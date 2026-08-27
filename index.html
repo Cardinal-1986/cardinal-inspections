@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1095 &#8212; The estimate builder now uses a clean, light &#8220;Cardinal&#8221; theme &#8212; a porcelain page with white cards and deep black text, easy to read on a phone or iPad in daylight. The number boxes (quantity, price, discount, deposit) are drawn as soft pressed-in cells, and the box you&#8217;re typing in gets a red outline so you never lose your place. The dark header and bottom bar stay dark on purpose. Only the estimate builder changed.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1096 &#8212; Every estimate line now has its own Detailed / Flat switch. Detailed keeps quantity, unit and unit price; Flat collapses to one description and a single lump-sum price, with no empty columns. The keyboard flows for fast entry &#8212; press Enter on the last price box to start a new line, and Tab jumps to the next line. New lines match the mode of the one above, and the client proposal and the Community bid sheet print detailed and flat lines side by side, each one clean. The old global &#8220;Qty / unit&#8221; checkbox is replaced by the per-line switch.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41839,6 +41839,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1096, d:'2026-08-27', t:'Every estimate line gets its own Detailed / Flat switch', s:'You can now price each line the way it wants to be priced, without flipping the whole estimate. Every line has a small Detailed / Flat switch. Detailed keeps Quantity, Unit and Unit Price and multiplies them. Flat collapses those away and shows one description with a single lump-sum price &mdash; no empty Qty or Unit columns to leave blank. The keyboard keeps up: press Enter in a line&#8217;s last price box to drop a fresh line below it, and Tab jumps from the price straight to the next line&#8217;s first field, so you can build an estimate without lifting your hand to the mouse. New lines take the same mode as the line above. The client proposal and the Community bid sheet both print detailed and flat lines together, each one clean and correct. Old lump-sum estimates open as all-flat automatically. The old single &ldquo;Qty / unit&rdquo; checkbox is gone &mdash; the per-line switch replaces it.' },
 { b:1095, d:'2026-08-27', t:'The estimate builder gets the light Cardinal theme', s:'You asked to keep the estimate builder light only &mdash; no dark option &mdash; with a tokenized Cardinal theme and the number boxes drawn like the soft, pressed-in style you sent. It is now a porcelain page: white cards, deep charcoal text, neutral borders and Cardinal red for the Save button, the active line and accents. The number cells (quantity, unit price, flat price, discount, deposit) are neumorphic &mdash; pressed into the card with crisp black text so they read in sunlight &mdash; and the cell you are typing in shows a red focus ring. The header and the phone Save bar stay dark on purpose, framing the light workspace and keeping the status bar matched. Only the estimate builder changed; Reports, Community cards and everything else keep their look.' },
 { b:1094, d:'2026-08-27', t:'Community estimates count, and its tap, match the quote', s:'You asked why a Community job showed a bid amount but the Estimates tile read 0. That tile counted estimates built in the estimate builder, and a job priced on the bid form has none &mdash; the price is typed straight onto the form. Now, in Community, a job with a priced estimate (typed, submitted or awarded) counts as one, and tapping the Estimates tile opens that estimate on the Estimate tab instead of dropping you into an empty builder. The count and the tap now agree with the amount shown at the top of the card. Retail and insurance are untouched.' },
 { b:1093, d:'2026-08-27', t:'Community: the address under the map is readable again', s:'Reported from a screenshot &mdash; on a Community client&rsquo;s Location card the street address printed under the map was a dark green, a colour picked back when that card was cream. Community moved to the black card a while ago and this one ink never followed, so it sat at about 1.2:1 and was effectively invisible. It now takes Community&rsquo;s own light text colour (about 15:1). One stale rule was removed rather than a stronger one piled on top, so the correct colour that was already defined a line above now wins.' },
@@ -46948,7 +46949,7 @@ window.CardinalPhotoEditor = { open: open, close: close };
 .cr-est-head button.danger{color:#d8cfc4;border-color:rgba(216,207,196,.4)}
 .cr-est-head button.danger:hover{background:#c8202e;color:#fff;border-color:#c8202e}
 .cr-est-saved-row .rowdel{flex:0 0 auto;background:transparent;border:0;cursor:pointer;color:#8f1620;font-size:15px;line-height:1;padding:3px 5px;border-radius:5px;font-family:inherit}
-.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#B01F21}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-itemchk{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:6px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8f1620;cursor:pointer;white-space:nowrap;flex:0 0 auto}.cr-est-itemchk:hover{background:#f5efd8;border-color:#c8202e}.cr-est-itemchk input{width:15px !important;height:15px;margin:0;accent-color:#c8202e;flex:0 0 auto}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
+.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#B01F21}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .cr-est-rowmode{display:inline-flex;margin-top:10px;border:1px solid var(--est-line,#e2e8f0);border-radius:8px;overflow:hidden;background:var(--est-well,#f8fafc)}.cr-est-lineitem .cr-est-rowmode button{-webkit-appearance:none;appearance:none;border:0;background:transparent;padding:7px 15px;min-height:38px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--est-dim,#475569);cursor:pointer;font-family:inherit}.cr-est-lineitem .cr-est-rowmode button+button{border-left:1px solid var(--est-line,#e2e8f0)}.cr-est-lineitem .cr-est-rowmode button.on{background:var(--est-red,#c8202e);color:#fff}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
 /* 962 \u2014 THE APP ALREADY HAD AN ANSWER FOR THIS AND I MISSED IT.
    Build 595 (#projModal), then 935 (#cr-pb-modal .sheet), both solved the
    installed bottom bar the same way and 935 wrote down why: \u201cClearance, NOT a
@@ -47101,12 +47102,11 @@ if(i.error) throw i.error;
 return i.data;
 }
 function computeTotals(s){
-var itemized = s.itemized !== false;
 var subtotal = 0;
 (s.lines || []).forEach(function(l){
-var amt = itemized
-? (Number(l.qty) || 0) * (Number(l.unit_price) || 0)
-: (Number(l.amount) || 0);
+var amt = l.flat === true
+? (Number(l.amount) || 0)
+: (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
 l.amount = amt;
 subtotal += amt;
 });
@@ -47143,7 +47143,11 @@ estimate_number: existing.estimate_number || '',
 title          : existing.title || '',
 status         : existing.status || 'draft',
 lines          : (existing.line_items || []).map(function(l){
-return Object.assign({ _lid: newLineId() }, l);
+var o = Object.assign({ _lid: newLineId() }, l);
+/* 1096: an estimate saved under the old global lump-sum flag becomes
+   per-line flat, once. The guard keeps any explicit per-line choice. */
+if(existing.itemized === false && o.flat == null) o.flat = true;
+return o;
 }),
 photos         : (existing.photos || []).slice(),
 itemized       : existing.itemized !== false,
@@ -47248,10 +47252,6 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 '</div>' +
 '<div class="cr-est-items-head" data-navsec="items">' +
 '<h3>Line Items</h3>' +
-'<label class="cr-est-itemchk" title="Turn off for lump-sum pricing \u2014 the client sees a description and one amount">' +
-'<input type="checkbox" data-f="itemized"' + (s.itemized !== false ? ' checked' : '') + ' /> ' +
-'<span>Qty / unit</span>' +
-'</label>' +
 '<button class="add-lib"    data-act="add-lib"    type="button">+ From Library</button>' +
 '<button class="add-custom" data-act="add-custom" type="button">+ Custom</button>' +
 '<button class="add-abc"    data-act="add-abc"    type="button">+ ABC Supply</button>' +
@@ -47360,8 +47360,32 @@ function estNavRelabel(lid, text){
   var el = view.querySelector('.cr-est-nav .navitem[data-lid="' + lid + '"] .tx');
   if(el) el.textContent = text || 'Untitled item';
 }
+/* 1096: focus one field of a line by id, after a render() replaced the node.
+   Always re-queries live — never hold a node reference across render(). */
+function focusLineField(lid, field){
+if(!view) return;
+var row = view.querySelector('.cr-est-lineitem[data-lid="' + lid + '"]');
+if(!row) return;
+var el = row.querySelector('[data-lf="' + field + '"]');
+if(el){ el.focus(); if(el.type === 'number' && el.select){ try{ el.select(); }catch(_s){} } }
+}
+/* 1096: spawn a blank line after `lid`, inheriting its Detailed/Flat mode, and
+   land the caret on the new line's entry field. Enter or Tab off a row's last
+   money field calls this. */
+function addLineAfter(lid){
+if(!state) return;
+var i = state.lines.findIndex(function(x){ return x._lid === lid; });
+if(i === -1) i = state.lines.length - 1;
+var prev = state.lines[i];
+var nl = { _lid: newLineId(), name:'', description:'', qty:1, unit:'', unit_price:0, amount:0 };
+if(prev && prev.flat === true) nl.flat = true;
+state.lines.splice(i + 1, 0, nl);
+state._dirty = true;
+render();
+focusLineField(nl._lid, nl.flat === true ? 'description' : 'qty');
+}
 function renderLine(l, idx, total){
-var itemized = state.itemized !== false;
+var itemized = (l.flat !== true);
 var amt = itemized
 ? (Number(l.qty) || 0) * (Number(l.unit_price) || 0)
 : (Number(l.amount) || 0);
@@ -47394,6 +47418,10 @@ moves +
 'value="' + esc(l.name || '') + '" placeholder="Item name" />' +
 '<textarea class="desc-input" data-lf="description" ' +
 'placeholder="Description (optional) \u2014 what\u2019s included, materials, warranty">' + esc(l.description || '') + '</textarea>' +
+'<div class="cr-est-rowmode" role="group" aria-label="Line pricing mode">' +
+'<button type="button" tabindex="-1" data-act="mode-detailed"' + (itemized ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>Detailed</button>' +
+'<button type="button" tabindex="-1" data-act="mode-flat"' + (itemized ? ' aria-pressed="false"' : ' class="on" aria-pressed="true"') + '>Flat</button>' +
+'</div>' +
 pricing +
 '</div>';
 }
@@ -47627,9 +47655,9 @@ var l = state.lines.find(function(x){ return x._lid === row.dataset.lid; });
 if(!l) return;
 var cell = row.querySelector('[data-slot="amount"]');
 if(!cell) return;
-var amt = state.itemized !== false
-? (Number(l.qty) || 0) * (Number(l.unit_price) || 0)
-: (Number(l.amount) || 0);
+var amt = l.flat === true
+? (Number(l.amount) || 0)
+: (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
 cell.textContent = money(amt);
 });
 }
@@ -47765,18 +47793,6 @@ if(!was) state.photos[idx].cover = true;
 render();
 };
 });
-var itemChk = view.querySelector('[data-f="itemized"]');
-if(itemChk) itemChk.onchange = function(e){
-state.itemized = !!e.target.checked;
-if(!state.itemized){
-state.lines.forEach(function(l){
-if(l.amount == null || l.amount === 0){
-l.amount = (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
-}
-});
-}
-render();
-};
 view.querySelectorAll('.cr-est-lineitem').forEach(function(row){
 var lid = row.dataset.lid;
 var line = state.lines.find(function(l){ return l._lid === lid; });
@@ -47804,6 +47820,41 @@ if(field === 'name') estNavRelabel(lid, v);
 };
 inp.onchange = inp.oninput;
 });
+/* 1096: the per-line Detailed/Flat switch. Toggling to Flat seeds the lump
+   price from qty x rate so it is not $0, then lands the caret on the price. */
+row.querySelectorAll('[data-act^="mode-"]').forEach(function(btn){
+btn.onclick = function(){
+var toFlat = btn.dataset.act === 'mode-flat';
+if((line.flat === true) === toFlat) return;
+if(toFlat){
+if(line.amount == null || line.amount === 0){
+line.amount = (Number(line.qty) || 0) * (Number(line.unit_price) || 0);
+}
+line.flat = true;
+}else{
+line.flat = false;
+}
+if(state) state._dirty = true;
+render();
+focusLineField(lid, toFlat ? 'amount' : 'qty');
+};
+});
+/* 1096: the pricing entry is the keyboard's fast lane. Enter on a row's last
+   money field spawns a fresh line in the same mode; Tab off it walks to the
+   next row's entry (Qty for detailed, Description for flat) or spawns one. */
+var term = row.querySelector(line.flat === true ? '[data-lf="amount"]' : '[data-lf="unit_price"]');
+if(term) term.onkeydown = function(e){
+if(e.key === 'Enter'){ e.preventDefault(); addLineAfter(lid); return; }
+if(e.key === 'Tab' && !e.shiftKey){
+var i = state.lines.findIndex(function(x){ return x._lid === lid; });
+if(i === state.lines.length - 1){ e.preventDefault(); addLineAfter(lid); }
+else{
+e.preventDefault();
+var nx = state.lines[i + 1];
+focusLineField(nx._lid, nx.flat === true ? 'description' : 'qty');
+}
+}
+};
 });
 estNavWire();
 autoGrowAll();
@@ -48377,17 +48428,27 @@ var total    = Number(est.total) || 0;
 var depPct   = Number(est.deposit_pct) || 0;
 var depAmt   = Number(est.deposit_amount) || 0;
 var balance  = Math.max(0, total - depAmt);
-var itemized = est.itemized !== false;
+var anyDetailed = lines.some(function(l){ return l.flat !== true; });
 var itemRows = lines.map(function(l){
+var flat = l.flat === true;
 var qty  = Number(l.qty) || 0;
 var rate = Number(l.unit_price) || 0;
-var amt  = itemized ? (qty * rate) : (Number(l.amount) || 0);
+var amt  = flat ? (Number(l.amount) || 0) : (qty * rate);
 var amtCell = amt ? money(amt) : '';
 var desc = '<b>' + esc(l.name || 'Item') + '</b>' +
 (l.description ? '<br><span style="font-size:9.5pt;color:#555;">' + nl2br(l.description) + '</span>' : '');
-if(!itemized){
+if(!anyDetailed){
 return '<tr class="avoid-break">' +
 '<td>' + desc + '</td>' +
+'<td class="rate">' + amtCell + '</td>' +
+'</tr>';
+}
+if(flat){
+/* a lump line inside a detailed table: the description takes the
+   qty/unit/rate span, the amount lands under Amount — no bare "1 EA". */
+return '<tr class="avoid-break">' +
+'<td>' + desc + '</td>' +
+'<td colspan="3"></td>' +
 '<td class="rate">' + amtCell + '</td>' +
 '</tr>';
 }
@@ -48399,9 +48460,9 @@ return '<tr class="avoid-break">' +
 '<td class="rate">' + amtCell + '</td>' +
 '</tr>';
 }).join('');
-var COLS = itemized ? 5 : 2;
+var COLS = anyDetailed ? 5 : 2;
 var SPAN = COLS - 2;
-var headRow = itemized
+var headRow = anyDetailed
 ? '<tr>' +
 '<th>Description</th><th style="text-align:right;">Qty</th>' +
 '<th style="text-align:center;">Unit</th>' +
@@ -59325,7 +59386,7 @@ var items = est.line_items || [];
    non-itemized row (14 of 18 live) unit_price is 0 and `amount` carries the
    money. This is computeTotals' rule and the print document's rule, copied
    rather than re-derived, including hiding the qty cell on a lump sum. */
-var itm974 = est.itemized !== false;
+/* 1096: pricing mode is per line now — decided inside the map below. */
 return '<div class="sheet">' +
 '<div class="lh">' +
 '<div class="for">Estimate goes to \u00b7 for approval</div>' +
@@ -59336,16 +59397,17 @@ return '<div class="sheet">' +
 '</div>' +
 (items.length
 ? '<div class="lines">' + items.map(function(it){
+var flat = it.flat === true;
 return '<div class="ln">' +
 '<span class="d"><b>' + esc(it.name || it.title || 'Item') + '</b>' +
 (it.description ? '<small>' + esc(it.description) + '</small>' : '') +
 '</span>' +
-(itm974
-? '<span class="q">' + esc((Number(it.qty) || 0) + ' ' + (it.unit || '')) + '</span>'
-: '') +
-'<span class="p">' + usd(itm974
-? (Number(it.qty) || 0) * (Number(it.unit_price) || 0)
-: (Number(it.amount) || 0)) + '</span>' +
+(flat
+? ''
+: '<span class="q">' + esc((Number(it.qty) || 0) + ' ' + (it.unit || '')) + '</span>') +
+'<span class="p">' + usd(flat
+? (Number(it.amount) || 0)
+: (Number(it.qty) || 0) * (Number(it.unit_price) || 0)) + '</span>' +
 '</div>';
 }).join('') + '</div>'
 : '') +
@@ -68261,6 +68323,23 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   border-color:var(--est-red);
   box-shadow:var(--est-inset),0 0 0 3px var(--est-focus);
 }
+/* 1096: on a phone the deep neumorphic inset is too heavy for the smaller
+   cells — a tighter pad and a subtle 1px inset; the red focus ring stays. */
+@media(max-width:560px){
+#cr-est-view .cr-est-lineitem .pricing input[type=number],
+#cr-est-view .cr-est-lineitem .pricing.lump input,
+#cr-est-view .cr-est-totals .val input,
+#cr-est-view .cr-est-totals .deposit input{
+  padding:4px 8px;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.08);
+}
+#cr-est-view .cr-est-lineitem .pricing input[type=number]:focus,
+#cr-est-view .cr-est-lineitem .pricing.lump input:focus,
+#cr-est-view .cr-est-totals .val input:focus,
+#cr-est-view .cr-est-totals .deposit input:focus{
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.08),0 0 0 3px var(--est-focus,rgba(200,32,46,.22));
+}
+}
 
 /* the two in-card inputs — transparent at rest, well on focus (unchanged behaviour) */
 #cr-est-view .cr-est-lineitem .name-input,
@@ -68277,8 +68356,6 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-view .cr-est-totals .deposit .amt{color:var(--est-ink);}
 
 /* the small controls */
-#cr-est-view .cr-est-itemchk{background:var(--est-well);border:1px solid var(--est-line);color:var(--est-red);}
-#cr-est-view .cr-est-itemchk:hover{background:#FDECEE;border-color:var(--est-red);}
 #cr-est-view .cr-est-items-head .add-custom{color:var(--est-red);border:1px solid var(--est-red);}
 #cr-est-view .cr-est-items-head .add-abc{color:#2F7D4A;border:1px solid #3F9457;}
 #cr-est-view .cr-est-move button{background:var(--est-well);border:1px solid var(--est-line);color:var(--est-red);}

@@ -1,5 +1,27 @@
 # Cardinal Resource App — Open Items
 
+## 🟢 IN PROGRESS — the manual estimating engine, enhanced (27 Aug 2026)
+
+Theo pasted a generic React/TS/Tailwind "estimating engine" spec; the pushback held —
+**stay vanilla, enhance the existing Obsidian engine, keep it a client-price quote tool**
+(no cost/markup/margin layer), **light-mode only** (`--est-*`, porcelain, neumorphic number
+cells). His batch plan:
+
+- **Batch 1 — ✅ Build 1095.** Editor visual polish + the tokenized light "Cardinal" theme.
+- **Batch 2a — ✅ Build 1096.** Per-line **Detailed / Flat** switch (`l.flat`, jsonb, no schema
+  change): collapse Qty/Unit on Flat, adaptive keyboard (Enter → new line, Tab → next entry),
+  mixed-mode proposal + Community sheet, mobile-compact insets. Retired the global "Qty / unit"
+  checkbox. Gated: `harness_estflat1096.js` + `render_estflat1096.mjs` (both green/red controlled).
+- **Batch 2b — NEXT (Build 1097): line-item sections.** Titled sections with an editable title, a
+  live auto-calc subtotal badge, quick controls (Add Line to Section, Reorder ▲/▼, Collapse/Expand
+  accordion). `computeTotals` sums across sections; `buildDocHtml` groups by titled section. Built
+  on top of 1096's per-line model.
+- **Batch 3 — queued.** Saved assemblies (a pick-list of pre-built line groups) + proposal polish.
+
+Settled and not to re-litigate: **no dark option** for the builder; **no money/cost/markup** layer
+(quote tool); Cardinal red is `#c8202e`, never Tailwind `#DC2626`; the toggle's inactive label uses
+`--est-dim #475569` (slate-500 fails 4.5:1 on porcelain).
+
 ## 🟢 IN PROGRESS — the Community CRM simplification arc (27 Aug 2026, Theo's 3rd pass)
 
 Theo, third time saying the Community CRM feels like "a lot going on," steered the fix
