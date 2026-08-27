@@ -1,18 +1,384 @@
 # Cardinal Resource App — Open Items
 
+## 🟢 IN PROGRESS — the manual estimating engine, enhanced (27 Aug 2026)
+
+Theo pasted a generic React/TS/Tailwind "estimating engine" spec; the pushback held —
+**stay vanilla, enhance the existing Obsidian engine, keep it a client-price quote tool**
+(no cost/markup/margin layer), **light-mode only** (`--est-*`, porcelain, neumorphic number
+cells). His batch plan:
+
+- **Batch 1 — ✅ Build 1095.** Editor visual polish + the tokenized light "Cardinal" theme.
+- **Batch 2a — ✅ Build 1096.** Per-line **Detailed / Flat** switch (`l.flat`, jsonb, no schema
+  change): collapse Qty/Unit on Flat, adaptive keyboard (Enter → new line, Tab → next entry),
+  mixed-mode proposal + Community sheet, mobile-compact insets. Retired the global "Qty / unit"
+  checkbox. Gated: `harness_estflat1096.js` + `render_estflat1096.mjs` (both green/red controlled).
+- **Batch 2b — ✅ Build 1097.** Line-item sections: `section_id`+`sec` per line (jsonb, no
+  migration), one shared `window.crEstGroups`, editable title + autocomplete, live subtotal badge,
+  ▲/▼ block reorder, collapse, per-section + Line, + Section, per-line move-to-section select;
+  proposal + Community sheet print banners + per-section subtotals; single-ungrouped stays flat
+  (back-compat). Gated: `harness_estsec1097.js` + `render_estsec1097.mjs` (green/red controlled).
+- **Batch 3a — ✅ Build 1098.** Saved assemblies: **6 in-code defaults** (Theo's curated cross-trade
+  set — Full Roof/OC Duration, Standing Seam, Siding, Soffit & Fascia, Seamless Gutters, Windows) +
+  `estimate_assemblies` table for custom (shared read, author/admin write, `created_by DEFAULT
+  my_email()`). + Assembly opens the picker in `'assembly'` mode; per-card input scales on **two
+  axes** (`per_sq`×squares, `per_unit`×count for windows), LF/EA base lines keep their starting qty;
+  Save as Assembly on a section header names it by the section title. Prices ship at $0. **SQL:
+  `estimate_assemblies.sql` — apply before deploy.** Gated: `harness_estasm1098.js` +
+  `render_estasm1098.mjs`.
+- **Batch 3b — ✅ Build 1099: proposal polish.** `buildDocHtml` — section banners refined in place
+  (red left accent + deeper tint, `break-after:avoid`), faint zebra on **item rows only**
+  (continuous `_zeb` parity, banners/subtotals never striped), `break-inside:avoid` on the totals
+  `tfoot`/deposit/card, and an **Acceptance & Authorization** card (money recap + terms +
+  Client/Cardinal signatures; labels `--muted` for ≥4.5:1). **Theo picked option 1 — KEEP both
+  deposit displays** (mid-doc Payment Terms box *and* the card recap). Show/hide-subtotals toggle in
+  the preview toolbar (`hide-subs` class; preview/print only, published doc keeps subtotals). Gated:
+  `render_estdoc1099.mjs` + `harness_estdoc1099.js`. **The manual estimating engine batch is
+  complete** (1096 flat toggle, 1097 sections, 1098 assemblies, 1099 proposal polish).
+
+Settled and not to re-litigate: **no dark option** for the builder; **no money/cost/markup** layer
+(quote tool); Cardinal red is `#c8202e`, never Tailwind `#DC2626`; the toggle's inactive label uses
+`--est-dim #475569` (slate-500 fails 4.5:1 on porcelain).
+
+## 🟢 IN PROGRESS — the Community CRM simplification arc (27 Aug 2026, Theo's 3rd pass)
+
+Theo, third time saying the Community CRM feels like "a lot going on," steered the fix
+himself: pull the community/partner STATS out of the working CRM onto their own page,
+and cut the home to just the work. Renders confirmed the diagnosis — the Clients tab
+alone stacks three slices of the same people (Community clients / By partner / By
+stage), and the calm stats page he was picturing ALREADY EXISTS (`CardinalCommunity
+Analytics`, `cr-can`) but is buried in the Tools menu.
+
+His picks: **1b** (strip the home to one attention list; Bids/Partners become doors),
+**2 = yes** (stats page organized as a card PER PARTNER — Habitat first), a **Tarps
+tab** (aging tarps over the existing `tarped_at`, bidder or not), and **B** on naming
+(estimate, not bid — award-side kept).
+
+Sequence, one build each:
+- ✅ **1091 — the estimate rename.** SHIPPED (merged).
+- ✅ **#1 — partner-card stats page (1092).** SHIPPED. cr-can is now a card per
+  partner (Habitat first) with open/out-for-pricing/awarded/win-rate + oldest aging
+  + tarps-up; summary strip Out-for-pricing/Awarded/Win-rate/Tarps-up; a chart door in
+  the tab strip, Analytics removed from Tools. ⚠ Card tap-through to a partner's
+  estimates is a deliberate follow-up, not in 1092.
+- ⏭ **#2 (1b) — strip the home** to one attention list; Bids/Partners → doors.
+  PREVIEW before shipping (his rule; and it reverses the 853 "calendar/tiles/day"
+  ordering only for Community, so show it).
+- ⏭ **#3 — the Tarps tab.** Aging list over `tarped_at` (already a real field, build
+  977). Scope: community tarped clients; non-community tarps are a separate question.
+
+---
+
+
+---
+
+## ✅ CLOSED — Insurance Clients crowding (build 1086, 26 Aug 2026)
+
+`.cr-ic-chips` measures **10 chips · 4 rows · 194px** at 390px, above the client list —
+the same shape build 1085 fixed on All Leads & Jobs.
+
+**Fixed at 1086 with the clamp, NOT 1085's removal.** That screen has **no funnel and no
+rail**: those chips are its only filter, so removing them would have removed filtering
+outright. It keeps row one and ends with a dashed `+7` that expands to all ten and reads
+`Fewer`. **194px → 44px.** Same symptom as Leads, opposite remedy — which is the reason a
+sweep reports screens rather than prescribing one patch for all of them.
+
+Two other strips the same sweep flagged are **false alarms, checked, not fixed**:
+- **Add project** `#pfSourceChips` — 8 chips / 3 rows. A required radio group; every lead
+  source has to be visible. Hiding five behind a tap makes it worse.
+- **Photo editor** `.cr-ped-row` — 10 chips / 4 rows / 75px. A toolbar pinned to the bottom
+  over the photograph. Nothing is pushed anywhere.
+
+Instrument: `scripts/probe_crowding.mjs` (all 25 sentinel states, any width).
+
+---
+
+## OPEN (narrowed at 1087) — the Insurance header is the only CRM chrome that isn't chrome
+
+Theo sent a screenshot captioned *"Logged in to insurance header"*. Measured before
+theorising: it **passes every contrast floor** — white title 5.68:1, the "+" glyph 4.85:1
+on `#FFE8E8`. Not a readability defect.
+
+What the five-header comparison render shows instead: retail is a steel gradient, community
+`#047857`, production `#181b20`, sales `#1a1310` — **every other CRM head is a dark chrome
+surface. Insurance alone pulls `--ct-*`**, which is the Resource Library's *document*
+palette, so it is either solid `#CE0E18` or solid `#FFFFFF` depending on `cardinalRLTheme`.
+Two identities, and the switch lives in another feature. Wired deliberately at 407.
+
+⚠️ **A designed dark insurance palette already exists in the file and the header does not
+use it**: `body[data-crm-head="insurance"]{--bnbg:#1a0e0d;--bnbd:#3d1512;--bnac:#ff8a7a}`
+— currently the **bottom nav only**.
+
+✅ **The mismatch half is FIXED at 1087** — that was what Theo was actually reporting
+(*"It was the retail crm with insurance header after I signed in"*), and I had inferred a
+colour question from the same screenshot. The Landing no longer claims to be in a portal.
+
+✅ **The colour half is CLOSED at 1089.** Theo was shown four rendered headers — now-dark,
+now-light, and two options — and picked **option 1**: the header takes the bottom nav's own
+`#1a0e0d` / `#ff8a7a`, so the two ends of the insurance screen finally agree. **Dark theme
+only**, because insurance is the one head that flips with `cardinalRLTheme` and he was told
+in writing that light was unchanged; the new tokens are declared in the siren block alone and
+the rule falls back to `--ct-head-*`, so light is untouched by construction — proved by two
+byte-identical light-mode renders.
+
+⚠️ **Deliberately NOT done, and it is the obvious next thought:** the bottom nav is
+`#1a0e0d` in BOTH themes, so in light mode a white header still sits above a near-black nav.
+That mismatch predates this work and was left alone rather than folded in silently. Flattening
+insurance to one theme-independent palette — which is what every other CRM head already does —
+is a real option and a decision for Theo, not a tidy-up.
+
+---
+
+## ✅ SETTLED 27 Aug 2026 (Theo) — the sentinel runs always, blocks selectively
+
+*"Do that."* — after being shown what it had actually caught, and what it costs.
+
+**Run it on every build that touches a screen. Hold the merge only for colour, theme or
+layout builds.** Anything else merges on the other gates; sentinel findings are carried
+into the next build. **Not a licence to skip it or to stay quiet about what it found.**
+
+**What he was shown, both columns.** Four real catches in ~156 builds — 939 (a 3.09:1
+label of mine, caught before it shipped, on the readability build), 959 (a layout rule
+inert on all 30 elements it matched, with every purpose-built assertion green), 1064 (the
+photo editor's tool bar at 3.27:1), 1066 (the album's client name at 1.07:1 in light).
+**All four were colour/theme/layout builds** — which is the rule. Against that: full
+sweeps run ~1 useful finding in 40; four of its own checks have been wrong (1035, 1066 ×2,
+1067) and one run miscounted its renders (1081); and it cannot see a loading state or
+anything past where its walk stops.
+
+⚠️ **Its record of being RUN is worse than its record of working.** Measured at the time
+of the decision: of the 29 build-log entries at or after 1060, **12 mention the sentinel
+and 17 do not.** The old rule said every screen build. The new rule is narrower on
+blocking precisely so the running half stops being optional.
+
+---
+
+## ✅ CLOSED — the committed VAPID private key (build 1084, 26 Aug 2026)
+
+`api/notify.js` carried a VAPID private key as a literal fallback. **Not dormant** — with
+`VAPID_PRIVATE_KEY` unset in Vercel, that literal is what signed production pushes.
+
+**Rotated and removed.** Theo generated a new pair, private half into Vercel
+(`cardinal-inspections`, Production), public half committed to `index.html` ×2 and
+`api/notify.js` ×1. The fallback is **deleted**; an absent key now returns
+`reason:'no_vapid_private'` instead of signing with `''`.
+
+⚠️ **Blast radius was measured, not assumed: 4 subscriptions, 1 person — all Theo's own
+devices.** I had warned that "the whole crew re-subscribes"; nobody else had ever
+subscribed. Query before costing a decision.
+
+⚠️ **Standing rule, now in `CLAUDE.md`: never reintroduce a secret fallback.** It is not
+resilience — it guarantees the value is in the repo AND hides its own absence, so nobody
+learns the env var was never set.
+
+⚠️ **A public key cannot come from an env var on this app.** No build step, so
+`NEXT_PUBLIC_*` does nothing and `index.html` ships as committed. Private → env, public →
+committed. Vercel's own agent suggested otherwise; it was aimed at a Next.js app.
+
+**Left for Theo:** re-enable notifications once per device (Menu → Notifications).
+
+---
+
+## The CSS sediment — measured, and the growth is now gated (26 Aug 2026)
+
+**74 distinct DEAD rules.** Measured with the per-render display cap lifted, zero
+truncation. My earlier figures were both wrong: **196** was a capped summary line, **~900**
+was a render-multiplied sum I mistook for a defect count. 74 is the real one.
+
+**They are overwhelmingly superseded rules from migrations that SUCCEEDED**, not defects.
+Walking Chromium's matched rules: `#cr-hd2-bar #cr-hd2-home{width:34px}` → computes **44px**
+(build 1040's tap-target pass); `.jabox{background:#fff}` → computes transparent (the
+obsidian rebuild); `.cbx{display:inline-grid}` → computes `grid`. The dead rule is the
+*pre-fix* value in each case. **Not one of the 74 corresponds to a bug Theo has reported.**
+
+### ❌ Do NOT run a mass cleanup
+
+Costed and rejected. The risk is not deleting a dead rule — it is that **some overriders are
+conditional**. Delete a base rule whose replacement sits behind a media query, a theme or a
+CRM gate and the other branch is left with nothing. Per-rule, per-screen verification, with
+bytes as the payoff. **20 of the first 44 matched zero elements on the home screen** — they
+live on other screens, so any sweep multiplies again.
+
+### ✅ What was done instead: gate the growth
+
+`scripts/gate_stack.mjs` — see the gate inventory in `CLAUDE.md`. It does not touch the
+existing sediment; it stops the pile growing, which is the half that compounds.
+
+```bash
+node .claude/skills/cardinal-build/scripts/gate_stack.mjs --selftest
+node .claude/skills/cardinal-build/scripts/gate_stack.mjs <new.html> --prev <old.html> [--debug]
+```
+
+**Standing verdict: manage this debt, do not repay it.** Reach for `@layer` only if a build
+ever becomes genuinely hard because of the cascade; never a bundler, which would trade a
+slow-growing problem for a new class of failure and break the phone-deploy workflow.
+
+---
+
+## 🛑 DO NOT DELETE `claude/ai-can-build-584` — it is the project's only pre-squash history
+
+*Established 26 Aug 2026, after I recommended deleting it and was wrong.*
+
+**It holds 787 commits. `main` holds 74.** Every PR here is squash-merged, so `main`'s
+history is one commit per PR and the commit-by-commit lineage of builds ~1–584 survives
+**on that branch and nowhere else**.
+
+**It contains the span `CLAUDE.md` calls "the ONLY gap".** That file states there is no
+narrative record anywhere in the doc set for roughly **468–542**. Those commits are on
+this branch — 533–554 alone carries the left-nav rebuild (536), dark retail home (535),
+literal-yellow Landing (539), the money circle reading the right table (540), the
+contracts tab (541), the roofing Construction Agreement (542), the obsidian Activity
+Count tiles (544–545) and the whole Crews arc (547–554).
+
+**It also carries `aeac5e5`**, the build-573 tree that `scripts/measure_counts.py` names
+in its own header as its negative control and that `CLAUDE.md` cites **four times**. That
+commit is **not reachable from `main`** — checked, not assumed
+(`git merge-base --is-ancestor aeac5e5 origin/main` → false).
+
+### Why it looks deletable, and why that reading is wrong
+
+It is **unmergeable by construction** — `git merge-base origin/main 7a1d904` returns
+**empty**: no common ancestor at all, because main's history was rewritten beneath it. So
+every check for "is this branch worth keeping?" that asks *can it merge* answers no, and
+the branch's name reads like abandoned feature work. **Both signals point the wrong way.**
+It exists to be *read*, not landed.
+
+⚠️ **A sweep of every SHA cited in the doc set found ~75 of them are NOT ancestors of
+`main`.** Most stay alive through GitHub's permanent `refs/pull/N/head` refs, but that is
+a property of GitHub's retention policy, not of this repo — and it is not something to
+bet the measurement baseline on.
+
+### ✅ FIXED 26 Aug — two preservation branches now exist on the remote
+
+**The objects are no longer hanging off a single ref.** Both were pushed and verified:
+
+| ref | sha | what it holds |
+|---|---|---|
+| `history/pre-squash-584` | `7a1d904` | the full 787-commit lineage, builds ~1–584 |
+| `history/build-573-baseline` | `aeac5e5` | the build-573 tree, `measure_counts.py`'s negative control |
+
+```bash
+git fetch origin history/build-573-baseline
+git show history/build-573-baseline:index.html > /tmp/573.html   # the control tree
+```
+
+**`claude/ai-can-build-584` is now redundant** — a second ref covers everything it did.
+It can be deleted whenever Theo wants; nothing depends on it any more. Leaving it costs
+one confusing name in the branch list, which both this file and `CLAUDE.md` now explain.
+
+### ⚠ The permission matrix, established by control rather than assumed
+
+Tags were the obvious answer and are **blocked**. Diagnosed properly, with a control that
+proves what *is* allowed rather than only what isn't:
+
+| operation | result |
+|---|---|
+| push an **annotated tag** | ❌ HTTP 403 |
+| push a **lightweight tag** | ❌ HTTP 403 |
+| push a **branch at the identical sha** | ✅ succeeded |
+| **delete** any ref | ❌ HTTP 403 |
+
+So the restriction is on `refs/tags/*` and on deletion — **not** on the objects and **not**
+on write access generally. *The first two failures alone would have read as "no write
+permission"; only the branch control showed the real shape.* ⚠️ **Git reports both
+refusals as `Everything up-to-date` after the 403 line** — a phrase that reads like
+success. Use `--verbose` and check the exit code; the summary line lies.
+
+⚠️ **Tags remain the better artifact** — immutable, and they do not clutter the branch
+list. If Theo wants them, from a shell with his own credentials:
+
+```bash
+git tag -a build-573-baseline aeac5e5 -m "The last build-573 tree - measure_counts.py's negative control"
+git tag -a history/pre-squash-584 7a1d904 -m "787 commits, builds ~1-584: the pre-squash lineage. Unmergeable by design."
+git push origin build-573-baseline history/pre-squash-584
+```
+
+### 🧹 One piece of litter I made and cannot clear
+
+Diagnosing the above required pushing a throwaway branch, **`zz-perm-test`** (at
+`aeac5e5`). Ref deletion is 403, so **I cannot remove it.** One line from a shell with
+full credentials, or one click in the GitHub branch list:
+
+```bash
+git push origin --delete zz-perm-test
+```
+
+It is harmless — it points at a commit two other refs already hold — but it is untidy and
+it is mine.
+
 ---
 
 ## Layer: 26 Aug 2026 — the app-wide polish pass (Theo: "1-3 then 4-5")
 
-His list, in his order. **1 (half), 2 and 4 shipped; 3 and 5 closed as false positives.**
+His list, in his order. **ALL FIVE CLOSED: 1, 2 and 4 shipped; 3 and 5 were false positives.**
 
 | # | item | state |
 |---|---|---|
-| 1 | replace `alert()` / `confirm()` with in-app feedback | ⚠️ **half done — build 1080.** 289 `alert()` calls routed to the app's own toast. **The 92 `confirm()` calls are NOT done** — see below |
+| 1 | replace `alert()` / `confirm()` with in-app feedback | ✅ **DONE — 1080 + 1083.** 289 alerts to the toast, 88 confirms to the ask sheet |
 | 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
 | 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ❌ **CLOSED — all three parts are FALSE POSITIVES. Do not build it.** See below |
 | 4 | distinct icons in the Job Menu | ✅ **build 1082** — plus the ink, which was the bigger defect |
-| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ❌ **CLOSED — FALSE POSITIVE, measured.** Renders **183 × 44**. See below |
+| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ⚠️ **HALF right — corrected 26 Aug.** It renders **183 × 44** and is tappable, so what Theo saw is closed. But its **44px min-width floor really is dead**, and that is latent, not false. See below |
+
+### ❌ Item 5 — DECIDED 26 Aug 2026: LEAVE THE CSS ALONE
+
+**The button is fine; only a promise about it is false.** `#acxTrBtn` renders **183 × 44**,
+`min-height` computes 44px, it is fully tappable. The *width* floor is dead, beaten by
+`cr-jobdetails-styles`'s `… .acxjd .acxsel { min-width:0px }` — the deliberate flex
+truncation fix that stops labels overflowing.
+
+**Forcing the floor back is the riskier move.** `.acxsel` is a **class** with more than one
+user, and `min-width:0` exists for a reason. That trades a hypothetical (some future
+shorter label) for a real regression risk on a screen that works. This is the standing
+sediment verdict applied to itself: *manage the debt, do not repay it.*
+
+**The one real defect is honesty, not layout:** `cr-touch44-styles` declares
+`min-width:44px` for `#acxTrBtn` and it is inert. It reads as enforced. **A comment saying
+so is the whole fix** — folded into the next build that touches `index.html` rather than
+spending a build number on a comment.
+
+**If the label ever shortens, the sentinel's `FLOOR` check is still pointing at this.**
+
+### ⚠️ How it was originally mis-called — worth keeping
+
+
+
+*I closed this flatly as a false positive. The sentinel disagreed, and it was half right.*
+
+**What I said, and it holds:** `#acxTrBtn` renders **183 × 44** on the client screen, at
+390/1194/1440. Confirmed twice in Chromium. `min-height` computes **44px**. Nothing Theo
+can tap is 0px, so the thing he reported is genuinely closed.
+
+**What I missed:** the sentinel's `FLOOR` check reports `button#acxTrBtn computes 0px`,
+and it is **measuring the computed `min-width` property, not the rendered box.** Those are
+different claims and I answered the wrong one. Measured:
+
+```
+computedMinW: 0px      ← the floor is DEAD
+computedMinH: 44px     ← the height floor holds
+rect:         183x44   ← what actually paints
+```
+
+**What kills it**, from walking Chromium's own matched rules:
+
+| sheet | selector | sets |
+|---|---|---|
+| `cr-touch44-styles` | `#insToggleBtn, #acxTrBtn` | `min-width:44px` |
+| `cr-jobdetails-styles` | `:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxsel` | **`min-width:0px`** |
+
+The second is far more specific and wins on **retail only** (both `:not()`s exclude the
+other two CRMs). `selector_audit.py` finds **only the two touch-44 rules** for `#acxTrBtn`
+— it searches by the selector you name, and this rule reaches the button through its
+**class**, `.acxsel`. *A selector audit answers "who else writes this selector", not "what
+wins on this element". Only a render answers the second.*
+
+⚠️ **`min-width:0` on a flex child is the standard truncation fix** — it is what lets a
+label ellipsis instead of overflowing, and it is almost certainly deliberate. So this is
+**not** a one-line fix: forcing 44px back could reintroduce the overflow that rule exists
+to prevent.
+
+**Verdict: latent, not live. Recorded, not built.** The button is 183px because its own
+content is; nothing holds it there if the label shortens or the row squeezes. Wants a
+decision from Theo — options, not a patch.
 
 ### ❌ Item 3 is a FALSE POSITIVE in all three parts — audited 26 Aug, do NOT build it
 
@@ -111,7 +477,18 @@ keep their own red — more specific, deliberately untouched, asserted by `gate_
 across 15 tiles.** Build 981's comment saying *"DB_ICONS has no checklist key"* was rewritten
 in the same edit — it is no longer true.
 
-### ⏳ Needs Theo — the `confirm()` sheet wants a look before it is built
+### ✅ The confirm sheet shipped as build 1083 — Theo picked option 1
+
+`window.crAsk(msg, opts) -> Promise<boolean>`, a bottom sheet. **88 calls, not 92** (lexer).
+
+**Settled, do not re-litigate:** the buttons say what happens (*Delete photo* / *Keep it*, never
+OK/Cancel); destructive is red and sits **above** the safe answer; Escape and a scrim tap always
+mean **no**; and it **falls back to `confirm()`** if the sheet cannot be shown — the only
+executable `confirm(` left in the file, asserted at exactly 1.
+
+⚠️ **If you ever touch the async conversion, read the build log first.** Two guards nearly
+stopped guarding because an async function returns a Promise and a Promise is always truthy —
+one of them (`confirmPay`) would have paid a rep regardless of the answer.
 
 `confirm()` returns a boolean and **blocks**, so it cannot be routed the way `alert()`
 was. Replacing 92 of them needs a new in-app sheet *and* an async restructure at every
@@ -4315,7 +4692,8 @@ prompt leads with colour and takes the first sentence only.
    the model more freedom and weaker colour; higher tint strength pushes harder toward the swatch.
 3. **No render has used a CompanyCam import at full resolution.** 815 fixed the rendition order
    (it had been taking the annotated web copy); the fix is merged and unproven on a real render.
-4. **Run the sweep.** ~60 unreferenced files, ~20 MB, under `photos/visualizer/`.
+4. **~~Run the sweep.~~ ❌ DECIDED 26 Aug 2026: DO NOT.** Measured, not estimated: **184 unreferenced files, 60 MB** (219 files / 97 MB total under `visualizer/`, 35 referenced, 53 `design_jobs` rows). The "~60 files / ~20 MB" carried here for months was **wrong by 3x**.
+   **Still not worth doing.** 60 MB is pennies of Supabase storage against 184 irreversible deletes, and `sweep_visualizer.py` has never been run or validated — an unvalidated instrument pointed at a delete is the worst combination this project has. The orphans are genuinely dead (newest is 19 Aug, nothing in flight); they are just harmlessly dead. **Revisit if visualizer storage passes ~500 MB or storage cost appears on a bill.** ⚠️ The orphan count above came from fuzzy `LIKE` matching of storage paths against `design_jobs.source_path/render_path/preview_path` — good enough to SIZE the problem, **not good enough to delete on**.
    `python3 spark/sweep_visualizer.py` on the Spark is a dry run and prints what it would remove;
    `--apply` removes it. The 24-hour age floor is what protects an import that has not been
    rendered yet — do not lower it to be tidy.

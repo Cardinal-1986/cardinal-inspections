@@ -129,6 +129,7 @@ Light desktop-wide layout replacing a 680px phone layout that had **zero media q
 - **Bids are editable** (356) — a pencil on each bid row opens the bid form pre-filled; `CardinalNewBid.edit(id)` opens it from anywhere.
 - Partner colour coding by name: Habitat green · Community Action yellow · Dayton Home Repair Network blue · Rebuild pink. **Colour is name-matched, not a stored field** — a new partner reads neutral until that's changed.
 - Modules: `cr-ch2` (home), `cr-cc` (client page), `cr-nbid`, `cr-cpartners`, `cr-cprop`, `cr-wo`, `cr-can`.
+- **Community Analytics (`cr-can`) is a CARD PER PARTNER (1092).** Habitat first (same `/habitat/i` rule as cr-cpartners), each card: open estimates, out-for-pricing, awarded, win rate, oldest-open aging pill, and **tarps up** (Theo's aging-tarp count — `tarped_at` set on an unfinished job). Summary strip: Out for pricing / Awarded / Win rate / Tarps up. Opened by a **chart button in the hub tab strip** (`.cc-analytics`, reuses the existing `data-go="analytics"` handler) — moved out of the Tools list. Every ink is a `--ccm-*` token; `pcolor()` name-matches the four documented partner colours for the 4px card edge only.
 
 ---
 
@@ -145,6 +146,14 @@ Light desktop-wide layout replacing a 680px phone layout that had **zero media q
 **Entry point (379):** the burger menu's 💰 **Estimates** and the ⌘K palette both open this page. The duplicate "⚡ AI Estimates" menu entry was retired — AI estimating is the red button inside the page. A legacy flat-table estimates view still exists in `LIST_DEFS` but is now unreachable.
 
 **One merged API since 308** — `Object.assign(window.CardinalEstimates || {}, {...})`. Status lanes since 339: **Unsent → Sent → Accepted**, Status ∩ Rep ∩ Trade filters, ⚑ at 5+ days, **no caps and no auto-archive**, desktop dual-pane with live pipeline sums. `estimate_line_items` is the shared price book. Photo attach via `#cr-pae-actionbar`.
+
+**Per-line Detailed / Flat (1096).** Each line carries its own `flat` boolean (jsonb, no schema change — `save()`/`currentState()` strip only `_lid`). A **Detailed | Flat** segmented switch (`.cr-est-rowmode`) sits on every line: Detailed multiplies `qty × unit_price`; Flat collapses Qty/Unit away (`renderLine` → `.pricing.lump`) to one description + one lump `amount`. `computeTotals`, `refreshTotals`, `buildDocHtml` (client proposal — a flat line spans qty/unit/rate with `colspan="3"`, clean scope) and the Community bid sheet all decide **per line**. Toggling to Flat seeds the lump from `qty × rate` and focuses the price. Keyboard: **Enter** on the last money field spawns a new line in the same mode; **Tab** walks to the next line's entry (Qty detailed / Description flat). Old globally-lump estimates (`itemized === false`) migrate to per-line flat once on open, guarded. **This retired the old global "Qty / unit" checkbox** — the per-line switch replaces it.
+
+**Line-item sections (1097).** Lines group into titled sections. Each line optionally carries `section_id` + `sec` (jsonb, no migration). `estGroups()` → **`window.crEstGroups`** is the ONE grouping model, read by the editor (`renderLinesGrouped`/`renderSectionHead`), the proposal (`buildDocHtml`) and the Community sheet — grouped by first appearance, ungrouped lines under an implicit **General Scope** (id `''`). **A single ungrouped group renders flat, no banner** — legacy/simple quotes untouched. Editor section header: chevron collapse (`secCollapsed`, UI-only), editable title with `<datalist>` autocomplete, **live subtotal badge** (`refreshTotals` repaints it), ▲/▼ block reorder (`moveSection` rebuilds the flat array, sections stay contiguous), per-section **+ Line** (`addLineToSection`), a **+ Section** button, and a per-line move-to-section `<select>` (`moveLineToSection`). `addLineAfter` inherits the section + mode. Proposal/Community print each section as a banner (`tr.sec-banner`, Cardinal-red divider) + per-section subtotal before the grand total. `--est-*` porcelain tokens.
+
+**Saved assemblies (1098).** An assembly = a named bundle of lines that injects as one titled section. **Hybrid storage:** **6 defaults in-code** (`EST_ASSEMBLIES` — Theo's curated cross-trade set: Full Roof Replacement (OC Duration) + Metal/Standing Seam under Roofing, Composite/Vinyl Siding, Aluminum Fascia & Vented Soffit, Seamless 6" K-Style Gutters, Full-Frame Window Replacement — all $0), custom ones in **`estimate_assemblies`** (`estimate_assemblies.sql` — shared read, author/admin write, `created_by DEFAULT my_email()`). **+ Assembly** opens `#cr-est-picker` in `'assembly'` mode (`renderAssemblyPicker`, grouped by trade); each card carries an optional numeric input → `expandAssembly` scales the field lines by **two axes** (`per_sq` × squares, or `per_unit` × count for windows), leaves LF/EA base lines at their starting qty, keeps flat, drops `per_sq`/`per_unit`; the input is labelled Squares or Windows. `injectAssembly` stamps a fresh `section_id`+title and appends. **Save as Assembly** on a named section header (`saveSectionAsAssembly`) names it by the section title, strips editor keys, inserts. `loadAssemblies`/`deleteAssembly` degrade to defaults-only if the table is absent. Defaults can't be deleted. Gated: `harness_estasm1098.js` + `render_estasm1098.mjs`.
+
+**Proposal polish (1099).** The client-facing estimate (`buildDocHtml` in `cr-epub-script`) reads as a finished proposal. Section banners carry a red left accent + deeper tint (`#f3efe8`) — refined **in place**, one `tr.sec-banner td` rule, not stacked. Faint zebra on **item rows only** (`tr.zeb td{background:#f7f6f3}`): `rowFor(l, zi)` computes the class and a continuous `_zeb` counter threads the section map so banners/subtotals are never striped. Print protection: `tfoot{break-inside:avoid}`, `h2.sec{break-after:avoid}`, `tr.sec-banner{break-after:avoid}`, deposit box + card `avoid-break`. Closes with an **Acceptance & Authorization** card (`acceptBlock`) — money recap (Contract Total / Deposit Due at Signing % / Balance; deposit+balance cells only when a deposit exists), authorization line, Client + Cardinal signatures; labels use `--muted` (≥4.5:1). A **Hide subtotals** toggle in the preview toolbar flips `body.hide-subs` (hides `tr.sec-sub`) for a simpler one-number quote — preview/print only; the published doc keeps subtotals. Gated: `render_estdoc1099.mjs` (shipped `buildDocHtml`, WCAG contrast) + `harness_estdoc1099.js`.
 
 **Document rule:** anything needing share / email / signature / print goes through `window.db.create(title, html, projectName, projectId)` → `inspection_reports`.
 
@@ -453,10 +462,21 @@ var STAGES = ['Lead','Prospect','OnHold','Approved','Scheduled',
 Community renders its own vocabulary via `LABEL`. **Community never shows the
 words "Lead" or "Prospect" to a user.**
 
+⚠️ **1091 — Community says "estimate", not "bid" (Theo's call, his third time on
+the CRM feeling confusing).** DISPLAY TEXT ONLY: the Bids tab → **Estimates**, New
+Bid → **New Estimate**, the client page's Bid tab → **Estimate**, and the two "bid"
+rungs of the ladder below. **Award-side labels are deliberately unchanged** — Theo,
+verbatim: *"bid awarded is still good"* — so **Awaiting Funding / Awarded / Not
+Awarded / Build Complete** stay, as does `OC_AUDIT`'s "Bid awarded" / "Bid not
+awarded". **Nothing under the hood moved**: `CardinalNewBid`, `commBidAmount`,
+`showBidModal`, `go:'bids'`, `'allbids'`, `tab==='bid'`, `data-cpane="bid"` and
+every `crBid*` are untouched — this is the LABEL on the one pipeline, not a fork.
+The changelog's historical "bid" mentions were left as-is (history).
+
 | Stage value | Community label |
 |---|---|
-| `Lead` | Bid Requested |
-| `Prospect` | Bid Submitted |
+| `Lead` | Estimate Requested |
+| `Prospect` | Estimate Submitted |
 | `OnHold` | **Awaiting Funding** |
 | `Approved` | Awarded |
 | `Scheduled` | Scheduled |
@@ -3669,7 +3689,36 @@ stage palette is on the semantic frozen list.
 Gate: `scripts/render_stagechips.js` — seeds real project shapes, calls the
 shipped render, then clicks the chips and counts cards. RED on 689.
 
-### 691 — Assigned To beside Milestone on All Leads & Jobs
+### ⚠ RETIRED AT 1085 — the two chip strips came off All Leads & Jobs
+
+Theo: *"Get rid of the chips for pipeline and just use the filters?"* Measured against his
+own book (57 jobs, 7 stages, 6 reps) the two strips were **16 chips in seven wrapped rows,
+361px**, putting the first job card at **y=716 on an 844px phone**. After: **y=309**.
+
+`ljChipStrip`, `ljChipClick`, both listeners, `.ljglbl` and the five `.ljchip-unassigned`
+rules are **deleted**, not hidden. The section below is kept as the record of what they did
+and why, because two of its warnings still govern live code.
+
+**Still true and still load-bearing:**
+- **The filters themselves are untouched.** The funnel (`#ljShFilter`) holds all seven
+  groups on a phone; the desktop rail lists every one as a checkbox. `ljMatches()`'s
+  AND-across / OR-within behaviour is unchanged.
+- **Clicking a pipeline stage still works.** `#pipeRow` on the home dashboard is a
+  `.pipebtn` per stage carrying `data-stg`, and its handler calls `openLeadsView(stage)` —
+  which is what 690 was actually asked for.
+- ⚠️ **`.ljchips` / `.ljchip` / `.ljchip i` / `.ljchip b` are NOT dead.** Photo Activity's
+  CRM strip (`#phCrmChips`) builds `.ljchip` buttons, each with an `<i>` dot.
+- ⚠️ **`ljGroupCounts` / `ljGroupKeys` are NOT dead** — the rail and the sheet both call
+  them, including 931's "Unassigned sorts first".
+
+**Replaced by `#ljActive`** (`ljActiveLine()`): one line naming each applied filter, each
+removable, plus Clear all. Hidden entirely when nothing is filtered. No new colour — the
+chips are `.ljchip.on` and the label is `--rbe-mute`, both already themed both ways.
+
+**Lost, and named rather than swept:** 931's amber emphasis on the Unassigned bucket. The
+ordering survives; the at-a-glance "18 leads nobody owns" does not.
+
+#### 691 — Assigned To beside Milestone on All Leads & Jobs (historical)
 
 Two labelled chip strips. `ljChipStrip(gkey, mountId, wrapId)` renders either;
 one `ljChipClick` serves both and reads its group from the container's `data-g`.
@@ -6471,7 +6520,8 @@ like a clean one.*
 | `.cr-c-tabs.detail` | Claim Detail | `window.CardinalClaims.openOne(id)` — needs a claim row |
 | `.cr-cth-tabs` | Cardinal Truth | `showCardinalTruth()` |
 | `.cr-sh-tabs` | the Showcase | `window.CardinalShowcase.open()` — **no argument**; `{showroom:true}` drops a button |
-| `.ljchips` ×3 | Leads (Milestone, Assigned To) + Photo Activity (CRM) | `openLeadsView()` · `window.openPhotosView()` |
+| `.ljchips` ×1 | **Photo Activity (CRM) only since 1085** — the two Leads strips were removed | `window.openPhotosView()` |
+| `.cr-ic-chips` ×1 | Insurance Clients — **clamped to one row at 1086** with a `+N` expander. ⚠ It has no funnel and no rail, so these chips ARE the filter: fold it, never delete it | `showInsuranceClients()` |
 | `.cd-crmbar` | Client Directory | `openClientsDirectory()` — **absent ≥1100px by design** (`body.cr-lnav-on`) |
 | `.pu-tabs` | Punch & Repairs | `await window.openPunchView()` |
 
@@ -7272,3 +7322,224 @@ on a signed estimate; it simply stops being invisible.
 
 ⚠️ **Drafts are not versioned** — enforced inside the function, so the browser does not
 carry the rule twice.
+
+---
+
+## The app stopped using browser dialogs (1080, 1083) — `cr-tell-*` + `cr-ask-*`
+
+Theo's polish item 1, in two builds. `alert()` and `confirm()` are the browser's own
+grey boxes: system font, no theme, no brand, and on an installed PWA they carry the
+**origin** across the top of the screen. They were the last surface in the app that
+looked like a web page.
+
+| Build | Replaced | Count | Module | API |
+|---|---|---:|---|---|
+| **1080** | `alert()` | **289** | `cr-tell-styles` + `cr-tell-script` | `window.crTell(message, opts)` — a toast |
+| **1083** | `confirm()` | **88** | `cr-ask-styles` + `cr-ask-script` | `window.crAsk(message, opts) → Promise<boolean>` — a bottom sheet |
+
+⚠️ **The counts are 289 and 88, not the 291 and 92 a bare regex reports.** The extra
+hits are prose in comments. Both numbers came from `jslex_count.py`; this is the same
+trap as 1081's `font:` shorthand and 1082's `.dbic1`, three times in one session.
+
+### `crAsk` — how it decides what to say
+
+**The verb is derived from the message, not passed at 88 call sites.** `leadVerb()`
+reads the message's own leading word — `Delete this photo?` → the button says
+**Delete**. One place decides what a message means, the `normStage()` shape. `opts.verb`
+overrides it where a message doesn't lead with its verb.
+
+**Tone is derived the same way.** A `DANGER` regex on the leading word paints the
+confirm button cardinal red and puts it **above** the safe answer; `opts.tone:'plain'`
+and `'danger'` force it either way.
+
+**All four exits mean the same thing except one.** Yes resolves `true`; **Cancel,
+Escape and a tap on the scrim all resolve `false`** — proved in Chromium by
+`gate_1083.mjs`, because a confirm replacement that can strand somebody mid-answer is
+the one failure that must not ship.
+
+### Three things about these modules that are not obvious
+
+⚠️ **They copy the app's existing sheet convention rather than inventing one.** The
+scrim *is* the container, `display:none` → `.open{display:flex}` — the `.pu-sheet`
+shape from 768. Ten module-local sheets already existed; `crAsk` is the first
+**shared** one, and it looks like its neighbours on purpose.
+
+⚠️ **Neither writes the global scroll lock.** The no-14th-writer rule, asserted by
+`gate_1083.mjs`. `#crAsk` sits at **z-index 99990** — above every sheet (the highest
+was 10700), below the toast stack at 99999, so a toast can still speak over a question.
+
+⚠️ **Each falls back to the browser dialog it replaced** if its own surface cannot be
+shown. That fallback is the **only executable `confirm(` left in the file**, asserted
+at exactly 1 — and it is why a grep for `confirm(` does not come back clean.
+
+### The bug the conversion nearly shipped, which no syntax check could see
+
+`crAsk` returns a Promise, so 88 call sites became `await` and **46 functions became
+`async`**. An `async` function returns a Promise, and **a Promise is always truthy**:
+
+```js
+if(confirmPay(em, true)) payRep(em, true);   // would pay the rep REGARDLESS of the answer
+if(!priceOkToSend(title)) return;            // would never block again
+```
+
+Both parse perfectly. One of them moves money. Found by asking, of every function that
+gained `async`, whether any caller *consumes* its return value — then propagating
+`await` to those **4** sites. **Adding `async` to a function is never a local change**
+— it is the same class as this file's "adding `await` to a synchronous function"
+invariant, seen from the callee's side.
+
+**The compiler was the oracle for the rest of it.** `await` outside an `async` function
+is a SyntaxError, so `node --check` on all 126 inline blocks mechanically found every
+site still needing conversion. Static analysis only ever *proposed* a spot — and it
+proposed a wrong one: an auto-fixer matching `name(args){` as a method shorthand also
+matches `if(del){`, and wrote `async if(del){` into the file. **A tool that edits code
+needs its own negative control.**
+
+---
+
+## The Job Menu, readable and told apart (1082) — `DB_ICONS`, `.dbic1`, `.dbic2`
+
+Theo's polish item 4. His picks, verbatim: **"B, 1, 1,1,1"**.
+
+**15 tiles now carry 15 distinct glyphs**, asserted by comparing rendered path data.
+Four new `DB_ICONS` keys — `punch` (hammer), `checklist` (ticks beside lines), `walk`
+(house under a lens), `contract` (page with a pen) — retired the three collisions
+(`tasks` ×3, `camera` ×2, `docs` ×2).
+
+⚠️ **The Checklists collision was DELIBERATE and build 981 said so in a comment**
+(*"DB_ICONS has no checklist key; dbIc('tasks') is the clipboard Punch Outs already
+reuses"*). **That comment is now false, and was rewritten in the same edit.** A stale
+comment sends the next reader hunting for a key that exists.
+
+⚠️ **The bigger defect was the ink, and Theo hadn't asked about it.** Both glyph classes
+carried `color:#23507e` — a steel blue picked for a **white** tile, where it scores
+7.98:1. The tile went dark and the ink never followed. **THE RECURRING ONE, an eighth
+time.** Now `var(--rbe-ink,#cfd6df)` — an existing token pair, so it flips by itself and
+cannot drift.
+
+⚠️ **TWO classes, two different floors, and a sweep of one misses the other.**
+
+| class | what | floor | was | now |
+|---|---|---:|---:|---:|
+| `.dbic2` | the 15 drawn SVG icons | 3.0:1 (graphical) | 1.52:1 | **8.67:1** |
+| `.dbic1` | the `$` and `%` on the money rows | **4.5:1 — it is TEXT** | 1.52:1 | **8.67:1** |
+
+A probe written as `.jabox svg` sees only the first row and would have shipped a
+half-fix; adding `.dbic1` took 16 findings to 18. It clears on every ground the glyph
+can land on, including Community's `--ccm-card` (#161918 → 12.09:1).
+
+⚠️ **`.dbic1` has TWO live rules and the 8.67:1 above is the RETAIL/COMMUNITY one.**
+`body.claim-insurance .dbrow .dbic1` is more specific and owns every insurance render.
+It was left alone deliberately — `--ct-red-deep` is already a declared theme pair
+(`#7E1410` docket / `#FF3B30` siren) and **measures 10.53:1 on docket and 5.08:1 on
+siren**, clearing the text floor on both. `.dbic1` is emitted **only** inside `.dbrow`,
+at exactly two sites (`$` Payment Information, `%` Money In & Commissions), so the two
+rules never contend on the same screen. *`selector_audit.py` names the insurance rule
+"the winner" — that verdict ranks specificity globally and does not know the selector
+is body-scoped. Read the scope, not the verdict.*
+
+⚠️ **Twelve candidates were drawn and four were dropped**, each killed by the only test
+that matters — rendered at 21px *beside the glyph it must differ from*. A big tick read
+as Tasks; a camera-with-ring read as Photos; a signature squiggle vanished and read as
+Estimates; a clipboard-with-`!` kept the collision it was meant to fix. *"Is it a nice
+icon" is the wrong question.*
+
+---
+
+## Nothing is set below 11px (1081) — an app-wide floor, not a feature
+
+**519 declarations** were lifted. 11px is the smallest size Apple's own interface uses
+for a caption, and Theo works off a phone, on roofs, in daylight. The full invariant —
+including the two deliberate exceptions — is in `CLAUDE.md`; the short version:
+
+⚠️ **Sizes live in TWO declaration forms and the shorthand is the bigger half.**
+`font-size:` carried 158 of the sub-floor sites; **`font:600 10.5px …` carried 361.**
+The file holds 1,364 `font:` declarations against ~1,015 `font-size:` ones, so **a sweep
+of the longhand alone reads the minority** — which is exactly what "315 under 12px"
+was, and it was wrong. (BUG_CLASSES 70.)
+
+Two things stay outside the floor on purpose: **`font-size:0`**, which means *there is
+no text here* (a control collapsed to a pure `::after` icon), pinned at exactly two
+sites; and **every `pt` size**, which is a print document (168 of them, smallest
+6.8pt) and has nothing to do with a phone.
+
+`gate_1081.mjs` holds the floor by walking **Chromium's own parsed CSSOM** rather than
+the file, so neither a comment nor a shorthand nor an ungenerated print stylesheet can
+move the number.
+
+---
+
+## The Insurance header's own chrome — `--ct-crmhead-*` (1089)
+
+**Where the insurance header's colours come from, and why it is the odd one out.**
+
+Every other CRM head declares a **flat, theme-independent palette** in
+`body[data-crm-head="…"] .site` — retail a steel gradient, community `#047857`, production
+`#181b20`, sales `#1a1310`. **Insurance alone maps itself through `--ct-head-*`**, the
+`--ct-` system's header tokens, which `docket`/`siren` swap (407, deliberate — the toggle
+lives in the header). So insurance has always had *two* identities, switched by
+`cardinalRLTheme`.
+
+**1089 gave it its own dark chrome without giving up that flip.** Theo picked it from a
+rendered pair:
+
+| token | siren (dark) | docket (light) |
+|---|---|---|
+| `--ct-crmhead-bg` | `#1a0e0d` | *undeclared* → falls back to `--ct-head-bg` (`#FFFFFF`) |
+| `--ct-crmhead-kick` | `#ff8a7a` | ” → `--ct-head-kick` (`#C4180F`) |
+| `--ct-crmhead-line` | `#3d1512` | ” → `--ct-head-line` |
+| `--ct-crmhead-ink` | `#FFFFFF` | ” → `--ct-head-ink` |
+| `--ct-crmhead-dim` | `rgba(255,255,255,.72)` | ” → `--ct-head-dim` |
+| `--ct-crmhead-surface` | `#241412` | ” → `--ct-surface` |
+
+Those are the **bottom nav's** values (`--bnbg` / `--bnbd` / `--bnac`), so the top and bottom
+of an insurance screen now match. No colour was invented.
+
+⚠️ **The docket column is empty ON PURPOSE — that is the mechanism, not an unfinished pass.**
+The rule reads `var(--ct-crmhead-x, var(--ct-head-x))`, so light mode is untouched *by
+construction*: there is no light value to drift. **Adding one flips light mode** and is a
+decision for Theo, not a tidy-up. (Contrast with `--occ-*`, which is single-theme for a
+different reason — there the surface has no light design at all.)
+
+⚠️ **Do NOT "simplify" this by retuning `--ct-head-*` at source.** Those also paint the
+Resource Library's book header — `#resourceLibraryView .ins-header / .ins-title / .ins-hbtn`.
+That header reads `display:none` and looks dead, but
+`body.rl-at-book #resourceLibraryView .ins-header{display:flex}` brings it back while a book
+is open.
+
+⚠️ **`--hac` is the `+` button, NOT the title.** `#brandTitle h1` declares
+`color:var(--hac,…)` and another rule wins: Chromium computes the title's `color` **and**
+`-webkit-text-fill-color` as `--hin`. Read it with `probe_head_ink.mjs`, which reports both
+for any build × either theme, rather than trusting the declaration you can see.
+
+**`--tgrad` is dead in all six heads** — zero `var(--tgrad)` consumers since 685 removed
+gradient text. Left in place; retiring it is its own build.
+
+
+---
+
+## Production — the day sheet (1090)
+
+Tapping a date on the Production hub opens a sheet over the page showing that day: the date, its
+weather, everything booked on it, and `+ Add` / `Full calendar ›`. Dismissing it scrolls the hub to
+that day and lights the date row once (`.pbflash`). Theo's options **1 and 5** of five offered.
+
+**It is `#cr-pb-modal` in a second mode, not a second modal.** That element has been a bottom sheet
+since it was built for `+ Add`; `data-mode` says which content is in it and one backdrop handler
+closes whichever is showing. **No scroll lock** — the Add sheet never locked either, so the app's
+13-writer count is untouched.
+
+⚠️ **HOME PANE ONLY.** The full-calendar pane (`pbsplit` → `.pbsheet`) has shown the selected day
+beside the grid since 853. Both panes emit `data-day`, so the gate lives in the handler
+(`if(pane === 'home')`), not in the markup.
+
+⚠️ **`wire()` walks two roots.** `qAll(sel)` returns the board's matches plus the sheet's while the
+sheet is open, so a row in the sheet behaves like a row on the board **by construction**. Do not
+copy handlers into the sheet.
+
+⚠️ **THE MODULE'S CSS IS SCOPED `#cr-pb .x` AND THE SHEET IS OUTSIDE `#cr-pb`.** This is the trap:
+23 rules in the `.pbev` / `.pbempty` / `.pbchip` / `.pbpip` families now read
+`:is(#cr-pb,#cr-pb-modal) .pbX`. Before that fix the sheet's rows computed to
+`rgb(239,239,239)` — a light-grey UA button on a near-black sheet — with every structural assertion
+green. **Anything else you put in that sheet needs its selector extended the same way**, and only a
+real render will tell you.

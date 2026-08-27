@@ -46,6 +46,72 @@
 
 ---
 
+
+## 75 — your OWN new comment is part of the file you are counting
+
+**FIVE times in five consecutive builds (1085, 1086, 1088 ×2, 1089), a self-verification
+assertion failed a CORRECT patch because the comment the same build ADDED contained the
+token being counted.**
+
+| build | the assertion | what it counted |
+|---|---|---|
+| 1085 | `count('ljChipStrip') == 0` | the comment naming the function it had just deleted |
+| 1086 | `count('class=\"cr-ic-chipwrap')` | a JS-style escape that never appears in the HTML |
+| 1088 | `count('<link rel="manifest"') == 1` | the comment saying *"Two `<link rel="manifest">` is invalid"* |
+| 1088 | `count('--hbg:') == 6` | **the comment explaining this very trap** |
+| 1089 | `count(<the bottom-nav rule>) == 1` | **its own comment, quoting that rule verbatim as documentation** |
+
+⚠️ **1089 is the variant the rule above does NOT cover, so read it before trusting the
+remedy.** Its assertion was already on a full CSS declaration *block* — punctuation and all,
+exactly what "a form prose cannot imitate" prescribes — and it still failed, because the
+comment did not paraphrase the rule, it **reproduced it**. Quoting a declaration verbatim as
+documentation makes the comment indistinguishable from the code by any textual test.
+**Second half of the rule: a comment may NAME the tokens in a declaration, never reproduce
+the declaration.** 1089's comment now reads *"has carried bnbg #1a0e0d, bnbd #3d1512 and
+bnac #ff8a7a"* — same information, un-greppable as code.
+
+**The fourth is the one that settles the remedy.** That comment reads *"--htint, not --hbg:
+retail's ground is a gradient"* — the sentence warning about the counting trap contained
+`--hbg:` and sprang it. So the answer is not "be careful"; being careful is exactly what
+produced it.
+
+⚠️ **1090 failed SEVEN self-verification assertions on correct code in a single build**, and only
+two were this class — the other five were its neighbours, which is why they belong together:
+a signature (`function wire(){`) that is **not unique** (eight modules declare one); an anchor
+**invalidated by an earlier edit in the same script**; an assertion on a **pre-edit body a later
+edit legitimately rewrites**; a count thrown off by **the helper the build itself adds**; and
+`== orig.count(…) == 3`, which compared **one module's number against the whole file**. Every one
+failed a patch that was right. The through-line is that an assertion is a claim about *a region*
+and *a form*, and getting either wrong reads as a broken build.
+
+**THE RULE: assert on a form that prose cannot imitate — and scope it before you compare.**
+
+| instead of | assert |
+|---|---|
+| `<link rel="manifest"` | `<link rel="manifest" href=` |
+| `--hbg:` | `;--hbg:` (or `{--htint:`) |
+| `ljChipStrip` | `function ljChipStrip` and `ljChipStrip('` |
+| a retyped copy of the edit | **the `NEW_*` variable the script actually spliced in** |
+| `qAll(` | `qAll('` — every real call passes a quoted selector; no sentence does |
+| `body.style.overflow` | `body.style.overflow =` — a write has an `=`, a sentence about one does not |
+| `function wire(){` | the **brace-matched body**; that signature appears eight times |
+
+An HTML attribute and a CSS declaration both carry punctuation a sentence does not. Better
+still, assert on the inserted string itself — `out.count(NEW_CSS) == 1` cannot drift from the
+edit, because it *is* the edit. That is CLAUDE.md's "prefer self-computing assertions", and
+this class is what happens every time it is not followed.
+
+⚠️ **Related, and it costs a round on its own: `--marker '--htint'` is unusable.**
+`check_build.py` uses argparse, which reads a leading `--` as a flag and dies with *"expected
+one argument"*. Use `--marker='{--htint:'` — which is the better marker anyway, for the reason
+above.
+
+⚠️ **And a probe can lie in the pessimistic direction, which is the kind you believe.** 1088's
+first two theme-color probes both reported "the fix does nothing": one poked
+`body.dataset.crmHead` and called `skin()`, which recomputes `crmHead()`, finds it unchanged and
+**early-returns**; the other drove real navigation but read immediately, and `skin()` is driven
+by an **observer, not called inline**. Drive the app the way the app drives itself, and wait.
+
 ## 12. A guard that exists, looks right, and can never once succeed (builds 567 · 569)
 
 **The most expensive class this project has found in one session.** Two functions repainted **on
@@ -3793,3 +3859,170 @@ narrative, not prescriptive, and was read as prescriptive.
 **The general rule:** when a harness subtracts a baseline, decide per finding-type
 whether the baseline can legitimately excuse it. *Did-not-run* can never be excused
 by *did-not-run last time either*.
+
+---
+
+## Class 72 — `pgrep -f` matches the WATCHER'S OWN command line, so a wait-loop can never succeed (26 Aug 2026, build 1083)
+
+The mirror image of class 37 and of this file's standing "a check that cannot fail":
+**a check that cannot SUCCEED.** Same root — an assertion nobody ever watched fire.
+
+The sentinel for 1083 finished, wrote `SENTINEL CLEAN — 75 render(s)`, and nobody found
+out for ~20 minutes, because the background waiter armed to report it was this:
+
+```bash
+until [ -s "$LOG" ] && ! pgrep -f "sentinel.js .*index_v1083"; do sleep 5; done
+```
+
+**`pgrep -f` matches full command lines, and the pattern is sitting inside the very bash
+process running the grep.** So `pgrep` always found at least one match — itself — `! pgrep`
+was permanently false, and the loop ran until it was killed by hand.
+
+⚠️ **The second-order damage is worse than the wasted wait: it produced a confident WRONG
+STATUS REPORT.** A plain `pgrep -f "sentinel.js"` used to answer *"is it still going?"* kept
+printing the waiter, so the answer came back **STILL RUNNING** long after the sentinel had
+exited and written its result. The process table said "working"; the log file said "done".
+**Two instruments disagreed and the noisier one was believed.** It also produced a
+bogus `ps` reading — elapsed time and CPU time for the *wrapper*, not the work, which is why
+`00:00:00` CPU appeared beside a supposedly busy process and was not questioned.
+
+**The tells, in order of how early they could have caught it:**
+1. A wait-loop whose pattern is a literal that also appears in the loop's own text.
+2. `ps -o time` showing `00:00:00` CPU on a process claimed to be busy — that is a wrapper
+   or a shell, never the work.
+3. The artifact the loop is waiting FOR already existing while the loop still runs. **The
+   file is the ground truth; the process table is an inference.**
+
+**The fixes, cheapest first:**
+- **Wait on the launcher's own exit** rather than re-deriving liveness from the process
+  table. If the work was started by a tracked background job, its completion is already
+  reported — do not build a second, weaker detector beside it.
+- If you must poll: match on something the watcher cannot contain — the interpreter plus
+  script (`pgrep -f '^node .*sentinel\.js'` with an anchor), or exclude self
+  (`pgrep -f pat | grep -v "^$$\$"`).
+- **Condition on the artifact, not the process.** `[ -s "$LOG" ]` alone was already correct
+  here; the process check that was added to make it *more* rigorous is what broke it.
+
+*The general rule: any liveness check that greps a shared namespace must be proved able to
+return the "finished" answer at least once. Arm it against something already finished and
+watch it succeed — the same negative-control discipline this project applies to every gate,
+applied to the thing doing the watching.*
+
+---
+
+## Class 73 — a DISPLAY-CAPPED count read as a measurement, then trended (26 Aug 2026, after build 1083)
+
+`SENTINEL CLEAN — 75 render(s), nothing new · 196 carried` was reported to Theo twice as
+the standing debt, and once as a **trend**: *"it was 185 against the 991 baseline, so it has
+grown ~11 across ~90 builds."*
+
+**196 is not the debt. It is what fit on screen.** Running the same probe with `--all` and
+reading the output rather than the summary line:
+
+| id | count in the 196 | what it actually is |
+|---|---:|---|
+| `OVERRIDDEN` | **125** | the cascade working. The probe's own source says it *"only means something when the rule is NEW, so without `--since` it is suppressed unless `--all`"* — with no baseline **every** rule looks new, so all 125 are noise in that run |
+| `DEAD` | **44** | real — but this is the **displayed subset** |
+| `TRUNCATED` | **26** | **not defects at all** — the instrument reporting its own 20-per-render cap |
+| `FLOOR` | 1 | real, latent |
+
+**The `TRUNCATED` rows carry the true numbers, and they are an order of magnitude larger.**
+Summing what they name: **374 findings suppressed by the cap**, and **894 DEAD across the
+truncated renders alone** — against 44 listed. The standing debt is ~900+, not 196.
+
+### The two errors, and they compound
+
+1. **Reading a capped number as a total.** The cap is stated *in the output*, on 26 separate
+   lines, each naming exactly how many it withheld. It was right there and went unread —
+   the summary line got quoted instead of the report under it.
+2. **Trending two capped numbers against each other.** 185-then-196 reads like slow growth.
+   Both are ceilings, not measurements. **A capped number cannot be trended**: the
+   difference between two ceilings measures nothing, and it flatters — "grew by 11" sounds
+   like control, while the truth was "grew by an unknown amount, from an unknown base".
+
+### The rule
+
+**When a report says it truncated, the count in its summary is a floor and must be labelled
+one.** Print `196 shown, 374 withheld` or refuse to print a total. And never compute a
+delta between two numbers that could each be a cap — check that both are complete first,
+or say plainly that the trend is unknown.
+
+*Sibling of class 71, which was the same instrument hiding a coverage failure inside carried
+debt. Same root: a summary line that reads as authoritative while the detail under it says
+otherwise. The fix there was making a short sweep say so; the fix here is making a capped
+count say so.*
+
+---
+
+## Class 74 — the guard that silently does nothing: a non-matching `@media` walked, and a marker the browser drops (26 Aug 2026, `gate_stack.mjs`)
+
+Two faults in one new gate, both of which made it **report CLEAN while completely
+inert**, and both found only because the negative control was run on the REAL artifact
+rather than on the toy fixtures that were already passing.
+
+### 1 · Descending into a `@media` block that does not apply — a trap this file already records
+
+`gate_stack.mjs` walked every grouping rule regardless of whether it currently matched:
+
+```js
+if (r.selectorText) rules.push(r);
+else if (r.cssRules) walk(r.cssRules);      // ← walks @media print on a screen render
+```
+
+A deliberate stack was planted on `body` and the gate said CLEAN. Cause:
+`body { color: rgb(0,0,0) !important }` lives inside **`@media print`**. It is dead on
+screen — Chromium ignores it and the planted rule wins — but the gate counted it as a
+live candidate, concluded the new rule *lost* the cascade, and skipped it.
+
+⚠️ **This file already documents the sentinel's `DEAD` check making the identical
+mistake** (it walked non-matching `@media` and reported build 817's *fix* as the defect).
+The new gate's own header comment quoted the **sibling** trap — modern Chromium exposing
+an empty `.cssRules` on every `CSSStyleRule`, so descending on truthiness skips every
+style rule — and then committed this one three lines later. *Knowing a trap's sibling is
+not knowing the trap.*
+
+**The guard:**
+
+```js
+const applies = (r) => {
+  const c = r.conditionText;
+  if (c == null) return true;                       // @layer, @scope …
+  if (/Supports/.test(r.constructor.name)) { try { return CSS.supports(c); } catch { return false; } }
+  try { return matchMedia(c).matches; } catch { return false; }
+};
+```
+
+**Consequence, stated so nobody widens it by accident:** the gate now judges only what
+applies at the viewport it runs at. Print rules and non-matching media are **out of scope
+by design** — cover their media by running other viewports. On this file the guard drops
+**7,423 → 7,086** rules at 390px; those ~337 are real rules that simply are not live here.
+
+### 2 · A marker the browser throws away before anything can read it
+
+The escape hatch was specified as `-cr-stack:"reason"` on the winning rule. **A
+single-dash name is a vendor-prefix-shaped property, not a custom property — browsers drop
+it at parse time**, so `getPropertyValue` always returned `''` and the exemption could
+never apply. It needs **two** dashes:
+
+```css
+#thing { color:#fff; --cr-stack:"rb-light twin, base must stay"; }
+```
+
+⚠️ **The failure is silent in the safe direction, which is why it survives.** A dropped
+marker means the gate keeps firing — annoying, not dangerous — so it reads as "the gate is
+strict" rather than "the hatch is broken", and nobody investigates. **Test the escape
+hatch, not just the trigger.**
+
+### 3 · The counters are the reason either was found
+
+Neither fault was visible from the output — CLEAN and CLEAN. A `--debug` funnel made it
+obvious in one line:
+
+```
+funnel: {"total":7423,"isNew":2,"hasEls":2,"props":2,"cands2":2,"won":0,"displaced":0}
+```
+
+`cands2: 2 → won: 0` says precisely: *both candidates were examined and the new rule was
+judged to lose*, which contradicted `getComputedStyle`. **Any gate with a funnel should
+print it on demand** — "zero findings" and "never actually looked" are the same output
+otherwise, and this file has now paid for that three times (classes 37, 71, 74).

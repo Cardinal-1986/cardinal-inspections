@@ -102,6 +102,37 @@ Everything else in this file is a per-build gate: written once, run twice, never
 run again. The sentinel is the opposite — one script, every build, checking only
 the classes that have **already bitten this project more than twice**.
 
+#### ✅ SETTLED 27 Aug 2026 (Theo) — RUN it on every screen build, BLOCK on colour/theme/layout only
+
+He asked what it had actually caught before deciding, which is the right question, and
+the answer was put to him with both sides. **Run the sentinel on every build that touches
+a screen. Hold the merge for it only when the build is ABOUT colour, theme or layout.**
+For anything else — wiring, notifications, an `/api` route, a doc fix — merge on the other
+gates when they are green and fix whatever it finds in the next build.
+
+**The evidence the decision was made on. Four real catches in ~156 builds:**
+
+| build | what it found |
+|---|---|
+| **939** | a regression **of mine, before it shipped**, on the build whose whole point was readability — a control label at 3.09:1, because the light twin was scoped to `data-mode` (the LANDING theme, which follows the phone's OS) instead of the app theme |
+| **959** | a layout rule that **never won on any of the 30 elements it matched**. Every purpose-built assertion for that build stayed green, because they tested the icon and not where it sat |
+| **1064** | the photo editor's tool bar labelling itself at **3.27:1** on a `#1a1a1a` bar — a screen used on a roof at midday |
+| **1066** | the photo album's client name at **1.07:1 in light mode** |
+
+**All four were colour/theme/layout builds.** That is the entire basis for the rule: it
+earns a 15-minute hold exactly where it has ever paid, and nowhere else.
+
+**And the costs, which were stated before he chose:** a full sweep is noisy — 1064's audit
+run produced **40 findings and one survived being read**; four of its own checks have
+themselves been wrong (1035, 1066 ×2, 1067) and one run miscounted its own renders (1081);
+and it structurally **cannot see a loading state** (1064's third fix came from reading the
+block) or anything one click past where its walk stops (960 reported CLEAN over a 2.16:1
+price). *A visual sweep finds what is visible.*
+
+⚠️ **"Do not block" is not "do not run", and it is not "do not report".** Run it, say what
+it found, and carry a fix into the next build. Silently skipping it is how a class this
+list already names comes back.
+
 ```bash
 node <skill>/scripts/sentinel.js --selftest            # prove the instrument works
 node <skill>/scripts/sentinel.js <artifact> \

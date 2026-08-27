@@ -91,6 +91,42 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 **The span with no narrative record anywhere in the doc set is still roughly 468–542, and that is now the ONLY gap.** Everything from 543 to 836 is in `cardinal_build_log.md`.
 
+⚠️ **CORRECTION 26 Aug 2026 — that span is NOT lost, and the branch holding it was one
+`git push --delete` from gone.** `main` carries **74** commits, because every PR is
+squash-merged. The branch **`claude/ai-can-build-584` carries 787**, and 468–542 is among
+them — 536 the left-nav rebuild, 539 literal-yellow Landing, 540 the money circle, 541 the
+contracts tab, 542 the roofing Construction Agreement, 544–545 the obsidian tiles, 547–554
+the Crews arc. **It is the commit-by-commit lineage of builds ~1–584 and it exists nowhere
+else.**
+
+**Every signal about that branch points the wrong way.** `git merge-base origin/main
+7a1d904` returns **empty** — no common ancestor, because main's history was rewritten
+beneath it — so it is unmergeable by construction, and its name reads like abandoned
+feature work. Both readings say "delete me". **It exists to be read, not landed.** I
+recommended deleting it, was wrong, and found out only by checking what was on it first.
+
+⚠️ **`aeac5e5` lives on that branch and is NOT reachable from `main`** — verified with
+`git merge-base --is-ancestor aeac5e5 origin/main`, which returns false. That is the tree
+this file cites four times and `scripts/measure_counts.py` names in its own header as its
+negative control. **A sweep of every SHA cited in the doc set found ~75 that are not
+ancestors of main.** Most survive through GitHub's permanent `refs/pull/N/head` refs — but
+that is GitHub's retention policy doing the work, not anything in this repo.
+
+✅ **FIXED 26 Aug — two preservation branches exist on the remote**, so the objects no
+longer hang off a single ref: **`history/pre-squash-584`** (`7a1d904`, the 787-commit
+lineage) and **`history/build-573-baseline`** (`aeac5e5`, `measure_counts.py`'s control,
+readable with `git show history/build-573-baseline:index.html`). `claude/ai-can-build-584`
+is now redundant and safe to delete.
+
+⚠️ **Tags were the obvious answer and are BLOCKED — and the shape of the block matters.**
+Established with a control, not assumed: an annotated tag push is 403, a lightweight tag
+push is 403, **a branch push at the identical sha succeeds**, and deleting any ref is 403.
+So the restriction is `refs/tags/*` plus deletion — not the objects, not write access. *The
+two tag failures alone read as "no write permission"; only the branch control showed
+otherwise.* ⚠️ **Git prints `Everything up-to-date` after the 403 on both refused
+operations** — a phrase that reads like success. Use `--verbose` and check the exit code.
+The tag commands, for a shell with Theo's own credentials, are in `OPEN_ITEMS.md`.
+
 ⚠️ **The build log's heading levels are inconsistent and a header grep will lie to you.** 543–684 and 827–836 use `## Build NNN`; **685–826 mostly use `## build NNN` (lowercase), a `### NNN —` sub-head, or a bold `**NNN**` bullet inside a span write-up** (766–772, 809–818 and the Community port are all written as spans). A grep for `^## Build` finds 684 then jumps to 827 and reads like 142 missing builds. They are all there. **Grep case-insensitively, and for the number rather than the word.**
 
 **Every doc states the build it was worked forward to.** That stamp stays true forever; the table above says whether it is still current. This file has twice been found making a *stale claim about staleness* — asserting `START_HERE.md` said 427 when it said 467, then calling the whole set two sessions behind after most of it had been updated. **Re-check the table before repeating any claim in it, including this one.**
@@ -421,6 +457,7 @@ Covers per-block `node --check` on all inline scripts, tag balance, CSS brace ba
 | `harness_NNN.js` / `harness_<name>.js` | functional assertions on a surface | jsdom |
 | `render_<name>.js` | **a real Chromium render** — the only thing that settles a colour, an `!important`, or whether a control is wired | Chromium |
 | `gate_tint.py`, `gate_graphs.py`, `spark/test_*.py` | **the Spark worker's gates** — pure Python, no browser | Python |
+| **`gate_stack.mjs`** | **the ACCUMULATION gate — standing, not per-build.** Flags a rule this build ADDED that wins a property on a real element while the PRE-EXISTING rule it beat is still in the file. That is the moment a build out-specified instead of editing, and it is why 148 style blocks only ever grow. `--selftest` proves it fires and stays quiet; exempt a deliberate override with `--cr-stack:"reason"` on the winner (**two** dashes — one is dropped at parse time) | Chromium |
 | `drive_lifecycle.mjs`, `e2e_drive.mjs` | the full E2E lifecycle drive (773) against a recording mock | Chromium |
 
 **Do not read the whole folder.** Find the newest `gate_*` touching your surface, run it, and copy its shape. **Every one takes an optional path argument so it can be pointed at the previous build as a negative control** — a harness that has never been run red proves nothing.
@@ -430,6 +467,26 @@ Covers per-block `node --check` on all inline scripts, tag balance, CSS brace ba
 Then a **jsdom functional harness** on the changed surface. Recipe in `references/gates.md`. Where practical, go further: extract the *shipped* function text and execute it against real data shapes — not a re-implementation.
 
 **Never commit on red. Never hand over with a failing check.**
+
+### ✅ SETTLED 27 Aug 2026 (Theo) — when the sentinel HOLDS a merge, and when it does not
+
+**Run `sentinel.js` on every build that touches a screen. Hold the merge for it only when
+the build is ABOUT colour, theme or layout.** Everything else — wiring, notifications, an
+`/api` route, a doc fix — merges on the other gates when they are green, and anything the
+sentinel finds is carried into the next build.
+
+He asked what it had actually caught before deciding. **Four real catches in ~156 builds
+(933 → 1089), and all four were colour/theme/layout builds:** 939 (my own 3.09:1 label,
+caught before it shipped, on the readability build), 959 (a layout rule that never won on
+any of the 30 elements it matched — every purpose-built assertion stayed green), 1064 (the
+photo editor's tool bar at 3.27:1, a screen used on a roof at midday), 1066 (the album's
+client name at 1.07:1 in light). That is the whole basis for the rule: it earns its
+15-minute hold exactly where it has ever paid.
+
+⚠️ **"Do not block" is NOT "do not run" and NOT "do not report."** Full write-up, with the
+costs that were put to him before he chose — a 1-in-40 signal rate on full sweeps, four of
+its own checks having been wrong, and its structural blindness to loading states and to
+anything one click past where its walk stops — is in the skill's Gate 0 section.
 
 ### CI also gates this — `.github/workflows/check.yml`
 
@@ -963,8 +1020,11 @@ unconditionally**, and announced in the startup line. `achieved._prompt` (835) r
 shape actually ran. **Provenance is a query now, never an argument.**
 
 **Known-open, stated plainly:** no stale-claim recovery (a job claimed by a worker that dies stays
-`running` forever); ~60 unreferenced files (~20 MB) under `photos/visualizer/` with
-`spark/sweep_visualizer.py` merged but never run; the gutter mask still wants a
+`running` forever); **184 unreferenced files (60 MB)** under `photos/visualizer/` with
+`spark/sweep_visualizer.py` merged but never run — ⚠️ **the figure carried here for months was
+"~60 files (~20 MB)" and is wrong by 3x**, measured 26 Aug against `storage.objects` joined to
+`design_jobs`; **DECIDED 26 Aug: do not sweep**, 60 MB is not worth 184 irreversible deletes on a
+never-validated script — revisit past ~500 MB; the gutter mask still wants a
 `CARDINAL_MASK_GUTTERS` chain built by eye on the Spark; **830's `"rain gutter . downspout"` prompt
 is REVERTED as triage at 836**, not overruled.
 
@@ -1226,4 +1286,8 @@ no correctness gain.
 
 Never put credentials in `index.html`, in a commit, or in a chat message. They go in Vercel env vars or GitHub secrets only. A Gemini key and a GitHub PAT have both been exposed in chat on this project — assume that mistake is easy to repeat and refuse to repeat it.
 
-Note that `api/*.js` files carry **hardcoded fallbacks for the Supabase URL and the publishable anon key**. Those two are designed to be public and are safe. **Nothing else is.** Service-role keys, `GEMINI_API_KEY` and VAPID private keys must stay in env vars — and remember that anything at the repo root is served publicly unless `.vercelignore` says otherwise.
+Note that `api/*.js` files carry **hardcoded fallbacks for the Supabase URL and the publishable anon key**. Those two are designed to be public and are safe. **Nothing else is.** Service-role keys, `GEMINI_API_KEY` and VAPID private keys must stay in env vars
+
+⚠️ **That last clause was ASPIRATIONAL until build 1084 — `api/notify.js` carried a VAPID private key as a literal fallback, and with the env var unset it was what actually signed production pushes.** It is deleted; the route now returns `reason:'no_vapid_private'` rather than signing with `''`. **Do not reintroduce a secret fallback for any key.** A fallback is not resilience — it guarantees the value is in the repo, and it hides its own absence, so nobody learns the env var was never set. Asserted: zero 43-char base64url literals remain in that file.
+
+⚠️ **A PUBLIC key cannot be delivered by an env var here, and setting one is a silent no-op.** There is **no build step** — no Next.js/React/Vite/webpack, `scripts` is empty, `vercel.json` has no `buildCommand` — so `index.html` ships byte-for-byte as committed and `NEXT_PUBLIC_*` (a Next.js build-time substitution) does nothing. The browser gets `VAPID_PUBLIC` only because it is literally in the file, twice. Private half → env var; public half → committed — and remember that anything at the repo root is served publicly unless `.vercelignore` says otherwise.

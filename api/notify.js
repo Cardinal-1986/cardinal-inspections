@@ -11,14 +11,13 @@
  * mailed:0, which is the previous behaviour rather than a failure. */
 const SUPA_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
-const VAPID_PUBLIC = 'BI-nCdPXgT_WzKQA34jhHsX3dYQephRPLDKy7xr__Jyl1WergJWPlliAvbIldjztrds65MPkT5xI0TvDTg-Q_2k';
+const VAPID_PUBLIC = 'BMSHf0GA9pwE6xzqOYb4vlLE4pMs9sdP9ZuxXzgZXLR2UaXYVD-9-4o6zDjr5XHOa5runSWlKSNDaEWPfmo07uU';
 /* 612: whether the private key came from the environment or from the literal
    below is the single most useful fact when push silently fails — a fallback
    that no longer pairs with VAPID_PUBLIC makes every send 401/403. Reported
    as a BOOLEAN. The value is never returned, logged or echoed. */
 const VAPID_FROM_ENV = !!(process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRIVATE);
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRIVATE ||
-  'vtIkMaIEJxS2yUNI0wgulFiFxze4w3dfcRXFzsG-3qU';
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRIVATE || '';
 
 /* 642: this route had NO session check. It touched `req` exactly twice —
    req.method and req.body — while notifyTeam() in index.html has always sent an
@@ -67,6 +66,16 @@ export default async function handler(req, res){
   let webpush;
   try{
     webpush = (await import('web-push')).default;
+    /* 1084: there is no hardcoded private key any more. Before 1084 a missing env var
+       fell back to a literal committed to the repo — which meant the leaked key was
+       what actually signed production pushes, and any future key would leak the same
+       way. Absent now means SAY SO: signing with '' throws deep inside web-push with
+       a message that does not name the cause. */
+    if(!VAPID_PRIVATE){
+      res.status(500).json({ ok:false, error:'VAPID_PRIVATE_KEY is not set in this environment',
+        reason:'no_vapid_private', env:{ vapid_from_env:false } });
+      return;
+    }
     webpush.setVapidDetails('mailto:info@cardinalrenovations.net', VAPID_PUBLIC, VAPID_PRIVATE);
   }catch(e){
     res.status(500).json({ ok:false, error: 'push library unavailable: ' + (e.message || e) });
@@ -95,7 +104,7 @@ export default async function handler(req, res){
       res.status(200).json({ ok:true, sent:0, failed:0, mailed:0, texted:0, subs:0,
         reason:'no_recipients', env:{ vapid_from_env:VAPID_FROM_ENV,
         resend:!!process.env.RESEND_API_KEY,
-        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) } });
+        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (process.env.TWILIO_MESSAGING_SERVICE_SID || process.env.TWILIO_FROM)) } });
       return;
     }
 
@@ -111,7 +120,7 @@ export default async function handler(req, res){
         reason:'subs_query_failed',
         detail:String((subs && (subs.message || subs.error)) || 'non-array response').slice(0,140),
         env:{ vapid_from_env:VAPID_FROM_ENV, resend:!!process.env.RESEND_API_KEY,
-        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) } });
+        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (process.env.TWILIO_MESSAGING_SERVICE_SID || process.env.TWILIO_FROM)) } });
       return;
     }
 
@@ -168,7 +177,12 @@ export default async function handler(req, res){
        alert; each channel is independent, so a dead one never blocks the others. */
     var texted = 0, smsErr = null;
     var twSid = process.env.TWILIO_ACCOUNT_SID, twTok = process.env.TWILIO_AUTH_TOKEN, twFrom = process.env.TWILIO_FROM;
-    if(twSid && twTok && twFrom && text){
+    /* 1100: prefer a Messaging Service (TWILIO_MESSAGING_SERVICE_SID) so every text
+       rides the approved A2P 10DLC campaign and Twilio picks the registered sender;
+       fall back to the bare From number when the service isn't configured, so the
+       gate and behaviour are unchanged wherever only TWILIO_FROM is set. */
+    var twMsgSvc = process.env.TWILIO_MESSAGING_SERVICE_SID;
+    if(twSid && twTok && (twMsgSvc || twFrom) && text){
       try{
         var pq = SUPA_URL + '/rest/v1/team_profiles?select=email,phone&email=in.(' +
           emails.map(function(e){ return '"' + e.replace(/"/g, '') + '"'; }).join(',') + ')';
@@ -184,7 +198,9 @@ export default async function handler(req, res){
           var twAuth = 'Basic ' + Buffer.from(twSid + ':' + twTok).toString('base64');
           await Promise.all(phones.map(async function(to){
             try{
-              var form = new URLSearchParams({ To: to, From: twFrom, Body: smsBody }).toString();
+              var params = { To: to, Body: smsBody };
+              if(twMsgSvc) params.MessagingServiceSid = twMsgSvc; else params.From = twFrom;
+              var form = new URLSearchParams(params).toString();
               var sr = await fetch(twUrl, { method: 'POST',
                 headers: { Authorization: twAuth, 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: form });
