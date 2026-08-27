@@ -7494,3 +7494,32 @@ for any build × either theme, rather than trusting the declaration you can see.
 
 **`--tgrad` is dead in all six heads** — zero `var(--tgrad)` consumers since 685 removed
 gradient text. Left in place; retiring it is its own build.
+
+
+---
+
+## Production — the day sheet (1090)
+
+Tapping a date on the Production hub opens a sheet over the page showing that day: the date, its
+weather, everything booked on it, and `+ Add` / `Full calendar ›`. Dismissing it scrolls the hub to
+that day and lights the date row once (`.pbflash`). Theo's options **1 and 5** of five offered.
+
+**It is `#cr-pb-modal` in a second mode, not a second modal.** That element has been a bottom sheet
+since it was built for `+ Add`; `data-mode` says which content is in it and one backdrop handler
+closes whichever is showing. **No scroll lock** — the Add sheet never locked either, so the app's
+13-writer count is untouched.
+
+⚠️ **HOME PANE ONLY.** The full-calendar pane (`pbsplit` → `.pbsheet`) has shown the selected day
+beside the grid since 853. Both panes emit `data-day`, so the gate lives in the handler
+(`if(pane === 'home')`), not in the markup.
+
+⚠️ **`wire()` walks two roots.** `qAll(sel)` returns the board's matches plus the sheet's while the
+sheet is open, so a row in the sheet behaves like a row on the board **by construction**. Do not
+copy handlers into the sheet.
+
+⚠️ **THE MODULE'S CSS IS SCOPED `#cr-pb .x` AND THE SHEET IS OUTSIDE `#cr-pb`.** This is the trap:
+23 rules in the `.pbev` / `.pbempty` / `.pbchip` / `.pbpip` families now read
+`:is(#cr-pb,#cr-pb-modal) .pbX`. Before that fix the sheet's rows computed to
+`rgb(239,239,239)` — a light-grey UA button on a near-black sheet — with every structural assertion
+green. **Anything else you put in that sheet needs its selector extended the same way**, and only a
+real render will tell you.
