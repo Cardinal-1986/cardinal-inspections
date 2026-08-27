@@ -27665,6 +27665,8 @@ not just here, so retiring it is its own build.
   `probe_head_ink.mjs` (new, kept) reads computed `--htint`, `--hbg`, the title's *fill*,
   the `+` button's ground and ink, and `<meta theme-color>`, for any build × either theme.
 - `theme-color` follows the header: **`#CE0E18` → `#1a0e0d`**, so 1088's plumbing carries it.
+- **Sentinel CLEAN** against 1088 — 50 renders (25 states × 2 viewports), nothing new, 189
+  findings carried. Exit 0.
 
 ⚠ **BUG_CLASSES 75 struck a FIFTH time, and this time it failed my own bottom-nav check.**
 The self-verification asserted the bottom-nav rule survived exactly once — and the comment
