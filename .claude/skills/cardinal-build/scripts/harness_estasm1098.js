@@ -34,7 +34,7 @@ let expandAssembly;
 guard('expandAssembly extract', function(){
   let idc = 0;
   expandAssembly = new Function('newLineId',
-    braceExtract('function expandAssembly(a, squares){') + '\nreturn expandAssembly;')(function(){ return 'l_' + (idc++); });
+    braceExtract('function expandAssembly(a, n){') + '\nreturn expandAssembly;')(function(){ return 'l_' + (idc++); });
 });
 guard('expandAssembly', function(){
   const a = { name:'Roof', lines:[
@@ -55,20 +55,38 @@ guard('expandAssembly', function(){
   // no squares → template quantities unchanged
   const raw = expandAssembly(a, 0);
   ok(raw[0].qty === 1 && raw[1].qty === 1, 'squares=0 keeps template quantities (optional scaling)');
+
+  // per_unit (e.g. windows) scales by the same numeric input, dropped after
+  const w = { name:'Windows', lines:[
+    { name:'Extract', qty:1, unit:'EA', unit_price:0, per_unit:1 },
+    { name:'Unit',    qty:1, unit:'EA', unit_price:0, per_unit:1 } ]};
+  const ws = expandAssembly(w, 5);
+  ok(ws[0].qty === 5 && ws[1].qty === 5, 'per_unit lines scale by the entered count (5 windows)');
+  ok(ws.every(function(l){ return l.per_unit === undefined; }), 'per_unit is dropped from the estimate line');
+  // an LF line with a base quantity is NOT square-scaled — it is a starting qty
+  const lf = expandAssembly({ lines:[ { name:'Drip', qty:150, unit:'LF', unit_price:0 } ] }, 32);
+  ok(lf[0].qty === 150, 'an LF base line keeps its starting quantity (not scaled by squares)');
 });
 
 /* ── 2. EST_ASSEMBLIES presets are well-formed and price-free ───────────────── */
 guard('EST_ASSEMBLIES presets', function(){
   const arr = new Function('return ' + bracketArray('var EST_ASSEMBLIES ='))();
-  ok(arr.length === 4, 'four default assemblies ship');
-  const names = arr.map(function(a){ return a.name; });
-  ok(names.indexOf('Full Shingle Replacement') !== -1 && names.indexOf('Gutters & Downspouts') !== -1, 'the named packages are present');
+  ok(arr.length === 6, 'six default assemblies ship (the curated cross-trade set)');
   ok(arr.every(function(a){ return a._default === true && a.id && a.trade && Array.isArray(a.lines) && a.lines.length; }), 'each preset has id, trade, _default and lines');
   ok(arr.every(function(a){ return a.lines.every(function(l){ return Number(l.unit_price) === 0; }); }), 'every preset line ships at $0 (no invented prices)');
-  // the shingle package must have SQ lines carrying per_sq so scaling works
-  const shingle = arr.filter(function(a){ return a.id === 'def-shingle'; })[0];
-  ok(shingle.lines.some(function(l){ return l.unit === 'SQ' && l.per_sq != null; }), 'the shingle package has SQ lines with per_sq for scaling');
-  ok(shingle.lines.some(function(l){ return l.flat === true; }), 'the shingle package mixes flat lines too');
+  const trades = arr.map(function(a){ return a.trade; });
+  ['Roofing','Siding','Soffit & Fascia','Gutters','Windows'].forEach(function(t){
+    ok(trades.indexOf(t) !== -1, 'trade present: ' + t);
+  });
+  ok(trades.filter(function(t){ return t === 'Roofing'; }).length === 2, 'two Roofing packages (OC Duration + standing seam)');
+  // the OC roof package: SQ+per_sq shingle line (10% waste), LF base lines, flat cleanup
+  const roof = arr.filter(function(a){ return a.id === 'def-roof-oc'; })[0];
+  ok(roof && roof.lines.some(function(l){ return l.unit === 'SQ' && l.per_sq === 1.1; }), 'the OC shingle line carries per_sq 1.1 (10% waste)');
+  ok(roof.lines.some(function(l){ return l.unit === 'LF' && l.qty === 150; }), 'LF lines carry sensible base quantities (drip edge 150 LF)');
+  ok(roof.lines.some(function(l){ return l.flat === true; }), 'the roof package mixes a flat cleanup line');
+  // the window package scales by per_unit on EA lines
+  const win = arr.filter(function(a){ return a.id === 'def-window'; })[0];
+  ok(win && win.lines.every(function(l){ return l.per_unit != null && l.unit === 'EA'; }), 'the window package scales every line by per_unit (EA)');
 });
 
 /* ── 3. injection + section shape ──────────────────────────────────────────── */
@@ -97,7 +115,8 @@ ok(/if\(pickerMode === 'assembly'\) loadAssemblies\(\);/.test(src), 'opening the
 ok(/if\(pickerMode === 'assembly'\)\{ renderAssemblyPicker\(\); return; \}/.test(src), 'renderPicker routes assembly mode to its own renderer');
 ok(src.indexOf('function renderAssemblyPicker(){') !== -1, 'renderAssemblyPicker defined');
 ok(/a\._default \? \(a\.trade \|\| 'General'\) : 'Saved'/.test(src), 'picker groups defaults by trade, custom under "Saved"');
-ok(/hasSq \? '<input type="number" class="asm-sq"[\s\S]{0,120}Squares \(optional\)/.test(src), 'a Squares input appears only on assemblies with SQ lines');
+ok(/\(\(hasSq \|\| hasUnit\) \? '<input type="number" class="asm-sq"[\s\S]{0,80}placeholder="' \+ scaleLbl/.test(src), 'a scaling input appears only when the assembly has SQ or per_unit lines');
+ok(/scaleLbl = hasSq \? 'Squares \(optional\)' : \(hasUnit \? 'Windows \(optional\)'/.test(src), 'the input is labelled Squares for roofing/siding, Windows for the window package');
 ok(/injectAssembly\(a, sq\);[\s\S]{0,40}closePicker\(\);/.test(src), 'Insert injects (with the card\'s squares) then closes the picker');
 ok(src.indexOf('addAsmBtn.onclick = function(){ openPicker(\'assembly\'); }') !== -1, 'the + Assembly button opens the picker');
 ok(src.indexOf('sSave.onclick = function(){ saveSectionAsAssembly(sid); }') !== -1, 'the section "Save as Assembly" button is wired');

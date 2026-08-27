@@ -840,9 +840,11 @@ not a silent edit.
 Theo's Batch 3, first half. An **assembly** is a named bundle of lines that drops into an
 estimate as ONE titled section (build 1097's model), so a rep builds a roof in seconds.
 
-**Storage — hybrid, Theo's pick.** Four **default templates ship in-code** (`EST_ASSEMBLIES`:
-Full Shingle Replacement, Tear-Off & Deck Prep, Ventilation & Flashing, Gutters & Downspouts),
-always present, no seeding. Custom **"Save as Assembly"** ones live in a new
+**Storage — hybrid, Theo's pick.** **Six default templates ship in-code** (`EST_ASSEMBLIES` —
+Theo's curated cross-trade set: **Full Roof Replacement (OC Duration)** and **Metal / Standing
+Seam** under Roofing, **Composite / Vinyl Siding**, **Aluminum Fascia & Vented Soffit**, **Seamless
+6" K-Style Gutters**, **Full-Frame Window Replacement**), always present, no seeding. Custom
+**"Save as Assembly"** ones live in a new
 **`estimate_assemblies`** table (shared read for any signed-in staff; author or admin writes),
 so they sync across Theo's phone and desktop. **`created_by` DEFAULTs to `my_email()`** — the
 client never handles the email, and the insert RLS `with check (created_by = my_email())` passes.
@@ -853,10 +855,11 @@ must be applied before/with the deploy** — the estimate itself needs no schema
 **Prices ship at $0 by design** — an assembly carries the scope + quantities, the rep sets the
 money per job, so a stale price can never ride into a sent proposal (Theo's pick).
 
-**Scaling, no modal.** Each picker card carries an optional **Squares** input; `expandAssembly`
-scales every SQ line (`qty = (per_sq||1) × squares`) on insert, leaves non-SQ lines at their
-template qty, preserves `flat`, and drops `per_sq` from the estimate line. Blank = template
-quantities.
+**Scaling, no modal, two axes.** Each picker card carries an optional numeric input; `expandAssembly`
+scales the field-driven lines on insert — **per_sq lines by squares**, **per_unit lines by count**
+(the window package: enter the number of openings) — leaves LF/EA base lines at their starting qty,
+preserves `flat`, and drops `per_sq`/`per_unit` from the estimate line. The card labels the input
+**Squares** or **Windows** by which axis the package uses; blank = template quantities.
 
 **UI, all reused.** A **+ Assembly** button (beside 1097's *+ Section*) opens the existing
 `#cr-est-picker` in a new **`'assembly'` mode** (`openPicker`/`renderPicker` branch +
@@ -870,8 +873,9 @@ default can't be deleted).
 - `check_build.py` **GREEN** 1097 → 1098 (marker `renderAssemblyPicker`; negative control clean);
   patch **byte-reproducible**.
 - **`harness_estasm1098.js`** — executes the SHIPPED `expandAssembly` (SQ→32, per_sq 1.1→35.2,
-  flat preserved, non-SQ kept, per_sq dropped, fresh `_lid`) and evals the SHIPPED
-  `EST_ASSEMBLIES` (4 presets, every line $0, shingle package has SQ+per_sq and flat lines), plus
+  **per_unit→5 windows**, LF base kept, flat preserved, per_sq/per_unit dropped, fresh `_lid`) and
+  evals the SHIPPED `EST_ASSEMBLIES` (**6 presets across 5 trades**, every line $0, OC roof has
+  per_sq 1.1 + LF bases + flat, window package all per_unit), plus
   structural proofs of injection, the save/load/delete DB paths (shared read, graceful degrade,
   title-named, editor-only keys stripped, default-undeletable), the picker mode and wiring.
   **GREEN on 1098, RED (no crash) on the 1097 tree.**

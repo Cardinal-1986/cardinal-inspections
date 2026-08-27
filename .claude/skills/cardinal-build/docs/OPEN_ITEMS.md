@@ -17,10 +17,12 @@ cells). His batch plan:
   ▲/▼ block reorder, collapse, per-section + Line, + Section, per-line move-to-section select;
   proposal + Community sheet print banners + per-section subtotals; single-ungrouped stays flat
   (back-compat). Gated: `harness_estsec1097.js` + `render_estsec1097.mjs` (green/red controlled).
-- **Batch 3a — ✅ Build 1098.** Saved assemblies: 4 in-code defaults + `estimate_assemblies` table
-  for custom (shared read, author/admin write, `created_by DEFAULT my_email()`). + Assembly opens
-  the picker in `'assembly'` mode; per-card Squares input scales SQ lines on insert; Save as
-  Assembly on a section header names it by the section title. Prices ship at $0. **SQL:
+- **Batch 3a — ✅ Build 1098.** Saved assemblies: **6 in-code defaults** (Theo's curated cross-trade
+  set — Full Roof/OC Duration, Standing Seam, Siding, Soffit & Fascia, Seamless Gutters, Windows) +
+  `estimate_assemblies` table for custom (shared read, author/admin write, `created_by DEFAULT
+  my_email()`). + Assembly opens the picker in `'assembly'` mode; per-card input scales on **two
+  axes** (`per_sq`×squares, `per_unit`×count for windows), LF/EA base lines keep their starting qty;
+  Save as Assembly on a section header names it by the section title. Prices ship at $0. **SQL:
   `estimate_assemblies.sql` — apply before deploy.** Gated: `harness_estasm1098.js` +
   `render_estasm1098.mjs`.
 - **Batch 3b — NEXT (Build 1099): proposal polish.** `buildDocHtml` — refine the section banners,
