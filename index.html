@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1098 &#8212; Estimates get one-tap assemblies across every trade. Tap &#8220;+ Assembly&#8221; and pick a ready-made package &#8212; Full Roof Replacement (OC Duration), Standing Seam metal, Siding, Soffit &amp; Fascia, Seamless Gutters, or Window Replacement &#8212; and it drops in as a complete section with every line ready. On the card, enter the total squares (or window count) and the field-based lines scale to the job automatically; the LF and EA lines come pre-filled with sensible starting quantities. Built your own section? Tap &#8220;Save as Assembly&#8221; on its header and it joins your library, on every device. Assemblies ship with no prices &#8212; you set the money per job.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1099 &#8212; The client estimate you print or text now reads like a finished proposal. Every scope section carries a clean banner, the line items get a soft alternating shade so long lists stay easy to follow, and the whole document is laid out so the totals, deposit and signature never split across a page when it prints to PDF. It closes with an Acceptance &amp; Authorization card &#8212; the total, the deposit due at signing, and the balance at completion, right above the signature lines. In the preview you can also hide the per-section subtotals for a simpler one-number quote.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41839,6 +41839,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1099, d:'2026-08-27', t:'Cleaner, sign-ready estimate proposals', s:'The client-facing estimate now prints and shares as a polished proposal. Every scope <b>section</b> gets a clean banner, line items carry a subtle alternating shade for readability, and page breaks are controlled so the totals, deposit box and signature block never split across a page in the PDF. The document closes with an <b>Acceptance &amp; Authorization</b> card &mdash; contract total, deposit due at signing, and balance at completion, right above the signature lines. In the preview you can hide the per-section subtotals for a simpler one-number quote.' },
 { b:1098, d:'2026-08-27', t:'One-tap assemblies for estimates', s:'You can now build an estimate in seconds from ready-made packages that span every trade you run. Tap the new <b>+ Assembly</b> button and pick a template &mdash; Full Roof Replacement (OC Duration), Metal / Standing Seam, Composite &amp; Vinyl Siding, Aluminum Fascia &amp; Vented Soffit, Seamless 6&#34; K-Style Gutters, or Full-Frame Window Replacement &mdash; and it drops straight in as a complete, titled section with all its lines (detailed and flat) ready to price. On the card you can type the total squares (or, for windows, the number of openings) and the field-based lines scale to the job at once; the running-foot and each-count lines (drip edge, gutters, hangers, boots) come pre-filled with sensible starting quantities you adjust. Made a section you want to reuse? Tap <b>Save as Assembly</b> on its header and it is saved to your library, shared across your phone and desktop; delete your own any time. Every built-in package ships with no prices on purpose &mdash; the assembly carries the scope and quantities, and you set the dollars per job so a stale number never rides in. Nothing changes for a plain estimate; this is all opt-in from the two new buttons.' },
 { b:1097, d:'2026-08-27', t:'Organize an estimate into named sections', s:'Big estimates now group into sections so the estimate &mdash; and the client&#8217;s proposal &mdash; read like a real scope of work. Tap <b>+ Section</b> to start one; each section header has an editable title (with quick names like Tear-Off &amp; Decking, Ventilation &amp; Flashing, Labor &amp; Disposal), a live subtotal that adds up as you type, a collapse arrow to fold it away, up / down arrows to move the whole block, and its own <b>+ Line</b> button so you can add to a group up top without scrolling to the bottom. Every line has a small drop-down to move it into another section. Your printed proposal and the Community bid sheet now show each section as a clean banner with its own subtotal before the grand total, so a big roof reads clearly instead of as one long list. Nothing changes for a simple quote &mdash; an estimate with no sections looks exactly like it did, no banners added. Sections save with the estimate; no setup needed.' },
 { b:1096, d:'2026-08-27', t:'Every estimate line gets its own Detailed / Flat switch', s:'You can now price each line the way it wants to be priced, without flipping the whole estimate. Every line has a small Detailed / Flat switch. Detailed keeps Quantity, Unit and Unit Price and multiplies them. Flat collapses those away and shows one description with a single lump-sum price &mdash; no empty Qty or Unit columns to leave blank. The keyboard keeps up: press Enter in a line&#8217;s last price box to drop a fresh line below it, and Tab jumps from the price straight to the next line&#8217;s first field, so you can build an estimate without lifting your hand to the mouse. New lines take the same mode as the line above. The client proposal and the Community bid sheet both print detailed and flat lines together, each one clean and correct. Old lump-sum estimates open as all-flat automatically. The old single &ldquo;Qty / unit&rdquo; checkbox is gone &mdash; the per-line switch replaces it.' },
@@ -48795,7 +48796,7 @@ var depAmt   = Number(est.deposit_amount) || 0;
 var balance  = Math.max(0, total - depAmt);
 var anyDetailed = lines.some(function(l){ return l.flat !== true; });
 var COLS = anyDetailed ? 5 : 2;
-function rowFor(l){
+function rowFor(l, zi){
 var flat = l.flat === true;
 var qty  = Number(l.qty) || 0;
 var rate = Number(l.unit_price) || 0;
@@ -48803,15 +48804,16 @@ var amt  = flat ? (Number(l.amount) || 0) : (qty * rate);
 var amtCell = amt ? money(amt) : '';
 var desc = '<b>' + esc(l.name || 'Item') + '</b>' +
 (l.description ? '<br><span style="font-size:9.5pt;color:#555;">' + nl2br(l.description) + '</span>' : '');
+var _cls = 'avoid-break' + (zi % 2 === 1 ? ' zeb' : '');
 if(!anyDetailed){
-return '<tr class="avoid-break"><td>' + desc + '</td><td class="rate">' + amtCell + '</td></tr>';
+return '<tr class="' + _cls + '"><td>' + desc + '</td><td class="rate">' + amtCell + '</td></tr>';
 }
 if(flat){
 /* a lump line inside a detailed table: the description takes the
    qty/unit/rate span, the amount lands under Amount — no bare "1 EA". */
-return '<tr class="avoid-break"><td>' + desc + '</td><td colspan="3"></td><td class="rate">' + amtCell + '</td></tr>';
+return '<tr class="' + _cls + '"><td>' + desc + '</td><td colspan="3"></td><td class="rate">' + amtCell + '</td></tr>';
 }
-return '<tr class="avoid-break"><td>' + desc + '</td>' +
+return '<tr class="' + _cls + '"><td>' + desc + '</td>' +
 '<td class="qty">' + (qty || '') + '</td>' +
 '<td class="unit">' + esc(l.unit || '') + '</td>' +
 '<td class="rate">' + (rate ? money(rate) : '') + '</td>' +
@@ -48822,8 +48824,9 @@ return '<tr class="avoid-break"><td>' + desc + '</td>' +
 var docGroups = (typeof window.crEstGroups === 'function') ? window.crEstGroups(lines) : [{ id:'', title:'General Scope', lines:lines }];
 var docSingle = docGroups.length === 1 && docGroups[0].id === '';
 function secSum(gl){ return gl.reduce(function(s, l){ return s + (l.flat === true ? (Number(l.amount) || 0) : (Number(l.qty) || 0) * (Number(l.unit_price) || 0)); }, 0); }
+var _zeb = 0;
 var itemRows = docGroups.map(function(g){
-var rows = g.lines.map(rowFor).join('');
+var rows = g.lines.map(function(l){ return rowFor(l, _zeb++); }).join('');
 if(docSingle) return rows;
 var banner = '<tr class="sec-banner avoid-break"><td colspan="' + COLS + '">' + esc(g.title) + '</td></tr>';
 var subRow = '<tr class="sec-sub"><td class="lbl" colspan="' + (COLS - 1) + '">' + esc(g.title) + ' subtotal</td><td class="val">' + money(secSum(g.lines)) + '</td></tr>';
@@ -48889,6 +48892,22 @@ var paySection = est.payment_instructions
 nl2br(est.payment_instructions) +
 '</div>'
 : '';
+var acRecap = '<div class="ac-cell"><div class="ac-k">Contract Total</div><div class="ac-v">' + money(total) + '</div></div>';
+if(depAmt > 0){
+acRecap += '<div class="ac-cell hi"><div class="ac-k">Deposit Due at Signing (' + depPct + '%)</div><div class="ac-v">' + money(depAmt) + '</div></div>' +
+'<div class="ac-cell"><div class="ac-k">Balance at Completion</div><div class="ac-v">' + money(balance) + '</div></div>';
+}
+var acValid = est.valid_through ? ' This estimate is valid through ' + esc(fmtDate(est.valid_through)) + '.' : '';
+var acceptBlock =
+'<div class="accept-card avoid-break">' +
+'<div class="ac-hd">Acceptance &amp; Authorization</div>' +
+'<div class="ac-recap">' + acRecap + '</div>' +
+'<div class="ac-terms">By signing below, the client authorizes Cardinal Roofing &amp; Renovations, LLC to perform the work described above and agrees to the payment terms stated herein.' + acValid + '</div>' +
+'<div class="ac-sign">' +
+'<div class="col"><div class="line"></div><div class="lbl">Client Signature &amp; Date</div></div>' +
+'<div class="col"><div class="line"></div><div class="lbl">Cardinal Representative</div></div>' +
+'</div>' +
+'</div>';
 return '<!DOCTYPE html>\n' +
 '<html lang="en">\n' +
 '<head>\n' +
@@ -48915,7 +48934,7 @@ return '<!DOCTYPE html>\n' +
 'table.meta{border-collapse:collapse;width:100%;margin:4px 0 16px;font-size:10pt}\n' +
 'table.meta td{border:0;border-bottom:1px solid var(--hair);padding:7px 12px 7px 0;vertical-align:top}\n' +
 'table.meta td.k{background:none;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);width:20%;padding-top:9px}\n' +
-'h2.sec{font-size:13pt;font-weight:700;margin:24px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--hair);letter-spacing:.01em}\n' +
+'h2.sec{font-size:13pt;font-weight:700;margin:24px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--hair);letter-spacing:.01em;break-after:avoid}\n' +
 'h2.sec .num{display:inline-block;background:var(--red);color:#fff;border-radius:3px;font-size:9pt;padding:1px 7px;margin-right:9px;vertical-align:2px;font-family:"Segoe UI",Arial,sans-serif;font-weight:700}\n' +
 'p{margin:6px 0}\n' +
 '.note{border:0;border-left:3px solid var(--amber);background:var(--wash);padding:10px 14px;font-size:9.5pt;margin:14px 0;line-height:1.6}\n' +
@@ -48929,7 +48948,11 @@ return '<!DOCTYPE html>\n' +
 'table.items tr.totals td.val{text-align:right;width:14%;white-space:nowrap}\n' +
 'table.items tr.grand td{border-top:2px solid var(--ink);font-size:13pt;font-weight:700;padding-top:8px}\n' +
 'table.items tr.grand td.lbl{color:var(--ink);font-size:9.5pt}\n' +
-'table.items tr.sec-banner td{background:var(--wash);border-top:2px solid var(--red);border-bottom:1px solid var(--hair);font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:8.5pt;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);padding:9px 9px 7px}\n' +
+'table.items tr.sec-banner td{background:#f3efe8;border-top:2px solid var(--red);border-left:3px solid var(--red);border-bottom:1px solid var(--hair);font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:8.5pt;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);padding:10px 9px 8px}\n' +
+'table.items tr.sec-banner{break-after:avoid}\n' +
+'table.items tr.zeb td{background:#f7f6f3}\n' +
+'table.items tfoot{break-inside:avoid}\n' +
+'body.hide-subs table.items tr.sec-sub{display:none}\n' +
 'table.items tr.sec-sub td{border:0;padding:4px 9px 12px;font-variant-numeric:tabular-nums}\n' +
 'table.items tr.sec-sub td.lbl{text-align:right;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:8.5pt;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}\n' +
 'table.items tr.sec-sub td.val{text-align:right;white-space:nowrap;font-weight:700;color:var(--ink)}\n' +
@@ -48949,6 +48972,22 @@ return '<!DOCTYPE html>\n' +
 '.sign .col{flex:1}\n' +
 '.sign .line{border-bottom:1.25px solid var(--ink);height:36px}\n' +
 '.sign .lbl{font-family:"Segoe UI",Arial,sans-serif;font-size:8pt;letter-spacing:.06em;color:var(--muted);margin-top:6px}\n' +
+'.accept-card{border:1px solid var(--hair);border-top:3px solid var(--red);background:#fff;border-radius:2px;margin-top:20px;overflow:hidden}\n' +
+'.accept-card .ac-hd{font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:8.5pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);padding:11px 16px 10px;border-bottom:1px solid var(--hair);background:var(--wash)}\n' +
+'.accept-card .ac-recap{display:flex;border-bottom:1px solid var(--hair)}\n' +
+'.accept-card .ac-cell{flex:1;padding:12px 16px;text-align:center;border-right:1px solid var(--hair)}\n' +
+'.accept-card .ac-cell:last-child{border-right:0}\n' +
+'.accept-card .ac-cell .ac-k{font-family:"Segoe UI",Arial,sans-serif;font-size:7pt;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}\n' +
+'.accept-card .ac-cell .ac-v{font-size:13pt;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}\n' +
+'.accept-card .ac-cell.hi .ac-v{color:var(--red)}\n' +
+'.accept-card .ac-terms{padding:11px 16px 12px;font-size:9pt;line-height:1.5;color:#4a4a4a}\n' +
+'.accept-card .ac-sign{display:flex;gap:32px;padding:8px 16px 18px}\n' +
+'.accept-card .ac-sign .col{flex:1}\n' +
+'.accept-card .ac-sign .line{border-bottom:1.25px solid var(--ink);height:34px}\n' +
+'.accept-card .ac-sign .lbl{font-family:"Segoe UI",Arial,sans-serif;font-size:8pt;letter-spacing:.05em;color:var(--muted);margin-top:6px}\n' +
+'.accept-card .ac-recap.stack{flex-direction:column}\n' +
+'.accept-card .ac-recap.stack .ac-cell{border-right:0;border-bottom:1px solid var(--hair)}\n' +
+'.accept-card .ac-recap.stack .ac-cell:last-child{border-bottom:0}\n' +
 '.avoid-break{break-inside:avoid}\n' +
 '.page-break{break-before:page}\n' +
 '.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--hair);font-size:8pt;color:var(--faint);text-align:center;font-family:"Segoe UI",Arial,sans-serif;letter-spacing:.03em}\n' +
@@ -48968,6 +49007,10 @@ return '<!DOCTYPE html>\n' +
 'table.items td{padding:7px 5px}\n' +
 '.photogrid{grid-template-columns:1fr}\n' +
 '.sign{flex-direction:column;gap:22px}\n' +
+'.accept-card .ac-recap{flex-direction:column}\n' +
+'.accept-card .ac-cell{border-right:0;border-bottom:1px solid var(--hair)}\n' +
+'.accept-card .ac-cell:last-child{border-bottom:0}\n' +
+'.accept-card .ac-sign{flex-direction:column;gap:20px}\n' +
 '}\n' +
 '</style>\n' +
 '</head>\n' +
@@ -49015,16 +49058,7 @@ depositBlock +
 paySection +
 notesSection +
 photoSection +
-'<div class="sign avoid-break">' +
-'<div class="col">' +
-'<div class="line"></div>' +
-'<div class="lbl">Cardinal Roofing &amp; Renovations, LLC</div>' +
-'</div>' +
-'<div class="col">' +
-'<div class="line"></div>' +
-'<div class="lbl">Client Signature &amp; Date</div>' +
-'</div>' +
-'</div>' +
+acceptBlock +
 '<div class="foot">Cardinal Roofing &amp; Renovations, LLC \u00b7 5735 Webster Street, Dayton, Ohio 45414 \u00b7 (937) 576-6753 \u00b7 www.cardinalrenovations.net</div>' +
 '</body>\n</html>';
 }
@@ -49087,6 +49121,7 @@ previewEl.innerHTML =
 '<div class="pv-head">' +
 '<button data-act="pv-close" type="button">Close</button>' +
 '<h3>Preview</h3>' +
+'<button data-act="pv-subs" type="button">Hide subtotals</button>' +
 '<button class="primary" data-act="pv-print" type="button">Print / PDF</button>' +
 '</div>' +
 '<div class="pv-body"><iframe data-slot="pv-frame" title="Estimate preview"></iframe></div>';
@@ -49101,6 +49136,14 @@ f.contentWindow.print();
 }catch(e){
 crTell('Print failed: ' + (e.message || e));
 }
+};
+var _subsBtn = previewEl.querySelector('[data-act="pv-subs"]');
+if(_subsBtn) _subsBtn.onclick = function(){
+var f = previewEl.querySelector('[data-slot="pv-frame"]');
+var d = f && (f.contentDocument || (f.contentWindow && f.contentWindow.document));
+if(!d || !d.body) return;
+var hid = d.body.classList.toggle('hide-subs');
+_subsBtn.textContent = hid ? 'Show subtotals' : 'Hide subtotals';
 };
 return previewEl;
 }
@@ -49131,6 +49174,8 @@ var html = buildDocHtml(est, project, docUrls);
 var frame = previewEl.querySelector('[data-slot="pv-frame"]');
 if(!frame) return;
 frame.srcdoc = html;
+var _sb = previewEl.querySelector('[data-act="pv-subs"]');
+if(_sb){ _sb.style.display = (html.indexOf('class="sec-sub"') !== -1) ? '' : 'none'; _sb.textContent = 'Hide subtotals'; }
 previewEl.classList.add('open');
 document.body.style.overflow = 'hidden';
 }

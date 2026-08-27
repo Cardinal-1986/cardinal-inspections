@@ -835,6 +835,43 @@ not a silent edit.
 
 ---
 
+## Build 1099 — 27 Aug 2026 — Proposal polish for the client estimate (Batch 3, part 2)
+
+Theo's Batch 3, second half — the client-facing estimate document (`buildDocHtml` in
+`cr-epub-script`) reads like a finished proposal. All surgery on the print/share template; no
+schema, no `/api`. Previewed before build (before/after renders); **Theo picked option 1 — keep
+both deposit displays** (the mid-doc Payment Terms box *and* the acceptance-card recap).
+
+**Four refinements:**
+- **Section banners** gain a red left accent (`border-left:3px solid var(--red)`) matching the
+  deposit/note boxes, a deeper tint (`#f3efe8`), and `break-after:avoid` so a banner never orphans
+  from its first row on print. **Refined IN PLACE** — the existing `tr.sec-banner td` rule was
+  edited, not overridden with a second rule (`harness_estdoc1099.js` asserts exactly one such rule).
+- **Faint zebra on item rows only** (`tr.zeb td{background:#f7f6f3}`). `rowFor(l, zi)` computes the
+  row class; a continuous `_zeb` counter threads through the section map so banners and subtotal
+  rows are never striped (proven in the rendered DOM, not by regex).
+- **Print/PDF page-break protection** — `table.items tfoot{break-inside:avoid}` keeps the totals
+  together; `h2.sec{break-after:avoid}`; the deposit box and acceptance card are `avoid-break`.
+- **Acceptance & Authorization card** replaces the bare two-underline sign block: a money recap
+  (Contract Total / Deposit Due at Signing % / Balance at Completion — deposit + balance cells only
+  when a deposit exists), an authorization sentence with the valid-through date, and Client +
+  Cardinal signature lines. Labels use `--muted` (5.33:1 on white), **not** the sub-floor `--faint`
+  (3.45:1) — the one contrast fix a hand-check caught before the render.
+
+**Preview extra:** a **Hide subtotals** toggle in the preview toolbar flips a `hide-subs` class on
+the live document (`body.hide-subs table.items tr.sec-sub{display:none}`), for a simpler one-number
+quote; it also carries to Print/PDF. Auto-hides when a quote has no sections; label resets each open.
+The **published** document is unaffected — it always keeps subtotals.
+
+**Gates.** `check_build.py` green (126 scripts, stamp 1098→1099, negative control clean).
+`render_estdoc1099.mjs` executes the **shipped** `buildDocHtml` on a 4-section sample, renders in
+Chromium, and scores WCAG contrast against the composited ground — every new element clears 4.5:1
+(banner 14.68, ac-k 5.33, ac-v 16.83, red deposit 5.67, terms 8.86); RED on 1098 (11 fails, no
+crash). `harness_estdoc1099.js` proves the toggle is wired, the banner is refined-in-place, the
+zebra parity is threaded, and the card replaced the sign block; RED on 1098 (22 fails). The
+sentinel's visualizer setup does not reach the estimates preview screen, so the render is the INK
+gate for this surface — Theo's eyes remain the final visual gate.
+
 ## Build 1098 — 27 Aug 2026 — One-tap saved assemblies (Batch 3, part 1)
 
 Theo's Batch 3, first half. An **assembly** is a named bundle of lines that drops into an

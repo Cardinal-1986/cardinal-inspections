@@ -25,11 +25,15 @@ cells). His batch plan:
   Save as Assembly on a section header names it by the section title. Prices ship at $0. **SQL:
   `estimate_assemblies.sql` — apply before deploy.** Gated: `harness_estasm1098.js` +
   `render_estasm1098.mjs`.
-- **Batch 3b — NEXT (Build 1099): proposal polish.** `buildDocHtml` — refine the section banners,
-  zebra-fill item rows only, `break-inside:avoid` on the deposit/signature/totals + a
-  `break-after:avoid` banner, and fold the deposit box + signature into one card-style acceptance
-  footer (deposit %/amount/balance, terms line, signature + date). Optional show/hide-subtotals
-  toggle in the iframe preview.
+- **Batch 3b — ✅ Build 1099: proposal polish.** `buildDocHtml` — section banners refined in place
+  (red left accent + deeper tint, `break-after:avoid`), faint zebra on **item rows only**
+  (continuous `_zeb` parity, banners/subtotals never striped), `break-inside:avoid` on the totals
+  `tfoot`/deposit/card, and an **Acceptance & Authorization** card (money recap + terms +
+  Client/Cardinal signatures; labels `--muted` for ≥4.5:1). **Theo picked option 1 — KEEP both
+  deposit displays** (mid-doc Payment Terms box *and* the card recap). Show/hide-subtotals toggle in
+  the preview toolbar (`hide-subs` class; preview/print only, published doc keeps subtotals). Gated:
+  `render_estdoc1099.mjs` + `harness_estdoc1099.js`. **The manual estimating engine batch is
+  complete** (1096 flat toggle, 1097 sections, 1098 assemblies, 1099 proposal polish).
 
 Settled and not to re-litigate: **no dark option** for the builder; **no money/cost/markup** layer
 (quote tool); Cardinal red is `#c8202e`, never Tailwind `#DC2626`; the toggle's inactive label uses
