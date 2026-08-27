@@ -835,6 +835,32 @@ not a silent edit.
 
 ---
 
+## Build 1101 — 27 Aug 2026 — Landing hub no longer traps every menu screen
+
+Reported by Theo: "My Profile takes me back to landing." **Reproduced in Chromium**, root-caused,
+fixed at the chokepoint. `index.html` (app stamp 1099 → **1101**; 1100 was the api-only SMS build
+and never touched the stamp, hence the jump).
+
+**Root cause — the 570-572 nav-trap class, again.** `mainView`, `landingView`, `profileView`,
+`settingsView`, `clientsView`… are all top-level siblings. Every menu opener does the same thing:
+`hideAllViews()` then show its own view. `hideAllViews()` hid `mainView` and a dozen other views
+but **never `landingView`** — and `landingView` carries a `::before { position:fixed; inset:0 }`
+full-screen background. So opening any menu screen *from the landing hub* opened it correctly
+underneath, while the landing background stayed painted on top — you "bounced to landing." It hit
+My Profile, Settings, Team and Clients alike, not just profile. Exactly the class the file already
+documents for `cr-occ` / `cr-owner` / `cr-can` — landing was the last unregistered full-screen view.
+
+**Fix.** Register `landingView` in `hideAllViews()` (hide it + clear `body.cr-landing-on`, which
+otherwise hides the footer nav and kills top padding on the screen you opened). **Safe by
+construction:** `goToLanding()` and `showLanding()` re-show landing *after* calling `hideAllViews()`,
+so the way INTO the hub is unchanged — the gate proves it.
+
+Gate: `check_build` green (stamp 1099→1101, negative control clean). `render_navlanding1101.mjs`
+drives a real browser — enter hub → open My Profile → assert landing hidden + profile visible +
+`cr-landing-on` cleared → re-enter hub → assert landing visible again → open Clients → assert landing
+hidden. GREEN on 1101, **RED on 1099 (3 fails, no crash)** — the reproduction of Theo's bug. The
+sentinel's visualizer setup doesn't reach this CRM flow, so this render is its layout gate.
+
 ## Build 1100 — 27 Aug 2026 — SMS sends via the A2P-approved Messaging Service
 
 `api/notify.js` only — no `index.html` change, so no app-stamp bump (out-of-index build, like
