@@ -224,7 +224,26 @@ export default async function handler(req, res){
                 headers: { Authorization: twAuth, 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: form });
               if(sr.ok) texted++;
-              else if(!smsErr) smsErr = 'HTTP ' + sr.status + ' ' + (await sr.text()).slice(0, 90);
+              else if(!smsErr){
+                /* 1105: this dumped raw Twilio JSON truncated at 90 chars, so the
+                   screen showed `{"code":20003,"message":"Authenticate","more_info":"https://w`
+                   — cut mid-URL and unreadable on a phone. Say what the code MEANS
+                   and what to do about it; keep the number so it is still searchable. */
+                var raw1105 = await sr.text();
+                var tc = 0, tm = '';
+                try{ var tj = JSON.parse(raw1105); tc = Number(tj.code) || 0; tm = String(tj.message || ''); }catch(_tp){}
+                if(sr.status === 401 || tc === 20003){
+                  smsErr = 'Twilio rejected the credentials (20003). Check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in Vercel, then redeploy.';
+                }else if(tc === 21606 || tc === 21659 || tc === 21660){
+                  smsErr = 'Twilio will not send from that sender (' + tc + '). Check the number is in the Messaging Service sender pool.';
+                }else if(tc === 21610){
+                  smsErr = 'That number replied STOP and is opted out (21610).';
+                }else if(tc === 21211 || tc === 21614){
+                  smsErr = 'Twilio rejected the recipient number (' + tc + ') — check the number in the Team Directory.';
+                }else{
+                  smsErr = 'HTTP ' + sr.status + (tc ? ' (' + tc + ')' : '') + (tm ? ' ' + tm : '');
+                }
+              }
             }catch(e4){ if(!smsErr) smsErr = String((e4 && e4.message) || e4).slice(0, 120); }
           }));
         }
