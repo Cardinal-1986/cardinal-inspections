@@ -27579,6 +27579,201 @@ rejected (the danger is deleting a base rule whose replacement is conditional).
 
 
 
+
+## Build 1089 — the Insurance header goes dark, and matches its own bottom bar
+
+Theo was shown four rendered headers at 440px through the real app — the header as it is
+now in dark and in light, and two options — and picked **1**.
+
+| | ground | accent | where the values came from |
+|---|---|---|---|
+| now (dark) | `#CE0E18` | `#FFE8E8` | `--ct-head-*`, the `--ct-` system's header palette |
+| **option 1** | **`#1a0e0d`** | **`#ff8a7a`** | **the bottom nav of the same screen** |
+| option 2 | `#8f1620` | `#FFE8E8` | the deepened red, 70 sites in the file |
+
+**No new ink was chosen.** The insurance bottom nav has carried `bnbg #1a0e0d`, `bnbd
+#3d1512` and `bnac #ff8a7a` since it was themed; the bar at the TOP was the only one still
+shouting. They now agree, and a real render says so: a pixel census of the header band goes
+from **20,177 px of `#ce0e18`** to **28,603 px of `#1a0e0d`**, with 1,861 px of `#ff8a7a`
+where the `+` button is.
+
+### The shape of the change is the whole build
+
+**Insurance is the ONE head in this app that flips with a theme.** Retail, community,
+production and sales each declare a flat palette; insurance maps itself through
+`--ct-head-*`, which docket/siren swap — 407 made that deliberate and put the toggle in the
+header. Theo was told in writing that light mode was unchanged by either option, so light
+mode is unchanged **structurally**: the new tokens are declared in the **siren block only**,
+and the rule falls back to `--ct-head-*` when they are absent. There is no light twin to
+drift. *Proof: the two light-mode renders of 1088 and 1089 are byte-identical PNGs.*
+
+⚠ **`--ct-head-*` is NOT the app header's private palette, which is why new tokens exist
+rather than new values.** It also paints the Resource Library's book header —
+`#resourceLibraryView .ins-header / .ins-title / .ins-hbtn`. That header reads
+`display:none` in the ordinary Library and looks safely dead, **but
+`body.rl-at-book #resourceLibraryView .ins-header{display:flex}` brings it back while a book
+is open.** Retuning at source would have restyled a second screen nobody asked about. Asking
+whether the element *renders* rather than trusting the first `display:none` rule found is
+what kept this build to one surface.
+
+⚠ **And not a more-specific rule.** `body[data-rltheme="siren"][data-crm-head="insurance"]
+.site{…}` was the obvious two-line answer and is exactly what `gate_stack.mjs` exists to
+catch. The existing rule is edited in place; **no selector was added.**
+
+### The render corrected the code, twice
+
+**1. A failure that was not there.** I reported to Theo that the current red header carried
+an ink under the floor — the search placeholder at **3.63:1**. It had been scored against
+the *header*. The placeholder lives inside `#headSearch`, whose background is `--hsf`
+(`#16161B` in siren). On its actual ground it is **10.45:1**. There was no defect.
+
+**2. A mapping the CSS states plainly and does not honour.**
+`#brandTitle h1{…color:var(--hac,#c8202e)}` says the title is the accent, so I wrote down —
+and told Theo — that the word "Insurance" was `--hac`. Chromium says `color` **and**
+`-webkit-text-fill-color` are both `rgb(255,255,255)` in siren: another rule wins, the title
+is `--hin`, and `--hac` paints the `+` button and nothing else in this header. *The
+declaration you can read is not the declaration that wins.* Both errors had already reached
+Theo before the render caught them; both are corrected in `probe_head_ink.mjs`'s own comments
+so the next reader does not repeat them.
+
+### Contrast, against the ground each ink actually sits on
+
+| | now (siren) | option 1 | floor |
+|---|---:|---:|---|
+| title "Insurance" `--hin` | 5.68:1 | **18.88:1** | 3.0 (40px) |
+| icon buttons `--hmt` | 5.68:1 | **18.88:1** | 3.0 |
+| `+` button ground `--hac` | 4.85:1 | **8.24:1** | 3.0 |
+| `+` glyph `--hoc` | 4.85:1 | **8.24:1** | 3.0 |
+| search text `--hin` | 18.03:1 | 17.74:1 | 4.5 |
+| placeholder `--hdm` | 10.45:1 | 9.55:1 | 4.5 |
+
+⚠ **One number goes DOWN and shipped anyway, recorded rather than hidden:** the 1px button
+edge `--hln` is 1.76:1 today and **1.18:1** here. It is not text and not a new class — the
+same edge is 1.25:1 in light mode and has been for as long as the light theme has existed —
+and the glyph inside the button is 18.88:1. Raising it would mean leaving the bottom nav's
+palette, which is the one thing this build is for.
+
+**Not touched, deliberately:** `--tgrad`. It has **zero** `var(--tgrad)` consumers — 685 took
+the gradient text out and left the declaration behind on **all six** heads. Dead everywhere,
+not just here, so retiring it is its own build.
+
+### Gates
+
+- `check_build.py` **GREEN** 1088 → 1089, marker `--ct-crmhead-surface:#241412;`, negative
+  control clean. Byte-reproducible: re-applied to a clean 1088 tree, `cmp` equal.
+- **A Chromium render, which is the only instrument that settles a colour here.**
+  `probe_head_ink.mjs` (new, kept) reads computed `--htint`, `--hbg`, the title's *fill*,
+  the `+` button's ground and ink, and `<meta theme-color>`, for any build × either theme.
+- `theme-color` follows the header: **`#CE0E18` → `#1a0e0d`**, so 1088's plumbing carries it.
+- **Sentinel CLEAN** against 1088 — 50 renders (25 states × 2 viewports), nothing new, 189
+  findings carried. Exit 0.
+
+⚠ **BUG_CLASSES 75 struck a FIFTH time, and this time it failed my own bottom-nav check.**
+The self-verification asserted the bottom-nav rule survived exactly once — and the comment
+this build ADDS quoted that rule verbatim, so the count was 2. The comment now *names* the
+three tokens instead of reproducing the declaration. **A comment that quotes a declaration
+verbatim is counted by every assertion that greps for it.**
+
+⚠ **Two render scripts shared a latent path bug**, both fixed: `render_state.mjs` and the new
+probe joined `process.cwd()` onto an *absolute* argument, building `/repo//tmp/…` and failing
+as `ERR_FILE_NOT_FOUND`. Negative-control trees live outside the repo, so this fires exactly
+when a control is being built — a crash that reads as a missing artifact rather than a bad
+join. **BUG_CLASSES 37's family: a control that crashes instead of reporting.**
+
+---
+
+## Build 1088 — one PWA head, and a status bar that follows the header
+
+Theo, with three screenshots: the retail dashboard wearing its correct **steel** header with an
+**insurance-red band** across the status bar above it; Community with a **green** band matching
+its green header; retail again after a portal round trip, band correct. *"Then when I go to
+retail the red strip is at top then community back to retail it's normal."*
+
+### The head block was DUPLICATED, and the two copies disagreed
+
+| | copy A | copy B |
+|---|---|---|
+| manifest | `/manifest.json` | `manifest.json` |
+| **theme-color** | **`#1b1b1b`** | **`#170f11`** |
+| apple-touch-icon | `/icon-192.png` | `apple-touch-icon.png` |
+
+Plus duplicate `apple-mobile-web-app-capable`, `-status-bar-style` and `-title`.
+
+**Two `<link rel="manifest">` is invalid and the first wins**, so the live manifest was
+`/manifest.json` and the live theme-color was **`#1b1b1b`** — which does not match
+`manifest.json`'s own pinned `theme_color` of `#170f11`.
+
+⚠️ **And `crFlip()` was editing the tag it was not written for.** It rewrites
+`querySelector('meta[name=theme-color]')` — the FIRST tag — while its own comment says it exists
+because *"manifest pins theme_color #170f11"*. One tag now, so the selector has one thing to find
+and the two can never disagree again.
+
+⚠️ **BOTH `apple-touch-icon` links are kept deliberately.** Two is legal, they are different
+files, and picking one could silently change the icon on an already-installed phone.
+
+### `skin()` now writes the tint, and it is derived rather than duplicated
+
+`skin()` had never touched `theme-color`, so the band had no per-CRM knowledge at all — it could
+only lag the portal or match it by luck.
+
+**`--htint` is declared on the same line as each head's `--hbg`.** Reading `--hbg` back is not
+safe: four heads declare a flat colour, but **retail declares a GRADIENT and insurance declares
+`var(--ct-head-bg)`**, and neither is something to hand to a meta tag.
+
+⚠️ **The write happens AFTER the `dataset.crmHead` line, never before** — the tint is selected by
+that very attribute, so reading first returns the OUTGOING portal's colour and reproduces the
+exact bug being fixed.
+
+**Measured by driving real navigation:**
+
+| step | head | theme-color |
+|---|---|---|
+| boot | retail | `#243342` |
+| → Cardinal Truth | insurance | **`#CE0E18`** |
+| → retail home | retail | `#243342` |
+| → Community hub | community | **`#047857`** |
+| → retail home again | retail | `#243342` |
+
+One `theme-color` meta in the DOM, one manifest link.
+
+⚠️ **THE FIRST TWO VERSIONS OF THAT PROBE BOTH LIED, in opposite ways.** The first poked
+`body.dataset.crmHead` directly and called `skin()` — which recomputes `crmHead()`, finds it
+unchanged, and **early-returns**, so the meta never moved and it read as "the fix does nothing".
+The second drove real navigation but read immediately: `skin()` is driven by an **observer, not
+called inline**, so every row came back `head=retail`. *A probe that drives the app wrongly
+produces a confident, wrong verdict — and both wrong verdicts here were the pessimistic one,
+which is the kind you believe.*
+
+### ⚠ NOT PROVEN, and stated in the code as well as here
+
+**That the red band IS theme-color.** Neither `#1b1b1b` nor `#170f11` is red, so something else
+may paint it. Headless Chromium cannot render an iOS standalone status bar; **Theo's eyes are the
+gate.** If the strip still lags after this, theme-color is ruled OUT and the next look starts with
+one fewer suspect — worth having either way. Said plainly in the app's own changelog entry too,
+rather than shipped as a confident fix.
+
+### ⚠ THE COUNTING TRAP, FOUR TIMES IN FOUR BUILDS — and the fourth is the teaching one
+
+Every one failed a **correct** patch, and every one was my own new comment being counted:
+
+| build | the assertion | what it actually counted |
+|---|---|---|
+| 1085 | `count('ljChipStrip') == 0` | the comment naming the function it deleted |
+| 1086 | `count('class=\"cr-ic-chipwrap')` | a JS-style escape that never appears in HTML |
+| 1088 | `count('<link rel="manifest"') == 1` | the comment saying *"Two `<link rel="manifest">` is invalid"* |
+| 1088 | `count('--hbg:') == 6` | **the comment explaining this very trap** — *"--htint, not --hbg: retail's ground is a gradient"* |
+
+**The fourth is the one to remember: the sentence warning about the trap sprang the trap.** The
+fix is not vigilance, it is form — assert on something prose cannot imitate. `<link rel="manifest"
+href=`, not `<link rel="manifest"`. `{--htint:` and `;--hbg:`, not the bare token. A CSS
+declaration and an HTML attribute both have punctuation a sentence does not.
+
+⚠️ Also: **`--marker '--htint'` is unusable** — argparse reads a leading `--` as a flag and dies
+with *"expected one argument"*. `--marker='{--htint:'` is the form that works, and it is the
+better marker anyway for the reason above.
+
+**No SQL. No API change.**
+
 ## Build 1087 — the Landing stops wearing the last portal you used
 
 Theo, with a screenshot: *"Logged in to insurance header"*, then, when I had gone after the

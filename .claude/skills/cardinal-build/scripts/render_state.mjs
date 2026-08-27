@@ -29,7 +29,11 @@ const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: VW, height: VH } });
 for (const f of ['sentinel_setup_cardinal.js', 'e2e_mock_supa.js'])
   await p.addInitScript(readFileSync(S + f, 'utf8'));
-await p.goto('file://' + process.cwd() + '/' + FILE, { waitUntil: 'domcontentloaded' });
+/* ⚠ an ABSOLUTE path must not be prefixed with cwd. Negative-control trees live
+   outside the repo, so the naive join builds `/repo//tmp/...` and fails as
+   ERR_FILE_NOT_FOUND — which reads like a missing artifact, not a bad join. */
+await p.goto('file://' + (FILE.startsWith('/') ? FILE : process.cwd() + '/' + FILE),
+             { waitUntil: 'domcontentloaded' });
 await p.waitForTimeout(2500);
 /* ⚠ THIS APP HAS TWO INDEPENDENT THEME SWITCHES AND THEY COVER DIFFERENT
    SURFACES. Passing 'light' to a --ct-* screen (Insurance Clients, Cardinal

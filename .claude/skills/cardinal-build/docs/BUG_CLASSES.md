@@ -46,6 +46,60 @@
 
 ---
 
+
+## 75 — your OWN new comment is part of the file you are counting
+
+**FIVE times in five consecutive builds (1085, 1086, 1088 ×2, 1089), a self-verification
+assertion failed a CORRECT patch because the comment the same build ADDED contained the
+token being counted.**
+
+| build | the assertion | what it counted |
+|---|---|---|
+| 1085 | `count('ljChipStrip') == 0` | the comment naming the function it had just deleted |
+| 1086 | `count('class=\"cr-ic-chipwrap')` | a JS-style escape that never appears in the HTML |
+| 1088 | `count('<link rel="manifest"') == 1` | the comment saying *"Two `<link rel="manifest">` is invalid"* |
+| 1088 | `count('--hbg:') == 6` | **the comment explaining this very trap** |
+| 1089 | `count(<the bottom-nav rule>) == 1` | **its own comment, quoting that rule verbatim as documentation** |
+
+⚠️ **1089 is the variant the rule above does NOT cover, so read it before trusting the
+remedy.** Its assertion was already on a full CSS declaration *block* — punctuation and all,
+exactly what "a form prose cannot imitate" prescribes — and it still failed, because the
+comment did not paraphrase the rule, it **reproduced it**. Quoting a declaration verbatim as
+documentation makes the comment indistinguishable from the code by any textual test.
+**Second half of the rule: a comment may NAME the tokens in a declaration, never reproduce
+the declaration.** 1089's comment now reads *"has carried bnbg #1a0e0d, bnbd #3d1512 and
+bnac #ff8a7a"* — same information, un-greppable as code.
+
+**The fourth is the one that settles the remedy.** That comment reads *"--htint, not --hbg:
+retail's ground is a gradient"* — the sentence warning about the counting trap contained
+`--hbg:` and sprang it. So the answer is not "be careful"; being careful is exactly what
+produced it.
+
+**THE RULE: assert on a form that prose cannot imitate.**
+
+| instead of | assert |
+|---|---|
+| `<link rel="manifest"` | `<link rel="manifest" href=` |
+| `--hbg:` | `;--hbg:` (or `{--htint:`) |
+| `ljChipStrip` | `function ljChipStrip` and `ljChipStrip('` |
+| a retyped copy of the edit | **the `NEW_*` variable the script actually spliced in** |
+
+An HTML attribute and a CSS declaration both carry punctuation a sentence does not. Better
+still, assert on the inserted string itself — `out.count(NEW_CSS) == 1` cannot drift from the
+edit, because it *is* the edit. That is CLAUDE.md's "prefer self-computing assertions", and
+this class is what happens every time it is not followed.
+
+⚠️ **Related, and it costs a round on its own: `--marker '--htint'` is unusable.**
+`check_build.py` uses argparse, which reads a leading `--` as a flag and dies with *"expected
+one argument"*. Use `--marker='{--htint:'` — which is the better marker anyway, for the reason
+above.
+
+⚠️ **And a probe can lie in the pessimistic direction, which is the kind you believe.** 1088's
+first two theme-color probes both reported "the fix does nothing": one poked
+`body.dataset.crmHead` and called `skin()`, which recomputes `crmHead()`, finds it unchanged and
+**early-returns**; the other drove real navigation but read immediately, and `skin()` is driven
+by an **observer, not called inline**. Drive the app the way the app drives itself, and wait.
+
 ## 12. A guard that exists, looks right, and can never once succeed (builds 567 · 569)
 
 **The most expensive class this project has found in one session.** Two functions repainted **on
