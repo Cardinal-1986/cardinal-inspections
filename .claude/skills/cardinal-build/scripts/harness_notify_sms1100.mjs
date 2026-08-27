@@ -49,9 +49,35 @@ ok(/if\(twSid && twTok && \(twMsgSvc \|\| twFrom\) && text\)\{/.test(src),
    'the send gate accepts a Messaging Service OR a From number');
 ok(/var twMsgSvc = process\.env\.TWILIO_MESSAGING_SERVICE_SID;/.test(src),
    'twMsgSvc is read from TWILIO_MESSAGING_SERVICE_SID');
-ok((src.match(/process\.env\.TWILIO_MESSAGING_SERVICE_SID \|\| process\.env\.TWILIO_FROM/g) || []).length === 2,
-   'both capability reports widened to (MESSAGING_SERVICE_SID || FROM)');
+/* 1102 — THE ASSERTION THAT FAILED TO CATCH THE REAL BUG, replaced.
+   It counted the two widened `process.env.*` reports and asserted exactly 2. That
+   passed while a THIRD site (the success-path report the in-app test button actually
+   reads, written with local vars `twSid && twTok && twFrom`) still demanded a bare
+   From number — so an account on a Messaging Service was told "not set up yet" while
+   the send gate was busy sending the text. A count is not a contract: assert the
+   CONTRACT over EVERY site, so a site I did not know about cannot hide. */
+const smsSites = src.split('\n').filter(l => /\bsms\s*:/.test(l) && /twSid|TWILIO_ACCOUNT_SID/.test(l));
+ok(smsSites.length >= 3, 'every sms capability report is accounted for (found ' + smsSites.length + ', floor 3)');
+ok(smsSites.every(l => /MESSAGING_SERVICE_SID|twMsgSvc/.test(l)),
+   'EVERY sms capability report accepts a Messaging Service — none requires a bare From');
+ok(/sms_error: smsErr \|\| undefined/.test(src),
+   'the response names an SMS error of its own instead of burying it in the shared detail field');
 ok(src.indexOf('module.exports') === -1, 'stays ESM (no module.exports — CI would fail otherwise)');
 
-console.log(fails ? ('\nHARNESS RED — ' + fails + ' failure(s)') : '\nHARNESS GREEN — MSID preferred, From fallback intact, gate + capability widened');
+/* ── 1102: the in-app test button must report the OUTCOME, not a capability guess ── */
+try {
+  const idx = fs.readFileSync(new URL('../../../../index.html', import.meta.url), 'utf8');
+  /* ASCII-only anchors on purpose: index.html stores non-ASCII as \u escapes
+     (✅, —), so an anchor typed with a literal em-dash or emoji matches
+     nothing. That mismatch failed this very check against correct code. */
+  const i = idx.indexOf("1102: report the OUTCOME first");
+  const blk = i === -1 ? '' : idx.slice(i, i + 900);
+  ok(blk !== '', 'the test-alert text branch carries its 1102 note');
+  ok(/if\(\(j\.texted \|\| 0\) > 0\) lines\.push\('\\u2705 Text sent'\);/.test(blk),
+     'a REAL send is reported first — a stale capability flag can no longer mask it');
+  ok(blk.indexOf("else if(j.sms_error)") !== -1, 'a real SMS error is named, not guessed at');
+  ok(blk.indexOf("j.texted") < blk.indexOf("!env.sms"), 'outcome is checked BEFORE the capability hint');
+} catch (e) { ok(false, 'index.html client report check threw: ' + e.message); }
+
+console.log(fails ? ('\nHARNESS RED — ' + fails + ' failure(s)') : '\nHARNESS GREEN — MSID preferred, From fallback intact, every capability site widened, report is outcome-first');
 process.exit(fails ? 1 : 0);

@@ -230,7 +230,13 @@ export default async function handler(req, res){
                                           : firstErr.msg)
             : (mailErr || smsErr || undefined),
       /* presence only — never the values */
-      env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey, sms: !!(twSid && twTok && twFrom) }
+      /* 1102: this is the report the in-app test button reads, and it was the ONE
+         sms capability site build 1100 missed — it still demanded twFrom, so an
+         account configured with a Messaging Service (and no bare From number)
+         reported "not set up yet" even while the send gate happily sent the text.
+         Mirror the send gate exactly: a Messaging Service OR a From number. */
+      sms_error: smsErr || undefined,
+      env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey, sms: !!(twSid && twTok && (twMsgSvc || twFrom)) }
     });
   }catch(err){
     res.status(200).json({ ok:false, error: String(err && err.message || err) });
