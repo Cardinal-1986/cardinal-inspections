@@ -38,6 +38,11 @@ async function requireSession(req, res){
     if(!who.ok){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
     const user = await who.json();
     if(!user || !user.email){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
+    /* 1103: hand the caller's own token back. The SMS phone lookup needs it —
+       team_profiles' only SELECT policy is roles={authenticated} using=is_staff(),
+       so a query sent with the publishable key arrives as `anon`, matches no
+       policy, and RLS returns an EMPTY ARRAY rather than an error. */
+    user._token = token;
     return user;
   }catch(e){
     res.status(401).json({ ok:false, error:'Could not verify session' });
@@ -62,7 +67,8 @@ function normPhone(p){
 
 export default async function handler(req, res){
   if(req.method !== 'POST'){ res.status(405).json({ ok:false, error:'POST only' }); return; }
-  if(!(await requireSession(req, res))) return;
+  const _caller = await requireSession(req, res);
+  if(!_caller) return;
   let webpush;
   try{
     webpush = (await import('web-push')).default;
@@ -186,12 +192,25 @@ export default async function handler(req, res){
       try{
         var pq = SUPA_URL + '/rest/v1/team_profiles?select=email,phone&email=in.(' +
           emails.map(function(e){ return '"' + e.replace(/"/g, '') + '"'; }).join(',') + ')';
-        var pfr = await fetch(pq, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } });
+        /* 1103: query as the SIGNED-IN CALLER, not as anon — see requireSession.
+           RLS then matches team_profiles_select (is_staff()) and returns the rows.
+           No service-role key and no RLS bypass: the person triggering the alert
+           is staff, and staff may read the directory. */
+        var _tok = (_caller && _caller._token) ? _caller._token : SUPA_KEY;
+        var pfr = await fetch(pq, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + _tok } });
         var profs = await pfr.json();
-        var phones = Array.isArray(profs)
-          ? profs.map(function(p){ return normPhone(p.phone); }).filter(Boolean)
-          : [];
-        phones = phones.filter(function(v, i){ return phones.indexOf(v) === i; });   /* de-dupe */
+        var phones = [];
+        if(!Array.isArray(profs)){
+          /* a refused or errored lookup used to fall through as "no phones", which
+             reads as "add your mobile number" — blaming the user for a server fault. */
+          smsErr = 'team directory lookup failed: ' +
+            String((profs && (profs.message || profs.error)) || 'non-array response').slice(0, 90);
+        }else if(!profs.length){
+          smsErr = 'no Team Directory row was readable for the recipient(s) - check staff access';
+        }else{
+          phones = profs.map(function(p){ return normPhone(p.phone); }).filter(Boolean);
+          phones = phones.filter(function(v, i){ return phones.indexOf(v) === i; });   /* de-dupe */
+        }
         if(phones.length){
           var smsBody = ((title ? title + ': ' : '') + text).slice(0, 320);
           var twUrl = 'https://api.twilio.com/2010-04-01/Accounts/' + encodeURIComponent(twSid) + '/Messages.json';

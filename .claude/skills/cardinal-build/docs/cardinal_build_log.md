@@ -835,6 +835,78 @@ not a silent edit.
 
 ---
 
+## Build 1104 — 27 Aug 2026 — Shared screens all wear the Production header
+
+Theo, with screenshots: Settings came up **Community green** and the Team Directory came up
+**Production amber** in the same sitting — *"why does the header go to community and randomly change
+in other pages"*. App stamp 1102 → **1104** (1103 is the api-only SMS build, no stamp).
+
+**Not random — half-finished.** Build 979 pinned `punchView` and `teamView` to the production head
+because they belong to no CRM. Every *other* shared screen — Settings, My Profile, the Audit Log —
+still fell through to `stickyCrm()` and wore whichever portal was last used. Two screens of the same
+kind, two different answers, which is exactly what reads as random.
+
+**Theo's pick (27 Aug): the PRODUCTION head for all of them.** Offered neutral-steel vs. keep-and-
+label; he asked for Production, which is also the colour Team already had.
+
+**Extended the 979 mechanism rather than adding a second one.** The two 979 `if` blocks are folded
+into ONE list — `SHARED_HEAD_1104 = ['punchView','teamView','settingsView','profileView','auditView']`
+— so there is exactly one place that answers "which shared screens wear the production head", instead
+of five stacked ifs. Every id carries an inline `display:none` in the markup (**verified for all five**
+— that is what makes the `style.display !== 'none'` test correct on first paint).
+
+**Precedence and scope are unchanged:** still the LAST guard, so `projopen` and a real CRM view both
+outrank it; and it moves the **head only** — `data-crm` stays put, per the 754 line that grounds and
+module gates never follow the portal.
+
+⚠️ **Two colour claims in this session were WRONG because I quoted doc prose instead of resolving the
+tokens, and Theo corrected both.** For the record, measured from the file: retail head `#1a1215` +
+red accent; **insurance `#1a0e0d` + red** (`--ct-head-bg:#CE0E18`) — CLAUDE.md's "Aurora teal" is
+stale; community `#047857` + mint; production `#181b20` + amber `#f5a623`; sales `#1a1310` + steel
+blue. **Resolve the variable, never quote the prose.**
+
+Gate: `check_build` green (stamp 1102→1104, negative control clean) + `render_head1104.mjs`, a real
+Chromium drive that stands in community AND insurance, opens each of the five screens, and reads
+`CardinalHeader.crmHead()` — plus a control that the head is not production with nothing open, that
+`data-crm` never moves, and that `projopen` still wins. GREEN on 1104, **RED (6) on 1103** — the six
+being Settings/Profile/Audit under both portals. ⚠️ Two harness faults caught first, both mine:
+`crmHead` is module-private (must go through `window.CardinalHeader`), and `show()` runs
+`hideAllViews()` which clears `projopen`, so the precedence check passed **vacuously** until the
+class was set after the view.
+
+## Build 1103 — 27 Aug 2026 — The SMS phone lookup was running as `anon` (RLS returned nothing)
+
+`api/notify.js` only — no `index.html` change, so **no app-stamp bump** (out-of-index build, like
+1100). Reported as "still doesn't work, my number is in" — and the label had *moved* from "not set
+up yet" to "add your mobile number", which is what localised it: 1102 proved Twilio was configured,
+so the send loop was finding **zero phones**.
+
+**Root cause, measured against production.** `team_profiles`' only SELECT policy is
+`roles={authenticated} using=is_staff()`. The route queried it with the **publishable (anon) key**,
+so the request arrived as role `anon`, matched no policy, and **RLS returned an EMPTY ARRAY — not an
+error**. `phones` came back empty, nothing sent, and the honest-looking message blamed the user for
+a missing number that was in the table all along (verified: theo@ has a 13-char phone). Latent since
+874: SMS had never actually been configured before today, so it had never once run this path.
+
+**Fix — no RLS bypass, no new env var.** `requireSession()` already extracts the caller's bearer
+token; it now hands it back, and the lookup sends **the caller's token** instead of the anon key. RLS
+then matches `team_profiles_select`, because `is_staff()` is simply "your JWT email is in
+team_profiles" — true for every signed-in staff member, so multi-recipient alerts work too. A
+service-role key was the alternative and was rejected: it bypasses RLS and needs an env var Theo
+would have had to set.
+
+⚠️ **And the silence is fixed, which is the more important half.** A non-array (refused/errored)
+lookup and an empty result both used to fall through as "no phones" — indistinguishable from a user
+who never entered a number. Each now sets its own `smsErr`, so the test line names the real cause.
+
+⚠️ **`push_subs` is still read with the anon key and push works**, so that table is anon-readable
+where `team_profiles` is not. Left alone deliberately (out of scope), but it is the inconsistency
+that made this bug survive: two tables, two access models, one key.
+
+Gate: `node --check` + `harness_notify_sms1100.mjs` extended — asserts the caller token reaches the
+lookup, both silent paths now report, and the old `Array.isArray` fall-through is gone. GREEN on
+1103, **RED (7) on the shipped 1102 code**.
+
 ## Build 1102 — 27 Aug 2026 — The SMS capability report stops lying (my 1100 regression)
 
 **This is a defect I introduced at 1100 and it cost Theo a long round-trip.** Reported as
