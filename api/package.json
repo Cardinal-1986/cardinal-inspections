@@ -5,6 +5,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
     "@supabase/supabase-js": "^2.39.0",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "stripe": "^22.0.0"
   }
 }
