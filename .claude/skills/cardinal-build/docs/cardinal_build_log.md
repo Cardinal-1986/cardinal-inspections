@@ -835,6 +835,43 @@ not a silent edit.
 
 ---
 
+## Build 1102 — 27 Aug 2026 — The SMS capability report stops lying (my 1100 regression)
+
+**This is a defect I introduced at 1100 and it cost Theo a long round-trip.** Reported as
+"redeployed, still says not set up." App stamp 1101 → **1102**; `index.html` + `api/notify.js`.
+
+**Root cause.** 1100 widened the SMS gate to accept a Messaging Service, and widened the two
+capability reports written as `process.env.TWILIO_*`. It **missed a third site** — the one in the
+success-path response, the only one the in-app test button actually reads — because it is written
+with the *local* variables: `sms: !!(twSid && twTok && twFrom)`. On an account configured with a
+Messaging Service and **no** `TWILIO_FROM` (exactly Theo's, per the approved A2P campaign), that
+reports `sms:false` forever. Worse, the client checked `!env.sms` **first**, so the "not set up"
+line would print **even when the text had genuinely been sent** — `texted` was never consulted.
+
+**Why the gate did not catch it — the lesson, not the excuse.** `harness_notify_sms1100.mjs`
+asserted `…length === 2` on the widened pattern. There were exactly 2 widened sites, so it passed
+— while the third, differently-spelled site sat untouched. **A count is not a contract.** The
+assertion is replaced with a universal one over every site (`smsSites.every(...)` plus a floor of
+3), so a site nobody knew about cannot hide. Same family as CLAUDE.md's "scope the assertion" and
+"a check that cannot fail is worse than no check."
+
+**Fixes.** (1) `api/notify.js` — the third report mirrors the send gate: `(twMsgSvc || twFrom)`.
+(2) `api/notify.js` — response gains `sms_error`, so a real failure is named instead of buried in
+the shared `detail`. (3) `index.html` — the test line reports the **outcome first**: a real send
+outranks any capability guess, then a named error, then "not set up". A stale flag can never again
+mask a text that went out.
+
+⚠️ **Also worth knowing, and NOT a bug:** the phone the SMS path uses comes from **`team_profiles`**
+(the Team Directory), not from the phone field on My Profile — that one writes only to auth
+metadata. Verified in production: all staff but `audit@` and `jerry@` have a phone in
+`team_profiles`, theo@ included, so the lookup was never the blocker here.
+
+Gate: `check_build` green (stamp 1101→1102, negative control clean) + `harness_notify_sms1100.mjs`,
+now covering both files — GREEN on 1102, **RED (2) on the shipped 1101 code**, which is the
+regression reproduced. ⚠️ Its index.html anchors are **ASCII-only on purpose**: the file stores
+non-ASCII as `\u` escapes, and an anchor typed with a literal em-dash/emoji matched nothing and
+failed the check against correct code.
+
 ## Build 1101 — 27 Aug 2026 — Landing hub no longer traps every menu screen
 
 Reported by Theo: "My Profile takes me back to landing." **Reproduced in Chromium**, root-caused,
