@@ -835,6 +835,109 @@ not a silent edit.
 
 ---
 
+## Build 1094 — 27 Aug 2026 — Community estimates count, and its tap, match the quote
+
+Theo, on Bonita Wilburn's Community card: *"Where is the bid number coming from?? I don't
+see any estimates."* The header read **$16,360 QUOTED** while the Job Menu's **Estimates**
+tile read **0**, and tapping that tile opened the empty estimate builder. He picked
+option 2 — fix the count **and** the tap.
+
+**Why 0.** The tile (`dbEstN`) counts the estimates TABLE — builder documents (build 780).
+Bonita's $16,360 is priced on the **bid form**: a typed `checklist.lead.bid_amount`, not a
+table row. So the count was honestly 0 for a job that plainly has an estimate — the thread
+even says *"Priced at $16,360 on the bid form — not in the estimate builder."*
+
+**Two surgical edits, retail/insurance untouched:**
+
+1. **Count** (main block, the `dbEstN` async fill). A `_commEst` wrapper: a Community client
+   whose builder count is 0 but which has a priced estimate — `commBidAmount(pr,null).amt > 0`,
+   the **same logic the header's "QUOTED" uses**, covering typed / awarded / submitted —
+   counts as 1. Gated by `isCommunityClient(pr)` and only when there are no builder rows, so
+   no other CRM is affected and a job with real builder docs is never double-counted. The
+   Community mirror (`syncJobMenu`) scrapes this tile's text, so the visible button follows.
+
+2. **Tap** (cr-cc `syncJobMenu` onclick). The Community user taps a *mirrored* button whose
+   handler re-clicks the hidden source tile → `showTab('estimates')` → `suspendForTab()` →
+   the empty builder. A `data-jm==='estimates'` special-case now switches THIS card to its
+   Estimate tab (`tab='bid'; render()`) and scrolls to the top, so the tap lands on the
+   priced estimate in place. Same shape as the `pay` special-case already one branch above.
+
+**Why the mirror follows.** `syncJobMenu` scrapes `dbEstN`'s `.jan` text; the Bonita
+screenshot proves it already reflects the *resolved* async count (it showed 0, not the "…"
+placeholder). This build changes the value that fill computes, not the timing, so the
+mirror shows the new number by the same proven path.
+
+### Gates
+- `check_build.py` **GREEN** 1093 → 1094 (marker = the tap branch; negative control clean);
+  patch **byte-reproducible** (re-applied to a clean 1093 tree, `cmp` equal).
+- **Functional harness** (`harness_commest1094.js`): executes the **shipped** `commBidAmount`
+  (brace-matched verbatim) and the **shipped** `_commEst` decision against real project shapes
+  — typed / awarded / submitted / none / retail — and structurally proves the tap branch sets
+  `tab='bid'`, renders, and precedes the generic `b.click()`. **GREEN** on 1094, **RED (6)** on
+  the 1093 base, so the control has been seen to fail.
+- **Sentinel:** not a blocker — this is a wiring build (count text + tap behaviour), not
+  colour/theme/layout — and its `cardinal` setup opens the *retail* profile, never the
+  Community client page, so it does not reach this surface. The count is a single-glyph text
+  change (no layout shift); the tap is behavioural. Theo's eyes are the final gate on the tab
+  jump.
+
+No SQL. `index.html` + build-log entry.
+
+---
+
+## Build 1093 — 27 Aug 2026 — Community: the address under the map is readable again
+
+Theo, one screenshot of a Community client's Location card: *"Can't read the text."* The
+street address under the map — "3800 klepinger rd dayton ohio46416" — was a dark
+desaturated green on the near-black community card, **1.27:1**, effectively invisible.
+
+**The element is `.dbaddr` (the address UNDER the Leaflet map), not `.locaddr`.** A first
+pass this build mistook the two — `.locaddr` is the base-profile location ROW and is not
+even shown on the community client page — and would have shipped **inert**. Reading the
+actual screenshot settled which element it was; the render harness could not, because it
+grounds these transparent-over-dark profile cards white in a headless walk. *A confident
+wrong element is exactly what "verify against the real shape" is for.*
+
+**Root cause — a partial pass, the 637/702 pattern spelled out in the comment beside the
+rule.** Build 702 chose `#1a2a1e` (a dark green) for community `.dbaddr` **because the
+community card was then `#fffdf7` cream**, on which a dark ink is right. The 700–712 arc
+ported Community to the **black card** (`--ccm-ground #0e100f`). The ground moved cream →
+near-black; this one ink did not follow. Dark green on near-black is what the screenshot
+shows.
+
+**The fix was already one line above the bug.** Line 54131 declared
+`body[data-crm="community"] .dbaddr{color:var(--ccm-ink,#f2f4f3)}` — the correct community
+near-white ink — but the later, equal-specificity rule 54146 (`{color:#1a2a1e}`) overrode
+it. So this is **deletion-at-source**, not another override layer: widen 54131 to both
+community selectors (`claim-community` + `data-crm="community"`), and delete 54146. One
+community `.dbaddr` rule remains, taking Community's own ink token, which flips if Community
+ever gains a light twin — it cannot strand again the way a literal did.
+
+Measured against the real ground `#0e100f` (community card is transparent; page ground):
+**`.dbaddr` 1.27:1 → 17.29:1** (and ≥14.5:1 even if the card were `--ccm-card`/`--ccm-raise`).
+Retail (`#1e2432` / white via 76246) and insurance (`--ct-ink`) `.dbaddr` are governed by
+rules this build does not touch — asserted intact.
+
+### Gates
+- `check_build.py` **GREEN** 1092 → 1093; 126 inline blocks parse; **byte-reproducible**
+  (re-applied to a clean 1092 tree, `cmp` equal).
+- **Colour proof is the direct WCAG computation against the real ground**, corroborating
+  the screenshot — *not* the synthetic-DOM render, which grounds every dark profile card
+  white (it reports even retail-dark, which ships fine, as 1.00:1) and so cannot gate this
+  element without a full app boot. Stated plainly rather than dressed as a green render.
+- **Sentinel not run as a gate here, and why:** its `cardinal` setup's `client` state opens
+  the *retail* profile, never the community client page, so it does not reach this element;
+  and its INK probe derives the composited ground the same synthetic way the render fails
+  at. A note, per the Gate 0 rule, not a silent skip. Theo's eyes are the final gate.
+- Structural: stale `#1a2a1e` gone from the file (was a one-off), `.dbaddr` 8 → 7, the
+  trailing `.cr-pp-item` rule intact.
+
+**BUG_CLASSES:** the recurring light-ink-on-dark class (INK), in its "the ground moved, the
+ink stayed" form — and a fresh reminder of the mislabeled-element trap: the screenshot named
+the element, the harness named the wrong one.
+
+---
+
 ## Build 1092 — 27 Aug 2026 — Community stats become a card per partner, with a real door
 
 First layout build of the Community clean-up Theo steered (1091 was the rename). He
