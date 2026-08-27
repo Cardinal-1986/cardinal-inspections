@@ -835,6 +835,37 @@ not a silent edit.
 
 ---
 
+## Build 1092 — 27 Aug 2026 — Community stats become a card per partner, with a real door
+
+First layout build of the Community clean-up Theo steered (1091 was the rename). He
+approved the mockup shape and said "start the stats page." Community Analytics
+(`cr-can`) now shows **one card per partner, Habitat first** — open estimates,
+out-for-pricing, awarded, win rate, an oldest-open aging pill, and **tarps up** (his
+aging-tarp worry: `tarped_at` set on a job that is not Completed/Invoiced/Closed).
+The summary strip is Out for pricing / Awarded / Win rate / Tarps up. A **chart button
+in the hub tab strip** opens it, reusing the existing `data-go="analytics"` handler —
+the button was MOVED out of the buried Tools list, not duplicated.
+
+REUSE, not reinvent: Habitat-first is the same `/habitat/i` test cr-cpartners uses
+(973); the door reuses the existing handler; every card ink is an existing `--ccm-*`
+token (contrast inherited — computed on #161918: name 16.0, --ccm-mute labels 6.8,
+green 9.2, pills 8.8/5.1/7.3, all clear 4.5); `pcolor()` name-matches the four
+documented partner colours (Habitat green, DHRN blue, Community Action yellow, Rebuild
+pink) for the 4px card edge only, which is decoration and carries no floor. Tarps read
+from `ck(p).lead.tarped_at` — the same source the client page reads, no new field. No
+figures were invented — the same numbers `compute()` always produced, grouped by
+partner. `compute()` and `render()` were replaced whole (brace-matched) because the
+change threads through both.
+
+Gates: `check_build.py` green (marker `class="pcard"`, negative control clean); patch
+byte-reproducible; **seeded Chromium render** (13 fake community projects across 4
+partners) shows 4 cards Habitat-first, tarps 2/1, the "34d over" aging pill in coral,
+no side-scroll; a home render confirms the tab-strip door and the Tools-list removal.
+Sentinel: layout build, so it holds the merge until clean.
+
+⚠ Deliberately NOT in this build (next in the arc): card tap-through to that partner's
+estimates; stripping the home to one attention list (1b); the dedicated Tarps tab.
+
 ## Build 1091 — 27 Aug 2026 — Community speaks "estimate", not "bid"
 
 Theo, third time the Community CRM has felt confusing to him, asked whether "bids

@@ -129,6 +129,7 @@ Light desktop-wide layout replacing a 680px phone layout that had **zero media q
 - **Bids are editable** (356) — a pencil on each bid row opens the bid form pre-filled; `CardinalNewBid.edit(id)` opens it from anywhere.
 - Partner colour coding by name: Habitat green · Community Action yellow · Dayton Home Repair Network blue · Rebuild pink. **Colour is name-matched, not a stored field** — a new partner reads neutral until that's changed.
 - Modules: `cr-ch2` (home), `cr-cc` (client page), `cr-nbid`, `cr-cpartners`, `cr-cprop`, `cr-wo`, `cr-can`.
+- **Community Analytics (`cr-can`) is a CARD PER PARTNER (1092).** Habitat first (same `/habitat/i` rule as cr-cpartners), each card: open estimates, out-for-pricing, awarded, win rate, oldest-open aging pill, and **tarps up** (Theo's aging-tarp count — `tarped_at` set on an unfinished job). Summary strip: Out for pricing / Awarded / Win rate / Tarps up. Opened by a **chart button in the hub tab strip** (`.cc-analytics`, reuses the existing `data-go="analytics"` handler) — moved out of the Tools list. Every ink is a `--ccm-*` token; `pcolor()` name-matches the four documented partner colours for the 4px card edge only.
 
 ---
 
