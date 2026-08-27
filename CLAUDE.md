@@ -468,6 +468,26 @@ Then a **jsdom functional harness** on the changed surface. Recipe in `reference
 
 **Never commit on red. Never hand over with a failing check.**
 
+### ✅ SETTLED 27 Aug 2026 (Theo) — when the sentinel HOLDS a merge, and when it does not
+
+**Run `sentinel.js` on every build that touches a screen. Hold the merge for it only when
+the build is ABOUT colour, theme or layout.** Everything else — wiring, notifications, an
+`/api` route, a doc fix — merges on the other gates when they are green, and anything the
+sentinel finds is carried into the next build.
+
+He asked what it had actually caught before deciding. **Four real catches in ~156 builds
+(933 → 1089), and all four were colour/theme/layout builds:** 939 (my own 3.09:1 label,
+caught before it shipped, on the readability build), 959 (a layout rule that never won on
+any of the 30 elements it matched — every purpose-built assertion stayed green), 1064 (the
+photo editor's tool bar at 3.27:1, a screen used on a roof at midday), 1066 (the album's
+client name at 1.07:1 in light). That is the whole basis for the rule: it earns its
+15-minute hold exactly where it has ever paid.
+
+⚠️ **"Do not block" is NOT "do not run" and NOT "do not report."** Full write-up, with the
+costs that were put to him before he chose — a 1-in-40 signal rate on full sweeps, four of
+its own checks having been wrong, and its structural blindness to loading states and to
+anything one click past where its walk stops — is in the skill's Gate 0 section.
+
 ### CI also gates this — `.github/workflows/check.yml`
 
 Runs on every push to `main` and every PR. It is not a copy of `check_build.py`; it catches deploy-time failures that only Vercel would otherwise surface:

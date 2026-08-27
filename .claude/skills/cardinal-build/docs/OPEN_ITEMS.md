@@ -59,6 +59,30 @@ is a real option and a decision for Theo, not a tidy-up.
 
 ---
 
+## ✅ SETTLED 27 Aug 2026 (Theo) — the sentinel runs always, blocks selectively
+
+*"Do that."* — after being shown what it had actually caught, and what it costs.
+
+**Run it on every build that touches a screen. Hold the merge only for colour, theme or
+layout builds.** Anything else merges on the other gates; sentinel findings are carried
+into the next build. **Not a licence to skip it or to stay quiet about what it found.**
+
+**What he was shown, both columns.** Four real catches in ~156 builds — 939 (a 3.09:1
+label of mine, caught before it shipped, on the readability build), 959 (a layout rule
+inert on all 30 elements it matched, with every purpose-built assertion green), 1064 (the
+photo editor's tool bar at 3.27:1), 1066 (the album's client name at 1.07:1 in light).
+**All four were colour/theme/layout builds** — which is the rule. Against that: full
+sweeps run ~1 useful finding in 40; four of its own checks have been wrong (1035, 1066 ×2,
+1067) and one run miscounted its renders (1081); and it cannot see a loading state or
+anything past where its walk stops.
+
+⚠️ **Its record of being RUN is worse than its record of working.** Measured at the time
+of the decision: of the 29 build-log entries at or after 1060, **12 mention the sentinel
+and 17 do not.** The old rule said every screen build. The new rule is narrower on
+blocking precisely so the running half stops being optional.
+
+---
+
 ## ✅ CLOSED — the committed VAPID private key (build 1084, 26 Aug 2026)
 
 `api/notify.js` carried a VAPID private key as a literal fallback. **Not dormant** — with
