@@ -43,11 +43,19 @@ use it**: `body[data-crm-head="insurance"]{--bnbg:#1a0e0d;--bnbd:#3d1512;--bnac:
 (*"It was the retail crm with insurance header after I signed in"*), and I had inferred a
 colour question from the same screenshot. The Landing no longer claims to be in a portal.
 
-**What is still open here is only the COLOUR**, and it is a design call rather than a defect:
-Insurance is the one CRM head that pulls `--ct-*` (the Resource Library's *document* palette),
-so it is either solid `#CE0E18` or solid `#FFFFFF` depending on `cardinalRLTheme`, while every
-other portal has one designed dark chrome. Options 1/2 from 26 Aug still stand; renders in
-`heads_strip.png`. **No pick yet, and nothing is broken while it waits.**
+✅ **The colour half is CLOSED at 1089.** Theo was shown four rendered headers — now-dark,
+now-light, and two options — and picked **option 1**: the header takes the bottom nav's own
+`#1a0e0d` / `#ff8a7a`, so the two ends of the insurance screen finally agree. **Dark theme
+only**, because insurance is the one head that flips with `cardinalRLTheme` and he was told
+in writing that light was unchanged; the new tokens are declared in the siren block alone and
+the rule falls back to `--ct-head-*`, so light is untouched by construction — proved by two
+byte-identical light-mode renders.
+
+⚠️ **Deliberately NOT done, and it is the obvious next thought:** the bottom nav is
+`#1a0e0d` in BOTH themes, so in light mode a white header still sits above a near-black nav.
+That mismatch predates this work and was left alone rather than folded in silently. Flattening
+insurance to one theme-independent palette — which is what every other CRM head already does —
+is a real option and a decision for Theo, not a tidy-up.
 
 ---
 

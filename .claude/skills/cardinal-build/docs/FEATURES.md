@@ -7446,3 +7446,51 @@ sites; and **every `pt` size**, which is a print document (168 of them, smallest
 `gate_1081.mjs` holds the floor by walking **Chromium's own parsed CSSOM** rather than
 the file, so neither a comment nor a shorthand nor an ungenerated print stylesheet can
 move the number.
+
+---
+
+## The Insurance header's own chrome — `--ct-crmhead-*` (1089)
+
+**Where the insurance header's colours come from, and why it is the odd one out.**
+
+Every other CRM head declares a **flat, theme-independent palette** in
+`body[data-crm-head="…"] .site` — retail a steel gradient, community `#047857`, production
+`#181b20`, sales `#1a1310`. **Insurance alone maps itself through `--ct-head-*`**, the
+`--ct-` system's header tokens, which `docket`/`siren` swap (407, deliberate — the toggle
+lives in the header). So insurance has always had *two* identities, switched by
+`cardinalRLTheme`.
+
+**1089 gave it its own dark chrome without giving up that flip.** Theo picked it from a
+rendered pair:
+
+| token | siren (dark) | docket (light) |
+|---|---|---|
+| `--ct-crmhead-bg` | `#1a0e0d` | *undeclared* → falls back to `--ct-head-bg` (`#FFFFFF`) |
+| `--ct-crmhead-kick` | `#ff8a7a` | ” → `--ct-head-kick` (`#C4180F`) |
+| `--ct-crmhead-line` | `#3d1512` | ” → `--ct-head-line` |
+| `--ct-crmhead-ink` | `#FFFFFF` | ” → `--ct-head-ink` |
+| `--ct-crmhead-dim` | `rgba(255,255,255,.72)` | ” → `--ct-head-dim` |
+| `--ct-crmhead-surface` | `#241412` | ” → `--ct-surface` |
+
+Those are the **bottom nav's** values (`--bnbg` / `--bnbd` / `--bnac`), so the top and bottom
+of an insurance screen now match. No colour was invented.
+
+⚠️ **The docket column is empty ON PURPOSE — that is the mechanism, not an unfinished pass.**
+The rule reads `var(--ct-crmhead-x, var(--ct-head-x))`, so light mode is untouched *by
+construction*: there is no light value to drift. **Adding one flips light mode** and is a
+decision for Theo, not a tidy-up. (Contrast with `--occ-*`, which is single-theme for a
+different reason — there the surface has no light design at all.)
+
+⚠️ **Do NOT "simplify" this by retuning `--ct-head-*` at source.** Those also paint the
+Resource Library's book header — `#resourceLibraryView .ins-header / .ins-title / .ins-hbtn`.
+That header reads `display:none` and looks dead, but
+`body.rl-at-book #resourceLibraryView .ins-header{display:flex}` brings it back while a book
+is open.
+
+⚠️ **`--hac` is the `+` button, NOT the title.** `#brandTitle h1` declares
+`color:var(--hac,…)` and another rule wins: Chromium computes the title's `color` **and**
+`-webkit-text-fill-color` as `--hin`. Read it with `probe_head_ink.mjs`, which reports both
+for any build × either theme, rather than trusting the declaration you can see.
+
+**`--tgrad` is dead in all six heads** — zero `var(--tgrad)` consumers since 685 removed
+gradient text. Left in place; retiring it is its own build.
