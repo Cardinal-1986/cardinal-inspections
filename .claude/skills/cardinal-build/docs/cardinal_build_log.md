@@ -835,6 +835,45 @@ not a silent edit.
 
 ---
 
+## Build 1104 — 27 Aug 2026 — Shared screens all wear the Production header
+
+Theo, with screenshots: Settings came up **Community green** and the Team Directory came up
+**Production amber** in the same sitting — *"why does the header go to community and randomly change
+in other pages"*. App stamp 1102 → **1104** (1103 is the api-only SMS build, no stamp).
+
+**Not random — half-finished.** Build 979 pinned `punchView` and `teamView` to the production head
+because they belong to no CRM. Every *other* shared screen — Settings, My Profile, the Audit Log —
+still fell through to `stickyCrm()` and wore whichever portal was last used. Two screens of the same
+kind, two different answers, which is exactly what reads as random.
+
+**Theo's pick (27 Aug): the PRODUCTION head for all of them.** Offered neutral-steel vs. keep-and-
+label; he asked for Production, which is also the colour Team already had.
+
+**Extended the 979 mechanism rather than adding a second one.** The two 979 `if` blocks are folded
+into ONE list — `SHARED_HEAD_1104 = ['punchView','teamView','settingsView','profileView','auditView']`
+— so there is exactly one place that answers "which shared screens wear the production head", instead
+of five stacked ifs. Every id carries an inline `display:none` in the markup (**verified for all five**
+— that is what makes the `style.display !== 'none'` test correct on first paint).
+
+**Precedence and scope are unchanged:** still the LAST guard, so `projopen` and a real CRM view both
+outrank it; and it moves the **head only** — `data-crm` stays put, per the 754 line that grounds and
+module gates never follow the portal.
+
+⚠️ **Two colour claims in this session were WRONG because I quoted doc prose instead of resolving the
+tokens, and Theo corrected both.** For the record, measured from the file: retail head `#1a1215` +
+red accent; **insurance `#1a0e0d` + red** (`--ct-head-bg:#CE0E18`) — CLAUDE.md's "Aurora teal" is
+stale; community `#047857` + mint; production `#181b20` + amber `#f5a623`; sales `#1a1310` + steel
+blue. **Resolve the variable, never quote the prose.**
+
+Gate: `check_build` green (stamp 1102→1104, negative control clean) + `render_head1104.mjs`, a real
+Chromium drive that stands in community AND insurance, opens each of the five screens, and reads
+`CardinalHeader.crmHead()` — plus a control that the head is not production with nothing open, that
+`data-crm` never moves, and that `projopen` still wins. GREEN on 1104, **RED (6) on 1103** — the six
+being Settings/Profile/Audit under both portals. ⚠️ Two harness faults caught first, both mine:
+`crmHead` is module-private (must go through `window.CardinalHeader`), and `show()` runs
+`hideAllViews()` which clears `projopen`, so the precedence check passed **vacuously** until the
+class was set after the view.
+
 ## Build 1103 — 27 Aug 2026 — The SMS phone lookup was running as `anon` (RLS returned nothing)
 
 `api/notify.js` only — no `index.html` change, so **no app-stamp bump** (out-of-index build, like

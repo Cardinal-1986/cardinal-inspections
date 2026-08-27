@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1102 &#8212; The &#8220;Send a test alert to myself&#8221; button was reporting &#8220;Text: not set up yet&#8221; even when the text messaging was set up correctly &#8212; and even when the text had actually gone out. One leftover check still insisted on an old-style sender phone number, so an account sending through a Messaging Service was always told it was unconfigured. That check now matches how texts are really sent, and the test result reports what ACTUALLY happened: if a text went out it says so, if it failed it names the reason, and only if nothing is configured does it say so. Texting itself was never broken by this &#8212; only the message about it.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1104 &#8212; Settings, My Profile and the Audit Log stop changing colour on you. The header used to follow whichever portal you were last in, so the same Settings screen came up Community green one minute and something else the next &#8212; while Team already came up in the Production header. Those screens belong to no single CRM, so they now ALL wear the Production header, every time. A portal colour now means you are actually in that portal. Nothing about the portals themselves changed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41853,6 +41853,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1104, d:'2026-08-27', t:'Shared screens keep one header instead of changing colour', s:'Settings, My Profile and the Audit Log used to wear whichever portal header you were last in &mdash; so Settings came up <b>Community green</b> in one sitting while the Team Directory came up <b>Production amber</b>, which read as the header changing at random. It was not random: Team and Punch &amp; Repairs had already been pinned to the Production header, and every other shared screen still followed the last portal you touched. These screens belong to no single CRM, so they now all wear the <b>Production header</b>. From here a portal colour means you are actually standing in that portal. The portals themselves, and the screens that genuinely belong to one, are unchanged.' },
 { b:1102, d:'2026-08-27', t:'The test alert stops lying about text messages', s:'&ldquo;Send a test alert to myself&rdquo; kept reporting <b>&ldquo;Text: not set up yet&rdquo;</b> on a correctly configured account &mdash; and would have said it even when the text really did go out. Cardinal now sends texts through a Twilio <b>Messaging Service</b> (so they ride the approved carrier campaign), but one leftover check still demanded the old-style single sender phone number, and that check was the one the test button read. It now matches how texts are actually sent. The result line also reports what <b>actually happened</b> instead of guessing: a text that went out says so, a text that failed names the reason, and only a genuinely unconfigured account is told to add keys. Sending was never broken by this &mdash; only the message about it.' },
 { b:1101, d:'2026-08-27', t:'My Profile opens from the landing hub again', s:'Opening <b>My Profile</b> from the landing/portal hub (Menu &rarr; Settings &rarr; My Profile) sent you straight back to the landing page. The profile screen actually opened underneath, but the landing screen has a full-page background that stayed painted on top, so it hid whatever you opened. The landing screen was the one full-screen view the app never cleared when navigating away from it, so this hit every menu screen opened from the hub &mdash; My Profile, Settings, Team, Clients &mdash; not just profile. The app now clears the landing screen whenever it opens another screen. The way you get TO landing (the logo, the Landing menu item) is unchanged.' },
 { b:1099, d:'2026-08-27', t:'Cleaner, sign-ready estimate proposals', s:'The client-facing estimate now prints and shares as a polished proposal. Every scope <b>section</b> gets a clean banner, line items carry a subtle alternating shade for readability, and page breaks are controlled so the totals, deposit box and signature block never split across a page in the PDF. The document closes with an <b>Acceptance &amp; Authorization</b> card &mdash; contract total, deposit due at signing, and balance at completion, right above the signature lines. In the preview you can hide the per-section subtotals for a simpler one-number quote.' },
@@ -60813,10 +60814,28 @@ if(document.body.classList.contains('projopen')) return 'retail';
    lists items from all three), so a production-tinted PAGE ground would be
    a lie. 754 drew that line deliberately: grounds and module gates do not
    follow the portal, only the header does. */
-var pv979 = document.getElementById('punchView');
-if(pv979 && pv979.style.display !== 'none') return 'production';
-var tv979 = document.getElementById('teamView');
-if(tv979 && tv979.style.display !== 'none') return 'production';
+/* 1104: Theo, with screenshots: Settings came up Community green and Team came
+   up Production amber in the same sitting — "why does the header go to community
+   and randomly change". It was not random: 979 named punch + team, so those two
+   wore production, and every other shared screen still fell through to
+   stickyCrm() and wore whichever portal was last used. Settings, My Profile and
+   the Audit Log are the same KIND of screen as the two 979 named — they belong
+   to no CRM — so they join the same list rather than getting a second mechanism
+   beside it. Theo's pick, 27 Aug: the PRODUCTION head for all of them.
+
+   ONE list, not five stacked ifs: the 979 pair is folded in here, so there is
+   exactly one place that answers "which shared screens wear the production
+   head". Every id below carries an inline display:none in the markup (verified
+   for all five), which is what makes the display test correct on first paint.
+
+   Still the LAST guard: projopen and a real CRM view both outrank it, and it
+   moves the HEAD only — data-crm stays 'retail', per the 754 line that grounds
+   and module gates never follow the portal. */
+var SHARED_HEAD_1104 = ['punchView','teamView','settingsView','profileView','auditView'];
+for(var i1104 = 0; i1104 < SHARED_HEAD_1104.length; i1104++){
+  var el1104 = document.getElementById(SHARED_HEAD_1104[i1104]);
+  if(el1104 && el1104.style.display !== 'none') return 'production';
+}
 /* 1087: THE LANDING IS THE PORTAL PICKER, so it cannot be inside a portal.
    Theo, with a screenshot: "It was the retail crm with insurance header after I
    signed in." Reproduced at the entry point he named — showMain(email), the
