@@ -1448,8 +1448,23 @@ server-generated. Theo chose **"Neither — leave as-is"** on 17 Aug. If revisit
 **OPEN — notification channels are code-complete but need CONFIG (Theo's side, not code):**
 - **Email 403** — Resend domain `cardinalrenovations.net` is **"Not Started"**. Verify the domain
   (add its DNS records → Verify) and set `DIGEST_FROM` at that domain in Vercel. No code fix exists.
-- **SMS (874) not live** — needs `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM` in Vercel,
-  **A2P 10DLC** approval (Business Profile, in progress), and staff **phones in the Team Directory**.
+- ~~**SMS (874) not live**~~ — ✅ **CLOSED 27 Aug 2026, verified on Theo's phone: "Text sent".**
+  A2P 10DLC campaign approved; `TWILIO_MESSAGING_SERVICE_SID` (1100) rides it;
+  `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN` set in **`cardinal-inspections` → Production**.
+  ⚠️ **It took builds 1100–1106 and the last one is the lesson: the final blocker was an
+  invisible newline pasted into a Vercel env var.** Twilio answers that with the same
+  `20003 / Authenticate` as a genuinely wrong key, so two careful re-copies and two redeploys
+  changed nothing. 1106 trims all four `TWILIO_*` values on read and, on a 20003, reports each
+  credential's *shape* (stray whitespace / type prefix / length — never the value). Same keys,
+  no re-entry, working immediately after 1106 deployed.
+  **Standing rule: TRIM every credential read from an env var.** A pasted newline is invisible
+  in the Vercel UI, survives every re-copy, and produces an auth error indistinguishable from a
+  wrong secret.
+  ⚠️ **Also settled while chasing this:** `app.cardinalroster.com` is served by the
+  **`cardinal-inspections`** Vercel project — proved by env fingerprint via the public
+  `/api/ai-status`, not assumed. `cardinal-ap` has an entirely empty env and
+  `0d6e4079e367` has no production deployment (404); both build on every push and serve
+  nothing. Deleting them is unclaimed tidy-up.
 - **Verify with the 875 button:** Phone Notifications → "Send a test alert to myself" reads each
   channel's real status.
 

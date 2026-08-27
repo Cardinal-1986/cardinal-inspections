@@ -895,8 +895,26 @@ never an argument. `index.html` carries the stamp and one CHANGELOG entry; no be
   string would have been the weaker test; keeping the old one is what keeps the gate honest.
 - No SQL. `MIGRATIONS.md` unchanged.
 
-**Still Theo's, and now answerable in one screenshot:** if the next test still says 20003,
-the message itself names which credential is malformed and how.
+**✅ CONFIRMED THE SAME EVENING — the trim was the fix.** Theo ran the test on his phone
+straight after 1106 deployed and got all three channels green: *"Push sent to 2 devices ·
+Email sent · **Text sent**."* **The keys were never re-entered between the last 20003 and that
+success** — only 1106 landed — so one of them really was carrying a pasted newline. The whole
+1100–1106 arc, five builds, ends on a whitespace character.
+
+**The rule worth keeping, stated once:** **trim every credential read from an env var.** A
+pasted newline is invisible in the Vercel UI, survives every careful re-copy, and makes the
+provider answer with an auth error **byte-identical to a genuinely wrong secret** — so the
+error text sends you to re-check the thing that is already correct. That is why two redeploys
+changed nothing and why "check the keys" was the wrong instruction three times running.
+
+**A second thing settled here, by measurement rather than assumption.** Chasing a
+wrong-Vercel-project theory, the three projects that build this repo were fingerprinted through
+the public `/api/ai-status`: `app.cardinalroster.com` and `cardinal-inspections.vercel.app`
+report an identical env (gemini/openai/supabase/anthropic all live), `cardinal-ap.vercel.app`
+reports **every key empty**, and `0d6e4079e367.vercel.app` **404s with no production
+deployment**. So **`app.cardinalroster.com` is served by `cardinal-inspections`** — recorded
+because it had never been written down, and because the theory it killed was mine. The other
+two projects build on every push and serve nothing.
 
 ## Build 1105 — 27 Aug 2026 — A failed test text says what went wrong, readably
 
