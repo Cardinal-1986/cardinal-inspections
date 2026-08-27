@@ -835,6 +835,67 @@ not a silent edit.
 
 ---
 
+## Build 1097 — 27 Aug 2026 — Line items organize into named sections
+
+Theo's Batch 2, second half. Line items now group into titled sections so a big roof
+reads like a real scope of work — in the editor, in the client proposal, and on the
+Community bid sheet.
+
+**The model rides the existing jsonb — NO migration.** Each line optionally carries
+`section_id` (stable `sc_…`) and `sec` (title, denormalized onto the line so the proposal
+reads it straight off). `save()`/`currentState()` strip only `_lid`, so both keys persist in
+`line_items` with no schema change. Grouping is by **first appearance** of `section_id`;
+ungrouped lines (legacy + simple quotes) collect under one implicit **General Scope** group
+(id `''`). **A single ungrouped group renders flat with no banner** — every pre-1097 estimate
+and every two-line quick quote reads byte-for-byte as before. Collapse is UI-only (`secCollapsed`,
+keyed by the unique section id — never bleeds between estimates, like `estNavOpen`).
+
+**One model, three readers.** `estGroups()` is exported as `window.crEstGroups`; the editor
+(`renderLinesGrouped`), the proposal (`buildDocHtml`) and the Community sheet all group the same
+way, so the three can never disagree. Each consumer has a `typeof … === 'function'` fallback to a
+single group.
+
+**Editor.** Section header = a chevron (collapse), an editable title with a `<datalist>`
+autocomplete (Tear-Off & Decking, Primary Shingles, Ventilation & Flashing, Labor & Disposal), a
+**live subtotal badge** (repainted by `refreshTotals` as you type), ▲/▼ to move the whole block,
+and a per-section **+ Line**. A **+ Section** button sits in the items head; each line gets a
+**move-to-section `<select>`**. Mutations (`moveSection`, `renameSection`, `addLineToSection`,
+`addSection`, `moveLineToSection`) keep each section's lines contiguous in the flat array, so the
+existing line ▲/▼ still reorders within a section. `addLineAfter` (the 1096 Enter/Tab spawn) now
+inherits the section above it as well as the mode.
+
+**Proposal + Community sheet.** Each section prints as a banner row (`tr.sec-banner`, a Cardinal-red
+top divider, uppercase title) followed by its lines and a **per-section subtotal** row, before the
+grand-total block. The Community sheet gets a `.ln-sec` label row with its subtotal. Both keep the
+plain, banner-free layout when there is a single ungrouped list.
+
+**Look.** Porcelain-consistent `--est-*` tokens with literal fallbacks; the header carries a
+`border-left:3px solid var(--est-red)` accent. Inactive text is the readable slate-600 `--est-dim`
+(never slate-500, which fails 4.5:1 on porcelain).
+
+### Gates
+- `check_build.py` **GREEN** 1096 → 1097 (marker `cr-est-sechead`; negative control clean); patch
+  **byte-reproducible** (re-applied to a clean 1096 tree, `cmp` equal).
+- **`harness_estsec1097.js`** — executes the SHIPPED `estGroups`, `sectionSubtotal` and
+  `buildDocHtml` (brace-matched) against sectioned + ungrouped line sets: grouping order/membership,
+  mixed detailed+flat subtotals, the proposal's per-section banners and subtotals (Tear-Off = $2,500,
+  Shingles = $8,970), the single-ungrouped back-compat (no banners), and the per-line section select;
+  plus structural proofs of every mutation, the wiring, the Community grouping and the CSS. **GREEN on
+  1097, RED (no crash) on the 1096 tree.**
+- **`render_estsec1097.mjs`** — Chromium, both viewports + the real proposal document: the section
+  header controls all clear 4.5:1 on porcelain (title/subtotal/select 17:1, + Line 5.42:1, chevron/
+  General/+ Section 6.9–7.2:1), the accent bar is Cardinal red, and the **proposal banner** renders
+  legible (15.87:1 on cream) with the red divider. **GREEN on 1097, RED (4) on 1096.**
+- **No regression:** `render_estflat1096.mjs` and `render_estlight1095.mjs` both stay GREEN against
+  1097 — the per-line Detailed/Flat switch and the porcelain readability are intact. (The superseded
+  1096 *functional* harness reports two spelling-pinned reds — `renderLine` gained a `secs` param and
+  `addLineAfter` was restructured to also inherit the section — but the behavior is preserved and the
+  1097 harness covers the new shape. Assert the contract, not the spelling.)
+
+No SQL (`section_id` + `sec` ride the existing jsonb column). `index.html` + build-log entry.
+
+---
+
 ## Build 1096 — 27 Aug 2026 — Every estimate line gets its own Detailed / Flat switch
 
 Theo's Batch 2, first half: *"Seamless Detailed vs. Flat UX"* + *"Intuitive Keyboard Navigation"*.
