@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1093 &#8212; In Community, the street address under the map on a client&#8217;s Location card was a dark green left over from when that card was cream, so on the black card it was nearly invisible. It now uses Community&#8217;s own light text colour and reads clearly.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1094 &#8212; In Community, a job priced on the bid form now counts as one estimate instead of zero, and tapping the Estimates tile opens that priced estimate on the Estimate tab instead of an empty builder. The number and the tap now agree with the quote shown at the top of the card. Retail and insurance are unchanged.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12191,12 +12191,21 @@ function renderAcxOverview(){
       el.textContent = n;
       el.classList.toggle('zero', !n);
     };
+    /* 1094: a Community job priced on the bid form carries its estimate as a
+       typed amount (checklist.lead.bid_amount, or awarded/submitted) rather than
+       an estimates-table row, so this NAVIGATION count read 0 while the card
+       showed the quote. Count that one priced estimate — the same
+       commBidAmount() the header's "QUOTED" uses. isCommunityClient() gates it
+       and it only fills a zero, so retail/insurance and builder counts stand. */
+    var _commEst = function(n){
+      return (!n && isCommunityClient(pr) && commBidAmount(pr, null).amt > 0) ? 1 : n;
+    };
     var E = window.CardinalEstimates;
     if(E && typeof E.loadForProject === 'function'){
-      E.loadForProject(pr.id).then(function(rows){ _fill((rows || []).length); })
-       .catch(function(){ _fill(ests.length); });   /* fall back to the doc count */
+      E.loadForProject(pr.id).then(function(rows){ _fill(_commEst((rows || []).length)); })
+       .catch(function(){ _fill(_commEst(ests.length)); });   /* fall back to the doc count */
     }else{
-      _fill(ests.length);
+      _fill(_commEst(ests.length));
     }
   })();
   /* async: photo count + cover thumb */
@@ -41830,6 +41839,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1094, d:'2026-08-27', t:'Community estimates count, and its tap, match the quote', s:'You asked why a Community job showed a bid amount but the Estimates tile read 0. That tile counted estimates built in the estimate builder, and a job priced on the bid form has none &mdash; the price is typed straight onto the form. Now, in Community, a job with a priced estimate (typed, submitted or awarded) counts as one, and tapping the Estimates tile opens that estimate on the Estimate tab instead of dropping you into an empty builder. The count and the tap now agree with the amount shown at the top of the card. Retail and insurance are untouched.' },
 { b:1093, d:'2026-08-27', t:'Community: the address under the map is readable again', s:'Reported from a screenshot &mdash; on a Community client&rsquo;s Location card the street address printed under the map was a dark green, a colour picked back when that card was cream. Community moved to the black card a while ago and this one ink never followed, so it sat at about 1.2:1 and was effectively invisible. It now takes Community&rsquo;s own light text colour (about 15:1). One stale rule was removed rather than a stronger one piled on top, so the correct colour that was already defined a line above now wins.' },
 { b:1092, d:'2026-08-27', t:'Community stats become a card per partner, with a real button', s:'First of the Community clean-up you steered: the stats live on their own page, one card per community with Habitat first &mdash; open estimates, money out for pricing, awarded, win rate, the oldest estimate still waiting, and tarps up (the aging-tarp count you asked for, on any tarped job that is not finished). A chart button in the Community tab strip opens it; it is no longer buried in the Tools list. Nothing new was computed &mdash; the same figures, grouped by partner &mdash; and every colour is the community theme&rsquo;s own.' },
 { b:1091, d:'2026-08-27', t:'Community says &ldquo;estimate&rdquo; now, not &ldquo;bid&rdquo;', s:'You said the Community CRM was confusing and that the word &ldquo;bid&rdquo; might be part of it, so it now says &ldquo;estimate&rdquo; throughout: the Bids tab is Estimates, New Bid is New Estimate, the client page&rsquo;s Bid tab is Estimate, and the pipeline reads Estimate Requested then Estimate Submitted. The award side is deliberately unchanged &mdash; Awaiting Funding, Awarded and Not Awarded still describe what the funder decides, which reads right after an estimate. This is purely the words on screen; nothing in the data or the workflow changed, so every existing job keeps its place.' },
@@ -59724,6 +59734,16 @@ if(t.dataset.jm === 'pay'){
    #projectView for #paymentsView, and dbCloseTo() brings the black card back
    with the takeover intact. Suspending here would flash the cream page. */
 if(typeof window.openPaymentsPage === 'function') window.openPaymentsPage();
+return;
+}
+if(t.dataset.jm === 'estimates'){
+/* 1094: the Community estimate lives on THIS card's Estimate tab (the priced
+   bid form), not the builder. Clicking the source tile would suspendForTab() to
+   the empty #tab-estimates and read "no estimates". Show it in place instead,
+   the same spirit as the 'pay' case above, using the card's own tab switch. */
+tab = 'bid';
+try{ window.scrollTo(0, 0); }catch(_){}
+render();
 return;
 }
 /* 981: re-query at CLICK time. renderOverview() REPLACES the .jabox nodes

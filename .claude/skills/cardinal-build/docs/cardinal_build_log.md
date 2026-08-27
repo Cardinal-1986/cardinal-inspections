@@ -835,6 +835,56 @@ not a silent edit.
 
 ---
 
+## Build 1094 — 27 Aug 2026 — Community estimates count, and its tap, match the quote
+
+Theo, on Bonita Wilburn's Community card: *"Where is the bid number coming from?? I don't
+see any estimates."* The header read **$16,360 QUOTED** while the Job Menu's **Estimates**
+tile read **0**, and tapping that tile opened the empty estimate builder. He picked
+option 2 — fix the count **and** the tap.
+
+**Why 0.** The tile (`dbEstN`) counts the estimates TABLE — builder documents (build 780).
+Bonita's $16,360 is priced on the **bid form**: a typed `checklist.lead.bid_amount`, not a
+table row. So the count was honestly 0 for a job that plainly has an estimate — the thread
+even says *"Priced at $16,360 on the bid form — not in the estimate builder."*
+
+**Two surgical edits, retail/insurance untouched:**
+
+1. **Count** (main block, the `dbEstN` async fill). A `_commEst` wrapper: a Community client
+   whose builder count is 0 but which has a priced estimate — `commBidAmount(pr,null).amt > 0`,
+   the **same logic the header's "QUOTED" uses**, covering typed / awarded / submitted —
+   counts as 1. Gated by `isCommunityClient(pr)` and only when there are no builder rows, so
+   no other CRM is affected and a job with real builder docs is never double-counted. The
+   Community mirror (`syncJobMenu`) scrapes this tile's text, so the visible button follows.
+
+2. **Tap** (cr-cc `syncJobMenu` onclick). The Community user taps a *mirrored* button whose
+   handler re-clicks the hidden source tile → `showTab('estimates')` → `suspendForTab()` →
+   the empty builder. A `data-jm==='estimates'` special-case now switches THIS card to its
+   Estimate tab (`tab='bid'; render()`) and scrolls to the top, so the tap lands on the
+   priced estimate in place. Same shape as the `pay` special-case already one branch above.
+
+**Why the mirror follows.** `syncJobMenu` scrapes `dbEstN`'s `.jan` text; the Bonita
+screenshot proves it already reflects the *resolved* async count (it showed 0, not the "…"
+placeholder). This build changes the value that fill computes, not the timing, so the
+mirror shows the new number by the same proven path.
+
+### Gates
+- `check_build.py` **GREEN** 1093 → 1094 (marker = the tap branch; negative control clean);
+  patch **byte-reproducible** (re-applied to a clean 1093 tree, `cmp` equal).
+- **Functional harness** (`harness_commest1094.js`): executes the **shipped** `commBidAmount`
+  (brace-matched verbatim) and the **shipped** `_commEst` decision against real project shapes
+  — typed / awarded / submitted / none / retail — and structurally proves the tap branch sets
+  `tab='bid'`, renders, and precedes the generic `b.click()`. **GREEN** on 1094, **RED (6)** on
+  the 1093 base, so the control has been seen to fail.
+- **Sentinel:** not a blocker — this is a wiring build (count text + tap behaviour), not
+  colour/theme/layout — and its `cardinal` setup opens the *retail* profile, never the
+  Community client page, so it does not reach this surface. The count is a single-glyph text
+  change (no layout shift); the tap is behavioural. Theo's eyes are the final gate on the tab
+  jump.
+
+No SQL. `index.html` + build-log entry.
+
+---
+
 ## Build 1093 — 27 Aug 2026 — Community: the address under the map is readable again
 
 Theo, one screenshot of a Community client's Location card: *"Can't read the text."* The
