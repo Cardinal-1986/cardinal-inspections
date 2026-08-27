@@ -835,6 +835,40 @@ not a silent edit.
 
 ---
 
+## Build 1105 — 27 Aug 2026 — A failed test text says what went wrong, readably
+
+Theo, with a screenshot and two words: **"Can't read also"**. App stamp 1104 → **1105**;
+`index.html` + `api/notify.js`.
+
+**The 1102/1103 work did its job — and exposed the next defect.** The test button finally surfaced
+the real Twilio failure instead of "add your mobile number":
+
+    ⚠️ Text failed — HTTP 401 {"code":20003,"message":"Authenticate","more_info":"https://w
+
+…cut off mid-URL, running off the right edge of the screen and under the floating dark-mode button.
+**A correct diagnosis nobody can read is not a diagnosis.**
+
+**Two causes, both fixed.**
+1. `#testAlertStatus` carried `white-space:pre-line` and **no wrap rule**, so an unbroken JSON/URL
+   string could not break — it overflowed instead. Now `overflow-wrap:anywhere` +
+   `word-break:break-word`, plus `padding-right:52px` so text clears the fixed FAB.
+2. `notify.js` dumped Twilio's raw body `.slice(0, 90)` — truncation mid-token by construction. It
+   now parses the JSON and says what the code MEANS, keeping the number searchable: **20003/401 →
+   "Twilio rejected the credentials, check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in Vercel"**;
+   21606/21659/21660 → sender not in the Messaging Service pool; 21610 → opted out; 21211/21614 →
+   bad recipient; anything else → `HTTP n (code) message`.
+
+⚠️ **The live finding this build was written on: Twilio is returning 20003 (auth).** That is a
+credentials problem in Vercel, not app code — the campaign, the Messaging Service and the phone
+lookup are all now proven good.
+
+Gate: `check_build` green (stamp 1104→1105, negative control clean) + `render_smserr1105.mjs`, which
+puts **the exact string from the screenshot** into the real element and measures it in Chromium.
+GREEN on 1105 (268px wide, wraps to 4 lines, no overflow, 52px clearance), **RED (3) on 1104**.
+⚠️ **The first run of that gate passed VACUOUSLY** — the element lives inside `profileView`
+(`display:none`), so it measured `scrollWidth 0 <= clientWidth 0`. It now lays the screen out first
+**and refuses to pass on a zero-width element**, which is the assertion that would have caught it.
+
 ## Build 1104 — 27 Aug 2026 — Shared screens all wear the Production header
 
 Theo, with screenshots: Settings came up **Community green** and the Team Directory came up
