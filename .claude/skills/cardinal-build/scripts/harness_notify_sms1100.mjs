@@ -64,6 +64,20 @@ ok(/sms_error: smsErr \|\| undefined/.test(src),
    'the response names an SMS error of its own instead of burying it in the shared detail field');
 ok(src.indexOf('module.exports') === -1, 'stays ESM (no module.exports — CI would fail otherwise)');
 
+/* ── 1103: the phone lookup must run as the SIGNED-IN CALLER, and never fail silently ── */
+ok(/user\._token = token;/.test(src), 'requireSession hands the caller token back to the handler');
+ok(/const _caller = await requireSession\(req, res\);/.test(src), 'the handler captures the caller');
+ok(/var _tok = \(_caller && _caller\._token\) \? _caller\._token : SUPA_KEY;/.test(src),
+   'the team_profiles lookup uses the caller token (RLS sees authenticated staff, not anon)');
+ok(/Authorization: 'Bearer ' \+ _tok \}/.test(src), 'that token is what the lookup actually sends');
+ok(/smsErr = 'team directory lookup failed: '/.test(src),
+   'a refused/errored lookup is REPORTED, not swallowed as "no phones"');
+ok(/smsErr = 'no Team Directory row was readable/.test(src),
+   'an EMPTY lookup (the RLS symptom) is reported instead of blaming the user');
+/* the silent path this replaced must be gone */
+ok(!/var phones = Array\.isArray\(profs\)/.test(src),
+   'the old silent Array.isArray fall-through is gone');
+
 /* ── 1102: the in-app test button must report the OUTCOME, not a capability guess ── */
 try {
   const idx = fs.readFileSync(new URL('../../../../index.html', import.meta.url), 'utf8');

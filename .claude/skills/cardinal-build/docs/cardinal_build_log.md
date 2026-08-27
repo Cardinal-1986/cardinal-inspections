@@ -835,6 +835,39 @@ not a silent edit.
 
 ---
 
+## Build 1103 — 27 Aug 2026 — The SMS phone lookup was running as `anon` (RLS returned nothing)
+
+`api/notify.js` only — no `index.html` change, so **no app-stamp bump** (out-of-index build, like
+1100). Reported as "still doesn't work, my number is in" — and the label had *moved* from "not set
+up yet" to "add your mobile number", which is what localised it: 1102 proved Twilio was configured,
+so the send loop was finding **zero phones**.
+
+**Root cause, measured against production.** `team_profiles`' only SELECT policy is
+`roles={authenticated} using=is_staff()`. The route queried it with the **publishable (anon) key**,
+so the request arrived as role `anon`, matched no policy, and **RLS returned an EMPTY ARRAY — not an
+error**. `phones` came back empty, nothing sent, and the honest-looking message blamed the user for
+a missing number that was in the table all along (verified: theo@ has a 13-char phone). Latent since
+874: SMS had never actually been configured before today, so it had never once run this path.
+
+**Fix — no RLS bypass, no new env var.** `requireSession()` already extracts the caller's bearer
+token; it now hands it back, and the lookup sends **the caller's token** instead of the anon key. RLS
+then matches `team_profiles_select`, because `is_staff()` is simply "your JWT email is in
+team_profiles" — true for every signed-in staff member, so multi-recipient alerts work too. A
+service-role key was the alternative and was rejected: it bypasses RLS and needs an env var Theo
+would have had to set.
+
+⚠️ **And the silence is fixed, which is the more important half.** A non-array (refused/errored)
+lookup and an empty result both used to fall through as "no phones" — indistinguishable from a user
+who never entered a number. Each now sets its own `smsErr`, so the test line names the real cause.
+
+⚠️ **`push_subs` is still read with the anon key and push works**, so that table is anon-readable
+where `team_profiles` is not. Left alone deliberately (out of scope), but it is the inconsistency
+that made this bug survive: two tables, two access models, one key.
+
+Gate: `node --check` + `harness_notify_sms1100.mjs` extended — asserts the caller token reaches the
+lookup, both silent paths now report, and the old `Array.isArray` fall-through is gone. GREEN on
+1103, **RED (7) on the shipped 1102 code**.
+
 ## Build 1102 — 27 Aug 2026 — The SMS capability report stops lying (my 1100 regression)
 
 **This is a defect I introduced at 1100 and it cost Theo a long round-trip.** Reported as
