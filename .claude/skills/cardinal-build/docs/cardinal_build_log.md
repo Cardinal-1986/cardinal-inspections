@@ -835,6 +835,68 @@ not a silent edit.
 
 ---
 
+## Build 1096 — 27 Aug 2026 — Every estimate line gets its own Detailed / Flat switch
+
+Theo's Batch 2, first half: *"Seamless Detailed vs. Flat UX"* + *"Intuitive Keyboard Navigation"*.
+The estimator had ONE global "Qty / unit" checkbox (`state.itemized`) that flattened the whole
+estimate. This makes pricing a **per-line** choice — a small **Detailed | Flat** segmented switch
+on every line — and retires the global checkbox (markup + both CSS blocks). One capability, now
+per line: the "one pipeline per concept" doctrine.
+
+**The data.** Each line carries its own `flat` boolean. No schema change — `line_items` is jsonb
+and `save()`/`currentState()` strip only `_lid`, so `flat` rides through. Detailed multiplies
+`qty × unit_price`; Flat carries a single lump-sum `amount`. `computeTotals`, `refreshTotals`,
+`buildDocHtml` (the client proposal) and the **Community bid sheet** all decide per line now, so
+a mixed estimate sums and prints correctly. **Back-compat migration:** an estimate saved under the
+old global lump flag (`itemized === false`) opens as **per-line flat, once** — `if(existing.itemized
+=== false && o.flat == null) o.flat = true`, guarded so an explicit per-line choice is never
+stomped. `itemized` is still written on save for any external reader; nothing 1096+ reads it to
+render.
+
+**The collapse.** Flat drops the Qty/Unit/Unit-Price cells (`renderLine` emits `.pricing.lump`,
+`grid-template-columns:auto 1fr`) — Description + one right-aligned lump price take the row, no
+blank columns. Toggling to Flat **seeds the lump from qty × rate** so it is never $0, then
+auto-focuses the price. In the proposal, a flat line inside a detailed table spans qty/unit/rate
+with `colspan="3"` and lands its amount under Amount — clean scope, no "1 EA". An all-flat estimate
+prints the original 2-col table; an all-detailed one is unchanged.
+
+**The keyboard.** Mode buttons are `tabindex="-1"` so they never interrupt the flow. On a row's
+last money field (Unit Price for detailed, Amount for flat): **Enter** spawns a fresh line in the
+same mode and lands the caret on its entry field; **Tab** walks to the next line's entry (Qty for
+detailed, Description for flat) or spawns one if it is the last line. New lines inherit the mode
+above them.
+
+**The look.** The switch is porcelain-consistent: active segment Cardinal red / white, inactive
+label the readable slate-600 token `--est-dim #475569` (NOT slate-500, which fails 4.5:1 on the
+porcelain ground — the exact trap 1095 already dodged once). On phones the deep neumorphic inset is
+too heavy for the smaller cells, so `@media(max-width:560px)` gives the number cells a compact
+`4px 8px` pad and a subtle `inset 0 1px 2px rgba(0,0,0,.08)` while keeping the red focus ring —
+Theo's "Compact Inset Styling on Small Screens" ask.
+
+### Gates
+- `check_build.py` **GREEN** 1095 → 1096 (marker `cr-est-rowmode`; negative control clean); patch
+  **byte-reproducible** (re-applied to a clean 1095 tree, `cmp` equal).
+- **`harness_estflat1096.js`** — executes the SHIPPED `computeTotals`, `renderLine` and
+  `buildDocHtml` (brace-matched, not re-implemented) against a mixed detailed+flat line set: the
+  money sums right (a flat line ignores its stray qty×rate), the flat row collapses to one amount,
+  the proposal prints mixed rows as clean scope. Plus structural proofs of the toggle/keyboard
+  wiring, the migration guard and the Community sheet per-line render. **GREEN on 1096, RED (28
+  failures, no crash) on the 1095 tree** — the negative control degrades to reported failures, not a
+  stack trace (BUG_CLASSES 37).
+- **`render_estflat1096.mjs`** — real CSS, real editor DOM, Chromium, both viewports: the active
+  segment is Cardinal red with a **5.67:1** white label, the inactive label **7.24:1**, the Flat row
+  shows exactly one right-aligned price input with no qty field, and the number cells take the
+  compact `4px 8px` + subtle inset on phone / the deep neumorphic inset on desktop. **GREEN on 1096,
+  RED (5) on 1095.** `render_estlight1095.mjs` re-run against 1096 stays GREEN — no regression to the
+  porcelain readability.
+- **Sentinel** (layout/theme build): the editor is auth-gated, so — as at 1095 — the targeted
+  Chromium renders above are the authoritative colour/layout proof for the changed surface. Theo's
+  eyes are the final gate on feel.
+
+No SQL (`flat` rides the existing jsonb column). `index.html` + build-log entry.
+
+---
+
 ## Build 1095 — 27 Aug 2026 — The estimate builder gets the light "Cardinal" theme
 
 Theo, through a run of previews (three polish directions, then a tokenized light/dark, then
