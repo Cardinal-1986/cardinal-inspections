@@ -27661,7 +27661,7 @@ prose cannot.** `qAll('` not `qAll(`; `body.style.overflow =` not the bare name;
   ⚠ It also **prefers a day that HAS work** when choosing a cell: an empty day renders the empty
   state and the row-styling assertions would pass vacuously. *A check that cannot fail is worse
   than no check.*
-- Sentinel: this is a layout build, so under the rule settled the same night it **holds the merge**.
+- **Sentinel CLEAN** against 1089 — 50 renders (25 states × 2 viewports), nothing new, 189 carried, exit 0. This is a layout build, so under the rule settled the same night the sentinel held the merge until it reported; it reports clean.
 
 ---
 
