@@ -1,0 +1,69 @@
+== A. WHICH HEADER RENDERS, PER SCREEN ==
+   crmHead() asked once per sticky portal (retail / insurance / community)
+
+  PINNED — same header whatever portal you came from:
+    RETAIL     Landing (portal picker)
+    PRODUCTION Settings, My Profile, Audit Log, Team Directory, Punch & Repairs
+    INSURANCE  Cardinal Truth, Insurance Clients
+
+  FOLLOWS THE LAST PORTAL — header changes with where you have been:
+    Leads & Jobs              r→retail  i→insurance  c→community
+    Photos                    r→retail  i→insurance  c→community
+    Reports                   r→retail  i→insurance  c→community
+    Gallery                   r→retail  i→insurance  c→community
+    Company Documents         r→retail  i→insurance  c→community
+    Resource Library          r→retail  i→insurance  c→community
+    Quick Inspection          r→retail  i→insurance  c→community
+    Quick Insp start          r→retail  i→insurance  c→community
+    Address check             r→retail  i→insurance  c→community
+    iTel lab                  r→retail  i→insurance  c→community
+
+  Open client profile (projopen): retail
+  No view open at all:            r→retail  i→insurance  c→community   <- FOLLOWS THE PORTAL
+
+
+== B. HEADER GROUND + ON-SCREEN CONTRAST (states reached the real way) ==
+
+  dark     retail            head=retail     title="“Single source of trut"
+                             ground linear-gradient(180deg,#243342,#16202b)    ink #fff     accent #8fb4d8  8 on-screen · worst 3.79 "＋"
+  dark     production        head=production title="Production"
+                             ground #181b20                                    ink #fff     accent #f5a623  9 on-screen · worst 3.80 "▼"
+  dark     insurance/docket  head=insurance  title="Insurance"
+                             ground #FFFFFF                                    ink #17181B  accent #C4180F  9 on-screen · worst 4.00 "▼"
+  dark     insurance/siren   head=insurance  title="Insurance"
+                             ground #FFFFFF                                    ink #17181B  accent #C4180F  9 on-screen · worst 4.00 "▼"
+  dark     community         head=community  title="Community"
+                             ground #047857                                    ink #fff     accent #A7F3D0  9 on-screen · worst 3.58 "▼"
+  dark     client profile    head=retail     title="“Single source of trut"
+                             ground linear-gradient(180deg,#243342,#16202b)    ink #fff     accent #8fb4d8  8 on-screen · worst 3.79 "＋"
+  rb-light retail            head=retail     title="“Single source of trut"
+                             ground linear-gradient(180deg,#243342,#16202b)    ink #fff     accent #8fb4d8  8 on-screen · worst 3.79 "＋"
+  rb-light production        head=production title="Production"
+                             ground #181b20                                    ink #fff     accent #f5a623  9 on-screen · worst 4.72 "▼"
+  rb-light insurance/docket  head=insurance  title="Insurance"
+                             ground #FFFFFF                                    ink #17181B  accent #C4180F  9 on-screen · worst 4.00 "▼"
+  rb-light insurance/siren   head=insurance  title="Insurance"
+                             ground #FFFFFF                                    ink #17181B  accent #C4180F  9 on-screen · worst 4.00 "▼"
+  rb-light community         head=community  title="Community"
+                             ground #047857                                    ink #fff     accent #A7F3D0  9 on-screen · worst 3.58 "▼"
+  rb-light client profile    head=retail     title="“Single source of trut"
+                             ground linear-gradient(180deg,#243342,#16202b)    ink #fff     accent #8fb4d8  8 on-screen · worst 3.79 "＋"
+
+  --- ON-SCREEN INK BELOW FLOOR ---
+    3.79:1 (floor 4.5)  dark     retail            #addProjectBtn "＋"  rgb(11,18,24) on rgb(79,115,150) 18.0px
+    3.80:1 (floor 4.5)  dark     retail            #crBanner      "▼"  rgb(109,116,126) on rgb(21,23,27) 11.0px
+    3.80:1 (floor 4.5)  dark     production        #crBanner      "▼"  rgb(109,116,126) on rgb(21,23,27) 11.0px
+    4.00:1 (floor 4.5)  dark     insurance/docket  #crBanner      "▼"  rgb(109,116,126) on rgb(26,14,13) 11.0px
+    4.00:1 (floor 4.5)  dark     insurance/siren   #crBanner      "▼"  rgb(109,116,126) on rgb(26,14,13) 11.0px
+    4.28:1 (floor 4.5)  dark     community         #addProjectBtn "＋"  rgb(4,120,87) on rgb(167,243,208) 18.0px
+    3.58:1 (floor 4.5)  dark     community         #crBanner      "▼"  rgb(109,116,126) on rgb(8,33,26) 11.0px
+    3.79:1 (floor 4.5)  dark     client profile    #addProjectBtn "＋"  rgb(11,18,24) on rgb(79,115,150) 18.0px
+    3.80:1 (floor 4.5)  dark     client profile    #crBanner      "▼"  rgb(109,116,126) on rgb(21,23,27) 11.0px
+    3.79:1 (floor 4.5)  rb-light retail            #addProjectBtn "＋"  rgb(11,18,24) on rgb(79,115,150) 18.0px
+    4.00:1 (floor 4.5)  rb-light insurance/docket  #crBanner      "▼"  rgb(109,116,126) on rgb(26,14,13) 11.0px
+    4.00:1 (floor 4.5)  rb-light insurance/siren   #crBanner      "▼"  rgb(109,116,126) on rgb(26,14,13) 11.0px
+    4.28:1 (floor 4.5)  rb-light community         #addProjectBtn "＋"  rgb(4,120,87) on rgb(167,243,208) 18.0px
+    3.58:1 (floor 4.5)  rb-light community         #crBanner      "▼"  rgb(109,116,126) on rgb(8,33,26) 11.0px
+    3.79:1 (floor 4.5)  rb-light client profile    #addProjectBtn "＋"  rgb(11,18,24) on rgb(79,115,150) 18.0px
+
+AUDIT COMPLETE — 10 drifting screen(s), 15 on-screen ink failure(s)

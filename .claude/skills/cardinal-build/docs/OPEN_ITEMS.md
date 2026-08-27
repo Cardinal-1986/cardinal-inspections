@@ -1445,6 +1445,56 @@ done. Creating a NEW estimate / community partner offline is not built — the n
 server-generated. Theo chose **"Neither — leave as-is"** on 17 Aug. If revisited, the approach is
 **"draft on device → number on sync"**, never a fake placeholder number.
 
+### HEADER AUDIT — 27 Aug 2026, `scripts/audit_headers.mjs` (measured, not read)
+
+Theo: *"can you run audit on the header for all sections"*. Chromium walk of 18 views
+× 3 sticky portals × 2 themes. **No build shipped — findings only.**
+
+**H1. TEN screens still follow the last-used portal.** 1104 pinned five shared screens to
+the production head; these ten were not in that list and still wear whichever portal you
+were last in: **Leads & Jobs, Photos, Reports, Gallery, Company Documents, Resource
+Library, Quick Inspection, Quick Insp start, Address check, iTel lab** — plus the
+no-view-open state. ⚠ **This is the 754 design working as written, not a regression**, and
+754 chose it deliberately. But it is the same experience Theo reported at 1104 ("randomly
+change"), on ten screens 1104 did not cover. **A decision, not a bug fix** — pinning them
+is one edit to `SHARED_HEAD_1104`, but it would end "the header tells you which portal you
+are in" for those screens. Ask before changing.
+
+**H2. Two header inks below floor, on nearly every palette.** Only TWO distinct elements
+account for all 15 hits:
+- **`#crBanner` caret `▼`** — `#6d747e` at 11px. **3.58:1** on community, **3.80:1** on
+  retail/production, **4.00:1** on insurance, floor 4.5. Passes only on rb-light production
+  (4.72). It is the same grey on every ground, so it fails or passes by luck of the ground.
+- **`#addProjectBtn` glyph `＋`** — the dark glyph on the accent button: **3.79:1** on the
+  retail steel, **4.28:1** on community mint, 18px, floor 4.5. ⚠ Borderline by
+  classification: an 18px `＋` is arguably a UI graphic (3.0 floor), not body text. Say so
+  rather than quoting 3.79 as a flat failure.
+
+**H3. The insurance `siren` sub-theme did not reach the header in any state I could drive.**
+`--ct-crmhead-*` (the dark `#1a0e0d` insurance header) is declared **only** under
+`[data-rltheme="siren"]`, but every navigated state measured `#FFFFFF` — docket's ground —
+because something re-stamps `data-rltheme` back to `docket`. **Not proven to be a defect**:
+it may be that docket is simply the live theme. What is proven is that the dark insurance
+head is unreachable by the paths this rig drives. Worth one look before anyone "fixes" it.
+
+**Two FALSE POSITIVES, recorded so nobody re-finds them:**
+- A **1.01:1 invisible title on the community header** — an artifact of forcing
+  `body[data-crm-head]` without letting `build()` rewrite the title, so the RETAIL slogan
+  sat on a green ground. `build()` writes `TITLES[kh]`; the app never renders that.
+- A **stale header after navigation** — the header module is woken by a `childList`
+  observer, so a view shown by raw `style.display` does not re-skin. Through the app's own
+  doors (`openSettingsView`, `openMyProfile`, `openTeamView`, `openAuditLog`) it updates
+  every time. **Latent fragility, not a live bug**: a future nav path that only toggles
+  display would silently leave the previous portal's colours.
+
+⚠ **The rig was wrong twice before it was right, and both faults FLATTERED the app.**
+`page.setContent()` gives an opaque origin where `localStorage` throws, so
+`CardinalPortal.set()` silently failed, `stickyCrm()` answered `retail` for all three
+portals, and the first run reported **"0 drifting screens"** having never varied the portal.
+And `#navMenu` is a closed drawer at `translateX(-320px)` — `display:block`,
+`visibility:visible` — so a naive filter scored 195 elements nobody can see. The script now
+serves over `http://` and **asserts the portal actually changed before reporting a row**.
+
 **OPEN — notification channels are code-complete but need CONFIG (Theo's side, not code):**
 - **Email 403** — Resend domain `cardinalrenovations.net` is **"Not Started"**. Verify the domain
   (add its DNS records → Verify) and set `DIGEST_FROM` at that domain in Vercel. No code fix exists.
