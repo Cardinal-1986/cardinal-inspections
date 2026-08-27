@@ -835,6 +835,25 @@ not a silent edit.
 
 ---
 
+## Build 1100 — 27 Aug 2026 — SMS sends via the A2P-approved Messaging Service
+
+`api/notify.js` only — no `index.html` change, so no app-stamp bump (out-of-index build, like
+809–836). Cardinal's A2P 10DLC campaign was **approved by carriers**; this makes the SMS path ride
+it. `notify.js` now prefers a **Messaging Service** — reads `TWILIO_MESSAGING_SERVICE_SID`, and when
+set sends `MessagingServiceSid` instead of a bare `From`, so Twilio picks the registered sender and
+every text stays inside the approved campaign. **Fully backward-compatible:** with the env var unset
+it falls back to `From: TWILIO_FROM` and behaves exactly as before; the send gate and both capability
+reports widened from `TWILIO_FROM` to `(TWILIO_MESSAGING_SERVICE_SID || TWILIO_FROM)`. README env-var
+row updated.
+
+**To activate:** set `TWILIO_MESSAGING_SERVICE_SID` in Vercel to the Messaging Service that holds the
+sending number and is linked to the approved campaign. Until then the fallback keeps texts flowing.
+
+Gate: `node --check` (ESM, `export default`, no `module.exports` — CI would reject otherwise) +
+`harness_notify_sms1100.mjs`, which **executes the shipped sender-selection block** in both configs
+(MSID set → `MessagingServiceSid`, no `From`; MSID unset → `From`, no `MessagingServiceSid`) and
+checks the widened gate/capability reports. RED on the pre-1100 tree (5 fails, no crash).
+
 ## Build 1099 — 27 Aug 2026 — Proposal polish for the client estimate (Batch 3, part 2)
 
 Theo's Batch 3, second half — the client-facing estimate document (`buildDocHtml` in
