@@ -1067,13 +1067,27 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   #e2e8ea 0%, #b7c4cb 12%, #607D8B 38%, #607D8B 55%, #455a64 80%, #303e46 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
 @media (max-width:900px){
-  .piperow{padding:0 0 4px;gap:4px;overflow:visible;justify-content:space-between;
-    /* 957: this breakpoint turns the row from a scroller into fitted buttons,
-       which orphans the base rule's containment on a box that no longer has a
-       scrollport - the same shape that killed the Cardinal Truth pane. Reset
-       both here so a swipe on the row still scrolls the PAGE. */
+  /* 1114: A SCROLLER AGAIN, because seven cards do not fit a phone. 957 turned
+     this breakpoint from a scroller into fitted buttons, which was right for
+     five; at seven, 340px of row gives each card 47px and the two word labels
+     measure 51px ("Closed") and 57px ("On Hold") in Chromium — they did not
+     ellipsize, they OVERLAPPED their neighbours and spilled 4px past the row,
+     because align-items:center sizes a label to its own content and
+     overflow:hidden on a max-content box can never fire. Shrinking the type to
+     fit would mean ~9px, under the 11px floor build 1081 established.
+     min-width is sized to the widest label with headroom rather than tuned to
+     the pixel: the measurement above comes from this container's fallback
+     face, and Theo's phone resolves 'Segoe UI',Arial to something else. */
+  .piperow{padding:0 0 4px;gap:4px;overflow-x:auto;justify-content:space-between;
+    /* 957: kept. `contain` belongs to the base rule and is correct on a real
+       scrollport, but at a 900px tablet seven cards DO fit, and containment on
+       a box that is not scrolling is the shape that killed the Cardinal Truth
+       pane — a swipe on the row would stop scrolling the PAGE. */
     overscroll-behavior-x:auto;-webkit-overflow-scrolling:auto;}
-  .pipebtn{flex:1 1 0;min-width:0;max-width:none;padding:2px 0;}
+  .pipebtn{flex:1 1 auto;min-width:64px;max-width:none;padding:2px 0;}
+  /* the last-resort guard, and it can now actually fire: capped at the cell,
+     the existing nowrap/ellipsis on .plabel truncates instead of overlapping */
+  .pipebtn .plabel,.pipebtn .pcount,.pipebtn .pmoney{max-width:100%}
   .pipebtn .pcirc{width:46px;height:46px;font-size:21px;}
   .pipebtn .plabel{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .pipebtn .pcount{font-size:16px;}
@@ -1987,7 +2001,14 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 
 /* ---- phone: client-profile fit pass ---- */
 @media (max-width:700px){
-  body.projopen #brandTitle{display:none;}
+  /* 1115: `body.projopen #brandTitle{display:none}` was here and is deleted.
+     The 416 comment in cr-hd4-styles names it as THE one rule in the file that
+     could hide the title, and answers it with an unconditional
+     `display:block !important` — so it has not won since 416. Measured, not
+     assumed: the 1114 sentinel sweep reported it "never wins on any of the 1
+     element(s) it matches". Deletion at source beats out-specificity; and the
+     416 rule stays, because it is what keeps the title up if this ever comes
+     back. #brandCtx below still takes over the header on a project screen. */
   body.projopen #brandCtx{display:flex !important;}
   body.projopen .jobmenu-head{max-width:130px;}
   /* milestones fit without side-scroll (id-anchored: beats base rules regardless of order) */
@@ -3489,28 +3510,13 @@ body[data-crm-head="retail"]   {--bnbg:#101620;--bnbd:#243040;--bnac:#8fb4d8}
 /* .titlecard h1 carries font-size:17px !important, so this needs it too */
 #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:20px !important;line-height:1.15;
   color:var(--hin,#fff);-webkit-text-fill-color:var(--hin,#fff)}
-/* 1065: the slogan is shown only where it FITS. Measured at 1px resolution:
-   it needs 247px and the header's middle gives it 247px from 438px up, 190px
-   at 430, 150px at 390. Shrinking it to fit would mean 10px at 390 and is
-   impossible below 360; wrapping would add a second line to a fixed-height bar
-   on the screen with the least vertical room. So it is hidden below 438 — a
-   truncated slogan ("Single sourc…") reads as a broken app, an absent one
-   reads as a clean toolbar.
-   RETAIL ONLY: #brandTitle carries the CRM NAME in the other CRMs, which are
-   short words that fit, and the 416 comment above forces that title visible
-   because it must never disappear.
-   The 437 breakpoint is deliberate rather than reusing the existing 480: an
-   iPhone 16 Pro Max is 440pt, where the slogan fits, and hiding something that
-   fits to save a breakpoint is the wrong trade. */
-@media (max-width:437px){
-  body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}
-}
-body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{
-  font-family:'American Typewriter','Courier New',Courier,serif;
-  font-size:17px !important;font-weight:800;font-style:normal;letter-spacing:.005em;white-space:nowrap}
-#cr-hd2-mid #brandTitle h1 span.hq{color:#5d6b7a;-webkit-text-fill-color:#5d6b7a}
-#cr-hd2-mid #brandTitle h1 span.hg{color:#9aa0a8;-webkit-text-fill-color:#9aa0a8}
-#cr-hd2-mid #brandTitle h1 span.hr{color:#ff5a63;-webkit-text-fill-color:#ff5a63}
+/* 1114: "Retail" in the same face and size as the other four portal names.
+   Deleted here with the slogan they styled: 1065's @media (max-width:437px)
+   hide (a six-letter word fits at every width — keeping the hide would blank
+   the CRM name on a phone, which the 416 comment above forbids), the
+   retail-only American Typewriter / 17px / nowrap h1 rule, and the three
+   span.hq / .hg / .hr inks, which can no longer match an element. Retail now
+   inherits the 20px rule above, so all five portal names render alike. */
 
 /* ONE search bar. #cbSearch on the banner and #headSearch in the header are both
    live and do the same thing (open the client directory, seed #cliFilter). The
@@ -3869,13 +3875,32 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
                deliberately NOT in hideAdminItemsForNonAdmin's list, so every desk sees it. -->
           <button class="navopt" data-nav="notify" data-cri="bell lg">Enable Notifications</button>
 
-          <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
           <!-- 1041 (audit O2): ONE build line only. REPLACE this text each build —
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
-     in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1121 &#8212; Applying a Scope of Loss now records its history row again. Since the history table shipped (build 665), a scoping bug meant the record of each scope read — which document, what the AI found, what you approved — silently failed to write every single time, while the claim fields themselves applied fine. Nothing visible changes; the scope_reads history simply starts existing.</div>
+     in the CHANGELOG (What’s New reads it), not here.
+     1115: and now the SUMMARY is gone too. Theo: "get rid of the big
+     paragraph about what's new in the drawer menu and add a small logout
+     icon at the bottom." It was a 300-character wall under every row, and
+     What's New already tells the same story better. The version itself
+     STAYS and stays a direct text node: currentBuild(), buildTag(),
+     railVersion() and check_build.py's app_stamp() all read this element,
+     and app_stamp() anchors on `data-cr-footer...>` followed immediately by
+     `v2026-`, so wrapping the version in a <span> would break the gate.
+     Sign out moved IN HERE as an icon rather than being rebuilt: same
+     #signOutBtn, same listener, same display toggling from showMain() /
+     showLogin(). The glyph is CardinalIcons' `lock` — the one the desktop
+     rail's own sign-out already uses, so the two surfaces cannot drift.
+     1117: 1116 landed on main from the header-audit branch while this one
+     was open, and its footer still carried the em-dash summary. OURS wins
+     here on purpose — deleting that paragraph is the whole of 1115, and
+     check_build.py now gates the CHANGELOG entry instead of this text.
+     1122: and again for 1118-1121. Same call, same reason — this is the
+     THIRD time main's footer has arrived carrying a summary, so if you are
+     resolving this hunk a fourth time: ours wins, and it is not a judgement
+     call. -->
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1122<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21177,18 +21202,39 @@ document.getElementById('leadList').addEventListener('click', function(e){
 });
 
 /* ---------- hero: greeting + stats ---------- */
+/* 1114 — `short` is what the CARD prints. Theo: "on the pipeline stage cards,
+   just put letters. L P A C I Closed On Hold." Closed and On Hold keep their
+   words because C is already Completed's and O reads as nothing.
+   `label` stays the one full name per stage — the sphere glyph, the aria-label
+   and every other reader still compute from it, so this is one vocabulary with
+   a printed short form, not a second set of stage names to fall out of step.
+   Closed is a NEW bucket, and .pipe-closed's gradient has been sitting in the
+   stylesheet unused waiting for it. It goes last but one, in Theo's order. */
 var PIPE_BUCKETS = [
-  { key:'Lead',      label:'LEADS',      cls:'pipe-lead',      tip:'New leads \u2014 not yet quoted' },
-  { key:'Prospect',  label:'PROSPECTS',  cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
-  { key:'Approved',  label:'APPROVED',   cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
-  { key:'Completed', label:'COMPLETED',  cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
-  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
-  { key:'OnHold',    label:'ON HOLD',    cls:'pipe-onhold',    tip:'Bid in, waiting on a grant or funding decision' }
+  { key:'Lead',      label:'LEADS',      short:'L',       cls:'pipe-lead',      tip:'New leads \u2014 not yet quoted' },
+  { key:'Prospect',  label:'PROSPECTS',  short:'P',       cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
+  { key:'Approved',  label:'APPROVED',   short:'A',       cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
+  { key:'Completed', label:'COMPLETED',  short:'C',       cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
+  { key:'Invoiced',  label:'INVOICED',   short:'I',       cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
+  { key:'Closed',    label:'CLOSED',     short:'Closed',  cls:'pipe-closed',    tip:'Closed out \u2014 paid and done' },
+  { key:'OnHold',    label:'ON HOLD',    short:'On Hold', cls:'pipe-onhold',    tip:'Bid in, waiting on a grant or funding decision' }
 ];
-/* Same shape as IC_SKIP: a stage-keyed map per CRM. A community-only column
-   would otherwise appear as a permanently empty sixth column on the Retail
-   and Insurance boards, because renderPipeline does not filter by CRM. */
-var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
+/* Same shape as IC_SKIP: a stage-keyed map per CRM, because renderPipeline
+   does not filter by CRM. Its ORIGINAL reason was that On Hold — a grant or
+   funding wait — would otherwise be a permanently empty column on Retail and
+   Insurance. That is still why insurance skips it and is no longer why retail
+   did; see below. */
+/* 1114: RETAIL NO LONGER SKIPS On Hold, and Closed is skipped nowhere. The
+   rule above is an EMPTY-COLUMN rule, and it had stopped being true — measured
+   against production before this edit rather than assumed: one retail job sits
+   at OnHold (Maker Space Solutions) and one at Closed (Carl Bolivar, which
+   walked t_Prospect through t_Invoiced to t_Closed), so both were real work the
+   dashboard could not show anywhere. Theo asked for the row by name:
+   "L P A C I Closed On Hold".
+   Insurance keeps its On Hold skip — that stage means waiting on a grant or a
+   funding decision, which a claim does not do. Closed is terminal in every CRM,
+   so it is columned in every CRM. */
+var PIPE_SKIP = { insurance:{ 'OnHold':1 } };
 /* 540 ─ where the money actually is ─────────────────────────────────────────
    projectValue() used to scan inspection_reports for rows titled "Estimate…"
    and take the highest total. Measured against production: that table has 22
@@ -22605,9 +22651,14 @@ function renderPipeline(){
     var n = inBucket.length;
     var money = 0;
     inBucket.forEach(function(pr){ money += projectValue(pr); });
-    return '<button class="pipebtn" data-stg="' + b.key + '" title="' + b.tip + '">' +
+    /* 1114: aria-label carries the full stage name. The printed label is now a
+       letter on five of these, and a lone "L" announced on its own is not a
+       name — title= holds the tip, which is a description, not a label. */
+    var _full = b.label.charAt(0) + b.label.slice(1).toLowerCase();
+    return '<button class="pipebtn" data-stg="' + b.key + '" title="' + b.tip + '"' +
+      ' aria-label="' + _full + '">' +
       '<span class="pcirc ' + b.cls + '">' + (b.letter || b.label.charAt(0)) + '</span>' +
-      '<span class="plabel">' + b.label.charAt(0) + b.label.slice(1).toLowerCase() + '</span>' +
+      '<span class="plabel">' + (b.short || _full) + '</span>' +
       '<span class="pcount">' + n + '</span>' +
       '<span class="pmoney">' + fmtMoney(money) + '</span></button>';
   }).join('');
@@ -42023,12 +42074,21 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1122, d:'2026-08-28', t:'Builds 1118\u20131121 merged in alongside the Owner, header and menu work',
+  s:'Housekeeping, no new behaviour. The four fixes that shipped while this work was open \u2014 the Scope of Loss history row, the Pre-Install Guide\u2019s in-app prompts, seven labels brought back to the 11px floor, and the Estimates count on a job with none yet \u2014 are now in the same copy as the Owner section, the \u201CRetail\u201D header with letter pipeline cards, and the tidied side menu. Every one of them behaves exactly as its own entry below describes.' },
 { b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
  { b:1120, d:'2026-08-28', t:'The Pre-Install Guide asks through the app, not the browser', s:'Two grey browser pop-ups survived in the Pre-Install Guide \u2014 the \u201cEmail the guide?\u201d question and the \u201cReset the wording?\u201d one. Both now use the dark in-app ask-sheet every other question has used since build 1083, and the reset (which replaces unsaved edits) is styled red as a destructive action. Buttons name the action instead of OK/Cancel.' },
  { b:1119, d:'2026-08-28', t:'Seven small labels come back up to the 11px floor', s:'Build 1081 set an app-wide minimum text size of 11px so everything reads outdoors. Seven labels added since then had slipped under it \u2014 four in the new estimate builder, one in the Community sheet, the canvass grid\u2019s checkbox labels (9.5px, the smallest), and the AUTO chip on Pre-Install Guide rows. All are at 11px again.' },
  { b:1118, d:'2026-08-28', t:'The Estimates count fills in on jobs with none yet', s:'Since 1094 the Estimates box on a client profile showed \u201c\u2026\u201d forever on any job with zero estimates \u2014 a script error fired exactly when the count was 0, so the number never arrived. Jobs with estimates were unaffected. Fixed; priced Community bids also count as the 1 that build 1094 intended.' },
- { b:1116, d:'2026-08-28', t:'One header for the screens that belong to no portal, and it names the screen', s:'The header changed colour depending on where you had been. Leads &amp; Jobs, Photos, Reports, Gallery, Company Documents, the Library, Quick Inspection, Address Check, iTel, Invoices, Labor Rates and the Guide editor all wore whichever portal you were last in &mdash; none of them belongs to a portal, so the colour was telling you nothing. They now keep one steady header. The count had been growing on its own: five screens were settled earlier, and three more that were added in the last few days started out drifting too, because a screen was only steady if somebody remembered to name it. That is now the other way round &mdash; a new screen is steady by default, and a check fails the build if a screen is added without deciding which it is. The word in the middle of the header also changed: it used to name the colour, so Settings and My Profile read &ldquo;Production&rdquo;. Each screen now says its own name. Real portal screens are untouched and still say Retail, Insurance or Community. Two faint marks were darkened to read in daylight: the small arrow in the strip below the header, and the + on the Add button in Community.' },
-{ b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
+{ b:1117, d:'2026-08-28', t:'Build 1116 merged in alongside the menu and header work',
+  s:'Housekeeping. The shared-header build (1116) and this branch\u2019s three builds (the Owner section, the \u201CRetail\u201D header with letter pipeline cards, and the tidied side menu) were written at the same time and have now been brought together. Nothing new to look at \u2014 every one of those changes behaves exactly as its own entry below describes. The one thing worth knowing: on a screen that belongs to no portal the header names <b>the screen</b>, and on a real CRM screen it names the <b>portal</b>, so Settings no longer says \u201CProduction\u201D and the retail header still says \u201CRetail\u201D.' },
+{ b:1116, d:'2026-08-28', t:'One header for the screens that belong to no portal, and it names the screen', s:'The header changed colour depending on where you had been. Leads &amp; Jobs, Photos, Reports, Gallery, Company Documents, the Library, Quick Inspection, Address Check, iTel, Invoices, Labor Rates and the Guide editor all wore whichever portal you were last in &mdash; none of them belongs to a portal, so the colour was telling you nothing. They now keep one steady header. The count had been growing on its own: five screens were settled earlier, and three more that were added in the last few days started out drifting too, because a screen was only steady if somebody remembered to name it. That is now the other way round &mdash; a new screen is steady by default, and a check fails the build if a screen is added without deciding which it is. The word in the middle of the header also changed: it used to name the colour, so Settings and My Profile read &ldquo;Production&rdquo;. Each screen now says its own name. Real portal screens are untouched and still say Retail, Insurance or Community. Two faint marks were darkened to read in daylight: the small arrow in the strip below the header, and the + on the Add button in Community.' },
+{ b:1115, d:'2026-08-28', t:'A tidier menu: no wall of text, a sign-out icon, and every section closed',
+  s:'The side menu ended in a paragraph about the last build \u2014 three hundred characters nobody needed at the bottom of a phone screen. It is gone; the build number stays on one small line, and What\u2019s New still holds the full story. <b>Sign out</b> is now a small icon on that same line instead of a full-width row, matching the one on the desktop menu. And the sections \u2014 Daily, Sell, CRMs, Resources, Admin, Account \u2014 now start <b>closed every time you open the menu</b>, not just the first time. They used to remember whichever ones you had opened, so the menu got longer the more you used it. Open the ones you want; next time it is a clean list of headings again.' },
+{ b:1114, d:'2026-08-28', t:'The header says Retail, and the pipeline cards say L P A C I',
+  s:'The retail header carried the company slogan, which needed 247px and so had been hidden altogether on any phone narrower than 438px \u2014 the one portal whose header could go blank. It now reads \u201CRetail\u201D, in the same face and size as Insurance, Community, Production and Sales Floor, and it shows at every width. On the Cardinal Pipeline the stage cards print a single letter instead of the word \u2014 L, P, A, C, I \u2014 which is what makes room for the two cards retail was missing: Closed and On Hold now have their own card, and they keep their words because C is already Completed\u2019s and a lone O reads as nothing. Those two were not decoration \u2014 a job of yours is sitting in each of them right now, and until today neither showed up anywhere on the dashboard. Colours, counts, money and what each card opens are unchanged, and each one announces its full stage name to a screen reader.' },
+{ b:1113, d:'2026-08-28', t:'Owner section + a Strategy cockpit', s:'The <b>Owner Console</b> now has its own <b>Owner</b> section in the side menu instead of sitting under Admin, and a new <b>Strategy</b> area lives inside it (admin only). It holds an editable <b>Business Plan</b> \u2014 the recurring-revenue play (a Cardinal Care maintenance membership plus retail financing) \u2014 an editable <b>Market &amp; Competitors</b> summary for the Miami Valley (who the real threats are and where the white space is), and a <b>KPI scoreboard</b> of the numbers worth watching every morning. Tap <b>Edit</b> on the plan or the competitor notes to rewrite them in place. A fuller, sourced strategy brief was prepared alongside this.' },
+      { b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
       { b:1111, d:'2026-08-28', t:'Roof Pre-Install Guide \u2014 auto-emailed when a roof is scheduled', s:'The homeowner now gets a polished <b>Roof Installation &amp; Pre-Install Guide</b> the moment their build day is booked &mdash; what to expect on install day, the weather policy, and the six things to do beforehand. It <b>auto-fills</b> from the job: the installation date, and your sales rep\u2019s name and phone in the &ldquo;call before you step outside&rdquo; contacts. It sends through the same email rail as your estimates, <b>once per job</b>, and only for roofing jobs. If the client has <b>no email on file</b>, the app asks for it right when you book the day, saves it, and sends. The guide is an <b>editable master</b> in <b>Company Documents</b> &mdash; edit the wording like a document, Preview it with sample details, or Reset to the Cardinal default &mdash; and every job profile has an <b>Email to client</b> button to send or re-send by hand. Groundwork: two new tables (company_templates, client_guide_sends) via preinstall_guide.sql, applied before this build.' },
       { b:1110, d:'2026-08-28', t:'Labor Rate Schedule \u2014 Santiago\u2019s Exhibit A, editable and printable', s:'A new <b>Labor Rate Schedule</b> screen (Office menu, admin only) lays out the crew labor prices the way Santiago\u2019s <b>Exhibit A</b> does &mdash; navy section bands, gold titles, and the rate on the right of each line. It is <b>fully editable in place</b>: change a price, rename a line, add or delete lines, add category notes, or add a whole new category, then <b>Save</b>. <b>Print / PDF</b> gives you a clean one-page schedule (titled Santiago) to hand a crew. The rates live in the same Pricing catalog the app already uses, under their own roofing-labor template, so nothing else is duplicated.' },
       { b:1109, d:'2026-08-28', t:'Invoices show live status, balance and payment history', s:'Open an invoice and it now shows a live <b>Current Balance Due</b> card at the top &mdash; the real balance from the ledger, not a number frozen when the invoice was made &mdash; with its status (Sent / Deposit Paid / Partially Paid). When the job is fully paid the card flips to a bold <b>&#10003; PAID IN FULL</b> badge with a zero balance and the date it cleared. At the bottom a compact <b>Payment History</b> lists every recorded payment (date, method and check number, amount, and whether it was a deposit, progress draw or final), with a running total. It all prints and saves to PDF cleanly &mdash; crisp borders, high-contrast badges. The invoice as-issued (its original summary) is untouched; this is the live layer on top, and it is never baked into the saved document.' },
@@ -43519,10 +43579,12 @@ window.CardinalAdminHealth.show();
 }
 });
 var ownerOpt = makeOpt('cr-nav-owner', '\uD83D\uDCCB Owner Console', function(){ if(window.CardinalOwner && typeof window.CardinalOwner.open === 'function') window.CardinalOwner.open(); });
+var ownerSec = makeSec('cr-nav-sec-owner', 'Owner');   /* 1113: the Owner Console gets its own drawer section */
 var anchor = acctSec || document.getElementById('signOutBtn');
 if(anchor){
-anchor.parentNode.insertBefore(adminSec, anchor);
+anchor.parentNode.insertBefore(ownerSec, anchor);
 anchor.parentNode.insertBefore(ownerOpt, anchor);
+anchor.parentNode.insertBefore(adminSec, anchor);
 if(reports)  { reports.style.display  = ''; anchor.parentNode.insertBefore(reports, anchor); }
 if(feed)     { feed.style.display     = ''; anchor.parentNode.insertBefore(feed, anchor); }
 anchor.parentNode.insertBefore(health, anchor);
@@ -60732,9 +60794,13 @@ body[data-crm-head="community"] .site{--htint:#047857;--hbg:#047857;--hln:#0a926
 'use strict';
 var TITLES = { retail:'Retail', insurance:'Insurance', community:'Community',
 production:'Production', sales:'Sales Floor' };
-/* 435: retail shows the company line instead of the CRM word. Markup, not text,
-   so the two tones can differ. Other CRMs keep plain textContent. */
-var TITLES_HTML = { retail:'<span class="hq">&#8220;</span><span class="hg">Single source of</span> <span class="hr">truth</span><span class="hq">&#8221;</span>' };
+/* 1114: retail names itself like every other portal. 435 had put the company
+   slogan here as MARKUP rather than text, so its two tones could differ, and
+   1065 then had to hide it below 438px — "Single source of truth" needs 247px
+   and a 390px phone header gives it 150px. Theo: "get rid of the single source
+   of truth on the header and just put Retail." TITLES_HTML would now be an
+   empty map nobody feeds, so it goes with the slogan, along with its three
+   span inks in cr-hd4-styles. One map, five portals. */
 function relocateAux(){
 var pwa = document.getElementById('pwaNav');
 if(!pwa) return;
@@ -61135,6 +61201,10 @@ try{
   var _m1088 = document.querySelector('meta[name=theme-color]');
   if(_m1088 && /^#[0-9a-fA-F]{3,8}$|^rgb/.test(_tint)) _m1088.setAttribute('content', _tint);
 }catch(_t1088){ }
+/* The guard compares textContent against a PLAIN STRING, so it settles — it is
+   the innerHTML compare of 567's paintChip (source markup vs. the browser's
+   serialization of it, which never matched) that could not, and that shape is
+   gone with TITLES_HTML. */
 var h1 = document.querySelector('#brandTitle h1');
 if(h1){
   /* 1116: Theo asked the right question when the pin was put to him — "can we
@@ -61143,11 +61213,16 @@ if(h1){
      which meant the 1104 five have been reading "Production" on Settings and My
      Profile since that build, and pinning thirteen more would have put
      "Production" on Leads & Jobs and Photos. A shared screen belongs to no
-     portal, so it names ITSELF; only a real CRM screen names a CRM. */
+     portal, so it names ITSELF; only a real CRM screen names a CRM.
+     ⚠ 1117 (the merge): 1116 was written against a tree that still had
+     TITLES_HTML, and its middle branch read `TITLES_HTML[kh]`. 1114 DELETED
+     that map — retail's slogan was the only thing feeding it (see the note on
+     TITLES above) — so keeping 1116's line verbatim would throw a
+     ReferenceError here and kill the header module on every paint. The branch
+     is dropped, not renamed: with the slogan gone every portal title is plain
+     text, which is exactly what the surviving `TITLES[kh]` line does. */
   var _scr = SHARED_HEAD[ks];
-  var wantHtml = _scr ? null : TITLES_HTML[kh];
   if(_scr){ if(h1.textContent !== _scr) h1.textContent = _scr; }
-  else if(wantHtml){ if(h1.innerHTML !== wantHtml) h1.innerHTML = wantHtml; }
   else if(h1.textContent !== TITLES[kh]) h1.textContent = TITLES[kh];
 }
 }
@@ -79598,6 +79673,25 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 #cr-owner .ow-efb button[data-act=edit-cancel]{background:#eadfd2;color:#6b5f54;}
 #cr-owner .ow-foot{padding:26px 22px 40px;text-align:center;}
 #cr-owner .ow-foot .fl{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#c2b4a4;}
+#cr-owner .ow-strat{background:#fffdf9;border:1px solid #e4dccf;border-radius:12px;padding:16px 18px;margin-bottom:12px;}
+#cr-owner .ow-strat-h{font:700 13px/1.2 "Segoe UI",Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#c8202e;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;}
+#cr-owner .ow-strat-edit{font:600 12px "Segoe UI",Arial,sans-serif;color:#5c5147;background:#f2ebe0;border:1px solid #ddd2c4;border-radius:7px;padding:5px 12px;cursor:pointer;flex:none;}
+#cr-owner .ow-strat-edit:active{background:#e8ddcd;}
+#cr-owner .ow-strat-body{font:400 15px/1.55 Georgia,serif;color:#3a3128;}
+#cr-owner .ow-strat-body p{margin:0 0 10px;} #cr-owner .ow-strat-body p:last-child{margin-bottom:0;}
+#cr-owner .ow-strat-body b{color:#231d18;font-weight:700;}
+#cr-owner .ow-strat-note{font:italic 400 12.5px/1.5 Georgia,serif;color:#7c6f60;border-top:1px solid #ece3d5;padding-top:9px;margin-top:11px;}
+#cr-owner .ow-strat-ta{width:100%;min-height:230px;border:1px solid #ddd2c4;border-radius:8px;padding:11px 13px;font:400 13px/1.55 "SFMono-Regular",Menlo,Consolas,monospace;color:#231d18;background:#fffef9;resize:vertical;}
+#cr-owner .ow-strat-ta:focus{outline:none;border-color:#c8202e;}
+#cr-owner .ow-strat-eb{display:flex;gap:8px;margin-top:10px;}
+#cr-owner .ow-strat-eb button{font:700 12px "Segoe UI",Arial,sans-serif;letter-spacing:.03em;border-radius:8px;padding:9px 15px;cursor:pointer;border:1px solid #ddd2c4;background:#fffdf9;color:#231d18;}
+#cr-owner .ow-strat-eb button[data-act=strat-save]{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-owner .ow-strat-sub{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b5f54;margin:4px 0 11px;}
+#cr-owner .ow-strat-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+#cr-owner .ow-kpi{background:#fffdf9;border:1px solid #e4dccf;border-radius:10px;padding:12px 13px;}
+#cr-owner .ow-kpi-k{font:700 14px/1.2 "Segoe UI",Arial,sans-serif;color:#233251;margin-bottom:4px;}
+#cr-owner .ow-kpi-w{font:400 12px/1.4 "Segoe UI",Arial,sans-serif;color:#5c5147;}
+@media(min-width:560px){#cr-owner .ow-strat-kpis{grid-template-columns:repeat(3,1fr);}}
 </style>
 <script id="cr-owner-script">
 /* The Owner Console — build 895. window.CardinalOwner = { open, close }. */
@@ -79606,6 +79700,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   var TASKS = [], OITEMS = [], DOCS = [], REMINDERS = [];
   var LEDGER = [], LTXNS = [], openAcct = null;   /* 899: The Ledger */
   var VAULT = [], vaultBusy = false;   /* 900: The Vault */
+  var STRATEGY = { owner_biz_plan:null, owner_competitors:null }, stratEdit = null;   /* 1113: Strategy */
   var editing = null;   /* 896: {type:'task'|'item', id} — one row edited at a time */
   function editFormHTML(title, note, due){
     /* due === null omits the date field (tasks); '' or 'YYYY-MM-DD' shows it (items) */
@@ -79671,6 +79766,11 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     ]);
     TASKS  = (res[0] && res[0].data) || [];
     OITEMS = (res[1] && res[1].data) || [];
+    try{
+      var _st = await c.from('company_templates').select('slug,subject,html').in('slug', ['owner_biz_plan','owner_competitors']);
+      STRATEGY = { owner_biz_plan:null, owner_competitors:null };
+      (((_st && _st.data)) || []).forEach(function(r){ STRATEGY[r.slug] = r; });
+    }catch(_se){}
     var cd  = (res[2] && res[2].data) || [];
     var crews = (res[3] && res[3].data) || [];
     var cmap = {}; crews.forEach(function(c){ cmap[c.id] = c; });
@@ -79983,10 +80083,49 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     h += '</div>';
     return h;
   }
+  /* 1113: the Strategy section — an editable Business Plan + Market/Competitors
+     (company_templates, admin-editable), and the KPI scoreboard from the brief. */
+  var KPIS = [
+    ['Members & MRR','Cardinal Care sign-ups and the recurring revenue they represent.'],
+    ['Renewal rate','Share of members who renew \u2014 the health of the recurring engine.'],
+    ['Close rate','Estimates that become signed jobs, retail vs. insurance.'],
+    ['Average job value','By trade \u2014 the effect of financing and upgrades on ticket size.'],
+    ['AR / collections aging','What is owed and how old \u2014 cash flow at a glance.'],
+    ['Lead-source ROI','Which channels actually produce sold jobs.'],
+    ['Crew utilization','Booked crew-days vs. capacity \u2014 the real growth ceiling.'],
+    ['Claims / repairs per member','Work the membership generates.'],
+    ['Reviews captured','New Google reviews per month.']
+  ];
+  function stratDocHTML(slug, fallbackTitle){
+    var d = STRATEGY[slug], title = (d && d.subject) || fallbackTitle;
+    var html = (d && d.html) || '<p class="ow-strat-note">Not written yet.</p>';
+    if(stratEdit === slug){
+      return '<div class="ow-strat"><div class="ow-strat-h">' + esc(title) + '</div>'
+        + '<textarea class="ow-strat-ta" id="ow-strat-ta">' + esc(html) + '</textarea>'
+        + '<div class="ow-strat-eb"><button type="button" data-act="strat-save" data-slug="' + esc(slug) + '">Save</button>'
+        + '<button type="button" data-act="strat-cancel">Cancel</button></div></div>';
+    }
+    return '<div class="ow-strat"><div class="ow-strat-h">' + esc(title)
+      + (amAdmin() ? '<button type="button" class="ow-strat-edit" data-act="strat-edit" data-slug="' + esc(slug) + '">Edit</button>' : '')
+      + '</div><div class="ow-strat-body">' + html + '</div></div>';
+  }
+  function kpiHTML(){
+    return '<div class="ow-strat-kpis">' + KPIS.map(function(k){
+      return '<div class="ow-kpi"><div class="ow-kpi-k">' + esc(k[0]) + '</div><div class="ow-kpi-w">' + esc(k[1]) + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function strategyHTML(){
+    return '<div class="ow-sec"><div class="ow-sl">Strategy <span class="ow-ct">The plan</span></div>'
+      + stratDocHTML('owner_biz_plan', 'Business Plan')
+      + stratDocHTML('owner_competitors', 'Market &amp; Competitors')
+      + '<div class="ow-strat-sub">The Scoreboard \u2014 what to track</div>'
+      + kpiHTML()
+      + '</div>';
+  }
   function render(){
     if(!view) return;
     var body = view.querySelector('.ow-wrap');
-    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() + vaultHTML() +
+    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() + vaultHTML() + strategyHTML() +
       '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations · Owner</div></div>';
   }
 
@@ -79997,7 +80136,19 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     if(!t) return;
     var act = t.getAttribute('data-act'), c = cl(), id = rowId(t);
     try{
-      if(act === 'task-add'){
+      if(act === 'strat-edit'){ stratEdit = t.getAttribute('data-slug'); render(); }
+      else if(act === 'strat-cancel'){ stratEdit = null; render(); }
+      else if(act === 'strat-save'){
+        if(!amAdmin()) return;
+        var _slug = t.getAttribute('data-slug'), _ta = view.querySelector('#ow-strat-ta');
+        if(!_slug || !_ta) return;
+        var _up = await c.from('company_templates').upsert({ slug:_slug, html:_ta.value, updated_at:new Date().toISOString(), updated_by:me() }, { onConflict:'slug' });
+        if(_up && _up.error){ crTell('Could not save: ' + _up.error.message); return; }
+        if(!STRATEGY[_slug]) STRATEGY[_slug] = { slug:_slug };
+        STRATEGY[_slug].html = _ta.value; stratEdit = null; render();
+        crTell('Strategy saved.');
+      }
+      else if(act === 'task-add'){
         var inp = view.querySelector('#ow-task-in'), v = (inp.value || '').trim();
         if(!v) return;
         var pos = TASKS.reduce(function(m,x){ return Math.max(m, x.position || 0); }, 0) + 1;
@@ -80900,7 +81051,10 @@ body:not(.cr-lnav-on) #navMenu .navopt svg{width:19px;height:19px;flex:none;colo
 body:not(.cr-lnav-on) #navMenu .navopt:hover,
 body:not(.cr-lnav-on) #navMenu .navopt:active{background:color-mix(in srgb,var(--hac,#8fb4d8) 14%,transparent) !important;color:#fff !important;}
 body:not(.cr-lnav-on) #navMenu .navopt::after{content:'\203A';margin-left:auto;color:#5a626e;font-size:18px;line-height:1;flex:none;}
-body:not(.cr-lnav-on) #navMenu #signOutBtn{color:#e35c63 !important;border-top:1px solid rgba(255,255,255,.09) !important;}
+/* 1115: sign-out is an icon in the footer bar now, not a full-width row, so
+   its own divider goes with the row — the bar already has one. Deleted at
+   source rather than overridden. */
+body:not(.cr-lnav-on) #navMenu #signOutBtn{color:#e35c63 !important;}
 /* ── 930 · collapsible sections in the drawer, closed by default ───────────
    Theo: "make the menus collapsible and expandable start the menus collapsed."
    32 rows is a long scroll on a phone; six headers is a glance.
@@ -80954,6 +81108,27 @@ body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{background:transparent !importa
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint{background:transparent !important;color:#9aa0a8 !important;border-top:1px solid rgba(255,255,255,.07) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,255,.1) !important;color:#cfd6df !important;}
 body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !important;color:#9aa2ae !important;border-top:1px solid rgba(255,255,255,.06) !important;margin-top:4px;}
+/* 1115 · the drawer's bottom bar: the build stamp on the left, a small
+   sign-out on the right. NOT scoped to body:not(.cr-lnav-on) like the rule
+   above it — that one is a colour override for the drawer, this is the
+   element's own layout, and it must hold wherever the element renders.
+   margin-left:auto rather than justify-content:space-between so anything
+   injected between the two later still pushes sign-out to the right edge. */
+#navMenu [data-cr-footer].cr-drawer-foot{display:flex;align-items:center;gap:10px;
+  padding-top:4px !important;padding-bottom:4px !important;}
+/* 44px, not 40: 592 pushed every control to a 44px tap target and 1076 had
+   to come back for .lnav-out and the CRM switcher, which had been left at
+   ~28px. A new control arriving at 40 would be the third time. */
+#navMenu .cr-df-out{margin-left:auto;flex:none;width:44px;height:44px;padding:13px;
+  box-sizing:border-box;background:none;border:0;border-radius:12px;cursor:pointer;
+  color:#e35c63;/* an icon, floor 3.0:1 — measured by gate_1115.mjs */}
+#navMenu .cr-df-out:hover,#navMenu .cr-df-out:active{background:rgba(227,92,99,.16);}
+#navMenu .cr-df-out:focus-visible{outline:2px solid #e35c63;outline-offset:-2px;}
+/* the registry's glyphs paint through .i2 (fill) / .i5 (stroke), the same
+   pair .lnav-out uses on the rail. currentColor alone would leave them black. */
+#navMenu .cr-df-out svg{width:18px;height:18px;display:block;}
+#navMenu .cr-df-out svg .i2{fill:currentColor;}
+#navMenu .cr-df-out svg .i5{stroke:currentColor;}
 </style>
 <script id="cr-drawer-script">
 /* 924: turns the burger dropdown into a left slide-out drawer on mobile. Does
@@ -80982,19 +81157,32 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
          calls this, forever. Build 567 paid for this lesson once already. */
       if(el.textContent !== want) el.textContent = want;
     }
-    /* ── 930 · collapsible sections, closed by default ────────────────────
-       State lives in the SAME store the desktop rail already uses
-       (`cardinal.lnav.sections`, keyed by the slugged section label), so
-       collapsing Office on the phone collapses it on the desktop too — one
-       record of which nav sections are open, not two. Only the DEFAULT
-       differs by surface: the rail opens Daily and Sell, the drawer opens
-       nothing, which is what Theo asked for. */
-    var SEC_KEY = 'cardinal.lnav.sections';
-    function readSecs(){
-      try{ return JSON.parse(localStorage.getItem(SEC_KEY) || '{}') || {}; }
-      catch(_){ return {}; }
-    }
-    function writeSecs(st){ try{ localStorage.setItem(SEC_KEY, JSON.stringify(st)); }catch(_){} }
+    /* ── 930 · collapsible sections · 1115 · closed on EVERY opening ──────
+       930 defaulted them closed and then remembered your choice, in the SAME
+       localStorage record the desktop rail uses ('cardinal.lnav.sections').
+       So the drawer only ever opened collapsed ONCE: the first section you
+       expanded stayed expanded on every later visit, and expanding Office on
+       the phone expanded it on the desktop too.
+
+       Theo: "Have all the sections start off not expanded." That is not a
+       default any more, it is an invariant — so the drawer keeps its open set
+       IN MEMORY and empties it each time the drawer opens (see sync()).
+       Expanding still works for as long as the drawer is open; closing it
+       forgets.
+
+       ⚠ This deliberately makes the drawer STOP reading and STOP writing
+       'cardinal.lnav.sections'. Two knock-ons, both intended:
+         · the desktop rail keeps that key entirely to itself — it has its own
+           readState()/writeState(), and the rail's remembered folds and its
+           "Daily and Sell open" default are untouched;
+         · 954's openInsuranceSection(), which writes st.insurance = 1 when you
+           enter the insurance portal, no longer reaches the drawer. It still
+           opens the section on the rail. On the phone, "everything starts
+           collapsed" outranks it — that is this instruction, not an oversight.
+       There is no second persisted store here, so nothing can drift out of
+       step with the rail: this one does not persist at all. */
+    var secOpen = {};      /* slug -> 1, for this opening of the drawer only */
+    var wasOpen = false;   /* previous sync()'s answer, to spot the transition */
     function secSlug(s){ return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
     /* Never bury these in a section: sign-out and the build stamp sit after the
        last header, and scrape() skips them for the same reason. */
@@ -81038,7 +81226,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
       }
       applying = true;
       try{
-        var st = readSecs(), sec = null, open = true, count = 0;
+        var st = secOpen, sec = null, open = true, count = 0;
         function stamp(){ if(sec) sec.setAttribute('data-crcount', String(count)); }
         Array.prototype.forEach.call(menu.children, function(el){
           if(!el.classList) return;
@@ -81069,9 +81257,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     }
     function toggleSection(el){
       var id = el.getAttribute('data-crsec') || secSlug(el.textContent);
-      var st = readSecs();
-      st[id] = (el.getAttribute('aria-expanded') === 'true') ? 0 : 1;
-      writeSecs(st);
+      secOpen[id] = (el.getAttribute('aria-expanded') === 'true') ? 0 : 1;
       applySections();
     }
     /* Delegated, so headers injected later (Admin) need no second wiring. */
@@ -81103,6 +81289,14 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     }
     function sync(){
       var open = menu.style.display === 'block' && isDrawer();
+      /* 1115: every opening starts collapsed. Fires on the CLOSED→OPEN edge
+         only — sync() runs on every mutation of #navMenu (nine modules inject
+         rows over the first few seconds), and clearing unconditionally would
+         snap a section shut under the finger that just opened it. onMutate()
+         calls sync() before applySections(), so the reset is always in place
+         before the rows are re-tagged. */
+      if(open && !wasOpen) secOpen = {};
+      wasOpen = open;
       if(open) fillUser();
       menu.classList.toggle('cr-drawer-open', open);
       bd.classList.toggle('on', open);

@@ -1,5 +1,37 @@
 # Cardinal Resource App — Open Items
 
+## ✅ SETTLED 28 Aug 2026 — the drawer (build 1115)
+
+- **No build summary in the menu.** Theo: *"get rid of the big paragraph about what's new."*
+  The footer keeps the version line only; What's New holds the description. `check_build.py`
+  gates the CHANGELOG entry now, so there is no reason to put prose back.
+- **Sign out is a small icon**, bottom-right of that line, using the same `lock` glyph as the
+  desktop rail.
+- **Every drawer section starts collapsed, every time.** Not a default — an invariant. The
+  drawer keeps its open set in memory and clears it on open. It no longer reads or writes
+  `cardinal.lnav.sections` (the desktop rail owns that key), and 954's insurance-portal
+  auto-open no longer reaches the drawer. **Do not restore the persistence.**
+
+## 🟠 OWED — the Labor Rate Schedule, crew-list first (28 Aug 2026)
+
+Theo, on the 1110 screen: *"Labor rate schedule shouldn't go straight to Santiago. It should
+[list] all the crews, then tap to see the labor rates."* Unstarted — nothing half-built.
+
+- **Shape:** `openLRS()` currently loads every `pricing_items` row where `template='roofing_labor'`
+  and renders Santiago's sheet directly. It becomes a **crew list first** (from `crews`), then tap a
+  crew → that crew's own rate sheet.
+- **Settled: each crew has its OWN rates; the others start blank.** Santiago's 24 seeded lines stay
+  his. So the sheet needs a crew key — `crew_rates` already exists (build 548–554: per-crew
+  overrides joined to `pricing_items`, `pricing_item_id IS NULL` = a custom row) and is the pipeline
+  to reuse. **Do not add a second per-crew rate store.**
+- ⚠ **SETTLED 28 Aug, and it REVERSES the earlier answer: LIGHT MODE ONLY.** Theo asked for "dark
+  mode only" when he first described the rework, then corrected himself the same day —
+  *"On the labor rates schedule I only want light mode."* The screen is already the light exhibit
+  (navy `#1e2b4a` bands, gold `#c9a227`, `--lrs-gold-dk:#8f6b00` for the on-white title rule) and it
+  prints to Letter. **Do not build a dark twin, and do not wire it to `rb-light`.**
+- `crew_rates` and `crew_payments` are `is_cardinal_admin()` in RLS — a work order with no labor
+  lines for Curtis or Scottie is CORRECT, not a bug (that fence is from 556 and still holds).
+
 ## 🟢 IN PROGRESS — the manual estimating engine, enhanced (27 Aug 2026)
 
 Theo pasted a generic React/TS/Tailwind "estimating engine" spec; the pushback held —

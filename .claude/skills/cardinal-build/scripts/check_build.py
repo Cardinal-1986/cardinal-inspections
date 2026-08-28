@@ -228,6 +228,35 @@ def app_summary(src):
     return m.group(1).strip() if m else None
 
 
+# ── 1115: THE DESCRIPTION MOVED, SO THE GATE MOVED WITH IT ──────────────────
+# Build 1115 deleted the em-dash summary from the drawer footer (Theo: "get rid
+# of the big paragraph about what's new in the drawer menu"). app_summary() now
+# returns None on every build, and the branch below answers None with a PASS —
+# so the 1070 gate became a check that cannot fail, which is worse than no
+# check. The description it was guarding did not disappear, it just lives
+# somewhere better: the CHANGELOG entry What's New actually renders. Gate that
+# instead — the entry for THIS build must exist and must carry real prose.
+CHANGELOG_ENTRY_RE = re.compile(r"\{\s*b\s*:\s*(\d+)\s*,")
+
+
+def changelog_entry(src, build):
+    """The `s:` prose of the CHANGELOG entry for `build`, '' if the entry has
+    none, or None when there is no entry at all."""
+    i = src.find("var CHANGELOG = [")
+    if i < 0:
+        return None
+    block = src[i:src.find("</script>", i)]
+    for m in CHANGELOG_ENTRY_RE.finditer(block):
+        if int(m.group(1)) != build:
+            continue
+        # to the start of the next entry, or the end of the block
+        nxt = CHANGELOG_ENTRY_RE.search(block, m.end())
+        body = block[m.end():nxt.start() if nxt else len(block)]
+        sm = re.search(r"\bs\s*:\s*'((?:[^'\\]|\\.)*)'", body, re.S)
+        return sm.group(1).strip() if sm else ""
+    return None
+
+
 def gate_label(src, prev_src):
     hits = ALL_LABEL_RE.findall(src)
     builds = sorted({int(b) for _, b in hits})
@@ -270,7 +299,23 @@ def gate_label(src, prev_src):
     # and it lies with the same confidence whether it is right or not.
     now, before = app_summary(src), app_summary(prev_src)
     if now is None:
-        report(True, "app stamp summary: none present to check")
+        # 1115: no em-dash summary any more — gate the CHANGELOG entry instead.
+        entry = changelog_entry(src, stamp[1])
+        report(
+            entry is not None and len(entry) >= 40,
+            "CHANGELOG entry for build %d%s"
+            % (
+                stamp[1],
+                ""
+                if entry is not None and len(entry) >= 40
+                else (
+                    "   (MISSING - What's New is the only build description now)"
+                    if entry is None
+                    else "   (only %d chars of summary - What's New is the only"
+                         " build description now)" % len(entry)
+                ),
+            ),
+        )
     elif before is None:
         report(True, "app stamp summary written (previous build had none)")
     else:
