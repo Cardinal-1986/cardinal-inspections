@@ -29317,3 +29317,33 @@ It now prefers `data-cr-footer[^>]*>\s*v2026-\d\d-\d\d\s+build\s+(\d+)` and keep
 Theo, 28 Aug: *"I don't see the owner console with new features."* He was right, and the reason was not the code. **PR #535 was opened as a draft and stayed one**, so it never merged; `main` deploys the app, and `strategyHTML`, `cr-nav-sec-owner`, `owner_biz_plan` and `ow-kpi` were all at **0 occurrences** on `main` — measured, not assumed. Meanwhile main took five builds (1116, 1118–1121) and the branch conflicted twice.
 
 **The lesson is procedural, not technical: a draft PR is invisible to the person who asked for the feature.** The house convention is to open PRs as drafts, and that is fine for a branch nobody is waiting on — but when the ask is live, say plainly in the reply that it is a draft awaiting his merge, or mark it ready. Four builds sat finished and unreachable for seven hours.
+
+## Build 1123 — the Labor Rate Schedule lists the CREWS, then one crew's sheet
+
+Theo, 28 Aug: *"Labor rate schedule shouldn't go straight to Santiago. It should list all the crews, then tap to see the labor rates… dark mode only."*
+
+**The prime doctrine paid for itself before a line was written.** 1110 built this screen reading `pricing_items` (`template='roofing_labor'`) and showing its `rate` column as *the* schedule — one document, titled SANTIAGO. **Per-crew rates already existed**: build **548** put them in **`crew_rates`**, keyed by crew, either against a catalog line (`pricing_item_id`) or as a crew's own line (`custom_name`/`custom_unit`), with the Crews module already writing them. So this build adds **no table and no second store** — it points the screen at the pipeline that was already there:
+
+> the catalog (`pricing_items`, roofing_labor) = **the line items**, shared · `crew_rates` = **what this crew is paid**
+
+**Theo's pick on the trade question** (put to him with the real numbers — 5 roofing crews, 2 siding, 3 windows, 1 gutters, 1 repairs, against a catalog that is 24 roofing lines): **roofing crews get the shared catalog lines; every other trade starts with an empty sheet and grows its own.** `CATALOG_TRADES = ['Roofing']` is the whole rule, and `catalogFor()` is one line.
+
+### The migration is the part that would have silently broken
+
+⚠ **The catalog's `rate` column has always been Santiago's numbers.** Read per-crew, his sheet would have opened with all 23 lines blank — his schedule, silently emptied, on the first build that was supposed to improve it. `crew_rates_santiago_seed.sql` copies them onto his crew before the HTML change: **applied, verified — Santiago 23 rates, Daniel Sarceno 3, everyone else 0**, which is exactly "each crew has its own, others start blank". Idempotent (`NOT EXISTS`), non-clobbering, matched by name rather than a pasted uuid, and it **skips the one `unit='note'` row** because a category note is prose, not a rate.
+
+The same file adds **`crew_rates_one_per_item`**, a partial unique index on `(crew_id, pricing_item_id)`: there was no constraint saying a crew has one rate per line, and 1123 is the build that starts writing these rows from a screen two admins can have open at once. Verified zero duplicates before creating it. Partial, because a crew's own lines legitimately repeat.
+
+### Three things in the module that are decisions, not details
+
+- ⚠ **Editing sets a CREW's rates and never edits the catalog.** 1110 let you rename lines and add categories here; under a per-crew model that silently re-prices every roofing crew at once. Renaming a shared line is the Pricing Catalog's job and that screen exists. **"+ Add line" adds a line to THIS crew** — which is how a siding crew gets a sheet at all. Asserted: the module has no write path to `pricing_items`.
+- ⚠ **A blank rate is a real state.** No agreed price reads **"not set"** in readable text (5.86:1, measured), never a `0` and never the catalog's number. **Falling back to `pricing_items.rate` would pay one crew another crew's rate** — the comment in the module says so, because it is the one "helpful" change that would cost real money.
+- **The catalog carries category NOTES** (`unit='note'`, one today). A note gets no rate field and **no `data-key`**, so `harvest()` cannot mistake it for a line with a blank rate. Caught by querying the real table before writing the renderer — the first version would have printed *"not set"* against a sentence.
+
+### Dark on the screen, light on the paper
+
+The whole surface is dark now (`#0e1116` ground, `#161b22` card), with every ink computed before it was written, not after. ⚠ **The `@media print` block puts the document back on white with dark ink** — a rate sheet gets printed and handed to a crew, and a dark screen printed verbatim is a black page. The crew LIST never prints; only the open sheet. If you add a rule that paints a ground or an ink up there, add its light twin down there.
+
+Gates: `check_build.py` green (129 inline scripts, 152 style blocks, 1122 → 1123, marker `data-lrs-crew` + negative control) · **`harness_lrs1123.js` GREEN 45 / RED on 1122** — drives the shipped module open → tap → edit → save against production-shaped rows and proves the money path: a roofing crew sees its OWN rate (Daniel 38, not Santiago's 45), a siding crew does not inherit the roofing catalog, and **every write goes to `crew_rates`** · **`gate_1123.mjs` GREEN 25 / RED 12 on 1122 without crashing** — real Chromium at 390px across both screens: renders dark (`rgb(14,17,22)`), 4 crews grouped by trade, worst ink 5.86:1 against its composited ground on both screens, nothing under 11px, no sideways scroll, and every crew row and topbar control ≥44px.
+
+⚠ **That last one caught a pre-existing miss: on 1122 the topbar buttons were 33px** — under the 592/1076 rule the whole app is held to. They are 44px now; the control printing `lrs-back:33 lrs-edit:33 lrs-print:33` is how it surfaced.

@@ -1,5 +1,18 @@
 # Cardinal Resource App — Open Items
 
+## ✅ SETTLED 28 Aug 2026 — the Labor Rate Schedule is per crew (build 1123)
+
+- **Crew list first, then that crew's sheet.** Not one document titled Santiago.
+- **Roofing crews inherit the shared roofing catalog; every other trade starts empty**
+  and grows its own lines. Theo's pick when the real counts were put to him.
+- **Rates live in `crew_rates`** — the store build 548 already created. No new table.
+  Editing this screen never writes `pricing_items`.
+- **A line with no agreed price reads "not set".** Do not add a fallback to the
+  catalog rate: that is one crew's money shown on another crew's sheet.
+- **Dark on screen, light on paper.** The print block is deliberate, not leftover.
+- Santiago's 23 rates were seeded off the catalog before the HTML shipped, so his
+  sheet is unchanged; Daniel Sarceno keeps his 3; everyone else starts blank.
+
 ## ✅ SETTLED 28 Aug 2026 — the drawer (build 1115)
 
 - **No build summary in the menu.** Theo: *"get rid of the big paragraph about what's new."*

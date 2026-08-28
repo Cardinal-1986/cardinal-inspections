@@ -7656,3 +7656,21 @@ The Owner Console (`cr-owner` / `CardinalOwner`, build 895, admin-only, cream "D
 - ⚠ **The drawer no longer touches `cardinal.lnav.sections`.** That key is the desktop rail's alone now (its folds and its "Daily and Sell open" default are unchanged). 930's shared-store design is deliberately over.
 - ⚠ **954's `openInsuranceSection()` no longer reaches the drawer** — it still opens the section on the rail. On the phone, "everything starts collapsed" outranks it. This is the instruction, not an oversight.
 - Gates: `harness_drawer1115.js` (jsdom, drives the shipped module open→expand→close→open; GREEN 36 / RED on 1114) and `gate_1115.mjs` (real Chromium at 390px with the drawer open; GREEN 21 / RED 10 on 1114).
+
+## Labor Rate Schedule — crew list, then one crew's sheet (build 1123)
+
+**Office menu → Labor Rate Schedule, admin only.** Opens on **your crews**, grouped by trade, each row saying whether that crew has rates yet. Tap one for their sheet.
+
+**Where the numbers live — this is the thing to know before touching it:**
+
+> `pricing_items` (`template='roofing_labor'`) = **the line items**, shared · **`crew_rates`** = **what a given crew is paid**
+
+`crew_rates` is not new — build **548** created it and the Crews module (`cr-crew-script` → Labor Rates tab) has always written it. 1123 pointed this screen at the same store rather than inventing a second one. **Both surfaces read and write the same rows.**
+
+- **Trade rule:** `CATALOG_TRADES = ['Roofing']`. Roofing crews get the shared catalog lines; siding, windows, gutters and repairs **start empty** and grow their own lines via **+ Add line** (a `crew_rates` row with `custom_name`/`custom_unit`). Theo's pick, 28 Aug.
+- ⚠ **Editing here never touches the catalog.** No write path to `pricing_items` exists in the module, and the harness asserts it. Renaming a shared line is the **Pricing Catalog**'s job.
+- ⚠ **"not set" is a real state, rendered as readable text.** Do NOT make it fall back to `pricing_items.rate` — that is Santiago's number and paying it to another crew is a real-money bug.
+- ⚠ **Catalog rows with `unit='note'` are prose.** They render as a note with no rate field and **no `data-key`**, so a save cannot read them as a blank rate.
+- ⚠ **Dark on screen, LIGHT on paper.** `@media print` restores the white one-page exhibit and hides the crew list. Add a ground or an ink up top → add its light twin in the print block.
+- **SQL:** `crew_rates_santiago_seed.sql` — **applied**. Seeded Santiago's 23 rates off the catalog (his numbers were always the catalog's `rate`), and added `crew_rates_one_per_item`, a partial unique index on `(crew_id, pricing_item_id)`.
+- Gates: `harness_lrs1123.js` (jsdom, drives the shipped module; GREEN 45 / RED on 1122) and `gate_1123.mjs` (real Chromium, both screens; GREEN 25 / RED 12 on 1122).
