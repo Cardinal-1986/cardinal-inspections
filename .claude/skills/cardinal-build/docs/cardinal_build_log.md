@@ -29389,6 +29389,138 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
 
+## Build 1127 — the 195-finding sweep, read; three real, one wrong, 191 noise
+
+Theo picked "ship all three" after the triage. **The triage is the deliverable as
+much as the fix** — the number had been sitting in every sentinel run for weeks and
+nobody had read it.
+
+### What 195 actually was
+
+| bucket | n | verdict |
+|---|---:|---|
+| OVERRIDDEN | 120 | the cascade working. The tool's own source calls it "just the cascade", meaningful only when the rule is NEW |
+| DEAD | 44 | rules losing to no-more-specific rules. Low signal, and **under**-reported — capped at 20 per render |
+| TRUNCATED | 27 | **not defects** — every one is the sweep warning it hit that cap |
+| INK | 3 | **real** |
+| FLOOR | 1 | **false positive** |
+
+**Signal rate 3 in 195 — 1 in 65**, quieter even than the 1-in-40 the skill records.
+
+**The false positive is worth keeping.** `#acxTrBtn` was reported as missing the 44px
+touch floor, "computes 0px". It renders **183×44**. The check asserts the `min-width`
+DECLARATION wins, and `parseFloat('auto')` is 0 — so a button that is fine reads as a
+defect. The check should measure the box before firing.
+
+### The three real ones, and what reading them changed
+
+- **Trade headers** in the estimate library: Roofing 3.77:1, Gutters 3.68:1 on the
+  picker's own `#eef1f4` card, 11px/800 against a 4.5 floor. Their **four siblings
+  already passed** (4.78–5.29), so these were stragglers, not a broken palette. Each
+  deepened by lightness only, hue held within 0.3° — the 557 rule. Now 4.83:1.
+- **The punch-out description** at 3.05:1. ⚠️ **Not a one-element bug.** `.pu-m` takes
+  its colour from `--rbe-mute2`, a token with **21 consumers**, and that value was under
+  floor on *every* dark ground (4.21 page, 2.69 card). The sweep named the one consumer
+  that happened to render. Same shape as `.viewhead` — an app-wide class failing on
+  fifteen pages. Ask who else uses it.
+
+### ⚠️ Two things my own instrument got wrong, in opposite directions
+
+The first cut of `gate_1127.mjs` read only `backgroundColor` and stopped at the first
+hit. That **sails past `.pu-card`'s `linear-gradient`** and scores the punch line
+against the page two levels below — it reported 6.89:1 for a line that was really
+4.40:1, and passed. Fixing it by collecting every gradient stop and taking the worst
+across ALL ancestors then went too far the other way: it scored the estimate labels
+against the page ground behind an **opaque** `#eef1f4` card and a 0.55 scrim, turning a
+correct 4.83 into 3.63 and failing correct code. **Right rule: collect every stop at
+each level, then STOP at the first fully opaque paint.** Both errors produced confident
+numbers; only dumping the real ancestor chain settled it.
+
+**And the binding ground was not the one the sweep named.** `.pu-card` paints
+`linear-gradient(#2E333B, #262A31)`; the sweep reported the DARK stop. My first
+replacement, `#9099a3`, measured 4.99 against that stop and **4.40 against the light
+one** — it would have shipped still under the floor on a number I computed myself.
+
+### ⚠️ The fix collapses two tokens into one, deliberately
+
+`--rbe-mute2` is now `#9aa0a8` — **identical to `--rbe-mute` on dark**. `--rbe-mute` is
+itself the dimmest grey clearing 4.5 on the binding ground (4.82:1), so anything dimmer
+— which is the entire purpose of `mute2` — cannot be readable text there. The floor and
+the two-level hierarchy cannot both hold on that surface. An unreadable label is worse
+than a flat hierarchy. **Restoring two readable levels means lifting `--rbe-mute` too**
+(say `#b6bcc4` / `#9aa0a8`), a second token with its own consumers and grounds — a build
+of its own, not a silent widening of this one. `gate_1127.mjs` asserts the collapse on
+purpose, so the next reader sees a decision rather than a slip.
+
+**The light twin `#8a8a8a` is deliberately UNTOUCHED.** It scores 3.45:1 on white by
+arithmetic — but a light-theme render found **zero** elements resolving to it, so that
+is an unverified number against an assumed ground. Measure it on a screen that really
+uses it before changing it.
+
+**Gate:** `gate_1127.mjs` — GREEN 10 / **RED 7 on 1126**, no crash. It reproduces the
+sweep's exact numbers on the control and scores against the composited ground.
+
+---
+
+## Build 1126 — a dead push channel no longer silences the email and the text
+
+Theo, after 1125 shipped: *"Fix the notify route so channels are independent."*
+
+**The route already said it was.** `api/notify.js` has carried this comment since **874**:
+*"each channel is independent, so a dead one never blocks the others."* True of email
+against SMS. False of push against both — and 1125 had just put the punch-out deep link
+into the SMS, so the newest feature was riding the channel a push fault could cancel.
+
+**Three abort points, not one.** Each `return`ed before any email or SMS work ran:
+
+| site | reacting to | now |
+|---|---|---|
+| the `web-push` import arm | library fails to load on a cold start | `pushErr` + `push_unavailable` |
+| `if(!VAPID_PRIVATE)` | one unset env var | `pushErr` + `no_vapid_private` |
+| `if(!Array.isArray(subs))` | a refused **push_subs** query | `pushErr` + `subs_query_failed` |
+
+**The third is the one I nearly missed** — a hiccup reading *who has notifications enabled*
+silently cancelled the email and the text. Push setup now sets a flag; the subs query and
+the send loop run under `if(pushReady)`; email and SMS run regardless.
+
+**The second-order fault was worse than the first.** With no way to say "push is off at the
+server", the response carried `subs:0`, and the in-app test button read that as *"no device
+enabled here yet — tap Enable notifications"* — a confident sentence telling Theo to fix his
+**phone** about a missing **server** env var. `push_error` and `env.push` now exist beside
+`sms_error` and `env.sms`, and the button reads the outcome first. 1102's rule, second time.
+
+Also: `notifyOutcomeText()` counted only `sent` and `mailed`, so an alert delivered **purely
+by text** — the one channel that still works when the other two are unconfigured — announced
+itself as *"Could NOT notify"*. It counts `texted` now, or the fix would be invisible.
+
+**Reason strings are unchanged**, so both readers keep working; two that used to print raw at
+a person (`no_vapid_private`, `push_unavailable`) gained sentences.
+
+**Gates.** `harness_notifyindep1126.mjs` — GREEN 19 / **RED 12 on 1125**. It drives the
+*shipped* handler with `fetch` stubbed and asserts on the **actual outbound requests**
+(Resend's POST, Twilio's form body), because "the route returned ok" is not the claim; "a
+text was sent" is. ⚠️ Two traps paid for here:
+
+- **The control must live INSIDE the repo.** Node resolves `web-push` by walking up from the
+  file's own directory, so a control copied to `/tmp` dies in the import arm and fails 17 of
+  19 — five of them for that reason and not the behaviour under test. It reads as a *stronger*
+  control and is a worthless one. On the honest control the three "all healthy" checks PASS,
+  which is what proves this build regressed nothing.
+- **`VAPID_PRIVATE` is a module-scope const**, so each case re-imports with a cache-busting
+  query. Setting the env after the import proves nothing.
+
+⚠️ **`harness_notify_sms1100.mjs` went red on a correct build** — its `smsSites.length >= 3`
+was a hardcoded tally of the response paths that existed at 1106, and this build deleted one
+on purpose. Rewritten to assert the contract (one report per `env:` block, every one reading
+`twReady`), self-computing, and negative-controlled against two injected violations. That is
+**BUG_CLASSES 77**; the route fault is **76**.
+
+Everything else green: `check_build.py` (1125→1126, marker + negative control), `gate_dupes`,
+`gate_types`, `gate_smsnotify874`, `render_smserr1105`, `test_leadnotify901`,
+`harness_deeplink1125` (1125's link still in the text).
+
+---
+
 ## Build 1125 — a punch-out text you can tap, which opens the punch-out
 
 > ⚠️ **CI went RED on this PR for a doc, not for code — `MIGRATIONS.md is out of date`,
