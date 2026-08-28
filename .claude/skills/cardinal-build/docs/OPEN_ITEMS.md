@@ -1450,7 +1450,19 @@ server-generated. Theo chose **"Neither — leave as-is"** on 17 Aug. If revisit
 Theo: *"can you run audit on the header for all sections"*. Chromium walk of 18 views
 × 3 sticky portals × 2 themes. **No build shipped — findings only.**
 
-**H1. TEN screens still follow the last-used portal.** 1104 pinned five shared screens to
+⚠️ **RE-RUN 28 Aug against build 1112 — the count is THIRTEEN, not ten, and that
+changes what H1 means.** Builds 1107-1112 landed while this sat open and added three
+screens: **Invoices & AR (`cr-ar-view`), Labor Rate Schedule (`cr-lrs-view`) and the
+Pre-Install Guide editor (`cr-guide-editor`)**. All three drift. No header symbol changed
+in that span — `crmHead`, `SHARED_HEAD_1104`, `--hbg`/`--hac`, `crBanner`, `addProjectBtn`
+and `data-crm-head` are untouched — so H2 and H3 carry forward unaltered. **The lesson is
+that drifting is the DEFAULT for any new full-screen view**, not a fixed set of ten someone
+forgot: a screen is pinned only if it is named in `SHARED_HEAD_1104`, so every screen added
+from here inherits the drift silently. *An audit's screen list frozen at one build stops
+covering the app the moment the next build ships* — the list in `audit_headers.mjs` now
+carries a note saying so.
+
+**H1. TEN screens still follow the last-used portal** (thirteen at 1112 — see above)**.** 1104 pinned five shared screens to
 the production head; these ten were not in that list and still wear whichever portal you
 were last in: **Leads & Jobs, Photos, Reports, Gallery, Company Documents, Resource
 Library, Quick Inspection, Quick Insp start, Address check, iTel lab** — plus the

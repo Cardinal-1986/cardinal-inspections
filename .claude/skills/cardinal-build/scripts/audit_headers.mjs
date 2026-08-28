@@ -48,6 +48,10 @@ const SCREENS = [
   ['Resource Library', 'resourceLibraryView'], ['Quick Inspection', 'quickInspView'],
   ['Quick Insp start', 'qiStartView'], ['Address check', 'addrCheckView'],
   ['iTel lab', 'cr-itellab'],
+  /* arrived with builds 1107-1112, after the first run of this audit — a screen
+     list frozen at one build silently stops covering the app. */
+  ['Invoices & AR', 'cr-ar-view'], ['Labor Rate Schedule', 'cr-lrs-view'],
+  ['Pre-Install Guide editor', 'cr-guide-editor'],
 ];
 
 const relLum = ([r, g, b]) => { const f = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
