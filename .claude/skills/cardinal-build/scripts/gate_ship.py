@@ -59,14 +59,35 @@ def ci_run_for_sha(check_runs, sha, job_name=WORKFLOW_JOB):
     return False, None
 
 
+# ⚠ 1122: THIS GATE COULD NOT READ A STAMP FROM BUILD 1115 ONWARD, and it
+# failed CORRECT artifacts by returning None. The old reader was
+#     STAMP_RE = re.compile(r'build\s+(\d+)\s*&#8212;')
+# which anchored on the em-dash summary — a sound trick while one existed,
+# because it was the one thing telling the app stamp apart from the ~44 frozen
+# module banners that also say `build NNN`. Build 1115 DELETED that summary on
+# Theo's instruction ("get rid of the big paragraph about what's new"), so from
+# 1115 on there is no em-dash to find and every run reported
+#     FAIL  app stamp is above main — main says NNNN, branch says None
+# on a branch whose stamp was perfectly readable. check_build.py had already
+# been moved to the `data-cr-footer` anchor for exactly this reason; this file
+# was missed.
+#
+# The anchor is the honest discriminator now: `data-cr-footer` appears ONCE, in
+# rendered markup, on the app-stamp div. Module banners are HTML comments and
+# JS strings and carry no such attribute. The em-dash form is kept as a
+# fallback so this still reads main and every branch older than 1115.
+STAMP_ANCHORED_RE = re.compile(r'data-cr-footer[^>]*>\s*v2026-\d\d-\d\d\s+build\s+(\d+)')
 STAMP_RE = re.compile(r'build\s+(\d+)\s*&#8212;')
 
 
 def stamp_of(html):
-    """The APP stamp — the em-dash summary form, which only the rendered
-    nav footer uses. Module banners carry `build NNN` with no summary, so a
-    bare number match would find them too."""
-    m = STAMP_RE.search(html or '')
+    """The APP stamp — the one version string in rendered markup.
+
+    Prefers the `data-cr-footer` anchor; falls back to the em-dash summary form
+    for artifacts older than build 1115. Module banners carry `build NNN` with
+    neither, so a bare number match would still find them and must not be used."""
+    html = html or ''
+    m = STAMP_ANCHORED_RE.search(html) or STAMP_RE.search(html)
     return int(m.group(1)) if m else None
 
 
@@ -194,6 +215,14 @@ def selftest():
           stamp_of('<div data-cr-footer>v2026-08-16 build 840 &#8212; thing</div>') == 840)
     check('stamp_of ignores a module banner with no summary',
           stamp_of('/* v2026-08-16 build 148 */') is None)
+    # 1122: the post-1115 footer — no em-dash, attributes before the '>'.
+    # This case returns None against the old em-dash-only reader, so it is the
+    # regression test and not an inert assertion.
+    check('stamp_of reads the 1115+ footer, which has no summary',
+          stamp_of('<div data-cr-footer class="cr-drawer-foot" style="color:#b6a89f;">'
+                   'v2026-08-28 build 1122<button id="signOutBtn"></button></div>') == 1122)
+    check('stamp_of still ignores a banner beside a real stamp',
+          stamp_of('/* v2026-07-22 build 148 */') is None)
 
     print('\n' + '=' * 56)
     print(('GREEN' if f == 0 else 'RED') + '  —  %d passed, %d failed' % (p, f))

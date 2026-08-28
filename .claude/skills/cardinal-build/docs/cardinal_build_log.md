@@ -29293,6 +29293,25 @@ Not a feature. Builds **1118–1121** (PRs #536, #537 — the gate-suite runner'
 
 Gates on the merged tree: `check_build.py` green (1121 → 1122, marker + negative control) · `harness_owner1113` GREEN · `harness_pipe1114` GREEN 30 · `harness_drawer1115` GREEN 36 · `gate_1114` GREEN 58 · `gate_1115` GREEN 21 · **`gate_1081` GREEN 14** (the 11px floor — 1119 had just repaired seven labels, so it is the gate most likely to catch a bad merge) · **and main's own three: `gate_1116` GREEN, `gate_1118` GREEN, `gate_1121` GREEN** · the two standing quality gates **`gate_dupes` GREEN** (0 over baseline) and **`gate_types` GREEN** (0 codes grew). No SQL, no api route.
 
+### ⚠ `gate_ship.py` could not read a stamp from 1115 onward — it failed a CORRECT artifact
+
+Caught by running it, as the convention requires, before merging #535. It reported:
+
+    FAIL  app stamp is above main — main says 1121, branch says None
+
+**`None`, not a low number.** Its reader was `STAMP_RE = re.compile(r'build\s+(\d+)\s*&#8212;')` — anchored on the em-dash summary, which was a sound trick *while one existed*: it was the one thing separating the app stamp from the ~44 frozen module banners that also say `build NNN`. **Build 1115 deleted that summary on Theo's instruction**, so from 1115 on there is no em-dash and the gate reads nothing on any branch. `check_build.py` had already been moved to the `data-cr-footer` anchor for exactly this reason; **this file was missed** — the same defect, in the gate that runs last.
+
+It now prefers `data-cr-footer[^>]*>\s*v2026-\d\d-\d\d\s+build\s+(\d+)` and keeps the em-dash form as a fallback, so it still reads `main` and every branch older than 1115. Verified rather than asserted — the old reader returns `None` on both the synthetic case and the real artifact, the new one returns 1122 on both:
+
+| reader | 1115+ footer sample | the real `index.html` |
+|---|---|---|
+| old (em-dash) | `None` | `None` |
+| new (anchored) | `1122` | `1122` |
+
+`--selftest` gains that case plus a banner-still-ignored control: **10 passed, 0 failed**, and the new case is a genuine regression test because it fails against the old reader.
+
+**The class, stated plainly: a gate that identifies a thing by a decoration is broken the day the decoration is removed** — and it breaks *silently upward*, returning `None` rather than a wrong number, which reads as "the branch is broken" instead of "the gate is blind."
+
 ### ⚠ Why this branch needed merging twice: it was never taken out of DRAFT
 
 Theo, 28 Aug: *"I don't see the owner console with new features."* He was right, and the reason was not the code. **PR #535 was opened as a draft and stayed one**, so it never merged; `main` deploys the app, and `strategyHTML`, `cr-nav-sec-owner`, `owner_biz_plan` and `ow-kpi` were all at **0 occurrences** on `main` — measured, not assumed. Meanwhile main took five builds (1116, 1118–1121) and the branch conflicted twice.
