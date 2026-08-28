@@ -102,7 +102,7 @@ const body = () => q('lrs-body');
   await tick();
   const doc = body().querySelector('.lrs-doc');
   ok(!!doc, 'admin open renders the .lrs-doc');
-  ok(/EXHIBIT A/.test(doc.textContent) && /LABOR RATE SCHEDULE/.test(doc.textContent), 'header reads EXHIBIT A | LABOR RATE SCHEDULE');
+  ok(/SANTIAGO/.test(doc.textContent) && /LABOR RATE SCHEDULE/.test(doc.textContent), 'header reads SANTIAGO | LABOR RATE SCHEDULE');
   ok(q('cr-lrs-view').style.display === 'block', 'the view is shown (display:block)');
 
   // 4. category grouping — one band per category, in sort order
