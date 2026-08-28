@@ -4026,3 +4026,36 @@ funnel: {"total":7423,"isNew":2,"hasEls":2,"props":2,"cands2":2,"won":0,"displac
 judged to lose*, which contradicted `getComputedStyle`. **Any gate with a funnel should
 print it on demand** — "zero findings" and "never actually looked" are the same output
 otherwise, and this file has now paid for that three times (classes 37, 71, 74).
+
+
+## Class: a mirror held up once — a derived control that never repaints (build 1124)
+
+**Shape.** Surface B renders a copy of a fact it reads off surface A *at render
+time*. The fact later changes; A is repainted by its own painter; **B is not**.
+If A is invisible (hidden card, 0×0, another breakpoint), the user sees a
+control that responds to nothing.
+
+**The tell is the bug report: "can't click X".** It reads as a dead handler, so
+that is where you look — and the handler is fine, the data really did change,
+and you can burn a session proving things that were never broken. **Reproduce
+first and check the DATA, not the handler**: if `isFav()` flipped and the pixels
+did not, it is this class and not a click problem.
+
+**Instance.** `cr-namebar`'s favourite star copied `#favStar`'s class once
+(`var favOn = live.className.indexOf('on') !== -1`). `#favStar` is 0×0 on a
+phone. `toggleFav()` worked perfectly for months; the band never moved.
+
+**Fix.** Make the ONE painter paint every surface that shows the fact — not a
+second observer, not a second derivation. Guard each write (compare before
+assigning: `textContent` emits a childList record even for an identical string).
+
+**Why gates missed it.** jsdom cannot lay out or hit-test, so it confirms
+exactly the things that were already true. **This class needs a real render that
+asserts the GLYPH changed after a real click** — see `gate_1124.mjs`.
+
+## Class: a rename regex anchored on `(` (build 1124)
+
+`re.sub(r'name\(', 'newName(')` renames every **call** and misses every
+**reference** — `.then(name)`, `addEventListener('x', name)`, `[name, other]`.
+The module then throws `ReferenceError` at the first callback. Rename on a word
+boundary, and assert the old identifier reaches **zero** in the slice.

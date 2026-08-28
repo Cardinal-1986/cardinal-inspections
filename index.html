@@ -3900,7 +3900,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      THIRD time main's footer has arrived carrying a summary, so if you are
      resolving this hunk a fourth time: ours wins, and it is not a judgement
      call. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1122<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1125<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19490,11 +19490,41 @@ function favSort(list){
   });
 }
 function renderFavBtn(){
-  var b = document.getElementById('favStar');
-  if(!b || !currentProject) return;
+  if(!currentProject) return;
   var on = isFav(currentProject);
-  b.textContent = on ? '\u2B50' : '\u2606';
-  b.classList.toggle('on', on);
+  /* the hero star (#favStar). It is 0x0 on a phone — the client-profile
+     rebuild hid the card it lives in — but it is still the element every
+     other surface reads, so it is painted first and stays the source. */
+  var b = document.getElementById('favStar');
+  if(b){
+    var t = on ? '\u2B50' : '\u2606';
+    if(b.textContent !== t) b.textContent = t;
+    b.classList.toggle('on', on);
+  }
+  /* 1124: AND the name band's star, which is the only one you can see on a
+     phone. Theo: "Can't click the star to favorite."
+
+     The click was never the problem — it landed, toggleFav ran, the checklist
+     was written and #favStar flipped to a lit star nobody could see. What was
+     missing is this: the band built its star ONCE, from #favStar's class at
+     render time ("mirror the LIVE star rather than re-deriving it"), and
+     nothing repainted it afterwards. A mirror held up once is a photograph.
+     So the tap toggled a real favourite and the screen said nothing, which
+     reads exactly like a dead control.
+
+     Painting both here keeps the ONE painter that comment intended — every
+     caller of renderFavBtn(), from any surface, now leaves the two agreeing.
+     ⚠ Writes are compared first: assigning textContent emits a childList
+     record even when the string is identical, and this band sits in a subtree
+     other modules observe (567/569 cost two builds to exactly that). */
+  var nb = document.querySelector('#cr-namebar .nb-star');
+  if(nb){
+    var t2 = on ? '\u2605' : '\u2606';   /* the band is drawn glyphs, not the emoji */
+    if(nb.textContent !== t2) nb.textContent = t2;
+    nb.classList.toggle('on', on);
+    var pressed = on ? 'true' : 'false';
+    if(nb.getAttribute('aria-pressed') !== pressed) nb.setAttribute('aria-pressed', pressed);
+  }
 }
 
 /* ---------- pipeline stages ---------- */
@@ -19511,7 +19541,13 @@ function stageClass(s){ return 'stg-' + normStage(s).replace(/ /g,''); }
    could not tell success from silence — and for months it was silence. It
    now RESOLVES to the route's report. Still never throws: callers may ignore
    the promise and behave exactly as before. */
-function notifyTeam(to, subject, bodyHtml){
+/* 1125: `url` is the DEEP LINK — a relative '#…' path this app's own hash
+   router already understands (#p/<id>/<tab>, #leads, #board …). It reaches
+   /api/notify, which resolves it against the request host and puts it in the
+   text message AND in the push, so tapping either lands on the thing the alert
+   is about instead of the app's front door. Optional, defaulting to '/', so all
+   21 existing call sites keep their exact behaviour. */
+function notifyTeam(to, subject, bodyHtml, url){
   if(!TEAM) return Promise.resolve({ ok:false, reason:'offline' });
   return sb.auth.getSession().then(function(s){
     var tok = s.data.session && s.data.session.access_token;
@@ -19538,7 +19574,7 @@ function notifyTeam(to, subject, bodyHtml){
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
       body: JSON.stringify({ emails: _list, title: subject, body: _text,
-                             html: bodyHtml, url: '/' })
+                             html: bodyHtml, url: (url || '/') })
     }).then(function(r){ return r.json(); })
       .then(function(j){ return j || { ok:false, reason:'empty_response' }; })
       .catch(function(e){
@@ -19549,6 +19585,15 @@ function notifyTeam(to, subject, bodyHtml){
     return { ok:false, reason:'network', detail:String((e && e.message) || e).slice(0,120) };
   });
 }
+
+/* 1125: ONE place that knows what a punch-out's address looks like. Six
+   notifications point at a punch-out and they must not drift into six spellings
+   of the same link — the rule 612 applied to outcome text, and 607 to mentions.
+   The route it returns is not new: #p/<id>/<tab> has been in __tryRestoreFromHash
+   since 613, and 'punch' has been a real tab since 607. Nothing was missing but
+   somebody sending it. */
+function punchLink(pid){ return pid ? ('#p/' + encodeURIComponent(pid) + '/punch') : '/'; }
+window.punchLink = punchLink;
 
 /* 612: ONE place that turns a route report into a sentence a person can act
    on. Both "Notified" lines use it, so they cannot drift apart — the same
@@ -42074,6 +42119,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1125, d:'2026-08-28', t:'Punch-out texts are tappable \u2014 they open the punch-out',
+  s:'Curtis\u2019s idea. A punch-out text told you what happened and then left you to go find it: open the app, find the client, find the tab, find the item. Every punch-out alert now ends with a link, and tapping it opens that punch-out directly \u2014 the same for the buzz on your phone. It covers all six: filed, assigned to you, nobody assigned, a comment that tags you, extra scope flagged, and closed.' },
+{ b:1124, d:'2026-08-28', t:'The favourite star on a client works again',
+  s:'Tapping the star beside a client\u2019s name looked like it did nothing. It was actually working \u2014 the client really was being favourited, and the Clients list would have shown them pinned to the top \u2014 but the star itself never changed, so there was no way to tell, and tapping again just turned it back off. It now lights up the moment you tap it. It is a proper finger-sized target too: the gold shape is the same size, but the area that responds to a tap is much larger, so it catches the press instead of missing it.' },
+{ b:1123, d:'2026-08-28', t:'Labor rates are per crew now \u2014 pick the crew first',
+  s:'The <b>Labor Rate Schedule</b> used to open straight onto one sheet titled Santiago. It now opens on <b>your crews</b> \u2014 grouped by trade, each showing whether it has rates yet \u2014 and you tap one to see or set what that crew is paid. Roofing crews start with the roofing line items you already had; siding, windows, gutters and repairs start with an empty sheet and you add their lines as you go. A line with no agreed price reads <b>not set</b> rather than showing someone else\u2019s number. Santiago\u2019s own rates are unchanged and already filled in. Dark on screen; it still prints as the clean white one-page schedule for handing to a crew.' },
 { b:1122, d:'2026-08-28', t:'Builds 1118\u20131121 merged in alongside the Owner, header and menu work',
   s:'Housekeeping, no new behaviour. The four fixes that shipped while this work was open \u2014 the Scope of Loss history row, the Pre-Install Guide\u2019s in-app prompts, seven labels brought back to the 11px floor, and the Estimates count on a job with none yet \u2014 are now in the same copy as the Owner section, the \u201CRetail\u201D header with letter pipeline cards, and the tidied side menu. Every one of them behaves exactly as its own entry below describes.' },
 { b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
@@ -53138,7 +53189,8 @@ async function notifyAssignee(email, title, pid, verb){
       '<p><b>' + esc(shortName(me) || 'Someone') + '</b> ' +
       (verb === 'filed' ? 'filed a punch-out' : 'assigned you a punch-out') +
       ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p>' +
-      '<p>' + esc(title) + '</p>');
+      '<p>' + esc(title) + '</p>',
+      punchLink(pid));
     /* 771: notifyOutcomeText's first statement is to.map(...) — it takes the
        ARRAY of addresses, not a display name. Passing a string threw. */
     if(typeof window.notifyOutcomeText === 'function'){
@@ -53157,7 +53209,8 @@ async function notifyProductionUnassigned(title, pid){
     var pr = projectFor(pid);
     await window.notifyTeam(to, 'Unassigned punch-out: ' + title,
       '<p><b>' + esc(shortName(me) || 'Someone') + '</b> filed a punch-out with no one assigned' +
-      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(title) + '</p>');
+      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(title) + '</p>',
+      punchLink(pid));
   }catch(_){}
 }
 
@@ -54395,7 +54448,8 @@ async function flagSupplement(){
         'Supplement flagged — ' + ((pr && pr.name) || 'a job'),
         '<p><b>' + esc(nameOf(myEmail())) + '</b> flagged extra scope on <b>' +
         esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(String(what).trim()) + '</p>' +
-        '<p>Filed against the punch-out: ' + esc(it.title || '') + '</p>');
+        '<p>Filed against the punch-out: ' + esc(it.title || '') + '</p>',
+        punchLink(it.project_id));
       outMsg = outcomeText(res, to, 'the office');
     }else{
       outMsg = 'Flagged on the job. Nobody to notify.';
@@ -54454,7 +54508,8 @@ async function send(){
       var pr = projectFor(it.project_id);
       var res = await window.notifyTeam(to,
         'Punch-out — ' + ((pr && pr.name) || 'a job'),
-        '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>');
+        '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>',
+        punchLink(it.project_id));
       outMsg = outcomeText(res, to);
       lastSig = ''; render();
     }
@@ -54522,7 +54577,8 @@ async function notifyAssigned(email){
       'Assigned to you: ' + (it.title || 'a punch-out'),
       '<p><b>' + esc(nameOf(me)) + '</b> assigned you a punch-out at <b>' +
       esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(it.title || '') + '</p>' +
-      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtSchedule(it.scheduled_at, it.scheduled_time)) + '</p>' : ''));
+      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtSchedule(it.scheduled_at, it.scheduled_time)) + '</p>' : ''),
+      punchLink(it.project_id));
     outMsg = outcomeText(res, [email]);
     lastSig = ''; render();
   }catch(_){}
@@ -54537,7 +54593,8 @@ async function notifyClosed(){
     var res = await window.notifyTeam(to,
       nameOf(myEmail()) + ' closed: ' + (it.title || 'a punch-out'),
       '<p><b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b> is closed.</p>' +
-      '<p>' + photos().length + ' photos · ' + stepsDone() + ' of ' + steps().length + ' steps.</p>');
+      '<p>' + photos().length + ' photos · ' + stepsDone() + ' of ' + steps().length + ' steps.</p>',
+      punchLink(it.project_id));
     outMsg = outcomeText(res, to, 'the office');
   }catch(_){}
 }
@@ -77221,6 +77278,20 @@ select{min-height:44px;}
   #cr-namebar .nb-star{
     font-size:17px; line-height:1; flex:none; cursor:pointer;
     background:none; border:0; padding:0 2px; color:var(--rbe-mute2,#6d747e);
+    position:relative;   /* 1124: for the hit area below */
+  }
+  /* 1124: the glyph is 19x17 and 592/1076 hold every control in this app to a
+     44px tap target. Growing the BUTTON would grow .nb-top and push the PO row
+     down on every client profile, so the hit area is a transparent overlay
+     instead and the band's geometry does not move at all.
+     ⚠ It overlaps the row below. That is safe here and was CHECKED with
+     elementFromPoint rather than reasoned about: .nb-row2 comes later in the
+     DOM, so at equal z-index the pencil and the PO chip paint over this and
+     keep their own taps. If you ever give .nb-star a z-index, you take the
+     pencil's clicks with it. */
+  #cr-namebar .nb-star::after{
+    content:''; position:absolute; top:50%; left:50%;
+    width:44px; height:44px; transform:translate(-50%,-50%);
   }
   #cr-namebar .nb-star.on{ color:#f5c518; }
   #cr-namebar .nb-row2{ display:flex; align-items:center; gap:7px; margin-top:5px; }
@@ -82813,107 +82884,237 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
      only (crew labor rates). Navy/gold like the exhibit; prints as "Exhibit A".
      Reuses the existing pricing_items catalog table — no new data store. -->
 <style id="cr-lrs-styles">
+/* v2026-08-28 build 1123 · Labor Rate Schedule — CREW LIST first, then that
+   crew's own sheet. Dark on screen, light on paper.
+
+   1110 built this as one document titled SANTIAGO, read straight from the
+   pricing_items 'roofing_labor' catalog. Theo, 28 Aug: "Labor rate schedule
+   shouldn't go straight to Santiago. It should list all the crews, then tap to
+   see the labor rates... dark mode only." So the screen is now two screens and
+   the rates moved to where per-crew rates already lived.
+
+   ⚠ DARK IS THE SCREEN, NOT THE PAPER. The @media print block at the bottom
+   puts the whole document back on white with dark ink — a rate sheet gets
+   printed and handed to a crew, and a dark screen printed verbatim is a black
+   page. Every colour used above is restored there; if you add a rule up here
+   that paints a ground or an ink, add its light twin down there too.
+
+   Palette measured, not chosen by eye (floors: 4.5:1 text, 3.0:1 large):
+     name  #e8ebf0 on #161b22 = 14.48   detail #8d97a6 = 5.86
+     rate  #ffffff           = 17.30    gold   #e8c14a = 10.01
+     band  #e8c14a on #1e2b4a =  8.11   trade  #8fb4d8 = 7.98 */
 #cr-lrs-view{
-  --lrs-navy:#1e2b4a; --lrs-gold:#c9a227; --lrs-gold-dk:#8f6b00; --lrs-ink:#23303f; --lrs-dim:#5b6470;
-  --lrs-line:#e4e4e4; --lrs-red:#C8202E;
+  --lrs-bg:#0e1116; --lrs-card:#161b22; --lrs-edge:#242b36; --lrs-top:#151a21;
+  --lrs-navy:#1e2b4a; --lrs-gold:#e8c14a; --lrs-ink:#e8ebf0; --lrs-dim:#8d97a6;
+  --lrs-blue:#8fb4d8; --lrs-red:#C8202E;
   position:fixed; inset:0; z-index:9500; display:none; overflow:auto;
-  background:#eceef1; color:var(--lrs-ink);
+  background:var(--lrs-bg); color:var(--lrs-ink);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 #cr-lrs-view .lrs-topbar{
   position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px;
-  padding:10px 14px; background:#fff; border-bottom:1px solid var(--lrs-line);
+  padding:10px 14px; background:var(--lrs-top); border-bottom:1px solid var(--lrs-edge);
 }
-#cr-lrs-view .lrs-topbar .lrs-ttl{flex:1; font-weight:800; font-size:16px; color:var(--lrs-navy); letter-spacing:-.01em;}
+#cr-lrs-view .lrs-topbar .lrs-ttl{
+  flex:1; font-weight:800; font-size:16px; color:var(--lrs-ink); letter-spacing:-.01em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
 #cr-lrs-view .lrs-tb{
-  border:1px solid var(--lrs-line); background:#fff; color:var(--lrs-ink);
-  font-size:13px; font-weight:600; padding:8px 13px; border-radius:9px; cursor:pointer;
+  border:1px solid var(--lrs-edge); background:#1c222b; color:#cfd6df;
+  font-size:13px; font-weight:600; padding:10px 13px; border-radius:9px; cursor:pointer;
+  min-height:44px; box-sizing:border-box;   /* 592/1076: every control is a 44px target */
 }
-#cr-lrs-view .lrs-tb:hover{border-color:#c9c9c9;}
-#cr-lrs-view .lrs-tb.on{background:var(--lrs-navy); color:#fff; border-color:var(--lrs-navy);}
+#cr-lrs-view .lrs-tb:hover{border-color:#38414f; color:#fff;}
 #cr-lrs-view .lrs-tb.save{background:var(--lrs-red); border-color:var(--lrs-red); color:#fff;}
+#cr-lrs-view .lrs-tb:focus-visible{outline:2px solid var(--lrs-blue); outline-offset:-2px;}
 
-/* the document */
-#cr-lrs-view .lrs-doc{
-  max-width:820px; margin:22px auto 90px; background:#fff; padding:34px 40px 44px;
-  box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 30px rgba(0,0,0,.10); border-radius:2px;
+/* ── screen 1 · the crew list ─────────────────────────────────────────── */
+#cr-lrs-view .lrs-list{max-width:820px; margin:20px auto 90px; padding:0 14px;}
+#cr-lrs-view .lrs-lead{color:var(--lrs-dim); font-size:13px; line-height:1.5; margin:0 2px 16px;}
+#cr-lrs-view .lrs-trade{
+  color:var(--lrs-blue); font:800 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em;
+  text-transform:uppercase; margin:20px 2px 8px;
 }
-#cr-lrs-view .lrs-h{font-size:21px; font-weight:800; color:var(--lrs-navy); letter-spacing:.02em;}
-#cr-lrs-view .lrs-h span{color:var(--lrs-gold-dk); margin:0 6px; font-weight:700;}  /* 4.92:1 on white; the bright gold stays on the navy bands */
+#cr-lrs-view .lrs-crew{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  background:var(--lrs-card); border:1px solid var(--lrs-edge); border-radius:12px;
+  padding:14px 16px; margin-bottom:8px; cursor:pointer; min-height:44px;
+  color:var(--lrs-ink); font-family:inherit;
+}
+#cr-lrs-view .lrs-crew:hover{border-color:#38414f; background:#1a202a;}
+#cr-lrs-view .lrs-crew:focus-visible{outline:2px solid var(--lrs-blue); outline-offset:-2px;}
+#cr-lrs-view .lrs-cname{flex:1; font-size:15px; font-weight:700; color:var(--lrs-ink);}
+#cr-lrs-view .lrs-ccount{
+  font-size:12.5px; font-weight:700; color:var(--lrs-dim); white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+#cr-lrs-view .lrs-ccount.set{color:var(--lrs-gold);}
+#cr-lrs-view .lrs-chev{color:var(--lrs-dim); font-size:20px; line-height:1; flex:none;}
+#cr-lrs-view .lrs-arch{opacity:.55;}
+#cr-lrs-view .lrs-archhead{
+  color:var(--lrs-dim); font:800 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em;
+  text-transform:uppercase; margin:26px 2px 8px;
+}
+
+/* ── screen 2 · one crew's sheet ──────────────────────────────────────── */
+#cr-lrs-view .lrs-doc{
+  max-width:820px; margin:22px auto 90px; background:var(--lrs-card);
+  border:1px solid var(--lrs-edge); padding:30px 34px 40px; border-radius:12px;
+}
+#cr-lrs-view .lrs-h{font-size:21px; font-weight:800; color:var(--lrs-ink); letter-spacing:.02em;}
+#cr-lrs-view .lrs-h span{color:var(--lrs-gold); margin:0 6px; font-weight:700;}
+#cr-lrs-view .lrs-sub{color:var(--lrs-dim); font-size:12.5px; margin-top:5px;}
 #cr-lrs-view .lrs-rule{height:3px; background:var(--lrs-gold); margin:11px 0 22px; border-radius:2px;}
 #cr-lrs-view .lrs-cat{margin-bottom:20px;}
 #cr-lrs-view .lrs-band{
   background:var(--lrs-navy); color:var(--lrs-gold); font-size:13px; font-weight:800;
-  letter-spacing:.06em; text-transform:uppercase; padding:8px 14px; border-radius:3px;
+  letter-spacing:.06em; text-transform:uppercase; padding:9px 14px; border-radius:3px;
 }
 #cr-lrs-view .lrs-row{
   display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
-  padding:9px 14px; border-bottom:1px solid var(--lrs-line);
+  padding:10px 14px; border-bottom:1px solid var(--lrs-edge);
 }
 #cr-lrs-view .lrs-name{font-size:13.5px; color:var(--lrs-ink); line-height:1.4;}
 #cr-lrs-view .lrs-name .lrs-desc{display:block; font-size:12px; color:var(--lrs-dim); margin-top:2px;}
-#cr-lrs-view .lrs-rate{font-size:13.5px; font-weight:800; color:var(--lrs-navy); white-space:nowrap; text-align:right; font-variant-numeric:tabular-nums;}
+#cr-lrs-view .lrs-rate{
+  font-size:13.5px; font-weight:800; color:#fff; white-space:nowrap; text-align:right;
+  font-variant-numeric:tabular-nums;
+}
 #cr-lrs-view .lrs-rate .lrs-u{font-weight:600; color:var(--lrs-dim);}
+/* an unset rate is TEXT, not a faint dash — you have to be able to read which
+   lines this crew has no price for. 5.86:1. */
+#cr-lrs-view .lrs-rate.none{color:var(--lrs-dim); font-weight:600; font-style:italic;}
 #cr-lrs-view .lrs-note{font-size:11.5px; font-style:italic; color:var(--lrs-dim); line-height:1.5; padding:9px 14px;}
 
 /* edit mode */
 #cr-lrs-view .lrs-ename{flex:1; display:flex; flex-direction:column; gap:5px;}
-#cr-lrs-view .lrs-ename input, #cr-lrs-view .lrs-erate input, #cr-lrs-view .lrs-enote{
-  border:1px solid var(--lrs-line); border-radius:7px; padding:7px 9px; font-size:13px; font-family:inherit; color:var(--lrs-ink); outline:none; background:#fbfbfc;
+#cr-lrs-view .lrs-ename input, #cr-lrs-view .lrs-erate input{
+  border:1px solid var(--lrs-edge); border-radius:7px; padding:9px; font-size:13px;
+  font-family:inherit; color:var(--lrs-ink); outline:none; background:#10151c;
 }
-#cr-lrs-view .lrs-ename input:focus, #cr-lrs-view .lrs-erate input:focus, #cr-lrs-view select:focus, #cr-lrs-view .lrs-enote:focus{border-color:var(--lrs-red); box-shadow:0 0 0 3px rgba(200,32,46,.16);}
+#cr-lrs-view .lrs-ename input::placeholder{color:#79828f;}
+#cr-lrs-view .lrs-ename input:focus, #cr-lrs-view .lrs-erate input:focus, #cr-lrs-view select:focus{
+  border-color:var(--lrs-blue); box-shadow:0 0 0 3px rgba(143,180,216,.22);
+}
 #cr-lrs-view .lrs-erate{display:flex; align-items:center; gap:5px;}
 #cr-lrs-view .lrs-erate span{font-weight:800; color:var(--lrs-dim);}
-#cr-lrs-view .lrs-erate input{width:80px; text-align:right; font-weight:700;}
-#cr-lrs-view select{border:1px solid var(--lrs-line); border-radius:7px; padding:7px 6px; font-size:12.5px; font-family:inherit; color:var(--lrs-ink); background:#fbfbfc;}
-#cr-lrs-view .lrs-enote{width:100%; min-height:56px; resize:vertical;}
-#cr-lrs-view .lrs-note{display:flex; gap:8px; align-items:flex-start;}
-#cr-lrs-view .lrs-del{border:0; background:#f4dede; color:var(--lrs-red); font-size:16px; font-weight:800; width:30px; height:30px; border-radius:8px; cursor:pointer; flex:none; line-height:1;}
-#cr-lrs-view .lrs-del:hover{background:#efcccc;}
-#cr-lrs-view .lrs-add{padding:8px 14px 2px; display:flex; gap:8px;}
-#cr-lrs-view .lrs-mini{border:1px dashed #b9c0cc; background:#fff; color:var(--lrs-navy); font-size:12px; font-weight:600; padding:6px 11px; border-radius:8px; cursor:pointer;}
-#cr-lrs-view .lrs-mini:hover{border-color:var(--lrs-navy);}
-#cr-lrs-view .lrs-addcat{margin-top:8px; display:flex; gap:8px; align-items:center;}
-#cr-lrs-view .lrs-addcat input{flex:1; border:1px solid var(--lrs-line); border-radius:7px; padding:8px 10px; font-size:13px; font-family:inherit; color:var(--lrs-ink);}
-#cr-lrs-view .lrs-empty{padding:40px 14px; text-align:center; color:var(--lrs-dim); font-size:14px;}
+#cr-lrs-view .lrs-erate input{width:82px; text-align:right; font-weight:700;}
+#cr-lrs-view select{
+  border:1px solid var(--lrs-edge); border-radius:7px; padding:9px 6px; font-size:12.5px;
+  font-family:inherit; color:var(--lrs-ink); background:#10151c; min-height:38px;
+}
+#cr-lrs-view .lrs-del{
+  border:0; background:rgba(200,32,46,.18); color:#f08a90; font-size:16px; font-weight:800;
+  width:38px; height:38px; border-radius:9px; cursor:pointer; flex:none; line-height:1;
+}
+#cr-lrs-view .lrs-del:hover{background:rgba(200,32,46,.30);}
+#cr-lrs-view .lrs-add{padding:10px 14px 2px; display:flex; gap:8px;}
+#cr-lrs-view .lrs-mini{
+  border:1px dashed #48525f; background:transparent; color:var(--lrs-blue); font-size:12.5px;
+  font-weight:600; padding:9px 12px; border-radius:9px; cursor:pointer; min-height:38px;
+}
+#cr-lrs-view .lrs-mini:hover{border-color:var(--lrs-blue);}
+#cr-lrs-view .lrs-empty{padding:38px 14px; text-align:center; color:var(--lrs-dim); font-size:14px; line-height:1.6;}
 
 @media(max-width:560px){
-  #cr-lrs-view .lrs-doc{padding:22px 16px 34px; margin:12px 10px 80px;}
-  #cr-lrs-view .lrs-erate input{width:66px;}
+  #cr-lrs-view .lrs-doc{padding:20px 15px 32px; margin:12px 10px 80px;}
+  #cr-lrs-view .lrs-erate input{width:70px;}
+  #cr-lrs-view .lrs-topbar{flex-wrap:wrap;}
+  #cr-lrs-view .lrs-topbar .lrs-ttl{order:-1; flex-basis:100%;}
 }
+
+/* ── the paper ─────────────────────────────────────────────────────────
+   Everything above is the screen. A printed rate sheet goes to a crew, so it
+   prints as the light exhibit 1110 shipped: white ground, dark ink, navy bands
+   with gold text (print-color-adjust keeps them). The crew LIST never prints —
+   only the open sheet. */
 @media print{
   body > *:not(#cr-lrs-view){display:none !important;}
-  #cr-lrs-view{position:static !important; overflow:visible !important; background:#fff !important; display:block !important;}
-  #cr-lrs-view .lrs-topbar{display:none !important;}
-  #cr-lrs-view .lrs-doc{box-shadow:none !important; margin:0 auto !important; max-width:none !important; padding:0 !important;}
-  #cr-lrs-view .lrs-band, #cr-lrs-view .lrs-rule, #cr-lrs-view .lrs-h span{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #cr-lrs-view{
+    position:static !important; overflow:visible !important; display:block !important;
+    background:#fff !important; color:#23303f !important;
+  }
+  #cr-lrs-view .lrs-topbar, #cr-lrs-view .lrs-list{display:none !important;}
+  #cr-lrs-view .lrs-doc{
+    background:#fff !important; border:0 !important; box-shadow:none !important;
+    margin:0 auto !important; max-width:none !important; padding:0 !important;
+  }
+  #cr-lrs-view .lrs-h{color:#1e2b4a !important;}
+  #cr-lrs-view .lrs-h span{color:#8f6b00 !important;}
+  #cr-lrs-view .lrs-sub{color:#5b6470 !important;}
+  #cr-lrs-view .lrs-rule{background:#c9a227 !important;}
+  #cr-lrs-view .lrs-band{background:#1e2b4a !important; color:#c9a227 !important;}
+  #cr-lrs-view .lrs-row{border-bottom:1px solid #e4e4e4 !important;}
+  #cr-lrs-view .lrs-name{color:#23303f !important;}
+  #cr-lrs-view .lrs-name .lrs-desc, #cr-lrs-view .lrs-note, #cr-lrs-view .lrs-rate .lrs-u{color:#5b6470 !important;}
+  #cr-lrs-view .lrs-rate{color:#1e2b4a !important;}
+  #cr-lrs-view .lrs-rate.none{color:#5b6470 !important;}
+  #cr-lrs-view .lrs-band, #cr-lrs-view .lrs-rule, #cr-lrs-view .lrs-h span{
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
   #cr-lrs-view .lrs-cat{page-break-inside:avoid;}
-  #cr-lrs-view .lrs-add, #cr-lrs-view .lrs-addcat, #cr-lrs-view .lrs-del{display:none !important;}
+  #cr-lrs-view .lrs-add, #cr-lrs-view .lrs-del{display:none !important;}
   @page{size:Letter; margin:.6in;}
 }
 </style>
 
 <div id="cr-lrs-view" style="display:none;" aria-hidden="true">
   <div class="lrs-topbar">
+    <!-- 1123: ONE Back button with two meanings — out of a crew's sheet, then
+         out of the screen. syncBar() shows Edit and Print only on a sheet: the
+         crew list is not a document, and printing it would be a page of
+         buttons. Both start hidden here so the first paint is already right. -->
     <button id="lrs-back" class="lrs-tb" type="button">&#8249;&nbsp;Back</button>
     <div class="lrs-ttl">Labor Rate Schedule</div>
     <button id="lrs-cancel" class="lrs-tb" type="button" style="display:none;">Cancel</button>
-    <button id="lrs-edit" class="lrs-tb" type="button">Edit</button>
+    <button id="lrs-edit" class="lrs-tb" type="button" style="display:none;">Edit</button>
     <button id="lrs-save" class="lrs-tb save" type="button" style="display:none;">Save</button>
-    <button id="lrs-print" class="lrs-tb" type="button">Print / PDF</button>
+    <button id="lrs-print" class="lrs-tb" type="button" style="display:none;">Print / PDF</button>
   </div>
   <div id="lrs-body"></div>
 </div>
 
 <script id="cr-lrs-script">
-/* 1110: Labor Rate Schedule — see the banner on #cr-lrs-styles. window.CardinalLRS. */
+/* 1123: Labor Rate Schedule — the crew list, then one crew's sheet.
+   See the banner on #cr-lrs-styles. window.CardinalLRS / window.openLRS.
+
+   ⚠ WHERE THE NUMBERS LIVE, because this changed and the old shape is still in
+   the file next door. 1110 read `pricing_items` (template='roofing_labor') and
+   showed its `rate` column as THE schedule — one document, titled SANTIAGO.
+   Per-crew rates already existed by then: build 548 put them in `crew_rates`,
+   keyed by crew, either against a catalog line (pricing_item_id) or as a
+   crew's own line (custom_name/custom_unit). This screen now reads THAT, which
+   is why there is no second store and no new table:
+
+     the catalog  (pricing_items, roofing_labor)  = the LINE ITEMS, shared
+     crew_rates                                   = what THIS crew is paid
+
+   Theo's pick, 28 Aug: roofing crews get the shared catalog lines; siding,
+   windows, gutters and repairs start with an EMPTY sheet and grow their own
+   lines. So `catalogFor()` is the whole trade rule and it is one line long.
+
+   ⚠ EDITING HERE SETS A CREW'S RATES — IT NEVER EDITS THE CATALOG. 1110 let
+   you rename catalog lines and add categories from this screen; under a
+   per-crew model that would silently re-price every roofing crew at once.
+   Renaming a shared line is the Pricing Catalog's job and that screen already
+   exists. "+ Add line" adds a line to THIS CREW (a crew_rates custom row),
+   which is how a siding crew gets a sheet at all.
+
+   ⚠ A BLANK RATE IS A REAL STATE, not a missing one. A roofing crew with no
+   crew_rates row for a line has no agreed price for it; the sheet says "not
+   set" in readable text rather than showing a 0 or borrowing another crew's
+   number. Do not "fix" it by falling back to pricing_items.rate — that is
+   Santiago's number and paying it to someone else is a real-money bug. */
 (function(){
   'use strict';
   var TPL = 'roofing_labor';
+  var CATALOG_TRADES = ['Roofing'];   /* the trade rule, entire */
   var UNIT_LABEL = { sq:'SQ', lf:'LF', ea:'unit', sheet:'sheet', ls:'', note:'', bundle:'bundle', roll:'roll', day:'day', sf:'SF', hour:'hr', box:'box' };
   var UNIT_OPTS = [['sq','SQ'],['lf','LF'],['ea','unit'],['sheet','sheet'],['ls','flat ($)']];
-  var rows = [], deleted = [], editing = false, loaded = false;
+
+  var crews = [], catalog = [], rates = [], sel = null;
+  var editing = false, deleted = [], pending = [];
 
   function q(id){ return document.getElementById(id); }
   function esc2(s){ return (typeof esc === 'function') ? esc(s) : String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -82921,133 +83122,272 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
   function cx(){ return window.sb || window.supa; }
   function tell(m){ if(typeof crTell === 'function') crTell(m); }
+  function lrsMe(){ try{ return (window.currentUser && window.currentUser.email) || ''; }catch(e){ return ''; } }
 
   function money(n){
     n = Number(n) || 0;
     return '$' + (n % 1 === 0 ? n.toLocaleString('en-US')
                              : n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }));
   }
-  function rateHtml(r){
-    if(r.unit === 'note') return '';
-    var lab = UNIT_LABEL[r.unit] != null ? UNIT_LABEL[r.unit] : r.unit;
-    return money(r.rate) + (lab ? ' <span class="lrs-u">/ ' + esc2(lab) + '</span>' : '');
-  }
+  function unitOf(r){ return r.__cat ? r.__cat.unit : (r.custom_unit || 'ea'); }
+  function lineName(r){ return r.__cat ? r.__cat.name : (r.custom_name || ''); }
 
-  function load(){
-    var c = cx(); if(!c){ return Promise.resolve([]); }
-    return c.from('pricing_items').select('*').eq('template', TPL).order('sort_order', { ascending:true })
-      .then(function(r){ rows = (r && r.data) ? r.data.slice() : []; loaded = true; return rows; });
+  /* one crew's sheet lines: the shared catalog for a catalog trade, plus every
+     line this crew owns outright. A catalog line and its override are ONE row
+     on screen — joined here so render() never has to think about it. */
+  function catalogFor(crew){
+    return (crew && CATALOG_TRADES.indexOf(crew.trade) !== -1) ? catalog : [];
+  }
+  function sheetRows(){
+    var byItem = {};
+    rates.forEach(function(r){ if(r.pricing_item_id) byItem[r.pricing_item_id] = r; });
+    /* ⚠ Both branches below build the SAME shape, custom_* included. They used
+       not to, and gate_types caught it (TS2353): one array holding two object
+       shapes is the thing that makes every reader downstream branch on
+       `__cat ?` to find out what it is holding. Keep them identical. */
+    var out = catalogFor(sel).map(function(c){
+      var ov = byItem[c.id];
+      return { key:'cat:' + c.id, __cat:c, category:c.category,
+               rateRow:ov || null, rate:(ov ? ov.rate : null), sort:Number(c.sort_order) || 0,
+               custom_name:null, custom_unit:null };
+    });
+    rates.filter(function(r){ return !r.pricing_item_id; }).forEach(function(r, i){
+      out.push({ key:'own:' + r.id, __cat:null, category:'This crew only',
+                 rateRow:r, rate:r.rate, sort:100000 + i, custom_name:r.custom_name, custom_unit:r.custom_unit });
+    });
+    return out;
   }
   function grouped(){
     var order = [], map = {};
-    rows.forEach(function(r){ if(!map[r.category]){ map[r.category] = []; order.push(r.category); } map[r.category].push(r); });
+    sheetRows().sort(function(a, b){ return a.sort - b.sort; }).forEach(function(r){
+      if(!map[r.category]){ map[r.category] = []; order.push(r.category); }
+      map[r.category].push(r);
+    });
     return order.map(function(cat){ return { cat:cat, items:map[cat] }; });
+  }
+
+  function loadCrews(){
+    var c = cx(); if(!c) return Promise.resolve([]);
+    return Promise.all([
+      c.from('crews').select('id,name,trade,archived').order('name', { ascending:true }),
+      c.from('crew_rates').select('crew_id')
+    ]).then(function(res){
+      crews = (res[0] && res[0].data) ? res[0].data.slice() : [];
+      var n = {};
+      ((res[1] && res[1].data) || []).forEach(function(r){ n[r.crew_id] = (n[r.crew_id] || 0) + 1; });
+      crews.forEach(function(cw){ cw.__n = n[cw.id] || 0; });
+      return crews;
+    });
+  }
+  function loadSheet(crew){
+    var c = cx(); if(!c) return Promise.resolve();
+    /* only ask for the catalog when this crew's trade uses one, and only once
+       per session — it is shared by every roofing crew and does not change */
+    var needCat = CATALOG_TRADES.indexOf(crew.trade) !== -1 && !catalog.length;
+    var jobs = [
+      c.from('crew_rates').select('*').eq('crew_id', crew.id),
+      needCat ? c.from('pricing_items').select('*').eq('template', TPL).order('sort_order', { ascending:true })
+              : Promise.resolve(null)
+    ];
+    return Promise.all(jobs).then(function(res){
+      rates = (res[0] && res[0].data) ? res[0].data.slice() : [];
+      if(res[1] && res[1].data) catalog = res[1].data.slice();
+    });
+  }
+
+  /* ── screen 1 ── */
+  function renderCrewList(){
+    var body = q('lrs-body'); if(!body) return;
+    setTitle('Labor Rate Schedule');
+    if(!crews.length){
+      body.innerHTML = '<div class="lrs-list"><div class="lrs-empty">No crews yet.<br>Add them under <b>Crews</b> and they will show up here.</div></div>';
+      syncBar(); return;
+    }
+    var live = crews.filter(function(c){ return !c.archived; });
+    var gone = crews.filter(function(c){ return c.archived; });
+    var html = '<div class="lrs-list">'
+      + '<p class="lrs-lead">Every crew keeps its own rates. Tap one to see or set what they are paid.</p>';
+    var order = [], byTrade = {};
+    live.forEach(function(c){
+      var t = c.trade || 'Other';
+      if(!byTrade[t]){ byTrade[t] = []; order.push(t); }
+      byTrade[t].push(c);
+    });
+    order.forEach(function(t){
+      html += '<div class="lrs-trade">' + esc2(t) + '</div>';
+      byTrade[t].forEach(function(c){ html += crewBtn(c); });
+    });
+    if(gone.length){
+      html += '<div class="lrs-archhead">Archived</div>';
+      gone.forEach(function(c){ html += crewBtn(c, true); });
+    }
+    body.innerHTML = html + '</div>';
+    syncBar();
+  }
+  function crewBtn(c, arch){
+    return '<button type="button" class="lrs-crew' + (arch ? ' lrs-arch' : '') + '" data-lrs-crew="' + attr(c.id) + '">'
+      + '<span class="lrs-cname">' + esc2(c.name) + '</span>'
+      + '<span class="lrs-ccount' + (c.__n ? ' set' : '') + '">'
+      + (c.__n ? (c.__n + (c.__n === 1 ? ' rate' : ' rates')) : 'no rates yet') + '</span>'
+      + '<span class="lrs-chev" aria-hidden="true">›</span></button>';
+  }
+
+  /* ── screen 2 ── */
+  function renderSheet(){
+    var body = q('lrs-body'); if(!body || !sel) return;
+    setTitle(sel.name);
+    var groups = grouped();
+    var html = '<div class="lrs-doc">'
+      + '<div class="lrs-h">' + esc2(String(sel.name).toUpperCase()) + ' <span>|</span> LABOR RATE SCHEDULE</div>'
+      + '<div class="lrs-sub">' + esc2(sel.trade || 'Crew') + (sel.archived ? ' · archived' : '') + '</div>'
+      + '<div class="lrs-rule"></div>';
+    if(!groups.length){
+      html += '<div class="lrs-empty">No rates set for ' + esc2(sel.name) + ' yet.'
+            + (isAdm() ? '<br>Tap <b>Edit</b>, then <b>+ Add line</b> to build their sheet.' : '') + '</div>';
+    }
+    groups.forEach(function(g){
+      html += '<div class="lrs-cat"><div class="lrs-band">' + esc2(String(g.cat).toUpperCase()) + '</div>';
+      g.items.forEach(function(r){ html += lineRow(r); });
+      html += '</div>';
+    });
+    if(editing){
+      html += '<div class="lrs-add"><button type="button" class="lrs-mini" id="lrs-addown">+ Add line for this crew</button></div>';
+    }
+    body.innerHTML = html + '</div>';
+    syncBar();
+  }
+  function rateHtml(r){
+    if(r.rate == null || r.rate === '') return '<span class="lrs-rate none">not set</span>';
+    var u = unitOf(r), lab = UNIT_LABEL[u] != null ? UNIT_LABEL[u] : u;
+    return '<span class="lrs-rate">' + money(r.rate) + (lab ? ' <span class="lrs-u">/ ' + esc2(lab) + '</span>' : '') + '</span>';
+  }
+  function lineRow(r){
+    /* ⚠ The catalog carries CATEGORY NOTES as rows with unit='note' (one today,
+       under Chimney Flashing). A note is prose, not a line anyone is paid for:
+       it gets no rate field, no delete, and NO data-key, so harvest() cannot
+       mistake it for a row with a blank rate. Missing this rendered "not set"
+       against a sentence. */
+    if(r.__cat && r.__cat.unit === 'note'){
+      return '<div class="lrs-note">' + esc2(r.__cat.description || r.__cat.name || '') + '</div>';
+    }
+    var out = '<div class="lrs-row" data-key="' + attr(r.key) + '">';
+    if(editing){
+      out += '<div class="lrs-ename">';
+      if(r.__cat){
+        out += '<div class="lrs-name">' + esc2(r.__cat.name)
+             + (r.__cat.description ? '<span class="lrs-desc">' + esc2(r.__cat.description) + '</span>' : '') + '</div>';
+      }else{
+        out += '<input type="text" data-f="name" value="' + attr(r.custom_name || '') + '" placeholder="What they are paid for">';
+      }
+      out += '</div><div class="lrs-erate"><span>$</span>'
+           + '<input type="number" step="0.01" min="0" data-f="rate" value="' + (r.rate != null ? r.rate : '') + '" placeholder="—">';
+      if(!r.__cat) out += unitSel(r.custom_unit || 'ea');
+      if(r.rateRow) out += '<button type="button" class="lrs-del" data-lrs-del="' + attr(r.rateRow.id) + '" title="Remove this rate">×</button>';
+      out += '</div>';
+    }else{
+      out += '<div class="lrs-name">' + esc2(lineName(r))
+           + (r.__cat && r.__cat.description ? '<span class="lrs-desc">' + esc2(r.__cat.description) + '</span>' : '')
+           + '</div>' + rateHtml(r);
+    }
+    return out + '</div>';
   }
   function unitSel(u){
     return '<select data-f="unit">' + UNIT_OPTS.map(function(p){
       return '<option value="' + p[0] + '"' + (p[0] === u ? ' selected' : '') + '>' + p[1] + '</option>';
     }).join('') + '</select>';
   }
-  function editRow(r){
-    return '<div class="lrs-ename"><input type="text" data-f="name" value="' + attr(r.name) + '" placeholder="Description">'
-      + '<input type="text" data-f="description" value="' + attr(r.description || '') + '" placeholder="Detail (optional)"></div>'
-      + '<div class="lrs-erate"><span>$</span><input type="number" step="0.01" min="0" data-f="rate" value="' + (r.rate != null ? r.rate : '') + '">'
-      + unitSel(r.unit) + '<button type="button" class="lrs-del" data-lrs-del="' + esc2(r.id) + '" title="Remove">×</button></div>';
-  }
-  function render(){
-    var body = q('lrs-body'); if(!body) return;
-    if(!rows.length){ body.innerHTML = '<div class="lrs-doc"><div class="lrs-empty">No labor rates yet.</div></div>'; syncBar(); return; }
-    var html = '<div class="lrs-doc"><div class="lrs-h">SANTIAGO <span>|</span> LABOR RATE SCHEDULE</div><div class="lrs-rule"></div>';
-    grouped().forEach(function(g){
-      html += '<div class="lrs-cat"><div class="lrs-band">' + esc2(String(g.cat).toUpperCase()) + '</div>';
-      g.items.forEach(function(r){
-        if(r.unit === 'note'){
-          html += '<div class="lrs-note" data-id="' + esc2(r.id) + '">'
-            + (editing ? ('<textarea data-f="description" class="lrs-enote" placeholder="Category note">' + esc2(r.description || '') + '</textarea>'
-                        + '<button type="button" class="lrs-del" data-lrs-del="' + esc2(r.id) + '" title="Remove">×</button>')
-                       : esc2(r.description || '')) + '</div>';
-        }else{
-          html += '<div class="lrs-row" data-id="' + esc2(r.id) + '">'
-            + (editing ? editRow(r)
-                       : ('<div class="lrs-name">' + esc2(r.name) + (r.description ? '<span class="lrs-desc">' + esc2(r.description) + '</span>' : '') + '</div>'
-                        + '<div class="lrs-rate">' + rateHtml(r) + '</div>'))
-            + '</div>';
-        }
-      });
-      if(editing){
-        html += '<div class="lrs-add"><button type="button" class="lrs-mini" data-lrs-addrow="' + attr(g.cat) + '">+ Add line</button>'
-              + '<button type="button" class="lrs-mini" data-lrs-addnote="' + attr(g.cat) + '">+ Add note</button></div>';
-      }
-      html += '</div>';
-    });
-    if(editing){
-      html += '<div class="lrs-addcat"><input type="text" id="lrs-newcat" placeholder="New category name">'
-            + '<button type="button" class="lrs-mini" id="lrs-addcat">+ Add category</button></div>';
-    }
-    html += '</div>';
-    body.innerHTML = html;
-    syncBar();
-  }
+
+  function setTitle(t){ var el = document.querySelector('#cr-lrs-view .lrs-ttl'); if(el && el.textContent !== t) el.textContent = t; }
   function syncBar(){
-    var canEdit = isAdm();
-    var eb = q('lrs-edit'), cb = q('lrs-cancel'), sb2 = q('lrs-save');
+    var onSheet = !!sel, canEdit = isAdm() && onSheet;
+    var eb = q('lrs-edit'), cb = q('lrs-cancel'), sb2 = q('lrs-save'), pb = q('lrs-print');
     if(eb) eb.style.display = (canEdit && !editing) ? '' : 'none';
     if(cb) cb.style.display = editing ? '' : 'none';
     if(sb2) sb2.style.display = editing ? '' : 'none';
+    /* the crew LIST is not a document — printing it would be a page of buttons */
+    if(pb) pb.style.display = (onSheet && !editing) ? '' : 'none';
   }
 
-  /* read edited inputs back into rows (before a re-render or a save) */
+  /* read the edited inputs back off the DOM. `pending` holds rows added this
+     session that are not in crew_rates yet. */
   function harvest(){
-    var body = q('lrs-body'); if(!body) return;
-    body.querySelectorAll('[data-id]').forEach(function(el){
-      var r = rows.find(function(x){ return String(x.id) === String(el.getAttribute('data-id')); });
-      if(!r) return;
-      el.querySelectorAll('[data-f]').forEach(function(inp){
-        var f = inp.getAttribute('data-f');
-        if(f === 'rate') r.rate = parseFloat(inp.value) || 0; else r[f] = inp.value;
-      });
-      if(!r.__new) r.__dirty = true;
+    var body = q('lrs-body'); if(!body || !sel) return [];
+    var out = [];
+    body.querySelectorAll('[data-key]').forEach(function(el){
+      var key = el.getAttribute('data-key');
+      var fieldVal = function(f){ var i = el.querySelector('[data-f="' + f + '"]'); return i ? i.value : null; };
+      var raw = fieldVal('rate');
+      var rate = (raw == null || String(raw).trim() === '') ? null : parseFloat(raw);
+      if(rate != null && !isFinite(rate)) rate = null;
+      out.push({ key:key, rate:rate, name:fieldVal('name'), unit:fieldVal('unit') });
     });
+    return out;
   }
-  function addRow(cat, isNote){
-    var maxSort = rows.filter(function(r){ return r.category === cat; })
-      .reduce(function(m, r){ return Math.max(m, Number(r.sort_order) || 0); }, 100);
-    rows.push({ id:'new_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), template:TPL, category:cat,
-      name:isNote ? 'Note' : '', description:'', unit:isNote ? 'note' : 'sq', rate:0, sort_order:maxSort + 5, enabled:true, __new:true });
-    render();
+  function addOwn(){
+    var row = { id:'new_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                crew_id:sel.id, pricing_item_id:null, custom_name:'', custom_unit:'ea', rate:null, __new:true };
+    pending.push(row);
+    rates.push(row);       /* so sheetRows() picks it up like any other own-line */
+    renderSheet();
   }
-  function addCat(){
-    var el = q('lrs-newcat'); var name = String((el && el.value) || '').trim();
-    if(!name){ tell('Type a category name first.'); return; }
-    var maxSort = rows.reduce(function(m, r){ return Math.max(m, Number(r.sort_order) || 0); }, 100);
-    rows.push({ id:'new_' + Date.now(), template:TPL, category:name, name:'', description:'', unit:'sq', rate:0, sort_order:maxSort + 100, enabled:true, __new:true });
-    render();
-  }
+
   function save(){
-    harvest();
-    var c = cx(); if(!c){ tell('Not signed in.'); return; }
-    var ops = [];
-    rows.forEach(function(r){
-      if(r.__new){
-        if(r.unit !== 'note' && !String(r.name || '').trim()) return;   // skip blank new lines
-        ops.push(c.from('pricing_items').insert({ template:TPL,
-          sku:'RL-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          category:r.category, name:r.name || (r.unit === 'note' ? 'Note' : ''), description:r.description || null,
-          unit:r.unit || 'sq', rate:Number(r.rate) || 0, sort_order:Number(r.sort_order) || 500, enabled:true }));
-      }else if(r.__dirty){
-        ops.push(c.from('pricing_items').update({ category:r.category, name:r.name || '', description:r.description || null,
-          unit:r.unit || 'sq', rate:Number(r.rate) || 0 }).eq('id', r.id));
+    var c = cx(); if(!c || !sel){ tell('Not signed in.'); return; }
+    var edits = harvest(), ops = [];
+    edits.forEach(function(e){
+      var isCat = e.key.indexOf('cat:') === 0;
+      var id = e.key.slice(4);
+      if(isCat){
+        var ov = rates.find(function(r){ return String(r.pricing_item_id) === id; });
+        if(e.rate == null){ if(ov && !ov.__new) ops.push(c.from('crew_rates').delete().eq('id', ov.id)); return; }
+        if(ov && !ov.__new){
+          if(Number(ov.rate) !== e.rate)
+            ops.push(c.from('crew_rates').update({ rate:e.rate, updated_at:new Date().toISOString(), updated_by:lrsMe() }).eq('id', ov.id));
+        }else{
+          ops.push(c.from('crew_rates').insert({ crew_id:sel.id, pricing_item_id:id, rate:e.rate, updated_by:lrsMe() }));
+        }
+      }else{
+        var row = rates.find(function(r){ return String(r.id) === id; });
+        if(!row) return;
+        var nm = String(e.name || '').trim();
+        if(row.__new){
+          if(!nm || e.rate == null) return;   /* a blank new line is not a row */
+          ops.push(c.from('crew_rates').insert({ crew_id:sel.id, custom_name:nm, custom_unit:e.unit || 'ea', rate:e.rate, updated_by:lrsMe() }));
+        }else if(e.rate == null){
+          ops.push(c.from('crew_rates').delete().eq('id', row.id));
+        }else if(Number(row.rate) !== e.rate || row.custom_name !== nm || row.custom_unit !== e.unit){
+          ops.push(c.from('crew_rates').update({ custom_name:nm || row.custom_name, custom_unit:e.unit || row.custom_unit,
+            rate:e.rate, updated_at:new Date().toISOString(), updated_by:lrsMe() }).eq('id', row.id));
+        }
       }
     });
-    deleted.forEach(function(id){ ops.push(c.from('pricing_items').delete().eq('id', id)); });
+    deleted.forEach(function(id){ if(String(id).indexOf('new_') !== 0) ops.push(c.from('crew_rates').delete().eq('id', id)); });
+    if(!ops.length){ deleted = []; pending = []; editing = false; renderSheet(); tell('Nothing changed.'); return; }
     var btn = q('lrs-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
     Promise.all(ops).then(function(res){
       var bad = res.filter(function(x){ return x && x.error; });
       if(bad.length) throw new Error((bad[0].error && bad[0].error.message) || 'save failed');
-      deleted = []; editing = false;
-      return load();
-    }).then(function(){ render(); if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Labor rates saved.'); })
-      .catch(function(e){ if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Could not save: ' + ((e && e.message) || e)); });
+      deleted = []; pending = []; editing = false;
+      return loadSheet(sel).then(loadCrews);
+    }).then(function(){
+      renderSheet();
+      if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+      tell(sel.name + '’s rates saved.');
+    }).catch(function(e){
+      if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+      tell('Could not save: ' + ((e && e.message) || e));
+    });
+  }
+
+  function openCrew(id){
+    var c = crews.find(function(x){ return String(x.id) === String(id); });
+    if(!c) return;
+    sel = c; editing = false; deleted = []; pending = [];
+    loadSheet(c).then(renderSheet);
+  }
+  function backToList(){
+    sel = null; editing = false; deleted = []; pending = [];
+    loadCrews().then(renderCrewList);
   }
 
   function open(){
@@ -83055,39 +83395,42 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if(typeof hideAllViews === 'function') hideAllViews();
     var v = q('cr-lrs-view'); if(!v) return;
     v.style.display = 'block'; v.setAttribute('aria-hidden', 'false');
-    editing = false; deleted = [];
+    sel = null; editing = false; deleted = []; pending = [];
     try{ document.body.style.overflow = ''; }catch(e){}
-    load().then(render);   // always refresh from the catalog on open
+    loadCrews().then(renderCrewList);   /* always refresh on open */
     try{ window.scrollTo(0, 0); }catch(e){}
     if(window.navSetView) window.navSetView('laborrates');
   }
   function close(){
     var v = q('cr-lrs-view'); if(v){ v.style.display = 'none'; v.setAttribute('aria-hidden', 'true'); }
-    editing = false;
+    sel = null; editing = false;
     if(typeof showHome === 'function') showHome();
   }
 
   document.addEventListener('click', function(e){
     var t;
-    if((t = e.target.closest('#lrs-back'))){ close(); return; }
-    if((t = e.target.closest('#lrs-print'))){ try{ window.print(); }catch(_){} return; }
-    if((t = e.target.closest('#lrs-edit'))){ if(!isAdm()){ tell('Admin only.'); return; } editing = true; render(); return; }
-    if((t = e.target.closest('#lrs-cancel'))){ editing = false; deleted = []; load().then(render); return; }
-    if((t = e.target.closest('#lrs-save'))){ save(); return; }
-    if((t = e.target.closest('[data-lrs-del]'))){
-      var id = t.getAttribute('data-lrs-del'); harvest();
-      var r = rows.find(function(x){ return String(x.id) === String(id); });
-      if(r && !r.__new) deleted.push(id);
-      rows = rows.filter(function(x){ return String(x.id) !== String(id); });
-      render(); return;
+    /* Back is one control with two meanings: out of a sheet, then out of the
+       screen. A separate "close" button would be a second way to do one thing. */
+    if((t = e.target.closest('#lrs-back'))){ if(sel) backToList(); else close(); return; }
+    if((t = e.target.closest('[data-lrs-crew]'))){ openCrew(t.getAttribute('data-lrs-crew')); return; }
+    if((t = e.target.closest('#lrs-print'))){ try{ window.print(); }catch(_){ } return; }
+    if((t = e.target.closest('#lrs-edit'))){ if(!isAdm()) return; editing = true; renderSheet(); return; }
+    if((t = e.target.closest('#lrs-cancel'))){
+      editing = false; deleted = []; pending = [];
+      loadSheet(sel).then(renderSheet); return;
     }
-    if((t = e.target.closest('[data-lrs-addrow]'))){ harvest(); addRow(t.getAttribute('data-lrs-addrow'), false); return; }
-    if((t = e.target.closest('[data-lrs-addnote]'))){ harvest(); addRow(t.getAttribute('data-lrs-addnote'), true); return; }
-    if((t = e.target.closest('#lrs-addcat'))){ harvest(); addCat(); return; }
+    if((t = e.target.closest('#lrs-save'))){ save(); return; }
+    if((t = e.target.closest('#lrs-addown'))){ addOwn(); return; }
+    if((t = e.target.closest('[data-lrs-del]'))){
+      var id = t.getAttribute('data-lrs-del');
+      deleted.push(id);
+      rates = rates.filter(function(r){ return String(r.id) !== String(id); });
+      renderSheet(); return;
+    }
   });
 
-  window.openLRS = open;
-  window.CardinalLRS = Object.assign(window.CardinalLRS || {}, { open:open, close:close, load:load });
+  window.openLRS = function(){ open(); };
+  window.CardinalLRS = Object.assign(window.CardinalLRS || {}, { open:open, close:close });
 })();
 </script>
 

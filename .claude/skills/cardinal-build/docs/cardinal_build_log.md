@@ -29317,3 +29317,122 @@ It now prefers `data-cr-footer[^>]*>\s*v2026-\d\d-\d\d\s+build\s+(\d+)` and keep
 Theo, 28 Aug: *"I don't see the owner console with new features."* He was right, and the reason was not the code. **PR #535 was opened as a draft and stayed one**, so it never merged; `main` deploys the app, and `strategyHTML`, `cr-nav-sec-owner`, `owner_biz_plan` and `ow-kpi` were all at **0 occurrences** on `main` — measured, not assumed. Meanwhile main took five builds (1116, 1118–1121) and the branch conflicted twice.
 
 **The lesson is procedural, not technical: a draft PR is invisible to the person who asked for the feature.** The house convention is to open PRs as drafts, and that is fine for a branch nobody is waiting on — but when the ask is live, say plainly in the reply that it is a draft awaiting his merge, or mark it ready. Four builds sat finished and unreachable for seven hours.
+
+## Build 1123 — the Labor Rate Schedule lists the CREWS, then one crew's sheet
+
+Theo, 28 Aug: *"Labor rate schedule shouldn't go straight to Santiago. It should list all the crews, then tap to see the labor rates… dark mode only."*
+
+**The prime doctrine paid for itself before a line was written.** 1110 built this screen reading `pricing_items` (`template='roofing_labor'`) and showing its `rate` column as *the* schedule — one document, titled SANTIAGO. **Per-crew rates already existed**: build **548** put them in **`crew_rates`**, keyed by crew, either against a catalog line (`pricing_item_id`) or as a crew's own line (`custom_name`/`custom_unit`), with the Crews module already writing them. So this build adds **no table and no second store** — it points the screen at the pipeline that was already there:
+
+> the catalog (`pricing_items`, roofing_labor) = **the line items**, shared · `crew_rates` = **what this crew is paid**
+
+**Theo's pick on the trade question** (put to him with the real numbers — 5 roofing crews, 2 siding, 3 windows, 1 gutters, 1 repairs, against a catalog that is 24 roofing lines): **roofing crews get the shared catalog lines; every other trade starts with an empty sheet and grows its own.** `CATALOG_TRADES = ['Roofing']` is the whole rule, and `catalogFor()` is one line.
+
+### The migration is the part that would have silently broken
+
+⚠ **The catalog's `rate` column has always been Santiago's numbers.** Read per-crew, his sheet would have opened with all 23 lines blank — his schedule, silently emptied, on the first build that was supposed to improve it. `crew_rates_santiago_seed.sql` copies them onto his crew before the HTML change: **applied, verified — Santiago 23 rates, Daniel Sarceno 3, everyone else 0**, which is exactly "each crew has its own, others start blank". Idempotent (`NOT EXISTS`), non-clobbering, matched by name rather than a pasted uuid, and it **skips the one `unit='note'` row** because a category note is prose, not a rate.
+
+The same file adds **`crew_rates_one_per_item`**, a partial unique index on `(crew_id, pricing_item_id)`: there was no constraint saying a crew has one rate per line, and 1123 is the build that starts writing these rows from a screen two admins can have open at once. Verified zero duplicates before creating it. Partial, because a crew's own lines legitimately repeat.
+
+### Three things in the module that are decisions, not details
+
+- ⚠ **Editing sets a CREW's rates and never edits the catalog.** 1110 let you rename lines and add categories here; under a per-crew model that silently re-prices every roofing crew at once. Renaming a shared line is the Pricing Catalog's job and that screen exists. **"+ Add line" adds a line to THIS crew** — which is how a siding crew gets a sheet at all. Asserted: the module has no write path to `pricing_items`.
+- ⚠ **A blank rate is a real state.** No agreed price reads **"not set"** in readable text (5.86:1, measured), never a `0` and never the catalog's number. **Falling back to `pricing_items.rate` would pay one crew another crew's rate** — the comment in the module says so, because it is the one "helpful" change that would cost real money.
+- **The catalog carries category NOTES** (`unit='note'`, one today). A note gets no rate field and **no `data-key`**, so `harvest()` cannot mistake it for a line with a blank rate. Caught by querying the real table before writing the renderer — the first version would have printed *"not set"* against a sentence.
+
+### Dark on the screen, light on the paper
+
+The whole surface is dark now (`#0e1116` ground, `#161b22` card), with every ink computed before it was written, not after. ⚠ **The `@media print` block puts the document back on white with dark ink** — a rate sheet gets printed and handed to a crew, and a dark screen printed verbatim is a black page. The crew LIST never prints; only the open sheet. If you add a rule that paints a ground or an ink up there, add its light twin down there.
+
+Gates: `check_build.py` green (129 inline scripts, 152 style blocks, 1122 → 1123, marker `data-lrs-crew` + negative control) · **`harness_lrs1123.js` GREEN 45 / RED on 1122** — drives the shipped module open → tap → edit → save against production-shaped rows and proves the money path: a roofing crew sees its OWN rate (Daniel 38, not Santiago's 45), a siding crew does not inherit the roofing catalog, and **every write goes to `crew_rates`** · **`gate_1123.mjs` GREEN 25 / RED 12 on 1122 without crashing** — real Chromium at 390px across both screens: renders dark (`rgb(14,17,22)`), 4 crews grouped by trade, worst ink 5.86:1 against its composited ground on both screens, nothing under 11px, no sideways scroll, and every crew row and topbar control ≥44px.
+
+⚠ **That last one caught a pre-existing miss: on 1122 the topbar buttons were 33px** — under the 592/1076 rule the whole app is held to. They are 44px now; the control printing `lrs-back:33 lrs-edit:33 lrs-print:33` is how it surfaced.
+
+## Build 1124 — the favourite star: the click always worked, the screen never said so
+
+Theo, with a client-profile screenshot: *"Can't click the star to favorite."*
+
+**Reproduced before theorising, and the report was right about the symptom and wrong about the cause — which is why reproducing mattered.** Driven in Chromium at 390px on a real client profile:
+
+| probe | answer |
+|---|---|
+| `elementFromPoint` at the star's centre | **the star** — nothing overlays it |
+| the band's click handler wired | **yes** (`bar.__crWired`) |
+| `window.currentProject` / `toggleFav` | **both present** |
+| a real click | lands, no error |
+| `isFav(currentProject)` after | **`true` — the client WAS favourited** |
+| `#favStar` after | **`⭐`, class `namestar on`** |
+| the band's own star after | **`☆`, unchanged** |
+
+**The click was never broken.** `toggleFav()` ran, wrote the checklist, and lit `#favStar` — which is **0×0 on a phone**, inside a card the client-profile rebuild hides. The band star never moved, so the screen said nothing, and a second tap turned the favourite back off. From the outside that is indistinguishable from a dead control.
+
+**Root cause: a mirror held up once.** `cr-namebar-script` builds its star from `#favStar`'s class **at render time** — its own comment says *"mirror the LIVE star rather than re-deriving… two sources for one fact is how they drift apart."* The intent was right; the implementation was a snapshot. Nothing repainted the band when the fact changed.
+
+**Fix: `renderFavBtn()` paints both.** One painter, which is what that comment intended — every caller from any surface now leaves the two agreeing. ⚠ **Writes are compared before assigning**: `textContent` emits a childList record even when the string is identical, and this band sits in an observed subtree (567/569 cost two builds to exactly that). `aria-pressed` added, so a toggle button stops being silent to a screen reader.
+
+**Second defect, in the same tap: the star was a 19×17px glyph with a measured 20×20px hit area** — the 592/1076 rule holds every control here to 44px. Growing the button would grow `.nb-top` and push the PO row down on every client profile, so the hit area is a **transparent `::after` overlay**: 44×44 measured, geometry unmoved. ⚠ **It overlaps the row below, and that was CHECKED rather than reasoned about** — `.nb-row2` comes later in the DOM, so the pencil and the PO chip paint over it and keep their own taps (`elementFromPoint` returns each of them). **Give `.nb-star` a `z-index` and you take the pencil's clicks with it.**
+
+### ⚠ Why no gate had ever caught this, which is the part worth keeping
+
+**A jsdom harness cannot see this bug at all.** It cannot lay the band out, cannot hit-test, and would have cheerfully confirmed the handler wired and the data written — every one of which was already true. The defect lived entirely in *what the screen showed*. `gate_1124.mjs` is a real render: it taps the star, asserts the **glyph changes**, taps again and asserts it comes back, then measures the reachable area outward from the centre and asserts the neighbours still own their own taps. **GREEN 13 / RED 4 on 1123**, and the control prints the old hit area as `20×20px` — the number that explains the report.
+
+### ⚠ Two standing gates went red on this tree, and both findings were 1123's
+
+I ran `gate_dupes` and `gate_types` at 1122 and **not** at 1123 — so 1123's rework shipped past them and 1124 is where they fired. Both were real and both were fixed rather than rebaselined:
+
+- **`gate_dupes`:** the new LRS module added `me`, `nameOf`, `renderList`, `rowHtml`, `rv` — names already defined in five other modules. Not a runtime collision (they are inside the IIFE) but exactly the grep trap this project already pays for at `function money(` ×11. Renamed to `lrsMe`, `lineName`, `renderCrewList`, `lineRow`, `fieldVal`.
+- **`gate_types` TS2353:** `sheetRows()` built **two different object shapes in one array** — the catalog branch had no `custom_*`, the own-line branch did. Harmless at runtime, and precisely why every reader downstream had to branch on `__cat ?`. Both branches now build the same shape.
+
+⚠ **The rename itself then broke the module, and the harness caught it in one run.** `re.sub(r'renderList\(', …)` renamed the *call sites* and missed **`loadCrews().then(renderList)`** — a bare reference passed as a callback, twice. `ReferenceError: renderList is not defined`, on open. **A rename regex anchored on `(` only renames what is called, never what is passed.** Fixed with a word-boundary pass and asserted to zero.
+
+Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star::after` + negative control) · **`gate_1124.mjs` GREEN 13 / RED 4 on 1123** · `harness_lrs1123` GREEN 45 · `gate_1123` GREEN 25 · `gate_1116` GREEN · **`gate_dupes` GREEN** (0 over baseline, and *better*: `load` 18→17, `render` 32→31) · **`gate_types` GREEN** (0 codes grew, TS2339 1341→1339). No SQL, no api route.
+
+**Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
+
+## Build 1125 — a punch-out text you can tap, which opens the punch-out
+
+> ⚠️ **CI went RED on this PR for a doc, not for code — `MIGRATIONS.md is out of date`,
+> on 1123's head and every head after it.** The manifest's last column records *which doc
+> mentions a migration*, so it is derived from `FEATURES.md` and the build log. I ran
+> `migration_manifest.py` for 1123's crew-rate seed migration, **then** wrote the
+> `FEATURES.md` line, and never re-ran it — so the row said `build log only` when the
+> truth had become `FEATURES.md`, and the manifest was stale in the very commit that
+> generated it. **Regenerate the manifest LAST, after every doc edit in the build.**
+> Running it first feels like doing it early; it guarantees a stale row instead.
+> Cost: one CI cycle. The gate worked exactly as designed — it caught my ordering.
+>
+> ⚠️ **And this note must not name the `.sql` file, which is why it says "1123's crew-rate
+> seed migration" instead.** The manifest's *builds* column is derived from which build
+> entries mention a filename — so writing the name here filed a 1123 migration under
+> "1123, 1125" as well. **A build-log entry that names another build's migration file
+> rewrites the manifest's history.** Refer to it in prose, or the record starts claiming
+> a migration shipped twice.
+
+Curtis (project manager), relayed by Theo with a photo of the text on his phone: *"you should be able to tap it then it goes to the punch out in app."*
+
+**The prime doctrine, third time this session: the destination already existed.** `__tryRestoreFromHash` has parsed **`#p/<id>/<tab>`** since 613, and `punch` has been a real client-profile tab since 607. Verified in Chromium before a line was written — `#p/p1/punch` opens the client on the Punch Outs tab, `#p/p1` does not. **Nothing was missing except somebody sending the link.**
+
+**What was actually wrong, in two places:**
+
+| | |
+|---|---|
+| `notifyTeam()` | sent **`url: '/'`**, hardcoded — the app's front door, from all 21 call sites |
+| `api/notify.js` | used `url` for **web-push only**. `smsBody` was `title + ': ' + text` and **never contained it** |
+
+So even the push notification opened the app root, and the text — the channel Curtis actually reads — had no link at all.
+
+**The fix.** `notifyTeam(to, subject, bodyHtml, url)` gains an optional fourth argument defaulting to `'/'`, so all 21 existing call sites keep their exact behaviour. **`punchLink(pid)` is the one place that knows a punch-out's address** — six notifications point at one, and six spellings of the same link is how they drift (the rule 612 applied to outcome text and 607 to mentions). All six carry it now: filed, assigned to you, nobody assigned, a comment that tags you, extra scope flagged, and closed.
+
+⚠ **Two things in `api/notify.js` that are the whole build, not details:**
+
+- **The link goes in the TEXT.** An SMS has no hyperlink, so a url that rides only in the JSON is a url nobody can tap — and every gate would have stayed green. It is appended **after** the 320-char trim, never inside the slice, so a long punch-out title cannot truncate the link. Asserted with a 600-character title.
+- ⚠ **Only a same-site relative path or hash is accepted, and the absolute URL is built HERE from the request host.** This string is sent to a phone. An absolute URL taken from the caller would make the route a link-relay that texts on someone else's behalf. Anything with a scheme, or a protocol-relative `//`, drops back to `'/'`. Asserted both ways.
+
+Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + negative control) · **`harness_deeplink1125.js` GREEN 22 / RED on 1124** — imports and drives the **shipped** `/api/notify` handler with `fetch` stubbed and reads the **actual Twilio form body**, which is the only way to prove the link is in the message. It produces, verbatim: `New punch-out: 4" too long: Theo Dorion filed a punch-out at Jarrett Chenalt: 4" too long\nhttps://app.cardinalroster.com/#p/abc-123/punch` — Curtis's own screenshot with a link on the end · **`gate_1125.mjs` GREEN 6** — the other half, in a real engine: that address opens the right client on the Punch Outs tab, **and the control without the `/punch` segment lands on Overview**, so the segment is proved to do the work rather than assumed. No SQL.
+
+### ⚠ Two things found while testing, neither fixed here
+
+- **`/api/notify` returns 500 and sends NOTHING — no push, no email, no SMS — if `web-push` fails to import or `VAPID_PRIVATE_KEY` is unset.** The file's own comment says *"each channel is independent, so a dead one never blocks the others"*; that is true of a dead *channel* but not of the push **library** or its key, both of which are required before any channel runs. Not live-broken (Curtis receives texts, so the key is set), but one unset env var would silently take the texts down with it. Left alone deliberately — it is a separate decision, not this build's.
+- **The `url` mechanism now covers all 21 call sites**, so giving "materials ordered", "lead assigned to you" and the rest their own deep links is one argument each. Not done here; Curtis asked about punch-outs and the scope stayed there.
+
+⚠ **Running this gate locally needs `npm install --no-save web-push`** — it is in `api/package.json` (Vercel installs it) but not at the repo root. The harness says so by name when it is missing rather than reporting a mystery failure.
