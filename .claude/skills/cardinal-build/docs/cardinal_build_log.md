@@ -835,6 +835,98 @@ not a silent edit.
 
 ---
 
+## Build 1116 — 28 Aug 2026 — One header on every screen that belongs to no portal, and it names the screen
+
+`index.html`. Stamp 1112 → **1116**. Theo's pick, from the header audit's three options.
+
+**What the audit measured, and why the fix is not a longer list.** 1104 pinned five shared
+screens to the production head; the audit found **thirteen** more still following the
+last-used portal — and the count had gone **5 → 10 → 13 on its own**, because 1107–1112 added
+Invoices & AR, the Labor Rate Schedule and the Guide editor and *a screen was steady only if
+somebody remembered to name it*. Drifting was the DEFAULT for every new full-screen view.
+Appending thirteen ids would have been the same trap with a longer list, so `SHARED_HEAD` is
+now the complete census and **`gate_1116.mjs` walks every id in `hideAllViews()` and goes red
+on one that is in no bucket** — pinned, CRM, or explicitly deferred. A new view has to be
+classified by whoever adds it.
+
+**Theo's question is what made the build correct.** Put the pin to him and he asked: *"If we
+pinned them all to production can we get rid of the word production on just the screens that
+are not productions?"* The title has always been `TITLES[kh]` — it names the **palette** — so
+the 1104 five had been reading **"Production" on Settings and My Profile since that build**,
+and pinning thirteen more would have put "Production" on Leads & Jobs and Photos. A shared
+screen belongs to no portal, so it now names **itself**; only a real CRM screen names a CRM.
+
+**Two inks, and one of them was my own false positive.** The `#crBanner` caret was one grey
+(`#6d747e`) on five different grounds, so it passed or failed by luck: 3.58 community, 3.80
+retail/production, 4.00 insurance, floor 4.5 → `#8a9199`, 5.30 on the worst. The `＋` glyph
+was **pixel-sampled under the glyph rather than computed from tokens**, and that reversed the
+finding: community reads **3.43** (worse than the 4.28 flat arithmetic predicted) → `#02593d`
+at 5.26; **retail PASSES at 7.10** and was left alone — the audit's 3.79 came from scoring a
+centred glyph against the bottom stop of a gradient it never sits on.
+
+**⚠ THE GATE CAUGHT THREE REAL BUGS IN MY OWN CHANGE, and the third would have shipped
+looking almost right.**
+1. `SHARED_HEAD` and `sharedScreen()` were defined **inside `crmHead()`**, so `build()` threw
+   on them and no title was written at all — including the CRM titles that worked before.
+2. The visibility test was `el.style.display !== 'none'`, which 1104 got away with only
+   because all five of its ids carry an inline `display:none`. **Four of the new screens are
+   CLASS-shown** with no inline display, so the first key won every time and the whole app
+   read "iTel Lab". `getComputedStyle().display` is *also* wrong — it reports the element's
+   own display and cannot see a hidden ancestor. `getClientRects().length` is the honest test,
+   and unlike `offsetParent` it stays correct for the `position:fixed` views, which is most.
+3. **`skin()` early-returns when `(crm, head)` is unchanged** — and every shared screen
+   resolves to the same `(retail, production)` pair, so the title was written once and never
+   again: all thirteen screens kept whichever name was written first. `lastScreen` joins the
+   memo. *A memo that does not know what the output depends on is a cache bug with a delay.*
+
+**⚠ And three of my rig's own faults, all of which looked like app bugs.** A fixed 220ms
+sleep read every title stale; `hideAllViews()` did not put back what the rig had opened, so
+the first screen shown stayed visible; and the rig set `style.display` — an **attribute**
+mutation — while the header wakes on a `childList` observer, so `build()` never re-ran. All
+three are fixed in the gate with the reason written beside them. *Every real door in the app
+renders nodes, which is why this is a rig fault and not a shipped one — verified in the audit.*
+
+**⚠ THEO CAUGHT THE GAP THE GATE HAD NOT: the Text size control.** *"Don't forget you have
+different text size."* Build 939's control is a real `:root{zoom:1.15/1.30}`, so the CSS
+viewport SHRINKS as the type grows and the header's middle slot goes **150px → 99px → 60px**.
+The fit assert had been run at Normal only. Measured at all three: the longest name needed
+149px, so **every screen name would have ellipsised at Large and Larger** — two thirds of the
+range, shipped green.
+
+- **Contrast is untouched by this** and that is worth stating rather than re-measuring: zoom
+  scales ink and ground identically, so a ratio cannot move. The floors do not shift either —
+  11px at 1.30 is 14.3px, still short of the 18.66px large-text threshold.
+- **Names shortened** (Quick Inspection → Inspection, Punch & Repairs → Punch, Leads & Jobs →
+  Leads, Company Docs → Documents, My Profile → Profile, Address Check → Address) and the
+  shared-screen title given `clamp(12px,4.4vw,20px)`. Normal and Large now fit.
+- **At Larger the name is HIDDEN, not truncated.** 60px of slot cannot hold the shortest useful
+  name (91px), and the only way to widen it is shrinking tap targets below the 44px floor. That
+  is the app's own precedent — the retail slogan does exactly this below 438px, for the reason
+  already recorded there: *a truncated name reads as a broken app, an absent one reads as a
+  clean toolbar.* The gate asserts the DECISION at xl, so "it fits" can never be satisfied by
+  an invisible element.
+- ⚠ **Two CSS edits lost silently before this worked**, both the specificity trap this project
+  already names: `cr-hd4-styles` sets `max-width:100%` on a THREE-id selector, so my two-id
+  `max-width` was dead on arrival; and between two `!important` font-sizes specificity decides,
+  so 2 ids + an attribute LOST to 3 ids and the clamp never applied. *The tell was the name
+  measuring identical at all three zooms* — a silently-losing rule looks exactly like a rule
+  that did nothing. The winner carries a `--cr-stack:` note for `gate_stack`.
+
+**⚠ And the audit script had the same rig fault the gate did**, found while confirming this:
+`hideAllViews()` does not put back a view the rig opened, so the "no view open" row reported a
+still-visible screen and read `production`. **In a genuinely clean state `crmHead()` answers
+`retail`** — verified directly, so the app is right and the doc line was the rig. Fixed in
+`audit_headers.mjs` too.
+
+**Audit re-run on 1116: drifting screens (none)** — all eighteen pinned, and the banner caret
+now measures **5.63** where it was 3.58–4.00.
+
+**Gates.** `check_build` GREEN (stamp 1112→1116, marker `b:1116`, negative control clean) ·
+`gate_1116.mjs` GREEN — 18 screens × 2 portals for head, name, and "not Production", plus
+precedence (an open project and a real CRM screen still outrank), the 754 line (`data-crm`
+never moves), the longest name fitting 390px without ellipsis, and the classification census —
+**RED(72) on 1112**, no crash. No SQL.
+
 ## Build 1106 — 27 Aug 2026 — The Twilio config is trimmed, and 20003 says WHICH key looks wrong
 
 `index.html` (stamp + CHANGELOG only) + `api/notify.js`. Stamp 1105 → **1106**.
