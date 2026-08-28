@@ -927,6 +927,41 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1119 — 28 Aug 2026 — Seven labels come back up to the 11px floor
+
+Found by the same `run_gates.py` full run: **`gate_1081` — the standing type-floor gate —
+was RED on main** (A1: 7 source sites under, smallest 9.5px; D4: 6 parsed rules under).
+All seven arrived AFTER 1081 set the floor, or its gate would have caught them at birth:
+
+| selector | was | module / build |
+|---|---|---|
+| `.cr-est-lineitem .cr-est-rowmode button` | 10.5px | estimate builder, 1096 |
+| `.cr-est-sechead .sec-addline` | 10.5px | sections, 1097 |
+| `.cr-est-sechead .sec-saveasm` | 10px | assemblies, 1098 |
+| `#cr-est-picker .asm-grouphd` | 10.5px | assemblies, 1098 |
+| `#cr-cc .sheet .ln-sec` | 10.5px | Community sheet |
+| `#cr-can .pgrid .ck` | **9.5px** | canvass grid |
+| `.cd-guiderow .cdg-auto` | 10.5px | Pre-Install Guide chip |
+
+All bumped to 11px. **Known, accepted cost:** in the canvass partner card's 3-column grid
+at 390px, "Out for pricing" now wraps to two lines (measured in Chromium with the shipped
+markup: label h 13→26px, cell grows, nothing clips or overlaps) — the same cost 1081's
+original 519-declaration sweep accepted.
+
+### Gates
+- `check_build.py` GREEN 1118 → 1119; patch byte-reproducible; every size edit asserted
+  with self-computing before/after counts (BUG_CLASSES: no hardcoded post-patch numbers).
+- **`gate_1081` flips GREEN — 14/14** (A1 total 0, D4 0 parsed under, D5's two deliberate
+  `font-size:0` idioms untouched, E-probes compute ≥11px). **Control (the 1118 tree) is
+  RED on A1+D4** with the seven named.
+- Wrap-check render (above) — first attempt returned all-zero widths because `#cr-can`
+  ships `display:none`; a check that cannot fail proves nothing, so it was re-run with
+  the module's real `.cell/.ck/.cv` markup forced visible, against both trees.
+
+No SQL. `index.html` + this entry.
+
+---
+
 ## Build 1118 — 28 Aug 2026 — The Estimates tile fills again on zero-estimate jobs
 
 Found by the first full run of `run_gates.py` (the 214-gate regression suite): `gate_996`
