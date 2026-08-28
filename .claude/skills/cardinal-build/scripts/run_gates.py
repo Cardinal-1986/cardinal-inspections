@@ -56,7 +56,7 @@ Usage:
     python3 run_gates.py --only 1050,1036
     python3 run_gates.py --selftest            # prove the classifier works
 """
-import argparse, os, re, subprocess, sys, time, json
+import argparse, os, re, signal, subprocess, sys, tempfile, time, json
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -86,15 +86,43 @@ def gate_files(only=None):
     return [n for _, n in sorted(out)]
 
 def _invoke(name, args, timeout):
-    try:
-        p = subprocess.run(['node', os.path.join(HERE, name)] + args,
-                           cwd=REPO, capture_output=True, text=True, timeout=timeout)
-        return p.returncode, (p.stdout or '') + (p.stderr or ''), False
-    except subprocess.TimeoutExpired as e:
-        out = e.stdout or ''
-        if isinstance(out, bytes):
-            out = out.decode('utf8', 'replace')
-        return None, out, True
+    """Run one gate. NEVER use capture_output/PIPE here — see below.
+
+    ⚠ THE SECOND BUG THIS RUNNER SHIPPED WITH: a 55-MINUTE HANG.
+    The first version used subprocess.run(capture_output=True, timeout=N). Gates
+    that drive Playwright spawn Chromium; when the node process exits or is
+    killed, those chrome GRANDCHILDREN inherit the stdout pipe. run() fires its
+    timeout, kills node, then blocks forever in the drain that follows, because
+    the pipe never reaches EOF while a grandchild holds the write end. Observed
+    live: 0 node processes, 2 orphaned chrome, the runner alive and silent for
+    55 minutes at exactly 79 of 214.
+
+    A runner that HANGS is worse than one that fails — it looks like it is still
+    working, so nobody investigates. Two fixes, both needed:
+      1. write output to a FILE, not a pipe: nothing depends on EOF
+      2. start_new_session so the gate gets its own process group, and on timeout
+         kill the whole GROUP, which takes the browsers with it
+    """
+    with tempfile.TemporaryFile('w+b') as fh:
+        pr = subprocess.Popen(['node', os.path.join(HERE, name)] + args,
+                              cwd=REPO, stdout=fh, stderr=subprocess.STDOUT,
+                              start_new_session=True)
+        timed_out = False
+        try:
+            pr.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            try:
+                os.killpg(os.getpgid(pr.pid), signal.SIGKILL)   # browsers too
+            except (ProcessLookupError, PermissionError):
+                pr.kill()
+            try:
+                pr.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                pass
+        fh.seek(0)
+        out = fh.read().decode('utf8', 'replace')
+    return (None if timed_out else pr.returncode), out, timed_out
 
 def run_one(name, artifact, timeout):
     t0 = time.time()
