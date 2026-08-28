@@ -7570,3 +7570,14 @@ Extends the Invoices & AR module (`cr-ar-script`, `window.CardinalAR`). Where th
 - **`api/sms-link.js`** — Company SMS via the `notify.js` Twilio Messaging Service; reads `projects.phone` server-side with the caller's token.
 
 Do NOT build a second invoice/payment surface. Status = `statusFor` (the 1107 engine). Send link = `shareUrlFor` (`/api/share?t=`). Gate: `harness_inv1108.js`. Invoice-document live header = build 1109.
+
+
+---
+
+## Invoice document: live status/balance card + payment ledger (build 1109)
+
+**`wireInvoiceLive(doc, r)`** (main block, before `serializeFrame`) — called in the report editor's `frame.onload`. When the open doc is an invoice, injects a live layer into the iframe document, computed from `jobFinance()` + `cacheCollections` (the ledger), NOT the values baked at creation:
+- **Top:** a **Current Balance Due** card above the SUMMARY table (anchored on `#estTotal`) with the live balance + status pill (`CardinalAR.status`); swaps to a **PAID IN FULL** badge (+ final payment date) when balance ≤ 0.
+- **Bottom:** a **Payment History** ledger (Date, Method/Ref, Amount, Type + total).
+
+⚠ The injected nodes are `data-cardinal-live` and `serializeFrame()` strips them on save — the stored `inspection_reports.html` stays the as-issued record; this is a view/print-time layer only. Do NOT persist it. Print rules (`@media print`, `print-color-adjust:exact`) keep the badges crisp. Gate: `harness_inv1109.js`.

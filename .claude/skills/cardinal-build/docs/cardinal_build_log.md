@@ -28898,3 +28898,16 @@ Theo's Build 2. The invoicing flow moves from the admin-only AR dashboard into t
 - **`api/sms-link.js` (new):** Company SMS — texts the pay link to the client through the same Twilio Messaging Service as `notify.js`. Reads `projects.phone` SERVER-SIDE with the caller's token (RLS), so no arbitrary number can be dialed. Best-effort; missing keys -> `sms_not_configured`, never a crash.
 
 Gates: check_build.py green (127 scripts, stamp 1107->1108, marker + negative control). `node --check` on `api/sms-link.js`. **`harness_inv1108.js`** (jsdom, shipped module) — GREEN on 1108, RED on 1107: the job block per state, the offline modal writing a correct `collections` row that steps **Sent -> Deposit Paid** (verify #2), the deposit/progress/final type map, and the Company SMS POST carrying the `/api/share` pay link + auth token. MIGRATIONS.md regenerated (88 files). The invoice-document live header is the immediate next build (1109).
+
+
+## Build 1109 — Invoices show live status, balance and a payment history
+
+The invoice DOCUMENT gets the live layer to match the job card (1108).
+
+- **`wireInvoiceLive(doc, r)`** (main block, before `serializeFrame`) — called in the report editor's `frame.onload`, only when the doc is an invoice. Computes from `jobFinance()` + `cacheCollections` (NOT the values baked at creation) and injects into the iframe document:
+  - a **Current Balance Due** card at the top (above the SUMMARY table, anchored on `#estTotal`) with the live balance + status pill; when fully paid it swaps to a bold **✓ PAID IN FULL** badge with $0.00 and the date it cleared.
+  - a compact **Payment History** ledger at the bottom (Date, Method/Ref, Amount, Type + running total) from the collections rows.
+- **Never saved:** every injected node is `data-cardinal-live`, and `serializeFrame()` strips it (beside the existing hint/screenFix strip), so the stored document stays the as-issued record — a view/print-time layer, never baked in (no stale values, no duplication on re-open).
+- **Print-safe:** `@media print` keeps the card/ledger with `print-color-adjust:exact`, crisp `#1b1b1b` borders, `page-break-inside:avoid`. All inks ≥4.5:1 (the empty-ledger note was 4.48 at `#777` → `#666`).
+
+Gates: check_build.py green (stamp 1108→1109, marker + negative control). **`harness_inv1109.js`** (jsdom, extracts + runs the shipped `wireInvoiceLive`) GREEN on 1109 / RED on 1108: the balance card + status, the PAID IN FULL swap + date, the ledger (method/ref/type/total), placement above SUMMARY, the non-invoice skip, idempotency, and that all injected nodes are `data-cardinal-live` so the save-strip removes them. No SQL, no api route.
