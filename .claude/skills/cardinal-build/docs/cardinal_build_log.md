@@ -29389,6 +29389,68 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
 
+## Build 1128 — the two mute levels are two levels again, in BOTH themes
+
+Theo: *"Fix the mute levels."* 1127 collapsed `--rbe-mute` and `--rbe-mute2` into
+one colour on dark and recorded it as a deliberate cost. This pays it.
+
+**The third option neither of us had costed.** 1127 framed it as a binary — dim
+mute2 (unreadable) or accept the collapse. There was a third: **lift the brighter
+level**, which makes room beneath it. Nothing gets dimmer; the hierarchy returns.
+
+| | dark, on `#2E333B` | light, on `#f7f7f7` |
+|---|---|---|
+| pagetext | `#dfe3e8` 9.86 | `#2a2a2a` 13.40 |
+| **mute** | `#9aa0a8` → **`#b8bec6`** 4.82 → **6.79** | `#6b6b6b` → **`#585858`** 4.97 → **6.64** |
+| **mute2** | `#9aa0a8` 4.82 (unchanged) | `#8a8a8a` → **`#6e6e6e`** 3.22 → **4.76** |
+| steps | 1.45× / 1.41× | 2.02× / 1.40× |
+
+**186 consumers (116 + 21 in each theme) and not one loses contrast** — dark
+lightens on dark grounds, light darkens on light grounds. The change can only
+make things easier to read.
+
+### ⚠ 1127's light half was skipped on a one-screen render, and that was wrong
+
+1127 left the light pair alone because a light-theme render found **zero**
+elements using mute2. **That render walked the CLIENT screen only.** Swept across
+ten states it finds three — and one is **the punch-out description, still at
+3.22:1 in light after 1127 "fixed" it in dark.** The gate's negative control then
+found a fourth thing neither probe had: **light `--rbe-mute` at 4.35:1** on a
+cream ground (`rgb(240,232,208)`). *A single-screen render is not a theme audit,*
+and "measure BOTH themes" means both, on every screen you can reach.
+
+### ⚠ A 1.57:1 finding that was MY INSTRUMENT, not the app (BUG_CLASSES 80)
+
+While auditing, a probe reported a mute label at **1.57:1 on gold**. The ground is
+`.pu-hero`'s `rgba(245,192,69,.06)` — a **6% wash** over the dark page. My walk
+pushed the raw stop colour into the candidate list without **compositing its
+alpha**, so it scored the text against full-strength gold. Composited, the ground
+is `rgb(23,20,15)` and the truth is **6.97:1**. Reported as a false positive; no
+change made. 1127 fixed "stop at the first opaque paint" and left this half
+undone — a translucent layer must be *blended*, never scored at full strength.
+
+### ⚠ Two self-inflicted gate faults, both caught by the gate reporting zero
+
+- **A token's value is a hex string.** `gate_1128`'s probe fed `#b8bec6` to an
+  `rgb()` regex, got `null`, and matched **0 elements in both themes**. It
+  reported 0 rather than passing — the only reason it was caught.
+- **The probe lives in a template literal.** A backtick inside its comment ended
+  the string and the file stopped parsing. No backticks in `PROBE`.
+
+### Deliberately NOT in this build
+
+`--rbe-pagemute2` (dark `#6d747e`, the same grey 1127 replaced) feeds `--cr-muted-2`
+in the Estimates namespace. Checked: its **29 consumers are borders, a disabled
+button background and icon glyphs — not body text**, so the 4.5 floor does not
+apply. A different namespace and a different question; not widened into here.
+
+**Gates.** `gate_1128.mjs` — GREEN 14 / **RED 4 on 1127**, no crash, both themes.
+`gate_1127.mjs`'s two assertions that encoded the collapse are **updated, not
+deleted**, so the reversal stays legible. `check_build.py`, `gate_dupes`,
+`gate_types` green.
+
+---
+
 ## Build 1127 — the 195-finding sweep, read; three real, one wrong, 191 noise
 
 Theo picked "ship all three" after the triage. **The triage is the deliverable as

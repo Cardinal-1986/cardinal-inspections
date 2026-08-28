@@ -4150,3 +4150,46 @@ element is too small, when a losing `min-width` says nothing about the rendered 
 is the thing a thumb actually hits. The check earned its keep on `#payView .pay-chip`
 (really 34px) — but that one was small *and* out-specified, so the two conditions were
 never separated.
+
+---
+
+## 80 — a contrast rig that scores text against a TRANSLUCENT layer at full strength
+
+**Build 1128**, and it is the unfinished half of class 78. That class fixed *where*
+the ground walk stops (at the first fully opaque paint). It did not fix what to do
+with the layers above it: a `rgba(...)` wash must be **composited** with what is
+behind it, not added to the candidate list at full strength.
+
+The symptom is a spectacular false positive. `.pu-hero` paints
+`rgba(245,192,69,.06)` — a 6% gold wash over the dark page. Scored raw, a
+`--rbe-mute` label on it reads **1.57:1** and looks like the worst defect in the
+app. Composited (`0.06·gold + 0.94·#09090C = rgb(23,20,15)`) the truth is
+**6.97:1** — comfortably fine.
+
+```js
+let acc = null;                       // walk OUTWARD-IN, then blend inward-out
+for (let i = layers.length - 1; i >= 0; i--)
+  acc = acc ? [0,1,2].map(k => Math.round(layers[i].a*layers[i].c[k] + (1-layers[i].a)*acc[k]))
+            : layers[i].c;
+```
+
+**Both halves are required.** Stop at the first opaque paint (78) *and* blend
+every translucent layer above it (80). Either one alone gives a confident wrong
+number, and the two errors point in opposite directions — 78 inflates the ratio,
+80 deflates it.
+
+## 81 — a colour probe fed a TOKEN's value, which is hex, not rgb()
+
+**Build 1128.** `getComputedStyle(el).color` is `rgb(...)` or `color(srgb ...)`;
+`getPropertyValue('--rbe-mute')` is **`#b8bec6`**. One parser cannot be assumed to
+take both. `gate_1128`'s first cut fed hex to an rgb regex, got `null` for every
+token, and therefore matched **zero elements in both themes**.
+
+**It was caught only because the gate asserts its own population is non-empty**
+(`elements painted --rbe-mute render (N)`). Without that check it would have
+printed a clean pass over nothing at all — a check that cannot fail, which this
+list already names twice. **Any gate that filters a population must assert the
+population is not empty.**
+
+⚠️ And a mechanical trap in the same file: the probe is a **template literal**, so
+a backtick inside one of its comments ends the string and the file stops parsing.
