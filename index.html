@@ -1067,13 +1067,27 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   #e2e8ea 0%, #b7c4cb 12%, #607D8B 38%, #607D8B 55%, #455a64 80%, #303e46 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
 @media (max-width:900px){
-  .piperow{padding:0 0 4px;gap:4px;overflow:visible;justify-content:space-between;
-    /* 957: this breakpoint turns the row from a scroller into fitted buttons,
-       which orphans the base rule's containment on a box that no longer has a
-       scrollport - the same shape that killed the Cardinal Truth pane. Reset
-       both here so a swipe on the row still scrolls the PAGE. */
+  /* 1114: A SCROLLER AGAIN, because seven cards do not fit a phone. 957 turned
+     this breakpoint from a scroller into fitted buttons, which was right for
+     five; at seven, 340px of row gives each card 47px and the two word labels
+     measure 51px ("Closed") and 57px ("On Hold") in Chromium — they did not
+     ellipsize, they OVERLAPPED their neighbours and spilled 4px past the row,
+     because align-items:center sizes a label to its own content and
+     overflow:hidden on a max-content box can never fire. Shrinking the type to
+     fit would mean ~9px, under the 11px floor build 1081 established.
+     min-width is sized to the widest label with headroom rather than tuned to
+     the pixel: the measurement above comes from this container's fallback
+     face, and Theo's phone resolves 'Segoe UI',Arial to something else. */
+  .piperow{padding:0 0 4px;gap:4px;overflow-x:auto;justify-content:space-between;
+    /* 957: kept. `contain` belongs to the base rule and is correct on a real
+       scrollport, but at a 900px tablet seven cards DO fit, and containment on
+       a box that is not scrolling is the shape that killed the Cardinal Truth
+       pane — a swipe on the row would stop scrolling the PAGE. */
     overscroll-behavior-x:auto;-webkit-overflow-scrolling:auto;}
-  .pipebtn{flex:1 1 0;min-width:0;max-width:none;padding:2px 0;}
+  .pipebtn{flex:1 1 auto;min-width:64px;max-width:none;padding:2px 0;}
+  /* the last-resort guard, and it can now actually fire: capped at the cell,
+     the existing nowrap/ellipsis on .plabel truncates instead of overlapping */
+  .pipebtn .plabel,.pipebtn .pcount,.pipebtn .pmoney{max-width:100%}
   .pipebtn .pcirc{width:46px;height:46px;font-size:21px;}
   .pipebtn .plabel{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .pipebtn .pcount{font-size:16px;}
@@ -3489,28 +3503,13 @@ body[data-crm-head="retail"]   {--bnbg:#101620;--bnbd:#243040;--bnac:#8fb4d8}
 /* .titlecard h1 carries font-size:17px !important, so this needs it too */
 #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:20px !important;line-height:1.15;
   color:var(--hin,#fff);-webkit-text-fill-color:var(--hin,#fff)}
-/* 1065: the slogan is shown only where it FITS. Measured at 1px resolution:
-   it needs 247px and the header's middle gives it 247px from 438px up, 190px
-   at 430, 150px at 390. Shrinking it to fit would mean 10px at 390 and is
-   impossible below 360; wrapping would add a second line to a fixed-height bar
-   on the screen with the least vertical room. So it is hidden below 438 — a
-   truncated slogan ("Single sourc…") reads as a broken app, an absent one
-   reads as a clean toolbar.
-   RETAIL ONLY: #brandTitle carries the CRM NAME in the other CRMs, which are
-   short words that fit, and the 416 comment above forces that title visible
-   because it must never disappear.
-   The 437 breakpoint is deliberate rather than reusing the existing 480: an
-   iPhone 16 Pro Max is 440pt, where the slogan fits, and hiding something that
-   fits to save a breakpoint is the wrong trade. */
-@media (max-width:437px){
-  body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}
-}
-body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{
-  font-family:'American Typewriter','Courier New',Courier,serif;
-  font-size:17px !important;font-weight:800;font-style:normal;letter-spacing:.005em;white-space:nowrap}
-#cr-hd2-mid #brandTitle h1 span.hq{color:#5d6b7a;-webkit-text-fill-color:#5d6b7a}
-#cr-hd2-mid #brandTitle h1 span.hg{color:#9aa0a8;-webkit-text-fill-color:#9aa0a8}
-#cr-hd2-mid #brandTitle h1 span.hr{color:#ff5a63;-webkit-text-fill-color:#ff5a63}
+/* 1114: "Retail" in the same face and size as the other four portal names.
+   Deleted here with the slogan they styled: 1065's @media (max-width:437px)
+   hide (a six-letter word fits at every width — keeping the hide would blank
+   the CRM name on a phone, which the 416 comment above forbids), the
+   retail-only American Typewriter / 17px / nowrap h1 rule, and the three
+   span.hq / .hg / .hr inks, which can no longer match an element. Retail now
+   inherits the 20px rule above, so all five portal names render alike. */
 
 /* ONE search bar. #cbSearch on the banner and #headSearch in the header are both
    live and do the same thing (open the client directory, seed #cliFilter). The
@@ -3875,7 +3874,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1113 &#8212; The Owner Console gets its own Owner section in the menu, and a new Strategy area inside it: an editable business plan (the recurring-revenue play), an editable market &amp; competitor summary for the Miami Valley, and a KPI scoreboard of what to watch. Admin only.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1114 &#8212; The retail header reads &#8220;Retail&#8221; instead of the company slogan, and it no longer disappears on a phone. The pipeline cards are letters &#8212; L, P, A, C, I &#8212; which makes room for the two retail was missing: Closed and On Hold, each with a job in it today.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21161,18 +21160,39 @@ document.getElementById('leadList').addEventListener('click', function(e){
 });
 
 /* ---------- hero: greeting + stats ---------- */
+/* 1114 — `short` is what the CARD prints. Theo: "on the pipeline stage cards,
+   just put letters. L P A C I Closed On Hold." Closed and On Hold keep their
+   words because C is already Completed's and O reads as nothing.
+   `label` stays the one full name per stage — the sphere glyph, the aria-label
+   and every other reader still compute from it, so this is one vocabulary with
+   a printed short form, not a second set of stage names to fall out of step.
+   Closed is a NEW bucket, and .pipe-closed's gradient has been sitting in the
+   stylesheet unused waiting for it. It goes last but one, in Theo's order. */
 var PIPE_BUCKETS = [
-  { key:'Lead',      label:'LEADS',      cls:'pipe-lead',      tip:'New leads \u2014 not yet quoted' },
-  { key:'Prospect',  label:'PROSPECTS',  cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
-  { key:'Approved',  label:'APPROVED',   cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
-  { key:'Completed', label:'COMPLETED',  cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
-  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
-  { key:'OnHold',    label:'ON HOLD',    cls:'pipe-onhold',    tip:'Bid in, waiting on a grant or funding decision' }
+  { key:'Lead',      label:'LEADS',      short:'L',       cls:'pipe-lead',      tip:'New leads \u2014 not yet quoted' },
+  { key:'Prospect',  label:'PROSPECTS',  short:'P',       cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
+  { key:'Approved',  label:'APPROVED',   short:'A',       cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
+  { key:'Completed', label:'COMPLETED',  short:'C',       cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
+  { key:'Invoiced',  label:'INVOICED',   short:'I',       cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
+  { key:'Closed',    label:'CLOSED',     short:'Closed',  cls:'pipe-closed',    tip:'Closed out \u2014 paid and done' },
+  { key:'OnHold',    label:'ON HOLD',    short:'On Hold', cls:'pipe-onhold',    tip:'Bid in, waiting on a grant or funding decision' }
 ];
-/* Same shape as IC_SKIP: a stage-keyed map per CRM. A community-only column
-   would otherwise appear as a permanently empty sixth column on the Retail
-   and Insurance boards, because renderPipeline does not filter by CRM. */
-var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
+/* Same shape as IC_SKIP: a stage-keyed map per CRM, because renderPipeline
+   does not filter by CRM. Its ORIGINAL reason was that On Hold — a grant or
+   funding wait — would otherwise be a permanently empty column on Retail and
+   Insurance. That is still why insurance skips it and is no longer why retail
+   did; see below. */
+/* 1114: RETAIL NO LONGER SKIPS On Hold, and Closed is skipped nowhere. The
+   rule above is an EMPTY-COLUMN rule, and it had stopped being true — measured
+   against production before this edit rather than assumed: one retail job sits
+   at OnHold (Maker Space Solutions) and one at Closed (Carl Bolivar, which
+   walked t_Prospect through t_Invoiced to t_Closed), so both were real work the
+   dashboard could not show anywhere. Theo asked for the row by name:
+   "L P A C I Closed On Hold".
+   Insurance keeps its On Hold skip — that stage means waiting on a grant or a
+   funding decision, which a claim does not do. Closed is terminal in every CRM,
+   so it is columned in every CRM. */
+var PIPE_SKIP = { insurance:{ 'OnHold':1 } };
 /* 540 ─ where the money actually is ─────────────────────────────────────────
    projectValue() used to scan inspection_reports for rows titled "Estimate…"
    and take the highest total. Measured against production: that table has 22
@@ -22589,9 +22609,14 @@ function renderPipeline(){
     var n = inBucket.length;
     var money = 0;
     inBucket.forEach(function(pr){ money += projectValue(pr); });
-    return '<button class="pipebtn" data-stg="' + b.key + '" title="' + b.tip + '">' +
+    /* 1114: aria-label carries the full stage name. The printed label is now a
+       letter on five of these, and a lone "L" announced on its own is not a
+       name — title= holds the tip, which is a description, not a label. */
+    var _full = b.label.charAt(0) + b.label.slice(1).toLowerCase();
+    return '<button class="pipebtn" data-stg="' + b.key + '" title="' + b.tip + '"' +
+      ' aria-label="' + _full + '">' +
       '<span class="pcirc ' + b.cls + '">' + (b.letter || b.label.charAt(0)) + '</span>' +
-      '<span class="plabel">' + b.label.charAt(0) + b.label.slice(1).toLowerCase() + '</span>' +
+      '<span class="plabel">' + (b.short || _full) + '</span>' +
       '<span class="pcount">' + n + '</span>' +
       '<span class="pmoney">' + fmtMoney(money) + '</span></button>';
   }).join('');
@@ -42007,6 +42032,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1114, d:'2026-08-28', t:'The header says Retail, and the pipeline cards say L P A C I',
+  s:'The retail header carried the company slogan, which needed 247px and so had been hidden altogether on any phone narrower than 438px \u2014 the one portal whose header could go blank. It now reads \u201CRetail\u201D, in the same face and size as Insurance, Community, Production and Sales Floor, and it shows at every width. On the Cardinal Pipeline the stage cards print a single letter instead of the word \u2014 L, P, A, C, I \u2014 which is what makes room for the two cards retail was missing: Closed and On Hold now have their own card, and they keep their words because C is already Completed\u2019s and a lone O reads as nothing. Those two were not decoration \u2014 a job of yours is sitting in each of them right now, and until today neither showed up anywhere on the dashboard. Colours, counts, money and what each card opens are unchanged, and each one announces its full stage name to a screen reader.' },
 { b:1113, d:'2026-08-28', t:'Owner section + a Strategy cockpit', s:'The <b>Owner Console</b> now has its own <b>Owner</b> section in the side menu instead of sitting under Admin, and a new <b>Strategy</b> area lives inside it (admin only). It holds an editable <b>Business Plan</b> \u2014 the recurring-revenue play (a Cardinal Care maintenance membership plus retail financing) \u2014 an editable <b>Market &amp; Competitors</b> summary for the Miami Valley (who the real threats are and where the white space is), and a <b>KPI scoreboard</b> of the numbers worth watching every morning. Tap <b>Edit</b> on the plan or the competitor notes to rewrite them in place. A fuller, sourced strategy brief was prepared alongside this.' },
       { b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
       { b:1111, d:'2026-08-28', t:'Roof Pre-Install Guide \u2014 auto-emailed when a roof is scheduled', s:'The homeowner now gets a polished <b>Roof Installation &amp; Pre-Install Guide</b> the moment their build day is booked &mdash; what to expect on install day, the weather policy, and the six things to do beforehand. It <b>auto-fills</b> from the job: the installation date, and your sales rep\u2019s name and phone in the &ldquo;call before you step outside&rdquo; contacts. It sends through the same email rail as your estimates, <b>once per job</b>, and only for roofing jobs. If the client has <b>no email on file</b>, the app asks for it right when you book the day, saves it, and sends. The guide is an <b>editable master</b> in <b>Company Documents</b> &mdash; edit the wording like a document, Preview it with sample details, or Reset to the Cardinal default &mdash; and every job profile has an <b>Email to client</b> button to send or re-send by hand. Groundwork: two new tables (company_templates, client_guide_sends) via preinstall_guide.sql, applied before this build.' },
@@ -60714,9 +60741,13 @@ body[data-crm-head="community"] .site{--htint:#047857;--hbg:#047857;--hln:#0a926
 'use strict';
 var TITLES = { retail:'Retail', insurance:'Insurance', community:'Community',
 production:'Production', sales:'Sales Floor' };
-/* 435: retail shows the company line instead of the CRM word. Markup, not text,
-   so the two tones can differ. Other CRMs keep plain textContent. */
-var TITLES_HTML = { retail:'<span class="hq">&#8220;</span><span class="hg">Single source of</span> <span class="hr">truth</span><span class="hq">&#8221;</span>' };
+/* 1114: retail names itself like every other portal. 435 had put the company
+   slogan here as MARKUP rather than text, so its two tones could differ, and
+   1065 then had to hide it below 438px — "Single source of truth" needs 247px
+   and a 390px phone header gives it 150px. Theo: "get rid of the single source
+   of truth on the header and just put Retail." TITLES_HTML would now be an
+   empty map nobody feeds, so it goes with the slogan, along with its three
+   span inks in cr-hd4-styles. One map, five portals. */
 function relocateAux(){
 var pwa = document.getElementById('pwaNav');
 if(!pwa) return;
@@ -61061,12 +61092,12 @@ try{
   var _m1088 = document.querySelector('meta[name=theme-color]');
   if(_m1088 && /^#[0-9a-fA-F]{3,8}$|^rgb/.test(_tint)) _m1088.setAttribute('content', _tint);
 }catch(_t1088){ }
+/* The guard compares textContent against a PLAIN STRING, so it settles — it is
+   the innerHTML compare of 567's paintChip (source markup vs. the browser's
+   serialization of it, which never matched) that could not, and that shape is
+   gone with TITLES_HTML. */
 var h1 = document.querySelector('#brandTitle h1');
-if(h1){
-  var wantHtml = TITLES_HTML[kh];
-  if(wantHtml){ if(h1.innerHTML !== wantHtml) h1.innerHTML = wantHtml; }
-  else if(h1.textContent !== TITLES[kh]) h1.textContent = TITLES[kh];
-}
+if(h1 && h1.textContent !== TITLES[kh]) h1.textContent = TITLES[kh];
 }
 var scheduled = false;
 function scan(){

@@ -7614,3 +7614,29 @@ The Owner Console (`cr-owner` / `CardinalOwner`, build 895, admin-only, cream "D
 - An editable **Business Plan** (`owner_biz_plan`) — the recurring-revenue play (Cardinal Care membership + retail financing) — and an editable **Market & Competitors** summary (`owner_competitors`), both stored in `company_templates` (seeded by `owner_strategy_seed.sql`), loaded in `loadAll()`'s isolated try/catch. Admin **Edit** → textarea → **Save** upserts; non-admins read-only.
 - A **9-tile KPI scoreboard** (`KPIS` / `kpiHTML()`) — members/MRR, renewal rate, close rate, avg job value, AR aging, lead-source ROI, crew utilization, claims-per-member, reviews captured.
 - Companion deliverable: a standalone light-mode **Strategy Brief** artifact (recurring-revenue plan + a sourced 13-competitor Miami Valley analysis + KPIs). Light mode only. Gate: `harness_owner1113.js`.
+
+## Header title + Cardinal Pipeline cards (build 1114)
+
+**The retail header reads "Retail".** `cr-hd2-script` keeps one map — `TITLES = { retail:'Retail', insurance:'Insurance', community:'Community', production:'Production', sales:'Sales Floor' }` — and `skin()` writes it as `textContent`. **`TITLES_HTML` no longer exists.** It was added at 435 solely to paint the retail slogan in two tones (markup, so `.hq`/`.hg`/`.hr` could differ), and it, its consumer branch, those three ink rules, the retail-only `American Typewriter` face and **1065's `@media (max-width:437px)` hide** are all gone. That hide is why the change matters beyond wording: the slogan needed 247px and a 390px phone header gives 150px, so **retail was the one portal whose header name went blank on a phone**. Retail now inherits the same 20px `#brandTitle h1` rule as the other four.
+
+⚠ Don't re-add a per-CRM HTML title. The remaining guard compares `textContent` against a **plain string**, which settles; an `innerHTML` compare against source markup is the 567 `paintChip` shape that never matched and repainted every frame.
+
+**The pipeline cards print letters** (`#pipeRow`, `renderPipeline()` in the main block):
+
+| card | `key` | prints (`short`) | `aria-label` (from `label`) |
+|---|---|---|---|
+| Leads | `Lead` | **L** | Leads |
+| Prospects | `Prospect` | **P** | Prospects |
+| Approved | `Approved` | **A** | Approved |
+| Completed | `Completed` | **C** | Completed |
+| Invoiced | `Invoiced` | **I** | Invoiced |
+| Closed | `Closed` | **Closed** | Closed |
+| On Hold | `OnHold` | **On Hold** | On hold |
+
+- `short` is the printed label; **`label` is still the one full name per stage** and computes the sphere glyph and the accessible name — one vocabulary with a short form, not two stage-name sets. Closed and On Hold keep words (C is Completed's; a lone O reads as nothing).
+- **`Closed` is a bucket as of 1114**, and **`PIPE_SKIP` is now just `{ insurance:{ 'OnHold':1 } }`** — retail's On Hold skip is gone. The skip is an *empty-column* rule and it had stopped being true: measured on production, one retail job sits at `OnHold` and one at `Closed`, neither of which the dashboard could show. Insurance still skips On Hold (a claim doesn't wait on a grant).
+- `data-stg` still carries the raw stage key, so the click-to-filter into `openLeadsView()` is unchanged. `.pipe-closed`'s gradient already existed in the stylesheet.
+- In **dark retail** the sphere flattens to a 3px top edge (`cr-nvl-styles`, `font-size:0`), so `.plabel` is the only text on the card — which is what the letters are for. In light/other CRMs the sphere shows the same letter above it.
+- ⚠ **At ≤900px the row is a horizontal SCROLLER again** (`overflow-x:auto`, `.pipebtn{min-width:64px}`, spans `max-width:100%`). Seven cards cannot fit 340px at a legible size: at 390px each card is 47px and "Closed"/"On Hold" measure 51/57px — and they **overlap rather than ellipsize**, because `align-items:center` sizes a label to its own max-content and `overflow:hidden` on a max-content box never fires. 957's `overscroll-behavior-x:auto` reset is kept (a 900px tablet still fits seven, and containment on a non-scrolling box breaks the page swipe). Desktop is untouched — 1194px fits all seven at 106px each.
+- ⚠ **The overlap predates this build.** Measured on 1113 at 390px: "Prospects" 76px in a 67px card, "Completed" 77px in 67px. Five cards were already colliding on a phone.
+- Gates: `harness_pipe1114.js` (jsdom; runs the shipped bucket/render/header code; GREEN on 1114 / RED on 1113; 28 assertions + a coverage floor) and **`gate_1114.mjs`** (real Chromium, 390 + 1194, both themes; 58 checks; RED on 1113 without crashing).
