@@ -3875,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1120 &#8212; The last two browser pop-ups are gone: emailing a Pre-Install Guide from a job, and resetting a guide's wording back to the Cardinal default, now ask through the app's own dark ask-sheet like everything else since build 1083 — and the reset, which throws away unsaved edits, gets the red treatment a destructive question deserves. The buttons say what happens: “Email” and “Reset”, not OK/Cancel.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1121 &#8212; Applying a Scope of Loss now records its history row again. Since the history table shipped (build 665), a scoping bug meant the record of each scope read — which document, what the AI found, what you approved — silently failed to write every single time, while the claim fields themselves applied fine. Nothing visible changes; the scope_reads history simply starts existing.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17900,7 +17900,15 @@ async function readFiledScope(docId){
   await routeScopeToReader(f, document.getElementById('solReadBtn'));
 }
 
+/* 1121: openSolReviewModal and applySolExtraction are SIBLINGS — the 665
+   comment saying the apply chain "lives inside" the modal was never true
+   on this tree, so its logScopeRead call threw ReferenceError on fileName/
+   extracted (inside a .then: an unhandled rejection, silent) and the
+   scope-read history row never once wrote. The modal parks its parameters
+   here; the apply reads them. Found by tsc --checkJs (TS2304). */
+var _solReviewCtx = null;
 function openSolReviewModal(extracted, fileName){
+  _solReviewCtx = { extracted: extracted, fileName: fileName };
   var modal = document.getElementById('solModal');
   var rows  = document.getElementById('solRows');
   var summ  = document.getElementById('solSummary');
@@ -18066,9 +18074,11 @@ function applySolExtraction(){
     return bridgeSolToClaim(pr, applied);
   }).then(function(claimId){
     /* 665: the history row, AFTER the claim write, keyed by the id the bridge
-       just wrote. `extracted` and `fileName` are openSolReviewModal's own
-       parameters — this chain lives inside it. Non-blocking by design. */
-    return logScopeRead(claimId, pr, fileName, extracted, applied);
+       just wrote. Non-blocking by design. 1121: the modal's parameters arrive
+       via _solReviewCtx — this function is the modal's SIBLING, not its child,
+       and the bare names threw here on every apply. */
+    var _ctx = _solReviewCtx || {};
+    return logScopeRead(claimId, pr, _ctx.fileName, _ctx.extracted, applied);
   });
   document.getElementById('solModal').style.display = 'none';
 }
@@ -42013,7 +42023,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1120, d:'2026-08-28', t:'The Pre-Install Guide asks through the app, not the browser', s:'Two grey browser pop-ups survived in the Pre-Install Guide \u2014 the \u201cEmail the guide?\u201d question and the \u201cReset the wording?\u201d one. Both now use the dark in-app ask-sheet every other question has used since build 1083, and the reset (which replaces unsaved edits) is styled red as a destructive action. Buttons name the action instead of OK/Cancel.' },
+{ b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
+ { b:1120, d:'2026-08-28', t:'The Pre-Install Guide asks through the app, not the browser', s:'Two grey browser pop-ups survived in the Pre-Install Guide \u2014 the \u201cEmail the guide?\u201d question and the \u201cReset the wording?\u201d one. Both now use the dark in-app ask-sheet every other question has used since build 1083, and the reset (which replaces unsaved edits) is styled red as a destructive action. Buttons name the action instead of OK/Cancel.' },
  { b:1119, d:'2026-08-28', t:'Seven small labels come back up to the 11px floor', s:'Build 1081 set an app-wide minimum text size of 11px so everything reads outdoors. Seven labels added since then had slipped under it \u2014 four in the new estimate builder, one in the Community sheet, the canvass grid\u2019s checkbox labels (9.5px, the smallest), and the AUTO chip on Pre-Install Guide rows. All are at 11px again.' },
  { b:1118, d:'2026-08-28', t:'The Estimates count fills in on jobs with none yet', s:'Since 1094 the Estimates box on a client profile showed \u201c\u2026\u201d forever on any job with zero estimates \u2014 a script error fired exactly when the count was 0, so the number never arrived. Jobs with estimates were unaffected. Fixed; priced Community bids also count as the 1 that build 1094 intended.' },
  { b:1116, d:'2026-08-28', t:'One header for the screens that belong to no portal, and it names the screen', s:'The header changed colour depending on where you had been. Leads &amp; Jobs, Photos, Reports, Gallery, Company Documents, the Library, Quick Inspection, Address Check, iTel, Invoices, Labor Rates and the Guide editor all wore whichever portal you were last in &mdash; none of them belongs to a portal, so the colour was telling you nothing. They now keep one steady header. The count had been growing on its own: five screens were settled earlier, and three more that were added in the last few days started out drifting too, because a screen was only steady if somebody remembered to name it. That is now the other way round &mdash; a new screen is steady by default, and a check fails the build if a screen is added without deciding which it is. The word in the middle of the header also changed: it used to name the colour, so Settings and My Profile read &ldquo;Production&rdquo;. Each screen now says its own name. Real portal screens are untouched and still say Retail, Insurance or Community. Two faint marks were darkened to read in daylight: the small arrow in the strip below the header, and the + on the Add button in Community.' },
