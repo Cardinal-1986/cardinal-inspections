@@ -3874,7 +3874,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1108 &#8212; Reps can now run invoices from the field. Every job profile gets an Invoices &amp; Payments card: generate the invoice in one tap, see its live status (Draft, Sent, Deposit Paid, Partially Paid, Paid in Full), and send the secure pay link three ways &#8212; company text (Twilio), your own phone, or email. A Record Offline Payment button (on the card and on every Accounts Receivable row) logs a check, cash or bank transfer &#8212; amount, method, deposit/progress/final and date &#8212; and steps the status forward at once. New invoices mint their pay link and total automatically.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1109 &#8212; Open an invoice and it now shows a live balance at the top &#8212; the real amount still owed, read from the ledger rather than frozen when the invoice was created &#8212; with the payment status. When a job is fully paid the card becomes a bold PAID IN FULL badge with the date it cleared. A compact Payment History at the bottom lists every recorded payment (date, method, amount, type). Everything prints and saves to PDF cleanly. The original invoice summary is untouched; this live layer is never saved into the document.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25345,6 +25345,7 @@ async function openEditor(id){
       wireCheckboxes(doc);
       wireColorSelects(doc);
       wireWoFields(doc);
+      wireInvoiceLive(doc, r);   /* 1109: live invoice status/balance/ledger */
       refreshSigBtn();
       __fillIdx = 0;
       refreshFillChip();
@@ -25366,11 +25367,124 @@ async function openEditor(id){
   document.body.style.overflow = 'hidden';
 }
 
+/* 1109: live status / balance-due card + payment-history ledger on the INVOICE
+   document. Injected into the editor iframe on load, computed from the live
+   ledger (jobFinance + collections), NOT the values baked into the doc at
+   creation. Marked data-cardinal-live so serializeFrame() strips it on save —
+   the stored document stays the as-issued record; this is the current layer.
+   Prints (no `no-print`); print rules keep the badges crisp and high-contrast. */
+var INV_LIVE_CSS = `
+#cr-inv-live{border:2px solid #1b1b1b;border-radius:9px;padding:13px 16px;margin:16px 0 20px;background:#fff;font-family:inherit;}
+#cr-inv-live .cil-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+#cr-inv-live .cil-lbl{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#555;}
+#cr-inv-live .cil-pill{font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 11px;border-radius:999px;border:1.5px solid currentColor;white-space:nowrap;}
+#cr-inv-live .cil-pill.sent{color:#1d4ed8;}
+#cr-inv-live .cil-pill.part{color:#b45309;}
+#cr-inv-live .cil-pill.paid{color:#0f7a43;}
+#cr-inv-live .cil-pill.draft{color:#555;}
+#cr-inv-live .cil-amt{font-size:31px;font-weight:800;color:#9c1822;line-height:1.1;margin-top:3px;}
+#cr-inv-live .cil-meta{font-size:12px;color:#555;margin-top:5px;}
+#cr-inv-live.paid{border-color:#0f7a43;background:#eefaf2;}
+#cr-inv-live.paid .cil-badge{font-size:23px;font-weight:900;letter-spacing:.07em;color:#0f7a43;}
+#cr-inv-live.paid .cil-sub{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin-top:6px;}
+#cr-inv-live.paid .cil-sub span{color:#555;}
+#cr-inv-live.paid .cil-sub b{color:#1b1b1b;}
+#cr-inv-ledger{margin:24px 0 6px;}
+#cr-inv-ledger .cil-secthead{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#1b1b1b;border-bottom:2px solid #1b1b1b;padding-bottom:4px;margin:0 0 9px;}
+#cr-inv-ledger table{width:100%;border-collapse:collapse;font-size:12.5px;}
+#cr-inv-ledger th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#555;border-bottom:1.5px solid #1b1b1b;padding:5px 6px;}
+#cr-inv-ledger td{padding:6px;border-bottom:1px solid #cfcfcf;}
+#cr-inv-ledger .amt{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;}
+#cr-inv-ledger tfoot td{border-top:2px solid #1b1b1b;border-bottom:none;font-weight:800;}
+#cr-inv-ledger .cil-none{font-size:12.5px;color:#666;padding:4px 0;}
+@media print{
+  #cr-inv-live,#cr-inv-ledger{-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-inside:avoid;}
+  #cr-inv-live{border-width:2px;}
+  #cr-inv-ledger table{page-break-inside:auto;}
+  #cr-inv-ledger tr{page-break-inside:avoid;}
+}`;
+function wireInvoiceLive(doc, r){
+  try{
+    if(!doc || !r || !/^invoice/i.test(String(r.title || '').trim())) return;
+    var pr = cacheProjects.find(function(p){ return p.id === r.project_id; });
+    if(!pr) return;
+    ['cr-inv-live', 'cr-inv-ledger', 'cr-inv-live-style'].forEach(function(id){
+      var e = doc.getElementById(id); if(e) e.remove();
+    });
+    var fin = jobFinance(pr);
+    var billed = Number(fin.value) || 0, paid = Number(fin.paid) || 0, bal = Number(fin.balance) || 0;
+    var st = (window.CardinalAR && CardinalAR.status) ? CardinalAR.status(pr) : null;
+    var isPaid = billed > 0 && bal <= 0.005;
+
+    var cols = (typeof cacheCollections !== 'undefined' ? cacheCollections : [])
+      .filter(function(c){ return c && c.project_id === pr.id; })
+      .sort(function(a, b){ return String(b.collected_at || '').localeCompare(String(a.collected_at || '')); });
+    var dfmt = function(iso){ try{ return (typeof fmtDay === 'function') ? fmtDay(iso) : String(iso || '').slice(0, 10); }catch(e){ return String(iso || '').slice(0, 10); } };
+    var lastDate = cols.length ? dfmt(cols[0].collected_at) : '';
+    var cilMethod = function(c){
+      var m = { card:'Card', check:'Check', cash:'Cash', ach:'Bank transfer' }[c.method] || (c.method ? (c.method.charAt(0).toUpperCase() + c.method.slice(1)) : 'Payment');
+      var ref = ''; var mm = String(c.notes || '').match(/#\s*([\w-]+)/); if(mm) ref = ' &middot; #' + esc(mm[1]);
+      return esc(m) + ref;
+    };
+    var cilType = function(t){ return { deposit:'Deposit', final:'Final', supplemental:'Supplement', pwi:'PWI', other:'Payment' }[t] || 'Payment'; };
+
+    var style = doc.createElement('style');
+    style.id = 'cr-inv-live-style';
+    style.setAttribute('data-cardinal-live', '1');
+    style.textContent = INV_LIVE_CSS;
+    doc.head.appendChild(style);
+
+    var card = doc.createElement('div');
+    card.id = 'cr-inv-live';
+    card.setAttribute('data-cardinal-live', '1');
+    if(isPaid){
+      card.className = 'paid';
+      card.innerHTML = '<div class="cil-badge">&#10003; PAID IN FULL</div>'
+        + '<div class="cil-sub"><span>Balance</span><b>' + fmtMoney(0, true) + '</b></div>'
+        + (lastDate ? '<div class="cil-sub"><span>Paid in full on</span><b>' + esc(lastDate) + '</b></div>' : '');
+    }else{
+      card.innerHTML = '<div class="cil-row"><span class="cil-lbl">Current Balance Due</span>'
+        + (st ? '<span class="cil-pill ' + st.k + '">' + esc(st.label) + '</span>' : '') + '</div>'
+        + '<div class="cil-amt">' + fmtMoney(bal, true) + '</div>'
+        + '<div class="cil-meta">Billed ' + fmtMoney(billed, true) + ' &middot; Paid ' + fmtMoney(paid, true) + '</div>';
+    }
+    var estCell = doc.getElementById('estTotal');
+    var table = estCell && estCell.closest ? estCell.closest('table') : null;
+    var anchor = null;
+    if(table){
+      var prev = table.previousElementSibling;
+      anchor = (prev && /secthead/i.test(prev.className || '') && /summary/i.test(prev.textContent || '')) ? prev : table;
+    }
+    if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(card, anchor);
+    else doc.body.insertBefore(card, doc.body.firstChild);
+
+    var ledger = doc.createElement('div');
+    ledger.id = 'cr-inv-ledger';
+    ledger.setAttribute('data-cardinal-live', '1');
+    if(cols.length){
+      var body = cols.map(function(c){
+        return '<tr><td>' + esc(dfmt(c.collected_at)) + '</td><td>' + cilMethod(c)
+          + '</td><td class="amt">' + fmtMoney(c.amount, true) + '</td><td>' + esc(cilType(c.type)) + '</td></tr>';
+      }).join('');
+      ledger.innerHTML = '<div class="cil-secthead">Payment History</div>'
+        + '<table><thead><tr><th>Date</th><th>Method / Ref</th><th class="amt">Amount</th><th>Type</th></tr></thead>'
+        + '<tbody>' + body + '</tbody>'
+        + '<tfoot><tr><td colspan="2">Total paid</td><td class="amt">' + fmtMoney(paid, true) + '</td><td></td></tr></tfoot></table>';
+    }else{
+      ledger.innerHTML = '<div class="cil-secthead">Payment History</div>'
+        + '<p class="cil-none">No payments recorded yet.</p>';
+    }
+    doc.body.appendChild(ledger);
+  }catch(e){}
+}
+
 function serializeFrame(){
   var doc = frame.contentDocument;
   var clone = doc.documentElement.cloneNode(true);
   var hint = clone.querySelector('[data-cardinal-hint]');
   if(hint) hint.remove();
+  /* 1109: the live invoice status/balance/ledger is a view-time layer, never saved. */
+  clone.querySelectorAll('[data-cardinal-live]').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('.fig .frame button, .fig .frame input[type=file]').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('.reanalyzeBar, .reanalyzeBtn').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('h2.sec[data-rewired]').forEach(function(el){ el.removeAttribute('data-rewired'); });
@@ -41871,6 +41985,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1109, d:'2026-08-28', t:'Invoices show live status, balance and payment history', s:'Open an invoice and it now shows a live <b>Current Balance Due</b> card at the top &mdash; the real balance from the ledger, not a number frozen when the invoice was made &mdash; with its status (Sent / Deposit Paid / Partially Paid). When the job is fully paid the card flips to a bold <b>&#10003; PAID IN FULL</b> badge with a zero balance and the date it cleared. At the bottom a compact <b>Payment History</b> lists every recorded payment (date, method and check number, amount, and whether it was a deposit, progress draw or final), with a running total. It all prints and saves to PDF cleanly &mdash; crisp borders, high-contrast badges. The invoice as-issued (its original summary) is untouched; this is the live layer on top, and it is never baked into the saved document.' },
 { b:1108, d:'2026-08-28', t:'Invoices from the field: run, send and collect right on the job', s:'The invoicing flow now lives where the work happens. Every job profile has an <b>Invoices &amp; Payments</b> card: <b>generate the invoice</b> in one tap, watch its <b>live status</b> (Draft &rarr; Sent &rarr; Deposit Paid &rarr; Partially Paid &rarr; Paid in Full), and <b>send the secure pay link</b> three ways &mdash; <b>Company SMS</b> (through the business Twilio number, logged), <b>My phone</b> (opens your own Messages), or <b>Email</b>. This works for the assigned rep, not just admins, so a rep can take a deposit at the kitchen table. New: <b>Record Offline Payment</b> &mdash; on the card and on every Accounts Receivable row &mdash; logs a <b>check, cash or bank transfer</b> (amount, method, deposit/progress/final, date) straight to the ledger, so the status steps forward the moment the money is in hand, no bank wait. And a freshly generated invoice mints its own pay link and total automatically.' },
 { b:1107, d:'2026-08-28', t:'Invoices & Accounts Receivable \u2014 a Who-Owes-Me dashboard, and invoices that track themselves', s:'A new admin screen &mdash; <b>Invoices &amp; AR</b>, in the menu and on tap of the home <b>Accounts Receivable</b> card &mdash; puts every unpaid job in one place. The total you are owed sits up top beside what came in this month and what is overdue; below, jobs group by age (<b>Current</b>, <b>15&ndash;30 days</b>, <b>30+ days</b>), oldest first, each showing the client, address, amount billed, amount collected and the balance still due. Every row has one-tap actions to <b>copy</b>, <b>text</b> or <b>email</b> the secure pay link. And an invoice now tracks itself: the status is read straight from the money ledger, so a card payment moves it from <b>Sent</b> to <b>Deposit Paid</b>, then <b>Partially Paid</b>, then <b>Paid in Full</b> on its own &mdash; no worksheet to update. The pay link is the same clean, light checkout page already in use; card today, bank transfer next.' },
 { b:1106, d:'2026-08-27', t:'The text-message keys are cleaned, and a rejected key says which one', s:'The test text kept failing with the same rejection after the keys had been re-entered twice, because the app was never removing stray spaces or line breaks from them. A line break copied along with a key is invisible on the settings screen and rides straight into the login the app sends &mdash; so a perfectly correct key was being rejected, and the message said only &ldquo;check the keys&rdquo;, which was the same sentence either way. Both keys are now cleaned before use, and when the text service still rejects them the app names the shape of each one: whether it arrived with stray whitespace, what two letters it starts with, and how long it is. That is enough to spot the wrong key pasted into the wrong box. The key itself is never shown, so the message is safe to screenshot.' },
