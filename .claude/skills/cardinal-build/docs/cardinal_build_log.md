@@ -28871,3 +28871,17 @@ common ancestor can never collide with anything. *A warning that always fires is
 nobody reads.* `--self-test` still passes 6/6. The one collision still reported is
 `claude/ai-can-build-584` itself, which is genuine — and goes quiet when that now-redundant
 branch is deleted.
+
+
+## Build 1107 — Invoices & Accounts Receivable (the "Who Owes Me" dashboard + a derived status engine)
+
+Theo, on the invoicing flow: *"I really don't like the invoices cling flow we have now. There really isn't any."* First of a three-build arc that turns the static invoice document into a tracked, collectible thing, on top of the Stripe pay rail on `claude/adobe-acrobat-api-integration-mavu10` (PR #521). Design spec approved first (artifact); all four of Theo's design decisions taken as recommended.
+
+**Shipped (index.html only — no schema change):**
+- **`#cr-ar-view`** — a full-screen, admin-only, porcelain (`--est-*`) dashboard. KPI tray (Total Outstanding / Paid This Month / Overdue 30+), invoices grouped by age (Current 0–14 / 15–30 / 30+), oldest first; each row carries client, address, billed, collected, balance, a status pill, and one-tap Copy / Text / Email of the hosted pay link (`/api/share?t=<token>` — the page the pay bar already lives on). Registered in `hideAllViews()` + `navRestore()` (the 5-site view checklist) and the nav router; a new **Invoices & AR** nav row sits in Office/Resources beside Commissions, `hideOpt`-gated to admins. The home **Accounts Receivable** card (`#arCard`) is now a doorway.
+- **The status engine is DERIVED, ~8 lines** (`statusFor`): `paid >= billed → Paid in Full`; `paid > 0 → Deposit Paid` (first draw) / `Partially Paid` (subsequent); else the document's own `unsent`/`sent` → Draft / Sent. No stored state machine — the Stripe webhook already writes the one `collections` row it reads, so a card payment advances the badge on the next render. That is why staged draws (deposit → progress → final) track against one contract balance.
+- `indexCollections()` now also keeps the raw rows in `cacheCollections` (Paid-this-month + the deposit-vs-partial count). `reload()` re-renders an open AR view, so a recorded payment updates the row and the Total Outstanding KPI with no worksheet touch. `ensureShareTokenForRow()` mints a token for an arbitrary invoice (the app's `ensureShareToken` only did the open editor's `current` doc).
+
+**Send-the-link** is pre-filled `sms:` / `mailto:` — works today, no vendor, and matches Theo's own "opens a pre-filled SMS/Email" verify. Corrected mid-build: **Twilio SMS is already live** (builds 1102–1106, `api/notify.js`), so automated client reminders in Build 3 are close, not the "weeks of A2P" the spec said.
+
+**Gates:** `check_build.py` green (127 inline scripts parse, stamp 1106→1107, marker + negative control). New functional gate **`harness_ar1107.js`** (jsdom, runs the shipped module) — GREEN on 1107, RED on 1106: proves the four status states, aging buckets, the KPI math, **verify #1** (a recorded draw moves Sent→Deposit Paid and drops Total Outstanding) and **verify #2** (Text opens a pre-filled SMS carrying `/api/share?t=<token>`), the admin gate, and that every wiring edit landed. Contrast computed, not eyeballed: the KPI subtitle was 4.07:1 on the inset tile → moved to `--est-dim` (6.5:1); all pills clear 4.5:1 (tightest Deposit Paid, 4.53:1). No `.sql`. **Build 2** (createInvoiceFor mints the token + persists the total; live status header on the invoice; inline Record-offline-payment) and **Build 3** (ACH + Twilio auto-reminders) are next.
