@@ -64,9 +64,23 @@ REPO = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
 PASS, FAIL, UNKNOWN = 'PASS', 'FAIL', 'UNKNOWN'
 
-def classify(code, timed_out):
+CRASH_FOOTER = re.compile(r'^Node\.js v\d+\.', re.M)
+
+def classify(code, timed_out, out=''):
+    """⚠ THE THIRD TRAP, found on the first clean full run: an uncaught exception
+       in a gate exits 1 — the SAME code as a gate that ran and found failures.
+       Classifying on the exit code alone filed 26 crashed gates as findings.
+       A crash proves nothing (BUG_CLASSES 37), so it must be UNKNOWN.
+
+       Node prints a `Node.js vX.Y.Z` footer only when it dies on an uncaught
+       exception, so that line is the tell. Gates that self-declare a broken rig
+       ('rig fault - proves nothing') are the same case, said out loud."""
     if timed_out:               return UNKNOWN, 'timeout'
     if code == 0:               return PASS,    ''
+    if code == 1 and CRASH_FOOTER.search(out or ''):
+        return UNKNOWN, 'crashed (uncaught exception)'
+    if code == 1 and 'rig fault' in (out or ''):
+        return UNKNOWN, 'gate declares its own rig broken'
     if code == 1:               return FAIL,    'gate reported failures'
     if code == 2:               return UNKNOWN, 'gate refused to run (usage/missing input)'
     if code == 3:               return UNKNOWN, "gate's own watchdog fired"
@@ -133,7 +147,7 @@ def run_one(name, artifact, timeout):
     if code == 2 and not timed_out:
         mode = 'with-artifact'
         code, out, timed_out = _invoke(name, [artifact], timeout)
-    verdict, why = classify(code, timed_out)
+    verdict, why = classify(code, timed_out, out)
     tail = [l for l in out.strip().split('\n') if l.strip()][-1:] if out.strip() else []
     return {'gate': name, 'verdict': verdict, 'why': why, 'exit': code, 'mode': mode,
             'secs': round(time.time() - t0, 1), 'tail': (tail[0][:150] if tail else '')}
@@ -141,11 +155,15 @@ def run_one(name, artifact, timeout):
 def selftest():
     """Prove the classifier separates the four outcomes. A runner that has never
        been seen to mis-sort is not trustworthy just because it is quiet."""
-    cases = [(0, False, PASS), (1, False, FAIL), (2, False, UNKNOWN),
-             (3, False, UNKNOWN), (7, False, UNKNOWN), (None, True, UNKNOWN),
-             (-9, False, UNKNOWN)]
-    bad = [(c, t, want, classify(c, t)[0]) for c, t, want in cases
-           if classify(c, t)[0] != want]
+    cases = [(0, False, '', PASS), (1, False, 'FAIL x', FAIL),
+             (2, False, '', UNKNOWN), (3, False, '', UNKNOWN),
+             (7, False, '', UNKNOWN), (None, True, '', UNKNOWN),
+             (-9, False, '', UNKNOWN),
+             # a crash exits 1 exactly like a real finding - the output separates them
+             (1, False, 'TypeError: x\n    at y\nNode.js v22.22.2', UNKNOWN),
+             (1, False, 'no claim row rendered (rig fault - proves nothing)', UNKNOWN)]
+    bad = [(c, t, want, classify(c, t, o)[0]) for c, t, o, want in cases
+           if classify(c, t, o)[0] != want]
     for c, t, want, got in bad:
         print(f'  MISSORTED exit={c} timeout={t}: wanted {want}, got {got}')
     # and prove UNKNOWN is not silently a pass anywhere in the summary maths
