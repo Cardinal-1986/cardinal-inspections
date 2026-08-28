@@ -29389,6 +29389,65 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
 
+## Build 1126 — a dead push channel no longer silences the email and the text
+
+Theo, after 1125 shipped: *"Fix the notify route so channels are independent."*
+
+**The route already said it was.** `api/notify.js` has carried this comment since **874**:
+*"each channel is independent, so a dead one never blocks the others."* True of email
+against SMS. False of push against both — and 1125 had just put the punch-out deep link
+into the SMS, so the newest feature was riding the channel a push fault could cancel.
+
+**Three abort points, not one.** Each `return`ed before any email or SMS work ran:
+
+| site | reacting to | now |
+|---|---|---|
+| the `web-push` import arm | library fails to load on a cold start | `pushErr` + `push_unavailable` |
+| `if(!VAPID_PRIVATE)` | one unset env var | `pushErr` + `no_vapid_private` |
+| `if(!Array.isArray(subs))` | a refused **push_subs** query | `pushErr` + `subs_query_failed` |
+
+**The third is the one I nearly missed** — a hiccup reading *who has notifications enabled*
+silently cancelled the email and the text. Push setup now sets a flag; the subs query and
+the send loop run under `if(pushReady)`; email and SMS run regardless.
+
+**The second-order fault was worse than the first.** With no way to say "push is off at the
+server", the response carried `subs:0`, and the in-app test button read that as *"no device
+enabled here yet — tap Enable notifications"* — a confident sentence telling Theo to fix his
+**phone** about a missing **server** env var. `push_error` and `env.push` now exist beside
+`sms_error` and `env.sms`, and the button reads the outcome first. 1102's rule, second time.
+
+Also: `notifyOutcomeText()` counted only `sent` and `mailed`, so an alert delivered **purely
+by text** — the one channel that still works when the other two are unconfigured — announced
+itself as *"Could NOT notify"*. It counts `texted` now, or the fix would be invisible.
+
+**Reason strings are unchanged**, so both readers keep working; two that used to print raw at
+a person (`no_vapid_private`, `push_unavailable`) gained sentences.
+
+**Gates.** `harness_notifyindep1126.mjs` — GREEN 19 / **RED 12 on 1125**. It drives the
+*shipped* handler with `fetch` stubbed and asserts on the **actual outbound requests**
+(Resend's POST, Twilio's form body), because "the route returned ok" is not the claim; "a
+text was sent" is. ⚠️ Two traps paid for here:
+
+- **The control must live INSIDE the repo.** Node resolves `web-push` by walking up from the
+  file's own directory, so a control copied to `/tmp` dies in the import arm and fails 17 of
+  19 — five of them for that reason and not the behaviour under test. It reads as a *stronger*
+  control and is a worthless one. On the honest control the three "all healthy" checks PASS,
+  which is what proves this build regressed nothing.
+- **`VAPID_PRIVATE` is a module-scope const**, so each case re-imports with a cache-busting
+  query. Setting the env after the import proves nothing.
+
+⚠️ **`harness_notify_sms1100.mjs` went red on a correct build** — its `smsSites.length >= 3`
+was a hardcoded tally of the response paths that existed at 1106, and this build deleted one
+on purpose. Rewritten to assert the contract (one report per `env:` block, every one reading
+`twReady`), self-computing, and negative-controlled against two injected violations. That is
+**BUG_CLASSES 77**; the route fault is **76**.
+
+Everything else green: `check_build.py` (1125→1126, marker + negative control), `gate_dupes`,
+`gate_types`, `gate_smsnotify874`, `render_smserr1105`, `test_leadnotify901`,
+`harness_deeplink1125` (1125's link still in the text).
+
+---
+
 ## Build 1125 — a punch-out text you can tap, which opens the punch-out
 
 > ⚠️ **CI went RED on this PR for a doc, not for code — `MIGRATIONS.md is out of date`,

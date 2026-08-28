@@ -5414,7 +5414,13 @@ numbered records (estimates / community partners) is deliberately NOT built** �
 in HANDOFF (17 Aug).
 
 ## Team alerts by text + a test button (builds 874–875)
-`api/notify.js` fans a team alert to **push + email + SMS**, each best-effort and independent. SMS via
+`api/notify.js` fans a team alert to **push + email + SMS**, each best-effort and independent.
+⚠️ **That sentence was written at 874 and was not true until 1126** — it held for email against SMS,
+and not for push against either. Three sites answered a push problem by abandoning the whole request
+before the email or SMS work ran: an unset `VAPID_PRIVATE_KEY`, a failed `web-push` import, and a
+refused `push_subs` query. All three now degrade push alone. `push_error` + `env.push` report it, the
+way `sms_error` + `env.sms` already did. Gate: `harness_notifyindep1126.mjs` (GREEN 19 / RED 12 on
+1125). SMS via
 Twilio is gated on `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM` (like email on `RESEND_API_KEY`);
 recipient phones come from `team_profiles`, E.164-normalised by `normPhone()`, de-duped; the response
 reports `texted` + `env.sms` (presence only, no keys). Build 875 adds **"Send a test alert to myself"**

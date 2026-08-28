@@ -3900,7 +3900,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      THIRD time main's footer has arrived carrying a summary, so if you are
      resolving this hunk a fourth time: ours wins, and it is not a judgement
      call. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1125<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1126<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19602,10 +19602,17 @@ function notifyOutcomeText(res, to){
   var names = to.map(function(em){
     return (typeof rptRepName === 'function' ? rptRepName(em) : em.split('@')[0]);
   }).join(', ');
-  if(res && (res.sent > 0 || res.mailed > 0)){
+  if(res && (res.sent > 0 || res.mailed > 0 || res.texted > 0)){
+    /* 1126: `texted` belongs in this test. The route has counted a text as a
+       delivery since 874 (its `ok` includes it) and this sentence did not, so a
+       job whose alert reached somebody purely by SMS — the ONLY channel that
+       works when push and email are both unconfigured — was still announced as
+       "Could NOT notify". Independent channels have to be independently
+       believed, or the fix above is invisible on the screen. */
     var how = [];
     if(res.sent > 0) how.push(res.sent === 1 ? 'phone' : res.sent + ' phones');
     if(res.mailed > 0) how.push('email');
+    if(res.texted > 0) how.push('text');
     return '\uD83D\uDD14 Notified ' + names + ' \u2014 ' + how.join(' + ');
   }
   var r = res && res.reason, why;
@@ -19616,6 +19623,11 @@ function notifyOutcomeText(res, to){
   else if(r === 'no_subscriptions')why = 'they haven\u2019t turned on notifications on a device, and team email isn\u2019t set up';
   else if(r === 'subscriptions_expired') why = 'their notifications sign-up on that device expired \u2014 they can re-enable it in the app';
   else if(r === 'vapid_mismatch')  why = 'the server\u2019s push keys are wrong (VAPID_PRIVATE_KEY)';
+  /* 1126: both of these used to fall through to the raw reason string, so the
+     screen said "no_vapid_private" at a person. They are server settings, and
+     the sentence should say which one and that email/text were unaffected. */
+  else if(r === 'no_vapid_private') why = 'push is not switched on at the server (VAPID_PRIVATE_KEY)';
+  else if(r === 'push_unavailable') why = 'the push library did not load on the server';
   else if(r === 'push_rejected')   why = 'the phone service refused it' +
                                          (res.detail ? ' \u2014 ' + res.detail : '');
   else if(r === 'resend_missing')  why = 'email is not switched on (RESEND_API_KEY)';
@@ -23056,7 +23068,13 @@ document.getElementById('testAlertBtn').addEventListener('click', async function
     var env = j.env || {};
     var lines = [];
     /* push */
-    if((j.subs || 0) === 0) lines.push('\uD83D\uDD15 Push: no device enabled here yet \u2014 tap \u201CEnable notifications\u201D above first');
+    if(j.push_error) lines.push('\u26A0\uFE0F Push failed \u2014 ' + j.push_error);
+    /* 1126: push_error is read FIRST. Before it existed, a push channel that was
+       switched off at the server reported subs:0, and this line read that as
+       "no device enabled here yet — tap Enable notifications": a fluent sentence
+       telling the reader to fix their phone about a missing VAPID_PRIVATE_KEY.
+       The same shape as 1102's SMS report — an outcome outranks a guess. */
+    else if((j.subs || 0) === 0) lines.push('\uD83D\uDD15 Push: no device enabled here yet \u2014 tap \u201CEnable notifications\u201D above first');
     else if((j.sent || 0) > 0) lines.push('\u2705 Push sent to ' + j.sent + ' device' + (j.sent === 1 ? '' : 's'));
     else lines.push('\u26A0\uFE0F Push failed' + (j.reason ? ' (' + j.reason + ')' : ''));
     /* email */
@@ -42119,6 +42137,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1126, d:'2026-08-28', t:'A dead push channel no longer silences email and text',
+  s:'The punch-out link that shipped yesterday rides in a text message, and that text was riding on a route that could refuse to send anything at all. api/notify.js fans one alert out to three channels \u2014 push, email and SMS \u2014 and it has carried a comment since build 874 saying each is independent so a dead one never blocks the others. That was true of email against text, and false of push against both: three separate places in the route answered a push problem by abandoning the whole request before a single line of the email or SMS work had run. An unset VAPID_PRIVATE_KEY did it, the push library failing to load on a cold start did it, and \u2014 least obviously \u2014 a refused query against the SUBSCRIPTION table did it, so a hiccup reading who has notifications enabled silently cancelled the email and the text as well. All three now degrade push alone and the other two channels go out regardless. The failure is still reported, by the same names as before, and push gained the per-channel error field that email and text already had. That last part fixed a second, quieter fault: with no way to say \u201Cpush is off at the server\u201D, the built-in test button read the empty subscriber count as \u201Cno device enabled here yet \u2014 tap Enable notifications\u201D, telling you to fix your phone about a missing server setting. It now says which server setting. And a job whose alert reached somebody purely by text \u2014 the only channel that still works when the other two are unconfigured \u2014 is finally announced as notified instead of as a failure.' },
 { b:1125, d:'2026-08-28', t:'Punch-out texts are tappable \u2014 they open the punch-out',
   s:'Curtis\u2019s idea. A punch-out text told you what happened and then left you to go find it: open the app, find the client, find the tab, find the item. Every punch-out alert now ends with a link, and tapping it opens that punch-out directly \u2014 the same for the buzz on your phone. It covers all six: filed, assigned to you, nobody assigned, a comment that tags you, extra scope flagged, and closed.' },
 { b:1124, d:'2026-08-28', t:'The favourite star on a client works again',

@@ -4059,3 +4059,54 @@ asserts the GLYPH changed after a real click** — see `gate_1124.mjs`.
 **reference** — `.then(name)`, `addEventListener('x', name)`, `[name, other]`.
 The module then throws `ReferenceError` at the first callback. Rename on a word
 boundary, and assert the old identifier reaches **zero** in the slice.
+
+---
+
+## 76 — a shared route where ONE channel's setup failure ends the whole request
+
+**Build 1126.** `api/notify.js` fans one alert to three channels. Its own comment had said
+since **874** that "each channel is independent, so a dead one never blocks the others" —
+and it was true of email against SMS, false of push against both. Three sites answered a
+push problem with `return`, *before* a line of email or SMS work ran:
+
+| the site | what it was reacting to |
+|---|---|
+| the `web-push` import arm | the library failing to load on a cold start |
+| `if(!VAPID_PRIVATE)` | one unset env var |
+| `if(!Array.isArray(subs))` | a refused query against the **subscription** table |
+
+**The third is the one nobody would guess** — a hiccup reading *who has notifications
+enabled* silently cancelled the email and the text.
+
+**The tell is structural, and you can grep for it:** an early `return` that sits **above**
+work belonging to a different channel. A per-channel fault must set a per-channel flag and
+be reported at the end; only a fault affecting *every* channel may end the request.
+
+⚠️ **And the second-order fault is worse than the first.** With no way to say "push is off
+at the server", the route reported `subs:0`, and the in-app test button read that as
+*"no device enabled here yet — tap Enable notifications"*: a fluent, confident sentence
+telling the reader to fix **their phone** about a missing **server** env var. A degraded
+channel needs its own error field (`push_error` beside `sms_error`) or the reporting layer
+will invent a plausible wrong cause. This is 1102's lesson — *an outcome outranks a guess* —
+arriving a second time on a different channel.
+
+## 77 — an assertion whose floor counts CODE PATHS, so deleting one turns a correct build red
+
+**Build 1126**, and it is the mirror of class 44's "a test that silently LOSES a check".
+`harness_notify_sms1100.mjs` asserted `smsSites.length >= 3` — a hardcoded tally of the
+**response paths** that happened to exist at 1106. Build 1126 legitimately removed one (the
+`subs_query_failed` early return, whose removal *is* the fix), and a correct build went red.
+
+**A floor is right for coverage and wrong for structure.** Class 44 says a test deriving its
+own check count needs a floor, so shrinking coverage fails. That does **not** license
+hardcoding a count of code paths: paths legitimately come and go, checks should not.
+Assert the **contract**, and tie any count to something self-computing:
+
+```js
+const envBlocks = (src.match(/env\s*:\s*\{/g) || []).length;
+ok(smsSites.length === envBlocks && envBlocks > 0, '...');   // one report per env block
+ok(smsSites.every(l => /twReady/.test(l)), '...');           // all read the ONE source
+```
+
+Negative-controlled against two injected violations — a site recomputing readiness, and a
+report deleted — and it catches both, which the `>= 3` floor did not.
