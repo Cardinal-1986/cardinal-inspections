@@ -29388,3 +29388,34 @@ I ran `gate_dupes` and `gate_types` at 1122 and **not** at 1123 — so 1123's re
 Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star::after` + negative control) · **`gate_1124.mjs` GREEN 13 / RED 4 on 1123** · `harness_lrs1123` GREEN 45 · `gate_1123` GREEN 25 · `gate_1116` GREEN · **`gate_dupes` GREEN** (0 over baseline, and *better*: `load` 18→17, `render` 32→31) · **`gate_types` GREEN** (0 codes grew, TS2339 1341→1339). No SQL, no api route.
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
+
+## Build 1125 — a punch-out text you can tap, which opens the punch-out
+
+Curtis (project manager), relayed by Theo with a photo of the text on his phone: *"you should be able to tap it then it goes to the punch out in app."*
+
+**The prime doctrine, third time this session: the destination already existed.** `__tryRestoreFromHash` has parsed **`#p/<id>/<tab>`** since 613, and `punch` has been a real client-profile tab since 607. Verified in Chromium before a line was written — `#p/p1/punch` opens the client on the Punch Outs tab, `#p/p1` does not. **Nothing was missing except somebody sending the link.**
+
+**What was actually wrong, in two places:**
+
+| | |
+|---|---|
+| `notifyTeam()` | sent **`url: '/'`**, hardcoded — the app's front door, from all 21 call sites |
+| `api/notify.js` | used `url` for **web-push only**. `smsBody` was `title + ': ' + text` and **never contained it** |
+
+So even the push notification opened the app root, and the text — the channel Curtis actually reads — had no link at all.
+
+**The fix.** `notifyTeam(to, subject, bodyHtml, url)` gains an optional fourth argument defaulting to `'/'`, so all 21 existing call sites keep their exact behaviour. **`punchLink(pid)` is the one place that knows a punch-out's address** — six notifications point at one, and six spellings of the same link is how they drift (the rule 612 applied to outcome text and 607 to mentions). All six carry it now: filed, assigned to you, nobody assigned, a comment that tags you, extra scope flagged, and closed.
+
+⚠ **Two things in `api/notify.js` that are the whole build, not details:**
+
+- **The link goes in the TEXT.** An SMS has no hyperlink, so a url that rides only in the JSON is a url nobody can tap — and every gate would have stayed green. It is appended **after** the 320-char trim, never inside the slice, so a long punch-out title cannot truncate the link. Asserted with a 600-character title.
+- ⚠ **Only a same-site relative path or hash is accepted, and the absolute URL is built HERE from the request host.** This string is sent to a phone. An absolute URL taken from the caller would make the route a link-relay that texts on someone else's behalf. Anything with a scheme, or a protocol-relative `//`, drops back to `'/'`. Asserted both ways.
+
+Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + negative control) · **`harness_deeplink1125.js` GREEN 22 / RED on 1124** — imports and drives the **shipped** `/api/notify` handler with `fetch` stubbed and reads the **actual Twilio form body**, which is the only way to prove the link is in the message. It produces, verbatim: `New punch-out: 4" too long: Theo Dorion filed a punch-out at Jarrett Chenalt: 4" too long\nhttps://app.cardinalroster.com/#p/abc-123/punch` — Curtis's own screenshot with a link on the end · **`gate_1125.mjs` GREEN 6** — the other half, in a real engine: that address opens the right client on the Punch Outs tab, **and the control without the `/punch` segment lands on Overview**, so the segment is proved to do the work rather than assumed. No SQL.
+
+### ⚠ Two things found while testing, neither fixed here
+
+- **`/api/notify` returns 500 and sends NOTHING — no push, no email, no SMS — if `web-push` fails to import or `VAPID_PRIVATE_KEY` is unset.** The file's own comment says *"each channel is independent, so a dead one never blocks the others"*; that is true of a dead *channel* but not of the push **library** or its key, both of which are required before any channel runs. Not live-broken (Curtis receives texts, so the key is set), but one unset env var would silently take the texts down with it. Left alone deliberately — it is a separate decision, not this build's.
+- **The `url` mechanism now covers all 21 call sites**, so giving "materials ordered", "lead assigned to you" and the rest their own deep links is one argument each. Not done here; Curtis asked about punch-outs and the scope stayed there.
+
+⚠ **Running this gate locally needs `npm install --no-save web-push`** — it is in `api/package.json` (Vercel installs it) but not at the repo root. The harness says so by name when it is missing rather than reporting a mystery failure.

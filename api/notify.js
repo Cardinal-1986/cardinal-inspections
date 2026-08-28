@@ -137,6 +137,23 @@ export default async function handler(req, res){
         .trim()
       ).slice(0, 300);
     var url = String(body.url || '/');
+    /* 1125: the deep link, resolved HERE rather than trusted from the caller.
+       Curtis, via Theo: a punch-out text should be tappable and land on the
+       punch-out. Push already carried `url` (sw.js navigates to it) but every
+       caller sent '/', and the SMS never carried it at all.
+       ⚠ Only a SAME-SITE relative path or hash is accepted. This string ends up
+       in a text message, so an absolute URL from a caller would be a link the
+       route sends on someone else's behalf. Anything with a scheme, or a
+       protocol-relative '//', is dropped back to '/' rather than sent. */
+    var absUrl = '';
+    try{
+      if(/^[/#][^/]/.test(url) || url === '/'){
+        var host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+        if(/^[a-z0-9.-]+(:\d+)?$/i.test(host) && url !== '/') absUrl = 'https://' + host + '/' + url.replace(/^\//, '');
+      }else{
+        url = '/';
+      }
+    }catch(_){ absUrl = ''; }
     if(!emails.length){
       res.status(200).json({ ok:true, sent:0, failed:0, mailed:0, texted:0, subs:0,
         reason:'no_recipients', env:{ vapid_from_env:VAPID_FROM_ENV,
@@ -244,7 +261,13 @@ export default async function handler(req, res){
           phones = phones.filter(function(v, i){ return phones.indexOf(v) === i; });   /* de-dupe */
         }
         if(phones.length){
-          var smsBody = ((title ? title + ': ' : '') + text).slice(0, 320);
+          /* 1125: the link goes in the TEXT — an SMS has no hyperlink, so a
+             url that only rides in the JSON is a url nobody can tap. It is
+             appended AFTER the message is trimmed, never inside the slice, so
+             a long punch-out title can never truncate the link itself. That is
+             the whole point of the message. */
+          var _tail = absUrl ? ('\n' + absUrl) : '';
+          var smsBody = ((title ? title + ': ' : '') + text).slice(0, 320 - _tail.length) + _tail;
           var twUrl = 'https://api.twilio.com/2010-04-01/Accounts/' + encodeURIComponent(twSid) + '/Messages.json';
           var twAuth = 'Basic ' + Buffer.from(twSid + ':' + twTok).toString('base64');
           await Promise.all(phones.map(async function(to){

@@ -7674,3 +7674,24 @@ The Owner Console (`cr-owner` / `CardinalOwner`, build 895, admin-only, cream "D
 - ⚠ **Dark on screen, LIGHT on paper.** `@media print` restores the white one-page exhibit and hides the crew list. Add a ground or an ink up top → add its light twin in the print block.
 - **SQL:** `crew_rates_santiago_seed.sql` — **applied**. Seeded Santiago's 23 rates off the catalog (his numbers were always the catalog's `rate`), and added `crew_rates_one_per_item`, a partial unique index on `(crew_id, pricing_item_id)`.
 - Gates: `harness_lrs1123.js` (jsdom, drives the shipped module; GREEN 45 / RED on 1122) and `gate_1123.mjs` (real Chromium, both screens; GREEN 25 / RED 12 on 1122).
+
+
+## Deep links in team alerts (build 1125)
+
+`notifyTeam(to, subject, bodyHtml, url)` — the 4th argument is a **relative** deep
+link the app's own hash router understands (`#p/<id>/<tab>`, `#leads`, `#board`,
+`#clients` …, parsed by `__tryRestoreFromHash` since 613). Optional, defaults to
+`'/'`, so all 21 call sites are unaffected until each is given one.
+
+- **`punchLink(pid)`** is the one place that knows a punch-out's address
+  (`#p/<id>/punch`). All six punch-out notifications use it. Add a seventh
+  notification about a punch-out → use this, do not spell the link again.
+- `/api/notify` puts the link **in the SMS text** (an SMS has no hyperlink) and in
+  the push payload (`sw.js`'s `notificationclick` navigates to it).
+- ⚠ **It accepts only a same-site relative path/hash and builds the absolute URL
+  itself from the request host.** Do not "simplify" this by letting the caller
+  send an absolute URL — the string is texted to a phone.
+- ⚠ The link is appended **after** the 320-char trim, so a long title can never
+  truncate it.
+- Gates: `harness_deeplink1125.js` (drives the shipped route, reads the real
+  Twilio body) and `gate_1125.mjs` (Chromium: the address actually lands).

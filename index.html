@@ -3900,7 +3900,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      THIRD time main's footer has arrived carrying a summary, so if you are
      resolving this hunk a fourth time: ours wins, and it is not a judgement
      call. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1124<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1125<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19541,7 +19541,13 @@ function stageClass(s){ return 'stg-' + normStage(s).replace(/ /g,''); }
    could not tell success from silence — and for months it was silence. It
    now RESOLVES to the route's report. Still never throws: callers may ignore
    the promise and behave exactly as before. */
-function notifyTeam(to, subject, bodyHtml){
+/* 1125: `url` is the DEEP LINK — a relative '#…' path this app's own hash
+   router already understands (#p/<id>/<tab>, #leads, #board …). It reaches
+   /api/notify, which resolves it against the request host and puts it in the
+   text message AND in the push, so tapping either lands on the thing the alert
+   is about instead of the app's front door. Optional, defaulting to '/', so all
+   21 existing call sites keep their exact behaviour. */
+function notifyTeam(to, subject, bodyHtml, url){
   if(!TEAM) return Promise.resolve({ ok:false, reason:'offline' });
   return sb.auth.getSession().then(function(s){
     var tok = s.data.session && s.data.session.access_token;
@@ -19568,7 +19574,7 @@ function notifyTeam(to, subject, bodyHtml){
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
       body: JSON.stringify({ emails: _list, title: subject, body: _text,
-                             html: bodyHtml, url: '/' })
+                             html: bodyHtml, url: (url || '/') })
     }).then(function(r){ return r.json(); })
       .then(function(j){ return j || { ok:false, reason:'empty_response' }; })
       .catch(function(e){
@@ -19579,6 +19585,15 @@ function notifyTeam(to, subject, bodyHtml){
     return { ok:false, reason:'network', detail:String((e && e.message) || e).slice(0,120) };
   });
 }
+
+/* 1125: ONE place that knows what a punch-out's address looks like. Six
+   notifications point at a punch-out and they must not drift into six spellings
+   of the same link — the rule 612 applied to outcome text, and 607 to mentions.
+   The route it returns is not new: #p/<id>/<tab> has been in __tryRestoreFromHash
+   since 613, and 'punch' has been a real tab since 607. Nothing was missing but
+   somebody sending it. */
+function punchLink(pid){ return pid ? ('#p/' + encodeURIComponent(pid) + '/punch') : '/'; }
+window.punchLink = punchLink;
 
 /* 612: ONE place that turns a route report into a sentence a person can act
    on. Both "Notified" lines use it, so they cannot drift apart — the same
@@ -42104,6 +42119,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1125, d:'2026-08-28', t:'Punch-out texts are tappable \u2014 they open the punch-out',
+  s:'Curtis\u2019s idea. A punch-out text told you what happened and then left you to go find it: open the app, find the client, find the tab, find the item. Every punch-out alert now ends with a link, and tapping it opens that punch-out directly \u2014 the same for the buzz on your phone. It covers all six: filed, assigned to you, nobody assigned, a comment that tags you, extra scope flagged, and closed.' },
 { b:1124, d:'2026-08-28', t:'The favourite star on a client works again',
   s:'Tapping the star beside a client\u2019s name looked like it did nothing. It was actually working \u2014 the client really was being favourited, and the Clients list would have shown them pinned to the top \u2014 but the star itself never changed, so there was no way to tell, and tapping again just turned it back off. It now lights up the moment you tap it. It is a proper finger-sized target too: the gold shape is the same size, but the area that responds to a tap is much larger, so it catches the press instead of missing it.' },
 { b:1123, d:'2026-08-28', t:'Labor rates are per crew now \u2014 pick the crew first',
@@ -53172,7 +53189,8 @@ async function notifyAssignee(email, title, pid, verb){
       '<p><b>' + esc(shortName(me) || 'Someone') + '</b> ' +
       (verb === 'filed' ? 'filed a punch-out' : 'assigned you a punch-out') +
       ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p>' +
-      '<p>' + esc(title) + '</p>');
+      '<p>' + esc(title) + '</p>',
+      punchLink(pid));
     /* 771: notifyOutcomeText's first statement is to.map(...) — it takes the
        ARRAY of addresses, not a display name. Passing a string threw. */
     if(typeof window.notifyOutcomeText === 'function'){
@@ -53191,7 +53209,8 @@ async function notifyProductionUnassigned(title, pid){
     var pr = projectFor(pid);
     await window.notifyTeam(to, 'Unassigned punch-out: ' + title,
       '<p><b>' + esc(shortName(me) || 'Someone') + '</b> filed a punch-out with no one assigned' +
-      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(title) + '</p>');
+      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(title) + '</p>',
+      punchLink(pid));
   }catch(_){}
 }
 
@@ -54429,7 +54448,8 @@ async function flagSupplement(){
         'Supplement flagged — ' + ((pr && pr.name) || 'a job'),
         '<p><b>' + esc(nameOf(myEmail())) + '</b> flagged extra scope on <b>' +
         esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(String(what).trim()) + '</p>' +
-        '<p>Filed against the punch-out: ' + esc(it.title || '') + '</p>');
+        '<p>Filed against the punch-out: ' + esc(it.title || '') + '</p>',
+        punchLink(it.project_id));
       outMsg = outcomeText(res, to, 'the office');
     }else{
       outMsg = 'Flagged on the job. Nobody to notify.';
@@ -54488,7 +54508,8 @@ async function send(){
       var pr = projectFor(it.project_id);
       var res = await window.notifyTeam(to,
         'Punch-out — ' + ((pr && pr.name) || 'a job'),
-        '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>');
+        '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>',
+        punchLink(it.project_id));
       outMsg = outcomeText(res, to);
       lastSig = ''; render();
     }
@@ -54556,7 +54577,8 @@ async function notifyAssigned(email){
       'Assigned to you: ' + (it.title || 'a punch-out'),
       '<p><b>' + esc(nameOf(me)) + '</b> assigned you a punch-out at <b>' +
       esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(it.title || '') + '</p>' +
-      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtSchedule(it.scheduled_at, it.scheduled_time)) + '</p>' : ''));
+      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtSchedule(it.scheduled_at, it.scheduled_time)) + '</p>' : ''),
+      punchLink(it.project_id));
     outMsg = outcomeText(res, [email]);
     lastSig = ''; render();
   }catch(_){}
@@ -54571,7 +54593,8 @@ async function notifyClosed(){
     var res = await window.notifyTeam(to,
       nameOf(myEmail()) + ' closed: ' + (it.title || 'a punch-out'),
       '<p><b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b> is closed.</p>' +
-      '<p>' + photos().length + ' photos · ' + stepsDone() + ' of ' + steps().length + ' steps.</p>');
+      '<p>' + photos().length + ' photos · ' + stepsDone() + ' of ' + steps().length + ' steps.</p>',
+      punchLink(it.project_id));
     outMsg = outcomeText(res, to, 'the office');
   }catch(_){}
 }
