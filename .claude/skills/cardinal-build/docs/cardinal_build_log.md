@@ -29391,6 +29391,23 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 ## Build 1125 — a punch-out text you can tap, which opens the punch-out
 
+> ⚠️ **CI went RED on this PR for a doc, not for code — `MIGRATIONS.md is out of date`,
+> on 1123's head and every head after it.** The manifest's last column records *which doc
+> mentions a migration*, so it is derived from `FEATURES.md` and the build log. I ran
+> `migration_manifest.py` for 1123's crew-rate seed migration, **then** wrote the
+> `FEATURES.md` line, and never re-ran it — so the row said `build log only` when the
+> truth had become `FEATURES.md`, and the manifest was stale in the very commit that
+> generated it. **Regenerate the manifest LAST, after every doc edit in the build.**
+> Running it first feels like doing it early; it guarantees a stale row instead.
+> Cost: one CI cycle. The gate worked exactly as designed — it caught my ordering.
+>
+> ⚠️ **And this note must not name the `.sql` file, which is why it says "1123's crew-rate
+> seed migration" instead.** The manifest's *builds* column is derived from which build
+> entries mention a filename — so writing the name here filed a 1123 migration under
+> "1123, 1125" as well. **A build-log entry that names another build's migration file
+> rewrites the manifest's history.** Refer to it in prose, or the record starts claiming
+> a migration shipped twice.
+
 Curtis (project manager), relayed by Theo with a photo of the text on his phone: *"you should be able to tap it then it goes to the punch out in app."*
 
 **The prime doctrine, third time this session: the destination already existed.** `__tryRestoreFromHash` has parsed **`#p/<id>/<tab>`** since 613, and `punch` has been a real client-profile tab since 607. Verified in Chromium before a line was written — `#p/p1/punch` opens the client on the Punch Outs tab, `#p/p1` does not. **Nothing was missing except somebody sending the link.**

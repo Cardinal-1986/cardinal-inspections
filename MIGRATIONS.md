@@ -85,7 +85,7 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 61 | 1111 | `preinstall_guide.sql` | 13 | ✅ | — | FEATURES.md |
 | 62 | 1112 | `preinstall_guides_siding_windows.sql` | 2 | — | — | FEATURES.md |
 | 63 | 1113 | `owner_strategy_seed.sql` | 2 | — | — | FEATURES.md |
-| 64 | 1123 | `crew_rates_santiago_seed.sql` | 2 | ✅ | — | build log only |
+| 64 | 1123 | `crew_rates_santiago_seed.sql` | 2 | ✅ | — | FEATURES.md |
 | 65 | — | `collections_payment_provider.sql` | 5 | ✅ | — | **NOTHING** |
 | 66 | — | `companycam_caption_sample.sql` | 8 | ✅ | — | **NOTHING** |
 | 67 | — | `companycam_projects.sql` | 10 | ✅ | — | FEATURES.md, HANDOFF.md |
