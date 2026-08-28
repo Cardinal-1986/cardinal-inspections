@@ -927,6 +927,134 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1121 — 28 Aug 2026 — the Scope-of-Loss history row writes for the first time
+
+Found by the new type-check pass (`tsc --checkJs` over the concatenated inline blocks):
+of 14 surviving TS2304 "Cannot find name" errors, 13 were the safe `typeof X === 'function'`
+guard idiom — and one was a bare call. `applySolExtraction()`'s final `.then` called
+`logScopeRead(claimId, pr, fileName, extracted, applied)` using `openSolReviewModal`'s
+parameters, **but the two functions are siblings** — proven by brace-matching through the
+lexer's mask, not by reading: the modal closes 3 characters before the apply begins. The
+665-era comment saying "this chain lives inside it" was never true on this tree.
+
+**Blast radius, stated precisely:** every SOL apply since 665 completed its checklist write,
+audit row and claim bridge (earlier in the chain), then threw ReferenceError inside the final
+`.then` — an unhandled rejection, invisible — so **`scope_reads` has never received a row.**
+The visible feature worked, which is why nobody noticed. The claim fields were never affected.
+
+**Fix.** A module-level `_solReviewCtx` parked by the modal, read by the apply. Same class
+as 1118 (a name is not a contract), same session, same detector family.
+
+### Gates
+- `check_build.py` GREEN 1120 → 1121; patch byte-reproducible.
+- **`gate_1121.mjs`** — Chromium, real modal, real Apply button, `scope_reads` insert
+  intercepted: the row arrives with `doc_name` "gunn_sol.pdf", `rcv` 12000, the bridge's
+  claim id and the extraction. **Control (1120 tree): RED ×2 — zero inserts and the named
+  `ReferenceError: fileName is not defined`.** Two rig faults were found and fixed before
+  the gate was believed: the mock cannot settle the real claim bridge (stubbed, with the
+  argument-evaluation throw preserved on the control), and the seeded project pre-ticks only
+  the notes row, whose branch never populates `applied` — a vacuous pass shape (BUG_CLASSES).
+
+No SQL (`scope_reads` exists since 665). `index.html` + this entry + `gate_1121.mjs`.
+
+---
+
+## Build 1120 — 28 Aug 2026 — The Pre-Install Guide asks through the app, not the browser
+
+Third finding from the `run_gates.py` full run: **`gate_1083` — the standing no-browser-dialogs
+gate — was RED on main** (3 `confirm(` in CODE where the sheet's own fallback should be the
+only one; the lexer's count — a bare grep says 9 and counts six comments). Both extras were in
+`cr-guide-script`, added with the Pre-Install Guide arc after 1083 removed the last dialog:
+
+- `manualSend()` — "Email the <guide> to <client> at <email>?" — now `window.crAsk(...).then(...)`
+  (the module is ES5 `.then` style throughout; kept). **"email" joined the sheet's VERBS list**
+  so the go-button reads "Email" — one place decides what a message means, per 1083's design.
+- `resetEditor()` — "Reset the <guide> wording…? Your unsaved changes will be replaced." —
+  destructive. The message leads with "Reset", which the sheet's DANGER regex already classifies,
+  so the red treatment is automatic; no per-site styling added.
+
+### Gates
+- `check_build.py` GREEN 1119 → 1120; patch byte-reproducible (`cmp` equal on re-application).
+- **`gate_1083` flips GREEN — 17/17** (A2: exactly one executable `confirm(` — the sheet's own
+  fallback; A2b: zero call sites outside the module; C2 red-on-destructive still proven).
+  **Control (the 1119 tree) RED on A2 + A2b.**
+- **`drive_guide1120.mjs`** — the wiring itself, driven in Chromium: `CardinalGuide.send(pr)`
+  opens the sheet (`#crAsk`), go-button text **"Email"**, not danger-styled, declining closes it,
+  zero `window.confirm` calls. **Control: the sheet never opens and the stubbed `confirm`
+  records the exact message** — the gate was seen red before it was believed.
+
+No SQL. `index.html` + this entry.
+
+---
+
+## Build 1119 — 28 Aug 2026 — Seven labels come back up to the 11px floor
+
+Found by the same `run_gates.py` full run: **`gate_1081` — the standing type-floor gate —
+was RED on main** (A1: 7 source sites under, smallest 9.5px; D4: 6 parsed rules under).
+All seven arrived AFTER 1081 set the floor, or its gate would have caught them at birth:
+
+| selector | was | module / build |
+|---|---|---|
+| `.cr-est-lineitem .cr-est-rowmode button` | 10.5px | estimate builder, 1096 |
+| `.cr-est-sechead .sec-addline` | 10.5px | sections, 1097 |
+| `.cr-est-sechead .sec-saveasm` | 10px | assemblies, 1098 |
+| `#cr-est-picker .asm-grouphd` | 10.5px | assemblies, 1098 |
+| `#cr-cc .sheet .ln-sec` | 10.5px | Community sheet |
+| `#cr-can .pgrid .ck` | **9.5px** | canvass grid |
+| `.cd-guiderow .cdg-auto` | 10.5px | Pre-Install Guide chip |
+
+All bumped to 11px. **Known, accepted cost:** in the canvass partner card's 3-column grid
+at 390px, "Out for pricing" now wraps to two lines (measured in Chromium with the shipped
+markup: label h 13→26px, cell grows, nothing clips or overlaps) — the same cost 1081's
+original 519-declaration sweep accepted.
+
+### Gates
+- `check_build.py` GREEN 1118 → 1119; patch byte-reproducible; every size edit asserted
+  with self-computing before/after counts (BUG_CLASSES: no hardcoded post-patch numbers).
+- **`gate_1081` flips GREEN — 14/14** (A1 total 0, D4 0 parsed under, D5's two deliberate
+  `font-size:0` idioms untouched, E-probes compute ≥11px). **Control (the 1118 tree) is
+  RED on A1+D4** with the seven named.
+- Wrap-check render (above) — first attempt returned all-zero widths because `#cr-can`
+  ships `display:none`; a check that cannot fail proves nothing, so it was re-run with
+  the module's real `.cell/.ck/.cv` markup forced visible, against both trees.
+
+No SQL. `index.html` + this entry.
+
+---
+
+## Build 1118 — 28 Aug 2026 — The Estimates tile fills again on zero-estimate jobs
+
+Found by the first full run of `run_gates.py` (the 214-gate regression suite): `gate_996`
+and `gate_999` both reported `ReferenceError: isCommunityClient is not defined` on the
+client profile. Reproduced end-to-end in Chromium against origin/main 1116: the Estimates
+NAVIGATION tile stuck at its `…` placeholder while the Photos tile beside it filled.
+
+**Cause — a name is not a contract (the `renderTeamPage` class).** Build 1094's `_commEst()`
+in the main block called `isCommunityClient()`, which is defined only inside
+`cr-wo-script`'s closed IIFE (exports: `render`, `canSee` — nothing else). `&&`
+short-circuits, so the call was only ever reached when the estimate count was **0** — the
+one case with something to say — and it threw on all three fill paths (`.then`, `.catch`,
+and the no-module branch, all as unhandled rejections). Jobs with estimates worked
+perfectly, which is how it survived a day of use.
+
+**Fix.** Gate on the block's own hoisted `projClaimType()` (typeof-guarded, the block's
+convention at ten-plus sites), preserving 1094's intent: a priced Community bid still
+counts as the 1.
+
+### Gates
+- `check_build.py` GREEN 1116 → 1118 (marker `1118: isCommunityClient lives inside`;
+  negative control clean); patch byte-reproducible (`cmp` equal on a re-applied fresh tree).
+- **`gate_1118.mjs`** — Chromium, sentinel mock, phone width: tile is a number (0), the
+  `.zero` class applied, no `isCommunityClient` error reaches the page. **Control (the
+  1116 tree) goes RED on 2 named failures** — the `…` symptom and the ReferenceError —
+  without crashing.
+- `gate_996` note: its second failure (2 money-in rows still in `checklist.payments`,
+  "counted twice") is NOT addressed or triaged here — recorded as open.
+
+No SQL. `index.html` + this entry + `gate_1118.mjs`.
+
+---
+
 ## Build 1106 — 27 Aug 2026 — The Twilio config is trimmed, and 20003 says WHICH key looks wrong
 
 `index.html` (stamp + CHANGELOG only) + `api/notify.js`. Stamp 1105 → **1106**.
@@ -29147,3 +29275,26 @@ It now shells out to **`scripts/jslex_count.py`**, the sanctioned instrument, wh
 So the check still fails where it must. ⚠ **The first draft of that comment said "1 in CODE on the control" — wrong, it is 2 on both.** Measured after writing, which is the only reason it is right now.
 
 Gates on the merged tree: `check_build.py` green (1116 → 1117, 129 inline scripts, 152 style blocks, CHANGELOG entry for 1117, marker + negative control) · `harness_owner1113.js` GREEN · `harness_pipe1114.js` GREEN 30 · `harness_drawer1115.js` GREEN 36 · **`gate_1116.mjs` GREEN** · `gate_1115.mjs` GREEN 21 · `gate_1114.mjs` GREEN 58. No SQL, no api route.
+
+## Build 1122 — merging 1118–1121 in; the third time main's footer arrived with a summary
+
+Not a feature. Builds **1118–1121** (PRs #536, #537 — the gate-suite runner's three regressions, plus the Scope of Loss history fix and two standing quality gates) landed on `main` from the second session while this branch still carried 1113–1117 **unmerged**. Stamped **1122** from `next_build.py`.
+
+**Two conflicts, both the same pair as 1117, and neither semantic this time:**
+
+| hunk | resolution |
+|---|---|
+| the drawer footer | **ours** — main's footer arrived carrying an em-dash summary again. Deleting that paragraph is the whole of 1115 |
+| the `CHANGELOG` | **union** — theirs down to 1118, then ours whole. ⚠ Theirs repeats **1116 AND 1112**, both of which ours also has; a take-both duplicates two builds. Asserted: each of 1112–1122 appears **exactly once** |
+
+⚠️ **The footer hunk has now been resolved the same way three builds running (1117, and twice here counting 1116's arrival).** The comment in the artifact says so out loud, so the fourth session does not treat it as a judgement call: **ours wins, and `check_build.py` gates the CHANGELOG entry rather than that text.**
+
+**Nothing semantic collided** — unlike 1117, where 1116's `#brandTitle` hunk read a map 1114 had deleted. The header code merged clean here.
+
+Gates on the merged tree: `check_build.py` green (1121 → 1122, marker + negative control) · `harness_owner1113` GREEN · `harness_pipe1114` GREEN 30 · `harness_drawer1115` GREEN 36 · `gate_1114` GREEN 58 · `gate_1115` GREEN 21 · **`gate_1081` GREEN 14** (the 11px floor — 1119 had just repaired seven labels, so it is the gate most likely to catch a bad merge) · **and main's own three: `gate_1116` GREEN, `gate_1118` GREEN, `gate_1121` GREEN** · the two standing quality gates **`gate_dupes` GREEN** (0 over baseline) and **`gate_types` GREEN** (0 codes grew). No SQL, no api route.
+
+### ⚠ Why this branch needed merging twice: it was never taken out of DRAFT
+
+Theo, 28 Aug: *"I don't see the owner console with new features."* He was right, and the reason was not the code. **PR #535 was opened as a draft and stayed one**, so it never merged; `main` deploys the app, and `strategyHTML`, `cr-nav-sec-owner`, `owner_biz_plan` and `ow-kpi` were all at **0 occurrences** on `main` — measured, not assumed. Meanwhile main took five builds (1116, 1118–1121) and the branch conflicted twice.
+
+**The lesson is procedural, not technical: a draft PR is invisible to the person who asked for the feature.** The house convention is to open PRs as drafts, and that is fine for a branch nobody is waiting on — but when the ask is live, say plainly in the reply that it is a draft awaiting his merge, or mark it ready. Four builds sat finished and unreachable for seven hours.

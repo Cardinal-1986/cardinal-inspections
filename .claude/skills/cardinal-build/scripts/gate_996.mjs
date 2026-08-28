@@ -143,6 +143,18 @@ const migrated = await page.evaluate(async () => {
   const m = document.querySelector('#paySummary [data-paymigrate]');
   if (!m) return { err: 'no migrate control' };
   m.click();
+  /* Since the 1080-1083 arc the migration asks through the crAsk SHEET, not
+     window.confirm — the dialog auto-accept above never fires for it. Tap the
+     sheet's go button when it appears; on older trees (confirm) it never does
+     and the dialog handler still covers them. This gate reported "2 rows still
+     in checklist.payments — counted twice" for exactly this reason: the ask
+     was pending, the migration had not run, and a stale rig read as a live
+     double-count. */
+  for (let t = 0; t < 10; t++) {
+    await new Promise(r => setTimeout(r, 200));
+    const go = document.querySelector('#crAsk .askgo');
+    if (go && go.offsetParent !== null) { go.click(); break; }
+  }
   await new Promise(r => setTimeout(r, 1200));
   const after = (window.parseCkAll(window.currentProject).payments || []);
   return {
