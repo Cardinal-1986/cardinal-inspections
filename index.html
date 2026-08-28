@@ -3874,7 +3874,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1107 &#8212; Invoices &amp; Accounts Receivable: a new admin screen that puts every unpaid job in one place, grouped by how overdue it is, with the total you are owed up top. Each row shows the client, the address, what was billed, what has come in and the balance still due &#8212; plus one-tap buttons to copy, text or email the secure pay link. An invoice now tracks itself: the moment a card payment lands it moves from Sent to Deposit Paid, then Partially Paid, then Paid in Full, with no worksheet to touch. Open it from the menu (Invoices &amp; AR) or by tapping the Accounts Receivable card on the home screen.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1108 &#8212; Reps can now run invoices from the field. Every job profile gets an Invoices &amp; Payments card: generate the invoice in one tap, see its live status (Draft, Sent, Deposit Paid, Partially Paid, Paid in Full), and send the secure pay link three ways &#8212; company text (Twilio), your own phone, or email. A Record Offline Payment button (on the card and on every Accounts Receivable row) logs a check, cash or bank transfer &#8212; amount, method, deposit/progress/final and date &#8212; and steps the status forward at once. New invoices mint their pay link and total automatically.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12006,6 +12006,8 @@ function renderAcxOverview(){
     '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
     '<span style="text-align:right;"><small>Balance Due</small><b class="' + (fin.balance > 0 ? 'db-due' : 'db-paid') + '">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
+  /* 1108: the rep-facing Invoices & Payments block, right under the money strip. */
+  html += (window.CardinalAR && window.CardinalAR.jobBlock) ? window.CardinalAR.jobBlock(pr, fin) : '';
   /* ---- payment information + money in ---- */
   /* 796: the two money doors sit together. Money In was a half-width tile
      alone on its own row at the bottom of the Job Menu, and it is the ONLY
@@ -16526,6 +16528,13 @@ async function createInvoiceFor(pr){
   tpl = tpl.replace('[INV_DUE]', fmtMoney(fin.balance, true));
   try{
     var id = await db.create('Invoice \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
+    /* 1108: mint the share token + persist the numeric total at creation, so the
+       invoice is sendable immediately and AR reads its total without recomputing. */
+    try{
+      var _itok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+                : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+      await db.update(id, { share_token: _itok, total: fin.value });
+    }catch(_it){}
     await reload();
     await openEditor(id);
     crTell('Invoice ' + num + ' created from the signed contract and payments logged in the Worksheet. Email it to the client \u2014 the job moves to INVOICED automatically when sent.');
@@ -41862,6 +41871,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1108, d:'2026-08-28', t:'Invoices from the field: run, send and collect right on the job', s:'The invoicing flow now lives where the work happens. Every job profile has an <b>Invoices &amp; Payments</b> card: <b>generate the invoice</b> in one tap, watch its <b>live status</b> (Draft &rarr; Sent &rarr; Deposit Paid &rarr; Partially Paid &rarr; Paid in Full), and <b>send the secure pay link</b> three ways &mdash; <b>Company SMS</b> (through the business Twilio number, logged), <b>My phone</b> (opens your own Messages), or <b>Email</b>. This works for the assigned rep, not just admins, so a rep can take a deposit at the kitchen table. New: <b>Record Offline Payment</b> &mdash; on the card and on every Accounts Receivable row &mdash; logs a <b>check, cash or bank transfer</b> (amount, method, deposit/progress/final, date) straight to the ledger, so the status steps forward the moment the money is in hand, no bank wait. And a freshly generated invoice mints its own pay link and total automatically.' },
 { b:1107, d:'2026-08-28', t:'Invoices & Accounts Receivable \u2014 a Who-Owes-Me dashboard, and invoices that track themselves', s:'A new admin screen &mdash; <b>Invoices &amp; AR</b>, in the menu and on tap of the home <b>Accounts Receivable</b> card &mdash; puts every unpaid job in one place. The total you are owed sits up top beside what came in this month and what is overdue; below, jobs group by age (<b>Current</b>, <b>15&ndash;30 days</b>, <b>30+ days</b>), oldest first, each showing the client, address, amount billed, amount collected and the balance still due. Every row has one-tap actions to <b>copy</b>, <b>text</b> or <b>email</b> the secure pay link. And an invoice now tracks itself: the status is read straight from the money ledger, so a card payment moves it from <b>Sent</b> to <b>Deposit Paid</b>, then <b>Partially Paid</b>, then <b>Paid in Full</b> on its own &mdash; no worksheet to update. The pay link is the same clean, light checkout page already in use; card today, bank transfer next.' },
 { b:1106, d:'2026-08-27', t:'The text-message keys are cleaned, and a rejected key says which one', s:'The test text kept failing with the same rejection after the keys had been re-entered twice, because the app was never removing stray spaces or line breaks from them. A line break copied along with a key is invisible on the settings screen and rides straight into the login the app sends &mdash; so a perfectly correct key was being rejected, and the message said only &ldquo;check the keys&rdquo;, which was the same sentence either way. Both keys are now cleaned before use, and when the text service still rejects them the app names the shape of each one: whether it arrived with stray whitespace, what two letters it starts with, and how long it is. That is enough to spot the wrong key pasted into the wrong box. The key itself is never shown, so the message is safe to screenshot.' },
 { b:1105, d:'2026-08-27', t:'A failed test text now says what went wrong, readably', s:'When &ldquo;Send a test alert to myself&rdquo; could not send the text, it printed the phone company&rsquo;s raw error &mdash; <code>{&quot;code&quot;:20003,&quot;message&quot;:&quot;Authenticate&quot;,&quot;more_info&quot;:&quot;https://w</code> &mdash; cut off mid-word, running off the edge of the screen and under the dark-mode button. Two fixes: the status text now <b>wraps</b> instead of overflowing (and keeps clear of the floating button), and the common failures are written in plain English &mdash; rejected credentials say to check the Twilio keys in Vercel, a blocked sender says to check the number is in the Messaging Service, an opted-out number says so. The error number is kept in the message so it stays searchable.' },
@@ -81903,6 +81913,58 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   #cr-ar-view .crar-money{justify-content:flex-start;}
   #cr-ar-view .crar-age{margin-top:2px;}
 }
+
+/* ═══ 1108: the in-profile Invoices & Payments card + the offline payment modal.
+   The porcelain "money" language, self-contained (own light bg + dark ink), so it
+   reads on the dark profile without the light-on-dark trap. Light-only by design. */
+.crji-card{
+  background:#FFFFFF; border:1px solid #E2E8F0; border-radius:16px;
+  box-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 22px rgba(15,23,42,.16);
+  padding:15px 16px; margin:12px 0 4px; color:#0F172A;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+}
+.crji-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;}
+.crji-ttl{font-weight:800;font-size:15px;letter-spacing:-.01em;color:#0F172A;}
+.crji-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px;}
+.crji-nums>span{display:flex;flex-direction:column;gap:2px;background:#EAEEF3;border-radius:11px;padding:9px 11px;box-shadow:inset 3px 3px 7px #D1D9E6, inset -3px -3px 7px #FFFFFF;}
+.crji-nums small{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#475569;}
+.crji-nums b{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:#0F172A;}
+.crji-nums b.pos{color:#047857;}
+.crji-nums b.due{color:#C8202E;}
+.crji-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.crji-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid #E2E8F0;background:#FFFFFF;color:#0F172A;font-size:13px;font-weight:600;padding:9px 12px;border-radius:10px;box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 10px rgba(15,23,42,.08);}
+.crji-btn svg{width:15px;height:15px;}
+.crji-btn.primary{background:#C8202E;border-color:#C8202E;color:#fff;box-shadow:0 2px 8px rgba(200,32,46,.28);}
+.crji-btn.ghost{background:#F8FAFC;color:#475569;box-shadow:none;}
+.crji-hint{font-size:13px;color:#475569;}
+
+/* status pills, UNSCOPED so they render in the job block too (same values as the
+   AR view's #cr-ar-view .crar-pill rules; those stay and win inside the dashboard). */
+.crar-pill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.35;}
+.crar-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;}
+.crar-pill.draft{color:#475569;background:#EEF2F7;}
+.crar-pill.sent{color:#1D4ED8;background:#E7EFFD;}
+.crar-pill.part{color:#B45309;background:#FDF1E2;}
+.crar-pill.paid{color:#047857;background:#E4F5EE;}
+.crar-pill.over{color:#B91C1C;background:#FCEAEA;}
+
+/* the offline payment modal — porcelain sheet, above everything */
+#cr-pay-modal{position:fixed;inset:0;z-index:12000;display:none;}
+#cr-pay-modal.open{display:block;}
+#cr-pay-modal .crpay-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);}
+#cr-pay-modal .crpay-box{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);max-height:88vh;overflow:auto;background:#F4F4F5;border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,.45);padding:20px;color:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+#cr-pay-modal .crpay-h{font-weight:800;font-size:19px;letter-spacing:-.01em;color:#0F172A;}
+#cr-pay-modal .crpay-sub{color:#475569;font-size:13px;margin:3px 0 14px;}
+#cr-pay-modal .crpay-l{display:block;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#475569;margin:13px 0 6px;}
+#cr-pay-modal .crpay-amt{display:flex;align-items:center;gap:6px;background:#EAEEF3;border-radius:12px;padding:2px 12px;box-shadow:inset 4px 4px 9px #D1D9E6, inset -4px -4px 9px #FFFFFF;}
+#cr-pay-modal .crpay-amt span{font-weight:800;color:#475569;font-size:18px;}
+#cr-pay-modal .crpay-amt input{flex:1;border:0;background:transparent;font-size:22px;font-weight:800;color:#0F172A;padding:10px 0;outline:none;}
+#cr-pay-modal .crpay-in{width:100%;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:11px 12px;font-size:15px;color:#0F172A;outline:none;}
+#cr-pay-modal .crpay-in:focus{border-color:#C8202E;box-shadow:0 0 0 3px rgba(200,32,46,.22);}
+#cr-pay-modal .crpay-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#EAEEF3;border-radius:12px;padding:4px;}
+#cr-pay-modal .crpay-seg button{border:0;background:transparent;color:#475569;font-size:13px;font-weight:600;padding:10px 6px;border-radius:9px;cursor:pointer;}
+#cr-pay-modal .crpay-seg button.on{background:#FFFFFF;color:#0F172A;box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 10px rgba(15,23,42,.1);}
+#cr-pay-modal .crpay-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
 </style>
 
 <div id="cr-ar-view" style="display:none;" aria-hidden="true">
@@ -81931,6 +81993,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   var IC_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>';
   var IC_SMS  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
   var IC_MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
+  var IC_DOC  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>';
+  var IC_CASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="6.4" width="18.8" height="11.2" rx="1.8"/><circle cx="12" cy="12" r="2.6"/></svg>';
 
   function q(id){ return document.getElementById(id); }
   function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
@@ -82023,6 +82087,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       acts = '<button class="crar-btn" type="button" data-armkinv="' + esc2(pr.id) + '">Create invoice</button>'
            + '<button class="crar-btn ghost" type="button" data-aropen="' + esc2(pr.id) + '">Open job</button>';
     }
+    acts += '<button class="crar-btn ghost" type="button" data-arpay="' + esc2(pr.id) + '">' + IC_CASH + 'Record payment</button>';
     var ageTxt = od ? (x.age + ' days &middot; overdue')
                     : (x.inv && x.inv.status === 'sent' ? ('Sent ' + x.age + 'd ago') : (x.age + 'd'));
     return '<div class="crar-row' + (od ? ' od' : '') + '">'
@@ -82148,9 +82213,176 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   else markDoorway();
   try{ setTimeout(markDoorway, 1800); }catch(e){}  /* is_admin resolves after auth boot */
 
+  /* ═══ Build 1108: the in-profile Invoices & Payments block, the three send
+        options, and the offline (check / cash / bank transfer) payment modal.
+        Shared by the AR dashboard and the client profile — one implementation. ═══ */
+
+  function statusOf(pr){ return statusFor(pr, invoiceFor(pr.id)); }
+
+  /* the porcelain "Invoices & Payments" card shown on a job profile */
+  function jobBlockHtml(pr, fin){
+    if(!pr) return '';
+    fin = fin || jobFinance(pr);
+    var inv = invoiceFor(pr.id);
+    var st  = statusFor(pr, inv, fin);
+    var canInvoice = Number(fin.value) > 0 && fin.source !== 'estimate';
+    var bal = Number(fin.balance) || 0;
+    var acts;
+    if(inv){
+      acts = '<button class="crji-btn primary" type="button" data-inv-sms="' + esc2(pr.id) + '">' + IC_SMS + 'Company SMS</button>'
+           + '<button class="crji-btn" type="button" data-inv-text="' + esc2(pr.id) + '">' + IC_SMS + 'My phone</button>'
+           + '<button class="crji-btn" type="button" data-inv-email="' + esc2(pr.id) + '">' + IC_MAIL + 'Email</button>'
+           + '<button class="crji-btn ghost" type="button" data-inv-open="' + esc2(pr.id) + '">Open invoice</button>';
+    }else if(canInvoice){
+      acts = '<button class="crji-btn primary" type="button" data-inv-gen="' + esc2(pr.id) + '">' + IC_DOC + 'Generate invoice</button>';
+    }else{
+      acts = '<span class="crji-hint">An invoice opens once a contract is signed.</span>';
+    }
+    if(canInvoice) acts += '<button class="crji-btn ghost" type="button" data-inv-pay="' + esc2(pr.id) + '">' + IC_CASH + 'Record offline payment</button>';
+    return '<div class="crji-card">'
+      + '<div class="crji-head"><span class="crji-ttl">Invoices &amp; Payments</span>' + pill(st) + '</div>'
+      + '<div class="crji-nums">'
+      +   '<span><small>Billed</small><b>' + money(fin.value) + '</b></span>'
+      +   '<span><small>Collected</small><b class="pos">' + money(fin.paid) + '</b></span>'
+      +   '<span><small>Balance</small><b class="' + (bal > 0 ? 'due' : 'paid') + '">' + money(bal) + '</b></span>'
+      + '</div>'
+      + '<div class="crji-acts">' + acts + '</div>'
+      + '</div>';
+  }
+
+  /* re-paint whatever invoice surfaces are on screen after the ledger changes */
+  function refreshInv(){
+    try{ if(typeof renderAcxOverview === 'function' && currentProject) renderAcxOverview(); }catch(e){}
+    try{ var v = q('cr-ar-view'); if(v && v.style.display !== 'none') render(); }catch(e){}
+  }
+
+  /* Company SMS — text the pay link to the client through the company Twilio number */
+  function companySms(pr){
+    var cx = window.sb || window.supa;
+    linkFor(pr.id).then(function(url){
+      return (cx && cx.auth ? cx.auth.getSession() : Promise.resolve({})).then(function(s){
+        var tok = s && s.data && s.data.session ? s.data.session.access_token : '';
+        return fetch('/api/sms-link', { method:'POST',
+          headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + tok },
+          body: JSON.stringify({ project_id: pr.id, url: url }) });
+      }).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(j){
+        if(j && j.ok) crTell('Texted the pay link to ' + (pr.name || 'the client') + '.');
+        else crTell((j && j.error) || 'Could not send the company text.');
+      });
+    }).catch(fail);
+  }
+
+  /* ---- the offline payment modal (check / cash / bank transfer) ---- */
+  function ensurePayModal(){
+    var m = q('cr-pay-modal');
+    if(m) return m;
+    m = document.createElement('div');
+    m.id = 'cr-pay-modal';
+    m.innerHTML =
+      '<div class="crpay-backdrop" id="crpay-backdrop"></div>' +
+      '<div class="crpay-box" role="dialog" aria-modal="true" aria-label="Record offline payment">' +
+        '<div class="crpay-h">Record a payment</div>' +
+        '<div class="crpay-sub" id="crpay-sub"></div>' +
+        '<label class="crpay-l" for="crpay-amt">Amount</label>' +
+        '<div class="crpay-amt"><span>$</span><input type="number" id="crpay-amt" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>' +
+        '<label class="crpay-l">Method</label>' +
+        '<div class="crpay-seg" id="crpay-method" data-v="check">' +
+          '<button type="button" data-m="check" class="on">Check</button>' +
+          '<button type="button" data-m="cash">Cash</button>' +
+          '<button type="button" data-m="ach">Bank transfer</button>' +
+        '</div>' +
+        '<input type="text" id="crpay-ref" class="crpay-in" placeholder="Check # (optional)">' +
+        '<label class="crpay-l">Type</label>' +
+        '<div class="crpay-seg" id="crpay-type" data-v="deposit">' +
+          '<button type="button" data-t="deposit" class="on">Deposit</button>' +
+          '<button type="button" data-t="progress">Progress</button>' +
+          '<button type="button" data-t="final">Final</button>' +
+        '</div>' +
+        '<label class="crpay-l" for="crpay-date">Date</label>' +
+        '<input type="date" id="crpay-date" class="crpay-in">' +
+        '<div class="crpay-foot">' +
+          '<button type="button" class="crji-btn ghost" id="crpay-cancel">Cancel</button>' +
+          '<button type="button" class="crji-btn primary" id="crpay-save">Record payment</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(m);
+    return m;
+  }
+  var _payFor = null;
+  function setSeg(id, v){
+    var seg = q(id); if(!seg) return; seg.setAttribute('data-v', v);
+    Array.prototype.forEach.call(seg.children, function(b){
+      b.classList.toggle('on', b.getAttribute('data-m') === v || b.getAttribute('data-t') === v);
+    });
+  }
+  function openPayModal(pr){
+    if(!pr) return;
+    _payFor = pr;
+    var m = ensurePayModal();
+    var fin = jobFinance(pr);
+    q('crpay-sub').textContent = (pr.name || 'Client') + ' · balance ' + money(fin.balance);
+    q('crpay-amt').value = ''; q('crpay-ref').value = '';
+    setSeg('crpay-method', 'check'); setSeg('crpay-type', 'deposit');
+    q('crpay-date').value = new Date().toISOString().slice(0, 10);
+    m.classList.add('open');
+    setTimeout(function(){ try{ q('crpay-amt').focus(); }catch(e){} }, 40);
+  }
+  function closePayModal(){ var m = q('cr-pay-modal'); if(m) m.classList.remove('open'); _payFor = null; }
+  function collectionsInsert(row){
+    var cx = window.sb || window.supa;
+    if(cx && cx.from){
+      return cx.from('collections').insert(row).then(function(r){
+        if(r && r.error) throw new Error(r.error.message || 'Could not record the payment'); return r;
+      });
+    }
+    return Promise.reject(new Error('Not signed in'));
+  }
+  function savePayModal(){
+    var pr = _payFor; if(!pr) return;
+    var amt = parseFloat(q('crpay-amt').value);
+    if(!(amt > 0)){ crTell('Enter an amount.'); return; }
+    var method = q('crpay-method').getAttribute('data-v') || 'check';
+    var ptype  = q('crpay-type').getAttribute('data-v') || 'deposit';
+    var ref = String(q('crpay-ref').value || '').trim();
+    var date = q('crpay-date').value || new Date().toISOString().slice(0, 10);
+    var typeMap = { deposit:'deposit', progress:'other', final:'final' };
+    var me = (window.currentUser && currentUser.email) || '';
+    var notes = 'Offline ' + (method === 'ach' ? 'bank transfer' : method) + (ref ? ' #' + ref : '') + ' (recorded on-site)';
+    var row = { project_id: pr.id, collected_at: date, amount: amt,
+                type: typeMap[ptype] || 'other', source: 'homeowner', method: method,
+                notes: notes, created_by: me };
+    var btn = q('crpay-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+    collectionsInsert(row).then(function(){
+      closePayModal();
+      crTell('Recorded ' + money(amt) + '. Status updated.');
+      if(typeof reload === 'function'){ reload().then(refreshInv).catch(refreshInv); } else refreshInv();
+    }).catch(function(err){
+      if(btn){ btn.disabled = false; btn.textContent = 'Record payment'; }
+      fail(err);
+    });
+  }
+
+  /* second delegated listener: job-block actions + record-payment + the modal */
+  document.addEventListener('click', function(e){
+    var t;
+    if((t = e.target.closest('[data-inv-gen]'))){ var pg = prById(t.getAttribute('data-inv-gen')); if(pg && typeof createInvoiceFor === 'function') createInvoiceFor(pg); return; }
+    if((t = e.target.closest('[data-inv-open]'))){ var iv = invoiceFor(t.getAttribute('data-inv-open')); if(iv && typeof openEditor === 'function') openEditor(iv.id); return; }
+    if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms')); if(ps) companySms(ps); return; }
+    if((t = e.target.closest('[data-inv-text]'))){ var px = prById(t.getAttribute('data-inv-text')); if(px) linkFor(px.id).then(function(url){ location.href = 'sms:?&body=' + encodeURIComponent('Hi ' + firstName(px) + ', here’s your invoice from Cardinal Roofing — review and pay securely here: ' + url); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-email]'))){ var pe = prById(t.getAttribute('data-inv-email')); if(pe) linkFor(pe.id).then(function(url){ location.href = 'mailto:?subject=' + encodeURIComponent('Your invoice from Cardinal Roofing & Renovations') + '&body=' + encodeURIComponent('Hi ' + firstName(pe) + ',\n\nHere is your invoice — review and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations'); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-pay]'))){ var pp = prById(t.getAttribute('data-inv-pay')); if(pp) openPayModal(pp); return; }
+    if((t = e.target.closest('[data-arpay]'))){ var pa = prById(t.getAttribute('data-arpay')); if(pa) openPayModal(pa); return; }
+    if((t = e.target.closest('#crpay-cancel')) || (t = e.target.closest('#crpay-backdrop'))){ closePayModal(); return; }
+    if((t = e.target.closest('#crpay-save'))){ savePayModal(); return; }
+    if((t = e.target.closest('#crpay-method [data-m]'))){ setSeg('crpay-method', t.getAttribute('data-m')); return; }
+    if((t = e.target.closest('#crpay-type [data-t]'))){ setSeg('crpay-type', t.getAttribute('data-t')); return; }
+  });
   window.openAR = open;
   window.renderAR = render;
-  window.CardinalAR = Object.assign(window.CardinalAR || {}, { open:open, render:render, close:close, list:arList });
+  window.CardinalAR = Object.assign(window.CardinalAR || {}, {
+    open:open, render:render, close:close, list:arList,
+    status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor
+  });
 })();
 </script>
 

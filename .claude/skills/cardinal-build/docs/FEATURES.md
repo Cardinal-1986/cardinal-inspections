@@ -7556,3 +7556,17 @@ real render will tell you.
 **Status is derived, not stored** (`statusFor`): from `jobFinance()` value/paid + the `collections` ledger — Paid in Full / Deposit Paid / Partially Paid / Sent / Draft. The Stripe webhook (`api/pay-webhook.js`) writes the `collections` row it reads, so status advances on its own; this is what makes staged draws (deposit → progress → final) track against one balance.
 
 **Do NOT build a second AR view.** The old home aging chart (`renderOps`, `#arWrap`) stays as the mini-chart (4 buckets); this is the actionable worklist (3 buckets, Theo's pick). Reuses `collPaid`, `cacheCollections`, `jobFinance`, and the `shareUrlFor` `/api/share?t=` link shape. Send is pre-filled `sms:`/`mailto:` today; Twilio auto-send (already live in `api/notify.js`) is Build 3. `createInvoiceFor` minting the token + a live status header on the invoice itself is Build 2. Gate: `harness_ar1107.js` (jsdom; GREEN on 1107, RED on 1106).
+
+
+---
+
+## Invoices & Payments — the job-level block, offline recording, Company SMS (build 1108)
+
+Extends the Invoices & AR module (`cr-ar-script`, `window.CardinalAR`). Where the AR dashboard (1107) is the admin's company-wide worklist, this is the per-job, rep-facing surface.
+
+- **`CardinalAR.jobBlock(pr, fin)`** -> the porcelain "Invoices & Payments" card, mounted in `renderAcxOverview()` after the `.dbmoney` strip. Live status pill + Billed / Collected / Balance. Actions by state: Generate invoice (no invoice yet), or Company SMS / My phone (`sms:`) / Email + Open invoice; plus Record offline payment. Rep-visible on their assigned jobs (RLS).
+- **`CardinalAR.recordPayment(pr)`** -> the offline payment modal (also on every AR row, `data-arpay`). Amount / Method (check/cash/ach) / Type (deposit/progress/final -> deposit/other/final) / Date -> one `collections` row via `sb` (RLS: admin/production, or the rep on their own job — `collections_rep_insert.sql`). Steps the derived status forward. ⚠ The LEDGER, not the worksheet's legacy `ws.paid`.
+- **createInvoiceFor** mints `share_token` + `total` at creation.
+- **`api/sms-link.js`** — Company SMS via the `notify.js` Twilio Messaging Service; reads `projects.phone` server-side with the caller's token.
+
+Do NOT build a second invoice/payment surface. Status = `statusFor` (the 1107 engine). Send link = `shareUrlFor` (`/api/share?t=`). Gate: `harness_inv1108.js`. Invoice-document live header = build 1109.
