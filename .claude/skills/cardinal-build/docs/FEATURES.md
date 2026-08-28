@@ -7592,3 +7592,16 @@ The **crew** labor-rate schedule (what Cardinal pays a sub for labor), modeled o
 - **Edit (admin):** Edit toggles inline inputs for rate/name/description + a unit select; `+ Add line`, `+ Add note`, `+ Add category`, delete `×`; Save/Cancel. Save diffs against the catalog — inserts new lines (blank skipped), updates edited rows, deletes removed ones.
 - **Print / PDF:** `@media print` isolates `#cr-lrs-view`, hides the topbar + edit chrome, keeps the navy/gold with `print-color-adjust:exact`, `@page Letter` — a one-page Exhibit A to hand a crew.
 - Gate: `harness_lrs1110.js` (jsdom; GREEN on 1110 / RED on 1109).
+
+## Roof Pre-Install Guide — editable master + auto-email on scheduling (build 1111)
+
+The homeowner's "Roof Installation Information & Pre-Install Guide" (what to expect on install day, weather policy, six things to do before). **Auto-emails to the client when a roof build day is booked**, autofilled from the job.
+
+- **Module:** `cr-guide-styles` + `#cr-guide-editor` + `cr-guide-script` (`window.CardinalGuide` = open/close/send/sendFor/fill/doc/ctxFor/loadTemplate/isNonRoofOnly; `window.__apptEmailPreInstallGuide` = the auto hook). Letterhead/style shell + autofill in code; editable body in `company_templates('preinstall_roof')`.
+- **Trigger:** the third helper (beside `__apptMayAdvanceStage` / `__apptNotifyProduction`) at the build-day appointment hook in `adb.create` / `adb.update`. On a `kind:'job'` appointment for a roofing job: once-guard → send, or prompt for a missing email then send. Fire-and-forget.
+- **Autofill tokens** (`<span class="cr-gtok" data-tok>`): `install_date` (from `appt_date`), `rep_name` (`rptRepName`) + `rep_phone` (`cacheTeam[email].phone`), `client_name`, `property_address`. Filled at send (no token survives into the sent HTML); shown as chips in the editor.
+- **Guardrails:** roofing only (skip a job explicitly tagged non-roofing via `ljTrades`; untagged proceeds) · valid client email required (missing → capture prompt writes `pr.email` via `patchProject`) · **once per job** (`client_guide_sends` PK `(project_id,kind)`) · never blocks booking · rep confirmation toast.
+- **Email rail:** `/api/senddoc` (Resend, staff-gated) — the estimates path — with the filled guide as the HTML doc, client name + property line. Sends from `DIGEST_FROM` (set it to a verified Cardinal domain).
+- **Editable master in Company Documents** (prepended row): **Preview** (sample autofill), **Edit** (admin → `#cr-guide-editor`, an iframe contenteditable doc + subject + Reset + Save `upsert`). Job overview has an **Email to client** button (`data-cr-guide-send`, roofing-gated) to send/re-send by hand (covers jobs scheduled before the feature shipped).
+- **Data:** `preinstall_guide.sql` — `company_templates` (admin write / staff read) + `client_guide_sends` (staff read/insert). Registered in `hideAllViews()` + `navRestore()` (`case 'guideedit'`). No dark mode (client document).
+- Gate: `harness_guide1111.js` (jsdom; GREEN on 1111 / RED on 1110; 32 assertions).
