@@ -54,12 +54,12 @@ const DEFERRED = ['cr-occ', 'cr-est-view', 'cr-owner', 'cr-disp', 'cr-can', 'cr-
   const head = () => p.evaluate(() => { try { return window.CardinalHeader.crmHead(); } catch (e) { return 'threw'; } });
   const title = () => p.evaluate(() => { const h = document.querySelector('#brandTitle h1'); return h ? h.textContent.trim() : '(none)'; });
   const EXPECT = {
-    punchView: 'Punch & Repairs', teamView: 'Team', settingsView: 'Settings',
-    profileView: 'My Profile', auditView: 'Audit Log', leadsView: 'Leads & Jobs',
+    punchView: 'Punch', teamView: 'Team', settingsView: 'Settings',
+    profileView: 'Profile', auditView: 'Audit Log', leadsView: 'Leads',
     photosView: 'Photos', reportsView: 'Reports', galleryView: 'Gallery',
-    companyDocsView: 'Company Docs', resourceLibraryView: 'Library',
-    quickInspView: 'Quick Inspection', qiStartView: 'Quick Inspection',
-    addrCheckView: 'Address Check', 'cr-itellab': 'iTel Lab',
+    companyDocsView: 'Documents', resourceLibraryView: 'Library',
+    quickInspView: 'Inspection', qiStartView: 'Inspection',
+    addrCheckView: 'Address', 'cr-itellab': 'iTel Lab',
     'cr-ar-view': 'Invoices', 'cr-lrs-view': 'Labor Rates', 'cr-guide-editor': 'Guides'
   };
   const showOnly = async (id, want) => {
@@ -129,15 +129,42 @@ const DEFERRED = ['cr-occ', 'cr-est-view', 'cr-owner', 'cr-disp', 'cr-can', 'cr-
   ok(await p.evaluate(() => document.body.dataset.crm) !== 'production',
      'data-crm is NOT moved to production (grounds never follow the header)');
 
-  /* the screen name must FIT a phone header, not ellipsise */
-  const fit = await p.evaluate(() => {
-    const h = document.querySelector('#brandTitle h1');
-    if (!h) return null;
-    return { scroll: h.scrollWidth, client: h.clientWidth, text: h.textContent };
-  });
-  ok(fit && fit.scroll <= fit.client + 1,
-     'the longest screen name fits at 390px without ellipsis ("' + (fit && fit.text) + '" ' +
-     (fit && fit.scroll) + ' <= ' + (fit && fit.client) + ')');
+  /* The screen name must FIT a phone header at EVERY text size. Theo: "don't
+     forget you have different text size" — the menu's Text size control sets
+     :root[data-cr-text=lg|xl] to zoom 1.15 / 1.30 (build 939), so a name that
+     fits at Normal can ellipsise at Larger. Contrast is untouched by zoom (it
+     scales ink and ground alike), but width is not, and checking one size only
+     is how a fit assert passes for the two thirds of the range nobody measured.
+     Checked on the LONGEST name, not whichever screen happened to be open. */
+  const LONGEST = Object.values(EXPECT).reduce((a, b) => (b.length > a.length ? b : a), '');
+  for (const size of ['md', 'lg', 'xl']) {
+    const fit = await p.evaluate(([sz, name]) => {
+      if (sz === 'md') delete document.documentElement.dataset.crText;
+      else document.documentElement.dataset.crText = sz;
+      const h = document.querySelector('#brandTitle h1');
+      if (!h) return null;
+      h.textContent = name;
+      const box = h.closest('#brandTitle') || h;
+      const bcs = getComputedStyle(box);
+      return { scroll: h.scrollWidth, client: h.clientWidth, text: h.textContent,
+               disp: bcs.display, hidden: bcs.display === 'none' || box.getClientRects().length === 0,
+               zoom: getComputedStyle(document.documentElement).zoom };
+    }, [size, LONGEST]);
+    if (size === 'xl') {
+      /* At Larger the name is deliberately hidden — 60px of slot cannot hold a
+         name and widening it would break the 44px tap-target floor. Assert the
+         DECISION, so "it fits" can never be satisfied by an invisible element. */
+      ok(fit && fit.hidden === true,
+         'xl (zoom ' + (fit && fit.zoom) + '): the name is HIDDEN, not truncated (display ' + (fit && fit.disp) + ')');
+    } else {
+      ok(fit && fit.hidden === false, size + ': the name is VISIBLE (display ' + (fit && fit.disp) + ')');
+      ok(fit && fit.client > 40, size + ': the title is laid out (client ' + (fit && fit.client) + 'px) — a 0-width box makes the fit assert vacuous');
+      ok(fit && fit.client > 40 && fit.scroll <= fit.client + 1,
+         size + ' (zoom ' + (fit && fit.zoom) + '): the longest name "' + (fit && fit.text) +
+         '" fits without ellipsis (' + (fit && fit.scroll) + ' <= ' + (fit && fit.client) + ')');
+    }
+  }
+  await p.evaluate(() => { delete document.documentElement.dataset.crText; });
 
   /* every view hideAllViews knows is classified — this is what stops the recurrence */
   const src = fs.readFileSync(FILE, 'utf8');

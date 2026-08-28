@@ -101,7 +101,14 @@ const ok = (c, m) => { if (!c) { console.log('  ASSERT FAIL — ' + m); fails++;
     if (r !== 'missing') await p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
     return r;
   };
-  const clearAll = async () => { await p.evaluate(() => { try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (_) {} document.body.classList.remove('projopen'); });
+  /* hideAllViews() does NOT put back every view this rig opened — a screen shown
+     by setting style.display stays shown — so the "no view open" row reported a
+     screen that was still visible and read 'production'. In a genuinely clean
+     state crmHead() answers 'retail', verified directly. The rig must undo the
+     rig. */
+  const clearAll = async () => { await p.evaluate(ids => { try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (_) {}
+    ids.forEach(x => { const e = document.getElementById(x); if (e) e.style.display = 'none'; });
+    document.body.classList.remove('projopen'); }, SCREENS.map(x => x[1]));
     await p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))); };
 
   /* ── A ─────────────────────────────────────────────────────────────── */

@@ -886,6 +886,41 @@ mutation — while the header wakes on a `childList` observer, so `build()` neve
 three are fixed in the gate with the reason written beside them. *Every real door in the app
 renders nodes, which is why this is a rig fault and not a shipped one — verified in the audit.*
 
+**⚠ THEO CAUGHT THE GAP THE GATE HAD NOT: the Text size control.** *"Don't forget you have
+different text size."* Build 939's control is a real `:root{zoom:1.15/1.30}`, so the CSS
+viewport SHRINKS as the type grows and the header's middle slot goes **150px → 99px → 60px**.
+The fit assert had been run at Normal only. Measured at all three: the longest name needed
+149px, so **every screen name would have ellipsised at Large and Larger** — two thirds of the
+range, shipped green.
+
+- **Contrast is untouched by this** and that is worth stating rather than re-measuring: zoom
+  scales ink and ground identically, so a ratio cannot move. The floors do not shift either —
+  11px at 1.30 is 14.3px, still short of the 18.66px large-text threshold.
+- **Names shortened** (Quick Inspection → Inspection, Punch & Repairs → Punch, Leads & Jobs →
+  Leads, Company Docs → Documents, My Profile → Profile, Address Check → Address) and the
+  shared-screen title given `clamp(12px,4.4vw,20px)`. Normal and Large now fit.
+- **At Larger the name is HIDDEN, not truncated.** 60px of slot cannot hold the shortest useful
+  name (91px), and the only way to widen it is shrinking tap targets below the 44px floor. That
+  is the app's own precedent — the retail slogan does exactly this below 438px, for the reason
+  already recorded there: *a truncated name reads as a broken app, an absent one reads as a
+  clean toolbar.* The gate asserts the DECISION at xl, so "it fits" can never be satisfied by
+  an invisible element.
+- ⚠ **Two CSS edits lost silently before this worked**, both the specificity trap this project
+  already names: `cr-hd4-styles` sets `max-width:100%` on a THREE-id selector, so my two-id
+  `max-width` was dead on arrival; and between two `!important` font-sizes specificity decides,
+  so 2 ids + an attribute LOST to 3 ids and the clamp never applied. *The tell was the name
+  measuring identical at all three zooms* — a silently-losing rule looks exactly like a rule
+  that did nothing. The winner carries a `--cr-stack:` note for `gate_stack`.
+
+**⚠ And the audit script had the same rig fault the gate did**, found while confirming this:
+`hideAllViews()` does not put back a view the rig opened, so the "no view open" row reported a
+still-visible screen and read `production`. **In a genuinely clean state `crmHead()` answers
+`retail`** — verified directly, so the app is right and the doc line was the rig. Fixed in
+`audit_headers.mjs` too.
+
+**Audit re-run on 1116: drifting screens (none)** — all eighteen pinned, and the banner caret
+now measures **5.63** where it was 3.58–4.00.
+
 **Gates.** `check_build` GREEN (stamp 1112→1116, marker `b:1116`, negative control clean) ·
 `gate_1116.mjs` GREEN — 18 screens × 2 portals for head, name, and "not Production", plus
 precedence (an open project and a real CRM screen still outrank), the 754 line (`data-crm`
