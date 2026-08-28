@@ -927,6 +927,39 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1118 — 28 Aug 2026 — The Estimates tile fills again on zero-estimate jobs
+
+Found by the first full run of `run_gates.py` (the 214-gate regression suite): `gate_996`
+and `gate_999` both reported `ReferenceError: isCommunityClient is not defined` on the
+client profile. Reproduced end-to-end in Chromium against origin/main 1116: the Estimates
+NAVIGATION tile stuck at its `…` placeholder while the Photos tile beside it filled.
+
+**Cause — a name is not a contract (the `renderTeamPage` class).** Build 1094's `_commEst()`
+in the main block called `isCommunityClient()`, which is defined only inside
+`cr-wo-script`'s closed IIFE (exports: `render`, `canSee` — nothing else). `&&`
+short-circuits, so the call was only ever reached when the estimate count was **0** — the
+one case with something to say — and it threw on all three fill paths (`.then`, `.catch`,
+and the no-module branch, all as unhandled rejections). Jobs with estimates worked
+perfectly, which is how it survived a day of use.
+
+**Fix.** Gate on the block's own hoisted `projClaimType()` (typeof-guarded, the block's
+convention at ten-plus sites), preserving 1094's intent: a priced Community bid still
+counts as the 1.
+
+### Gates
+- `check_build.py` GREEN 1116 → 1118 (marker `1118: isCommunityClient lives inside`;
+  negative control clean); patch byte-reproducible (`cmp` equal on a re-applied fresh tree).
+- **`gate_1118.mjs`** — Chromium, sentinel mock, phone width: tile is a number (0), the
+  `.zero` class applied, no `isCommunityClient` error reaches the page. **Control (the
+  1116 tree) goes RED on 2 named failures** — the `…` symptom and the ReferenceError —
+  without crashing.
+- `gate_996` note: its second failure (2 money-in rows still in `checklist.payments`,
+  "counted twice") is NOT addressed or triaged here — recorded as open.
+
+No SQL. `index.html` + this entry + `gate_1118.mjs`.
+
+---
+
 ## Build 1106 — 27 Aug 2026 — The Twilio config is trimmed, and 20003 says WHICH key looks wrong
 
 `index.html` (stamp + CHANGELOG only) + `api/notify.js`. Stamp 1105 → **1106**.
