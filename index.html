@@ -3900,7 +3900,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      THIRD time main's footer has arrived carrying a summary, so if you are
      resolving this hunk a fourth time: ours wins, and it is not a judgement
      call. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1126<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1127<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29275,7 +29275,37 @@ body.claim-insurance #brandLogo{
 
 :root{
   --rbe-accdk:#4f7396;--rbe-acc:#8fb4d8;--rbe-acclt:#b9d3ec;
-  --rbe-mute:#9aa0a8;--rbe-mute2:#6d747e;
+  /* 1127: --rbe-mute2 was #6d747e and failed the 4.5 floor on EVERY dark
+     ground in the app - 4.21:1 on the page (#09090C) and 3.05:1 on a card
+     (#262a31), both MEASURED in Chromium. The sentinel reported only .pu-m,
+     the punch-out description, because that is the one that happened to
+     render; the token has 21 consumers and the same value was under floor
+     for all of them. Same shape as .viewhead (an app-wide class failing on
+     fifteen pages) and as 1116, which fixed this exact grey in ONE place
+     (#crBanner .car) and left the token itself alone.
+     ⚠ THE BINDING GROUND IS A GRADIENT STOP, not the colour the sweep named.
+     .pu-card paints linear-gradient(#2E333B, #262A31); the sweep reported the
+     DARK stop (#262A31) and the light stop #2E333B is half a point harder. My
+     first pick, #9099a3, measured 4.99 against the reported stop and only 4.40
+     against the real one - it would have shipped still under the floor, on the
+     strength of a number I had computed myself.
+     #9aa0a8 measures 4.82:1 there and 7.55:1 on the page. Every consumer sits
+     on a dark ground, so a lighter grey can only raise contrast.
+     ⚠ THIS COLLAPSES mute2 INTO --rbe-mute ON DARK - both are now #9aa0a8, so
+     the two levels of de-emphasis become one. That is a real cost and it is
+     deliberate: --rbe-mute is itself the DIMMEST grey that clears 4.5 on this
+     ground (4.82:1), so anything dimmer - which is the entire point of mute2 -
+     cannot be readable text there. An unreadable label is worse than a flat
+     hierarchy. Restoring two readable levels means lifting --rbe-mute as well
+     (say #b6bcc4 / #9aa0a8), which touches a second token with its own
+     consumers and its own grounds - a build of its own, not a silent widening
+     of this one.
+     ⚠ The LIGHT twin (#8a8a8a, below) is deliberately UNTOUCHED. It scores
+     3.45:1 on white by arithmetic, but a light-theme render found ZERO
+     elements actually resolving to it, so that is an unverified number
+     against an assumed ground, not a measured defect. Measure it on a screen
+     that really uses it before changing it. */
+  --rbe-mute:#9aa0a8;--rbe-mute2:#9aa0a8;
   --rbe-link:#6db3f2;
   --rbe-line:#232329;--rbe-line2:#2b2b33;--rbe-line3:#3a3a44;
   --rbe-panel:#16161B;--rbe-panel2:#101015;--rbe-panelbd:#24242c;--rbe-railbg:#0E0E12;
@@ -42137,6 +42167,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1127, d:'2026-08-28', t:'Three unreadable labels, found by reading 195 sweep findings',
+  s:'A visual sweep of the whole app had been reporting 195 findings for a while and nobody had read them. Read: 120 were the browser cascade working normally, 44 were style rules that lose to another rule, 27 were the sweep telling us it had truncated its own list, and one was wrong \u2014 it said a button missed the 44px touch size when it actually renders 183x44. That left three real ones, all of them text too faint to read. The punch-out description on a punch card was the worst at 3.05:1 against a 4.5 floor \u2014 the screen a project manager reads standing on a roof \u2014 and it turned out not to be one label at all: it comes from a shared grey used in 21 places that was under the floor on every dark background in the app, from 2.6 to 4.2. The sweep only caught the one that happened to be on screen. That grey is now lighter everywhere, measured at 6.89:1 on the page and 4.99:1 on a card, and still a visible step dimmer than the grey above it so the two levels of emphasis stay distinct. The other two were the Roofing and Gutters headers in the estimate line-item library, at 3.77:1 and 3.68:1. Their four sibling trade colours already passed, so these two were stragglers rather than a broken palette: each was deepened without changing its hue, so the six still read as one colour-coded family. The light-mode version of the shared grey looks wrong on paper too, but a light-mode render found nothing actually using it \u2014 so it was left alone rather than changed on a number nobody has seen fail.' },
 { b:1126, d:'2026-08-28', t:'A dead push channel no longer silences email and text',
   s:'The punch-out link that shipped yesterday rides in a text message, and that text was riding on a route that could refuse to send anything at all. api/notify.js fans one alert out to three channels \u2014 push, email and SMS \u2014 and it has carried a comment since build 874 saying each is independent so a dead one never blocks the others. That was true of email against text, and false of push against both: three separate places in the route answered a push problem by abandoning the whole request before a single line of the email or SMS work had run. An unset VAPID_PRIVATE_KEY did it, the push library failing to load on a cold start did it, and \u2014 least obviously \u2014 a refused query against the SUBSCRIPTION table did it, so a hiccup reading who has notifications enabled silently cancelled the email and the text as well. All three now degrade push alone and the other two channels go out regardless. The failure is still reported, by the same names as before, and push gained the per-channel error field that email and text already had. That last part fixed a second, quieter fault: with no way to say \u201Cpush is off at the server\u201D, the built-in test button read the empty subscriber count as \u201Cno device enabled here yet \u2014 tap Enable notifications\u201D, telling you to fix your phone about a missing server setting. It now says which server setting. And a job whose alert reached somebody purely by text \u2014 the only channel that still works when the other two are unconfigured \u2014 is finally announced as notified instead of as a failure.' },
 { b:1125, d:'2026-08-28', t:'Punch-out texts are tappable \u2014 they open the punch-out',
@@ -69238,7 +69270,14 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-picker .box-list{background:var(--est-bg);}
 #cr-est-picker .cat-header{background:#EEF1F4;color:var(--est-dim);border-top:1px solid var(--est-line);border-bottom:1px solid var(--est-line);}
 /* dark twins of the category palette, for the light header #EEF1F4 */
-#cr-est-picker{--lc0:#B06A10;--lc1:#2F6DA8;--lc2:#1F8A86;--lc3:#8A4FB0;--lc4:#C0392B;--lc5:#5A6472;}
+/* 1127: --lc0 was #B06A10 (3.77:1) and --lc2 was #1F8A86 (3.68:1) on this
+   picker's own #eef1f4 card, against the 4.5 floor for 11px/800 label text.
+   Their four siblings already sat at 4.78-5.29, so these two were stragglers
+   in a compliant set, not a palette-wide problem. Deepened by LIGHTNESS only
+   - hue held within 0.3 degrees - so the six still read as one colour-coded
+   family: the build-557 rule, 'the same colour deepened, not a swap to
+   another hue'. Now 4.83:1 each, inside the siblings' band. */
+#cr-est-picker{--lc0:#985B0E;--lc1:#2F6DA8;--lc2:#1A7572;--lc3:#8A4FB0;--lc4:#C0392B;--lc5:#5A6472;}
 #cr-est-picker .cat-header .cc{background:#E2E8F0;color:var(--est-dim);}
 #cr-est-picker .p-item .price{color:var(--est-red);}
 #cr-est-picker .p-item{border-bottom:1px solid var(--est-line);}

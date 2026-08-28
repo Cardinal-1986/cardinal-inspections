@@ -1,5 +1,41 @@
 # Cardinal Resource App — Open Items
 
+---
+
+## ✅ The 195 carried sentinel findings — TRIAGED 28 Aug 2026 (build 1127)
+
+**Read once so nobody reads them again.** A full `--all` sweep of build 1126 across
+390/1194/1440px, every finding classified:
+
+| bucket | n | verdict |
+|---|---:|---|
+| `OVERRIDDEN` | 120 | **noise** — the cascade working. sentinel.js's own source calls it "just the cascade", meaningful only when the rule is NEW, which is why it is suppressed without `--since` |
+| `DEAD` | 44 | **low signal** — rules losing to no-more-specific rules. Also **under**-reported: capped at 20 per render |
+| `TRUNCATED` | 27 | **not defects** — every one is the sweep warning it hit that 20-per-render cap |
+| `INK` | 3 | **real — all three fixed at 1127** |
+| `FLOOR` | 1 | **false positive** — `#acxTrBtn` renders 183×44; see BUG_CLASSES 79 |
+
+**Signal rate 3 in 195 (1 in 65).** The three were: the punch-out description at 3.05:1
+(really 2.69 on the binding gradient stop) and the Roofing/Gutters trade headers at
+3.77/3.68. All measured, all fixed, all gated by `gate_1127.mjs`.
+
+**What is still open from this triage, and deliberately not done:**
+
+1. **`--rbe-mute` and `--rbe-mute2` are now the same colour on dark** (`#9aa0a8`). The
+   floor beat the two-level hierarchy — see the 1127 build-log entry. Restoring two
+   readable levels means lifting `--rbe-mute` (say `#b6bcc4` / `#9aa0a8`): a second
+   token, its own consumers, its own grounds. **A build of its own.**
+2. **The light `--rbe-mute2` (`#8a8a8a`) is unverified.** 3.45:1 on white by arithmetic,
+   but a light-theme render found **zero** elements resolving to it. Measure it on a
+   screen that really uses it before touching it.
+3. **The 44 DEAD findings were not individually read** — the class has never produced a
+   confirmed defect here, and the listing is truncated anyway. If DEAD is ever to be
+   trusted, the per-render cap has to go up first.
+4. **`sentinel_probe.js`'s FLOOR check should measure the box**, not the declaration
+   (BUG_CLASSES 79). Until then expect this false positive on every sweep.
+
+⚠️ **Do not re-file the 191.** They are noise *as classified above*, not "unknown".
+
 ## ✅ SETTLED 28 Aug 2026 — the Labor Rate Schedule is per crew (build 1123)
 
 - **Crew list first, then that crew's sheet.** Not one document titled Santiago.

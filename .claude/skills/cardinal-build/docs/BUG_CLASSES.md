@@ -4110,3 +4110,43 @@ ok(smsSites.every(l => /twReady/.test(l)), '...');           // all read the ONE
 
 Negative-controlled against two injected violations — a site recomputing readiness, and a
 report deleted — and it catches both, which the `>= 3` floor did not.
+
+---
+
+## 78 — a contrast rig that stops at the wrong ancestor, in either direction
+
+**Build 1127**, and it cost two wrong answers in ten minutes — both confident.
+
+| the walk | what it does | what it reported |
+|---|---|---|
+| read `backgroundColor`, stop at first hit | **sails past a gradient** — a card painting `linear-gradient(...)` has `backgroundColor: rgba(0,0,0,0)` | punch line **6.89:1**, passing, when it was 4.40 |
+| collect every stop, worst across ALL ancestors | **walks past an opaque card** into the page behind it | estimate labels **3.63:1**, failing, when they were 4.83 |
+
+**The rule: collect every ground painted at each level — the solid colour AND every
+gradient stop — then STOP at the first fully opaque paint.** Anything above an opaque
+paint is covered and cannot reach the eye; anything below one still composites.
+
+⚠️ **And the binding ground may not be the one a sweep names.** `.pu-card` paints
+`linear-gradient(#2E333B, #262A31)`. The sentinel reported the **dark** stop; the light
+stop is half a point harder, and a replacement colour chosen against the reported stop
+measured 4.99 there and **4.40** against the real worst. It would have shipped under the
+floor on a number I computed myself. When a gradient is in the chain, score the worst
+stop, not the one you were handed.
+
+**Only dumping the real ancestor chain settled which walk was right.** Two plausible
+implementations, two confident numbers, opposite errors — reading the chain is cheap and
+is the only thing that adjudicates.
+
+## 79 — a floor check that asserts the DECLARATION won, not that the box is big enough
+
+**Build 1127**, found while triaging a full sweep. `#acxTrBtn` was reported as failing
+the 44px touch floor — "computes 0px". **It renders 183×44.**
+
+Two faults in one check: it reads `getComputedStyle(el).minWidth` and concludes the
+element is too small, when a losing `min-width` says nothing about the rendered box; and
+`parseFloat('auto')` is `NaN`, which `|| 0` turns into a confident zero.
+
+**A size floor must measure the box.** The declaration is a means; `getBoundingClientRect()`
+is the thing a thumb actually hits. The check earned its keep on `#payView .pay-chip`
+(really 34px) — but that one was small *and* out-specified, so the two conditions were
+never separated.

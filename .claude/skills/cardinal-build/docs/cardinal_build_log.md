@@ -29389,6 +29389,79 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
 
+## Build 1127 — the 195-finding sweep, read; three real, one wrong, 191 noise
+
+Theo picked "ship all three" after the triage. **The triage is the deliverable as
+much as the fix** — the number had been sitting in every sentinel run for weeks and
+nobody had read it.
+
+### What 195 actually was
+
+| bucket | n | verdict |
+|---|---:|---|
+| OVERRIDDEN | 120 | the cascade working. The tool's own source calls it "just the cascade", meaningful only when the rule is NEW |
+| DEAD | 44 | rules losing to no-more-specific rules. Low signal, and **under**-reported — capped at 20 per render |
+| TRUNCATED | 27 | **not defects** — every one is the sweep warning it hit that cap |
+| INK | 3 | **real** |
+| FLOOR | 1 | **false positive** |
+
+**Signal rate 3 in 195 — 1 in 65**, quieter even than the 1-in-40 the skill records.
+
+**The false positive is worth keeping.** `#acxTrBtn` was reported as missing the 44px
+touch floor, "computes 0px". It renders **183×44**. The check asserts the `min-width`
+DECLARATION wins, and `parseFloat('auto')` is 0 — so a button that is fine reads as a
+defect. The check should measure the box before firing.
+
+### The three real ones, and what reading them changed
+
+- **Trade headers** in the estimate library: Roofing 3.77:1, Gutters 3.68:1 on the
+  picker's own `#eef1f4` card, 11px/800 against a 4.5 floor. Their **four siblings
+  already passed** (4.78–5.29), so these were stragglers, not a broken palette. Each
+  deepened by lightness only, hue held within 0.3° — the 557 rule. Now 4.83:1.
+- **The punch-out description** at 3.05:1. ⚠️ **Not a one-element bug.** `.pu-m` takes
+  its colour from `--rbe-mute2`, a token with **21 consumers**, and that value was under
+  floor on *every* dark ground (4.21 page, 2.69 card). The sweep named the one consumer
+  that happened to render. Same shape as `.viewhead` — an app-wide class failing on
+  fifteen pages. Ask who else uses it.
+
+### ⚠️ Two things my own instrument got wrong, in opposite directions
+
+The first cut of `gate_1127.mjs` read only `backgroundColor` and stopped at the first
+hit. That **sails past `.pu-card`'s `linear-gradient`** and scores the punch line
+against the page two levels below — it reported 6.89:1 for a line that was really
+4.40:1, and passed. Fixing it by collecting every gradient stop and taking the worst
+across ALL ancestors then went too far the other way: it scored the estimate labels
+against the page ground behind an **opaque** `#eef1f4` card and a 0.55 scrim, turning a
+correct 4.83 into 3.63 and failing correct code. **Right rule: collect every stop at
+each level, then STOP at the first fully opaque paint.** Both errors produced confident
+numbers; only dumping the real ancestor chain settled it.
+
+**And the binding ground was not the one the sweep named.** `.pu-card` paints
+`linear-gradient(#2E333B, #262A31)`; the sweep reported the DARK stop. My first
+replacement, `#9099a3`, measured 4.99 against that stop and **4.40 against the light
+one** — it would have shipped still under the floor on a number I computed myself.
+
+### ⚠️ The fix collapses two tokens into one, deliberately
+
+`--rbe-mute2` is now `#9aa0a8` — **identical to `--rbe-mute` on dark**. `--rbe-mute` is
+itself the dimmest grey clearing 4.5 on the binding ground (4.82:1), so anything dimmer
+— which is the entire purpose of `mute2` — cannot be readable text there. The floor and
+the two-level hierarchy cannot both hold on that surface. An unreadable label is worse
+than a flat hierarchy. **Restoring two readable levels means lifting `--rbe-mute` too**
+(say `#b6bcc4` / `#9aa0a8`), a second token with its own consumers and grounds — a build
+of its own, not a silent widening of this one. `gate_1127.mjs` asserts the collapse on
+purpose, so the next reader sees a decision rather than a slip.
+
+**The light twin `#8a8a8a` is deliberately UNTOUCHED.** It scores 3.45:1 on white by
+arithmetic — but a light-theme render found **zero** elements resolving to it, so that
+is an unverified number against an assumed ground. Measure it on a screen that really
+uses it before changing it.
+
+**Gate:** `gate_1127.mjs` — GREEN 10 / **RED 7 on 1126**, no crash. It reproduces the
+sweep's exact numbers on the control and scores against the composited ground.
+
+---
+
 ## Build 1126 — a dead push channel no longer silences the email and the text
 
 Theo, after 1125 shipped: *"Fix the notify route so channels are independent."*
