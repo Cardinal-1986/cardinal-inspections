@@ -835,6 +835,230 @@ not a silent edit.
 
 ---
 
+## Build 1106 — 27 Aug 2026 — The Twilio config is trimmed, and 20003 says WHICH key looks wrong
+
+`index.html` (stamp + CHANGELOG only) + `api/notify.js`. Stamp 1105 → **1106**.
+
+**The round-trip this ends.** 1105 made the failure readable; Theo read it, re-copied both
+credentials off the Twilio console, redeployed twice, and got the identical
+`20003 / HTTP 401`. Two redeploys with no change in the message is the signal that
+"check the keys" was not a diagnosis — it is the same sentence whether the value is
+wrong, is the wrong *kind* of value, or is byte-perfect and carrying a newline.
+
+**The defect, found by reading rather than by guessing.** Nothing in `api/notify.js` ever
+trimmed the `TWILIO_*` values. Line 185 read them raw and line 217 put them straight into
+`Buffer.from(twSid + ':' + twTok)`. **Vercel stores exactly what was pasted**, so a trailing
+newline from a phone copy rides into the Basic auth header, and Twilio answers 20003 —
+byte-identical to a genuinely wrong key. Re-copying carefully cannot fix it if the newline
+comes along every time, which is precisely the symptom: two careful re-copies, same error.
+
+**Two changes.**
+
+1. **One source, trimmed.** All four values are read once at the top of the handler into
+   `*Raw`, trimmed into `twSid` / `twTok` / `twMsgSvc` / `twFrom`, and reduced to a single
+   `twReady`. Every consumer — the send gate and all **three** `sms:` capability reports —
+   now reads that one answer. This deletes the class that caused the 1100 regression rather
+   than policing it: 1100 widened two of the four `process.env` readers and missed the
+   third, so the app said "not set up yet" while it was sending. Four readers → **two lines,
+   one answer**.
+2. **`twShape()` — describe the value without revealing it.** On a 20003 the message now
+   names, for each credential: whether it arrived with stray whitespace, its two-letter type
+   prefix (`AC` / `MG` / `SK` are public type markers, not secrets) and its length against
+   what Twilio uses. So an `MG` pasted into `TWILIO_ACCOUNT_SID`, a half-paste, and an
+   invisible newline are three different sentences instead of one.
+   **The auth token's characters are never printed** — only whitespace and length.
+
+**⚠ The stamp moved even though the fix is server-side.** Precedent (1100, 1103, the whole
+809–836 arc) is that an api-only build leaves `index.html` alone — but Theo had redeployed
+twice with nothing on screen changing, so there was no way to tell *which code was running*.
+That is the `WORKER_BUILD` lesson from 829 in a different costume: provenance is a query,
+never an argument. `index.html` carries the stamp and one CHANGELOG entry; no behaviour.
+
+**Gates.**
+- `check_build` GREEN — 126 inline scripts parse, stamp 1105 → 1106, marker `b:1106` present,
+  negative control clean.
+- `harness_notify_sms1100.mjs` GREEN (39 assertions), **RED(10) on 1105** with no crash — the
+  `guard()` wrapper reports the missing `twShape` as a failure instead of dying, which is
+  BUG_CLASSES 37 avoided by construction.
+- **Two mutation tests, because a new contract that has never been seen to fail is not a
+  contract.** (a) Reintroduce the exact 1100 regression — one `sms:` site quietly recomputing
+  `twSid && twTok && twFrom` — and the harness goes RED on it. (b) Point the auth header back
+  at the untrimmed pair and it goes RED naming the line. Both fired.
+- `twShape()` is **extracted from the shipped file and executed**, not regex-matched: a good
+  SID, a good token, unset, empty, a trailing newline, wrapping spaces, an `MG` in the SID
+  slot, an `SK` in the SID slot, a half-paste. Plus a **leak assertion** — no 4-character run
+  of a 32-char token appears anywhere in the three messages it can produce.
+- `render_smserr1105.mjs` extended to measure **both** worst cases at 390px and GREEN on both
+  (1105's JSON blob wraps to 4 lines, 1106's shape report to 7, neither overflows 268px).
+  **RED(5) on 1104.** ⚠ Worth noting: on 1104 the *1106* string does not overflow — it is
+  prose with spaces, so it breaks naturally without the wrap rule. Measuring only the new
+  string would have been the weaker test; keeping the old one is what keeps the gate honest.
+- No SQL. `MIGRATIONS.md` unchanged.
+
+**✅ CONFIRMED THE SAME EVENING — the trim was the fix.** Theo ran the test on his phone
+straight after 1106 deployed and got all three channels green: *"Push sent to 2 devices ·
+Email sent · **Text sent**."* **The keys were never re-entered between the last 20003 and that
+success** — only 1106 landed — so one of them really was carrying a pasted newline. The whole
+1100–1106 arc, five builds, ends on a whitespace character.
+
+**The rule worth keeping, stated once:** **trim every credential read from an env var.** A
+pasted newline is invisible in the Vercel UI, survives every careful re-copy, and makes the
+provider answer with an auth error **byte-identical to a genuinely wrong secret** — so the
+error text sends you to re-check the thing that is already correct. That is why two redeploys
+changed nothing and why "check the keys" was the wrong instruction three times running.
+
+**A second thing settled here, by measurement rather than assumption.** Chasing a
+wrong-Vercel-project theory, the three projects that build this repo were fingerprinted through
+the public `/api/ai-status`: `app.cardinalroster.com` and `cardinal-inspections.vercel.app`
+report an identical env (gemini/openai/supabase/anthropic all live), `cardinal-ap.vercel.app`
+reports **every key empty**, and `0d6e4079e367.vercel.app` **404s with no production
+deployment**. So **`app.cardinalroster.com` is served by `cardinal-inspections`** — recorded
+because it had never been written down, and because the theory it killed was mine. The other
+two projects build on every push and serve nothing.
+
+## Build 1105 — 27 Aug 2026 — A failed test text says what went wrong, readably
+
+Theo, with a screenshot and two words: **"Can't read also"**. App stamp 1104 → **1105**;
+`index.html` + `api/notify.js`.
+
+**The 1102/1103 work did its job — and exposed the next defect.** The test button finally surfaced
+the real Twilio failure instead of "add your mobile number":
+
+    ⚠️ Text failed — HTTP 401 {"code":20003,"message":"Authenticate","more_info":"https://w
+
+…cut off mid-URL, running off the right edge of the screen and under the floating dark-mode button.
+**A correct diagnosis nobody can read is not a diagnosis.**
+
+**Two causes, both fixed.**
+1. `#testAlertStatus` carried `white-space:pre-line` and **no wrap rule**, so an unbroken JSON/URL
+   string could not break — it overflowed instead. Now `overflow-wrap:anywhere` +
+   `word-break:break-word`, plus `padding-right:52px` so text clears the fixed FAB.
+2. `notify.js` dumped Twilio's raw body `.slice(0, 90)` — truncation mid-token by construction. It
+   now parses the JSON and says what the code MEANS, keeping the number searchable: **20003/401 →
+   "Twilio rejected the credentials, check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in Vercel"**;
+   21606/21659/21660 → sender not in the Messaging Service pool; 21610 → opted out; 21211/21614 →
+   bad recipient; anything else → `HTTP n (code) message`.
+
+⚠️ **The live finding this build was written on: Twilio is returning 20003 (auth).** That is a
+credentials problem in Vercel, not app code — the campaign, the Messaging Service and the phone
+lookup are all now proven good.
+
+Gate: `check_build` green (stamp 1104→1105, negative control clean) + `render_smserr1105.mjs`, which
+puts **the exact string from the screenshot** into the real element and measures it in Chromium.
+GREEN on 1105 (268px wide, wraps to 4 lines, no overflow, 52px clearance), **RED (3) on 1104**.
+⚠️ **The first run of that gate passed VACUOUSLY** — the element lives inside `profileView`
+(`display:none`), so it measured `scrollWidth 0 <= clientWidth 0`. It now lays the screen out first
+**and refuses to pass on a zero-width element**, which is the assertion that would have caught it.
+
+## Build 1104 — 27 Aug 2026 — Shared screens all wear the Production header
+
+Theo, with screenshots: Settings came up **Community green** and the Team Directory came up
+**Production amber** in the same sitting — *"why does the header go to community and randomly change
+in other pages"*. App stamp 1102 → **1104** (1103 is the api-only SMS build, no stamp).
+
+**Not random — half-finished.** Build 979 pinned `punchView` and `teamView` to the production head
+because they belong to no CRM. Every *other* shared screen — Settings, My Profile, the Audit Log —
+still fell through to `stickyCrm()` and wore whichever portal was last used. Two screens of the same
+kind, two different answers, which is exactly what reads as random.
+
+**Theo's pick (27 Aug): the PRODUCTION head for all of them.** Offered neutral-steel vs. keep-and-
+label; he asked for Production, which is also the colour Team already had.
+
+**Extended the 979 mechanism rather than adding a second one.** The two 979 `if` blocks are folded
+into ONE list — `SHARED_HEAD_1104 = ['punchView','teamView','settingsView','profileView','auditView']`
+— so there is exactly one place that answers "which shared screens wear the production head", instead
+of five stacked ifs. Every id carries an inline `display:none` in the markup (**verified for all five**
+— that is what makes the `style.display !== 'none'` test correct on first paint).
+
+**Precedence and scope are unchanged:** still the LAST guard, so `projopen` and a real CRM view both
+outrank it; and it moves the **head only** — `data-crm` stays put, per the 754 line that grounds and
+module gates never follow the portal.
+
+⚠️ **Two colour claims in this session were WRONG because I quoted doc prose instead of resolving the
+tokens, and Theo corrected both.** For the record, measured from the file: retail head `#1a1215` +
+red accent; **insurance `#1a0e0d` + red** (`--ct-head-bg:#CE0E18`) — CLAUDE.md's "Aurora teal" is
+stale; community `#047857` + mint; production `#181b20` + amber `#f5a623`; sales `#1a1310` + steel
+blue. **Resolve the variable, never quote the prose.**
+
+Gate: `check_build` green (stamp 1102→1104, negative control clean) + `render_head1104.mjs`, a real
+Chromium drive that stands in community AND insurance, opens each of the five screens, and reads
+`CardinalHeader.crmHead()` — plus a control that the head is not production with nothing open, that
+`data-crm` never moves, and that `projopen` still wins. GREEN on 1104, **RED (6) on 1103** — the six
+being Settings/Profile/Audit under both portals. ⚠️ Two harness faults caught first, both mine:
+`crmHead` is module-private (must go through `window.CardinalHeader`), and `show()` runs
+`hideAllViews()` which clears `projopen`, so the precedence check passed **vacuously** until the
+class was set after the view.
+
+## Build 1103 — 27 Aug 2026 — The SMS phone lookup was running as `anon` (RLS returned nothing)
+
+`api/notify.js` only — no `index.html` change, so **no app-stamp bump** (out-of-index build, like
+1100). Reported as "still doesn't work, my number is in" — and the label had *moved* from "not set
+up yet" to "add your mobile number", which is what localised it: 1102 proved Twilio was configured,
+so the send loop was finding **zero phones**.
+
+**Root cause, measured against production.** `team_profiles`' only SELECT policy is
+`roles={authenticated} using=is_staff()`. The route queried it with the **publishable (anon) key**,
+so the request arrived as role `anon`, matched no policy, and **RLS returned an EMPTY ARRAY — not an
+error**. `phones` came back empty, nothing sent, and the honest-looking message blamed the user for
+a missing number that was in the table all along (verified: theo@ has a 13-char phone). Latent since
+874: SMS had never actually been configured before today, so it had never once run this path.
+
+**Fix — no RLS bypass, no new env var.** `requireSession()` already extracts the caller's bearer
+token; it now hands it back, and the lookup sends **the caller's token** instead of the anon key. RLS
+then matches `team_profiles_select`, because `is_staff()` is simply "your JWT email is in
+team_profiles" — true for every signed-in staff member, so multi-recipient alerts work too. A
+service-role key was the alternative and was rejected: it bypasses RLS and needs an env var Theo
+would have had to set.
+
+⚠️ **And the silence is fixed, which is the more important half.** A non-array (refused/errored)
+lookup and an empty result both used to fall through as "no phones" — indistinguishable from a user
+who never entered a number. Each now sets its own `smsErr`, so the test line names the real cause.
+
+⚠️ **`push_subs` is still read with the anon key and push works**, so that table is anon-readable
+where `team_profiles` is not. Left alone deliberately (out of scope), but it is the inconsistency
+that made this bug survive: two tables, two access models, one key.
+
+Gate: `node --check` + `harness_notify_sms1100.mjs` extended — asserts the caller token reaches the
+lookup, both silent paths now report, and the old `Array.isArray` fall-through is gone. GREEN on
+1103, **RED (7) on the shipped 1102 code**.
+
+## Build 1102 — 27 Aug 2026 — The SMS capability report stops lying (my 1100 regression)
+
+**This is a defect I introduced at 1100 and it cost Theo a long round-trip.** Reported as
+"redeployed, still says not set up." App stamp 1101 → **1102**; `index.html` + `api/notify.js`.
+
+**Root cause.** 1100 widened the SMS gate to accept a Messaging Service, and widened the two
+capability reports written as `process.env.TWILIO_*`. It **missed a third site** — the one in the
+success-path response, the only one the in-app test button actually reads — because it is written
+with the *local* variables: `sms: !!(twSid && twTok && twFrom)`. On an account configured with a
+Messaging Service and **no** `TWILIO_FROM` (exactly Theo's, per the approved A2P campaign), that
+reports `sms:false` forever. Worse, the client checked `!env.sms` **first**, so the "not set up"
+line would print **even when the text had genuinely been sent** — `texted` was never consulted.
+
+**Why the gate did not catch it — the lesson, not the excuse.** `harness_notify_sms1100.mjs`
+asserted `…length === 2` on the widened pattern. There were exactly 2 widened sites, so it passed
+— while the third, differently-spelled site sat untouched. **A count is not a contract.** The
+assertion is replaced with a universal one over every site (`smsSites.every(...)` plus a floor of
+3), so a site nobody knew about cannot hide. Same family as CLAUDE.md's "scope the assertion" and
+"a check that cannot fail is worse than no check."
+
+**Fixes.** (1) `api/notify.js` — the third report mirrors the send gate: `(twMsgSvc || twFrom)`.
+(2) `api/notify.js` — response gains `sms_error`, so a real failure is named instead of buried in
+the shared `detail`. (3) `index.html` — the test line reports the **outcome first**: a real send
+outranks any capability guess, then a named error, then "not set up". A stale flag can never again
+mask a text that went out.
+
+⚠️ **Also worth knowing, and NOT a bug:** the phone the SMS path uses comes from **`team_profiles`**
+(the Team Directory), not from the phone field on My Profile — that one writes only to auth
+metadata. Verified in production: all staff but `audit@` and `jerry@` have a phone in
+`team_profiles`, theo@ included, so the lookup was never the blocker here.
+
+Gate: `check_build` green (stamp 1101→1102, negative control clean) + `harness_notify_sms1100.mjs`,
+now covering both files — GREEN on 1102, **RED (2) on the shipped 1101 code**, which is the
+regression reproduced. ⚠️ Its index.html anchors are **ASCII-only on purpose**: the file stores
+non-ASCII as `\u` escapes, and an anchor typed with a literal em-dash/emoji matched nothing and
+failed the check against correct code.
+
 ## Build 1101 — 27 Aug 2026 — Landing hub no longer traps every menu screen
 
 Reported by Theo: "My Profile takes me back to landing." **Reproduced in Chromium**, root-caused,

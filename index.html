@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1101 &#8212; Opening My Profile &#8212; or any menu screen &#8212; from the landing hub used to dump you back on the landing page: the screen really did open, but the landing page&#8217;s full-screen background stayed painted on top of it, so you never saw it. The app now clears the landing screen whenever it opens another screen, so My Profile, Settings, Team, Clients and the rest come up properly from the hub. Nothing about how you get TO the landing screen changed. (Build 1100 was a behind-the-scenes text-messaging change with no app screen, which is why the number jumps.)</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1106 &#8212; When the text service rejects the login, the app now says which of the two keys looks wrong instead of just naming both. The keys are also cleaned of stray spaces and line breaks before they are used &#8212; an invisible line break copied along with a key looked exactly like a wrong key, which is what kept the test failing after the keys had been re-entered correctly. The message reports only the shape of each key &#8212; its first two letters and its length &#8212; never the key itself, so it is safe on screen and in a screenshot.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7843,7 +7843,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn" id="pushEnableBtn">&#128276; Enable notifications on this device</button>
       <span id="pushStatus" style="display:block;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-top:9px;color:#555;"></span>
       <button class="btn ghost" id="testAlertBtn" style="margin-top:12px;">&#128233; Send a test alert to myself</button>
-      <span id="testAlertStatus" style="display:block;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-top:9px;color:#555;white-space:pre-line;line-height:1.5;"></span>
+      <span id="testAlertStatus" style="display:block;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-top:9px;color:#555;white-space:pre-line;line-height:1.5;overflow-wrap:anywhere;word-break:break-word;padding-right:52px;"></span>
     </div>
   </div>
 </div>
@@ -22914,9 +22914,13 @@ document.getElementById('testAlertBtn').addEventListener('click', async function
     if(!env.resend) lines.push('\u2709\uFE0F Email: not set up yet \u2014 add RESEND_API_KEY in Vercel');
     else if((j.mailed || 0) > 0) lines.push('\u2705 Email sent to ' + me);
     else lines.push('\u26A0\uFE0F Email failed' + (j.detail ? ' \u2014 ' + j.detail : ''));
-    /* text */
-    if(!env.sms) lines.push('\uD83D\uDCAC Text: not set up yet \u2014 add the TWILIO_* keys in Vercel');
-    else if((j.texted || 0) > 0) lines.push('\u2705 Text sent');
+    /* text \u2014 1102: report the OUTCOME first. The capability flag is a hint, not the
+       truth: build 1100 left one narrow copy of it behind, so a text that really did
+       go out was still reported as "not set up yet". A real send outranks any guess,
+       and a real error is named instead of guessed at. */
+    if((j.texted || 0) > 0) lines.push('\u2705 Text sent');
+    else if(j.sms_error) lines.push('\u26A0\uFE0F Text failed \u2014 ' + j.sms_error);
+    else if(!env.sms) lines.push('\uD83D\uDCAC Text: not set up yet \u2014 add the TWILIO_* keys in Vercel');
     else lines.push('\u26A0\uFE0F Text not sent \u2014 add your mobile number in the Team Directory, then retry');
     st.style.color = (j.ok ? '#2e7d32' : '#8a5a00');
     st.textContent = lines.join('\n');
@@ -41849,6 +41853,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1106, d:'2026-08-27', t:'The text-message keys are cleaned, and a rejected key says which one', s:'The test text kept failing with the same rejection after the keys had been re-entered twice, because the app was never removing stray spaces or line breaks from them. A line break copied along with a key is invisible on the settings screen and rides straight into the login the app sends &mdash; so a perfectly correct key was being rejected, and the message said only &ldquo;check the keys&rdquo;, which was the same sentence either way. Both keys are now cleaned before use, and when the text service still rejects them the app names the shape of each one: whether it arrived with stray whitespace, what two letters it starts with, and how long it is. That is enough to spot the wrong key pasted into the wrong box. The key itself is never shown, so the message is safe to screenshot.' },
+{ b:1105, d:'2026-08-27', t:'A failed test text now says what went wrong, readably', s:'When &ldquo;Send a test alert to myself&rdquo; could not send the text, it printed the phone company&rsquo;s raw error &mdash; <code>{&quot;code&quot;:20003,&quot;message&quot;:&quot;Authenticate&quot;,&quot;more_info&quot;:&quot;https://w</code> &mdash; cut off mid-word, running off the edge of the screen and under the dark-mode button. Two fixes: the status text now <b>wraps</b> instead of overflowing (and keeps clear of the floating button), and the common failures are written in plain English &mdash; rejected credentials say to check the Twilio keys in Vercel, a blocked sender says to check the number is in the Messaging Service, an opted-out number says so. The error number is kept in the message so it stays searchable.' },
+{ b:1104, d:'2026-08-27', t:'Shared screens keep one header instead of changing colour', s:'Settings, My Profile and the Audit Log used to wear whichever portal header you were last in &mdash; so Settings came up <b>Community green</b> in one sitting while the Team Directory came up <b>Production amber</b>, which read as the header changing at random. It was not random: Team and Punch &amp; Repairs had already been pinned to the Production header, and every other shared screen still followed the last portal you touched. These screens belong to no single CRM, so they now all wear the <b>Production header</b>. From here a portal colour means you are actually standing in that portal. The portals themselves, and the screens that genuinely belong to one, are unchanged.' },
+{ b:1102, d:'2026-08-27', t:'The test alert stops lying about text messages', s:'&ldquo;Send a test alert to myself&rdquo; kept reporting <b>&ldquo;Text: not set up yet&rdquo;</b> on a correctly configured account &mdash; and would have said it even when the text really did go out. Cardinal now sends texts through a Twilio <b>Messaging Service</b> (so they ride the approved carrier campaign), but one leftover check still demanded the old-style single sender phone number, and that check was the one the test button read. It now matches how texts are actually sent. The result line also reports what <b>actually happened</b> instead of guessing: a text that went out says so, a text that failed names the reason, and only a genuinely unconfigured account is told to add keys. Sending was never broken by this &mdash; only the message about it.' },
 { b:1101, d:'2026-08-27', t:'My Profile opens from the landing hub again', s:'Opening <b>My Profile</b> from the landing/portal hub (Menu &rarr; Settings &rarr; My Profile) sent you straight back to the landing page. The profile screen actually opened underneath, but the landing screen has a full-page background that stayed painted on top, so it hid whatever you opened. The landing screen was the one full-screen view the app never cleared when navigating away from it, so this hit every menu screen opened from the hub &mdash; My Profile, Settings, Team, Clients &mdash; not just profile. The app now clears the landing screen whenever it opens another screen. The way you get TO landing (the logo, the Landing menu item) is unchanged.' },
 { b:1099, d:'2026-08-27', t:'Cleaner, sign-ready estimate proposals', s:'The client-facing estimate now prints and shares as a polished proposal. Every scope <b>section</b> gets a clean banner, line items carry a subtle alternating shade for readability, and page breaks are controlled so the totals, deposit box and signature block never split across a page in the PDF. The document closes with an <b>Acceptance &amp; Authorization</b> card &mdash; contract total, deposit due at signing, and balance at completion, right above the signature lines. In the preview you can hide the per-section subtotals for a simpler one-number quote.' },
 { b:1098, d:'2026-08-27', t:'One-tap assemblies for estimates', s:'You can now build an estimate in seconds from ready-made packages that span every trade you run. Tap the new <b>+ Assembly</b> button and pick a template &mdash; Full Roof Replacement (OC Duration), Metal / Standing Seam, Composite &amp; Vinyl Siding, Aluminum Fascia &amp; Vented Soffit, Seamless 6&#34; K-Style Gutters, or Full-Frame Window Replacement &mdash; and it drops straight in as a complete, titled section with all its lines (detailed and flat) ready to price. On the card you can type the total squares (or, for windows, the number of openings) and the field-based lines scale to the job at once; the running-foot and each-count lines (drip edge, gutters, hangers, boots) come pre-filled with sensible starting quantities you adjust. Made a section you want to reuse? Tap <b>Save as Assembly</b> on its header and it is saved to your library, shared across your phone and desktop; delete your own any time. Every built-in package ships with no prices on purpose &mdash; the assembly carries the scope and quantities, and you set the dollars per job so a stale number never rides in. Nothing changes for a plain estimate; this is all opt-in from the two new buttons.' },
@@ -60808,10 +60816,28 @@ if(document.body.classList.contains('projopen')) return 'retail';
    lists items from all three), so a production-tinted PAGE ground would be
    a lie. 754 drew that line deliberately: grounds and module gates do not
    follow the portal, only the header does. */
-var pv979 = document.getElementById('punchView');
-if(pv979 && pv979.style.display !== 'none') return 'production';
-var tv979 = document.getElementById('teamView');
-if(tv979 && tv979.style.display !== 'none') return 'production';
+/* 1104: Theo, with screenshots: Settings came up Community green and Team came
+   up Production amber in the same sitting — "why does the header go to community
+   and randomly change". It was not random: 979 named punch + team, so those two
+   wore production, and every other shared screen still fell through to
+   stickyCrm() and wore whichever portal was last used. Settings, My Profile and
+   the Audit Log are the same KIND of screen as the two 979 named — they belong
+   to no CRM — so they join the same list rather than getting a second mechanism
+   beside it. Theo's pick, 27 Aug: the PRODUCTION head for all of them.
+
+   ONE list, not five stacked ifs: the 979 pair is folded in here, so there is
+   exactly one place that answers "which shared screens wear the production
+   head". Every id below carries an inline display:none in the markup (verified
+   for all five), which is what makes the display test correct on first paint.
+
+   Still the LAST guard: projopen and a real CRM view both outrank it, and it
+   moves the HEAD only — data-crm stays 'retail', per the 754 line that grounds
+   and module gates never follow the portal. */
+var SHARED_HEAD_1104 = ['punchView','teamView','settingsView','profileView','auditView'];
+for(var i1104 = 0; i1104 < SHARED_HEAD_1104.length; i1104++){
+  var el1104 = document.getElementById(SHARED_HEAD_1104[i1104]);
+  if(el1104 && el1104.style.display !== 'none') return 'production';
+}
 /* 1087: THE LANDING IS THE PORTAL PICKER, so it cannot be inside a portal.
    Theo, with a screenshot: "It was the retail crm with insurance header after I
    signed in." Reproduced at the entry point he named — showMain(email), the

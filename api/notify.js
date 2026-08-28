@@ -38,6 +38,11 @@ async function requireSession(req, res){
     if(!who.ok){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
     const user = await who.json();
     if(!user || !user.email){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
+    /* 1103: hand the caller's own token back. The SMS phone lookup needs it —
+       team_profiles' only SELECT policy is roles={authenticated} using=is_staff(),
+       so a query sent with the publishable key arrives as `anon`, matches no
+       policy, and RLS returns an EMPTY ARRAY rather than an error. */
+    user._token = token;
     return user;
   }catch(e){
     res.status(401).json({ ok:false, error:'Could not verify session' });
@@ -60,9 +65,41 @@ function normPhone(p){
   return '';
 }
 
+/* 1106: describe a credential's SHAPE without ever revealing it. Twilio answers
+   a wrong key and an INVISIBLY wrong key with the same 20003, so "check the
+   keys" sent Theo round the same loop twice: he re-copied both, redeployed
+   twice, and got the identical error. What the message could not say is that
+   nothing here ever trimmed the values — Vercel stores exactly what was
+   pasted, and a trailing newline off a phone copy rides straight into the
+   Basic auth header. Reported: the two-letter type prefix (AC/MG/SK are public
+   type markers, not secrets), the length, and whether it arrived wrapped in
+   whitespace. Never a character of the token itself. */
+function twShape(raw, wantPrefix, wantLen){
+  var s = String(raw == null ? '' : raw), t = s.trim();
+  if(!t) return 'not set';
+  var bits = [];
+  if(s !== t) bits.push('has stray whitespace');
+  if(wantPrefix && t.slice(0, 2).toUpperCase() !== wantPrefix)
+    bits.push('starts "' + t.slice(0, 2) + '", expected "' + wantPrefix + '"');
+  if(wantLen && t.length !== wantLen) bits.push(t.length + ' chars, expected ' + wantLen);
+  return bits.length ? bits.join('; ') : 'looks right';
+}
+
 export default async function handler(req, res){
   if(req.method !== 'POST'){ res.status(405).json({ ok:false, error:'POST only' }); return; }
-  if(!(await requireSession(req, res))) return;
+  const _caller = await requireSession(req, res);
+  if(!_caller) return;
+  /* 1106: read and TRIM the Twilio config once, here, and use these everywhere
+     below. Two things this fixes at once: a pasted newline no longer corrupts
+     the auth header, and the capability report can no longer disagree with the
+     send gate — build 1100 widened two of the three sites and left the third,
+     which is how the app said "not set up yet" while it was busy sending. One
+     source, three readers. */
+  var twSidRaw = process.env.TWILIO_ACCOUNT_SID, twTokRaw = process.env.TWILIO_AUTH_TOKEN;
+  var twMsgSvcRaw = process.env.TWILIO_MESSAGING_SERVICE_SID, twFromRaw = process.env.TWILIO_FROM;
+  var twSid = String(twSidRaw || '').trim(), twTok = String(twTokRaw || '').trim();
+  var twMsgSvc = String(twMsgSvcRaw || '').trim(), twFrom = String(twFromRaw || '').trim();
+  var twReady = !!(twSid && twTok && (twMsgSvc || twFrom));
   let webpush;
   try{
     webpush = (await import('web-push')).default;
@@ -104,7 +141,7 @@ export default async function handler(req, res){
       res.status(200).json({ ok:true, sent:0, failed:0, mailed:0, texted:0, subs:0,
         reason:'no_recipients', env:{ vapid_from_env:VAPID_FROM_ENV,
         resend:!!process.env.RESEND_API_KEY,
-        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (process.env.TWILIO_MESSAGING_SERVICE_SID || process.env.TWILIO_FROM)) } });
+        sms:twReady /* 1106: TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM, trimmed, one source */ } });
       return;
     }
 
@@ -120,7 +157,7 @@ export default async function handler(req, res){
         reason:'subs_query_failed',
         detail:String((subs && (subs.message || subs.error)) || 'non-array response').slice(0,140),
         env:{ vapid_from_env:VAPID_FROM_ENV, resend:!!process.env.RESEND_API_KEY,
-        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (process.env.TWILIO_MESSAGING_SERVICE_SID || process.env.TWILIO_FROM)) } });
+        sms:twReady /* 1106: TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM, trimmed, one source */ } });
       return;
     }
 
@@ -176,22 +213,36 @@ export default async function handler(req, res){
        the same recipient emails. A push, an email and a text can all fire for one
        alert; each channel is independent, so a dead one never blocks the others. */
     var texted = 0, smsErr = null;
-    var twSid = process.env.TWILIO_ACCOUNT_SID, twTok = process.env.TWILIO_AUTH_TOKEN, twFrom = process.env.TWILIO_FROM;
     /* 1100: prefer a Messaging Service (TWILIO_MESSAGING_SERVICE_SID) so every text
        rides the approved A2P 10DLC campaign and Twilio picks the registered sender;
        fall back to the bare From number when the service isn't configured, so the
-       gate and behaviour are unchanged wherever only TWILIO_FROM is set. */
-    var twMsgSvc = process.env.TWILIO_MESSAGING_SERVICE_SID;
-    if(twSid && twTok && (twMsgSvc || twFrom) && text){
+       gate and behaviour are unchanged wherever only TWILIO_FROM is set.
+       1106: twSid/twTok/twMsgSvc/twFrom are read and trimmed once at the top of
+       the handler now — this block must not re-read process.env, or the two can
+       drift apart again. */
+    if(twReady && text){
       try{
         var pq = SUPA_URL + '/rest/v1/team_profiles?select=email,phone&email=in.(' +
           emails.map(function(e){ return '"' + e.replace(/"/g, '') + '"'; }).join(',') + ')';
-        var pfr = await fetch(pq, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } });
+        /* 1103: query as the SIGNED-IN CALLER, not as anon — see requireSession.
+           RLS then matches team_profiles_select (is_staff()) and returns the rows.
+           No service-role key and no RLS bypass: the person triggering the alert
+           is staff, and staff may read the directory. */
+        var _tok = (_caller && _caller._token) ? _caller._token : SUPA_KEY;
+        var pfr = await fetch(pq, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + _tok } });
         var profs = await pfr.json();
-        var phones = Array.isArray(profs)
-          ? profs.map(function(p){ return normPhone(p.phone); }).filter(Boolean)
-          : [];
-        phones = phones.filter(function(v, i){ return phones.indexOf(v) === i; });   /* de-dupe */
+        var phones = [];
+        if(!Array.isArray(profs)){
+          /* a refused or errored lookup used to fall through as "no phones", which
+             reads as "add your mobile number" — blaming the user for a server fault. */
+          smsErr = 'team directory lookup failed: ' +
+            String((profs && (profs.message || profs.error)) || 'non-array response').slice(0, 90);
+        }else if(!profs.length){
+          smsErr = 'no Team Directory row was readable for the recipient(s) - check staff access';
+        }else{
+          phones = profs.map(function(p){ return normPhone(p.phone); }).filter(Boolean);
+          phones = phones.filter(function(v, i){ return phones.indexOf(v) === i; });   /* de-dupe */
+        }
         if(phones.length){
           var smsBody = ((title ? title + ': ' : '') + text).slice(0, 320);
           var twUrl = 'https://api.twilio.com/2010-04-01/Accounts/' + encodeURIComponent(twSid) + '/Messages.json';
@@ -205,7 +256,32 @@ export default async function handler(req, res){
                 headers: { Authorization: twAuth, 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: form });
               if(sr.ok) texted++;
-              else if(!smsErr) smsErr = 'HTTP ' + sr.status + ' ' + (await sr.text()).slice(0, 90);
+              else if(!smsErr){
+                /* 1105: this dumped raw Twilio JSON truncated at 90 chars, so the
+                   screen showed `{"code":20003,"message":"Authenticate","more_info":"https://w`
+                   — cut mid-URL and unreadable on a phone. Say what the code MEANS
+                   and what to do about it; keep the number so it is still searchable. */
+                var raw1105 = await sr.text();
+                var tc = 0, tm = '';
+                try{ var tj = JSON.parse(raw1105); tc = Number(tj.code) || 0; tm = String(tj.message || ''); }catch(_tp){}
+                if(sr.status === 401 || tc === 20003){
+                  /* 1106: name WHICH value looks wrong. "Check the keys" is true and
+                     useless — it is the same sentence whether the SID is a Messaging
+                     Service id, the token is half a paste, or both are perfect and
+                     carrying a newline. The shape says which, and reveals nothing. */
+                  smsErr = 'Twilio rejected the credentials (20003). Account SID: ' +
+                    twShape(twSidRaw, 'AC', 34) + '. Auth token: ' + twShape(twTokRaw, '', 32) +
+                    '. Fix in Vercel, then redeploy.';
+                }else if(tc === 21606 || tc === 21659 || tc === 21660){
+                  smsErr = 'Twilio will not send from that sender (' + tc + '). Check the number is in the Messaging Service sender pool.';
+                }else if(tc === 21610){
+                  smsErr = 'That number replied STOP and is opted out (21610).';
+                }else if(tc === 21211 || tc === 21614){
+                  smsErr = 'Twilio rejected the recipient number (' + tc + ') — check the number in the Team Directory.';
+                }else{
+                  smsErr = 'HTTP ' + sr.status + (tc ? ' (' + tc + ')' : '') + (tm ? ' ' + tm : '');
+                }
+              }
             }catch(e4){ if(!smsErr) smsErr = String((e4 && e4.message) || e4).slice(0, 120); }
           }));
         }
@@ -230,7 +306,13 @@ export default async function handler(req, res){
                                           : firstErr.msg)
             : (mailErr || smsErr || undefined),
       /* presence only — never the values */
-      env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey, sms: !!(twSid && twTok && twFrom) }
+      /* 1102: this is the report the in-app test button reads, and it was the ONE
+         sms capability site build 1100 missed — it still demanded twFrom, so an
+         account configured with a Messaging Service (and no bare From number)
+         reported "not set up yet" even while the send gate happily sent the text.
+         Mirror the send gate exactly: a Messaging Service OR a From number. */
+      sms_error: smsErr || undefined,
+      env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey, sms: twReady /* 1106: same one source as the send gate */ }
     });
   }catch(err){
     res.status(200).json({ ok:false, error: String(err && err.message || err) });
