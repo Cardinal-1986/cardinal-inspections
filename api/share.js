@@ -92,15 +92,77 @@ function signUi(token) {
 </script>`;
 }
 
+// ── the payment bar (client-facing) ─────────────────────────────────────────
+// owedOn: what THIS document owes, computed server-side. KEEP IN SYNC with the
+// identical copy in api/pay.js, which does the authoritative charge — this copy
+// only renders the amount for display.
+async function owedOn(sbHeaders, rep) {
+  const isInvoice = /^invoice/i.test(String(rep.title || '').trim());
+  let collected = 0;
+  const cr = await fetch(
+    `${SUPABASE_URL}/rest/v1/collections?project_id=eq.${rep.project_id}&select=amount`,
+    { headers: sbHeaders });
+  if (cr.ok) for (const r of await cr.json()) collected += Number(r.amount) || 0;
+  if (isInvoice) {
+    let contractTotal = 0;
+    const dr = await fetch(
+      `${SUPABASE_URL}/rest/v1/inspection_reports?project_id=eq.${rep.project_id}&select=title,total,signed_at`,
+      { headers: sbHeaders });
+    if (dr.ok) for (const r of await dr.json()) {
+      if (/^contract/i.test(String(r.title || '').trim()) && r.signed_at && Number(r.total) > 0) contractTotal += Number(r.total);
+    }
+    const jobTotal = contractTotal > 0 ? contractTotal : (Number(rep.total) || 0);
+    return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due' };
+  }
+  const er = await fetch(
+    `${SUPABASE_URL}/rest/v1/estimates?or=(doc_id.eq.${rep.id},contract_doc_id.eq.${rep.id})&select=deposit_amount&limit=1`,
+    { headers: sbHeaders });
+  const est = er.ok ? (await er.json())[0] : null;
+  const deposit = Number(est && est.deposit_amount) || 0;
+  return { cents: Math.round((deposit - collected) * 100), label: 'Deposit' };
+}
+
+// payUi: a polished, trustworthy pay bar. It links to /api/pay?t=… (which does
+// the server-side charge); the amount shown here is display only.
+function payUi(token, cents, label, name) {
+  const dollars = (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  const safeName = String(name || 'Cardinal Roofing & Renovations').replace(/[<>&"]/g, '').slice(0, 64);
+  const href = '/api/pay?t=' + encodeURIComponent(token);
+  const lock = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-1px;margin-right:5px;">'
+    + '<path d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2.5 2.5 0 0 1 2.5 2.5v5A2.5 2.5 0 0 1 16 22H8a2.5 2.5 0 0 1-2.5-2.5v-5A2.5 2.5 0 0 1 8 10z" stroke="#8b8f98" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return `
+<div id="crPayBar" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;
+  padding:0 12px calc(12px + env(safe-area-inset-bottom,0px));pointer-events:none;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+  <div style="pointer-events:auto;max-width:520px;margin:0 auto;background:#ffffff;
+    border:1px solid #ece7e3;border-radius:18px 18px 14px 14px;
+    box-shadow:0 -1px 8px rgba(20,10,8,.05),0 16px 44px rgba(20,10,8,.20);padding:15px 18px 13px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;">
+      <div style="min-width:0;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#6b5d52;">${label}</div>
+        <div style="font-size:13px;color:#6b645e;margin-top:3px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;">${safeName}</div>
+      </div>
+      <div style="font-size:31px;font-weight:800;color:#231b18;letter-spacing:-.015em;white-space:nowrap;line-height:1;">${dollars}</div>
+    </div>
+    <a href="${href}" style="display:block;margin-top:15px;text-align:center;text-decoration:none;
+      background:#C8202E;color:#ffffff;font-size:17px;font-weight:800;letter-spacing:.01em;
+      padding:15px 20px;border-radius:12px;box-shadow:0 6px 15px rgba(200,32,46,.30);">Pay ${dollars}</a>
+    <div style="text-align:center;margin-top:11px;font-size:11.5px;font-weight:600;color:#6b645e;">
+      ${lock}Secure checkout &middot; processed by Stripe</div>
+  </div>
+</div>`;
+}
+
 export default async function handler(req, res) {
   const t = (req.query && req.query.t) || '';
   if (!/^[a-f0-9-]{20,60}$/i.test(t)) { res.status(400).send('Invalid link'); return; }
   const srk = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!srk) { res.status(500).send('Sharing is not configured'); return; }
+  const sbHeaders = { apikey: srk, Authorization: `Bearer ${srk}` };
   try {
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/inspection_reports?share_token=eq.${t}&select=html,title&limit=1`,
-      { headers: { apikey: srk, Authorization: `Bearer ${srk}` } });
+      `${SUPABASE_URL}/rest/v1/inspection_reports?share_token=eq.${t}&select=id,project_id,project,html,title,total,signed_at&limit=1`,
+      { headers: sbHeaders });
     if (!r.ok) throw new Error('lookup failed');
     const rows = await r.json();
     if (!rows.length) { res.status(404).send('This link is no longer available.'); return; }
@@ -162,6 +224,17 @@ export default async function handler(req, res) {
     if (signable) {
       const ui = signUi(t);
       html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
+    } else {
+      // Not awaiting a signature — offer payment if this document owes something:
+      // a deposit on an estimate/contract, or a live balance on an invoice. The
+      // bar is best-effort; a lookup hiccup must never block the document itself.
+      try {
+        const { cents, label } = await owedOn(sbHeaders, rows[0]);
+        if (cents >= 50 && cents <= 10000000) {
+          const ui = payUi(t, cents, label, rows[0].project || rows[0].title);
+          html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
+        }
+      } catch (e) { /* leave the document unblocked */ }
     }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Robots-Tag', 'noindex');

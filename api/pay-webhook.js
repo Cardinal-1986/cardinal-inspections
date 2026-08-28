@@ -52,7 +52,9 @@ export default async function handler(req, res) {
       const meta = s.metadata || {};
       const paid = s.payment_status === 'paid' || s.status === 'complete';
       const amount = (Number(s.amount_total) || 0) / 100;
-      if (paid && meta.kind === 'deposit' && meta.project_id && amount > 0) {
+      // a deposit records as 'deposit'; an invoice balance as 'final' (collections.type CHECK)
+      const collType = meta.kind === 'balance' ? 'final' : 'deposit';
+      if (paid && (meta.kind === 'deposit' || meta.kind === 'balance') && meta.project_id && amount > 0) {
         const ins = await fetch(`${SUPABASE_URL}/rest/v1/collections`, {
           method: 'POST',
           headers: {
@@ -63,11 +65,11 @@ export default async function handler(req, res) {
             project_id: meta.project_id,
             collected_at: new Date().toISOString().slice(0, 10),
             amount,
-            type: 'deposit',
+            type: collType,
             source: 'homeowner',
             method: 'card',
             external_ref: String(s.payment_intent || s.id),
-            notes: 'Online card deposit via secure link',
+            notes: 'Online card payment via secure link',
             created_by: 'stripe'
           }])
         });
