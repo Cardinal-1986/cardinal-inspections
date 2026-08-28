@@ -3858,7 +3858,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="pricing" data-cri="tag lg">Pricing Catalog</button>
           <button class="navopt" data-nav="companydocs" data-cri="folder lg">Company Documents</button>
           <button class="navopt" data-nav="crews" data-cri="hardhat lg">Crews</button>
+          <button class="navopt" data-nav="laborrates" data-cri="clipboard lg">Labor Rate Schedule</button>
           <button class="navopt" data-nav="pay" data-cri="cash lg">Commissions</button>
+          <button class="navopt" data-nav="ar" data-cri="cash lg">Invoices &amp; AR</button>
 
           <div class="navsec">Account</div>
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
@@ -3873,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1106 &#8212; When the text service rejects the login, the app now says which of the two keys looks wrong instead of just naming both. The keys are also cleaned of stray spaces and line breaks before they are used &#8212; an invisible line break copied along with a key looked exactly like a wrong key, which is what kept the test failing after the keys had been re-entered correctly. The message reports only the shape of each key &#8212; its first two letters and its length &#8212; never the key itself, so it is safe on screen and in a screenshot.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1112 &#8212; The Pre-Install Guide now comes in three &#8212; Roof, Siding and Windows &#8212; and the right one is chosen automatically from the job&rsquo;s trade when its build day is booked (siding and windows carry their own steps, arrival window and daily-cleanup notes). All three are editable masters in Company Documents. Everything else works exactly as the roof guide already did: auto-filled, sent once per job, with the missing-email prompt. Needs the preinstall_guides_siding_windows.sql migration.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3984,7 +3986,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
               <div class="opsstat" data-opsnav="outlook" style="cursor:pointer;" title="Open Schedule Board"><span class="opsc" style="background:#2f6b3f;" id="opsOutlook">0</span><small>30 Day<br>Outlook</small></div>
             </div>
           </div>
-          <div class="pipecard opscard">
+          <div class="pipecard opscard" id="arCard">
             <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><ellipse cx="12" cy="6.2" rx="7.4" ry="2.4"/><ellipse cx="12" cy="12" rx="7.4" ry="2.4"/><ellipse cx="12" cy="17.8" rx="7.4" ry="2.4"/></g><g class="i5"><ellipse cx="12" cy="6.4" rx="7" ry="2.6"/><path d="M5 6.4v11.2c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6.4" class="m"/><path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6" class="m"/></g></svg>Accounts Receivable</div>
             <div class="arwrap" id="arWrap"></div>
             <div class="artotal" id="arTotal"></div>
@@ -11183,6 +11185,8 @@ var adb = {
       if(r.error) throw r.error;
       await __apptMayAdvanceStage(fields);   /* 783 */
       __apptNotifyProduction(fields);        /* 1047 — fire-and-forget */
+      /* 1111: email the client the Pre-Install Guide when a roof build day is booked. */
+      try{ if(window.__apptEmailPreInstallGuide) window.__apptEmailPreInstallGuide(fields); }catch(_g){}
       return;
     }
     fields.id = uid(); fields.created_by = null;
@@ -11209,6 +11213,8 @@ var adb = {
     /* 1047: 998's attach-job path — a job landing on an existing build day is
        the same news as a new one. Only when this update ATTACHED the job. */
     if(fields.project_id) __apptNotifyProduction(merged);
+    /* 1111: same for a job attached to an existing build day. */
+    try{ if(fields.project_id && window.__apptEmailPreInstallGuide) window.__apptEmailPreInstallGuide(merged); }catch(_g){}
   },
   remove: async function(id){
     if(TEAM){
@@ -11241,6 +11247,7 @@ var estTier = {};   /* 1011: the winning tier per project (2 = accepted/signed, 
 var estDocIds = {}; /* 1011: every doc_id any estimates row points at (ANY status, archived included) — a published copy of a table row must never compete as a second estimate */
 var ctrSigned = {}; /* total on the signed, un-voided contract */
 var collPaid = {};  /* 721: money-in from the collections table, per project — the single source for Balance Due when a job has any collections */
+var cacheCollections = [];  /* 1107: raw collections rows kept for the Invoices & AR view (Paid-this-month, per-job payment counts) */
 var woByReport = {};  /* 723: crew_work_orders row keyed by report_id (its WO document) */
 /* 493: [] means two different things - the table is empty, or we never got a
    successful read. A denied or failed load leaves cacheProjects at its initial
@@ -11330,6 +11337,7 @@ async function reload(){
     if(currentProject && document.getElementById('projectView').style.display !== 'none'){
       renderProjectDocs();
     }
+    if(typeof renderAR === 'function'){ var _arOpen = document.getElementById('cr-ar-view'); if(_arOpen && _arOpen.style.display !== 'none') renderAR(); }
   }catch(e){
     mount.innerHTML = '<div class="empty"><b>Could not load.</b><br>' + esc(e.message || e) + '</div>';
   }
@@ -12003,6 +12011,11 @@ function renderAcxOverview(){
     '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
     '<span style="text-align:right;"><small>Balance Due</small><b class="' + (fin.balance > 0 ? 'db-due' : 'db-paid') + '">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
+  /* 1108: the rep-facing Invoices & Payments block, right under the money strip. */
+  html += (window.CardinalAR && window.CardinalAR.jobBlock) ? window.CardinalAR.jobBlock(pr, fin) : '';
+  /* 1111: manual re-send of the Pre-Install Guide (auto-sends on scheduling; this
+     covers a job scheduled before the feature shipped, and re-sends). Roofing only. */
+  html += (window.CardinalGuide && !window.CardinalGuide.isNonRoofOnly(pr)) ? ('<div class="db-guiderow"><span class="dbg-t">Roof Pre-Install Guide</span><button class="estopt" data-cr-guide-send="' + esc(pr.id) + '">Email to client</button></div>') : '';
   /* ---- payment information + money in ---- */
   /* 796: the two money doors sit together. Money In was a half-width tile
      alone on its own row at the bottom of the Job Menu, and it is the ONLY
@@ -16523,6 +16536,13 @@ async function createInvoiceFor(pr){
   tpl = tpl.replace('[INV_DUE]', fmtMoney(fin.balance, true));
   try{
     var id = await db.create('Invoice \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
+    /* 1108: mint the share token + persist the numeric total at creation, so the
+       invoice is sendable immediately and AR reads its total without recomputing. */
+    try{
+      var _itok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+                : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+      await db.update(id, { share_token: _itok, total: fin.value });
+    }catch(_it){}
     await reload();
     await openEditor(id);
     crTell('Invoice ' + num + ' created from the signed contract and payments logged in the Worksheet. Email it to the client \u2014 the job moves to INVOICED automatically when sent.');
@@ -18828,6 +18848,15 @@ function hideAllViews(){
      covering the next screen — the 570-572 nav-trap class again. */
   var _can = document.getElementById('cr-can');
   if(_can) _can.style.display = 'none';
+  /* 1107: Invoices & AR is a fixed inset:0 view, DISPLAY-shown, so display:none. */
+  var _arv = document.getElementById('cr-ar-view');
+  if(_arv) _arv.style.display = 'none';
+  /* 1110: Labor Rate Schedule is a fixed inset:0 view, display-shown. */
+  var _lrsv = document.getElementById('cr-lrs-view');
+  if(_lrsv) _lrsv.style.display = 'none';
+  /* 1111: the Pre-Install Guide editor is a fixed inset:0 view, display-shown. */
+  var _gev = document.getElementById('cr-guide-editor');
+  if(_gev) _gev.style.display = 'none';
   /* 1101: landingView is the last top-level view that was NOT registered here — its
      ::before is position:fixed;inset:0 (a full-screen background), so opening any menu
      screen (My Profile, Settings, Team, Clients…) from the landing hub left landing
@@ -20285,6 +20314,8 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'punch'){ if(typeof window.openPunchView === 'function') window.openPunchView(); }
   else if(nav === 'newbid'){ if(window.CardinalNewBid && typeof window.CardinalNewBid.open === 'function') window.CardinalNewBid.open(); }
   else if(nav === 'backup'){ exportBackup(); }
+  else if(nav === 'ar'){ if(typeof openAR === 'function') openAR(); }
+  else if(nav === 'laborrates'){ if(typeof openLRS === 'function') openLRS(); }
   else { openList(nav); }
 });
 
@@ -20852,6 +20883,10 @@ function renderCompanyDocs(){
       t + (n ? ' (' + n + ')' : '') + '</button>';
   }).join('');
   var rows = (__cdTrade === 'All') ? COMPANY_DOCS : COMPANY_DOCS.filter(function(d){ return d.trade === __cdTrade; });
+  /* 1111/1112: the Pre-Install Guides (Roof / Siding / Windows) — editable master
+     docs that auto-email to the client when a matching build day is booked. */
+  var __guideRow = (window.CardinalGuide && window.CardinalGuide.docsRows)
+    ? window.CardinalGuide.docsRows(__cdTrade, isAdmin()) : '';
   document.getElementById('cdDocList').innerHTML = rows.length
     ? rows.map(function(d){
         return '<div class="cdocrow"><span class="cdicon">&#128196;</span>' +
@@ -20866,6 +20901,7 @@ function renderCompanyDocs(){
             'data-cddl="' + esc(d.file) + '">Download</a></div>';
       }).join('')
     : '<div class="empty"><b>No ' + __cdTrade.toLowerCase() + ' documents yet.</b><br>Add the file to the /docs folder and list it in COMPANY_DOCS.</div>';
+  try{ if(__guideRow) document.getElementById('cdDocList').insertAdjacentHTML('afterbegin', __guideRow); }catch(_g){}
   try{ cdCheckFiles(); }catch(_){}
 }
 /* 746: two of the five listed documents did not exist in /docs, so both buttons
@@ -21213,6 +21249,7 @@ function indexMoney(estimates, contracts){
    the commission, so it is made authoritative for Balance Due (see jobFinance).
    A project absent here has no collections yet and keeps its legacy paid. */
 function indexCollections(collections){
+  cacheCollections = collections || [];
   collPaid = {};
   (collections || []).forEach(function(c){
     if(!c || !c.project_id) return;
@@ -25328,6 +25365,7 @@ async function openEditor(id){
       wireCheckboxes(doc);
       wireColorSelects(doc);
       wireWoFields(doc);
+      wireInvoiceLive(doc, r);   /* 1109: live invoice status/balance/ledger */
       refreshSigBtn();
       __fillIdx = 0;
       refreshFillChip();
@@ -25349,11 +25387,124 @@ async function openEditor(id){
   document.body.style.overflow = 'hidden';
 }
 
+/* 1109: live status / balance-due card + payment-history ledger on the INVOICE
+   document. Injected into the editor iframe on load, computed from the live
+   ledger (jobFinance + collections), NOT the values baked into the doc at
+   creation. Marked data-cardinal-live so serializeFrame() strips it on save —
+   the stored document stays the as-issued record; this is the current layer.
+   Prints (no `no-print`); print rules keep the badges crisp and high-contrast. */
+var INV_LIVE_CSS = `
+#cr-inv-live{border:2px solid #1b1b1b;border-radius:9px;padding:13px 16px;margin:16px 0 20px;background:#fff;font-family:inherit;}
+#cr-inv-live .cil-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+#cr-inv-live .cil-lbl{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#555;}
+#cr-inv-live .cil-pill{font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 11px;border-radius:999px;border:1.5px solid currentColor;white-space:nowrap;}
+#cr-inv-live .cil-pill.sent{color:#1d4ed8;}
+#cr-inv-live .cil-pill.part{color:#b45309;}
+#cr-inv-live .cil-pill.paid{color:#0f7a43;}
+#cr-inv-live .cil-pill.draft{color:#555;}
+#cr-inv-live .cil-amt{font-size:31px;font-weight:800;color:#9c1822;line-height:1.1;margin-top:3px;}
+#cr-inv-live .cil-meta{font-size:12px;color:#555;margin-top:5px;}
+#cr-inv-live.paid{border-color:#0f7a43;background:#eefaf2;}
+#cr-inv-live.paid .cil-badge{font-size:23px;font-weight:900;letter-spacing:.07em;color:#0f7a43;}
+#cr-inv-live.paid .cil-sub{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin-top:6px;}
+#cr-inv-live.paid .cil-sub span{color:#555;}
+#cr-inv-live.paid .cil-sub b{color:#1b1b1b;}
+#cr-inv-ledger{margin:24px 0 6px;}
+#cr-inv-ledger .cil-secthead{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#1b1b1b;border-bottom:2px solid #1b1b1b;padding-bottom:4px;margin:0 0 9px;}
+#cr-inv-ledger table{width:100%;border-collapse:collapse;font-size:12.5px;}
+#cr-inv-ledger th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#555;border-bottom:1.5px solid #1b1b1b;padding:5px 6px;}
+#cr-inv-ledger td{padding:6px;border-bottom:1px solid #cfcfcf;}
+#cr-inv-ledger .amt{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;}
+#cr-inv-ledger tfoot td{border-top:2px solid #1b1b1b;border-bottom:none;font-weight:800;}
+#cr-inv-ledger .cil-none{font-size:12.5px;color:#666;padding:4px 0;}
+@media print{
+  #cr-inv-live,#cr-inv-ledger{-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-inside:avoid;}
+  #cr-inv-live{border-width:2px;}
+  #cr-inv-ledger table{page-break-inside:auto;}
+  #cr-inv-ledger tr{page-break-inside:avoid;}
+}`;
+function wireInvoiceLive(doc, r){
+  try{
+    if(!doc || !r || !/^invoice/i.test(String(r.title || '').trim())) return;
+    var pr = cacheProjects.find(function(p){ return p.id === r.project_id; });
+    if(!pr) return;
+    ['cr-inv-live', 'cr-inv-ledger', 'cr-inv-live-style'].forEach(function(id){
+      var e = doc.getElementById(id); if(e) e.remove();
+    });
+    var fin = jobFinance(pr);
+    var billed = Number(fin.value) || 0, paid = Number(fin.paid) || 0, bal = Number(fin.balance) || 0;
+    var st = (window.CardinalAR && CardinalAR.status) ? CardinalAR.status(pr) : null;
+    var isPaid = billed > 0 && bal <= 0.005;
+
+    var cols = (typeof cacheCollections !== 'undefined' ? cacheCollections : [])
+      .filter(function(c){ return c && c.project_id === pr.id; })
+      .sort(function(a, b){ return String(b.collected_at || '').localeCompare(String(a.collected_at || '')); });
+    var dfmt = function(iso){ try{ return (typeof fmtDay === 'function') ? fmtDay(iso) : String(iso || '').slice(0, 10); }catch(e){ return String(iso || '').slice(0, 10); } };
+    var lastDate = cols.length ? dfmt(cols[0].collected_at) : '';
+    var cilMethod = function(c){
+      var m = { card:'Card', check:'Check', cash:'Cash', ach:'Bank transfer' }[c.method] || (c.method ? (c.method.charAt(0).toUpperCase() + c.method.slice(1)) : 'Payment');
+      var ref = ''; var mm = String(c.notes || '').match(/#\s*([\w-]+)/); if(mm) ref = ' &middot; #' + esc(mm[1]);
+      return esc(m) + ref;
+    };
+    var cilType = function(t){ return { deposit:'Deposit', final:'Final', supplemental:'Supplement', pwi:'PWI', other:'Payment' }[t] || 'Payment'; };
+
+    var style = doc.createElement('style');
+    style.id = 'cr-inv-live-style';
+    style.setAttribute('data-cardinal-live', '1');
+    style.textContent = INV_LIVE_CSS;
+    doc.head.appendChild(style);
+
+    var card = doc.createElement('div');
+    card.id = 'cr-inv-live';
+    card.setAttribute('data-cardinal-live', '1');
+    if(isPaid){
+      card.className = 'paid';
+      card.innerHTML = '<div class="cil-badge">&#10003; PAID IN FULL</div>'
+        + '<div class="cil-sub"><span>Balance</span><b>' + fmtMoney(0, true) + '</b></div>'
+        + (lastDate ? '<div class="cil-sub"><span>Paid in full on</span><b>' + esc(lastDate) + '</b></div>' : '');
+    }else{
+      card.innerHTML = '<div class="cil-row"><span class="cil-lbl">Current Balance Due</span>'
+        + (st ? '<span class="cil-pill ' + st.k + '">' + esc(st.label) + '</span>' : '') + '</div>'
+        + '<div class="cil-amt">' + fmtMoney(bal, true) + '</div>'
+        + '<div class="cil-meta">Billed ' + fmtMoney(billed, true) + ' &middot; Paid ' + fmtMoney(paid, true) + '</div>';
+    }
+    var estCell = doc.getElementById('estTotal');
+    var table = estCell && estCell.closest ? estCell.closest('table') : null;
+    var anchor = null;
+    if(table){
+      var prev = table.previousElementSibling;
+      anchor = (prev && /secthead/i.test(prev.className || '') && /summary/i.test(prev.textContent || '')) ? prev : table;
+    }
+    if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(card, anchor);
+    else doc.body.insertBefore(card, doc.body.firstChild);
+
+    var ledger = doc.createElement('div');
+    ledger.id = 'cr-inv-ledger';
+    ledger.setAttribute('data-cardinal-live', '1');
+    if(cols.length){
+      var body = cols.map(function(c){
+        return '<tr><td>' + esc(dfmt(c.collected_at)) + '</td><td>' + cilMethod(c)
+          + '</td><td class="amt">' + fmtMoney(c.amount, true) + '</td><td>' + esc(cilType(c.type)) + '</td></tr>';
+      }).join('');
+      ledger.innerHTML = '<div class="cil-secthead">Payment History</div>'
+        + '<table><thead><tr><th>Date</th><th>Method / Ref</th><th class="amt">Amount</th><th>Type</th></tr></thead>'
+        + '<tbody>' + body + '</tbody>'
+        + '<tfoot><tr><td colspan="2">Total paid</td><td class="amt">' + fmtMoney(paid, true) + '</td><td></td></tr></tfoot></table>';
+    }else{
+      ledger.innerHTML = '<div class="cil-secthead">Payment History</div>'
+        + '<p class="cil-none">No payments recorded yet.</p>';
+    }
+    doc.body.appendChild(ledger);
+  }catch(e){}
+}
+
 function serializeFrame(){
   var doc = frame.contentDocument;
   var clone = doc.documentElement.cloneNode(true);
   var hint = clone.querySelector('[data-cardinal-hint]');
   if(hint) hint.remove();
+  /* 1109: the live invoice status/balance/ledger is a view-time layer, never saved. */
+  clone.querySelectorAll('[data-cardinal-live]').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('.fig .frame button, .fig .frame input[type=file]').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('.reanalyzeBar, .reanalyzeBtn').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('h2.sec[data-rewired]').forEach(function(el){ el.removeAttribute('data-rewired'); });
@@ -27470,6 +27621,9 @@ function __histPush(st){
         case 'communityAnalytics': if(window.CardinalCommunityAnalytics) window.CardinalCommunityAnalytics.open(); break;
         case 'lineitems':          if(window.CardinalLineItems) window.CardinalLineItems.open(); break;
         case 'contract':           if(typeof window.openContractEditor === 'function' && state.data && state.data.contractId) window.openContractEditor({ id: state.data.contractId }); break;
+        case 'ar':                 if(typeof openAR === 'function') openAR(); break;
+        case 'laborrates':         if(window.CardinalLRS) window.CardinalLRS.open(); break;
+        case 'guideedit':          if(window.CardinalGuide) window.CardinalGuide.open(); break;
       }
     }catch(_e){}
     setTimeout(function(){ _navRestoring = false; __histLock = false; }, 30);
@@ -41853,6 +42007,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
+      { b:1111, d:'2026-08-28', t:'Roof Pre-Install Guide \u2014 auto-emailed when a roof is scheduled', s:'The homeowner now gets a polished <b>Roof Installation &amp; Pre-Install Guide</b> the moment their build day is booked &mdash; what to expect on install day, the weather policy, and the six things to do beforehand. It <b>auto-fills</b> from the job: the installation date, and your sales rep\u2019s name and phone in the &ldquo;call before you step outside&rdquo; contacts. It sends through the same email rail as your estimates, <b>once per job</b>, and only for roofing jobs. If the client has <b>no email on file</b>, the app asks for it right when you book the day, saves it, and sends. The guide is an <b>editable master</b> in <b>Company Documents</b> &mdash; edit the wording like a document, Preview it with sample details, or Reset to the Cardinal default &mdash; and every job profile has an <b>Email to client</b> button to send or re-send by hand. Groundwork: two new tables (company_templates, client_guide_sends) via preinstall_guide.sql, applied before this build.' },
+      { b:1110, d:'2026-08-28', t:'Labor Rate Schedule \u2014 Santiago\u2019s Exhibit A, editable and printable', s:'A new <b>Labor Rate Schedule</b> screen (Office menu, admin only) lays out the crew labor prices the way Santiago\u2019s <b>Exhibit A</b> does &mdash; navy section bands, gold titles, and the rate on the right of each line. It is <b>fully editable in place</b>: change a price, rename a line, add or delete lines, add category notes, or add a whole new category, then <b>Save</b>. <b>Print / PDF</b> gives you a clean one-page schedule (titled Santiago) to hand a crew. The rates live in the same Pricing catalog the app already uses, under their own roofing-labor template, so nothing else is duplicated.' },
+      { b:1109, d:'2026-08-28', t:'Invoices show live status, balance and payment history', s:'Open an invoice and it now shows a live <b>Current Balance Due</b> card at the top &mdash; the real balance from the ledger, not a number frozen when the invoice was made &mdash; with its status (Sent / Deposit Paid / Partially Paid). When the job is fully paid the card flips to a bold <b>&#10003; PAID IN FULL</b> badge with a zero balance and the date it cleared. At the bottom a compact <b>Payment History</b> lists every recorded payment (date, method and check number, amount, and whether it was a deposit, progress draw or final), with a running total. It all prints and saves to PDF cleanly &mdash; crisp borders, high-contrast badges. The invoice as-issued (its original summary) is untouched; this is the live layer on top, and it is never baked into the saved document.' },
+{ b:1108, d:'2026-08-28', t:'Invoices from the field: run, send and collect right on the job', s:'The invoicing flow now lives where the work happens. Every job profile has an <b>Invoices &amp; Payments</b> card: <b>generate the invoice</b> in one tap, watch its <b>live status</b> (Draft &rarr; Sent &rarr; Deposit Paid &rarr; Partially Paid &rarr; Paid in Full), and <b>send the secure pay link</b> three ways &mdash; <b>Company SMS</b> (through the business Twilio number, logged), <b>My phone</b> (opens your own Messages), or <b>Email</b>. This works for the assigned rep, not just admins, so a rep can take a deposit at the kitchen table. New: <b>Record Offline Payment</b> &mdash; on the card and on every Accounts Receivable row &mdash; logs a <b>check, cash or bank transfer</b> (amount, method, deposit/progress/final, date) straight to the ledger, so the status steps forward the moment the money is in hand, no bank wait. And a freshly generated invoice mints its own pay link and total automatically.' },
+{ b:1107, d:'2026-08-28', t:'Invoices & Accounts Receivable \u2014 a Who-Owes-Me dashboard, and invoices that track themselves', s:'A new admin screen &mdash; <b>Invoices &amp; AR</b>, in the menu and on tap of the home <b>Accounts Receivable</b> card &mdash; puts every unpaid job in one place. The total you are owed sits up top beside what came in this month and what is overdue; below, jobs group by age (<b>Current</b>, <b>15&ndash;30 days</b>, <b>30+ days</b>), oldest first, each showing the client, address, amount billed, amount collected and the balance still due. Every row has one-tap actions to <b>copy</b>, <b>text</b> or <b>email</b> the secure pay link. And an invoice now tracks itself: the status is read straight from the money ledger, so a card payment moves it from <b>Sent</b> to <b>Deposit Paid</b>, then <b>Partially Paid</b>, then <b>Paid in Full</b> on its own &mdash; no worksheet to update. The pay link is the same clean, light checkout page already in use; card today, bank transfer next.' },
 { b:1106, d:'2026-08-27', t:'The text-message keys are cleaned, and a rejected key says which one', s:'The test text kept failing with the same rejection after the keys had been re-entered twice, because the app was never removing stray spaces or line breaks from them. A line break copied along with a key is invisible on the settings screen and rides straight into the login the app sends &mdash; so a perfectly correct key was being rejected, and the message said only &ldquo;check the keys&rdquo;, which was the same sentence either way. Both keys are now cleaned before use, and when the text service still rejects them the app names the shape of each one: whether it arrived with stray whitespace, what two letters it starts with, and how long it is. That is enough to spot the wrong key pasted into the wrong box. The key itself is never shown, so the message is safe to screenshot.' },
 { b:1105, d:'2026-08-27', t:'A failed test text now says what went wrong, readably', s:'When &ldquo;Send a test alert to myself&rdquo; could not send the text, it printed the phone company&rsquo;s raw error &mdash; <code>{&quot;code&quot;:20003,&quot;message&quot;:&quot;Authenticate&quot;,&quot;more_info&quot;:&quot;https://w</code> &mdash; cut off mid-word, running off the edge of the screen and under the dark-mode button. Two fixes: the status text now <b>wraps</b> instead of overflowing (and keeps clear of the floating button), and the common failures are written in plain English &mdash; rejected credentials say to check the Twilio keys in Vercel, a blocked sender says to check the number is in the Messaging Service, an opted-out number says so. The error number is kept in the message so it stays searchable.' },
 { b:1104, d:'2026-08-27', t:'Shared screens keep one header instead of changing colour', s:'Settings, My Profile and the Audit Log used to wear whichever portal header you were last in &mdash; so Settings came up <b>Community green</b> in one sitting while the Team Directory came up <b>Production amber</b>, which read as the header changing at random. It was not random: Team and Punch &amp; Repairs had already been pinned to the Production header, and every other shared screen still followed the last portal you touched. These screens belong to no single CRM, so they now all wear the <b>Production header</b>. From here a portal colour means you are actually standing in that portal. The portals themselves, and the screens that genuinely belong to one, are unchanged.' },
@@ -43354,6 +43514,8 @@ if(isAdmin()) return;
 hideOpt('reports');
 hideOpt('feed');
 hideOpt('settings');
+hideOpt('ar');
+hideOpt('laborrates');
 var acct = findSec('account');
 if(acct) acct.style.display = 'none';
 }
@@ -81767,5 +81929,1331 @@ body.cr-landing-on footer.site{display:none !important;}
 })();
 </script>
 
+<!-- ═══ 1107: Invoices & Accounts Receivable — the "Who Owes Me" dashboard ═══
+     A read-only view over cacheProjects + jobFinance() + the collections ledger.
+     Status is DERIVED, never a stored state machine: the Stripe webhook writes one
+     collections row and this recomputes on the next render. Reuses the porcelain
+     --est-* system (build 1095), declared on #cr-ar-view like #cr-est-picker does.
+     Light-only, by Theo's call — no dark twin, deliberately (a single-theme surface,
+     same call as OC Colors / the Showcase). Admin-only (a money overview). -->
+<style id="cr-ar-styles">
+#cr-ar-view{
+  /* the real --est-* porcelain tokens, declared here so every var() resolves
+     even though this view is appended to <body>, not inside #cr-est-view. */
+  --est-bg:#F4F4F5; --est-panel:#FFFFFF; --est-ink:#0F172A; --est-dim:#475569;
+  --est-line:#E2E8F0; --est-well:#F8FAFC; --est-red:#C8202E; --est-focus:rgba(200,32,46,.22);
+  --est-numbg:#EAEEF3; --est-inset:inset 4px 4px 9px #D1D9E6, inset -4px -4px 9px #FFFFFF;
+  --est-lift:0 1px 2px rgba(15,23,42,.06),0 6px 16px rgba(15,23,42,.09);
+  --est-hover:0 2px 4px rgba(15,23,42,.08),0 12px 26px rgba(15,23,42,.12);
+  --crar-mist:#64748B;
+  position:fixed; inset:0; z-index:9500; display:none; overflow:auto;
+  background:var(--est-bg); color:var(--est-ink);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+#cr-ar-view .crar-shell{max-width:1080px; margin:0 auto; padding:14px 16px 96px;}
+#cr-ar-view .crar-top{display:flex; align-items:center; gap:12px; padding:6px 2px 16px;}
+#cr-ar-view .crar-close{
+  border:1px solid var(--est-line); background:var(--est-panel); color:var(--est-ink);
+  font-size:14px; font-weight:600; padding:9px 14px; border-radius:11px; cursor:pointer;
+  box-shadow:var(--est-lift);
+}
+#cr-ar-view .crar-close:hover{box-shadow:var(--est-hover);}
+#cr-ar-view .crar-ttl{flex:1; font-size:19px; font-weight:800; letter-spacing:-.01em;}
+#cr-ar-view .crar-refresh{
+  border:1px solid var(--est-line); background:var(--est-well); color:var(--est-dim);
+  font-size:13px; font-weight:600; padding:9px 12px; border-radius:11px; cursor:pointer;
+  display:inline-flex; align-items:center; gap:6px;
+}
+#cr-ar-view .crar-refresh svg{width:15px; height:15px;}
+#cr-ar-view .crar-refresh:hover{color:var(--est-ink);}
+
+/* KPI tray — neumorphic inset porcelain tiles */
+#cr-ar-view .crar-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin-bottom:8px;}
+#cr-ar-view .crar-kpi{
+  background:var(--est-numbg); border-radius:14px; padding:15px 17px;
+  box-shadow:var(--est-inset); display:flex; flex-direction:column; gap:5px;
+}
+#cr-ar-view .crar-k{font-size:12px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--est-dim);}
+#cr-ar-view .crar-v{font-size:29px; font-weight:800; letter-spacing:-.02em; color:var(--est-ink); font-variant-numeric:tabular-nums; line-height:1.05;}
+#cr-ar-view .crar-v.pos{color:#047857;}
+#cr-ar-view .crar-kpi.alert .crar-v{color:var(--est-red);}
+#cr-ar-view .crar-sub{font-size:12px; color:var(--est-dim);}  /* #475569 clears 4.5:1 on the inset tile and porcelain (mist did not) */
+
+/* aging group */
+#cr-ar-view .crar-grp{margin-top:18px;}
+#cr-ar-view .crar-grphd{
+  display:flex; align-items:center; gap:11px; margin-bottom:10px;
+  font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--est-dim);
+}
+#cr-ar-view .crar-grphd b{font-size:14px; letter-spacing:.02em; text-transform:none; color:var(--est-ink); font-weight:800;}
+#cr-ar-view .crar-grp.over .crar-grphd b{color:var(--est-red);}
+#cr-ar-view .crar-line{flex:1; height:1px; background:var(--est-line);}
+#cr-ar-view .crar-sub2, #cr-ar-view .crar-grphd .crar-sub{font-variant-numeric:tabular-nums;}
+
+/* invoice row */
+#cr-ar-view .crar-row{
+  display:grid; grid-template-columns:1.35fr .95fr auto; align-items:center; gap:14px;
+  background:var(--est-panel); border:1px solid var(--est-line); border-radius:14px;
+  box-shadow:var(--est-lift); padding:14px 16px; margin-bottom:10px; position:relative;
+}
+#cr-ar-view .crar-row.od{border-left:3px solid var(--est-red);}
+#cr-ar-view .crar-row:hover{box-shadow:var(--est-hover);}
+#cr-ar-view .crar-who{min-width:0;}
+#cr-ar-view .crar-nm{font-size:15px; font-weight:600; display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
+#cr-ar-view .crar-addr{font-size:13px; color:var(--est-dim); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+#cr-ar-view .crar-money{display:flex; gap:16px; justify-content:flex-end;}
+#cr-ar-view .crar-col{display:flex; flex-direction:column; align-items:flex-end; gap:2px;}
+#cr-ar-view .crar-cl{font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--crar-mist);}
+#cr-ar-view .crar-mv{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--est-ink);}
+#cr-ar-view .crar-mv.dim{color:var(--crar-mist); font-weight:500;}
+#cr-ar-view .crar-mv.pos{color:#047857;}
+#cr-ar-view .crar-mv.bal{font-size:18px; font-weight:800;}
+#cr-ar-view .crar-mv.bal.od{color:var(--est-red);}
+#cr-ar-view .crar-age{font-size:12px; font-weight:600; color:var(--crar-mist); white-space:nowrap;}
+#cr-ar-view .crar-age.od{color:var(--est-red);}
+
+/* status pills — semantic hues, dark inks for a 4.5:1 floor on the light tints */
+#cr-ar-view .crar-pill{display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:1.35;}
+#cr-ar-view .crar-pill::before{content:""; width:7px; height:7px; border-radius:50%; background:currentColor;}
+#cr-ar-view .crar-pill.draft{color:#475569; background:#EEF2F7;}
+#cr-ar-view .crar-pill.sent{color:#1D4ED8; background:#E7EFFD;}
+#cr-ar-view .crar-pill.part{color:#B45309; background:#FDF1E2;}
+#cr-ar-view .crar-pill.paid{color:#047857; background:#E4F5EE;}
+#cr-ar-view .crar-pill.over{color:#B91C1C; background:#FCEAEA;}
+
+/* actions */
+#cr-ar-view .crar-acts{grid-column:1 / -1; display:flex; gap:8px; flex-wrap:wrap;
+  border-top:1px dashed var(--est-line); margin-top:2px; padding-top:12px;}
+#cr-ar-view .crar-btn{
+  display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+  border:1px solid var(--est-line); background:var(--est-panel); color:var(--est-ink);
+  font-size:13px; font-weight:600; padding:8px 12px; border-radius:10px; box-shadow:var(--est-lift);
+}
+#cr-ar-view .crar-btn svg{width:15px; height:15px;}
+#cr-ar-view .crar-btn:hover{box-shadow:var(--est-hover);}
+#cr-ar-view .crar-btn.ghost{background:var(--est-well); color:var(--est-dim); box-shadow:none;}
+#cr-ar-view .crar-btn.primary{background:var(--est-red); border-color:var(--est-red); color:#fff; box-shadow:0 2px 8px rgba(200,32,46,.28);}
+
+#cr-ar-view .crar-empty{
+  background:var(--est-panel); border:1px dashed var(--est-line); border-radius:16px;
+  padding:40px 20px; text-align:center; color:var(--est-dim); font-size:15px; box-shadow:var(--est-lift);
+}
+#cr-ar-view .crar-empty b{color:var(--est-ink); font-size:17px;}
+
+/* the home dashboard AR card becomes a doorway, for admins */
+body.cr-ar-adm #arCard{cursor:pointer;}
+body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px rgba(15,23,42,.12);}
+
+@media(max-width:640px){
+  #cr-ar-view .crar-kpis{grid-template-columns:1fr;}
+}
+@media(max-width:560px){
+  #cr-ar-view .crar-row{grid-template-columns:1fr;}
+  #cr-ar-view .crar-money{justify-content:flex-start;}
+  #cr-ar-view .crar-age{margin-top:2px;}
+}
+
+/* ═══ 1108: the in-profile Invoices & Payments card + the offline payment modal.
+   The porcelain "money" language, self-contained (own light bg + dark ink), so it
+   reads on the dark profile without the light-on-dark trap. Light-only by design. */
+.crji-card{
+  background:#FFFFFF; border:1px solid #E2E8F0; border-radius:16px;
+  box-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 22px rgba(15,23,42,.16);
+  padding:15px 16px; margin:12px 0 4px; color:#0F172A;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+}
+.crji-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;}
+.crji-ttl{font-weight:800;font-size:15px;letter-spacing:-.01em;color:#0F172A;}
+.crji-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px;}
+.crji-nums>span{display:flex;flex-direction:column;gap:2px;background:#EAEEF3;border-radius:11px;padding:9px 11px;box-shadow:inset 3px 3px 7px #D1D9E6, inset -3px -3px 7px #FFFFFF;}
+.crji-nums small{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#475569;}
+.crji-nums b{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:#0F172A;}
+.crji-nums b.pos{color:#047857;}
+.crji-nums b.due{color:#C8202E;}
+.crji-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.crji-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid #E2E8F0;background:#FFFFFF;color:#0F172A;font-size:13px;font-weight:600;padding:9px 12px;border-radius:10px;box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 10px rgba(15,23,42,.08);}
+.crji-btn svg{width:15px;height:15px;}
+.crji-btn.primary{background:#C8202E;border-color:#C8202E;color:#fff;box-shadow:0 2px 8px rgba(200,32,46,.28);}
+.crji-btn.ghost{background:#F8FAFC;color:#475569;box-shadow:none;}
+.crji-hint{font-size:13px;color:#475569;}
+
+/* status pills, UNSCOPED so they render in the job block too (same values as the
+   AR view's #cr-ar-view .crar-pill rules; those stay and win inside the dashboard). */
+.crar-pill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.35;}
+.crar-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;}
+.crar-pill.draft{color:#475569;background:#EEF2F7;}
+.crar-pill.sent{color:#1D4ED8;background:#E7EFFD;}
+.crar-pill.part{color:#B45309;background:#FDF1E2;}
+.crar-pill.paid{color:#047857;background:#E4F5EE;}
+.crar-pill.over{color:#B91C1C;background:#FCEAEA;}
+
+/* the offline payment modal — porcelain sheet, above everything */
+#cr-pay-modal{position:fixed;inset:0;z-index:12000;display:none;}
+#cr-pay-modal.open{display:block;}
+#cr-pay-modal .crpay-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);}
+#cr-pay-modal .crpay-box{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);max-height:88vh;overflow:auto;background:#F4F4F5;border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,.45);padding:20px;color:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+#cr-pay-modal .crpay-h{font-weight:800;font-size:19px;letter-spacing:-.01em;color:#0F172A;}
+#cr-pay-modal .crpay-sub{color:#475569;font-size:13px;margin:3px 0 14px;}
+#cr-pay-modal .crpay-l{display:block;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#475569;margin:13px 0 6px;}
+#cr-pay-modal .crpay-amt{display:flex;align-items:center;gap:6px;background:#EAEEF3;border-radius:12px;padding:2px 12px;box-shadow:inset 4px 4px 9px #D1D9E6, inset -4px -4px 9px #FFFFFF;}
+#cr-pay-modal .crpay-amt span{font-weight:800;color:#475569;font-size:18px;}
+#cr-pay-modal .crpay-amt input{flex:1;border:0;background:transparent;font-size:22px;font-weight:800;color:#0F172A;padding:10px 0;outline:none;}
+#cr-pay-modal .crpay-in{width:100%;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:11px 12px;font-size:15px;color:#0F172A;outline:none;}
+#cr-pay-modal .crpay-in:focus{border-color:#C8202E;box-shadow:0 0 0 3px rgba(200,32,46,.22);}
+#cr-pay-modal .crpay-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#EAEEF3;border-radius:12px;padding:4px;}
+#cr-pay-modal .crpay-seg button{border:0;background:transparent;color:#475569;font-size:13px;font-weight:600;padding:10px 6px;border-radius:9px;cursor:pointer;}
+#cr-pay-modal .crpay-seg button.on{background:#FFFFFF;color:#0F172A;box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 10px rgba(15,23,42,.1);}
+#cr-pay-modal .crpay-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+</style>
+
+<div id="cr-ar-view" style="display:none;" aria-hidden="true">
+  <div class="crar-shell">
+    <div class="crar-top">
+      <button id="crarClose" class="crar-close" type="button" aria-label="Back">&#8249;&nbsp;Back</button>
+      <div class="crar-ttl">Invoices &amp; Accounts Receivable</div>
+      <button id="crarRefresh" class="crar-refresh" type="button" aria-label="Refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Refresh
+      </button>
+    </div>
+    <div class="crar-kpis">
+      <div class="crar-kpi"><span class="crar-k">Total outstanding</span><span class="crar-v" id="crarKpiOut">$0</span><span class="crar-sub" id="crarKpiOutSub">0 open invoices</span></div>
+      <div class="crar-kpi"><span class="crar-k">Paid this month</span><span class="crar-v pos" id="crarKpiMonth">$0</span><span class="crar-sub">card &amp; offline</span></div>
+      <div class="crar-kpi alert"><span class="crar-k">Overdue &middot; 30+ days</span><span class="crar-v" id="crarKpiOver">$0</span><span class="crar-sub" id="crarKpiOverSub">nothing overdue</span></div>
+    </div>
+    <div class="crar-body" id="crarBody"></div>
+  </div>
+</div>
+
+<script id="cr-ar-script">
+/* 1107: Invoices & AR — see the banner on #cr-ar-styles. window.CardinalAR. */
+(function(){
+  'use strict';
+  var INV_RX = /^invoice/i;
+  var IC_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>';
+  var IC_SMS  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+  var IC_MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
+  var IC_DOC  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>';
+  var IC_CASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="6.4" width="18.8" height="11.2" rx="1.8"/><circle cx="12" cy="12" r="2.6"/></svg>';
+
+  function q(id){ return document.getElementById(id); }
+  function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
+  function projects(){ return (typeof cacheProjects !== 'undefined' && cacheProjects) ? cacheProjects : []; }
+  function rows(){ return (typeof cacheRows !== 'undefined' && cacheRows) ? cacheRows : []; }
+  function collections(){ return (typeof cacheCollections !== 'undefined' && cacheCollections) ? cacheCollections : []; }
+  function esc2(s){ return (typeof esc === 'function') ? esc(s) : String(s == null ? '' : s); }
+  function money(n){ return (typeof fmtMoney === 'function') ? fmtMoney(n) : ('$' + Math.round(Number(n) || 0)); }
+  function stg(pr){ return (typeof normStage === 'function') ? normStage(pr.stage) : pr.stage; }
+
+  /* newest invoice-titled document for a project */
+  function invoiceFor(pid){
+    var best = null;
+    rows().forEach(function(r){
+      if(r && r.project_id === pid && INV_RX.test(String(r.title || '').trim())){
+        if(!best || String(r.created_at || '') > String(best.created_at || '')) best = r;
+      }
+    });
+    return best;
+  }
+  /* how many payments have landed — deposit-vs-partial labelling */
+  function collCount(pid){
+    var n = 0;
+    collections().forEach(function(c){ if(c && c.project_id === pid) n++; });
+    return n;
+  }
+  /* THE STATUS ENGINE — derived from the ledger, not a stored machine.
+     paid >= billed -> Paid in Full; paid > 0 -> Deposit/Partially Paid;
+     else the document's own unsent/sent -> Draft / Sent. */
+  function statusFor(pr, inv, fin){
+    fin = fin || jobFinance(pr);
+    var billed = Number(fin.value) || 0, paid = Number(fin.paid) || 0;
+    if(billed > 0 && paid >= billed - 0.005) return { k:'paid', label:'Paid in Full' };
+    if(paid > 0.005) return (collCount(pr.id) <= 1)
+      ? { k:'part', label:'Deposit Paid' }
+      : { k:'part', label:'Partially Paid' };
+    if(inv && inv.status === 'sent') return { k:'sent', label:'Sent' };
+    return { k:'draft', label:'Draft' };
+  }
+  /* days since the invoice was sent, else since Invoiced stage */
+  function ageDays(pr, inv){
+    var iso = (inv && inv.sent_at) || null;
+    if(!iso){
+      var ck = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
+      iso = ck.t_Invoiced || pr.stage_since || pr.updated_at || null;
+    }
+    if(!iso) return 0;
+    var d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    return d > 0 ? d : 0;
+  }
+
+  /* the AR set: invoiced (or invoice-bearing) jobs that still owe */
+  function arList(){
+    var out = [];
+    projects().forEach(function(pr){
+      var inv = invoiceFor(pr.id);
+      if(stg(pr) !== 'Invoiced' && !inv) return;
+      var fin = jobFinance(pr);
+      if(!(Number(fin.balance) > 0.005)) return;
+      out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:ageDays(pr, inv) });
+    });
+    out.sort(function(a, b){ return b.age - a.age; });
+    return out;
+  }
+  function bucketOf(age){ return age < 15 ? 0 : (age <= 30 ? 1 : 2); }
+  function paidThisMonth(){
+    var now = new Date();
+    var ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    var sum = 0;
+    collections().forEach(function(c){
+      if(c && String(c.collected_at || '').slice(0, 7) === ym) sum += Number(c.amount) || 0;
+    });
+    return sum;
+  }
+
+  function pill(st){ return '<span class="crar-pill ' + st.k + '">' + esc2(st.label) + '</span>'; }
+
+  function rowHtml(x){
+    var pr = x.pr, od = x.age > 30;
+    var addr = esc2(pr.address || '');
+    var nm = esc2(pr.name || 'Client');
+    var note = x.inv ? '' : ' &middot; not yet invoiced';
+    var acts;
+    if(x.inv){
+      acts = '<button class="crar-btn ghost" type="button" data-arcopy="' + esc2(pr.id) + '">' + IC_LINK + 'Copy link</button>'
+           + '<button class="crar-btn' + (od ? ' primary' : '') + '" type="button" data-artext="' + esc2(pr.id) + '">' + IC_SMS + (od ? 'Resend text' : 'Text link') + '</button>'
+           + '<button class="crar-btn" type="button" data-aremail="' + esc2(pr.id) + '">' + IC_MAIL + 'Email</button>'
+           + '<button class="crar-btn ghost" type="button" data-aropen="' + esc2(pr.id) + '">Open job</button>';
+    } else {
+      acts = '<button class="crar-btn" type="button" data-armkinv="' + esc2(pr.id) + '">Create invoice</button>'
+           + '<button class="crar-btn ghost" type="button" data-aropen="' + esc2(pr.id) + '">Open job</button>';
+    }
+    acts += '<button class="crar-btn ghost" type="button" data-arpay="' + esc2(pr.id) + '">' + IC_CASH + 'Record payment</button>';
+    var ageTxt = od ? (x.age + ' days &middot; overdue')
+                    : (x.inv && x.inv.status === 'sent' ? ('Sent ' + x.age + 'd ago') : (x.age + 'd'));
+    return '<div class="crar-row' + (od ? ' od' : '') + '">'
+      + '<div class="crar-who"><div class="crar-nm">' + nm + ' ' + pill(x.st) + '</div>'
+      +   '<div class="crar-addr">' + (addr || '&mdash;') + note + '</div></div>'
+      + '<div class="crar-money">'
+      +   '<div class="crar-col"><span class="crar-cl">Billed</span><span class="crar-mv dim">' + money(x.fin.value) + '</span></div>'
+      +   '<div class="crar-col"><span class="crar-cl">Collected</span><span class="crar-mv' + (x.fin.paid > 0 ? ' pos' : ' dim') + '">' + money(x.fin.paid) + '</span></div>'
+      +   '<div class="crar-col"><span class="crar-cl">Balance</span><span class="crar-mv bal' + (od ? ' od' : '') + '">' + money(x.fin.balance) + '</span></div>'
+      + '</div>'
+      + '<div class="crar-age' + (od ? ' od' : '') + '">' + ageTxt + '</div>'
+      + '<div class="crar-acts">' + acts + '</div>'
+      + '</div>';
+  }
+
+  function render(){
+    var view = q('cr-ar-view'); if(!view) return;
+    var list = arList();
+    var total = 0, overdue = 0, overdueN = 0;
+    list.forEach(function(x){ total += x.fin.balance; if(x.age > 30){ overdue += x.fin.balance; overdueN++; } });
+    if(q('crarKpiOut')) q('crarKpiOut').textContent = money(total);
+    if(q('crarKpiMonth')) q('crarKpiMonth').textContent = money(paidThisMonth());
+    if(q('crarKpiOver')) q('crarKpiOver').textContent = money(overdue);
+    if(q('crarKpiOutSub')) q('crarKpiOutSub').textContent = list.length + (list.length === 1 ? ' open invoice' : ' open invoices');
+    if(q('crarKpiOverSub')) q('crarKpiOverSub').textContent = overdueN ? (overdueN + (overdueN === 1 ? ' invoice needs a nudge' : ' invoices need a nudge')) : 'nothing overdue';
+    var body = q('crarBody'); if(!body) return;
+    if(!list.length){
+      body.innerHTML = '<div class="crar-empty"><b>All clear.</b><br>No open balances right now.</div>';
+      return;
+    }
+    var buckets = [[], [], []];
+    list.forEach(function(x){ buckets[bucketOf(x.age)].push(x); });
+    var labels = ['Current &middot; 0&ndash;14 days', '15&ndash;30 days', '30+ days &middot; overdue'];
+    var html = '';
+    for(var i = 0; i < 3; i++){
+      if(!buckets[i].length) continue;
+      var sub = 0; buckets[i].forEach(function(x){ sub += x.fin.balance; });
+      html += '<div class="crar-grp' + (i === 2 ? ' over' : '') + '">'
+        + '<div class="crar-grphd"><b>' + labels[i] + '</b><span class="crar-line"></span><span class="crar-sub">' + money(sub) + '</span></div>'
+        + buckets[i].map(rowHtml).join('')
+        + '</div>';
+    }
+    body.innerHTML = html;
+  }
+
+  function open(){
+    if(!isAdm()){ if(typeof crTell === 'function') crTell('Invoices & AR is for admins.'); return; }
+    if(typeof hideAllViews === 'function') hideAllViews();
+    var view = q('cr-ar-view'); if(!view) return;
+    view.style.display = 'block';
+    view.setAttribute('aria-hidden', 'false');
+    try{ document.body.style.overflow = ''; }catch(e){}
+    render();
+    try{ window.scrollTo(0, 0); }catch(e){}
+    if(window.navSetView) window.navSetView('ar');
+  }
+  function close(){
+    var view = q('cr-ar-view'); if(view){ view.style.display = 'none'; view.setAttribute('aria-hidden', 'true'); }
+    if(typeof showHome === 'function') showHome();
+  }
+
+  /* mint a share token for an ARBITRARY invoice row (the app's ensureShareToken
+     only handles the open editor's `current` doc). Same token shape + persist. */
+  function ensureTokenForRow(row){
+    if(!row) return Promise.reject(new Error('No invoice document'));
+    if(row.share_token) return Promise.resolve(row.share_token);
+    var tok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+            : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+    return db.update(row.id, { share_token: tok }).then(function(){ row.share_token = tok; return tok; });
+  }
+  function payUrl(tok){ return location.origin + '/api/share?t=' + tok; }
+  function firstName(pr){ return String((pr && pr.name) || '').trim().split(/\s+/)[0] || 'there'; }
+  function linkFor(pid){
+    var inv = invoiceFor(pid);
+    if(!inv) return Promise.reject(new Error('This job has no invoice yet — create one first.'));
+    return ensureTokenForRow(inv).then(payUrl);
+  }
+  function fail(err){ if(typeof crTell === 'function') crTell((err && err.message) || String(err)); }
+  function prById(id){ return projects().find(function(p){ return p.id === id; }) || null; }
+
+  document.addEventListener('click', function(e){
+    var t;
+    if((t = e.target.closest('#crarClose'))){ close(); return; }
+    if((t = e.target.closest('#crarRefresh'))){ if(typeof reload === 'function') reload(); else render(); return; }
+    if((t = e.target.closest('#arCard')) && isAdm()){ open(); return; }
+    if((t = e.target.closest('[data-aropen]'))){ if(window.openProject) window.openProject(t.getAttribute('data-aropen')); return; }
+    if((t = e.target.closest('[data-armkinv]'))){
+      var pr = prById(t.getAttribute('data-armkinv'));
+      if(pr && typeof createInvoiceFor === 'function') createInvoiceFor(pr);
+      return;
+    }
+    if((t = e.target.closest('[data-arcopy]'))){
+      linkFor(t.getAttribute('data-arcopy')).then(function(url){
+        var done = false;
+        try{ if(navigator.clipboard){ navigator.clipboard.writeText(url); done = true; } }catch(e2){}
+        if(typeof crTell === 'function') crTell(done ? 'Pay link copied.' : url);
+        else prompt('Pay link', url);
+      }).catch(fail);
+      return;
+    }
+    if((t = e.target.closest('[data-artext]'))){
+      var prT = prById(t.getAttribute('data-artext'));
+      linkFor(t.getAttribute('data-artext')).then(function(url){
+        var body = 'Hi ' + firstName(prT) + ', here’s your invoice from Cardinal Roofing — you can review it and pay securely here: ' + url;
+        location.href = 'sms:?&body=' + encodeURIComponent(body);
+      }).catch(fail);
+      return;
+    }
+    if((t = e.target.closest('[data-aremail]'))){
+      var prE = prById(t.getAttribute('data-aremail'));
+      linkFor(t.getAttribute('data-aremail')).then(function(url){
+        var subj = 'Your invoice from Cardinal Roofing & Renovations';
+        var body = 'Hi ' + firstName(prE) + ',\n\nHere is your invoice — you can review it and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations';
+        location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+      }).catch(fail);
+      return;
+    }
+  });
+
+  /* mark the home dashboard AR card as a doorway for admins (CSS cursor + hover) */
+  function markDoorway(){ try{ if(isAdm()) document.body.classList.add('cr-ar-adm'); }catch(e){} }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', markDoorway);
+  else markDoorway();
+  try{ setTimeout(markDoorway, 1800); }catch(e){}  /* is_admin resolves after auth boot */
+
+  /* ═══ Build 1108: the in-profile Invoices & Payments block, the three send
+        options, and the offline (check / cash / bank transfer) payment modal.
+        Shared by the AR dashboard and the client profile — one implementation. ═══ */
+
+  function statusOf(pr){ return statusFor(pr, invoiceFor(pr.id)); }
+
+  /* the porcelain "Invoices & Payments" card shown on a job profile */
+  function jobBlockHtml(pr, fin){
+    if(!pr) return '';
+    fin = fin || jobFinance(pr);
+    var inv = invoiceFor(pr.id);
+    var st  = statusFor(pr, inv, fin);
+    var canInvoice = Number(fin.value) > 0 && fin.source !== 'estimate';
+    var bal = Number(fin.balance) || 0;
+    var acts;
+    if(inv){
+      acts = '<button class="crji-btn primary" type="button" data-inv-sms="' + esc2(pr.id) + '">' + IC_SMS + 'Company SMS</button>'
+           + '<button class="crji-btn" type="button" data-inv-text="' + esc2(pr.id) + '">' + IC_SMS + 'My phone</button>'
+           + '<button class="crji-btn" type="button" data-inv-email="' + esc2(pr.id) + '">' + IC_MAIL + 'Email</button>'
+           + '<button class="crji-btn ghost" type="button" data-inv-open="' + esc2(pr.id) + '">Open invoice</button>';
+    }else if(canInvoice){
+      acts = '<button class="crji-btn primary" type="button" data-inv-gen="' + esc2(pr.id) + '">' + IC_DOC + 'Generate invoice</button>';
+    }else{
+      acts = '<span class="crji-hint">An invoice opens once a contract is signed.</span>';
+    }
+    if(canInvoice) acts += '<button class="crji-btn ghost" type="button" data-inv-pay="' + esc2(pr.id) + '">' + IC_CASH + 'Record offline payment</button>';
+    return '<div class="crji-card">'
+      + '<div class="crji-head"><span class="crji-ttl">Invoices &amp; Payments</span>' + pill(st) + '</div>'
+      + '<div class="crji-nums">'
+      +   '<span><small>Billed</small><b>' + money(fin.value) + '</b></span>'
+      +   '<span><small>Collected</small><b class="pos">' + money(fin.paid) + '</b></span>'
+      +   '<span><small>Balance</small><b class="' + (bal > 0 ? 'due' : 'paid') + '">' + money(bal) + '</b></span>'
+      + '</div>'
+      + '<div class="crji-acts">' + acts + '</div>'
+      + '</div>';
+  }
+
+  /* re-paint whatever invoice surfaces are on screen after the ledger changes */
+  function refreshInv(){
+    try{ if(typeof renderAcxOverview === 'function' && currentProject) renderAcxOverview(); }catch(e){}
+    try{ var v = q('cr-ar-view'); if(v && v.style.display !== 'none') render(); }catch(e){}
+  }
+
+  /* Company SMS — text the pay link to the client through the company Twilio number */
+  function companySms(pr){
+    var cx = window.sb || window.supa;
+    linkFor(pr.id).then(function(url){
+      return (cx && cx.auth ? cx.auth.getSession() : Promise.resolve({})).then(function(s){
+        var tok = s && s.data && s.data.session ? s.data.session.access_token : '';
+        return fetch('/api/sms-link', { method:'POST',
+          headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + tok },
+          body: JSON.stringify({ project_id: pr.id, url: url }) });
+      }).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(j){
+        if(j && j.ok) crTell('Texted the pay link to ' + (pr.name || 'the client') + '.');
+        else crTell((j && j.error) || 'Could not send the company text.');
+      });
+    }).catch(fail);
+  }
+
+  /* ---- the offline payment modal (check / cash / bank transfer) ---- */
+  function ensurePayModal(){
+    var m = q('cr-pay-modal');
+    if(m) return m;
+    m = document.createElement('div');
+    m.id = 'cr-pay-modal';
+    m.innerHTML =
+      '<div class="crpay-backdrop" id="crpay-backdrop"></div>' +
+      '<div class="crpay-box" role="dialog" aria-modal="true" aria-label="Record offline payment">' +
+        '<div class="crpay-h">Record a payment</div>' +
+        '<div class="crpay-sub" id="crpay-sub"></div>' +
+        '<label class="crpay-l" for="crpay-amt">Amount</label>' +
+        '<div class="crpay-amt"><span>$</span><input type="number" id="crpay-amt" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>' +
+        '<label class="crpay-l">Method</label>' +
+        '<div class="crpay-seg" id="crpay-method" data-v="check">' +
+          '<button type="button" data-m="check" class="on">Check</button>' +
+          '<button type="button" data-m="cash">Cash</button>' +
+          '<button type="button" data-m="ach">Bank transfer</button>' +
+        '</div>' +
+        '<input type="text" id="crpay-ref" class="crpay-in" placeholder="Check # (optional)">' +
+        '<label class="crpay-l">Type</label>' +
+        '<div class="crpay-seg" id="crpay-type" data-v="deposit">' +
+          '<button type="button" data-t="deposit" class="on">Deposit</button>' +
+          '<button type="button" data-t="progress">Progress</button>' +
+          '<button type="button" data-t="final">Final</button>' +
+        '</div>' +
+        '<label class="crpay-l" for="crpay-date">Date</label>' +
+        '<input type="date" id="crpay-date" class="crpay-in">' +
+        '<div class="crpay-foot">' +
+          '<button type="button" class="crji-btn ghost" id="crpay-cancel">Cancel</button>' +
+          '<button type="button" class="crji-btn primary" id="crpay-save">Record payment</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(m);
+    return m;
+  }
+  var _payFor = null;
+  function setSeg(id, v){
+    var seg = q(id); if(!seg) return; seg.setAttribute('data-v', v);
+    Array.prototype.forEach.call(seg.children, function(b){
+      b.classList.toggle('on', b.getAttribute('data-m') === v || b.getAttribute('data-t') === v);
+    });
+  }
+  function openPayModal(pr){
+    if(!pr) return;
+    _payFor = pr;
+    var m = ensurePayModal();
+    var fin = jobFinance(pr);
+    q('crpay-sub').textContent = (pr.name || 'Client') + ' · balance ' + money(fin.balance);
+    q('crpay-amt').value = ''; q('crpay-ref').value = '';
+    setSeg('crpay-method', 'check'); setSeg('crpay-type', 'deposit');
+    q('crpay-date').value = new Date().toISOString().slice(0, 10);
+    m.classList.add('open');
+    setTimeout(function(){ try{ q('crpay-amt').focus(); }catch(e){} }, 40);
+  }
+  function closePayModal(){ var m = q('cr-pay-modal'); if(m) m.classList.remove('open'); _payFor = null; }
+  function collectionsInsert(row){
+    var cx = window.sb || window.supa;
+    if(cx && cx.from){
+      return cx.from('collections').insert(row).then(function(r){
+        if(r && r.error) throw new Error(r.error.message || 'Could not record the payment'); return r;
+      });
+    }
+    return Promise.reject(new Error('Not signed in'));
+  }
+  function savePayModal(){
+    var pr = _payFor; if(!pr) return;
+    var amt = parseFloat(q('crpay-amt').value);
+    if(!(amt > 0)){ crTell('Enter an amount.'); return; }
+    var method = q('crpay-method').getAttribute('data-v') || 'check';
+    var ptype  = q('crpay-type').getAttribute('data-v') || 'deposit';
+    var ref = String(q('crpay-ref').value || '').trim();
+    var date = q('crpay-date').value || new Date().toISOString().slice(0, 10);
+    var typeMap = { deposit:'deposit', progress:'other', final:'final' };
+    var me = (window.currentUser && currentUser.email) || '';
+    var notes = 'Offline ' + (method === 'ach' ? 'bank transfer' : method) + (ref ? ' #' + ref : '') + ' (recorded on-site)';
+    var row = { project_id: pr.id, collected_at: date, amount: amt,
+                type: typeMap[ptype] || 'other', source: 'homeowner', method: method,
+                notes: notes, created_by: me };
+    var btn = q('crpay-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+    collectionsInsert(row).then(function(){
+      closePayModal();
+      crTell('Recorded ' + money(amt) + '. Status updated.');
+      if(typeof reload === 'function'){ reload().then(refreshInv).catch(refreshInv); } else refreshInv();
+    }).catch(function(err){
+      if(btn){ btn.disabled = false; btn.textContent = 'Record payment'; }
+      fail(err);
+    });
+  }
+
+  /* second delegated listener: job-block actions + record-payment + the modal */
+  document.addEventListener('click', function(e){
+    var t;
+    if((t = e.target.closest('[data-inv-gen]'))){ var pg = prById(t.getAttribute('data-inv-gen')); if(pg && typeof createInvoiceFor === 'function') createInvoiceFor(pg); return; }
+    if((t = e.target.closest('[data-inv-open]'))){ var iv = invoiceFor(t.getAttribute('data-inv-open')); if(iv && typeof openEditor === 'function') openEditor(iv.id); return; }
+    if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms')); if(ps) companySms(ps); return; }
+    if((t = e.target.closest('[data-inv-text]'))){ var px = prById(t.getAttribute('data-inv-text')); if(px) linkFor(px.id).then(function(url){ location.href = 'sms:?&body=' + encodeURIComponent('Hi ' + firstName(px) + ', here’s your invoice from Cardinal Roofing — review and pay securely here: ' + url); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-email]'))){ var pe = prById(t.getAttribute('data-inv-email')); if(pe) linkFor(pe.id).then(function(url){ location.href = 'mailto:?subject=' + encodeURIComponent('Your invoice from Cardinal Roofing & Renovations') + '&body=' + encodeURIComponent('Hi ' + firstName(pe) + ',\n\nHere is your invoice — review and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations'); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-pay]'))){ var pp = prById(t.getAttribute('data-inv-pay')); if(pp) openPayModal(pp); return; }
+    if((t = e.target.closest('[data-arpay]'))){ var pa = prById(t.getAttribute('data-arpay')); if(pa) openPayModal(pa); return; }
+    if((t = e.target.closest('#crpay-cancel')) || (t = e.target.closest('#crpay-backdrop'))){ closePayModal(); return; }
+    if((t = e.target.closest('#crpay-save'))){ savePayModal(); return; }
+    if((t = e.target.closest('#crpay-method [data-m]'))){ setSeg('crpay-method', t.getAttribute('data-m')); return; }
+    if((t = e.target.closest('#crpay-type [data-t]'))){ setSeg('crpay-type', t.getAttribute('data-t')); return; }
+  });
+  window.openAR = open;
+  window.renderAR = render;
+  window.CardinalAR = Object.assign(window.CardinalAR || {}, {
+    open:open, render:render, close:close, list:arList,
+    status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor
+  });
+})();
+</script>
+
+
+<!-- ═══ 1110: Labor Rate Schedule — Santiago's Exhibit A, editable, print-safe ═══
+     A document-styled editor over pricing_items(template='roofing_labor'). Admin
+     only (crew labor rates). Navy/gold like the exhibit; prints as "Exhibit A".
+     Reuses the existing pricing_items catalog table — no new data store. -->
+<style id="cr-lrs-styles">
+#cr-lrs-view{
+  --lrs-navy:#1e2b4a; --lrs-gold:#c9a227; --lrs-gold-dk:#8f6b00; --lrs-ink:#23303f; --lrs-dim:#5b6470;
+  --lrs-line:#e4e4e4; --lrs-red:#C8202E;
+  position:fixed; inset:0; z-index:9500; display:none; overflow:auto;
+  background:#eceef1; color:var(--lrs-ink);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+#cr-lrs-view .lrs-topbar{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px;
+  padding:10px 14px; background:#fff; border-bottom:1px solid var(--lrs-line);
+}
+#cr-lrs-view .lrs-topbar .lrs-ttl{flex:1; font-weight:800; font-size:16px; color:var(--lrs-navy); letter-spacing:-.01em;}
+#cr-lrs-view .lrs-tb{
+  border:1px solid var(--lrs-line); background:#fff; color:var(--lrs-ink);
+  font-size:13px; font-weight:600; padding:8px 13px; border-radius:9px; cursor:pointer;
+}
+#cr-lrs-view .lrs-tb:hover{border-color:#c9c9c9;}
+#cr-lrs-view .lrs-tb.on{background:var(--lrs-navy); color:#fff; border-color:var(--lrs-navy);}
+#cr-lrs-view .lrs-tb.save{background:var(--lrs-red); border-color:var(--lrs-red); color:#fff;}
+
+/* the document */
+#cr-lrs-view .lrs-doc{
+  max-width:820px; margin:22px auto 90px; background:#fff; padding:34px 40px 44px;
+  box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 30px rgba(0,0,0,.10); border-radius:2px;
+}
+#cr-lrs-view .lrs-h{font-size:21px; font-weight:800; color:var(--lrs-navy); letter-spacing:.02em;}
+#cr-lrs-view .lrs-h span{color:var(--lrs-gold-dk); margin:0 6px; font-weight:700;}  /* 4.92:1 on white; the bright gold stays on the navy bands */
+#cr-lrs-view .lrs-rule{height:3px; background:var(--lrs-gold); margin:11px 0 22px; border-radius:2px;}
+#cr-lrs-view .lrs-cat{margin-bottom:20px;}
+#cr-lrs-view .lrs-band{
+  background:var(--lrs-navy); color:var(--lrs-gold); font-size:13px; font-weight:800;
+  letter-spacing:.06em; text-transform:uppercase; padding:8px 14px; border-radius:3px;
+}
+#cr-lrs-view .lrs-row{
+  display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+  padding:9px 14px; border-bottom:1px solid var(--lrs-line);
+}
+#cr-lrs-view .lrs-name{font-size:13.5px; color:var(--lrs-ink); line-height:1.4;}
+#cr-lrs-view .lrs-name .lrs-desc{display:block; font-size:12px; color:var(--lrs-dim); margin-top:2px;}
+#cr-lrs-view .lrs-rate{font-size:13.5px; font-weight:800; color:var(--lrs-navy); white-space:nowrap; text-align:right; font-variant-numeric:tabular-nums;}
+#cr-lrs-view .lrs-rate .lrs-u{font-weight:600; color:var(--lrs-dim);}
+#cr-lrs-view .lrs-note{font-size:11.5px; font-style:italic; color:var(--lrs-dim); line-height:1.5; padding:9px 14px;}
+
+/* edit mode */
+#cr-lrs-view .lrs-ename{flex:1; display:flex; flex-direction:column; gap:5px;}
+#cr-lrs-view .lrs-ename input, #cr-lrs-view .lrs-erate input, #cr-lrs-view .lrs-enote{
+  border:1px solid var(--lrs-line); border-radius:7px; padding:7px 9px; font-size:13px; font-family:inherit; color:var(--lrs-ink); outline:none; background:#fbfbfc;
+}
+#cr-lrs-view .lrs-ename input:focus, #cr-lrs-view .lrs-erate input:focus, #cr-lrs-view select:focus, #cr-lrs-view .lrs-enote:focus{border-color:var(--lrs-red); box-shadow:0 0 0 3px rgba(200,32,46,.16);}
+#cr-lrs-view .lrs-erate{display:flex; align-items:center; gap:5px;}
+#cr-lrs-view .lrs-erate span{font-weight:800; color:var(--lrs-dim);}
+#cr-lrs-view .lrs-erate input{width:80px; text-align:right; font-weight:700;}
+#cr-lrs-view select{border:1px solid var(--lrs-line); border-radius:7px; padding:7px 6px; font-size:12.5px; font-family:inherit; color:var(--lrs-ink); background:#fbfbfc;}
+#cr-lrs-view .lrs-enote{width:100%; min-height:56px; resize:vertical;}
+#cr-lrs-view .lrs-note{display:flex; gap:8px; align-items:flex-start;}
+#cr-lrs-view .lrs-del{border:0; background:#f4dede; color:var(--lrs-red); font-size:16px; font-weight:800; width:30px; height:30px; border-radius:8px; cursor:pointer; flex:none; line-height:1;}
+#cr-lrs-view .lrs-del:hover{background:#efcccc;}
+#cr-lrs-view .lrs-add{padding:8px 14px 2px; display:flex; gap:8px;}
+#cr-lrs-view .lrs-mini{border:1px dashed #b9c0cc; background:#fff; color:var(--lrs-navy); font-size:12px; font-weight:600; padding:6px 11px; border-radius:8px; cursor:pointer;}
+#cr-lrs-view .lrs-mini:hover{border-color:var(--lrs-navy);}
+#cr-lrs-view .lrs-addcat{margin-top:8px; display:flex; gap:8px; align-items:center;}
+#cr-lrs-view .lrs-addcat input{flex:1; border:1px solid var(--lrs-line); border-radius:7px; padding:8px 10px; font-size:13px; font-family:inherit; color:var(--lrs-ink);}
+#cr-lrs-view .lrs-empty{padding:40px 14px; text-align:center; color:var(--lrs-dim); font-size:14px;}
+
+@media(max-width:560px){
+  #cr-lrs-view .lrs-doc{padding:22px 16px 34px; margin:12px 10px 80px;}
+  #cr-lrs-view .lrs-erate input{width:66px;}
+}
+@media print{
+  body > *:not(#cr-lrs-view){display:none !important;}
+  #cr-lrs-view{position:static !important; overflow:visible !important; background:#fff !important; display:block !important;}
+  #cr-lrs-view .lrs-topbar{display:none !important;}
+  #cr-lrs-view .lrs-doc{box-shadow:none !important; margin:0 auto !important; max-width:none !important; padding:0 !important;}
+  #cr-lrs-view .lrs-band, #cr-lrs-view .lrs-rule, #cr-lrs-view .lrs-h span{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #cr-lrs-view .lrs-cat{page-break-inside:avoid;}
+  #cr-lrs-view .lrs-add, #cr-lrs-view .lrs-addcat, #cr-lrs-view .lrs-del{display:none !important;}
+  @page{size:Letter; margin:.6in;}
+}
+</style>
+
+<div id="cr-lrs-view" style="display:none;" aria-hidden="true">
+  <div class="lrs-topbar">
+    <button id="lrs-back" class="lrs-tb" type="button">&#8249;&nbsp;Back</button>
+    <div class="lrs-ttl">Labor Rate Schedule</div>
+    <button id="lrs-cancel" class="lrs-tb" type="button" style="display:none;">Cancel</button>
+    <button id="lrs-edit" class="lrs-tb" type="button">Edit</button>
+    <button id="lrs-save" class="lrs-tb save" type="button" style="display:none;">Save</button>
+    <button id="lrs-print" class="lrs-tb" type="button">Print / PDF</button>
+  </div>
+  <div id="lrs-body"></div>
+</div>
+
+<script id="cr-lrs-script">
+/* 1110: Labor Rate Schedule — see the banner on #cr-lrs-styles. window.CardinalLRS. */
+(function(){
+  'use strict';
+  var TPL = 'roofing_labor';
+  var UNIT_LABEL = { sq:'SQ', lf:'LF', ea:'unit', sheet:'sheet', ls:'', note:'', bundle:'bundle', roll:'roll', day:'day', sf:'SF', hour:'hr', box:'box' };
+  var UNIT_OPTS = [['sq','SQ'],['lf','LF'],['ea','unit'],['sheet','sheet'],['ls','flat ($)']];
+  var rows = [], deleted = [], editing = false, loaded = false;
+
+  function q(id){ return document.getElementById(id); }
+  function esc2(s){ return (typeof esc === 'function') ? esc(s) : String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function attr(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
+  function cx(){ return window.sb || window.supa; }
+  function tell(m){ if(typeof crTell === 'function') crTell(m); }
+
+  function money(n){
+    n = Number(n) || 0;
+    return '$' + (n % 1 === 0 ? n.toLocaleString('en-US')
+                             : n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }));
+  }
+  function rateHtml(r){
+    if(r.unit === 'note') return '';
+    var lab = UNIT_LABEL[r.unit] != null ? UNIT_LABEL[r.unit] : r.unit;
+    return money(r.rate) + (lab ? ' <span class="lrs-u">/ ' + esc2(lab) + '</span>' : '');
+  }
+
+  function load(){
+    var c = cx(); if(!c){ return Promise.resolve([]); }
+    return c.from('pricing_items').select('*').eq('template', TPL).order('sort_order', { ascending:true })
+      .then(function(r){ rows = (r && r.data) ? r.data.slice() : []; loaded = true; return rows; });
+  }
+  function grouped(){
+    var order = [], map = {};
+    rows.forEach(function(r){ if(!map[r.category]){ map[r.category] = []; order.push(r.category); } map[r.category].push(r); });
+    return order.map(function(cat){ return { cat:cat, items:map[cat] }; });
+  }
+  function unitSel(u){
+    return '<select data-f="unit">' + UNIT_OPTS.map(function(p){
+      return '<option value="' + p[0] + '"' + (p[0] === u ? ' selected' : '') + '>' + p[1] + '</option>';
+    }).join('') + '</select>';
+  }
+  function editRow(r){
+    return '<div class="lrs-ename"><input type="text" data-f="name" value="' + attr(r.name) + '" placeholder="Description">'
+      + '<input type="text" data-f="description" value="' + attr(r.description || '') + '" placeholder="Detail (optional)"></div>'
+      + '<div class="lrs-erate"><span>$</span><input type="number" step="0.01" min="0" data-f="rate" value="' + (r.rate != null ? r.rate : '') + '">'
+      + unitSel(r.unit) + '<button type="button" class="lrs-del" data-lrs-del="' + esc2(r.id) + '" title="Remove">×</button></div>';
+  }
+  function render(){
+    var body = q('lrs-body'); if(!body) return;
+    if(!rows.length){ body.innerHTML = '<div class="lrs-doc"><div class="lrs-empty">No labor rates yet.</div></div>'; syncBar(); return; }
+    var html = '<div class="lrs-doc"><div class="lrs-h">SANTIAGO <span>|</span> LABOR RATE SCHEDULE</div><div class="lrs-rule"></div>';
+    grouped().forEach(function(g){
+      html += '<div class="lrs-cat"><div class="lrs-band">' + esc2(String(g.cat).toUpperCase()) + '</div>';
+      g.items.forEach(function(r){
+        if(r.unit === 'note'){
+          html += '<div class="lrs-note" data-id="' + esc2(r.id) + '">'
+            + (editing ? ('<textarea data-f="description" class="lrs-enote" placeholder="Category note">' + esc2(r.description || '') + '</textarea>'
+                        + '<button type="button" class="lrs-del" data-lrs-del="' + esc2(r.id) + '" title="Remove">×</button>')
+                       : esc2(r.description || '')) + '</div>';
+        }else{
+          html += '<div class="lrs-row" data-id="' + esc2(r.id) + '">'
+            + (editing ? editRow(r)
+                       : ('<div class="lrs-name">' + esc2(r.name) + (r.description ? '<span class="lrs-desc">' + esc2(r.description) + '</span>' : '') + '</div>'
+                        + '<div class="lrs-rate">' + rateHtml(r) + '</div>'))
+            + '</div>';
+        }
+      });
+      if(editing){
+        html += '<div class="lrs-add"><button type="button" class="lrs-mini" data-lrs-addrow="' + attr(g.cat) + '">+ Add line</button>'
+              + '<button type="button" class="lrs-mini" data-lrs-addnote="' + attr(g.cat) + '">+ Add note</button></div>';
+      }
+      html += '</div>';
+    });
+    if(editing){
+      html += '<div class="lrs-addcat"><input type="text" id="lrs-newcat" placeholder="New category name">'
+            + '<button type="button" class="lrs-mini" id="lrs-addcat">+ Add category</button></div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+    syncBar();
+  }
+  function syncBar(){
+    var canEdit = isAdm();
+    var eb = q('lrs-edit'), cb = q('lrs-cancel'), sb2 = q('lrs-save');
+    if(eb) eb.style.display = (canEdit && !editing) ? '' : 'none';
+    if(cb) cb.style.display = editing ? '' : 'none';
+    if(sb2) sb2.style.display = editing ? '' : 'none';
+  }
+
+  /* read edited inputs back into rows (before a re-render or a save) */
+  function harvest(){
+    var body = q('lrs-body'); if(!body) return;
+    body.querySelectorAll('[data-id]').forEach(function(el){
+      var r = rows.find(function(x){ return String(x.id) === String(el.getAttribute('data-id')); });
+      if(!r) return;
+      el.querySelectorAll('[data-f]').forEach(function(inp){
+        var f = inp.getAttribute('data-f');
+        if(f === 'rate') r.rate = parseFloat(inp.value) || 0; else r[f] = inp.value;
+      });
+      if(!r.__new) r.__dirty = true;
+    });
+  }
+  function addRow(cat, isNote){
+    var maxSort = rows.filter(function(r){ return r.category === cat; })
+      .reduce(function(m, r){ return Math.max(m, Number(r.sort_order) || 0); }, 100);
+    rows.push({ id:'new_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), template:TPL, category:cat,
+      name:isNote ? 'Note' : '', description:'', unit:isNote ? 'note' : 'sq', rate:0, sort_order:maxSort + 5, enabled:true, __new:true });
+    render();
+  }
+  function addCat(){
+    var el = q('lrs-newcat'); var name = String((el && el.value) || '').trim();
+    if(!name){ tell('Type a category name first.'); return; }
+    var maxSort = rows.reduce(function(m, r){ return Math.max(m, Number(r.sort_order) || 0); }, 100);
+    rows.push({ id:'new_' + Date.now(), template:TPL, category:name, name:'', description:'', unit:'sq', rate:0, sort_order:maxSort + 100, enabled:true, __new:true });
+    render();
+  }
+  function save(){
+    harvest();
+    var c = cx(); if(!c){ tell('Not signed in.'); return; }
+    var ops = [];
+    rows.forEach(function(r){
+      if(r.__new){
+        if(r.unit !== 'note' && !String(r.name || '').trim()) return;   // skip blank new lines
+        ops.push(c.from('pricing_items').insert({ template:TPL,
+          sku:'RL-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          category:r.category, name:r.name || (r.unit === 'note' ? 'Note' : ''), description:r.description || null,
+          unit:r.unit || 'sq', rate:Number(r.rate) || 0, sort_order:Number(r.sort_order) || 500, enabled:true }));
+      }else if(r.__dirty){
+        ops.push(c.from('pricing_items').update({ category:r.category, name:r.name || '', description:r.description || null,
+          unit:r.unit || 'sq', rate:Number(r.rate) || 0 }).eq('id', r.id));
+      }
+    });
+    deleted.forEach(function(id){ ops.push(c.from('pricing_items').delete().eq('id', id)); });
+    var btn = q('lrs-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+    Promise.all(ops).then(function(res){
+      var bad = res.filter(function(x){ return x && x.error; });
+      if(bad.length) throw new Error((bad[0].error && bad[0].error.message) || 'save failed');
+      deleted = []; editing = false;
+      return load();
+    }).then(function(){ render(); if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Labor rates saved.'); })
+      .catch(function(e){ if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Could not save: ' + ((e && e.message) || e)); });
+  }
+
+  function open(){
+    if(!isAdm()){ tell('The Labor Rate Schedule is admin-only.'); return; }
+    if(typeof hideAllViews === 'function') hideAllViews();
+    var v = q('cr-lrs-view'); if(!v) return;
+    v.style.display = 'block'; v.setAttribute('aria-hidden', 'false');
+    editing = false; deleted = [];
+    try{ document.body.style.overflow = ''; }catch(e){}
+    load().then(render);   // always refresh from the catalog on open
+    try{ window.scrollTo(0, 0); }catch(e){}
+    if(window.navSetView) window.navSetView('laborrates');
+  }
+  function close(){
+    var v = q('cr-lrs-view'); if(v){ v.style.display = 'none'; v.setAttribute('aria-hidden', 'true'); }
+    editing = false;
+    if(typeof showHome === 'function') showHome();
+  }
+
+  document.addEventListener('click', function(e){
+    var t;
+    if((t = e.target.closest('#lrs-back'))){ close(); return; }
+    if((t = e.target.closest('#lrs-print'))){ try{ window.print(); }catch(_){} return; }
+    if((t = e.target.closest('#lrs-edit'))){ if(!isAdm()){ tell('Admin only.'); return; } editing = true; render(); return; }
+    if((t = e.target.closest('#lrs-cancel'))){ editing = false; deleted = []; load().then(render); return; }
+    if((t = e.target.closest('#lrs-save'))){ save(); return; }
+    if((t = e.target.closest('[data-lrs-del]'))){
+      var id = t.getAttribute('data-lrs-del'); harvest();
+      var r = rows.find(function(x){ return String(x.id) === String(id); });
+      if(r && !r.__new) deleted.push(id);
+      rows = rows.filter(function(x){ return String(x.id) !== String(id); });
+      render(); return;
+    }
+    if((t = e.target.closest('[data-lrs-addrow]'))){ harvest(); addRow(t.getAttribute('data-lrs-addrow'), false); return; }
+    if((t = e.target.closest('[data-lrs-addnote]'))){ harvest(); addRow(t.getAttribute('data-lrs-addnote'), true); return; }
+    if((t = e.target.closest('#lrs-addcat'))){ harvest(); addCat(); return; }
+  });
+
+  window.openLRS = open;
+  window.CardinalLRS = Object.assign(window.CardinalLRS || {}, { open:open, close:close, load:load });
+})();
+</script>
+
+
+
+<!-- ═══ 1111: Roof Pre-Install Guide — admin editor (edits company_templates) ═══ -->
+<style id="cr-guide-styles">
+#cr-guide-editor{
+  position:fixed; inset:0; z-index:9500; display:none; overflow:hidden;
+  background:#eceef1; color:#23303f;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; flex-direction:column;
+}
+#cr-guide-editor[style*="block"]{ display:flex !important; }
+#cr-guide-editor .cge-topbar{
+  display:flex; align-items:center; gap:9px; padding:10px 14px;
+  background:#fff; border-bottom:1px solid #e4e4e4; flex:none;
+}
+#cr-guide-editor .cge-ttl{ flex:1; font-weight:800; font-size:16px; color:#1e2b4a; letter-spacing:-.01em; }
+#cr-guide-editor .cge-tb{
+  border:1px solid #e4e4e4; background:#fff; color:#23303f;
+  font-size:13px; font-weight:600; padding:8px 13px; border-radius:9px; cursor:pointer;
+}
+#cr-guide-editor .cge-tb:hover{ border-color:#c9c9c9; }
+#cr-guide-editor .cge-tb.save{ background:#C8202E; border-color:#C8202E; color:#fff; }
+#cr-guide-editor .cge-tb.save:hover{ background:#a91b27; }
+#cr-guide-editor .cge-sub{ padding:12px 16px 10px; background:#fff; border-bottom:1px solid #e4e4e4; flex:none; }
+#cr-guide-editor .cge-sub label{ display:block; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#5b6470; margin-bottom:5px; }
+#cr-guide-editor #cr-ge-subject{
+  width:100%; border:1px solid #e4e4e4; border-radius:8px; padding:9px 11px; font-size:14px;
+  font-family:inherit; color:#23303f; background:#fbfbfc; outline:none;
+}
+#cr-guide-editor #cr-ge-subject:focus{ border-color:#C8202E; box-shadow:0 0 0 3px rgba(200,32,46,.16); }
+#cr-guide-editor .cge-hint{ margin:9px 0 0; font-size:12.5px; line-height:1.5; color:#5b6470; }
+#cr-guide-editor .cge-hint b{ color:#23303f; }
+#cr-guide-editor #cr-ge-frame{
+  flex:1; width:100%; border:0; background:#eceef1; min-height:0;
+}
+@media(max-width:560px){
+  #cr-guide-editor .cge-ttl{ font-size:15px; }
+  #cr-guide-editor .cge-tb{ padding:8px 10px; font-size:12.5px; }
+}
+/* the editable "master doc" row prepended into Company Documents */
+.cd-guiderow{
+  display:flex; align-items:center; gap:12px; padding:13px 15px; margin-bottom:10px;
+  background:linear-gradient(180deg,#fff,#fbf3f4); border:1px solid #f0d3d6; border-radius:12px;
+}
+.cd-guiderow .cdg-ico{ font-size:22px; line-height:1; flex:none; }
+.cd-guiderow .cdg-name{ flex:1; min-width:0; }
+.cd-guiderow .cdg-name b{ display:block; font-size:14px; color:#1e2b4a; }
+.cd-guiderow .cdg-name small{ display:block; font-size:12px; color:#5b6470; margin-top:2px; line-height:1.4; }
+.cd-guiderow .cdg-auto{ display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+  color:#0f7a43; background:#e6f6ec; border:1px solid #bfe6cd; border-radius:999px; padding:2px 8px; margin-top:5px; }
+.cd-guiderow .btn{ flex:none; }
+/* the manual re-send row on the job profile overview */
+.db-guiderow{ display:flex; align-items:center; gap:10px; margin:10px 0 2px; flex-wrap:wrap; }
+.db-guiderow .dbg-t{ font-size:12.5px; font-weight:700; color:var(--rbe-dim,#8a93a1); }
+</style>
+
+<div id="cr-guide-editor" style="display:none;" aria-hidden="true">
+  <div class="cge-topbar">
+    <button id="cr-ge-close" class="cge-tb" type="button">&#8249;&nbsp;Back</button>
+    <div class="cge-ttl" id="cr-ge-ttl">Roof Pre-Install Guide</div>
+    <button id="cr-ge-preview" class="cge-tb" type="button">Preview</button>
+    <button id="cr-ge-reset" class="cge-tb" type="button">Reset</button>
+    <button id="cr-ge-save" class="cge-tb save" type="button">Save</button>
+  </div>
+  <div class="cge-sub">
+    <label for="cr-ge-subject">Email subject line</label>
+    <input id="cr-ge-subject" type="text" placeholder="Email subject line" autocomplete="off">
+    <p class="cge-hint">Edit the wording below like a document. The <b>highlighted</b> fields &mdash; installation date, and your sales rep&rsquo;s name and phone &mdash; fill in automatically for each client when the guide is emailed. <b>Preview</b> shows it with sample details; <b>Reset</b> restores the Cardinal default.</p>
+  </div>
+  <iframe id="cr-ge-frame" title="Pre-Install Guide editor"></iframe>
+</div>
+<script id="cr-guide-script">
+/* ═══ 1111/1112: Pre-Install Guides — editable masters + auto-email on scheduling ═══
+   The guide the homeowner gets when their build day is booked, matched to the job's
+   trade: Roofing / Siding / Windows. Each editable master body lives in
+   company_templates(<slug>); the letterhead/style shell and the autofill are here.
+   Auto-sends (once per job+guide) when a build-day 'job' appointment is created —
+   via /api/senddoc (Resend), the same rail estimates use. window.CardinalGuide. */
+(function(){
+  'use strict';
+  var GUIDES = {
+    preinstall_roof: { trade:'Roofing', label:'Roof Pre-Install Guide',
+      title:'Roof Installation — Pre-Install Guide', h1:'Roof Installation Information &amp; Pre-Install Guide',
+      subject:'Your Roof Installation — What to Expect (Cardinal Roofing)',
+      note:'Emailed to the homeowner when a roof build day is booked — auto-filled from the job.',
+      content: "<div class=\"chips\">\n      <div class=\"chip\"><div class=\"k\">Installation Date</div><div class=\"v\"><span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span></div></div>\n      <div class=\"chip\"><div class=\"k\">Crew Arrival Window</div><div class=\"v\">6:30 &ndash; 7:00 AM</div></div>\n    </div>\n    <div class=\"bd\">\n      <p class=\"lead\">Great news &mdash; your roof installation is officially scheduled for <span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span>, with our crew planning to arrive between 6:30&ndash;7:00 AM.</p>\n      <p>Everything is in place on our end. Your materials will be delivered either the afternoon before or the morning of installation, and our crew will handle the project from start to finish &mdash; including removal of the existing roofing, installation of your new roof system, and a thorough cleanup of your property before we leave. All we ask is that you sit back, relax, and let us take care of the rest.</p>\n\n      <h2>Weather Policy</h2>\n      <p>If inclement weather threatens the safety of your project or our crew, we will reach out promptly to discuss rescheduling. We will never open up a roof we cannot safely and properly close the same day. Your home and everyone&rsquo;s safety always come first.</p>\n\n      <h2>What to Expect on Installation Day</h2>\n      <p>A dump trailer or debris container will be positioned near your driveway or in the area we discussed, and material may be staged on the ground or loaded directly onto the roof. Our crew works around the full perimeter of your home, so expect ladders, equipment, and steady activity throughout the day. Before we leave, we sweep the property, run magnetic rollers across the driveway, walkways, and lawn areas, and remove all debris from the job site.</p>\n\n      <h2>Six Things to Do Before Installation Day</h2>\n      <ol class=\"steps\">\n        <li><span class=\"t\">Park vehicles on the street the evening before.</span><p>This keeps your cars well clear of falling debris and gives our crew full access to the driveway and work area for equipment, material, and debris removal.</p></li>\n        <li><span class=\"t\">Make sure an exterior outlet is available and powered.</span><p>Our crews run a combination of pneumatic and electric tools and may need to plug into an exterior outlet. If your outdoor outlets are controlled by an indoor switch, tied to a GFCI, or shut off at the breaker, please make sure they are live the morning of installation. Prefer we not use your power? Just let us know and we&rsquo;ll bring a generator instead &mdash; no issue either way.</p></li>\n        <li><span class=\"t\">Use your doors carefully throughout the day (call before exiting).</span><p>Our crew works directly above and around the perimeter of your home. Please use a door away from active work when possible, and if you or a pet needs to go outside, call or text one of the contacts below first so we can pause overhead work and clear a safe path.</p>\n          <div class=\"contacts\">\n            <div class=\"ctitle\">Call or text to clear your safe path</div>\n            <div class=\"crow\"><span class=\"who\">On-site crew leader</span><span class=\"num\">introduced on the day</span></div>\n            <div class=\"crow\"><span class=\"who\">Project Manager &mdash; Curtis Hoskins</span><span class=\"num\">(937) 576-6753</span></div>\n            <div class=\"crow\"><span class=\"who\">Your Sales Rep &mdash; <span class=\"cr-gtok\" data-tok=\"rep_name\">your sales rep</span></span><span class=\"num\"><span class=\"cr-gtok\" data-tok=\"rep_phone\">(937) 576-6753</span></span></div>\n          </div>\n        </li>\n        <li><span class=\"t\">Keep children and pets indoors.</span><p>A construction zone moves quickly and materials can shift without warning. Keeping little ones and pets inside for the day keeps everyone safe and keeps our crew focused on your roof.</p></li>\n        <li><span class=\"t\">Remove fragile items from interior walls and cover belongings in the attic or garage.</span><p>Pictures, mirrors, and shelving can vibrate loose during installation, and fine dust can filter down through the decking. A quick walk-through the night before, plus a tarp over anything stored below the roof deck, will save you the cleanup later.</p></li>\n        <li><span class=\"t\">Plan for a full day of activity.</span><p>A quality roof installation is not a quiet process &mdash; expect hammering, compressors, and crew movement from morning until the job is complete. If you work from home or have someone on a sleep schedule, you may want to make other arrangements for the day.</p></li>\n      </ol>\n\n      <h2>Questions or Special Requests</h2>\n      <p>We want this to be as smooth and stress-free as possible for you and your family. If anything comes up before your installation date &mdash; a scheduling conflict, a concern about access, landscaping you want protected, or a special request specific to your property &mdash; please don&rsquo;t hesitate to reach out. It&rsquo;s much easier to plan for something in advance than to work around it on install day.</p>\n      <p class=\"sign\">Thank you for trusting us with your home. We look forward to serving you and delivering a finished product you&rsquo;re proud of.<br><br><b>Cardinal Roofing &amp; Renovations</b></p>\n    </div>" },
+    preinstall_siding: { trade:'Siding', label:'Siding Pre-Install Guide',
+      title:'Siding Installation — Pre-Install Guide', h1:'Siding Installation Information &amp; Pre-Install Guide',
+      subject:'Your Siding Installation — What to Expect (Cardinal Roofing)',
+      note:'Emailed to the homeowner when a siding build day is booked — auto-filled from the job.',
+      content: "<div class=\"chips\">\n      <div class=\"chip\"><div class=\"k\">Installation Date</div><div class=\"v\"><span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span></div></div>\n      <div class=\"chip\"><div class=\"k\">Crew Arrival Window</div><div class=\"v\">7:00 &ndash; 7:30 AM</div></div>\n    </div>\n    <div class=\"bd\">\n      <p class=\"lead\">Great news &mdash; your siding installation is officially scheduled for <span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span>, and our crew is ready to transform the exterior of your home. We plan to arrive between 7:00&ndash;7:30 AM.</p>\n      <p>Everything is in place on our end. Your siding panels, trim coil, weather barrier, and custom accessories will be delivered either the afternoon before or the morning of installation. Siding projects often take multiple days &mdash; and our crew cleans up your job site every single day before leaving, ensuring all tools are organized, grounds are swept, and pathways are safe. All we ask is that you sit back, relax, and let us take care of the rest.</p>\n\n      <h2>Yard Sign &amp; Property Identification</h2>\n      <p>A few days prior to your install date, you will notice a Cardinal yard sign placed on your front lawn. In addition to letting your neighbors know quality work is underway, this sign serves a vital operational purpose: it acts as our crew&rsquo;s visual beacon so material delivery drivers and tear-off crews verify the exact address and never begin tearing siding off the wrong home. <b>Please leave the sign in place until your siding project is fully completed.</b></p>\n\n      <h2>Weather Policy</h2>\n      <p>Siding installation requires dry conditions and safe wind levels so weather-resistive housewrap and siding panels are hung with precision. If high winds or steady rain threaten our crew&rsquo;s safety or the integrity of exposed walls, we will reach out promptly to discuss scheduling. We will never leave wall sections unprotected or exposed to open weather. Your home and everyone&rsquo;s safety always come first.</p>\n\n      <h2>What to Expect on Installation Day &amp; Daily Cleanup</h2>\n      <p>A debris trailer or container will be positioned in your driveway or designated work zone. Siding installation involves setting up scaffolding, aluminum pump jacks, ladders, and metal cutting brake tables directly along the exterior walls, so you will see steady crew movement around the entire perimeter of your home.</p>\n      <p><b>Daily job-site cleanup:</b> because siding projects take multiple days, our crew performs a comprehensive cleanup at the end of every workday &mdash; we sweep all walkways, run magnetic rollers around the foundation and driveway to capture stray nails, organize equipment, and make sure your doors and gates are safe and accessible each evening.</p>\n\n      <h2>Six Things to Do Before Installation Day</h2>\n      <ol class=\"steps\">\n        <li><span class=\"t\">Clear a 5-to-10 foot perimeter around your home.</span><p>Our crews need direct access to all exterior walls for ladders and scaffolding. Please move patio furniture, grills, planters, garden hoses, solar lights, and lawn decor away from the foundation walls before our arrival.</p></li>\n        <li><span class=\"t\">Park vehicles on the street the evening before.</span><p>Moving cars into the street gives our trucks full access to stage siding boxes, trim coil, and brake tables, while keeping your vehicles well clear of moving ladders, scaffolding, and falling debris.</p></li>\n        <li><span class=\"t\">Exiting the home or letting pets out? Call us first.</span><p>Our crew works directly against every wall, doorframe, and window opening. If you need to leave the house, or a pet needs to go out, please call or text one of the contacts below before opening exterior doors &mdash; we will immediately pause work and clear a safe, unobstructed path for you and your pets.</p>\n          <div class=\"contacts\">\n            <div class=\"ctitle\">Call or text to clear your safe path</div>\n            <div class=\"crow\"><span class=\"who\">On-site crew leader</span><span class=\"num\">introduced on the day</span></div>\n            <div class=\"crow\"><span class=\"who\">Project Manager &mdash; Curtis Hoskins</span><span class=\"num\">(937) 576-6753</span></div>\n            <div class=\"crow\"><span class=\"who\">Your Sales Rep &mdash; <span class=\"cr-gtok\" data-tok=\"rep_name\">your sales rep</span></span><span class=\"num\"><span class=\"cr-gtok\" data-tok=\"rep_phone\">(937) 576-6753</span></span></div>\n          </div>\n        </li>\n        <li><span class=\"t\">Secure wall hangings, mirrors, and interior decor.</span><p>Tearing off old siding and fastening new siding creates rhythmic vibrations directly through your exterior wall studs. Please take down mirrors, framed pictures, clocks, and delicate shelving on exterior-facing walls the night before to prevent anything from vibrating loose.</p></li>\n        <li><span class=\"t\">Trim back foundation shrubs &amp; flag underground utilities.</span><p>If you have bushes or branches growing tight against exterior walls, a quick trim beforehand helps our installers achieve seamless siding alignment. Also, please point out any underground sprinkler heads, invisible fence lines, or buried utilities so we can protect them throughout the project.</p></li>\n        <li><span class=\"t\">Ensure exterior power is live (or request a generator).</span><p>Our installers use power shears, miter saws, and compressors. Please make sure outdoor outlets and their indoor switches/breakers are live. If you prefer we bring a portable generator instead, just let us know in advance &mdash; no problem at all.</p></li>\n      </ol>\n\n      <h2>Questions or Special Requests</h2>\n      <p>We want this to be as smooth and stress-free as possible for you and your family. If anything comes up before your installation date &mdash; a scheduling conflict, a concern about access, prize landscaping or gardens you want protected, or a special request specific to your property &mdash; please don&rsquo;t hesitate to reach out. It&rsquo;s much easier to plan for something in advance than to work around it on install day.</p>\n      <p class=\"sign\">Thank you for trusting us with your home. We look forward to serving you and delivering a finished product you&rsquo;re proud of.<br><br><b>Cardinal Roofing &amp; Renovations</b></p>\n    </div>" },
+    preinstall_windows: { trade:'Windows', label:'Window Pre-Install Guide',
+      title:'Window Replacement — Pre-Install Guide', h1:'Window Replacement Information &amp; Pre-Install Guide',
+      subject:'Your Window Replacement — What to Expect (Cardinal Roofing)',
+      note:'Emailed to the homeowner when a window build day is booked — auto-filled from the job.',
+      content: "<div class=\"chips\">\n      <div class=\"chip\"><div class=\"k\">Installation Date</div><div class=\"v\"><span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span></div></div>\n      <div class=\"chip\"><div class=\"k\">Crew Arrival Window</div><div class=\"v\">7:30 &ndash; 8:00 AM</div></div>\n    </div>\n    <div class=\"bd\">\n      <p class=\"lead\">Great news &mdash; your custom window replacement is officially scheduled for <span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span>, and our installation crew is ready to upgrade your home&rsquo;s comfort, efficiency, and beauty. We plan to arrive between 7:30&ndash;8:00 AM.</p>\n      <p>Everything is in place on our end. Your new window units, insulated trim, and custom aluminum capping materials will be delivered either the afternoon before or the morning of installation. Our certified crew handles everything from start to finish &mdash; including drop-cloth protection, careful removal of existing units, structural insulation, precision level installation, and continuous cleanup. All we ask is that you sit back, relax, and let us take care of the rest.</p>\n\n      <h2>Yard Sign &amp; Property Identification</h2>\n      <p>A few days prior to your install date, you will notice a Cardinal yard sign placed on your front lawn. In addition to letting neighbors know quality work is underway, this sign serves an important operational purpose: it acts as our crew&rsquo;s visual beacon so delivery drivers and window installers verify the exact address and stage materials at the correct property. <b>Please leave the sign in place until your installation is completed.</b></p>\n\n      <h2>Our &ldquo;One Window at a Time&rdquo; &amp; Weather Policy</h2>\n      <p>We know maintaining home security and indoor temperature matters. Our crew removes and replaces one window opening at a time (or by single room zones). We never leave multiple empty window openings exposed to the elements &mdash; each opening is insulated, weather-sealed, and secured before moving to the next.</p>\n      <p><b>Weather watch:</b> window replacements can safely proceed during mild cold or light rain. However, if severe storms, high wind gusts, or extreme freezing conditions threaten safety or proper sealant curing, we will reach out promptly to reschedule. Your home&rsquo;s interior comfort always comes first.</p>\n\n      <h2>What to Expect on Installation Day &amp; Daily Cleanup</h2>\n      <p>Installers will be working both inside your home and outside on exterior ladders and staging. We lay down protective drop cloths along indoor walkways and below active work areas. Outside, we set up an aluminum trim brake to custom-bend exterior capping.</p>\n      <p><b>Meticulous cleanup every day:</b> at the end of every work session, our crew vacuums indoor sills and floors, sweeps exterior walkways, runs rolling magnets across driveways and lawns to catch screws, and removes all old sash debris from your property.</p>\n\n      <h2>Six Things to Do Before Installation Day</h2>\n      <ol class=\"steps\">\n        <li><span class=\"t\">Take down all blinds, shades, curtains &amp; hardware.</span><p>Please remove all window treatments (curtains, drapes, blinds, plantation shutters, and mounting brackets) from every window being replaced. This gives our installers clear access to the window jambs and prevents delicate fabrics from gathering dust or sustaining damage.</p></li>\n        <li><span class=\"t\">Move beds, furniture &amp; decor 4 to 6 feet back from windows.</span><p>Our installers need room to maneuver large glass units and set up indoor ladders. Please slide beds, desks, dressers, couches, and electronics away from window openings, and clear window sills and nearby wall decor for a completely unobstructed workspace.</p></li>\n        <li><span class=\"t\">Secure pets &amp; communicate before stepping outside.</span><p>With interior doors frequently opening and window openings temporarily accessible, please keep pets secured in a closed, comfortable room away from active work zones. If you or your pets need to step outside, give our crew leader a quick heads-up so we ensure all ladders and pathways are completely clear.</p>\n          <div class=\"contacts\">\n            <div class=\"ctitle\">Call or text to coordinate site access</div>\n            <div class=\"crow\"><span class=\"who\">On-site crew leader</span><span class=\"num\">introduced on the day</span></div>\n            <div class=\"crow\"><span class=\"who\">Project Manager &mdash; Curtis Hoskins</span><span class=\"num\">(937) 576-6753</span></div>\n            <div class=\"crow\"><span class=\"who\">Your Sales Rep &mdash; <span class=\"cr-gtok\" data-tok=\"rep_name\">your sales rep</span></span><span class=\"num\"><span class=\"cr-gtok\" data-tok=\"rep_phone\">(937) 576-6753</span></span></div>\n          </div>\n        </li>\n        <li><span class=\"t\">Disable window security sensors &amp; alarms.</span><p>If your home has a security system with hardwired or wireless window sensors, please contact your alarm monitoring provider to bypass window zones on install day, and remove any stick-on sensor contacts so they aren&rsquo;t discarded with the old frames.</p></li>\n        <li><span class=\"t\">Trim exterior bushes &amp; clear outdoor pathways.</span><p>Installers must access the exterior of each window to install insulation, flashing tape, and custom aluminum coil capping. Please trim back close branches and move outdoor furniture, planters, or garden hoses away from exterior windows.</p></li>\n        <li><span class=\"t\">Ensure exterior &amp; interior power access (or request a generator).</span><p>Installers use saws, vacuum extractors, and trim tools. Please ensure an exterior or nearby interior outlet is live. If you prefer we bring a portable generator instead, just let us know in advance.</p></li>\n      </ol>\n\n      <h2>Questions or Special Requests</h2>\n      <p>We want this to be as smooth and stress-free as possible for you and your family. If anything comes up before your installation date &mdash; a scheduling conflict, a concern about access, prize landscaping you want protected, or a special request specific to your property &mdash; please don&rsquo;t hesitate to reach out. It&rsquo;s much easier to plan for something in advance than to work around it on install day.</p>\n      <p class=\"sign\">Thank you for trusting us with your home. We look forward to serving you and delivering a finished product you&rsquo;re proud of.<br><br><b>Cardinal Roofing &amp; Renovations</b></p>\n    </div>" }
+  };
+  var GUIDE_ORDER = ['preinstall_roof','preinstall_siding','preinstall_windows'];
+  function G(slug){ return GUIDES[slug] || GUIDES.preinstall_roof; }
+
+  var STYLE = "*{box-sizing:border-box}"
+    + "body{margin:0;background:#eceef1;color:#1f2733;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}"
+    + ".doc{max-width:720px;margin:22px auto 60px;background:#fff;padding:0 0 38px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 30px rgba(0,0,0,.10);border-radius:3px;overflow:hidden}"
+    + ".hd{background:#C8202E;color:#fff;padding:22px 34px}"
+    + ".hd .co{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.95}"
+    + ".hd h1{margin:6px 0 0;font-size:23px;font-weight:800;letter-spacing:-.01em}"
+    + ".hd .addr{margin-top:8px;font-size:12px;line-height:1.5;opacity:.9}"
+    + ".hd .prep{margin-top:9px;font-size:12.5px;font-weight:600;opacity:.95;border-top:1px solid rgba(255,255,255,.25);padding-top:8px}"
+    + ".chips{display:flex;gap:0;border-bottom:1px solid #e4e4e4}"
+    + ".chip{flex:1;padding:16px 34px}.chip + .chip{border-left:1px solid #e4e4e4}"
+    + ".chip .k{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#5b6470}"
+    + ".chip .v{font-size:18px;font-weight:800;color:#1e2b4a;margin-top:4px}"
+    + ".bd{padding:22px 34px 0}.bd p{font-size:14px;line-height:1.62;margin:0 0 13px}.bd .lead{font-size:15px}"
+    + "h2{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#C8202E;border-bottom:2px solid #C8202E;padding-bottom:5px;margin:26px 0 12px}"
+    + ".steps{margin:0;padding:0;list-style:none;counter-reset:s}"
+    + ".steps > li{position:relative;padding:0 0 15px 46px;counter-increment:s}"
+    + ".steps > li::before{content:counter(s);position:absolute;left:0;top:0;width:30px;height:30px;background:#1e2b4a;color:#fff;border-radius:8px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center}"
+    + ".steps .t{font-weight:800;font-size:14px;display:block;margin-bottom:3px}"
+    + ".steps p{font-size:13.5px;line-height:1.55;margin:0;color:#2c3542}"
+    + ".contacts{background:#f7f8fa;border:1px solid #e4e4e4;border-radius:10px;padding:14px 16px;margin:8px 0 4px}"
+    + ".contacts .ctitle{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#1e2b4a;margin-bottom:9px}"
+    + ".contacts .crow{display:flex;align-items:baseline;gap:8px;font-size:14px;padding:5px 0;border-top:1px solid #ececf0}"
+    + ".contacts .crow:first-of-type{border-top:0}.contacts .who{font-weight:700}"
+    + ".contacts .num{margin-left:auto;font-weight:700;color:#1e2b4a;font-variant-numeric:tabular-nums}"
+    + ".sign{margin-top:22px;font-size:14px;line-height:1.6}"
+    + ".ft{margin:26px 34px 0;padding-top:16px;border-top:2px solid #1e2b4a;font-size:12.5px;color:#5b6470;line-height:1.7}.ft b{color:#1f2733}";
+
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function cx(){ return window.sb || window.supa; }
+  function tell(m){ try{ if(typeof crTell === 'function') crTell(m); }catch(e){} }
+  function okToast(m){ try{ if(window.crToastOk) window.crToastOk(m); else tell(m); }catch(e){} }
+
+  function fmtInstall(d){
+    if(!d) return '';
+    try{
+      var m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      var dt = m ? new Date(+m[1], +m[2]-1, +m[3]) : new Date(d);
+      if(isNaN(dt.getTime())) return String(d);
+      return dt.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
+    }catch(e){ return String(d); }
+  }
+
+  /* which guide a job gets, by trade. Untagged → roof (the primary trade and the
+     roof guide). A job tagged only for a trade with no guide (Gutters/Repairs/Misc)
+     → null (no guide). Roofing wins when multiple trades are present. */
+  function slugForJob(pr){
+    var t = [];
+    try{ if(typeof ljTrades === 'function') t = ljTrades(pr) || []; }catch(e){}
+    if(!t.length) return 'preinstall_roof';
+    if(t.indexOf('Roofing') !== -1) return 'preinstall_roof';
+    if(t.indexOf('Siding')  !== -1) return 'preinstall_siding';
+    if(t.indexOf('Windows') !== -1) return 'preinstall_windows';
+    return null;
+  }
+
+  function repEmailFor(pr){
+    try{ if(typeof ljAssignedEmail === 'function'){ var e = ljAssignedEmail(pr); if(e) return e; } }catch(_){}
+    return (pr && pr.sales_rep) ? String(pr.sales_rep) : '';
+  }
+  function ctxFor(pr, fields){
+    var repEmail = repEmailFor(pr);
+    var repName = '', repPhone = '';
+    try{ if(typeof rptRepName === 'function' && repEmail) repName = rptRepName(repEmail); }catch(_){}
+    try{ var t = (window.cacheTeam || {})[repEmail]; if(t && t.phone) repPhone = t.phone; }catch(_){}
+    return {
+      client_name: (pr && pr.name) ? String(pr.name) : '',
+      property_address: (pr && pr.address) ? String(pr.address) : '',
+      install_date: fmtInstall(fields && (fields.appt_date || fields.when || fields.date)),
+      rep_name: repName,
+      rep_phone: repPhone
+    };
+  }
+
+  var FALLBACK = { install_date:'your scheduled date', rep_name:'your Cardinal sales rep',
+                   rep_phone:'(937) 576-6753', client_name:'', property_address:'' };
+  function fill(content, ctx){
+    ctx = ctx || {};
+    return String(content).replace(
+      /<span class="cr-gtok" data-tok="([a-z_]+)">[\s\S]*?<\/span>/g,
+      function(_m, tok){
+        var v = ctx[tok];
+        if(v == null || String(v).trim() === '') v = FALLBACK[tok] != null ? FALLBACK[tok] : '';
+        return esc(v);
+      });
+  }
+
+  function doc(filledContent, ctx, editable, slug){
+    ctx = ctx || {};
+    var prep = '';
+    var who = (ctx.client_name || '').trim(), where = (ctx.property_address || '').trim();
+    if(who || where){
+      prep = '<div class="prep">Prepared for ' + esc(who || where) + (who && where ? ' &middot; ' + esc(where) : '') + '</div>';
+    }
+    var g = G(slug || 'preinstall_roof');
+    var editStyle = editable
+      ? ".cr-gtok{background:#fff4b8;border-radius:3px;padding:0 3px;font-weight:700;box-shadow:inset 0 0 0 1px #e6cf6a}"
+        + ".cr-edit-region{outline:none}.cr-edit-region:focus{box-shadow:inset 0 0 0 2px rgba(200,32,46,.25)}"
+      : "";
+    var region = editable
+      ? '<div class="cr-edit-region" contenteditable="true">' + filledContent + '</div>'
+      : filledContent;
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+      + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+      + '<title>' + esc(g.title) + '</title><style>' + STYLE + editStyle + '</style></head><body>'
+      + '<div class="doc"><div class="hd"><div class="co">Cardinal Roofing &amp; Renovations</div>'
+      + '<h1>' + g.h1 + '</h1>'
+      + '<div class="addr">5735 Webster Street, Dayton, OH 45414 &middot; (937) 576-6753 &middot; Admin@cardinalrenovations.net</div>'
+      + prep + '</div>'
+      + region
+      + '<div class="ft"><b>Cardinal Roofing &amp; Renovations, LLC</b><br>'
+      + '5735 Webster Street, Dayton, OH 45414 &middot; Office: (937) 576-6753 &middot; Admin@cardinalrenovations.net</div>'
+      + '</div></body></html>';
+  }
+
+  /* the editable master for a slug: {subject, html}. DB row wins; GUIDES[slug] falls back. */
+  function loadTemplate(slug){
+    var g = G(slug), c = cx();
+    if(!c) return Promise.resolve({ subject:g.subject, html:g.content });
+    return c.from('company_templates').select('subject,html').eq('slug', slug).maybeSingle()
+      .then(function(r){
+        var row = r && r.data;
+        return { subject:(row && row.subject) || g.subject, html:(row && row.html) || g.content };
+      })
+      .catch(function(){ return { subject:g.subject, html:g.content }; });
+  }
+
+  /* once-per-job+guide guard + audit (client_guide_sends PK project_id,kind=slug). */
+  function alreadySent(projectId, kind){
+    var c = cx(); if(!c) return Promise.resolve(false);
+    return c.from('client_guide_sends').select('project_id').eq('project_id', projectId).eq('kind', kind).maybeSingle()
+      .then(function(r){ return !!(r && r.data); }).catch(function(){ return false; });
+  }
+  function markSent(projectId, kind, toEmail){
+    var c = cx(); if(!c) return Promise.resolve();
+    var by = ''; try{ by = (window.currentUser && window.currentUser.email) || ''; }catch(_){}
+    return c.from('client_guide_sends').insert({ project_id:projectId, kind:kind, to_email:toEmail || null, sent_by:by || null })
+      .then(function(){}).catch(function(){});
+  }
+
+  function validEmail(e){ return typeof e === 'string' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim()); }
+
+  function postSend(pr, ctx, tpl, slug){
+    var g = G(slug);
+    var html = doc(fill(tpl.html, ctx), ctx, false, slug);
+    var propLine = ctx.property_address ? ('This covers your ' + g.trade.toLowerCase() + ' installation at ' + ctx.property_address + '.') : '';
+    var session = null;
+    return Promise.resolve()
+      .then(function(){ return (window.TEAM && cx()) ? cx().auth.getSession() : null; })
+      .then(function(s){ session = s && s.data && s.data.session; })
+      .then(function(){
+        return fetch('/api/senddoc', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + (session ? session.access_token : '') },
+          body: JSON.stringify({ to:(pr.email || '').trim(), clientName:ctx.client_name,
+            propertyLine:propLine, title:g.title, html:html })
+        });
+      })
+      .then(function(res){
+        return res.json().catch(function(){ return {}; }).then(function(d){
+          if(!res.ok) throw new Error((d && (d.detail || d.error)) || ('HTTP ' + res.status));
+          return d;
+        });
+      });
+  }
+
+  /* send the matching guide for a job. opts.slug pins it; opts.force bypasses the guard. */
+  function sendFor(pr, fields, opts){
+    opts = opts || {};
+    if(!pr || !pr.id) return Promise.resolve({ skipped:'no_project' });
+    var slug = opts.slug || slugForJob(pr);
+    if(!slug) return Promise.resolve({ skipped:'no_guide' });
+    if(!validEmail(pr.email)) return Promise.resolve({ skipped:'no_email' });
+    return (opts.force ? Promise.resolve(false) : alreadySent(pr.id, slug)).then(function(sent){
+      if(sent) return { skipped:'already_sent' };
+      return loadTemplate(slug).then(function(tpl){
+        return postSend(pr, ctxFor(pr, fields), tpl, slug).then(function(){
+          return markSent(pr.id, slug, pr.email).then(function(){ return { ok:true, slug:slug }; });
+        });
+      });
+    });
+  }
+
+  /* the auto hook: after a build-day appointment. Gate → once → send / capture email. */
+  function autoOnAppointment(fields){
+    try{
+      if(!fields || fields.kind !== 'job' || !fields.project_id) return;
+      var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(fields.project_id); })[0];
+      if(!pr) return;
+      var slug = slugForJob(pr);
+      if(!slug) return;                                     /* trade has no guide → skip */
+      alreadySent(pr.id, slug).then(function(sent){
+        if(sent) return;
+        if(validEmail(pr.email)){
+          sendFor(pr, fields, { slug:slug }).then(function(r){
+            if(r && r.ok) okToast(G(slug).label + ' emailed to ' + (pr.name || 'the client'));
+          }).catch(function(e){ tell('Could not email the guide: ' + ((e && e.message) || e)); });
+        }else{
+          promptEmail(pr, fields, slug);
+        }
+      });
+    }catch(_){ /* a courtesy email must never break booking */ }
+  }
+
+  function promptEmail(pr, fields, slug){
+    try{
+      var to = window.prompt('Email the ' + G(slug).label + ' to ' + (pr.name || 'the client') + '?\n\nAdd their email address to send it (leave blank to skip):', '');
+      if(to == null) return;
+      to = String(to).trim();
+      if(!to) return;
+      if(!validEmail(to)){ tell('That does not look like a valid email — nothing was sent.'); return; }
+      var saved = Promise.resolve();
+      try{ if(typeof patchProject === 'function') saved = patchProject(pr.id, { email:to }); }catch(_){}
+      Promise.resolve(saved).then(function(){
+        pr.email = to;
+        return sendFor(pr, fields, { force:true, slug:slug });
+      }).then(function(r){
+        if(r && r.ok) okToast('Email saved — ' + G(slug).label + ' sent to ' + (pr.name || 'the client'));
+      }).catch(function(e){ tell('Saved the email, but the guide could not be sent: ' + ((e && e.message) || e)); });
+    }catch(_){}
+  }
+
+  /* manual "Email to client" from the job overview (allows a re-send). */
+  function manualSend(pr){
+    if(!pr){ tell('No job selected.'); return; }
+    var slug = slugForJob(pr);
+    if(!slug){ tell('There is no Pre-Install Guide for this job’s trade.'); return; }
+    if(!validEmail(pr.email)){ promptEmail(pr, {}, slug); return; }
+    if(!window.confirm('Email the ' + G(slug).label + ' to ' + (pr.name || 'the client') + ' at ' + pr.email + '?')) return;
+    sendFor(pr, {}, { force:true, slug:slug }).then(function(r){
+      if(r && r.ok) okToast(G(slug).label + ' sent to ' + (pr.name || 'the client'));
+    }).catch(function(e){ tell('Could not send: ' + ((e && e.message) || e)); });
+  }
+
+  /* ── the editable rows for Company Documents (matched to the trade filter) ── */
+  function docsRows(trade, admin){
+    return GUIDE_ORDER.filter(function(slug){ return trade === 'All' || trade === G(slug).trade; })
+      .map(function(slug){
+        var g = G(slug);
+        return '<div class="cd-guiderow"><span class="cdg-ico">&#128231;</span>'
+          + '<span class="cdg-name"><b>' + esc(g.label) + '</b>'
+          + '<small>' + esc(g.note) + '</small>'
+          + '<span class="cdg-auto">Auto-emailed on scheduling</span></span>'
+          + '<button class="btn ghost" data-cr-guide-preview-doc="' + slug + '">Preview</button>'
+          + (admin ? '<button class="btn" data-cr-guide-edit="' + slug + '">Edit</button>' : '')
+          + '</div>';
+      }).join('');
+  }
+
+  /* ── the admin editor (edits company_templates(<slug>)) ─────────────────────── */
+  function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
+  var _slug = 'preinstall_roof';
+  function geFrame(){ return document.getElementById('cr-ge-frame'); }
+  function geDocOf(){ var f = geFrame(); try{ return f && (f.contentDocument || (f.contentWindow && f.contentWindow.document)); }catch(e){ return null; } }
+  function openEditor(slug){
+    if(!isAdm()){ tell('Editing the guide is admin-only.'); return; }
+    _slug = GUIDES[slug] ? slug : 'preinstall_roof';
+    if(typeof hideAllViews === 'function') hideAllViews();
+    var v = document.getElementById('cr-guide-editor'); if(!v) return;
+    v.style.display = 'block'; v.setAttribute('aria-hidden', 'false');
+    try{ document.body.style.overflow = ''; }catch(e){}
+    window.scrollTo(0, 0);
+    var ttl = document.getElementById('cr-ge-ttl'); if(ttl) ttl.textContent = G(_slug).label;
+    if(window.navSetView) window.navSetView('guideedit');
+    loadTemplate(_slug).then(function(tpl){
+      var subj = document.getElementById('cr-ge-subject'); if(subj) subj.value = tpl.subject || G(_slug).subject;
+      var f = geFrame(); if(f) f.srcdoc = doc(tpl.html, {}, true, _slug);
+    });
+  }
+  function closeEditor(){
+    var v = document.getElementById('cr-guide-editor'); if(v){ v.style.display = 'none'; v.setAttribute('aria-hidden', 'true'); }
+    if(typeof showHome === 'function') showHome();
+  }
+  function harvestBody(){
+    var d = geDocOf(); if(!d) return null;
+    var reg = d.querySelector('.cr-edit-region'); if(!reg) return null;
+    var clone = reg.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); });
+    return clone.innerHTML || null;
+  }
+  function saveEditor(){
+    if(!isAdm()){ tell('Admin only.'); return; }
+    var c = cx(); if(!c){ tell('Not signed in.'); return; }
+    var html = harvestBody();
+    if(!html){ tell('Nothing to save.'); return; }
+    var subj = (document.getElementById('cr-ge-subject') || {}).value || G(_slug).subject;
+    var by = ''; try{ by = (window.currentUser && window.currentUser.email) || ''; }catch(_){}
+    var btn = document.getElementById('cr-ge-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+    c.from('company_templates').upsert({ slug:_slug, subject:subj, html:html, updated_at:new Date().toISOString(), updated_by:by || null }, { onConflict:'slug' })
+      .then(function(r){ if(r && r.error) throw r.error;
+        if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+        okToast(G(_slug).label + ' saved.'); })
+      .catch(function(e){ if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Could not save: ' + ((e && e.message) || e)); });
+  }
+  function resetEditor(){
+    if(!window.confirm('Reset the ' + G(_slug).label + ' wording back to the Cardinal default? Your unsaved changes will be replaced.')) return;
+    var f = geFrame(); if(f) f.srcdoc = doc(G(_slug).content, {}, true, _slug);
+    var subj = document.getElementById('cr-ge-subject'); if(subj) subj.value = G(_slug).subject;
+  }
+  function sampleCtx(){
+    return { client_name:'Daniel Whitfield', property_address:'128 Maple Ave, Dayton, OH',
+      install_date:fmtInstall(new Date(Date.now()+6*86400000).toISOString().slice(0,10)),
+      rep_name:'Nick Hey', rep_phone:'(937) 576-6753' };
+  }
+  function openPreviewWindow(html){
+    try{
+      var w = window.open('', '_blank');
+      if(w){ w.document.open(); w.document.write(html); w.document.close(); }
+      else tell('Allow pop-ups to preview.');
+    }catch(e){ tell('Could not open a preview.'); }
+  }
+  function preview(){
+    var s = sampleCtx();
+    openPreviewWindow(doc(fill(harvestBody() || G(_slug).content, s), s, false, _slug));
+  }
+  function previewSaved(slug){
+    var s = sampleCtx(); slug = GUIDES[slug] ? slug : 'preinstall_roof';
+    loadTemplate(slug).then(function(tpl){ openPreviewWindow(doc(fill(tpl.html, s), s, false, slug)); });
+  }
+
+  document.addEventListener('click', function(e){
+    var t;
+    if((t = e.target.closest('#cr-ge-close'))){ closeEditor(); return; }
+    if((t = e.target.closest('#cr-ge-save'))){ saveEditor(); return; }
+    if((t = e.target.closest('#cr-ge-reset'))){ resetEditor(); return; }
+    if((t = e.target.closest('#cr-ge-preview'))){ preview(); return; }
+    if((t = e.target.closest('[data-cr-guide-preview-doc]'))){ previewSaved(t.getAttribute('data-cr-guide-preview-doc')); return; }
+    if((t = e.target.closest('[data-cr-guide-edit]'))){ openEditor(t.getAttribute('data-cr-guide-edit')); return; }
+    if((t = e.target.closest('[data-cr-guide-send]'))){
+      var id = t.getAttribute('data-cr-guide-send');
+      var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(id); })[0];
+      manualSend(pr); return;
+    }
+  });
+
+  window.__apptEmailPreInstallGuide = autoOnAppointment;
+  window.CardinalGuide = Object.assign(window.CardinalGuide || {}, {
+    open: openEditor, close: closeEditor, send: manualSend, sendFor: sendFor,
+    fill: fill, doc: doc, ctxFor: ctxFor, loadTemplate: loadTemplate,
+    slugForJob: slugForJob, docsRows: docsRows, GUIDES: GUIDES,
+    /* back-compat: 1111's isNonRoofOnly is now "no guide for this trade" */
+    isNonRoofOnly: function(pr){ return slugForJob(pr) === null; }
+  });
+})();
+</script>
 </body>
 </html>

@@ -7543,3 +7543,67 @@ copy handlers into the sheet.
 `rgb(239,239,239)` — a light-grey UA button on a near-black sheet — with every structural assertion
 green. **Anything else you put in that sheet needs its selector extended the same way**, and only a
 real render will tell you.
+
+
+---
+
+## Invoices & Accounts Receivable — the "Who Owes Me" dashboard (build 1107)
+
+**Where:** `#cr-ar-view` + `<style id="cr-ar-styles">` + `<script id="cr-ar-script">`, appended at the end of `index.html`. Exports `window.CardinalAR` (`open`, `render`, `close`, `list`) plus globals `openAR` / `renderAR`. Opened from the **Invoices & AR** nav row (Office/Resources, admin-only) or by tapping the home **Accounts Receivable** card (`#arCard`). Registered in `hideAllViews()` + `navRestore()` (`case 'ar'`) and the nav router (`nav === 'ar'`).
+
+**What it is:** every invoiced job that still owes, grouped by age (Current 0–14 / 15–30 / 30+), oldest first. KPI tray: Total Outstanding, Paid This Month, Overdue 30+. Each row: client, address, billed / collected / balance, a status pill, and one-tap Copy / Text / Email of the hosted pay link (`/api/share?t=<token>`). Porcelain `--est-*` system, light-only, admin-gated.
+
+**Status is derived, not stored** (`statusFor`): from `jobFinance()` value/paid + the `collections` ledger — Paid in Full / Deposit Paid / Partially Paid / Sent / Draft. The Stripe webhook (`api/pay-webhook.js`) writes the `collections` row it reads, so status advances on its own; this is what makes staged draws (deposit → progress → final) track against one balance.
+
+**Do NOT build a second AR view.** The old home aging chart (`renderOps`, `#arWrap`) stays as the mini-chart (4 buckets); this is the actionable worklist (3 buckets, Theo's pick). Reuses `collPaid`, `cacheCollections`, `jobFinance`, and the `shareUrlFor` `/api/share?t=` link shape. Send is pre-filled `sms:`/`mailto:` today; Twilio auto-send (already live in `api/notify.js`) is Build 3. `createInvoiceFor` minting the token + a live status header on the invoice itself is Build 2. Gate: `harness_ar1107.js` (jsdom; GREEN on 1107, RED on 1106).
+
+
+---
+
+## Invoices & Payments — the job-level block, offline recording, Company SMS (build 1108)
+
+Extends the Invoices & AR module (`cr-ar-script`, `window.CardinalAR`). Where the AR dashboard (1107) is the admin's company-wide worklist, this is the per-job, rep-facing surface.
+
+- **`CardinalAR.jobBlock(pr, fin)`** -> the porcelain "Invoices & Payments" card, mounted in `renderAcxOverview()` after the `.dbmoney` strip. Live status pill + Billed / Collected / Balance. Actions by state: Generate invoice (no invoice yet), or Company SMS / My phone (`sms:`) / Email + Open invoice; plus Record offline payment. Rep-visible on their assigned jobs (RLS).
+- **`CardinalAR.recordPayment(pr)`** -> the offline payment modal (also on every AR row, `data-arpay`). Amount / Method (check/cash/ach) / Type (deposit/progress/final -> deposit/other/final) / Date -> one `collections` row via `sb` (RLS: admin/production, or the rep on their own job — `collections_rep_insert.sql`). Steps the derived status forward. ⚠ The LEDGER, not the worksheet's legacy `ws.paid`.
+- **createInvoiceFor** mints `share_token` + `total` at creation.
+- **`api/sms-link.js`** — Company SMS via the `notify.js` Twilio Messaging Service; reads `projects.phone` server-side with the caller's token.
+
+Do NOT build a second invoice/payment surface. Status = `statusFor` (the 1107 engine). Send link = `shareUrlFor` (`/api/share?t=`). Gate: `harness_inv1108.js`. Invoice-document live header = build 1109.
+
+
+---
+
+## Invoice document: live status/balance card + payment ledger (build 1109)
+
+**`wireInvoiceLive(doc, r)`** (main block, before `serializeFrame`) — called in the report editor's `frame.onload`. When the open doc is an invoice, injects a live layer into the iframe document, computed from `jobFinance()` + `cacheCollections` (the ledger), NOT the values baked at creation:
+- **Top:** a **Current Balance Due** card above the SUMMARY table (anchored on `#estTotal`) with the live balance + status pill (`CardinalAR.status`); swaps to a **PAID IN FULL** badge (+ final payment date) when balance ≤ 0.
+- **Bottom:** a **Payment History** ledger (Date, Method/Ref, Amount, Type + total).
+
+⚠ The injected nodes are `data-cardinal-live` and `serializeFrame()` strips them on save — the stored `inspection_reports.html` stays the as-issued record; this is a view/print-time layer only. Do NOT persist it. Print rules (`@media print`, `print-color-adjust:exact`) keep the badges crisp. Gate: `harness_inv1109.js`.
+
+## Labor Rate Schedule — Santiago's Exhibit A, editable + printable (build 1110)
+
+The **crew** labor-rate schedule (what Cardinal pays a sub for labor), modeled on Santiago's "EXHIBIT A | LABOR RATE SCHEDULE" price list. Distinct from the `roofing`/`siding`/`windows` **estimate** catalogs (which quote a homeowner) — this is a fourth `pricing_items` template, `roofing_labor`.
+
+- **Where:** burger menu → **Office → Labor Rate Schedule** (`data-nav="laborrates"`). **Admin only** (crew rates; `hideOpt('laborrates')` for non-admins, `window.is_admin()` in-module, `pricing_items` RLS is the authority). Module: `<style id="cr-lrs-styles">` + `<div id="cr-lrs-view">` + `<script id="cr-lrs-script">`; `window.openLRS` / `window.CardinalLRS` (`open`/`close`/`load`). Full-screen `inset:0` view registered in `hideAllViews()` + `navRestore()` (`case 'laborrates'`).
+- **Look:** exhibit-styled document — navy `#1e2b4a` category bands with gold `#c9a227` titles, "SANTIAGO | LABOR RATE SCHEDULE" header (the on-screen title; Theo renamed it from "EXHIBIT A"), rates right-aligned. (On-white gold title accent is `--lrs-gold-dk:#8f6b00`, 4.92:1; the bright gold rides the navy bands at 5.79:1.)
+- **Data:** reads `pricing_items` where `template='roofing_labor'`, ordered by `sort_order`, grouped by `category`. Units map to exhibit labels: `sq`→SQ, `lf`→LF, `ea`→unit, `sheet`→sheet, `ls`→a flat price (no unit suffix), `note`→a non-priced italic category note. Seeded by `pricing_roofing_labor.sql` (24 items / 5 categories, idempotent + non-clobbering).
+- **Edit (admin):** Edit toggles inline inputs for rate/name/description + a unit select; `+ Add line`, `+ Add note`, `+ Add category`, delete `×`; Save/Cancel. Save diffs against the catalog — inserts new lines (blank skipped), updates edited rows, deletes removed ones.
+- **Print / PDF:** `@media print` isolates `#cr-lrs-view`, hides the topbar + edit chrome, keeps the navy/gold with `print-color-adjust:exact`, `@page Letter` — a one-page Exhibit A to hand a crew.
+- Gate: `harness_lrs1110.js` (jsdom; GREEN on 1110 / RED on 1109).
+
+## Roof Pre-Install Guide — editable master + auto-email on scheduling (build 1111)
+
+The homeowner's "Roof Installation Information & Pre-Install Guide" (what to expect on install day, weather policy, six things to do before). **Auto-emails to the client when a roof build day is booked**, autofilled from the job.
+
+- **Module:** `cr-guide-styles` + `#cr-guide-editor` + `cr-guide-script` (`window.CardinalGuide` = open/close/send/sendFor/fill/doc/ctxFor/loadTemplate/isNonRoofOnly; `window.__apptEmailPreInstallGuide` = the auto hook). Letterhead/style shell + autofill in code; editable body in `company_templates('preinstall_roof')`.
+- **Trigger:** the third helper (beside `__apptMayAdvanceStage` / `__apptNotifyProduction`) at the build-day appointment hook in `adb.create` / `adb.update`. On a `kind:'job'` appointment for a roofing job: once-guard → send, or prompt for a missing email then send. Fire-and-forget.
+- **Autofill tokens** (`<span class="cr-gtok" data-tok>`): `install_date` (from `appt_date`), `rep_name` (`rptRepName`) + `rep_phone` (`cacheTeam[email].phone`), `client_name`, `property_address`. Filled at send (no token survives into the sent HTML); shown as chips in the editor.
+- **Guardrails:** roofing only (skip a job explicitly tagged non-roofing via `ljTrades`; untagged proceeds) · valid client email required (missing → capture prompt writes `pr.email` via `patchProject`) · **once per job** (`client_guide_sends` PK `(project_id,kind)`) · never blocks booking · rep confirmation toast.
+- **Email rail:** `/api/senddoc` (Resend, staff-gated) — the estimates path — with the filled guide as the HTML doc, client name + property line. Sends from `DIGEST_FROM` (set it to a verified Cardinal domain).
+- **Editable master in Company Documents** (prepended row): **Preview** (sample autofill), **Edit** (admin → `#cr-guide-editor`, an iframe contenteditable doc + subject + Reset + Save `upsert`). Job overview has an **Email to client** button (`data-cr-guide-send`, roofing-gated) to send/re-send by hand (covers jobs scheduled before the feature shipped).
+- **Data:** `preinstall_guide.sql` — `company_templates` (admin write / staff read) + `client_guide_sends` (staff read/insert). Registered in `hideAllViews()` + `navRestore()` (`case 'guideedit'`). No dark mode (client document).
+- Gate: `harness_guide1111.js` (jsdom; GREEN on 1111 / RED on 1110; 32 assertions).
+
+**1112 — three guides (Roof / Siding / Windows).** The module generalized to a `GUIDES` map keyed by slug (`preinstall_roof`/`siding`/`windows`). `CardinalGuide.slugForJob(pr)` picks by `ljTrades`: Roofing > Siding > Windows; **untagged → roof**; a trade with no guide (Gutters/Repairs/Misc) → **null (no send)**. Each guide is its own editable master in `company_templates` (seeded by `preinstall_guides_siding_windows.sql`) with its own steps, arrival window, and title; the once-guard (`client_guide_sends`) is per `(project, slug)`. Company Documents shows all matching guides via `CardinalGuide.docsRows(trade, isAdmin)` (each row carries its slug); the editor (`#cr-ge-ttl`) edits whichever guide's Edit button was tapped. Gate: `harness_guide1112.js` (GREEN on 1112 / RED on 1111; 26 assertions).
