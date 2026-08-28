@@ -3875,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1112 &#8212; The Pre-Install Guide now comes in three &#8212; Roof, Siding and Windows &#8212; and the right one is chosen automatically from the job&rsquo;s trade when its build day is booked (siding and windows carry their own steps, arrival window and daily-cleanup notes). All three are editable masters in Company Documents. Everything else works exactly as the roof guide already did: auto-filled, sent once per job, with the missing-email prompt. Needs the preinstall_guides_siding_windows.sql migration.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1113 &#8212; The Owner Console gets its own Owner section in the menu, and a new Strategy area inside it: an editable business plan (the recurring-revenue play), an editable market &amp; competitor summary for the Miami Valley, and a KPI scoreboard of what to watch. Admin only.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42007,7 +42007,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
+{ b:1113, d:'2026-08-28', t:'Owner section + a Strategy cockpit', s:'The <b>Owner Console</b> now has its own <b>Owner</b> section in the side menu instead of sitting under Admin, and a new <b>Strategy</b> area lives inside it (admin only). It holds an editable <b>Business Plan</b> \u2014 the recurring-revenue play (a Cardinal Care maintenance membership plus retail financing) \u2014 an editable <b>Market &amp; Competitors</b> summary for the Miami Valley (who the real threats are and where the white space is), and a <b>KPI scoreboard</b> of the numbers worth watching every morning. Tap <b>Edit</b> on the plan or the competitor notes to rewrite them in place. A fuller, sourced strategy brief was prepared alongside this.' },
+      { b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
       { b:1111, d:'2026-08-28', t:'Roof Pre-Install Guide \u2014 auto-emailed when a roof is scheduled', s:'The homeowner now gets a polished <b>Roof Installation &amp; Pre-Install Guide</b> the moment their build day is booked &mdash; what to expect on install day, the weather policy, and the six things to do beforehand. It <b>auto-fills</b> from the job: the installation date, and your sales rep\u2019s name and phone in the &ldquo;call before you step outside&rdquo; contacts. It sends through the same email rail as your estimates, <b>once per job</b>, and only for roofing jobs. If the client has <b>no email on file</b>, the app asks for it right when you book the day, saves it, and sends. The guide is an <b>editable master</b> in <b>Company Documents</b> &mdash; edit the wording like a document, Preview it with sample details, or Reset to the Cardinal default &mdash; and every job profile has an <b>Email to client</b> button to send or re-send by hand. Groundwork: two new tables (company_templates, client_guide_sends) via preinstall_guide.sql, applied before this build.' },
       { b:1110, d:'2026-08-28', t:'Labor Rate Schedule \u2014 Santiago\u2019s Exhibit A, editable and printable', s:'A new <b>Labor Rate Schedule</b> screen (Office menu, admin only) lays out the crew labor prices the way Santiago\u2019s <b>Exhibit A</b> does &mdash; navy section bands, gold titles, and the rate on the right of each line. It is <b>fully editable in place</b>: change a price, rename a line, add or delete lines, add category notes, or add a whole new category, then <b>Save</b>. <b>Print / PDF</b> gives you a clean one-page schedule (titled Santiago) to hand a crew. The rates live in the same Pricing catalog the app already uses, under their own roofing-labor template, so nothing else is duplicated.' },
       { b:1109, d:'2026-08-28', t:'Invoices show live status, balance and payment history', s:'Open an invoice and it now shows a live <b>Current Balance Due</b> card at the top &mdash; the real balance from the ledger, not a number frozen when the invoice was made &mdash; with its status (Sent / Deposit Paid / Partially Paid). When the job is fully paid the card flips to a bold <b>&#10003; PAID IN FULL</b> badge with a zero balance and the date it cleared. At the bottom a compact <b>Payment History</b> lists every recorded payment (date, method and check number, amount, and whether it was a deposit, progress draw or final), with a running total. It all prints and saves to PDF cleanly &mdash; crisp borders, high-contrast badges. The invoice as-issued (its original summary) is untouched; this is the live layer on top, and it is never baked into the saved document.' },
@@ -43498,10 +43499,12 @@ window.CardinalAdminHealth.show();
 }
 });
 var ownerOpt = makeOpt('cr-nav-owner', '\uD83D\uDCCB Owner Console', function(){ if(window.CardinalOwner && typeof window.CardinalOwner.open === 'function') window.CardinalOwner.open(); });
+var ownerSec = makeSec('cr-nav-sec-owner', 'Owner');   /* 1113: the Owner Console gets its own drawer section */
 var anchor = acctSec || document.getElementById('signOutBtn');
 if(anchor){
-anchor.parentNode.insertBefore(adminSec, anchor);
+anchor.parentNode.insertBefore(ownerSec, anchor);
 anchor.parentNode.insertBefore(ownerOpt, anchor);
+anchor.parentNode.insertBefore(adminSec, anchor);
 if(reports)  { reports.style.display  = ''; anchor.parentNode.insertBefore(reports, anchor); }
 if(feed)     { feed.style.display     = ''; anchor.parentNode.insertBefore(feed, anchor); }
 anchor.parentNode.insertBefore(health, anchor);
@@ -79512,6 +79515,25 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 #cr-owner .ow-efb button[data-act=edit-cancel]{background:#eadfd2;color:#6b5f54;}
 #cr-owner .ow-foot{padding:26px 22px 40px;text-align:center;}
 #cr-owner .ow-foot .fl{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#c2b4a4;}
+#cr-owner .ow-strat{background:#fffdf9;border:1px solid #e4dccf;border-radius:12px;padding:16px 18px;margin-bottom:12px;}
+#cr-owner .ow-strat-h{font:700 13px/1.2 "Segoe UI",Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#c8202e;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;}
+#cr-owner .ow-strat-edit{font:600 12px "Segoe UI",Arial,sans-serif;color:#5c5147;background:#f2ebe0;border:1px solid #ddd2c4;border-radius:7px;padding:5px 12px;cursor:pointer;flex:none;}
+#cr-owner .ow-strat-edit:active{background:#e8ddcd;}
+#cr-owner .ow-strat-body{font:400 15px/1.55 Georgia,serif;color:#3a3128;}
+#cr-owner .ow-strat-body p{margin:0 0 10px;} #cr-owner .ow-strat-body p:last-child{margin-bottom:0;}
+#cr-owner .ow-strat-body b{color:#231d18;font-weight:700;}
+#cr-owner .ow-strat-note{font:italic 400 12.5px/1.5 Georgia,serif;color:#7c6f60;border-top:1px solid #ece3d5;padding-top:9px;margin-top:11px;}
+#cr-owner .ow-strat-ta{width:100%;min-height:230px;border:1px solid #ddd2c4;border-radius:8px;padding:11px 13px;font:400 13px/1.55 "SFMono-Regular",Menlo,Consolas,monospace;color:#231d18;background:#fffef9;resize:vertical;}
+#cr-owner .ow-strat-ta:focus{outline:none;border-color:#c8202e;}
+#cr-owner .ow-strat-eb{display:flex;gap:8px;margin-top:10px;}
+#cr-owner .ow-strat-eb button{font:700 12px "Segoe UI",Arial,sans-serif;letter-spacing:.03em;border-radius:8px;padding:9px 15px;cursor:pointer;border:1px solid #ddd2c4;background:#fffdf9;color:#231d18;}
+#cr-owner .ow-strat-eb button[data-act=strat-save]{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-owner .ow-strat-sub{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b5f54;margin:4px 0 11px;}
+#cr-owner .ow-strat-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+#cr-owner .ow-kpi{background:#fffdf9;border:1px solid #e4dccf;border-radius:10px;padding:12px 13px;}
+#cr-owner .ow-kpi-k{font:700 14px/1.2 "Segoe UI",Arial,sans-serif;color:#233251;margin-bottom:4px;}
+#cr-owner .ow-kpi-w{font:400 12px/1.4 "Segoe UI",Arial,sans-serif;color:#5c5147;}
+@media(min-width:560px){#cr-owner .ow-strat-kpis{grid-template-columns:repeat(3,1fr);}}
 </style>
 <script id="cr-owner-script">
 /* The Owner Console — build 895. window.CardinalOwner = { open, close }. */
@@ -79520,6 +79542,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   var TASKS = [], OITEMS = [], DOCS = [], REMINDERS = [];
   var LEDGER = [], LTXNS = [], openAcct = null;   /* 899: The Ledger */
   var VAULT = [], vaultBusy = false;   /* 900: The Vault */
+  var STRATEGY = { owner_biz_plan:null, owner_competitors:null }, stratEdit = null;   /* 1113: Strategy */
   var editing = null;   /* 896: {type:'task'|'item', id} — one row edited at a time */
   function editFormHTML(title, note, due){
     /* due === null omits the date field (tasks); '' or 'YYYY-MM-DD' shows it (items) */
@@ -79585,6 +79608,11 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     ]);
     TASKS  = (res[0] && res[0].data) || [];
     OITEMS = (res[1] && res[1].data) || [];
+    try{
+      var _st = await c.from('company_templates').select('slug,subject,html').in('slug', ['owner_biz_plan','owner_competitors']);
+      STRATEGY = { owner_biz_plan:null, owner_competitors:null };
+      (((_st && _st.data)) || []).forEach(function(r){ STRATEGY[r.slug] = r; });
+    }catch(_se){}
     var cd  = (res[2] && res[2].data) || [];
     var crews = (res[3] && res[3].data) || [];
     var cmap = {}; crews.forEach(function(c){ cmap[c.id] = c; });
@@ -79897,10 +79925,49 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     h += '</div>';
     return h;
   }
+  /* 1113: the Strategy section — an editable Business Plan + Market/Competitors
+     (company_templates, admin-editable), and the KPI scoreboard from the brief. */
+  var KPIS = [
+    ['Members & MRR','Cardinal Care sign-ups and the recurring revenue they represent.'],
+    ['Renewal rate','Share of members who renew \u2014 the health of the recurring engine.'],
+    ['Close rate','Estimates that become signed jobs, retail vs. insurance.'],
+    ['Average job value','By trade \u2014 the effect of financing and upgrades on ticket size.'],
+    ['AR / collections aging','What is owed and how old \u2014 cash flow at a glance.'],
+    ['Lead-source ROI','Which channels actually produce sold jobs.'],
+    ['Crew utilization','Booked crew-days vs. capacity \u2014 the real growth ceiling.'],
+    ['Claims / repairs per member','Work the membership generates.'],
+    ['Reviews captured','New Google reviews per month.']
+  ];
+  function stratDocHTML(slug, fallbackTitle){
+    var d = STRATEGY[slug], title = (d && d.subject) || fallbackTitle;
+    var html = (d && d.html) || '<p class="ow-strat-note">Not written yet.</p>';
+    if(stratEdit === slug){
+      return '<div class="ow-strat"><div class="ow-strat-h">' + esc(title) + '</div>'
+        + '<textarea class="ow-strat-ta" id="ow-strat-ta">' + esc(html) + '</textarea>'
+        + '<div class="ow-strat-eb"><button type="button" data-act="strat-save" data-slug="' + esc(slug) + '">Save</button>'
+        + '<button type="button" data-act="strat-cancel">Cancel</button></div></div>';
+    }
+    return '<div class="ow-strat"><div class="ow-strat-h">' + esc(title)
+      + (amAdmin() ? '<button type="button" class="ow-strat-edit" data-act="strat-edit" data-slug="' + esc(slug) + '">Edit</button>' : '')
+      + '</div><div class="ow-strat-body">' + html + '</div></div>';
+  }
+  function kpiHTML(){
+    return '<div class="ow-strat-kpis">' + KPIS.map(function(k){
+      return '<div class="ow-kpi"><div class="ow-kpi-k">' + esc(k[0]) + '</div><div class="ow-kpi-w">' + esc(k[1]) + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function strategyHTML(){
+    return '<div class="ow-sec"><div class="ow-sl">Strategy <span class="ow-ct">The plan</span></div>'
+      + stratDocHTML('owner_biz_plan', 'Business Plan')
+      + stratDocHTML('owner_competitors', 'Market &amp; Competitors')
+      + '<div class="ow-strat-sub">The Scoreboard \u2014 what to track</div>'
+      + kpiHTML()
+      + '</div>';
+  }
   function render(){
     if(!view) return;
     var body = view.querySelector('.ow-wrap');
-    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() + vaultHTML() +
+    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() + vaultHTML() + strategyHTML() +
       '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations · Owner</div></div>';
   }
 
@@ -79911,7 +79978,19 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     if(!t) return;
     var act = t.getAttribute('data-act'), c = cl(), id = rowId(t);
     try{
-      if(act === 'task-add'){
+      if(act === 'strat-edit'){ stratEdit = t.getAttribute('data-slug'); render(); }
+      else if(act === 'strat-cancel'){ stratEdit = null; render(); }
+      else if(act === 'strat-save'){
+        if(!amAdmin()) return;
+        var _slug = t.getAttribute('data-slug'), _ta = view.querySelector('#ow-strat-ta');
+        if(!_slug || !_ta) return;
+        var _up = await c.from('company_templates').upsert({ slug:_slug, html:_ta.value, updated_at:new Date().toISOString(), updated_by:me() }, { onConflict:'slug' });
+        if(_up && _up.error){ crTell('Could not save: ' + _up.error.message); return; }
+        if(!STRATEGY[_slug]) STRATEGY[_slug] = { slug:_slug };
+        STRATEGY[_slug].html = _ta.value; stratEdit = null; render();
+        crTell('Strategy saved.');
+      }
+      else if(act === 'task-add'){
         var inp = view.querySelector('#ow-task-in'), v = (inp.value || '').trim();
         if(!v) return;
         var pos = TASKS.reduce(function(m,x){ return Math.max(m, x.position || 0); }, 0) + 1;

@@ -7607,3 +7607,10 @@ The homeowner's "Roof Installation Information & Pre-Install Guide" (what to exp
 - Gate: `harness_guide1111.js` (jsdom; GREEN on 1111 / RED on 1110; 32 assertions).
 
 **1112 — three guides (Roof / Siding / Windows).** The module generalized to a `GUIDES` map keyed by slug (`preinstall_roof`/`siding`/`windows`). `CardinalGuide.slugForJob(pr)` picks by `ljTrades`: Roofing > Siding > Windows; **untagged → roof**; a trade with no guide (Gutters/Repairs/Misc) → **null (no send)**. Each guide is its own editable master in `company_templates` (seeded by `preinstall_guides_siding_windows.sql`) with its own steps, arrival window, and title; the once-guard (`client_guide_sends`) is per `(project, slug)`. Company Documents shows all matching guides via `CardinalGuide.docsRows(trade, isAdmin)` (each row carries its slug); the editor (`#cr-ge-ttl`) edits whichever guide's Edit button was tapped. Gate: `harness_guide1112.js` (GREEN on 1112 / RED on 1111; 26 assertions).
+
+## Owner Console: drawer section + Strategy cockpit (build 1113)
+
+The Owner Console (`cr-owner` / `CardinalOwner`, build 895, admin-only, cream "Daily Brief" surface) now has **its own "Owner" drawer section** (`makeSec('cr-nav-sec-owner','Owner')`, in `addAdminSection`, inserted before Admin) and a new **Strategy** section (`strategyHTML()` in `render()`):
+- An editable **Business Plan** (`owner_biz_plan`) — the recurring-revenue play (Cardinal Care membership + retail financing) — and an editable **Market & Competitors** summary (`owner_competitors`), both stored in `company_templates` (seeded by `owner_strategy_seed.sql`), loaded in `loadAll()`'s isolated try/catch. Admin **Edit** → textarea → **Save** upserts; non-admins read-only.
+- A **9-tile KPI scoreboard** (`KPIS` / `kpiHTML()`) — members/MRR, renewal rate, close rate, avg job value, AR aging, lead-source ROI, crew utilization, claims-per-member, reviews captured.
+- Companion deliverable: a standalone light-mode **Strategy Brief** artifact (recurring-revenue plan + a sourced 13-competitor Miami Valley analysis + KPIs). Light mode only. Gate: `harness_owner1113.js`.
