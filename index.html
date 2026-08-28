@@ -2001,7 +2001,14 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 
 /* ---- phone: client-profile fit pass ---- */
 @media (max-width:700px){
-  body.projopen #brandTitle{display:none;}
+  /* 1115: `body.projopen #brandTitle{display:none}` was here and is deleted.
+     The 416 comment in cr-hd4-styles names it as THE one rule in the file that
+     could hide the title, and answers it with an unconditional
+     `display:block !important` — so it has not won since 416. Measured, not
+     assumed: the 1114 sentinel sweep reported it "never wins on any of the 1
+     element(s) it matches". Deletion at source beats out-specificity; and the
+     416 rule stays, because it is what keeps the title up if this ever comes
+     back. #brandCtx below still takes over the header on a project screen. */
   body.projopen #brandCtx{display:flex !important;}
   body.projopen .jobmenu-head{max-width:130px;}
   /* milestones fit without side-scroll (id-anchored: beats base rules regardless of order) */
@@ -3868,13 +3875,24 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
                deliberately NOT in hideAdminItemsForNonAdmin's list, so every desk sees it. -->
           <button class="navopt" data-nav="notify" data-cri="bell lg">Enable Notifications</button>
 
-          <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
           <!-- 1041 (audit O2): ONE build line only. REPLACE this text each build —
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
-     in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1114 &#8212; The retail header reads &#8220;Retail&#8221; instead of the company slogan, and it no longer disappears on a phone. The pipeline cards are letters &#8212; L, P, A, C, I &#8212; which makes room for the two retail was missing: Closed and On Hold, each with a job in it today.</div>
+     in the CHANGELOG (What’s New reads it), not here.
+     1115: and now the SUMMARY is gone too. Theo: "get rid of the big
+     paragraph about what's new in the drawer menu and add a small logout
+     icon at the bottom." It was a 300-character wall under every row, and
+     What's New already tells the same story better. The version itself
+     STAYS and stays a direct text node: currentBuild(), buildTag(),
+     railVersion() and check_build.py's app_stamp() all read this element,
+     and app_stamp() anchors on `data-cr-footer...>` followed immediately by
+     `v2026-`, so wrapping the version in a <span> would break the gate.
+     Sign out moved IN HERE as an icon rather than being rebuilt: same
+     #signOutBtn, same listener, same display toggling from showMain() /
+     showLogin(). The glyph is CardinalIcons' `lock` — the one the desktop
+     rail's own sign-out already uses, so the two surfaces cannot drift. -->
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1115<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42032,6 +42050,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1115, d:'2026-08-28', t:'A tidier menu: no wall of text, a sign-out icon, and every section closed',
+  s:'The side menu ended in a paragraph about the last build \u2014 three hundred characters nobody needed at the bottom of a phone screen. It is gone; the build number stays on one small line, and What\u2019s New still holds the full story. <b>Sign out</b> is now a small icon on that same line instead of a full-width row, matching the one on the desktop menu. And the sections \u2014 Daily, Sell, CRMs, Resources, Admin, Account \u2014 now start <b>closed every time you open the menu</b>, not just the first time. They used to remember whichever ones you had opened, so the menu got longer the more you used it. Open the ones you want; next time it is a clean list of headings again.' },
 { b:1114, d:'2026-08-28', t:'The header says Retail, and the pipeline cards say L P A C I',
   s:'The retail header carried the company slogan, which needed 247px and so had been hidden altogether on any phone narrower than 438px \u2014 the one portal whose header could go blank. It now reads \u201CRetail\u201D, in the same face and size as Insurance, Community, Production and Sales Floor, and it shows at every width. On the Cardinal Pipeline the stage cards print a single letter instead of the word \u2014 L, P, A, C, I \u2014 which is what makes room for the two cards retail was missing: Closed and On Hold now have their own card, and they keep their words because C is already Completed\u2019s and a lone O reads as nothing. Those two were not decoration \u2014 a job of yours is sitting in each of them right now, and until today neither showed up anywhere on the dashboard. Colours, counts, money and what each card opens are unchanged, and each one announces its full stage name to a screen reader.' },
 { b:1113, d:'2026-08-28', t:'Owner section + a Strategy cockpit', s:'The <b>Owner Console</b> now has its own <b>Owner</b> section in the side menu instead of sitting under Admin, and a new <b>Strategy</b> area lives inside it (admin only). It holds an editable <b>Business Plan</b> \u2014 the recurring-revenue play (a Cardinal Care maintenance membership plus retail financing) \u2014 an editable <b>Market &amp; Competitors</b> summary for the Miami Valley (who the real threats are and where the white space is), and a <b>KPI scoreboard</b> of the numbers worth watching every morning. Tap <b>Edit</b> on the plan or the competitor notes to rewrite them in place. A fuller, sourced strategy brief was prepared alongside this.' },
@@ -80924,7 +80944,10 @@ body:not(.cr-lnav-on) #navMenu .navopt svg{width:19px;height:19px;flex:none;colo
 body:not(.cr-lnav-on) #navMenu .navopt:hover,
 body:not(.cr-lnav-on) #navMenu .navopt:active{background:color-mix(in srgb,var(--hac,#8fb4d8) 14%,transparent) !important;color:#fff !important;}
 body:not(.cr-lnav-on) #navMenu .navopt::after{content:'\203A';margin-left:auto;color:#5a626e;font-size:18px;line-height:1;flex:none;}
-body:not(.cr-lnav-on) #navMenu #signOutBtn{color:#e35c63 !important;border-top:1px solid rgba(255,255,255,.09) !important;}
+/* 1115: sign-out is an icon in the footer bar now, not a full-width row, so
+   its own divider goes with the row — the bar already has one. Deleted at
+   source rather than overridden. */
+body:not(.cr-lnav-on) #navMenu #signOutBtn{color:#e35c63 !important;}
 /* ── 930 · collapsible sections in the drawer, closed by default ───────────
    Theo: "make the menus collapsible and expandable start the menus collapsed."
    32 rows is a long scroll on a phone; six headers is a glance.
@@ -80978,6 +81001,27 @@ body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{background:transparent !importa
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint{background:transparent !important;color:#9aa0a8 !important;border-top:1px solid rgba(255,255,255,.07) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,255,.1) !important;color:#cfd6df !important;}
 body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !important;color:#9aa2ae !important;border-top:1px solid rgba(255,255,255,.06) !important;margin-top:4px;}
+/* 1115 · the drawer's bottom bar: the build stamp on the left, a small
+   sign-out on the right. NOT scoped to body:not(.cr-lnav-on) like the rule
+   above it — that one is a colour override for the drawer, this is the
+   element's own layout, and it must hold wherever the element renders.
+   margin-left:auto rather than justify-content:space-between so anything
+   injected between the two later still pushes sign-out to the right edge. */
+#navMenu [data-cr-footer].cr-drawer-foot{display:flex;align-items:center;gap:10px;
+  padding-top:4px !important;padding-bottom:4px !important;}
+/* 44px, not 40: 592 pushed every control to a 44px tap target and 1076 had
+   to come back for .lnav-out and the CRM switcher, which had been left at
+   ~28px. A new control arriving at 40 would be the third time. */
+#navMenu .cr-df-out{margin-left:auto;flex:none;width:44px;height:44px;padding:13px;
+  box-sizing:border-box;background:none;border:0;border-radius:12px;cursor:pointer;
+  color:#e35c63;/* an icon, floor 3.0:1 — measured by gate_1115.mjs */}
+#navMenu .cr-df-out:hover,#navMenu .cr-df-out:active{background:rgba(227,92,99,.16);}
+#navMenu .cr-df-out:focus-visible{outline:2px solid #e35c63;outline-offset:-2px;}
+/* the registry's glyphs paint through .i2 (fill) / .i5 (stroke), the same
+   pair .lnav-out uses on the rail. currentColor alone would leave them black. */
+#navMenu .cr-df-out svg{width:18px;height:18px;display:block;}
+#navMenu .cr-df-out svg .i2{fill:currentColor;}
+#navMenu .cr-df-out svg .i5{stroke:currentColor;}
 </style>
 <script id="cr-drawer-script">
 /* 924: turns the burger dropdown into a left slide-out drawer on mobile. Does
@@ -81006,19 +81050,32 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
          calls this, forever. Build 567 paid for this lesson once already. */
       if(el.textContent !== want) el.textContent = want;
     }
-    /* ── 930 · collapsible sections, closed by default ────────────────────
-       State lives in the SAME store the desktop rail already uses
-       (`cardinal.lnav.sections`, keyed by the slugged section label), so
-       collapsing Office on the phone collapses it on the desktop too — one
-       record of which nav sections are open, not two. Only the DEFAULT
-       differs by surface: the rail opens Daily and Sell, the drawer opens
-       nothing, which is what Theo asked for. */
-    var SEC_KEY = 'cardinal.lnav.sections';
-    function readSecs(){
-      try{ return JSON.parse(localStorage.getItem(SEC_KEY) || '{}') || {}; }
-      catch(_){ return {}; }
-    }
-    function writeSecs(st){ try{ localStorage.setItem(SEC_KEY, JSON.stringify(st)); }catch(_){} }
+    /* ── 930 · collapsible sections · 1115 · closed on EVERY opening ──────
+       930 defaulted them closed and then remembered your choice, in the SAME
+       localStorage record the desktop rail uses ('cardinal.lnav.sections').
+       So the drawer only ever opened collapsed ONCE: the first section you
+       expanded stayed expanded on every later visit, and expanding Office on
+       the phone expanded it on the desktop too.
+
+       Theo: "Have all the sections start off not expanded." That is not a
+       default any more, it is an invariant — so the drawer keeps its open set
+       IN MEMORY and empties it each time the drawer opens (see sync()).
+       Expanding still works for as long as the drawer is open; closing it
+       forgets.
+
+       ⚠ This deliberately makes the drawer STOP reading and STOP writing
+       'cardinal.lnav.sections'. Two knock-ons, both intended:
+         · the desktop rail keeps that key entirely to itself — it has its own
+           readState()/writeState(), and the rail's remembered folds and its
+           "Daily and Sell open" default are untouched;
+         · 954's openInsuranceSection(), which writes st.insurance = 1 when you
+           enter the insurance portal, no longer reaches the drawer. It still
+           opens the section on the rail. On the phone, "everything starts
+           collapsed" outranks it — that is this instruction, not an oversight.
+       There is no second persisted store here, so nothing can drift out of
+       step with the rail: this one does not persist at all. */
+    var secOpen = {};      /* slug -> 1, for this opening of the drawer only */
+    var wasOpen = false;   /* previous sync()'s answer, to spot the transition */
     function secSlug(s){ return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
     /* Never bury these in a section: sign-out and the build stamp sit after the
        last header, and scrape() skips them for the same reason. */
@@ -81062,7 +81119,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
       }
       applying = true;
       try{
-        var st = readSecs(), sec = null, open = true, count = 0;
+        var st = secOpen, sec = null, open = true, count = 0;
         function stamp(){ if(sec) sec.setAttribute('data-crcount', String(count)); }
         Array.prototype.forEach.call(menu.children, function(el){
           if(!el.classList) return;
@@ -81093,9 +81150,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     }
     function toggleSection(el){
       var id = el.getAttribute('data-crsec') || secSlug(el.textContent);
-      var st = readSecs();
-      st[id] = (el.getAttribute('aria-expanded') === 'true') ? 0 : 1;
-      writeSecs(st);
+      secOpen[id] = (el.getAttribute('aria-expanded') === 'true') ? 0 : 1;
       applySections();
     }
     /* Delegated, so headers injected later (Admin) need no second wiring. */
@@ -81127,6 +81182,14 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     }
     function sync(){
       var open = menu.style.display === 'block' && isDrawer();
+      /* 1115: every opening starts collapsed. Fires on the CLOSED→OPEN edge
+         only — sync() runs on every mutation of #navMenu (nine modules inject
+         rows over the first few seconds), and clearing unconditionally would
+         snap a section shut under the finger that just opened it. onMutate()
+         calls sync() before applySections(), so the reset is always in place
+         before the rows are re-tagged. */
+      if(open && !wasOpen) secOpen = {};
+      wasOpen = open;
       if(open) fillUser();
       menu.classList.toggle('cr-drawer-open', open);
       bd.classList.toggle('on', open);

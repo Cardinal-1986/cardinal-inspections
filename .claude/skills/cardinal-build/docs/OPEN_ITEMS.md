@@ -1,5 +1,17 @@
 # Cardinal Resource App — Open Items
 
+## ✅ SETTLED 28 Aug 2026 — the drawer (build 1115)
+
+- **No build summary in the menu.** Theo: *"get rid of the big paragraph about what's new."*
+  The footer keeps the version line only; What's New holds the description. `check_build.py`
+  gates the CHANGELOG entry now, so there is no reason to put prose back.
+- **Sign out is a small icon**, bottom-right of that line, using the same `lock` glyph as the
+  desktop rail.
+- **Every drawer section starts collapsed, every time.** Not a default — an invariant. The
+  drawer keeps its open set in memory and clears it on open. It no longer reads or writes
+  `cardinal.lnav.sections` (the desktop rail owns that key), and 954's insurance-portal
+  auto-open no longer reaches the drawer. **Do not restore the persistence.**
+
 ## 🟠 OWED — the Labor Rate Schedule, crew-list first (28 Aug 2026)
 
 Theo, on the 1110 screen: *"Labor rate schedule shouldn't go straight to Santiago. It should

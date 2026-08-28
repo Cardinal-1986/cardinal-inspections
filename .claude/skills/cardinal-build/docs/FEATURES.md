@@ -7640,3 +7640,19 @@ The Owner Console (`cr-owner` / `CardinalOwner`, build 895, admin-only, cream "D
 - ⚠ **At ≤900px the row is a horizontal SCROLLER again** (`overflow-x:auto`, `.pipebtn{min-width:64px}`, spans `max-width:100%`). Seven cards cannot fit 340px at a legible size: at 390px each card is 47px and "Closed"/"On Hold" measure 51/57px — and they **overlap rather than ellipsize**, because `align-items:center` sizes a label to its own max-content and `overflow:hidden` on a max-content box never fires. 957's `overscroll-behavior-x:auto` reset is kept (a 900px tablet still fits seven, and containment on a non-scrolling box breaks the page swipe). Desktop is untouched — 1194px fits all seven at 106px each.
 - ⚠ **The overlap predates this build.** Measured on 1113 at 390px: "Prospects" 76px in a 67px card, "Completed" 77px in 67px. Five cards were already colliding on a phone.
 - Gates: `harness_pipe1114.js` (jsdom; runs the shipped bucket/render/header code; GREEN on 1114 / RED on 1113; 28 assertions + a coverage floor) and **`gate_1114.mjs`** (real Chromium, 390 + 1194, both themes; 58 checks; RED on 1113 without crashing).
+
+## The drawer's bottom bar + always-collapsed sections (build 1115)
+
+**`[data-cr-footer]` is a bar, not a paragraph.** It holds the version stamp and the sign-out icon, side by side (`.cr-drawer-foot`, flex, `margin-left:auto` on the button).
+
+⚠ **The version must stay a DIRECT text node inside it.** Four readers parse this element and one of them is a gate: `currentBuild()` (What's New), `buildTag()` (error reports), `railVersion()` (the rail footer), and `check_build.py`'s `app_stamp()`, which anchors on `data-cr-footer…>` followed immediately by `v2026-`. `addPaletteHint()` also finds the footer by testing `/^v2026-/` against its `textContent`. **Wrapping the version in a `<span>` breaks the build gate.**
+
+⚠ **The em-dash build summary is gone for good** (Theo, 1115). `check_build.py`'s 1070 summary gate would have gone permanently inert, so it now gates the **CHANGELOG entry for the stamped build** (must exist, ≥40 chars of `s:` prose) instead. Don't reinstate the footer prose to "fix" it.
+
+**Sign out** is `#signOutBtn` still — same id, same listener, same `showMain()`/`showLogin()` toggling — restyled to a 44×44 icon button (`.cr-df-out`) using `CardinalIcons`' **`lock`**, the same glyph the desktop rail's `.lnav-out` uses. One concept, one glyph.
+
+**Sections are collapsed every time the drawer opens**, not just the first time:
+- The open set lives **in memory** (`secOpen` in `cr-drawer-script`) and is emptied on the **closed→open edge** in `sync()` — not unconditionally, or a mutation would snap shut a section under the finger that just opened it.
+- ⚠ **The drawer no longer touches `cardinal.lnav.sections`.** That key is the desktop rail's alone now (its folds and its "Daily and Sell open" default are unchanged). 930's shared-store design is deliberately over.
+- ⚠ **954's `openInsuranceSection()` no longer reaches the drawer** — it still opens the section on the rail. On the phone, "everything starts collapsed" outranks it. This is the instruction, not an oversight.
+- Gates: `harness_drawer1115.js` (jsdom, drives the shipped module open→expand→close→open; GREEN 36 / RED on 1114) and `gate_1115.mjs` (real Chromium at 390px with the drawer open; GREEN 21 / RED 10 on 1114).

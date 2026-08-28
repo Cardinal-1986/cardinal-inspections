@@ -34,7 +34,19 @@ const lum = ([r, g, b]) => {
   return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
 };
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-const rgb = s => { const m = /(-?[\d.]+)[,\s]+(-?[\d.]+)[,\s]+(-?[\d.]+)/.exec(s || ''); return m ? [+m[1], +m[2], +m[3]] : null; };
+const rgb = s => {
+  s = String(s || '');
+  /* ⚠ Chromium hands back TWO forms and they use DIFFERENT SCALES:
+     `rgb(13, 18, 32)` is 0-255, and `color(srgb 0.1004 0.1206 0.1476)` is 0-1.
+     Parsing the second with a 0-255 reader reads #1a1f26 as very nearly black
+     — which on a dark drawer produces a plausible, confident, wrong ratio.
+     Caught on this gate's first run: it reported 5.97:1 for an icon whose real
+     figure is different, and nothing about the output looked odd. */
+  const c = /color\(\s*srgb\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)/.exec(s);
+  if (c) return [c[1], c[2], c[3]].map(v => Math.round(Math.min(1, Math.max(0, parseFloat(v))) * 255));
+  const m = /(-?[\d.]+)[,\s]+(-?[\d.]+)[,\s]+(-?[\d.]+)/.exec(s);
+  return m ? [+m[1], +m[2], +m[3]] : null;
+};
 
 const probe = () => ({
   cards: [...document.querySelectorAll('#pipeRow .pipebtn')].map(b => {
