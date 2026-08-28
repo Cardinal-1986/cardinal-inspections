@@ -7543,3 +7543,16 @@ copy handlers into the sheet.
 `rgb(239,239,239)` — a light-grey UA button on a near-black sheet — with every structural assertion
 green. **Anything else you put in that sheet needs its selector extended the same way**, and only a
 real render will tell you.
+
+
+---
+
+## Invoices & Accounts Receivable — the "Who Owes Me" dashboard (build 1107)
+
+**Where:** `#cr-ar-view` + `<style id="cr-ar-styles">` + `<script id="cr-ar-script">`, appended at the end of `index.html`. Exports `window.CardinalAR` (`open`, `render`, `close`, `list`) plus globals `openAR` / `renderAR`. Opened from the **Invoices & AR** nav row (Office/Resources, admin-only) or by tapping the home **Accounts Receivable** card (`#arCard`). Registered in `hideAllViews()` + `navRestore()` (`case 'ar'`) and the nav router (`nav === 'ar'`).
+
+**What it is:** every invoiced job that still owes, grouped by age (Current 0–14 / 15–30 / 30+), oldest first. KPI tray: Total Outstanding, Paid This Month, Overdue 30+. Each row: client, address, billed / collected / balance, a status pill, and one-tap Copy / Text / Email of the hosted pay link (`/api/share?t=<token>`). Porcelain `--est-*` system, light-only, admin-gated.
+
+**Status is derived, not stored** (`statusFor`): from `jobFinance()` value/paid + the `collections` ledger — Paid in Full / Deposit Paid / Partially Paid / Sent / Draft. The Stripe webhook (`api/pay-webhook.js`) writes the `collections` row it reads, so status advances on its own; this is what makes staged draws (deposit → progress → final) track against one balance.
+
+**Do NOT build a second AR view.** The old home aging chart (`renderOps`, `#arWrap`) stays as the mini-chart (4 buckets); this is the actionable worklist (3 buckets, Theo's pick). Reuses `collPaid`, `cacheCollections`, `jobFinance`, and the `shareUrlFor` `/api/share?t=` link shape. Send is pre-filled `sms:`/`mailto:` today; Twilio auto-send (already live in `api/notify.js`) is Build 3. `createInvoiceFor` minting the token + a live status header on the invoice itself is Build 2. Gate: `harness_ar1107.js` (jsdom; GREEN on 1107, RED on 1106).
