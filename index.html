@@ -3858,6 +3858,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="pricing" data-cri="tag lg">Pricing Catalog</button>
           <button class="navopt" data-nav="companydocs" data-cri="folder lg">Company Documents</button>
           <button class="navopt" data-nav="crews" data-cri="hardhat lg">Crews</button>
+          <button class="navopt" data-nav="laborrates" data-cri="clipboard lg">Labor Rate Schedule</button>
           <button class="navopt" data-nav="pay" data-cri="cash lg">Commissions</button>
           <button class="navopt" data-nav="ar" data-cri="cash lg">Invoices &amp; AR</button>
 
@@ -3874,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1109 &#8212; Open an invoice and it now shows a live balance at the top &#8212; the real amount still owed, read from the ledger rather than frozen when the invoice was created &#8212; with the payment status. When a job is fully paid the card becomes a bold PAID IN FULL badge with the date it cleared. A compact Payment History at the bottom lists every recorded payment (date, method, amount, type). Everything prints and saves to PDF cleanly. The original invoice summary is untouched; this live layer is never saved into the document.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1110 &#8212; A new Labor Rate Schedule screen (Office menu, admin only) lays out the crew labor prices like Santiago&rsquo;s Exhibit A &#8212; navy section bands, gold titles, and the rate on the right of each line. Every line is editable in place: change a rate, rename a line, add or remove lines, notes and whole categories, then Save. It prints and saves to PDF as a clean one-page schedule titled Santiago. The rates live in the same Pricing catalog the app already uses, under their own labor template.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18843,6 +18844,9 @@ function hideAllViews(){
   /* 1107: Invoices & AR is a fixed inset:0 view, DISPLAY-shown, so display:none. */
   var _arv = document.getElementById('cr-ar-view');
   if(_arv) _arv.style.display = 'none';
+  /* 1110: Labor Rate Schedule is a fixed inset:0 view, display-shown. */
+  var _lrsv = document.getElementById('cr-lrs-view');
+  if(_lrsv) _lrsv.style.display = 'none';
   /* 1101: landingView is the last top-level view that was NOT registered here — its
      ::before is position:fixed;inset:0 (a full-screen background), so opening any menu
      screen (My Profile, Settings, Team, Clients…) from the landing hub left landing
@@ -20301,6 +20305,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'newbid'){ if(window.CardinalNewBid && typeof window.CardinalNewBid.open === 'function') window.CardinalNewBid.open(); }
   else if(nav === 'backup'){ exportBackup(); }
   else if(nav === 'ar'){ if(typeof openAR === 'function') openAR(); }
+  else if(nav === 'laborrates'){ if(typeof openLRS === 'function') openLRS(); }
   else { openList(nav); }
 });
 
@@ -27602,6 +27607,7 @@ function __histPush(st){
         case 'lineitems':          if(window.CardinalLineItems) window.CardinalLineItems.open(); break;
         case 'contract':           if(typeof window.openContractEditor === 'function' && state.data && state.data.contractId) window.openContractEditor({ id: state.data.contractId }); break;
         case 'ar':                 if(typeof openAR === 'function') openAR(); break;
+        case 'laborrates':         if(window.CardinalLRS) window.CardinalLRS.open(); break;
       }
     }catch(_e){}
     setTimeout(function(){ _navRestoring = false; __histLock = false; }, 30);
@@ -41985,7 +41991,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1109, d:'2026-08-28', t:'Invoices show live status, balance and payment history', s:'Open an invoice and it now shows a live <b>Current Balance Due</b> card at the top &mdash; the real balance from the ledger, not a number frozen when the invoice was made &mdash; with its status (Sent / Deposit Paid / Partially Paid). When the job is fully paid the card flips to a bold <b>&#10003; PAID IN FULL</b> badge with a zero balance and the date it cleared. At the bottom a compact <b>Payment History</b> lists every recorded payment (date, method and check number, amount, and whether it was a deposit, progress draw or final), with a running total. It all prints and saves to PDF cleanly &mdash; crisp borders, high-contrast badges. The invoice as-issued (its original summary) is untouched; this is the live layer on top, and it is never baked into the saved document.' },
+{ b:1110, d:'2026-08-28', t:'Labor Rate Schedule \u2014 Santiago\u2019s Exhibit A, editable and printable', s:'A new <b>Labor Rate Schedule</b> screen (Office menu, admin only) lays out the crew labor prices the way Santiago\u2019s <b>Exhibit A</b> does &mdash; navy section bands, gold titles, and the rate on the right of each line. It is <b>fully editable in place</b>: change a price, rename a line, add or delete lines, add category notes, or add a whole new category, then <b>Save</b>. <b>Print / PDF</b> gives you a clean one-page schedule (titled Santiago) to hand a crew. The rates live in the same Pricing catalog the app already uses, under their own roofing-labor template, so nothing else is duplicated.' },
+      { b:1109, d:'2026-08-28', t:'Invoices show live status, balance and payment history', s:'Open an invoice and it now shows a live <b>Current Balance Due</b> card at the top &mdash; the real balance from the ledger, not a number frozen when the invoice was made &mdash; with its status (Sent / Deposit Paid / Partially Paid). When the job is fully paid the card flips to a bold <b>&#10003; PAID IN FULL</b> badge with a zero balance and the date it cleared. At the bottom a compact <b>Payment History</b> lists every recorded payment (date, method and check number, amount, and whether it was a deposit, progress draw or final), with a running total. It all prints and saves to PDF cleanly &mdash; crisp borders, high-contrast badges. The invoice as-issued (its original summary) is untouched; this is the live layer on top, and it is never baked into the saved document.' },
 { b:1108, d:'2026-08-28', t:'Invoices from the field: run, send and collect right on the job', s:'The invoicing flow now lives where the work happens. Every job profile has an <b>Invoices &amp; Payments</b> card: <b>generate the invoice</b> in one tap, watch its <b>live status</b> (Draft &rarr; Sent &rarr; Deposit Paid &rarr; Partially Paid &rarr; Paid in Full), and <b>send the secure pay link</b> three ways &mdash; <b>Company SMS</b> (through the business Twilio number, logged), <b>My phone</b> (opens your own Messages), or <b>Email</b>. This works for the assigned rep, not just admins, so a rep can take a deposit at the kitchen table. New: <b>Record Offline Payment</b> &mdash; on the card and on every Accounts Receivable row &mdash; logs a <b>check, cash or bank transfer</b> (amount, method, deposit/progress/final, date) straight to the ledger, so the status steps forward the moment the money is in hand, no bank wait. And a freshly generated invoice mints its own pay link and total automatically.' },
 { b:1107, d:'2026-08-28', t:'Invoices & Accounts Receivable \u2014 a Who-Owes-Me dashboard, and invoices that track themselves', s:'A new admin screen &mdash; <b>Invoices &amp; AR</b>, in the menu and on tap of the home <b>Accounts Receivable</b> card &mdash; puts every unpaid job in one place. The total you are owed sits up top beside what came in this month and what is overdue; below, jobs group by age (<b>Current</b>, <b>15&ndash;30 days</b>, <b>30+ days</b>), oldest first, each showing the client, address, amount billed, amount collected and the balance still due. Every row has one-tap actions to <b>copy</b>, <b>text</b> or <b>email</b> the secure pay link. And an invoice now tracks itself: the status is read straight from the money ledger, so a card payment moves it from <b>Sent</b> to <b>Deposit Paid</b>, then <b>Partially Paid</b>, then <b>Paid in Full</b> on its own &mdash; no worksheet to update. The pay link is the same clean, light checkout page already in use; card today, bank transfer next.' },
 { b:1106, d:'2026-08-27', t:'The text-message keys are cleaned, and a rejected key says which one', s:'The test text kept failing with the same rejection after the keys had been re-entered twice, because the app was never removing stray spaces or line breaks from them. A line break copied along with a key is invisible on the settings screen and rides straight into the login the app sends &mdash; so a perfectly correct key was being rejected, and the message said only &ldquo;check the keys&rdquo;, which was the same sentence either way. Both keys are now cleaned before use, and when the text service still rejects them the app names the shape of each one: whether it arrived with stray whitespace, what two letters it starts with, and how long it is. That is enough to spot the wrong key pasted into the wrong box. The key itself is never shown, so the message is safe to screenshot.' },
@@ -43490,6 +43497,7 @@ hideOpt('reports');
 hideOpt('feed');
 hideOpt('settings');
 hideOpt('ar');
+hideOpt('laborrates');
 var acct = findSec('account');
 if(acct) acct.style.display = 'none';
 }
@@ -82498,6 +82506,290 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     open:open, render:render, close:close, list:arList,
     status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor
   });
+})();
+</script>
+
+
+<!-- ═══ 1110: Labor Rate Schedule — Santiago's Exhibit A, editable, print-safe ═══
+     A document-styled editor over pricing_items(template='roofing_labor'). Admin
+     only (crew labor rates). Navy/gold like the exhibit; prints as "Exhibit A".
+     Reuses the existing pricing_items catalog table — no new data store. -->
+<style id="cr-lrs-styles">
+#cr-lrs-view{
+  --lrs-navy:#1e2b4a; --lrs-gold:#c9a227; --lrs-gold-dk:#8f6b00; --lrs-ink:#23303f; --lrs-dim:#5b6470;
+  --lrs-line:#e4e4e4; --lrs-red:#C8202E;
+  position:fixed; inset:0; z-index:9500; display:none; overflow:auto;
+  background:#eceef1; color:var(--lrs-ink);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+#cr-lrs-view .lrs-topbar{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px;
+  padding:10px 14px; background:#fff; border-bottom:1px solid var(--lrs-line);
+}
+#cr-lrs-view .lrs-topbar .lrs-ttl{flex:1; font-weight:800; font-size:16px; color:var(--lrs-navy); letter-spacing:-.01em;}
+#cr-lrs-view .lrs-tb{
+  border:1px solid var(--lrs-line); background:#fff; color:var(--lrs-ink);
+  font-size:13px; font-weight:600; padding:8px 13px; border-radius:9px; cursor:pointer;
+}
+#cr-lrs-view .lrs-tb:hover{border-color:#c9c9c9;}
+#cr-lrs-view .lrs-tb.on{background:var(--lrs-navy); color:#fff; border-color:var(--lrs-navy);}
+#cr-lrs-view .lrs-tb.save{background:var(--lrs-red); border-color:var(--lrs-red); color:#fff;}
+
+/* the document */
+#cr-lrs-view .lrs-doc{
+  max-width:820px; margin:22px auto 90px; background:#fff; padding:34px 40px 44px;
+  box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 30px rgba(0,0,0,.10); border-radius:2px;
+}
+#cr-lrs-view .lrs-h{font-size:21px; font-weight:800; color:var(--lrs-navy); letter-spacing:.02em;}
+#cr-lrs-view .lrs-h span{color:var(--lrs-gold-dk); margin:0 6px; font-weight:700;}  /* 4.92:1 on white; the bright gold stays on the navy bands */
+#cr-lrs-view .lrs-rule{height:3px; background:var(--lrs-gold); margin:11px 0 22px; border-radius:2px;}
+#cr-lrs-view .lrs-cat{margin-bottom:20px;}
+#cr-lrs-view .lrs-band{
+  background:var(--lrs-navy); color:var(--lrs-gold); font-size:13px; font-weight:800;
+  letter-spacing:.06em; text-transform:uppercase; padding:8px 14px; border-radius:3px;
+}
+#cr-lrs-view .lrs-row{
+  display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+  padding:9px 14px; border-bottom:1px solid var(--lrs-line);
+}
+#cr-lrs-view .lrs-name{font-size:13.5px; color:var(--lrs-ink); line-height:1.4;}
+#cr-lrs-view .lrs-name .lrs-desc{display:block; font-size:12px; color:var(--lrs-dim); margin-top:2px;}
+#cr-lrs-view .lrs-rate{font-size:13.5px; font-weight:800; color:var(--lrs-navy); white-space:nowrap; text-align:right; font-variant-numeric:tabular-nums;}
+#cr-lrs-view .lrs-rate .lrs-u{font-weight:600; color:var(--lrs-dim);}
+#cr-lrs-view .lrs-note{font-size:11.5px; font-style:italic; color:var(--lrs-dim); line-height:1.5; padding:9px 14px;}
+
+/* edit mode */
+#cr-lrs-view .lrs-ename{flex:1; display:flex; flex-direction:column; gap:5px;}
+#cr-lrs-view .lrs-ename input, #cr-lrs-view .lrs-erate input, #cr-lrs-view .lrs-enote{
+  border:1px solid var(--lrs-line); border-radius:7px; padding:7px 9px; font-size:13px; font-family:inherit; color:var(--lrs-ink); outline:none; background:#fbfbfc;
+}
+#cr-lrs-view .lrs-ename input:focus, #cr-lrs-view .lrs-erate input:focus, #cr-lrs-view select:focus, #cr-lrs-view .lrs-enote:focus{border-color:var(--lrs-red); box-shadow:0 0 0 3px rgba(200,32,46,.16);}
+#cr-lrs-view .lrs-erate{display:flex; align-items:center; gap:5px;}
+#cr-lrs-view .lrs-erate span{font-weight:800; color:var(--lrs-dim);}
+#cr-lrs-view .lrs-erate input{width:80px; text-align:right; font-weight:700;}
+#cr-lrs-view select{border:1px solid var(--lrs-line); border-radius:7px; padding:7px 6px; font-size:12.5px; font-family:inherit; color:var(--lrs-ink); background:#fbfbfc;}
+#cr-lrs-view .lrs-enote{width:100%; min-height:56px; resize:vertical;}
+#cr-lrs-view .lrs-note{display:flex; gap:8px; align-items:flex-start;}
+#cr-lrs-view .lrs-del{border:0; background:#f4dede; color:var(--lrs-red); font-size:16px; font-weight:800; width:30px; height:30px; border-radius:8px; cursor:pointer; flex:none; line-height:1;}
+#cr-lrs-view .lrs-del:hover{background:#efcccc;}
+#cr-lrs-view .lrs-add{padding:8px 14px 2px; display:flex; gap:8px;}
+#cr-lrs-view .lrs-mini{border:1px dashed #b9c0cc; background:#fff; color:var(--lrs-navy); font-size:12px; font-weight:600; padding:6px 11px; border-radius:8px; cursor:pointer;}
+#cr-lrs-view .lrs-mini:hover{border-color:var(--lrs-navy);}
+#cr-lrs-view .lrs-addcat{margin-top:8px; display:flex; gap:8px; align-items:center;}
+#cr-lrs-view .lrs-addcat input{flex:1; border:1px solid var(--lrs-line); border-radius:7px; padding:8px 10px; font-size:13px; font-family:inherit; color:var(--lrs-ink);}
+#cr-lrs-view .lrs-empty{padding:40px 14px; text-align:center; color:var(--lrs-dim); font-size:14px;}
+
+@media(max-width:560px){
+  #cr-lrs-view .lrs-doc{padding:22px 16px 34px; margin:12px 10px 80px;}
+  #cr-lrs-view .lrs-erate input{width:66px;}
+}
+@media print{
+  body > *:not(#cr-lrs-view){display:none !important;}
+  #cr-lrs-view{position:static !important; overflow:visible !important; background:#fff !important; display:block !important;}
+  #cr-lrs-view .lrs-topbar{display:none !important;}
+  #cr-lrs-view .lrs-doc{box-shadow:none !important; margin:0 auto !important; max-width:none !important; padding:0 !important;}
+  #cr-lrs-view .lrs-band, #cr-lrs-view .lrs-rule, #cr-lrs-view .lrs-h span{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #cr-lrs-view .lrs-cat{page-break-inside:avoid;}
+  #cr-lrs-view .lrs-add, #cr-lrs-view .lrs-addcat, #cr-lrs-view .lrs-del{display:none !important;}
+  @page{size:Letter; margin:.6in;}
+}
+</style>
+
+<div id="cr-lrs-view" style="display:none;" aria-hidden="true">
+  <div class="lrs-topbar">
+    <button id="lrs-back" class="lrs-tb" type="button">&#8249;&nbsp;Back</button>
+    <div class="lrs-ttl">Labor Rate Schedule</div>
+    <button id="lrs-cancel" class="lrs-tb" type="button" style="display:none;">Cancel</button>
+    <button id="lrs-edit" class="lrs-tb" type="button">Edit</button>
+    <button id="lrs-save" class="lrs-tb save" type="button" style="display:none;">Save</button>
+    <button id="lrs-print" class="lrs-tb" type="button">Print / PDF</button>
+  </div>
+  <div id="lrs-body"></div>
+</div>
+
+<script id="cr-lrs-script">
+/* 1110: Labor Rate Schedule — see the banner on #cr-lrs-styles. window.CardinalLRS. */
+(function(){
+  'use strict';
+  var TPL = 'roofing_labor';
+  var UNIT_LABEL = { sq:'SQ', lf:'LF', ea:'unit', sheet:'sheet', ls:'', note:'', bundle:'bundle', roll:'roll', day:'day', sf:'SF', hour:'hr', box:'box' };
+  var UNIT_OPTS = [['sq','SQ'],['lf','LF'],['ea','unit'],['sheet','sheet'],['ls','flat ($)']];
+  var rows = [], deleted = [], editing = false, loaded = false;
+
+  function q(id){ return document.getElementById(id); }
+  function esc2(s){ return (typeof esc === 'function') ? esc(s) : String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function attr(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
+  function cx(){ return window.sb || window.supa; }
+  function tell(m){ if(typeof crTell === 'function') crTell(m); }
+
+  function money(n){
+    n = Number(n) || 0;
+    return '$' + (n % 1 === 0 ? n.toLocaleString('en-US')
+                             : n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }));
+  }
+  function rateHtml(r){
+    if(r.unit === 'note') return '';
+    var lab = UNIT_LABEL[r.unit] != null ? UNIT_LABEL[r.unit] : r.unit;
+    return money(r.rate) + (lab ? ' <span class="lrs-u">/ ' + esc2(lab) + '</span>' : '');
+  }
+
+  function load(){
+    var c = cx(); if(!c){ return Promise.resolve([]); }
+    return c.from('pricing_items').select('*').eq('template', TPL).order('sort_order', { ascending:true })
+      .then(function(r){ rows = (r && r.data) ? r.data.slice() : []; loaded = true; return rows; });
+  }
+  function grouped(){
+    var order = [], map = {};
+    rows.forEach(function(r){ if(!map[r.category]){ map[r.category] = []; order.push(r.category); } map[r.category].push(r); });
+    return order.map(function(cat){ return { cat:cat, items:map[cat] }; });
+  }
+  function unitSel(u){
+    return '<select data-f="unit">' + UNIT_OPTS.map(function(p){
+      return '<option value="' + p[0] + '"' + (p[0] === u ? ' selected' : '') + '>' + p[1] + '</option>';
+    }).join('') + '</select>';
+  }
+  function editRow(r){
+    return '<div class="lrs-ename"><input type="text" data-f="name" value="' + attr(r.name) + '" placeholder="Description">'
+      + '<input type="text" data-f="description" value="' + attr(r.description || '') + '" placeholder="Detail (optional)"></div>'
+      + '<div class="lrs-erate"><span>$</span><input type="number" step="0.01" min="0" data-f="rate" value="' + (r.rate != null ? r.rate : '') + '">'
+      + unitSel(r.unit) + '<button type="button" class="lrs-del" data-lrs-del="' + esc2(r.id) + '" title="Remove">×</button></div>';
+  }
+  function render(){
+    var body = q('lrs-body'); if(!body) return;
+    if(!rows.length){ body.innerHTML = '<div class="lrs-doc"><div class="lrs-empty">No labor rates yet.</div></div>'; syncBar(); return; }
+    var html = '<div class="lrs-doc"><div class="lrs-h">SANTIAGO <span>|</span> LABOR RATE SCHEDULE</div><div class="lrs-rule"></div>';
+    grouped().forEach(function(g){
+      html += '<div class="lrs-cat"><div class="lrs-band">' + esc2(String(g.cat).toUpperCase()) + '</div>';
+      g.items.forEach(function(r){
+        if(r.unit === 'note'){
+          html += '<div class="lrs-note" data-id="' + esc2(r.id) + '">'
+            + (editing ? ('<textarea data-f="description" class="lrs-enote" placeholder="Category note">' + esc2(r.description || '') + '</textarea>'
+                        + '<button type="button" class="lrs-del" data-lrs-del="' + esc2(r.id) + '" title="Remove">×</button>')
+                       : esc2(r.description || '')) + '</div>';
+        }else{
+          html += '<div class="lrs-row" data-id="' + esc2(r.id) + '">'
+            + (editing ? editRow(r)
+                       : ('<div class="lrs-name">' + esc2(r.name) + (r.description ? '<span class="lrs-desc">' + esc2(r.description) + '</span>' : '') + '</div>'
+                        + '<div class="lrs-rate">' + rateHtml(r) + '</div>'))
+            + '</div>';
+        }
+      });
+      if(editing){
+        html += '<div class="lrs-add"><button type="button" class="lrs-mini" data-lrs-addrow="' + attr(g.cat) + '">+ Add line</button>'
+              + '<button type="button" class="lrs-mini" data-lrs-addnote="' + attr(g.cat) + '">+ Add note</button></div>';
+      }
+      html += '</div>';
+    });
+    if(editing){
+      html += '<div class="lrs-addcat"><input type="text" id="lrs-newcat" placeholder="New category name">'
+            + '<button type="button" class="lrs-mini" id="lrs-addcat">+ Add category</button></div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+    syncBar();
+  }
+  function syncBar(){
+    var canEdit = isAdm();
+    var eb = q('lrs-edit'), cb = q('lrs-cancel'), sb2 = q('lrs-save');
+    if(eb) eb.style.display = (canEdit && !editing) ? '' : 'none';
+    if(cb) cb.style.display = editing ? '' : 'none';
+    if(sb2) sb2.style.display = editing ? '' : 'none';
+  }
+
+  /* read edited inputs back into rows (before a re-render or a save) */
+  function harvest(){
+    var body = q('lrs-body'); if(!body) return;
+    body.querySelectorAll('[data-id]').forEach(function(el){
+      var r = rows.find(function(x){ return String(x.id) === String(el.getAttribute('data-id')); });
+      if(!r) return;
+      el.querySelectorAll('[data-f]').forEach(function(inp){
+        var f = inp.getAttribute('data-f');
+        if(f === 'rate') r.rate = parseFloat(inp.value) || 0; else r[f] = inp.value;
+      });
+      if(!r.__new) r.__dirty = true;
+    });
+  }
+  function addRow(cat, isNote){
+    var maxSort = rows.filter(function(r){ return r.category === cat; })
+      .reduce(function(m, r){ return Math.max(m, Number(r.sort_order) || 0); }, 100);
+    rows.push({ id:'new_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), template:TPL, category:cat,
+      name:isNote ? 'Note' : '', description:'', unit:isNote ? 'note' : 'sq', rate:0, sort_order:maxSort + 5, enabled:true, __new:true });
+    render();
+  }
+  function addCat(){
+    var el = q('lrs-newcat'); var name = String((el && el.value) || '').trim();
+    if(!name){ tell('Type a category name first.'); return; }
+    var maxSort = rows.reduce(function(m, r){ return Math.max(m, Number(r.sort_order) || 0); }, 100);
+    rows.push({ id:'new_' + Date.now(), template:TPL, category:name, name:'', description:'', unit:'sq', rate:0, sort_order:maxSort + 100, enabled:true, __new:true });
+    render();
+  }
+  function save(){
+    harvest();
+    var c = cx(); if(!c){ tell('Not signed in.'); return; }
+    var ops = [];
+    rows.forEach(function(r){
+      if(r.__new){
+        if(r.unit !== 'note' && !String(r.name || '').trim()) return;   // skip blank new lines
+        ops.push(c.from('pricing_items').insert({ template:TPL,
+          sku:'RL-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          category:r.category, name:r.name || (r.unit === 'note' ? 'Note' : ''), description:r.description || null,
+          unit:r.unit || 'sq', rate:Number(r.rate) || 0, sort_order:Number(r.sort_order) || 500, enabled:true }));
+      }else if(r.__dirty){
+        ops.push(c.from('pricing_items').update({ category:r.category, name:r.name || '', description:r.description || null,
+          unit:r.unit || 'sq', rate:Number(r.rate) || 0 }).eq('id', r.id));
+      }
+    });
+    deleted.forEach(function(id){ ops.push(c.from('pricing_items').delete().eq('id', id)); });
+    var btn = q('lrs-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+    Promise.all(ops).then(function(res){
+      var bad = res.filter(function(x){ return x && x.error; });
+      if(bad.length) throw new Error((bad[0].error && bad[0].error.message) || 'save failed');
+      deleted = []; editing = false;
+      return load();
+    }).then(function(){ render(); if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Labor rates saved.'); })
+      .catch(function(e){ if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Could not save: ' + ((e && e.message) || e)); });
+  }
+
+  function open(){
+    if(!isAdm()){ tell('The Labor Rate Schedule is admin-only.'); return; }
+    if(typeof hideAllViews === 'function') hideAllViews();
+    var v = q('cr-lrs-view'); if(!v) return;
+    v.style.display = 'block'; v.setAttribute('aria-hidden', 'false');
+    editing = false; deleted = [];
+    try{ document.body.style.overflow = ''; }catch(e){}
+    load().then(render);   // always refresh from the catalog on open
+    try{ window.scrollTo(0, 0); }catch(e){}
+    if(window.navSetView) window.navSetView('laborrates');
+  }
+  function close(){
+    var v = q('cr-lrs-view'); if(v){ v.style.display = 'none'; v.setAttribute('aria-hidden', 'true'); }
+    editing = false;
+    if(typeof showHome === 'function') showHome();
+  }
+
+  document.addEventListener('click', function(e){
+    var t;
+    if((t = e.target.closest('#lrs-back'))){ close(); return; }
+    if((t = e.target.closest('#lrs-print'))){ try{ window.print(); }catch(_){} return; }
+    if((t = e.target.closest('#lrs-edit'))){ if(!isAdm()){ tell('Admin only.'); return; } editing = true; render(); return; }
+    if((t = e.target.closest('#lrs-cancel'))){ editing = false; deleted = []; load().then(render); return; }
+    if((t = e.target.closest('#lrs-save'))){ save(); return; }
+    if((t = e.target.closest('[data-lrs-del]'))){
+      var id = t.getAttribute('data-lrs-del'); harvest();
+      var r = rows.find(function(x){ return String(x.id) === String(id); });
+      if(r && !r.__new) deleted.push(id);
+      rows = rows.filter(function(x){ return String(x.id) !== String(id); });
+      render(); return;
+    }
+    if((t = e.target.closest('[data-lrs-addrow]'))){ harvest(); addRow(t.getAttribute('data-lrs-addrow'), false); return; }
+    if((t = e.target.closest('[data-lrs-addnote]'))){ harvest(); addRow(t.getAttribute('data-lrs-addnote'), true); return; }
+    if((t = e.target.closest('#lrs-addcat'))){ harvest(); addCat(); return; }
+  });
+
+  window.openLRS = open;
+  window.CardinalLRS = Object.assign(window.CardinalLRS || {}, { open:open, close:close, load:load });
 })();
 </script>
 
