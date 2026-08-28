@@ -29347,3 +29347,44 @@ The whole surface is dark now (`#0e1116` ground, `#161b22` card), with every ink
 Gates: `check_build.py` green (129 inline scripts, 152 style blocks, 1122 → 1123, marker `data-lrs-crew` + negative control) · **`harness_lrs1123.js` GREEN 45 / RED on 1122** — drives the shipped module open → tap → edit → save against production-shaped rows and proves the money path: a roofing crew sees its OWN rate (Daniel 38, not Santiago's 45), a siding crew does not inherit the roofing catalog, and **every write goes to `crew_rates`** · **`gate_1123.mjs` GREEN 25 / RED 12 on 1122 without crashing** — real Chromium at 390px across both screens: renders dark (`rgb(14,17,22)`), 4 crews grouped by trade, worst ink 5.86:1 against its composited ground on both screens, nothing under 11px, no sideways scroll, and every crew row and topbar control ≥44px.
 
 ⚠ **That last one caught a pre-existing miss: on 1122 the topbar buttons were 33px** — under the 592/1076 rule the whole app is held to. They are 44px now; the control printing `lrs-back:33 lrs-edit:33 lrs-print:33` is how it surfaced.
+
+## Build 1124 — the favourite star: the click always worked, the screen never said so
+
+Theo, with a client-profile screenshot: *"Can't click the star to favorite."*
+
+**Reproduced before theorising, and the report was right about the symptom and wrong about the cause — which is why reproducing mattered.** Driven in Chromium at 390px on a real client profile:
+
+| probe | answer |
+|---|---|
+| `elementFromPoint` at the star's centre | **the star** — nothing overlays it |
+| the band's click handler wired | **yes** (`bar.__crWired`) |
+| `window.currentProject` / `toggleFav` | **both present** |
+| a real click | lands, no error |
+| `isFav(currentProject)` after | **`true` — the client WAS favourited** |
+| `#favStar` after | **`⭐`, class `namestar on`** |
+| the band's own star after | **`☆`, unchanged** |
+
+**The click was never broken.** `toggleFav()` ran, wrote the checklist, and lit `#favStar` — which is **0×0 on a phone**, inside a card the client-profile rebuild hides. The band star never moved, so the screen said nothing, and a second tap turned the favourite back off. From the outside that is indistinguishable from a dead control.
+
+**Root cause: a mirror held up once.** `cr-namebar-script` builds its star from `#favStar`'s class **at render time** — its own comment says *"mirror the LIVE star rather than re-deriving… two sources for one fact is how they drift apart."* The intent was right; the implementation was a snapshot. Nothing repainted the band when the fact changed.
+
+**Fix: `renderFavBtn()` paints both.** One painter, which is what that comment intended — every caller from any surface now leaves the two agreeing. ⚠ **Writes are compared before assigning**: `textContent` emits a childList record even when the string is identical, and this band sits in an observed subtree (567/569 cost two builds to exactly that). `aria-pressed` added, so a toggle button stops being silent to a screen reader.
+
+**Second defect, in the same tap: the star was a 19×17px glyph with a measured 20×20px hit area** — the 592/1076 rule holds every control here to 44px. Growing the button would grow `.nb-top` and push the PO row down on every client profile, so the hit area is a **transparent `::after` overlay**: 44×44 measured, geometry unmoved. ⚠ **It overlaps the row below, and that was CHECKED rather than reasoned about** — `.nb-row2` comes later in the DOM, so the pencil and the PO chip paint over it and keep their own taps (`elementFromPoint` returns each of them). **Give `.nb-star` a `z-index` and you take the pencil's clicks with it.**
+
+### ⚠ Why no gate had ever caught this, which is the part worth keeping
+
+**A jsdom harness cannot see this bug at all.** It cannot lay the band out, cannot hit-test, and would have cheerfully confirmed the handler wired and the data written — every one of which was already true. The defect lived entirely in *what the screen showed*. `gate_1124.mjs` is a real render: it taps the star, asserts the **glyph changes**, taps again and asserts it comes back, then measures the reachable area outward from the centre and asserts the neighbours still own their own taps. **GREEN 13 / RED 4 on 1123**, and the control prints the old hit area as `20×20px` — the number that explains the report.
+
+### ⚠ Two standing gates went red on this tree, and both findings were 1123's
+
+I ran `gate_dupes` and `gate_types` at 1122 and **not** at 1123 — so 1123's rework shipped past them and 1124 is where they fired. Both were real and both were fixed rather than rebaselined:
+
+- **`gate_dupes`:** the new LRS module added `me`, `nameOf`, `renderList`, `rowHtml`, `rv` — names already defined in five other modules. Not a runtime collision (they are inside the IIFE) but exactly the grep trap this project already pays for at `function money(` ×11. Renamed to `lrsMe`, `lineName`, `renderCrewList`, `lineRow`, `fieldVal`.
+- **`gate_types` TS2353:** `sheetRows()` built **two different object shapes in one array** — the catalog branch had no `custom_*`, the own-line branch did. Harmless at runtime, and precisely why every reader downstream had to branch on `__cat ?`. Both branches now build the same shape.
+
+⚠ **The rename itself then broke the module, and the harness caught it in one run.** `re.sub(r'renderList\(', …)` renamed the *call sites* and missed **`loadCrews().then(renderList)`** — a bare reference passed as a callback, twice. `ReferenceError: renderList is not defined`, on open. **A rename regex anchored on `(` only renames what is called, never what is passed.** Fixed with a word-boundary pass and asserted to zero.
+
+Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star::after` + negative control) · **`gate_1124.mjs` GREEN 13 / RED 4 on 1123** · `harness_lrs1123` GREEN 45 · `gate_1123` GREEN 25 · `gate_1116` GREEN · **`gate_dupes` GREEN** (0 over baseline, and *better*: `load` 18→17, `render` 32→31) · **`gate_types` GREEN** (0 codes grew, TS2339 1341→1339). No SQL, no api route.
+
+**Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.

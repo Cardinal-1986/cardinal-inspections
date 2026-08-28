@@ -3900,7 +3900,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      THIRD time main's footer has arrived carrying a summary, so if you are
      resolving this hunk a fourth time: ours wins, and it is not a judgement
      call. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1123<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1124<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19490,11 +19490,41 @@ function favSort(list){
   });
 }
 function renderFavBtn(){
-  var b = document.getElementById('favStar');
-  if(!b || !currentProject) return;
+  if(!currentProject) return;
   var on = isFav(currentProject);
-  b.textContent = on ? '\u2B50' : '\u2606';
-  b.classList.toggle('on', on);
+  /* the hero star (#favStar). It is 0x0 on a phone — the client-profile
+     rebuild hid the card it lives in — but it is still the element every
+     other surface reads, so it is painted first and stays the source. */
+  var b = document.getElementById('favStar');
+  if(b){
+    var t = on ? '\u2B50' : '\u2606';
+    if(b.textContent !== t) b.textContent = t;
+    b.classList.toggle('on', on);
+  }
+  /* 1124: AND the name band's star, which is the only one you can see on a
+     phone. Theo: "Can't click the star to favorite."
+
+     The click was never the problem — it landed, toggleFav ran, the checklist
+     was written and #favStar flipped to a lit star nobody could see. What was
+     missing is this: the band built its star ONCE, from #favStar's class at
+     render time ("mirror the LIVE star rather than re-deriving it"), and
+     nothing repainted it afterwards. A mirror held up once is a photograph.
+     So the tap toggled a real favourite and the screen said nothing, which
+     reads exactly like a dead control.
+
+     Painting both here keeps the ONE painter that comment intended — every
+     caller of renderFavBtn(), from any surface, now leaves the two agreeing.
+     ⚠ Writes are compared first: assigning textContent emits a childList
+     record even when the string is identical, and this band sits in a subtree
+     other modules observe (567/569 cost two builds to exactly that). */
+  var nb = document.querySelector('#cr-namebar .nb-star');
+  if(nb){
+    var t2 = on ? '\u2605' : '\u2606';   /* the band is drawn glyphs, not the emoji */
+    if(nb.textContent !== t2) nb.textContent = t2;
+    nb.classList.toggle('on', on);
+    var pressed = on ? 'true' : 'false';
+    if(nb.getAttribute('aria-pressed') !== pressed) nb.setAttribute('aria-pressed', pressed);
+  }
 }
 
 /* ---------- pipeline stages ---------- */
@@ -42074,6 +42104,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1124, d:'2026-08-28', t:'The favourite star on a client works again',
+  s:'Tapping the star beside a client\u2019s name looked like it did nothing. It was actually working \u2014 the client really was being favourited, and the Clients list would have shown them pinned to the top \u2014 but the star itself never changed, so there was no way to tell, and tapping again just turned it back off. It now lights up the moment you tap it. It is a proper finger-sized target too: the gold shape is the same size, but the area that responds to a tap is much larger, so it catches the press instead of missing it.' },
 { b:1123, d:'2026-08-28', t:'Labor rates are per crew now \u2014 pick the crew first',
   s:'The <b>Labor Rate Schedule</b> used to open straight onto one sheet titled Santiago. It now opens on <b>your crews</b> \u2014 grouped by trade, each showing whether it has rates yet \u2014 and you tap one to see or set what that crew is paid. Roofing crews start with the roofing line items you already had; siding, windows, gutters and repairs start with an empty sheet and you add their lines as you go. A line with no agreed price reads <b>not set</b> rather than showing someone else\u2019s number. Santiago\u2019s own rates are unchanged and already filled in. Dark on screen; it still prints as the clean white one-page schedule for handing to a crew.' },
 { b:1122, d:'2026-08-28', t:'Builds 1118\u20131121 merged in alongside the Owner, header and menu work',
@@ -77223,6 +77255,20 @@ select{min-height:44px;}
   #cr-namebar .nb-star{
     font-size:17px; line-height:1; flex:none; cursor:pointer;
     background:none; border:0; padding:0 2px; color:var(--rbe-mute2,#6d747e);
+    position:relative;   /* 1124: for the hit area below */
+  }
+  /* 1124: the glyph is 19x17 and 592/1076 hold every control in this app to a
+     44px tap target. Growing the BUTTON would grow .nb-top and push the PO row
+     down on every client profile, so the hit area is a transparent overlay
+     instead and the band's geometry does not move at all.
+     ⚠ It overlaps the row below. That is safe here and was CHECKED with
+     elementFromPoint rather than reasoned about: .nb-row2 comes later in the
+     DOM, so at equal z-index the pencil and the PO chip paint over this and
+     keep their own taps. If you ever give .nb-star a z-index, you take the
+     pencil's clicks with it. */
+  #cr-namebar .nb-star::after{
+    content:''; position:absolute; top:50%; left:50%;
+    width:44px; height:44px; transform:translate(-50%,-50%);
   }
   #cr-namebar .nb-star.on{ color:#f5c518; }
   #cr-namebar .nb-row2{ display:flex; align-items:center; gap:7px; margin-top:5px; }
@@ -83053,7 +83099,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
   function cx(){ return window.sb || window.supa; }
   function tell(m){ if(typeof crTell === 'function') crTell(m); }
-  function me(){ try{ return (window.currentUser && window.currentUser.email) || ''; }catch(e){ return ''; } }
+  function lrsMe(){ try{ return (window.currentUser && window.currentUser.email) || ''; }catch(e){ return ''; } }
 
   function money(n){
     n = Number(n) || 0;
@@ -83061,7 +83107,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
                              : n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }));
   }
   function unitOf(r){ return r.__cat ? r.__cat.unit : (r.custom_unit || 'ea'); }
-  function nameOf(r){ return r.__cat ? r.__cat.name : (r.custom_name || ''); }
+  function lineName(r){ return r.__cat ? r.__cat.name : (r.custom_name || ''); }
 
   /* one crew's sheet lines: the shared catalog for a catalog trade, plus every
      line this crew owns outright. A catalog line and its override are ONE row
@@ -83072,10 +83118,15 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function sheetRows(){
     var byItem = {};
     rates.forEach(function(r){ if(r.pricing_item_id) byItem[r.pricing_item_id] = r; });
+    /* ⚠ Both branches below build the SAME shape, custom_* included. They used
+       not to, and gate_types caught it (TS2353): one array holding two object
+       shapes is the thing that makes every reader downstream branch on
+       `__cat ?` to find out what it is holding. Keep them identical. */
     var out = catalogFor(sel).map(function(c){
       var ov = byItem[c.id];
       return { key:'cat:' + c.id, __cat:c, category:c.category,
-               rateRow:ov || null, rate:(ov ? ov.rate : null), sort:Number(c.sort_order) || 0 };
+               rateRow:ov || null, rate:(ov ? ov.rate : null), sort:Number(c.sort_order) || 0,
+               custom_name:null, custom_unit:null };
     });
     rates.filter(function(r){ return !r.pricing_item_id; }).forEach(function(r, i){
       out.push({ key:'own:' + r.id, __cat:null, category:'This crew only',
@@ -83122,7 +83173,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   }
 
   /* ── screen 1 ── */
-  function renderList(){
+  function renderCrewList(){
     var body = q('lrs-body'); if(!body) return;
     setTitle('Labor Rate Schedule');
     if(!crews.length){
@@ -83173,7 +83224,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }
     groups.forEach(function(g){
       html += '<div class="lrs-cat"><div class="lrs-band">' + esc2(String(g.cat).toUpperCase()) + '</div>';
-      g.items.forEach(function(r){ html += rowHtml(r); });
+      g.items.forEach(function(r){ html += lineRow(r); });
       html += '</div>';
     });
     if(editing){
@@ -83187,7 +83238,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var u = unitOf(r), lab = UNIT_LABEL[u] != null ? UNIT_LABEL[u] : u;
     return '<span class="lrs-rate">' + money(r.rate) + (lab ? ' <span class="lrs-u">/ ' + esc2(lab) + '</span>' : '') + '</span>';
   }
-  function rowHtml(r){
+  function lineRow(r){
     /* ⚠ The catalog carries CATEGORY NOTES as rows with unit='note' (one today,
        under Chimney Flashing). A note is prose, not a line anyone is paid for:
        it gets no rate field, no delete, and NO data-key, so harvest() cannot
@@ -83211,7 +83262,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       if(r.rateRow) out += '<button type="button" class="lrs-del" data-lrs-del="' + attr(r.rateRow.id) + '" title="Remove this rate">×</button>';
       out += '</div>';
     }else{
-      out += '<div class="lrs-name">' + esc2(nameOf(r))
+      out += '<div class="lrs-name">' + esc2(lineName(r))
            + (r.__cat && r.__cat.description ? '<span class="lrs-desc">' + esc2(r.__cat.description) + '</span>' : '')
            + '</div>' + rateHtml(r);
     }
@@ -83241,11 +83292,11 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var out = [];
     body.querySelectorAll('[data-key]').forEach(function(el){
       var key = el.getAttribute('data-key');
-      var rv = function(f){ var i = el.querySelector('[data-f="' + f + '"]'); return i ? i.value : null; };
-      var raw = rv('rate');
+      var fieldVal = function(f){ var i = el.querySelector('[data-f="' + f + '"]'); return i ? i.value : null; };
+      var raw = fieldVal('rate');
       var rate = (raw == null || String(raw).trim() === '') ? null : parseFloat(raw);
       if(rate != null && !isFinite(rate)) rate = null;
-      out.push({ key:key, rate:rate, name:rv('name'), unit:rv('unit') });
+      out.push({ key:key, rate:rate, name:fieldVal('name'), unit:fieldVal('unit') });
     });
     return out;
   }
@@ -83268,9 +83319,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
         if(e.rate == null){ if(ov && !ov.__new) ops.push(c.from('crew_rates').delete().eq('id', ov.id)); return; }
         if(ov && !ov.__new){
           if(Number(ov.rate) !== e.rate)
-            ops.push(c.from('crew_rates').update({ rate:e.rate, updated_at:new Date().toISOString(), updated_by:me() }).eq('id', ov.id));
+            ops.push(c.from('crew_rates').update({ rate:e.rate, updated_at:new Date().toISOString(), updated_by:lrsMe() }).eq('id', ov.id));
         }else{
-          ops.push(c.from('crew_rates').insert({ crew_id:sel.id, pricing_item_id:id, rate:e.rate, updated_by:me() }));
+          ops.push(c.from('crew_rates').insert({ crew_id:sel.id, pricing_item_id:id, rate:e.rate, updated_by:lrsMe() }));
         }
       }else{
         var row = rates.find(function(r){ return String(r.id) === id; });
@@ -83278,12 +83329,12 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
         var nm = String(e.name || '').trim();
         if(row.__new){
           if(!nm || e.rate == null) return;   /* a blank new line is not a row */
-          ops.push(c.from('crew_rates').insert({ crew_id:sel.id, custom_name:nm, custom_unit:e.unit || 'ea', rate:e.rate, updated_by:me() }));
+          ops.push(c.from('crew_rates').insert({ crew_id:sel.id, custom_name:nm, custom_unit:e.unit || 'ea', rate:e.rate, updated_by:lrsMe() }));
         }else if(e.rate == null){
           ops.push(c.from('crew_rates').delete().eq('id', row.id));
         }else if(Number(row.rate) !== e.rate || row.custom_name !== nm || row.custom_unit !== e.unit){
           ops.push(c.from('crew_rates').update({ custom_name:nm || row.custom_name, custom_unit:e.unit || row.custom_unit,
-            rate:e.rate, updated_at:new Date().toISOString(), updated_by:me() }).eq('id', row.id));
+            rate:e.rate, updated_at:new Date().toISOString(), updated_by:lrsMe() }).eq('id', row.id));
         }
       }
     });
@@ -83313,7 +83364,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   }
   function backToList(){
     sel = null; editing = false; deleted = []; pending = [];
-    loadCrews().then(renderList);
+    loadCrews().then(renderCrewList);
   }
 
   function open(){
@@ -83323,7 +83374,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     v.style.display = 'block'; v.setAttribute('aria-hidden', 'false');
     sel = null; editing = false; deleted = []; pending = [];
     try{ document.body.style.overflow = ''; }catch(e){}
-    loadCrews().then(renderList);   /* always refresh on open */
+    loadCrews().then(renderCrewList);   /* always refresh on open */
     try{ window.scrollTo(0, 0); }catch(e){}
     if(window.navSetView) window.navSetView('laborrates');
   }
