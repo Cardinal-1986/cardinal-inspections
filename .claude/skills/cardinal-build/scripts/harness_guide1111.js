@@ -132,7 +132,8 @@ function lastFetch(){ return fetches[fetches.length - 1]; }
 
   // 5. roofing gate
   ok(G.isNonRoofOnly({ id:'X' }) === false, 'untagged job is NOT non-roof (proceeds)');
-  TRADES.X = ['Siding','Windows']; ok(G.isNonRoofOnly({ id:'X' }) === true, 'siding/windows-only job IS non-roof (skips)');
+  // 1112: isNonRoofOnly now means "no guide for this trade" — siding/windows get their OWN guide.
+  TRADES.X = ['Gutters']; ok(G.isNonRoofOnly({ id:'X' }) === true, 'a gutters-only job has no guide (skips)');
   TRADES.X = ['Roofing','Siding']; ok(G.isNonRoofOnly({ id:'X' }) === false, 'a job that includes Roofing proceeds');
   delete TRADES.X;
 
@@ -141,10 +142,10 @@ function lastFetch(){ return fetches[fetches.length - 1]; }
   w.__apptEmailPreInstallGuide({ kind:'drop', project_id:'P1' }); await tick(); await tick();
   ok(fetches.length === 0, 'a material-drop appointment does not email the guide');
 
-  // 7. auto hook: siding-only job is skipped
-  TRADES.P2 = ['Siding'];
+  // 7. auto hook: a job whose trade has no guide (gutters) is skipped (1112: siding/windows now send their own)
+  TRADES.P2 = ['Gutters'];
   w.__apptEmailPreInstallGuide({ kind:'job', project_id:'P2', appt_date:'2026-09-01' }); await tick(); await tick();
-  ok(fetches.length === 0, 'a build day for a siding-only job does not email the roof guide');
+  ok(fetches.length === 0, 'a build day for a gutters-only job sends no guide');
 
   // 8. auto hook: roofing job with an email → sends the filled guide via senddoc
   w.__apptEmailPreInstallGuide({ kind:'job', project_id:'P1', appt_date:'2026-08-21' });

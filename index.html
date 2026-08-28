@@ -3875,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1111 &#8212; New: a Roof Pre-Install Guide that emails itself to the homeowner the moment a roof build day is booked &#8212; auto-filled with the install date and your sales rep&rsquo;s name and phone. If the client has no email on file yet, the app asks for it right then so it can send. The guide is an editable master in Company Documents (edit the wording, Preview, or Reset to default), and every job profile has an Email-to-client button to re-send. Sends once per job. Needs the preinstall_guide.sql migration.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1112 &#8212; The Pre-Install Guide now comes in three &#8212; Roof, Siding and Windows &#8212; and the right one is chosen automatically from the job&rsquo;s trade when its build day is booked (siding and windows carry their own steps, arrival window and daily-cleanup notes). All three are editable masters in Company Documents. Everything else works exactly as the roof guide already did: auto-filled, sent once per job, with the missing-email prompt. Needs the preinstall_guides_siding_windows.sql migration.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20883,17 +20883,10 @@ function renderCompanyDocs(){
       t + (n ? ' (' + n + ')' : '') + '</button>';
   }).join('');
   var rows = (__cdTrade === 'All') ? COMPANY_DOCS : COMPANY_DOCS.filter(function(d){ return d.trade === __cdTrade; });
-  /* 1111: the Roof Pre-Install Guide — an editable master doc that auto-emails
-     to the client when a roof build day is booked. Shown under All + Roofing. */
-  var __guideRow = (__cdTrade === 'All' || __cdTrade === 'Roofing')
-    ? ('<div class="cd-guiderow"><span class="cdg-ico">&#128231;</span>'
-       + '<span class="cdg-name"><b>Roof Pre-Install Guide</b>'
-       + '<small>Emailed to the homeowner when a roof build day is booked — auto-filled from the job.</small>'
-       + '<span class="cdg-auto">Auto-emailed on scheduling</span></span>'
-       + '<button class="btn ghost" data-cr-guide-preview-doc="1">Preview</button>'
-       + (isAdmin() ? '<button class="btn" data-cr-guide-edit="1">Edit</button>' : '')
-       + '</div>')
-    : '';
+  /* 1111/1112: the Pre-Install Guides (Roof / Siding / Windows) — editable master
+     docs that auto-email to the client when a matching build day is booked. */
+  var __guideRow = (window.CardinalGuide && window.CardinalGuide.docsRows)
+    ? window.CardinalGuide.docsRows(__cdTrade, isAdmin()) : '';
   document.getElementById('cdDocList').innerHTML = rows.length
     ? rows.map(function(d){
         return '<div class="cdocrow"><span class="cdicon">&#128196;</span>' +
@@ -42014,7 +42007,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1111, d:'2026-08-28', t:'Roof Pre-Install Guide \u2014 auto-emailed when a roof is scheduled', s:'The homeowner now gets a polished <b>Roof Installation &amp; Pre-Install Guide</b> the moment their build day is booked &mdash; what to expect on install day, the weather policy, and the six things to do beforehand. It <b>auto-fills</b> from the job: the installation date, and your sales rep\u2019s name and phone in the &ldquo;call before you step outside&rdquo; contacts. It sends through the same email rail as your estimates, <b>once per job</b>, and only for roofing jobs. If the client has <b>no email on file</b>, the app asks for it right when you book the day, saves it, and sends. The guide is an <b>editable master</b> in <b>Company Documents</b> &mdash; edit the wording like a document, Preview it with sample details, or Reset to the Cardinal default &mdash; and every job profile has an <b>Email to client</b> button to send or re-send by hand. Groundwork: two new tables (company_templates, client_guide_sends) via preinstall_guide.sql, applied before this build.' },
+{ b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
+      { b:1111, d:'2026-08-28', t:'Roof Pre-Install Guide \u2014 auto-emailed when a roof is scheduled', s:'The homeowner now gets a polished <b>Roof Installation &amp; Pre-Install Guide</b> the moment their build day is booked &mdash; what to expect on install day, the weather policy, and the six things to do beforehand. It <b>auto-fills</b> from the job: the installation date, and your sales rep\u2019s name and phone in the &ldquo;call before you step outside&rdquo; contacts. It sends through the same email rail as your estimates, <b>once per job</b>, and only for roofing jobs. If the client has <b>no email on file</b>, the app asks for it right when you book the day, saves it, and sends. The guide is an <b>editable master</b> in <b>Company Documents</b> &mdash; edit the wording like a document, Preview it with sample details, or Reset to the Cardinal default &mdash; and every job profile has an <b>Email to client</b> button to send or re-send by hand. Groundwork: two new tables (company_templates, client_guide_sends) via preinstall_guide.sql, applied before this build.' },
       { b:1110, d:'2026-08-28', t:'Labor Rate Schedule \u2014 Santiago\u2019s Exhibit A, editable and printable', s:'A new <b>Labor Rate Schedule</b> screen (Office menu, admin only) lays out the crew labor prices the way Santiago\u2019s <b>Exhibit A</b> does &mdash; navy section bands, gold titles, and the rate on the right of each line. It is <b>fully editable in place</b>: change a price, rename a line, add or delete lines, add category notes, or add a whole new category, then <b>Save</b>. <b>Print / PDF</b> gives you a clean one-page schedule (titled Santiago) to hand a crew. The rates live in the same Pricing catalog the app already uses, under their own roofing-labor template, so nothing else is duplicated.' },
       { b:1109, d:'2026-08-28', t:'Invoices show live status, balance and payment history', s:'Open an invoice and it now shows a live <b>Current Balance Due</b> card at the top &mdash; the real balance from the ledger, not a number frozen when the invoice was made &mdash; with its status (Sent / Deposit Paid / Partially Paid). When the job is fully paid the card flips to a bold <b>&#10003; PAID IN FULL</b> badge with a zero balance and the date it cleared. At the bottom a compact <b>Payment History</b> lists every recorded payment (date, method and check number, amount, and whether it was a deposit, progress draw or final), with a running total. It all prints and saves to PDF cleanly &mdash; crisp borders, high-contrast badges. The invoice as-issued (its original summary) is untouched; this is the live layer on top, and it is never baked into the saved document.' },
 { b:1108, d:'2026-08-28', t:'Invoices from the field: run, send and collect right on the job', s:'The invoicing flow now lives where the work happens. Every job profile has an <b>Invoices &amp; Payments</b> card: <b>generate the invoice</b> in one tap, watch its <b>live status</b> (Draft &rarr; Sent &rarr; Deposit Paid &rarr; Partially Paid &rarr; Paid in Full), and <b>send the secure pay link</b> three ways &mdash; <b>Company SMS</b> (through the business Twilio number, logged), <b>My phone</b> (opens your own Messages), or <b>Email</b>. This works for the assigned rep, not just admins, so a rep can take a deposit at the kitchen table. New: <b>Record Offline Payment</b> &mdash; on the card and on every Accounts Receivable row &mdash; logs a <b>check, cash or bank transfer</b> (amount, method, deposit/progress/final, date) straight to the ledger, so the status steps forward the moment the money is in hand, no bank wait. And a freshly generated invoice mints its own pay link and total automatically.' },
@@ -82876,7 +82870,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 <div id="cr-guide-editor" style="display:none;" aria-hidden="true">
   <div class="cge-topbar">
     <button id="cr-ge-close" class="cge-tb" type="button">&#8249;&nbsp;Back</button>
-    <div class="cge-ttl">Roof Pre-Install Guide</div>
+    <div class="cge-ttl" id="cr-ge-ttl">Roof Pre-Install Guide</div>
     <button id="cr-ge-preview" class="cge-tb" type="button">Preview</button>
     <button id="cr-ge-reset" class="cge-tb" type="button">Reset</button>
     <button id="cr-ge-save" class="cge-tb save" type="button">Save</button>
@@ -82889,20 +82883,33 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   <iframe id="cr-ge-frame" title="Pre-Install Guide editor"></iframe>
 </div>
 <script id="cr-guide-script">
-/* ═══ 1111: Roof Pre-Install Guide — editable master + auto-email on scheduling ═══
-   The guide the homeowner gets when their roof build day is booked. The editable
-   master body lives in company_templates('preinstall_roof'); the letterhead/style
-   shell and the autofill are here. Auto-sends (once per job) when a build-day
-   'job' appointment is created for a roofing job — via /api/senddoc (Resend), the
-   same rail estimates use. window.CardinalGuide. */
+/* ═══ 1111/1112: Pre-Install Guides — editable masters + auto-email on scheduling ═══
+   The guide the homeowner gets when their build day is booked, matched to the job's
+   trade: Roofing / Siding / Windows. Each editable master body lives in
+   company_templates(<slug>); the letterhead/style shell and the autofill are here.
+   Auto-sends (once per job+guide) when a build-day 'job' appointment is created —
+   via /api/senddoc (Resend), the same rail estimates use. window.CardinalGuide. */
 (function(){
   'use strict';
-  var SLUG = 'preinstall_roof', KIND = 'preinstall_roof';
-  var DEFAULT_SUBJECT = 'Your Roof Installation — What to Expect (Cardinal Roofing)';
-  var DOC_TITLE = 'Roof Installation — Pre-Install Guide';
-  /* the editable master body (fallback if the DB row is missing; the seed in
-     preinstall_guide.sql is the same HTML). Tokens: cr-gtok[data-tok]. */
-  var DEFAULT_CONTENT = "<div class=\"chips\">\n      <div class=\"chip\"><div class=\"k\">Installation Date</div><div class=\"v\"><span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span></div></div>\n      <div class=\"chip\"><div class=\"k\">Crew Arrival Window</div><div class=\"v\">6:30 &ndash; 7:00 AM</div></div>\n    </div>\n    <div class=\"bd\">\n      <p class=\"lead\">Great news &mdash; your roof installation is officially scheduled for <span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span>, with our crew planning to arrive between 6:30&ndash;7:00 AM.</p>\n      <p>Everything is in place on our end. Your materials will be delivered either the afternoon before or the morning of installation, and our crew will handle the project from start to finish &mdash; including removal of the existing roofing, installation of your new roof system, and a thorough cleanup of your property before we leave. All we ask is that you sit back, relax, and let us take care of the rest.</p>\n\n      <h2>Weather Policy</h2>\n      <p>If inclement weather threatens the safety of your project or our crew, we will reach out promptly to discuss rescheduling. We will never open up a roof we cannot safely and properly close the same day. Your home and everyone&rsquo;s safety always come first.</p>\n\n      <h2>What to Expect on Installation Day</h2>\n      <p>A dump trailer or debris container will be positioned near your driveway or in the area we discussed, and material may be staged on the ground or loaded directly onto the roof. Our crew works around the full perimeter of your home, so expect ladders, equipment, and steady activity throughout the day. Before we leave, we sweep the property, run magnetic rollers across the driveway, walkways, and lawn areas, and remove all debris from the job site.</p>\n\n      <h2>Six Things to Do Before Installation Day</h2>\n      <ol class=\"steps\">\n        <li><span class=\"t\">Park vehicles on the street the evening before.</span><p>This keeps your cars well clear of falling debris and gives our crew full access to the driveway and work area for equipment, material, and debris removal.</p></li>\n        <li><span class=\"t\">Make sure an exterior outlet is available and powered.</span><p>Our crews run a combination of pneumatic and electric tools and may need to plug into an exterior outlet. If your outdoor outlets are controlled by an indoor switch, tied to a GFCI, or shut off at the breaker, please make sure they are live the morning of installation. Prefer we not use your power? Just let us know and we&rsquo;ll bring a generator instead &mdash; no issue either way.</p></li>\n        <li><span class=\"t\">Use your doors carefully throughout the day (call before exiting).</span><p>Our crew works directly above and around the perimeter of your home. Please use a door away from active work when possible, and if you or a pet needs to go outside, call or text one of the contacts below first so we can pause overhead work and clear a safe path.</p>\n          <div class=\"contacts\">\n            <div class=\"ctitle\">Call or text to clear your safe path</div>\n            <div class=\"crow\"><span class=\"who\">On-site crew leader</span><span class=\"num\">introduced on the day</span></div>\n            <div class=\"crow\"><span class=\"who\">Project Manager &mdash; Curtis Hoskins</span><span class=\"num\">(937) 576-6753</span></div>\n            <div class=\"crow\"><span class=\"who\">Your Sales Rep &mdash; <span class=\"cr-gtok\" data-tok=\"rep_name\">your sales rep</span></span><span class=\"num\"><span class=\"cr-gtok\" data-tok=\"rep_phone\">(937) 576-6753</span></span></div>\n          </div>\n        </li>\n        <li><span class=\"t\">Keep children and pets indoors.</span><p>A construction zone moves quickly and materials can shift without warning. Keeping little ones and pets inside for the day keeps everyone safe and keeps our crew focused on your roof.</p></li>\n        <li><span class=\"t\">Remove fragile items from interior walls and cover belongings in the attic or garage.</span><p>Pictures, mirrors, and shelving can vibrate loose during installation, and fine dust can filter down through the decking. A quick walk-through the night before, plus a tarp over anything stored below the roof deck, will save you the cleanup later.</p></li>\n        <li><span class=\"t\">Plan for a full day of activity.</span><p>A quality roof installation is not a quiet process &mdash; expect hammering, compressors, and crew movement from morning until the job is complete. If you work from home or have someone on a sleep schedule, you may want to make other arrangements for the day.</p></li>\n      </ol>\n\n      <h2>Questions or Special Requests</h2>\n      <p>We want this to be as smooth and stress-free as possible for you and your family. If anything comes up before your installation date &mdash; a scheduling conflict, a concern about access, landscaping you want protected, or a special request specific to your property &mdash; please don&rsquo;t hesitate to reach out. It&rsquo;s much easier to plan for something in advance than to work around it on install day.</p>\n      <p class=\"sign\">Thank you for trusting us with your home. We look forward to serving you and delivering a finished product you&rsquo;re proud of.<br><br><b>Cardinal Roofing &amp; Renovations</b></p>\n    </div>";
+  var GUIDES = {
+    preinstall_roof: { trade:'Roofing', label:'Roof Pre-Install Guide',
+      title:'Roof Installation — Pre-Install Guide', h1:'Roof Installation Information &amp; Pre-Install Guide',
+      subject:'Your Roof Installation — What to Expect (Cardinal Roofing)',
+      note:'Emailed to the homeowner when a roof build day is booked — auto-filled from the job.',
+      content: "<div class=\"chips\">\n      <div class=\"chip\"><div class=\"k\">Installation Date</div><div class=\"v\"><span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span></div></div>\n      <div class=\"chip\"><div class=\"k\">Crew Arrival Window</div><div class=\"v\">6:30 &ndash; 7:00 AM</div></div>\n    </div>\n    <div class=\"bd\">\n      <p class=\"lead\">Great news &mdash; your roof installation is officially scheduled for <span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span>, with our crew planning to arrive between 6:30&ndash;7:00 AM.</p>\n      <p>Everything is in place on our end. Your materials will be delivered either the afternoon before or the morning of installation, and our crew will handle the project from start to finish &mdash; including removal of the existing roofing, installation of your new roof system, and a thorough cleanup of your property before we leave. All we ask is that you sit back, relax, and let us take care of the rest.</p>\n\n      <h2>Weather Policy</h2>\n      <p>If inclement weather threatens the safety of your project or our crew, we will reach out promptly to discuss rescheduling. We will never open up a roof we cannot safely and properly close the same day. Your home and everyone&rsquo;s safety always come first.</p>\n\n      <h2>What to Expect on Installation Day</h2>\n      <p>A dump trailer or debris container will be positioned near your driveway or in the area we discussed, and material may be staged on the ground or loaded directly onto the roof. Our crew works around the full perimeter of your home, so expect ladders, equipment, and steady activity throughout the day. Before we leave, we sweep the property, run magnetic rollers across the driveway, walkways, and lawn areas, and remove all debris from the job site.</p>\n\n      <h2>Six Things to Do Before Installation Day</h2>\n      <ol class=\"steps\">\n        <li><span class=\"t\">Park vehicles on the street the evening before.</span><p>This keeps your cars well clear of falling debris and gives our crew full access to the driveway and work area for equipment, material, and debris removal.</p></li>\n        <li><span class=\"t\">Make sure an exterior outlet is available and powered.</span><p>Our crews run a combination of pneumatic and electric tools and may need to plug into an exterior outlet. If your outdoor outlets are controlled by an indoor switch, tied to a GFCI, or shut off at the breaker, please make sure they are live the morning of installation. Prefer we not use your power? Just let us know and we&rsquo;ll bring a generator instead &mdash; no issue either way.</p></li>\n        <li><span class=\"t\">Use your doors carefully throughout the day (call before exiting).</span><p>Our crew works directly above and around the perimeter of your home. Please use a door away from active work when possible, and if you or a pet needs to go outside, call or text one of the contacts below first so we can pause overhead work and clear a safe path.</p>\n          <div class=\"contacts\">\n            <div class=\"ctitle\">Call or text to clear your safe path</div>\n            <div class=\"crow\"><span class=\"who\">On-site crew leader</span><span class=\"num\">introduced on the day</span></div>\n            <div class=\"crow\"><span class=\"who\">Project Manager &mdash; Curtis Hoskins</span><span class=\"num\">(937) 576-6753</span></div>\n            <div class=\"crow\"><span class=\"who\">Your Sales Rep &mdash; <span class=\"cr-gtok\" data-tok=\"rep_name\">your sales rep</span></span><span class=\"num\"><span class=\"cr-gtok\" data-tok=\"rep_phone\">(937) 576-6753</span></span></div>\n          </div>\n        </li>\n        <li><span class=\"t\">Keep children and pets indoors.</span><p>A construction zone moves quickly and materials can shift without warning. Keeping little ones and pets inside for the day keeps everyone safe and keeps our crew focused on your roof.</p></li>\n        <li><span class=\"t\">Remove fragile items from interior walls and cover belongings in the attic or garage.</span><p>Pictures, mirrors, and shelving can vibrate loose during installation, and fine dust can filter down through the decking. A quick walk-through the night before, plus a tarp over anything stored below the roof deck, will save you the cleanup later.</p></li>\n        <li><span class=\"t\">Plan for a full day of activity.</span><p>A quality roof installation is not a quiet process &mdash; expect hammering, compressors, and crew movement from morning until the job is complete. If you work from home or have someone on a sleep schedule, you may want to make other arrangements for the day.</p></li>\n      </ol>\n\n      <h2>Questions or Special Requests</h2>\n      <p>We want this to be as smooth and stress-free as possible for you and your family. If anything comes up before your installation date &mdash; a scheduling conflict, a concern about access, landscaping you want protected, or a special request specific to your property &mdash; please don&rsquo;t hesitate to reach out. It&rsquo;s much easier to plan for something in advance than to work around it on install day.</p>\n      <p class=\"sign\">Thank you for trusting us with your home. We look forward to serving you and delivering a finished product you&rsquo;re proud of.<br><br><b>Cardinal Roofing &amp; Renovations</b></p>\n    </div>" },
+    preinstall_siding: { trade:'Siding', label:'Siding Pre-Install Guide',
+      title:'Siding Installation — Pre-Install Guide', h1:'Siding Installation Information &amp; Pre-Install Guide',
+      subject:'Your Siding Installation — What to Expect (Cardinal Roofing)',
+      note:'Emailed to the homeowner when a siding build day is booked — auto-filled from the job.',
+      content: "<div class=\"chips\">\n      <div class=\"chip\"><div class=\"k\">Installation Date</div><div class=\"v\"><span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span></div></div>\n      <div class=\"chip\"><div class=\"k\">Crew Arrival Window</div><div class=\"v\">7:00 &ndash; 7:30 AM</div></div>\n    </div>\n    <div class=\"bd\">\n      <p class=\"lead\">Great news &mdash; your siding installation is officially scheduled for <span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span>, and our crew is ready to transform the exterior of your home. We plan to arrive between 7:00&ndash;7:30 AM.</p>\n      <p>Everything is in place on our end. Your siding panels, trim coil, weather barrier, and custom accessories will be delivered either the afternoon before or the morning of installation. Siding projects often take multiple days &mdash; and our crew cleans up your job site every single day before leaving, ensuring all tools are organized, grounds are swept, and pathways are safe. All we ask is that you sit back, relax, and let us take care of the rest.</p>\n\n      <h2>Yard Sign &amp; Property Identification</h2>\n      <p>A few days prior to your install date, you will notice a Cardinal yard sign placed on your front lawn. In addition to letting your neighbors know quality work is underway, this sign serves a vital operational purpose: it acts as our crew&rsquo;s visual beacon so material delivery drivers and tear-off crews verify the exact address and never begin tearing siding off the wrong home. <b>Please leave the sign in place until your siding project is fully completed.</b></p>\n\n      <h2>Weather Policy</h2>\n      <p>Siding installation requires dry conditions and safe wind levels so weather-resistive housewrap and siding panels are hung with precision. If high winds or steady rain threaten our crew&rsquo;s safety or the integrity of exposed walls, we will reach out promptly to discuss scheduling. We will never leave wall sections unprotected or exposed to open weather. Your home and everyone&rsquo;s safety always come first.</p>\n\n      <h2>What to Expect on Installation Day &amp; Daily Cleanup</h2>\n      <p>A debris trailer or container will be positioned in your driveway or designated work zone. Siding installation involves setting up scaffolding, aluminum pump jacks, ladders, and metal cutting brake tables directly along the exterior walls, so you will see steady crew movement around the entire perimeter of your home.</p>\n      <p><b>Daily job-site cleanup:</b> because siding projects take multiple days, our crew performs a comprehensive cleanup at the end of every workday &mdash; we sweep all walkways, run magnetic rollers around the foundation and driveway to capture stray nails, organize equipment, and make sure your doors and gates are safe and accessible each evening.</p>\n\n      <h2>Six Things to Do Before Installation Day</h2>\n      <ol class=\"steps\">\n        <li><span class=\"t\">Clear a 5-to-10 foot perimeter around your home.</span><p>Our crews need direct access to all exterior walls for ladders and scaffolding. Please move patio furniture, grills, planters, garden hoses, solar lights, and lawn decor away from the foundation walls before our arrival.</p></li>\n        <li><span class=\"t\">Park vehicles on the street the evening before.</span><p>Moving cars into the street gives our trucks full access to stage siding boxes, trim coil, and brake tables, while keeping your vehicles well clear of moving ladders, scaffolding, and falling debris.</p></li>\n        <li><span class=\"t\">Exiting the home or letting pets out? Call us first.</span><p>Our crew works directly against every wall, doorframe, and window opening. If you need to leave the house, or a pet needs to go out, please call or text one of the contacts below before opening exterior doors &mdash; we will immediately pause work and clear a safe, unobstructed path for you and your pets.</p>\n          <div class=\"contacts\">\n            <div class=\"ctitle\">Call or text to clear your safe path</div>\n            <div class=\"crow\"><span class=\"who\">On-site crew leader</span><span class=\"num\">introduced on the day</span></div>\n            <div class=\"crow\"><span class=\"who\">Project Manager &mdash; Curtis Hoskins</span><span class=\"num\">(937) 576-6753</span></div>\n            <div class=\"crow\"><span class=\"who\">Your Sales Rep &mdash; <span class=\"cr-gtok\" data-tok=\"rep_name\">your sales rep</span></span><span class=\"num\"><span class=\"cr-gtok\" data-tok=\"rep_phone\">(937) 576-6753</span></span></div>\n          </div>\n        </li>\n        <li><span class=\"t\">Secure wall hangings, mirrors, and interior decor.</span><p>Tearing off old siding and fastening new siding creates rhythmic vibrations directly through your exterior wall studs. Please take down mirrors, framed pictures, clocks, and delicate shelving on exterior-facing walls the night before to prevent anything from vibrating loose.</p></li>\n        <li><span class=\"t\">Trim back foundation shrubs &amp; flag underground utilities.</span><p>If you have bushes or branches growing tight against exterior walls, a quick trim beforehand helps our installers achieve seamless siding alignment. Also, please point out any underground sprinkler heads, invisible fence lines, or buried utilities so we can protect them throughout the project.</p></li>\n        <li><span class=\"t\">Ensure exterior power is live (or request a generator).</span><p>Our installers use power shears, miter saws, and compressors. Please make sure outdoor outlets and their indoor switches/breakers are live. If you prefer we bring a portable generator instead, just let us know in advance &mdash; no problem at all.</p></li>\n      </ol>\n\n      <h2>Questions or Special Requests</h2>\n      <p>We want this to be as smooth and stress-free as possible for you and your family. If anything comes up before your installation date &mdash; a scheduling conflict, a concern about access, prize landscaping or gardens you want protected, or a special request specific to your property &mdash; please don&rsquo;t hesitate to reach out. It&rsquo;s much easier to plan for something in advance than to work around it on install day.</p>\n      <p class=\"sign\">Thank you for trusting us with your home. We look forward to serving you and delivering a finished product you&rsquo;re proud of.<br><br><b>Cardinal Roofing &amp; Renovations</b></p>\n    </div>" },
+    preinstall_windows: { trade:'Windows', label:'Window Pre-Install Guide',
+      title:'Window Replacement — Pre-Install Guide', h1:'Window Replacement Information &amp; Pre-Install Guide',
+      subject:'Your Window Replacement — What to Expect (Cardinal Roofing)',
+      note:'Emailed to the homeowner when a window build day is booked — auto-filled from the job.',
+      content: "<div class=\"chips\">\n      <div class=\"chip\"><div class=\"k\">Installation Date</div><div class=\"v\"><span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span></div></div>\n      <div class=\"chip\"><div class=\"k\">Crew Arrival Window</div><div class=\"v\">7:30 &ndash; 8:00 AM</div></div>\n    </div>\n    <div class=\"bd\">\n      <p class=\"lead\">Great news &mdash; your custom window replacement is officially scheduled for <span class=\"cr-gtok\" data-tok=\"install_date\">your scheduled date</span>, and our installation crew is ready to upgrade your home&rsquo;s comfort, efficiency, and beauty. We plan to arrive between 7:30&ndash;8:00 AM.</p>\n      <p>Everything is in place on our end. Your new window units, insulated trim, and custom aluminum capping materials will be delivered either the afternoon before or the morning of installation. Our certified crew handles everything from start to finish &mdash; including drop-cloth protection, careful removal of existing units, structural insulation, precision level installation, and continuous cleanup. All we ask is that you sit back, relax, and let us take care of the rest.</p>\n\n      <h2>Yard Sign &amp; Property Identification</h2>\n      <p>A few days prior to your install date, you will notice a Cardinal yard sign placed on your front lawn. In addition to letting neighbors know quality work is underway, this sign serves an important operational purpose: it acts as our crew&rsquo;s visual beacon so delivery drivers and window installers verify the exact address and stage materials at the correct property. <b>Please leave the sign in place until your installation is completed.</b></p>\n\n      <h2>Our &ldquo;One Window at a Time&rdquo; &amp; Weather Policy</h2>\n      <p>We know maintaining home security and indoor temperature matters. Our crew removes and replaces one window opening at a time (or by single room zones). We never leave multiple empty window openings exposed to the elements &mdash; each opening is insulated, weather-sealed, and secured before moving to the next.</p>\n      <p><b>Weather watch:</b> window replacements can safely proceed during mild cold or light rain. However, if severe storms, high wind gusts, or extreme freezing conditions threaten safety or proper sealant curing, we will reach out promptly to reschedule. Your home&rsquo;s interior comfort always comes first.</p>\n\n      <h2>What to Expect on Installation Day &amp; Daily Cleanup</h2>\n      <p>Installers will be working both inside your home and outside on exterior ladders and staging. We lay down protective drop cloths along indoor walkways and below active work areas. Outside, we set up an aluminum trim brake to custom-bend exterior capping.</p>\n      <p><b>Meticulous cleanup every day:</b> at the end of every work session, our crew vacuums indoor sills and floors, sweeps exterior walkways, runs rolling magnets across driveways and lawns to catch screws, and removes all old sash debris from your property.</p>\n\n      <h2>Six Things to Do Before Installation Day</h2>\n      <ol class=\"steps\">\n        <li><span class=\"t\">Take down all blinds, shades, curtains &amp; hardware.</span><p>Please remove all window treatments (curtains, drapes, blinds, plantation shutters, and mounting brackets) from every window being replaced. This gives our installers clear access to the window jambs and prevents delicate fabrics from gathering dust or sustaining damage.</p></li>\n        <li><span class=\"t\">Move beds, furniture &amp; decor 4 to 6 feet back from windows.</span><p>Our installers need room to maneuver large glass units and set up indoor ladders. Please slide beds, desks, dressers, couches, and electronics away from window openings, and clear window sills and nearby wall decor for a completely unobstructed workspace.</p></li>\n        <li><span class=\"t\">Secure pets &amp; communicate before stepping outside.</span><p>With interior doors frequently opening and window openings temporarily accessible, please keep pets secured in a closed, comfortable room away from active work zones. If you or your pets need to step outside, give our crew leader a quick heads-up so we ensure all ladders and pathways are completely clear.</p>\n          <div class=\"contacts\">\n            <div class=\"ctitle\">Call or text to coordinate site access</div>\n            <div class=\"crow\"><span class=\"who\">On-site crew leader</span><span class=\"num\">introduced on the day</span></div>\n            <div class=\"crow\"><span class=\"who\">Project Manager &mdash; Curtis Hoskins</span><span class=\"num\">(937) 576-6753</span></div>\n            <div class=\"crow\"><span class=\"who\">Your Sales Rep &mdash; <span class=\"cr-gtok\" data-tok=\"rep_name\">your sales rep</span></span><span class=\"num\"><span class=\"cr-gtok\" data-tok=\"rep_phone\">(937) 576-6753</span></span></div>\n          </div>\n        </li>\n        <li><span class=\"t\">Disable window security sensors &amp; alarms.</span><p>If your home has a security system with hardwired or wireless window sensors, please contact your alarm monitoring provider to bypass window zones on install day, and remove any stick-on sensor contacts so they aren&rsquo;t discarded with the old frames.</p></li>\n        <li><span class=\"t\">Trim exterior bushes &amp; clear outdoor pathways.</span><p>Installers must access the exterior of each window to install insulation, flashing tape, and custom aluminum coil capping. Please trim back close branches and move outdoor furniture, planters, or garden hoses away from exterior windows.</p></li>\n        <li><span class=\"t\">Ensure exterior &amp; interior power access (or request a generator).</span><p>Installers use saws, vacuum extractors, and trim tools. Please ensure an exterior or nearby interior outlet is live. If you prefer we bring a portable generator instead, just let us know in advance.</p></li>\n      </ol>\n\n      <h2>Questions or Special Requests</h2>\n      <p>We want this to be as smooth and stress-free as possible for you and your family. If anything comes up before your installation date &mdash; a scheduling conflict, a concern about access, prize landscaping you want protected, or a special request specific to your property &mdash; please don&rsquo;t hesitate to reach out. It&rsquo;s much easier to plan for something in advance than to work around it on install day.</p>\n      <p class=\"sign\">Thank you for trusting us with your home. We look forward to serving you and delivering a finished product you&rsquo;re proud of.<br><br><b>Cardinal Roofing &amp; Renovations</b></p>\n    </div>" }
+  };
+  var GUIDE_ORDER = ['preinstall_roof','preinstall_siding','preinstall_windows'];
+  function G(slug){ return GUIDES[slug] || GUIDES.preinstall_roof; }
 
   var STYLE = "*{box-sizing:border-box}"
     + "body{margin:0;background:#eceef1;color:#1f2733;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}"
@@ -82936,7 +82943,6 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function tell(m){ try{ if(typeof crTell === 'function') crTell(m); }catch(e){} }
   function okToast(m){ try{ if(window.crToastOk) window.crToastOk(m); else tell(m); }catch(e){} }
 
-  /* nicely format a 'YYYY-MM-DD' (appt_date is text) as "Friday, Aug 21, 2026" */
   function fmtInstall(d){
     if(!d) return '';
     try{
@@ -82947,21 +82953,23 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }catch(e){ return String(d); }
   }
 
-  /* the fenced roofing gate: skip ONLY a job explicitly tagged with trades that
-     do not include Roofing. Untagged jobs proceed (Cardinal is primarily roofing
-     and this is the roof guide). Theo's choice, 28 Aug. */
-  function isNonRoofOnly(pr){
-    try{
-      var t = (typeof ljTrades === 'function') ? (ljTrades(pr) || []) : [];
-      return t.length > 0 && t.indexOf('Roofing') === -1;
-    }catch(e){ return false; }
+  /* which guide a job gets, by trade. Untagged → roof (the primary trade and the
+     roof guide). A job tagged only for a trade with no guide (Gutters/Repairs/Misc)
+     → null (no guide). Roofing wins when multiple trades are present. */
+  function slugForJob(pr){
+    var t = [];
+    try{ if(typeof ljTrades === 'function') t = ljTrades(pr) || []; }catch(e){}
+    if(!t.length) return 'preinstall_roof';
+    if(t.indexOf('Roofing') !== -1) return 'preinstall_roof';
+    if(t.indexOf('Siding')  !== -1) return 'preinstall_siding';
+    if(t.indexOf('Windows') !== -1) return 'preinstall_windows';
+    return null;
   }
 
   function repEmailFor(pr){
     try{ if(typeof ljAssignedEmail === 'function'){ var e = ljAssignedEmail(pr); if(e) return e; } }catch(_){}
     return (pr && pr.sales_rep) ? String(pr.sales_rep) : '';
   }
-  /* build the autofill context from the job + the appointment fields */
   function ctxFor(pr, fields){
     var repEmail = repEmailFor(pr);
     var repName = '', repPhone = '';
@@ -82976,9 +82984,6 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     };
   }
 
-  /* replace every <span class="cr-gtok" data-tok="X">…</span> with ctx[X] (escaped),
-     falling back to a graceful default when a value is missing. Regex over the
-     stored HTML — the tokens are authored by us, never by a client. */
   var FALLBACK = { install_date:'your scheduled date', rep_name:'your Cardinal sales rep',
                    rep_phone:'(937) 576-6753', client_name:'', property_address:'' };
   function fill(content, ctx){
@@ -82992,16 +82997,14 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       });
   }
 
-  /* wrap the (already token-filled) content in the fixed letterhead/footer shell.
-     editable:true wraps the body in a contenteditable region (for the admin editor)
-     and shows the autofill tokens as highlighted chips. */
-  function doc(filledContent, ctx, editable){
+  function doc(filledContent, ctx, editable, slug){
     ctx = ctx || {};
     var prep = '';
     var who = (ctx.client_name || '').trim(), where = (ctx.property_address || '').trim();
     if(who || where){
       prep = '<div class="prep">Prepared for ' + esc(who || where) + (who && where ? ' &middot; ' + esc(where) : '') + '</div>';
     }
+    var g = G(slug || 'preinstall_roof');
     var editStyle = editable
       ? ".cr-gtok{background:#fff4b8;border-radius:3px;padding:0 3px;font-weight:700;box-shadow:inset 0 0 0 1px #e6cf6a}"
         + ".cr-edit-region{outline:none}.cr-edit-region:focus{box-shadow:inset 0 0 0 2px rgba(200,32,46,.25)}"
@@ -83011,9 +83014,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       : filledContent;
     return '<!doctype html><html lang="en"><head><meta charset="utf-8">'
       + '<meta name="viewport" content="width=device-width,initial-scale=1">'
-      + '<title>' + esc(DOC_TITLE) + '</title><style>' + STYLE + editStyle + '</style></head><body>'
+      + '<title>' + esc(g.title) + '</title><style>' + STYLE + editStyle + '</style></head><body>'
       + '<div class="doc"><div class="hd"><div class="co">Cardinal Roofing &amp; Renovations</div>'
-      + '<h1>Roof Installation Information &amp; Pre-Install Guide</h1>'
+      + '<h1>' + g.h1 + '</h1>'
       + '<div class="addr">5735 Webster Street, Dayton, OH 45414 &middot; (937) 576-6753 &middot; Admin@cardinalrenovations.net</div>'
       + prep + '</div>'
       + region
@@ -83022,39 +83025,37 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       + '</div></body></html>';
   }
 
-  /* the editable master: {subject, html}. DB row wins; DEFAULT_* is the fallback. */
-  function loadTemplate(){
-    var c = cx();
-    if(!c) return Promise.resolve({ subject:DEFAULT_SUBJECT, html:DEFAULT_CONTENT });
-    return c.from('company_templates').select('subject,html').eq('slug', SLUG).maybeSingle()
+  /* the editable master for a slug: {subject, html}. DB row wins; GUIDES[slug] falls back. */
+  function loadTemplate(slug){
+    var g = G(slug), c = cx();
+    if(!c) return Promise.resolve({ subject:g.subject, html:g.content });
+    return c.from('company_templates').select('subject,html').eq('slug', slug).maybeSingle()
       .then(function(r){
         var row = r && r.data;
-        return { subject:(row && row.subject) || DEFAULT_SUBJECT,
-                 html:(row && row.html) || DEFAULT_CONTENT };
+        return { subject:(row && row.subject) || g.subject, html:(row && row.html) || g.content };
       })
-      .catch(function(){ return { subject:DEFAULT_SUBJECT, html:DEFAULT_CONTENT }; });
+      .catch(function(){ return { subject:g.subject, html:g.content }; });
   }
 
-  /* once-per-job guard + audit, via client_guide_sends (PK project_id,kind). */
-  function alreadySent(projectId){
+  /* once-per-job+guide guard + audit (client_guide_sends PK project_id,kind=slug). */
+  function alreadySent(projectId, kind){
     var c = cx(); if(!c) return Promise.resolve(false);
-    return c.from('client_guide_sends').select('project_id').eq('project_id', projectId).eq('kind', KIND).maybeSingle()
+    return c.from('client_guide_sends').select('project_id').eq('project_id', projectId).eq('kind', kind).maybeSingle()
       .then(function(r){ return !!(r && r.data); }).catch(function(){ return false; });
   }
-  function markSent(projectId, toEmail){
+  function markSent(projectId, kind, toEmail){
     var c = cx(); if(!c) return Promise.resolve();
     var by = ''; try{ by = (window.currentUser && window.currentUser.email) || ''; }catch(_){}
-    return c.from('client_guide_sends').insert({ project_id:projectId, kind:KIND, to_email:toEmail || null, sent_by:by || null })
+    return c.from('client_guide_sends').insert({ project_id:projectId, kind:kind, to_email:toEmail || null, sent_by:by || null })
       .then(function(){}).catch(function(){});
   }
 
   function validEmail(e){ return typeof e === 'string' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim()); }
 
-  /* build + POST the filled guide to /api/senddoc. Resolves {ok:true} on send. */
-  function postSend(pr, ctx, tpl){
-    var filled = fill(tpl.html, ctx);
-    var html = doc(filled, ctx);
-    var propLine = ctx.property_address ? ('This covers your roof installation at ' + ctx.property_address + '.') : '';
+  function postSend(pr, ctx, tpl, slug){
+    var g = G(slug);
+    var html = doc(fill(tpl.html, ctx), ctx, false, slug);
+    var propLine = ctx.property_address ? ('This covers your ' + g.trade.toLowerCase() + ' installation at ' + ctx.property_address + '.') : '';
     var session = null;
     return Promise.resolve()
       .then(function(){ return (window.TEAM && cx()) ? cx().auth.getSession() : null; })
@@ -83063,8 +83064,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
         return fetch('/api/senddoc', {
           method:'POST',
           headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + (session ? session.access_token : '') },
-          body: JSON.stringify({ to: (pr.email || '').trim(), clientName: ctx.client_name,
-            propertyLine: propLine, title: DOC_TITLE, html: html })
+          body: JSON.stringify({ to:(pr.email || '').trim(), clientName:ctx.client_name,
+            propertyLine:propLine, title:g.title, html:html })
         });
       })
       .then(function(res){
@@ -83075,95 +83076,113 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       });
   }
 
-  /* send for a project (used by both the auto path and the manual button).
-     force:true bypasses the once-guard (a deliberate re-send). */
+  /* send the matching guide for a job. opts.slug pins it; opts.force bypasses the guard. */
   function sendFor(pr, fields, opts){
     opts = opts || {};
     if(!pr || !pr.id) return Promise.resolve({ skipped:'no_project' });
+    var slug = opts.slug || slugForJob(pr);
+    if(!slug) return Promise.resolve({ skipped:'no_guide' });
     if(!validEmail(pr.email)) return Promise.resolve({ skipped:'no_email' });
-    return (opts.force ? Promise.resolve(false) : alreadySent(pr.id)).then(function(sent){
+    return (opts.force ? Promise.resolve(false) : alreadySent(pr.id, slug)).then(function(sent){
       if(sent) return { skipped:'already_sent' };
-      return loadTemplate().then(function(tpl){
-        return postSend(pr, ctxFor(pr, fields), tpl).then(function(){
-          return markSent(pr.id, pr.email).then(function(){ return { ok:true }; });
+      return loadTemplate(slug).then(function(tpl){
+        return postSend(pr, ctxFor(pr, fields), tpl, slug).then(function(){
+          return markSent(pr.id, slug, pr.email).then(function(){ return { ok:true, slug:slug }; });
         });
       });
     });
   }
 
-  /* ── the auto hook: called (fire-and-forget) after a build-day appointment is
-     created/attached. Gate → once → send, or prompt to capture a missing email. */
+  /* the auto hook: after a build-day appointment. Gate → once → send / capture email. */
   function autoOnAppointment(fields){
     try{
       if(!fields || fields.kind !== 'job' || !fields.project_id) return;
       var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(fields.project_id); })[0];
       if(!pr) return;
-      if(isNonRoofOnly(pr)) return;                         /* explicitly non-roof → skip */
-      alreadySent(pr.id).then(function(sent){
+      var slug = slugForJob(pr);
+      if(!slug) return;                                     /* trade has no guide → skip */
+      alreadySent(pr.id, slug).then(function(sent){
         if(sent) return;
         if(validEmail(pr.email)){
-          sendFor(pr, fields).then(function(r){
-            if(r && r.ok) okToast('Pre-Install Guide emailed to ' + (pr.name || 'the client'));
-          }).catch(function(e){ tell('Could not email the Pre-Install Guide: ' + ((e && e.message) || e)); });
+          sendFor(pr, fields, { slug:slug }).then(function(r){
+            if(r && r.ok) okToast(G(slug).label + ' emailed to ' + (pr.name || 'the client'));
+          }).catch(function(e){ tell('Could not email the guide: ' + ((e && e.message) || e)); });
         }else{
-          promptEmail(pr, fields);
+          promptEmail(pr, fields, slug);
         }
       });
     }catch(_){ /* a courtesy email must never break booking */ }
   }
 
-  /* capture a missing client email at the moment it matters, then send. */
-  function promptEmail(pr, fields){
+  function promptEmail(pr, fields, slug){
     try{
-      var to = window.prompt('Email the Pre-Install Guide to ' + (pr.name || 'the client') + '?\n\nAdd their email address to send it (leave blank to skip):', '');
-      if(to == null) return;                 /* cancelled */
+      var to = window.prompt('Email the ' + G(slug).label + ' to ' + (pr.name || 'the client') + '?\n\nAdd their email address to send it (leave blank to skip):', '');
+      if(to == null) return;
       to = String(to).trim();
-      if(!to) return;                        /* skipped */
+      if(!to) return;
       if(!validEmail(to)){ tell('That does not look like a valid email — nothing was sent.'); return; }
       var saved = Promise.resolve();
-      try{ if(typeof patchProject === 'function') saved = patchProject(pr.id, { email: to }); }catch(_){}
+      try{ if(typeof patchProject === 'function') saved = patchProject(pr.id, { email:to }); }catch(_){}
       Promise.resolve(saved).then(function(){
         pr.email = to;
-        return sendFor(pr, fields, { force:true });
+        return sendFor(pr, fields, { force:true, slug:slug });
       }).then(function(r){
-        if(r && r.ok) okToast('Email saved — Pre-Install Guide sent to ' + (pr.name || 'the client'));
+        if(r && r.ok) okToast('Email saved — ' + G(slug).label + ' sent to ' + (pr.name || 'the client'));
       }).catch(function(e){ tell('Saved the email, but the guide could not be sent: ' + ((e && e.message) || e)); });
     }catch(_){}
   }
 
-  /* manual "Send Pre-Install Guide" from the job (allows a re-send). */
+  /* manual "Email to client" from the job overview (allows a re-send). */
   function manualSend(pr){
     if(!pr){ tell('No job selected.'); return; }
-    if(!validEmail(pr.email)){ promptEmail(pr, {}); return; }
-    if(!window.confirm('Email the Roof Pre-Install Guide to ' + (pr.name || 'the client') + ' at ' + pr.email + '?')) return;
-    sendFor(pr, {}, { force:true }).then(function(r){
-      if(r && r.ok) okToast('Pre-Install Guide sent to ' + (pr.name || 'the client'));
-      else if(r && r.skipped === 'no_email') promptEmail(pr, {});
+    var slug = slugForJob(pr);
+    if(!slug){ tell('There is no Pre-Install Guide for this job’s trade.'); return; }
+    if(!validEmail(pr.email)){ promptEmail(pr, {}, slug); return; }
+    if(!window.confirm('Email the ' + G(slug).label + ' to ' + (pr.name || 'the client') + ' at ' + pr.email + '?')) return;
+    sendFor(pr, {}, { force:true, slug:slug }).then(function(r){
+      if(r && r.ok) okToast(G(slug).label + ' sent to ' + (pr.name || 'the client'));
     }).catch(function(e){ tell('Could not send: ' + ((e && e.message) || e)); });
   }
 
-  /* ── the admin editor (edits company_templates('preinstall_roof')) ───────── */
+  /* ── the editable rows for Company Documents (matched to the trade filter) ── */
+  function docsRows(trade, admin){
+    return GUIDE_ORDER.filter(function(slug){ return trade === 'All' || trade === G(slug).trade; })
+      .map(function(slug){
+        var g = G(slug);
+        return '<div class="cd-guiderow"><span class="cdg-ico">&#128231;</span>'
+          + '<span class="cdg-name"><b>' + esc(g.label) + '</b>'
+          + '<small>' + esc(g.note) + '</small>'
+          + '<span class="cdg-auto">Auto-emailed on scheduling</span></span>'
+          + '<button class="btn ghost" data-cr-guide-preview-doc="' + slug + '">Preview</button>'
+          + (admin ? '<button class="btn" data-cr-guide-edit="' + slug + '">Edit</button>' : '')
+          + '</div>';
+      }).join('');
+  }
+
+  /* ── the admin editor (edits company_templates(<slug>)) ─────────────────────── */
   function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
+  var _slug = 'preinstall_roof';
   function geFrame(){ return document.getElementById('cr-ge-frame'); }
   function geDocOf(){ var f = geFrame(); try{ return f && (f.contentDocument || (f.contentWindow && f.contentWindow.document)); }catch(e){ return null; } }
-  function openEditor(){
+  function openEditor(slug){
     if(!isAdm()){ tell('Editing the guide is admin-only.'); return; }
+    _slug = GUIDES[slug] ? slug : 'preinstall_roof';
     if(typeof hideAllViews === 'function') hideAllViews();
     var v = document.getElementById('cr-guide-editor'); if(!v) return;
     v.style.display = 'block'; v.setAttribute('aria-hidden', 'false');
     try{ document.body.style.overflow = ''; }catch(e){}
     window.scrollTo(0, 0);
+    var ttl = document.getElementById('cr-ge-ttl'); if(ttl) ttl.textContent = G(_slug).label;
     if(window.navSetView) window.navSetView('guideedit');
-    loadTemplate().then(function(tpl){
-      var subj = document.getElementById('cr-ge-subject'); if(subj) subj.value = tpl.subject || DEFAULT_SUBJECT;
-      var f = geFrame(); if(f) f.srcdoc = doc(tpl.html, {}, true);   /* tokens stay as chips (not filled) */
+    loadTemplate(_slug).then(function(tpl){
+      var subj = document.getElementById('cr-ge-subject'); if(subj) subj.value = tpl.subject || G(_slug).subject;
+      var f = geFrame(); if(f) f.srcdoc = doc(tpl.html, {}, true, _slug);
     });
   }
   function closeEditor(){
     var v = document.getElementById('cr-guide-editor'); if(v){ v.style.display = 'none'; v.setAttribute('aria-hidden', 'true'); }
     if(typeof showHome === 'function') showHome();
   }
-  /* pull the edited body back out of the iframe's contenteditable region, cleaned */
   function harvestBody(){
     var d = geDocOf(); if(!d) return null;
     var reg = d.querySelector('.cr-edit-region'); if(!reg) return null;
@@ -83176,19 +83195,19 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var c = cx(); if(!c){ tell('Not signed in.'); return; }
     var html = harvestBody();
     if(!html){ tell('Nothing to save.'); return; }
-    var subj = (document.getElementById('cr-ge-subject') || {}).value || DEFAULT_SUBJECT;
+    var subj = (document.getElementById('cr-ge-subject') || {}).value || G(_slug).subject;
     var by = ''; try{ by = (window.currentUser && window.currentUser.email) || ''; }catch(_){}
     var btn = document.getElementById('cr-ge-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
-    c.from('company_templates').upsert({ slug:SLUG, subject:subj, html:html, updated_at:new Date().toISOString(), updated_by:by || null }, { onConflict:'slug' })
+    c.from('company_templates').upsert({ slug:_slug, subject:subj, html:html, updated_at:new Date().toISOString(), updated_by:by || null }, { onConflict:'slug' })
       .then(function(r){ if(r && r.error) throw r.error;
         if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
-        okToast('Pre-Install Guide saved.'); })
+        okToast(G(_slug).label + ' saved.'); })
       .catch(function(e){ if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Could not save: ' + ((e && e.message) || e)); });
   }
   function resetEditor(){
-    if(!window.confirm('Reset the guide wording back to the Cardinal default? Your unsaved changes will be replaced.')) return;
-    var f = geFrame(); if(f) f.srcdoc = doc(DEFAULT_CONTENT, {}, true);
-    var subj = document.getElementById('cr-ge-subject'); if(subj) subj.value = DEFAULT_SUBJECT;
+    if(!window.confirm('Reset the ' + G(_slug).label + ' wording back to the Cardinal default? Your unsaved changes will be replaced.')) return;
+    var f = geFrame(); if(f) f.srcdoc = doc(G(_slug).content, {}, true, _slug);
+    var subj = document.getElementById('cr-ge-subject'); if(subj) subj.value = G(_slug).subject;
   }
   function sampleCtx(){
     return { client_name:'Daniel Whitfield', property_address:'128 Maple Ave, Dayton, OH',
@@ -83202,15 +83221,13 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       else tell('Allow pop-ups to preview.');
     }catch(e){ tell('Could not open a preview.'); }
   }
-  /* preview the guide with the editor's CURRENT edits (used inside the editor) */
   function preview(){
     var s = sampleCtx();
-    openPreviewWindow(doc(fill(harvestBody() || DEFAULT_CONTENT, s), s));
+    openPreviewWindow(doc(fill(harvestBody() || G(_slug).content, s), s, false, _slug));
   }
-  /* preview the SAVED guide (used from the Company Documents row) */
-  function previewSaved(){
-    var s = sampleCtx();
-    loadTemplate().then(function(tpl){ openPreviewWindow(doc(fill(tpl.html, s), s)); });
+  function previewSaved(slug){
+    var s = sampleCtx(); slug = GUIDES[slug] ? slug : 'preinstall_roof';
+    loadTemplate(slug).then(function(tpl){ openPreviewWindow(doc(fill(tpl.html, s), s, false, slug)); });
   }
 
   document.addEventListener('click', function(e){
@@ -83219,8 +83236,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if((t = e.target.closest('#cr-ge-save'))){ saveEditor(); return; }
     if((t = e.target.closest('#cr-ge-reset'))){ resetEditor(); return; }
     if((t = e.target.closest('#cr-ge-preview'))){ preview(); return; }
-    if((t = e.target.closest('[data-cr-guide-preview-doc]'))){ previewSaved(); return; }
-    if((t = e.target.closest('[data-cr-guide-edit]'))){ openEditor(); return; }
+    if((t = e.target.closest('[data-cr-guide-preview-doc]'))){ previewSaved(t.getAttribute('data-cr-guide-preview-doc')); return; }
+    if((t = e.target.closest('[data-cr-guide-edit]'))){ openEditor(t.getAttribute('data-cr-guide-edit')); return; }
     if((t = e.target.closest('[data-cr-guide-send]'))){
       var id = t.getAttribute('data-cr-guide-send');
       var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(id); })[0];
@@ -83232,7 +83249,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   window.CardinalGuide = Object.assign(window.CardinalGuide || {}, {
     open: openEditor, close: closeEditor, send: manualSend, sendFor: sendFor,
     fill: fill, doc: doc, ctxFor: ctxFor, loadTemplate: loadTemplate,
-    isNonRoofOnly: isNonRoofOnly, DEFAULT_CONTENT: DEFAULT_CONTENT
+    slugForJob: slugForJob, docsRows: docsRows, GUIDES: GUIDES,
+    /* back-compat: 1111's isNonRoofOnly is now "no guide for this trade" */
+    isNonRoofOnly: function(pr){ return slugForJob(pr) === null; }
   });
 })();
 </script>
