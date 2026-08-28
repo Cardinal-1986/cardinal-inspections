@@ -927,6 +927,34 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1120 — 28 Aug 2026 — The Pre-Install Guide asks through the app, not the browser
+
+Third finding from the `run_gates.py` full run: **`gate_1083` — the standing no-browser-dialogs
+gate — was RED on main** (3 `confirm(` in CODE where the sheet's own fallback should be the
+only one; the lexer's count — a bare grep says 9 and counts six comments). Both extras were in
+`cr-guide-script`, added with the Pre-Install Guide arc after 1083 removed the last dialog:
+
+- `manualSend()` — "Email the <guide> to <client> at <email>?" — now `window.crAsk(...).then(...)`
+  (the module is ES5 `.then` style throughout; kept). **"email" joined the sheet's VERBS list**
+  so the go-button reads "Email" — one place decides what a message means, per 1083's design.
+- `resetEditor()` — "Reset the <guide> wording…? Your unsaved changes will be replaced." —
+  destructive. The message leads with "Reset", which the sheet's DANGER regex already classifies,
+  so the red treatment is automatic; no per-site styling added.
+
+### Gates
+- `check_build.py` GREEN 1119 → 1120; patch byte-reproducible (`cmp` equal on re-application).
+- **`gate_1083` flips GREEN — 17/17** (A2: exactly one executable `confirm(` — the sheet's own
+  fallback; A2b: zero call sites outside the module; C2 red-on-destructive still proven).
+  **Control (the 1119 tree) RED on A2 + A2b.**
+- **`drive_guide1120.mjs`** — the wiring itself, driven in Chromium: `CardinalGuide.send(pr)`
+  opens the sheet (`#crAsk`), go-button text **"Email"**, not danger-styled, declining closes it,
+  zero `window.confirm` calls. **Control: the sheet never opens and the stubbed `confirm`
+  records the exact message** — the gate was seen red before it was believed.
+
+No SQL. `index.html` + this entry.
+
+---
+
 ## Build 1119 — 28 Aug 2026 — Seven labels come back up to the 11px floor
 
 Found by the same `run_gates.py` full run: **`gate_1081` — the standing type-floor gate —

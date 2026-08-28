@@ -3875,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1119 &#8212; Seven bits of text that had slipped under the app's 11px minimum are back on the floor: the Detailed/Flat switch, the section-header Add line and Save assembly buttons and the assembly group headings in the estimate builder, a section heading in the Community sheet, the canvass grid's checkbox labels (which were 9.5px), and the AUTO chip on the Pre-Install Guide rows. The floor exists so everything reads on a roof in daylight; build 1081 set it, these arrived after.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1120 &#8212; The last two browser pop-ups are gone: emailing a Pre-Install Guide from a job, and resetting a guide's wording back to the Cardinal default, now ask through the app's own dark ask-sheet like everything else since build 1083 — and the reset, which throws away unsaved edits, gets the red treatment a destructive question deserves. The buttons say what happens: “Email” and “Reset”, not OK/Cancel.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42013,7 +42013,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1119, d:'2026-08-28', t:'Seven small labels come back up to the 11px floor', s:'Build 1081 set an app-wide minimum text size of 11px so everything reads outdoors. Seven labels added since then had slipped under it \u2014 four in the new estimate builder, one in the Community sheet, the canvass grid\u2019s checkbox labels (9.5px, the smallest), and the AUTO chip on Pre-Install Guide rows. All are at 11px again.' },
+{ b:1120, d:'2026-08-28', t:'The Pre-Install Guide asks through the app, not the browser', s:'Two grey browser pop-ups survived in the Pre-Install Guide \u2014 the \u201cEmail the guide?\u201d question and the \u201cReset the wording?\u201d one. Both now use the dark in-app ask-sheet every other question has used since build 1083, and the reset (which replaces unsaved edits) is styled red as a destructive action. Buttons name the action instead of OK/Cancel.' },
+ { b:1119, d:'2026-08-28', t:'Seven small labels come back up to the 11px floor', s:'Build 1081 set an app-wide minimum text size of 11px so everything reads outdoors. Seven labels added since then had slipped under it \u2014 four in the new estimate builder, one in the Community sheet, the canvass grid\u2019s checkbox labels (9.5px, the smallest), and the AUTO chip on Pre-Install Guide rows. All are at 11px again.' },
  { b:1118, d:'2026-08-28', t:'The Estimates count fills in on jobs with none yet', s:'Since 1094 the Estimates box on a client profile showed \u201c\u2026\u201d forever on any job with zero estimates \u2014 a script error fired exactly when the count was 0, so the number never arrived. Jobs with estimates were unaffected. Fixed; priced Community bids also count as the 1 that build 1094 intended.' },
  { b:1116, d:'2026-08-28', t:'One header for the screens that belong to no portal, and it names the screen', s:'The header changed colour depending on where you had been. Leads &amp; Jobs, Photos, Reports, Gallery, Company Documents, the Library, Quick Inspection, Address Check, iTel, Invoices, Labor Rates and the Guide editor all wore whichever portal you were last in &mdash; none of them belongs to a portal, so the colour was telling you nothing. They now keep one steady header. The count had been growing on its own: five screens were settled earlier, and three more that were added in the last few days started out drifting too, because a screen was only steady if somebody remembered to name it. That is now the other way round &mdash; a new screen is steady by default, and a check fails the build if a screen is added without deciding which it is. The word in the middle of the header also changed: it used to name the colour, so Settings and My Profile read &ldquo;Production&rdquo;. Each screen now says its own name. Real portal screens are untouched and still say Retail, Insurance or Community. Two faint marks were darkened to read in daylight: the small arrow in the strip below the header, and the + on the Add button in Community.' },
 { b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
@@ -81911,7 +81912,7 @@ body.cr-landing-on footer.site{display:none !important;}
      ======================================================================== */
   var DANGER = /^(delete|remove|discard|clear|archive|reset|overwrite|replace)\b/i;
   var VERBS  = ['delete','remove','discard','clear','archive','reset','overwrite',
-                'replace','send','switch','move','close','mark','log','download','finish'];
+                'replace','send','email','switch','move','close','mark','log','download','finish'];
 
   function leadVerb(msg){
     var m = /^\s*[^\w]*([A-Za-z]+)/.exec(String(msg || ''));
@@ -83212,10 +83213,14 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var slug = slugForJob(pr);
     if(!slug){ tell('There is no Pre-Install Guide for this job’s trade.'); return; }
     if(!validEmail(pr.email)){ promptEmail(pr, {}, slug); return; }
-    if(!window.confirm('Email the ' + G(slug).label + ' to ' + (pr.name || 'the client') + ' at ' + pr.email + '?')) return;
+    /* 1120: the ask sheet (1083), not the browser box — crAsk falls back to
+       confirm() itself if the sheet cannot show, so nothing is lost. */
+    window.crAsk('Email the ' + G(slug).label + ' to ' + (pr.name || 'the client') + ' at ' + pr.email + '?').then(function(yes){
+    if(!yes) return;
     sendFor(pr, {}, { force:true, slug:slug }).then(function(r){
       if(r && r.ok) okToast(G(slug).label + ' sent to ' + (pr.name || 'the client'));
     }).catch(function(e){ tell('Could not send: ' + ((e && e.message) || e)); });
+    });
   }
 
   /* ── the editable rows for Company Documents (matched to the trade filter) ── */
@@ -83279,9 +83284,12 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       .catch(function(e){ if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Could not save: ' + ((e && e.message) || e)); });
   }
   function resetEditor(){
-    if(!window.confirm('Reset the ' + G(_slug).label + ' wording back to the Cardinal default? Your unsaved changes will be replaced.')) return;
-    var f = geFrame(); if(f) f.srcdoc = doc(G(_slug).content, {}, true, _slug);
-    var subj = document.getElementById('cr-ge-subject'); if(subj) subj.value = G(_slug).subject;
+    /* 1120: destructive — "Reset" gets the sheet's red treatment (1083). */
+    window.crAsk('Reset the ' + G(_slug).label + ' wording back to the Cardinal default? Your unsaved changes will be replaced.').then(function(yes){
+      if(!yes) return;
+      var f = geFrame(); if(f) f.srcdoc = doc(G(_slug).content, {}, true, _slug);
+      var subj = document.getElementById('cr-ge-subject'); if(subj) subj.value = G(_slug).subject;
+    });
   }
   function sampleCtx(){
     return { client_name:'Daniel Whitfield', property_address:'128 Maple Ave, Dayton, OH',
