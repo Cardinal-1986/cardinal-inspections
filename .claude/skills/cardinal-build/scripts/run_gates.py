@@ -24,10 +24,26 @@ folds crashes into either PASS or FAIL inherits that bug at suite scale. So:
 UNKNOWN is never counted as a pass. A suite that is 100% PASS + 40 UNKNOWN has
 told you about 40 gates it could not ask.
 
-CALLING CONVENTION. 163 of the 191 gates default to the repo's index.html
-(`process.argv[2] || <repo path>`); 28 require an explicit path and exit 2 with
-a usage line without one. Passing the artifact path positionally satisfies both,
-so every gate is invoked the same way.
+CALLING CONVENTION - AND THE BUG THIS SHIPPED WITH.
+
+The first version handed the artifact path to every gate, believing argv[2] meant
+the same thing everywhere. It does not. There are at least four conventions:
+
+    argv[2] || <repo>/index.html     most gates: the artifact
+    argv[2] || <repo>/api            g960: the API DIRECTORY
+    argv[2] || '.'                   g1072: the REPO ROOT
+    argv.slice(2), path required     g1025+: exits 2 without one
+
+Handing index.html to the second kind made g960 look for `index.html/digest.js`
+and report 3 red; run bare it is 11/11 green. That single wrong assumption
+produced a wave of false failures large enough to look like the app was broken.
+The runner was the defect - not the app, and not the gates.
+
+So: run each gate with NO argument first and let its own default apply. That
+default is correct by construction, because whoever wrote the gate chose what
+argv[2] means. Only when a gate exits 2 (refused to run) retry once WITH the
+artifact path, which is exactly what the fourth convention needs. The mode used
+is recorded per gate, so a convention change surfaces instead of hiding.
 
 SCOPE. This runs `gate_*.mjs` only. The 152 `harness_*` / `render_*` files are
 older, more heterogeneous, and several need bespoke setup — they are a separate
@@ -69,19 +85,29 @@ def gate_files(only=None):
         out.append((int(m.group(1)), n))
     return [n for _, n in sorted(out)]
 
+def _invoke(name, args, timeout):
+    try:
+        p = subprocess.run(['node', os.path.join(HERE, name)] + args,
+                           cwd=REPO, capture_output=True, text=True, timeout=timeout)
+        return p.returncode, (p.stdout or '') + (p.stderr or ''), False
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout or ''
+        if isinstance(out, bytes):
+            out = out.decode('utf8', 'replace')
+        return None, out, True
+
 def run_one(name, artifact, timeout):
     t0 = time.time()
-    timed_out = False
-    try:
-        p = subprocess.run(['node', os.path.join(HERE, name), artifact],
-                           cwd=REPO, capture_output=True, text=True, timeout=timeout)
-        code, out = p.returncode, (p.stdout or '') + (p.stderr or '')
-    except subprocess.TimeoutExpired as e:
-        timed_out, code = True, None
-        out = (e.stdout or b'').decode('utf8', 'replace') if isinstance(e.stdout, bytes) else (e.stdout or '')
+    # A gate's own default is correct by construction: whoever wrote it chose
+    # what argv[2] means. Only hand a path to a gate that refuses without one.
+    mode = 'no-arg'
+    code, out, timed_out = _invoke(name, [], timeout)
+    if code == 2 and not timed_out:
+        mode = 'with-artifact'
+        code, out, timed_out = _invoke(name, [artifact], timeout)
     verdict, why = classify(code, timed_out)
     tail = [l for l in out.strip().split('\n') if l.strip()][-1:] if out.strip() else []
-    return {'gate': name, 'verdict': verdict, 'why': why, 'exit': code,
+    return {'gate': name, 'verdict': verdict, 'why': why, 'exit': code, 'mode': mode,
             'secs': round(time.time() - t0, 1), 'tail': (tail[0][:150] if tail else '')}
 
 def selftest():
