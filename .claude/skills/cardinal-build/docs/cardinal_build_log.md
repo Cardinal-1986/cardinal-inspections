@@ -927,6 +927,38 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1121 — 28 Aug 2026 — the Scope-of-Loss history row writes for the first time
+
+Found by the new type-check pass (`tsc --checkJs` over the concatenated inline blocks):
+of 14 surviving TS2304 "Cannot find name" errors, 13 were the safe `typeof X === 'function'`
+guard idiom — and one was a bare call. `applySolExtraction()`'s final `.then` called
+`logScopeRead(claimId, pr, fileName, extracted, applied)` using `openSolReviewModal`'s
+parameters, **but the two functions are siblings** — proven by brace-matching through the
+lexer's mask, not by reading: the modal closes 3 characters before the apply begins. The
+665-era comment saying "this chain lives inside it" was never true on this tree.
+
+**Blast radius, stated precisely:** every SOL apply since 665 completed its checklist write,
+audit row and claim bridge (earlier in the chain), then threw ReferenceError inside the final
+`.then` — an unhandled rejection, invisible — so **`scope_reads` has never received a row.**
+The visible feature worked, which is why nobody noticed. The claim fields were never affected.
+
+**Fix.** A module-level `_solReviewCtx` parked by the modal, read by the apply. Same class
+as 1118 (a name is not a contract), same session, same detector family.
+
+### Gates
+- `check_build.py` GREEN 1120 → 1121; patch byte-reproducible.
+- **`gate_1121.mjs`** — Chromium, real modal, real Apply button, `scope_reads` insert
+  intercepted: the row arrives with `doc_name` "gunn_sol.pdf", `rcv` 12000, the bridge's
+  claim id and the extraction. **Control (1120 tree): RED ×2 — zero inserts and the named
+  `ReferenceError: fileName is not defined`.** Two rig faults were found and fixed before
+  the gate was believed: the mock cannot settle the real claim bridge (stubbed, with the
+  argument-evaluation throw preserved on the control), and the seeded project pre-ticks only
+  the notes row, whose branch never populates `applied` — a vacuous pass shape (BUG_CLASSES).
+
+No SQL (`scope_reads` exists since 665). `index.html` + this entry + `gate_1121.mjs`.
+
+---
+
 ## Build 1120 — 28 Aug 2026 — The Pre-Install Guide asks through the app, not the browser
 
 Third finding from the `run_gates.py` full run: **`gate_1083` — the standing no-browser-dialogs
