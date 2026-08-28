@@ -178,12 +178,29 @@ const ST = '<script id="cr-hd2-script">';
 const hs = html.indexOf(ST);
 const hdr = hs < 0 ? '' : html.slice(hs + ST.length, html.indexOf('</script>', hs));
 ok(hdr.length > 5000, 'the shipped header module was extracted');
-/* ⚠ Assert on CODE, never on the word. This build's own comments name
-   TITLES_HTML and quote Theo's "single source of truth", so /TITLES_HTML/ and
-   /Single source of/ both match PROSE and fail correct code — verified with
-   jslex_count.py: TITLES_HTML is 0 in CODE and 2 in comments. */
-ok(!/var TITLES_HTML/.test(hdr) && !/TITLES_HTML\[/.test(hdr),
-   'TITLES_HTML is deleted at source — neither declared nor read');
+/* ⚠ Assert on CODE, never on the word — and this assertion USED A REGEX to do
+   it, which is the very mistake the sentence below warns about. It read
+   `!/TITLES_HTML\[/.test(hdr)`, and it went RED at 1117 on a tree where
+   TITLES_HTML has ZERO code references, because the merge comment explaining
+   the deletion quotes the retired line as `TITLES_HTML[kh]`. Prose. A correct
+   artifact failed a bad assertion; the harness got away with it until now only
+   because no comment had happened to contain the `[` form.
+   Now it asks the sanctioned instrument — scripts/jslex_count.py, which tracks
+   strings/templates/comments as lexer states — instead of guessing. It reports
+   0 in CODE / 4 in comments on 1117, and 2 in CODE on BOTH controls (the 1113
+   tree and main's own 1116), so the check still fails where it must. Measured,
+   not assumed: the first draft of this comment said 1 and was wrong. */
+let titlesHtmlCode = null;
+try{
+  const out = require('child_process').execFileSync('python3',
+    [path.resolve(__dirname, 'jslex_count.py'), APP, 'TITLES_HTML'],
+    { encoding:'utf8' });
+  const m = /in CODE\s*:\s*(\d+)/.exec(out);
+  titlesHtmlCode = m ? parseInt(m[1], 10) : null;
+}catch(e){ titlesHtmlCode = 'lexer failed: ' + (e.message || e); }
+ok(titlesHtmlCode === 0,
+   'TITLES_HTML is deleted at source — 0 references in CODE (lexer says: ' +
+   titlesHtmlCode + ')');
 ok(!/class="hq"/.test(hdr) && !/class="hg"/.test(hdr),
    'the slogan markup is gone from the header module');
 
