@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1148<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1149<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25444,7 +25444,27 @@ async function openEditor(id){
   var r;
   try{ r = await db.get(id); }
   catch(err){ showError('Could not open report: ' + (err.message || err)); return; }
-  if(!r) return;
+  if(!r){
+    /* 1149 — THIS SILENT RETURN PUT A CLIENT'S SIGNATURE ON THE WRONG CONTRACT.
+       db.get() does not throw on a miss: offline it is
+       `lsLoad().find(...)`, which returns UNDEFINED for a document that was
+       created on another device and is not in this one's cache. So at a
+       client's house, on bad signal, tapping "Contract — Roofing" fetched
+       nothing, this returned WITHOUT A WORD, and the editor carried on showing
+       the contract opened before it. It looked like the roofing contract had
+       loaded. The client signed, and the signature landed on the other
+       document (verified in the database: the 0-slot contract carries the
+       signature, the 6-slot roofing contract was never touched).
+       Say so, and CLEAR THE DOCUMENT STAMP so the signature button refuses
+       until something is properly loaded. The frame's content is deliberately
+       left alone — blanking it would throw away unsaved edits in the document
+       that IS open — but with no stamp it can no longer be signed. */
+    try{ frame.removeAttribute('data-doc-id'); }catch(_ds){}
+    showError('Could not open that document \u2014 it is not on this device and could not be '
+            + 'fetched. NOTHING WAS OPENED: what you are looking at is the document you had '
+            + 'open before, so do not sign it. Get signal and tap it again.');
+    return;
+  }
   /* 731: project_id was missing here, and one consumer depended on it.
      sigApply's stage move reads `current.project_id`, so the condition
      `if(/^contract/i.test(t) && current.project_id)` was ALWAYS false and
@@ -25489,6 +25509,10 @@ async function openEditor(id){
   refreshEditEstBtn();
   savedFlash.textContent = '';
   rccGate();
+  /* 1149: the frame records the document it is actually showing. Without this
+     there was nothing to compare the signature against — `current` and the
+     frame both went stale together on the miss above, so they always agreed. */
+  frame.dataset.docId = String(r.id);
   frame.srcdoc = r.html;
   frame.onload = function(){
     try{
@@ -26338,6 +26362,17 @@ function pickSigner(doc, cb){
   });
 }
 document.getElementById('sigBtn').addEventListener('click', function(){
+  /* 1149: prove the document in the frame is the record the editor thinks it is
+     before a pen ever touches the screen. On the incident both went stale
+     together, so this is belt AND braces with the loud miss above: any future
+     path that leaves them disagreeing refuses here instead of signing the wrong
+     paperwork. A signature is not a thing you retry. */
+  var _loaded = (frame && frame.dataset && frame.dataset.docId) || '';
+  var _want   = (current && current.id) ? String(current.id) : '';
+  if(!_loaded || !_want || _loaded !== _want){
+    crTell('This document is not fully loaded, so nothing was signed. Close it and open it again.');
+    return;
+  }
   window.__ceSigner = null;   /* 722: inspection_reports signing, never a contract */
   /* 781: an agreement has three signature rows. Ask WHOSE signature this is
      before opening the pad — the old code had exactly one destination and
@@ -42315,6 +42350,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1149, d:'2026-08-30', t:'A signature can only land on the document you are looking at',
+  s:'At a client\u2019s house a contract was opened, the wrong one came up, it was backed out of, the roofing contract was tapped \u2014 and the signature landed on the first contract. Here is why, and it was not your mistake. Opening a document that is not saved on your phone yet needs signal. If the fetch comes back empty, the app used to give up SILENTLY and simply keep showing whatever was already open, so the screen looked like the document you tapped had loaded. Three things change. Opening a document that cannot be fetched now says so plainly and tells you not to sign what is on screen. The page now records which document it is actually showing. And the signature button checks that before it opens the pad \u2014 if it cannot prove the document in front of you is the one the app thinks it is, it refuses and tells you to reopen it, rather than signing. That check runs before everything else, including on older contracts that have no signature lines built into them, which is the kind that got signed.' },
 { b:1148, d:'2026-08-29', t:'No more scroll bar down the side of the menu',
   s:'You asked why your screen showed a scroll bar on the menu when the machine you were demoing on did not. Both were scrolling \u2014 the menu is far taller than any screen, so there is always more below the fold \u2014 but neither menu told the browser how to draw its scroll bar, so each computer used its own default. Windows draws a solid bar that takes up space and never goes away; a Mac draws one that fades out until you scroll. Same app, same menu, two different machines. The bar is now hidden on both the slide-out menu and the docked side rail, and the strip of width the old bar was eating goes back to the menu. Nothing about scrolling changes \u2014 wheel, trackpad, touch and arrow keys all still move the menu exactly as before.' },
 { b:1147, d:'2026-08-29', t:'The texts about a job now link straight back to the job',
