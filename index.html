@@ -3905,7 +3905,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1140<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1141<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8460,6 +8460,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn dark" id="edMoreBtn" aria-haspopup="true" aria-expanded="false"><span class="bl">&#8943; More</span></button>
       <span id="edSecondary"><button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
       <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
+      <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>
       <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
       <button class="btn dark" id="editEstBtn" style="display:none;" data-cri="pencil" title="Reopen this estimate in the builder — Publish there updates this document"><span class="bl">Edit estimate</span></button>
       <button class="btn dark" id="addFieldBtn" data-cri="plus"><span class="bl">&#65291; Field</span></button>
@@ -25793,7 +25794,31 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
 });
 
 /* ---- email to client ---- */
-document.getElementById('editEstBtn').addEventListener('click', editEstimateFromDoc);
+/* 1141: one-tap send-for-signature. Reuses the share_token pipeline
+     (share.js injects Accept & Sign, clientsign.js stamps it) and opens the
+     phone's Messages app pre-filled with the link. No phone on file -> copy. */
+  document.getElementById('textSignBtn').addEventListener('click', async function(){
+    try{
+      await saveCurrent();
+      var proj = currentDocProject();
+      var tok = await ensureShareToken();
+      var url = shareUrlFor(tok);
+      var name = String((proj && (proj.name || proj.client_name)) || '').trim();
+      var title = (titleInput.value || '').trim() || 'your document';
+      var body = (name ? 'Hi ' + name + ' \u2014 ' : '') + 'here is ' + title +
+        ' from Cardinal Roofing & Renovations. You can review and sign it right here: ' + url;
+      var tel = (proj && proj.phone) ? String(proj.phone).replace(/[^+\d]/g, '') : '';
+      if(tel){
+        location.href = 'sms:' + tel + '?&body=' + encodeURIComponent(body);
+      }else{
+        var copied = false;
+        try{ await navigator.clipboard.writeText(url); copied = true; }catch(e){}
+        prompt('No phone on file for this client \u2014 ' +
+          (copied ? 'the sign link is copied, paste it into a text:' : 'copy this link and text it to them:'), url);
+      }
+    }catch(err){ showError('Could not start the text: ' + (err.message || err)); }
+  });
+  document.getElementById('editEstBtn').addEventListener('click', editEstimateFromDoc);
 document.getElementById('emailDocBtn').addEventListener('click', async function(){
   var btn = this;
   var _bl = btn.querySelector('.bl') || btn;
@@ -42253,6 +42278,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1141, d:'2026-08-29', t:'Text an estimate for signature in one tap', s:'Open a published estimate or document and there is now a \u201cText to sign\u201d button next to Email to client: one tap saves it, makes the secure link, and opens your phone\u2019s Messages already addressed to the client with a friendly note and the link \u2014 you just hit send. They open it on their phone, review, and sign right there with a finger; you get notified the moment they do. Two fixes came with it: the estimate proposal is now actually signable from that link (the redesign had quietly left it review-only), and if a client has no phone on file the button copies the link instead so nothing is lost.' },
 { b:1140, d:'2026-08-29', t:'Roof Options \u2014 Good / Better / Best on one page', s:'A new Options button in the estimate toolbar builds a single client-facing sheet that shows two or three of a client\u2019s estimates side by side \u2014 Good, Better, Best \u2014 with the middle one marked \u201cMost chosen\u201d and an initial box on each. It reads from estimates you already saved (build one, Duplicate it, change the shingle, save \u2014 those are your tiers), so there is no new form to fill. The bullet list under each price is that estimate\u2019s own scope. You can type a monthly payment per option to show a financing line, or leave it blank to hide it. Generates a shareable, printable, signable document like any other estimate.' },
 { b:1139, d:'2026-08-29', t:'Pin your own default assembly', s:'Save a set of estimate lines as an assembly, then star it: it becomes YOUR default and sits at the top of the +Assembly picker \u2014 one tap to drop your standard scope into any estimate. Each person has their own default and it follows you across devices. Tap the star again to unpin. Blank estimates stay blank; this just puts your go-to at the top. Needs the estimate_assembly_default.sql migration.' },
  { b:1138, d:'2026-08-29', t:'Duplicate an estimate', s:'Open a saved estimate and the toolbar now has Duplicate: it copies the whole thing \u2014 every line, section, deposit and note \u2014 into a fresh draft titled \u201c\u2026 (copy)\u201d that you can re-price and save on its own. Use it to build a second option for the same client, or to start the next client from a job just like theirs. The original is never touched, and the copy gets its own estimate number when you save it.' },
@@ -49467,7 +49493,7 @@ var acceptBlock =
 '<div class="ac-recap">' + acRecap + '</div>' +
 '<div class="ac-terms">By signing below, the client authorizes Cardinal Roofing &amp; Renovations, LLC to perform the work described above and agrees to the payment terms stated herein.' + acValid + '</div>' +
 '<div class="ac-sign">' +
-'<div class="col"><div class="line"></div><div class="lbl">Client Signature &amp; Date</div></div>' +
+'<div class="col"><div class="line"></div><div class="lbl">Client Acceptance &nbsp;|&nbsp; Date</div></div>' +
 '<div class="col"><div class="line"></div><div class="lbl">Cardinal Representative</div></div>' +
 '</div>' +
 '</div>';
