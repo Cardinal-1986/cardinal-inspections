@@ -927,6 +927,28 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1131 — 29 Aug 2026 — the chase list's mark-chased button styles apply again
+
+`gate_983` (the invalid-`font:` sweep's standing guard, rig-repaired to floors in the
+suite cleanup) was red on exactly one site: `.cr-cth-chasedid` — the mark-chased button on
+Cardinal Truth's chase list — carried `font:600 12px inherit`. `inherit` is legal only as
+a WHOLE `font:` value, so Chromium discards the entire declaration: the 600 weight and
+12px size never rendered once. Shipped at **1056** ("the chase list counts to something"),
+after 983's sweep removed 30 of the same mistake — the erosion class again, third of the
+day (11px floor at 1119, 44px floor pending, this).
+
+**Fix.** The sweep's own shape: `font-weight:600;font-size:12px` (the `font-family:inherit`
+longhand beside it was already fine). One declaration.
+
+### Gates
+- `check_build.py` GREEN 1130 → 1131 (marker anchored to the site — the bare longhand
+  string exists 983-wide, which failed the first negative control honestly).
+- **`gate_983` flips GREEN (9/9)**; control (1130 tree) RED naming the one site.
+
+No SQL. `index.html` + this entry.
+
+---
+
 ## Build 1130 — 29 Aug 2026 — Old lump-sum estimates render right outside the editor
 
 Raised by the gate-suite triage as a low-confidence flag on `gate_974`'s repair, then
