@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1145<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1146<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42293,6 +42293,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1146, d:'2026-08-29', t:'Long scopes of work scroll again in the estimate editor',
+  s:'You reported that the description box on an estimate line got stuck \u2014 you could drag it and nothing moved. It was not a scrolling problem, it was worse than that: past a certain length the box stopped growing and the rest of the text became unreachable by ANY gesture. Measured on a real scope: 598 pixels of box holding 828 pixels of text, so 28 per cent of what you had typed could not be reached by a swipe, a scroll wheel or a drag \u2014 only by moving the cursor through it a line at a time. The cause was two pieces of code doing the same job and disagreeing: one grew the box to fit your text, the other capped it, and the capped one ran last and won. There is now one, and it grows to fit. However long the scope, the whole thing is on screen and the page scrolls normally \u2014 no box inside a box. Two things went with it: every description had been quietly clipping the bottom two pixels of its last line, which is now measured off the box instead of guessed; and the box re-measures itself when you rotate the phone, which without it would have brought the whole problem straight back.' },
 { b:1145, d:'2026-08-29', t:'Two menu labels in light mode were a shade too pale',
   s:'A correction to yesterday\u2019s light-mode build, found by the contrast sweep rather than by eye. The section headings in the side menu \u2014 \u201cDaily\u201d, \u201cOwner\u201d and the rest \u2014 were drawn in a blue that sat just under the readability floor where the header shades from light to slightly darker: 4.37 against a floor of 4.5. Production\u2019s amber had exactly the same fault and simply had not been caught. Both are now a half-shade deeper \u2014 the same colours, not new ones \u2014 and clear the floor at 4.63 and 4.66. Nothing else moves, and dark mode is untouched. The check that measured these in the first place was itself scoring the lighter end of the header and so passed a real failure; it now scores the worst point, which is the part of this that stops it happening again.' },
 { b:1144, d:'2026-08-29', t:'Light mode finally reaches the header and the menu',
@@ -47895,7 +47897,13 @@ return { subtotal:subtotal, discount:discount, total:total, deposit:deposit, dep
 function autosizeDesc(el){
   if(!el) return;
   el.style.height = 'auto';
-  el.style.height = Math.max(38, el.scrollHeight) + 'px';
+  /* box-sizing is border-box, so `height` has to carry the 1px top+bottom
+     borders that scrollHeight leaves out. MEASURED off the element, not
+     hardcoded, so a border change cannot quietly start clipping again. The
+     old autoGrow() added a literal 2 for this and autosizeDesc() did not,
+     which clipped 2px off the last line of EVERY description. */
+  var bord = el.offsetHeight - el.clientHeight;
+  el.style.height = Math.max(38, el.scrollHeight + bord) + 'px';
 }
 function autosizeDescs(){
   if(!view) return;
@@ -47921,6 +47929,20 @@ view.addEventListener('change', function(){ if(state) state._dirty = true; }, tr
 view.addEventListener('input', function(e){
   if(e.target && e.target.classList && e.target.classList.contains('desc-input')) autosizeDesc(e.target);
 }, true);
+/* 1146: a grow-to-fit box is sized for ONE width. Rotate the phone, or open the
+   keyboard, and every description re-wraps TALLER than the height we set — and
+   with overflow:hidden the surplus is unreachable again, which is the whole bug
+   this build exists to kill. Re-measure on resize, debounced, and only while
+   the editor is actually on screen (a hidden view measures scrollHeight 0 and
+   would collapse every box to 38px). Wired here, once, for the same reason as
+   the listeners above: render() replaces innerHTML, not this element. */
+var __crEstSizeT = null;
+window.addEventListener('resize', function(){
+  clearTimeout(__crEstSizeT);
+  __crEstSizeT = setTimeout(function(){
+    if(view && view.classList.contains('open')) autosizeDescs();
+  }, 120);
+});
 return view;
 }
 function openEditor(project, existing){
@@ -48331,15 +48353,16 @@ secs.map(function(sc){ return '<option value="' + esc(sc.id) + '"' + ((l.section
 pricing +
 '</div>';
 }
-function autoGrow(ta){
-if(!ta) return;
-ta.style.height = 'auto';
-ta.style.height = Math.min(600, Math.max(38, ta.scrollHeight + 2)) + 'px';
-}
-function autoGrowAll(){
-if(!view) return;
-view.querySelectorAll('.desc-input').forEach(autoGrow);
-}
+/* 1146: autoGrow()/autoGrowAll() are GONE, and this comment is here so nobody
+   adds them back. They capped the description box at 600px while autosizeDesc()
+   (1135) grew it to fit; autoGrow ran LAST — on the target's own oninput, after
+   the delegated capture listener — so the cap always won and 1135's fix was
+   silently undone for any long scope. Combined with overflow:hidden on
+   .desc-input that made the overflow unreachable: measured at 598px of box over
+   828px of content, and NEITHER a wheel NOR a touch drag moves an
+   overflow:hidden textarea, so 28% of a real scope of work could not be
+   reached by any gesture. Only the caret could move it, which is exactly what
+   "it gets stuck" feels like. One pipeline now: autosizeDesc / autosizeDescs. */
 /* ---- signed URLs for the builder photo strip (step 3 of 3) ---------------
    The last in-app render still on a raw public URL. renderPhotos() is
    synchronous, and re-rendering once the signatures land would destroy a
@@ -48748,7 +48771,7 @@ line[field] = Number(v) || 0;
 refreshTotals();
 }else{
 line[field] = v;
-if(field === 'description') autoGrow(e.target);
+if(field === 'description') autosizeDesc(e.target);
 if(field === 'name') estNavRelabel(lid, v);
 }
 };
@@ -48793,7 +48816,7 @@ var secMove = row.querySelector('[data-secmove]');
 if(secMove) secMove.onchange = function(e){ moveLineToSection(lid, e.target.value); };
 });
 estNavWire();
-autoGrowAll();
+autosizeDescs();
 }
 async function handleSave(){
 save().catch(function(_){ });

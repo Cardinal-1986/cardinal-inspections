@@ -30106,3 +30106,50 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
   ⚠ **The fixed gate still does not reproduce the sentinel's 4.37 finding**, and
   why is not yet known. Stated rather than papered over: this gate is materially
   better and is not yet equal to the sentinel on that surface.
+
+## Build 1146 — the estimate description box stops trapping text
+
+- **1146** · **Theo, from a client's scope of work: "Can you make scrolling better
+  within the text body. It gets stuck."** It was not a scrolling problem. Past a
+  certain length the box stopped growing and the surplus became unreachable by
+  **any** gesture: measured on a real scope, **598px of box over 828px of content
+  — 28% of what he had typed**, with `scrollTop` staying 0 after both a wheel and
+  a touch drag. `overflow:hidden` on a textarea means only the caret can move it.
+
+  **Cause: two pipelines doing one job, the project's own "one pipeline per
+  concept" rule.** `autosizeDesc()` (1135) grew the box to fit; `autoGrow()` capped
+  it at 600px. `autoGrow` ran LAST — on the target's own `oninput`, after the
+  delegated capture listener — so the cap always won and 1135's fix was silently
+  undone for any long scope. `autoGrow`/`autoGrowAll` are deleted; both call sites
+  point at the survivor. Theo picked grow-to-fit from three options, so there is now
+  **no inner scroll region at all** — one scrolling surface, the page.
+
+  Two things went with it, both found while verifying rather than assumed:
+  - **`autosizeDesc` clipped 2px off the last line of EVERY description**, long or
+    short: `box-sizing:border-box` counts the 1px borders in `height` and
+    `scrollHeight` excludes them. `autoGrow`'s `+2` had been compensating. Now
+    measured off the element (`offsetHeight - clientHeight`) so a border change
+    cannot quietly restart it.
+  - **A resize re-measure.** A grow-to-fit box is sized for ONE width; rotating the
+    phone re-wraps the text taller than the height set for it and `overflow:hidden`
+    clips it again — the whole bug, back. Debounced, and gated on the editor being
+    on screen (a hidden view measures `scrollHeight` 0 and would collapse every box
+    to 38px).
+
+  `gate_1146.mjs` extracts the SHIPPED CSS rule and the SHIPPED sizer from the file
+  under test and drives a real Chromium wheel and touch drag. **RED 6 / GREEN 4 on
+  the 1145 control** (reproducing 810px unreachable, 58% of the scope, wheel
+  `scrollTop` 0), GREEN 10/10 on 1146.
+
+  ⚠ **One of its own checks was a false pass and was caught on the control.** "the
+  artifact wires a resize re-measure" tested for `addEventListener('resize'` and
+  `autosizeDescs` anywhere in 5 MB — both exist independently, so it PASSED on the
+  tree with no such wiring. Scoped to a resize handler body that actually reaches
+  the sizer. Third over-broad regex this session to produce a check that could not
+  fail; the control is the only reason any of them were found.
+
+  Regression-checked: `gate_1135` GREEN. `harness_estflat1096` and
+  `harness_estasm1098` are RED — **verified identical failure messages on the 1145
+  control, so pre-existing and not this build's.** (`renderLine threw: not found:
+  function renderLine(l, idx, total){` is a harness extracting a function by an
+  exact signature that has since drifted — a stale assertion, not an app fault.)
