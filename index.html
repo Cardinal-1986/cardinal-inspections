@@ -3902,7 +3902,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      call.
      1133: the fourth time. Resolved as instructed — version bumped, no
      summary; 1129-1133's summaries are in the CHANGELOG. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1134<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1135<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42246,7 +42246,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1134, d:'2026-08-29', t:'Edit estimate \u2014 straight from the finished document', s:'Open a published estimate document and the toolbar now offers Edit estimate: one tap closes the document (saving it first) and reopens that estimate in the builder with every line editable \u2014 the same screen as building from a template. Publish there updates the same document. Documents that predate the builder say so instead of guessing.' },
+{ b:1135, d:'2026-08-29', t:'Estimate line cards open full size', s:'Opening an estimate \u2014 especially one built from a template \u2014 showed each line\u2019s description squeezed to a line and a half with the rest cut off, and long item names ran underneath the up/down/remove buttons. Descriptions now open at their full height and stay sized while you type; names stop short of the buttons.' },
+ { b:1134, d:'2026-08-29', t:'Edit estimate \u2014 straight from the finished document', s:'Open a published estimate document and the toolbar now offers Edit estimate: one tap closes the document (saving it first) and reopens that estimate in the builder with every line editable \u2014 the same screen as building from a template. Publish there updates the same document. Documents that predate the builder say so instead of guessing.' },
  { b:1133, d:'2026-08-29', t:'The profile\u2019s call/text/email icons reach the tap minimum', s:'The client profile\u2019s contact icons, edit pencil and favourite star were 21\u201340px \u2014 under the app\u2019s 44px touch floor \u2014 since the 791 profile rebuild replaced the old floored links. All five now meet the floor with the band looking exactly as before — only the tap area grew. Tap-to-call on a roof, with gloves, is the whole point of the floor.' },
  { b:1132, d:'2026-08-29', t:'Crews form fields reach the 44px touch minimum', s:'The Crews screen predates the app-wide 44px touch pass (build 752), and its check missed the screen because the test data had no crews until later \u2014 so its text and date fields sat at 33\u201335px on a phone. Floored now. The Labor Rates table\u2019s dense cells are left alone on purpose; say the word if those should grow too.' },
  { b:1131, d:'2026-08-29', t:'The chase list\u2019s mark-chased button styles apply again', s:'Its font rule used a shorthand form CSS defines as invalid (inherit inside font:), which browsers drop whole \u2014 the 600 weight and 12px size never rendered. Slipped in at build 1056, after the 983 sweep that removed 30 of the same mistake. Now longhand; the 983 gate holds the standard at zero again.' },
@@ -47799,6 +47800,16 @@ var pct = Math.max(0, Math.min(100, Number(s.deposit_pct) || 0));
 var deposit = total * pct / 100;
 return { subtotal:subtotal, discount:discount, total:total, deposit:deposit, deposit_pct:pct };
 }
+function autosizeDesc(el){
+  if(!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(38, el.scrollHeight) + 'px';
+}
+function autosizeDescs(){
+  if(!view) return;
+  var els = view.querySelectorAll('.desc-input');
+  Array.prototype.forEach.call(els, autosizeDesc);
+}
 function ensureView(){
 if(view) return view;
 view = document.createElement('div');
@@ -47809,6 +47820,15 @@ document.body.appendChild(view);
    innerHTML, not this element, so it never stacks. */
 view.addEventListener('input', function(){ if(state) state._dirty = true; }, true);
 view.addEventListener('change', function(){ if(state) state._dirty = true; }, true);
+/* 1135: template descriptions are paragraphs, and a textarea does not grow to
+   its content — every line card opened "squished" to ~1.5 lines with the rest
+   clipped (min-height 38px + overflow hidden). Size each description to its
+   own scrollHeight on render and keep it sized while typing. Delegated here
+   for the same reason as the dirty flag above: render() replaces innerHTML,
+   not this element, so it never stacks. */
+view.addEventListener('input', function(e){
+  if(e.target && e.target.classList && e.target.classList.contains('desc-input')) autosizeDesc(e.target);
+}, true);
 return view;
 }
 function openEditor(project, existing){
@@ -47863,6 +47883,9 @@ state._dirty = false;
 render();
 view.classList.add('open');
 document.body.style.overflow = 'hidden';
+/* 1135: render() ran while the view was still display:none, where every
+   textarea measures scrollHeight 0 - size them now that it is visible. */
+autosizeDescs();
 }
 function close(){
 if(view) view.classList.remove('open');
@@ -47966,6 +47989,7 @@ renderTotals(t) +
 '</div>';
 wire();
 ensureEstPhotoUrls();
+autosizeDescs();
 }
 /* ---- Navigator B: the estimate's table of contents (build 546) ------------
    Theo asked for a navigator with sections and drop-downs on both screens. The
@@ -69346,7 +69370,11 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* the two in-card inputs — transparent at rest, well on focus (unchanged behaviour) */
 #cr-est-view .cr-est-lineitem .name-input,
 #cr-est-view .cr-est-lineitem .desc-input{background:transparent;box-shadow:none;border-color:transparent;}
-#cr-est-view .cr-est-lineitem .name-input{color:var(--est-ink);}
+#cr-est-view .cr-est-lineitem .name-input{color:var(--est-ink);
+  /* 1135: the move arrows (right:38) and X (right:8) are absolutely positioned
+     over this row - without clearance a template's long name runs under them.
+     Set HERE because this id-scoped layer wins padding for these inputs. */
+  width:100%;box-sizing:border-box;padding-right:104px;}
 #cr-est-view .cr-est-lineitem .name-input:hover,
 #cr-est-view .cr-est-lineitem .desc-input:hover{background:rgba(15,23,42,.03);border-color:var(--est-line);}
 #cr-est-view .cr-est-lineitem .name-input:focus,
