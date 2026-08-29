@@ -30246,3 +30246,61 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
     not a finding. It now SKIPs, and the rail is covered instead by a standalone
     check that lifts the shipped rules verbatim and proves both ids are selected
     and both still scroll.
+
+## Build 1149 — a signature can only land on the document you are looking at
+
+- **1149** · **INCIDENT, reported by Theo from a client's house: "I went to a
+  clients home and worked through the estimate then went to contract, it pulled
+  up a service contract so i backed out, went to roofing contract but when i hit
+  client signature and a signature field came up it signed the service
+  contract."** A client's signature landed on paperwork she was not shown.
+
+  **Confirmed in the production database before touching any code** (read-only;
+  Theo chose to leave both records alone pending his call with the client):
+
+  | id | title | `data-sig` slots | signature | updated |
+  |---|---|---:|---|---|
+  | `7f1777ba` | Contract — Kimberly Lawson | **0** | **YES, client column** | 22:20:35 |
+  | `924dbd32` | Contract — Roofing — Kimberly Lawson | **6** | none | untouched since 18:25 |
+
+  ⚠️ **The `contracts` TABLE is empty — zero rows.** The first hypothesis (stale
+  `CURRENT` in `cr-ce-script`, whose `openSigner(contract, cb)` accepts the
+  document and never uses it) was therefore WRONG, and checking the data rather
+  than shipping that fix is the only reason it was not chased. The signature went
+  through the `inspection_reports` document editor.
+
+  **Root cause — a silent return, and why it fired at a client's house.**
+  `db.get()` does not throw on a miss; offline it is
+  `lsLoad().find(...)`, which returns **undefined** for a document created on
+  another device and not in this one's cache. `openEditor(id)` had:
+
+      catch(err){ showError('Could not open report: ' + …); return; }   // throw: reported
+      if(!r) return;                                                    // MISS: silent
+
+  The roofing contract was created at 18:25 on another device. On bad signal the
+  fetch returned nothing, `openEditor` bailed **without a word**, and the editor
+  carried on showing the previously-opened contract. It looked loaded. She signed.
+
+  ⚠️ **`current` and the frame go stale TOGETHER on that path**, so an id-match
+  check alone could never have caught it — they always agreed. That is why the
+  primary fix has to be at the miss itself.
+
+  **Three changes, all refusing to fail quietly:** the miss now names itself and
+  says *do not sign what is on screen*; the frame stamps `dataset.docId` with the
+  document it is actually showing; and the signature button refuses unless that
+  stamp matches `current.id` — **checked before the slots branch**, so the
+  0-slot legacy contract (which skips the 781 "whose signature is this?" picker
+  entirely and falls straight to the pad) cannot be signed either. The frame's
+  content is deliberately NOT blanked — that would discard unsaved edits in
+  whatever is genuinely open — but with no stamp it cannot be signed.
+
+  **`gate_1149b.mjs` drives the actual incident** in Chromium: stub `db.get` to
+  return undefined, then click sign. **1148: stamp kept, no message, PAD OPENS
+  (RED 4/0). 1149: stamp cleared, warned, PAD REFUSES (GREEN 4/4).**
+
+  ⚠️ **Three faults in my own gates, all caught by the control:** two checks
+  PASSED on the buggy tree (over-broad matches — `/return/ && /crTell/` anywhere
+  in a 2400-char window, and a fall-through shape that never varied), now tied to
+  the guard statement itself and to the ORDER of the two guards; and one check
+  FAILED the correct fix because `[^\n]{0,200}` stopped at the first newline and
+  never reached the `showError` two lines down. Fix the test when the test is wrong.
