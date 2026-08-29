@@ -47,10 +47,32 @@ export default async function handler(req, res) {
 
   // 2) record a paid deposit — exactly one row, idempotent on external_ref
   try {
-    if (event.type === 'checkout.session.completed') {
+    /* 1151: THREE events can carry a payment now, and one of them means the
+       OPPOSITE of the others.
+         checkout.session.completed              — card: paid. ACH: NOT paid yet.
+         checkout.session.async_payment_succeeded — the bank debit cleared, days later.
+         checkout.session.async_payment_failed    — it bounced. Record NOTHING.
+       Both recording events run the identical write below, so a card deposit and
+       an ACH deposit land as the same shape of row. */
+    const RECORDING = ['checkout.session.completed',
+                       'checkout.session.async_payment_succeeded'];
+    if (event.type === 'checkout.session.async_payment_failed') {
+      /* the debit bounced. Nothing was ever written for it (see the paid test
+         below), so there is nothing to undo — answer 200 so Stripe stops
+         retrying, and leave the ledger untouched. */
+      res.status(200).json({ received: true, recorded: false, reason: 'async_payment_failed' });
+      return;
+    }
+    if (RECORDING.includes(event.type)) {
       const s = event.data.object || {};
       const meta = s.metadata || {};
-      const paid = s.payment_status === 'paid' || s.status === 'complete';
+      /* ⚠ THIS TEST USED TO BE `payment_status === 'paid' || status === 'complete'`.
+         For a card those agree. For ACH they do NOT: the session is 'complete'
+         while payment_status is still 'unpaid', because the debit takes days and
+         can fail. That `||` would have booked a $12k deposit before the money
+         existed — and left it booked if the debit later bounced. Money is
+         recorded when it has ARRIVED, and by nothing else. */
+      const paid = s.payment_status === 'paid';
       const amount = (Number(s.amount_total) || 0) / 100;
       // a deposit records as 'deposit'; an invoice balance as 'final' (collections.type CHECK)
       const collType = meta.kind === 'balance' ? 'final' : 'deposit';

@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1150<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1151<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42376,6 +42376,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1151, d:'2026-08-30', t:'Clients can pay by bank transfer, not just card',
+  s:'Paying online now offers a bank transfer next to the card. It matters because of the fee: a card costs about 2.9 per cent plus 30 cents with no ceiling, while a bank debit costs 0.8 per cent capped at five dollars. On a $12,000 deposit that is roughly $348 on a card against $5 by bank \u2014 the difference goes to you, on every job a client chooses it. Cards work exactly as before. One thing behind the scenes matters more than it sounds: a bank transfer does not clear at the moment the client hits pay, it takes a few days and can still fail, so the money is only written into your books when it actually arrives. Before this build the code would have counted a bank payment as collected the instant the client finished checkout \u2014 and would then have missed the event that says it really landed, leaving a payment on the books that might never have arrived. It now waits, records on arrival, and records nothing at all if the transfer bounces.' },
 { b:1150, d:'2026-08-30', t:'The second signature pad is tied to its contract too',
   s:'A companion to yesterday\u2019s fix, closing the same hole on the other signing screen before it could ever be hit. The contracts screen has its own signature pad, and it was built the same way the broken one was: it was handed the contract to sign and then ignored it, working out what to sign only when you pressed Apply. Nothing has gone wrong there because that screen has no saved contracts on it yet \u2014 which is exactly why it was worth fixing now rather than after. The pad now remembers which contract it was opened for, and when you sign it checks that is still the contract in front of you. If it is not, it refuses, tells you, and writes nothing. An unsaved contract is refused up front instead of opening a pad that could not have saved anything anyway.' },
 { b:1149, d:'2026-08-30', t:'A signature can only land on the document you are looking at',
