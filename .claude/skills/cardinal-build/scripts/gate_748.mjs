@@ -288,17 +288,29 @@ chk('the agreement still produces a PDF', printed.pdfBytes > 20000, printed.pdfB
 const src = APP_HTML;
 chk('no javascript was added — wireCheckboxes is still defined once',
     (src.match(/function wireCheckboxes\(doc\)\{/g) || []).length === 1);
-chk('and still called exactly once, from the editor',
-    (src.match(/wireCheckboxes\(doc\);/g) || []).length === 1);
+/* Build 965 ("a field you can add yourself") added a second, deliberate call —
+   insertField() re-wires after inserting a field; both passes are idempotent by
+   their own guards (data-cbx). The double-wire safety is proved above by the
+   "wiring twice does not double-bind" check. */
+chk('and still called exactly twice — openEditor + the 965 insertField re-wire',
+    (src.match(/wireCheckboxes\(doc\);/g) || []).length === 2);
 chk('no css was added — the .cbx rule is untouched',
     (src.match(/\.cbx\{cursor:pointer;font-size:13pt;user-select:none;\}/g) || []).length === 1);
-chk('the .opts collapse spans are untouched (5 of them)',
-    (src.match(/data-opts=/g) || []).length === 5);
-for (const k of ['layers', 'pitch', 'decking'])
+/* Build 779 (spec sheet matches the printed master) retired the DECKING
+   collapse() span on purpose: collapse()'s regex stops at the first </span> and
+   cannot survive nested checkbox markup, so decking became data-val tick boxes
+   (data-group="rdk") pre-ticked from the inspection. Layers and pitch keep
+   collapse(). 5 spans -> 4. */
+chk('the .opts collapse spans are untouched (4 since 779 — decking became data-val boxes)',
+    (src.match(/data-opts=/g) || []).length === 4);
+for (const k of ['layers', 'pitch'])
   chk(`collapse() still matches data-opts="${k}"`,
       new RegExp('<span class="opts" data-opts="' + k + '">[^<]*(?:<(?!/span>)[^<]*)*</span>').test(src));
-chk('no Agreement uses data-val (it would rewrite the gutter description)',
-    DEALS.every(d => !/data-val/.test(TPL[d] || '')));
+chk('779: decking is data-val tick boxes in the roofing agreement (data-group="rdk")',
+    /data-group="rdk" data-val="OSB"/.test(src));
+chk('only the roofing Agreement uses data-val (779 decking); siding/gutter stay clean',
+    /data-val/.test(TPL.ROOF_AGREEMENT || '') &&
+    ['SIDING_AGREEMENT', 'GUTTER_AGREEMENT'].every(d => !/data-val/.test(TPL[d] || '')));
 chk('the dead WHITE SQUARE is now a real box',
     !/&#9633; No gutter protection/.test(src) && /class="cbx" data-group="ggp">&#9744;<\/span> No gutter protection/.test(src));
 

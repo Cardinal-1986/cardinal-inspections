@@ -152,6 +152,11 @@ const E = await SW.page.evaluate(() => {
     const rect = el.getBoundingClientRect();
     if (rect.top > 300 || rect.bottom < 0 || rect.width < 20 || rect.height < 4) return;
     const cs = getComputedStyle(el);
+    /* 924's drawer backdrop (#navBackdrop) sits at inset:0 with opacity:0 and
+       pointer-events:none while the menu is closed — dark by declaration but
+       invisible to the user. The sweep is about what PAINTS, so skip anything
+       fully transparent or hidden. */
+    if (parseFloat(cs.opacity) === 0 || cs.visibility === 'hidden') return;
     const bg = parse(cs.backgroundColor);
     if (bg && bg.a > 0.3 && bg.r < 60 && bg.g < 60 && bg.b < 60) {
       hits.push({ id: el.id, cls: (el.className || '').toString().slice(0, 40), top: Math.round(rect.top) });

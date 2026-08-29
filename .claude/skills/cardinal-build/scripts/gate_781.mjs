@@ -112,19 +112,25 @@ ok('the acceptance paragraph no longer calls a contract an estimate', a.saysEsti
 ok('the signature button is still offered', a.sigBtn === 'inline-block', a.sigBtn);
 
 console.log('\n--- E. signing the row you named ---');
-A.page.__answer = '1';                                   /* Buyer */
+/* The "Who is signing?" ask is an in-page picker sheet now ([data-who]
+   buttons, pickSigner) rather than a window.prompt — 965 also widened it to
+   any [data-sig] the document carries. Drive the sheet the way a rep would. */
 const e1 = await A.page.evaluate(async () => {
   const btn = document.getElementById('sigBtn'); btn.click();
+  await new Promise(r => setTimeout(r, 250));
+  const asked = !!document.querySelector('[data-who="buyer"]') &&
+    /Who is signing\?/.test(document.body.textContent);
+  const b = document.querySelector('[data-who="buyer"]');
+  if (b) b.click();                                      /* Buyer */
   await new Promise(r => setTimeout(r, 250));
   /* draw something so sigDrawn is true, then apply */
   const pad = document.getElementById('sigPad');
   const cx = pad.getContext('2d'); cx.beginPath(); cx.moveTo(5, 5); cx.lineTo(60, 30); cx.stroke();
   window.sigDrawn = true;
-  return { modalOpen: document.getElementById('sigModal').style.display };
+  return { asked, modalOpen: document.getElementById('sigModal').style.display };
 });
 ok('the pad opened after naming who signs', e1.modalOpen === 'block', e1.modalOpen);
-ok('it asked whose signature it is', A.prompts.some(p => p.type === 'prompt' && /Who is signing/.test(p.msg)),
-  JSON.stringify(A.prompts.map(p => p.type)));
+ok('it asked whose signature it is', e1.asked);
 
 console.log('\n--- F. source-level guarantees ---');
 ok('the 50/50 split is gone from BOTH contract creators', !/var half = price \/ 2/.test(APP_HTML));
@@ -135,8 +141,12 @@ ok('both creators now call one money chokepoint',
   (APP_HTML.match(/tpl = await fillContractMoney\(tpl, pr, price\);/g) || []).length === 2,
   (APP_HTML.match(/tpl = await fillContractMoney\(tpl, pr, price\);/g) || []).length);
 ok('the fallback is 30, in one named place', /var DEPOSIT_PCT_DEFAULT = 30;/.test(APP_HTML));
-ok('the estimate wins over the fallback', /Number\(src0\.deposit_pct\)/.test(APP_HTML));
-ok('the ROW LABEL follows the real percentage', APP_HTML.indexOf("split('Deposit (50%)').join('Deposit (' + trim(pct)") > -1);
+/* the resolver variable was renamed src0 -> row; the contract is unchanged */
+ok('the estimate wins over the fallback',
+  /if\(row\.deposit_pct != null\) pct = Math\.max\(0, Math\.min\(100, Number\(row\.deposit_pct\)/.test(APP_HTML));
+/* the label gained a data-cpct span for the live-edit arc; still pct-driven */
+ok('the ROW LABEL follows the real percentage',
+  /split\('Deposit \(50%\)'\)\.join\('Deposit \((<span[^>]*>)?' \+ trim\(pct\)/.test(APP_HTML));
 ok('only the buyer signing advances the pipeline', /if\(_who === 'buyer'\)/.test(APP_HTML));
 ok('the footer is stripped for deals only (estimates keep it)',
   /if\(isDeal\)\{[\s\S]{0,400}out\.replace\(SIGN_FOOTER, ''\)/.test(APP_HTML));

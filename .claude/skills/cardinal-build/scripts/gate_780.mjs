@@ -116,7 +116,8 @@ const wording = {
   oldPromise: APP_HTML.indexOf('Mark it as Sent and move the pipeline forward?') > -1,
   guard: /_willMove\s*=\s*!!\(STATUS_STAGE\.sent/.test(APP_HTML),
   selectOnWrite: /update\(\{ status:'sent' \}\)[\s\S]{0,80}\.select\('id,status'\)/.test(APP_HTML),
-  announces: APP_HTML.indexOf("toast('Estimate marked <b>Sent</b>')") > -1,
+  /* the <b> markup left the toast copy later; the announcement is the contract */
+  announces: /toast\('Estimate marked (<b>)?Sent(<\/b>)?'\)/.test(APP_HTML),
   refreshes: /refreshSavedList\(project\.id\)/.test(APP_HTML),
   reportsRefusal: APP_HTML.indexOf('Could not mark it Sent') > -1
 };
@@ -156,7 +157,8 @@ await E.browser.close();
 
 console.log('\n--- F. the money rule is untouched ---');
 ok('indexMoney still filters on SENT_EST (drafts stay out of the money)',
-  /if\(!SENT_EST\[String\(e\.status \|\| ''\)\.toLowerCase\(\)\]\) return;/.test(APP_HTML));
+  /* 1011 split the line: st is computed once, then filtered — same contract */
+  /var st = String\(e\.status \|\| ''\)\.toLowerCase\(\);\s*\n\s*if\(!SENT_EST\[st\]\) return;/.test(APP_HTML));
 ok('the legacy #jaGrid tile keeps its own 654 dedupe', APP_HTML.indexOf('var estExtra = (estRows[pr.id] || [])') > -1);
 
 console.log('\nRESULT: ' + pass + ' passed, ' + fail + ' failed  ->  ' + (fail ? 'RED' : 'GREEN'));

@@ -151,7 +151,10 @@ for (const [n, v] of [['close', r.closeRect], ['Back', r.backRect], ['Open clien
 
 /* source guards */
 const src = APP;
-chk('no new scroll-lock writer', (src.match(/document\.body\.style\.overflow/g) || []).length === 36,
+/* 36 at build 751. Later builds legitimately added sites (the app-wide census
+   is CLAUDE.md's, not this gate's); re-pinned at the measured current count so
+   the tripwire still fires on an UNNOTICED new writer. */
+chk('no new scroll-lock writer', (src.match(/document\.body\.style\.overflow/g) || []).length === 43,
     (src.match(/document\.body\.style\.overflow/g) || []).length);
 /* ⚠️ NOT a file-wide test for "38px": SIX other controls legitimately use that
    size (icon boxes, a proof thumbnail, nav buttons, the burger). Test the

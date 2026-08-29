@@ -119,6 +119,14 @@ const sheet = await page.evaluate(async ({OPENADD, SCOPE})=>{
          (No backticks in this comment: it lives inside a template literal.) */
       var __real = {
         modal: null,
+        /* RIG REPAIR 29 Aug 2026 (triage at build 1121): build 1090 moved modal
+           creation out of openAdd into ensurePbModal(mode) (the shared add/day
+           sheet). Through the proxy that call was a no-op, modal stayed null and
+           modal.innerHTML threw. Stub it the way the module does. */
+        ensurePbModal: function(){
+          if(!__real.modal) __real.modal = document.createElement('div');
+          return __real.modal;
+        },
         closeAdd: function(){},
         boardJobs: function(){ return [{ pr:{ id:'p1', name:'Test job', stage:'Approved' } }]; },
         projectFor: function(){ return null; },

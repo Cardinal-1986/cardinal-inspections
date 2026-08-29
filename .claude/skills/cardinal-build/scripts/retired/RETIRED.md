@@ -21,4 +21,6 @@ whose RIG broke gets repaired in place instead — see gate_996 (crAsk), gate_96
 | gate_1025 | the obsidian (dark) estimates screens' inks | build 1095 deliberately re-themed the estimate builder LIGHT-only ("Cardinal" porcelain, Theo's pick after previews); the inks 1025 pins were replaced on purpose | `render_estlight1095.mjs` (19 inks + focus ring, both viewports) |
 | gate_724 | the `#puDetail` punch-detail sheet's repairs (604-610 arc) | build 768 made `CardinalPunchCard` (#cr-pk) the one punch detail screen; build 837 deleted `#puDetail` whole — 0 occurrences in the file | `render_punchcard837.mjs` |
 | gate_725 | `#puDetail`'s five-photo rule + alert() fence | same 837 deletion (crashes on `getComputedStyle(null)`); the five-photo rule lives on in the card module (`PHOTO_MIN=5`) and the alert() moved to crTell at 1080-1083 | the card module's own gates |
+| gate_793 | the client Location "inset card" design | build 794 deliberately replaced it — the log records 793's assertions as "inverted on purpose" (Theo: "make the location and maps go across the screen") | `gate_794.mjs` (29 checks, green) |
+| gate_970 | the estimate satellites reading `estProjectNow()` | build 1029 retired that design — cr-ess listens to `cr-est-saved`/`cr-est-published` events; 0 `estProjectNow()` calls is correct | `gate_1029.mjs` |
 

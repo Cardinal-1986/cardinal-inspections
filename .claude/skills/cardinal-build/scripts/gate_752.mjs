@@ -101,7 +101,10 @@ console.log(`  home: ${c.small} of ${c.total} under 44px`);
 need('chrome: menu button (.cr-ib.menu)', await probe('#navBtn'), 1, 1);
 need('chrome: ＋ add project', await probe('#addProjectBtn'), 1, 1);
 need('chrome: hd2 home', await probe('#cr-hd2-home'), 1, 1);
-need('chrome: back-to-app', await probe('#cr-home-btn'), 1, 1);
+/* #cr-home-btn was retired at build 757 — the header's own gold home
+   (#cr-hd2-home, probed above) made both floating buttons redundant. */
+chk('chrome: floating back-to-app retired at 757 (header home replaces it)',
+    await page.evaluate(() => !document.getElementById('cr-home-btn')));
 need('chrome: theme toggle', await probe('.cr-lr-theme'), 1, 1);
 need('landing: Skip', await probe('button.sk'), 1, 1);
 need('landing: All clients · N', await probe('.cr-lr-minor button'), 0, 1);
@@ -151,19 +154,33 @@ await page.evaluate(() => document.getElementById('navBtn').click()).catch(() =>
 await page.evaluate(() => openLeadsView());
 await page.waitForTimeout(900);
 need('list: card action buttons (.ljbtn)', await probe('.ljbtn'), 1, 1);
-need('list: stage filter chips', await probe('.ljchip'), 0, 1);
+/* Build 1085 deleted the Leads filter chip strips on Theo's pick ("Get rid of
+   the chips for pipeline and just use the filters?") — the funnel and the
+   desktop rail carry the stage groups now. .ljchip survives only on Photo
+   Activity's CRM strip. Assert the strip stayed deleted on THIS screen. */
+chk('list: 1085 — no filter chip strip on All Leads & Jobs',
+    await page.evaluate(() => !document.querySelector('#leadsView .ljchip')));
 need('list: sort control', await probe('.ljsortchip'), 0, 1);
 
 /* ── PROFILE ── */
 await page.evaluate(() => openProject('p1'));
 await page.waitForTimeout(1100);
-need('profile: email link', await probe('a.hem'), 0, 1);
-need('profile: phone link', await probe('a.hph'), 0, 1);
-need('profile: Add contact', await probe('#dbAddContact'), 0, 1);
-need('profile: Switch Primary', await probe('#dbSwitchPrim'), 0, 1);
-need('profile: edit pencil', await probe('.editpencil'), 1, 1);
+/* Builds 788–791 rebuilt the retail client profile phone-first: the cover
+   photo was retired (788, #projCoverBtn), and the card became the #cr-namebar
+   band (791) — Switch Primary and Add contact are gone, email/text/call are
+   the band's .nb-ico icons, the pencil is .nb-pen. The old controls are 0x0
+   on a retail phone by design; assert that, then hold the replacement band's
+   controls to the same 44px floor this gate exists for.
+   ⚠️ As of build 1121 the band's controls measure UNDER the floor
+   (.nb-ico 40x40, .nb-pen 32x28, .nb-star ~21x17, no ::after pad) — a real
+   deficit on the replacement surface, reported, not papered over. */
+chk('profile: 788/791 — the old contact links / Add contact / Switch Primary / cover chip are retired on the retail phone',
+    await page.evaluate(() => ['a.hem', 'a.hph', '#dbAddContact', '#dbSwitchPrim', '#projCoverBtn']
+      .every(s => { const e = document.querySelector(s); if (!e) return true;
+        const r = e.getBoundingClientRect(); return !(r.width && r.height); })));
+need('profile: namebar contact icons (.nb-ico — the 791 replacement)', await probe('#cr-namebar .nb-ico'), 1, 1);
+need('profile: namebar edit pencil (.nb-pen)', await probe('#cr-namebar .nb-pen'), 1, 1);
 need('profile: Map/Satellite toggles', await probe('.dbmtabs button'), 0, 1);
-need('profile: cover-photo chip', await probe('#projCoverBtn'), 1, 1);
 need('profile: selects (Activity Count etc.)', await probe('#projectView select:not(#stageSel)'), 0, 1);
 
 /* ── COMMISSIONS (money buttons) ── */
@@ -185,8 +202,22 @@ chk('photo tiles unchanged (~155px, already over the floor)', tile && tile.w >= 
 /* ── fences in the source ── */
 const src = APP;
 chk('the census block exists exactly once', (src.match(/<style id="cr-touch44-styles">/g) || []).length === 1);
-chk('and is the LAST stylesheet in the document',
-    src.lastIndexOf('<style') === src.lastIndexOf('<style id="cr-touch44-styles">'));
+/* At 752 the block was the LAST stylesheet, and the positional pin protected
+   its same-specificity strategy. Builds since (791 namebar, 1080–83 ask sheet,
+   guide, etc.) legitimately appended module stylesheets after it. What must
+   still be true is that the census RULES STILL WIN in the cascade — proven on
+   computed style, which is what the position was standing in for. (The
+   rendered rect probes above are the end-to-end proof on every census target.) */
+chk('the census min-height still wins in the cascade (.ljbtn/.chipbtn compute 44px)',
+    await page.evaluate(() => {
+      const probe = document.createElement('button');
+      probe.className = 'ljbtn'; document.body.appendChild(probe);
+      const a = getComputedStyle(probe).minHeight;
+      probe.className = 'chipbtn';
+      const b = getComputedStyle(probe).minHeight;
+      probe.remove();
+      return a === '44px' && b === '44px';
+    }));
 chk('printed documents untouched: the 15px document tick-box rule survives',
     src.includes('.cbx{cursor:pointer;font-size:13pt;user-select:none;}'));
 chk('module stylesheets untouched: #calCard .calnav 32px rule survives',

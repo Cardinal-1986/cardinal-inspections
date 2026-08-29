@@ -70,16 +70,25 @@ if(CRMHEAD){
      coming BEFORE the checks and failed correct code. Fifth time this project
      has paid for that trap; the rule is assert on a form your own prose cannot
      contain. */
+  /* ⚠ RIG REPAIR 29 Aug 2026 (triage at build 1121): builds 1104/1116 folded
+     the 979 punch/team pair into ONE census — `SHARED_HEAD` + `sharedScreen()`
+     — so the two getElementById calls are gone from crmHead by design ("the
+     979 pair is folded in here", crmHead's own 1104 comment; gate_1116.mjs
+     guards the census). The 979 contract survives unchanged: the shared-screen
+     check still sits after crmNow and projopen and before stickyCrm, and both
+     ids are still in the census — which is what is asserted now. */
   const iCrmNow  = CRMHEAD.indexOf('var k = crmNow()');
   const iProjopen= CRMHEAD.indexOf("contains('projopen')");
-  const iPunch   = CRMHEAD.indexOf("getElementById('punchView')");
-  const iTeam    = CRMHEAD.indexOf("getElementById('teamView')");
+  const iShared  = CRMHEAD.indexOf("if(sharedScreen()) return 'production'");
   const iSticky  = CRMHEAD.indexOf('return stickyCrm()');
+  const censusHasBoth = /SHARED_HEAD\s*=\s*\{[\s\S]*?punchView\s*:/.test(APP) &&
+                        /SHARED_HEAD\s*=\s*\{[\s\S]*?teamView\s*:/.test(APP);
   need('3 the punch/team check is last — projopen and a real CRM view still win',
-       iPunch > -1 && iTeam > -1 && iCrmNow < iPunch && iProjopen < iPunch &&
-       iPunch < iSticky && iTeam < iSticky,
+       iShared > -1 && censusHasBoth && iCrmNow < iShared && iProjopen < iShared &&
+       iShared < iSticky,
        'order in crmHead: crmNow@'+iCrmNow+' projopen@'+iProjopen+
-       ' punchView@'+iPunch+' teamView@'+iTeam+' stickyCrm@'+iSticky);
+       ' sharedScreen@'+iShared+' stickyCrm@'+iSticky+
+       ' censusHasPunch+Team='+censusHasBoth);
 } else need('3 the punch/team check is last', false, 'crmHead not found');
 
 /* ---- 9: goHome must resolve tool screens through the portal ---- */
@@ -185,11 +194,19 @@ const bad2 = now.filter(r => r.head !== 'production');
 need('1 the header names both screens Production',
      bad2.length === 0,
      'still portal-coloured on: ' + bad2.map(r=>r.portal+'/'+r.v+'='+r.head).join(', '));
-const badTitle = now.filter(r => String(r.title||'').trim() !== 'Production');
+/* ⚠ RIG REPAIR 29 Aug 2026 (triage at build 1121): build 1116 — Theo's pick,
+   quoted in the log ("can we get rid of the word production on just the
+   screens that are not productions?") — made a shared screen name ITSELF while
+   still wearing the production chrome. SHARED_HEAD says punchView:'Punch',
+   teamView:'Team'. The chrome check (--hbg) is unchanged. */
+const TITLE_WANT = { punch:'Punch', team:'Team' };
+const badTitle = now.filter(r => String(r.title||'').trim() !== TITLE_WANT[r.v]);
 const badBg = now.filter(r => r.hbg !== '#181b20');
 need('2 ...and really renders the production chrome, all three portals',
      badTitle.length === 0 && badBg.length === 0,
-     'title wrong on ' + badTitle.length + ', --hbg wrong on ' + badBg.length +
+     'title wrong on ' + badTitle.length + ' (saw ' +
+     [...new Set(now.map(r=>r.v+'="'+String(r.title||'').trim()+'"'))].join(' / ') +
+     '), --hbg wrong on ' + badBg.length +
      ' (saw ' + [...new Set(now.map(r=>r.hbg))].join(' / ') + ')');
 const badCrm = now.filter(r => r.crm === 'production');
 need('4 data-crm untouched — the PAGE stays neutral, punch is cross-CRM',

@@ -135,27 +135,42 @@ const C = await P.page.evaluate(() => {
   if (!pay || !money) return { none: true, tiles, hasMoneyTile: tiles.some(t => /Money In/i.test(t || '')) };
   const a = pay.getBoundingClientRect(), b = money.getBoundingClientRect();
   const sa = getComputedStyle(pay), sb = getComputedStyle(money);
+  /* 797 merged Payment Information into #dbMoneyCard and reparented that card
+     ABOVE the client band (syncMoneyCard); Money In & Commissions stays its own
+     row in the menu, full-bleed. Adjacency is gone BY DESIGN — what must hold
+     now is: pay lives inside the merged card, money follows it in document
+     order and sits below it, and both are still .dbrow peers. */
+  const card = document.getElementById('dbMoneyCard');
   return { none: false,
-    adjacent: money.previousElementSibling === pay,
+    payInCard: !!(card && card.contains(pay)),
     below: b.top >= a.bottom - 1,
-    sameLook: sa.background === sb.background && sa.borderTopWidth === sb.borderTopWidth
-              && sa.fontSize === sb.fontSize && Math.round(a.width) === Math.round(b.width),
+    afterCard: !!(card && (money.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_PRECEDING)),
+    sameLook: pay.classList.contains('dbrow') && money.classList.contains('dbrow')
+              && sa.fontSize === sb.fontSize,
+    fullBleed: Math.round(b.left) <= 1 && Math.round(b.right) >= window.innerWidth - 1,
     text: (money.textContent || '').trim(),
     tiles, hasMoneyTile: tiles.some(t => /Money In/i.test(t || '')),
-    /* every Job Menu row should now hold two tiles — the orphan is what the
-       screenshot was of */
-    rowSizes: rows.map(r => r.querySelectorAll('.jabox').length) };
+    /* the paired rows must stay paired; a row is only allowed a lone tile when
+       it is EXPLICITLY full-width (849's Work Orders row sets
+       grid-template-columns:1fr). 981/1076 legitimately grew one row to 4 —
+       a 2-column grid wrapping into two full pairs — so the orphan test is
+       "odd count in a 2-column row", not "exactly two". */
+    rowShapes: rows.map(r => ({ n: r.querySelectorAll('.jabox').length,
+      cols: getComputedStyle(r).gridTemplateColumns.split(' ').length })) };
 });
-ok('the Money In row exists, immediately after Payment Information',
-  !C.none && C.adjacent && C.below, JSON.stringify({ adjacent: C.adjacent, below: C.below }));
-ok('and it is drawn like Payment Information, not like something new',
-  !C.none && C.sameLook, JSON.stringify(C.sameLook));
+ok('the Money In row exists, below the merged Payment Information card (797 layout)',
+  !C.none && C.payInCard && C.below && C.afterCard,
+  JSON.stringify({ payInCard: C.payInCard, below: C.below, afterCard: C.afterCard }));
+ok('and it is still a .dbrow peer of Payment Information, full-bleed per 797',
+  !C.none && C.sameLook && C.fullBleed, JSON.stringify({ sameLook: C.sameLook, fullBleed: C.fullBleed }));
 ok('labelled Money In & Commissions',
   !C.none && /Money In & Commissions/.test(C.text || ''), JSON.stringify(C.text));
 ok('the Job Menu no longer carries a Money In tile',
   !C.hasMoneyTile, JSON.stringify(C.tiles));
 ok('and no Job Menu row is left with a single orphan tile',
-  !C.none && C.rowSizes.length > 0 && C.rowSizes.every(n => n === 2), JSON.stringify(C.rowSizes));
+  !C.none && C.rowShapes.length > 0
+  && C.rowShapes.every(r => r.cols === 1 ? true : r.n % r.cols === 0),
+  JSON.stringify(C.rowShapes));
 
 console.log('\n--- D. it still opens the commissions pane (the reason it moved) ---');
 const D = await P.page.evaluate(async () => {

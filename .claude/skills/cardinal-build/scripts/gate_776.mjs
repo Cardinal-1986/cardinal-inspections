@@ -69,16 +69,24 @@ async function run(label, knobs) {
   await page.waitForTimeout(1800);
   /* knobs go on AFTER the editor is open, so only the publish round trip is affected */
   await page.evaluate(k => { if (k.delay) window.__MOCK_DELAY__ = k.delay; if (k.failTable) window.__MOCK_FAIL__ = k.failTable; }, knobs);
+  /* 1080-1083 replaced window.confirm/alert with the in-app crAsk/crTell sheet:
+     intercept both and record what the app SAYS, auto-answering yes. */
+  await page.evaluate(() => {
+    window.__asks = [];
+    window.crAsk = function (m) { window.__asks.push('confirm: ' + String(m || '')); return Promise.resolve(true); };
+    window.crTell = function (m) { window.__asks.push('alert: ' + String(m || '')); };
+  });
   const hadBtn = await page.evaluate(() => { const b = document.getElementById('cr-epub-btn'); if (b) { b.click(); return true; } return false; });
   await page.waitForTimeout(knobs.wait || 9000);
   const state = await page.evaluate(() => ({
     btnText: (document.getElementById('cr-epub-btn') || {}).textContent || null,
     docs: (window.__SEED__.inspection_reports || []).map(r => r.title),
     estimates: (window.__SEED__.estimates || []).map(e => ({ n: e.estimate_number, doc: e.doc_id || null })),
-    documentEditorOpen: (function () { const e = document.getElementById('editorView'); return !!(e && getComputedStyle(e).display !== 'none'); })()
+    documentEditorOpen: (function () { const e = document.getElementById('editorView'); return !!(e && getComputedStyle(e).display !== 'none'); })(),
+    asks: window.__asks || []
   }));
   await browser.close();
-  return { label, hadBtn, dialogs, state };
+  return { label, hadBtn, dialogs: dialogs.concat(state.asks), state };
 }
 
 console.log('\n--- A. happy path ---');
@@ -91,9 +99,12 @@ ok('the "Mark it as Sent" prompt still appears', A.dialogs.some(d => /Estimate p
   JSON.stringify(A.dialogs));
 ok('no failure message on the happy path', !A.dialogs.some(d => /has not finished saving/.test(d)));
 
-console.log('\n--- B. the save never lands (slow connection) ---');
-const B = await run('slow', { delay: 14000, wait: 13000 });
-ok('the user is TOLD the estimate did not save', B.dialogs.some(d => /has not finished saving, so nothing was published/.test(d)),
+console.log('\n--- B. the save never lands (1029: save-in-place — the promise is the signal) ---');
+/* 1029 retired the 9s editor-close wait: publish now AWAITS save() itself, so
+   "the save never lands" is a save that FAILS — save() speaks, publish stands
+   down. The 776 rule (never silent, never a false claim) is what we hold. */
+const B = await run('savefail', { failTable: 'estimates', wait: 9000 });
+ok('the user is TOLD the estimate did not save', B.dialogs.some(d => /save failed|could not save/i.test(d)),
   JSON.stringify(B.dialogs));
 ok('the button is returned to "Publish", not left spinning', /Publish/.test(B.state.btnText || '') && !/Publishing/.test(B.state.btnText || ''),
   B.state.btnText);
@@ -107,9 +118,14 @@ ok('NOTHING announces "Estimate published."', !C.dialogs.some(d => /Estimate pub
 
 console.log('\n--- source-level guards ---');
 ok('neither handler gives up in silence any more', !/if\(!closed\) return;/.test(APP_HTML));
-ok('both 9s waits are still there (behaviour kept, only the silence removed)',
-  (APP_HTML.match(/var closed = await waitForEditorClose\(9000\);/g) || []).length === 2);
-ok('the published claim is gated on a real doc_id', /if\(!est \|\| !est\.doc_id\) return;/.test(APP_HTML));
+/* 1029 retired both 9s waits ON PURPOSE (save-in-place: the editor no longer
+   closes on Save, so the poll would hang and give up on every publish). Hold
+   the retirement: no live call remains, and both sites say why. */
+ok('the 9s waits are retired with their reason stated (1029)',
+  !/waitForEditorClose\(/.test(APP_HTML) &&
+  (APP_HTML.match(/waitForEditorClose retired/g) || []).length === 2);
+ok('the published claim is gated on a real doc_id',
+  /var docId = await publish\(est, projectBefore\);\s*\nif\(!docId\)\{ return; \}/.test(APP_HTML));
 
 console.log('\nRESULT: ' + pass + ' passed, ' + fail + ' failed  ->  ' + (fail ? 'RED' : 'GREEN'));
 process.exit(fail ? 1 : 0);

@@ -78,16 +78,22 @@ const TPL = await page.evaluate(() => {
   }
   return o;
 });
-chk('the roofing agreement carries 3 dropdowns',
-    (TPL.ROOF_AGREEMENT.match(/<select class="crsel"/g) || []).length === 3,
+/* Build 779 (spec sheet matches the printed master) grew the roofing agreement
+   to 12 dropdowns: occ 1 + trim 3 (drip edge, extrusions, valley metal) +
+   style 1 + brand 1 + qty 6. Build 964 gave siding 12 and gutters 5 on purpose
+   ("the siding and gutter agreements stop being forms"). */
+chk('the roofing agreement carries 12 dropdowns (779)',
+    (TPL.ROOF_AGREEMENT.match(/<select class="crsel"/g) || []).length === 12,
     (TPL.ROOF_AGREEMENT.match(/<select class="crsel"/g) || []).length);
-chk('one shingle-colour + two trim',
+chk('one shingle-colour + three trim (779 added valley metal)',
     (TPL.ROOF_AGREEMENT.match(/data-crsel="occ"/g) || []).length === 1 &&
-    (TPL.ROOF_AGREEMENT.match(/data-crsel="trim"/g) || []).length === 2);
+    (TPL.ROOF_AGREEMENT.match(/data-crsel="trim"/g) || []).length === 3);
 chk('each is contenteditable="false" (the 748 trap)',
-    (TPL.ROOF_AGREEMENT.match(/class="crsel"[^>]*contenteditable="false"/g) || []).length === 3);
-for (const n of ['SIDING_AGREEMENT', 'GUTTER_AGREEMENT'])
-  chk(`${n} gained no dropdown`, !/<select class="crsel"/.test(TPL[n] || ''));
+    (TPL.ROOF_AGREEMENT.match(/class="crsel"[^>]*contenteditable="false"/g) || []).length === 12);
+for (const [n, want] of [['SIDING_AGREEMENT', 12], ['GUTTER_AGREEMENT', 5]])
+  chk(`${n} carries its 964 dropdown set (${want})`,
+      (TPL[n].match(/<select class="crsel"/g) || []).length === want,
+      (TPL[n].match(/<select class="crsel"/g) || []).length);
 
 /* ── 1-5. the full round trip through the app's own functions ─────────────── */
 const r = await (async () => { try { return await page.evaluate(async () => {
@@ -102,7 +108,7 @@ const r = await (async () => { try { return await page.evaluate(async () => {
 
   const occ  = doc.querySelector('select[data-crsel="occ"]');
   const trim = doc.querySelectorAll('select[data-crsel="trim"]');
-  if (!occ || trim.length !== 2) return { missing: true };
+  if (!occ || trim.length !== 3) return { missing: true };   /* 3 since 779 */
 
   const optTexts = [...occ.options].map(o => o.textContent);
   const out = {
@@ -164,7 +170,12 @@ chk('catalogue order is preserved', (r.occTexts || [])[1] === 'Onyx Black', (r.o
 chk('the trim dropdown has the aluminium set + Other',
     r.trimCount === 12 && (r.trimTexts || []).includes('Musket Brown') && (r.trimTexts || []).includes('Other'),
     r.trimCount + ' options');
-chk('it sits inside a contenteditable cell (the trap is real)', r.insideEditable === true);
+/* At 750 the select sat inside an editable table.meta cell (the 748 trap).
+   Build 779 moved the spec sheet into .specline divs, which are NOT in
+   EDITABLE_SELECTOR — the trap is designed out; the control must not have
+   silently landed back inside an editable host. */
+chk('779: the select no longer sits inside a contenteditable host (trap designed out)',
+    r.insideEditable === false);
 chk('but the control itself is not editable', r.selfNotEditable === 'false', String(r.selfNotEditable));
 chk('picking a colour sets it live', r.liveValue === 'Estate Gray', r.liveValue);
 chk('AND writes the selected ATTRIBUTE (what survives the save)',
@@ -181,14 +192,17 @@ chk('reopening did not duplicate the options',
     r.reopenedOptionCount === r.occCount, r.reopenedOptionCount + ' vs ' + r.occCount);
 
 /* ── 6. earlier builds intact ─────────────────────────────────────────────── */
-for (const [n, want] of [['ROOF_AGREEMENT', 23], ['SIDING_AGREEMENT', 21], ['GUTTER_AGREEMENT', 32]])
+/* ROOF was 23 at 750; 779 added boxes for every lettered spec option (now 32). */
+for (const [n, want] of [['ROOF_AGREEMENT', 32], ['SIDING_AGREEMENT', 21], ['GUTTER_AGREEMENT', 32]])
   chk(`748 intact: ${n} still has ${want} tick boxes`,
       (TPL[n].match(/class="cbx"/g) || []).length === want,
       (TPL[n].match(/class="cbx"/g) || []).length);
 chk('749 intact: the diagram is still there', /<figure class="roofdiag">/.test(TPL.ROOF_AGREEMENT));
 chk('no "[circle" prompt returned', !/\[circle/i.test(APP_HTML));
-chk('valley metal is deliberately still free text (out of scope, flagged)',
-    /5\. Valley metal[\s\S]{0,120}\[colour\]/.test(APP_HTML));
+/* 750 flagged valley metal as still-free-text, out of scope; build 779 gave it
+   its trim dropdown (the flagged follow-up landed). Assert the resolution. */
+chk('valley metal got its trim dropdown at 779 (the 750 flag is resolved)',
+    /data-crsel="trim"[^>]*aria-label="Valley metal colour"/.test(APP_HTML));
 chk('no backtick reached the estimate skeleton', (() => {
   const d = /(?:var|const)\s+ESTIMATE_BASE_RAW\s*=\s*`/.exec(APP_HTML);
   const blk = APP_HTML.slice(d.index + d[0].length, APP_HTML.indexOf('`;', d.index + d[0].length));

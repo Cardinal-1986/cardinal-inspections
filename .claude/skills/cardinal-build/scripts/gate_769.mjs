@@ -124,7 +124,7 @@ ok('...and only them', n.length === 1 && n[0].to.length === 1 && n[0].to[0] === 
 ok('the subject names the work', n.length === 1 && /Reattach gutter/.test(n[0].title), n[0] && n[0].title);
 ok('the body says who filed it', n.length === 1 && /filed a punch-out/.test(n[0].body || ''));
 
-console.log('\n--- filing UNASSIGNED work buzzes nobody ---');
+console.log('\n--- filing UNASSIGNED work buzzes PRODUCTION minus the actor (1047) ---');
 await page.evaluate(() => window.CardinalProduction.addFor('j-tac'));
 await page.waitForTimeout(600);
 await page.fill('#cr-pb-modal [data-f="title"]', 'Unassigned tidy-up');
@@ -132,7 +132,15 @@ await page.evaluate(() => { window.__NOTIFIED__ = []; });
 await page.click('#cr-pb-modal [data-act="save"]');
 await page.waitForTimeout(1400);
 n = await page.evaluate(() => window.__NOTIFIED__ || []);
-ok('nobody is notified about unassigned work', n.length === 0, JSON.stringify(n).slice(0, 160));
+/* 1047 (the notification matrix) closed this gap on purpose: an unassigned
+   punch-out now buzzes the production crew minus the actor, so it cannot sit
+   invisible in the queue. Assert the shipped matrix, not the 769 silence. */
+ok('unassigned work buzzes production (1047)', n.length === 1 &&
+  (n[0].to || []).includes('curtis@cardinalrenovations.net') &&
+  (n[0].to || []).includes('scottie@cardinalrenovations.net') &&
+  /Unassigned punch-out/.test(n[0].title || ''), JSON.stringify(n).slice(0, 160));
+ok('...but never the actor', n.length === 1 &&
+  !(n[0].to || []).includes('theo@cardinalrenovations.net'), JSON.stringify((n[0] || {}).to));
 
 console.log('\n--- filing work on YOURSELF buzzes nobody ---');
 await page.evaluate(() => { window.currentUser = { email: 'scottie@cardinalrenovations.net' }; });
