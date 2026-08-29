@@ -30339,3 +30339,59 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
   signature columns symmetric and blank again, one PNG left (the logo).
   **The pre-strip row is preserved in `_sig_incident_backup_20260829`.**
   `924dbd32` (Contract — Roofing) was never touched at any point.
+
+## Build 1151 — ACH, and the settlement bug it would have exposed
+
+- **1151** · Theo, after the live Stripe rail was proven end to end with a real
+  $1 card payment: *"whats next with stripe?"* → ACH, chosen because it is the
+  only item on the list that pays for itself.
+
+  **Why it is worth doing.** Card is 2.9% + 30¢ **uncapped**; a US bank debit is
+  0.8% **capped at $5**. On a $12,000 deposit that is ~$348 against $5. On
+  roofing-sized money the fee difference is not cosmetic. `payment_method_types`
+  goes `['card']` → `['card','us_bank_account']`; Stripe Checkout collects the
+  ACH mandate itself.
+
+  ⚠️ **THE REAL FIND — a money bug that was invisible until ACH was switched on.**
+  The webhook's paid test was:
+
+      const paid = s.payment_status === 'paid' || s.status === 'complete';
+
+  For a card those agree. **For ACH they do not.** `checkout.session.completed`
+  fires with `status:'complete'` while `payment_status` is still `'unpaid'` —
+  the debit takes days and can bounce. Driven through the shipped 1150 handler,
+  the old code did **both halves wrong**:
+
+  | event | 1150 (control) | 1151 |
+  |---|---|---|
+  | `completed` (unpaid) | **1 row — books $12,000 that has not arrived** | 0 rows |
+  | `async_payment_succeeded` | **0 rows — the real money never recorded** | 1 row, $12,000 |
+  | `async_payment_failed` | 0 rows | 0 rows |
+
+  So a bounced debit would have left a **phantom $12,000 permanently in the
+  ledger** — inflating AR and firing the 10% commission trigger on money never
+  received. The test is now `payment_status === 'paid'` and nothing else: money
+  is recorded when it has ARRIVED.
+
+  `async_payment_succeeded` joins `completed` as a recording event (identical
+  write, so a card row and an ACH row are the same shape);
+  `async_payment_failed` answers 200 and records nothing — there was never a row
+  to undo, which is the point of waiting.
+
+  **`gate_1151.mjs` drives the real three-event ACH sequence through the SHIPPED
+  handler** (byte-identical copy, local test secret, Supabase stubbed):
+  **GREEN 8/8**, and **RED 4/4 on the 1150 control** — the control is the proof
+  the hazard was real rather than theoretical.
+
+  ⚠️ **check_build marker note:** the code change is in `api/`, which
+  `check_build.py` does not see (it gates ONE artifact). A first run marked on
+  `us_bank_account` went RED because that string is in `api/pay.js`, not
+  `index.html`. The `api/` half is gated separately (`node --check` on both
+  routes + the ACH gate). The documented one-artifact trap, walked into live.
+
+  **Not yet wired, and stated so it is not mistaken for done:** `charge.refunded`
+  (a refund in Stripe still leaves the collection row — the ledger drifts),
+  `charge.dispute.created` (a chargeback arrives silently), and
+  `checkout.session.expired` (a client who abandons the payment page is
+  invisible). **ACH also has to be enabled in the Stripe dashboard** — Settings
+  → Payment methods → ACH Direct Debit — before the option appears at checkout.

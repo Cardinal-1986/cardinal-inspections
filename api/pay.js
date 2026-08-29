@@ -93,7 +93,16 @@ export default async function handler(req, res) {
     const meta = { kind, share_token: t, project_id: rep.project_id || '', report_id: rep.id };
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'],
+      /* 1151: ACH alongside card. On roofing money the fee difference is not
+         cosmetic — card is 2.9% + 30c uncapped, a bank debit is 0.8% capped at
+         $5, so a $12k deposit costs ~$348 on a card and $5 by ACH. Stripe
+         Checkout collects the mandate for us_bank_account itself.
+         ⚠ ACH does NOT settle at checkout: the session completes with
+         payment_status 'unpaid' and the money arrives days later as
+         checkout.session.async_payment_succeeded (or never, as
+         async_payment_failed). api/pay-webhook.js handles both — do not add a
+         delayed method here without checking that it still does. */
+      payment_method_types: ['card', 'us_bank_account'],
       line_items: [{
         quantity: 1,
         price_data: {
