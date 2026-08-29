@@ -29615,6 +29615,36 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
 
+## Build 1139 — 29 Aug 2026 — pin your own default assembly (estimate builder #2)
+
+Theo's #2 ask, resolved by AskUserQuestion to the smallest true version: not "edit the
+built-in masters" (a new pipeline) but **"make one of MY saved assemblies the default that
+sits at the top."** The assembly system (1098) already stores custom, editable, synced
+assemblies in `estimate_assemblies`; this adds a per-user default on top of it.
+
+**What shipped.** A star on each of MY saved assemblies in the +Assembly picker (mine only
+— gated on `created_by === myEmail()`). Star one and it pins to a top **★ My Default**
+group, one tap to drop my standard scope into any estimate; star again to unpin. Per user,
+synced across devices. Blank estimates stay blank — this only reorders the picker.
+
+**One column, no new table** (Theo's constraint): `estimate_assemblies.is_default boolean`.
+`ea_update` RLS already permits a user to update their own rows, so no new policy. "One
+default per user" is enforced app-side — `setAssemblyDefault()` clears my current default
+before setting the new one (two writes). Pre-1139 database: the column is absent, `select`
+omits it, `_pinned` is false, the feature lies dormant (graceful, like 1098 itself).
+
+### Gates
+- `check_build.py` GREEN 1138 → 1139; patch byte-reproducible.
+- **`gate_1139.mjs`** — Chromium, the REAL +Assembly button (openPicker calls loadAssemblies
+  against the mock): my assembly shows a star, someone else's does not, the current default
+  sits in the top group; starring another writes `is_default=true`, clears the prior default
+  (2 updates), and re-pins the new one to the top. **Control (1138 tree): RED ×6 — no star.**
+- `gate_dupes` GREEN; `gate_types` GREEN.
+
+**SQL: `estimate_assembly_default.sql` — apply BEFORE deploying this index.html.** Idempotent.
+
+---
+
 ## Build 1138 — 29 Aug 2026 — duplicate an estimate
 
 First of Theo's four estimate-builder asks (duplicate → editable templates →
