@@ -29615,6 +29615,65 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
 
+## Build 1139 — 29 Aug 2026 — pin your own default assembly (estimate builder #2)
+
+Theo's #2 ask, resolved by AskUserQuestion to the smallest true version: not "edit the
+built-in masters" (a new pipeline) but **"make one of MY saved assemblies the default that
+sits at the top."** The assembly system (1098) already stores custom, editable, synced
+assemblies in `estimate_assemblies`; this adds a per-user default on top of it.
+
+**What shipped.** A star on each of MY saved assemblies in the +Assembly picker (mine only
+— gated on `created_by === myEmail()`). Star one and it pins to a top **★ My Default**
+group, one tap to drop my standard scope into any estimate; star again to unpin. Per user,
+synced across devices. Blank estimates stay blank — this only reorders the picker.
+
+**One column, no new table** (Theo's constraint): `estimate_assemblies.is_default boolean`.
+`ea_update` RLS already permits a user to update their own rows, so no new policy. "One
+default per user" is enforced app-side — `setAssemblyDefault()` clears my current default
+before setting the new one (two writes). Pre-1139 database: the column is absent, `select`
+omits it, `_pinned` is false, the feature lies dormant (graceful, like 1098 itself).
+
+### Gates
+- `check_build.py` GREEN 1138 → 1139; patch byte-reproducible.
+- **`gate_1139.mjs`** — Chromium, the REAL +Assembly button (openPicker calls loadAssemblies
+  against the mock): my assembly shows a star, someone else's does not, the current default
+  sits in the top group; starring another writes `is_default=true`, clears the prior default
+  (2 updates), and re-pins the new one to the top. **Control (1138 tree): RED ×6 — no star.**
+- `gate_dupes` GREEN; `gate_types` GREEN.
+
+**SQL: `estimate_assembly_default.sql` — apply BEFORE deploying this index.html.** Idempotent.
+
+---
+
+## Build 1138 — 29 Aug 2026 — duplicate an estimate
+
+First of Theo's four estimate-builder asks (duplicate → editable templates →
+good/better/best → one-tap-to-signed). The prime doctrine paid: the editor already
+takes `(project, existing)` and inserts a new row when `existing` has no id, so
+"duplicate" is a data transform, not a new pipeline.
+
+**What shipped.** A **Duplicate** button beside Delete in the editor toolbar, on saved
+estimates only (same `s.id` guard). It copies the LIVE state — every line (re-minted ids),
+photos, deposit, notes, itemized flag — into a fresh draft titled "… (copy)", with no id,
+no estimate_number and status draft, then `openEditor(project, copy)`. Saving the copy
+INSERTS (a new number is assigned); the original on disk is never touched. Uses for a
+roofer: a second priced option for the same client, or starting the next client from a job
+just like theirs.
+
+### Gates
+- `check_build.py` GREEN 1137 → 1138; patch byte-reproducible.
+- **`gate_1138.mjs`** — Chromium, real editor, real button: the copy carries both source
+  lines, the editor becomes a NEW draft, and **saving it does 1 insert / 0 updates** (the
+  original row is not overwritten), title "… (copy)", total 46000.00, no id in the payload.
+  **Control (1137 tree): RED — no button.**
+- `gate_dupes` GREEN. `gate_types` **rebaselined** (+2 TS2339): the copy's `o[k]=l[k]` line
+  builder is the same DOM-untyped index idiom `save()` already uses; the ReferenceError
+  class (TS2304) did not grow.
+
+No SQL (reuses `estimates`, the existing insert path). `index.html` + this entry + `gate_1138.mjs`.
+
+---
+
 ## Build 1137 — the Owner Console becomes a hub
 
 Theo: *"The owner console is just 1 looooong page. Can we make it more presentable
