@@ -927,6 +927,31 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1133 — 29 Aug 2026 — the profile's call/text/email icons reach the tap minimum
+
+Fourth and last live defect from the gate-suite triage: `gate_752` (the original 44px
+sweep's gate, rig-repaired in the cleanup) stayed red on the client profile's namebar —
+`.nb-ico` ×3 (email/text/call) at 40×40, `.nb-pen` 32×28, `.nb-star` ~21×17. The 791
+profile rebuild replaced the contact links **752 had already floored** without inheriting
+the floor, and `gate_944`'s walk never opens a client profile, so only 752 could see it.
+
+**The fix took two attempts, and the first was measured out.** Bare `min-height:44px` on
+the star and pen grew the name band **77 → 116px at 390w** — a design change to a screen
+Theo directed personally, not a floor fix. Shipped shape: `min-*` 44px boxes (real rects,
+so the gate's probe sees them) with **negative margins handing the layout space back** —
+band re-measured **77px, pixel-identical**, zero overlap among the five tappables, no
+horizontal scroll. The visual design of 788–804 is untouched; only the tap areas grew.
+
+### Gates
+- `check_build.py` GREEN 1132 → 1133.
+- **`gate_752` flips GREEN — 29/29** (icons 44×44, pen 44×44); control (1132 tree) RED ×2.
+- `band1133.mjs` (scratch render): band height, overlap and h-scroll measured on both
+  trees at 390px — FIX `{bandH:77, hscroll:false, overlap:false}`, identical to PRE.
+
+No SQL. `index.html` + this entry.
+
+---
+
 ## Build 1132 — 29 Aug 2026 — Crews form fields reach the 44px touch minimum
 
 `gate_944` (the 22-destination walk + 44px floor) was red on two controls: the Compliance

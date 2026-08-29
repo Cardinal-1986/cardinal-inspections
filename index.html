@@ -3875,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1132 &#8212; The Crews screen\u2019s form fields \u2014 Compliance uploads, Profile, Notes \u2014 come up to the app\u2019s 44px touch minimum (they were 33\u201335px, from before the touch-target pass existed). The Labor Rates table\u2019s tight cells are deliberately left as they are \u2014 flooring them would rewrite that table\u2019s density; flag it if you want them bigger too.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1133 &#8212; The call, text and email icons on a client\u2019s profile \u2014 and the edit pencil and favourite star beside the name \u2014 come up to the 44px tap minimum (they were 40px, 32px and 21px). The name band looks exactly the same — only the tappable area grew. These replaced the old contact links in the 791 rebuild without inheriting the touch pass; the build-752 gate caught it once the suite started running again.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42027,7 +42027,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1132, d:'2026-08-29', t:'Crews form fields reach the 44px touch minimum', s:'The Crews screen predates the app-wide 44px touch pass (build 752), and its check missed the screen because the test data had no crews until later \u2014 so its text and date fields sat at 33\u201335px on a phone. Floored now. The Labor Rates table\u2019s dense cells are left alone on purpose; say the word if those should grow too.' },
+{ b:1133, d:'2026-08-29', t:'The profile\u2019s call/text/email icons reach the tap minimum', s:'The client profile\u2019s contact icons, edit pencil and favourite star were 21\u201340px \u2014 under the app\u2019s 44px touch floor \u2014 since the 791 profile rebuild replaced the old floored links. All five now meet the floor with the band looking exactly as before — only the tap area grew. Tap-to-call on a roof, with gloves, is the whole point of the floor.' },
+ { b:1132, d:'2026-08-29', t:'Crews form fields reach the 44px touch minimum', s:'The Crews screen predates the app-wide 44px touch pass (build 752), and its check missed the screen because the test data had no crews until later \u2014 so its text and date fields sat at 33\u201335px on a phone. Floored now. The Labor Rates table\u2019s dense cells are left alone on purpose; say the word if those should grow too.' },
  { b:1131, d:'2026-08-29', t:'The chase list\u2019s mark-chased button styles apply again', s:'Its font rule used a shorthand form CSS defines as invalid (inherit inside font:), which browsers drop whole \u2014 the 600 weight and 12px size never rendered. Slipped in at build 1056, after the 983 sweep that removed 30 of the same mistake. Now longhand; the 983 gate holds the standard at zero again.' },
  { b:1130, d:'2026-08-29', t:'Old lump-sum estimates render right outside the editor', s:'Estimates saved before build 1096 carry no per-line pricing flag, and only the editor back-fills it. The Community estimate sheet and newly published documents read the flag alone, so those estimates \u2014 13 of 20 on file \u2014 drew every line as $0 with a stray quantity. Both surfaces now apply the editor\u2019s own rule: a lump-sum estimate\u2019s lines are flat. Totals were never wrong.' },
  { b:1129, d:'2026-08-29', t:'Company Documents lists its documents again', s:'Opening Company Documents drew the trade pills then hit a script error before the document list rendered, so it showed zero documents for every user \u2014 no View or Download on any master. Broken since build 1111 (the Pre-Install Guide rows arriving used a function name that exists only inside other modules). One-line fix; the build-746 regression gate now guards it.' },
@@ -76725,6 +76726,23 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
    audit cannot see it, do not "fix" it), document tick boxes (iframe, prints),
    photo tiles (155px).
    ========================================================================== */
+
+/* ---- client profile namebar (1133) ------------------------------------- */
+/* was 40x40 (.nb-ico x3 — email/text/call), 32x28 (.nb-pen), ~21x17
+   (.nb-star). The 791 band replaced the contact links that 752 HAD floored,
+   without inheriting the floor — and gate_944's walk never opens a client
+   profile, so only gate_752 could see it. min-* per this block's rule (min
+   beats the .nb-pen rule's fixed width/height without touching it); the star
+   additionally needs inline-flex because an inline span cannot honor a
+   min-height. */
+#cr-namebar .nb-ico{min-width:44px;min-height:44px;}
+/* pen + star: the 44px HIT RECT without the 39px-taller band a bare min-height
+   produced (measured 77 -> 116px at 390w). Negative margins give back the
+   layout space while the tappable rect stays 44 — the rect is real, so the
+   probe sees it; the band stays the design 788-804 shipped. Overlap with the
+   other tappables is render-proven zero. */
+#cr-namebar .nb-pen{min-width:44px;min-height:44px;margin:-8px 0;}
+#cr-namebar .nb-star{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;margin:-14px -6px;}
 
 /* ---- crews (1132) ------------------------------------------------------ */
 /* was 289x33 (text) / 289x35 (date) on the Compliance upload form — the crews
