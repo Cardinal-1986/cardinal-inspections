@@ -927,6 +927,32 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1136 — 29 Aug 2026 — the estimate document is readable across the table
+
+Theo: "a live client had a very hard time reading the estimate on my iPad and printed
+paper due to font size." Measured: the document's working text ran **8.5–10.5pt with
+table headers at 6.8–7.5pt** — under any comfortable floor on paper, worse on a scaled
+iPad preview.
+
+**The remap**, inside `buildDocHtml` ONLY (sliced, per-size counts asserted before AND
+after — a file-wide sub on values this generic is an app-wide restyle in disguise):
+working text one step up across the board — 8.5→10, 9→10.5, 9.5/10→11, 10.5→11.5pt;
+labels 6.8/7→8.5, 7.5→9, 8→9.5pt. The 13/19/24pt display sizes untouched, asserted.
+Applies to the preview, print, and every republish; stored documents keep their look
+until republished (by design — a document is a record).
+
+### Gates
+- `check_build.py` GREEN 1135 → 1136; patch byte-reproducible.
+- **`gate_1136.mjs`** — the REAL preview driven (editor on a 10-line fixture, the real
+  Preview button, the iframe's srcdoc measured standalone): body 15.3px, item cells
+  14.7px, headers 12px, smallest rendered text 11.33px (8.5pt) — all floors hold; the
+  24pt title untouched. **Printed to PDF: 3 pages on BOTH trees — the bump cost zero
+  paper on this fixture.** Control (1135 tree): RED ×2 (headers 10px, smallest 9.33px).
+
+No SQL. `index.html` + this entry + `gate_1136.mjs`.
+
+---
+
 ## Build 1135 — 29 Aug 2026 — estimate line cards open full size
 
 Theo, with screenshots: opening an estimate "starts off squished (the templates)". Two
