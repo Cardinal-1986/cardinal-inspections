@@ -30064,3 +30064,143 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
 
 ## Build 1143 — the full Service Financial plan catalog on Roof Options
 - **1143** · `GBB_PLANS` grows from 3 placeholders to the **whole Service Financial program list** (34 plans), grouped by `GBB_GROUPS` into `<optgroup>`s in the picker: **same-as-cash** (2003–2024), **0% equal-payment** (3025–3072), **deferred-interest** (1006–1024), **reduced-interest loans** (the 4xxx short/long-term, 2.99%–12.99% across 60–240 mo), and **FEMA** (4398/4316/4612/4632). Monthly math per family in `buildGbbHtml`'s `tierMonthly`: `factor` → `total × payment_factor` (Service Financial's own factor, so the number matches their sheet), `equal0` → `total / months` (0%), `fema` → `gbbMonthlyPayment(total, rate, payMonths)`, `samecash`/`defermin` → no per-column monthly (promo only). `gbbPlanFooter(plan)` builds the kind-specific footer sentence; `gbbPlanLabel(plan)` builds the dropdown option (with the plan **#** so the rep knows which to submit). A tier total outside a plan's `[min,max]` shows no monthly for that tier. **Dealer fees are deliberately NOT stored** — Cardinal's cost, and `index.html` ships publicly. Gates: `check_build` green; `gate_1142.mjs` rewritten for the four families (factor #4212 exact factor math + per-tier differ, 0% #3060 = total/60, same-as-cash #2024 promo + no "/mo", FEMA #4612 amortized, no-plan clean, and the picker groups the real catalog with ≥30 options in ≥4 optgroups; **control RED on 1142** — placeholder ids only, 4 options). `gate_1140.mjs` plan value updated to a real id (#4198) and still green. `gate_dupes`/`gate_types`(no growth)/`gate_944`/`gate_1081` green. No SQL. **Still open:** a live dealer apply-link (needs the Service Financial application URL).
+
+## Build 1145 — the light accents corrected, and the gate that passed them
+
+- **1145** · **The correction to 1144, plus four faults in the gate that let it ship.**
+  The `rb-light` sentinel sweep found two of 1144's four light accents under the
+  contrast floor. Both were measured against the LIGHTER stop of their own header
+  gradient and shipped: retail `#3970A5` and production `#976107` each read
+  **4.37:1** against the darker stop, floor 4.5. Hue held, half a shade deeper —
+  `#376CA0` (worst 4.63) and `#915D07` (worst 4.66), all 11 literals, declaration
+  and every `var(--hac,…)` fallback. Production light measured 4.64 → 4.91.
+  Dark is untouched and asserted byte-identical.
+
+  **The gate is the real content of this build.** `gate_1144.mjs` was green on the
+  failure, and once each fault was fixed the next one was still hiding it:
+
+  1. **It scored the flattering gradient stop.** Every stop was pushed into one
+     list and composited — but a gradient's stops are ALTERNATIVES at one level,
+     not stacked layers, so compositing opaque stops just returns the first.
+     `#E6ECF2` was collected and discarded. Read 4.71 where the truth was 4.37.
+     Now returns one ground per stop; the caller takes the worst.
+  2. **It never scanned the drawer.** `scan()` walked `header.site` only, while
+     the file's own banner claimed "the header and the drawer". Both flagged
+     labels are in the drawer. With fault 1 fixed it STILL reported retail light
+     as 4.62 PASS — a fix that changes a number without changing a verdict.
+  3. **The drawer never opened.** It clicked `#menuBtn`/`.burger`/`#navToggle`;
+     the button is `#navBtn`. `x` was null and `.catch(() => {})` swallowed it,
+     so every drawer element had a zero box and `scan()` skipped the lot. It now
+     PROVES the drawer opened (33 elements) rather than trusting the click.
+  4. **A flat 4.5 floor.** `size` was collected and never used, so large text was
+     judged against the body floor. Now 4.5 body / 3.0 large (WCAG), and the row
+     reports which floor judged it so a pass can never look like a relaxed one.
+
+  ⚠ Fault 4 did NOT rescue the `＋` button: it is 18px/400, so 4.5 genuinely
+  applies and it genuinely fails at **3.79:1** in retail dark. Verified against
+  the 1143 tree — it PREDATES the light-chrome work. Carried as dated debt with
+  its measured value, so a row that gets worse still fails and a row that is
+  fixed makes the entry report itself stale. Not fixed here: chasing pre-existing
+  debt surfaced by a sharper instrument is scope creep.
+
+  ⚠ **The fixed gate still does not reproduce the sentinel's 4.37 finding**, and
+  why is not yet known. Stated rather than papered over: this gate is materially
+  better and is not yet equal to the sentinel on that surface.
+
+## Build 1146 — the estimate description box stops trapping text
+
+- **1146** · **Theo, from a client's scope of work: "Can you make scrolling better
+  within the text body. It gets stuck."** It was not a scrolling problem. Past a
+  certain length the box stopped growing and the surplus became unreachable by
+  **any** gesture: measured on a real scope, **598px of box over 828px of content
+  — 28% of what he had typed**, with `scrollTop` staying 0 after both a wheel and
+  a touch drag. `overflow:hidden` on a textarea means only the caret can move it.
+
+  **Cause: two pipelines doing one job, the project's own "one pipeline per
+  concept" rule.** `autosizeDesc()` (1135) grew the box to fit; `autoGrow()` capped
+  it at 600px. `autoGrow` ran LAST — on the target's own `oninput`, after the
+  delegated capture listener — so the cap always won and 1135's fix was silently
+  undone for any long scope. `autoGrow`/`autoGrowAll` are deleted; both call sites
+  point at the survivor. Theo picked grow-to-fit from three options, so there is now
+  **no inner scroll region at all** — one scrolling surface, the page.
+
+  Two things went with it, both found while verifying rather than assumed:
+  - **`autosizeDesc` clipped 2px off the last line of EVERY description**, long or
+    short: `box-sizing:border-box` counts the 1px borders in `height` and
+    `scrollHeight` excludes them. `autoGrow`'s `+2` had been compensating. Now
+    measured off the element (`offsetHeight - clientHeight`) so a border change
+    cannot quietly restart it.
+  - **A resize re-measure.** A grow-to-fit box is sized for ONE width; rotating the
+    phone re-wraps the text taller than the height set for it and `overflow:hidden`
+    clips it again — the whole bug, back. Debounced, and gated on the editor being
+    on screen (a hidden view measures `scrollHeight` 0 and would collapse every box
+    to 38px).
+
+  `gate_1146.mjs` extracts the SHIPPED CSS rule and the SHIPPED sizer from the file
+  under test and drives a real Chromium wheel and touch drag. **RED 6 / GREEN 4 on
+  the 1145 control** (reproducing 810px unreachable, 58% of the scope, wheel
+  `scrollTop` 0), GREEN 10/10 on 1146.
+
+  ⚠ **One of its own checks was a false pass and was caught on the control.** "the
+  artifact wires a resize re-measure" tested for `addEventListener('resize'` and
+  `autosizeDescs` anywhere in 5 MB — both exist independently, so it PASSED on the
+  tree with no such wiring. Scoped to a resize handler body that actually reaches
+  the sizer. Third over-broad regex this session to produce a check that could not
+  fail; the control is the only reason any of them were found.
+
+  Regression-checked: `gate_1135` GREEN. `harness_estflat1096` and
+  `harness_estasm1098` are RED — **verified identical failure messages on the 1145
+  control, so pre-existing and not this build's.** (`renderLine threw: not found:
+  function renderLine(l, idx, total){` is a harness extracting a function by an
+  exact signature that has since drifted — a stale assertion, not an app fault.)
+
+## Build 1147 — the texts about a job link back to the job
+
+- **1147** · **Theo, with a screenshot of three Cardinal texts: "Can you also make
+  hyperlinks in anything that texts client info back to the app?"**
+
+  **The prime doctrine again: the mechanism was already built.** 1125 gave
+  `/api/notify` a `url` — validated same-site-only (a scheme or a protocol-relative
+  `//` is dropped to `/`, so a caller cannot make the route send an arbitrary
+  link), resolved against the request host, and appended to the SMS **after** the
+  320-char trim so a long subject cannot truncate it. `notifyTeam(to, subject,
+  html, url)` has taken it since. Nothing was missing but callers sending it.
+
+  Measured before building: **6 of 21 call sites carried a link** — all six the
+  punch-out/supplement family 1125 wired for Curtis. The other fifteen sent none,
+  **and every one of them names a client in its subject line.** Now **20 of 21**.
+  The twenty-first is `'Cardinal test alert'`, which names no client and has
+  nowhere to point.
+
+  ⚠ **`_notifyOrQueue(to, subject, html)` had no `url` parameter at all**, so the
+  two stage alerts in Theo's screenshot could not carry one even though notifyTeam
+  would have taken it. Threaded through, **and into the offline outbox entry and
+  its flush** — without that, an alert sent with no signal arrives on reconnect
+  stripped of the one useful part and nothing says so.
+
+  `clientLink(pid)` sits beside `punchLink(pid)`: one place that knows `#p/<id>`,
+  so twelve call sites cannot drift into twelve spellings. Punch-out alerts keep
+  `punchLink` and land on the punch-out.
+
+  **Also fixed, straight off the screenshot:** the text read *"is marked
+  COMPLETED.Next: do the final walk-around"*. The HTML→text strip dropped every
+  tag to `''`, so `</p><p>` vanished instead of becoming a space. A block END is
+  now a space; inline tags still strip to nothing, so `<b>word</b>s` stays
+  `words`. **Both strips fixed** — `notifyTeam`'s and `api/notify.js`'s — because
+  a caller may send `html` with no `body`, and then the API side builds the SMS.
+
+  `gate_1147.mjs` executes the SHIPPED helpers rather than describing them:
+  GREEN 16/16, **RED 9/5 on the 1146 control**.
+
+  ⚠ **Three faults in my own gate, each caught by the control:**
+  - it **crashed** on the control instead of reporting red — `new Function('' +
+    '; return clientLink')` throws where the function does not exist yet, and a
+    crash reads as "broken gate", not "correctly red". **BUG_CLASSES 37, again.**
+  - the one-line `punchLink` was extracted by slicing to the next `\n}`, which
+    overshot into unrelated code and reported a FALSE failure against a function
+    that was present and correct. Brace-matched now.
+  - the `api/notify.js` check is **not** selected by the path argument, so it can
+    never go red on a control. Kept, but now labelled as a working-tree check.
+
+  The link-coverage assertion is a **floor** (`>= 20`), not a tally, so coverage
+  that shrinks goes red rather than quietly reporting a smaller number.

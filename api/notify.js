@@ -143,6 +143,12 @@ export default async function handler(req, res){
     var title = String(body.title || body.subject || 'Cardinal Resource').slice(0, 120);
     var text = String(body.body || html
         .replace(/<br\s*\/?>/gi, ' ')
+        /* 1147: same fix as notifyTeam's own strip in index.html — a block END
+           is a sentence boundary. Dropping `</p><p>` to '' ran the sentences
+           together, so a text read "is marked COMPLETED.Next: do the final
+           walk-around". Both strips have to do this: a caller may send `html`
+           with no `body`, and then THIS is the one that builds the SMS. */
+        .replace(/<\/(?:p|div|li|h[1-6]|tr|blockquote)\s*>/gi, ' ')
         .replace(/<[^>]*>/g, '')
         .replace(/&nbsp;/gi, ' ')
         .replace(/\s+/g, ' ')

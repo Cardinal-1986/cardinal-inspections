@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1144<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1147<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11206,7 +11206,7 @@ function __apptNotifyProduction(f){
       'Build day set \u2014 ' + nm,
       '<p><b>' + nm + '</b> is booked for <b>' + (f.appt_date || '') + '</b>' +
       (f.appt_time ? ' at ' + f.appt_time : '') + '.</p>' +
-      (f.title ? '<p>' + String(f.title).replace(/</g, '&lt;') + '</p>' : ''))
+      (f.title ? '<p>' + String(f.title).replace(/</g, '&lt;') + '</p>' : ''), clientLink(f.project_id))
       .catch(function(){});
   }catch(_e){}
 }
@@ -12350,7 +12350,7 @@ function renderAcxOverview(){
         var __rme = (window.currentUser && window.currentUser.email) || '';
         if(asg.value && asg.value !== __rme && window.notifyTeam){
           window.notifyTeam([asg.value], 'Lead assigned to you \u2014 ' + (pr.name || 'client'),
-            '<p>' + esc(rptRepName(__rme) || __rme || 'Someone') + ' assigned you <b>' + esc(pr.name || 'a lead') + '</b>' + (pr.address ? ' \u2014 ' + esc(pr.address) : '') + '.</p><p>Open Cardinal to see it.</p>');
+            '<p>' + esc(rptRepName(__rme) || __rme || 'Someone') + ' assigned you <b>' + esc(pr.name || 'a lead') + '</b>' + (pr.address ? ' \u2014 ' + esc(pr.address) : '') + '.</p><p>Open Cardinal to see it.</p>', clientLink(pr.id));
         }
       }catch(_){}
       /* 650: keep the commission rep in step while it is still unlocked —
@@ -12834,7 +12834,7 @@ function openTaskModal(pr, idx){
         var asg = document.getElementById('tskAssign').value;
         if(asg && asg !== myEmail){
           notifyTeam([asg], 'New task \u2014 ' + (pr.name || 'client'),
-            '<p>' + esc(rptRepName(myEmail)) + ' assigned you a task on <b>' + esc(pr.name || '') + '</b>:</p><p>' + esc(d) + '</p>');
+            '<p>' + esc(rptRepName(myEmail)) + ' assigned you a task on <b>' + esc(pr.name || '') + '</b>:</p><p>' + esc(d) + '</p>', clientLink(pr.id));
         }
       }catch(err){ showError('Could not save task: ' + (err.message || err)); }
     });
@@ -16317,7 +16317,7 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       var __me = (window.currentUser && window.currentUser.email) || '';
       if(__la && __la !== __me && window.notifyTeam){
         window.notifyTeam([__la], 'New lead assigned — ' + (first + ' ' + last),
-          '<p>' + esc(rptRepName(__me) || __me || 'Someone') + ' assigned you a new lead: <b>' + esc(first + ' ' + last) + '</b>' + (addr ? ' — ' + esc(addr) : '') + '.</p><p>Open Cardinal to see it.</p>');
+          '<p>' + esc(rptRepName(__me) || __me || 'Someone') + ' assigned you a new lead: <b>' + esc(first + ' ' + last) + '</b>' + (addr ? ' — ' + esc(addr) : '') + '.</p><p>Open Cardinal to see it.</p>', clientLink(pid));
       }
     }catch(_){}
     var ad = document.getElementById('ldApptDate').value;
@@ -18480,7 +18480,7 @@ async function sendChat(){
           msg.name + ' tagged you \u2014 ' + (currentProject.name || 'a client'),
           '<p><b>' + esc(msg.name) + '</b> tagged you on <b>' + esc(currentProject.name || '') + '</b>:</p>' +
           '<blockquote>' + esc(text) + '</blockquote>' +
-          '<p>Open the client\u2019s Communications page in Cardinal Resource to reply.</p>');
+          '<p>Open the client\u2019s Communications page in Cardinal Resource to reply.</p>', clientLink(currentProject.id));
         qcNotified(to, _r);
       }
     }
@@ -19254,7 +19254,7 @@ async function setMaterialsOrdered(on){
     var _rep = on && currentProject.sales_rep;
     if(_rep && typeof window.notifyTeam === 'function' && String(_rep).toLowerCase() !== me.toLowerCase()){
       window.notifyTeam([_rep], 'Materials ordered \u2014 ' + (currentProject.name || 'your job'),
-        '<p>Materials were just marked ordered for <b>' + (currentProject.name || 'your job') + '</b>.</p>')
+        '<p>Materials were just marked ordered for <b>' + (currentProject.name || 'your job') + '</b>.</p>', clientLink(currentProject.id))
         .catch(function(){});
     }
   }catch(_e){}
@@ -19588,6 +19588,12 @@ function notifyTeam(to, subject, bodyHtml, url){
     _list = _list.filter(function(e, i){ return _list.indexOf(e) === i; });
     var _text = String(bodyHtml || '')
       .replace(/<br\s*\/?>/gi, ' ')
+      /* 1147: a block END is a sentence boundary. Stripping every tag to ''
+         ran the blocks together — Theo's screenshot reads "is marked
+         COMPLETED.Next: do the final walk-around", because `</p><p>` vanished
+         rather than becoming a space. Inline tags still strip to nothing so
+         "<b>word</b>s" does not gain one. */
+      .replace(/<\/(?:p|div|li|h[1-6]|tr|blockquote)\s*>/gi, ' ')
       .replace(/<[^>]*>/g, '')
       .replace(/&nbsp;/gi, ' ')
       .replace(/\s+/g, ' ')
@@ -19616,6 +19622,15 @@ function notifyTeam(to, subject, bodyHtml, url){
    somebody sending it. */
 function punchLink(pid){ return pid ? ('#p/' + encodeURIComponent(pid) + '/punch') : '/'; }
 window.punchLink = punchLink;
+
+/* 1147: the same rule as punchLink, for the CLIENT. 1125 gave /api/notify a
+   `url` and wired it to the six punch-out notifications; the other twelve —
+   every one of which names a client in its subject line — still sent nothing,
+   so the text a rep gets about a job had no way back into the job. The route
+   was already built and validated (same-site paths only); nothing was missing
+   but somebody sending it. #p/<id> has been in __tryRestoreFromHash since 613. */
+function clientLink(pid){ return pid ? ('#p/' + encodeURIComponent(pid)) : '/'; }
+window.clientLink = clientLink;
 
 /* 612: ONE place that turns a route report into a sentence a person can act
    on. Both "Notified" lines use it, so they cannot drift apart — the same
@@ -19760,10 +19775,15 @@ function assignedRepOf(pr){
    so it fires on reconnect. notifyTeam never throws and always returns a promise of
    {ok,reason}; we only queue on a genuine network/offline failure, not on a real
    refusal (signed out) that a present, online person would already see. */
-function _notifyOrQueue(to, subject, html){
-  function _q(){ try{ if(window.CardinalOutbox && window.CardinalOutbox.queue) window.CardinalOutbox.queue({ op:'notify', to:to, subject:subject, html:html }); }catch(_){} }
+function _notifyOrQueue(to, subject, html, url){
+  /* 1147: `url` was missing from this signature entirely, so the two stage
+     alerts (APPROVED, Job complete) could not carry a link even though
+     notifyTeam has taken one since 1125. It has to ride the OUTBOX entry too:
+     without that, an alert sent with no signal loses its link on reconnect and
+     the failure is invisible — the text still arrives, just useless. */
+  function _q(){ try{ if(window.CardinalOutbox && window.CardinalOutbox.queue) window.CardinalOutbox.queue({ op:'notify', to:to, subject:subject, html:html, url:url }); }catch(_){} }
   try{
-    Promise.resolve(notifyTeam(to, subject, html)).then(function(res){
+    Promise.resolve(notifyTeam(to, subject, html, url)).then(function(res){
       if(res && res.ok) return;
       if(!res || res.reason === 'network' || res.reason === 'offline') _q();
     }, _q);
@@ -19826,7 +19846,8 @@ async function setStage(prId, v){
          Curtis sees in his inbox, rendered in whatever font his mail client picks. */
       'APPROVED \u2014 schedule + order materials: ' + (pr.name || ''),
       '<p><b>' + esc(pr.name || '') + '</b> (' + esc(pr.address || '') + ') is now <b>APPROVED</b>.</p>' +
-      '<p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s \uD83D\uDCE6 Materials tab).</p>');
+      '<p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s \uD83D\uDCE6 Materials tab).</p>',
+      clientLink(pr.id));
   }
   if(v === 'Completed' && prev !== 'Completed'){
     var rep = assignedRepOf(pr);
@@ -19834,7 +19855,8 @@ async function setStage(prId, v){
       'Job complete \u2014 walk-around + invoice: ' + (pr.name || ''),
       '<p><b>' + esc(pr.name || '') + '</b> (' + esc(pr.address || '') + ') is marked <b>COMPLETED</b>.</p>' +
       '<p>Next: do the <b>final walk-around</b> with the client, then send the invoice. ' +
-      'Once the invoice goes out, move the client to <b>Invoiced</b>.</p>');
+      'Once the invoice goes out, move the client to <b>Invoiced</b>.</p>',
+      clientLink(pr.id));
   }
 }
 (function(){
@@ -26416,7 +26438,7 @@ document.getElementById('sigApply').addEventListener('click', async function(){
       crTell('Contract signed \u2014 project moved to APPROVED. Curtis has been notified to schedule and order materials.');
     }else if(isEstimateTitle(t)){
       notifyTeam(ADMIN_EMAILS, 'Estimate signed \u2014 needs approval: ' + t,
-        '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>');
+        '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>', clientLink(current.project_id));
       crTell('Estimate signed. It now appears in the admin Approvals queue \u2014 a contract will be generated on approval.');
     }
     await reload();
@@ -42293,6 +42315,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1147, d:'2026-08-29', t:'The texts about a job now link straight back to the job',
+  s:'Every alert that names a client \u2014 approved, job complete, lead assigned, task assigned, materials ordered, estimate signed, someone tagged you \u2014 now carries a tappable link that opens that client in the app. Before, only the six punch-out messages did; the other twelve told you a job had moved and gave you no way to get to it, so you were left searching for the name by hand. Twenty of the twenty-one alerts now carry one; the twenty-first is the test message, which names no client and has nowhere to point. Two things went with it. A text sent while you have no signal keeps its link when it finally goes out \u2014 without that it would arrive later stripped of the one useful part, and nothing would have told you. And the run-together sentence is fixed: a text used to read \u201cis marked COMPLETED.Next: do the final walk-around\u201d because the paragraph break was being deleted rather than turned into a space.' },
+{ b:1146, d:'2026-08-29', t:'Long scopes of work scroll again in the estimate editor',
+  s:'You reported that the description box on an estimate line got stuck \u2014 you could drag it and nothing moved. It was not a scrolling problem, it was worse than that: past a certain length the box stopped growing and the rest of the text became unreachable by ANY gesture. Measured on a real scope: 598 pixels of box holding 828 pixels of text, so 28 per cent of what you had typed could not be reached by a swipe, a scroll wheel or a drag \u2014 only by moving the cursor through it a line at a time. The cause was two pieces of code doing the same job and disagreeing: one grew the box to fit your text, the other capped it, and the capped one ran last and won. There is now one, and it grows to fit. However long the scope, the whole thing is on screen and the page scrolls normally \u2014 no box inside a box. Two things went with it: every description had been quietly clipping the bottom two pixels of its last line, which is now measured off the box instead of guessed; and the box re-measures itself when you rotate the phone, which without it would have brought the whole problem straight back.' },
+{ b:1145, d:'2026-08-29', t:'Two menu labels in light mode were a shade too pale',
+  s:'A correction to yesterday\u2019s light-mode build, found by the contrast sweep rather than by eye. The section headings in the side menu \u2014 \u201cDaily\u201d, \u201cOwner\u201d and the rest \u2014 were drawn in a blue that sat just under the readability floor where the header shades from light to slightly darker: 4.37 against a floor of 4.5. Production\u2019s amber had exactly the same fault and simply had not been caught. Both are now a half-shade deeper \u2014 the same colours, not new ones \u2014 and clear the floor at 4.63 and 4.66. Nothing else moves, and dark mode is untouched. The check that measured these in the first place was itself scoring the lighter end of the header and so passed a real failure; it now scores the worst point, which is the part of this that stops it happening again.' },
 { b:1144, d:'2026-08-29', t:'Light mode finally reaches the header and the menu',
   s:'You asked why the side menu stayed dark. It was: switching to light mode turned the whole app white except the header, the coloured strip under it and the slide-out menu \u2014 those three run on their own colour system, separate from the rest of the app, and it had no light version at all. They do now. Every colour was worked out rather than picked by eye, and each CRM keeps its own identity: Retail stays blue, Community green, Production amber, Sales red \u2014 the same hue, deepened until it is genuinely readable on a light background. That mattered more than it sounds: the existing accent colours were chosen for a dark background and are close to invisible on a light one \u2014 Community\u2019s mint green measured 1.2 against a readable floor of 4.5. Checked across all four CRMs in both modes: every piece of text in the header, the strip and the menu now clears the readability floor, and dark mode is byte-for-byte untouched.' },
 { b:1143, d:'2026-08-29', t:'The full Service Financial menu on Roof Options', s:'The Roof Options financing dropdown now carries your whole Service Financial program list, grouped: Same-as-cash (no payments), 0% equal-payment plans, deferred-interest plans, the reduced-interest loans (6.99%\u201312.99% across 60\u2013240 months), and the FEMA storm plans. Pick any one and each option shows its own monthly \u2014 the reduced-interest loans use Service Financial\u2019s own payment factors so the number matches their sheet exactly, the 0% plans divide evenly by the term, and the same-as-cash / deferred plans show the promo in the footer with no monthly. The plan number is on each choice so you know which one to submit. Your dealer fees are deliberately NOT in the app \u2014 that\u2019s your cost, and this file is public.' },
@@ -47893,7 +47921,13 @@ return { subtotal:subtotal, discount:discount, total:total, deposit:deposit, dep
 function autosizeDesc(el){
   if(!el) return;
   el.style.height = 'auto';
-  el.style.height = Math.max(38, el.scrollHeight) + 'px';
+  /* box-sizing is border-box, so `height` has to carry the 1px top+bottom
+     borders that scrollHeight leaves out. MEASURED off the element, not
+     hardcoded, so a border change cannot quietly start clipping again. The
+     old autoGrow() added a literal 2 for this and autosizeDesc() did not,
+     which clipped 2px off the last line of EVERY description. */
+  var bord = el.offsetHeight - el.clientHeight;
+  el.style.height = Math.max(38, el.scrollHeight + bord) + 'px';
 }
 function autosizeDescs(){
   if(!view) return;
@@ -47919,6 +47953,20 @@ view.addEventListener('change', function(){ if(state) state._dirty = true; }, tr
 view.addEventListener('input', function(e){
   if(e.target && e.target.classList && e.target.classList.contains('desc-input')) autosizeDesc(e.target);
 }, true);
+/* 1146: a grow-to-fit box is sized for ONE width. Rotate the phone, or open the
+   keyboard, and every description re-wraps TALLER than the height we set — and
+   with overflow:hidden the surplus is unreachable again, which is the whole bug
+   this build exists to kill. Re-measure on resize, debounced, and only while
+   the editor is actually on screen (a hidden view measures scrollHeight 0 and
+   would collapse every box to 38px). Wired here, once, for the same reason as
+   the listeners above: render() replaces innerHTML, not this element. */
+var __crEstSizeT = null;
+window.addEventListener('resize', function(){
+  clearTimeout(__crEstSizeT);
+  __crEstSizeT = setTimeout(function(){
+    if(view && view.classList.contains('open')) autosizeDescs();
+  }, 120);
+});
 return view;
 }
 function openEditor(project, existing){
@@ -48329,15 +48377,16 @@ secs.map(function(sc){ return '<option value="' + esc(sc.id) + '"' + ((l.section
 pricing +
 '</div>';
 }
-function autoGrow(ta){
-if(!ta) return;
-ta.style.height = 'auto';
-ta.style.height = Math.min(600, Math.max(38, ta.scrollHeight + 2)) + 'px';
-}
-function autoGrowAll(){
-if(!view) return;
-view.querySelectorAll('.desc-input').forEach(autoGrow);
-}
+/* 1146: autoGrow()/autoGrowAll() are GONE, and this comment is here so nobody
+   adds them back. They capped the description box at 600px while autosizeDesc()
+   (1135) grew it to fit; autoGrow ran LAST — on the target's own oninput, after
+   the delegated capture listener — so the cap always won and 1135's fix was
+   silently undone for any long scope. Combined with overflow:hidden on
+   .desc-input that made the overflow unreachable: measured at 598px of box over
+   828px of content, and NEITHER a wheel NOR a touch drag moves an
+   overflow:hidden textarea, so 28% of a real scope of work could not be
+   reached by any gesture. Only the caret could move it, which is exactly what
+   "it gets stuck" feels like. One pipeline now: autosizeDesc / autosizeDescs. */
 /* ---- signed URLs for the builder photo strip (step 3 of 3) ---------------
    The last in-app render still on a raw public URL. renderPhotos() is
    synchronous, and re-rendering once the signatures land would destroy a
@@ -48746,7 +48795,7 @@ line[field] = Number(v) || 0;
 refreshTotals();
 }else{
 line[field] = v;
-if(field === 'description') autoGrow(e.target);
+if(field === 'description') autosizeDesc(e.target);
 if(field === 'name') estNavRelabel(lid, v);
 }
 };
@@ -48791,7 +48840,7 @@ var secMove = row.querySelector('[data-secmove]');
 if(secMove) secMove.onchange = function(e){ moveLineToSection(lid, e.target.value); };
 });
 estNavWire();
-autoGrowAll();
+autosizeDescs();
 }
 async function handleSave(){
 save().catch(function(_){ });
@@ -53578,7 +53627,7 @@ async function markOrdered(pid){
     if(pr.sales_rep && typeof window.notifyTeam === 'function' &&
        String(pr.sales_rep).toLowerCase() !== String(me).toLowerCase()){
       window.notifyTeam([pr.sales_rep], 'Materials ordered \u2014 ' + (pr.name || 'your job'),
-        '<p>Materials were just marked ordered for <b>' + esc(pr.name || 'your job') + '</b>.</p>')
+        '<p>Materials were just marked ordered for <b>' + esc(pr.name || 'your job') + '</b>.</p>', clientLink(pr.id))
         .catch(function(){});
     }
   }catch(_e){}
@@ -56161,7 +56210,7 @@ var _r = await window.notifyTeam(to,
 '<p><b>' + esc(msg.name) + '</b> tagged you on the punch out <b>' + esc(it.title) + '</b>' +
 ((pr && pr.name) ? ' at <b>' + esc(pr.name) + '</b>' : '') + ':</p>' +
 '<blockquote>' + esc(text) + '</blockquote>' +
-'<p>Open the job’s Punch Outs page in Cardinal Resource to reply.</p>');
+'<p>Open the job’s Punch Outs page in Cardinal Resource to reply.</p>', punchLink(it.project_id));
 var th = document.querySelector('#ppPage .pp-thread');
 if(th){
 var d = document.createElement('div');
@@ -61551,9 +61600,9 @@ body[data-crm-head="community"] .site{--htint:#047857;--hbg:#047857;--hln:#0a926
    measure 1.20-3.37:1 (community #A7F3D0 is 1.20 - invisible). Each is the
    same hue deepened, the 557/1127 rule, so the CRM still reads as itself.
    ⚠ The DARK rules above are untouched byte-for-byte. */
-:root[data-theme="rb-light"] body[data-crm-head="retail"] .site{--htint:#F0F4F7;--hbg:linear-gradient(180deg,#F0F4F7,#E6ECF2);--hln:#D5DDE4;--hin:#2B3D4F;--hmt:#435F7B;--hdm:#4F7091;--hac:#3970A5;--hoc:#E0E7EE;--hsf:#F7F9FA}
+:root[data-theme="rb-light"] body[data-crm-head="retail"] .site{--htint:#F0F4F7;--hbg:linear-gradient(180deg,#F0F4F7,#E6ECF2);--hln:#D5DDE4;--hin:#2B3D4F;--hmt:#435F7B;--hdm:#4F7091;--hac:#376CA0;--hoc:#E0E7EE;--hsf:#F7F9FA}
 :root[data-theme="rb-light"] body[data-crm-head="community"] .site{--htint:#F0F7F5;--hbg:linear-gradient(180deg,#F0F7F5,#E6F2EE);--hln:#D5E4E0;--hin:#1A4438;--hmt:#316657;--hdm:#417969;--hac:#117C4B;--hoc:#E0EEEA;--hsf:#F7FBF9}
-:root[data-theme="rb-light"] body[data-crm-head="production"] .site{--htint:#F2F3F5;--hbg:linear-gradient(180deg,#F2F3F5,#E9EBEF);--hln:#D8DBE1;--hin:#353C47;--hmt:#525C6E;--hdm:#626E83;--hac:#976107;--hoc:#E3E6EA;--hsf:#F8F8FA}
+:root[data-theme="rb-light"] body[data-crm-head="production"] .site{--htint:#F2F3F5;--hbg:linear-gradient(180deg,#F2F3F5,#E9EBEF);--hln:#D8DBE1;--hin:#353C47;--hmt:#525C6E;--hdm:#626E83;--hac:#915D07;--hoc:#E3E6EA;--hsf:#F8F8FA}
 :root[data-theme="rb-light"] body[data-crm-head="sales"] .site{--htint:#F6F2F1;--hbg:linear-gradient(180deg,#F6F2F1,#F0EAE7);--hln:#E4DAD5;--hin:#4B362E;--hmt:#745547;--hdm:#8B6655;--hac:#D0211B;--hoc:#EDE4E1;--hsf:#FAF8F7}
 header.site #navMenu,header.site #newMenu{z-index:95}#cr-hd2-ribbon{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-bottom:3px solid var(--racc,var(--red));background:linear-gradient(168deg,var(--rb1,#241518) 0%,var(--rb2,#170f11) 48%,var(--rb3,#221407) 100%)}#cr-hd2-ribbon::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--rh1,#c8202e) 30%,var(--rh2,#e35c63) 50%,var(--rh1,#c8202e) 70%,transparent)}#cr-hd2-ribbon #qClock,#cr-hd2-ribbon #cbCtx{display:block;max-width:100%;margin:0;color:#fff;font:800 13.5px/1.2 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-ribbon #cbCtx{display:none}#cr-hd2-ribbon #cbCtx small{color:#B57EDC;font-size:.9em;margin-right:4px;font-weight:800}body.projopen #cr-hd2-ribbon #qClock{display:none}body.projopen #cr-hd2-ribbon #cbCtx{display:block}#cr-hd2-ribbon{padding-left:56px;padding-right:56px;min-height:52px}#cr-hd2-home{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:rgba(200,32,46,.08);border:1px solid #c8202e;color:#e35c63;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}#cr-hd2-home svg{display:block;width:17px;height:17px}#cr-home-btn{display:none}#cr-hd2-bar{border-bottom:2px solid transparent;border-image:linear-gradient(90deg,transparent,var(--hac,#8fb4d8) 25%,#b9d3ec 50%,var(--hac,#8fb4d8) 75%,transparent) 1}body[data-crm-head="insurance"] #cr-hd2-bar,body[data-crm-head="community"] #cr-hd2-bar,body[data-crm-head="production"] #cr-hd2-bar,body[data-crm-head="sales"] #cr-hd2-bar{border-image:none;border-bottom:1px solid var(--hln,#ddd6cf)}#cardinalTruthView,#insClientsView,#resourceLibraryView,#crewsView{top:var(--headh,110px) !important;z-index:60 !important}#cr-ih-bar{display:none}#insClientsView .ins-header,#resourceLibraryView .ins-header{display:none}#resourceLibraryView .rl-search{top:0}body.viewing-community-hub footer.site{display:none}body[data-crm="community"]{background:var(--ccm-ground,#0e100f)}body[data-crm="insurance"]{background:var(--ct-bg)}.dashcard,section.history{border-color:var(--rbe-panelbd)}.cr-est-body{max-width:100vw;box-sizing:border-box}.cr-est-head{max-width:100vw;box-sizing:border-box}.cr-est-body{overflow-x:hidden}.cr-est-body input,.cr-est-body select,.cr-est-body textarea{min-width:0;max-width:100%;box-sizing:border-box}.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}
 /* 697: the rule above was the ONLY guarded horizontal scroller in the file;
@@ -63472,7 +63521,7 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
   color:var(--hin,#2B3D4F);
   /* its own ground was still dark (#33414f measured under the light header),
      so the ink alone could not clear the floor — the SURFACE had to follow. */
-  background:color-mix(in srgb,var(--hac,#3970A5) 10%,#ffffff);
+  background:color-mix(in srgb,var(--hac,#376CA0) 10%,#ffffff);
   border-color:rgba(0,0,0,.20);}
 /* ⚠ and it needs the ID to win. `#cr-hd2-bar .cr-ib` is (1,1,1); anything
    scoped to `header.site ...` is (0,2,2) and LOSES, which is why the ink kept
@@ -63481,7 +63530,7 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
    control was the first. Scope to the ID or do not bother writing the rule. */
 :root[data-theme="rb-light"] #cr-hd2-bar .cr-ib{color:var(--hin,#2B3D4F);}
 :root[data-theme="rb-light"] #cr-hd2-bar .cr-ib:hover{
-  color:var(--hin,#2B3D4F);border-color:var(--hac,#3970A5);}
+  color:var(--hin,#2B3D4F);border-color:var(--hac,#376CA0);}
 /* ⚠ #addProjectBtn is not chrome text — it is a FILLED accent button that paints
    its own gradient (#b9d3ec -> #8fb4d8, the DARK accent), and it carries an ID so
    every rule above lost to it. Treating it as text was the wrong shape: it wants
@@ -63489,8 +63538,8 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
    per CRM: 5.20 / 5.24 / 5.21 / 5.36:1. */
 :root[data-theme="rb-light"] #cr-hd2-bar #addProjectBtn,
 :root[data-theme="rb-light"] header.site #addProjectBtn{
-  background:var(--hac,#3970A5) !important;color:#ffffff !important;
-  border-color:var(--hac,#3970A5) !important;}
+  background:var(--hac,#376CA0) !important;color:#ffffff !important;
+  border-color:var(--hac,#376CA0) !important;}
 #crBanner .cbmenu{display:none;position:absolute;top:100%;left:0;min-width:215px;background:var(--bink);
   border:1px solid var(--bline);border-radius:0 0 12px 12px;box-shadow:0 18px 40px rgba(0,0,0,.55);z-index:210;padding:6px 0;}
 #crBanner .cbdd.open .cbmenu{display:block;}
@@ -64989,7 +65038,7 @@ async function notifyAssignedBoard(id, email){
       'Assigned to you: ' + (it.title || 'a punch-out'),
       '<p>You were assigned a punch-out at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p>' +
       '<p>' + esc(it.title || '') + '</p>' +
-      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtDate(it.scheduled_at)) + fmtSchedClock(it.scheduled_time) + '</p>' : ''));
+      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtDate(it.scheduled_at)) + fmtSchedClock(it.scheduled_time) + '</p>' : ''), punchLink(it.project_id));
     return (typeof window.notifyOutcomeText === 'function') ? window.notifyOutcomeText(res, [email]) : '';
   }catch(_){ return ''; }
 }
@@ -80123,7 +80172,7 @@ function flush(){
            buried, so it never shows a red 'refused' chip a person can't act on. */
         if(row.op === 'notify'){
           var nf = (typeof window.notifyTeam === 'function')
-            ? Promise.resolve(window.notifyTeam(row.to, row.subject, row.html))
+            ? Promise.resolve(window.notifyTeam(row.to, row.subject, row.html, row.url))
             : Promise.resolve({ ok:false, reason:'network' });
           return nf.then(function(res){
             if(res && res.ok){ sentSome = true; return del(row.id).then(function(){ return false; }); }
@@ -82169,22 +82218,22 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
    Measured on the WORST of the four CRM panels: item ink 13.0:1, muted and
    chevron 5.2:1, accent 4.6:1. Separators are borders, so no text floor. */
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu{
-  background:color-mix(in srgb,var(--hac,#3970A5) 9%,#ffffff) !important;
+  background:color-mix(in srgb,var(--hac,#376CA0) 9%,#ffffff) !important;
   box-shadow:2px 0 30px rgba(0,0,0,.18) !important;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .cr-drawer-head{
   border-bottom:1px solid rgba(0,0,0,.10);}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navopt{color:#1F2733 !important;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navopt + .navopt{
-  border-top:1px solid color-mix(in srgb,var(--hac,#3970A5) 16%,transparent) !important;}
+  border-top:1px solid color-mix(in srgb,var(--hac,#376CA0) 16%,transparent) !important;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navopt:hover,
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navopt:active{
-  background:color-mix(in srgb,var(--hac,#3970A5) 12%,transparent) !important;
+  background:color-mix(in srgb,var(--hac,#376CA0) 12%,transparent) !important;
   color:#131A23 !important;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navopt::after{color:#5A6472;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navsec{
-  border-top:1px solid color-mix(in srgb,var(--hac,#3970A5) 16%,transparent) !important;}
+  border-top:1px solid color-mix(in srgb,var(--hac,#376CA0) 16%,transparent) !important;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navsec:active{
-  background:color-mix(in srgb,var(--hac,#3970A5) 12%,transparent) !important;}
+  background:color-mix(in srgb,var(--hac,#376CA0) 12%,transparent) !important;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navsec::after{color:#5A6472;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{
   border-top:1px dashed rgba(0,0,0,.16) !important;}
