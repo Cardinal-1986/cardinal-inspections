@@ -143,24 +143,32 @@ const MEASURE = `(sel) => {
     mute2: getComputedStyle(document.documentElement).getPropertyValue('--rbe-mute2').trim() }));
   ok(tok.mute2.toLowerCase() === '#9aa0a8',
      'the dark --rbe-mute2 is the measured value (' + tok.mute2 + ')');
-  /* ⚠ This assertion is deliberately the REVERSE of what a first draft asserted.
-     I wanted mute2 to stay a visible step dimmer than mute and wrote a check
-     saying so — but --rbe-mute is itself the dimmest grey clearing 4.5 on the
-     binding ground (4.82:1), so anything dimmer cannot be readable there. The
-     hierarchy and the floor cannot both hold on this surface. Asserting the
-     collapse is how the next person learns it was a decision and not a slip. */
-  ok(tok.mute.toLowerCase() === tok.mute2.toLowerCase(),
-     'mute and mute2 are deliberately EQUAL on dark (' + tok.mute + ') — the floor ' +
-     'wins over the two-level hierarchy; restoring both needs --rbe-mute lifted too');
+  /* ⚠ SUPERSEDED BY 1128, and left here rather than deleted so the reversal is
+     legible. 1127 asserted mute === mute2 on dark, because --rbe-mute was then
+     the dimmest grey clearing 4.5 on the binding ground and nothing dimmer could
+     be readable — so the floor beat the hierarchy and the collapse was recorded
+     as a decision. 1128 took the third option neither of us had costed: LIFT the
+     brighter level instead of dimming the quieter one, which makes room beneath
+     it. Both now clear the floor AND read as two levels. What this gate should
+     assert is therefore the opposite, and gate_1128.mjs owns the ladder. */
+  ok(tok.mute.toLowerCase() !== tok.mute2.toLowerCase(),
+     'mute and mute2 are two colours again (' + tok.mute + ' vs ' + tok.mute2 +
+     ') — 1127 collapsed them, 1128 restored the step by lifting mute');
   await p.close();
 }
 
 /* ── the light twin was deliberately NOT changed; prove it is still there ─ */
 {
   const src = readFileSync(FILE, 'utf8');
-  ok(/--rbe-mute:#6b6b6b;--rbe-mute2:#8a8a8a;/.test(src),
-     'the LIGHT twin is untouched — a light render found nothing using it, so it was ' +
-     'not changed on arithmetic alone');
+  /* ⚠ 1127 asserted the light twin stayed #6b6b6b/#8a8a8a, on the grounds that a
+     light render found NOTHING using mute2. That render walked ONE screen. Swept
+     across ten, light mute2 has three consumers — and one is the punch-out
+     description, still at 3.22:1 in light after 1127 "fixed" it in dark. Light
+     mute was failing too, at 4.35:1 on a cream ground. 1128 fixed both. The
+     lesson kept here: a single-screen render is not a theme audit. */
+  ok(/--rbe-mute:#585858;--rbe-mute2:#6e6e6e;/.test(src),
+     'the LIGHT pair is fixed too (1128) — 1127 skipped it on a one-screen render ' +
+     'that wrongly concluded nothing used it');
 }
 
 await b.close();

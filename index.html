@@ -3900,7 +3900,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      THIRD time main's footer has arrived carrying a summary, so if you are
      resolving this hunk a fourth time: ours wins, and it is not a judgement
      call. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1127<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1128<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29305,7 +29305,17 @@ body.claim-insurance #brandLogo{
      elements actually resolving to it, so that is an unverified number
      against an assumed ground, not a measured defect. Measure it on a screen
      that really uses it before changing it. */
-  --rbe-mute:#9aa0a8;--rbe-mute2:#9aa0a8;
+  /* 1128: 1127 set mute2 to #9aa0a8 to clear the 4.5 floor and, because
+     --rbe-mute was ALREADY the dimmest grey that clears it there, the two
+     collapsed into one colour. Two token names, one value, no hierarchy.
+     The fix is not to dim mute2 again - that is what was unreadable - but to
+     LIFT mute, which makes room beneath it. Measured on the binding ground
+     #2E333B (.pu-card's gradient light stop, the worst real ground either
+     token sits on): pagetext 9.86 -> mute 6.79 -> mute2 4.82, steps of 1.45x
+     and 1.41x. Three levels that read as three, all above the floor.
+     116 consumers, every one on a dark ground, so a lighter grey only ever
+     raises contrast - the change cannot make anything harder to read. */
+  --rbe-mute:#b8bec6;--rbe-mute2:#9aa0a8;
   --rbe-link:#6db3f2;
   --rbe-line:#232329;--rbe-line2:#2b2b33;--rbe-line3:#3a3a44;
   --rbe-panel:#16161B;--rbe-panel2:#101015;--rbe-panelbd:#24242c;--rbe-railbg:#0E0E12;
@@ -29327,7 +29337,18 @@ body.claim-insurance #brandLogo{
 }
 :root[data-theme="rb-light"]{
   --rbe-accdk:#2d5578;--rbe-acc:#3d6485;--rbe-acclt:#4f7396;
-  --rbe-mute:#6b6b6b;--rbe-mute2:#8a8a8a;
+  /* 1128: ⚠ 1127 left this pair alone on the strength of a light-theme render
+     that found ZERO elements using mute2 - and that render only walked the
+     CLIENT screen. Swept across ten states it finds three, and the punch-out
+     description is one of them: the same line 1127 fixed in dark was still
+     at 3.22:1 in light. That is the 'measure BOTH themes' rule, and I broke
+     it by measuring one screen and generalising.
+     Light is dark's collision mirrored: contrast comes from going DARKER, and
+     --rbe-mute (#6b6b6b) was itself only 4.97 on the worst measured ground
+     (#f7f7f7), leaving no room beneath it. Both move: pagetext 13.40 ->
+     mute 6.64 -> mute2 4.76, a 1.40x step. 70 consumers, all on light
+     grounds, so darker only ever raises contrast. */
+  --rbe-mute:#585858;--rbe-mute2:#6e6e6e;
   --rbe-link:#c8202e;
   --rbe-line:#e2e2e2;--rbe-line2:#e2e2e2;--rbe-line3:#3d6485;
   --rbe-panel:#fafafa;--rbe-panel2:#ffffff;--rbe-panelbd:#e2e2e2;--rbe-railbg:#ffffff;
@@ -42167,6 +42188,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1128, d:'2026-08-28', t:'The two levels of grey text are two levels again \u2014 in both themes',
+  s:'Yesterday\u2019s readability fix had a cost, and this pays it. The app uses two shades of grey for secondary text \u2014 one for \u201Cquieter than the main text\u201D and a second for \u201Cquieter still\u201D. Build 1127 had to brighten the quieter one to make it readable on a roof, and it landed on exactly the shade the first one was already using, so two levels became one and a deliberate bit of visual hierarchy quietly disappeared. Rather than dim it back \u2014 which is what was unreadable in the first place \u2014 the brighter level moves further up, making room underneath. Three distinct levels now, evenly spaced, every one of them comfortably readable. Light mode got the same treatment, and there it also fixed something that was still broken: the punch-out description that 1127 repaired in dark mode was still too faint in light, at 3.22 against a floor of 4.5. That was missed because the check ran on one screen and the conclusion was drawn for the whole app; sweeping ten screens found it. Nothing anywhere gets fainter \u2014 every one of the 186 places these two greys are used gains contrast or keeps what it had.' },
 { b:1127, d:'2026-08-28', t:'Three unreadable labels, found by reading 195 sweep findings',
   s:'A visual sweep of the whole app had been reporting 195 findings for a while and nobody had read them. Read: 120 were the browser cascade working normally, 44 were style rules that lose to another rule, 27 were the sweep telling us it had truncated its own list, and one was wrong \u2014 it said a button missed the 44px touch size when it actually renders 183x44. That left three real ones, all of them text too faint to read. The punch-out description on a punch card was the worst at 3.05:1 against a 4.5 floor \u2014 the screen a project manager reads standing on a roof \u2014 and it turned out not to be one label at all: it comes from a shared grey used in 21 places that was under the floor on every dark background in the app, from 2.6 to 4.2. The sweep only caught the one that happened to be on screen. That grey is now lighter everywhere, measured at 6.89:1 on the page and 4.99:1 on a card, and still a visible step dimmer than the grey above it so the two levels of emphasis stay distinct. The other two were the Roofing and Gutters headers in the estimate line-item library, at 3.77:1 and 3.68:1. Their four sibling trade colours already passed, so these two were stragglers rather than a broken palette: each was deepened without changing its hue, so the six still read as one colour-coded family. The light-mode version of the shared grey looks wrong on paper too, but a light-mode render found nothing actually using it \u2014 so it was left alone rather than changed on a number nobody has seen fail.' },
 { b:1126, d:'2026-08-28', t:'A dead push channel no longer silences email and text',

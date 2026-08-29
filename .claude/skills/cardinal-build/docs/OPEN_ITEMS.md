@@ -21,18 +21,29 @@
 
 **What is still open from this triage, and deliberately not done:**
 
-1. **`--rbe-mute` and `--rbe-mute2` are now the same colour on dark** (`#9aa0a8`). The
-   floor beat the two-level hierarchy — see the 1127 build-log entry. Restoring two
-   readable levels means lifting `--rbe-mute` (say `#b6bcc4` / `#9aa0a8`): a second
-   token, its own consumers, its own grounds. **A build of its own.**
-2. **The light `--rbe-mute2` (`#8a8a8a`) is unverified.** 3.45:1 on white by arithmetic,
-   but a light-theme render found **zero** elements resolving to it. Measure it on a
-   screen that really uses it before touching it.
+1. ✅ **DONE at 1128 — `--rbe-mute` and `--rbe-mute2` are two colours again.** Lifting
+   the brighter level (rather than dimming the quieter one back) made room beneath it:
+   dark `#b8bec6`/`#9aa0a8`, light `#585858`/`#6e6e6e`, every level above the floor in
+   both themes.
+2. ⚠️ **CORRECTED at 1128 — the claim below was WRONG and is kept so the error is
+   legible.** It said a light-theme render found **zero** elements using `--rbe-mute2`.
+   That render walked **one screen**. Across ten states there are three, and one is the
+   punch-out description — still at **3.22:1 in light** after 1127 "fixed" it in dark.
+   Light `--rbe-mute` was failing too, at 4.35:1 on a cream ground. Both fixed at 1128.
+   *A single-screen render is not a theme audit.*
 3. **The 44 DEAD findings were not individually read** — the class has never produced a
    confirmed defect here, and the listing is truncated anyway. If DEAD is ever to be
    trusted, the per-render cap has to go up first.
 4. **`sentinel_probe.js`'s FLOOR check should measure the box**, not the declaration
    (BUG_CLASSES 79). Until then expect this false positive on every sweep.
+5. **`--rbe-pagemute2` (dark `#6d747e`) still carries the grey 1127 replaced.** Checked
+   at 1128 and deliberately left: it feeds `--cr-muted-2` in the Estimates namespace,
+   whose **29 consumers are borders, a disabled button background and icon glyphs, not
+   body text**, so the 4.5 floor does not apply. Revisit only if it starts dressing text.
+6. **The sentinel's ground walk composites alpha only in `gate_1128`'s probe, not in
+   `sentinel_probe.js`.** BUG_CLASSES 80 — a translucent wash scored at full strength
+   produces spectacular false positives (a 6% gold hero read as 1.57:1; the truth is
+   6.97:1). Porting the blend into the shared probe would remove a whole class of noise.
 
 ⚠️ **Do not re-file the 191.** They are noise *as classified above*, not "unknown".
 
