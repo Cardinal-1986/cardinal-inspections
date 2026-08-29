@@ -30064,3 +30064,45 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
 
 ## Build 1143 — the full Service Financial plan catalog on Roof Options
 - **1143** · `GBB_PLANS` grows from 3 placeholders to the **whole Service Financial program list** (34 plans), grouped by `GBB_GROUPS` into `<optgroup>`s in the picker: **same-as-cash** (2003–2024), **0% equal-payment** (3025–3072), **deferred-interest** (1006–1024), **reduced-interest loans** (the 4xxx short/long-term, 2.99%–12.99% across 60–240 mo), and **FEMA** (4398/4316/4612/4632). Monthly math per family in `buildGbbHtml`'s `tierMonthly`: `factor` → `total × payment_factor` (Service Financial's own factor, so the number matches their sheet), `equal0` → `total / months` (0%), `fema` → `gbbMonthlyPayment(total, rate, payMonths)`, `samecash`/`defermin` → no per-column monthly (promo only). `gbbPlanFooter(plan)` builds the kind-specific footer sentence; `gbbPlanLabel(plan)` builds the dropdown option (with the plan **#** so the rep knows which to submit). A tier total outside a plan's `[min,max]` shows no monthly for that tier. **Dealer fees are deliberately NOT stored** — Cardinal's cost, and `index.html` ships publicly. Gates: `check_build` green; `gate_1142.mjs` rewritten for the four families (factor #4212 exact factor math + per-tier differ, 0% #3060 = total/60, same-as-cash #2024 promo + no "/mo", FEMA #4612 amortized, no-plan clean, and the picker groups the real catalog with ≥30 options in ≥4 optgroups; **control RED on 1142** — placeholder ids only, 4 options). `gate_1140.mjs` plan value updated to a real id (#4198) and still green. `gate_dupes`/`gate_types`(no growth)/`gate_944`/`gate_1081` green. No SQL. **Still open:** a live dealer apply-link (needs the Service Financial application URL).
+
+## Build 1145 — the light accents corrected, and the gate that passed them
+
+- **1145** · **The correction to 1144, plus four faults in the gate that let it ship.**
+  The `rb-light` sentinel sweep found two of 1144's four light accents under the
+  contrast floor. Both were measured against the LIGHTER stop of their own header
+  gradient and shipped: retail `#3970A5` and production `#976107` each read
+  **4.37:1** against the darker stop, floor 4.5. Hue held, half a shade deeper —
+  `#376CA0` (worst 4.63) and `#915D07` (worst 4.66), all 11 literals, declaration
+  and every `var(--hac,…)` fallback. Production light measured 4.64 → 4.91.
+  Dark is untouched and asserted byte-identical.
+
+  **The gate is the real content of this build.** `gate_1144.mjs` was green on the
+  failure, and once each fault was fixed the next one was still hiding it:
+
+  1. **It scored the flattering gradient stop.** Every stop was pushed into one
+     list and composited — but a gradient's stops are ALTERNATIVES at one level,
+     not stacked layers, so compositing opaque stops just returns the first.
+     `#E6ECF2` was collected and discarded. Read 4.71 where the truth was 4.37.
+     Now returns one ground per stop; the caller takes the worst.
+  2. **It never scanned the drawer.** `scan()` walked `header.site` only, while
+     the file's own banner claimed "the header and the drawer". Both flagged
+     labels are in the drawer. With fault 1 fixed it STILL reported retail light
+     as 4.62 PASS — a fix that changes a number without changing a verdict.
+  3. **The drawer never opened.** It clicked `#menuBtn`/`.burger`/`#navToggle`;
+     the button is `#navBtn`. `x` was null and `.catch(() => {})` swallowed it,
+     so every drawer element had a zero box and `scan()` skipped the lot. It now
+     PROVES the drawer opened (33 elements) rather than trusting the click.
+  4. **A flat 4.5 floor.** `size` was collected and never used, so large text was
+     judged against the body floor. Now 4.5 body / 3.0 large (WCAG), and the row
+     reports which floor judged it so a pass can never look like a relaxed one.
+
+  ⚠ Fault 4 did NOT rescue the `＋` button: it is 18px/400, so 4.5 genuinely
+  applies and it genuinely fails at **3.79:1** in retail dark. Verified against
+  the 1143 tree — it PREDATES the light-chrome work. Carried as dated debt with
+  its measured value, so a row that gets worse still fails and a row that is
+  fixed makes the entry report itself stale. Not fixed here: chasing pre-existing
+  debt surfaced by a sharper instrument is scope creep.
+
+  ⚠ **The fixed gate still does not reproduce the sentinel's 4.37 finding**, and
+  why is not yet known. Stated rather than papered over: this gate is materially
+  better and is not yet equal to the sentinel on that surface.
