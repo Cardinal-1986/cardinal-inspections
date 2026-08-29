@@ -124,7 +124,7 @@ try {
     /* 1142: pick a financing plan (the manual monthly input is gone) */
     const planSel = pick.querySelector('[data-slot="gbbp-plan"]');
     if (!planSel) out.fail.push('picker: financing plan dropdown missing');
-    else planSel.value = 'sf-699-60';
+    else planSel.value = '4198';  /* 6.99% / 60 mo reduced-interest */
     pick.querySelector('[data-act="gbbp-go"]').click();
     await new Promise(function(res){ setTimeout(res, 500); });
     if (!created) out.fail.push('Generate did not call db.create');

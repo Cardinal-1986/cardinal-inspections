@@ -1,18 +1,24 @@
-/* gate_1142.mjs — build 1142: Service Financial plans on Roof Options.
+/* gate_1142.mjs — Service Financial plans on Roof Options (1142, catalog 1143).
  *
- * A financing-plan dropdown drives buildGbbHtml, which computes each tier's
- * monthly from its OWN total via amortization. Three plans:
- *   9.99% / 120 mo, 6.99% / 60 mo (amortizing), 24 mo no-payment (deferred).
+ * buildGbbHtml(tiers, project, plan) computes each tier's monthly per plan
+ * family:
+ *   factor  -> total x payment factor   (reduced-interest loans)
+ *   equal0  -> total / months           (0% equal payments)
+ *   fema    -> amortize over the paying term at the stated rate
+ *   samecash / defermin -> NO per-column monthly; promo in the footer.
  *
- * Proves against the real, exported buildGbbHtml(tiers, project, plan):
- *   1. an amortizing plan renders each tier's own computed "$X/mo" (matching
- *      the amortization formula), they DIFFER by price, and the footer names
- *      the APR, term, "Service Financial" and "W.A.C.".
- *   2. a deferred plan shows the no-payment promo in the footer and NO "/mo".
- *   3. no plan → no financing line at all.
- *   4. the picker carries the three real plans in its dropdown.
- * Control (1141 tree): RED — buildGbbHtml ignores the plan arg and there is no
- * financing dropdown.
+ * Proves against the real, exported buildGbbHtml, using the shipped catalog
+ * ids (window.CardinalEstimatePublish exposes buildGbbHtml + openOptions):
+ *   1. a reduced-interest plan (#4212, 9.99% / 60, factor 2.12%) renders each
+ *      tier's own total x 2.12%, they DIFFER by price, footer names APR/term/
+ *      lender/W.A.C.
+ *   2. a 0% equal-payment plan (#3060) renders total / 60.
+ *   3. a same-as-cash plan (#2024) shows the promo footer and NO "/mo".
+ *   4. a FEMA plan (#4612) renders an amortized "/mo".
+ *   5. no plan -> no financing.
+ *   6. the picker groups the catalog into <optgroup>s carrying the real ids.
+ * Control (1142 tree, placeholder plans): RED — those ids don't exist / the
+ * factor math and optgroups aren't there.
  * Run: node gate_1142.mjs [artifact]
  */
 import { readFileSync, existsSync } from 'fs';
@@ -49,32 +55,41 @@ try {
   const tiers = [ { est:estOf('e1',41800), label:'Oakridge' },
                   { est:estOf('e2',46783), label:'Duration' },
                   { est:estOf('e3',52140), label:'STORM' } ];
-  // the app's own math + formatting, replicated to assert an exact string
-  function pay(P0, apr, n){ var r=(apr/100)/12; return r===0 ? P0/n : P0*r/(1-Math.pow(1+r,-n)); }
   function moStr(v){ return '$' + v.toLocaleString('en-US',{maximumFractionDigits:0}) + '/mo'; }
+  function amort(P0, apr, n){ var r=(apr/100)/12; return r===0 ? P0/n : P0*r/(1-Math.pow(1+r,-n)); }
 
-  /* ---- 1: amortizing plan (9.99% / 120) ---- */
-  const plan999 = { id:'sf-999-120', kind:'amort', apr:9.99, months:120 };
-  const doc = P.buildGbbHtml(tiers, project, plan999);
-  const expect = tiers.map(t => moStr(pay(t.est.total, 9.99, 120)));
-  expect.forEach((m, i) => { if (doc.indexOf(m) === -1) out.fail.push('tier '+i+' missing computed monthly '+m); });
+  /* ---- 1: reduced-interest factor plan #4212 (9.99% / 60, factor 2.12%) ---- */
+  const p4212 = { id:'4212', group:'reduced', kind:'factor', rate:9.99, months:60, factor:2.12, min:1000, max:100000 };
+  const doc = P.buildGbbHtml(tiers, project, p4212);
+  const expect = tiers.map(t => moStr(t.est.total * 2.12 / 100));
+  expect.forEach((m, i) => { if (doc.indexOf(m) === -1) out.fail.push('tier '+i+' missing factor monthly '+m); });
   if (expect[0] === expect[2]) out.fail.push('monthlies do not differ by price');
-  if (doc.indexOf('9.99% APR for 120 months through Service Financial') === -1) out.fail.push('footer missing APR/term/lender');
+  if (doc.indexOf('9.99% APR \\u00b7 60 months through Service Financial') === -1 && doc.indexOf('9.99% APR \u00b7 60 months through Service Financial') === -1) out.fail.push('footer missing APR/term/lender');
   if (doc.indexOf('W.A.C.') === -1) out.fail.push('footer missing W.A.C.');
-  // the cheapest tier's monthly should be less than the priciest
-  if (!(pay(41800,9.99,120) < pay(52140,9.99,120))) out.fail.push('math ordering wrong');
 
-  /* ---- 2: deferred plan (24 mo no payment) ---- */
-  const planDef = { id:'sf-defer24', kind:'defer', apr:0, months:24 };
-  const docD = P.buildGbbHtml(tiers, project, planDef);
-  if (docD.indexOf('24 months no payment, no interest through Service Financial') === -1) out.fail.push('deferred: promo footer missing');
-  if (/class="gbb-mo">or about/.test(docD)) out.fail.push('deferred: should show no per-column monthly');
+  /* ---- 2: 0% equal-payment plan #3060 -> total / 60 ---- */
+  const p3060 = { id:'3060', group:'equal0', kind:'equal0', months:60, min:1000, max:100000 };
+  const doc0 = P.buildGbbHtml(tiers, project, p3060);
+  if (doc0.indexOf(moStr(46783/60)) === -1) out.fail.push('0% plan: wrong equal monthly');
+  if (doc0.indexOf('0% interest') === -1) out.fail.push('0% plan: footer missing');
 
-  /* ---- 3: no plan -> no financing ---- */
+  /* ---- 3: same-as-cash #2024 -> promo, no per-column monthly ---- */
+  const p2024 = { id:'2024', group:'samecash', kind:'samecash', months:24, min:1000, max:100000 };
+  const docC = P.buildGbbHtml(tiers, project, p2024);
+  if (docC.indexOf('same as cash') === -1) out.fail.push('same-as-cash: promo footer missing');
+  if (/class="gbb-mo">or about/.test(docC)) out.fail.push('same-as-cash: should show no per-column monthly');
+
+  /* ---- 4: FEMA #4612 (6 defer, 60 pay, 9.99%) -> amortized /mo ---- */
+  const p4612 = { id:'4612', group:'fema', kind:'fema', deferMonths:6, payMonths:60, rate:9.99, months:60, min:500, max:100000 };
+  const docF = P.buildGbbHtml(tiers, project, p4612);
+  if (docF.indexOf(moStr(amort(46783, 9.99, 60))) === -1) out.fail.push('FEMA: wrong amortized monthly');
+  if (docF.indexOf('6 months no payment') === -1) out.fail.push('FEMA: footer missing defer period');
+
+  /* ---- 5: no plan -> no financing ---- */
   const docN = P.buildGbbHtml(tiers, project, null);
   if (docN.indexOf('through Service Financial') !== -1 || /or about \\$/.test(docN)) out.fail.push('no-plan doc still shows financing');
 
-  /* ---- 4: the picker carries the three real plans ---- */
+  /* ---- 6: the picker groups the real catalog ---- */
   if (typeof P.openOptions === 'function') {
     window.CardinalEstimates.currentProject = function(){ return project; };
     window.CardinalEstimates.loadForProject = function(){ return Promise.resolve(tiers.map(t=>t.est)); };
@@ -83,9 +98,12 @@ try {
     const sel = document.querySelector('#cr-gbb-pick .gbbp-plan');
     if (!sel) out.fail.push('picker: no financing dropdown');
     else {
+      const groups = sel.querySelectorAll('optgroup');
+      if (groups.length < 4) out.fail.push('picker: expected >=4 optgroups, got ' + groups.length);
       const vals = Array.from(sel.options).map(o => o.value);
-      ['sf-999-120','sf-699-60','sf-defer24'].forEach(id => { if (vals.indexOf(id) === -1) out.fail.push('picker: plan missing '+id); });
+      ['4212','3060','2024','4612','4132'].forEach(id => { if (vals.indexOf(id) === -1) out.fail.push('picker: plan missing #'+id); });
       if (vals.indexOf('') === -1) out.fail.push('picker: no "None" option');
+      if (vals.length < 30) out.fail.push('picker: catalog looks short (' + vals.length + ' options)');
     }
   } else { out.fail.push('openOptions not exported'); }
 
@@ -100,7 +118,7 @@ try {
 await browser.close();
 
 if (r && r.ok) {
-  console.log('gate_1142 GREEN — computed monthlies, deferred promo, and the plan dropdown all wired');
+  console.log('gate_1142 GREEN — factor/0%/same-as-cash/FEMA math and the grouped catalog all wired');
   process.exit(0);
 } else {
   console.log('gate_1142 RED');
