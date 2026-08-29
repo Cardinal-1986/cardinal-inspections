@@ -4193,3 +4193,30 @@ population is not empty.**
 
 ⚠️ And a mechanical trap in the same file: the probe is a **template literal**, so
 a backtick inside one of its comments ends the string and the file stops parsing.
+
+---
+
+## 82 — a theme override scoped to a class, beaten by an ID it never looked for
+
+**Build 1144**, twice in one build, with an identical symptom both times: the
+override is written, the gate stays red, and the ink keeps reporting the old
+value as though the rule were never added.
+
+| the winner | specificity | my override | specificity |
+|---|---|---|---|
+| `#navMenu .cr-ts button[aria-pressed="true"]` | (1,2,1) | `:root[data-theme] header.site button` | (0,2,2) |
+| `#cr-hd2-bar .cr-ib` | (1,1,1) | `:root[data-theme] header.site button.cr-ib` | (0,2,2) |
+
+**An ID beats any number of classes and attributes.** `:root[data-theme="…"]`
+feels like it should win because it is "more scoped" — it adds an attribute, not
+an id, so it does not.
+
+**Before writing a theme override, ask the BROWSER which rule currently wins**
+(walk `document.styleSheets`, `el.matches(rule.selectorText)`) rather than
+grepping for the selector you expect. Both of these were invisible to a grep of
+the stylesheet I was editing, because the winner lived in a different block.
+
+⚠️ **And check the SHAPE, not just the colour.** `#addProjectBtn` swallowed four
+successive ink rules because it is a *filled* accent button painting its own
+gradient, not text on chrome. The fix was to keep it filled in the light accent
+with white on top — no ink rule would ever have been right.

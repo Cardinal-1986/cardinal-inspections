@@ -29674,6 +29674,70 @@ No SQL (reuses `estimates`, the existing insert path). `index.html` + this entry
 
 ---
 
+## Build 1144 — light chrome: the header, the banner and the drawer follow the theme
+
+Theo, of the drawer: *"why dark mode?"* Measured: in light mode the page went
+white and **three** surfaces stayed dark, because they run on their own per-CRM
+`--h*` / `--b*` token systems rather than on `--rbe-*`.
+
+**He was offered three options and picked the third**, which was the right call:
+leave it · light drawer only · light chrome throughout. A light drawer alone
+would have hung a white panel off a dark navy header.
+
+### ⚠ Two corrections to what I told him first
+
+- I said the drawer "looks like it simply never got a light twin." **Wrong** —
+  it is wired to the header's tokens on purpose, so it inherited a decision
+  rather than missing one.
+- I said the header was `#000000` in both themes. **Wrong, and it is BUG_CLASSES
+  78/80 again**: the header paints a GRADIENT, so `backgroundColor` reads
+  `rgba(0,0,0,0)` and my hex converter turned that into black. It is dark navy
+  `#243342 → #16202b`. The conclusion held; the number did not.
+
+### The accents could not carry over
+
+Every `--hac` is picked for a dark ground. On light: retail **2.02**, community
+**1.20** (invisible), production **1.89**, sales **3.37**. Each light twin is the
+same hue deepened until it clears 4.5 on **both** the header ground and the
+drawer panel it itself tints — solved by iteration, since the panel is
+`color-mix(accent 9%, #fff)` and therefore moves with the accent.
+
+| CRM | dark | light | on header / on panel |
+|---|---|---|---|
+| retail | `#8fb4d8` | `#3970A5` | 4.73 / 4.64 |
+| community | `#A7F3D0` | `#117C4B` | 4.83 / 4.64 |
+| production | `#f5a623` | `#976107` | 4.72 / 4.65 |
+| sales | `#e8544f` | `#D0211B` | 4.81 / 4.63 |
+
+### ⚠ Light chrome is not one surface — it took SIX passes to find them all
+
+Each round the gate found fewer, and each was a separate system:
+`--h*` tokens → the header's own hardcoded `#fff !important` inks →
+`cr-drawer-styles` → **`cr-textsize-styles`** (the A/A/A control) → the Admin row
+in `cr-menu-styles` → **`#crBanner`**, a third token system with its own per-CRM
+darks (`#15171b`, community `#08211a`, insurance `#1a0e0d`).
+**Overriding one stylesheet and calling the surface done is how a light pass ends
+up six elements short.**
+
+### ⚠ The specificity trap, twice in one build (BUG_CLASSES 82)
+
+`#navMenu .cr-ts button` and `#cr-hd2-bar .cr-ib` both carry an **ID** — (1,2,1)
+and (1,1,1). Anything scoped to `header.site …` is (0,2,2) and **loses**. Both
+times the symptom was identical: the rule was written, the gate stayed red, and
+the ink kept reading as the old value. **Scope to the ID or do not bother.**
+
+And `#addProjectBtn` was the wrong SHAPE, not the wrong colour: a filled accent
+button painting its own gradient, which four successive text-ink rules lost to.
+It stays filled, in the light accent, white on top (5.20–5.36:1).
+
+**Gate.** `gate_1144.mjs` — GREEN 27 / **RED 11 on 1143**, no crash. Walks all
+four CRMs × both themes, scoring every text in the header, banner and drawer
+against its composited ground; asserts the theme actually changes, that each
+accent has a light twin, the 11px floor, and that **the dark rules are
+byte-identical** — a light twin that moves dark is a regression.
+
+---
+
 ## Build 1137 — the Owner Console becomes a hub
 
 Theo: *"The owner console is just 1 looooong page. Can we make it more presentable

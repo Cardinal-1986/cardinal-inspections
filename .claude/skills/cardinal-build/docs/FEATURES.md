@@ -7622,6 +7622,16 @@ The homeowner's "Roof Installation Information & Pre-Install Guide" (what to exp
 
 ## Owner Console: drawer section + Strategy cockpit (build 1113)
 
+⚠️ **As of build 1144 the CHROME follows the theme.** The header, the `#crBanner`
+strip and the slide-out drawer were the last surfaces that ignored `rb-light` —
+they run on their own per-CRM `--h*` / `--b*` tokens, not `--rbe-*`, and had no
+light values at all. Each CRM now has a computed light set (ground, three ink
+levels, a deepened accent), hue held. ⚠️ **The dark accents cannot be reused on
+light** — retail 2.02, community 1.20, production 1.89, sales 3.37:1. Light
+chrome is SIX stylesheets, not one: `--h*` tokens, the header's own `#fff
+!important` inks, `cr-drawer-styles`, `cr-textsize-styles`, `cr-menu-styles`'s
+Admin row, and `#crBanner`. Gate: `gate_1144.mjs` (4 CRMs × 2 themes).
+
 ⚠️ **As of build 1137 the console opens on a HUB, not a single scroll.** Seven cards
 (Today · On the horizon · Renewals · Reminders · The Ledger · The Vault · Strategy),
 each with a live figure; tap one to open that area alone; a back bar returns to the hub.
