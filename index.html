@@ -3905,7 +3905,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1137<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1138<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42253,7 +42253,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1137, d:'2026-08-29', t:'The Owner Console is a hub now, not one long scroll',
+{ b:1138, d:'2026-08-29', t:'Duplicate an estimate', s:'Open a saved estimate and the toolbar now has Duplicate: it copies the whole thing \u2014 every line, section, deposit and note \u2014 into a fresh draft titled \u201c\u2026 (copy)\u201d that you can re-price and save on its own. Use it to build a second option for the same client, or to start the next client from a job just like theirs. The original is never touched, and the copy gets its own estimate number when you save it.' },
+ { b:1137, d:'2026-08-29', t:'The Owner Console is a hub now, not one long scroll',
   s:'Your words: \u201Cthe owner console is just 1 looooong page.\u201D It was \u2014 eight sections stacked into one scroller, 2,907px on a phone, which is three and a half screenfuls. And that was measured with every list EMPTY, so in real use it was longer than that, never shorter. It now opens on a hub: one card per area \u2014 Today, On the horizon, Renewals, Reminders, The Ledger, The Vault, Strategy \u2014 and each card carries its own live figure, so the question \u201Cdoes anything need me today\u201D is answered before you tap anything. Tap a card to open that area on its own; the back button at the top left returns you to the hub. On a desktop the cards go two across. The hub is 1,376px, a little over one and a half screens, and the areas themselves are unchanged \u2014 each one is exactly the section that was already there, just no longer stacked on top of the other seven. Your phone\u2019s own back gesture works properly too: back from an area returns to the hub, and back again leaves the console, instead of throwing you out to the home screen from three levels deep.' },
 { b:1136, d:'2026-08-29', t:'The estimate document is readable across the table', s:'A client had a hard time reading an estimate on the iPad and on paper \u2014 the document\u2019s working text ran 8.5\u201310.5pt with table headers under 7pt. Every working size moved up one step (body and line descriptions to 10\u201311pt-plus, labels to 8.5\u20139.5pt); the headings and the big totals were already large and stay as they were. Applies to the preview, the printed page and every newly published estimate; already-published documents keep their stored look until republished.' },
  { b:1135, d:'2026-08-29', t:'Estimate line cards open full size', s:'Opening an estimate \u2014 especially one built from a template \u2014 showed each line\u2019s description squeezed to a line and a half with the rest cut off, and long item names ran underneath the up/down/remove buttons. Descriptions now open at their full height and stay sized while you type; names stop short of the buttons.' },
@@ -47927,7 +47928,7 @@ view.innerHTML =
 '<button data-act="close" type="button">Close</button>' +
 /* 524: only on a SAVED estimate - there is nothing to delete before the first
    save, and an enabled Delete on a blank draft is a trap. */
-(s.id ? '<button class="danger" data-act="del" type="button">Delete</button>' : '') +
+(s.id ? '<button class="danger" data-act="del" type="button">Delete</button>' + '<button data-act="dup" type="button" title="Copy this estimate to a new draft you can price separately">Duplicate</button>' : '') +
 '<span class="estnum" title="The estimate number is assigned on first save">' + esc(s.estimate_number || (s.id ? '' : 'auto \u2116')) + '</span>' +
 '<h2>' + esc(s.id ? 'Edit Estimate' : 'New Estimate') + '</h2>' +
 '<button class="primary" data-act="save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
@@ -48511,6 +48512,8 @@ else crTell('Publish is still loading \u2014 give it a second and tap again.');
 };
 /* guarded, unlike its neighbours: the Delete button only exists on a saved
    estimate, and wire() otherwise dereferences querySelector() straight away. */
+var dupBtn = view.querySelector('[data-act="dup"]');
+if(dupBtn) dupBtn.onclick = function(){ duplicateEstimate(); };
 var delBtn = view.querySelector('[data-act="del"]');
 if(delBtn) delBtn.onclick = function(){
 /* 1026: state carries `project` (the object) — state.project_id was always
@@ -48719,6 +48722,32 @@ save().catch(function(_){ });
    for the editor to close — which save-in-place would have silently broken.
    Resolves with the saved DB row; rejects AFTER telling the user why, so a
    caller must not alert again (776: never silent, never doubled). */
+function duplicateEstimate(){
+  var s = state;
+  if(!s || !s.project || !s.project.id){ crTell('Open an estimate first.'); return; }
+  /* Copy the fields openEditor's existing-branch reads, with NO id/doc ids and
+     a cleared number, so saving inserts a new row. Line ids are re-minted by
+     openEditor. The original stays exactly as it is on disk. */
+  var copy = {
+    project_id     : s.project.id,
+    estimate_number: '',
+    title          : (s.title || 'Estimate') + ' (copy)',
+    status         : 'draft',
+    line_items     : (s.lines || []).map(function(l){
+      var o = {}; Object.keys(l).forEach(function(k){ if(k !== '_lid') o[k] = l[k]; }); return o;
+    }),
+    photos         : (s.photos || []).slice(),
+    itemized       : s.itemized !== false,
+    discount       : s.discount,
+    deposit_pct    : s.deposit_pct,
+    valid_days     : s.valid_days,
+    valid_through  : null,
+    notes          : s.notes,
+    payment_instructions: s.payment_instructions
+  };
+  openEditor(s.project, copy);
+  if(typeof crTell === 'function') crTell('Copied to a new draft \u2014 edit it and Save to keep it. The original is unchanged.');
+}
 async function save(){
 var s = state;
 if(!s) throw new Error('No estimate open');

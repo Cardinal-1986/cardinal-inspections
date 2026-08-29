@@ -29615,6 +29615,35 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
 
+## Build 1138 — 29 Aug 2026 — duplicate an estimate
+
+First of Theo's four estimate-builder asks (duplicate → editable templates →
+good/better/best → one-tap-to-signed). The prime doctrine paid: the editor already
+takes `(project, existing)` and inserts a new row when `existing` has no id, so
+"duplicate" is a data transform, not a new pipeline.
+
+**What shipped.** A **Duplicate** button beside Delete in the editor toolbar, on saved
+estimates only (same `s.id` guard). It copies the LIVE state — every line (re-minted ids),
+photos, deposit, notes, itemized flag — into a fresh draft titled "… (copy)", with no id,
+no estimate_number and status draft, then `openEditor(project, copy)`. Saving the copy
+INSERTS (a new number is assigned); the original on disk is never touched. Uses for a
+roofer: a second priced option for the same client, or starting the next client from a job
+just like theirs.
+
+### Gates
+- `check_build.py` GREEN 1137 → 1138; patch byte-reproducible.
+- **`gate_1138.mjs`** — Chromium, real editor, real button: the copy carries both source
+  lines, the editor becomes a NEW draft, and **saving it does 1 insert / 0 updates** (the
+  original row is not overwritten), title "… (copy)", total 46000.00, no id in the payload.
+  **Control (1137 tree): RED — no button.**
+- `gate_dupes` GREEN. `gate_types` **rebaselined** (+2 TS2339): the copy's `o[k]=l[k]` line
+  builder is the same DOM-untyped index idiom `save()` already uses; the ReferenceError
+  class (TS2304) did not grow.
+
+No SQL (reuses `estimates`, the existing insert path). `index.html` + this entry + `gate_1138.mjs`.
+
+---
+
 ## Build 1137 — the Owner Console becomes a hub
 
 Theo: *"The owner console is just 1 looooong page. Can we make it more presentable
