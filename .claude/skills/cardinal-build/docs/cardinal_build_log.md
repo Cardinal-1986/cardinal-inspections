@@ -30304,3 +30304,38 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
   the guard statement itself and to the ORDER of the two guards; and one check
   FAILED the correct fix because `[^\n]{0,200}` stopped at the first newline and
   never reached the `showError` two lines down. Fix the test when the test is wrong.
+
+## Build 1150 — the second signature pad is bound to its contract too
+
+- **1150** · Companion to 1149, closing the same class on the OTHER signing path
+  **before it can fire**. Theo, on being told it existed: *"take care of 2"*.
+
+  `window.openSigner(contract, cb)` accepted the document to sign and **threw it
+  away** — it armed `__ceSigner` and opened the pad, and the destination was
+  decided at APPLY time by the caller's closure over `CURRENT`. Identical shape
+  to the 1149 incident: nothing tied the pen to a document.
+
+  **It has never bitten because the `contracts` table has zero rows** — which is
+  precisely why it was worth fixing now. The moment that screen has data, a
+  second contract opened behind the pad, a reload, or a stale view puts the
+  signature on the wrong row with no error.
+
+  The pad now records `__ceSignerId` from the `contract` it is handed, `sigApply`
+  passes it back as a second argument, `sigCancel` clears it, and
+  `onContractSigned(pngDataUrl, armedId)` **refuses on a mismatch before writing
+  anything** — the guard sits ahead of `homeowner_signature`, asserted by
+  position (`guard@392 < write@753`) rather than by its presence. An unsaved
+  contract is refused up front instead of opening a pad that could not have
+  saved anything.
+
+  `gate_1150.mjs`: **GREEN 10/10 · RED 9/1 on the 1149 control.**
+  `gate_1149` and `gate_1149b` re-run green — the two pads do not interfere.
+
+### The incident record — Kimberly Lawson, resolved
+  Theo's call, taken after he spoke to the client: **strip the signature, leave
+  the roofing contract to be signed properly.** Done on `7f1777ba`:
+  171,826 → 154,845 chars (the 16,981-char signature PNG removed), the
+  "Signed August 29, 2026" label restored to "Client Acceptance | Date", both
+  signature columns symmetric and blank again, one PNG left (the logo).
+  **The pre-strip row is preserved in `_sig_incident_backup_20260829`.**
+  `924dbd32` (Contract — Roofing) was never touched at any point.
