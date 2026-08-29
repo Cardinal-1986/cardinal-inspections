@@ -927,6 +927,44 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1134 — 29 Aug 2026 — Edit estimate, straight from the finished document
+
+Theo: "make drafted estimates editable just like when you're adding the templates in."
+Audited first (prime doctrine): the builder already edits drafts from every list — the
+profile's saved rows, the Estimates-screen lanes (568/1033), Community's Open bid (710) —
+with every line a live input. The gap was the **published estimate document**: opened from
+Documents it is a flat rendering with no way back to the builder except back-out-and-hunt.
+
+**What shipped.** An **Edit estimate** button in the doc editor's toolbar, shown only for
+estimate-titled documents (keyed on `titleInput` — `current` carries no title, and the
+live input honours a rename). Click: resolve the estimates row by `doc_id` /
+`contract_doc_id`, **falling back to the `EST-YYYY-NNNN` title prefix** (the doc_id
+write-back is a known swallowed failure, 474 audit); close the document (saving it, under
+`__histLock` — see below); open the builder on that row. A document with no live estimate
+says so honestly instead of guessing.
+
+**Two conventions the rig caught before ship, both would have hit real phones:**
+- The visibility call first sat inside `frame.onload`'s post-load try — where one throwing
+  wire silently hides it (the sigBtn fragility, inherited). Moved beside
+  `setEditorStatus()`: title-keyed, frame-independent.
+- Without **`__histLock`** around `closeEditor()`, the history machinery restored the
+  document it had just watched close — the doc re-opened over the builder and stripped its
+  `open` class. The `edClientChip` direct-route shape, same lock, same reason.
+
+### Gates
+- `check_build.py` GREEN 1133 → 1134; patch byte-reproducible (consolidated script,
+  `cmp` equal).
+- **`gate_1134.mjs`** — Chromium, data layer stubbed for two docs + one estimates row,
+  app functions run as shipped: button shows on the estimate doc, stays hidden on an
+  inspection doc, click closes the doc and opens the builder on the resolved row
+  (title-prefix fallback path exercised — doc_id deliberately absent), zero page errors.
+  **Control (1133 tree): RED — no button.**
+- `gate_dupes` GREEN (new names unique); `gate_types` GREEN (error count fell by 1).
+
+No SQL. `index.html` + this entry + `gate_1134.mjs`.
+
+---
+
 ## Build 1133 — 29 Aug 2026 — the profile's call/text/email icons reach the tap minimum
 
 Fourth and last live defect from the gate-suite triage: `gate_752` (the original 44px

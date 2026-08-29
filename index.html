@@ -3902,7 +3902,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      call.
      1133: the fourth time. Resolved as instructed — version bumped, no
      summary; 1129-1133's summaries are in the CHANGELOG. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1133<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1134<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8458,6 +8458,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <span id="edSecondary"><button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
       <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
       <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
+      <button class="btn dark" id="editEstBtn" style="display:none;" data-cri="pencil" title="Reopen this estimate in the builder — Publish there updates this document"><span class="bl">Edit estimate</span></button>
       <button class="btn dark" id="addFieldBtn" data-cri="plus"><span class="bl">&#65291; Field</span></button>
       <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
       <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
@@ -25442,6 +25443,9 @@ async function openEditor(id){
     }
   })();
   setEditorStatus(r.status, r.sent_at, r.signed_at);
+  /* 1134: keyed on the title alone, so it must not sit inside the frame's
+     post-load try — one throwing wire there would silently hide it. */
+  refreshEditEstBtn();
   savedFlash.textContent = '';
   rccGate();
   frame.srcdoc = r.html;
@@ -25786,6 +25790,7 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
 });
 
 /* ---- email to client ---- */
+document.getElementById('editEstBtn').addEventListener('click', editEstimateFromDoc);
 document.getElementById('emailDocBtn').addEventListener('click', async function(){
   var btn = this;
   var _bl = btn.querySelector('.bl') || btn;
@@ -26096,6 +26101,53 @@ function refreshSigBtn(){
   var b = document.getElementById('sigBtn');
   if(!b) return;
   b.style.display = (doc && (doc.querySelector('.sign') || doc.querySelector('[data-sig]'))) ? 'inline-block' : 'none';
+}
+/* 1134: a published estimate document is a rendering of a live estimates row —
+   the builder is one tap away instead of back-out-and-hunt. Shown only for
+   estimate-titled docs; everything else keeps its toolbar as it was. */
+function refreshEditEstBtn(){
+  /* current carries no title; titleInput is the module's live title (it is what
+     saveCurrent persists), so a rename while open is honoured too. */
+  var b = document.getElementById('editEstBtn');
+  if(!b) return;
+  var t = titleInput ? titleInput.value : '';
+  b.style.display = (current && isEstimateTitle(t)) ? 'inline-block' : 'none';
+}
+async function editEstimateFromDoc(){
+  var cur = current;
+  if(!cur) return;
+  var E = window.CardinalEstimates;
+  if(!E || typeof E.openEditor !== 'function' || typeof E.loadForProject !== 'function'){
+    crTell('The estimate builder has not loaded yet — try again in a moment.');
+    return;
+  }
+  var pid = cur.project_id;
+  if(!pid){
+    crTell('This document is not linked to a client, so its estimate cannot be found.');
+    return;
+  }
+  var rows = [];
+  try{ rows = (await E.loadForProject(pid)) || []; }catch(_){ }
+  var docId = cur.id;
+  var row = rows.find(function(x){ return x.doc_id === docId || x.contract_doc_id === docId; });
+  if(!row){
+    /* The doc_id write-back after publish is a KNOWN swallowed failure (474
+       audit) — fall back to the number publish() stamps into the title
+       (EST-YYYY-NNNN, build 1015). */
+    var m = /^(EST-\d{4}-\d+)/.exec(((titleInput && titleInput.value) || '').trim());
+    if(m) row = rows.find(function(x){ return x.estimate_number === m[1]; });
+  }
+  if(!row){
+    crTell('No live estimate is linked to this document — it may predate the builder. Open it from the client’s Estimates list instead.');
+    return;
+  }
+  /* The edClientChip direct-route shape: without __histLock the history
+     machinery restores the editor it just watched close — the doc re-opens
+     over the builder. Same lock, same reason. */
+  __histLock = true;
+  try{ await closeEditor(); }   /* saves this document first */
+  finally { __histLock = false; }
+  E.openEditor(pid, row);
 }
 /* The caret, and whether the document allows a field there. Returns null with a
    reason rather than a bare false — "nothing happened" is the worst answer a
@@ -42194,7 +42246,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1133, d:'2026-08-29', t:'The profile\u2019s call/text/email icons reach the tap minimum', s:'The client profile\u2019s contact icons, edit pencil and favourite star were 21\u201340px \u2014 under the app\u2019s 44px touch floor \u2014 since the 791 profile rebuild replaced the old floored links. All five now meet the floor with the band looking exactly as before — only the tap area grew. Tap-to-call on a roof, with gloves, is the whole point of the floor.' },
+{ b:1134, d:'2026-08-29', t:'Edit estimate \u2014 straight from the finished document', s:'Open a published estimate document and the toolbar now offers Edit estimate: one tap closes the document (saving it first) and reopens that estimate in the builder with every line editable \u2014 the same screen as building from a template. Publish there updates the same document. Documents that predate the builder say so instead of guessing.' },
+ { b:1133, d:'2026-08-29', t:'The profile\u2019s call/text/email icons reach the tap minimum', s:'The client profile\u2019s contact icons, edit pencil and favourite star were 21\u201340px \u2014 under the app\u2019s 44px touch floor \u2014 since the 791 profile rebuild replaced the old floored links. All five now meet the floor with the band looking exactly as before — only the tap area grew. Tap-to-call on a roof, with gloves, is the whole point of the floor.' },
  { b:1132, d:'2026-08-29', t:'Crews form fields reach the 44px touch minimum', s:'The Crews screen predates the app-wide 44px touch pass (build 752), and its check missed the screen because the test data had no crews until later \u2014 so its text and date fields sat at 33\u201335px on a phone. Floored now. The Labor Rates table\u2019s dense cells are left alone on purpose; say the word if those should grow too.' },
  { b:1131, d:'2026-08-29', t:'The chase list\u2019s mark-chased button styles apply again', s:'Its font rule used a shorthand form CSS defines as invalid (inherit inside font:), which browsers drop whole \u2014 the 600 weight and 12px size never rendered. Slipped in at build 1056, after the 983 sweep that removed 30 of the same mistake. Now longhand; the 983 gate holds the standard at zero again.' },
  { b:1130, d:'2026-08-29', t:'Old lump-sum estimates render right outside the editor', s:'Estimates saved before build 1096 carry no per-line pricing flag, and only the editor back-fills it. The Community estimate sheet and newly published documents read the flag alone, so those estimates \u2014 13 of 20 on file \u2014 drew every line as $0 with a stray quantity. Both surfaces now apply the editor\u2019s own rule: a lump-sum estimate\u2019s lines are flat. Totals were never wrong.' },
