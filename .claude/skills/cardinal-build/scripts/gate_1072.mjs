@@ -69,8 +69,11 @@ async function callRoute(file, body, { geminiOk = true } = {}) {
 console.log('A · the routes (executed as shipped)');
 const IMG = 'data:image/jpeg;base64,' + Buffer.from('x').toString('base64');
 const CASES = [
-  ['A1', 'api/summarize.js', { captions: ['granule loss'] },        'gemini-3.5-flash'],
-  ['A2', 'api/caption.js',   { image: IMG },                        'gemini-3.5-flash'],
+  /* summarize + caption moved to the 3.6-led ladder after this gate shipped;
+     the subject here is that each route REPORTS its model, not which model
+     leads — C1/C3 hold the ladders. */
+  ['A1', 'api/summarize.js', { captions: ['granule loss'] },        'gemini-3.6-flash'],
+  ['A2', 'api/caption.js',   { image: IMG },                        'gemini-3.6-flash'],
   ['A3', 'api/analyze.js',   { image: IMG, prompt: 'what is this' }, 'gemini-3.5-flash'],
 ];
 for (const [id, file, body, primary] of CASES) {
@@ -144,9 +147,13 @@ console.log('\nC · no ladder moved — this build reports, it does not decide')
     ? ok('C2 — analyze.js is still pinned to 3.5')
     : bad('C2 — analyze.js is still pinned to 3.5', 'MODEL changed');
 
-  rd('api/summarize.js').includes('models/gemini-3.5-flash')
-    ? ok('C3 — summarize.js still calls 3.5')
-    : bad('C3 — summarize.js still calls 3.5', 'the URL changed');
+  /* C3 once pinned the literal URL 'models/gemini-3.5-flash'; summarize.js
+     later became a 3.6->3.5 ladder that builds the URL from GEMINI_MODELS, so
+     the string moved while the contract held — an assertion pinned to
+     punctuation (CLAUDE.md). Assert the ladder, the same shape as C1. */
+  rd('api/summarize.js').includes("GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash']")
+    ? ok('C3 — summarize.js ladder still 3.6 then 3.5')
+    : bad('C3 — summarize.js ladder still 3.6 then 3.5', 'the ladder changed');
 
   /* the report drafter's flash, and it must be conditional */
   const I = rd('index.html');
