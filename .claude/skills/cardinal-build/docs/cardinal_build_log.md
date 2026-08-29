@@ -29302,3 +29302,464 @@ Theo handed over the siding and windows guide PDFs the same session 1111 (roof) 
 - No dark mode (client documents). No new API route.
 
 Gates: check_build.py green (stamp 1111→1112, marker `preinstall_windows` + negative control). **`harness_guide1112.js`** (jsdom, shipped module) GREEN on 1112 / RED on 1111 — 26 assertions: the trade→guide map (incl. Roofing-wins + untagged→roof + gutters→none), auto-send picking the right guide (correct title + trade-specific content in the senddoc payload), the no-guide skip, per-(job,guide) once-guard, `docsRows` filtering + slugs + admin-gating, and manual send. `harness_guide1111.js` updated for the new semantics (siding/windows now send their own guide; gutters is the skip case) and stays GREEN. SQL ships + runs before the HTML.
+
+## Build 1113 — Owner drawer section + an Owner Console Strategy cockpit
+
+Theo: *"Make an owner section in the drawer slide out and add in the owner console"* + a business plan, deep competitor research, and a KPI cockpit. He picked **recurring revenue** as the plan's spine and *"in the Owner Console + a page."* Light mode only (the console is already the cream "Daily Brief" editorial surface, build 895).
+
+- **Prior art honored.** The Owner Console already exists (`cr-owner` / `CardinalOwner`, build 895) — admin-only morning brief (Top 10, tax/BWC/1099 calendar, expirations, Ledger, Vault). It was reached via a lone "Owner Console" item tucked under the **Admin** drawer section. This build gives it **its own "Owner" section** (`makeSec('cr-nav-sec-owner','Owner')`, inserted before Admin) and grows the console.
+- **New Strategy section in the console** (`strategyHTML()`, composed into `render()` before the footer): an editable **Business Plan** (the recurring-revenue play — Cardinal Care membership + retail financing) and an editable **Market & Competitors** summary (Miami Valley), plus a **9-tile KPI scoreboard** (members/MRR, renewal rate, close rate, avg job value, AR aging, lead-source ROI, crew utilization, claims-per-member, reviews captured).
+- **Storage reuses `company_templates`** (build 1111) — slugs `owner_biz_plan` + `owner_competitors`, seeded by `owner_strategy_seed.sql` (non-clobbering, applied). `loadAll()` fetches them in an isolated try/catch so a Strategy hiccup never breaks the console. Admin **Edit** → a textarea of the content → **Save** upserts `company_templates` (admin-only RLS is the authority); non-admins see the content read-only (no Edit).
+- **The research + the plan also shipped as a standalone light-mode Strategy Brief** (an Artifact) — the recurring-revenue plan, a sourced 13-competitor Miami Valley analysis, and the KPI scoreboard. Key finding baked into the moves: Cardinal is OC *Preferred* while four rivals are OC *Platinum*; customer-facing claim transparency is unclaimed white space; a maintenance membership is near-total white space (which is why recurring revenue is both the growth play and the differentiation).
+- Contrast (cream palette): section red 5.58:1, body ink 12.5:1, KPI navy 12.5:1, dims 4.8–7.6:1; the sub-label was 3.59:1 → `#6b5f54` (5.54:1).
+
+Gates: check_build.py green (stamp 1112→1113, marker `cr-nav-sec-owner` + negative control). **`harness_owner1113.js`** (jsdom, drives the shipped `open()`/`render()` with mocked tables) GREEN on 1113 / RED on 1112 — the Strategy section renders both docs + 9 KPI tiles, admin Edit→textarea→Save upserts company_templates, the save re-renders, non-admins get no Edit, and the drawer "Owner" section wiring landed. Seed SQL runs before the HTML.
+
+## Build 1114 — the header says "Retail", and the pipeline cards say L P A C I
+
+Theo, with a home screenshot: *"Can you get rid of the single source of truth on the header and just put Retail. Also ok the pipeline stage cards, just put letters. L P A C I Closed On Hold."*
+
+**The header.** `TITLES_HTML` (435) existed for exactly one purpose — painting the retail slogan in two tones, which is why it was markup and every other portal was plain text. With the slogan gone the map has no entries, so **the whole mechanism is deleted at source** rather than left as an empty object nobody feeds: the `var`, its consumer branch in `skin()`, its three `span.hq/.hg/.hr` inks, the retail-only `American Typewriter` 17px/nowrap face, and **1065's `@media (max-width:437px)` hide**. That hide is the one worth noting — it existed because "Single source of truth" needs 247px and a 390px phone header gives it 150px, so **retail was the one portal whose header name went blank on a phone**. A six-letter word fits at every width; retail now inherits the same 20px rule as Insurance, Community, Production and Sales Floor. One `TITLES` map, five portals.
+
+- The remaining guard is `h1.textContent !== TITLES[kh]`, a compare against a **plain string** — not the 567 `paintChip` shape (source markup vs. the browser's serialization of it, which could never match and wrote on 5 of 5 guarded passes). Proven to settle: two extra `skin()` calls produce **zero** mutation records.
+
+**The pipeline.** `PIPE_BUCKETS` gains **`short`** — the label the card prints (`L P A C I Closed On Hold`). Every bucket keeps its full `label`, which still computes the sphere glyph and the new `aria-label`, so this is **one vocabulary with a printed short form**, not a second set of stage names to fall out of step. Closed and On Hold keep words: `C` is already Completed's and a lone `O` reads as nothing.
+
+⚠ **`PIPE_SKIP` lost retail's `OnHold` entry, and that is the substantive half of this build.** The skip's own comment says it exists to stop *"a permanently empty sixth column"* — an **empty-column rule**, and it had stopped being true. Measured against production before the edit rather than assumed: **one retail job sits at `OnHold`** (Maker Space Solutions LLC) and **one at `Closed`** (Carl Bolivar, whose checklist walks `t_Prospect → t_Approved → t_Scheduled → t_Completed → t_Invoiced → t_Closed`). Both were real work the dashboard **could not show anywhere**. So retail goes from five cards to seven, `Closed` is a **new bucket** — `.pipe-closed`'s full gradient has been sitting unused in the stylesheet since the palette was authored, so it is un-buried, not invented — and insurance keeps its On Hold skip, because a claim does not wait on a grant.
+
+- `aria-label` carries the full stage name. `title=` holds the tip, which is a description, not a label, and a lone "L" announced on its own is not a name.
+- `data-stg` is untouched, so the click-to-filter handler and `openLeadsView()` are unchanged.
+
+⚠ **The seven cards did not fit a phone, and the row is a SCROLLER again at ≤900px.** Caught by a Chromium render, not by jsdom: at 390px the row gives each card **47px**, and the two word labels measure **51px ("Closed")** and **57px ("On Hold")**. They did **not** ellipsize — `align-items:center` sizes a label to its own max-content, so `overflow:hidden` on a max-content box **can never fire** — they overlapped their neighbours and spilled 4px past the row. Shrinking the type to fit would mean ~9px, under the 1081 floor. So 957's breakpoint (which turned the row from a scroller into fitted buttons — correct for five cards) gets `overflow-x:auto` back, `.pipebtn` a `min-width:64px` floor, and the three spans `max-width:100%` so the existing nowrap/ellipsis can actually engage as a last resort. **957's `overscroll-behavior-x:auto` reset is KEPT** — at a 900px tablet seven cards still fit, and containment on a box that is not scrolling is the shape that killed the Cardinal Truth pane. Desktop is unchanged: at 1194px the seven cards fit at 106px each with no scroll, measured.
+
+⚠ **The overlap was NOT introduced by this build — 1113 already had it, worse.** The negative control render found `"Prospects"` at **76px in a 67px card** and `"Completed"` at **77px in 67px** on the 1113 dashboard at 390px. Five cards were overlapping on Theo's phone and nobody had measured it. 1114 is the first build where every label fits inside its own card at every width tested.
+
+⚠ **1113 also rendered NO header title at all at 390px** — the 1065 hide, confirmed in the control. That is the second thing this build fixes rather than causes.
+
+Gates: check_build.py green (129 inline scripts, 152 style blocks, stamp 1113→1114, marker `short:'On Hold'` + negative control). **`gate_1114.mjs`** — a real Chromium render at 390 and 1194 in **both** themes: seven cards, the exact label row, no label wider than its own card, the row either fits or is a real scrollport, the 11px floor, no collapse, and every label's ink scored against its **composited** ground — **GREEN (58) on 1114 / RED (23 failures, no crash) on 1113**. **`harness_pipe1114.js`** — extracts the shipped `PIPE_BUCKETS` / `PIPE_SKIP` / `LEGACY_STAGE` / `normStage` / `renderPipeline` by brace-matching and runs them against production-shaped rows, then evaluates the shipped `cr-hd2-script` and drives its own `skin()` — **GREEN on 1114 (28 assertions) / RED on 1113**: the seven cards in Theo's order, the exact printed label string, `aria-label`, the colour classes incl. `pipe-closed`, the counts (Approved still absorbs Scheduled; blank stage still whitelists to Lead; `Lost` lands in no bucket), the two new cards counting the two real jobs, insurance still skipping On Hold, `#brandTitle` reading `Retail` **as text with zero element children**, and the repaint guard settling. No SQL, no api route.
+
+⚠ **Three of the harness's first assertions failed CORRECT code** — `/TITLES_HTML/`, `/Single source of/` and `/American Typewriter/` all matched **this build's own explanatory comments**. `jslex_count.py` settled it: `TITLES_HTML` is 0 in CODE and 2 in comments. Assertions now target the declaration and the usage (`var TITLES_HTML`, `TITLES_HTML[`, `class="hq"`, `font-family:'American Typewriter'`), never the word. The harness also carries a **coverage floor** (`checks >= 26`) so a check that stops matching cannot go quiet.
+
+⚠ **`gate_1114.mjs` itself shipped two wrong checks and both were caught by its own controls, not by reading it.** (1) The ancestor ground-walk did not **stop at the first opaque ground**, so a dark carved cell's light ink was scored against the cream page eleven levels up — a confident **2.71:1 FAIL on an element that measures 6.32:1**. It now stops at the first alpha-1 ground, and collects each element's gradient stops before its own background-color (the 685 rule). (2) The clip check `scrollWidth > clientWidth` on `.plabel` was **vacuous** — a max-content-width box can never report clipping — so it passed while the label was 10px wider than its card. It now measures the label against its **cell**, which is what actually overlaps. Both are the same lesson this project keeps paying for: a bad instrument hands you a confident wrong number.
+
+## Build 1115 — the drawer's bottom bar, and sections that are always collapsed
+
+Theo, with a drawer screenshot: *"Can you get rid of the big paragraph about what's new in the drawer menu and add a small logout icon at the bottom. Have all the sections start off not expanded."*
+
+**The paragraph is gone; the version line is not.** The footer prose was ~275 characters of last-build summary sitting under every row on a phone. It is deleted — but `[data-cr-footer]` **stays**, carrying `v2026-08-28 build 1115` and nothing else, because **four separate readers parse that element**: `currentBuild()` (What's New), `buildTag()` (error reports), `railVersion()` (the desktop rail's footer) and `check_build.py`'s `app_stamp()`. ⚠ **The version must remain a DIRECT text node** — `app_stamp()` anchors on `data-cr-footer…>` followed immediately by `v2026-`, so wrapping it in a `<span>` breaks the gate. `addPaletteHint()` also anchors on it via `/^v2026-/` on `textContent`.
+
+**Sign out is a small icon in that bar**, not a full-width row. **Same `#signOutBtn`** — same id, same click listener, same `showMain()`/`showLogin()` display toggling; only its class, its contents and its position changed, so nothing that talks to it had to be touched. The glyph is `CardinalIcons`' **`lock`** — the one the desktop rail's own `.lnav-out` already uses, so the two sign-outs cannot drift. The 🚪 emoji goes with the row (a survivor of the 686–699 emoji sweep). 44×44, not 40: **592 pushed every control to 44px and 1076 had to come back for `.lnav-out` and the CRM switcher**; a new control arriving at 40 would be the third time.
+
+**Sections are collapsed on EVERY opening, which is a change of kind, not of default.** 930 defaulted them closed and then **remembered** the choice, in the same `localStorage` record the desktop rail uses (`cardinal.lnav.sections`). So the drawer opened collapsed exactly **once**: whatever you expanded stayed expanded forever, and expanding Office on the phone expanded it on the desktop too. The drawer now keeps its open set **in memory** and empties it on the closed→open edge in `sync()`.
+
+⚠ **Two deliberate knock-ons, both stated so nobody "repairs" them:**
+- The drawer **no longer reads or writes** `cardinal.lnav.sections`. The rail keeps that key entirely to itself — its own `readState()`/`writeState()`, its own "Daily and Sell open" default, its remembered folds. There is no second persisted store, because this one does not persist at all.
+- **954's `openInsuranceSection()`** — which writes `st.insurance = 1` when you enter the insurance portal — no longer reaches the drawer. It still opens the section **on the rail**. On the phone, "everything starts collapsed" outranks it.
+
+⚠ The reset fires on the **closed→open edge only**. `sync()` runs on every mutation of `#navMenu` (nine modules inject rows over the first few seconds), so clearing unconditionally would snap a section shut under the finger that just opened it. `onMutate()` calls `sync()` before `applySections()`, so the reset is always in place before the rows are re-tagged. `harness_drawer1115.js` pins both halves.
+
+**One line from the 1114 sentinel closed:** `body.projopen #brandTitle{display:none}` is deleted. The 416 comment names it as *the* one rule in the file that could hide the title and answers it with an unconditional `display:block !important`, so it has not won since 416 — measured, not assumed: the sweep reported it *"never wins on any of the 1 element(s) it matches"*. It surfaced at 1114 only because 1114 stopped hiding the retail title at 390px, so the instrument could finally see the element. Deletion at source; 416's rule stays.
+
+### The summary gate moved to the CHANGELOG, because it had become a check that cannot fail
+
+`check_build.py`'s 1070 gate compared the em-dash summary against the previous build's. With no summary, `app_summary()` returns `None` on every build and the branch answered `None` with a **PASS** — inert forever, which this project rates worse than no check. The description did not disappear, it moved: the `CHANGELOG` entry What's New actually renders. The gate now requires **an entry for the stamped build carrying ≥40 characters of `s:` prose**. Negative-controlled two ways before being trusted: a tree stamped 1116 with no entry → RED (`MISSING`), and an entry stubbed to 9 characters → RED (`only 9 chars`).
+
+Gates: check_build.py green (129 inline scripts, 152 style blocks, stamp 1114→1115, marker `class="cr-df-out"` + negative control, and the new CHANGELOG gate). **`harness_drawer1115.js`** — extracts the shipped `cr-drawer-script` and drives it open → expand → close → open — **GREEN (36) / RED on 1114**: the collapse survives a reopen, a rail-stored "open" does not reach the drawer, a late-injected row does not collapse what you just opened, the fold store is byte-identical after a full session, and the footer/sign-out are never swallowed by a section. **`gate_1115.mjs`** (real Chromium at 390px, drawer open) — **GREEN (21) / RED (10) on 1114**: the bar is one 53px flex row reading exactly `v2026-08-28 build 1115`, the `lock` glyph **hydrated into a real svg with drawn geometry** (a `data-cri` button that never hydrates is a 44px square of nothing), 44×44 tap target, icon 4.71:1 and stamp 6.43:1 against the composited ground, 11px stamp, no sideways scroll, and **0 of 10 sections expanded with 0 of 45 rows on screen**. No SQL, no api route.
+
+✅ **Sentinel sweep on 1115: 1 new finding, NOT a defect and NOT this build's — do not re-flag it.** `OVERRIDDEN .convertins { background-color: rgb(253, 236, 236) } never wins on any of the 1 element(s) it matches [390px client]`. Checked, not assumed: `.convertins` appears **zero** times in the 1115 diff, and `selector_audit.py` shows the base rule (line ~2187, `background:#FDECEC`) is beaten in dark retail by **798's** `:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .convertins{background:#241a1a}` — which is the design. 798's own comment says so: the `#FDECEC` panel is the LIGHT design and dark deliberately overrides it, and **1068** added the light twin for the sub-label. The sentinel walks dark, so the base rule legitimately loses there. That is the OVERRIDDEN category doing its job — *"the cascade working, only interesting when the rule is NEW"* — and this rule predates the session.
+
+⚠ **Why it read as NEW at all, which is worth knowing about the instrument: `--since` subtracts the PREVIOUS run's REPORT, and a report can be truncated.** The 1114 sweep printed `TRUNCATED DEAD: 21 findings on this render, only 20 listed — 1 NOT shown`. A finding the earlier run dropped to its cap is not in the baseline, so the next run calls it new. The two runs also used different `--only` sets (1115 added `UNWIRED`), which moves the budget again. **A "new" finding on a surface the build did not touch is a truncation artefact until proven otherwise — check the diff for the selector before chasing it.**
+
+⚠ **`gate_1115.mjs` shipped a wrong contrast reader and its own output looked fine.** Chromium returns two colour forms on different scales — `rgb(13, 18, 32)` is 0–255, `color(srgb 0.1004 0.1206 0.1476)` is 0–1 — and the 0–255 reader parsed the second as very nearly black. On a dark drawer that produces a **plausible, confident, wrong** number: it reported the icon at **5.97:1** where the true figure is **4.71:1**. Both pass, so nothing looked odd; the tell was the ground printing as `color(srgb …)` at all. Fixed in `gate_1115.mjs` and in `gate_1114.mjs`, which carried the same helper (its grounds happened to come back in `rgb()` form, so its numbers were right by luck); 1114 re-run and still green at 6.32/17.34.
+
+## Build 1117 — merging 1116 into the 1113–1115 branch, and the ReferenceError a clean merge would have shipped
+
+Not a feature. Build **1116** (the shared-header audit, PR #529) landed on `main` from a second session while this branch carried 1113–1115, and `mergeable_state` went `dirty`. `origin/main` merged in; **three conflicts in `index.html`**, one of them semantic.
+
+**Stamp 1117**, from `next_build.py` against the remote — the branch stamp was 1115 and `gate_ship.py` requires it above main's 1116.
+
+| hunk | what collided | resolution |
+|---|---|---|
+| the drawer footer | 1115 deleted the em-dash summary; 1116's footer still carried one | **ours** — deleting that paragraph *is* 1115, and `check_build.py` now gates the CHANGELOG entry instead of that text |
+| the `CHANGELOG` array | both sides added entries above the shared 1112 row | **union**, descending — 1117, 1116, 1115, 1114, 1113, then 1112 **once** (it is in both sides; a careless take-both duplicates it) |
+| `#brandTitle`'s paint | see below | **theirs, minus one branch** |
+
+### ⚠ Taking 1116's hunk verbatim would have thrown on every paint
+
+1116 was written against a tree that still had **`TITLES_HTML`**, and its middle branch reads `TITLES_HTML[kh]`. **1114 deleted that map** — retail's two-tone slogan was the only thing feeding it. Neither side is wrong; they were written in parallel against different trees, and git had no way to see it. Keeping either side whole loses something real:
+
+- theirs verbatim → **`ReferenceError` on the first paint**, killing the header module app-wide;
+- ours verbatim → 1116's whole build gone, and Settings goes back to saying "Production".
+
+The resolution keeps 1116's `SHARED_HEAD[ks]` branch and **drops the `TITLES_HTML` one**, which is not a rename — with the slogan gone every portal title is plain text, exactly what the surviving `TITLES[kh]` line already does. **`gate_1116.mjs`, main's own gate, is GREEN on the merged tree** (12 assertions incl. precedence, "a real CRM screen still names its CRM", and the three-viewport fit) — that is the proof the resolution kept their build, not my reading of it.
+
+### ⚠ A correct artifact failed a bad assertion — `harness_pipe1114.js`, and it was MY harness
+
+The 1114 harness went RED on the merged tree: *"TITLES_HTML is deleted at source — neither declared nor read"*. **The app was right and the test was wrong.** The assertion was `!/TITLES_HTML\[/.test(hdr)` — a raw regex — and the merge comment above quotes the retired line as `` `TITLES_HTML[kh]` ``. **Prose.** Its own comment, three lines up, says *"Assert on CODE, never on the word"*; it then did exactly that, and got away with it only because no comment had previously contained the `[` form.
+
+It now shells out to **`scripts/jslex_count.py`**, the sanctioned instrument, which tracks strings/templates/comments as lexer states. Measured across three trees:
+
+| tree | TITLES_HTML in CODE | in comments |
+|---|---:|---:|
+| 1113 (pre-1114) | **2** | 0 |
+| main 1116 | **2** | 0 |
+| 1117 merged | **0** | 4 |
+
+So the check still fails where it must. ⚠ **The first draft of that comment said "1 in CODE on the control" — wrong, it is 2 on both.** Measured after writing, which is the only reason it is right now.
+
+Gates on the merged tree: `check_build.py` green (1116 → 1117, 129 inline scripts, 152 style blocks, CHANGELOG entry for 1117, marker + negative control) · `harness_owner1113.js` GREEN · `harness_pipe1114.js` GREEN 30 · `harness_drawer1115.js` GREEN 36 · **`gate_1116.mjs` GREEN** · `gate_1115.mjs` GREEN 21 · `gate_1114.mjs` GREEN 58. No SQL, no api route.
+
+## Build 1122 — merging 1118–1121 in; the third time main's footer arrived with a summary
+
+Not a feature. Builds **1118–1121** (PRs #536, #537 — the gate-suite runner's three regressions, plus the Scope of Loss history fix and two standing quality gates) landed on `main` from the second session while this branch still carried 1113–1117 **unmerged**. Stamped **1122** from `next_build.py`.
+
+**Two conflicts, both the same pair as 1117, and neither semantic this time:**
+
+| hunk | resolution |
+|---|---|
+| the drawer footer | **ours** — main's footer arrived carrying an em-dash summary again. Deleting that paragraph is the whole of 1115 |
+| the `CHANGELOG` | **union** — theirs down to 1118, then ours whole. ⚠ Theirs repeats **1116 AND 1112**, both of which ours also has; a take-both duplicates two builds. Asserted: each of 1112–1122 appears **exactly once** |
+
+⚠️ **The footer hunk has now been resolved the same way three builds running (1117, and twice here counting 1116's arrival).** The comment in the artifact says so out loud, so the fourth session does not treat it as a judgement call: **ours wins, and `check_build.py` gates the CHANGELOG entry rather than that text.**
+
+**Nothing semantic collided** — unlike 1117, where 1116's `#brandTitle` hunk read a map 1114 had deleted. The header code merged clean here.
+
+Gates on the merged tree: `check_build.py` green (1121 → 1122, marker + negative control) · `harness_owner1113` GREEN · `harness_pipe1114` GREEN 30 · `harness_drawer1115` GREEN 36 · `gate_1114` GREEN 58 · `gate_1115` GREEN 21 · **`gate_1081` GREEN 14** (the 11px floor — 1119 had just repaired seven labels, so it is the gate most likely to catch a bad merge) · **and main's own three: `gate_1116` GREEN, `gate_1118` GREEN, `gate_1121` GREEN** · the two standing quality gates **`gate_dupes` GREEN** (0 over baseline) and **`gate_types` GREEN** (0 codes grew). No SQL, no api route.
+
+### ⚠ `gate_ship.py` could not read a stamp from 1115 onward — it failed a CORRECT artifact
+
+Caught by running it, as the convention requires, before merging #535. It reported:
+
+    FAIL  app stamp is above main — main says 1121, branch says None
+
+**`None`, not a low number.** Its reader was `STAMP_RE = re.compile(r'build\s+(\d+)\s*&#8212;')` — anchored on the em-dash summary, which was a sound trick *while one existed*: it was the one thing separating the app stamp from the ~44 frozen module banners that also say `build NNN`. **Build 1115 deleted that summary on Theo's instruction**, so from 1115 on there is no em-dash and the gate reads nothing on any branch. `check_build.py` had already been moved to the `data-cr-footer` anchor for exactly this reason; **this file was missed** — the same defect, in the gate that runs last.
+
+It now prefers `data-cr-footer[^>]*>\s*v2026-\d\d-\d\d\s+build\s+(\d+)` and keeps the em-dash form as a fallback, so it still reads `main` and every branch older than 1115. Verified rather than asserted — the old reader returns `None` on both the synthetic case and the real artifact, the new one returns 1122 on both:
+
+| reader | 1115+ footer sample | the real `index.html` |
+|---|---|---|
+| old (em-dash) | `None` | `None` |
+| new (anchored) | `1122` | `1122` |
+
+`--selftest` gains that case plus a banner-still-ignored control: **10 passed, 0 failed**, and the new case is a genuine regression test because it fails against the old reader.
+
+**The class, stated plainly: a gate that identifies a thing by a decoration is broken the day the decoration is removed** — and it breaks *silently upward*, returning `None` rather than a wrong number, which reads as "the branch is broken" instead of "the gate is blind."
+
+### ⚠ Why this branch needed merging twice: it was never taken out of DRAFT
+
+Theo, 28 Aug: *"I don't see the owner console with new features."* He was right, and the reason was not the code. **PR #535 was opened as a draft and stayed one**, so it never merged; `main` deploys the app, and `strategyHTML`, `cr-nav-sec-owner`, `owner_biz_plan` and `ow-kpi` were all at **0 occurrences** on `main` — measured, not assumed. Meanwhile main took five builds (1116, 1118–1121) and the branch conflicted twice.
+
+**The lesson is procedural, not technical: a draft PR is invisible to the person who asked for the feature.** The house convention is to open PRs as drafts, and that is fine for a branch nobody is waiting on — but when the ask is live, say plainly in the reply that it is a draft awaiting his merge, or mark it ready. Four builds sat finished and unreachable for seven hours.
+
+## Build 1123 — the Labor Rate Schedule lists the CREWS, then one crew's sheet
+
+Theo, 28 Aug: *"Labor rate schedule shouldn't go straight to Santiago. It should list all the crews, then tap to see the labor rates… dark mode only."*
+
+**The prime doctrine paid for itself before a line was written.** 1110 built this screen reading `pricing_items` (`template='roofing_labor'`) and showing its `rate` column as *the* schedule — one document, titled SANTIAGO. **Per-crew rates already existed**: build **548** put them in **`crew_rates`**, keyed by crew, either against a catalog line (`pricing_item_id`) or as a crew's own line (`custom_name`/`custom_unit`), with the Crews module already writing them. So this build adds **no table and no second store** — it points the screen at the pipeline that was already there:
+
+> the catalog (`pricing_items`, roofing_labor) = **the line items**, shared · `crew_rates` = **what this crew is paid**
+
+**Theo's pick on the trade question** (put to him with the real numbers — 5 roofing crews, 2 siding, 3 windows, 1 gutters, 1 repairs, against a catalog that is 24 roofing lines): **roofing crews get the shared catalog lines; every other trade starts with an empty sheet and grows its own.** `CATALOG_TRADES = ['Roofing']` is the whole rule, and `catalogFor()` is one line.
+
+### The migration is the part that would have silently broken
+
+⚠ **The catalog's `rate` column has always been Santiago's numbers.** Read per-crew, his sheet would have opened with all 23 lines blank — his schedule, silently emptied, on the first build that was supposed to improve it. `crew_rates_santiago_seed.sql` copies them onto his crew before the HTML change: **applied, verified — Santiago 23 rates, Daniel Sarceno 3, everyone else 0**, which is exactly "each crew has its own, others start blank". Idempotent (`NOT EXISTS`), non-clobbering, matched by name rather than a pasted uuid, and it **skips the one `unit='note'` row** because a category note is prose, not a rate.
+
+The same file adds **`crew_rates_one_per_item`**, a partial unique index on `(crew_id, pricing_item_id)`: there was no constraint saying a crew has one rate per line, and 1123 is the build that starts writing these rows from a screen two admins can have open at once. Verified zero duplicates before creating it. Partial, because a crew's own lines legitimately repeat.
+
+### Three things in the module that are decisions, not details
+
+- ⚠ **Editing sets a CREW's rates and never edits the catalog.** 1110 let you rename lines and add categories here; under a per-crew model that silently re-prices every roofing crew at once. Renaming a shared line is the Pricing Catalog's job and that screen exists. **"+ Add line" adds a line to THIS crew** — which is how a siding crew gets a sheet at all. Asserted: the module has no write path to `pricing_items`.
+- ⚠ **A blank rate is a real state.** No agreed price reads **"not set"** in readable text (5.86:1, measured), never a `0` and never the catalog's number. **Falling back to `pricing_items.rate` would pay one crew another crew's rate** — the comment in the module says so, because it is the one "helpful" change that would cost real money.
+- **The catalog carries category NOTES** (`unit='note'`, one today). A note gets no rate field and **no `data-key`**, so `harvest()` cannot mistake it for a line with a blank rate. Caught by querying the real table before writing the renderer — the first version would have printed *"not set"* against a sentence.
+
+### Dark on the screen, light on the paper
+
+The whole surface is dark now (`#0e1116` ground, `#161b22` card), with every ink computed before it was written, not after. ⚠ **The `@media print` block puts the document back on white with dark ink** — a rate sheet gets printed and handed to a crew, and a dark screen printed verbatim is a black page. The crew LIST never prints; only the open sheet. If you add a rule that paints a ground or an ink up there, add its light twin down there.
+
+Gates: `check_build.py` green (129 inline scripts, 152 style blocks, 1122 → 1123, marker `data-lrs-crew` + negative control) · **`harness_lrs1123.js` GREEN 45 / RED on 1122** — drives the shipped module open → tap → edit → save against production-shaped rows and proves the money path: a roofing crew sees its OWN rate (Daniel 38, not Santiago's 45), a siding crew does not inherit the roofing catalog, and **every write goes to `crew_rates`** · **`gate_1123.mjs` GREEN 25 / RED 12 on 1122 without crashing** — real Chromium at 390px across both screens: renders dark (`rgb(14,17,22)`), 4 crews grouped by trade, worst ink 5.86:1 against its composited ground on both screens, nothing under 11px, no sideways scroll, and every crew row and topbar control ≥44px.
+
+⚠ **That last one caught a pre-existing miss: on 1122 the topbar buttons were 33px** — under the 592/1076 rule the whole app is held to. They are 44px now; the control printing `lrs-back:33 lrs-edit:33 lrs-print:33` is how it surfaced.
+
+## Build 1124 — the favourite star: the click always worked, the screen never said so
+
+Theo, with a client-profile screenshot: *"Can't click the star to favorite."*
+
+**Reproduced before theorising, and the report was right about the symptom and wrong about the cause — which is why reproducing mattered.** Driven in Chromium at 390px on a real client profile:
+
+| probe | answer |
+|---|---|
+| `elementFromPoint` at the star's centre | **the star** — nothing overlays it |
+| the band's click handler wired | **yes** (`bar.__crWired`) |
+| `window.currentProject` / `toggleFav` | **both present** |
+| a real click | lands, no error |
+| `isFav(currentProject)` after | **`true` — the client WAS favourited** |
+| `#favStar` after | **`⭐`, class `namestar on`** |
+| the band's own star after | **`☆`, unchanged** |
+
+**The click was never broken.** `toggleFav()` ran, wrote the checklist, and lit `#favStar` — which is **0×0 on a phone**, inside a card the client-profile rebuild hides. The band star never moved, so the screen said nothing, and a second tap turned the favourite back off. From the outside that is indistinguishable from a dead control.
+
+**Root cause: a mirror held up once.** `cr-namebar-script` builds its star from `#favStar`'s class **at render time** — its own comment says *"mirror the LIVE star rather than re-deriving… two sources for one fact is how they drift apart."* The intent was right; the implementation was a snapshot. Nothing repainted the band when the fact changed.
+
+**Fix: `renderFavBtn()` paints both.** One painter, which is what that comment intended — every caller from any surface now leaves the two agreeing. ⚠ **Writes are compared before assigning**: `textContent` emits a childList record even when the string is identical, and this band sits in an observed subtree (567/569 cost two builds to exactly that). `aria-pressed` added, so a toggle button stops being silent to a screen reader.
+
+**Second defect, in the same tap: the star was a 19×17px glyph with a measured 20×20px hit area** — the 592/1076 rule holds every control here to 44px. Growing the button would grow `.nb-top` and push the PO row down on every client profile, so the hit area is a **transparent `::after` overlay**: 44×44 measured, geometry unmoved. ⚠ **It overlaps the row below, and that was CHECKED rather than reasoned about** — `.nb-row2` comes later in the DOM, so the pencil and the PO chip paint over it and keep their own taps (`elementFromPoint` returns each of them). **Give `.nb-star` a `z-index` and you take the pencil's clicks with it.**
+
+### ⚠ Why no gate had ever caught this, which is the part worth keeping
+
+**A jsdom harness cannot see this bug at all.** It cannot lay the band out, cannot hit-test, and would have cheerfully confirmed the handler wired and the data written — every one of which was already true. The defect lived entirely in *what the screen showed*. `gate_1124.mjs` is a real render: it taps the star, asserts the **glyph changes**, taps again and asserts it comes back, then measures the reachable area outward from the centre and asserts the neighbours still own their own taps. **GREEN 13 / RED 4 on 1123**, and the control prints the old hit area as `20×20px` — the number that explains the report.
+
+### ⚠ Two standing gates went red on this tree, and both findings were 1123's
+
+I ran `gate_dupes` and `gate_types` at 1122 and **not** at 1123 — so 1123's rework shipped past them and 1124 is where they fired. Both were real and both were fixed rather than rebaselined:
+
+- **`gate_dupes`:** the new LRS module added `me`, `nameOf`, `renderList`, `rowHtml`, `rv` — names already defined in five other modules. Not a runtime collision (they are inside the IIFE) but exactly the grep trap this project already pays for at `function money(` ×11. Renamed to `lrsMe`, `lineName`, `renderCrewList`, `lineRow`, `fieldVal`.
+- **`gate_types` TS2353:** `sheetRows()` built **two different object shapes in one array** — the catalog branch had no `custom_*`, the own-line branch did. Harmless at runtime, and precisely why every reader downstream had to branch on `__cat ?`. Both branches now build the same shape.
+
+⚠ **The rename itself then broke the module, and the harness caught it in one run.** `re.sub(r'renderList\(', …)` renamed the *call sites* and missed **`loadCrews().then(renderList)`** — a bare reference passed as a callback, twice. `ReferenceError: renderList is not defined`, on open. **A rename regex anchored on `(` only renames what is called, never what is passed.** Fixed with a word-boundary pass and asserted to zero.
+
+Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star::after` + negative control) · **`gate_1124.mjs` GREEN 13 / RED 4 on 1123** · `harness_lrs1123` GREEN 45 · `gate_1123` GREEN 25 · `gate_1116` GREEN · **`gate_dupes` GREEN** (0 over baseline, and *better*: `load` 18→17, `render` 32→31) · **`gate_types` GREEN** (0 codes grew, TS2339 1341→1339). No SQL, no api route.
+
+**Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
+
+## Build 1128 — the two mute levels are two levels again, in BOTH themes
+
+Theo: *"Fix the mute levels."* 1127 collapsed `--rbe-mute` and `--rbe-mute2` into
+one colour on dark and recorded it as a deliberate cost. This pays it.
+
+**The third option neither of us had costed.** 1127 framed it as a binary — dim
+mute2 (unreadable) or accept the collapse. There was a third: **lift the brighter
+level**, which makes room beneath it. Nothing gets dimmer; the hierarchy returns.
+
+| | dark, on `#2E333B` | light, on `#f7f7f7` |
+|---|---|---|
+| pagetext | `#dfe3e8` 9.86 | `#2a2a2a` 13.40 |
+| **mute** | `#9aa0a8` → **`#b8bec6`** 4.82 → **6.79** | `#6b6b6b` → **`#585858`** 4.97 → **6.64** |
+| **mute2** | `#9aa0a8` 4.82 (unchanged) | `#8a8a8a` → **`#6e6e6e`** 3.22 → **4.76** |
+| steps | 1.45× / 1.41× | 2.02× / 1.40× |
+
+**186 consumers (116 + 21 in each theme) and not one loses contrast** — dark
+lightens on dark grounds, light darkens on light grounds. The change can only
+make things easier to read.
+
+### ⚠ 1127's light half was skipped on a one-screen render, and that was wrong
+
+1127 left the light pair alone because a light-theme render found **zero**
+elements using mute2. **That render walked the CLIENT screen only.** Swept across
+ten states it finds three — and one is **the punch-out description, still at
+3.22:1 in light after 1127 "fixed" it in dark.** The gate's negative control then
+found a fourth thing neither probe had: **light `--rbe-mute` at 4.35:1** on a
+cream ground (`rgb(240,232,208)`). *A single-screen render is not a theme audit,*
+and "measure BOTH themes" means both, on every screen you can reach.
+
+### ⚠ A 1.57:1 finding that was MY INSTRUMENT, not the app (BUG_CLASSES 80)
+
+While auditing, a probe reported a mute label at **1.57:1 on gold**. The ground is
+`.pu-hero`'s `rgba(245,192,69,.06)` — a **6% wash** over the dark page. My walk
+pushed the raw stop colour into the candidate list without **compositing its
+alpha**, so it scored the text against full-strength gold. Composited, the ground
+is `rgb(23,20,15)` and the truth is **6.97:1**. Reported as a false positive; no
+change made. 1127 fixed "stop at the first opaque paint" and left this half
+undone — a translucent layer must be *blended*, never scored at full strength.
+
+### ⚠ Two self-inflicted gate faults, both caught by the gate reporting zero
+
+- **A token's value is a hex string.** `gate_1128`'s probe fed `#b8bec6` to an
+  `rgb()` regex, got `null`, and matched **0 elements in both themes**. It
+  reported 0 rather than passing — the only reason it was caught.
+- **The probe lives in a template literal.** A backtick inside its comment ended
+  the string and the file stopped parsing. No backticks in `PROBE`.
+
+### Deliberately NOT in this build
+
+`--rbe-pagemute2` (dark `#6d747e`, the same grey 1127 replaced) feeds `--cr-muted-2`
+in the Estimates namespace. Checked: its **29 consumers are borders, a disabled
+button background and icon glyphs — not body text**, so the 4.5 floor does not
+apply. A different namespace and a different question; not widened into here.
+
+**Gates.** `gate_1128.mjs` — GREEN 14 / **RED 4 on 1127**, no crash, both themes.
+`gate_1127.mjs`'s two assertions that encoded the collapse are **updated, not
+deleted**, so the reversal stays legible. `check_build.py`, `gate_dupes`,
+`gate_types` green.
+
+---
+
+## Build 1127 — the 195-finding sweep, read; three real, one wrong, 191 noise
+
+Theo picked "ship all three" after the triage. **The triage is the deliverable as
+much as the fix** — the number had been sitting in every sentinel run for weeks and
+nobody had read it.
+
+### What 195 actually was
+
+| bucket | n | verdict |
+|---|---:|---|
+| OVERRIDDEN | 120 | the cascade working. The tool's own source calls it "just the cascade", meaningful only when the rule is NEW |
+| DEAD | 44 | rules losing to no-more-specific rules. Low signal, and **under**-reported — capped at 20 per render |
+| TRUNCATED | 27 | **not defects** — every one is the sweep warning it hit that cap |
+| INK | 3 | **real** |
+| FLOOR | 1 | **false positive** |
+
+**Signal rate 3 in 195 — 1 in 65**, quieter even than the 1-in-40 the skill records.
+
+**The false positive is worth keeping.** `#acxTrBtn` was reported as missing the 44px
+touch floor, "computes 0px". It renders **183×44**. The check asserts the `min-width`
+DECLARATION wins, and `parseFloat('auto')` is 0 — so a button that is fine reads as a
+defect. The check should measure the box before firing.
+
+### The three real ones, and what reading them changed
+
+- **Trade headers** in the estimate library: Roofing 3.77:1, Gutters 3.68:1 on the
+  picker's own `#eef1f4` card, 11px/800 against a 4.5 floor. Their **four siblings
+  already passed** (4.78–5.29), so these were stragglers, not a broken palette. Each
+  deepened by lightness only, hue held within 0.3° — the 557 rule. Now 4.83:1.
+- **The punch-out description** at 3.05:1. ⚠️ **Not a one-element bug.** `.pu-m` takes
+  its colour from `--rbe-mute2`, a token with **21 consumers**, and that value was under
+  floor on *every* dark ground (4.21 page, 2.69 card). The sweep named the one consumer
+  that happened to render. Same shape as `.viewhead` — an app-wide class failing on
+  fifteen pages. Ask who else uses it.
+
+### ⚠️ Two things my own instrument got wrong, in opposite directions
+
+The first cut of `gate_1127.mjs` read only `backgroundColor` and stopped at the first
+hit. That **sails past `.pu-card`'s `linear-gradient`** and scores the punch line
+against the page two levels below — it reported 6.89:1 for a line that was really
+4.40:1, and passed. Fixing it by collecting every gradient stop and taking the worst
+across ALL ancestors then went too far the other way: it scored the estimate labels
+against the page ground behind an **opaque** `#eef1f4` card and a 0.55 scrim, turning a
+correct 4.83 into 3.63 and failing correct code. **Right rule: collect every stop at
+each level, then STOP at the first fully opaque paint.** Both errors produced confident
+numbers; only dumping the real ancestor chain settled it.
+
+**And the binding ground was not the one the sweep named.** `.pu-card` paints
+`linear-gradient(#2E333B, #262A31)`; the sweep reported the DARK stop. My first
+replacement, `#9099a3`, measured 4.99 against that stop and **4.40 against the light
+one** — it would have shipped still under the floor on a number I computed myself.
+
+### ⚠️ The fix collapses two tokens into one, deliberately
+
+`--rbe-mute2` is now `#9aa0a8` — **identical to `--rbe-mute` on dark**. `--rbe-mute` is
+itself the dimmest grey clearing 4.5 on the binding ground (4.82:1), so anything dimmer
+— which is the entire purpose of `mute2` — cannot be readable text there. The floor and
+the two-level hierarchy cannot both hold on that surface. An unreadable label is worse
+than a flat hierarchy. **Restoring two readable levels means lifting `--rbe-mute` too**
+(say `#b6bcc4` / `#9aa0a8`), a second token with its own consumers and grounds — a build
+of its own, not a silent widening of this one. `gate_1127.mjs` asserts the collapse on
+purpose, so the next reader sees a decision rather than a slip.
+
+**The light twin `#8a8a8a` is deliberately UNTOUCHED.** It scores 3.45:1 on white by
+arithmetic — but a light-theme render found **zero** elements resolving to it, so that
+is an unverified number against an assumed ground. Measure it on a screen that really
+uses it before changing it.
+
+**Gate:** `gate_1127.mjs` — GREEN 10 / **RED 7 on 1126**, no crash. It reproduces the
+sweep's exact numbers on the control and scores against the composited ground.
+
+---
+
+## Build 1126 — a dead push channel no longer silences the email and the text
+
+Theo, after 1125 shipped: *"Fix the notify route so channels are independent."*
+
+**The route already said it was.** `api/notify.js` has carried this comment since **874**:
+*"each channel is independent, so a dead one never blocks the others."* True of email
+against SMS. False of push against both — and 1125 had just put the punch-out deep link
+into the SMS, so the newest feature was riding the channel a push fault could cancel.
+
+**Three abort points, not one.** Each `return`ed before any email or SMS work ran:
+
+| site | reacting to | now |
+|---|---|---|
+| the `web-push` import arm | library fails to load on a cold start | `pushErr` + `push_unavailable` |
+| `if(!VAPID_PRIVATE)` | one unset env var | `pushErr` + `no_vapid_private` |
+| `if(!Array.isArray(subs))` | a refused **push_subs** query | `pushErr` + `subs_query_failed` |
+
+**The third is the one I nearly missed** — a hiccup reading *who has notifications enabled*
+silently cancelled the email and the text. Push setup now sets a flag; the subs query and
+the send loop run under `if(pushReady)`; email and SMS run regardless.
+
+**The second-order fault was worse than the first.** With no way to say "push is off at the
+server", the response carried `subs:0`, and the in-app test button read that as *"no device
+enabled here yet — tap Enable notifications"* — a confident sentence telling Theo to fix his
+**phone** about a missing **server** env var. `push_error` and `env.push` now exist beside
+`sms_error` and `env.sms`, and the button reads the outcome first. 1102's rule, second time.
+
+Also: `notifyOutcomeText()` counted only `sent` and `mailed`, so an alert delivered **purely
+by text** — the one channel that still works when the other two are unconfigured — announced
+itself as *"Could NOT notify"*. It counts `texted` now, or the fix would be invisible.
+
+**Reason strings are unchanged**, so both readers keep working; two that used to print raw at
+a person (`no_vapid_private`, `push_unavailable`) gained sentences.
+
+**Gates.** `harness_notifyindep1126.mjs` — GREEN 19 / **RED 12 on 1125**. It drives the
+*shipped* handler with `fetch` stubbed and asserts on the **actual outbound requests**
+(Resend's POST, Twilio's form body), because "the route returned ok" is not the claim; "a
+text was sent" is. ⚠️ Two traps paid for here:
+
+- **The control must live INSIDE the repo.** Node resolves `web-push` by walking up from the
+  file's own directory, so a control copied to `/tmp` dies in the import arm and fails 17 of
+  19 — five of them for that reason and not the behaviour under test. It reads as a *stronger*
+  control and is a worthless one. On the honest control the three "all healthy" checks PASS,
+  which is what proves this build regressed nothing.
+- **`VAPID_PRIVATE` is a module-scope const**, so each case re-imports with a cache-busting
+  query. Setting the env after the import proves nothing.
+
+⚠️ **`harness_notify_sms1100.mjs` went red on a correct build** — its `smsSites.length >= 3`
+was a hardcoded tally of the response paths that existed at 1106, and this build deleted one
+on purpose. Rewritten to assert the contract (one report per `env:` block, every one reading
+`twReady`), self-computing, and negative-controlled against two injected violations. That is
+**BUG_CLASSES 77**; the route fault is **76**.
+
+Everything else green: `check_build.py` (1125→1126, marker + negative control), `gate_dupes`,
+`gate_types`, `gate_smsnotify874`, `render_smserr1105`, `test_leadnotify901`,
+`harness_deeplink1125` (1125's link still in the text).
+
+---
+
+## Build 1125 — a punch-out text you can tap, which opens the punch-out
+
+> ⚠️ **CI went RED on this PR for a doc, not for code — `MIGRATIONS.md is out of date`,
+> on 1123's head and every head after it.** The manifest's last column records *which doc
+> mentions a migration*, so it is derived from `FEATURES.md` and the build log. I ran
+> `migration_manifest.py` for 1123's crew-rate seed migration, **then** wrote the
+> `FEATURES.md` line, and never re-ran it — so the row said `build log only` when the
+> truth had become `FEATURES.md`, and the manifest was stale in the very commit that
+> generated it. **Regenerate the manifest LAST, after every doc edit in the build.**
+> Running it first feels like doing it early; it guarantees a stale row instead.
+> Cost: one CI cycle. The gate worked exactly as designed — it caught my ordering.
+>
+> ⚠️ **And this note must not name the `.sql` file, which is why it says "1123's crew-rate
+> seed migration" instead.** The manifest's *builds* column is derived from which build
+> entries mention a filename — so writing the name here filed a 1123 migration under
+> "1123, 1125" as well. **A build-log entry that names another build's migration file
+> rewrites the manifest's history.** Refer to it in prose, or the record starts claiming
+> a migration shipped twice.
+
+Curtis (project manager), relayed by Theo with a photo of the text on his phone: *"you should be able to tap it then it goes to the punch out in app."*
+
+**The prime doctrine, third time this session: the destination already existed.** `__tryRestoreFromHash` has parsed **`#p/<id>/<tab>`** since 613, and `punch` has been a real client-profile tab since 607. Verified in Chromium before a line was written — `#p/p1/punch` opens the client on the Punch Outs tab, `#p/p1` does not. **Nothing was missing except somebody sending the link.**
+
+**What was actually wrong, in two places:**
+
+| | |
+|---|---|
+| `notifyTeam()` | sent **`url: '/'`**, hardcoded — the app's front door, from all 21 call sites |
+| `api/notify.js` | used `url` for **web-push only**. `smsBody` was `title + ': ' + text` and **never contained it** |
+
+So even the push notification opened the app root, and the text — the channel Curtis actually reads — had no link at all.
+
+**The fix.** `notifyTeam(to, subject, bodyHtml, url)` gains an optional fourth argument defaulting to `'/'`, so all 21 existing call sites keep their exact behaviour. **`punchLink(pid)` is the one place that knows a punch-out's address** — six notifications point at one, and six spellings of the same link is how they drift (the rule 612 applied to outcome text and 607 to mentions). All six carry it now: filed, assigned to you, nobody assigned, a comment that tags you, extra scope flagged, and closed.
+
+⚠ **Two things in `api/notify.js` that are the whole build, not details:**
+
+- **The link goes in the TEXT.** An SMS has no hyperlink, so a url that rides only in the JSON is a url nobody can tap — and every gate would have stayed green. It is appended **after** the 320-char trim, never inside the slice, so a long punch-out title cannot truncate the link. Asserted with a 600-character title.
+- ⚠ **Only a same-site relative path or hash is accepted, and the absolute URL is built HERE from the request host.** This string is sent to a phone. An absolute URL taken from the caller would make the route a link-relay that texts on someone else's behalf. Anything with a scheme, or a protocol-relative `//`, drops back to `'/'`. Asserted both ways.
+
+Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + negative control) · **`harness_deeplink1125.js` GREEN 22 / RED on 1124** — imports and drives the **shipped** `/api/notify` handler with `fetch` stubbed and reads the **actual Twilio form body**, which is the only way to prove the link is in the message. It produces, verbatim: `New punch-out: 4" too long: Theo Dorion filed a punch-out at Jarrett Chenalt: 4" too long\nhttps://app.cardinalroster.com/#p/abc-123/punch` — Curtis's own screenshot with a link on the end · **`gate_1125.mjs` GREEN 6** — the other half, in a real engine: that address opens the right client on the Punch Outs tab, **and the control without the `/punch` segment lands on Overview**, so the segment is proved to do the work rather than assumed. No SQL.
+
+### ⚠ Two things found while testing, neither fixed here
+
+- **`/api/notify` returns 500 and sends NOTHING — no push, no email, no SMS — if `web-push` fails to import or `VAPID_PRIVATE_KEY` is unset.** The file's own comment says *"each channel is independent, so a dead one never blocks the others"*; that is true of a dead *channel* but not of the push **library** or its key, both of which are required before any channel runs. Not live-broken (Curtis receives texts, so the key is set), but one unset env var would silently take the texts down with it. Left alone deliberately — it is a separate decision, not this build's.
+- **The `url` mechanism now covers all 21 call sites**, so giving "materials ordered", "lead assigned to you" and the rest their own deep links is one argument each. Not done here; Curtis asked about punch-outs and the scope stayed there.
+
+⚠ **Running this gate locally needs `npm install --no-save web-push`** — it is in `api/package.json` (Vercel installs it) but not at the repo root. The harness says so by name when it is missing rather than reporting a mystery failure.

@@ -4026,3 +4026,170 @@ funnel: {"total":7423,"isNew":2,"hasEls":2,"props":2,"cands2":2,"won":0,"displac
 judged to lose*, which contradicted `getComputedStyle`. **Any gate with a funnel should
 print it on demand** — "zero findings" and "never actually looked" are the same output
 otherwise, and this file has now paid for that three times (classes 37, 71, 74).
+
+
+## Class: a mirror held up once — a derived control that never repaints (build 1124)
+
+**Shape.** Surface B renders a copy of a fact it reads off surface A *at render
+time*. The fact later changes; A is repainted by its own painter; **B is not**.
+If A is invisible (hidden card, 0×0, another breakpoint), the user sees a
+control that responds to nothing.
+
+**The tell is the bug report: "can't click X".** It reads as a dead handler, so
+that is where you look — and the handler is fine, the data really did change,
+and you can burn a session proving things that were never broken. **Reproduce
+first and check the DATA, not the handler**: if `isFav()` flipped and the pixels
+did not, it is this class and not a click problem.
+
+**Instance.** `cr-namebar`'s favourite star copied `#favStar`'s class once
+(`var favOn = live.className.indexOf('on') !== -1`). `#favStar` is 0×0 on a
+phone. `toggleFav()` worked perfectly for months; the band never moved.
+
+**Fix.** Make the ONE painter paint every surface that shows the fact — not a
+second observer, not a second derivation. Guard each write (compare before
+assigning: `textContent` emits a childList record even for an identical string).
+
+**Why gates missed it.** jsdom cannot lay out or hit-test, so it confirms
+exactly the things that were already true. **This class needs a real render that
+asserts the GLYPH changed after a real click** — see `gate_1124.mjs`.
+
+## Class: a rename regex anchored on `(` (build 1124)
+
+`re.sub(r'name\(', 'newName(')` renames every **call** and misses every
+**reference** — `.then(name)`, `addEventListener('x', name)`, `[name, other]`.
+The module then throws `ReferenceError` at the first callback. Rename on a word
+boundary, and assert the old identifier reaches **zero** in the slice.
+
+---
+
+## 76 — a shared route where ONE channel's setup failure ends the whole request
+
+**Build 1126.** `api/notify.js` fans one alert to three channels. Its own comment had said
+since **874** that "each channel is independent, so a dead one never blocks the others" —
+and it was true of email against SMS, false of push against both. Three sites answered a
+push problem with `return`, *before* a line of email or SMS work ran:
+
+| the site | what it was reacting to |
+|---|---|
+| the `web-push` import arm | the library failing to load on a cold start |
+| `if(!VAPID_PRIVATE)` | one unset env var |
+| `if(!Array.isArray(subs))` | a refused query against the **subscription** table |
+
+**The third is the one nobody would guess** — a hiccup reading *who has notifications
+enabled* silently cancelled the email and the text.
+
+**The tell is structural, and you can grep for it:** an early `return` that sits **above**
+work belonging to a different channel. A per-channel fault must set a per-channel flag and
+be reported at the end; only a fault affecting *every* channel may end the request.
+
+⚠️ **And the second-order fault is worse than the first.** With no way to say "push is off
+at the server", the route reported `subs:0`, and the in-app test button read that as
+*"no device enabled here yet — tap Enable notifications"*: a fluent, confident sentence
+telling the reader to fix **their phone** about a missing **server** env var. A degraded
+channel needs its own error field (`push_error` beside `sms_error`) or the reporting layer
+will invent a plausible wrong cause. This is 1102's lesson — *an outcome outranks a guess* —
+arriving a second time on a different channel.
+
+## 77 — an assertion whose floor counts CODE PATHS, so deleting one turns a correct build red
+
+**Build 1126**, and it is the mirror of class 44's "a test that silently LOSES a check".
+`harness_notify_sms1100.mjs` asserted `smsSites.length >= 3` — a hardcoded tally of the
+**response paths** that happened to exist at 1106. Build 1126 legitimately removed one (the
+`subs_query_failed` early return, whose removal *is* the fix), and a correct build went red.
+
+**A floor is right for coverage and wrong for structure.** Class 44 says a test deriving its
+own check count needs a floor, so shrinking coverage fails. That does **not** license
+hardcoding a count of code paths: paths legitimately come and go, checks should not.
+Assert the **contract**, and tie any count to something self-computing:
+
+```js
+const envBlocks = (src.match(/env\s*:\s*\{/g) || []).length;
+ok(smsSites.length === envBlocks && envBlocks > 0, '...');   // one report per env block
+ok(smsSites.every(l => /twReady/.test(l)), '...');           // all read the ONE source
+```
+
+Negative-controlled against two injected violations — a site recomputing readiness, and a
+report deleted — and it catches both, which the `>= 3` floor did not.
+
+---
+
+## 78 — a contrast rig that stops at the wrong ancestor, in either direction
+
+**Build 1127**, and it cost two wrong answers in ten minutes — both confident.
+
+| the walk | what it does | what it reported |
+|---|---|---|
+| read `backgroundColor`, stop at first hit | **sails past a gradient** — a card painting `linear-gradient(...)` has `backgroundColor: rgba(0,0,0,0)` | punch line **6.89:1**, passing, when it was 4.40 |
+| collect every stop, worst across ALL ancestors | **walks past an opaque card** into the page behind it | estimate labels **3.63:1**, failing, when they were 4.83 |
+
+**The rule: collect every ground painted at each level — the solid colour AND every
+gradient stop — then STOP at the first fully opaque paint.** Anything above an opaque
+paint is covered and cannot reach the eye; anything below one still composites.
+
+⚠️ **And the binding ground may not be the one a sweep names.** `.pu-card` paints
+`linear-gradient(#2E333B, #262A31)`. The sentinel reported the **dark** stop; the light
+stop is half a point harder, and a replacement colour chosen against the reported stop
+measured 4.99 there and **4.40** against the real worst. It would have shipped under the
+floor on a number I computed myself. When a gradient is in the chain, score the worst
+stop, not the one you were handed.
+
+**Only dumping the real ancestor chain settled which walk was right.** Two plausible
+implementations, two confident numbers, opposite errors — reading the chain is cheap and
+is the only thing that adjudicates.
+
+## 79 — a floor check that asserts the DECLARATION won, not that the box is big enough
+
+**Build 1127**, found while triaging a full sweep. `#acxTrBtn` was reported as failing
+the 44px touch floor — "computes 0px". **It renders 183×44.**
+
+Two faults in one check: it reads `getComputedStyle(el).minWidth` and concludes the
+element is too small, when a losing `min-width` says nothing about the rendered box; and
+`parseFloat('auto')` is `NaN`, which `|| 0` turns into a confident zero.
+
+**A size floor must measure the box.** The declaration is a means; `getBoundingClientRect()`
+is the thing a thumb actually hits. The check earned its keep on `#payView .pay-chip`
+(really 34px) — but that one was small *and* out-specified, so the two conditions were
+never separated.
+
+---
+
+## 80 — a contrast rig that scores text against a TRANSLUCENT layer at full strength
+
+**Build 1128**, and it is the unfinished half of class 78. That class fixed *where*
+the ground walk stops (at the first fully opaque paint). It did not fix what to do
+with the layers above it: a `rgba(...)` wash must be **composited** with what is
+behind it, not added to the candidate list at full strength.
+
+The symptom is a spectacular false positive. `.pu-hero` paints
+`rgba(245,192,69,.06)` — a 6% gold wash over the dark page. Scored raw, a
+`--rbe-mute` label on it reads **1.57:1** and looks like the worst defect in the
+app. Composited (`0.06·gold + 0.94·#09090C = rgb(23,20,15)`) the truth is
+**6.97:1** — comfortably fine.
+
+```js
+let acc = null;                       // walk OUTWARD-IN, then blend inward-out
+for (let i = layers.length - 1; i >= 0; i--)
+  acc = acc ? [0,1,2].map(k => Math.round(layers[i].a*layers[i].c[k] + (1-layers[i].a)*acc[k]))
+            : layers[i].c;
+```
+
+**Both halves are required.** Stop at the first opaque paint (78) *and* blend
+every translucent layer above it (80). Either one alone gives a confident wrong
+number, and the two errors point in opposite directions — 78 inflates the ratio,
+80 deflates it.
+
+## 81 — a colour probe fed a TOKEN's value, which is hex, not rgb()
+
+**Build 1128.** `getComputedStyle(el).color` is `rgb(...)` or `color(srgb ...)`;
+`getPropertyValue('--rbe-mute')` is **`#b8bec6`**. One parser cannot be assumed to
+take both. `gate_1128`'s first cut fed hex to an rgb regex, got `null` for every
+token, and therefore matched **zero elements in both themes**.
+
+**It was caught only because the gate asserts its own population is non-empty**
+(`elements painted --rbe-mute render (N)`). Without that check it would have
+printed a clean pass over nothing at all — a check that cannot fail, which this
+list already names twice. **Any gate that filters a population must assert the
+population is not empty.**
+
+⚠️ And a mechanical trap in the same file: the probe is a **template literal**, so
+a backtick inside one of its comments ends the string and the file stops parsing.

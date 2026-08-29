@@ -78,7 +78,19 @@ ok(/encodeURIComponent\(twSid\)/.test(src), 'the Messages URL uses the TRIMMED a
 /* the SAME contract as 1102, now checked against the one source: no sms report
    may compute its own idea of whether SMS is configured. */
 const smsSites = src.split('\n').filter(l => /\bsms\s*:/.test(l));
-ok(smsSites.length >= 3, 'every sms capability report is accounted for (found ' + smsSites.length + ', floor 3)');
+/* 1126: this was `>= 3`, a hardcoded count of the RESPONSE PATHS that existed at
+   1106 — and 1126 legitimately removed one of them (the subs_query_failed early
+   return, which used to abandon the request and take the email and text with
+   it). A correct build turned this red.
+   Rewritten to assert the CONTRACT instead of a tally: every capability report
+   reads the one source, and there is exactly one per env block — self-computing,
+   so adding or removing a response path can never make it wrong again, while
+   dropping to zero or reintroducing a second opinion still goes red. */
+const envBlocks = (src.match(/env\s*:\s*\{/g) || []).length;
+ok(smsSites.length === envBlocks && envBlocks > 0,
+   'every env report carries exactly one sms capability line (' + smsSites.length + ' sms / ' + envBlocks + ' env)');
+ok(smsSites.every(l => /twReady/.test(l)),
+   'and every one of them reads twReady — no site computes its own idea of whether SMS is configured');
 ok(smsSites.every(l => /\bsms\s*:\s*twReady\b/.test(l)),
    'EVERY sms capability report is twReady itself — none recomputes, so none can drift');
 ok(/sms_error: smsErr \|\| undefined/.test(src),

@@ -1067,13 +1067,27 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
   #e2e8ea 0%, #b7c4cb 12%, #607D8B 38%, #607D8B 55%, #455a64 80%, #303e46 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
 @media (max-width:900px){
-  .piperow{padding:0 0 4px;gap:4px;overflow:visible;justify-content:space-between;
-    /* 957: this breakpoint turns the row from a scroller into fitted buttons,
-       which orphans the base rule's containment on a box that no longer has a
-       scrollport - the same shape that killed the Cardinal Truth pane. Reset
-       both here so a swipe on the row still scrolls the PAGE. */
+  /* 1114: A SCROLLER AGAIN, because seven cards do not fit a phone. 957 turned
+     this breakpoint from a scroller into fitted buttons, which was right for
+     five; at seven, 340px of row gives each card 47px and the two word labels
+     measure 51px ("Closed") and 57px ("On Hold") in Chromium — they did not
+     ellipsize, they OVERLAPPED their neighbours and spilled 4px past the row,
+     because align-items:center sizes a label to its own content and
+     overflow:hidden on a max-content box can never fire. Shrinking the type to
+     fit would mean ~9px, under the 11px floor build 1081 established.
+     min-width is sized to the widest label with headroom rather than tuned to
+     the pixel: the measurement above comes from this container's fallback
+     face, and Theo's phone resolves 'Segoe UI',Arial to something else. */
+  .piperow{padding:0 0 4px;gap:4px;overflow-x:auto;justify-content:space-between;
+    /* 957: kept. `contain` belongs to the base rule and is correct on a real
+       scrollport, but at a 900px tablet seven cards DO fit, and containment on
+       a box that is not scrolling is the shape that killed the Cardinal Truth
+       pane — a swipe on the row would stop scrolling the PAGE. */
     overscroll-behavior-x:auto;-webkit-overflow-scrolling:auto;}
-  .pipebtn{flex:1 1 0;min-width:0;max-width:none;padding:2px 0;}
+  .pipebtn{flex:1 1 auto;min-width:64px;max-width:none;padding:2px 0;}
+  /* the last-resort guard, and it can now actually fire: capped at the cell,
+     the existing nowrap/ellipsis on .plabel truncates instead of overlapping */
+  .pipebtn .plabel,.pipebtn .pcount,.pipebtn .pmoney{max-width:100%}
   .pipebtn .pcirc{width:46px;height:46px;font-size:21px;}
   .pipebtn .plabel{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .pipebtn .pcount{font-size:16px;}
@@ -1987,7 +2001,14 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 
 /* ---- phone: client-profile fit pass ---- */
 @media (max-width:700px){
-  body.projopen #brandTitle{display:none;}
+  /* 1115: `body.projopen #brandTitle{display:none}` was here and is deleted.
+     The 416 comment in cr-hd4-styles names it as THE one rule in the file that
+     could hide the title, and answers it with an unconditional
+     `display:block !important` — so it has not won since 416. Measured, not
+     assumed: the 1114 sentinel sweep reported it "never wins on any of the 1
+     element(s) it matches". Deletion at source beats out-specificity; and the
+     416 rule stays, because it is what keeps the title up if this ever comes
+     back. #brandCtx below still takes over the header on a project screen. */
   body.projopen #brandCtx{display:flex !important;}
   body.projopen .jobmenu-head{max-width:130px;}
   /* milestones fit without side-scroll (id-anchored: beats base rules regardless of order) */
@@ -3489,28 +3510,13 @@ body[data-crm-head="retail"]   {--bnbg:#101620;--bnbd:#243040;--bnac:#8fb4d8}
 /* .titlecard h1 carries font-size:17px !important, so this needs it too */
 #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:20px !important;line-height:1.15;
   color:var(--hin,#fff);-webkit-text-fill-color:var(--hin,#fff)}
-/* 1065: the slogan is shown only where it FITS. Measured at 1px resolution:
-   it needs 247px and the header's middle gives it 247px from 438px up, 190px
-   at 430, 150px at 390. Shrinking it to fit would mean 10px at 390 and is
-   impossible below 360; wrapping would add a second line to a fixed-height bar
-   on the screen with the least vertical room. So it is hidden below 438 — a
-   truncated slogan ("Single sourc…") reads as a broken app, an absent one
-   reads as a clean toolbar.
-   RETAIL ONLY: #brandTitle carries the CRM NAME in the other CRMs, which are
-   short words that fit, and the 416 comment above forces that title visible
-   because it must never disappear.
-   The 437 breakpoint is deliberate rather than reusing the existing 480: an
-   iPhone 16 Pro Max is 440pt, where the slogan fits, and hiding something that
-   fits to save a breakpoint is the wrong trade. */
-@media (max-width:437px){
-  body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}
-}
-body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{
-  font-family:'American Typewriter','Courier New',Courier,serif;
-  font-size:17px !important;font-weight:800;font-style:normal;letter-spacing:.005em;white-space:nowrap}
-#cr-hd2-mid #brandTitle h1 span.hq{color:#5d6b7a;-webkit-text-fill-color:#5d6b7a}
-#cr-hd2-mid #brandTitle h1 span.hg{color:#9aa0a8;-webkit-text-fill-color:#9aa0a8}
-#cr-hd2-mid #brandTitle h1 span.hr{color:#ff5a63;-webkit-text-fill-color:#ff5a63}
+/* 1114: "Retail" in the same face and size as the other four portal names.
+   Deleted here with the slogan they styled: 1065's @media (max-width:437px)
+   hide (a six-letter word fits at every width — keeping the hide would blank
+   the CRM name on a phone, which the 416 comment above forbids), the
+   retail-only American Typewriter / 17px / nowrap h1 rule, and the three
+   span.hq / .hg / .hr inks, which can no longer match an element. Retail now
+   inherits the 20px rule above, so all five portal names render alike. */
 
 /* ONE search bar. #cbSearch on the banner and #headSearch in the header are both
    live and do the same thing (open the client directory, seed #cliFilter). The
@@ -3869,13 +3875,34 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
                deliberately NOT in hideAdminItemsForNonAdmin's list, so every desk sees it. -->
           <button class="navopt" data-nav="notify" data-cri="bell lg">Enable Notifications</button>
 
-          <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
           <!-- 1041 (audit O2): ONE build line only. REPLACE this text each build —
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
-     in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1133 &#8212; The call, text and email icons on a client\u2019s profile \u2014 and the edit pencil and favourite star beside the name \u2014 come up to the 44px tap minimum (they were 40px, 32px and 21px). The name band looks exactly the same — only the tappable area grew. These replaced the old contact links in the 791 rebuild without inheriting the touch pass; the build-752 gate caught it once the suite started running again.</div>
+     in the CHANGELOG (What’s New reads it), not here.
+     1115: and now the SUMMARY is gone too. Theo: "get rid of the big
+     paragraph about what's new in the drawer menu and add a small logout
+     icon at the bottom." It was a 300-character wall under every row, and
+     What's New already tells the same story better. The version itself
+     STAYS and stays a direct text node: currentBuild(), buildTag(),
+     railVersion() and check_build.py's app_stamp() all read this element,
+     and app_stamp() anchors on `data-cr-footer...>` followed immediately by
+     `v2026-`, so wrapping the version in a <span> would break the gate.
+     Sign out moved IN HERE as an icon rather than being rebuilt: same
+     #signOutBtn, same listener, same display toggling from showMain() /
+     showLogin(). The glyph is CardinalIcons' `lock` — the one the desktop
+     rail's own sign-out already uses, so the two surfaces cannot drift.
+     1117: 1116 landed on main from the header-audit branch while this one
+     was open, and its footer still carried the em-dash summary. OURS wins
+     here on purpose — deleting that paragraph is the whole of 1115, and
+     check_build.py now gates the CHANGELOG entry instead of this text.
+     1122: and again for 1118-1121. Same call, same reason — this is the
+     THIRD time main's footer has arrived carrying a summary, so if you are
+     resolving this hunk a fourth time: ours wins, and it is not a judgement
+     call.
+     1133: the fourth time. Resolved as instructed — version bumped, no
+     summary; 1129-1133's summaries are in the CHANGELOG. -->
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1133<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19465,11 +19492,41 @@ function favSort(list){
   });
 }
 function renderFavBtn(){
-  var b = document.getElementById('favStar');
-  if(!b || !currentProject) return;
+  if(!currentProject) return;
   var on = isFav(currentProject);
-  b.textContent = on ? '\u2B50' : '\u2606';
-  b.classList.toggle('on', on);
+  /* the hero star (#favStar). It is 0x0 on a phone — the client-profile
+     rebuild hid the card it lives in — but it is still the element every
+     other surface reads, so it is painted first and stays the source. */
+  var b = document.getElementById('favStar');
+  if(b){
+    var t = on ? '\u2B50' : '\u2606';
+    if(b.textContent !== t) b.textContent = t;
+    b.classList.toggle('on', on);
+  }
+  /* 1124: AND the name band's star, which is the only one you can see on a
+     phone. Theo: "Can't click the star to favorite."
+
+     The click was never the problem — it landed, toggleFav ran, the checklist
+     was written and #favStar flipped to a lit star nobody could see. What was
+     missing is this: the band built its star ONCE, from #favStar's class at
+     render time ("mirror the LIVE star rather than re-deriving it"), and
+     nothing repainted it afterwards. A mirror held up once is a photograph.
+     So the tap toggled a real favourite and the screen said nothing, which
+     reads exactly like a dead control.
+
+     Painting both here keeps the ONE painter that comment intended — every
+     caller of renderFavBtn(), from any surface, now leaves the two agreeing.
+     ⚠ Writes are compared first: assigning textContent emits a childList
+     record even when the string is identical, and this band sits in a subtree
+     other modules observe (567/569 cost two builds to exactly that). */
+  var nb = document.querySelector('#cr-namebar .nb-star');
+  if(nb){
+    var t2 = on ? '\u2605' : '\u2606';   /* the band is drawn glyphs, not the emoji */
+    if(nb.textContent !== t2) nb.textContent = t2;
+    nb.classList.toggle('on', on);
+    var pressed = on ? 'true' : 'false';
+    if(nb.getAttribute('aria-pressed') !== pressed) nb.setAttribute('aria-pressed', pressed);
+  }
 }
 
 /* ---------- pipeline stages ---------- */
@@ -19486,7 +19543,13 @@ function stageClass(s){ return 'stg-' + normStage(s).replace(/ /g,''); }
    could not tell success from silence — and for months it was silence. It
    now RESOLVES to the route's report. Still never throws: callers may ignore
    the promise and behave exactly as before. */
-function notifyTeam(to, subject, bodyHtml){
+/* 1125: `url` is the DEEP LINK — a relative '#…' path this app's own hash
+   router already understands (#p/<id>/<tab>, #leads, #board …). It reaches
+   /api/notify, which resolves it against the request host and puts it in the
+   text message AND in the push, so tapping either lands on the thing the alert
+   is about instead of the app's front door. Optional, defaulting to '/', so all
+   21 existing call sites keep their exact behaviour. */
+function notifyTeam(to, subject, bodyHtml, url){
   if(!TEAM) return Promise.resolve({ ok:false, reason:'offline' });
   return sb.auth.getSession().then(function(s){
     var tok = s.data.session && s.data.session.access_token;
@@ -19513,7 +19576,7 @@ function notifyTeam(to, subject, bodyHtml){
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
       body: JSON.stringify({ emails: _list, title: subject, body: _text,
-                             html: bodyHtml, url: '/' })
+                             html: bodyHtml, url: (url || '/') })
     }).then(function(r){ return r.json(); })
       .then(function(j){ return j || { ok:false, reason:'empty_response' }; })
       .catch(function(e){
@@ -19525,6 +19588,15 @@ function notifyTeam(to, subject, bodyHtml){
   });
 }
 
+/* 1125: ONE place that knows what a punch-out's address looks like. Six
+   notifications point at a punch-out and they must not drift into six spellings
+   of the same link — the rule 612 applied to outcome text, and 607 to mentions.
+   The route it returns is not new: #p/<id>/<tab> has been in __tryRestoreFromHash
+   since 613, and 'punch' has been a real tab since 607. Nothing was missing but
+   somebody sending it. */
+function punchLink(pid){ return pid ? ('#p/' + encodeURIComponent(pid) + '/punch') : '/'; }
+window.punchLink = punchLink;
+
 /* 612: ONE place that turns a route report into a sentence a person can act
    on. Both "Notified" lines use it, so they cannot drift apart — the same
    rule 607 applied to mention-parsing. */
@@ -19532,10 +19604,17 @@ function notifyOutcomeText(res, to){
   var names = to.map(function(em){
     return (typeof rptRepName === 'function' ? rptRepName(em) : em.split('@')[0]);
   }).join(', ');
-  if(res && (res.sent > 0 || res.mailed > 0)){
+  if(res && (res.sent > 0 || res.mailed > 0 || res.texted > 0)){
+    /* 1126: `texted` belongs in this test. The route has counted a text as a
+       delivery since 874 (its `ok` includes it) and this sentence did not, so a
+       job whose alert reached somebody purely by SMS — the ONLY channel that
+       works when push and email are both unconfigured — was still announced as
+       "Could NOT notify". Independent channels have to be independently
+       believed, or the fix above is invisible on the screen. */
     var how = [];
     if(res.sent > 0) how.push(res.sent === 1 ? 'phone' : res.sent + ' phones');
     if(res.mailed > 0) how.push('email');
+    if(res.texted > 0) how.push('text');
     return '\uD83D\uDD14 Notified ' + names + ' \u2014 ' + how.join(' + ');
   }
   var r = res && res.reason, why;
@@ -19546,6 +19625,11 @@ function notifyOutcomeText(res, to){
   else if(r === 'no_subscriptions')why = 'they haven\u2019t turned on notifications on a device, and team email isn\u2019t set up';
   else if(r === 'subscriptions_expired') why = 'their notifications sign-up on that device expired \u2014 they can re-enable it in the app';
   else if(r === 'vapid_mismatch')  why = 'the server\u2019s push keys are wrong (VAPID_PRIVATE_KEY)';
+  /* 1126: both of these used to fall through to the raw reason string, so the
+     screen said "no_vapid_private" at a person. They are server settings, and
+     the sentence should say which one and that email/text were unaffected. */
+  else if(r === 'no_vapid_private') why = 'push is not switched on at the server (VAPID_PRIVATE_KEY)';
+  else if(r === 'push_unavailable') why = 'the push library did not load on the server';
   else if(r === 'push_rejected')   why = 'the phone service refused it' +
                                          (res.detail ? ' \u2014 ' + res.detail : '');
   else if(r === 'resend_missing')  why = 'email is not switched on (RESEND_API_KEY)';
@@ -21181,18 +21265,39 @@ document.getElementById('leadList').addEventListener('click', function(e){
 });
 
 /* ---------- hero: greeting + stats ---------- */
+/* 1114 — `short` is what the CARD prints. Theo: "on the pipeline stage cards,
+   just put letters. L P A C I Closed On Hold." Closed and On Hold keep their
+   words because C is already Completed's and O reads as nothing.
+   `label` stays the one full name per stage — the sphere glyph, the aria-label
+   and every other reader still compute from it, so this is one vocabulary with
+   a printed short form, not a second set of stage names to fall out of step.
+   Closed is a NEW bucket, and .pipe-closed's gradient has been sitting in the
+   stylesheet unused waiting for it. It goes last but one, in Theo's order. */
 var PIPE_BUCKETS = [
-  { key:'Lead',      label:'LEADS',      cls:'pipe-lead',      tip:'New leads \u2014 not yet quoted' },
-  { key:'Prospect',  label:'PROSPECTS',  cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
-  { key:'Approved',  label:'APPROVED',   cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
-  { key:'Completed', label:'COMPLETED',  cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
-  { key:'Invoiced',  label:'INVOICED',   cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
-  { key:'OnHold',    label:'ON HOLD',    cls:'pipe-onhold',    tip:'Bid in, waiting on a grant or funding decision' }
+  { key:'Lead',      label:'LEADS',      short:'L',       cls:'pipe-lead',      tip:'New leads \u2014 not yet quoted' },
+  { key:'Prospect',  label:'PROSPECTS',  short:'P',       cls:'pipe-prospect',  tip:'Estimates out \u2014 awaiting decision' },
+  { key:'Approved',  label:'APPROVED',   short:'A',       cls:'pipe-approved',  tip:'Signed contracts (incl. scheduled)' },
+  { key:'Completed', label:'COMPLETED',  short:'C',       cls:'pipe-completed', tip:'Work finished \u2014 not yet invoiced' },
+  { key:'Invoiced',  label:'INVOICED',   short:'I',       cls:'pipe-invoiced',  tip:'Invoice sent \u2014 awaiting payment' },
+  { key:'Closed',    label:'CLOSED',     short:'Closed',  cls:'pipe-closed',    tip:'Closed out \u2014 paid and done' },
+  { key:'OnHold',    label:'ON HOLD',    short:'On Hold', cls:'pipe-onhold',    tip:'Bid in, waiting on a grant or funding decision' }
 ];
-/* Same shape as IC_SKIP: a stage-keyed map per CRM. A community-only column
-   would otherwise appear as a permanently empty sixth column on the Retail
-   and Insurance boards, because renderPipeline does not filter by CRM. */
-var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
+/* Same shape as IC_SKIP: a stage-keyed map per CRM, because renderPipeline
+   does not filter by CRM. Its ORIGINAL reason was that On Hold — a grant or
+   funding wait — would otherwise be a permanently empty column on Retail and
+   Insurance. That is still why insurance skips it and is no longer why retail
+   did; see below. */
+/* 1114: RETAIL NO LONGER SKIPS On Hold, and Closed is skipped nowhere. The
+   rule above is an EMPTY-COLUMN rule, and it had stopped being true — measured
+   against production before this edit rather than assumed: one retail job sits
+   at OnHold (Maker Space Solutions) and one at Closed (Carl Bolivar, which
+   walked t_Prospect through t_Invoiced to t_Closed), so both were real work the
+   dashboard could not show anywhere. Theo asked for the row by name:
+   "L P A C I Closed On Hold".
+   Insurance keeps its On Hold skip — that stage means waiting on a grant or a
+   funding decision, which a claim does not do. Closed is terminal in every CRM,
+   so it is columned in every CRM. */
+var PIPE_SKIP = { insurance:{ 'OnHold':1 } };
 /* 540 ─ where the money actually is ─────────────────────────────────────────
    projectValue() used to scan inspection_reports for rows titled "Estimate…"
    and take the highest total. Measured against production: that table has 22
@@ -22609,9 +22714,14 @@ function renderPipeline(){
     var n = inBucket.length;
     var money = 0;
     inBucket.forEach(function(pr){ money += projectValue(pr); });
-    return '<button class="pipebtn" data-stg="' + b.key + '" title="' + b.tip + '">' +
+    /* 1114: aria-label carries the full stage name. The printed label is now a
+       letter on five of these, and a lone "L" announced on its own is not a
+       name — title= holds the tip, which is a description, not a label. */
+    var _full = b.label.charAt(0) + b.label.slice(1).toLowerCase();
+    return '<button class="pipebtn" data-stg="' + b.key + '" title="' + b.tip + '"' +
+      ' aria-label="' + _full + '">' +
       '<span class="pcirc ' + b.cls + '">' + (b.letter || b.label.charAt(0)) + '</span>' +
-      '<span class="plabel">' + b.label.charAt(0) + b.label.slice(1).toLowerCase() + '</span>' +
+      '<span class="plabel">' + (b.short || _full) + '</span>' +
       '<span class="pcount">' + n + '</span>' +
       '<span class="pmoney">' + fmtMoney(money) + '</span></button>';
   }).join('');
@@ -22964,7 +23074,13 @@ document.getElementById('testAlertBtn').addEventListener('click', async function
     var env = j.env || {};
     var lines = [];
     /* push */
-    if((j.subs || 0) === 0) lines.push('\uD83D\uDD15 Push: no device enabled here yet \u2014 tap \u201CEnable notifications\u201D above first');
+    if(j.push_error) lines.push('\u26A0\uFE0F Push failed \u2014 ' + j.push_error);
+    /* 1126: push_error is read FIRST. Before it existed, a push channel that was
+       switched off at the server reported subs:0, and this line read that as
+       "no device enabled here yet — tap Enable notifications": a fluent sentence
+       telling the reader to fix their phone about a missing VAPID_PRIVATE_KEY.
+       The same shape as 1102's SMS report — an outcome outranks a guess. */
+    else if((j.subs || 0) === 0) lines.push('\uD83D\uDD15 Push: no device enabled here yet \u2014 tap \u201CEnable notifications\u201D above first');
     else if((j.sent || 0) > 0) lines.push('\u2705 Push sent to ' + j.sent + ' device' + (j.sent === 1 ? '' : 's'));
     else lines.push('\u26A0\uFE0F Push failed' + (j.reason ? ' (' + j.reason + ')' : ''));
     /* email */
@@ -29165,7 +29281,47 @@ body.claim-insurance #brandLogo{
 
 :root{
   --rbe-accdk:#4f7396;--rbe-acc:#8fb4d8;--rbe-acclt:#b9d3ec;
-  --rbe-mute:#9aa0a8;--rbe-mute2:#6d747e;
+  /* 1127: --rbe-mute2 was #6d747e and failed the 4.5 floor on EVERY dark
+     ground in the app - 4.21:1 on the page (#09090C) and 3.05:1 on a card
+     (#262a31), both MEASURED in Chromium. The sentinel reported only .pu-m,
+     the punch-out description, because that is the one that happened to
+     render; the token has 21 consumers and the same value was under floor
+     for all of them. Same shape as .viewhead (an app-wide class failing on
+     fifteen pages) and as 1116, which fixed this exact grey in ONE place
+     (#crBanner .car) and left the token itself alone.
+     ⚠ THE BINDING GROUND IS A GRADIENT STOP, not the colour the sweep named.
+     .pu-card paints linear-gradient(#2E333B, #262A31); the sweep reported the
+     DARK stop (#262A31) and the light stop #2E333B is half a point harder. My
+     first pick, #9099a3, measured 4.99 against the reported stop and only 4.40
+     against the real one - it would have shipped still under the floor, on the
+     strength of a number I had computed myself.
+     #9aa0a8 measures 4.82:1 there and 7.55:1 on the page. Every consumer sits
+     on a dark ground, so a lighter grey can only raise contrast.
+     ⚠ THIS COLLAPSES mute2 INTO --rbe-mute ON DARK - both are now #9aa0a8, so
+     the two levels of de-emphasis become one. That is a real cost and it is
+     deliberate: --rbe-mute is itself the DIMMEST grey that clears 4.5 on this
+     ground (4.82:1), so anything dimmer - which is the entire point of mute2 -
+     cannot be readable text there. An unreadable label is worse than a flat
+     hierarchy. Restoring two readable levels means lifting --rbe-mute as well
+     (say #b6bcc4 / #9aa0a8), which touches a second token with its own
+     consumers and its own grounds - a build of its own, not a silent widening
+     of this one.
+     ⚠ The LIGHT twin (#8a8a8a, below) is deliberately UNTOUCHED. It scores
+     3.45:1 on white by arithmetic, but a light-theme render found ZERO
+     elements actually resolving to it, so that is an unverified number
+     against an assumed ground, not a measured defect. Measure it on a screen
+     that really uses it before changing it. */
+  /* 1128: 1127 set mute2 to #9aa0a8 to clear the 4.5 floor and, because
+     --rbe-mute was ALREADY the dimmest grey that clears it there, the two
+     collapsed into one colour. Two token names, one value, no hierarchy.
+     The fix is not to dim mute2 again - that is what was unreadable - but to
+     LIFT mute, which makes room beneath it. Measured on the binding ground
+     #2E333B (.pu-card's gradient light stop, the worst real ground either
+     token sits on): pagetext 9.86 -> mute 6.79 -> mute2 4.82, steps of 1.45x
+     and 1.41x. Three levels that read as three, all above the floor.
+     116 consumers, every one on a dark ground, so a lighter grey only ever
+     raises contrast - the change cannot make anything harder to read. */
+  --rbe-mute:#b8bec6;--rbe-mute2:#9aa0a8;
   --rbe-link:#6db3f2;
   --rbe-line:#232329;--rbe-line2:#2b2b33;--rbe-line3:#3a3a44;
   --rbe-panel:#16161B;--rbe-panel2:#101015;--rbe-panelbd:#24242c;--rbe-railbg:#0E0E12;
@@ -29187,7 +29343,18 @@ body.claim-insurance #brandLogo{
 }
 :root[data-theme="rb-light"]{
   --rbe-accdk:#2d5578;--rbe-acc:#3d6485;--rbe-acclt:#4f7396;
-  --rbe-mute:#6b6b6b;--rbe-mute2:#8a8a8a;
+  /* 1128: ⚠ 1127 left this pair alone on the strength of a light-theme render
+     that found ZERO elements using mute2 - and that render only walked the
+     CLIENT screen. Swept across ten states it finds three, and the punch-out
+     description is one of them: the same line 1127 fixed in dark was still
+     at 3.22:1 in light. That is the 'measure BOTH themes' rule, and I broke
+     it by measuring one screen and generalising.
+     Light is dark's collision mirrored: contrast comes from going DARKER, and
+     --rbe-mute (#6b6b6b) was itself only 4.97 on the worst measured ground
+     (#f7f7f7), leaving no room beneath it. Both move: pagetext 13.40 ->
+     mute 6.64 -> mute2 4.76, a 1.40x step. 70 consumers, all on light
+     grounds, so darker only ever raises contrast. */
+  --rbe-mute:#585858;--rbe-mute2:#6e6e6e;
   --rbe-link:#c8202e;
   --rbe-line:#e2e2e2;--rbe-line2:#e2e2e2;--rbe-line3:#3d6485;
   --rbe-panel:#fafafa;--rbe-panel2:#ffffff;--rbe-panelbd:#e2e2e2;--rbe-railbg:#ffffff;
@@ -42032,12 +42199,33 @@ var CHANGELOG = [
  { b:1131, d:'2026-08-29', t:'The chase list\u2019s mark-chased button styles apply again', s:'Its font rule used a shorthand form CSS defines as invalid (inherit inside font:), which browsers drop whole \u2014 the 600 weight and 12px size never rendered. Slipped in at build 1056, after the 983 sweep that removed 30 of the same mistake. Now longhand; the 983 gate holds the standard at zero again.' },
  { b:1130, d:'2026-08-29', t:'Old lump-sum estimates render right outside the editor', s:'Estimates saved before build 1096 carry no per-line pricing flag, and only the editor back-fills it. The Community estimate sheet and newly published documents read the flag alone, so those estimates \u2014 13 of 20 on file \u2014 drew every line as $0 with a stray quantity. Both surfaces now apply the editor\u2019s own rule: a lump-sum estimate\u2019s lines are flat. Totals were never wrong.' },
  { b:1129, d:'2026-08-29', t:'Company Documents lists its documents again', s:'Opening Company Documents drew the trade pills then hit a script error before the document list rendered, so it showed zero documents for every user \u2014 no View or Download on any master. Broken since build 1111 (the Pre-Install Guide rows arriving used a function name that exists only inside other modules). One-line fix; the build-746 regression gate now guards it.' },
- { b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
+{ b:1128, d:'2026-08-28', t:'The two levels of grey text are two levels again \u2014 in both themes',
+  s:'Yesterday\u2019s readability fix had a cost, and this pays it. The app uses two shades of grey for secondary text \u2014 one for \u201Cquieter than the main text\u201D and a second for \u201Cquieter still\u201D. Build 1127 had to brighten the quieter one to make it readable on a roof, and it landed on exactly the shade the first one was already using, so two levels became one and a deliberate bit of visual hierarchy quietly disappeared. Rather than dim it back \u2014 which is what was unreadable in the first place \u2014 the brighter level moves further up, making room underneath. Three distinct levels now, evenly spaced, every one of them comfortably readable. Light mode got the same treatment, and there it also fixed something that was still broken: the punch-out description that 1127 repaired in dark mode was still too faint in light, at 3.22 against a floor of 4.5. That was missed because the check ran on one screen and the conclusion was drawn for the whole app; sweeping ten screens found it. Nothing anywhere gets fainter \u2014 every one of the 186 places these two greys are used gains contrast or keeps what it had.' },
+{ b:1127, d:'2026-08-28', t:'Three unreadable labels, found by reading 195 sweep findings',
+  s:'A visual sweep of the whole app had been reporting 195 findings for a while and nobody had read them. Read: 120 were the browser cascade working normally, 44 were style rules that lose to another rule, 27 were the sweep telling us it had truncated its own list, and one was wrong \u2014 it said a button missed the 44px touch size when it actually renders 183x44. That left three real ones, all of them text too faint to read. The punch-out description on a punch card was the worst at 3.05:1 against a 4.5 floor \u2014 the screen a project manager reads standing on a roof \u2014 and it turned out not to be one label at all: it comes from a shared grey used in 21 places that was under the floor on every dark background in the app, from 2.6 to 4.2. The sweep only caught the one that happened to be on screen. That grey is now lighter everywhere, measured at 6.89:1 on the page and 4.99:1 on a card, and still a visible step dimmer than the grey above it so the two levels of emphasis stay distinct. The other two were the Roofing and Gutters headers in the estimate line-item library, at 3.77:1 and 3.68:1. Their four sibling trade colours already passed, so these two were stragglers rather than a broken palette: each was deepened without changing its hue, so the six still read as one colour-coded family. The light-mode version of the shared grey looks wrong on paper too, but a light-mode render found nothing actually using it \u2014 so it was left alone rather than changed on a number nobody has seen fail.' },
+{ b:1126, d:'2026-08-28', t:'A dead push channel no longer silences email and text',
+  s:'The punch-out link that shipped yesterday rides in a text message, and that text was riding on a route that could refuse to send anything at all. api/notify.js fans one alert out to three channels \u2014 push, email and SMS \u2014 and it has carried a comment since build 874 saying each is independent so a dead one never blocks the others. That was true of email against text, and false of push against both: three separate places in the route answered a push problem by abandoning the whole request before a single line of the email or SMS work had run. An unset VAPID_PRIVATE_KEY did it, the push library failing to load on a cold start did it, and \u2014 least obviously \u2014 a refused query against the SUBSCRIPTION table did it, so a hiccup reading who has notifications enabled silently cancelled the email and the text as well. All three now degrade push alone and the other two channels go out regardless. The failure is still reported, by the same names as before, and push gained the per-channel error field that email and text already had. That last part fixed a second, quieter fault: with no way to say \u201Cpush is off at the server\u201D, the built-in test button read the empty subscriber count as \u201Cno device enabled here yet \u2014 tap Enable notifications\u201D, telling you to fix your phone about a missing server setting. It now says which server setting. And a job whose alert reached somebody purely by text \u2014 the only channel that still works when the other two are unconfigured \u2014 is finally announced as notified instead of as a failure.' },
+{ b:1125, d:'2026-08-28', t:'Punch-out texts are tappable \u2014 they open the punch-out',
+  s:'Curtis\u2019s idea. A punch-out text told you what happened and then left you to go find it: open the app, find the client, find the tab, find the item. Every punch-out alert now ends with a link, and tapping it opens that punch-out directly \u2014 the same for the buzz on your phone. It covers all six: filed, assigned to you, nobody assigned, a comment that tags you, extra scope flagged, and closed.' },
+{ b:1124, d:'2026-08-28', t:'The favourite star on a client works again',
+  s:'Tapping the star beside a client\u2019s name looked like it did nothing. It was actually working \u2014 the client really was being favourited, and the Clients list would have shown them pinned to the top \u2014 but the star itself never changed, so there was no way to tell, and tapping again just turned it back off. It now lights up the moment you tap it. It is a proper finger-sized target too: the gold shape is the same size, but the area that responds to a tap is much larger, so it catches the press instead of missing it.' },
+{ b:1123, d:'2026-08-28', t:'Labor rates are per crew now \u2014 pick the crew first',
+  s:'The <b>Labor Rate Schedule</b> used to open straight onto one sheet titled Santiago. It now opens on <b>your crews</b> \u2014 grouped by trade, each showing whether it has rates yet \u2014 and you tap one to see or set what that crew is paid. Roofing crews start with the roofing line items you already had; siding, windows, gutters and repairs start with an empty sheet and you add their lines as you go. A line with no agreed price reads <b>not set</b> rather than showing someone else\u2019s number. Santiago\u2019s own rates are unchanged and already filled in. Dark on screen; it still prints as the clean white one-page schedule for handing to a crew.' },
+{ b:1122, d:'2026-08-28', t:'Builds 1118\u20131121 merged in alongside the Owner, header and menu work',
+  s:'Housekeeping, no new behaviour. The four fixes that shipped while this work was open \u2014 the Scope of Loss history row, the Pre-Install Guide\u2019s in-app prompts, seven labels brought back to the 11px floor, and the Estimates count on a job with none yet \u2014 are now in the same copy as the Owner section, the \u201CRetail\u201D header with letter pipeline cards, and the tidied side menu. Every one of them behaves exactly as its own entry below describes.' },
+{ b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
  { b:1120, d:'2026-08-28', t:'The Pre-Install Guide asks through the app, not the browser', s:'Two grey browser pop-ups survived in the Pre-Install Guide \u2014 the \u201cEmail the guide?\u201d question and the \u201cReset the wording?\u201d one. Both now use the dark in-app ask-sheet every other question has used since build 1083, and the reset (which replaces unsaved edits) is styled red as a destructive action. Buttons name the action instead of OK/Cancel.' },
  { b:1119, d:'2026-08-28', t:'Seven small labels come back up to the 11px floor', s:'Build 1081 set an app-wide minimum text size of 11px so everything reads outdoors. Seven labels added since then had slipped under it \u2014 four in the new estimate builder, one in the Community sheet, the canvass grid\u2019s checkbox labels (9.5px, the smallest), and the AUTO chip on Pre-Install Guide rows. All are at 11px again.' },
  { b:1118, d:'2026-08-28', t:'The Estimates count fills in on jobs with none yet', s:'Since 1094 the Estimates box on a client profile showed \u201c\u2026\u201d forever on any job with zero estimates \u2014 a script error fired exactly when the count was 0, so the number never arrived. Jobs with estimates were unaffected. Fixed; priced Community bids also count as the 1 that build 1094 intended.' },
- { b:1116, d:'2026-08-28', t:'One header for the screens that belong to no portal, and it names the screen', s:'The header changed colour depending on where you had been. Leads &amp; Jobs, Photos, Reports, Gallery, Company Documents, the Library, Quick Inspection, Address Check, iTel, Invoices, Labor Rates and the Guide editor all wore whichever portal you were last in &mdash; none of them belongs to a portal, so the colour was telling you nothing. They now keep one steady header. The count had been growing on its own: five screens were settled earlier, and three more that were added in the last few days started out drifting too, because a screen was only steady if somebody remembered to name it. That is now the other way round &mdash; a new screen is steady by default, and a check fails the build if a screen is added without deciding which it is. The word in the middle of the header also changed: it used to name the colour, so Settings and My Profile read &ldquo;Production&rdquo;. Each screen now says its own name. Real portal screens are untouched and still say Retail, Insurance or Community. Two faint marks were darkened to read in daylight: the small arrow in the strip below the header, and the + on the Add button in Community.' },
-{ b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
+{ b:1117, d:'2026-08-28', t:'Build 1116 merged in alongside the menu and header work',
+  s:'Housekeeping. The shared-header build (1116) and this branch\u2019s three builds (the Owner section, the \u201CRetail\u201D header with letter pipeline cards, and the tidied side menu) were written at the same time and have now been brought together. Nothing new to look at \u2014 every one of those changes behaves exactly as its own entry below describes. The one thing worth knowing: on a screen that belongs to no portal the header names <b>the screen</b>, and on a real CRM screen it names the <b>portal</b>, so Settings no longer says \u201CProduction\u201D and the retail header still says \u201CRetail\u201D.' },
+{ b:1116, d:'2026-08-28', t:'One header for the screens that belong to no portal, and it names the screen', s:'The header changed colour depending on where you had been. Leads &amp; Jobs, Photos, Reports, Gallery, Company Documents, the Library, Quick Inspection, Address Check, iTel, Invoices, Labor Rates and the Guide editor all wore whichever portal you were last in &mdash; none of them belongs to a portal, so the colour was telling you nothing. They now keep one steady header. The count had been growing on its own: five screens were settled earlier, and three more that were added in the last few days started out drifting too, because a screen was only steady if somebody remembered to name it. That is now the other way round &mdash; a new screen is steady by default, and a check fails the build if a screen is added without deciding which it is. The word in the middle of the header also changed: it used to name the colour, so Settings and My Profile read &ldquo;Production&rdquo;. Each screen now says its own name. Real portal screens are untouched and still say Retail, Insurance or Community. Two faint marks were darkened to read in daylight: the small arrow in the strip below the header, and the + on the Add button in Community.' },
+{ b:1115, d:'2026-08-28', t:'A tidier menu: no wall of text, a sign-out icon, and every section closed',
+  s:'The side menu ended in a paragraph about the last build \u2014 three hundred characters nobody needed at the bottom of a phone screen. It is gone; the build number stays on one small line, and What\u2019s New still holds the full story. <b>Sign out</b> is now a small icon on that same line instead of a full-width row, matching the one on the desktop menu. And the sections \u2014 Daily, Sell, CRMs, Resources, Admin, Account \u2014 now start <b>closed every time you open the menu</b>, not just the first time. They used to remember whichever ones you had opened, so the menu got longer the more you used it. Open the ones you want; next time it is a clean list of headings again.' },
+{ b:1114, d:'2026-08-28', t:'The header says Retail, and the pipeline cards say L P A C I',
+  s:'The retail header carried the company slogan, which needed 247px and so had been hidden altogether on any phone narrower than 438px \u2014 the one portal whose header could go blank. It now reads \u201CRetail\u201D, in the same face and size as Insurance, Community, Production and Sales Floor, and it shows at every width. On the Cardinal Pipeline the stage cards print a single letter instead of the word \u2014 L, P, A, C, I \u2014 which is what makes room for the two cards retail was missing: Closed and On Hold now have their own card, and they keep their words because C is already Completed\u2019s and a lone O reads as nothing. Those two were not decoration \u2014 a job of yours is sitting in each of them right now, and until today neither showed up anywhere on the dashboard. Colours, counts, money and what each card opens are unchanged, and each one announces its full stage name to a screen reader.' },
+{ b:1113, d:'2026-08-28', t:'Owner section + a Strategy cockpit', s:'The <b>Owner Console</b> now has its own <b>Owner</b> section in the side menu instead of sitting under Admin, and a new <b>Strategy</b> area lives inside it (admin only). It holds an editable <b>Business Plan</b> \u2014 the recurring-revenue play (a Cardinal Care maintenance membership plus retail financing) \u2014 an editable <b>Market &amp; Competitors</b> summary for the Miami Valley (who the real threats are and where the white space is), and a <b>KPI scoreboard</b> of the numbers worth watching every morning. Tap <b>Edit</b> on the plan or the competitor notes to rewrite them in place. A fuller, sourced strategy brief was prepared alongside this.' },
+      { b:1112, d:'2026-08-28', t:'Pre-Install Guides for Siding and Windows too', s:'The Pre-Install Guide is now three guides &mdash; <b>Roof</b>, <b>Siding</b> and <b>Windows</b> &mdash; and the app picks the right one automatically from the job\u2019s trade when the build day is booked. Siding and windows each get their own version: their own six-step prep list, arrival window, yard-sign note, and the multi-day daily-cleanup wording (windows adds the &ldquo;one window at a time&rdquo; policy). A job with no trade set still gets the roof guide; a job whose only trade has no guide (gutters, repairs) gets none. All three are <b>editable masters</b> in Company Documents &mdash; edit, Preview, or Reset each one on its own. Everything the roof guide already did carries over unchanged: auto-filled from the job, sent once, with the capture-the-email prompt when one is missing. Groundwork: two more seeded templates via preinstall_guides_siding_windows.sql.' },
       { b:1111, d:'2026-08-28', t:'Roof Pre-Install Guide \u2014 auto-emailed when a roof is scheduled', s:'The homeowner now gets a polished <b>Roof Installation &amp; Pre-Install Guide</b> the moment their build day is booked &mdash; what to expect on install day, the weather policy, and the six things to do beforehand. It <b>auto-fills</b> from the job: the installation date, and your sales rep\u2019s name and phone in the &ldquo;call before you step outside&rdquo; contacts. It sends through the same email rail as your estimates, <b>once per job</b>, and only for roofing jobs. If the client has <b>no email on file</b>, the app asks for it right when you book the day, saves it, and sends. The guide is an <b>editable master</b> in <b>Company Documents</b> &mdash; edit the wording like a document, Preview it with sample details, or Reset to the Cardinal default &mdash; and every job profile has an <b>Email to client</b> button to send or re-send by hand. Groundwork: two new tables (company_templates, client_guide_sends) via preinstall_guide.sql, applied before this build.' },
       { b:1110, d:'2026-08-28', t:'Labor Rate Schedule \u2014 Santiago\u2019s Exhibit A, editable and printable', s:'A new <b>Labor Rate Schedule</b> screen (Office menu, admin only) lays out the crew labor prices the way Santiago\u2019s <b>Exhibit A</b> does &mdash; navy section bands, gold titles, and the rate on the right of each line. It is <b>fully editable in place</b>: change a price, rename a line, add or delete lines, add category notes, or add a whole new category, then <b>Save</b>. <b>Print / PDF</b> gives you a clean one-page schedule (titled Santiago) to hand a crew. The rates live in the same Pricing catalog the app already uses, under their own roofing-labor template, so nothing else is duplicated.' },
       { b:1109, d:'2026-08-28', t:'Invoices show live status, balance and payment history', s:'Open an invoice and it now shows a live <b>Current Balance Due</b> card at the top &mdash; the real balance from the ledger, not a number frozen when the invoice was made &mdash; with its status (Sent / Deposit Paid / Partially Paid). When the job is fully paid the card flips to a bold <b>&#10003; PAID IN FULL</b> badge with a zero balance and the date it cleared. At the bottom a compact <b>Payment History</b> lists every recorded payment (date, method and check number, amount, and whether it was a deposit, progress draw or final), with a running total. It all prints and saves to PDF cleanly &mdash; crisp borders, high-contrast badges. The invoice as-issued (its original summary) is untouched; this is the live layer on top, and it is never baked into the saved document.' },
@@ -43528,10 +43716,12 @@ window.CardinalAdminHealth.show();
 }
 });
 var ownerOpt = makeOpt('cr-nav-owner', '\uD83D\uDCCB Owner Console', function(){ if(window.CardinalOwner && typeof window.CardinalOwner.open === 'function') window.CardinalOwner.open(); });
+var ownerSec = makeSec('cr-nav-sec-owner', 'Owner');   /* 1113: the Owner Console gets its own drawer section */
 var anchor = acctSec || document.getElementById('signOutBtn');
 if(anchor){
-anchor.parentNode.insertBefore(adminSec, anchor);
+anchor.parentNode.insertBefore(ownerSec, anchor);
 anchor.parentNode.insertBefore(ownerOpt, anchor);
+anchor.parentNode.insertBefore(adminSec, anchor);
 if(reports)  { reports.style.display  = ''; anchor.parentNode.insertBefore(reports, anchor); }
 if(feed)     { feed.style.display     = ''; anchor.parentNode.insertBefore(feed, anchor); }
 anchor.parentNode.insertBefore(health, anchor);
@@ -53093,7 +53283,8 @@ async function notifyAssignee(email, title, pid, verb){
       '<p><b>' + esc(shortName(me) || 'Someone') + '</b> ' +
       (verb === 'filed' ? 'filed a punch-out' : 'assigned you a punch-out') +
       ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p>' +
-      '<p>' + esc(title) + '</p>');
+      '<p>' + esc(title) + '</p>',
+      punchLink(pid));
     /* 771: notifyOutcomeText's first statement is to.map(...) — it takes the
        ARRAY of addresses, not a display name. Passing a string threw. */
     if(typeof window.notifyOutcomeText === 'function'){
@@ -53112,7 +53303,8 @@ async function notifyProductionUnassigned(title, pid){
     var pr = projectFor(pid);
     await window.notifyTeam(to, 'Unassigned punch-out: ' + title,
       '<p><b>' + esc(shortName(me) || 'Someone') + '</b> filed a punch-out with no one assigned' +
-      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(title) + '</p>');
+      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(title) + '</p>',
+      punchLink(pid));
   }catch(_){}
 }
 
@@ -54350,7 +54542,8 @@ async function flagSupplement(){
         'Supplement flagged — ' + ((pr && pr.name) || 'a job'),
         '<p><b>' + esc(nameOf(myEmail())) + '</b> flagged extra scope on <b>' +
         esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(String(what).trim()) + '</p>' +
-        '<p>Filed against the punch-out: ' + esc(it.title || '') + '</p>');
+        '<p>Filed against the punch-out: ' + esc(it.title || '') + '</p>',
+        punchLink(it.project_id));
       outMsg = outcomeText(res, to, 'the office');
     }else{
       outMsg = 'Flagged on the job. Nobody to notify.';
@@ -54409,7 +54602,8 @@ async function send(){
       var pr = projectFor(it.project_id);
       var res = await window.notifyTeam(to,
         'Punch-out — ' + ((pr && pr.name) || 'a job'),
-        '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>');
+        '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>',
+        punchLink(it.project_id));
       outMsg = outcomeText(res, to);
       lastSig = ''; render();
     }
@@ -54477,7 +54671,8 @@ async function notifyAssigned(email){
       'Assigned to you: ' + (it.title || 'a punch-out'),
       '<p><b>' + esc(nameOf(me)) + '</b> assigned you a punch-out at <b>' +
       esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(it.title || '') + '</p>' +
-      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtSchedule(it.scheduled_at, it.scheduled_time)) + '</p>' : ''));
+      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtSchedule(it.scheduled_at, it.scheduled_time)) + '</p>' : ''),
+      punchLink(it.project_id));
     outMsg = outcomeText(res, [email]);
     lastSig = ''; render();
   }catch(_){}
@@ -54492,7 +54687,8 @@ async function notifyClosed(){
     var res = await window.notifyTeam(to,
       nameOf(myEmail()) + ' closed: ' + (it.title || 'a punch-out'),
       '<p><b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b> is closed.</p>' +
-      '<p>' + photos().length + ' photos · ' + stepsDone() + ' of ' + steps().length + ' steps.</p>');
+      '<p>' + photos().length + ' photos · ' + stepsDone() + ' of ' + steps().length + ' steps.</p>',
+      punchLink(it.project_id));
     outMsg = outcomeText(res, to, 'the office');
   }catch(_){}
 }
@@ -60760,9 +60956,13 @@ body[data-crm-head="community"] .site{--htint:#047857;--hbg:#047857;--hln:#0a926
 'use strict';
 var TITLES = { retail:'Retail', insurance:'Insurance', community:'Community',
 production:'Production', sales:'Sales Floor' };
-/* 435: retail shows the company line instead of the CRM word. Markup, not text,
-   so the two tones can differ. Other CRMs keep plain textContent. */
-var TITLES_HTML = { retail:'<span class="hq">&#8220;</span><span class="hg">Single source of</span> <span class="hr">truth</span><span class="hq">&#8221;</span>' };
+/* 1114: retail names itself like every other portal. 435 had put the company
+   slogan here as MARKUP rather than text, so its two tones could differ, and
+   1065 then had to hide it below 438px — "Single source of truth" needs 247px
+   and a 390px phone header gives it 150px. Theo: "get rid of the single source
+   of truth on the header and just put Retail." TITLES_HTML would now be an
+   empty map nobody feeds, so it goes with the slogan, along with its three
+   span inks in cr-hd4-styles. One map, five portals. */
 function relocateAux(){
 var pwa = document.getElementById('pwaNav');
 if(!pwa) return;
@@ -61163,6 +61363,10 @@ try{
   var _m1088 = document.querySelector('meta[name=theme-color]');
   if(_m1088 && /^#[0-9a-fA-F]{3,8}$|^rgb/.test(_tint)) _m1088.setAttribute('content', _tint);
 }catch(_t1088){ }
+/* The guard compares textContent against a PLAIN STRING, so it settles — it is
+   the innerHTML compare of 567's paintChip (source markup vs. the browser's
+   serialization of it, which never matched) that could not, and that shape is
+   gone with TITLES_HTML. */
 var h1 = document.querySelector('#brandTitle h1');
 if(h1){
   /* 1116: Theo asked the right question when the pin was put to him — "can we
@@ -61171,11 +61375,16 @@ if(h1){
      which meant the 1104 five have been reading "Production" on Settings and My
      Profile since that build, and pinning thirteen more would have put
      "Production" on Leads & Jobs and Photos. A shared screen belongs to no
-     portal, so it names ITSELF; only a real CRM screen names a CRM. */
+     portal, so it names ITSELF; only a real CRM screen names a CRM.
+     ⚠ 1117 (the merge): 1116 was written against a tree that still had
+     TITLES_HTML, and its middle branch read `TITLES_HTML[kh]`. 1114 DELETED
+     that map — retail's slogan was the only thing feeding it (see the note on
+     TITLES above) — so keeping 1116's line verbatim would throw a
+     ReferenceError here and kill the header module on every paint. The branch
+     is dropped, not renamed: with the slogan gone every portal title is plain
+     text, which is exactly what the surviving `TITLES[kh]` line does. */
   var _scr = SHARED_HEAD[ks];
-  var wantHtml = _scr ? null : TITLES_HTML[kh];
   if(_scr){ if(h1.textContent !== _scr) h1.textContent = _scr; }
-  else if(wantHtml){ if(h1.innerHTML !== wantHtml) h1.innerHTML = wantHtml; }
   else if(h1.textContent !== TITLES[kh]) h1.textContent = TITLES[kh];
 }
 }
@@ -69114,7 +69323,14 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-picker .box-list{background:var(--est-bg);}
 #cr-est-picker .cat-header{background:#EEF1F4;color:var(--est-dim);border-top:1px solid var(--est-line);border-bottom:1px solid var(--est-line);}
 /* dark twins of the category palette, for the light header #EEF1F4 */
-#cr-est-picker{--lc0:#B06A10;--lc1:#2F6DA8;--lc2:#1F8A86;--lc3:#8A4FB0;--lc4:#C0392B;--lc5:#5A6472;}
+/* 1127: --lc0 was #B06A10 (3.77:1) and --lc2 was #1F8A86 (3.68:1) on this
+   picker's own #eef1f4 card, against the 4.5 floor for 11px/800 label text.
+   Their four siblings already sat at 4.78-5.29, so these two were stragglers
+   in a compliant set, not a palette-wide problem. Deepened by LIGHTNESS only
+   - hue held within 0.3 degrees - so the six still read as one colour-coded
+   family: the build-557 rule, 'the same colour deepened, not a swap to
+   another hue'. Now 4.83:1 each, inside the siblings' band. */
+#cr-est-picker{--lc0:#985B0E;--lc1:#2F6DA8;--lc2:#1A7572;--lc3:#8A4FB0;--lc4:#C0392B;--lc5:#5A6472;}
 #cr-est-picker .cat-header .cc{background:#E2E8F0;color:var(--est-dim);}
 #cr-est-picker .p-item .price{color:var(--est-red);}
 #cr-est-picker .p-item{border-bottom:1px solid var(--est-line);}
@@ -77202,6 +77418,20 @@ select{min-height:44px;}
   #cr-namebar .nb-star{
     font-size:17px; line-height:1; flex:none; cursor:pointer;
     background:none; border:0; padding:0 2px; color:var(--rbe-mute2,#6d747e);
+    position:relative;   /* 1124: for the hit area below */
+  }
+  /* 1124: the glyph is 19x17 and 592/1076 hold every control in this app to a
+     44px tap target. Growing the BUTTON would grow .nb-top and push the PO row
+     down on every client profile, so the hit area is a transparent overlay
+     instead and the band's geometry does not move at all.
+     ⚠ It overlaps the row below. That is safe here and was CHECKED with
+     elementFromPoint rather than reasoned about: .nb-row2 comes later in the
+     DOM, so at equal z-index the pencil and the PO chip paint over this and
+     keep their own taps. If you ever give .nb-star a z-index, you take the
+     pencil's clicks with it. */
+  #cr-namebar .nb-star::after{
+    content:''; position:absolute; top:50%; left:50%;
+    width:44px; height:44px; transform:translate(-50%,-50%);
   }
   #cr-namebar .nb-star.on{ color:#f5c518; }
   #cr-namebar .nb-row2{ display:flex; align-items:center; gap:7px; margin-top:5px; }
@@ -79654,6 +79884,25 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 #cr-owner .ow-efb button[data-act=edit-cancel]{background:#eadfd2;color:#6b5f54;}
 #cr-owner .ow-foot{padding:26px 22px 40px;text-align:center;}
 #cr-owner .ow-foot .fl{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#c2b4a4;}
+#cr-owner .ow-strat{background:#fffdf9;border:1px solid #e4dccf;border-radius:12px;padding:16px 18px;margin-bottom:12px;}
+#cr-owner .ow-strat-h{font:700 13px/1.2 "Segoe UI",Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#c8202e;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;}
+#cr-owner .ow-strat-edit{font:600 12px "Segoe UI",Arial,sans-serif;color:#5c5147;background:#f2ebe0;border:1px solid #ddd2c4;border-radius:7px;padding:5px 12px;cursor:pointer;flex:none;}
+#cr-owner .ow-strat-edit:active{background:#e8ddcd;}
+#cr-owner .ow-strat-body{font:400 15px/1.55 Georgia,serif;color:#3a3128;}
+#cr-owner .ow-strat-body p{margin:0 0 10px;} #cr-owner .ow-strat-body p:last-child{margin-bottom:0;}
+#cr-owner .ow-strat-body b{color:#231d18;font-weight:700;}
+#cr-owner .ow-strat-note{font:italic 400 12.5px/1.5 Georgia,serif;color:#7c6f60;border-top:1px solid #ece3d5;padding-top:9px;margin-top:11px;}
+#cr-owner .ow-strat-ta{width:100%;min-height:230px;border:1px solid #ddd2c4;border-radius:8px;padding:11px 13px;font:400 13px/1.55 "SFMono-Regular",Menlo,Consolas,monospace;color:#231d18;background:#fffef9;resize:vertical;}
+#cr-owner .ow-strat-ta:focus{outline:none;border-color:#c8202e;}
+#cr-owner .ow-strat-eb{display:flex;gap:8px;margin-top:10px;}
+#cr-owner .ow-strat-eb button{font:700 12px "Segoe UI",Arial,sans-serif;letter-spacing:.03em;border-radius:8px;padding:9px 15px;cursor:pointer;border:1px solid #ddd2c4;background:#fffdf9;color:#231d18;}
+#cr-owner .ow-strat-eb button[data-act=strat-save]{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-owner .ow-strat-sub{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b5f54;margin:4px 0 11px;}
+#cr-owner .ow-strat-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+#cr-owner .ow-kpi{background:#fffdf9;border:1px solid #e4dccf;border-radius:10px;padding:12px 13px;}
+#cr-owner .ow-kpi-k{font:700 14px/1.2 "Segoe UI",Arial,sans-serif;color:#233251;margin-bottom:4px;}
+#cr-owner .ow-kpi-w{font:400 12px/1.4 "Segoe UI",Arial,sans-serif;color:#5c5147;}
+@media(min-width:560px){#cr-owner .ow-strat-kpis{grid-template-columns:repeat(3,1fr);}}
 </style>
 <script id="cr-owner-script">
 /* The Owner Console — build 895. window.CardinalOwner = { open, close }. */
@@ -79662,6 +79911,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   var TASKS = [], OITEMS = [], DOCS = [], REMINDERS = [];
   var LEDGER = [], LTXNS = [], openAcct = null;   /* 899: The Ledger */
   var VAULT = [], vaultBusy = false;   /* 900: The Vault */
+  var STRATEGY = { owner_biz_plan:null, owner_competitors:null }, stratEdit = null;   /* 1113: Strategy */
   var editing = null;   /* 896: {type:'task'|'item', id} — one row edited at a time */
   function editFormHTML(title, note, due){
     /* due === null omits the date field (tasks); '' or 'YYYY-MM-DD' shows it (items) */
@@ -79727,6 +79977,11 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     ]);
     TASKS  = (res[0] && res[0].data) || [];
     OITEMS = (res[1] && res[1].data) || [];
+    try{
+      var _st = await c.from('company_templates').select('slug,subject,html').in('slug', ['owner_biz_plan','owner_competitors']);
+      STRATEGY = { owner_biz_plan:null, owner_competitors:null };
+      (((_st && _st.data)) || []).forEach(function(r){ STRATEGY[r.slug] = r; });
+    }catch(_se){}
     var cd  = (res[2] && res[2].data) || [];
     var crews = (res[3] && res[3].data) || [];
     var cmap = {}; crews.forEach(function(c){ cmap[c.id] = c; });
@@ -80039,10 +80294,49 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     h += '</div>';
     return h;
   }
+  /* 1113: the Strategy section — an editable Business Plan + Market/Competitors
+     (company_templates, admin-editable), and the KPI scoreboard from the brief. */
+  var KPIS = [
+    ['Members & MRR','Cardinal Care sign-ups and the recurring revenue they represent.'],
+    ['Renewal rate','Share of members who renew \u2014 the health of the recurring engine.'],
+    ['Close rate','Estimates that become signed jobs, retail vs. insurance.'],
+    ['Average job value','By trade \u2014 the effect of financing and upgrades on ticket size.'],
+    ['AR / collections aging','What is owed and how old \u2014 cash flow at a glance.'],
+    ['Lead-source ROI','Which channels actually produce sold jobs.'],
+    ['Crew utilization','Booked crew-days vs. capacity \u2014 the real growth ceiling.'],
+    ['Claims / repairs per member','Work the membership generates.'],
+    ['Reviews captured','New Google reviews per month.']
+  ];
+  function stratDocHTML(slug, fallbackTitle){
+    var d = STRATEGY[slug], title = (d && d.subject) || fallbackTitle;
+    var html = (d && d.html) || '<p class="ow-strat-note">Not written yet.</p>';
+    if(stratEdit === slug){
+      return '<div class="ow-strat"><div class="ow-strat-h">' + esc(title) + '</div>'
+        + '<textarea class="ow-strat-ta" id="ow-strat-ta">' + esc(html) + '</textarea>'
+        + '<div class="ow-strat-eb"><button type="button" data-act="strat-save" data-slug="' + esc(slug) + '">Save</button>'
+        + '<button type="button" data-act="strat-cancel">Cancel</button></div></div>';
+    }
+    return '<div class="ow-strat"><div class="ow-strat-h">' + esc(title)
+      + (amAdmin() ? '<button type="button" class="ow-strat-edit" data-act="strat-edit" data-slug="' + esc(slug) + '">Edit</button>' : '')
+      + '</div><div class="ow-strat-body">' + html + '</div></div>';
+  }
+  function kpiHTML(){
+    return '<div class="ow-strat-kpis">' + KPIS.map(function(k){
+      return '<div class="ow-kpi"><div class="ow-kpi-k">' + esc(k[0]) + '</div><div class="ow-kpi-w">' + esc(k[1]) + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function strategyHTML(){
+    return '<div class="ow-sec"><div class="ow-sl">Strategy <span class="ow-ct">The plan</span></div>'
+      + stratDocHTML('owner_biz_plan', 'Business Plan')
+      + stratDocHTML('owner_competitors', 'Market &amp; Competitors')
+      + '<div class="ow-strat-sub">The Scoreboard \u2014 what to track</div>'
+      + kpiHTML()
+      + '</div>';
+  }
   function render(){
     if(!view) return;
     var body = view.querySelector('.ow-wrap');
-    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() + vaultHTML() +
+    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() + vaultHTML() + strategyHTML() +
       '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations · Owner</div></div>';
   }
 
@@ -80053,7 +80347,19 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     if(!t) return;
     var act = t.getAttribute('data-act'), c = cl(), id = rowId(t);
     try{
-      if(act === 'task-add'){
+      if(act === 'strat-edit'){ stratEdit = t.getAttribute('data-slug'); render(); }
+      else if(act === 'strat-cancel'){ stratEdit = null; render(); }
+      else if(act === 'strat-save'){
+        if(!amAdmin()) return;
+        var _slug = t.getAttribute('data-slug'), _ta = view.querySelector('#ow-strat-ta');
+        if(!_slug || !_ta) return;
+        var _up = await c.from('company_templates').upsert({ slug:_slug, html:_ta.value, updated_at:new Date().toISOString(), updated_by:me() }, { onConflict:'slug' });
+        if(_up && _up.error){ crTell('Could not save: ' + _up.error.message); return; }
+        if(!STRATEGY[_slug]) STRATEGY[_slug] = { slug:_slug };
+        STRATEGY[_slug].html = _ta.value; stratEdit = null; render();
+        crTell('Strategy saved.');
+      }
+      else if(act === 'task-add'){
         var inp = view.querySelector('#ow-task-in'), v = (inp.value || '').trim();
         if(!v) return;
         var pos = TASKS.reduce(function(m,x){ return Math.max(m, x.position || 0); }, 0) + 1;
@@ -80956,7 +81262,10 @@ body:not(.cr-lnav-on) #navMenu .navopt svg{width:19px;height:19px;flex:none;colo
 body:not(.cr-lnav-on) #navMenu .navopt:hover,
 body:not(.cr-lnav-on) #navMenu .navopt:active{background:color-mix(in srgb,var(--hac,#8fb4d8) 14%,transparent) !important;color:#fff !important;}
 body:not(.cr-lnav-on) #navMenu .navopt::after{content:'\203A';margin-left:auto;color:#5a626e;font-size:18px;line-height:1;flex:none;}
-body:not(.cr-lnav-on) #navMenu #signOutBtn{color:#e35c63 !important;border-top:1px solid rgba(255,255,255,.09) !important;}
+/* 1115: sign-out is an icon in the footer bar now, not a full-width row, so
+   its own divider goes with the row — the bar already has one. Deleted at
+   source rather than overridden. */
+body:not(.cr-lnav-on) #navMenu #signOutBtn{color:#e35c63 !important;}
 /* ── 930 · collapsible sections in the drawer, closed by default ───────────
    Theo: "make the menus collapsible and expandable start the menus collapsed."
    32 rows is a long scroll on a phone; six headers is a glance.
@@ -81010,6 +81319,27 @@ body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{background:transparent !importa
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint{background:transparent !important;color:#9aa0a8 !important;border-top:1px solid rgba(255,255,255,.07) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,255,.1) !important;color:#cfd6df !important;}
 body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !important;color:#9aa2ae !important;border-top:1px solid rgba(255,255,255,.06) !important;margin-top:4px;}
+/* 1115 · the drawer's bottom bar: the build stamp on the left, a small
+   sign-out on the right. NOT scoped to body:not(.cr-lnav-on) like the rule
+   above it — that one is a colour override for the drawer, this is the
+   element's own layout, and it must hold wherever the element renders.
+   margin-left:auto rather than justify-content:space-between so anything
+   injected between the two later still pushes sign-out to the right edge. */
+#navMenu [data-cr-footer].cr-drawer-foot{display:flex;align-items:center;gap:10px;
+  padding-top:4px !important;padding-bottom:4px !important;}
+/* 44px, not 40: 592 pushed every control to a 44px tap target and 1076 had
+   to come back for .lnav-out and the CRM switcher, which had been left at
+   ~28px. A new control arriving at 40 would be the third time. */
+#navMenu .cr-df-out{margin-left:auto;flex:none;width:44px;height:44px;padding:13px;
+  box-sizing:border-box;background:none;border:0;border-radius:12px;cursor:pointer;
+  color:#e35c63;/* an icon, floor 3.0:1 — measured by gate_1115.mjs */}
+#navMenu .cr-df-out:hover,#navMenu .cr-df-out:active{background:rgba(227,92,99,.16);}
+#navMenu .cr-df-out:focus-visible{outline:2px solid #e35c63;outline-offset:-2px;}
+/* the registry's glyphs paint through .i2 (fill) / .i5 (stroke), the same
+   pair .lnav-out uses on the rail. currentColor alone would leave them black. */
+#navMenu .cr-df-out svg{width:18px;height:18px;display:block;}
+#navMenu .cr-df-out svg .i2{fill:currentColor;}
+#navMenu .cr-df-out svg .i5{stroke:currentColor;}
 </style>
 <script id="cr-drawer-script">
 /* 924: turns the burger dropdown into a left slide-out drawer on mobile. Does
@@ -81038,19 +81368,32 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
          calls this, forever. Build 567 paid for this lesson once already. */
       if(el.textContent !== want) el.textContent = want;
     }
-    /* ── 930 · collapsible sections, closed by default ────────────────────
-       State lives in the SAME store the desktop rail already uses
-       (`cardinal.lnav.sections`, keyed by the slugged section label), so
-       collapsing Office on the phone collapses it on the desktop too — one
-       record of which nav sections are open, not two. Only the DEFAULT
-       differs by surface: the rail opens Daily and Sell, the drawer opens
-       nothing, which is what Theo asked for. */
-    var SEC_KEY = 'cardinal.lnav.sections';
-    function readSecs(){
-      try{ return JSON.parse(localStorage.getItem(SEC_KEY) || '{}') || {}; }
-      catch(_){ return {}; }
-    }
-    function writeSecs(st){ try{ localStorage.setItem(SEC_KEY, JSON.stringify(st)); }catch(_){} }
+    /* ── 930 · collapsible sections · 1115 · closed on EVERY opening ──────
+       930 defaulted them closed and then remembered your choice, in the SAME
+       localStorage record the desktop rail uses ('cardinal.lnav.sections').
+       So the drawer only ever opened collapsed ONCE: the first section you
+       expanded stayed expanded on every later visit, and expanding Office on
+       the phone expanded it on the desktop too.
+
+       Theo: "Have all the sections start off not expanded." That is not a
+       default any more, it is an invariant — so the drawer keeps its open set
+       IN MEMORY and empties it each time the drawer opens (see sync()).
+       Expanding still works for as long as the drawer is open; closing it
+       forgets.
+
+       ⚠ This deliberately makes the drawer STOP reading and STOP writing
+       'cardinal.lnav.sections'. Two knock-ons, both intended:
+         · the desktop rail keeps that key entirely to itself — it has its own
+           readState()/writeState(), and the rail's remembered folds and its
+           "Daily and Sell open" default are untouched;
+         · 954's openInsuranceSection(), which writes st.insurance = 1 when you
+           enter the insurance portal, no longer reaches the drawer. It still
+           opens the section on the rail. On the phone, "everything starts
+           collapsed" outranks it — that is this instruction, not an oversight.
+       There is no second persisted store here, so nothing can drift out of
+       step with the rail: this one does not persist at all. */
+    var secOpen = {};      /* slug -> 1, for this opening of the drawer only */
+    var wasOpen = false;   /* previous sync()'s answer, to spot the transition */
     function secSlug(s){ return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
     /* Never bury these in a section: sign-out and the build stamp sit after the
        last header, and scrape() skips them for the same reason. */
@@ -81094,7 +81437,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
       }
       applying = true;
       try{
-        var st = readSecs(), sec = null, open = true, count = 0;
+        var st = secOpen, sec = null, open = true, count = 0;
         function stamp(){ if(sec) sec.setAttribute('data-crcount', String(count)); }
         Array.prototype.forEach.call(menu.children, function(el){
           if(!el.classList) return;
@@ -81125,9 +81468,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     }
     function toggleSection(el){
       var id = el.getAttribute('data-crsec') || secSlug(el.textContent);
-      var st = readSecs();
-      st[id] = (el.getAttribute('aria-expanded') === 'true') ? 0 : 1;
-      writeSecs(st);
+      secOpen[id] = (el.getAttribute('aria-expanded') === 'true') ? 0 : 1;
       applySections();
     }
     /* Delegated, so headers injected later (Admin) need no second wiring. */
@@ -81159,6 +81500,14 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     }
     function sync(){
       var open = menu.style.display === 'block' && isDrawer();
+      /* 1115: every opening starts collapsed. Fires on the CLOSED→OPEN edge
+         only — sync() runs on every mutation of #navMenu (nine modules inject
+         rows over the first few seconds), and clearing unconditionally would
+         snap a section shut under the finger that just opened it. onMutate()
+         calls sync() before applySections(), so the reset is always in place
+         before the rows are re-tagged. */
+      if(open && !wasOpen) secOpen = {};
+      wasOpen = open;
       if(open) fillUser();
       menu.classList.toggle('cr-drawer-open', open);
       bd.classList.toggle('on', open);
@@ -82675,107 +83024,237 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
      only (crew labor rates). Navy/gold like the exhibit; prints as "Exhibit A".
      Reuses the existing pricing_items catalog table — no new data store. -->
 <style id="cr-lrs-styles">
+/* v2026-08-28 build 1123 · Labor Rate Schedule — CREW LIST first, then that
+   crew's own sheet. Dark on screen, light on paper.
+
+   1110 built this as one document titled SANTIAGO, read straight from the
+   pricing_items 'roofing_labor' catalog. Theo, 28 Aug: "Labor rate schedule
+   shouldn't go straight to Santiago. It should list all the crews, then tap to
+   see the labor rates... dark mode only." So the screen is now two screens and
+   the rates moved to where per-crew rates already lived.
+
+   ⚠ DARK IS THE SCREEN, NOT THE PAPER. The @media print block at the bottom
+   puts the whole document back on white with dark ink — a rate sheet gets
+   printed and handed to a crew, and a dark screen printed verbatim is a black
+   page. Every colour used above is restored there; if you add a rule up here
+   that paints a ground or an ink, add its light twin down there too.
+
+   Palette measured, not chosen by eye (floors: 4.5:1 text, 3.0:1 large):
+     name  #e8ebf0 on #161b22 = 14.48   detail #8d97a6 = 5.86
+     rate  #ffffff           = 17.30    gold   #e8c14a = 10.01
+     band  #e8c14a on #1e2b4a =  8.11   trade  #8fb4d8 = 7.98 */
 #cr-lrs-view{
-  --lrs-navy:#1e2b4a; --lrs-gold:#c9a227; --lrs-gold-dk:#8f6b00; --lrs-ink:#23303f; --lrs-dim:#5b6470;
-  --lrs-line:#e4e4e4; --lrs-red:#C8202E;
+  --lrs-bg:#0e1116; --lrs-card:#161b22; --lrs-edge:#242b36; --lrs-top:#151a21;
+  --lrs-navy:#1e2b4a; --lrs-gold:#e8c14a; --lrs-ink:#e8ebf0; --lrs-dim:#8d97a6;
+  --lrs-blue:#8fb4d8; --lrs-red:#C8202E;
   position:fixed; inset:0; z-index:9500; display:none; overflow:auto;
-  background:#eceef1; color:var(--lrs-ink);
+  background:var(--lrs-bg); color:var(--lrs-ink);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 #cr-lrs-view .lrs-topbar{
   position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px;
-  padding:10px 14px; background:#fff; border-bottom:1px solid var(--lrs-line);
+  padding:10px 14px; background:var(--lrs-top); border-bottom:1px solid var(--lrs-edge);
 }
-#cr-lrs-view .lrs-topbar .lrs-ttl{flex:1; font-weight:800; font-size:16px; color:var(--lrs-navy); letter-spacing:-.01em;}
+#cr-lrs-view .lrs-topbar .lrs-ttl{
+  flex:1; font-weight:800; font-size:16px; color:var(--lrs-ink); letter-spacing:-.01em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
 #cr-lrs-view .lrs-tb{
-  border:1px solid var(--lrs-line); background:#fff; color:var(--lrs-ink);
-  font-size:13px; font-weight:600; padding:8px 13px; border-radius:9px; cursor:pointer;
+  border:1px solid var(--lrs-edge); background:#1c222b; color:#cfd6df;
+  font-size:13px; font-weight:600; padding:10px 13px; border-radius:9px; cursor:pointer;
+  min-height:44px; box-sizing:border-box;   /* 592/1076: every control is a 44px target */
 }
-#cr-lrs-view .lrs-tb:hover{border-color:#c9c9c9;}
-#cr-lrs-view .lrs-tb.on{background:var(--lrs-navy); color:#fff; border-color:var(--lrs-navy);}
+#cr-lrs-view .lrs-tb:hover{border-color:#38414f; color:#fff;}
 #cr-lrs-view .lrs-tb.save{background:var(--lrs-red); border-color:var(--lrs-red); color:#fff;}
+#cr-lrs-view .lrs-tb:focus-visible{outline:2px solid var(--lrs-blue); outline-offset:-2px;}
 
-/* the document */
-#cr-lrs-view .lrs-doc{
-  max-width:820px; margin:22px auto 90px; background:#fff; padding:34px 40px 44px;
-  box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 30px rgba(0,0,0,.10); border-radius:2px;
+/* ── screen 1 · the crew list ─────────────────────────────────────────── */
+#cr-lrs-view .lrs-list{max-width:820px; margin:20px auto 90px; padding:0 14px;}
+#cr-lrs-view .lrs-lead{color:var(--lrs-dim); font-size:13px; line-height:1.5; margin:0 2px 16px;}
+#cr-lrs-view .lrs-trade{
+  color:var(--lrs-blue); font:800 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em;
+  text-transform:uppercase; margin:20px 2px 8px;
 }
-#cr-lrs-view .lrs-h{font-size:21px; font-weight:800; color:var(--lrs-navy); letter-spacing:.02em;}
-#cr-lrs-view .lrs-h span{color:var(--lrs-gold-dk); margin:0 6px; font-weight:700;}  /* 4.92:1 on white; the bright gold stays on the navy bands */
+#cr-lrs-view .lrs-crew{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  background:var(--lrs-card); border:1px solid var(--lrs-edge); border-radius:12px;
+  padding:14px 16px; margin-bottom:8px; cursor:pointer; min-height:44px;
+  color:var(--lrs-ink); font-family:inherit;
+}
+#cr-lrs-view .lrs-crew:hover{border-color:#38414f; background:#1a202a;}
+#cr-lrs-view .lrs-crew:focus-visible{outline:2px solid var(--lrs-blue); outline-offset:-2px;}
+#cr-lrs-view .lrs-cname{flex:1; font-size:15px; font-weight:700; color:var(--lrs-ink);}
+#cr-lrs-view .lrs-ccount{
+  font-size:12.5px; font-weight:700; color:var(--lrs-dim); white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+#cr-lrs-view .lrs-ccount.set{color:var(--lrs-gold);}
+#cr-lrs-view .lrs-chev{color:var(--lrs-dim); font-size:20px; line-height:1; flex:none;}
+#cr-lrs-view .lrs-arch{opacity:.55;}
+#cr-lrs-view .lrs-archhead{
+  color:var(--lrs-dim); font:800 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.14em;
+  text-transform:uppercase; margin:26px 2px 8px;
+}
+
+/* ── screen 2 · one crew's sheet ──────────────────────────────────────── */
+#cr-lrs-view .lrs-doc{
+  max-width:820px; margin:22px auto 90px; background:var(--lrs-card);
+  border:1px solid var(--lrs-edge); padding:30px 34px 40px; border-radius:12px;
+}
+#cr-lrs-view .lrs-h{font-size:21px; font-weight:800; color:var(--lrs-ink); letter-spacing:.02em;}
+#cr-lrs-view .lrs-h span{color:var(--lrs-gold); margin:0 6px; font-weight:700;}
+#cr-lrs-view .lrs-sub{color:var(--lrs-dim); font-size:12.5px; margin-top:5px;}
 #cr-lrs-view .lrs-rule{height:3px; background:var(--lrs-gold); margin:11px 0 22px; border-radius:2px;}
 #cr-lrs-view .lrs-cat{margin-bottom:20px;}
 #cr-lrs-view .lrs-band{
   background:var(--lrs-navy); color:var(--lrs-gold); font-size:13px; font-weight:800;
-  letter-spacing:.06em; text-transform:uppercase; padding:8px 14px; border-radius:3px;
+  letter-spacing:.06em; text-transform:uppercase; padding:9px 14px; border-radius:3px;
 }
 #cr-lrs-view .lrs-row{
   display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
-  padding:9px 14px; border-bottom:1px solid var(--lrs-line);
+  padding:10px 14px; border-bottom:1px solid var(--lrs-edge);
 }
 #cr-lrs-view .lrs-name{font-size:13.5px; color:var(--lrs-ink); line-height:1.4;}
 #cr-lrs-view .lrs-name .lrs-desc{display:block; font-size:12px; color:var(--lrs-dim); margin-top:2px;}
-#cr-lrs-view .lrs-rate{font-size:13.5px; font-weight:800; color:var(--lrs-navy); white-space:nowrap; text-align:right; font-variant-numeric:tabular-nums;}
+#cr-lrs-view .lrs-rate{
+  font-size:13.5px; font-weight:800; color:#fff; white-space:nowrap; text-align:right;
+  font-variant-numeric:tabular-nums;
+}
 #cr-lrs-view .lrs-rate .lrs-u{font-weight:600; color:var(--lrs-dim);}
+/* an unset rate is TEXT, not a faint dash — you have to be able to read which
+   lines this crew has no price for. 5.86:1. */
+#cr-lrs-view .lrs-rate.none{color:var(--lrs-dim); font-weight:600; font-style:italic;}
 #cr-lrs-view .lrs-note{font-size:11.5px; font-style:italic; color:var(--lrs-dim); line-height:1.5; padding:9px 14px;}
 
 /* edit mode */
 #cr-lrs-view .lrs-ename{flex:1; display:flex; flex-direction:column; gap:5px;}
-#cr-lrs-view .lrs-ename input, #cr-lrs-view .lrs-erate input, #cr-lrs-view .lrs-enote{
-  border:1px solid var(--lrs-line); border-radius:7px; padding:7px 9px; font-size:13px; font-family:inherit; color:var(--lrs-ink); outline:none; background:#fbfbfc;
+#cr-lrs-view .lrs-ename input, #cr-lrs-view .lrs-erate input{
+  border:1px solid var(--lrs-edge); border-radius:7px; padding:9px; font-size:13px;
+  font-family:inherit; color:var(--lrs-ink); outline:none; background:#10151c;
 }
-#cr-lrs-view .lrs-ename input:focus, #cr-lrs-view .lrs-erate input:focus, #cr-lrs-view select:focus, #cr-lrs-view .lrs-enote:focus{border-color:var(--lrs-red); box-shadow:0 0 0 3px rgba(200,32,46,.16);}
+#cr-lrs-view .lrs-ename input::placeholder{color:#79828f;}
+#cr-lrs-view .lrs-ename input:focus, #cr-lrs-view .lrs-erate input:focus, #cr-lrs-view select:focus{
+  border-color:var(--lrs-blue); box-shadow:0 0 0 3px rgba(143,180,216,.22);
+}
 #cr-lrs-view .lrs-erate{display:flex; align-items:center; gap:5px;}
 #cr-lrs-view .lrs-erate span{font-weight:800; color:var(--lrs-dim);}
-#cr-lrs-view .lrs-erate input{width:80px; text-align:right; font-weight:700;}
-#cr-lrs-view select{border:1px solid var(--lrs-line); border-radius:7px; padding:7px 6px; font-size:12.5px; font-family:inherit; color:var(--lrs-ink); background:#fbfbfc;}
-#cr-lrs-view .lrs-enote{width:100%; min-height:56px; resize:vertical;}
-#cr-lrs-view .lrs-note{display:flex; gap:8px; align-items:flex-start;}
-#cr-lrs-view .lrs-del{border:0; background:#f4dede; color:var(--lrs-red); font-size:16px; font-weight:800; width:30px; height:30px; border-radius:8px; cursor:pointer; flex:none; line-height:1;}
-#cr-lrs-view .lrs-del:hover{background:#efcccc;}
-#cr-lrs-view .lrs-add{padding:8px 14px 2px; display:flex; gap:8px;}
-#cr-lrs-view .lrs-mini{border:1px dashed #b9c0cc; background:#fff; color:var(--lrs-navy); font-size:12px; font-weight:600; padding:6px 11px; border-radius:8px; cursor:pointer;}
-#cr-lrs-view .lrs-mini:hover{border-color:var(--lrs-navy);}
-#cr-lrs-view .lrs-addcat{margin-top:8px; display:flex; gap:8px; align-items:center;}
-#cr-lrs-view .lrs-addcat input{flex:1; border:1px solid var(--lrs-line); border-radius:7px; padding:8px 10px; font-size:13px; font-family:inherit; color:var(--lrs-ink);}
-#cr-lrs-view .lrs-empty{padding:40px 14px; text-align:center; color:var(--lrs-dim); font-size:14px;}
+#cr-lrs-view .lrs-erate input{width:82px; text-align:right; font-weight:700;}
+#cr-lrs-view select{
+  border:1px solid var(--lrs-edge); border-radius:7px; padding:9px 6px; font-size:12.5px;
+  font-family:inherit; color:var(--lrs-ink); background:#10151c; min-height:38px;
+}
+#cr-lrs-view .lrs-del{
+  border:0; background:rgba(200,32,46,.18); color:#f08a90; font-size:16px; font-weight:800;
+  width:38px; height:38px; border-radius:9px; cursor:pointer; flex:none; line-height:1;
+}
+#cr-lrs-view .lrs-del:hover{background:rgba(200,32,46,.30);}
+#cr-lrs-view .lrs-add{padding:10px 14px 2px; display:flex; gap:8px;}
+#cr-lrs-view .lrs-mini{
+  border:1px dashed #48525f; background:transparent; color:var(--lrs-blue); font-size:12.5px;
+  font-weight:600; padding:9px 12px; border-radius:9px; cursor:pointer; min-height:38px;
+}
+#cr-lrs-view .lrs-mini:hover{border-color:var(--lrs-blue);}
+#cr-lrs-view .lrs-empty{padding:38px 14px; text-align:center; color:var(--lrs-dim); font-size:14px; line-height:1.6;}
 
 @media(max-width:560px){
-  #cr-lrs-view .lrs-doc{padding:22px 16px 34px; margin:12px 10px 80px;}
-  #cr-lrs-view .lrs-erate input{width:66px;}
+  #cr-lrs-view .lrs-doc{padding:20px 15px 32px; margin:12px 10px 80px;}
+  #cr-lrs-view .lrs-erate input{width:70px;}
+  #cr-lrs-view .lrs-topbar{flex-wrap:wrap;}
+  #cr-lrs-view .lrs-topbar .lrs-ttl{order:-1; flex-basis:100%;}
 }
+
+/* ── the paper ─────────────────────────────────────────────────────────
+   Everything above is the screen. A printed rate sheet goes to a crew, so it
+   prints as the light exhibit 1110 shipped: white ground, dark ink, navy bands
+   with gold text (print-color-adjust keeps them). The crew LIST never prints —
+   only the open sheet. */
 @media print{
   body > *:not(#cr-lrs-view){display:none !important;}
-  #cr-lrs-view{position:static !important; overflow:visible !important; background:#fff !important; display:block !important;}
-  #cr-lrs-view .lrs-topbar{display:none !important;}
-  #cr-lrs-view .lrs-doc{box-shadow:none !important; margin:0 auto !important; max-width:none !important; padding:0 !important;}
-  #cr-lrs-view .lrs-band, #cr-lrs-view .lrs-rule, #cr-lrs-view .lrs-h span{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #cr-lrs-view{
+    position:static !important; overflow:visible !important; display:block !important;
+    background:#fff !important; color:#23303f !important;
+  }
+  #cr-lrs-view .lrs-topbar, #cr-lrs-view .lrs-list{display:none !important;}
+  #cr-lrs-view .lrs-doc{
+    background:#fff !important; border:0 !important; box-shadow:none !important;
+    margin:0 auto !important; max-width:none !important; padding:0 !important;
+  }
+  #cr-lrs-view .lrs-h{color:#1e2b4a !important;}
+  #cr-lrs-view .lrs-h span{color:#8f6b00 !important;}
+  #cr-lrs-view .lrs-sub{color:#5b6470 !important;}
+  #cr-lrs-view .lrs-rule{background:#c9a227 !important;}
+  #cr-lrs-view .lrs-band{background:#1e2b4a !important; color:#c9a227 !important;}
+  #cr-lrs-view .lrs-row{border-bottom:1px solid #e4e4e4 !important;}
+  #cr-lrs-view .lrs-name{color:#23303f !important;}
+  #cr-lrs-view .lrs-name .lrs-desc, #cr-lrs-view .lrs-note, #cr-lrs-view .lrs-rate .lrs-u{color:#5b6470 !important;}
+  #cr-lrs-view .lrs-rate{color:#1e2b4a !important;}
+  #cr-lrs-view .lrs-rate.none{color:#5b6470 !important;}
+  #cr-lrs-view .lrs-band, #cr-lrs-view .lrs-rule, #cr-lrs-view .lrs-h span{
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
   #cr-lrs-view .lrs-cat{page-break-inside:avoid;}
-  #cr-lrs-view .lrs-add, #cr-lrs-view .lrs-addcat, #cr-lrs-view .lrs-del{display:none !important;}
+  #cr-lrs-view .lrs-add, #cr-lrs-view .lrs-del{display:none !important;}
   @page{size:Letter; margin:.6in;}
 }
 </style>
 
 <div id="cr-lrs-view" style="display:none;" aria-hidden="true">
   <div class="lrs-topbar">
+    <!-- 1123: ONE Back button with two meanings — out of a crew's sheet, then
+         out of the screen. syncBar() shows Edit and Print only on a sheet: the
+         crew list is not a document, and printing it would be a page of
+         buttons. Both start hidden here so the first paint is already right. -->
     <button id="lrs-back" class="lrs-tb" type="button">&#8249;&nbsp;Back</button>
     <div class="lrs-ttl">Labor Rate Schedule</div>
     <button id="lrs-cancel" class="lrs-tb" type="button" style="display:none;">Cancel</button>
-    <button id="lrs-edit" class="lrs-tb" type="button">Edit</button>
+    <button id="lrs-edit" class="lrs-tb" type="button" style="display:none;">Edit</button>
     <button id="lrs-save" class="lrs-tb save" type="button" style="display:none;">Save</button>
-    <button id="lrs-print" class="lrs-tb" type="button">Print / PDF</button>
+    <button id="lrs-print" class="lrs-tb" type="button" style="display:none;">Print / PDF</button>
   </div>
   <div id="lrs-body"></div>
 </div>
 
 <script id="cr-lrs-script">
-/* 1110: Labor Rate Schedule — see the banner on #cr-lrs-styles. window.CardinalLRS. */
+/* 1123: Labor Rate Schedule — the crew list, then one crew's sheet.
+   See the banner on #cr-lrs-styles. window.CardinalLRS / window.openLRS.
+
+   ⚠ WHERE THE NUMBERS LIVE, because this changed and the old shape is still in
+   the file next door. 1110 read `pricing_items` (template='roofing_labor') and
+   showed its `rate` column as THE schedule — one document, titled SANTIAGO.
+   Per-crew rates already existed by then: build 548 put them in `crew_rates`,
+   keyed by crew, either against a catalog line (pricing_item_id) or as a
+   crew's own line (custom_name/custom_unit). This screen now reads THAT, which
+   is why there is no second store and no new table:
+
+     the catalog  (pricing_items, roofing_labor)  = the LINE ITEMS, shared
+     crew_rates                                   = what THIS crew is paid
+
+   Theo's pick, 28 Aug: roofing crews get the shared catalog lines; siding,
+   windows, gutters and repairs start with an EMPTY sheet and grow their own
+   lines. So `catalogFor()` is the whole trade rule and it is one line long.
+
+   ⚠ EDITING HERE SETS A CREW'S RATES — IT NEVER EDITS THE CATALOG. 1110 let
+   you rename catalog lines and add categories from this screen; under a
+   per-crew model that would silently re-price every roofing crew at once.
+   Renaming a shared line is the Pricing Catalog's job and that screen already
+   exists. "+ Add line" adds a line to THIS CREW (a crew_rates custom row),
+   which is how a siding crew gets a sheet at all.
+
+   ⚠ A BLANK RATE IS A REAL STATE, not a missing one. A roofing crew with no
+   crew_rates row for a line has no agreed price for it; the sheet says "not
+   set" in readable text rather than showing a 0 or borrowing another crew's
+   number. Do not "fix" it by falling back to pricing_items.rate — that is
+   Santiago's number and paying it to someone else is a real-money bug. */
 (function(){
   'use strict';
   var TPL = 'roofing_labor';
+  var CATALOG_TRADES = ['Roofing'];   /* the trade rule, entire */
   var UNIT_LABEL = { sq:'SQ', lf:'LF', ea:'unit', sheet:'sheet', ls:'', note:'', bundle:'bundle', roll:'roll', day:'day', sf:'SF', hour:'hr', box:'box' };
   var UNIT_OPTS = [['sq','SQ'],['lf','LF'],['ea','unit'],['sheet','sheet'],['ls','flat ($)']];
-  var rows = [], deleted = [], editing = false, loaded = false;
+
+  var crews = [], catalog = [], rates = [], sel = null;
+  var editing = false, deleted = [], pending = [];
 
   function q(id){ return document.getElementById(id); }
   function esc2(s){ return (typeof esc === 'function') ? esc(s) : String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -82783,133 +83262,272 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function isAdm(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
   function cx(){ return window.sb || window.supa; }
   function tell(m){ if(typeof crTell === 'function') crTell(m); }
+  function lrsMe(){ try{ return (window.currentUser && window.currentUser.email) || ''; }catch(e){ return ''; } }
 
   function money(n){
     n = Number(n) || 0;
     return '$' + (n % 1 === 0 ? n.toLocaleString('en-US')
                              : n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }));
   }
-  function rateHtml(r){
-    if(r.unit === 'note') return '';
-    var lab = UNIT_LABEL[r.unit] != null ? UNIT_LABEL[r.unit] : r.unit;
-    return money(r.rate) + (lab ? ' <span class="lrs-u">/ ' + esc2(lab) + '</span>' : '');
-  }
+  function unitOf(r){ return r.__cat ? r.__cat.unit : (r.custom_unit || 'ea'); }
+  function lineName(r){ return r.__cat ? r.__cat.name : (r.custom_name || ''); }
 
-  function load(){
-    var c = cx(); if(!c){ return Promise.resolve([]); }
-    return c.from('pricing_items').select('*').eq('template', TPL).order('sort_order', { ascending:true })
-      .then(function(r){ rows = (r && r.data) ? r.data.slice() : []; loaded = true; return rows; });
+  /* one crew's sheet lines: the shared catalog for a catalog trade, plus every
+     line this crew owns outright. A catalog line and its override are ONE row
+     on screen — joined here so render() never has to think about it. */
+  function catalogFor(crew){
+    return (crew && CATALOG_TRADES.indexOf(crew.trade) !== -1) ? catalog : [];
+  }
+  function sheetRows(){
+    var byItem = {};
+    rates.forEach(function(r){ if(r.pricing_item_id) byItem[r.pricing_item_id] = r; });
+    /* ⚠ Both branches below build the SAME shape, custom_* included. They used
+       not to, and gate_types caught it (TS2353): one array holding two object
+       shapes is the thing that makes every reader downstream branch on
+       `__cat ?` to find out what it is holding. Keep them identical. */
+    var out = catalogFor(sel).map(function(c){
+      var ov = byItem[c.id];
+      return { key:'cat:' + c.id, __cat:c, category:c.category,
+               rateRow:ov || null, rate:(ov ? ov.rate : null), sort:Number(c.sort_order) || 0,
+               custom_name:null, custom_unit:null };
+    });
+    rates.filter(function(r){ return !r.pricing_item_id; }).forEach(function(r, i){
+      out.push({ key:'own:' + r.id, __cat:null, category:'This crew only',
+                 rateRow:r, rate:r.rate, sort:100000 + i, custom_name:r.custom_name, custom_unit:r.custom_unit });
+    });
+    return out;
   }
   function grouped(){
     var order = [], map = {};
-    rows.forEach(function(r){ if(!map[r.category]){ map[r.category] = []; order.push(r.category); } map[r.category].push(r); });
+    sheetRows().sort(function(a, b){ return a.sort - b.sort; }).forEach(function(r){
+      if(!map[r.category]){ map[r.category] = []; order.push(r.category); }
+      map[r.category].push(r);
+    });
     return order.map(function(cat){ return { cat:cat, items:map[cat] }; });
+  }
+
+  function loadCrews(){
+    var c = cx(); if(!c) return Promise.resolve([]);
+    return Promise.all([
+      c.from('crews').select('id,name,trade,archived').order('name', { ascending:true }),
+      c.from('crew_rates').select('crew_id')
+    ]).then(function(res){
+      crews = (res[0] && res[0].data) ? res[0].data.slice() : [];
+      var n = {};
+      ((res[1] && res[1].data) || []).forEach(function(r){ n[r.crew_id] = (n[r.crew_id] || 0) + 1; });
+      crews.forEach(function(cw){ cw.__n = n[cw.id] || 0; });
+      return crews;
+    });
+  }
+  function loadSheet(crew){
+    var c = cx(); if(!c) return Promise.resolve();
+    /* only ask for the catalog when this crew's trade uses one, and only once
+       per session — it is shared by every roofing crew and does not change */
+    var needCat = CATALOG_TRADES.indexOf(crew.trade) !== -1 && !catalog.length;
+    var jobs = [
+      c.from('crew_rates').select('*').eq('crew_id', crew.id),
+      needCat ? c.from('pricing_items').select('*').eq('template', TPL).order('sort_order', { ascending:true })
+              : Promise.resolve(null)
+    ];
+    return Promise.all(jobs).then(function(res){
+      rates = (res[0] && res[0].data) ? res[0].data.slice() : [];
+      if(res[1] && res[1].data) catalog = res[1].data.slice();
+    });
+  }
+
+  /* ── screen 1 ── */
+  function renderCrewList(){
+    var body = q('lrs-body'); if(!body) return;
+    setTitle('Labor Rate Schedule');
+    if(!crews.length){
+      body.innerHTML = '<div class="lrs-list"><div class="lrs-empty">No crews yet.<br>Add them under <b>Crews</b> and they will show up here.</div></div>';
+      syncBar(); return;
+    }
+    var live = crews.filter(function(c){ return !c.archived; });
+    var gone = crews.filter(function(c){ return c.archived; });
+    var html = '<div class="lrs-list">'
+      + '<p class="lrs-lead">Every crew keeps its own rates. Tap one to see or set what they are paid.</p>';
+    var order = [], byTrade = {};
+    live.forEach(function(c){
+      var t = c.trade || 'Other';
+      if(!byTrade[t]){ byTrade[t] = []; order.push(t); }
+      byTrade[t].push(c);
+    });
+    order.forEach(function(t){
+      html += '<div class="lrs-trade">' + esc2(t) + '</div>';
+      byTrade[t].forEach(function(c){ html += crewBtn(c); });
+    });
+    if(gone.length){
+      html += '<div class="lrs-archhead">Archived</div>';
+      gone.forEach(function(c){ html += crewBtn(c, true); });
+    }
+    body.innerHTML = html + '</div>';
+    syncBar();
+  }
+  function crewBtn(c, arch){
+    return '<button type="button" class="lrs-crew' + (arch ? ' lrs-arch' : '') + '" data-lrs-crew="' + attr(c.id) + '">'
+      + '<span class="lrs-cname">' + esc2(c.name) + '</span>'
+      + '<span class="lrs-ccount' + (c.__n ? ' set' : '') + '">'
+      + (c.__n ? (c.__n + (c.__n === 1 ? ' rate' : ' rates')) : 'no rates yet') + '</span>'
+      + '<span class="lrs-chev" aria-hidden="true">›</span></button>';
+  }
+
+  /* ── screen 2 ── */
+  function renderSheet(){
+    var body = q('lrs-body'); if(!body || !sel) return;
+    setTitle(sel.name);
+    var groups = grouped();
+    var html = '<div class="lrs-doc">'
+      + '<div class="lrs-h">' + esc2(String(sel.name).toUpperCase()) + ' <span>|</span> LABOR RATE SCHEDULE</div>'
+      + '<div class="lrs-sub">' + esc2(sel.trade || 'Crew') + (sel.archived ? ' · archived' : '') + '</div>'
+      + '<div class="lrs-rule"></div>';
+    if(!groups.length){
+      html += '<div class="lrs-empty">No rates set for ' + esc2(sel.name) + ' yet.'
+            + (isAdm() ? '<br>Tap <b>Edit</b>, then <b>+ Add line</b> to build their sheet.' : '') + '</div>';
+    }
+    groups.forEach(function(g){
+      html += '<div class="lrs-cat"><div class="lrs-band">' + esc2(String(g.cat).toUpperCase()) + '</div>';
+      g.items.forEach(function(r){ html += lineRow(r); });
+      html += '</div>';
+    });
+    if(editing){
+      html += '<div class="lrs-add"><button type="button" class="lrs-mini" id="lrs-addown">+ Add line for this crew</button></div>';
+    }
+    body.innerHTML = html + '</div>';
+    syncBar();
+  }
+  function rateHtml(r){
+    if(r.rate == null || r.rate === '') return '<span class="lrs-rate none">not set</span>';
+    var u = unitOf(r), lab = UNIT_LABEL[u] != null ? UNIT_LABEL[u] : u;
+    return '<span class="lrs-rate">' + money(r.rate) + (lab ? ' <span class="lrs-u">/ ' + esc2(lab) + '</span>' : '') + '</span>';
+  }
+  function lineRow(r){
+    /* ⚠ The catalog carries CATEGORY NOTES as rows with unit='note' (one today,
+       under Chimney Flashing). A note is prose, not a line anyone is paid for:
+       it gets no rate field, no delete, and NO data-key, so harvest() cannot
+       mistake it for a row with a blank rate. Missing this rendered "not set"
+       against a sentence. */
+    if(r.__cat && r.__cat.unit === 'note'){
+      return '<div class="lrs-note">' + esc2(r.__cat.description || r.__cat.name || '') + '</div>';
+    }
+    var out = '<div class="lrs-row" data-key="' + attr(r.key) + '">';
+    if(editing){
+      out += '<div class="lrs-ename">';
+      if(r.__cat){
+        out += '<div class="lrs-name">' + esc2(r.__cat.name)
+             + (r.__cat.description ? '<span class="lrs-desc">' + esc2(r.__cat.description) + '</span>' : '') + '</div>';
+      }else{
+        out += '<input type="text" data-f="name" value="' + attr(r.custom_name || '') + '" placeholder="What they are paid for">';
+      }
+      out += '</div><div class="lrs-erate"><span>$</span>'
+           + '<input type="number" step="0.01" min="0" data-f="rate" value="' + (r.rate != null ? r.rate : '') + '" placeholder="—">';
+      if(!r.__cat) out += unitSel(r.custom_unit || 'ea');
+      if(r.rateRow) out += '<button type="button" class="lrs-del" data-lrs-del="' + attr(r.rateRow.id) + '" title="Remove this rate">×</button>';
+      out += '</div>';
+    }else{
+      out += '<div class="lrs-name">' + esc2(lineName(r))
+           + (r.__cat && r.__cat.description ? '<span class="lrs-desc">' + esc2(r.__cat.description) + '</span>' : '')
+           + '</div>' + rateHtml(r);
+    }
+    return out + '</div>';
   }
   function unitSel(u){
     return '<select data-f="unit">' + UNIT_OPTS.map(function(p){
       return '<option value="' + p[0] + '"' + (p[0] === u ? ' selected' : '') + '>' + p[1] + '</option>';
     }).join('') + '</select>';
   }
-  function editRow(r){
-    return '<div class="lrs-ename"><input type="text" data-f="name" value="' + attr(r.name) + '" placeholder="Description">'
-      + '<input type="text" data-f="description" value="' + attr(r.description || '') + '" placeholder="Detail (optional)"></div>'
-      + '<div class="lrs-erate"><span>$</span><input type="number" step="0.01" min="0" data-f="rate" value="' + (r.rate != null ? r.rate : '') + '">'
-      + unitSel(r.unit) + '<button type="button" class="lrs-del" data-lrs-del="' + esc2(r.id) + '" title="Remove">×</button></div>';
-  }
-  function render(){
-    var body = q('lrs-body'); if(!body) return;
-    if(!rows.length){ body.innerHTML = '<div class="lrs-doc"><div class="lrs-empty">No labor rates yet.</div></div>'; syncBar(); return; }
-    var html = '<div class="lrs-doc"><div class="lrs-h">SANTIAGO <span>|</span> LABOR RATE SCHEDULE</div><div class="lrs-rule"></div>';
-    grouped().forEach(function(g){
-      html += '<div class="lrs-cat"><div class="lrs-band">' + esc2(String(g.cat).toUpperCase()) + '</div>';
-      g.items.forEach(function(r){
-        if(r.unit === 'note'){
-          html += '<div class="lrs-note" data-id="' + esc2(r.id) + '">'
-            + (editing ? ('<textarea data-f="description" class="lrs-enote" placeholder="Category note">' + esc2(r.description || '') + '</textarea>'
-                        + '<button type="button" class="lrs-del" data-lrs-del="' + esc2(r.id) + '" title="Remove">×</button>')
-                       : esc2(r.description || '')) + '</div>';
-        }else{
-          html += '<div class="lrs-row" data-id="' + esc2(r.id) + '">'
-            + (editing ? editRow(r)
-                       : ('<div class="lrs-name">' + esc2(r.name) + (r.description ? '<span class="lrs-desc">' + esc2(r.description) + '</span>' : '') + '</div>'
-                        + '<div class="lrs-rate">' + rateHtml(r) + '</div>'))
-            + '</div>';
-        }
-      });
-      if(editing){
-        html += '<div class="lrs-add"><button type="button" class="lrs-mini" data-lrs-addrow="' + attr(g.cat) + '">+ Add line</button>'
-              + '<button type="button" class="lrs-mini" data-lrs-addnote="' + attr(g.cat) + '">+ Add note</button></div>';
-      }
-      html += '</div>';
-    });
-    if(editing){
-      html += '<div class="lrs-addcat"><input type="text" id="lrs-newcat" placeholder="New category name">'
-            + '<button type="button" class="lrs-mini" id="lrs-addcat">+ Add category</button></div>';
-    }
-    html += '</div>';
-    body.innerHTML = html;
-    syncBar();
-  }
+
+  function setTitle(t){ var el = document.querySelector('#cr-lrs-view .lrs-ttl'); if(el && el.textContent !== t) el.textContent = t; }
   function syncBar(){
-    var canEdit = isAdm();
-    var eb = q('lrs-edit'), cb = q('lrs-cancel'), sb2 = q('lrs-save');
+    var onSheet = !!sel, canEdit = isAdm() && onSheet;
+    var eb = q('lrs-edit'), cb = q('lrs-cancel'), sb2 = q('lrs-save'), pb = q('lrs-print');
     if(eb) eb.style.display = (canEdit && !editing) ? '' : 'none';
     if(cb) cb.style.display = editing ? '' : 'none';
     if(sb2) sb2.style.display = editing ? '' : 'none';
+    /* the crew LIST is not a document — printing it would be a page of buttons */
+    if(pb) pb.style.display = (onSheet && !editing) ? '' : 'none';
   }
 
-  /* read edited inputs back into rows (before a re-render or a save) */
+  /* read the edited inputs back off the DOM. `pending` holds rows added this
+     session that are not in crew_rates yet. */
   function harvest(){
-    var body = q('lrs-body'); if(!body) return;
-    body.querySelectorAll('[data-id]').forEach(function(el){
-      var r = rows.find(function(x){ return String(x.id) === String(el.getAttribute('data-id')); });
-      if(!r) return;
-      el.querySelectorAll('[data-f]').forEach(function(inp){
-        var f = inp.getAttribute('data-f');
-        if(f === 'rate') r.rate = parseFloat(inp.value) || 0; else r[f] = inp.value;
-      });
-      if(!r.__new) r.__dirty = true;
+    var body = q('lrs-body'); if(!body || !sel) return [];
+    var out = [];
+    body.querySelectorAll('[data-key]').forEach(function(el){
+      var key = el.getAttribute('data-key');
+      var fieldVal = function(f){ var i = el.querySelector('[data-f="' + f + '"]'); return i ? i.value : null; };
+      var raw = fieldVal('rate');
+      var rate = (raw == null || String(raw).trim() === '') ? null : parseFloat(raw);
+      if(rate != null && !isFinite(rate)) rate = null;
+      out.push({ key:key, rate:rate, name:fieldVal('name'), unit:fieldVal('unit') });
     });
+    return out;
   }
-  function addRow(cat, isNote){
-    var maxSort = rows.filter(function(r){ return r.category === cat; })
-      .reduce(function(m, r){ return Math.max(m, Number(r.sort_order) || 0); }, 100);
-    rows.push({ id:'new_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), template:TPL, category:cat,
-      name:isNote ? 'Note' : '', description:'', unit:isNote ? 'note' : 'sq', rate:0, sort_order:maxSort + 5, enabled:true, __new:true });
-    render();
+  function addOwn(){
+    var row = { id:'new_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                crew_id:sel.id, pricing_item_id:null, custom_name:'', custom_unit:'ea', rate:null, __new:true };
+    pending.push(row);
+    rates.push(row);       /* so sheetRows() picks it up like any other own-line */
+    renderSheet();
   }
-  function addCat(){
-    var el = q('lrs-newcat'); var name = String((el && el.value) || '').trim();
-    if(!name){ tell('Type a category name first.'); return; }
-    var maxSort = rows.reduce(function(m, r){ return Math.max(m, Number(r.sort_order) || 0); }, 100);
-    rows.push({ id:'new_' + Date.now(), template:TPL, category:name, name:'', description:'', unit:'sq', rate:0, sort_order:maxSort + 100, enabled:true, __new:true });
-    render();
-  }
+
   function save(){
-    harvest();
-    var c = cx(); if(!c){ tell('Not signed in.'); return; }
-    var ops = [];
-    rows.forEach(function(r){
-      if(r.__new){
-        if(r.unit !== 'note' && !String(r.name || '').trim()) return;   // skip blank new lines
-        ops.push(c.from('pricing_items').insert({ template:TPL,
-          sku:'RL-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          category:r.category, name:r.name || (r.unit === 'note' ? 'Note' : ''), description:r.description || null,
-          unit:r.unit || 'sq', rate:Number(r.rate) || 0, sort_order:Number(r.sort_order) || 500, enabled:true }));
-      }else if(r.__dirty){
-        ops.push(c.from('pricing_items').update({ category:r.category, name:r.name || '', description:r.description || null,
-          unit:r.unit || 'sq', rate:Number(r.rate) || 0 }).eq('id', r.id));
+    var c = cx(); if(!c || !sel){ tell('Not signed in.'); return; }
+    var edits = harvest(), ops = [];
+    edits.forEach(function(e){
+      var isCat = e.key.indexOf('cat:') === 0;
+      var id = e.key.slice(4);
+      if(isCat){
+        var ov = rates.find(function(r){ return String(r.pricing_item_id) === id; });
+        if(e.rate == null){ if(ov && !ov.__new) ops.push(c.from('crew_rates').delete().eq('id', ov.id)); return; }
+        if(ov && !ov.__new){
+          if(Number(ov.rate) !== e.rate)
+            ops.push(c.from('crew_rates').update({ rate:e.rate, updated_at:new Date().toISOString(), updated_by:lrsMe() }).eq('id', ov.id));
+        }else{
+          ops.push(c.from('crew_rates').insert({ crew_id:sel.id, pricing_item_id:id, rate:e.rate, updated_by:lrsMe() }));
+        }
+      }else{
+        var row = rates.find(function(r){ return String(r.id) === id; });
+        if(!row) return;
+        var nm = String(e.name || '').trim();
+        if(row.__new){
+          if(!nm || e.rate == null) return;   /* a blank new line is not a row */
+          ops.push(c.from('crew_rates').insert({ crew_id:sel.id, custom_name:nm, custom_unit:e.unit || 'ea', rate:e.rate, updated_by:lrsMe() }));
+        }else if(e.rate == null){
+          ops.push(c.from('crew_rates').delete().eq('id', row.id));
+        }else if(Number(row.rate) !== e.rate || row.custom_name !== nm || row.custom_unit !== e.unit){
+          ops.push(c.from('crew_rates').update({ custom_name:nm || row.custom_name, custom_unit:e.unit || row.custom_unit,
+            rate:e.rate, updated_at:new Date().toISOString(), updated_by:lrsMe() }).eq('id', row.id));
+        }
       }
     });
-    deleted.forEach(function(id){ ops.push(c.from('pricing_items').delete().eq('id', id)); });
+    deleted.forEach(function(id){ if(String(id).indexOf('new_') !== 0) ops.push(c.from('crew_rates').delete().eq('id', id)); });
+    if(!ops.length){ deleted = []; pending = []; editing = false; renderSheet(); tell('Nothing changed.'); return; }
     var btn = q('lrs-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
     Promise.all(ops).then(function(res){
       var bad = res.filter(function(x){ return x && x.error; });
       if(bad.length) throw new Error((bad[0].error && bad[0].error.message) || 'save failed');
-      deleted = []; editing = false;
-      return load();
-    }).then(function(){ render(); if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Labor rates saved.'); })
-      .catch(function(e){ if(btn){ btn.disabled = false; btn.textContent = 'Save'; } tell('Could not save: ' + ((e && e.message) || e)); });
+      deleted = []; pending = []; editing = false;
+      return loadSheet(sel).then(loadCrews);
+    }).then(function(){
+      renderSheet();
+      if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+      tell(sel.name + '’s rates saved.');
+    }).catch(function(e){
+      if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+      tell('Could not save: ' + ((e && e.message) || e));
+    });
+  }
+
+  function openCrew(id){
+    var c = crews.find(function(x){ return String(x.id) === String(id); });
+    if(!c) return;
+    sel = c; editing = false; deleted = []; pending = [];
+    loadSheet(c).then(renderSheet);
+  }
+  function backToList(){
+    sel = null; editing = false; deleted = []; pending = [];
+    loadCrews().then(renderCrewList);
   }
 
   function open(){
@@ -82917,39 +83535,42 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if(typeof hideAllViews === 'function') hideAllViews();
     var v = q('cr-lrs-view'); if(!v) return;
     v.style.display = 'block'; v.setAttribute('aria-hidden', 'false');
-    editing = false; deleted = [];
+    sel = null; editing = false; deleted = []; pending = [];
     try{ document.body.style.overflow = ''; }catch(e){}
-    load().then(render);   // always refresh from the catalog on open
+    loadCrews().then(renderCrewList);   /* always refresh on open */
     try{ window.scrollTo(0, 0); }catch(e){}
     if(window.navSetView) window.navSetView('laborrates');
   }
   function close(){
     var v = q('cr-lrs-view'); if(v){ v.style.display = 'none'; v.setAttribute('aria-hidden', 'true'); }
-    editing = false;
+    sel = null; editing = false;
     if(typeof showHome === 'function') showHome();
   }
 
   document.addEventListener('click', function(e){
     var t;
-    if((t = e.target.closest('#lrs-back'))){ close(); return; }
-    if((t = e.target.closest('#lrs-print'))){ try{ window.print(); }catch(_){} return; }
-    if((t = e.target.closest('#lrs-edit'))){ if(!isAdm()){ tell('Admin only.'); return; } editing = true; render(); return; }
-    if((t = e.target.closest('#lrs-cancel'))){ editing = false; deleted = []; load().then(render); return; }
-    if((t = e.target.closest('#lrs-save'))){ save(); return; }
-    if((t = e.target.closest('[data-lrs-del]'))){
-      var id = t.getAttribute('data-lrs-del'); harvest();
-      var r = rows.find(function(x){ return String(x.id) === String(id); });
-      if(r && !r.__new) deleted.push(id);
-      rows = rows.filter(function(x){ return String(x.id) !== String(id); });
-      render(); return;
+    /* Back is one control with two meanings: out of a sheet, then out of the
+       screen. A separate "close" button would be a second way to do one thing. */
+    if((t = e.target.closest('#lrs-back'))){ if(sel) backToList(); else close(); return; }
+    if((t = e.target.closest('[data-lrs-crew]'))){ openCrew(t.getAttribute('data-lrs-crew')); return; }
+    if((t = e.target.closest('#lrs-print'))){ try{ window.print(); }catch(_){ } return; }
+    if((t = e.target.closest('#lrs-edit'))){ if(!isAdm()) return; editing = true; renderSheet(); return; }
+    if((t = e.target.closest('#lrs-cancel'))){
+      editing = false; deleted = []; pending = [];
+      loadSheet(sel).then(renderSheet); return;
     }
-    if((t = e.target.closest('[data-lrs-addrow]'))){ harvest(); addRow(t.getAttribute('data-lrs-addrow'), false); return; }
-    if((t = e.target.closest('[data-lrs-addnote]'))){ harvest(); addRow(t.getAttribute('data-lrs-addnote'), true); return; }
-    if((t = e.target.closest('#lrs-addcat'))){ harvest(); addCat(); return; }
+    if((t = e.target.closest('#lrs-save'))){ save(); return; }
+    if((t = e.target.closest('#lrs-addown'))){ addOwn(); return; }
+    if((t = e.target.closest('[data-lrs-del]'))){
+      var id = t.getAttribute('data-lrs-del');
+      deleted.push(id);
+      rates = rates.filter(function(r){ return String(r.id) !== String(id); });
+      renderSheet(); return;
+    }
   });
 
-  window.openLRS = open;
-  window.CardinalLRS = Object.assign(window.CardinalLRS || {}, { open:open, close:close, load:load });
+  window.openLRS = function(){ open(); };
+  window.CardinalLRS = Object.assign(window.CardinalLRS || {}, { open:open, close:close });
 })();
 </script>
 

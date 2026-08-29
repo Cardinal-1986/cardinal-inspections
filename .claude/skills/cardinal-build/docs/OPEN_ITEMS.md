@@ -1,5 +1,97 @@
 # Cardinal Resource App — Open Items
 
+---
+
+## ✅ The 195 carried sentinel findings — TRIAGED 28 Aug 2026 (build 1127)
+
+**Read once so nobody reads them again.** A full `--all` sweep of build 1126 across
+390/1194/1440px, every finding classified:
+
+| bucket | n | verdict |
+|---|---:|---|
+| `OVERRIDDEN` | 120 | **noise** — the cascade working. sentinel.js's own source calls it "just the cascade", meaningful only when the rule is NEW, which is why it is suppressed without `--since` |
+| `DEAD` | 44 | **low signal** — rules losing to no-more-specific rules. Also **under**-reported: capped at 20 per render |
+| `TRUNCATED` | 27 | **not defects** — every one is the sweep warning it hit that 20-per-render cap |
+| `INK` | 3 | **real — all three fixed at 1127** |
+| `FLOOR` | 1 | **false positive** — `#acxTrBtn` renders 183×44; see BUG_CLASSES 79 |
+
+**Signal rate 3 in 195 (1 in 65).** The three were: the punch-out description at 3.05:1
+(really 2.69 on the binding gradient stop) and the Roofing/Gutters trade headers at
+3.77/3.68. All measured, all fixed, all gated by `gate_1127.mjs`.
+
+**What is still open from this triage, and deliberately not done:**
+
+1. ✅ **DONE at 1128 — `--rbe-mute` and `--rbe-mute2` are two colours again.** Lifting
+   the brighter level (rather than dimming the quieter one back) made room beneath it:
+   dark `#b8bec6`/`#9aa0a8`, light `#585858`/`#6e6e6e`, every level above the floor in
+   both themes.
+2. ⚠️ **CORRECTED at 1128 — the claim below was WRONG and is kept so the error is
+   legible.** It said a light-theme render found **zero** elements using `--rbe-mute2`.
+   That render walked **one screen**. Across ten states there are three, and one is the
+   punch-out description — still at **3.22:1 in light** after 1127 "fixed" it in dark.
+   Light `--rbe-mute` was failing too, at 4.35:1 on a cream ground. Both fixed at 1128.
+   *A single-screen render is not a theme audit.*
+3. **The 44 DEAD findings were not individually read** — the class has never produced a
+   confirmed defect here, and the listing is truncated anyway. If DEAD is ever to be
+   trusted, the per-render cap has to go up first.
+4. **`sentinel_probe.js`'s FLOOR check should measure the box**, not the declaration
+   (BUG_CLASSES 79). Until then expect this false positive on every sweep.
+5. **`--rbe-pagemute2` (dark `#6d747e`) still carries the grey 1127 replaced.** Checked
+   at 1128 and deliberately left: it feeds `--cr-muted-2` in the Estimates namespace,
+   whose **29 consumers are borders, a disabled button background and icon glyphs, not
+   body text**, so the 4.5 floor does not apply. Revisit only if it starts dressing text.
+6. **The sentinel's ground walk composites alpha only in `gate_1128`'s probe, not in
+   `sentinel_probe.js`.** BUG_CLASSES 80 — a translucent wash scored at full strength
+   produces spectacular false positives (a 6% gold hero read as 1.57:1; the truth is
+   6.97:1). Porting the blend into the shared probe would remove a whole class of noise.
+
+⚠️ **Do not re-file the 191.** They are noise *as classified above*, not "unknown".
+
+## ✅ SETTLED 28 Aug 2026 — the Labor Rate Schedule is per crew (build 1123)
+
+- **Crew list first, then that crew's sheet.** Not one document titled Santiago.
+- **Roofing crews inherit the shared roofing catalog; every other trade starts empty**
+  and grows its own lines. Theo's pick when the real counts were put to him.
+- **Rates live in `crew_rates`** — the store build 548 already created. No new table.
+  Editing this screen never writes `pricing_items`.
+- **A line with no agreed price reads "not set".** Do not add a fallback to the
+  catalog rate: that is one crew's money shown on another crew's sheet.
+- **Dark on screen, light on paper.** The print block is deliberate, not leftover.
+- Santiago's 23 rates were seeded off the catalog before the HTML shipped, so his
+  sheet is unchanged; Daniel Sarceno keeps his 3; everyone else starts blank.
+
+## ✅ SETTLED 28 Aug 2026 — the drawer (build 1115)
+
+- **No build summary in the menu.** Theo: *"get rid of the big paragraph about what's new."*
+  The footer keeps the version line only; What's New holds the description. `check_build.py`
+  gates the CHANGELOG entry now, so there is no reason to put prose back.
+- **Sign out is a small icon**, bottom-right of that line, using the same `lock` glyph as the
+  desktop rail.
+- **Every drawer section starts collapsed, every time.** Not a default — an invariant. The
+  drawer keeps its open set in memory and clears it on open. It no longer reads or writes
+  `cardinal.lnav.sections` (the desktop rail owns that key), and 954's insurance-portal
+  auto-open no longer reaches the drawer. **Do not restore the persistence.**
+
+## 🟠 OWED — the Labor Rate Schedule, crew-list first (28 Aug 2026)
+
+Theo, on the 1110 screen: *"Labor rate schedule shouldn't go straight to Santiago. It should
+[list] all the crews, then tap to see the labor rates."* Unstarted — nothing half-built.
+
+- **Shape:** `openLRS()` currently loads every `pricing_items` row where `template='roofing_labor'`
+  and renders Santiago's sheet directly. It becomes a **crew list first** (from `crews`), then tap a
+  crew → that crew's own rate sheet.
+- **Settled: each crew has its OWN rates; the others start blank.** Santiago's 24 seeded lines stay
+  his. So the sheet needs a crew key — `crew_rates` already exists (build 548–554: per-crew
+  overrides joined to `pricing_items`, `pricing_item_id IS NULL` = a custom row) and is the pipeline
+  to reuse. **Do not add a second per-crew rate store.**
+- ⚠ **SETTLED 28 Aug, and it REVERSES the earlier answer: LIGHT MODE ONLY.** Theo asked for "dark
+  mode only" when he first described the rework, then corrected himself the same day —
+  *"On the labor rates schedule I only want light mode."* The screen is already the light exhibit
+  (navy `#1e2b4a` bands, gold `#c9a227`, `--lrs-gold-dk:#8f6b00` for the on-white title rule) and it
+  prints to Letter. **Do not build a dark twin, and do not wire it to `rb-light`.**
+- `crew_rates` and `crew_payments` are `is_cardinal_admin()` in RLS — a work order with no labor
+  lines for Curtis or Scottie is CORRECT, not a bug (that fence is from 556 and still holds).
+
 ## 🟢 IN PROGRESS — the manual estimating engine, enhanced (27 Aug 2026)
 
 Theo pasted a generic React/TS/Tailwind "estimating engine" spec; the pushback held —

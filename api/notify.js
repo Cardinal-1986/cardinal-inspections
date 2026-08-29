@@ -100,7 +100,18 @@ export default async function handler(req, res){
   var twSid = String(twSidRaw || '').trim(), twTok = String(twTokRaw || '').trim();
   var twMsgSvc = String(twMsgSvcRaw || '').trim(), twFrom = String(twFromRaw || '').trim();
   var twReady = !!(twSid && twTok && (twMsgSvc || twFrom));
-  let webpush;
+  /* 1126: PUSH SETUP DEGRADES PUSH — it does not end the request.
+     Until now both arms of this block did `res.status(500)` + `return`, BEFORE
+     a single line of the email or SMS work below had run. So an unset
+     VAPID_PRIVATE_KEY, or a web-push import that failed on a cold start, took
+     out all three channels at once — and the 874 comment further down has said
+     "each channel is independent, so a dead one never blocks the others" the
+     whole time. It was true of email vs SMS and false of push vs everything.
+     ⚠ The failure is still REPORTED, and by the same `reason` strings as before
+     (`no_vapid_private`) so the two readers in index.html keep working. What
+     changed is that it is now carried to the end as a per-channel error instead
+     of being thrown as the route's only answer. */
+  let webpush = null, pushReady = false, pushErr = null, pushReason = null;
   try{
     webpush = (await import('web-push')).default;
     /* 1084: there is no hardcoded private key any more. Before 1084 a missing env var
@@ -109,14 +120,15 @@ export default async function handler(req, res){
        way. Absent now means SAY SO: signing with '' throws deep inside web-push with
        a message that does not name the cause. */
     if(!VAPID_PRIVATE){
-      res.status(500).json({ ok:false, error:'VAPID_PRIVATE_KEY is not set in this environment',
-        reason:'no_vapid_private', env:{ vapid_from_env:false } });
-      return;
+      pushErr = 'VAPID_PRIVATE_KEY is not set in this environment';
+      pushReason = 'no_vapid_private';
+    }else{
+      webpush.setVapidDetails('mailto:info@cardinalrenovations.net', VAPID_PUBLIC, VAPID_PRIVATE);
+      pushReady = true;
     }
-    webpush.setVapidDetails('mailto:info@cardinalrenovations.net', VAPID_PUBLIC, VAPID_PRIVATE);
   }catch(e){
-    res.status(500).json({ ok:false, error: 'push library unavailable: ' + (e.message || e) });
-    return;
+    pushErr = 'push library unavailable: ' + ((e && e.message) || e);
+    pushReason = 'push_unavailable';
   }
   try{
     var body = req.body || {};
@@ -137,31 +149,52 @@ export default async function handler(req, res){
         .trim()
       ).slice(0, 300);
     var url = String(body.url || '/');
+    /* 1125: the deep link, resolved HERE rather than trusted from the caller.
+       Curtis, via Theo: a punch-out text should be tappable and land on the
+       punch-out. Push already carried `url` (sw.js navigates to it) but every
+       caller sent '/', and the SMS never carried it at all.
+       ⚠ Only a SAME-SITE relative path or hash is accepted. This string ends up
+       in a text message, so an absolute URL from a caller would be a link the
+       route sends on someone else's behalf. Anything with a scheme, or a
+       protocol-relative '//', is dropped back to '/' rather than sent. */
+    var absUrl = '';
+    try{
+      if(/^[/#][^/]/.test(url) || url === '/'){
+        var host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+        if(/^[a-z0-9.-]+(:\d+)?$/i.test(host) && url !== '/') absUrl = 'https://' + host + '/' + url.replace(/^\//, '');
+      }else{
+        url = '/';
+      }
+    }catch(_){ absUrl = ''; }
     if(!emails.length){
       res.status(200).json({ ok:true, sent:0, failed:0, mailed:0, texted:0, subs:0,
-        reason:'no_recipients', env:{ vapid_from_env:VAPID_FROM_ENV,
+        reason:'no_recipients', push_error: pushErr || undefined,
+        env:{ vapid_from_env:VAPID_FROM_ENV,
         resend:!!process.env.RESEND_API_KEY,
-        sms:twReady /* 1106: TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM, trimmed, one source */ } });
+        sms:twReady /* 1106: TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM, trimmed, one source */,
+        push: pushReady } });
       return;
     }
 
+    var sent = 0, failed = 0, gone = 0, firstErr = null, subs = [];
+    /* 1126: the THIRD abort point, and the least obvious of the three. A refused
+       or errored push_subs query used to `return` here too — so a Supabase
+       hiccup on the SUBSCRIPTION table silently cancelled the email and the
+       text as well. It is a push-channel fault and now reads as one. */
+    if(pushReady){
     var q = SUPA_URL + '/rest/v1/push_subs?select=email,endpoint,sub&email=in.(' +
       emails.map(function(e){ return '"' + e.replace(/"/g,'') + '"'; }).join(',') + ')';
     var r = await fetch(q, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } });
-    var subs = await r.json();
-    if(!Array.isArray(subs)){
+    var subsRaw = await r.json();
+    if(!Array.isArray(subsRaw)){
       /* 612: this returned sent:0 and looked identical to "nobody is
          subscribed". A refused or errored query is a different problem and
          has to say so. */
-      res.status(200).json({ ok:false, sent:0, failed:0, mailed:0, texted:0, subs:0,
-        reason:'subs_query_failed',
-        detail:String((subs && (subs.message || subs.error)) || 'non-array response').slice(0,140),
-        env:{ vapid_from_env:VAPID_FROM_ENV, resend:!!process.env.RESEND_API_KEY,
-        sms:twReady /* 1106: TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM, trimmed, one source */ } });
-      return;
-    }
-
-    var sent = 0, failed = 0, gone = 0, firstErr = null;
+      pushErr = 'could not read the subscription list: ' +
+        String((subsRaw && (subsRaw.message || subsRaw.error)) || 'non-array response').slice(0,120);
+      pushReason = 'subs_query_failed';
+    }else{
+    subs = subsRaw;
     await Promise.all(subs.map(async function(row){
       try{
         await webpush.sendNotification(row.sub, JSON.stringify({ title:title, body:text, url:url }));
@@ -185,6 +218,8 @@ export default async function handler(req, res){
         }
       }
     }));
+    }   /* end: subs query returned a usable array */
+    }   /* 1126: end `if(pushReady)` — email and SMS below run regardless */
 
     /* Email, best-effort. A phone that never registered is the common case —
        Theo's was the ONLY row in push_subs, and stale — so an alert that can
@@ -244,7 +279,13 @@ export default async function handler(req, res){
           phones = phones.filter(function(v, i){ return phones.indexOf(v) === i; });   /* de-dupe */
         }
         if(phones.length){
-          var smsBody = ((title ? title + ': ' : '') + text).slice(0, 320);
+          /* 1125: the link goes in the TEXT — an SMS has no hyperlink, so a
+             url that only rides in the JSON is a url nobody can tap. It is
+             appended AFTER the message is trimmed, never inside the slice, so
+             a long punch-out title can never truncate the link itself. That is
+             the whole point of the message. */
+          var _tail = absUrl ? ('\n' + absUrl) : '';
+          var smsBody = ((title ? title + ': ' : '') + text).slice(0, 320 - _tail.length) + _tail;
           var twUrl = 'https://api.twilio.com/2010-04-01/Accounts/' + encodeURIComponent(twSid) + '/Messages.json';
           var twAuth = 'Basic ' + Buffer.from(twSid + ':' + twTok).toString('base64');
           await Promise.all(phones.map(async function(to){
@@ -288,9 +329,13 @@ export default async function handler(req, res){
       }catch(e5){ smsErr = String((e5 && e5.message) || e5).slice(0, 120); }
     }
 
-    /* 612: name the cause, in the order that is actionable. */
+    /* 612: name the cause, in the order that is actionable.
+       1126: a push SETUP failure outranks everything below it — `no_subscriptions`
+       was previously reported for an unconfigured push channel, which reads as
+       "nobody has enabled notifications" and sends the reader to the wrong fix. */
     var reason = null;
-    if(!subs.length)                    reason = 'no_subscriptions';
+    if(pushReason)                      reason = pushReason;
+    else if(!subs.length)               reason = 'no_subscriptions';
     else if(sent === 0 && failed > 0)   reason = (firstErr && (firstErr.status === 401 ||
                                                   firstErr.status === 403))
                                                  ? 'vapid_mismatch' : 'push_rejected';
@@ -312,7 +357,14 @@ export default async function handler(req, res){
          reported "not set up yet" even while the send gate happily sent the text.
          Mirror the send gate exactly: a Messaging Service OR a From number. */
       sms_error: smsErr || undefined,
-      env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey, sms: twReady /* 1106: same one source as the send gate */ }
+      /* 1126: push gets the same per-channel error field email and SMS already
+         had. Without it a dead push channel reported `subs:0`, and the test
+         button read that as "no device enabled here yet — tap Enable
+         notifications": a correct-looking sentence blaming the user for a
+         missing server env var. */
+      push_error: pushErr || undefined,
+      env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey, sms: twReady /* 1106: same one source as the send gate */,
+             push: pushReady }
     });
   }catch(err){
     res.status(200).json({ ok:false, error: String(err && err.message || err) });

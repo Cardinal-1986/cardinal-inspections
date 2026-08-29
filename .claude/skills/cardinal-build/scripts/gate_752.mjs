@@ -147,6 +147,15 @@ if (!pu.absent) {
 /* ── MENU ── */
 await page.evaluate(() => document.getElementById('navBtn').click());
 await page.waitForTimeout(700);
+/* 1113-1117: the phone menu is the drawer, and it opens with every section
+   COLLAPSED (never-chosen = closed, applySections). Rows are tappable only
+   expanded, so expand all sections first — and the section headers are now
+   the first-tap targets, so they get probed too. */
+await page.evaluate(() => document.querySelectorAll('#navMenu .navsec').forEach(x => {
+  if (x.getAttribute('aria-expanded') !== 'true') x.click();
+}));
+await page.waitForTimeout(500);
+need('menu: section headers (the drawer\'s first-tap targets)', await probe('#navMenu .navsec'), 0, 1);
 need('menu: all nav items', await probe('#newMenu .navopt, #navMenu .navopt'), 0, 1);
 await page.evaluate(() => document.getElementById('navBtn').click()).catch(() => {});
 
