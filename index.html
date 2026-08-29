@@ -3905,7 +3905,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1139<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1140<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42253,6 +42253,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1140, d:'2026-08-29', t:'Roof Options \u2014 Good / Better / Best on one page', s:'A new Options button in the estimate toolbar builds a single client-facing sheet that shows two or three of a client\u2019s estimates side by side \u2014 Good, Better, Best \u2014 with the middle one marked \u201cMost chosen\u201d and an initial box on each. It reads from estimates you already saved (build one, Duplicate it, change the shingle, save \u2014 those are your tiers), so there is no new form to fill. The bullet list under each price is that estimate\u2019s own scope. You can type a monthly payment per option to show a financing line, or leave it blank to hide it. Generates a shareable, printable, signable document like any other estimate.' },
 { b:1139, d:'2026-08-29', t:'Pin your own default assembly', s:'Save a set of estimate lines as an assembly, then star it: it becomes YOUR default and sits at the top of the +Assembly picker \u2014 one tap to drop your standard scope into any estimate. Each person has their own default and it follows you across devices. Tap the star again to unpin. Blank estimates stay blank; this just puts your go-to at the top. Needs the estimate_assembly_default.sql migration.' },
  { b:1138, d:'2026-08-29', t:'Duplicate an estimate', s:'Open a saved estimate and the toolbar now has Duplicate: it copies the whole thing \u2014 every line, section, deposit and note \u2014 into a fresh draft titled \u201c\u2026 (copy)\u201d that you can re-price and save on its own. Use it to build a second option for the same client, or to start the next client from a job just like theirs. The original is never touched, and the copy gets its own estimate number when you save it.' },
  { b:1137, d:'2026-08-29', t:'The Owner Console is a hub now, not one long scroll',
@@ -49263,7 +49264,7 @@ currentProject   : function(){ return state ? state.project : null; },
 })();
 </script>
 
-<style id="cr-epub-styles">#cr-epub-btn{background:linear-gradient(135deg,#2c2c2c,#1a1a1a);color:#f08a90;border:1px solid #c8202e;padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}#cr-epub-btn:hover{background:#3c3c3c}#cr-epub-btn:disabled{opacity:.55;cursor:wait}#cr-epub-preview-btn{background:transparent;color:#f08a90;border:1px solid rgba(200,32,46,.5);padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}#cr-epub-preview-btn:hover{background:rgba(200,32,46,.14)}#cr-epub-preview{display:none;position:fixed;inset:0;background:#3a3a3a;z-index:9550;flex-direction:column}#cr-epub-preview.open{display:flex}#cr-epub-preview .pv-head{padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:#1a1a1a;color:#f5efe0;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-epub-preview .pv-head h3{margin:0;flex:1;text-align:center;font:800 13px Georgia,serif}#cr-epub-preview .pv-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#f08a90;padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}#cr-epub-preview .pv-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}#cr-epub-preview .pv-body{flex:1;overflow:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;background:#5a5a5a;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+<style id="cr-epub-styles">#cr-gbb-btn{background:transparent;color:#f08a90;border:1px solid rgba(200,32,46,.5);padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}#cr-gbb-btn:hover{background:rgba(200,32,46,.14)}#cr-gbb-btn:disabled{opacity:.55;cursor:wait}#cr-epub-btn{background:linear-gradient(135deg,#2c2c2c,#1a1a1a);color:#f08a90;border:1px solid #c8202e;padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}#cr-epub-btn:hover{background:#3c3c3c}#cr-epub-btn:disabled{opacity:.55;cursor:wait}#cr-epub-preview-btn{background:transparent;color:#f08a90;border:1px solid rgba(200,32,46,.5);padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}#cr-epub-preview-btn:hover{background:rgba(200,32,46,.14)}#cr-epub-preview{display:none;position:fixed;inset:0;background:#3a3a3a;z-index:9550;flex-direction:column}#cr-epub-preview.open{display:flex}#cr-epub-preview .pv-head{padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:#1a1a1a;color:#f5efe0;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-epub-preview .pv-head h3{margin:0;flex:1;text-align:center;font:800 13px Georgia,serif}#cr-epub-preview .pv-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#f08a90;padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}#cr-epub-preview .pv-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}#cr-epub-preview .pv-body{flex:1;overflow:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;background:#5a5a5a;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 body.standalone #cr-epub-preview .pv-body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* the estimate preview \u2014 was 14px */#cr-epub-preview iframe{display:block;width:8.5in;max-width:100%;min-height:11in;margin:0 auto;border:0;background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.45)}.cr-epub-note{background:#f4f2f1;border:1px solid #e8d9a8;border-left:4px solid #c8202e;border-radius:6px;padding:10px 14px;margin:14px 0 0;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#5a4a1a;line-height:1.5}.cr-epub-note b{color:#2c2c2c}.cr-epub-note a{color:#8f1620;font-weight:800;cursor:pointer;text-decoration:underline}</style>
 <script id="cr-epub-script">
 (function(){
@@ -49675,6 +49676,258 @@ catch(e){ console.warn('[epub] openEditor threw:', e); }
 return false;
 }
 var previewEl = null;
+/* ============================================================
+   1140 — Good / Better / Best ("Roof Options")
+   One document that presents up to three saved estimates side
+   by side; the homeowner initials the option they want. Built
+   from estimates that already exist on the project, so there
+   is no new table and no new pipeline — it publishes through
+   the same window.db.create rails as a single estimate.
+   ============================================================ */
+var GBB_RANKS = ['Good', 'Better', 'Best'];
+function gbbBullets(est){
+  var lines = Array.isArray(est.line_items) ? est.line_items : [];
+  var seen = {}, out = [];
+  for(var i = 0; i < lines.length; i++){
+    var nm = String((lines[i] && lines[i].name) || '').trim();
+    if(!nm) continue;
+    var key = nm.toLowerCase();
+    if(seen[key]) continue;
+    seen[key] = 1; out.push(nm);
+    if(out.length >= 6) break;
+  }
+  return out;
+}
+function gbbMonthly(m){
+  var v = Number(m) || 0;
+  if(v <= 0) return '';
+  return '$' + v.toLocaleString('en-US', { maximumFractionDigits:0 }) + '/mo';
+}
+/* tiers: [{ est, label, monthly }], length 2 or 3. */
+function buildGbbHtml(tiers, project){
+  var logo = cardinalLogo();
+  var clientName = (project && (project.name || project.client_name)) || 'Client';
+  var address    = (project && project.address) || '';
+  var today = fmtDate(new Date());
+  var anyMonthly = tiers.some(function(t){ return (Number(t.monthly) || 0) > 0; });
+  var n = tiers.length;
+  var midIdx = (n === 3) ? 1 : -1;
+  var cols = tiers.map(function(t, i){
+    var est = t.est || {};
+    var rank = GBB_RANKS[n === 2 ? (i === 0 ? 0 : 2) : i] || '';
+    var label = String(t.label || est.title || 'Option').trim();
+    var price = Number(est.total) || 0;
+    var mo = gbbMonthly(t.monthly);
+    var bullets = gbbBullets(est);
+    var mid = (i === midIdx);
+    var bl = bullets.length
+      ? '<ul class="gbb-feat">' + bullets.map(function(b){ return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>'
+      : '';
+    return '<div class="gbb-col' + (mid ? ' gbb-mid' : '') + '">' +
+      (mid ? '<div class="gbb-badge">Most chosen</div>' : '') +
+      '<div class="gbb-rank">' + esc(rank) + '</div>' +
+      '<div class="gbb-prod">' + esc(label) + '</div>' +
+      (est.estimate_number ? '<div class="gbb-en">' + esc(est.estimate_number) + '</div>' : '') +
+      '<div class="gbb-price">' + money(price) + '</div>' +
+      (mo ? '<div class="gbb-mo">or about ' + esc(mo) + ' financed</div>' : (anyMonthly ? '<div class="gbb-mo">&nbsp;</div>' : '')) +
+      bl +
+      '<div class="gbb-pick"><span class="gbb-box"></span><span class="gbb-pl">Initial to choose</span></div>' +
+    '</div>';
+  }).join('');
+  var finNote = anyMonthly
+    ? '<span>Financing available through Cardinal’s lender · subject to approval</span>'
+    : '<span>&nbsp;</span>';
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+    '<title>Cardinal Roofing &amp; Renovations — Roof Options</title>\n' +
+    '<style>\n' +
+    ':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#8a8a8a;--hair:#e5e2dc;--wash:#faf8f4}\n' +
+    '*{box-sizing:border-box}\nhtml,body{margin:0;padding:0}\n' +
+    'body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:11.5pt;line-height:1.5;width:8.5in;margin:0 auto;padding:0.7in 0.6in 0.85in;background:#fff}\n' +
+    '@page{size:Letter;margin:0.6in}\n' +
+    '@media print{.no-print{display:none!important}body{width:auto;margin:0;padding:0}}\n' +
+    '.est-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:8px}\n' +
+    '.est-logo{width:2in;max-width:100%;display:block}\n' +
+    '.est-co{text-align:right;font-size:9.5pt;line-height:1.55;color:#5a5a5a}\n' +
+    '.est-co .co-name{font-weight:700;font-size:10.5pt;color:var(--ink);margin-bottom:2px;letter-spacing:.02em}\n' +
+    '.gbb-title{font-size:23pt;font-weight:400;letter-spacing:.14em;margin:8px 0 2px;color:var(--ink)}\n' +
+    '.rule{height:2px;background:var(--red);border:0;margin:8px 0 14px}\n' +
+    '.gbb-for{font-size:11pt;color:var(--muted);margin:0 0 4px}\n' +
+    '.gbb-for b{color:var(--ink);font-weight:700}\n' +
+    '.gbb-intro{font-size:11pt;color:#3f3f3f;margin:6px 0 16px;max-width:64ch;line-height:1.55}\n' +
+    '.gbb-grid{display:flex;gap:0;align-items:stretch;margin:4px 0 6px}\n' +
+    '.gbb-col{flex:1;border:1px solid var(--hair);border-right:0;padding:16px 14px 14px;display:flex;flex-direction:column;position:relative;min-width:0}\n' +
+    '.gbb-col:first-child{border-radius:8px 0 0 8px}\n' +
+    '.gbb-col:last-child{border-right:1px solid var(--hair);border-radius:0 8px 8px 0}\n' +
+    '.gbb-mid{border:2px solid var(--red);border-radius:8px;margin:-6px -1px;z-index:2;background:#fff;box-shadow:0 6px 22px rgba(200,32,46,.10)}\n' +
+    '.gbb-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:8.5pt;letter-spacing:.1em;text-transform:uppercase;padding:3px 11px;border-radius:99px;white-space:nowrap}\n' +
+    '.gbb-rank{font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:9pt;letter-spacing:.16em;text-transform:uppercase;color:var(--red-dk)}\n' +
+    '.gbb-prod{font-size:14pt;font-weight:700;margin:4px 0 1px;line-height:1.2}\n' +
+    '.gbb-en{font-family:"Segoe UI",Arial,sans-serif;font-size:8.5pt;letter-spacing:.06em;color:var(--faint);margin-bottom:6px}\n' +
+    '.gbb-price{font-size:21pt;font-weight:700;margin:8px 0 1px;font-variant-numeric:tabular-nums;color:var(--ink)}\n' +
+    '.gbb-mo{font-family:"Segoe UI",Arial,sans-serif;font-size:9pt;color:var(--muted);margin-bottom:10px}\n' +
+    '.gbb-feat{list-style:none;margin:2px 0 12px;padding:0;display:grid;gap:5px}\n' +
+    '.gbb-feat li{font-size:10pt;line-height:1.35;padding-left:16px;position:relative;color:var(--ink)}\n' +
+    '.gbb-feat li::before{content:"";position:absolute;left:1px;top:5px;width:8px;height:8px;border-radius:2px;background:var(--red)}\n' +
+    '.gbb-pick{margin-top:auto;display:flex;align-items:center;gap:8px;border-top:1px dashed var(--hair);padding-top:10px}\n' +
+    '.gbb-box{width:20px;height:20px;border:2px solid var(--muted);border-radius:5px;flex:0 0 auto}\n' +
+    '.gbb-mid .gbb-box{border-color:var(--red)}\n' +
+    '.gbb-pl{font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:9pt;color:var(--muted)}\n' +
+    '.gbb-terms{margin:14px 0 0;padding:10px 14px;background:var(--wash);border-left:3px solid var(--red);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:"Segoe UI",Arial,sans-serif;font-size:9.5pt;color:var(--muted)}\n' +
+    '.gbb-terms b{color:var(--ink)}\n' +
+    '.gbb-sign{display:flex;gap:28px;margin-top:26px}\n' +
+    '.gbb-sign .col{flex:1}\n' +
+    '.gbb-sign .col.sm{flex:0 0 1.6in}\n' +
+    '.gbb-sign .line{border-bottom:1.25px solid var(--ink);height:34px}\n' +
+    '.gbb-sign .lbl{font-family:"Segoe UI",Arial,sans-serif;font-size:9pt;letter-spacing:.05em;color:var(--muted);margin-top:6px}\n' +
+    '.gbb-fine{margin-top:16px;font-size:9.5pt;line-height:1.5;color:var(--muted);max-width:78ch}\n' +
+    '.foot{margin-top:22px;padding-top:9px;border-top:1px solid var(--hair);font-size:9pt;color:var(--faint);text-align:center;font-family:"Segoe UI",Arial,sans-serif;letter-spacing:.03em}\n' +
+    '@media screen and (max-width:9in){body{width:auto;max-width:8.5in;padding:26px 20px 36px}}\n' +
+    '@media screen and (max-width:640px){\n' +
+    'body{font-size:11pt;padding:20px 15px 32px}\n' +
+    '.est-head{flex-direction:column;gap:8px}.est-co{text-align:left}\n' +
+    '.gbb-title{font-size:18pt}\n' +
+    '.gbb-grid{flex-direction:column;gap:12px}\n' +
+    '.gbb-col,.gbb-col:first-child,.gbb-col:last-child{border:1px solid var(--hair);border-radius:8px}\n' +
+    '.gbb-mid{margin:0}\n' +
+    '.gbb-sign{flex-direction:column;gap:18px}.gbb-sign .col.sm{flex:1}\n' +
+    '}\n' +
+    '</style>\n</head>\n<body>\n' +
+    '<div class="est-head">' +
+    '<div class="est-brand">' + (logo ? '<img class="est-logo" src="' + logo + '" alt="Cardinal Roofing &amp; Renovations">' : '') + '</div>' +
+    '<div class="est-co">' +
+    '<div class="co-name">Cardinal Roofing &amp; Renovations, LLC</div>' +
+    '5735 Webster Street<br>Dayton, Ohio 45414<br>Office # (937) 576-6753<br>Admin@cardinalrenovations.net' +
+    '</div></div>' +
+    '<div class="gbb-title">ROOF OPTIONS</div>' +
+    '<hr class="rule">' +
+    '<p class="gbb-for"><b>Prepared for ' + esc(clientName) + '</b>' + (address ? ' · ' + esc(address) : '') + ' · ' + esc(today) + '</p>' +
+    '<p class="gbb-intro">Below are the options for your project, side by side. Every option is a complete estimate installed by the same Cardinal crew to the same standard — the difference is the product and the price. Initial the box on the option you’d like us to proceed with.</p>' +
+    '<div class="gbb-grid">' + cols + '</div>' +
+    '<div class="gbb-terms"><span>A deposit is due on the option you select; the balance on completion.</span>' + finNote + '</div>' +
+    '<div class="gbb-sign">' +
+    '<div class="col"><div class="line"></div><div class="lbl">Homeowner Signature</div></div>' +
+    '<div class="col sm"><div class="line"></div><div class="lbl">Date</div></div>' +
+    '<div class="col sm"><div class="line"></div><div class="lbl">Option Chosen</div></div>' +
+    '</div>' +
+    '<p class="gbb-fine">This document presents priced options and is not itself a bill. A deposit is due only on the option you initial and sign for. Prices held 30 days. Owens Corning warranty registered in the homeowner’s name at completion.</p>' +
+    '<div class="foot">Cardinal Roofing &amp; Renovations, LLC · 5735 Webster Street, Dayton, Ohio 45414 · (937) 576-6753 · www.cardinalrenovations.net</div>' +
+    '</body>\n</html>';
+}
+async function publishGbb(tiers, project){
+  if(!window.db || typeof window.db.create !== 'function'){
+    crTell('Document system not available. Reload the app and retry.');
+    return null;
+  }
+  var html = buildGbbHtml(tiers, project);
+  var clientName = (project && (project.name || project.client_name)) || '';
+  var title = 'Roof Options' + (clientName ? ' — ' + clientName : '');
+  var docId = await window.db.create(title, html, clientName, project.id);
+  if(typeof window.auditLog === 'function'){
+    try{ window.auditLog('estimate_options_publish', 'Published ' + title, project.id); }catch(_){}
+  }
+  return docId;
+}
+var gbbPickEl = null;
+function gbbEnsurePick(){
+  if(gbbPickEl) return gbbPickEl;
+  gbbPickEl = document.createElement('div');
+  gbbPickEl.id = 'cr-gbb-pick';
+  gbbPickEl.innerHTML =
+    '<div class="gbbp-card">' +
+    '<div class="gbbp-hd"><h3>Roof Options</h3><button data-act="gbbp-x" type="button">Close</button></div>' +
+    '<p class="gbbp-sub">Pick the estimates to show side by side — Good, Better, Best. Each is one of this client’s saved estimates. The middle one is marked “Most chosen.” Leave a monthly blank to hide the financing line.</p>' +
+    '<div class="gbbp-rows"></div>' +
+    '<p class="gbbp-hint" data-slot="gbbp-hint"></p>' +
+    '<div class="gbbp-foot"><button class="primary" data-act="gbbp-go" type="button">Generate document</button></div>' +
+    '</div>';
+  document.body.appendChild(gbbPickEl);
+  gbbPickEl.querySelector('[data-act="gbbp-x"]').onclick = gbbClosePick;
+  gbbPickEl.querySelector('[data-act="gbbp-go"]').onclick = gbbGenerate;
+  gbbPickEl.addEventListener('click', function(e){ if(e.target === gbbPickEl) gbbClosePick(); });
+  return gbbPickEl;
+}
+function gbbClosePick(){
+  if(gbbPickEl){ gbbPickEl.classList.remove('open'); }
+  document.body.style.overflow = '';
+}
+function gbbRowHtml(rank, ests, sel){
+  var opts = '<option value="">— none —</option>' + ests.map(function(e){
+    var lbl = (e.estimate_number ? e.estimate_number + '  ' : '') + (e.title || 'Estimate') +
+      '  ·  ' + money(Number(e.total) || 0);
+    return '<option value="' + esc(e.id) + '"' + (String(e.id) === String(sel) ? ' selected' : '') + '>' + esc(lbl) + '</option>';
+  }).join('');
+  return '<div class="gbbp-row">' +
+    '<div class="gbbp-rank">' + esc(rank) + '</div>' +
+    '<select class="gbbp-est" data-rank="' + esc(rank) + '">' + opts + '</select>' +
+    '<div class="gbbp-mo"><span>$</span><input class="gbbp-monthly" type="number" min="0" step="1" inputmode="numeric" placeholder="mo"><span>/mo</span></div>' +
+    '</div>';
+}
+async function gbbOpen(){
+  var project = (window.CardinalEstimates && typeof window.CardinalEstimates.currentProject === 'function')
+    ? window.CardinalEstimates.currentProject() : null;
+  if(!project || !project.id){ crTell('Open an estimate for this client first.'); return; }
+  gbbEnsurePick();
+  var rows = gbbPickEl.querySelector('.gbbp-rows');
+  var hint = gbbPickEl.querySelector('[data-slot="gbbp-hint"]');
+  rows.innerHTML = '<p class="gbbp-loading">Loading this client’s estimates…</p>';
+  gbbPickEl.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  var ests = (window.CardinalEstimates && typeof window.CardinalEstimates.loadForProject === 'function')
+    ? await window.CardinalEstimates.loadForProject(project.id) : [];
+  if(!gbbPickEl.classList.contains('open')) return;
+  if(!ests || ests.length < 2){
+    rows.innerHTML = '';
+    hint.textContent = 'You need at least two saved estimates on this client to build an options sheet. Tip: open one estimate, use Duplicate to make a copy, change the shingle, and Save — that is your second tier.';
+    return;
+  }
+  hint.textContent = '';
+  var sorted = ests.slice().sort(function(a,b){ return (Number(a.total)||0) - (Number(b.total)||0); });
+  var pre = [ sorted[0], sorted[Math.floor(sorted.length/2)], sorted[sorted.length-1] ];
+  if(ests.length === 2){ pre = [ sorted[0], null, sorted[1] ]; }
+  rows.innerHTML =
+    gbbRowHtml('Good',   ests, pre[0] && pre[0].id) +
+    gbbRowHtml('Better', ests, pre[1] && pre[1].id) +
+    gbbRowHtml('Best',   ests, pre[2] && pre[2].id);
+}
+async function gbbGenerate(){
+  var project = (window.CardinalEstimates && typeof window.CardinalEstimates.currentProject === 'function')
+    ? window.CardinalEstimates.currentProject() : null;
+  if(!project || !project.id){ crTell('Open an estimate for this client first.'); return; }
+  var ests = (window.CardinalEstimates && typeof window.CardinalEstimates.loadForProject === 'function')
+    ? await window.CardinalEstimates.loadForProject(project.id) : [];
+  var byId = {}; ests.forEach(function(e){ byId[String(e.id)] = e; });
+  var rows = gbbPickEl ? Array.prototype.slice.call(gbbPickEl.querySelectorAll('.gbbp-row')) : [];
+  var tiers = [];
+  var seen = {};
+  rows.forEach(function(r){
+    var sel = r.querySelector('.gbbp-est');
+    var mo  = r.querySelector('.gbbp-monthly');
+    var id  = sel && sel.value;
+    if(!id || !byId[id]) return;
+    if(seen[id]) return;
+    seen[id] = 1;
+    tiers.push({ est: byId[id], label: (byId[id].title || 'Option'), monthly: mo ? mo.value : '' });
+  });
+  if(tiers.length < 2){
+    var h = gbbPickEl.querySelector('[data-slot="gbbp-hint"]');
+    if(h) h.textContent = 'Choose at least two different estimates.';
+    return;
+  }
+  var goBtn = gbbPickEl.querySelector('[data-act="gbbp-go"]');
+  if(goBtn){ goBtn.disabled = true; goBtn.textContent = 'Generating…'; }
+  try{
+    var docId = await publishGbb(tiers, project);
+    gbbClosePick();
+    if(!(typeof openDoc === 'function' && openDoc(docId))){
+      crTell('Options document created.\n\nOpen it from this client’s document list to share, print, or collect a signature.');
+    }
+  }catch(e){
+    crTell('Could not generate the options document: ' + (e.message || e));
+  }finally{
+    if(goBtn){ goBtn.disabled = false; goBtn.textContent = 'Generate document'; }
+  }
+}
 function ensurePreview(){
 if(previewEl) return previewEl;
 previewEl = document.createElement('div');
@@ -49761,6 +50014,15 @@ pv.title = 'See the finished document without saving';
 pv.onclick = openPreview;
 saveBtn.parentNode.insertBefore(pv, saveBtn);
 }
+if(!document.getElementById('cr-gbb-btn')){
+var ob = document.createElement('button');
+ob.id = 'cr-gbb-btn';
+ob.type = 'button';
+ob.textContent = 'Options';
+ob.title = 'Build a Good / Better / Best options sheet from this client\u2019s estimates';
+ob.onclick = gbbOpen;
+saveBtn.parentNode.insertBefore(ob, saveBtn);
+}
 if(document.getElementById('cr-epub-btn')) return;
 var btn = document.createElement('button');
 btn.id = 'cr-epub-btn';
@@ -49839,11 +50101,47 @@ if(document.readyState === 'loading') document.addEventListener('DOMContentLoade
 else start();
 window.CardinalEstimatePublish = {
 buildDocHtml : buildDocHtml,
+buildGbbHtml : buildGbbHtml,
 publish      : publish,
+publishGbb   : publishGbb,
+openOptions  : gbbOpen,
 openDoc      : openDoc,
 };
 })();
 </script>
+<style id="cr-gbb-styles">
+/* 1140 - Roof Options picker overlay. Dark ground, id-scoped, its own
+   literal colours so it is immune to the token-strip class (448-449). */
+#cr-gbb-pick{position:fixed;inset:0;z-index:100060;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(6,7,9,.72);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#cr-gbb-pick.open{display:flex}
+#cr-gbb-pick .gbbp-card{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:#141619;color:#ECEAE6;border:1px solid #2A2D34;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.55);padding:20px 20px 18px;font-family:'Segoe UI',Arial,sans-serif;-webkit-overflow-scrolling:touch}
+#cr-gbb-pick .gbbp-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+#cr-gbb-pick .gbbp-hd h3{margin:0;font-size:18px;font-weight:800;letter-spacing:.01em;color:#fff}
+#cr-gbb-pick .gbbp-hd [data-act="gbbp-x"]{background:transparent;color:#9AA2AE;border:1px solid #333842;border-radius:8px;padding:7px 13px;font:600 13px 'Segoe UI',Arial,sans-serif;cursor:pointer}
+#cr-gbb-pick .gbbp-hd [data-act="gbbp-x"]:hover{color:#fff;border-color:#4a515c}
+#cr-gbb-pick .gbbp-sub{margin:2px 0 14px;font-size:13px;line-height:1.5;color:#B7BEC8}
+#cr-gbb-pick .gbbp-rows{display:grid;gap:11px}
+#cr-gbb-pick .gbbp-loading{color:#9AA2AE;font-size:13px;margin:4px 0}
+#cr-gbb-pick .gbbp-row{display:flex;align-items:center;gap:10px}
+#cr-gbb-pick .gbbp-rank{flex:0 0 58px;font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#E45864}
+#cr-gbb-pick .gbbp-est{flex:1;min-width:0;background:#0F1114;color:#ECEAE6;border:1px solid #333842;border-radius:9px;padding:10px 11px;font:500 14px 'Segoe UI',Arial,sans-serif;appearance:none;-webkit-appearance:none}
+#cr-gbb-pick .gbbp-est:focus{outline:none;border-color:#E45864}
+#cr-gbb-pick .gbbp-mo{flex:0 0 auto;display:flex;align-items:center;gap:3px;color:#9AA2AE;font-size:13px}
+#cr-gbb-pick .gbbp-mo input{width:58px;background:#0F1114;color:#ECEAE6;border:1px solid #333842;border-radius:8px;padding:9px 8px;font:600 14px 'Segoe UI',Arial,sans-serif;text-align:right}
+#cr-gbb-pick .gbbp-mo input:focus{outline:none;border-color:#E45864}
+#cr-gbb-pick .gbbp-hint{margin:10px 0 0;font-size:13px;line-height:1.5;color:#E8B45A}
+#cr-gbb-pick .gbbp-hint:empty{display:none}
+#cr-gbb-pick .gbbp-foot{margin-top:16px;display:flex;justify-content:flex-end}
+#cr-gbb-pick .gbbp-foot [data-act="gbbp-go"]{background:#C8202E;color:#fff;border:0;border-radius:10px;padding:12px 20px;font:800 14px 'Segoe UI',Arial,sans-serif;letter-spacing:.02em;cursor:pointer;min-height:44px}
+#cr-gbb-pick .gbbp-foot [data-act="gbbp-go"]:hover{background:#e0303e}
+#cr-gbb-pick .gbbp-foot [data-act="gbbp-go"]:disabled{opacity:.55;cursor:default}
+@media (max-width:560px){
+#cr-gbb-pick .gbbp-row{flex-wrap:wrap}
+#cr-gbb-pick .gbbp-est{flex:1 1 100%;order:2}
+#cr-gbb-pick .gbbp-rank{order:1}
+#cr-gbb-pick .gbbp-mo{order:3}
+}
+</style>
 
 <style id="cr-e2c-styles">#cr-e2c-btn{background:transparent;color:#f08a90;border:1px solid rgba(200,32,46,.5);padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}#cr-e2c-btn:hover{background:rgba(200,32,46,.14)}#cr-e2c-btn:disabled{opacity:.5;cursor:wait}</style>
 <script id="cr-e2c-script">
