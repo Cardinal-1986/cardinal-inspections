@@ -3875,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1121 &#8212; Applying a Scope of Loss now records its history row again. Since the history table shipped (build 665), a scoping bug meant the record of each scope read — which document, what the AI found, what you approved — silently failed to write every single time, while the claim fields themselves applied fine. Nothing visible changes; the scope_reads history simply starts existing.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1129 &#8212; Company Documents shows its documents again. Since build 1111 opening it drew the trade pills and then stopped — a script error before the list was written — so every user saw zero documents, no View or Download on any contract master. One wrong function name; found by the regression suite's gate for build 746. Numbered 1129 because another session holds 1122–1128.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20902,7 +20902,11 @@ function renderCompanyDocs(){
   /* 1111/1112: the Pre-Install Guides (Roof / Siding / Windows) — editable master
      docs that auto-email to the client when a matching build day is booked. */
   var __guideRow = (window.CardinalGuide && window.CardinalGuide.docsRows)
-    ? window.CardinalGuide.docsRows(__cdTrade, isAdmin()) : '';
+    /* 1129: isAdmin exists 15 times in this file and EVERY one is sealed inside
+     a module IIFE — none is in this block's scope and window.isAdmin is never
+     assigned, so this call threw and killed the doc list below it for every
+     user since 1111. isAdminUser() is this block's own admin check. */
+    ? window.CardinalGuide.docsRows(__cdTrade, isAdminUser()) : '';
   document.getElementById('cdDocList').innerHTML = rows.length
     ? rows.map(function(d){
         return '<div class="cdocrow"><span class="cdicon">&#128196;</span>' +
@@ -42023,7 +42027,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
+{ b:1129, d:'2026-08-29', t:'Company Documents lists its documents again', s:'Opening Company Documents drew the trade pills then hit a script error before the document list rendered, so it showed zero documents for every user \u2014 no View or Download on any master. Broken since build 1111 (the Pre-Install Guide rows arriving used a function name that exists only inside other modules). One-line fix; the build-746 regression gate now guards it.' },
+ { b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
  { b:1120, d:'2026-08-28', t:'The Pre-Install Guide asks through the app, not the browser', s:'Two grey browser pop-ups survived in the Pre-Install Guide \u2014 the \u201cEmail the guide?\u201d question and the \u201cReset the wording?\u201d one. Both now use the dark in-app ask-sheet every other question has used since build 1083, and the reset (which replaces unsaved edits) is styled red as a destructive action. Buttons name the action instead of OK/Cancel.' },
  { b:1119, d:'2026-08-28', t:'Seven small labels come back up to the 11px floor', s:'Build 1081 set an app-wide minimum text size of 11px so everything reads outdoors. Seven labels added since then had slipped under it \u2014 four in the new estimate builder, one in the Community sheet, the canvass grid\u2019s checkbox labels (9.5px, the smallest), and the AUTO chip on Pre-Install Guide rows. All are at 11px again.' },
  { b:1118, d:'2026-08-28', t:'The Estimates count fills in on jobs with none yet', s:'Since 1094 the Estimates box on a client profile showed \u201c\u2026\u201d forever on any job with zero estimates \u2014 a script error fired exactly when the count was 0, so the number never arrived. Jobs with estimates were unaffected. Fixed; priced Community bids also count as the 1 that build 1094 intended.' },

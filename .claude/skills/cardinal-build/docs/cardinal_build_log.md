@@ -927,6 +927,38 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1129 — 29 Aug 2026 — Company Documents lists its documents again
+
+Third member of the sealed-name family in three days (1118 `isCommunityClient`, 1121
+`fileName`/`extracted`, now `isAdmin`) — and the second from the Pre-Install Guide arc.
+Found by the gate-suite triage: `gate_746` (Company Documents: Download stops swallowing
+the app) was red with 9 failures.
+
+**Cause.** 1111's guide-rows call in `renderCompanyDocs()`:
+`window.CardinalGuide.docsRows(__cdTrade, isAdmin())`. `isAdmin` is defined **15 times in
+the file and every one is inside a module IIFE** — none reaches the main block, and
+`window.isAdmin` is never assigned. So the call threw a ReferenceError after the trade
+pills drew and **before `#cdDocList` was written**: every user saw zero documents, no
+View/Download on any contract master, since 1111. 1112's harness tested `docsRows` itself
+in jsdom and never the call site's scope — how it shipped green.
+
+**Fix.** `isAdminUser()` — the main block's own hoisted admin check (Theo+Joan by
+`ADMIN_EMAILS`), the same predicate the block uses for the reassign select. The flag only
+gates the admin "Edit" button on guide rows.
+
+**Numbered 1129** because the Adobe-Acrobat session's branch holds 1122–1128
+(`next_build.py`).
+
+### Gates
+- `check_build.py` GREEN 1121 → 1129 (marker + clean negative control).
+- **`gate_746` flips GREEN** (16 checks incl. both admin and non-admin renders); **control
+  (the 1121 tree) RED — 9 failures**. No new gate needed: the 746 gate already covers the
+  surface, which is the whole argument for keeping the suite runnable.
+
+No SQL. `index.html` + this entry.
+
+---
+
 ## Build 1121 — 28 Aug 2026 — the Scope-of-Loss history row writes for the first time
 
 Found by the new type-check pass (`tsc --checkJs` over the concatenated inline blocks):
