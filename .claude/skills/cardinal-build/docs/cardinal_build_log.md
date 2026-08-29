@@ -927,6 +927,61 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1136 — 29 Aug 2026 — the estimate document is readable across the table
+
+Theo: "a live client had a very hard time reading the estimate on my iPad and printed
+paper due to font size." Measured: the document's working text ran **8.5–10.5pt with
+table headers at 6.8–7.5pt** — under any comfortable floor on paper, worse on a scaled
+iPad preview.
+
+**The remap**, inside `buildDocHtml` ONLY (sliced, per-size counts asserted before AND
+after — a file-wide sub on values this generic is an app-wide restyle in disguise):
+working text one step up across the board — 8.5→10, 9→10.5, 9.5/10→11, 10.5→11.5pt;
+labels 6.8/7→8.5, 7.5→9, 8→9.5pt. The 13/19/24pt display sizes untouched, asserted.
+Applies to the preview, print, and every republish; stored documents keep their look
+until republished (by design — a document is a record).
+
+### Gates
+- `check_build.py` GREEN 1135 → 1136; patch byte-reproducible.
+- **`gate_1136.mjs`** — the REAL preview driven (editor on a 10-line fixture, the real
+  Preview button, the iframe's srcdoc measured standalone): body 15.3px, item cells
+  14.7px, headers 12px, smallest rendered text 11.33px (8.5pt) — all floors hold; the
+  24pt title untouched. **Printed to PDF: 3 pages on BOTH trees — the bump cost zero
+  paper on this fixture.** Control (1135 tree): RED ×2 (headers 10px, smallest 9.33px).
+
+No SQL. `index.html` + this entry + `gate_1136.mjs`.
+
+---
+
+## Build 1135 — 29 Aug 2026 — estimate line cards open full size
+
+Theo, with screenshots: opening an estimate "starts off squished (the templates)". Two
+defects in one card:
+
+- **`.desc-input` never grew.** A textarea does not size to its content; template
+  descriptions are paragraphs, and `min-height:38px` + `overflow:hidden` showed ~1.5
+  lines with the rest clipped. Now: `autosizeDesc()` sets each description to its own
+  scrollHeight — on open and while typing (delegated beside the 1029 dirty-flag listener,
+  same no-stacking reason). ⚠ Sized **after** `view.classList.add('open')`, not in
+  `render()` alone — the first render runs while the view is display:none, where every
+  textarea measures scrollHeight 0. The gate caught that ordering before ship.
+- **Long names ran under the ▲▼/✕ buttons** (absolutely positioned over the row).
+  Clearance (`padding-right:104px`) set **in the 1095 porcelain id-scoped layer** — the
+  first attempt edited the old base rule, and the id layer's shorthand kept winning
+  (computed 12px, the 481 class). Edit the winning layer, not under it.
+
+### Gates
+- `check_build.py` GREEN 1134 → 1135; patch byte-reproducible (consolidated, `cmp` equal).
+- **`gate_1135.mjs`** — real editor, a template-length description: opens unclipped
+  (scrollHeight ≈ clientHeight, 219px vs the old 36), typing keeps it sized, name input
+  computes 104px right clearance. **Control (1134 tree): RED ×2** (clipped at 36px,
+  clearance 12px). The gate went red on the fix twice first — the hidden-view measurement
+  and the wrong-layer padding — which is what it is for.
+
+No SQL. `index.html` + this entry + `gate_1135.mjs`.
+
+---
+
 ## Build 1134 — 29 Aug 2026 — Edit estimate, straight from the finished document
 
 Theo: "make drafted estimates editable just like when you're adding the templates in."
