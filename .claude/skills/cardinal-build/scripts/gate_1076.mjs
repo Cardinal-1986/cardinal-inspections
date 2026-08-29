@@ -285,7 +285,11 @@ await step('D', async () => {
 /* ── E · the tile: the ADMIN TERNARY, executed, not grepped ──────────────── */
 console.log('\n── E · the job-menu tile ──');
 await step('E', async () => {
-  const expr = parenAround(HTML, "jt(dbIc('camera'), 'The Walk'");
+  /* 1080–1082 (ce80e34) gave the tile its own drawn 'walk' icon, replacing
+   * 'camera'. Match the tile by its LABEL, not the icon key, so an icon swap
+   * cannot break the marker again — the contract is the admin-gated tile. */
+  const mWalk = HTML.match(/jt\(dbIc\('[a-z0-9_-]+'\),\s*'The Walk'/);
+  const expr = mWalk ? parenAround(HTML, mWalk[0]) : null;
   ok('E0 the tile sits inside a parenthesised expression', !!expr, expr ? expr.length + ' chars' : 'marker not found');
   if (!expr) {
     ok('E1 an admin gets the tile', false, 'no expression');

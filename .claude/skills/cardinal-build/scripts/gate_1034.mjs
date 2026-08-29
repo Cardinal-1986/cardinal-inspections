@@ -63,16 +63,19 @@ async function sweep(html, light) {
     out.review = await page.evaluate(`(function(){
       if (typeof _crStageReviewMaybe !== 'function') return 'MISSING';
       var asked = [];
-      var realConfirm = window.confirm;
-      /* the confirm sits behind a setTimeout(…, 300) — the stub must OUTLIVE
-         the timers, so it is restored only after the 700ms window closes */
+      var realConfirm = window.confirm, realAsk = window.crAsk;
+      /* the ask sits behind a setTimeout(…, 300) — the stub must OUTLIVE
+         the timers, so it is restored only after the 700ms window closes.
+         Builds 1080–1083 replaced window.confirm with crAsk(msg)→Promise<boolean>;
+         both are stubbed so either mechanism is counted. */
       window.confirm = function(msg){ asked.push(String(msg).slice(0, 30)); return false; };
+      window.crAsk = function(msg){ asked.push(String(msg).slice(0, 30)); return Promise.resolve(false); };
       var pr = { stage: 'Completed', phone: '937-555-0000', checklist: '{}', name: 'T' };
       _crStageReviewMaybe(pr, 'Invoiced');   /* backward — must NOT ask */
       _crStageReviewMaybe(pr, 'Scheduled');  /* forward — must ask */
       return new Promise(function(res){
         setTimeout(function(){
-          window.confirm = realConfirm;
+          window.confirm = realConfirm; window.crAsk = realAsk;
           res({ askedCount: asked.length });
         }, 700);
       });
