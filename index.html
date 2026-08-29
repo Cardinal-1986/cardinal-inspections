@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1149<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1150<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -26396,7 +26396,7 @@ var __sigWho = null;
 document.getElementById('addFieldBtn').addEventListener('click', openFieldMenu);
 document.getElementById('fillChipBtn').addEventListener('click', jumpNextBlank);
 document.getElementById('sigClear').addEventListener('click', sigReset);
-document.getElementById('sigCancel').addEventListener('click', function(){ window.__ceSigner = null; sigModal.style.display = 'none'; });
+document.getElementById('sigCancel').addEventListener('click', function(){ window.__ceSigner = null; window.__ceSignerId = null; sigModal.style.display = 'none'; });
 document.getElementById('sigApply').addEventListener('click', async function(){
   if(!sigDrawn){ crTell('Have the client sign first.'); return; }
   /* 722: the contracts-table editor borrows this ONE pad via window.openSigner().
@@ -26405,9 +26405,12 @@ document.getElementById('sigApply').addEventListener('click', async function(){
      (window.__ceSigner is null), so document signing is byte-identical. */
   if(window.__ceSigner){
     var _cb = window.__ceSigner; window.__ceSigner = null;
+    /* 1150: hand back the id the pad was ARMED with, so the callback can refuse
+       if the module has moved on since. */
+    var _armedId = window.__ceSignerId || null; window.__ceSignerId = null;
     var _png = sigPad.toDataURL('image/png');
     sigModal.style.display = 'none';
-    try{ await _cb(_png); }catch(_e){ showError('Could not record signature: ' + (_e.message || _e)); }
+    try{ await _cb(_png, _armedId); }catch(_e){ showError('Could not record signature: ' + (_e.message || _e)); }
     return;
   }
   var doc = frame.contentDocument;
@@ -26485,6 +26488,21 @@ document.getElementById('sigApply').addEventListener('click', async function(){
    the captured PNG to `cb` when armed. Signing an inspection_reports document
    never calls this, so that flow is untouched. */
 window.openSigner = function(contract, cb){
+  /* 1150: this took `contract` and THREW IT AWAY, routing purely by the
+     caller's closure over module state. That is the same shape that put a
+     client's signature on the wrong contract through the other pad (1149):
+     nothing tied the pen to a document, so whatever the module happened to be
+     pointing at when Apply was pressed is what got signed. The contracts table
+     has no rows yet, so it has never bitten — this closes it before it can.
+     Remember WHICH contract armed the pad and hand it back at apply time; the
+     callback verifies rather than assumes. */
+  var _id = (contract && (contract.id || contract.contract_id)) || null;
+  if(!_id){
+    crTell('This contract is not saved yet, so it cannot be signed.');
+    window.__ceSigner = null; window.__ceSignerId = null;
+    return;
+  }
+  window.__ceSignerId = String(_id);
   window.__ceSigner = (typeof cb === 'function') ? cb : null;
   sigReset();
   sigModal.style.display = 'block';
@@ -39741,8 +39759,16 @@ crTell('Signature workflow is not available in this build.');
    the inspection_reports canvas); here we mirror it onto the contracts ROW —
    status + timestamps as columns, the signature image into the contract jsonb —
    and advance the job to Approved exactly as the document flow does. */
-async function onContractSigned(pngDataUrl){
+async function onContractSigned(pngDataUrl, armedId){
 if(!CURRENT || !CURRENT.id || !window.supa) return;
+/* 1150: the pad was armed against a specific contract. If CURRENT has moved on
+   since — a second contract opened behind the pad, a reload, a stale view — the
+   signature would silently land on whatever CURRENT is now. Refuse instead.
+   The id is compared, not assumed equal. */
+if(armedId && String(armedId) !== String(CURRENT.id)){
+  crTell('That signature was started on a different contract, so nothing was signed. Open the contract again and re-sign.');
+  return;
+}
 var now = new Date().toISOString();
 var hw = (CURRENT_BLOB && (CURRENT_BLOB.homeowner || CURRENT_BLOB.client)) || {};
 var newBlob = Object.assign({}, CURRENT_BLOB || {}, {
@@ -42350,6 +42376,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1150, d:'2026-08-30', t:'The second signature pad is tied to its contract too',
+  s:'A companion to yesterday\u2019s fix, closing the same hole on the other signing screen before it could ever be hit. The contracts screen has its own signature pad, and it was built the same way the broken one was: it was handed the contract to sign and then ignored it, working out what to sign only when you pressed Apply. Nothing has gone wrong there because that screen has no saved contracts on it yet \u2014 which is exactly why it was worth fixing now rather than after. The pad now remembers which contract it was opened for, and when you sign it checks that is still the contract in front of you. If it is not, it refuses, tells you, and writes nothing. An unsaved contract is refused up front instead of opening a pad that could not have saved anything anyway.' },
 { b:1149, d:'2026-08-30', t:'A signature can only land on the document you are looking at',
   s:'At a client\u2019s house a contract was opened, the wrong one came up, it was backed out of, the roofing contract was tapped \u2014 and the signature landed on the first contract. Here is why, and it was not your mistake. Opening a document that is not saved on your phone yet needs signal. If the fetch comes back empty, the app used to give up SILENTLY and simply keep showing whatever was already open, so the screen looked like the document you tapped had loaded. Three things change. Opening a document that cannot be fetched now says so plainly and tells you not to sign what is on screen. The page now records which document it is actually showing. And the signature button checks that before it opens the pad \u2014 if it cannot prove the document in front of you is the one the app thinks it is, it refuses and tells you to reopen it, rather than signing. That check runs before everything else, including on older contracts that have no signature lines built into them, which is the kind that got signed.' },
 { b:1148, d:'2026-08-29', t:'No more scroll bar down the side of the menu',
