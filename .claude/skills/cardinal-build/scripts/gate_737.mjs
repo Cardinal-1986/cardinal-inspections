@@ -61,6 +61,14 @@ await page.addInitScript(() => {
 });
 await page.goto('https://app.cardinalroster.com/', { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(3200);
+/* RIG REPAIR (build 1121 triage): builds 1080–1083 replaced every window.confirm()
+   with the in-app ask sheet — window.crAsk(msg) -> Promise<boolean>. crAsk is a
+   window-assigned global, so reassigning it AFTER boot intercepts every bare call.
+   Same contract as the confirm stub above: record the question, answer __ANSWER__. */
+await page.evaluate(() => {
+  window.crAsk = function (m) { window.__ASKED__.push(String(m || '')); return Promise.resolve(!!window.__ANSWER__); };
+  window.crTell = function (m) { window.__ASKED__.push('TELL:' + String(m || '')); };
+});
 
 /* the payout screen lives behind CardinalPayouts / a nav destination; drive its
    delegated handler directly through the DOM the module renders */
@@ -81,8 +89,10 @@ const behaviour = await page.evaluate(async () => {
      assert on the shipped source, which is what the click path runs */
   const src = document.documentElement.outerHTML;
   return {
-    guardedNet: /if\(em\)\{ if\(confirmPay\(em, true\)\) payRep\(em, true\); return; \}/.test(src),
-    guardedFull: /if\(em\)\{ if\(confirmPay\(em, false\)\) payRep\(em, false\); return; \}/.test(src),
+    /* 1080+: confirmPay awaits crAsk, so the guard reads `if(await confirmPay(...))`.
+       Accept both spellings — the contract (payRep only behind confirmPay) is unchanged. */
+    guardedNet: /if\(em\)\{ if\((?:await )?confirmPay\(em, true\)\) payRep\(em, true\); return; \}/.test(src),
+    guardedFull: /if\(em\)\{ if\((?:await )?confirmPay\(em, false\)\) payRep\(em, false\); return; \}/.test(src),
     unguarded: /if\(em\)\{\s*payRep\(/.test(src),
     helper: (src.match(/function confirmPay\(em, deductDraws\)\{/g) || []).length,
     namesMoney: /'Mark ' \+ payMoney\(g\.owed\) \+ ' in commissions paid to ' \+ who/.test(src),
@@ -144,8 +154,13 @@ if (asked.unreachable) {
 }
 
 /* ── nothing may have LOST a confirmation ─────────────────────────────────── */
-const n = (APP_HTML.match(/\bconfirm\s*\(/g) || []).length;
-chk('the app still has at least 80 confirm() guards', n >= 80, 'found ' + n);
+/* RIG REPAIR (build 1121 triage): builds 1080–1083 converted confirm() guards to
+   crAsk() (the in-app ask sheet). The invariant is the same — the app still asks
+   before acting — so count BOTH forms against the same floor. (92 crAsk + 8
+   confirm = 100 at build 1121.) */
+const n = (APP_HTML.match(/\bconfirm\s*\(/g) || []).length +
+          (APP_HTML.match(/\bcrAsk\s*\(/g) || []).length;
+chk('the app still has at least 80 confirm()/crAsk() guards', n >= 80, 'found ' + n);
 chk('deleting a client still demands the typed name',
     /Type the client\\u2019s name exactly to confirm deletion|Type the client’s name exactly to confirm deletion/.test(APP_HTML));
 chk('bulk delete still demands the typed word DELETE', /Type DELETE to confirm removing/.test(APP_HTML));

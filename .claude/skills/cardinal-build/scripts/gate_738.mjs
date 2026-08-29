@@ -65,6 +65,14 @@ await page.addInitScript(() => {
 });
 await page.goto('https://app.cardinalroster.com/', { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(3200);
+/* RIG REPAIR (build 1121 triage): builds 1080–1083 replaced window.confirm() with
+   the in-app ask sheet — window.crAsk(msg) -> Promise<boolean>. crAsk is a
+   window-assigned global, so reassigning it AFTER boot intercepts every bare
+   call. Same contract as the confirm stub above: record, answer __ANSWER__. */
+await page.evaluate(() => {
+  window.crAsk = function (m) { window.__ASKED__.push(String(m || '')); return Promise.resolve(!!window.__ANSWER__); };
+  window.crTell = function (m) { window.__ASKED__.push('TELL:' + String(m || '')); };
+});
 await page.evaluate(() => { try { hideAllViews(); } catch (e) {} try { openProject('P1'); } catch (e) {} });
 await page.waitForTimeout(900);
 
@@ -144,8 +152,10 @@ async function markSent(id, answer) {
 /* ── 5. the email path carries the same guard ─────────────────────────────── */
 const emailGuard = await page.evaluate(() => {
   const s = document.documentElement.outerHTML;
-  return { onEmail: /if\(!priceOkToSend\(/.test(s),
-           onToggle: /if\(toSent && !priceOkToSend\(/.test(s),
+  /* 1080+: priceOkToSend awaits crAsk, so callers read `!await priceOkToSend(`.
+     Accept both spellings — the contract (both paths gated on it) is unchanged. */
+  return { onEmail: /if\(!(?:await )?priceOkToSend\(/.test(s),
+           onToggle: /if\(toSent && !(?:await )?priceOkToSend\(/.test(s),
            helper: (s.match(/function priceOkToSend\(what\)\{/g) || []).length,
            wavesThrough: /if\(t === null\) return true;/.test(s) };
 });

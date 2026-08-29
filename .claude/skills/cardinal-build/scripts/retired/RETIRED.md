@@ -19,3 +19,6 @@ whose RIG broke gets repaired in place instead — see gate_996 (crAsk), gate_96
 | gate_762 | the Exterior Designer in Studio White | same deletion at 807 | same |
 | gate_806 | the librarian's Gemini→Claude migration (byte-identical prompts vs a preserved pre-806 handler) | its negative control imported `librarian_gemini.js` from a SESSION SCRATCHPAD that no longer exists; the one-time migration it proved shipped at 806. Lesson, now a rule: a gate must never depend on a scratchpad path | CI parses `api/librarian.js`; prompt content has no standing gate |
 | gate_1025 | the obsidian (dark) estimates screens' inks | build 1095 deliberately re-themed the estimate builder LIGHT-only ("Cardinal" porcelain, Theo's pick after previews); the inks 1025 pins were replaced on purpose | `render_estlight1095.mjs` (19 inks + focus ring, both viewports) |
+| gate_724 | the `#puDetail` punch-detail sheet's repairs (604-610 arc) | build 768 made `CardinalPunchCard` (#cr-pk) the one punch detail screen; build 837 deleted `#puDetail` whole — 0 occurrences in the file | `render_punchcard837.mjs` |
+| gate_725 | `#puDetail`'s five-photo rule + alert() fence | same 837 deletion (crashes on `getComputedStyle(null)`); the five-photo rule lives on in the card module (`PHOTO_MIN=5`) and the alert() moved to crTell at 1080-1083 | the card module's own gates |
+
