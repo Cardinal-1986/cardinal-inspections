@@ -3905,7 +3905,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1141<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1142<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42278,6 +42278,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1142, d:'2026-08-29', t:'Real financing on the Roof Options sheet', s:'The Roof Options builder now has a Financing plan dropdown with your Service Financial programs \u2014 9.99% APR for 120 months, 6.99% APR for 60 months, and 24 months no payment / no interest. Pick one and each option on the sheet shows its own monthly payment, calculated from that option\u2019s price, with the plan terms and \u201csubject to credit approval (W.A.C.)\u201d in the footer. The deferred plan shows the no-payment promo instead of a monthly. Leave it on None to hide financing entirely. No typing a payment by hand anymore \u2014 the math is done for you.' },
 { b:1141, d:'2026-08-29', t:'Text an estimate for signature in one tap', s:'Open a published estimate or document and there is now a \u201cText to sign\u201d button next to Email to client: one tap saves it, makes the secure link, and opens your phone\u2019s Messages already addressed to the client with a friendly note and the link \u2014 you just hit send. They open it on their phone, review, and sign right there with a finger; you get notified the moment they do. Two fixes came with it: the estimate proposal is now actually signable from that link (the redesign had quietly left it review-only), and if a client has no phone on file the button copies the link instead so nothing is lost.' },
 { b:1140, d:'2026-08-29', t:'Roof Options \u2014 Good / Better / Best on one page', s:'A new Options button in the estimate toolbar builds a single client-facing sheet that shows two or three of a client\u2019s estimates side by side \u2014 Good, Better, Best \u2014 with the middle one marked \u201cMost chosen\u201d and an initial box on each. It reads from estimates you already saved (build one, Duplicate it, change the shingle, save \u2014 those are your tiers), so there is no new form to fill. The bullet list under each price is that estimate\u2019s own scope. You can type a monthly payment per option to show a financing line, or leave it blank to hide it. Generates a shareable, printable, signable document like any other estimate.' },
 { b:1139, d:'2026-08-29', t:'Pin your own default assembly', s:'Save a set of estimate lines as an assembly, then star it: it becomes YOUR default and sits at the top of the +Assembly picker \u2014 one tap to drop your standard scope into any estimate. Each person has their own default and it follows you across devices. Tap the star again to unpin. Blank estimates stay blank; this just puts your go-to at the top. Needs the estimate_assembly_default.sql migration.' },
@@ -49711,6 +49712,25 @@ var previewEl = null;
    the same window.db.create rails as a single estimate.
    ============================================================ */
 var GBB_RANKS = ['Good', 'Better', 'Best'];
+/* 1142: Cardinal's Service Financial programs. An amortizing plan computes
+   each tier's monthly from its own total; a deferred plan is a promo carried
+   in the footer, with no monthly. W.A.C. = with approved credit. */
+var GBB_PLANS = [
+  { id:'sf-999-120', label:'9.99% APR \u00b7 120 months', kind:'amort', apr:9.99, months:120 },
+  { id:'sf-699-60',  label:'6.99% APR \u00b7 60 months',  kind:'amort', apr:6.99, months:60 },
+  { id:'sf-defer24', label:'24 months \u00b7 no payment, no interest', kind:'defer', apr:0, months:24 }
+];
+function gbbPlanById(id){
+  for(var i = 0; i < GBB_PLANS.length; i++){ if(GBB_PLANS[i].id === id) return GBB_PLANS[i]; }
+  return null;
+}
+function gbbMonthlyPayment(principal, apr, months){
+  var P = Number(principal) || 0, n = Number(months) || 0;
+  if(P <= 0 || n <= 0) return 0;
+  var r = (Number(apr) || 0) / 100 / 12;
+  if(r === 0) return P / n;
+  return P * r / (1 - Math.pow(1 + r, -n));
+}
 function gbbBullets(est){
   var lines = Array.isArray(est.line_items) ? est.line_items : [];
   var seen = {}, out = [];
@@ -49729,13 +49749,23 @@ function gbbMonthly(m){
   if(v <= 0) return '';
   return '$' + v.toLocaleString('en-US', { maximumFractionDigits:0 }) + '/mo';
 }
-/* tiers: [{ est, label, monthly }], length 2 or 3. */
-function buildGbbHtml(tiers, project){
+/* tiers: [{ est, label, monthly? }], length 2 or 3. plan (optional): a
+   GBB_PLANS entry — an amortizing plan computes each tier's monthly from its
+   own total; a deferred plan carries the promo in the footer. A tier's own
+   `monthly` is the legacy manual value used only when no plan is passed. */
+function buildGbbHtml(tiers, project, plan){
   var logo = cardinalLogo();
   var clientName = (project && (project.name || project.client_name)) || 'Client';
   var address    = (project && project.address) || '';
   var today = fmtDate(new Date());
-  var anyMonthly = tiers.some(function(t){ return (Number(t.monthly) || 0) > 0; });
+  var GBB_LENDER = 'Service Financial';
+  var isDefer = !!(plan && plan.kind === 'defer');
+  function tierMonthly(t){
+    var est = (t && t.est) || {};
+    if(plan && plan.kind === 'amort') return gbbMonthlyPayment(Number(est.total) || 0, plan.apr, plan.months);
+    return Number(t.monthly) || 0;
+  }
+  var anyMonthly = !isDefer && tiers.some(function(t){ return tierMonthly(t) > 0; });
   var n = tiers.length;
   var midIdx = (n === 3) ? 1 : -1;
   var cols = tiers.map(function(t, i){
@@ -49743,7 +49773,7 @@ function buildGbbHtml(tiers, project){
     var rank = GBB_RANKS[n === 2 ? (i === 0 ? 0 : 2) : i] || '';
     var label = String(t.label || est.title || 'Option').trim();
     var price = Number(est.total) || 0;
-    var mo = gbbMonthly(t.monthly);
+    var mo = isDefer ? '' : gbbMonthly(tierMonthly(t));
     var bullets = gbbBullets(est);
     var mid = (i === midIdx);
     var bl = bullets.length
@@ -49755,14 +49785,21 @@ function buildGbbHtml(tiers, project){
       '<div class="gbb-prod">' + esc(label) + '</div>' +
       (est.estimate_number ? '<div class="gbb-en">' + esc(est.estimate_number) + '</div>' : '') +
       '<div class="gbb-price">' + money(price) + '</div>' +
-      (mo ? '<div class="gbb-mo">or about ' + esc(mo) + ' financed</div>' : (anyMonthly ? '<div class="gbb-mo">&nbsp;</div>' : '')) +
+      (mo ? '<div class="gbb-mo">or about ' + esc(mo) + '</div>' : (anyMonthly ? '<div class="gbb-mo">&nbsp;</div>' : '')) +
       bl +
       '<div class="gbb-pick"><span class="gbb-box"></span><span class="gbb-pl">Initial to choose</span></div>' +
     '</div>';
   }).join('');
-  var finNote = anyMonthly
-    ? '<span>Financing available through Cardinal’s lender · subject to approval</span>'
-    : '<span>&nbsp;</span>';
+  var finNote;
+  if(plan && plan.kind === 'amort'){
+    finNote = '<span>' + esc(plan.apr) + '% APR for ' + esc(plan.months) + ' months through ' + GBB_LENDER + ' · subject to credit approval (W.A.C.)</span>';
+  }else if(isDefer){
+    finNote = '<span>' + esc(plan.months) + ' months no payment, no interest through ' + GBB_LENDER + ' · subject to credit approval (W.A.C.)</span>';
+  }else if(anyMonthly){
+    finNote = '<span>Financing available through ' + GBB_LENDER + ' · subject to credit approval (W.A.C.)</span>';
+  }else{
+    finNote = '<span>&nbsp;</span>';
+  }
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
     '<title>Cardinal Roofing &amp; Renovations — Roof Options</title>\n' +
@@ -49840,12 +49877,12 @@ function buildGbbHtml(tiers, project){
     '<div class="foot">Cardinal Roofing &amp; Renovations, LLC · 5735 Webster Street, Dayton, Ohio 45414 · (937) 576-6753 · www.cardinalrenovations.net</div>' +
     '</body>\n</html>';
 }
-async function publishGbb(tiers, project){
+async function publishGbb(tiers, project, plan){
   if(!window.db || typeof window.db.create !== 'function'){
     crTell('Document system not available. Reload the app and retry.');
     return null;
   }
-  var html = buildGbbHtml(tiers, project);
+  var html = buildGbbHtml(tiers, project, plan);
   var clientName = (project && (project.name || project.client_name)) || '';
   var title = 'Roof Options' + (clientName ? ' — ' + clientName : '');
   var docId = await window.db.create(title, html, clientName, project.id);
@@ -49862,7 +49899,8 @@ function gbbEnsurePick(){
   gbbPickEl.innerHTML =
     '<div class="gbbp-card">' +
     '<div class="gbbp-hd"><h3>Roof Options</h3><button data-act="gbbp-x" type="button">Close</button></div>' +
-    '<p class="gbbp-sub">Pick the estimates to show side by side — Good, Better, Best. Each is one of this client’s saved estimates. The middle one is marked “Most chosen.” Leave a monthly blank to hide the financing line.</p>' +
+    '<p class="gbbp-sub">Pick the estimates to show side by side — Good, Better, Best. Each is one of this client’s saved estimates; the middle one is marked “Most chosen.” Choose a financing plan and each option shows its own monthly payment.</p>' +
+    '<div class="gbbp-fin"><label>Financing plan</label><select class="gbbp-plan" data-slot="gbbp-plan"><option value="">None — no financing line</option>' + GBB_PLANS.map(function(p){ return '<option value="' + esc(p.id) + '">' + esc(p.label) + '</option>'; }).join('') + '</select></div>' +
     '<div class="gbbp-rows"></div>' +
     '<p class="gbbp-hint" data-slot="gbbp-hint"></p>' +
     '<div class="gbbp-foot"><button class="primary" data-act="gbbp-go" type="button">Generate document</button></div>' +
@@ -49886,7 +49924,6 @@ function gbbRowHtml(rank, ests, sel){
   return '<div class="gbbp-row">' +
     '<div class="gbbp-rank">' + esc(rank) + '</div>' +
     '<select class="gbbp-est" data-rank="' + esc(rank) + '">' + opts + '</select>' +
-    '<div class="gbbp-mo"><span>$</span><input class="gbbp-monthly" type="number" min="0" step="1" inputmode="numeric" placeholder="mo"><span>/mo</span></div>' +
     '</div>';
 }
 async function gbbOpen(){
@@ -49923,17 +49960,18 @@ async function gbbGenerate(){
   var ests = (window.CardinalEstimates && typeof window.CardinalEstimates.loadForProject === 'function')
     ? await window.CardinalEstimates.loadForProject(project.id) : [];
   var byId = {}; ests.forEach(function(e){ byId[String(e.id)] = e; });
+  var planSel = gbbPickEl ? gbbPickEl.querySelector('[data-slot="gbbp-plan"]') : null;
+  var plan = planSel ? gbbPlanById(planSel.value) : null;
   var rows = gbbPickEl ? Array.prototype.slice.call(gbbPickEl.querySelectorAll('.gbbp-row')) : [];
   var tiers = [];
   var seen = {};
   rows.forEach(function(r){
     var sel = r.querySelector('.gbbp-est');
-    var mo  = r.querySelector('.gbbp-monthly');
     var id  = sel && sel.value;
     if(!id || !byId[id]) return;
     if(seen[id]) return;
     seen[id] = 1;
-    tiers.push({ est: byId[id], label: (byId[id].title || 'Option'), monthly: mo ? mo.value : '' });
+    tiers.push({ est: byId[id], label: (byId[id].title || 'Option') });
   });
   if(tiers.length < 2){
     var h = gbbPickEl.querySelector('[data-slot="gbbp-hint"]');
@@ -49943,7 +49981,7 @@ async function gbbGenerate(){
   var goBtn = gbbPickEl.querySelector('[data-act="gbbp-go"]');
   if(goBtn){ goBtn.disabled = true; goBtn.textContent = 'Generating…'; }
   try{
-    var docId = await publishGbb(tiers, project);
+    var docId = await publishGbb(tiers, project, plan);
     gbbClosePick();
     if(!(typeof openDoc === 'function' && openDoc(docId))){
       crTell('Options document created.\n\nOpen it from this client’s document list to share, print, or collect a signature.');
@@ -50146,6 +50184,10 @@ openDoc      : openDoc,
 #cr-gbb-pick .gbbp-hd [data-act="gbbp-x"]{background:transparent;color:#9AA2AE;border:1px solid #333842;border-radius:8px;padding:7px 13px;font:600 13px 'Segoe UI',Arial,sans-serif;cursor:pointer}
 #cr-gbb-pick .gbbp-hd [data-act="gbbp-x"]:hover{color:#fff;border-color:#4a515c}
 #cr-gbb-pick .gbbp-sub{margin:2px 0 14px;font-size:13px;line-height:1.5;color:#B7BEC8}
+#cr-gbb-pick .gbbp-fin{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+#cr-gbb-pick .gbbp-fin label{flex:0 0 auto;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9AA2AE}
+#cr-gbb-pick .gbbp-plan{flex:1;min-width:0;background:#0F1114;color:#ECEAE6;border:1px solid #333842;border-radius:9px;padding:10px 11px;font:500 14px 'Segoe UI',Arial,sans-serif;appearance:none;-webkit-appearance:none}
+#cr-gbb-pick .gbbp-plan:focus{outline:none;border-color:#E45864}
 #cr-gbb-pick .gbbp-rows{display:grid;gap:11px}
 #cr-gbb-pick .gbbp-loading{color:#9AA2AE;font-size:13px;margin:4px 0}
 #cr-gbb-pick .gbbp-row{display:flex;align-items:center;gap:10px}

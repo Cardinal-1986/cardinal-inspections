@@ -121,9 +121,10 @@ try {
     /* cheapest good(e1) -> Good, best(e3) -> Best */
     if (prefill[0] !== 'e1') out.fail.push('Good not pre-filled with cheapest: ' + prefill[0]);
     if (prefill[2] !== 'e3') out.fail.push('Best not pre-filled with priciest: ' + prefill[2]);
-    /* type a monthly on the middle row */
-    const mid = pick.querySelectorAll('.gbbp-row')[1].querySelector('.gbbp-monthly');
-    if (mid) mid.value = '416';
+    /* 1142: pick a financing plan (the manual monthly input is gone) */
+    const planSel = pick.querySelector('[data-slot="gbbp-plan"]');
+    if (!planSel) out.fail.push('picker: financing plan dropdown missing');
+    else planSel.value = 'sf-699-60';
     pick.querySelector('[data-act="gbbp-go"]').click();
     await new Promise(function(res){ setTimeout(res, 500); });
     if (!created) out.fail.push('Generate did not call db.create');
@@ -132,7 +133,7 @@ try {
       if (String(created.title).indexOf('Roof Options') === -1) out.fail.push('doc title not "Roof Options": ' + created.title);
       const dc = new DOMParser().parseFromString(created.html, 'text/html');
       if (dc.querySelectorAll('.gbb-col').length !== 3) out.fail.push('generated doc: not 3 columns');
-      if (created.html.indexOf('416') === -1) out.fail.push('generated doc missing the typed monthly');
+      if (!/\\/mo/.test(created.html) || created.html.indexOf('6.99% APR') === -1) out.fail.push('generated doc missing the computed financing line');
     }
     if (pick.classList.contains('open')) out.fail.push('picker did not close after generate');
   }
