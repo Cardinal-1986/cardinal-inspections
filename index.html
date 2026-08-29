@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1147<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1148<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42315,6 +42315,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1148, d:'2026-08-29', t:'No more scroll bar down the side of the menu',
+  s:'You asked why your screen showed a scroll bar on the menu when the machine you were demoing on did not. Both were scrolling \u2014 the menu is far taller than any screen, so there is always more below the fold \u2014 but neither menu told the browser how to draw its scroll bar, so each computer used its own default. Windows draws a solid bar that takes up space and never goes away; a Mac draws one that fades out until you scroll. Same app, same menu, two different machines. The bar is now hidden on both the slide-out menu and the docked side rail, and the strip of width the old bar was eating goes back to the menu. Nothing about scrolling changes \u2014 wheel, trackpad, touch and arrow keys all still move the menu exactly as before.' },
 { b:1147, d:'2026-08-29', t:'The texts about a job now link straight back to the job',
   s:'Every alert that names a client \u2014 approved, job complete, lead assigned, task assigned, materials ordered, estimate signed, someone tagged you \u2014 now carries a tappable link that opens that client in the app. Before, only the six punch-out messages did; the other twelve told you a job had moved and gave you no way to get to it, so you were left searching for the name by hand. Twenty of the twenty-one alerts now carry one; the twenty-first is the test message, which names no client and has nowhere to point. Two things went with it. A text sent while you have no signal keeps its link when it finally goes out \u2014 without that it would arrive later stripped of the one useful part, and nothing would have told you. And the run-together sentence is fixed: a text used to read \u201cis marked COMPLETED.Next: do the final walk-around\u201d because the paragraph break was being deleted rather than turned into a space.' },
 { b:1146, d:'2026-08-29', t:'Long scopes of work scroll again in the estimate editor',
@@ -68562,6 +68564,21 @@ body.cr-lnav-mini #cr-lnav .lnav-body{margin:0;border:0;border-radius:0;box-shad
 #cr-lnav .lnav-item:focus-visible,#cr-lnav .lnav-sec:focus-visible,
 #cr-lnav .lnav-crm button:focus-visible{outline:2px solid var(--lnav-crmc,#c8202e);outline-offset:-2px}
 @media (prefers-reduced-motion:reduce){#cr-lnav .lnav-sec .chev{transition:none}}
+
+/* 1148: Theo — "Why does my screen have a scroll bar, and the second screen
+   from someone trying the app out have no scroll bar. I prefer no scroll bar."
+   Neither nav scroller styled its scrollbar, so each machine drew whatever its
+   OS does: Windows (and macOS set to "always show") draws a CLASSIC scrollbar
+   that takes layout width and never hides; macOS default draws an OVERLAY one
+   that is invisible until you scroll. Same build, same overflow — the nav is
+   2755px of content and overflows at every height measured from 720 to 1440,
+   so the bar was always THERE on both, just drawn differently.
+   Hidden the way the app already hides one in ten other places
+   (scrollbar-width + ::-webkit-scrollbar), which also reclaims the gutter width
+   a classic bar was eating. Scrolling itself is untouched — wheel, trackpad,
+   touch and keyboard all still work; only the painted bar is gone. */
+#navMenu, #cr-lnav{ scrollbar-width:none; -ms-overflow-style:none; }
+#navMenu::-webkit-scrollbar, #cr-lnav::-webkit-scrollbar{ width:0; height:0; display:none; }
 </style>
 <script id="cr-lnav-script">
 (function(){
