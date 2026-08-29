@@ -22,7 +22,11 @@ for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright/index.js
   try { chromium = require(p).chromium; break; } catch (e) {}
 }
 const args = process.argv.slice(2);
-const FILE = args[0];
+/* suite-runnable: default to this gate's OWN artifact — it gates supplement.html,
+   not index.html; the runner's index.html fallback made it declare
+   rig-fault on the wrong file. A positional arg still wins. */
+const FILE = (args[0] && !args[0].startsWith('--')) ? args[0]
+  : new URL('../../../../supplement.html', import.meta.url).pathname;
 const ci = args.indexOf('--control');
 const CONTROL = ci >= 0 ? args[ci + 1] : null;
 if (!FILE || !existsSync(FILE)) { console.error('usage: node gate_1059.mjs <supplement.html> [--control <prev>]'); process.exit(2); }
