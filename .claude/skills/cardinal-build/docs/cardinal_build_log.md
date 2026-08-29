@@ -30204,3 +30204,45 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
 
   The link-coverage assertion is a **floor** (`>= 20`), not a tally, so coverage
   that shrinks goes red rather than quietly reporting a smaller number.
+
+## Build 1148 — the nav loses its scroll bar
+
+- **1148** · **Theo, with two photographs: "Why does my screen have a scroll bar,
+  and the second screen from someone trying the app out have no scroll bar. I
+  prefer no scroll bar."**
+
+  **Neither machine was misconfigured and both were scrolling.** Measured in
+  Chromium: the nav holds **2755px of content and overflows at every viewport
+  height from 720 to 1440** — 1955px below the fold at 800px tall. So the bar was
+  always THERE on both screens. What differed is how the OS draws it: Windows
+  (and macOS set to "always show") draws a CLASSIC bar that reserves layout width
+  and never hides; macOS default draws an OVERLAY one, invisible until you
+  scroll. Same build, same overflow, two scrollbar modes.
+
+  The cause in the code is that **neither nav scroller styled its scrollbar** —
+  `#navMenu` (the overlay drawer) and `#cr-lnav` (the docked desktop rail) both
+  carry `overflow-y:auto` and zero scrollbar rules, so each inherited the OS
+  default. Hidden now on both, using the pair this app **already** uses at ten
+  other sites (`scrollbar-width:none` + `::-webkit-scrollbar{display:none}`) —
+  the convention existed; the nav had simply never been given it.
+
+  ⚠ **Build 984's lesson was weighed and is the reason the gate is shaped as it
+  is.** 984 records that `scrollbar-width:none` "left no affordance that anything
+  was hidden" and content got clipped; there the fix was to WRAP instead of
+  scroll, which a vertical nav list cannot do. So `gate_1148.mjs`'s load-bearing
+  assertions are not "the bar is invisible" but **"it still overflows"** and
+  **"it still scrolls"** — hiding the BAR must never become hiding the CONTENT.
+  RED 1/2 on the 1147 control, GREEN 3/3 on this build.
+
+  ⚠ **Two faults in that gate, both caught on the control:**
+  - the **gutter check could not fail** — headless Chromium draws OVERLAY
+    scrollbars, so a hidden bar and a visible one both measure 0px, and the
+    launch flag I claimed forced classic bars was an unrelated one. The browser's
+    scrollbar mode is now **detected at run time** off a throwaway overflowing
+    div, and the gutter assertion is made only when the mode is actually classic
+    — otherwise it prints SKIP with the reason. It skips in CI today; that is
+    stated rather than hidden.
+  - **`#cr-lnav` is absent from the harness**, so failing on it was a false red,
+    not a finding. It now SKIPs, and the rail is covered instead by a standalone
+    check that lifts the shipped rules verbatim and proves both ids are selected
+    and both still scroll.
