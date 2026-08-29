@@ -29615,6 +29615,79 @@ Gates on the final tree: `check_build.py` green (1123 → 1124, marker `nb-star:
 
 **Sentinel on 1123: CLEAN** — 25 renders, nothing new, 135 carried. That clears the theme-build merge hold on the Labor Rate Schedule.
 
+## Build 1137 — the Owner Console becomes a hub
+
+Theo: *"The owner console is just 1 looooong page. Can we make it more presentable
+like an owners hub that can take you to different areas?"* Measured before
+building: **2,907px on a 390px phone = 3.4 screenfuls**, 2,285px on
+desktop. ⚠️ **And that was with every list EMPTY** — Top 10 showed 0, Reminders 0,
+Vault 0 — so real data only ever made it longer. Strategy alone was 820px, 28%.
+
+**Now: a hub of seven cards, 1,376px = 1.6 screens.** Each card carries a live
+figure, so *"does anything need me today"* is answered before you tap anything.
+
+| area | figure |
+|---|---|
+| Today | N things open |
+| On the horizon | N due within 60 days |
+| Renewals | N expiring within 60 days |
+| Reminders | N set |
+| The Ledger | what you owe |
+| The Vault | N documents filed |
+| Strategy | N/2 documents written |
+
+**The areas are the SAME sections, re-hung.** `AREAS[].fn` calls the existing
+`top10HTML()` / `oblHTML()` / … verbatim — nothing was rewritten, so nothing in
+them could regress. One table knows the areas; the cards, the router, the deep
+link and the back bar all read it, so a new area is one row (the `STAGES` rule).
+
+**"Soon" reuses `dueClass()`'s existing 30/60-day thresholds** rather than
+inventing a second idea of soon.
+
+### The part that needed care: history
+
+An inner level inside a full-screen view is the **570–572 trap** — a view that
+swaps the page underneath itself and traps the user. Each area is its own
+`navSetView('owner', {area:k})` entry, and the restore case now reads
+`state.data.area` (the shape the `contract` case already used). **Back from an
+area lands on the hub; back from the hub leaves the console.** `gate_1137`
+drives the real `history.back()`, not just the in-app button.
+
+`close()` clears `area`, or the next open resumes inside an area. An unknown key
+falls back to the hub rather than a blank screen.
+
+### ⚠ Three of my own instruments were wrong, in ways this project has named before
+
+⚠️ **Built as 1129 and renumbered to 1137 on merge.** Main went 1128 -> 1136 while
+this branch was open and #541 had already shipped a 1129, so the number was taken.
+`next_build.py` is run before the first patch — the lesson is to run it **again
+before pushing**, because a long build outlives its own answer.
+
+- **A vacuous pass, from a class I wrote hours earlier.** `[].every()` is `true`,
+  so *"every card carries a live figure — []"* PASSED on the 1128 control where
+  there are no cards. That is **BUG_CLASSES 81**, written at 1128 and reproduced
+  at 1129. Both population checks now assert non-empty first; the control went
+  15 failures → 17.
+- **An assertion pinned to one line's spelling.** `harness_owner1113` asserted the
+  literal `vaultHTML() + strategyHTML()` — the old concatenation — and a correct
+  build turned it red. Rewritten to the contract it protects (Strategy is an area,
+  render dispatches areas). Still RED 2 on 1128, so it was not weakened.
+- **A gate that crashed instead of reporting.** That same harness then died on
+  `bizEdit.click()` of `undefined` — class 37. Guarded.
+
+⚠️ **And the harness was stale for a real reason worth keeping:** it opened the
+console and asserted straight into Strategy, which was right through 1128 and
+wrong the moment the page stopped being one scroller. It now opens the area the
+way a person does — `open('strategy')`. Its assertions are unchanged.
+
+**Gates.** `gate_1137.mjs` — GREEN 20 / **RED 17 on the pre-hub tree**, no crash: hub length,
+per-card figures, 44px targets, computed ink (worst 5.58:1 on the card's own
+ground), tap-in, in-app back, **browser back**, deep link, unknown-key fallback,
+two-up desktop, no sideways scroll, no page errors. `check_build`, `gate_dupes`,
+`gate_types` green.
+
+---
+
 ## Build 1128 — the two mute levels are two levels again, in BOTH themes
 
 Theo: *"Fix the mute levels."* 1127 collapsed `--rbe-mute` and `--rbe-mute2` into
