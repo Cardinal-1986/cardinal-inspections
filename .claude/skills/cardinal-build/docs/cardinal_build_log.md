@@ -927,6 +927,37 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1130 — 29 Aug 2026 — Old lump-sum estimates render right outside the editor
+
+Raised by the gate-suite triage as a low-confidence flag on `gate_974`'s repair, then
+**measured against production before anything was built**: 20 live estimates, 13 lump-sum
+(`itemized:false`), **all 13 without 1096's per-line `flat` flag** (the editor back-fills
+it only at load and stores it only on save), 1 of them on a Community job.
+
+**The defect.** Two readers outside the editor read `it.flat` alone: the Community
+estimate sheet's `lnFor()` (`cr-cc-script`) and the published document's `buildDocHtml()`
+(`cr-epub-script`). For all 13 rows both drew each line as qty × unit_price = **$0** with
+a stray qty cell (the production shape carries the money in `amount`, unit_price 0 — the
+974-recorded shape). Totals were always right — they read the row's own `total` — so the
+sheet disagreed with itself.
+
+**Fix.** Both readers now apply the editor's own 1096 rule at their head —
+`itemized:false` ⇒ every line flat — **on a clone** (`Object.assign({}, it, {flat:true})`;
+estimates rows are never mutated). The editor's back-compat is untouched and asserted so.
+
+### Gates
+- `check_build.py` GREEN 1129 → 1130.
+- **`gate_1130.mjs`** — pure Node: **slices both normalization blocks out of the artifact
+  and executes the shipped text** against a frozen production-shaped fixture ($8,500 in
+  `amount`). Fix: 8/8 — both surfaces render $8,500, qty suppressed, frozen rows
+  unmutated, the editor's 1096 rule still present. **Control (1129 tree): RED ×3.** The
+  gate's first draft had two checks that tested a local re-implementation and could never
+  fail — rewritten before being believed (a check that cannot fail is worse than none).
+
+No SQL. `index.html` + this entry + `gate_1130.mjs`.
+
+---
+
 ## Build 1129 — 29 Aug 2026 — Company Documents lists its documents again
 
 Third member of the sealed-name family in three days (1118 `isCommunityClient`, 1121

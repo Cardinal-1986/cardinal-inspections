@@ -3875,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1129 &#8212; Company Documents shows its documents again. Since build 1111 opening it drew the trade pills and then stopped — a script error before the list was written — so every user saw zero documents, no View or Download on any contract master. One wrong function name; found by the regression suite's gate for build 746. Numbered 1129 because another session holds 1122–1128.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1130 &#8212; Older lump-sum estimates show their real numbers everywhere again. Build 1096 made pricing per-line, and estimates saved before it (13 of the 20 on file) only get the new flag when opened in the editor \u2014 so the Community estimate sheet and freshly published documents rendered their lines at $0 with a stray quantity cell. Both now apply the same rule the editor does. Totals were always right; the lines now match them.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42027,7 +42027,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1129, d:'2026-08-29', t:'Company Documents lists its documents again', s:'Opening Company Documents drew the trade pills then hit a script error before the document list rendered, so it showed zero documents for every user \u2014 no View or Download on any master. Broken since build 1111 (the Pre-Install Guide rows arriving used a function name that exists only inside other modules). One-line fix; the build-746 regression gate now guards it.' },
+{ b:1130, d:'2026-08-29', t:'Old lump-sum estimates render right outside the editor', s:'Estimates saved before build 1096 carry no per-line pricing flag, and only the editor back-fills it. The Community estimate sheet and newly published documents read the flag alone, so those estimates \u2014 13 of 20 on file \u2014 drew every line as $0 with a stray quantity. Both surfaces now apply the editor\u2019s own rule: a lump-sum estimate\u2019s lines are flat. Totals were never wrong.' },
+ { b:1129, d:'2026-08-29', t:'Company Documents lists its documents again', s:'Opening Company Documents drew the trade pills then hit a script error before the document list rendered, so it showed zero documents for every user \u2014 no View or Download on any master. Broken since build 1111 (the Pre-Install Guide rows arriving used a function name that exists only inside other modules). One-line fix; the build-746 regression gate now guards it.' },
  { b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
  { b:1120, d:'2026-08-28', t:'The Pre-Install Guide asks through the app, not the browser', s:'Two grey browser pop-ups survived in the Pre-Install Guide \u2014 the \u201cEmail the guide?\u201d question and the \u201cReset the wording?\u201d one. Both now use the dark in-app ask-sheet every other question has used since build 1083, and the reset (which replaces unsaved edits) is styled red as a destructive action. Buttons name the action instead of OK/Cancel.' },
  { b:1119, d:'2026-08-28', t:'Seven small labels come back up to the 11px floor', s:'Build 1081 set an app-wide minimum text size of 11px so everything reads outdoors. Seven labels added since then had slipped under it \u2014 four in the new estimate builder, one in the Community sheet, the canvass grid\u2019s checkbox labels (9.5px, the smallest), and the AUTO chip on Pre-Install Guide rows. All are at 11px again.' },
@@ -48966,6 +48967,14 @@ return (urls && k && urls[k]) || p.url || '';
 function buildDocHtml(est, project, urls){
 var logo    = cardinalLogo();
 var lines   = Array.isArray(est.line_items) ? est.line_items : [];
+/* 1130: same back-compat as the sheet — a pre-1096 lump-sum row (itemized
+   false, no per-line flags) must print flat, not qty x $0. Clone, never
+   mutate the row. */
+if(est.itemized === false){
+  lines = lines.map(function(l){
+    return (l && l.flat == null) ? Object.assign({}, l, { flat: true }) : l;
+  });
+}
 var photos  = Array.isArray(est.photos) ? est.photos : [];
 var clientName = (project && (project.name || project.client_name)) || 'Client';
 var address    = (project && project.address) || '';
@@ -60004,6 +60013,17 @@ return '<div class="sheet"><div class="nobid">' +
 '</div>' + rec + '</div>';
 }
 var items = est.line_items || [];
+/* 1130: 1096's per-line `flat` flag is back-filled only when a row is opened
+   in the EDITOR (and stored only on save). 13 of 20 live estimates are
+   pre-1096 lump sums whose items carry no flag at all, so `it.flat` alone
+   rendered every line here at qty x $0 with a stray qty cell. Apply the same
+   back-compat the editor applies — itemized:false means every line is flat —
+   on a CLONE (estimates rows are never mutated). */
+if(est.itemized === false){
+  items = items.map(function(it){
+    return (it && it.flat == null) ? Object.assign({}, it, { flat: true }) : it;
+  });
+}
 /* 974: the line objects carry no `price` key at ALL in production — each one is
    {qty,name,unit,amount,library_id,unit_price,description}, so the multiply
    that used to be here rendered $0 on every line. The swap to unit_price alone would be a NEW wrong number: on a
