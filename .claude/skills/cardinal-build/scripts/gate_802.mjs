@@ -44,7 +44,10 @@ function proj(id, name, stage, partner, bidAmount, dueAt) {
 // baked into the client's own name field with an em dash.
 const SEED = {
   projects: [
-    proj('p1', 'Zulema Hall — Habitat for Humanity', 'Lead', 'Habitat for Humanity', 12000, '2026-08-14'),   // due today
+    /* "due today" must BE today — the original hardcoded 2026-08-14 (the gate's
+       authoring date) and correctly read "Nd overdue" ever after. */
+    proj('p1', 'Zulema Hall — Habitat for Humanity', 'Lead', 'Habitat for Humanity', 12000,
+      (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date())),   // due today
     proj('p2', 'Will Poindexter — Habitat for Humanity', 'Lead', 'Habitat for Humanity', 29460, '1900-01-01'), // deep overdue, stable
     proj('p3', 'Jacob Reyes', 'Prospect', 'Habitat for Humanity', 18425, null),   // no suffix in the name - must pass through
     proj('p4', 'Frank Ostrowski — Habitat for Humanity', 'Approved', 'Habitat for Humanity', 18500, null)      // awarded
@@ -147,13 +150,24 @@ const tools = await P.page.evaluate(() => {
   };
 });
 ok('New Bid is not inside the collapsed details', !tools.none && tools.primaryVisible, JSON.stringify(tools));
-ok('closed by default, with the 6 secondary tools inside it', !tools.none && !tools.beforeOpen && tools.beforeCount === 6, JSON.stringify(tools));
+/* 1092 MOVED the Analytics button out of the Tools sheet into the hub tab
+   strip ("moved, not duplicated" — build log); five tools remain inside. */
+ok('closed by default, with the 5 secondary tools inside it (analytics moved to the strip at 1092)',
+  !tools.none && !tools.beforeOpen && tools.beforeCount === 5, JSON.stringify(tools));
 ok('clicking the summary opens it', !tools.none && tools.afterOpen === true, JSON.stringify(tools));
 const dataGoWired = await P.page.evaluate(() => {
-  const btn = document.querySelector('#cr-ch2 .cc-moretools [data-go="analytics"]');
-  return !!btn && typeof btn.onclick === 'function';
+  /* analytics left the sheet at 1092 — probe a tool still inside it, and prove
+     the analytics door survived its move to the strip rather than being lost. */
+  const btn = document.querySelector('#cr-ch2 .cc-moretools [data-go="activity"]');
+  const an  = document.querySelector('#cr-ch2 [data-go="analytics"]');
+  return { sheet: !!btn && typeof btn.onclick === 'function',
+           analytics: !!an && typeof an.onclick === 'function',
+           analyticsInSheet: !!(an && an.closest('.cc-moretools')) };
 });
-ok('a tool inside the sheet is still wired (data-go dispatch untouched)', dataGoWired, dataGoWired);
+ok('a tool inside the sheet is still wired (data-go dispatch untouched)',
+  dataGoWired.sheet, JSON.stringify(dataGoWired));
+ok('the analytics door survived its 1092 move to the strip, wired, outside the sheet',
+  dataGoWired.analytics && !dataGoWired.analyticsInSheet, JSON.stringify(dataGoWired));
 
 console.log('\n--- F. partner-level numbers untouched ---');
 const nums = await P.page.evaluate(() => {

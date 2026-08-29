@@ -60,6 +60,13 @@ async function fillCore() {
     set('ldFirst', 'ZZ-Gate'); set('ldLast', 'Contact'); set('ldStreet', '9 Test Way');
     set('ldCity', 'Dayton'); set('ldZip', '45414');
     const st = document.getElementById('ldState'); if (st) st.value = 'OH';
+    /* 999/1005 made Claim Type and Lead Source required on this form — both
+       checks sit AFTER the contact refusal, so scenario 3 still proves the
+       782 rule; fill them here so 4 and 5 exercise what they always did. */
+    const ct = document.querySelector('input[name="ldClaimType"]');
+    if (ct && ![...document.querySelectorAll('input[name="ldClaimType"]')].some(r => r.checked)) ct.checked = true;
+    const so = document.getElementById('ldSource');
+    if (so && !so.value) { const o = [...so.options].find(o => o.value); if (o) so.value = o.value; }
   });
 }
 const shot = async n => { try { const r = await cdp.send('Page.captureScreenshot', { format: 'png' }); writeFileSync(OUT + '/' + n + '.png', Buffer.from(r.data, 'base64')); } catch (e) {} };

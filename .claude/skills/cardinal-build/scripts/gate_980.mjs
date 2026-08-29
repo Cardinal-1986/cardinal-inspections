@@ -89,10 +89,16 @@ const all = fontDecls(strip(APP));
    So the contract this assertion was really guarding is "no VALID font
    declaration was consumed", and that is what it now says. It is still
    falsifiable and still RED on 979 (94 > 64). */
+/* ⚠ REWRITTEN AGAIN, 29 Aug (triage at build 1121), same cause a THIRD time.
+   `other === 1291` and `wholeInherit === 27` were still snapshot totals; later
+   builds legitimately ADD valid font declarations (the 1081 11px-floor sweep
+   alone rewrote hundreds of shorthands), so a growing app failed a correct
+   gate at 1332. The guarded contract — "the sweep never CONSUMED a valid
+   declaration" — is a floor, not an equality. */
 need('2 the sweep only ever removed invalid shorthands, never valid ones',
-     all.invalid.length <= 64 && all.wholeInherit.length === 27 && all.other.length === 1291,
+     all.invalid.length <= 64 && all.wholeInherit.length >= 27 && all.other.length >= 1291,
      'file-wide invalid ' + all.invalid.length + ' (must be <=64), plain font:inherit ' +
-     all.wholeInherit.length + ' (must be 27), valid font: ' + all.other.length + ' (must be 1291)');
+     all.wholeInherit.length + ' (must be >=27), valid font: ' + all.other.length + ' (must be >=1291)');
 
 need('7 the plain, VALID `font:inherit` was left alone',
      all.wholeInherit.length >= 20,

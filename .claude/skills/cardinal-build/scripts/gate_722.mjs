@@ -57,7 +57,20 @@ function anyWrite(t, pred) { return page.evaluate(([tbl, p]) => { const f = new 
 function writeCount(t) { return page.evaluate((tbl) => (window.__WRITES__ || []).filter(x => x.table === tbl).length, t); }
 async function clickCE(act) { try { await page.click(`#cr-ce-view [data-act="${act}"]`, { force: true, timeout: 3000 }); return true; } catch (e) { return false; } }
 
-const hasLifecycle = await page.evaluate(() => window.openContractEditor && window.openContractEditor.constructor && window.openContractEditor.constructor.name === 'AsyncFunction');
+/* RIG REPAIR (build 1121 triage): build 1022 wrapped openContractEditor via
+   wrapNav(), a plain sync wrapper, so constructor.name is now 'Function'. The
+   wrapper returns the original's return value, so a thenable return still
+   identifies the async lifecycle version (the legacy 722-era stub is sync and
+   returns undefined). Calling with no input returns early via crTell without
+   opening the editor; crTell (the 1080+ ask-sheet global) is stubbed first. */
+const hasLifecycle = await page.evaluate(() => {
+  const f = window.openContractEditor;
+  if (!f || typeof f !== 'function') return false;
+  if (f.constructor && f.constructor.name === 'AsyncFunction') return true;
+  const savedTell = window.crTell; window.crTell = function () {};
+  let out; try { out = f(); } finally { window.crTell = savedTell; }
+  return !!(out && typeof out.then === 'function');
+});
 chk('openContractEditor is the async (lifecycle) version', hasLifecycle);
 
 // ---- open C1 (draft) ----

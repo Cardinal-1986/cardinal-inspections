@@ -20,7 +20,9 @@ console.log('gate_784 on ' + FILE);
 
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-srk';
 process.env.RESEND_API_KEY = 'test-resend';
-process.env.CRON_SECRET = '';
+/* the route is fail-closed now: CRON_SECRET is REQUIRED and every request
+   must carry Authorization: Bearer <secret> (Vercel Cron does). */
+process.env.CRON_SECRET = 'test-cron-secret';
 process.env.DIGEST_STALE_DAYS = '5';
 
 const iso = d => new Date(Date.now() - d * 86400000).toISOString();
@@ -63,7 +65,7 @@ async function run(cfg) {
   installFetch(cfg);
   let out = null;
   const res = { status: () => res, json: o => { out = o; return res; } };
-  await mod.default({ headers: {} }, res);
+  await mod.default({ headers: { authorization: 'Bearer test-cron-secret' } }, res);
   return { out, sent: SENT.slice() };
 }
 

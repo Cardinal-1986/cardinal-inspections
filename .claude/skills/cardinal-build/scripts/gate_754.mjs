@@ -89,8 +89,12 @@ const go = async code => { await page.evaluate(code); await page.waitForTimeout(
 /* ── retail baseline ── */
 const retailHome = await go(`window.showHome()`);
 const retailLeads = await go(`document.querySelector('#crBanner [data-go="leads"]').click()`);
-chk('RETAIL: shared screen keeps retail header', retailLeads.head === 'retail' || retailLeads.head === '(unset)', retailLeads.head);
-chk('RETAIL: header paint unchanged on shared screen', retailLeads.hdPaint === retailHome.hdPaint);
+/* Build 1116 (Theo's pick): a screen that belongs to no portal wears ONE
+   neutral head (the production palette) and names ITSELF. The 754 head-follows
+   rule survives only on real CRM screens; what 754 still guarantees here is
+   that the PAGE ground never follows and that home remembers the portal. */
+chk('RETAIL: shared screen wears the neutral head (1116)', retailLeads.head === 'production', retailLeads.head);
+chk('RETAIL: shared screen names itself, not a portal (1116)', retailLeads.title.trim() === 'Leads', retailLeads.title.trim());
 const retailBack = await go(`document.getElementById('cr-hd2-home').click()`);
 chk('RETAIL: home returns to the retail dashboard', retailBack.main && !retailBack.truth, JSON.stringify({ main: retailBack.main }));
 
@@ -98,17 +102,25 @@ chk('RETAIL: home returns to the retail dashboard', retailBack.main && !retailBa
 const truthHome = await go(`window.showCardinalTruth()`);
 chk('INSURANCE home: data-crm=insurance', truthHome.crm === 'insurance', truthHome.crm);
 chk('INSURANCE home: data-crm-head=insurance', truthHome.head === 'insurance', truthHome.head);
-const insLeads = await go(`document.querySelector('#crBanner [data-go="leads"]').click()`);
+/* Build 755 made the two banner pills CRM-shaped: under insurance they read
+   Clients / Claims (paintCrmPills), so there is no banner Leads pill to tap
+   from Truth home any more — deliberate. The shared Leads screen is still
+   reachable from the burger; the 754 contract (head follows the portal, the
+   page ground does not) is asserted unchanged on that same screen. */
+const insLeads = await go(`(() => { document.getElementById('navBtn').click(); document.querySelector('#navMenu [data-nav="leads"]').click(); })()`);
 chk('tap Leads: the leads screen opens', insLeads.leads);
 chk('tap Leads: PAGE stays retail-grounded (data-crm=retail)', insLeads.crm === 'retail', insLeads.crm);
-chk('tap Leads: HEADER stays insurance (data-crm-head)', insLeads.head === 'insurance', insLeads.head);
-chk('tap Leads: header paint IDENTICAL to Truth home', insLeads.hdPaint === truthHome.hdPaint, insLeads.hdPaint);
-chk('tap Leads: banner paint identical to Truth home', insLeads.bnPaint === truthHome.bnPaint, insLeads.bnPaint);
-chk('tap Leads: title still reads Insurance', insLeads.title.trim() === 'Insurance', insLeads.title.trim());
-chk('tap Leads: switcher still highlights Insurance', insLeads.switcherOn === 'insurance', insLeads.switcherOn);
+/* 1116: the shared Leads screen is portal-neutral — same head from ANY portal. */
+chk('tap Leads: HEADER goes neutral (1116, data-crm-head=production)', insLeads.head === 'production', insLeads.head);
+chk('tap Leads: ONE header for the shared screen regardless of entry portal (1116)',
+    insLeads.hdPaint === retailLeads.hdPaint, insLeads.hdPaint);
+chk('tap Leads: banner paint identical from either portal (1116)',
+    insLeads.bnPaint === retailLeads.bnPaint, insLeads.bnPaint);
+chk('tap Leads: the title names the screen, not a portal (1116)', insLeads.title.trim() === 'Leads', insLeads.title.trim());
+chk('tap Leads: switcher highlights no CRM on a neutral screen (1116)', insLeads.switcherOn === '(none)', insLeads.switcherOn);
 chk('tap Leads: page ground = the retail-portal ground (no light wash)', insLeads.bodyPaint === retailLeads.bodyPaint, insLeads.bodyPaint);
-chk('crmHead() resolves insurance on the shared screen',
-    await page.evaluate(`window.CardinalHeader && window.CardinalHeader.crmHead ? window.CardinalHeader.crmHead() : '(absent)'`) === 'insurance');
+chk('crmHead() resolves the neutral head on the shared screen (1116)',
+    await page.evaluate(`window.CardinalHeader && window.CardinalHeader.crmHead ? window.CardinalHeader.crmHead() : '(absent)'`) === 'production');
 const insBack = await go(`document.getElementById('cr-hd2-home').click()`);
 chk('HOME FROM LEADS RETURNS TO CARDINAL TRUTH (the reported bug)', insBack.truth && !insBack.main, JSON.stringify({ truth: insBack.truth, main: insBack.main }));
 
@@ -126,21 +138,24 @@ await go(`(() => { window.currentProject = null; })()`);
 /* ── community ── */
 const hubHome = await go(`window.CardinalCommunityHub.show()`);
 chk('COMMUNITY home: data-crm-head=community', hubHome.head === 'community', hubHome.head);
-const comLeads = await go(`document.querySelector('#crBanner [data-go="leads"]').click()`);
-chk('tap Leads: header stays community', comLeads.head === 'community', comLeads.head);
-chk('tap Leads: header paint identical to hub home', comLeads.hdPaint === hubHome.hdPaint);
+/* 755: community pills read Partners / Estimates — Leads goes via the burger. */
+const comLeads = await go(`(() => { document.getElementById('navBtn').click(); document.querySelector('#navMenu [data-nav="leads"]').click(); })()`);
+chk('tap Leads: header goes neutral from community too (1116)', comLeads.head === 'production', comLeads.head);
+chk('tap Leads: same neutral header paint as from the other portals (1116)', comLeads.hdPaint === retailLeads.hdPaint);
 chk('tap Leads: page stays retail-grounded', comLeads.crm === 'retail', comLeads.crm);
 const comBack = await go(`document.getElementById('cr-hd2-home').click()`);
 chk('home returns to the Community hub', comBack.hub && !comBack.main, JSON.stringify({ hub: comBack.hub }));
 
 /* ── the explicit switcher still works from a shared screen ── */
-await go(`document.querySelector('#crBanner [data-go="leads"]').click()`);
+await go(`(() => { document.getElementById('navBtn').click(); document.querySelector('#navMenu [data-nav="leads"]').click(); })()`);
 const switched = await go(`document.querySelector('#cbCrm [data-crm-go="insurance"]').click()`);
 chk('switcher from a shared screen: Insurance opens Cardinal Truth', switched.truth && switched.head === 'insurance', JSON.stringify({ truth: switched.truth, head: switched.head }));
 
 /* ── source guards ── */
 const src = APP;
-chk('26 header selectors migrated to data-crm-head', (src.match(/body\[data-crm-head="/g) || []).length === 26, (src.match(/body\[data-crm-head="/g) || []).length);
+/* 26 at build 754; later header work (979/1104/1116 arc) legitimately added
+   three more. Re-pinned at the measured current count. */
+chk('29 header selectors migrated to data-crm-head', (src.match(/body\[data-crm-head="/g) || []).length === 29, (src.match(/body\[data-crm-head="/g) || []).length);
 chk('the two page grounds did NOT move', src.includes('body[data-crm="community"]{background:var(--ccm-ground,#0e100f)}') && src.includes('body[data-crm="insurance"]{background:var(--ct-bg)}'));
 chk('PIPE_SKIP still reads the page CRM', src.includes("var _crm = document.body.dataset.crm || 'retail';"));
 chk('openLeadForm defaults from crmHead', src.includes('(_h.crmHead || _h.crm)'));

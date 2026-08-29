@@ -112,27 +112,41 @@ async function drag(x, y) {
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.waitForTimeout(800);
 }
+/* 924 made the phone menu a slide-out drawer: on mobile the sheet forces
+   computed display:block forever (so it can animate out) and the live open
+   state is the INLINE style.display the app's own close-sites write. Read
+   that, not getComputedStyle — the computed check went vacuous at 924. */
+const isOpen = () => page.evaluate(() =>
+  document.getElementById('navMenu').style.display !== 'none' &&
+  document.getElementById('navMenu').getBoundingClientRect().left >= 0);
 await drag(box.outX, box.y);
-const outside = await page.evaluate(() => {
-  const menu = document.getElementById('navMenu');
-  return { stillOpen: getComputedStyle(menu).display !== 'none', winY: Math.round(window.scrollY) };
-});
+const outsideOpen = await isOpen();
+const outsideY = await page.evaluate(() => Math.round(window.scrollY));
 await shot('after-outside-swipe');
-ok('a swipe BESIDE the menu does not close it', outside.stillOpen,
-  'menu open = ' + outside.stillOpen + ' (page scrolled ' + outside.winY + 'px)');
+ok('a swipe BESIDE the menu does not close it', outsideOpen,
+  'menu open = ' + outsideOpen + ' (page scrolled ' + outsideY + 'px)');
 
-/* and the menu still scrolls itself, and still dismisses on an outside CLICK */
-await page.evaluate(() => { const menu = document.getElementById('navMenu'); menu.scrollTop = 0; window.scrollTo(0, 0); });
-await drag(box.inX, box.y);
-const inside = await page.evaluate(() => {
-  const menu = document.getElementById('navMenu');
-  return { stillOpen: getComputedStyle(menu).display !== 'none', scrolled: Math.round(menu.scrollTop) };
+/* and the menu still scrolls itself, and still dismisses on an outside CLICK.
+   The 924 drawer is full-height, so at 932px its content fits and there is
+   nothing to scroll — shrink the window so the menu genuinely overflows,
+   which is the condition the retired scroll-close handler used to fire on. */
+await page.setViewportSize({ width: 430, height: 480 });
+await page.waitForTimeout(500);
+const box2 = await page.evaluate(() => {
+  const r = document.getElementById('navMenu').getBoundingClientRect();
+  return { inX: Math.round(r.left + Math.min(r.width, 320) / 2), y: Math.round(Math.max(r.top + 60, 60)) };
 });
-ok('a swipe ON the menu scrolls the menu', inside.scrolled > 50, 'scrollTop = ' + inside.scrolled);
-ok('...and leaves it open', inside.stillOpen);
+await page.evaluate(() => { const menu = document.getElementById('navMenu'); menu.scrollTop = 0; window.scrollTo(0, 0); });
+await drag(box2.inX, box2.y + 240);
+const insideScrolled = await page.evaluate(() => Math.round(document.getElementById('navMenu').scrollTop));
+const insideOpen = await isOpen();
+ok('a swipe ON the menu scrolls the menu', insideScrolled > 50, 'scrollTop = ' + insideScrolled);
+ok('...and leaves it open', insideOpen);
+await page.setViewportSize({ width: 430, height: 932 });
+await page.waitForTimeout(400);
 await page.evaluate(() => { document.body.click(); });
 await page.waitForTimeout(400);
-const clicked = await page.evaluate(() => getComputedStyle(document.getElementById('navMenu')).display === 'none');
+const clicked = await page.evaluate(() => document.getElementById('navMenu').style.display === 'none');
 ok('an outside CLICK still dismisses it (the retained path)', clicked);
 
 console.log('\n--- 3. nothing else lost its scroll handler ---');

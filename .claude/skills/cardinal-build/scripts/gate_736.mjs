@@ -135,7 +135,11 @@ let lightNow = null;
 }
 
 /* ── the wording: 16 states, and the three vague ones are gone ─────────────── */
-chk('all 16 empty states are still present', (APP_HTML.match(/class="empty"/g) || []).length === 16,
+/* RIG REPAIR (build 1121 triage): the exact-16 census was a freeze for build 736.
+   Later builds legitimately ADDED empty states (the ABC Supply / assemblies arc
+   at 774+, commissions/collections) — 23 at build 1121. The proof this check
+   carries is that none of the original 16 was removed, so it is a FLOOR now. */
+chk('all 16 empty states are still present', (APP_HTML.match(/class="empty"/g) || []).length >= 16,
     'found ' + (APP_HTML.match(/class="empty"/g) || []).length);
 chk('no empty state just says "Nothing here."', APP_HTML.indexOf('Nothing here.</div>') === -1);
 chk('the activity feed says what fills it', /This fills in as the team creates clients/.test(APP_HTML));

@@ -96,7 +96,10 @@ ok('a slot fills its grid column, not its caption',
 ok('no slot is a 23px tap target any more', Math.min(...boxes) >= 44, 'smallest '+Math.min(...boxes));
 if(W<=560){
   ok('a narrow screen gets three columns', m.cols.split(' ').length===3, m.cols);
-  ok('captions are 10px, not 6.8px', m.slots[0].font==='10px', m.slots[0].font);
+  /* 786 raised the 6.8px caption to 10px; 1081 then set an app-wide 11px
+     floor across 519 declarations, which lifted it again. Hold the floor. */
+  ok('captions clear the 11px floor (786 fix + 1081 floor), not 6.8px',
+     parseFloat(m.slots[0].font) >= 11, m.slots[0].font);
   ok('captions on one row share a baseline',
      new Set(m.slots.slice(0,3).map(s=>Math.round(s.slTop))).size===1,
      m.slots.map(s=>s.slTop).join(', '));

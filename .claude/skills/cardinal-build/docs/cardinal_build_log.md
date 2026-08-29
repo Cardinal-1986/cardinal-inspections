@@ -927,6 +927,139 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1133 — 29 Aug 2026 — the profile's call/text/email icons reach the tap minimum
+
+Fourth and last live defect from the gate-suite triage: `gate_752` (the original 44px
+sweep's gate, rig-repaired in the cleanup) stayed red on the client profile's namebar —
+`.nb-ico` ×3 (email/text/call) at 40×40, `.nb-pen` 32×28, `.nb-star` ~21×17. The 791
+profile rebuild replaced the contact links **752 had already floored** without inheriting
+the floor, and `gate_944`'s walk never opens a client profile, so only 752 could see it.
+
+**The fix took two attempts, and the first was measured out.** Bare `min-height:44px` on
+the star and pen grew the name band **77 → 116px at 390w** — a design change to a screen
+Theo directed personally, not a floor fix. Shipped shape: `min-*` 44px boxes (real rects,
+so the gate's probe sees them) with **negative margins handing the layout space back** —
+band re-measured **77px, pixel-identical**, zero overlap among the five tappables, no
+horizontal scroll. The visual design of 788–804 is untouched; only the tap areas grew.
+
+### Gates
+- `check_build.py` GREEN 1132 → 1133.
+- **`gate_752` flips GREEN — 29/29** (icons 44×44, pen 44×44); control (1132 tree) RED ×2.
+- `band1133.mjs` (scratch render): band height, overlap and h-scroll measured on both
+  trees at 390px — FIX `{bandH:77, hscroll:false, overlap:false}`, identical to PRE.
+
+No SQL. `index.html` + this entry.
+
+---
+
+## Build 1132 — 29 Aug 2026 — Crews form fields reach the 44px touch minimum
+
+`gate_944` (the 22-destination walk + 44px floor) was red on two controls: the Compliance
+upload form's date (289×35) and text (289×33) inputs on the Crews screen. **How they
+escaped the 752 sweep AND 944's walk:** the crews arc (547+) predates the touch pass, and
+944's walk saw an *empty* crews screen — the shared mock had no crews seed until build 948
+— so the rig was blind exactly where the debt was. User-visible the whole time.
+
+**Fix.** A crews group in `cr-touch44-styles` — the block whose own header says every
+sub-44 fix belongs there, with its measurement. `min-height:44px` only, per its rule, on
+`#crewsView` text/date/file/select/textarea. **Deliberately NOT floored, recorded in the
+block:** `#crewsView .crw-rt input` (~29px) — the Labor Rates table is a dense admin grid
+and a 44px cell rewrites its density; measured, named, Theo's call.
+
+### Gates
+- `check_build.py` GREEN 1131 → 1132.
+- **`gate_944` flips GREEN** ("every walked control meets the floor"); **control (1131
+  tree) RED — 2 sub-44 control(s)**.
+
+No SQL. `index.html` + this entry.
+
+---
+
+## Build 1131 — 29 Aug 2026 — the chase list's mark-chased button styles apply again
+
+`gate_983` (the invalid-`font:` sweep's standing guard, rig-repaired to floors in the
+suite cleanup) was red on exactly one site: `.cr-cth-chasedid` — the mark-chased button on
+Cardinal Truth's chase list — carried `font:600 12px inherit`. `inherit` is legal only as
+a WHOLE `font:` value, so Chromium discards the entire declaration: the 600 weight and
+12px size never rendered once. Shipped at **1056** ("the chase list counts to something"),
+after 983's sweep removed 30 of the same mistake — the erosion class again, third of the
+day (11px floor at 1119, 44px floor pending, this).
+
+**Fix.** The sweep's own shape: `font-weight:600;font-size:12px` (the `font-family:inherit`
+longhand beside it was already fine). One declaration.
+
+### Gates
+- `check_build.py` GREEN 1130 → 1131 (marker anchored to the site — the bare longhand
+  string exists 983-wide, which failed the first negative control honestly).
+- **`gate_983` flips GREEN (9/9)**; control (1130 tree) RED naming the one site.
+
+No SQL. `index.html` + this entry.
+
+---
+
+## Build 1130 — 29 Aug 2026 — Old lump-sum estimates render right outside the editor
+
+Raised by the gate-suite triage as a low-confidence flag on `gate_974`'s repair, then
+**measured against production before anything was built**: 20 live estimates, 13 lump-sum
+(`itemized:false`), **all 13 without 1096's per-line `flat` flag** (the editor back-fills
+it only at load and stores it only on save), 1 of them on a Community job.
+
+**The defect.** Two readers outside the editor read `it.flat` alone: the Community
+estimate sheet's `lnFor()` (`cr-cc-script`) and the published document's `buildDocHtml()`
+(`cr-epub-script`). For all 13 rows both drew each line as qty × unit_price = **$0** with
+a stray qty cell (the production shape carries the money in `amount`, unit_price 0 — the
+974-recorded shape). Totals were always right — they read the row's own `total` — so the
+sheet disagreed with itself.
+
+**Fix.** Both readers now apply the editor's own 1096 rule at their head —
+`itemized:false` ⇒ every line flat — **on a clone** (`Object.assign({}, it, {flat:true})`;
+estimates rows are never mutated). The editor's back-compat is untouched and asserted so.
+
+### Gates
+- `check_build.py` GREEN 1129 → 1130.
+- **`gate_1130.mjs`** — pure Node: **slices both normalization blocks out of the artifact
+  and executes the shipped text** against a frozen production-shaped fixture ($8,500 in
+  `amount`). Fix: 8/8 — both surfaces render $8,500, qty suppressed, frozen rows
+  unmutated, the editor's 1096 rule still present. **Control (1129 tree): RED ×3.** The
+  gate's first draft had two checks that tested a local re-implementation and could never
+  fail — rewritten before being believed (a check that cannot fail is worse than none).
+
+No SQL. `index.html` + this entry + `gate_1130.mjs`.
+
+---
+
+## Build 1129 — 29 Aug 2026 — Company Documents lists its documents again
+
+Third member of the sealed-name family in three days (1118 `isCommunityClient`, 1121
+`fileName`/`extracted`, now `isAdmin`) — and the second from the Pre-Install Guide arc.
+Found by the gate-suite triage: `gate_746` (Company Documents: Download stops swallowing
+the app) was red with 9 failures.
+
+**Cause.** 1111's guide-rows call in `renderCompanyDocs()`:
+`window.CardinalGuide.docsRows(__cdTrade, isAdmin())`. `isAdmin` is defined **15 times in
+the file and every one is inside a module IIFE** — none reaches the main block, and
+`window.isAdmin` is never assigned. So the call threw a ReferenceError after the trade
+pills drew and **before `#cdDocList` was written**: every user saw zero documents, no
+View/Download on any contract master, since 1111. 1112's harness tested `docsRows` itself
+in jsdom and never the call site's scope — how it shipped green.
+
+**Fix.** `isAdminUser()` — the main block's own hoisted admin check (Theo+Joan by
+`ADMIN_EMAILS`), the same predicate the block uses for the reassign select. The flag only
+gates the admin "Edit" button on guide rows.
+
+**Numbered 1129** because the Adobe-Acrobat session's branch holds 1122–1128
+(`next_build.py`).
+
+### Gates
+- `check_build.py` GREEN 1121 → 1129 (marker + clean negative control).
+- **`gate_746` flips GREEN** (16 checks incl. both admin and non-admin renders); **control
+  (the 1121 tree) RED — 9 failures**. No new gate needed: the 746 gate already covers the
+  surface, which is the whole argument for keeping the suite runnable.
+
+No SQL. `index.html` + this entry.
+
+---
+
 ## Build 1121 — 28 Aug 2026 — the Scope-of-Loss history row writes for the first time
 
 Found by the new type-check pass (`tsc --checkJs` over the concatenated inline blocks):

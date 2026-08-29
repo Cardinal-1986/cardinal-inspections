@@ -126,10 +126,17 @@ for (const t of TRADES) {
   chk(`[${t.key}] and it is not also an estimate or a work order`, matched && !matched.est && !matched.wo, JSON.stringify(matched));
 
   chk(`[${t.key}] the printed heading says the trade`, html.indexOf(t.heading) !== -1, t.heading + ' present=' + (html.indexOf(t.heading) !== -1));
-  chk(`[${t.key}] it carries ITS OWN spec sections`, t.mine.every(s => html.indexOf(s) !== -1),
-      t.mine.map(s => s + '=' + (html.indexOf(s) !== -1)).join(' '));
-  chk(`[${t.key}] and NOT another trade's`, t.notMine.every(s => html.indexOf(s) === -1),
-      t.notMine.map(s => s + '=' + (html.indexOf(s) !== -1)).join(' '));
+  /* RIG REPAIR (build 1121 triage): build 779 rebuilt the roofing spec sheet to
+     match the printed master's headings ("6. Starter Shingles", "11. Ridge Cap /
+     Hip Cap" — title case), so the exact-case literals stopped matching sections
+     that are still present. Match case-insensitively; the mine/notMine
+     discrimination between trades is unchanged (verified against all three
+     agreement bodies). */
+  const lhtml = html.toLowerCase();
+  chk(`[${t.key}] it carries ITS OWN spec sections`, t.mine.every(s => lhtml.indexOf(s.toLowerCase()) !== -1),
+      t.mine.map(s => s + '=' + (lhtml.indexOf(s.toLowerCase()) !== -1)).join(' '));
+  chk(`[${t.key}] and NOT another trade's`, t.notMine.every(s => lhtml.indexOf(s.toLowerCase()) === -1),
+      t.notMine.map(s => s + '=' + (lhtml.indexOf(s.toLowerCase()) !== -1)).join(' '));
   chk(`[${t.key}] prefilled with the buyer`, html.indexOf('Bob DeBuilder') !== -1 && html.indexOf('[BUYER]') === -1,
       'buyer=' + (html.indexOf('Bob DeBuilder') !== -1) + ' placeholder_left=' + (html.indexOf('[BUYER]') !== -1));
   /* each trade's Terms & Conditions differ (siding clause 2 is the limited lifetime

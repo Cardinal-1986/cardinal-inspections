@@ -225,8 +225,12 @@ chk('and what the owner typed is still in the box', ui.stillThere === 'galen@hab
 /* ── 6. the weak check is gone, and the strong ones are untouched ─────────── */
 const src = await page.evaluate(() => document.documentElement.outerHTML);
 chk('cr-bulk no longer accepts anything with an @ in it', !/if\(!\/@\/\.test\(email\)\)/.test(src));
+/* RIG REPAIR (build 1121 triage): the exact-5 census was a freeze for build 740.
+   Builds 1080–1082 legitimately ADDED a sixth site using the SAME strong regex
+   (the new-teammate email check, refusing via crTell) — an addition strengthens
+   the invariant, so this is a FLOOR now: none of the original five removed. */
 chk('the four money-path regexes are still there',
-    (src.match(/\/\^\[\^@\\s\]\+@\[\^@\\s\]\+\\\.\[\^@\\s\]\+\$\//g) || []).length === 5,
+    (src.match(/\/\^\[\^@\\s\]\+@\[\^@\\s\]\+\\\.\[\^@\\s\]\+\$\//g) || []).length >= 5,
     'literal count = ' + (src.match(/\/\^\[\^@\\s\]\+@\[\^@\\s\]\+\\\.\[\^@\\s\]\+\$\//g) || []).length);
 
 await browser.close();

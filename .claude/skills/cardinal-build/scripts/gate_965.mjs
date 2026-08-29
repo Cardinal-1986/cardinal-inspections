@@ -70,6 +70,13 @@ const R = await page.evaluate(async ()=>{
   const doc=f && f.contentDocument;
   if(!doc) return { dead:'no frame' };
   const alerts=[]; const realAlert=window.alert; window.alert=m=>alerts.push(String(m));
+  /* ⚠ RIG REPAIR 29 Aug 2026 (triage at build 1121): builds 1080–1083 moved the
+     app off alert()/confirm() onto crTell()/crAsk(); insertField's fence now
+     speaks through crTell, so a stub of alert alone hears nothing and the fence
+     read as silent (assertions 1 and 10). Same collector, same contract. */
+  const realTell=window.crTell, realAsk=window.crAsk;
+  window.crTell=m=>alerts.push(String(m||''));
+  window.crAsk=m=>{alerts.push(String(m||''));return Promise.resolve(true);};
 
   /* BUG_CLASSES 37: a negative control that CRASHES instead of reporting red
      proves nothing, and the crash reads as "not green" rather than as "no
@@ -190,7 +197,7 @@ const R = await page.evaluate(async ()=>{
   await ins('del');
   out.printedKept = !!(printed && caretOk && doc.contains(printed) && alerts.length>0);
 
-  window.alert=realAlert;
+  window.alert=realAlert; window.crTell=realTell; window.crAsk=realAsk;
   return out;
 });
 

@@ -155,7 +155,10 @@ chk('cr-pme-styles is gone', !src.includes('<style id="cr-pme-styles">'));
 chk('the Escape handler is kept', src.includes("e.key === 'Escape' && visibleMount()"));
 chk('crCloseAll is kept (two other modules call it)', src.includes('window.crCloseAll = function () {'));
 chk('the gold home and goHome() are untouched', (src.match(/function goHome\(\)\{/g) || []).length === 1 && src.includes("home.onclick = function(){ goHome(); };"));
-chk('cr-touch44 is still the last style block', src.lastIndexOf('<style') === src.lastIndexOf('<style id="cr-touch44-styles">'));
+/* the LAST-stylesheet positional pin is retired: later builds legitimately
+   appended module stylesheets (791 namebar, 1080–83 ask sheet, …); the
+   cascade-win proof lives in gate_752 now. */
+chk('cr-touch44 block still present exactly once', (src.match(/<style id="cr-touch44-styles">/g) || []).length === 1);
 
 await browser.close();
 let fails = 0;

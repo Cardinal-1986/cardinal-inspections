@@ -55,14 +55,20 @@ async function measureAt(width) {
   await page.waitForTimeout(800);
   let out;
   try {
-    out = await page.evaluate(`(() => {
+    out = await page.evaluate(`(async () => {
       const g = id => { const e = document.getElementById(id); const r = e.getBoundingClientRect();
         return { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), b: Math.round(r.bottom), w: Math.round(r.width) }; };
       const out = { iw: window.innerWidth };
+      /* Build 924: with no desktop rail (body:not(.cr-lnav-on)) the burger menu
+         is a LEFT slide-out drawer animating translateX(-100%) -> 0 over .3s.
+         Wait out the transition before measuring, and record which mode ran. */
+      out.drawer = !document.body.classList.contains('cr-lnav-on');
       document.getElementById('navBtn').click();
+      if (out.drawer) await new Promise(res => setTimeout(res, 450));
       out.navBtn = g('navBtn'); out.navMenu = g('navMenu');
       out.navShown = document.getElementById('navMenu').style.display === 'block';
       document.getElementById('navMenu').style.display = 'none';
+      document.body.classList.remove('cr-drawer-open');
       document.getElementById('addProjectBtn').click();
       out.addBtn = g('addProjectBtn'); out.newMenu = g('newMenu');
       out.newShown = document.getElementById('newMenu').style.display === 'block';
@@ -98,12 +104,20 @@ for (const width of [390, 768, 1194, 2560]) {
   chk(`${width}px: burger menu fully on-screen`, m.l >= 0 && m.r <= out.iw, `menu x=[${m.l}..${m.r}] iw=${out.iw}`);
   chk(`${width}px: + menu shown`, out.newShown);
   chk(`${width}px: + menu fully on-screen`, n.l >= 0 && n.r <= out.iw, `menu x=[${n.l}..${n.r}]`);
-  if (width > 640) {
+  /* Build 924: without the desktop rail the burger is a LEFT drawer, not a
+     dropdown — anchor to the screen's left edge, not the button. The dropdown
+     anchoring contract survives only where the rail is on (out.drawer=false). */
+  if (!out.drawer) {
     chk(`${width}px: burger menu LEFT edge under the button`, Math.abs(m.l - b.l) <= 2, `menu.l=${m.l} btn.l=${b.l}`);
     chk(`${width}px: burger menu below the button`, m.t >= b.b, `menu.t=${m.t} btn.b=${b.b}`);
     chk(`${width}px: + menu LEFT edge under the +`, Math.abs(n.l - a.l) <= 2, `menu.l=${n.l} btn.l=${a.l}`);
   } else {
-    chk(`${width}px: burger sheet starts at the left gutter`, m.l <= 12, `menu.l=${m.l}`);
+    chk(`${width}px: 924 drawer slid fully in, anchored at the left edge`, m.l === 0, `menu.l=${m.l}`);
+    /* the + dropdown anchors to its button only where it fits; on a narrow
+       phone the handler clamps it into the viewport (already asserted
+       fully-on-screen above), so the anchor check applies over 640 only. */
+    if (width > 640)
+      chk(`${width}px: + menu LEFT edge under the +`, Math.abs(n.l - a.l) <= 2, `menu.l=${n.l} btn.l=${a.l}`);
   }
   if (nav) {
     chk('burger item still navigates (Leads & Jobs opens)', nav.opened && !nav.err, nav.err || '');

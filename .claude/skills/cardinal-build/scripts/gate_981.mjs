@@ -55,8 +55,15 @@ need('2 the mirror carries the ACT string, not an index',
 need('3 the dispatch re-queries at click time',
      /\.jabox\[data-jm="' \+ t\.dataset\.jm/.test(CC) && !/boxes\[Number\(t\.dataset\.jm\)\]/.test(CC),
      'still indexing a captured node list');
+/* ⚠ RIG REPAIR 29 Aug 2026 (triage at build 1121): the assertion had pinned the
+   tile's ICON key (dbIc('tasks')), which is incidental to the contract. Builds
+   1080–1082 ("a menu you can read", PR #503) gave Checklists its own icon —
+   dbIc('checklist') — because Tasks, Punch Outs and Checklists shared one
+   clipboard (the comment beside the tile says so). The contract — the
+   Checklists tile lives on the ONE shared menu and routes to 'checklists' —
+   is unchanged; only the icon argument is left free. */
 need('4 Checklists is on the ONE shared menu (A1)',
-     /jt\(dbIc\('tasks'\), 'Checklists', '', 'checklists'\)/.test(APP),
+     /jt\(dbIc\('[a-z_-]+'\), 'Checklists', '', 'checklists'\)/.test(APP),
      'the Checklists tile is not on .ja-menu — re-pointing loses that door');
 const exportBlock = (CC.match(/window\.CardinalCommunityJob\s*=\s*\{[\s\S]*?\};/) || [''])[0];
 need('5 showTab is wrapped, and suspend/resume EXTEND the existing export',

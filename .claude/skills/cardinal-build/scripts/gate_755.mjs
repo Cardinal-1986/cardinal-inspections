@@ -92,7 +92,14 @@ const bannerPillCount = p0.count;
 await go(`window.showCardinalTruth()`);
 const p1 = await page.evaluate(PILLS);
 chk('INSURANCE: pills read Clients / Claims', p1.pills.map(p => p.label).join('/') === 'Clients/Claims', JSON.stringify(p1.pills));
-chk('INSURANCE: both pills shown', p1.pills.every(p => p.shown));
+/* Build 803 ("the banner stops repeating the tabs under it"): a pill hides
+   WHILE the duplicating tab strip is on screen. On Truth home the 801 strip
+   covers the client list, so the Clients pill is hidden there by design;
+   Claims (a different screen) stays shown. */
+chk('INSURANCE: Claims shown; Clients hidden as a duplicate of the Truth strip (803)',
+    p1.pills.find(p => p.go === 'claims').shown === true &&
+    p1.pills.find(p => p.go === 'insclients').shown === false,
+    JSON.stringify(p1.pills));
 chk('no new pills were added (same element count)', p1.count === bannerPillCount, p1.count + ' vs ' + bannerPillCount);
 await go(`document.querySelector('#crBanner [data-go="insclients"]').click()`);
 chk('Clients opens the insurance client list', await page.evaluate(vis('insClientsView')));
@@ -103,7 +110,11 @@ chk('Claims opens the claims tracker', await page.evaluate(vis('cr-claims-mount'
 /* ── community ── */
 await go(`window.CardinalCommunityHub.show()`);
 const p2 = await page.evaluate(PILLS);
-chk('COMMUNITY: pills read Partners / Bids', p2.pills.map(p => p.label).join('/') === 'Partners/Bids', JSON.stringify(p2.pills));
+/* Build 1091: Community speaks "estimate", not "bid" — the pill label is
+   Estimates now (the data-go stays 'bids'). And 803 hides both pills while
+   the hub's own tab strip is on screen (asserted implicitly: the deep-link
+   clicks below still route through the hidden pills). */
+chk('COMMUNITY: pills read Partners / Estimates (1091)', p2.pills.map(p => p.label).join('/') === 'Partners/Estimates', JSON.stringify(p2.pills));
 await go(`window.showHome()`); /* leave, then deep-link from retail-adjacent state */
 await go(`window.CardinalCommunityHub.show()`);
 await go(`document.querySelector('#crBanner [data-go="partners"]').click()`);

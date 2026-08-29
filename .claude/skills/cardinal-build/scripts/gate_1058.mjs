@@ -21,7 +21,11 @@
 import { readFileSync, existsSync } from 'fs';
 
 const args = process.argv.slice(2);
-const FILE = args[0];
+/* suite-runnable: default to this gate's OWN artifact — it gates api/digest.js,
+   not index.html; the runner's index.html fallback made it declare
+   rig-fault on the wrong file. A positional arg still wins. */
+const FILE = (args[0] && !args[0].startsWith('--')) ? args[0]
+  : new URL('../../../../api/digest.js', import.meta.url).pathname;
 const ai = args.indexOf('--app');
 const APP = ai >= 0 ? args[ai + 1] : '/home/user/cardinal-inspections/index.html';
 const ci = args.indexOf('--control');

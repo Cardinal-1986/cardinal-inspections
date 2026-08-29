@@ -59,6 +59,14 @@ async function sweep(html) {
   await page.evaluate(`Promise.resolve(window.__sentinelStates[1].run())`);
   await page.waitForTimeout(600);
 
+  /* Builds 1080–1083 replaced window.confirm with the in-app crAsk sheet
+   * (Promise<boolean>). Reassign it AFTER boot with a controllable answer so
+   * the dirty guard is drivable; the native-dialog handler stays as a belt. */
+  await page.evaluate(`(function(){
+    window.__askAnswer = true; window.__asks = [];
+    window.crAsk = function(m){ window.__asks.push(String(m || '')); return Promise.resolve(window.__askAnswer); };
+  })()`);
+
   const out = { dialogs };
   out.closeLabel = await page.evaluate(`(function(){
     var b = document.querySelector('#cr-est-view [data-act="close"]');
@@ -85,9 +93,11 @@ async function sweep(html) {
 
   /* [dirty cleared] Close straight after save must NOT ask */
   const dlgBefore = dialogs.length;
+  const askBefore = await page.evaluate(`window.__asks.length`);
   await page.evaluate(`(function(){ var b = document.querySelector('#cr-est-view [data-act="close"]'); if (b) b.click(); })()`);
   await page.waitForTimeout(300);
-  out.closeAskedWhenClean = dialogs.length > dlgBefore;
+  out.closeAskedWhenClean = dialogs.length > dlgBefore
+    || (await page.evaluate(`window.__asks.length`)) > askBefore;
   out.closedClean = await page.evaluate(`(function(){
     var v = document.getElementById('cr-est-view');
     return !(v && v.classList.contains('open'));
@@ -101,16 +111,20 @@ async function sweep(html) {
     if (t){ t.value = t.value + ' x'; t.dispatchEvent(new Event('input', { bubbles: true })); }
   })()`);
   const dlg2 = dialogs.length;
+  const ask2 = await page.evaluate(`window.__asks.length`);
   dialogMode = 'dismiss';
+  await page.evaluate(`window.__askAnswer = false`);
   await page.evaluate(`(function(){ var b = document.querySelector('#cr-est-view [data-act="close"]'); if (b) b.click(); })()`);
   await page.waitForTimeout(300);
-  out.dirtyAsked = dialogs.length > dlg2;
-  out.dirtyMsg = dialogs[dialogs.length - 1] || '';
+  const asksNow = await page.evaluate(`window.__asks`);
+  out.dirtyAsked = dialogs.length > dlg2 || asksNow.length > ask2;
+  out.dirtyMsg = asksNow[asksNow.length - 1] || dialogs[dialogs.length - 1] || '';
   out.stillOpenOnDismiss = await page.evaluate(`(function(){
     var v = document.getElementById('cr-est-view');
     return !!(v && v.classList.contains('open'));
   })()`);
   dialogMode = 'accept';
+  await page.evaluate(`window.__askAnswer = true`);
   await page.evaluate(`(function(){ var b = document.querySelector('#cr-est-view [data-act="close"]'); if (b) b.click(); })()`);
   await page.waitForTimeout(300);
   out.closedOnAccept = await page.evaluate(`(function(){

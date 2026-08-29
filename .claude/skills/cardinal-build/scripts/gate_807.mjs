@@ -180,38 +180,49 @@ const vis = 'el => { if(!el) return false; const r = el.getBoundingClientRect();
   const { ctx, page } = await open({ user:{ email:'theo@cardinalrenovations.net' } });
   const o = await page.evaluate(`(()=>{ const vis = ${vis};
     const txt = document.body.innerText || '';
-    const optCats = {};
-    document.querySelectorAll('.opt[data-surface]').forEach(b=>{
-      optCats[b.dataset.surface] = (optCats[b.dataset.surface]||0) + 1; });
+    /* 809-826 rebuilt the PREP picker: surfaces are picked one at a time on
+       the #vzRail buttons and the options render as .crow rows in #vzList
+       (the spec book), with a No-change row (empty data-id) always on top and
+       brands as .lhead group headers. Drive the rail to census every surface;
+       the OLD probe read .opt[data-surface], which no longer exists. */
+    const surf = {};
+    document.querySelectorAll('#vzRail button').forEach(rb => {
+      rb.click();                       /* drawList() is synchronous */
+      const rows = Array.from(document.querySelectorAll('#vzList .crow'));
+      surf[(rb.title || '').toLowerCase()] = {
+        total: rows.length,
+        real:  rows.filter(r => r.dataset.id).length,
+        ids:   rows.map(r => r.dataset.id).filter(Boolean),
+        heads: Array.from(document.querySelectorAll('#vzList .lhead'))
+                 .map(h => (h.textContent || '').trim()),
+        disc:  !!document.querySelector('#vzList .crow[data-id="oc3"] .badge.disc'),
+      };
+    });
+    const rb0 = document.querySelector('#vzRail button'); if (rb0) rb0.click();
     return { card: vis(document.getElementById('vzSignin')),
              app:  vis(document.getElementById('vzApp')),
-             opts: optCats,
-             /* Read the DOM, NOT innerText. The surface pickers are inside
-                closed <details>, so innerText returns "" for all of them and
-                every text-based assertion here passed vacuously — including
-                the one meant to prove a hidden colour is not offered. */
-             hidden: !!document.querySelector('.opt[data-surface=roof][data-id="oc2"]'),
-             disc:   !!document.querySelector('.opt[data-surface=roof][data-id="oc3"] .badge.disc'),
-             roofSubs: Array.from(document.querySelectorAll('.opt[data-surface=roof]'))
-                         .filter(b => b.dataset.id)          /* the No-change option has none */
-                         .map(b => b.querySelector('.nm i').textContent),
+             surf,
              comboA: window.CardinalVisualizer.comboKey('p.jpg',{roof:{id:'a'},siding:{id:'b'}}),
              comboB: window.CardinalVisualizer.comboKey('p.jpg',{siding:{id:'b'},roof:{id:'a'}}),
              roofPrompt: window.CardinalVisualizer.roofPrompt({name:'Brownwood',product_line:'Duration',description:'warm brown blend'}) };
   })()`);
   chk('a stored session goes straight in — no second sign-in', o.card === false && o.app === true,
       'card=' + o.card + ' app=' + o.app);
-  /* +1 per surface for the "No change" option. */
+  /* +1 per surface for the "No change" row (empty data-id). */
+  const R = (o.surf || {}).roof || {};
   chk('roof options come from oc_colors (Shasta White is hidden, so 2 + No change)',
-      o.opts.roof === 3, JSON.stringify(o.opts));
-  chk('a hidden colour is not offered', o.hidden === false, 'oc2 present=' + o.hidden);
-  chk('a discontinued colour keeps a badged spot', o.disc === true, 'oc3 badge=' + o.disc);
+      R.total === 3 && R.real === 2, JSON.stringify(R));
+  chk('a hidden colour is not offered', Array.isArray(R.ids) && !R.ids.includes('oc2'),
+      'oc2 present=' + (Array.isArray(R.ids) && R.ids.includes('oc2')));
+  chk('a discontinued colour keeps a badged spot', R.disc === true, 'oc3 badge=' + R.disc);
+  /* brands render as the .lhead group headers since the spec-book rework */
   chk('every roof option is Owens Corning — materials never supplies a shingle',
-      Array.isArray(o.roofSubs) && o.roofSubs.length > 0 &&
-      o.roofSubs.every(s => /Owens Corning/.test(s)), JSON.stringify(o.roofSubs));
+      Array.isArray(R.heads) && R.heads.length > 0 &&
+      R.heads.every(s => /Owens Corning/.test(s)), JSON.stringify(R.heads));
   chk('siding/trim/windows/gutters come from materials',
-      o.opts.siding === 2 && o.opts.trim === 2 && o.opts.windows === 2 && o.opts.gutters === 2,
-      JSON.stringify(o.opts));
+      ['siding','trim','windows','gutters'].every(k =>
+        o.surf[k] && o.surf[k].real === 1 && o.surf[k].total === 2),
+      JSON.stringify(o.surf));
   chk('comboKey is order-independent', o.comboA === o.comboB, o.comboA + ' vs ' + o.comboB);
   chk('the roof prompt is composed from the colour, since oc_colors has none',
       /Owens Corning Duration in Brownwood/.test(o.roofPrompt) &&
@@ -229,10 +240,15 @@ const vis = 'el => { if(!el) return false; const r = el.getBoundingClientRect();
     const shot = document.querySelector('#vzShots .shot');
     const before = document.getElementById('vzQueue').disabled;
     if (shot) shot.click();
-    const roof = document.querySelector('.opt[data-surface=roof][data-id="oc1"]');
+    /* the 809-826 picker: roof list is up by default; siding sits behind
+       its rail button. */
+    const roof = document.querySelector('#vzList .crow[data-id="oc1"]');
     if (roof) roof.click();
     const mid = document.getElementById('vzQueue').disabled;
-    const sid = document.querySelector('.opt[data-surface=siding][data-id="m1"]');
+    const sidRail = Array.from(document.querySelectorAll('#vzRail button'))
+                      .find(b => b.title === 'Siding');
+    if (sidRail) sidRail.click();
+    const sid = document.querySelector('#vzList .crow[data-id="m1"]');
     if (sid) sid.click();
     document.getElementById('vzQueue').click();
     await new Promise(r=>setTimeout(r,400));
@@ -267,10 +283,12 @@ const vis = 'el => { if(!el) return false; const r = el.getBoundingClientRect();
       GEO.test(JSON.stringify({ lat: 39.75, lon: -84.19 }).toLowerCase()));
   chk('NO coordinate travels with a job (the GPS/EXIF fence)',
       !GEO.test(flat), flat.slice(0, 160));
+  /* 822 added `engine` (spark | gemini, CHECK-constrained) to the row. */
   chk('the job names only fields the worker reads — nothing spread in',
       JSON.stringify(Object.keys(row).sort()) ===
-      JSON.stringify(['created_by','project_id','selections','source_path']),
-      JSON.stringify(Object.keys(row).sort()));
+      JSON.stringify(['created_by','engine','project_id','selections','source_path']) &&
+      (row.engine === 'spark' || row.engine === 'gemini'),
+      JSON.stringify(Object.keys(row).sort()) + ' engine=' + row.engine);
   await ctx.close();
 }
 
