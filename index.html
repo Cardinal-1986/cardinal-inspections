@@ -3875,7 +3875,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1131 &#8212; One styling rule on the Cardinal Truth chase list (the \u201cmark chased\u201d button) was written in a form browsers silently discard, so its intended size and weight never applied. Written out longhand; the button now renders as designed. Found by the build-983 regression gate, which returns to green.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1132 &#8212; The Crews screen\u2019s form fields \u2014 Compliance uploads, Profile, Notes \u2014 come up to the app\u2019s 44px touch minimum (they were 33\u201335px, from before the touch-target pass existed). The Labor Rates table\u2019s tight cells are deliberately left as they are \u2014 flooring them would rewrite that table\u2019s density; flag it if you want them bigger too.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42027,7 +42027,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1131, d:'2026-08-29', t:'The chase list\u2019s mark-chased button styles apply again', s:'Its font rule used a shorthand form CSS defines as invalid (inherit inside font:), which browsers drop whole \u2014 the 600 weight and 12px size never rendered. Slipped in at build 1056, after the 983 sweep that removed 30 of the same mistake. Now longhand; the 983 gate holds the standard at zero again.' },
+{ b:1132, d:'2026-08-29', t:'Crews form fields reach the 44px touch minimum', s:'The Crews screen predates the app-wide 44px touch pass (build 752), and its check missed the screen because the test data had no crews until later \u2014 so its text and date fields sat at 33\u201335px on a phone. Floored now. The Labor Rates table\u2019s dense cells are left alone on purpose; say the word if those should grow too.' },
+ { b:1131, d:'2026-08-29', t:'The chase list\u2019s mark-chased button styles apply again', s:'Its font rule used a shorthand form CSS defines as invalid (inherit inside font:), which browsers drop whole \u2014 the 600 weight and 12px size never rendered. Slipped in at build 1056, after the 983 sweep that removed 30 of the same mistake. Now longhand; the 983 gate holds the standard at zero again.' },
  { b:1130, d:'2026-08-29', t:'Old lump-sum estimates render right outside the editor', s:'Estimates saved before build 1096 carry no per-line pricing flag, and only the editor back-fills it. The Community estimate sheet and newly published documents read the flag alone, so those estimates \u2014 13 of 20 on file \u2014 drew every line as $0 with a stray quantity. Both surfaces now apply the editor\u2019s own rule: a lump-sum estimate\u2019s lines are flat. Totals were never wrong.' },
  { b:1129, d:'2026-08-29', t:'Company Documents lists its documents again', s:'Opening Company Documents drew the trade pills then hit a script error before the document list rendered, so it showed zero documents for every user \u2014 no View or Download on any master. Broken since build 1111 (the Pre-Install Guide rows arriving used a function name that exists only inside other modules). One-line fix; the build-746 regression gate now guards it.' },
  { b:1121, d:'2026-08-28', t:'Scope of Loss history actually records', s:'Applying a SOL extraction was supposed to log a history row (build 665): which document, what was found, what was approved. A scoping bug made that write throw silently on every apply, so the history has never had a single row \u2014 while the visible apply worked, which is why nobody noticed. Found by the new type-check gate; fixed. The claim fields were never affected.' },
@@ -76724,6 +76725,17 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
    audit cannot see it, do not "fix" it), document tick boxes (iframe, prints),
    photo tiles (155px).
    ========================================================================== */
+
+/* ---- crews (1132) ------------------------------------------------------ */
+/* was 289x33 (text) / 289x35 (date) on the Compliance upload form — the crews
+   arc (547+) predates this block and 944's walk saw an EMPTY crews screen
+   until the mock gained a crews seed at 948, so these escaped the sweep while
+   being user-visible the whole time. min-height only, per this block's rule.
+   NOT floored on purpose: #crewsView .crw-rt input (~29px) — the Labor Rates
+   table is a dense admin grid; a 44px cell rewrites its density. Measured,
+   named, deferred to Theo's call rather than swept. */
+#crewsView input[type=text],#crewsView input[type=date],#crewsView input[type=file],
+#crewsView select,#crewsView textarea{min-height:44px;}
 
 /* ---- chrome, on every screen ------------------------------------------- */
 /* was 38×38 (menu) / 34×34 (+) — the header icon buttons */

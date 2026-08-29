@@ -927,6 +927,29 @@ precedence (an open project and a real CRM screen still outrank), the 754 line (
 never moves), the longest name fitting 390px without ellipsis, and the classification census —
 **RED(72) on 1112**, no crash. No SQL.
 
+## Build 1132 — 29 Aug 2026 — Crews form fields reach the 44px touch minimum
+
+`gate_944` (the 22-destination walk + 44px floor) was red on two controls: the Compliance
+upload form's date (289×35) and text (289×33) inputs on the Crews screen. **How they
+escaped the 752 sweep AND 944's walk:** the crews arc (547+) predates the touch pass, and
+944's walk saw an *empty* crews screen — the shared mock had no crews seed until build 948
+— so the rig was blind exactly where the debt was. User-visible the whole time.
+
+**Fix.** A crews group in `cr-touch44-styles` — the block whose own header says every
+sub-44 fix belongs there, with its measurement. `min-height:44px` only, per its rule, on
+`#crewsView` text/date/file/select/textarea. **Deliberately NOT floored, recorded in the
+block:** `#crewsView .crw-rt input` (~29px) — the Labor Rates table is a dense admin grid
+and a 44px cell rewrites its density; measured, named, Theo's call.
+
+### Gates
+- `check_build.py` GREEN 1131 → 1132.
+- **`gate_944` flips GREEN** ("every walked control meets the floor"); **control (1131
+  tree) RED — 2 sub-44 control(s)**.
+
+No SQL. `index.html` + this entry.
+
+---
+
 ## Build 1131 — 29 Aug 2026 — the chase list's mark-chased button styles apply again
 
 `gate_983` (the invalid-`font:` sweep's standing guard, rig-repaired to floors in the
