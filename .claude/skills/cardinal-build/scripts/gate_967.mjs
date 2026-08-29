@@ -118,8 +118,14 @@ const panel = await page.evaluate(async ()=>{
     out.btns = btns;
     /* every control on a screen you tap with a glove */
     out.small = p ? Array.from(p.querySelectorAll('button')).filter(x=>x.getBoundingClientRect().height < 44).map(x=>(x.textContent||'').trim()) : [];
-    /* Discard: confirm() must be auto-accepted */
+    /* Discard: the ask must be auto-accepted. ⚠ RIG REPAIR 29 Aug 2026
+       (triage at build 1121): builds 1080–1083 replaced window.confirm()
+       with window.crAsk(msg)->Promise<boolean>; the Discard handler now
+       awaits crAsk, so a confirm stub alone left the modal unanswered and
+       the held change stayed (dead=1). Stub both. */
     window.confirm = () => true;
+    window.__asks = window.__asks || [];
+    window.crAsk = function(m){ window.__asks.push(String(m||'')); return Promise.resolve(true); };
     const dis = p ? Array.from(p.querySelectorAll('button')).find(x=>/discard/i.test(x.textContent||'')) : null;
     if(dis) dis.click();
     await new Promise(r=>setTimeout(r,400));

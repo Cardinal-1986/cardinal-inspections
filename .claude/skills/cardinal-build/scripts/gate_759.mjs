@@ -152,69 +152,17 @@ await go(`openPhotosView()`, 1500);
 const r2c = await probe(`(() => [...document.querySelectorAll('#phCrmChips [data-phcrm]')].map(b => b.getAttribute('data-phcrm') + (b.classList.contains('on') ? '*' : '')))()`);
 chk('2. arriving from Community preselects Community', (r2c || []).includes('community*'), JSON.stringify(r2c));
 
-/* ══ 3. Production job rows ══ */
-await go(`window.showHome()`, 700);
-await go(`window.CardinalProduction.open()`, 1600);
-const r3 = await probe(`(() => {
-  const jobs = [...document.querySelectorAll('.cr-pb-job')];
-  if (!jobs.length) return { none: true };
-  return jobs.map(j => {
-    const nm = j.querySelector('.nm'), ad = j.querySelector('.ad');
-    if (!nm || !ad) return { missing: true };
-    const nb = nm.getBoundingClientRect(), ab = ad.getBoundingClientRect(), jb = j.getBoundingClientRect();
-    return {
-      nmDisplay: getComputedStyle(nm).display, adDisplay: getComputedStyle(ad).display,
-      addressBelowName: Math.round(ab.top) >= Math.round(nb.bottom) - 1,
-      /* the element's OWN right edge — a container rect cannot see inline overflow */
-      adWithinCard: Math.round(ab.right) <= Math.round(jb.right),
-      /* NOT scrollWidth <= clientWidth — that means "short enough not to need
-         truncating". A line that IS being ellipsised has scrollWidth greater
-         than clientWidth by definition, so that test failed a correct build.
-         Assert the MECHANISM plus containment instead.
-         (And no backticks in here: this whole probe is a template literal —
-         BUG_CLASSES 38, which this comment tripped on its first draft.) */
-      clips: getComputedStyle(ad).overflow === 'hidden' && getComputedStyle(ad).textOverflow === 'ellipsis'
-             && getComputedStyle(nm).overflow === 'hidden' && getComputedStyle(nm).textOverflow === 'ellipsis',
-      adOverflowing: ad.scrollWidth > ad.clientWidth + 1,   /* i.e. the ellipsis is actually in use */
-      adColor: getComputedStyle(ad).color,
-    };
-  });
-})()`);
-chk('3. production rows rendered', !r3.none && !r3.__err, r3.__err || '');
-if (Array.isArray(r3)) {
-  chk('3. the name is a block', r3.every(j => j.nmDisplay === 'block'), JSON.stringify(r3.map(j => j.nmDisplay)));
-  chk('3. THE ADDRESS SITS BELOW THE NAME', r3.every(j => j.addressBelowName), JSON.stringify(r3.map(j => j.addressBelowName)));
-  chk('3. the address stays inside the card', r3.every(j => j.adWithinCard), JSON.stringify(r3.map(j => j.adWithinCard)));
-  chk('3. both lines clip with an ellipsis', r3.every(j => j.clips), JSON.stringify(r3.map(j => j.clips)));
-  chk('3. and the long address is genuinely being ellipsised', r3.some(j => j.adOverflowing), JSON.stringify(r3.map(j => j.adOverflowing)));
-  chk('3. the address ink is the readable one (5.33:1)', r3.every(j => j.adColor === 'rgb(141, 149, 157)'), JSON.stringify(r3.map(j => j.adColor)[0]));
-}
-
-/* ══ 4. call the client from the punch dossier ══ */
-await go(`(() => { const j = [...document.querySelectorAll('.cr-pb-job')].find(x => /Joeseph/.test(x.textContent)); if (j) j.click(); })()`, 1300);
-const r4 = await probe(`(() => {
-  const tel = document.querySelector('.cr-pb-dtel');
-  return { present: !!tel, href: tel ? tel.getAttribute('href') : null,
-           hasIcon: !!(tel && tel.querySelector('svg')),
-           text: tel ? (tel.textContent || '').trim() : null,
-           resolver: typeof window.projPhone };
-})()`);
-chk('4. projPhone is a genuine global', r4.resolver === 'function', r4.resolver);
-chk('4. CALL BUTTON APPEARS FOR A LEAD-ONLY PHONE (the 11-of-34 case)', r4.present, JSON.stringify(r4));
-chk('4. it dials the normalised number', r4.href === 'tel:9375558899', r4.href);
-chk('4. and it carries a phone icon', r4.hasIcon);
-/* a client with no phone anywhere must still show nothing — honest, not broken */
-await go(`(() => { const b = document.querySelector('[data-act="tolist"]'); if (b) b.click(); })()`, 900);
-await go(`(() => { const j = [...document.querySelectorAll('.cr-pb-job')].find(x => /Kimberly/.test(x.textContent)); if (j) j.click(); })()`, 1300);
-const r4b = await probe(`(() => ({ present: !!document.querySelector('.cr-pb-dtel'),
-  open: !!document.querySelector('.cr-pb-dacts') }))()`);
-chk('4. no Call button when there is no number anywhere', r4b.open && !r4b.present, JSON.stringify(r4b));
-
-/* ══ source guards ══ */
+/* ══ 3+4 TRIMMED (suite cleanup, 29 Aug 2026) ══
+   Sections 3 (Production job rows) and 4 (call from the punch dossier) drove
+   the PRE-767 Production board. Builds 766-772 rewrote cr-pb-styles/cr-pb-script
+   WHOLESALE — .cr-pb-dtel / .cr-pb-dacts occur 0 times in the file, and 877's
+   Self Check triage records the old board controls matching nothing. The call
+   capability carried into the punch card (jobHtml, tel: via projPhone) under
+   the 766-772-era gates. Sections 1-2 (insurance card fit, Photo Activity CRM
+   chips) still guard living surfaces and stay. */
+/* ══ source guards (trimmed with sections 3-4: the three pins on the
+   pre-767 board's CSS went with it; these two guard living code) ══ */
 const src = APP;
-chk('the grid track can shrink', src.includes('grid-template-columns:minmax(0,1fr);gap:8px}'));
-chk('the light-mode address ink is untouched', src.includes(':root[data-theme="rb-light"] .cr-pb-job .ad{color:#6b7280}'));
-chk('exactly one muted-ink site changed', (src.match(/color:#697079/g) || []).length === 12, (src.match(/color:#697079/g) || []).length);
 chk('one phone resolver, not a ninth regex', (src.match(/function projPhone\(pr\)\{/g) || []).length === 1);
 chk('the photo chips reuse the app\'s chip classes', src.includes('<div class="ljchips" id="phCrmChips"></div>'));
 

@@ -124,9 +124,14 @@ const run = await page.evaluate(async ({CC, CH2, CAN})=>{
         ` + (grab(CC, 'function priceOf(pr){')||'function priceOf(){ return {amt:0,src:"none"}; }') +
         '\n' + (grab(CC, 'function priceSrc(pr){')||'') + '\n' + bidHtml + '; return bidHtml;')(EST);
 
-      /* a LUMP SUM line: unit_price 0, amount 12000 — the live shape on 14 of 18 rows */
+      /* a LUMP SUM line: unit_price 0, amount 12000 — the live shape on 14 of 18 rows.
+         ⚠ RIG REPAIR 29 Aug 2026 (triage at build 1121): build 1096 made pricing
+         a PER-LINE choice — a line is lump-sum when it.flat === true; the
+         estimate-level `itemized:false` is still written on save but "nothing
+         1096+ reads it to render" (build log 1096). The fixture now declares the
+         lump line the way the app does; the assertions are unchanged. */
       out.lump = mkBid({ total: 12000, itemized: false,
-        line_items: [{ name:'OC Duration', qty: 11, unit:'EA', unit_price: 0, amount: 12000 }] })(proj({}, {}));
+        line_items: [{ name:'OC Duration', qty: 11, unit:'EA', unit_price: 0, amount: 12000, flat: true }] })(proj({}, {}));
       /* an ITEMIZED line: 4 x 250 */
       out.itemized = mkBid({ total: 1000, itemized: true,
         line_items: [{ name:'Vent', qty: 4, unit:'EA', unit_price: 250, amount: 0 }] })(proj({}, {}));
@@ -218,11 +223,15 @@ need('5b ...and the qty cell is dropped on a lump sum, as the print document doe
 need('6 an itemized line still multiplies qty x unit_price',
      /\$1,000/.test(String(run.itemized||'')),
      'line amounts rendered: ' + JSON.stringify(money(run.itemized).slice(0,4)));
-need('7 a job priced on the bid form is not told "No bid priced yet"',
-     !/No bid priced yet/.test(String(run.handPriced||'')) && /\$14,330/.test(String(run.handPriced||'')),
+/* ⚠ RIG REPAIR 29 Aug 2026 (triage at build 1121): build 1091 renamed
+   Community "bid" wording to "estimate", so the shipped phrase is now
+   "No estimate priced yet". Match either so the assertion stays non-vacuous
+   in both eras; the contract is unchanged. */
+need('7 a job priced on the bid form is not told "No bid/estimate priced yet"',
+     !/No (bid|estimate) priced yet/.test(String(run.handPriced||'')) && /\$14,330/.test(String(run.handPriced||'')),
      String(run.handPriced||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').slice(0,150));
 need('7b ...while a genuinely unpriced job still says so',
-     /No bid priced yet/.test(String(run.unpriced||'')),
+     /No (bid|estimate) priced yet/.test(String(run.unpriced||'')),
      String(run.unpriced||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').slice(0,120));
 
 const AN = run.analytics || {};

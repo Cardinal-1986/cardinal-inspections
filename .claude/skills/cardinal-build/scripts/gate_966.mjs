@@ -167,7 +167,7 @@ need('5 typing into a placeholder drops the count', !!(R && R.typeDrop>=1), 'dro
 need('6 choosing from a dropdown drops the count', !!(R && R.selDrop>=1), 'drop='+(R&&R.selDrop));
 need('7 ticking a set drops the count', !!(R && R.cbxDrop>=1), 'drop='+(R&&R.cbxDrop));
 need('8 at zero it reads All filled, in green',
-     !!(R && R.end && R.end.text==='All filled' && R.endColor==='rgb(108, 185, 143)' && R.stuck===0),
+     !!(R && R.end && R.end.text==='All filled' && R.endColor==='rgb(159, 220, 180)' /* #9fdcb4 — the app moved off #6cb98f for 4.75:1; its comment beside savedFlash says so */ && R.stuck===0),
      R ? ('text="'+(R.end&&R.end.text)+'" colour='+R.endColor+' unfillable='+R.stuck) : '');
 need('9 tapping it outlines a blank', !!(R && R.jumped && R.hiOutline==='solid'),
      R ? ('jumped='+R.jumped+' outline='+R.hiOutline) : '');

@@ -113,7 +113,17 @@ const s1 = await page.evaluate(() => {
     panelBeforeGrid: !!(p && p.compareDocumentPosition(document.getElementById('galGrid')) & Node.DOCUMENT_POSITION_FOLLOWING) };
 });
 ok('the From CompanyCam button exists on the album', !!s1.btnExists);
-ok('an admin sees it', !!s1.btnShown);
+/* 789 folded the CompanyCam entry into the + Add photos button: #galCcBtn is
+   deliberately never shown (the panel wiring still hangs off it), and the
+   plus opens the picker for an admin, the device picker for everyone else. */
+ok('an admin’s + button opens the CompanyCam picker (789)', await page.evaluate(() => {
+  const g = id => document.getElementById(id);
+  if (g('galCcBtn').style.display !== 'none') return false;   /* the old button must stay retired */
+  g('galAddBtn').click();
+  const opened = g('galCcPanel') && g('galCcPanel').style.display !== 'none';
+  if (typeof galCcClose === 'function') galCcClose();
+  return !!opened;
+}));
 ok('the picker panel exists and starts closed', !!(s1.panelExists && s1.panelHidden));
 ok('the panel sits above the photo grid', !!s1.panelBeforeGrid);
 
@@ -124,13 +134,16 @@ const s2 = await page.evaluate(() => {
   const real = window.currentUser;
   window.currentUser = { email: 'nick@cardinalrenovations.net' };
   openGalleryMode('all');
-  const hiddenForRep = !!(g('galCcBtn') && g('galCcBtn').style.display === 'none');
+  g('galAddBtn').click();
+  const hiddenForRep = !!(g('galCcPanel') && g('galCcPanel').style.display === 'none');
   window.currentUser = real;
   openGalleryMode('all');
-  const backForAdmin = !!(g('galCcBtn') && g('galCcBtn').style.display !== 'none');
+  g('galAddBtn').click();
+  const backForAdmin = !!(g('galCcPanel') && g('galCcPanel').style.display !== 'none');
+  if (typeof galCcClose === 'function') galCcClose();
   return { hiddenForRep, backForAdmin };
 });
-ok('a rep does NOT get the button (server 403s them anyway)', !!s2.hiddenForRep);
+ok('a rep’s + does NOT open the picker (server 403s them anyway)', !!s2.hiddenForRep);
 ok('the admin gets it back on the next open', !!s2.backForAdmin);
 
 console.log('\n--- 2. open seeds the address and searches ---');
@@ -161,6 +174,13 @@ const s4 = await page.evaluate(() => {
   return { addLabel: a ? a.textContent : null };
 });
 ok('the Add button counts the ticks', /Add 2 to album/.test(s4.addLabel || ''), s4.addLabel);
+/* 1080-1083: the foreign-photo challenge is crAsk now, not window.confirm —
+   record and auto-accept it so the add proceeds as a user's Yes would. */
+await page.evaluate(() => {
+  window.__asks = [];
+  window.crAsk = function (m) { window.__asks.push('confirm: ' + String(m || '')); return Promise.resolve(true); };
+  window.crTell = function (m) { window.__asks.push('alert: ' + String(m || '')); };
+});
 await page.evaluate(() => { const a = document.getElementById('galCcAddBtn'); if (a) a.click(); });
 await page.waitForTimeout(3500);
 const s5 = await page.evaluate(() => {
@@ -174,7 +194,8 @@ const s5 = await page.evaluate(() => {
     unticked: document.querySelectorAll('#galCcGrid [data-gcc-pick]:checked').length
   };
 });
-ok('the foreign tick was challenged first', dialogs.some(d => /different job/.test(d)), JSON.stringify(dialogs));
+const asks = dialogs.concat(await page.evaluate(() => window.__asks || []));
+ok('the foreign tick was challenged first', asks.some(d => /different job/.test(d)), JSON.stringify(asks));
 ok('two photographs landed in project_photos', s5.rows.length === 2, JSON.stringify(s5.rows));
 ok('both rows belong to this client', s5.rows.every(r => r.project === 'p-1'));
 ok("the crew's caption came across on the captioned one", s5.rows.some(r => r.caption === 'North slope hail damage'), JSON.stringify(s5.rows.map(r => r.caption)));

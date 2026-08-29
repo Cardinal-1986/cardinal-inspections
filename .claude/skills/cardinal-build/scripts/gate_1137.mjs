@@ -1,4 +1,8 @@
-/* gate_1129.mjs — the Owner Console is a hub with areas, not one long scroller.
+/* gate_1137.mjs — the Owner Console is a hub with areas, not one long scroller.
+ *
+ * ⚠ Built as 1129; renumbered to 1137 when main reached 1136 mid-build and #541
+ * had already taken 1129. The control below is the tree this branch forked from
+ * (1128 content, now merged forward) — what it proves is unchanged.
  *
  * Theo: "The owner console is just 1 looooong page. Can we make it more
  * presentable like an owners hub that can take you to different areas?"
@@ -11,9 +15,9 @@
  * cost six screens at once. Back from an area must land on the hub, and back
  * from the hub must leave the console.
  *
- * Negative control: point it at 1128 -> RED (no .ow-card exists at all), and it
+ * Negative control: point it at pre-hub main -> RED (no .ow-card exists at all), and it
  * must report red rather than crash (BUG_CLASSES 37), so every probe is guarded.
- *   node gate_1129.mjs [file.html]
+ *   node gate_1137.mjs [file.html]
  */
 import { chromium } from 'playwright';
 import { readFileSync } from 'fs';
@@ -60,7 +64,7 @@ const hub = await p.evaluate(() => {
 ok(hub.n >= 7, 'the hub shows a card per area (' + hub.n + ')');
 ok(hub.secs === 0, 'and the eight stacked sections are NOT all on it (' + hub.secs + ' rendered)');
 ok(hub.h > 0 && hub.h < 2000,
-   'the hub fits ~1.5 screens, not 3.4 — ' + hub.h + 'px (was 2907px at 1128)');
+   'the hub fits ~1.5 screens, not 3.4 — ' + hub.h + 'px (was 2907px before the hub)');
 /* ⚠ [].every() is TRUE. Both of these passed vacuously on the 1128 control,
    where there are no cards at all — "every card carries a figure — []" is a
    check that cannot fail. BUG_CLASSES 81, written this same day and promptly

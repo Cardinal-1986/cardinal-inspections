@@ -160,7 +160,9 @@ ok('the urgency band says URGENT, never PAYMENT', !/payment/i.test(await page.ev
 ok('manager can reassign', mgr.hasAssignSelect);
 ok('manager can set the date — Curtis dispatches', mgr.hasDate);
 ok('manager can flip urgency company-wide', mgr.hasUrgToggle);
-ok('three trade templates are offered', mgr.templates.length === 3, JSON.stringify(mgr.templates));
+/* 947 added Window repair and General repair beside the three trades (Bob
+   Deaton is a windows crew) — five templates is the shipped set. */
+ok('five trade templates are offered (947: +Window, +General)', mgr.templates.length === 5, JSON.stringify(mgr.templates));
 ok('the templates are the trades Cardinal runs',
   /Roofing/.test(mgr.templates.join('|')) && /Siding/.test(mgr.templates.join('|')) && /Gutter/.test(mgr.templates.join('|')));
 ok('five guided photo slots', mgr.slots.length === 5, JSON.stringify(mgr.slots));
@@ -227,6 +229,9 @@ await shot('02-checklist');
 console.log('\n--- the close gate: 5 photos AND every step ---');
 ok('close refuses while photos are short', await page.evaluate(async () => {
   let alerted = '';
+  /* 1080-1083 replaced window.alert with the in-app crTell sheet; intercept
+     both so the refusal text is still captured. */
+  window.crTell = (m) => { alerted = String(m || ''); };
   window.alert = (m) => { alerted = m; };
   document.querySelector('#cr-pk [data-act="close"]').click();
   await new Promise(r => setTimeout(r, 400));

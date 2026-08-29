@@ -124,8 +124,11 @@ const e2 = await CT.page.evaluate(() => ({
 }));
 // the meaningful check is at the source level - the second call site survives
 const srcCheck = (APP.match(/window\.CardinalPortal\.pick\(\);/g) || []).length;
-ok('exactly two callers of pick() remain — the new menu item and the pre-existing Insurance mini-chip',
-  srcCheck === 2, srcCheck);
+/* 924 (the phone slide-out drawer) added a THIRD deliberate caller — the
+   drawer header's .cr-dh-switch. The count is pinned so an accidental removal
+   OR duplication still goes red; bump it only with a build-log citation. */
+ok('exactly three callers of pick() remain — the menu item, the Insurance mini-chip, and 924\'s drawer switch',
+  srcCheck === 3, srcCheck);
 await CT.browser.close();
 
 console.log('\n--- F. desktop: chip gone there too (deliberately not phone-scoped), menu works there too ---');

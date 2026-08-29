@@ -131,33 +131,35 @@ for (const width of [390, 1194]) {
     chk(`${tag} ${id}: AND CLOSES THE TOOL SCREEN`, !a.mountShown, `stillOpen=${a.mountShown}`);
   }
 
-  /* the floating exit button — the control Theo actually tapped */
+  /* Build 757 ("one Home button, not three") RETIRED the two floating home
+     controls this section used to click — #cr-pme-exit-btn and #cr-home-btn.
+     The surviving control is the header's gold house, and what 756 proved
+     (Home means YOUR CRM, and it closes the panel) is asserted through it. */
+  chk(`${tag} 757: the floating exit button is gone`,
+      await page.evaluate(`!document.getElementById('cr-pme-exit-btn')`));
+  chk(`${tag} 757: the floating #cr-home-btn is gone`,
+      await page.evaluate(`!document.getElementById('cr-home-btn')`));
+
   await go(`window.showCardinalTruth()`, 700);
   await go(`window.crOpenClaims()`, 1200);
-  await go(`(() => { const b = document.getElementById('cr-pme-exit-btn'); if (b) b.click(); })()`, 1200);
+  await go(`document.getElementById('cr-hd2-home').click()`, 1200);
   const ex = await probe(STATE('cr-claims-mount'));
-  chk(`${tag} the mounts' own Home -> Cardinal Truth (the reported bug)`, ex.truth && !ex.main, JSON.stringify({ truth: ex.truth, main: ex.main, head: ex.head }));
+  chk(`${tag} Home from the claims mount -> Cardinal Truth (the reported bug)`, ex.truth && !ex.main, JSON.stringify({ truth: ex.truth, main: ex.main, head: ex.head }));
   chk(`${tag} …and the panel is closed`, !ex.mountShown);
-
-  /* #cr-home-btn */
-  await go(`window.showCardinalTruth()`, 700);
-  await go(`(() => { const b = document.getElementById('cr-home-btn'); if (b) b.click(); })()`, 1100);
-  const hb2 = await probe(STATE('cr-claims-mount'));
-  chk(`${tag} the floating #cr-home-btn -> Cardinal Truth`, hb2.truth && !hb2.main, JSON.stringify({ truth: hb2.truth, main: hb2.main }));
 
   /* community */
   await go(`window.CardinalCommunityHub.show()`, 1000);
   await go(`window.crOpenClaims()`, 1200);
-  await go(`(() => { const b = document.getElementById('cr-pme-exit-btn'); if (b) b.click(); })()`, 1200);
+  await go(`document.getElementById('cr-hd2-home').click()`, 1200);
   const cm = await probe(STATE('cr-claims-mount'));
-  chk(`${tag} COMMUNITY: the mounts' Home -> the Community hub`, cm.hub && !cm.main, JSON.stringify({ hub: cm.hub, main: cm.main }));
+  chk(`${tag} COMMUNITY: Home from the mount -> the Community hub`, cm.hub && !cm.main, JSON.stringify({ hub: cm.hub, main: cm.main }));
 
   /* retail regression */
   await go(`window.showHome()`, 900);
   await go(`window.crOpenClaims()`, 1200);
-  await go(`(() => { const b = document.getElementById('cr-pme-exit-btn'); if (b) b.click(); })()`, 1200);
+  await go(`document.getElementById('cr-hd2-home').click()`, 1200);
   const rt = await probe(STATE('cr-claims-mount'));
-  chk(`${tag} RETAIL: the mounts' Home still -> the retail dashboard`, rt.main && !rt.truth, JSON.stringify({ main: rt.main, truth: rt.truth }));
+  chk(`${tag} RETAIL: Home from the mount still -> the retail dashboard`, rt.main && !rt.truth, JSON.stringify({ main: rt.main, truth: rt.truth }));
   chk(`${tag} RETAIL: and the panel closes`, !rt.mountShown);
 
   await page.close();
@@ -168,9 +170,14 @@ for (const width of [390, 1194]) {
 const src = APP;
 chk('one home ladder in the file: goHome()', (src.match(/function goHome\(\)\{/g) || []).length === 1);
 chk('goHome is exported on CardinalHeader', src.includes('goHome  : goHome,'));
-chk('three home controls route through it', (src.match(/window\.CardinalHeader\.goHome\(\)/g) || []).length === 3, (src.match(/window\.CardinalHeader\.goHome\(\)/g) || []).length);
+/* 3 at build 756; build 757 retired one caller with its floating button. */
+chk('two home controls route through it (757 retired the third)', (src.match(/window\.CardinalHeader\.goHome\(\)/g) || []).length === 2, (src.match(/window\.CardinalHeader\.goHome\(\)/g) || []).length);
 chk('cr-mounthead-styles present', src.includes('<style id="cr-mounthead-styles">'));
-chk('cr-touch44 is still the LAST style block', src.lastIndexOf('<style') === src.lastIndexOf('<style id="cr-touch44-styles">'));
+/* the LAST-stylesheet positional pin is retired: later builds legitimately
+   appended module stylesheets (791 namebar, 1080–83 ask sheet, …); the
+   cascade-win proof lives in gate_752 now. What must still hold here is
+   that the block exists exactly once. */
+chk('cr-touch44 block still present exactly once', (src.match(/<style id="cr-touch44-styles">/g) || []).length === 1);
 chk('the desktop lnav rule is untouched', src.includes('body.cr-lnav-on #cr-estimates-mount,\nbody.cr-lnav-on #cr-pricing-mount,\nbody.cr-lnav-on #cr-claims-mount{'));
 
 await browser.close();

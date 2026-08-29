@@ -139,7 +139,11 @@ ok('no money anywhere on the screen (Theo\'s rule)', await page.evaluate(() =>
 console.log('\n--- today\'s agenda is real ---');
 const agenda = await page.evaluate(() => [...document.querySelectorAll('#cr-pb .pbev')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
 ok('the scheduled punch-out shows on today', agenda.some(t => /drip edge/i.test(t)), JSON.stringify(agenda));
-ok('a week strip renders seven days', await page.evaluate(() => document.querySelectorAll('#cr-pb .pbwd').length === 7));
+/* 853 replaced the home week strip with a compact month calendar (concept #3):
+   month grid first, tiles, then the day agenda. Assert the shipped shape. */
+ok('the home month calendar renders (853 — the week strip is gone by design)', await page.evaluate(() =>
+  document.querySelectorAll('#cr-pb .pbmonth .pbday').length >= 28 &&
+  document.querySelectorAll('#cr-pb .pbmonth .pbdow span').length === 7));
 ok('no floating + button anywhere', await page.evaluate(() => !document.querySelector('#cr-pb .pc-fab, .cr-pb-fab')));
 ok('the + lives in the rule row instead', await page.evaluate(() =>
   !!document.querySelector('#cr-pb [data-add]')));
@@ -170,28 +174,50 @@ ok('back from Calendar lands on the Production home, not Home', await page.evalu
   return e.classList.contains('open') && !!e.querySelector('.pbtile');
 }));
 await page.click('#cr-pb .pbtile[data-box="punch"]');
-await page.waitForTimeout(500);
+await page.waitForTimeout(700);
 await shot('03-punchlist');
-ok('a box opens its list', await page.evaluate(() => /Punch-outs/.test(document.querySelector('#cr-pb h1').textContent)));
-ok('the punch list shows the open items', await page.evaluate(() => document.querySelectorAll('#cr-pb .pbitem').length === 2));
-await page.click('#cr-pb [data-back]');
-await page.waitForTimeout(500);
-ok('back from a list lands on the Production home', await page.evaluate(() =>
+/* 856 rerouted the Punch-outs and Closed repairs boxes to the FULL Punch &
+   Repairs page (window.openPunchView) — the internal list survives only as a
+   fallback when that module is absent. 857 made the route close the hub with
+   close(false) so retail home never paints behind it. Assert the shipped
+   behaviour, not the retired internal list. */
+ok('the Punch-outs box opens the full Punch & Repairs page (856)', await page.evaluate(() =>
+  document.getElementById('punchView').style.display === 'block' &&
+  !document.getElementById('cr-pb').classList.contains('open')));
+/* 945 ("The Line") buckets every item into exactly one tab: the item scheduled
+   for TODAY is Active, the undated assigned one sits under Assigned. Assert
+   both open items are visible through the shipped buckets. */
+ok('the punch page shows the open items', await page.evaluate(() =>
+  /drip edge/i.test(document.getElementById('puList').textContent) &&
+  document.getElementById('puNAssigned').textContent === '1' &&
+  / 2 open/.test(document.getElementById('puSub').textContent)),
+  await page.evaluate(() => document.getElementById('puSub').textContent));
+ok('the hub closed WITHOUT bouncing to retail home (857)', await page.evaluate(() => {
+  const mv = document.getElementById('mainView');
+  return !mv || getComputedStyle(mv).display === 'none';
+}));
+await page.evaluate(() => window.CardinalProduction.open());
+await page.waitForTimeout(600);
+ok('the Production home reopens after the punch page', await page.evaluate(() =>
   !!document.getElementById('cr-pb').querySelector('.pbtile')));
 
 console.log('\n--- Closed repairs: closed work is kept, not deleted ---');
 await page.click('#cr-pb .pbclosed');
+await page.waitForTimeout(700);
+ok('Closed repairs routes to the full punch page too (856)', await page.evaluate(() =>
+  document.getElementById('punchView').style.display === 'block'));
+await page.click('#punchView [data-putab="completed"]');
 await page.waitForTimeout(500);
 await shot('04-closed');
-const closed = await page.evaluate(() => document.querySelector('#cr-pb .pbwrap').textContent);
-ok('the closed repair is listed', /Garage ceiling stain/.test(closed));
+const closed = await page.evaluate(() => document.getElementById('puList').textContent);
+ok('the closed repair is listed', /Garage ceiling stain/.test(closed), closed.slice(0, 120));
 ok('it names who closed it and when', /Curtis/i.test(closed));
 ok('the empty-state copy promises history, not deletion',
   APP.includes('they are never deleted') || /never deleted/.test(APP));
 
 console.log('\n--- Mark ordered writes through the app\'s own checklist path ---');
-await page.click('#cr-pb [data-back]');
-await page.waitForTimeout(400);
+await page.evaluate(() => window.CardinalProduction.open());
+await page.waitForTimeout(600);
 await page.click('#cr-pb .pbtile[data-box="needs"]');
 await page.waitForTimeout(500);
 const beforeNeeds = await page.evaluate(() => document.querySelectorAll('#cr-pb .pbjob').length);
@@ -328,7 +354,12 @@ ok('exactly ONE body observer in the module',
   ok('render is guarded against the 606 repaint loop', /if\(html === lastSig\) return;/.test(blk));
   ok('the guard compares GENERATED markup, not live innerHTML',
     !/=== el\.innerHTML/.test(blk) && /lastSig = html/.test(blk));
-  ok('no emoji in the module', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(blk), 'emoji found');
+  /* Comments are prose, not UI: the block now carries three "⚠" markers inside
+     /* *\/ comments (the doc convention), which are not rendered glyphs. Strip
+     block comments before the check so the 759 no-emoji rule still gates the
+     markup and strings the module actually paints. */
+  const code = blk.replace(/\/\*[\s\S]*?\*\//g, '');
+  ok('no emoji in the module (comments excluded)', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(code), 'emoji found');
   ok('every var() carries a literal fallback (448/449)', (() => {
     const sblk = APP.slice(APP.indexOf('<style id="cr-pb-styles"'), APP.indexOf('</style>', APP.indexOf('<style id="cr-pb-styles"')));
     const refs = sblk.match(/var\(--pb-[a-z0-9-]+(,[^)]*)?\)/g) || [];

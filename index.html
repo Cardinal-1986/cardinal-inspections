@@ -3899,8 +3899,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1122: and again for 1118-1121. Same call, same reason — this is the
      THIRD time main's footer has arrived carrying a summary, so if you are
      resolving this hunk a fourth time: ours wins, and it is not a judgement
-     call. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1129<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+     call.
+     1133: the fourth time. Resolved as instructed — version bumped, no
+     summary; 1129-1133's summaries are in the CHANGELOG.
+     1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
+     was open, so this build renumbered 1129 -> 1137 as well — #541 had already
+     taken 1129. Re-run next_build.py before pushing, not only before starting. -->
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1137<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8456,6 +8461,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <span id="edSecondary"><button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
       <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
       <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
+      <button class="btn dark" id="editEstBtn" style="display:none;" data-cri="pencil" title="Reopen this estimate in the builder — Publish there updates this document"><span class="bl">Edit estimate</span></button>
       <button class="btn dark" id="addFieldBtn" data-cri="plus"><span class="bl">&#65291; Field</span></button>
       <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
       <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
@@ -20984,7 +20990,11 @@ function renderCompanyDocs(){
   /* 1111/1112: the Pre-Install Guides (Roof / Siding / Windows) — editable master
      docs that auto-email to the client when a matching build day is booked. */
   var __guideRow = (window.CardinalGuide && window.CardinalGuide.docsRows)
-    ? window.CardinalGuide.docsRows(__cdTrade, isAdmin()) : '';
+    /* 1129: isAdmin exists 15 times in this file and EVERY one is sealed inside
+     a module IIFE — none is in this block's scope and window.isAdmin is never
+     assigned, so this call threw and killed the doc list below it for every
+     user since 1111. isAdminUser() is this block's own admin check. */
+    ? window.CardinalGuide.docsRows(__cdTrade, isAdminUser()) : '';
   document.getElementById('cdDocList').innerHTML = rows.length
     ? rows.map(function(d){
         return '<div class="cdocrow"><span class="cdicon">&#128196;</span>' +
@@ -25436,6 +25446,9 @@ async function openEditor(id){
     }
   })();
   setEditorStatus(r.status, r.sent_at, r.signed_at);
+  /* 1134: keyed on the title alone, so it must not sit inside the frame's
+     post-load try — one throwing wire there would silently hide it. */
+  refreshEditEstBtn();
   savedFlash.textContent = '';
   rccGate();
   frame.srcdoc = r.html;
@@ -25780,6 +25793,7 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
 });
 
 /* ---- email to client ---- */
+document.getElementById('editEstBtn').addEventListener('click', editEstimateFromDoc);
 document.getElementById('emailDocBtn').addEventListener('click', async function(){
   var btn = this;
   var _bl = btn.querySelector('.bl') || btn;
@@ -26090,6 +26104,53 @@ function refreshSigBtn(){
   var b = document.getElementById('sigBtn');
   if(!b) return;
   b.style.display = (doc && (doc.querySelector('.sign') || doc.querySelector('[data-sig]'))) ? 'inline-block' : 'none';
+}
+/* 1134: a published estimate document is a rendering of a live estimates row —
+   the builder is one tap away instead of back-out-and-hunt. Shown only for
+   estimate-titled docs; everything else keeps its toolbar as it was. */
+function refreshEditEstBtn(){
+  /* current carries no title; titleInput is the module's live title (it is what
+     saveCurrent persists), so a rename while open is honoured too. */
+  var b = document.getElementById('editEstBtn');
+  if(!b) return;
+  var t = titleInput ? titleInput.value : '';
+  b.style.display = (current && isEstimateTitle(t)) ? 'inline-block' : 'none';
+}
+async function editEstimateFromDoc(){
+  var cur = current;
+  if(!cur) return;
+  var E = window.CardinalEstimates;
+  if(!E || typeof E.openEditor !== 'function' || typeof E.loadForProject !== 'function'){
+    crTell('The estimate builder has not loaded yet — try again in a moment.');
+    return;
+  }
+  var pid = cur.project_id;
+  if(!pid){
+    crTell('This document is not linked to a client, so its estimate cannot be found.');
+    return;
+  }
+  var rows = [];
+  try{ rows = (await E.loadForProject(pid)) || []; }catch(_){ }
+  var docId = cur.id;
+  var row = rows.find(function(x){ return x.doc_id === docId || x.contract_doc_id === docId; });
+  if(!row){
+    /* The doc_id write-back after publish is a KNOWN swallowed failure (474
+       audit) — fall back to the number publish() stamps into the title
+       (EST-YYYY-NNNN, build 1015). */
+    var m = /^(EST-\d{4}-\d+)/.exec(((titleInput && titleInput.value) || '').trim());
+    if(m) row = rows.find(function(x){ return x.estimate_number === m[1]; });
+  }
+  if(!row){
+    crTell('No live estimate is linked to this document — it may predate the builder. Open it from the client’s Estimates list instead.');
+    return;
+  }
+  /* The edClientChip direct-route shape: without __histLock the history
+     machinery restores the editor it just watched close — the doc re-opens
+     over the builder. Same lock, same reason. */
+  __histLock = true;
+  try{ await closeEditor(); }   /* saves this document first */
+  finally { __histLock = false; }
+  E.openEditor(pid, row);
 }
 /* The caret, and whether the document allows a field there. Returns null with a
    reason rather than a bare false — "nothing happened" is the worst answer a
@@ -42192,8 +42253,16 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1129, d:'2026-08-29', t:'The Owner Console is a hub now, not one long scroll',
+{ b:1137, d:'2026-08-29', t:'The Owner Console is a hub now, not one long scroll',
   s:'Your words: \u201Cthe owner console is just 1 looooong page.\u201D It was \u2014 eight sections stacked into one scroller, 2,907px on a phone, which is three and a half screenfuls. And that was measured with every list EMPTY, so in real use it was longer than that, never shorter. It now opens on a hub: one card per area \u2014 Today, On the horizon, Renewals, Reminders, The Ledger, The Vault, Strategy \u2014 and each card carries its own live figure, so the question \u201Cdoes anything need me today\u201D is answered before you tap anything. Tap a card to open that area on its own; the back button at the top left returns you to the hub. On a desktop the cards go two across. The hub is 1,376px, a little over one and a half screens, and the areas themselves are unchanged \u2014 each one is exactly the section that was already there, just no longer stacked on top of the other seven. Your phone\u2019s own back gesture works properly too: back from an area returns to the hub, and back again leaves the console, instead of throwing you out to the home screen from three levels deep.' },
+{ b:1136, d:'2026-08-29', t:'The estimate document is readable across the table', s:'A client had a hard time reading an estimate on the iPad and on paper \u2014 the document\u2019s working text ran 8.5\u201310.5pt with table headers under 7pt. Every working size moved up one step (body and line descriptions to 10\u201311pt-plus, labels to 8.5\u20139.5pt); the headings and the big totals were already large and stay as they were. Applies to the preview, the printed page and every newly published estimate; already-published documents keep their stored look until republished.' },
+ { b:1135, d:'2026-08-29', t:'Estimate line cards open full size', s:'Opening an estimate \u2014 especially one built from a template \u2014 showed each line\u2019s description squeezed to a line and a half with the rest cut off, and long item names ran underneath the up/down/remove buttons. Descriptions now open at their full height and stay sized while you type; names stop short of the buttons.' },
+ { b:1134, d:'2026-08-29', t:'Edit estimate \u2014 straight from the finished document', s:'Open a published estimate document and the toolbar now offers Edit estimate: one tap closes the document (saving it first) and reopens that estimate in the builder with every line editable \u2014 the same screen as building from a template. Publish there updates the same document. Documents that predate the builder say so instead of guessing.' },
+ { b:1133, d:'2026-08-29', t:'The profile\u2019s call/text/email icons reach the tap minimum', s:'The client profile\u2019s contact icons, edit pencil and favourite star were 21\u201340px \u2014 under the app\u2019s 44px touch floor \u2014 since the 791 profile rebuild replaced the old floored links. All five now meet the floor with the band looking exactly as before — only the tap area grew. Tap-to-call on a roof, with gloves, is the whole point of the floor.' },
+ { b:1132, d:'2026-08-29', t:'Crews form fields reach the 44px touch minimum', s:'The Crews screen predates the app-wide 44px touch pass (build 752), and its check missed the screen because the test data had no crews until later \u2014 so its text and date fields sat at 33\u201335px on a phone. Floored now. The Labor Rates table\u2019s dense cells are left alone on purpose; say the word if those should grow too.' },
+ { b:1131, d:'2026-08-29', t:'The chase list\u2019s mark-chased button styles apply again', s:'Its font rule used a shorthand form CSS defines as invalid (inherit inside font:), which browsers drop whole \u2014 the 600 weight and 12px size never rendered. Slipped in at build 1056, after the 983 sweep that removed 30 of the same mistake. Now longhand; the 983 gate holds the standard at zero again.' },
+ { b:1130, d:'2026-08-29', t:'Old lump-sum estimates render right outside the editor', s:'Estimates saved before build 1096 carry no per-line pricing flag, and only the editor back-fills it. The Community estimate sheet and newly published documents read the flag alone, so those estimates \u2014 13 of 20 on file \u2014 drew every line as $0 with a stray quantity. Both surfaces now apply the editor\u2019s own rule: a lump-sum estimate\u2019s lines are flat. Totals were never wrong.' },
+ { b:1129, d:'2026-08-29', t:'Company Documents lists its documents again', s:'Opening Company Documents drew the trade pills then hit a script error before the document list rendered, so it showed zero documents for every user \u2014 no View or Download on any master. Broken since build 1111 (the Pre-Install Guide rows arriving used a function name that exists only inside other modules). One-line fix; the build-746 regression gate now guards it.' },
 { b:1128, d:'2026-08-28', t:'The two levels of grey text are two levels again \u2014 in both themes',
   s:'Yesterday\u2019s readability fix had a cost, and this pays it. The app uses two shades of grey for secondary text \u2014 one for \u201Cquieter than the main text\u201D and a second for \u201Cquieter still\u201D. Build 1127 had to brighten the quieter one to make it readable on a roof, and it landed on exactly the shade the first one was already using, so two levels became one and a deliberate bit of visual hierarchy quietly disappeared. Rather than dim it back \u2014 which is what was unreadable in the first place \u2014 the brighter level moves further up, making room underneath. Three distinct levels now, evenly spaced, every one of them comfortably readable. Light mode got the same treatment, and there it also fixed something that was still broken: the punch-out description that 1127 repaired in dark mode was still too faint in light, at 3.22 against a floor of 4.5. That was missed because the check ran on one screen and the conclusion was drawn for the whole app; sweeping ten screens found it. Nothing anywhere gets fainter \u2014 every one of the 186 places these two greys are used gains contrast or keeps what it had.' },
 { b:1127, d:'2026-08-28', t:'Three unreadable labels, found by reading 195 sweep findings',
@@ -47741,6 +47810,16 @@ var pct = Math.max(0, Math.min(100, Number(s.deposit_pct) || 0));
 var deposit = total * pct / 100;
 return { subtotal:subtotal, discount:discount, total:total, deposit:deposit, deposit_pct:pct };
 }
+function autosizeDesc(el){
+  if(!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(38, el.scrollHeight) + 'px';
+}
+function autosizeDescs(){
+  if(!view) return;
+  var els = view.querySelectorAll('.desc-input');
+  Array.prototype.forEach.call(els, autosizeDesc);
+}
 function ensureView(){
 if(view) return view;
 view = document.createElement('div');
@@ -47751,6 +47830,15 @@ document.body.appendChild(view);
    innerHTML, not this element, so it never stacks. */
 view.addEventListener('input', function(){ if(state) state._dirty = true; }, true);
 view.addEventListener('change', function(){ if(state) state._dirty = true; }, true);
+/* 1135: template descriptions are paragraphs, and a textarea does not grow to
+   its content — every line card opened "squished" to ~1.5 lines with the rest
+   clipped (min-height 38px + overflow hidden). Size each description to its
+   own scrollHeight on render and keep it sized while typing. Delegated here
+   for the same reason as the dirty flag above: render() replaces innerHTML,
+   not this element, so it never stacks. */
+view.addEventListener('input', function(e){
+  if(e.target && e.target.classList && e.target.classList.contains('desc-input')) autosizeDesc(e.target);
+}, true);
 return view;
 }
 function openEditor(project, existing){
@@ -47805,6 +47893,9 @@ state._dirty = false;
 render();
 view.classList.add('open');
 document.body.style.overflow = 'hidden';
+/* 1135: render() ran while the view was still display:none, where every
+   textarea measures scrollHeight 0 - size them now that it is visible. */
+autosizeDescs();
 }
 function close(){
 if(view) view.classList.remove('open');
@@ -47908,6 +47999,7 @@ renderTotals(t) +
 '</div>';
 wire();
 ensureEstPhotoUrls();
+autosizeDescs();
 }
 /* ---- Navigator B: the estimate's table of contents (build 546) ------------
    Theo asked for a navigator with sections and drop-downs on both screens. The
@@ -49152,9 +49244,21 @@ if(!p) return '';
 var k = (typeof photoPathOf === 'function') ? photoPathOf(p) : (p.path || p.storage_path);
 return (urls && k && urls[k]) || p.url || '';
 }
+/* 1136: the type scale below was raised one step across the board (working
+   text 8.5-10.5pt -> 10-11.5pt, labels 6.8-8pt -> 8.5-9.5pt; the 13/19/24pt
+   display sizes untouched) - a client could not read the estimate on an
+   iPad or on paper. Theo, 29 Aug, with the printout in hand. */
 function buildDocHtml(est, project, urls){
 var logo    = cardinalLogo();
 var lines   = Array.isArray(est.line_items) ? est.line_items : [];
+/* 1130: same back-compat as the sheet — a pre-1096 lump-sum row (itemized
+   false, no per-line flags) must print flat, not qty x $0. Clone, never
+   mutate the row. */
+if(est.itemized === false){
+  lines = lines.map(function(l){
+    return (l && l.flat == null) ? Object.assign({}, l, { flat: true }) : l;
+  });
+}
 var photos  = Array.isArray(est.photos) ? est.photos : [];
 var clientName = (project && (project.name || project.client_name)) || 'Client';
 var address    = (project && project.address) || '';
@@ -49199,7 +49303,7 @@ var rate = Number(l.unit_price) || 0;
 var amt  = flat ? (Number(l.amount) || 0) : (qty * rate);
 var amtCell = amt ? money(amt) : '';
 var desc = '<b>' + esc(l.name || 'Item') + '</b>' +
-(l.description ? '<br><span style="font-size:9.5pt;color:#555;">' + nl2br(l.description) + '</span>' : '');
+(l.description ? '<br><span style="font-size:11pt;color:#555;">' + nl2br(l.description) + '</span>' : '');
 var _cls = 'avoid-break' + (zi % 2 === 1 ? ' zeb' : '');
 if(!anyDetailed){
 return '<tr class="' + _cls + '"><td>' + desc + '</td><td class="rate">' + amtCell + '</td></tr>';
@@ -49317,76 +49421,76 @@ return '<!DOCTYPE html>\n' +
 ':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#8a8a8a;--hair:#e5e2dc;--wash:#faf8f4;--amber:#E8A33D}\n' +
 '*{box-sizing:border-box}\n' +
 'html,body{margin:0;padding:0}\n' +
-'body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:10.5pt;line-height:1.55;width:8.5in;margin:0 auto;padding:0.75in 0.65in 0.9in;background:#fff}\n' +
+'body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:11.5pt;line-height:1.55;width:8.5in;margin:0 auto;padding:0.75in 0.65in 0.9in;background:#fff}\n' +
 '@page{size:Letter;margin:0.75in 0.65in 0.9in}\n' +
 '@media print{.no-print{display:none!important}body{width:auto;margin:0;padding:0}}\n' +
 '.est-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:10px}\n' +
 '.est-brand{flex:0 0 auto}\n' +
 '.est-logo{width:2.15in;max-width:100%;display:block}\n' +
-'.est-co{flex:0 0 auto;text-align:right;font-size:8.5pt;line-height:1.6;color:#5a5a5a}\n' +
-'.est-co .co-name{font-weight:700;font-size:9.5pt;color:var(--ink);margin-bottom:3px;letter-spacing:.02em}\n' +
+'.est-co{flex:0 0 auto;text-align:right;font-size:10pt;line-height:1.6;color:#5a5a5a}\n' +
+'.est-co .co-name{font-weight:700;font-size:11pt;color:var(--ink);margin-bottom:3px;letter-spacing:.02em}\n' +
 '.est-title{font-size:24pt;font-weight:400;letter-spacing:.22em;text-align:right;margin:10px 0 2px;color:var(--ink)}\n' +
 '.rule{height:2px;background:var(--red);border:0;margin:10px 0 18px}\n' +
-'table.meta{border-collapse:collapse;width:100%;margin:4px 0 16px;font-size:10pt}\n' +
+'table.meta{border-collapse:collapse;width:100%;margin:4px 0 16px;font-size:11pt}\n' +
 'table.meta td{border:0;border-bottom:1px solid var(--hair);padding:7px 12px 7px 0;vertical-align:top}\n' +
-'table.meta td.k{background:none;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);width:20%;padding-top:9px}\n' +
+'table.meta td.k{background:none;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);width:20%;padding-top:9px}\n' +
 'h2.sec{font-size:13pt;font-weight:700;margin:24px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--hair);letter-spacing:.01em;break-after:avoid}\n' +
-'h2.sec .num{display:inline-block;background:var(--red);color:#fff;border-radius:3px;font-size:9pt;padding:1px 7px;margin-right:9px;vertical-align:2px;font-family:"Segoe UI",Arial,sans-serif;font-weight:700}\n' +
+'h2.sec .num{display:inline-block;background:var(--red);color:#fff;border-radius:3px;font-size:10.5pt;padding:1px 7px;margin-right:9px;vertical-align:2px;font-family:"Segoe UI",Arial,sans-serif;font-weight:700}\n' +
 'p{margin:6px 0}\n' +
-'.note{border:0;border-left:3px solid var(--amber);background:var(--wash);padding:10px 14px;font-size:9.5pt;margin:14px 0;line-height:1.6}\n' +
-'table.items{border-collapse:collapse;width:100%;margin:10px 0 4px;font-size:10pt}\n' +
-'table.items th{background:none;color:var(--ink);text-align:left;padding:7px 9px;font-family:"Segoe UI",Arial,sans-serif;font-size:7.5pt;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid var(--ink)}\n' +
+'.note{border:0;border-left:3px solid var(--amber);background:var(--wash);padding:10px 14px;font-size:11pt;margin:14px 0;line-height:1.6}\n' +
+'table.items{border-collapse:collapse;width:100%;margin:10px 0 4px;font-size:11pt}\n' +
+'table.items th{background:none;color:var(--ink);text-align:left;padding:7px 9px;font-family:"Segoe UI",Arial,sans-serif;font-size:9pt;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid var(--ink)}\n' +
 'table.items td{border:0;border-bottom:1px solid var(--hair);padding:8px 9px;vertical-align:top}\n' +
 'table.items td.qty,table.items td.rate{text-align:right;white-space:nowrap;width:12%;font-variant-numeric:tabular-nums}\n' +
 'table.items td.unit{width:9%;color:var(--muted);text-align:center}\n' +
 'table.items tr.totals td{border:0;padding:4px 9px;font-variant-numeric:tabular-nums}\n' +
-'table.items tr.totals td.lbl{text-align:right;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:8.5pt;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}\n' +
+'table.items tr.totals td.lbl{text-align:right;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:10pt;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}\n' +
 'table.items tr.totals td.val{text-align:right;width:14%;white-space:nowrap}\n' +
 'table.items tr.grand td{border-top:2px solid var(--ink);font-size:13pt;font-weight:700;padding-top:8px}\n' +
-'table.items tr.grand td.lbl{color:var(--ink);font-size:9.5pt}\n' +
-'table.items tr.sec-banner td{background:#f3efe8;border-top:2px solid var(--red);border-left:3px solid var(--red);border-bottom:1px solid var(--hair);font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:8.5pt;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);padding:10px 9px 8px}\n' +
+'table.items tr.grand td.lbl{color:var(--ink);font-size:11pt}\n' +
+'table.items tr.sec-banner td{background:#f3efe8;border-top:2px solid var(--red);border-left:3px solid var(--red);border-bottom:1px solid var(--hair);font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:10pt;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);padding:10px 9px 8px}\n' +
 'table.items tr.sec-banner{break-after:avoid}\n' +
 'table.items tr.zeb td{background:#f7f6f3}\n' +
 'table.items tfoot{break-inside:avoid}\n' +
 'body.hide-subs table.items tr.sec-sub{display:none}\n' +
 'table.items tr.sec-sub td{border:0;padding:4px 9px 12px;font-variant-numeric:tabular-nums}\n' +
-'table.items tr.sec-sub td.lbl{text-align:right;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:8.5pt;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}\n' +
+'table.items tr.sec-sub td.lbl{text-align:right;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:10pt;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}\n' +
 'table.items tr.sec-sub td.val{text-align:right;white-space:nowrap;font-weight:700;color:var(--ink)}\n' +
 '.deposit-box{border:0;border-left:3px solid var(--red);border-radius:0;padding:10px 16px;margin:14px 0;background:var(--wash)}\n' +
-'table.dep{border-collapse:collapse;width:100%;font-size:10.5pt}\n' +
+'table.dep{border-collapse:collapse;width:100%;font-size:11.5pt}\n' +
 'table.dep td{padding:4px 0}\n' +
 'table.dep td.k{font-weight:700}\n' +
 'table.dep td.v{text-align:right;font-weight:700;white-space:nowrap;font-size:11.5pt;font-variant-numeric:tabular-nums}\n' +
 '.coverfig{margin:0 0 16px;border:1px solid var(--hair);overflow:hidden;background:#fafafa}\n' +
 '.coverfig img{width:100%;height:auto;max-height:4.2in;object-fit:cover;display:block;background:#eceae5;min-height:2.4in}\n' +
-'.coverfig figcaption{padding:7px 11px;font-size:8.5pt;line-height:1.5;color:#555;background:#fff;border-top:1px solid var(--hair)}\n' +
+'.coverfig figcaption{padding:7px 11px;font-size:10pt;line-height:1.5;color:#555;background:#fff;border-top:1px solid var(--hair)}\n' +
 '.photogrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;align-items:start}\n' +
 '.pfig{margin:0;border:1px solid var(--hair);overflow:hidden;background:#fafafa}\n' +
 '.pfig img{width:100%;height:auto;max-height:3.2in;object-fit:cover;display:block;background:#eceae5;min-height:1.6in}\n' +
-'.pfig figcaption{padding:6px 9px;font-size:8.5pt;line-height:1.5;color:#555;background:#fff;border-top:1px solid var(--hair)}\n' +
+'.pfig figcaption{padding:6px 9px;font-size:10pt;line-height:1.5;color:#555;background:#fff;border-top:1px solid var(--hair)}\n' +
 '.sign{display:flex;gap:32px;margin-top:38px}\n' +
 '.sign .col{flex:1}\n' +
 '.sign .line{border-bottom:1.25px solid var(--ink);height:36px}\n' +
-'.sign .lbl{font-family:"Segoe UI",Arial,sans-serif;font-size:8pt;letter-spacing:.06em;color:var(--muted);margin-top:6px}\n' +
+'.sign .lbl{font-family:"Segoe UI",Arial,sans-serif;font-size:9.5pt;letter-spacing:.06em;color:var(--muted);margin-top:6px}\n' +
 '.accept-card{border:1px solid var(--hair);border-top:3px solid var(--red);background:#fff;border-radius:2px;margin-top:20px;overflow:hidden}\n' +
-'.accept-card .ac-hd{font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:8.5pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);padding:11px 16px 10px;border-bottom:1px solid var(--hair);background:var(--wash)}\n' +
+'.accept-card .ac-hd{font-family:"Segoe UI",Arial,sans-serif;font-weight:700;font-size:10pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);padding:11px 16px 10px;border-bottom:1px solid var(--hair);background:var(--wash)}\n' +
 '.accept-card .ac-recap{display:flex;border-bottom:1px solid var(--hair)}\n' +
 '.accept-card .ac-cell{flex:1;padding:12px 16px;text-align:center;border-right:1px solid var(--hair)}\n' +
 '.accept-card .ac-cell:last-child{border-right:0}\n' +
-'.accept-card .ac-cell .ac-k{font-family:"Segoe UI",Arial,sans-serif;font-size:7pt;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}\n' +
+'.accept-card .ac-cell .ac-k{font-family:"Segoe UI",Arial,sans-serif;font-size:8.5pt;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}\n' +
 '.accept-card .ac-cell .ac-v{font-size:13pt;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}\n' +
 '.accept-card .ac-cell.hi .ac-v{color:var(--red)}\n' +
-'.accept-card .ac-terms{padding:11px 16px 12px;font-size:9pt;line-height:1.5;color:#4a4a4a}\n' +
+'.accept-card .ac-terms{padding:11px 16px 12px;font-size:10.5pt;line-height:1.5;color:#4a4a4a}\n' +
 '.accept-card .ac-sign{display:flex;gap:32px;padding:8px 16px 18px}\n' +
 '.accept-card .ac-sign .col{flex:1}\n' +
 '.accept-card .ac-sign .line{border-bottom:1.25px solid var(--ink);height:34px}\n' +
-'.accept-card .ac-sign .lbl{font-family:"Segoe UI",Arial,sans-serif;font-size:8pt;letter-spacing:.05em;color:var(--muted);margin-top:6px}\n' +
+'.accept-card .ac-sign .lbl{font-family:"Segoe UI",Arial,sans-serif;font-size:9.5pt;letter-spacing:.05em;color:var(--muted);margin-top:6px}\n' +
 '.accept-card .ac-recap.stack{flex-direction:column}\n' +
 '.accept-card .ac-recap.stack .ac-cell{border-right:0;border-bottom:1px solid var(--hair)}\n' +
 '.accept-card .ac-recap.stack .ac-cell:last-child{border-bottom:0}\n' +
 '.avoid-break{break-inside:avoid}\n' +
 '.page-break{break-before:page}\n' +
-'.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--hair);font-size:8pt;color:var(--faint);text-align:center;font-family:"Segoe UI",Arial,sans-serif;letter-spacing:.03em}\n' +
+'.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--hair);font-size:9.5pt;color:var(--faint);text-align:center;font-family:"Segoe UI",Arial,sans-serif;letter-spacing:.03em}\n' +
 '/* the share-link fix: the document is readable on the phone in the kitchen */\n' +
 '@media screen and (max-width:9in){body{width:auto;max-width:8.5in;padding:28px 22px 40px}}\n' +
 '@media screen and (max-width:560px){\n' +
@@ -49398,8 +49502,8 @@ return '<!DOCTYPE html>\n' +
 'table.meta td{border:0;padding:1px 0 7px}\n' +
 'table.meta td.k{padding:8px 0 1px;border-top:1px solid var(--hair)}\n' +
 'table.meta tr:first-child td.k:first-child{border-top:0}\n' +
-'table.items{font-size:9pt}\n' +
-'table.items th{font-size:6.8pt;padding:6px 5px}\n' +
+'table.items{font-size:10.5pt}\n' +
+'table.items th{font-size:8.5pt;padding:6px 5px}\n' +
 'table.items td{padding:7px 5px}\n' +
 '.photogrid{grid-template-columns:1fr}\n' +
 '.sign{flex-direction:column;gap:22px}\n' +
@@ -56720,7 +56824,7 @@ window.CardinalSupplement = { render: render, open: openModal };
    Chromium never showed this - it scrolls the pane on wheel input either way,
    which is why the audit had to walk the parsed rules instead. */
 #cardinalTruthView{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-#cardinalTruthView .ins-body.cr-cth{background:var(--ct-bg,#FAF8F7);padding:0}.cr-cth-rail{contain:paint}.cr-cth-wrap{position:relative;max-width:580px;margin:0 auto;padding:22px 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}.cr-cth-wrap{position:relative}.cr-cth-owed{position:relative;background:linear-gradient(160deg,var(--ct-surface-2),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;box-shadow:0 0 0 1px var(--ct-focus),0 0 22px var(--ct-focus);padding:22px 22px 20px;overflow:hidden}.cr-cth-owed::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ct-warn)}.cr-cth-owed .lbl{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-warn)}.cr-cth-owed .fig{font:700 clamp(36px,10.5vw,50px)/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;color:var(--ct-ink);margin:10px 0 8px}.cr-cth-owed .note{font-size:13px;line-height:1.5;color:var(--ct-ink-2)}.cr-cth-owed .note b{color:var(--ct-ink);font-weight:700}.cr-cth-owed .split{display:flex;gap:18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--ct-warn-bg)}.cr-cth-owed .split div{flex:1;min-width:0}.cr-cth-owed .split .k{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-owed .split .v{font:700 16px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn);margin-top:4px}.cr-cth-stats{display:grid;gap:9px;margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.cr-cth-stat{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:14px 15px;min-width:0}.cr-cth-stat .l{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-stat .v{font:700 21px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.02em;margin-top:6px;color:var(--ct-ink)}.cr-cth-stat.up .v{color:var(--ct-red-deep)}.cr-cth-stat .s{font-size:11px;color:var(--ct-ink-2);margin-top:3px;line-height:1.35}.cr-cth-stat .top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}.cr-cth-stat .ic{font-size:14px;color:var(--ct-ink-2);opacity:.55;line-height:1}.cr-cth-tabs{display:flex;gap:20px;/* 984: WRAP, do not clip. gap:20px sets BOTH axes in flexbox, so row-gap is overridden below. flex-wrap only wraps when the content actually overflows, so this needs no media query: measured 2 rows at 360/390/414 and 1 row unchanged at 430+. Before 984 the strip fitted with EXACTLY 0px slack at one-digit counts, so any real count clipped the last tab, and scrollbar-width:none left no affordance that anything was hidden. 983 made it 11px worse by making font-weight:700 actually apply. */flex-wrap:wrap;row-gap:4px;margin-bottom:18px;padding-bottom:2px;border-bottom:1px solid var(--ct-line);overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-cth-tabs::-webkit-scrollbar{display:none}.cr-cth-tabs button{flex:0 0 auto;background:transparent;border:0;border-bottom:2px solid transparent;padding:0 0 10px;margin-bottom:-1px;font-weight:700;font-size:13px;color:var(--ct-ink-2);cursor:pointer;white-space:nowrap}.cr-cth-tabs button.on{color:var(--ct-ink);border-bottom-color:var(--ct-red)}.cr-cth-tabs button b{font-weight:700;margin-left:5px;opacity:.7}.cr-cth-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ct-line-strong),transparent)}.cr-cth-rail{position:relative;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 6px 12px;box-shadow:0 2px 10px rgba(0,0,0,.28)}.cr-cth-stage{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:15px 14px 15px 30px;background:transparent;border:0;text-align:left;cursor:pointer;font-family:inherit;color:var(--ct-ink);border-radius:10px;transition:background .15s}.cr-cth-stage:hover{background:var(--ct-surface-2)}.cr-cth-stage:focus-visible{outline:2px solid var(--ct-red);outline-offset:-2px}.cr-cth-stage::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--ct-bg);border:2px solid var(--ct-red);z-index:1}.cr-cth-stage::after{content:'';position:absolute;left:10px;top:50%;bottom:-50%;width:1px;background:linear-gradient(180deg,var(--ct-red),var(--ct-red-deep));opacity:.45}.cr-cth-stage:last-of-type::after{display:none}.cr-cth-stage .nm{flex:1;min-width:0}.cr-cth-stage .nm b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15.5px;letter-spacing:.01em;line-height:1.25}.cr-cth-stage .nm small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;line-height:1.4}.cr-cth-stage .ct{flex:0 0 auto;min-width:26px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-cth-stage .amt{flex:0 0 auto;min-width:88px;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);letter-spacing:-.01em}.cr-cth-stage .amt.zero{color:var(--ct-ink-2)}.cr-cth-stage.flag::before{background:var(--ct-warn);border-color:var(--ct-warn);box-shadow:0 0 0 4px var(--ct-line)}.cr-cth-stage.flag{background:var(--ct-surface-3)}.cr-cth-stage.flag .nm b{color:var(--ct-ink)}.cr-cth-stage.flag .amt{color:var(--ct-warn)}.cr-cth-stage.flag.recovered .amt{color:var(--ct-red-deep)}.cr-cth-stage .tag{position:absolute;right:14px;top:8px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-warn);opacity:.8}.cr-cth-term{display:flex;gap:9px;margin-top:14px;padding-left:6px}.cr-cth-term button{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink-2);transition:border-color .15s,color .15s}.cr-cth-term button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink)}.cr-cth-term button b{font-weight:700;font-size:12px;letter-spacing:.02em}.cr-cth-term button span{font:700 15px ui-monospace,'SF Mono',Menlo,monospace}.cr-cth-term button.denied b,.cr-cth-term button.denied span{color:var(--ct-red-deep)}.cr-cth-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}/* 675: the lead button under the stats. Same grid, same button styling — one cell spanning both columns, and its entrance pulled forward because it now sits above the fold instead of at the end of the page. */.cr-cth-tools.lead{margin-top:14px}.cr-cth-tools.lead{animation-delay:.14s}.cr-cth-tools button.wide{grid-column:1/-1}.cr-cth-tools button{display:flex;align-items:center;gap:10px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:15px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:border-color .15s,background .15s}.cr-cth-tools button:hover{border-color:var(--ct-line-strong);background:var(--ct-surface-2)}.cr-cth-tools button.primary{border-color:var(--ct-red);background:var(--ct-surface-2)}.cr-cth-tools button .i{font-size:17px;flex:0 0 auto}.cr-cth-tools button .x{flex:1;min-width:0}.cr-cth-tools button .x b{display:block;font-weight:700;font-size:13px}.cr-cth-tools button .x small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px}@media (prefers-reduced-motion:no-preference){.cr-cth-owed,.cr-cth-stats,.cr-cth-stage,.cr-cth-term,.cr-cth-tools{opacity:0;animation:crCthRise .44s cubic-bezier(.22,.9,.3,1) forwards}.cr-cth-owed{animation-delay:.04s}.cr-cth-stats{animation-delay:.10s}.cr-cth-stage:nth-of-type(1){animation-delay:.20s}.cr-cth-stage:nth-of-type(2){animation-delay:.25s}.cr-cth-stage:nth-of-type(3){animation-delay:.30s}.cr-cth-stage:nth-of-type(4){animation-delay:.35s}.cr-cth-stage:nth-of-type(5){animation-delay:.40s}.cr-cth-stage:nth-of-type(6){animation-delay:.45s}.cr-cth-stage:nth-of-type(7){animation-delay:.50s}.cr-cth-stage:nth-of-type(8){animation-delay:.55s}.cr-cth-term{animation-delay:.62s}.cr-cth-tools{animation-delay:.68s}@keyframes crCthRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}#insClientsView{background:var(--ct-bg) !important;color:var(--ct-ink)}#insClientsView .ins-body{background:var(--ct-bg,#FAF8F7) !important}#insClientsView .ins-search input,#insClientsView input[type="search"],#insClientsView input[type="text"]{background:var(--ct-surface) !important;color:var(--ct-ink) !important;border:1px solid var(--ct-line) !important}#insClientsView input::placeholder{color:var(--ct-ink-2) !important}#insClientsView .ins-count{color:var(--ct-ink-2) !important}#insClientsView .card,#insClientsView .ins-card{background:var(--ct-surface) !important;border-color:var(--ct-line) !important;color:var(--ct-ink) !important}#insClientsView .card small,#insClientsView .ins-cardsub{color:var(--ct-ink-2) !important}@media (min-width:900px){.cr-cth-wrap{max-width:1180px;padding-left:26px;padding-right:26px}.cr-cth-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:26px;align-items:start}.cr-cth-b1{grid-column:1;grid-row:1}.cr-cth-b2{grid-column:2;grid-row:1 / span 2}.cr-cth-b3{grid-column:1;grid-row:2}.cr-cth-tools{grid-template-columns:1fr 1fr}}@media (min-width:1240px){.cr-cth-stats{grid-template-columns:repeat(3,1fr)}}.cr-cth-chase{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 10px;margin-top:10px}.cr-cth-chaserow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:transparent;border:0;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:background .15s}.cr-cth-chaserow:hover{background:var(--ct-surface-2)}.cr-cth-chaserow .days{flex:0 0 auto;min-width:52px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--ct-surface-3)}.cr-cth-chaserow .days b{display:block;font:700 17px ui-monospace,'SF Mono',Menlo,monospace;line-height:1;color:var(--ct-warn)}.cr-cth-chaserow .days small{display:block;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink-2);margin-top:3px}.cr-cth-chasewrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%}.cr-cth-chasewrap>.cr-cth-chaserow{flex:1 1 auto;min-width:0}@media (max-width:560px){.cr-cth-chasewrap>.cr-cth-chasedid{flex:1 0 100%;margin:0 0 2px}.cr-cth-chasewrap{padding-bottom:4px}}.cr-cth-chasewrap.stale .days{background:var(--ct-red-wash)}.cr-cth-chasewrap.stale .days b{color:var(--ct-red-deep)}.cr-cth-chasewrap.stale .duetxt{color:var(--ct-red-deep);font-weight:700}.cr-cth-chaserow .duetxt{display:block;margin-top:1px;color:var(--ct-ink-2)}.cr-cth-chasedid{flex:0 0 auto;min-height:44px;padding:8px 12px;border-radius:9px;border:1px solid var(--ct-line,#E3DCD8);background:var(--ct-surface,#FFFFFF);color:var(--ct-red-deep,#7E1410);font:600 12px inherit;font-family:inherit;cursor:pointer}.cr-cth-chasedid:disabled{opacity:.6;cursor:default}.cr-cth-chaserow .who{flex:1;min-width:0}.cr-cth-chaserow .who b{display:block;font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .who small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .amt{flex:0 0 auto;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn)}.cr-cth-chaseempty{padding:20px 16px;text-align:center;font-size:13px;line-height:1.55;color:var(--ct-ink-2)}</style>
+#cardinalTruthView .ins-body.cr-cth{background:var(--ct-bg,#FAF8F7);padding:0}.cr-cth-rail{contain:paint}.cr-cth-wrap{position:relative;max-width:580px;margin:0 auto;padding:22px 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}.cr-cth-wrap{position:relative}.cr-cth-owed{position:relative;background:linear-gradient(160deg,var(--ct-surface-2),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;box-shadow:0 0 0 1px var(--ct-focus),0 0 22px var(--ct-focus);padding:22px 22px 20px;overflow:hidden}.cr-cth-owed::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ct-warn)}.cr-cth-owed .lbl{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-warn)}.cr-cth-owed .fig{font:700 clamp(36px,10.5vw,50px)/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;color:var(--ct-ink);margin:10px 0 8px}.cr-cth-owed .note{font-size:13px;line-height:1.5;color:var(--ct-ink-2)}.cr-cth-owed .note b{color:var(--ct-ink);font-weight:700}.cr-cth-owed .split{display:flex;gap:18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--ct-warn-bg)}.cr-cth-owed .split div{flex:1;min-width:0}.cr-cth-owed .split .k{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-owed .split .v{font:700 16px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn);margin-top:4px}.cr-cth-stats{display:grid;gap:9px;margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.cr-cth-stat{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:14px 15px;min-width:0}.cr-cth-stat .l{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-stat .v{font:700 21px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.02em;margin-top:6px;color:var(--ct-ink)}.cr-cth-stat.up .v{color:var(--ct-red-deep)}.cr-cth-stat .s{font-size:11px;color:var(--ct-ink-2);margin-top:3px;line-height:1.35}.cr-cth-stat .top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}.cr-cth-stat .ic{font-size:14px;color:var(--ct-ink-2);opacity:.55;line-height:1}.cr-cth-tabs{display:flex;gap:20px;/* 984: WRAP, do not clip. gap:20px sets BOTH axes in flexbox, so row-gap is overridden below. flex-wrap only wraps when the content actually overflows, so this needs no media query: measured 2 rows at 360/390/414 and 1 row unchanged at 430+. Before 984 the strip fitted with EXACTLY 0px slack at one-digit counts, so any real count clipped the last tab, and scrollbar-width:none left no affordance that anything was hidden. 983 made it 11px worse by making font-weight:700 actually apply. */flex-wrap:wrap;row-gap:4px;margin-bottom:18px;padding-bottom:2px;border-bottom:1px solid var(--ct-line);overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-cth-tabs::-webkit-scrollbar{display:none}.cr-cth-tabs button{flex:0 0 auto;background:transparent;border:0;border-bottom:2px solid transparent;padding:0 0 10px;margin-bottom:-1px;font-weight:700;font-size:13px;color:var(--ct-ink-2);cursor:pointer;white-space:nowrap}.cr-cth-tabs button.on{color:var(--ct-ink);border-bottom-color:var(--ct-red)}.cr-cth-tabs button b{font-weight:700;margin-left:5px;opacity:.7}.cr-cth-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ct-line-strong),transparent)}.cr-cth-rail{position:relative;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 6px 12px;box-shadow:0 2px 10px rgba(0,0,0,.28)}.cr-cth-stage{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:15px 14px 15px 30px;background:transparent;border:0;text-align:left;cursor:pointer;font-family:inherit;color:var(--ct-ink);border-radius:10px;transition:background .15s}.cr-cth-stage:hover{background:var(--ct-surface-2)}.cr-cth-stage:focus-visible{outline:2px solid var(--ct-red);outline-offset:-2px}.cr-cth-stage::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--ct-bg);border:2px solid var(--ct-red);z-index:1}.cr-cth-stage::after{content:'';position:absolute;left:10px;top:50%;bottom:-50%;width:1px;background:linear-gradient(180deg,var(--ct-red),var(--ct-red-deep));opacity:.45}.cr-cth-stage:last-of-type::after{display:none}.cr-cth-stage .nm{flex:1;min-width:0}.cr-cth-stage .nm b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15.5px;letter-spacing:.01em;line-height:1.25}.cr-cth-stage .nm small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;line-height:1.4}.cr-cth-stage .ct{flex:0 0 auto;min-width:26px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-cth-stage .amt{flex:0 0 auto;min-width:88px;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);letter-spacing:-.01em}.cr-cth-stage .amt.zero{color:var(--ct-ink-2)}.cr-cth-stage.flag::before{background:var(--ct-warn);border-color:var(--ct-warn);box-shadow:0 0 0 4px var(--ct-line)}.cr-cth-stage.flag{background:var(--ct-surface-3)}.cr-cth-stage.flag .nm b{color:var(--ct-ink)}.cr-cth-stage.flag .amt{color:var(--ct-warn)}.cr-cth-stage.flag.recovered .amt{color:var(--ct-red-deep)}.cr-cth-stage .tag{position:absolute;right:14px;top:8px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-warn);opacity:.8}.cr-cth-term{display:flex;gap:9px;margin-top:14px;padding-left:6px}.cr-cth-term button{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink-2);transition:border-color .15s,color .15s}.cr-cth-term button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink)}.cr-cth-term button b{font-weight:700;font-size:12px;letter-spacing:.02em}.cr-cth-term button span{font:700 15px ui-monospace,'SF Mono',Menlo,monospace}.cr-cth-term button.denied b,.cr-cth-term button.denied span{color:var(--ct-red-deep)}.cr-cth-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}/* 675: the lead button under the stats. Same grid, same button styling — one cell spanning both columns, and its entrance pulled forward because it now sits above the fold instead of at the end of the page. */.cr-cth-tools.lead{margin-top:14px}.cr-cth-tools.lead{animation-delay:.14s}.cr-cth-tools button.wide{grid-column:1/-1}.cr-cth-tools button{display:flex;align-items:center;gap:10px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:15px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:border-color .15s,background .15s}.cr-cth-tools button:hover{border-color:var(--ct-line-strong);background:var(--ct-surface-2)}.cr-cth-tools button.primary{border-color:var(--ct-red);background:var(--ct-surface-2)}.cr-cth-tools button .i{font-size:17px;flex:0 0 auto}.cr-cth-tools button .x{flex:1;min-width:0}.cr-cth-tools button .x b{display:block;font-weight:700;font-size:13px}.cr-cth-tools button .x small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px}@media (prefers-reduced-motion:no-preference){.cr-cth-owed,.cr-cth-stats,.cr-cth-stage,.cr-cth-term,.cr-cth-tools{opacity:0;animation:crCthRise .44s cubic-bezier(.22,.9,.3,1) forwards}.cr-cth-owed{animation-delay:.04s}.cr-cth-stats{animation-delay:.10s}.cr-cth-stage:nth-of-type(1){animation-delay:.20s}.cr-cth-stage:nth-of-type(2){animation-delay:.25s}.cr-cth-stage:nth-of-type(3){animation-delay:.30s}.cr-cth-stage:nth-of-type(4){animation-delay:.35s}.cr-cth-stage:nth-of-type(5){animation-delay:.40s}.cr-cth-stage:nth-of-type(6){animation-delay:.45s}.cr-cth-stage:nth-of-type(7){animation-delay:.50s}.cr-cth-stage:nth-of-type(8){animation-delay:.55s}.cr-cth-term{animation-delay:.62s}.cr-cth-tools{animation-delay:.68s}@keyframes crCthRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}#insClientsView{background:var(--ct-bg) !important;color:var(--ct-ink)}#insClientsView .ins-body{background:var(--ct-bg,#FAF8F7) !important}#insClientsView .ins-search input,#insClientsView input[type="search"],#insClientsView input[type="text"]{background:var(--ct-surface) !important;color:var(--ct-ink) !important;border:1px solid var(--ct-line) !important}#insClientsView input::placeholder{color:var(--ct-ink-2) !important}#insClientsView .ins-count{color:var(--ct-ink-2) !important}#insClientsView .card,#insClientsView .ins-card{background:var(--ct-surface) !important;border-color:var(--ct-line) !important;color:var(--ct-ink) !important}#insClientsView .card small,#insClientsView .ins-cardsub{color:var(--ct-ink-2) !important}@media (min-width:900px){.cr-cth-wrap{max-width:1180px;padding-left:26px;padding-right:26px}.cr-cth-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:26px;align-items:start}.cr-cth-b1{grid-column:1;grid-row:1}.cr-cth-b2{grid-column:2;grid-row:1 / span 2}.cr-cth-b3{grid-column:1;grid-row:2}.cr-cth-tools{grid-template-columns:1fr 1fr}}@media (min-width:1240px){.cr-cth-stats{grid-template-columns:repeat(3,1fr)}}.cr-cth-chase{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 10px;margin-top:10px}.cr-cth-chaserow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:transparent;border:0;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:background .15s}.cr-cth-chaserow:hover{background:var(--ct-surface-2)}.cr-cth-chaserow .days{flex:0 0 auto;min-width:52px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--ct-surface-3)}.cr-cth-chaserow .days b{display:block;font:700 17px ui-monospace,'SF Mono',Menlo,monospace;line-height:1;color:var(--ct-warn)}.cr-cth-chaserow .days small{display:block;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink-2);margin-top:3px}.cr-cth-chasewrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%}.cr-cth-chasewrap>.cr-cth-chaserow{flex:1 1 auto;min-width:0}@media (max-width:560px){.cr-cth-chasewrap>.cr-cth-chasedid{flex:1 0 100%;margin:0 0 2px}.cr-cth-chasewrap{padding-bottom:4px}}.cr-cth-chasewrap.stale .days{background:var(--ct-red-wash)}.cr-cth-chasewrap.stale .days b{color:var(--ct-red-deep)}.cr-cth-chasewrap.stale .duetxt{color:var(--ct-red-deep);font-weight:700}.cr-cth-chaserow .duetxt{display:block;margin-top:1px;color:var(--ct-ink-2)}.cr-cth-chasedid{flex:0 0 auto;min-height:44px;padding:8px 12px;border-radius:9px;border:1px solid var(--ct-line,#E3DCD8);background:var(--ct-surface,#FFFFFF);color:var(--ct-red-deep,#7E1410);font-weight:600;font-size:12px;font-family:inherit;cursor:pointer}.cr-cth-chasedid:disabled{opacity:.6;cursor:default}.cr-cth-chaserow .who{flex:1;min-width:0}.cr-cth-chaserow .who b{display:block;font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .who small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .amt{flex:0 0 auto;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn)}.cr-cth-chaseempty{padding:20px 16px;text-align:center;font-size:13px;line-height:1.55;color:var(--ct-ink-2)}</style>
 <script id="cr-cth-script">
 
 (function(){
@@ -60199,6 +60303,17 @@ return '<div class="sheet"><div class="nobid">' +
 '</div>' + rec + '</div>';
 }
 var items = est.line_items || [];
+/* 1130: 1096's per-line `flat` flag is back-filled only when a row is opened
+   in the EDITOR (and stored only on save). 13 of 20 live estimates are
+   pre-1096 lump sums whose items carry no flag at all, so `it.flat` alone
+   rendered every line here at qty x $0 with a stray qty cell. Apply the same
+   back-compat the editor applies — itemized:false means every line is flat —
+   on a CLONE (estimates rows are never mutated). */
+if(est.itemized === false){
+  items = items.map(function(it){
+    return (it && it.flat == null) ? Object.assign({}, it, { flat: true }) : it;
+  });
+}
 /* 974: the line objects carry no `price` key at ALL in production — each one is
    {qty,name,unit,amount,library_id,unit_price,description}, so the multiply
    that used to be here rendered $0 on every line. The swap to unit_price alone would be a NEW wrong number: on a
@@ -69269,7 +69384,11 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* the two in-card inputs — transparent at rest, well on focus (unchanged behaviour) */
 #cr-est-view .cr-est-lineitem .name-input,
 #cr-est-view .cr-est-lineitem .desc-input{background:transparent;box-shadow:none;border-color:transparent;}
-#cr-est-view .cr-est-lineitem .name-input{color:var(--est-ink);}
+#cr-est-view .cr-est-lineitem .name-input{color:var(--est-ink);
+  /* 1135: the move arrows (right:38) and X (right:8) are absolutely positioned
+     over this row - without clearance a template's long name runs under them.
+     Set HERE because this id-scoped layer wins padding for these inputs. */
+  width:100%;box-sizing:border-box;padding-right:104px;}
 #cr-est-view .cr-est-lineitem .name-input:hover,
 #cr-est-view .cr-est-lineitem .desc-input:hover{background:rgba(15,23,42,.03);border-color:var(--est-line);}
 #cr-est-view .cr-est-lineitem .name-input:focus,
@@ -76918,6 +77037,34 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
    audit cannot see it, do not "fix" it), document tick boxes (iframe, prints),
    photo tiles (155px).
    ========================================================================== */
+
+/* ---- client profile namebar (1133) ------------------------------------- */
+/* was 40x40 (.nb-ico x3 — email/text/call), 32x28 (.nb-pen), ~21x17
+   (.nb-star). The 791 band replaced the contact links that 752 HAD floored,
+   without inheriting the floor — and gate_944's walk never opens a client
+   profile, so only gate_752 could see it. min-* per this block's rule (min
+   beats the .nb-pen rule's fixed width/height without touching it); the star
+   additionally needs inline-flex because an inline span cannot honor a
+   min-height. */
+#cr-namebar .nb-ico{min-width:44px;min-height:44px;}
+/* pen + star: the 44px HIT RECT without the 39px-taller band a bare min-height
+   produced (measured 77 -> 116px at 390w). Negative margins give back the
+   layout space while the tappable rect stays 44 — the rect is real, so the
+   probe sees it; the band stays the design 788-804 shipped. Overlap with the
+   other tappables is render-proven zero. */
+#cr-namebar .nb-pen{min-width:44px;min-height:44px;margin:-8px 0;}
+#cr-namebar .nb-star{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;margin:-14px -6px;}
+
+/* ---- crews (1132) ------------------------------------------------------ */
+/* was 289x33 (text) / 289x35 (date) on the Compliance upload form — the crews
+   arc (547+) predates this block and 944's walk saw an EMPTY crews screen
+   until the mock gained a crews seed at 948, so these escaped the sweep while
+   being user-visible the whole time. min-height only, per this block's rule.
+   NOT floored on purpose: #crewsView .crw-rt input (~29px) — the Labor Rates
+   table is a dense admin grid; a 44px cell rewrites its density. Measured,
+   named, deferred to Theo's call rather than swept. */
+#crewsView input[type=text],#crewsView input[type=date],#crewsView input[type=file],
+#crewsView select,#crewsView textarea{min-height:44px;}
 
 /* ---- chrome, on every screen ------------------------------------------- */
 /* was 38×38 (menu) / 34×34 (+) — the header icon buttons */

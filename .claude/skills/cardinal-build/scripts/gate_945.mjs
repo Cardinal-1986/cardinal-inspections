@@ -35,6 +35,18 @@ await page.route('**/*', async r=>{const u=r.request().url();
     body:Buffer.from('iVBORw0KGgoAAAABAAAAAQAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64')});
   return r.fulfill({status:200,body:''});});
 await page.addInitScript(SETUP);
+/* ⚠ RIG REPAIR 29 Aug 2026 (triage at build 1121): the shared seed pins i1's
+   scheduled_at to the LITERAL '2026-08-27' — future when 945 shipped (20 Aug),
+   past nine days later, so i1 drifted from SCHEDULED into ACTIVE and a correct
+   app failed a correct assertion (active=2, scheduled=0). The seed's own crews
+   rows already COMPUTE their dates for exactly this reason. Recompute i1's day
+   to +3 here rather than editing the shared seed; the contract — a future-
+   dated, assigned item buckets as SCHEDULED — is unchanged. */
+await page.addInitScript(()=>{
+  const it=((window.__SEED__||{}).punch_items||[]).find(x=>x.id==='i1');
+  if(it){ const d=new Date(); d.setDate(d.getDate()+3);
+    it.scheduled_at=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+});
 await page.goto('https://sentinel.test/?as=theo',{waitUntil:'domcontentloaded'});
 await page.waitForTimeout(1700);
 

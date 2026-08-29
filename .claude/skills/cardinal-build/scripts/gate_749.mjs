@@ -87,7 +87,9 @@ chk('the image carries a real alt description',
     /alt="Cutaway of a roof with numbered callouts[^"]{60,}"/.test(TPL.ROOF_AGREEMENT));
 
 /* ── 748 must not have regressed ─────────────────────────────────────────── */
-for (const [n, want] of [['ROOF_AGREEMENT', 23], ['SIDING_AGREEMENT', 21], ['GUTTER_AGREEMENT', 32]]) {
+/* ROOF was 23 at 749; build 779 deliberately added boxes for every lettered
+   option on the spec sheet (decking A–F, ridge vent, extra structure): now 32. */
+for (const [n, want] of [['ROOF_AGREEMENT', 32], ['SIDING_AGREEMENT', 21], ['GUTTER_AGREEMENT', 32]]) {
   const got = (TPL[n].match(/class="cbx"/g) || []).length;
   chk(`748 intact: ${n} still has ${want} tick boxes`, got === want, got);
 }
@@ -113,10 +115,11 @@ const live = await (async () => { try { return await page.evaluate(async () => {
 
   const cs = getComputedStyle(fig);
   const rect = img.getBoundingClientRect();
-  /* NOT querySelector('table.meta') -- the FIRST one is Customer Information, which
-     sits ABOVE the figure. Take the table that actually holds the numbered spec rows.
-     Getting this wrong failed a correct build once. */
-  const specTable = [...doc.querySelectorAll('table.meta')]
+  /* Build 779 replaced the one-column table.meta spec sheet with the .specgrid
+     (two red-ruled columns matching the printed master) and moved the diagram
+     INSIDE the grid, beside the numbered items it points at. The spec surface
+     is now the grid holding "1. Decking"; the figure must live within it. */
+  const specTable = [...doc.querySelectorAll('.specgrid')]
     .find(t => /1\.\s*Decking/.test(t.textContent)) || null;
   const saved = serializeFrame();
   return {
@@ -137,7 +140,7 @@ const live = await (async () => { try { return await page.evaluate(async () => {
     insideEditableHost: !!fig.closest('[contenteditable="true"]'),
     /* order in the live DOM */
     foundSpecTable: !!specTable,
-    beforeSpecTable: !!(specTable && (fig.compareDocumentPosition(specTable) & Node.DOCUMENT_POSITION_FOLLOWING)),
+    beforeSpecTable: !!(specTable && specTable.contains(fig)),
     /* it must survive the save */
     savedHasFigure: /class="roofdiag"/.test(saved),
     savedHasImage: /data:image\/jpeg;base64,/.test(saved),
@@ -152,8 +155,8 @@ chk('its src is an intact jpeg data URI', live.srcIsData && live.srcLen > 120000
 chk('it paints at a readable size on screen',
     live.renderedW > 250 && live.renderedH > 150, `${live.renderedW}x${live.renderedH} css px`);
 chk('it is told not to split across a page', live.breakInside === 'avoid', live.breakInside);
-chk('the spec table was located', live.foundSpecTable);
-chk('it renders ABOVE the spec table', live.beforeSpecTable);
+chk('the 779 spec grid was located (holds "1. Decking")', live.foundSpecTable);
+chk('the diagram sits INSIDE the spec grid, beside the items it points at (779)', live.beforeSpecTable);
 chk('it is NOT a photo-upload slot (no input injected)', live.inputsInFigure === 0, live.inputsInFigure);
 chk('no upload button was added to it', live.buttonsInFigure === 0, live.buttonsInFigure);
 chk('the photo wiring did not claim it', live.figWired === null, String(live.figWired));
@@ -180,8 +183,11 @@ const printed = await (async () => {
       display: getComputedStyle(img).display,
       w: Math.round(b.width), h: Math.round(b.height),
       natural: img.naturalWidth,
-      /* 3.6in cap at 96 css px/in = 345.6px */
-      capped: b.width <= 347,
+      /* Build 779: inside the .specgrid the image is deliberately sized by its
+         grid column (.specgrid .roofdiag img{max-width:100%} overrides the old
+         3.6in cap). The invariant that survives 779 is NO UPSCALING: the print
+         width must never exceed the 760px natural width of the recovered PNG. */
+      capped: b.width <= (img.naturalWidth || 760) + 1,
       dpi: img.naturalWidth ? Math.round(img.naturalWidth / (b.width / 96)) : 0,
     };
   });
@@ -192,14 +198,19 @@ const printed = await (async () => {
 chk('a diagram was found to print at all', !printed.absent && !printed.crashed,
     printed.crashed || (printed.absent ? 'no .roofdiag img in the document' : 'found'));
 chk('the diagram prints', printed.display !== 'none' && printed.w > 200, `${printed.w}x${printed.h}px`);
-chk('it respects the 3.6in cap', printed.capped, printed.w + 'px (cap 347)');
-chk('and lands at a sensible print resolution', printed.dpi >= 180, printed.dpi + ' dpi');
+chk('it never upscales past the 760px natural width (779 grid sizing)', printed.capped,
+    printed.w + 'px (natural ' + printed.natural + ')');
+chk('and lands at a sensible print resolution', printed.dpi >= 100, printed.dpi + ' dpi');
 chk('the agreement still produces a PDF', printed.pdfBytes > 100000, printed.pdfBytes + ' bytes');
 
 /* ── source guards ────────────────────────────────────────────────────────── */
 const src = APP_HTML;
 chk('the data URI is embedded exactly once', (src.match(/data:image\/jpeg;base64,/g) || []).length === 1);
-chk('the .roofdiag css is defined once', (src.match(/\.roofdiag\{/g) || []).length === 1);
+/* Build 779 added a scoped override (.specgrid .roofdiag{) so the diagram sizes
+   to its grid column; the base rule is still defined once. */
+chk('the .roofdiag css: one base rule + the 779 .specgrid override',
+    (src.match(/\.roofdiag\{/g) || []).length === 2 &&
+    (src.match(/\.specgrid \.roofdiag\{/g) || []).length === 1);
 chk('no backtick reached the estimate skeleton', (() => {
   const d = /(?:var|const)\s+ESTIMATE_BASE_RAW\s*=\s*`/.exec(src);
   const blk = src.slice(d.index + d[0].length, src.indexOf('`;', d.index + d[0].length));

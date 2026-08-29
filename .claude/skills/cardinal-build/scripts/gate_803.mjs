@@ -98,7 +98,8 @@ await page.evaluate(() => { if (window.CardinalCommunityHub) window.CardinalComm
 await page.waitForTimeout(1600);
 const A = await page.evaluate(() => window.__pills());
 ok('Partners pill hidden while the hub strip is up', A['Partners'] === false, JSON.stringify(A));
-ok('Bids pill hidden too', A['Bids'] === false, JSON.stringify(A));
+/* 1091 renamed the Community pill 'Bids' -> 'Estimates' (display text only). */
+ok('Bids/Estimates pill hidden too', (A['Estimates'] !== undefined ? A['Estimates'] : A['Bids']) === false, JSON.stringify(A));
 ok('Photos / Production / Tools all stay', A['Photos'] === true && A['Production'] === true && A['Tools'] === true, JSON.stringify(A));
 
 console.log('\n--- B. the hub strip still works ---');
@@ -126,7 +127,7 @@ const C = await page.evaluate(async () => {
 });
 ok('the hub strip is genuinely gone from the screen', C.stripOnScreen === false, JSON.stringify(C));
 ok('Partners pill is back', C.pills['Partners'] === true, JSON.stringify(C));
-ok('Bids pill is back', C.pills['Bids'] === true, JSON.stringify(C));
+ok('Bids/Estimates pill is back', (C.pills['Estimates'] !== undefined ? C.pills['Estimates'] : C.pills['Bids']) === true, JSON.stringify(C));
 
 console.log('\n--- D. Cardinal Truth: Clients hides, Claims STAYS ---');
 const D = await page.evaluate(async () => {

@@ -152,8 +152,12 @@ const src = APP_HTML;
 chk('crDate is defined exactly once', (src.match(/function crDate\(v\)\{/g) || []).length === 1);
 chk('twelve or more formatters call it', (src.match(/(?<!function )crDate\(/g) || []).length >= 12,
     'found ' + (src.match(/(?<!function )crDate\(/g) || []).length);
+/* RIG REPAIR (build 1121 triage): the exact-35 census was a freeze for build 744.
+   Later builds legitimately ADDED date pickers (the 782 intake form, scheduling
+   arcs) — 47 at build 1121. The fence this check carries — the date-only inputs
+   that motivated crDate all still exist — is a FLOOR, not an exact pin. */
 chk('THE FENCE: 35 date pickers still bind YYYY-MM-DD',
-    (src.match(/type="date"/g) || []).length === 35, 'found ' + (src.match(/type="date"/g) || []).length);
+    (src.match(/type="date"/g) || []).length >= 35, 'found ' + (src.match(/type="date"/g) || []).length);
 chk('commDate was not "fixed" (it was already right)', /String\(s\)\.slice\(0, 10\) \+ 'T00:00:00'/.test(src));
 chk('cr-crew daysLeft was not "fixed" either', /new Date\(iso \+ 'T00:00:00'\)/.test(src));
 

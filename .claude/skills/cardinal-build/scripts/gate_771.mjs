@@ -107,6 +107,12 @@ await page.evaluate(() => { window.is_admin = () => true; window.currentUser = {
 console.log('\n--- FIX 1 (was BROKEN): the tick writes what you actually tapped ---');
 await page.evaluate(() => window.CardinalProduction.open());
 await page.waitForTimeout(1300);
+/* 856 routes the Punch-outs / Closed boxes to the full Punch & Repairs page,
+   which has no [data-tick]. The hub's internal list — the code FIX 1 proves —
+   survives as the shipped fallback for a boot where that module is absent, so
+   exercise exactly that path: drop the router hook, keeping the hub's own
+   toggle()/write pipeline under test unchanged. */
+await page.evaluate(() => { window.__origOPV = window.openPunchView; window.openPunchView = undefined; });
 await page.click('#cr-pb .pbtile[data-box="punch"]');
 await page.waitForTimeout(600);
 await page.evaluate(() => { window.__WRITES__ = []; });
@@ -141,6 +147,7 @@ ok('...and clears done_at/done_by instead of re-stamping them',
 ok('...the write says open', st.writes.some(w => /"status":"open"/.test(w)), JSON.stringify(st.writes));
 
 console.log('\n--- FIX 2: the card clears the installed app bottom bar ---');
+await page.evaluate(() => { if (window.__origOPV) window.openPunchView = window.__origOPV; });
 await page.evaluate(() => window.CardinalPunchCard.open('pi-1', { back: 'production' }));
 await page.waitForTimeout(900);
 const pad = await page.evaluate(() => {
@@ -159,7 +166,15 @@ const back3 = await page.evaluate(() => ({
 }));
 ok('description has an Edit control', back3.editDesc);
 ok('description section renders even when empty', back3.descAlwaysRenders);
-ok('a delete control exists for admins/production', back3.del);
+/* 947 retired the always-on Remove section: Delete now lives behind the header
+   ⋯ menu (same mayDelete gate). Open the menu and prove it is still there. */
+ok('a delete control exists for admins/production (behind the 947 ⋯ menu)', await page.evaluate(() => {
+  const m = document.querySelector('#cr-pk [data-act="menu"]');
+  if (!m) return false;
+  m.click();
+  return true;
+}) && await (async () => { await page.waitForTimeout(400);
+  return page.evaluate(() => !!document.querySelector('#cr-pk [data-act="del"]')); })());
 // give it a photo, then prove the remove pip appears and works
 await page.evaluate(async () => {
   const r = window.CardinalPunch.rows().find(x => x.id === 'pi-1');
@@ -169,7 +184,8 @@ await page.evaluate(async () => {
 await page.waitForTimeout(800);
 ok('filled photo slots carry a remove control',
   await page.evaluate(() => document.querySelectorAll('#cr-pk [data-rmphoto]').length === 2));
-await page.evaluate(() => { window.confirm = () => true; window.__WRITES__ = []; });
+/* 1080-1083: window.confirm became the in-app crAsk sheet — stub both. */
+await page.evaluate(() => { window.confirm = () => true; window.crAsk = () => Promise.resolve(true); window.__WRITES__ = []; });
 await page.click('#cr-pk [data-rmphoto="0"]');
 await page.waitForTimeout(1000);
 ok('removing a photo writes the shortened array', await page.evaluate(() => {

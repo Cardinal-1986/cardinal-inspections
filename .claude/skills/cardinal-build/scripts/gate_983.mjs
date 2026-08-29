@@ -89,10 +89,15 @@ need('5 the --lb-sans pair was repaired and no reference to it survives',
    The real claim is that the repair INVENTED nothing, which is a DELTA, not a
    position: the total number of font-family declarations must be identical to
    the previous build. Self-computing, the shape this project prescribes. */
+/* ⚠ REWRITTEN 29 Aug (triage at 1121): `=== 277` was itself a snapshot total —
+   builds 984–1121 legitimately added font-family declarations (306 at 1121), so
+   a growing app failed a correct gate. The "invented nothing" half of the claim
+   was only measurable at the 982→983 boundary; the half that stays measurable
+   forever is that the repair never REMOVED a family. Floor, not equality. */
 const FAMILIES = (CODE.match(/font-family\s*:/g) || []).length;
-need('6 no font-family was invented by the repair',
-     FAMILIES === 277,
-     'font-family declarations: ' + FAMILIES + ' (build 982 had 277; any change means the repair added or removed one)');
+need('6 no font-family was removed by the repair',
+     FAMILIES >= 277,
+     'font-family declarations: ' + FAMILIES + ' (build 982 had 277; fewer means the repair consumed one)');
 
 /* 4 — the inline attributes, and their scripts must still parse */
 const inlineFixed = (APP.match(/font-weight:\d{3};font-size:[\d.]+px;[^"']*?(?:text-align|border|margin|opacity|cursor|">)/g) || []).length;

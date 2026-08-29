@@ -112,7 +112,11 @@ const m = await P.page.evaluate(() => {
     star: !!(b && b.querySelector('[data-cr-fav]')),
     po: b && b.querySelector('.nb-po') ? b.querySelector('.nb-po').textContent : null,
     pencil: !!(b && b.querySelector('[data-cr-edit]')),
-    icons: b ? [...b.querySelectorAll('.nb-ico')].map(a => a.getAttribute('href').split(':')[0]) : [],
+    /* 792 replaced the <a href> icons with <button data-cr-act> panels; read
+       either shape and normalise to the scheme names the assertion has always
+       used, so the gate keeps proving "email, text, call — and only channels
+       that exist" across both generations. */
+    icons: b ? [...b.querySelectorAll('.nb-ico')].map(a => ({ email: 'mailto', text: 'sms', call: 'tel' })[a.getAttribute('data-cr-act')] || String(a.getAttribute('href') || '').split(':')[0]) : [],
     oldCard: !!(document.querySelector('#projectView .projinfo') || {}).offsetParent,
     portal: vis('crPortalChip'), overview: vis('jobMenuSel'),
     stageOrder: order(stage), locOrder: order(loc),
@@ -130,7 +134,12 @@ ok('email, text and call are the three actions',
   JSON.stringify(m.icons) === '["mailto","sms","tel"]', JSON.stringify(m.icons));
 ok('Switch Primary is gone from view', m.switchPrimary === false);
 ok('the Overview dropdown and ALL chip are hidden on a profile', !m.portal && !m.overview, JSON.stringify({ portal: m.portal, overview: m.overview }));
-ok('...and they were there before opening a client', beforeOpen.portal || beforeOpen.overview, JSON.stringify(beforeOpen));
+/* 799 retired the visible #crPortalChip (switcher moved to the burger menu) and
+   the namebar replaces #jobMenuSel below 560px (build log @885) — so on a phone
+   NEITHER control renders off-profile any more, by design. The "still present
+   when you are NOT on one" control moved to the desktop section below. */
+ok('...and neither renders off-profile on a phone (799 chip retirement + namebar replaces the select)',
+  !beforeOpen.portal && !beforeOpen.projopen, JSON.stringify(beforeOpen));
 ok('the pipeline bar is ordered first and bleeds edge to edge',
   m.stageOrder === '1' && m.stageBox && m.stageBox.left === 0 && m.stageBox.right === m.screen,
   JSON.stringify({ order: m.stageOrder, box: m.stageBox }));
@@ -175,6 +184,10 @@ await I.browser.close();
 
 console.log('\n--- E. the desktop is unchanged ---');
 const D = await boot(APP, 1280, 'retail');
+/* NOTE: the old off-profile presence control (the ALL chip visible before a
+   client is opened) has no subject left — 799 hides #crPortalChip everywhere.
+   #jobMenuSel is the JOB menu and never rendered off-profile; its on-profile
+   desktop presence is asserted below. */
 await open(D.page, 'p-1');
 const deskNow = await shot(D.page, 1280);
 const dm = await D.page.evaluate(() => {
@@ -188,8 +201,10 @@ const dm = await D.page.evaluate(() => {
 });
 await D.browser.close();
 ok('no band on the desktop', dm.band === false);
-ok('the old card, Overview dropdown and ALL chip are all still there',
-  dm.oldCard && dm.portal && dm.overview, JSON.stringify(dm));
+/* 799 hides #crPortalChip everywhere (display:none !important — the switcher
+   lives in the burger menu now), so the chip is no longer part of this check. */
+ok('the old card and Overview dropdown are still there (chip retired at 799)',
+  dm.oldCard && dm.overview, JSON.stringify(dm));
 ok('#acxMount is still a plain block (no reorder)', dm.mountDisplay === 'block', dm.mountDisplay);
 if (PREV) {
   const P2 = await boot(readFileSync(PREV, 'utf8'), 1280, 'retail');

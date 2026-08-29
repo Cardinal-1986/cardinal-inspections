@@ -137,7 +137,11 @@ ok('email, text and call are the three actions',
 ok('and none of them dials on touch any more', m.iconsAreLinks === 0, 'still <a>: ' + m.iconsAreLinks);
 ok('Switch Primary is gone from view', m.switchPrimary === false);
 ok('the Overview dropdown and ALL chip are hidden on a profile', !m.portal && !m.overview, JSON.stringify({ portal: m.portal, overview: m.overview }));
-ok('...and they were there before opening a client', beforeOpen.portal || beforeOpen.overview, JSON.stringify(beforeOpen));
+/* 799 retired the visible #crPortalChip (display:none !important; the switcher
+   moved into the burger menu) and the namebar replaces #jobMenuSel below 560px
+   (build log @885) — neither renders off-profile on a phone any more, by design. */
+ok('...and neither renders off-profile on a phone (799 chip retirement + namebar replaces the select)',
+  !beforeOpen.portal && !beforeOpen.projopen, JSON.stringify(beforeOpen));
 ok('the pipeline bar is ordered first and bleeds edge to edge',
   m.stageOrder === '1' && m.stageBox && m.stageBox.left === 0 && m.stageBox.right === m.screen,
   JSON.stringify({ order: m.stageOrder, box: m.stageBox }));
@@ -298,8 +302,9 @@ const dm = await D.page.evaluate(() => {
 });
 await D.browser.close();
 ok('no band on the desktop', dm.band === false);
-ok('the old card, Overview dropdown and ALL chip are all still there',
-  dm.oldCard && dm.portal && dm.overview, JSON.stringify(dm));
+/* 799 hides #crPortalChip everywhere — the chip is no longer part of this check. */
+ok('the old card and Overview dropdown are still there (chip retired at 799)',
+  dm.oldCard && dm.overview, JSON.stringify(dm));
 ok('#acxMount is still a plain block (no reorder)', dm.mountDisplay === 'block', dm.mountDisplay);
 if (PREV) {
   const P2 = await boot(readFileSync(PREV, 'utf8'), 1280, 'retail');

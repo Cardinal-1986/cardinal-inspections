@@ -43,7 +43,11 @@ const fnText = extract('lossAge');
 need('lossAge exists in the artifact', !!fnText, 'no such function — nothing to render the age');
 if (fnText) {
   // eslint-disable-next-line no-new-func
-  const lossAge = new Function(fnText + '; return lossAge;')();
+  /* the shipped lossAge later gained a window.crDate reference; this rig runs
+     it in Node, where bare `window` THREW at call time and the crash read as
+     'not green'. Hand it an empty window — crDate absent takes the function's
+     own new Date(iso) fallback, the exact behavior this gate always tested. */
+  const lossAge = new Function('window', fnText + '; return lossAge;')({});
   const iso = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
   need('a loss 100 days ago reads "· 100 days ago"', lossAge(iso(100)) === ' · 100 days ago', JSON.stringify(lossAge(iso(100))));
   need('a loss 1 day ago is singular', lossAge(iso(1)) === ' · 1 day ago', JSON.stringify(lossAge(iso(1))));

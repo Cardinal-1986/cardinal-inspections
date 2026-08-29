@@ -71,8 +71,16 @@ async function look(origin) {
     const txt = document.body ? (document.body.innerText || '') : '';
     const CRM = ['Cardinal Pipeline','Accounts Receivable','Work Schedule','Client Projects',
                  'Punch & Repairs','Schedule Board','Sales Floor','Import from AccuLynx'];
+    /* the hub no longer starts at y=0 — a later landing/head pass put a ~70px
+       band above it, so a fixed (40,35) probe lands on the landing's own body
+       padding. Anchor the tap INSIDE the hub's rect; the point of the check is
+       that a tap on the hub hits the hub, not CRM chrome underneath. */
     let topmost = '';
-    try { const el = document.elementFromPoint(40, 35);
+    try { const hubEl = document.querySelector('.cr-vh');
+          const hr = hubEl ? hubEl.getBoundingClientRect() : null;
+          const px = hr ? Math.round(hr.left + 40) : 40;
+          const py = hr ? Math.round(hr.top + 35) : 35;
+          const el = document.elementFromPoint(px, py);
           topmost = el ? (el.tagName + '.' + (el.className || '')) : ''; } catch(e) {}
     const hs = document.querySelector('header.site');
     return {

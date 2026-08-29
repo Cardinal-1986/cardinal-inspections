@@ -7616,14 +7616,14 @@ The homeowner's "Roof Installation Information & Pre-Install Guide" (what to exp
 
 ## Owner Console: drawer section + Strategy cockpit (build 1113)
 
-⚠️ **As of build 1129 the console opens on a HUB, not a single scroll.** Seven cards
+⚠️ **As of build 1137 the console opens on a HUB, not a single scroll.** Seven cards
 (Today · On the horizon · Renewals · Reminders · The Ledger · The Vault · Strategy),
 each with a live figure; tap one to open that area alone; a back bar returns to the hub.
 One table — `AREAS` in `cr-owner-script` — knows the areas, and `AREAS[].fn` calls the
 **existing** section builders verbatim, so the areas are the same sections re-hung.
 Each area is its own history entry (`navSetView('owner',{area})`), and
 `open('<area>')` deep-links straight into one. Was 2,907px / 3.4 phone screens with
-every list empty; the hub is 1,376px. Gate: `gate_1129.mjs`.
+every list empty; the hub is 1,376px. Gate: `gate_1137.mjs`.
 
 The Owner Console (`cr-owner` / `CardinalOwner`, build 895, admin-only, cream "Daily Brief" surface) now has **its own "Owner" drawer section** (`makeSec('cr-nav-sec-owner','Owner')`, in `addAdminSection`, inserted before Admin) and a new **Strategy** section (`strategyHTML()` in `render()`):
 - An editable **Business Plan** (`owner_biz_plan`) — the recurring-revenue play (Cardinal Care membership + retail financing) — and an editable **Market & Competitors** summary (`owner_competitors`), both stored in `company_templates` (seeded by `owner_strategy_seed.sql`), loaded in `loadAll()`'s isolated try/catch. Admin **Edit** → textarea → **Save** upserts; non-admins read-only.
