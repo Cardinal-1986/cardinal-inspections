@@ -30153,3 +30153,54 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
   control, so pre-existing and not this build's.** (`renderLine threw: not found:
   function renderLine(l, idx, total){` is a harness extracting a function by an
   exact signature that has since drifted — a stale assertion, not an app fault.)
+
+## Build 1147 — the texts about a job link back to the job
+
+- **1147** · **Theo, with a screenshot of three Cardinal texts: "Can you also make
+  hyperlinks in anything that texts client info back to the app?"**
+
+  **The prime doctrine again: the mechanism was already built.** 1125 gave
+  `/api/notify` a `url` — validated same-site-only (a scheme or a protocol-relative
+  `//` is dropped to `/`, so a caller cannot make the route send an arbitrary
+  link), resolved against the request host, and appended to the SMS **after** the
+  320-char trim so a long subject cannot truncate it. `notifyTeam(to, subject,
+  html, url)` has taken it since. Nothing was missing but callers sending it.
+
+  Measured before building: **6 of 21 call sites carried a link** — all six the
+  punch-out/supplement family 1125 wired for Curtis. The other fifteen sent none,
+  **and every one of them names a client in its subject line.** Now **20 of 21**.
+  The twenty-first is `'Cardinal test alert'`, which names no client and has
+  nowhere to point.
+
+  ⚠ **`_notifyOrQueue(to, subject, html)` had no `url` parameter at all**, so the
+  two stage alerts in Theo's screenshot could not carry one even though notifyTeam
+  would have taken it. Threaded through, **and into the offline outbox entry and
+  its flush** — without that, an alert sent with no signal arrives on reconnect
+  stripped of the one useful part and nothing says so.
+
+  `clientLink(pid)` sits beside `punchLink(pid)`: one place that knows `#p/<id>`,
+  so twelve call sites cannot drift into twelve spellings. Punch-out alerts keep
+  `punchLink` and land on the punch-out.
+
+  **Also fixed, straight off the screenshot:** the text read *"is marked
+  COMPLETED.Next: do the final walk-around"*. The HTML→text strip dropped every
+  tag to `''`, so `</p><p>` vanished instead of becoming a space. A block END is
+  now a space; inline tags still strip to nothing, so `<b>word</b>s` stays
+  `words`. **Both strips fixed** — `notifyTeam`'s and `api/notify.js`'s — because
+  a caller may send `html` with no `body`, and then the API side builds the SMS.
+
+  `gate_1147.mjs` executes the SHIPPED helpers rather than describing them:
+  GREEN 16/16, **RED 9/5 on the 1146 control**.
+
+  ⚠ **Three faults in my own gate, each caught by the control:**
+  - it **crashed** on the control instead of reporting red — `new Function('' +
+    '; return clientLink')` throws where the function does not exist yet, and a
+    crash reads as "broken gate", not "correctly red". **BUG_CLASSES 37, again.**
+  - the one-line `punchLink` was extracted by slicing to the next `\n}`, which
+    overshot into unrelated code and reported a FALSE failure against a function
+    that was present and correct. Brace-matched now.
+  - the `api/notify.js` check is **not** selected by the path argument, so it can
+    never go red on a control. Kept, but now labelled as a working-tree check.
+
+  The link-coverage assertion is a **floor** (`>= 20`), not a tally, so coverage
+  that shrinks goes red rather than quietly reporting a smaller number.

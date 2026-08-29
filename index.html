@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1146<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1147<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11206,7 +11206,7 @@ function __apptNotifyProduction(f){
       'Build day set \u2014 ' + nm,
       '<p><b>' + nm + '</b> is booked for <b>' + (f.appt_date || '') + '</b>' +
       (f.appt_time ? ' at ' + f.appt_time : '') + '.</p>' +
-      (f.title ? '<p>' + String(f.title).replace(/</g, '&lt;') + '</p>' : ''))
+      (f.title ? '<p>' + String(f.title).replace(/</g, '&lt;') + '</p>' : ''), clientLink(f.project_id))
       .catch(function(){});
   }catch(_e){}
 }
@@ -12350,7 +12350,7 @@ function renderAcxOverview(){
         var __rme = (window.currentUser && window.currentUser.email) || '';
         if(asg.value && asg.value !== __rme && window.notifyTeam){
           window.notifyTeam([asg.value], 'Lead assigned to you \u2014 ' + (pr.name || 'client'),
-            '<p>' + esc(rptRepName(__rme) || __rme || 'Someone') + ' assigned you <b>' + esc(pr.name || 'a lead') + '</b>' + (pr.address ? ' \u2014 ' + esc(pr.address) : '') + '.</p><p>Open Cardinal to see it.</p>');
+            '<p>' + esc(rptRepName(__rme) || __rme || 'Someone') + ' assigned you <b>' + esc(pr.name || 'a lead') + '</b>' + (pr.address ? ' \u2014 ' + esc(pr.address) : '') + '.</p><p>Open Cardinal to see it.</p>', clientLink(pr.id));
         }
       }catch(_){}
       /* 650: keep the commission rep in step while it is still unlocked —
@@ -12834,7 +12834,7 @@ function openTaskModal(pr, idx){
         var asg = document.getElementById('tskAssign').value;
         if(asg && asg !== myEmail){
           notifyTeam([asg], 'New task \u2014 ' + (pr.name || 'client'),
-            '<p>' + esc(rptRepName(myEmail)) + ' assigned you a task on <b>' + esc(pr.name || '') + '</b>:</p><p>' + esc(d) + '</p>');
+            '<p>' + esc(rptRepName(myEmail)) + ' assigned you a task on <b>' + esc(pr.name || '') + '</b>:</p><p>' + esc(d) + '</p>', clientLink(pr.id));
         }
       }catch(err){ showError('Could not save task: ' + (err.message || err)); }
     });
@@ -16317,7 +16317,7 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       var __me = (window.currentUser && window.currentUser.email) || '';
       if(__la && __la !== __me && window.notifyTeam){
         window.notifyTeam([__la], 'New lead assigned — ' + (first + ' ' + last),
-          '<p>' + esc(rptRepName(__me) || __me || 'Someone') + ' assigned you a new lead: <b>' + esc(first + ' ' + last) + '</b>' + (addr ? ' — ' + esc(addr) : '') + '.</p><p>Open Cardinal to see it.</p>');
+          '<p>' + esc(rptRepName(__me) || __me || 'Someone') + ' assigned you a new lead: <b>' + esc(first + ' ' + last) + '</b>' + (addr ? ' — ' + esc(addr) : '') + '.</p><p>Open Cardinal to see it.</p>', clientLink(pid));
       }
     }catch(_){}
     var ad = document.getElementById('ldApptDate').value;
@@ -18480,7 +18480,7 @@ async function sendChat(){
           msg.name + ' tagged you \u2014 ' + (currentProject.name || 'a client'),
           '<p><b>' + esc(msg.name) + '</b> tagged you on <b>' + esc(currentProject.name || '') + '</b>:</p>' +
           '<blockquote>' + esc(text) + '</blockquote>' +
-          '<p>Open the client\u2019s Communications page in Cardinal Resource to reply.</p>');
+          '<p>Open the client\u2019s Communications page in Cardinal Resource to reply.</p>', clientLink(currentProject.id));
         qcNotified(to, _r);
       }
     }
@@ -19254,7 +19254,7 @@ async function setMaterialsOrdered(on){
     var _rep = on && currentProject.sales_rep;
     if(_rep && typeof window.notifyTeam === 'function' && String(_rep).toLowerCase() !== me.toLowerCase()){
       window.notifyTeam([_rep], 'Materials ordered \u2014 ' + (currentProject.name || 'your job'),
-        '<p>Materials were just marked ordered for <b>' + (currentProject.name || 'your job') + '</b>.</p>')
+        '<p>Materials were just marked ordered for <b>' + (currentProject.name || 'your job') + '</b>.</p>', clientLink(currentProject.id))
         .catch(function(){});
     }
   }catch(_e){}
@@ -19588,6 +19588,12 @@ function notifyTeam(to, subject, bodyHtml, url){
     _list = _list.filter(function(e, i){ return _list.indexOf(e) === i; });
     var _text = String(bodyHtml || '')
       .replace(/<br\s*\/?>/gi, ' ')
+      /* 1147: a block END is a sentence boundary. Stripping every tag to ''
+         ran the blocks together — Theo's screenshot reads "is marked
+         COMPLETED.Next: do the final walk-around", because `</p><p>` vanished
+         rather than becoming a space. Inline tags still strip to nothing so
+         "<b>word</b>s" does not gain one. */
+      .replace(/<\/(?:p|div|li|h[1-6]|tr|blockquote)\s*>/gi, ' ')
       .replace(/<[^>]*>/g, '')
       .replace(/&nbsp;/gi, ' ')
       .replace(/\s+/g, ' ')
@@ -19616,6 +19622,15 @@ function notifyTeam(to, subject, bodyHtml, url){
    somebody sending it. */
 function punchLink(pid){ return pid ? ('#p/' + encodeURIComponent(pid) + '/punch') : '/'; }
 window.punchLink = punchLink;
+
+/* 1147: the same rule as punchLink, for the CLIENT. 1125 gave /api/notify a
+   `url` and wired it to the six punch-out notifications; the other twelve —
+   every one of which names a client in its subject line — still sent nothing,
+   so the text a rep gets about a job had no way back into the job. The route
+   was already built and validated (same-site paths only); nothing was missing
+   but somebody sending it. #p/<id> has been in __tryRestoreFromHash since 613. */
+function clientLink(pid){ return pid ? ('#p/' + encodeURIComponent(pid)) : '/'; }
+window.clientLink = clientLink;
 
 /* 612: ONE place that turns a route report into a sentence a person can act
    on. Both "Notified" lines use it, so they cannot drift apart — the same
@@ -19760,10 +19775,15 @@ function assignedRepOf(pr){
    so it fires on reconnect. notifyTeam never throws and always returns a promise of
    {ok,reason}; we only queue on a genuine network/offline failure, not on a real
    refusal (signed out) that a present, online person would already see. */
-function _notifyOrQueue(to, subject, html){
-  function _q(){ try{ if(window.CardinalOutbox && window.CardinalOutbox.queue) window.CardinalOutbox.queue({ op:'notify', to:to, subject:subject, html:html }); }catch(_){} }
+function _notifyOrQueue(to, subject, html, url){
+  /* 1147: `url` was missing from this signature entirely, so the two stage
+     alerts (APPROVED, Job complete) could not carry a link even though
+     notifyTeam has taken one since 1125. It has to ride the OUTBOX entry too:
+     without that, an alert sent with no signal loses its link on reconnect and
+     the failure is invisible — the text still arrives, just useless. */
+  function _q(){ try{ if(window.CardinalOutbox && window.CardinalOutbox.queue) window.CardinalOutbox.queue({ op:'notify', to:to, subject:subject, html:html, url:url }); }catch(_){} }
   try{
-    Promise.resolve(notifyTeam(to, subject, html)).then(function(res){
+    Promise.resolve(notifyTeam(to, subject, html, url)).then(function(res){
       if(res && res.ok) return;
       if(!res || res.reason === 'network' || res.reason === 'offline') _q();
     }, _q);
@@ -19826,7 +19846,8 @@ async function setStage(prId, v){
          Curtis sees in his inbox, rendered in whatever font his mail client picks. */
       'APPROVED \u2014 schedule + order materials: ' + (pr.name || ''),
       '<p><b>' + esc(pr.name || '') + '</b> (' + esc(pr.address || '') + ') is now <b>APPROVED</b>.</p>' +
-      '<p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s \uD83D\uDCE6 Materials tab).</p>');
+      '<p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s \uD83D\uDCE6 Materials tab).</p>',
+      clientLink(pr.id));
   }
   if(v === 'Completed' && prev !== 'Completed'){
     var rep = assignedRepOf(pr);
@@ -19834,7 +19855,8 @@ async function setStage(prId, v){
       'Job complete \u2014 walk-around + invoice: ' + (pr.name || ''),
       '<p><b>' + esc(pr.name || '') + '</b> (' + esc(pr.address || '') + ') is marked <b>COMPLETED</b>.</p>' +
       '<p>Next: do the <b>final walk-around</b> with the client, then send the invoice. ' +
-      'Once the invoice goes out, move the client to <b>Invoiced</b>.</p>');
+      'Once the invoice goes out, move the client to <b>Invoiced</b>.</p>',
+      clientLink(pr.id));
   }
 }
 (function(){
@@ -26416,7 +26438,7 @@ document.getElementById('sigApply').addEventListener('click', async function(){
       crTell('Contract signed \u2014 project moved to APPROVED. Curtis has been notified to schedule and order materials.');
     }else if(isEstimateTitle(t)){
       notifyTeam(ADMIN_EMAILS, 'Estimate signed \u2014 needs approval: ' + t,
-        '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>');
+        '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>', clientLink(current.project_id));
       crTell('Estimate signed. It now appears in the admin Approvals queue \u2014 a contract will be generated on approval.');
     }
     await reload();
@@ -42293,6 +42315,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1147, d:'2026-08-29', t:'The texts about a job now link straight back to the job',
+  s:'Every alert that names a client \u2014 approved, job complete, lead assigned, task assigned, materials ordered, estimate signed, someone tagged you \u2014 now carries a tappable link that opens that client in the app. Before, only the six punch-out messages did; the other twelve told you a job had moved and gave you no way to get to it, so you were left searching for the name by hand. Twenty of the twenty-one alerts now carry one; the twenty-first is the test message, which names no client and has nowhere to point. Two things went with it. A text sent while you have no signal keeps its link when it finally goes out \u2014 without that it would arrive later stripped of the one useful part, and nothing would have told you. And the run-together sentence is fixed: a text used to read \u201cis marked COMPLETED.Next: do the final walk-around\u201d because the paragraph break was being deleted rather than turned into a space.' },
 { b:1146, d:'2026-08-29', t:'Long scopes of work scroll again in the estimate editor',
   s:'You reported that the description box on an estimate line got stuck \u2014 you could drag it and nothing moved. It was not a scrolling problem, it was worse than that: past a certain length the box stopped growing and the rest of the text became unreachable by ANY gesture. Measured on a real scope: 598 pixels of box holding 828 pixels of text, so 28 per cent of what you had typed could not be reached by a swipe, a scroll wheel or a drag \u2014 only by moving the cursor through it a line at a time. The cause was two pieces of code doing the same job and disagreeing: one grew the box to fit your text, the other capped it, and the capped one ran last and won. There is now one, and it grows to fit. However long the scope, the whole thing is on screen and the page scrolls normally \u2014 no box inside a box. Two things went with it: every description had been quietly clipping the bottom two pixels of its last line, which is now measured off the box instead of guessed; and the box re-measures itself when you rotate the phone, which without it would have brought the whole problem straight back.' },
 { b:1145, d:'2026-08-29', t:'Two menu labels in light mode were a shade too pale',
@@ -53603,7 +53627,7 @@ async function markOrdered(pid){
     if(pr.sales_rep && typeof window.notifyTeam === 'function' &&
        String(pr.sales_rep).toLowerCase() !== String(me).toLowerCase()){
       window.notifyTeam([pr.sales_rep], 'Materials ordered \u2014 ' + (pr.name || 'your job'),
-        '<p>Materials were just marked ordered for <b>' + esc(pr.name || 'your job') + '</b>.</p>')
+        '<p>Materials were just marked ordered for <b>' + esc(pr.name || 'your job') + '</b>.</p>', clientLink(pr.id))
         .catch(function(){});
     }
   }catch(_e){}
@@ -56186,7 +56210,7 @@ var _r = await window.notifyTeam(to,
 '<p><b>' + esc(msg.name) + '</b> tagged you on the punch out <b>' + esc(it.title) + '</b>' +
 ((pr && pr.name) ? ' at <b>' + esc(pr.name) + '</b>' : '') + ':</p>' +
 '<blockquote>' + esc(text) + '</blockquote>' +
-'<p>Open the job’s Punch Outs page in Cardinal Resource to reply.</p>');
+'<p>Open the job’s Punch Outs page in Cardinal Resource to reply.</p>', punchLink(it.project_id));
 var th = document.querySelector('#ppPage .pp-thread');
 if(th){
 var d = document.createElement('div');
@@ -65014,7 +65038,7 @@ async function notifyAssignedBoard(id, email){
       'Assigned to you: ' + (it.title || 'a punch-out'),
       '<p>You were assigned a punch-out at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p>' +
       '<p>' + esc(it.title || '') + '</p>' +
-      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtDate(it.scheduled_at)) + fmtSchedClock(it.scheduled_time) + '</p>' : ''));
+      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtDate(it.scheduled_at)) + fmtSchedClock(it.scheduled_time) + '</p>' : ''), punchLink(it.project_id));
     return (typeof window.notifyOutcomeText === 'function') ? window.notifyOutcomeText(res, [email]) : '';
   }catch(_){ return ''; }
 }
@@ -80148,7 +80172,7 @@ function flush(){
            buried, so it never shows a red 'refused' chip a person can't act on. */
         if(row.op === 'notify'){
           var nf = (typeof window.notifyTeam === 'function')
-            ? Promise.resolve(window.notifyTeam(row.to, row.subject, row.html))
+            ? Promise.resolve(window.notifyTeam(row.to, row.subject, row.html, row.url))
             : Promise.resolve({ ok:false, reason:'network' });
           return nf.then(function(res){
             if(res && res.ok){ sentSome = true; return del(row.id).then(function(){ return false; }); }
