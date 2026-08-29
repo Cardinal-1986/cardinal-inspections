@@ -77,7 +77,14 @@ const qa = sel => Array.from(w.document.querySelectorAll(sel));
 
 (async function(){
   // open the console (paints, loads, repaints)
-  await w.CardinalOwner.open();
+  /* ⚠ 1129: the console is a HUB now — the eight sections are no longer stacked
+     on the landing page, so Strategy is not rendered until you enter its area.
+     This harness opened the console and asserted straight into Strategy, which
+     was correct through 1128 and became a stale assumption the moment the page
+     stopped being one scroller. Open the area the way a person now does. The
+     assertions below are UNCHANGED: what is tested did not change, only how you
+     get to it. */
+  await w.CardinalOwner.open('strategy');
   await tick(); await tick(); await tick();
 
   const wrap = q('#cr-owner .ow-wrap');
@@ -98,6 +105,10 @@ const qa = sel => Array.from(w.document.querySelectorAll(sel));
   // 3. Edit → a textarea with the raw content appears
   const bizEdit = edits.find(b => b.getAttribute('data-slug') === 'owner_biz_plan');
   ok(!!bizEdit, 'the Business Plan Edit control carries its slug');
+  /* BUG_CLASSES 37: without this guard a missing control throws here and the run
+     dies mid-way, which reads as "not green" rather than as a real failure —
+     exactly how this harness reported the 1129 change. */
+  if(!bizEdit){ console.log('\nRED — cannot continue: no Business Plan Edit control'); process.exit(1); }
   bizEdit.click();
   await tick();
   const ta = q('#cr-owner #ow-strat-ta');
@@ -124,7 +135,16 @@ const qa = sel => Array.from(w.document.querySelectorAll(sel));
   // 6. wiring in the artifact
   ok(/makeSec\('cr-nav-sec-owner', 'Owner'\)/.test(html), 'the drawer gets its own "Owner" section');
   ok(/insertBefore\(ownerSec, anchor\)/.test(html), 'the Owner section is inserted into the menu');
-  ok(/vaultHTML\(\) \+ strategyHTML\(\)/.test(html), 'render() includes the Strategy section');
+  /* ⚠ This asserted the literal string "vaultHTML() + strategyHTML()" — the
+     spelling of ONE line in render(). 1129 replaced that concatenation with the
+     AREAS table, and a correct build turned it red. The contract it actually
+     protects is "Strategy is reachable from the console", so assert THAT: it is
+     an area, and render() dispatches areas. Pinning punctuation is the class
+     that failed three of my own assertions across 827-836. */
+  ok(/k:'strategy'[\s\S]{0,220}strategyHTML\(\)/.test(html),
+     'Strategy is one of the console areas, wired to its builder');
+  ok(/\bvaultHTML\(\)/.test(html) && /\bareaHTML\(area\)\s*:\s*hubHTML\(\)/.test(html),
+     'render() dispatches to an area or the hub, and the Vault is still built');
   ok((script.match(/\['[^']+',/g) || []).length >= 9 && /KPIS = \[/.test(script), 'the KPI scoreboard is defined');
 
   clearTimeout(wd);

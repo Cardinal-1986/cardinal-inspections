@@ -3900,7 +3900,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      THIRD time main's footer has arrived carrying a summary, so if you are
      resolving this hunk a fourth time: ours wins, and it is not a judgement
      call. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-28 build 1128<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-29 build 1129<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27743,7 +27743,11 @@ function __histPush(st){
         case 'claims':          if(typeof window.crOpenClaims === 'function') window.crOpenClaims(); break;
         case 'crews':           if(window.CardinalCrews) window.CardinalCrews.open(); break;
         case 'pay':             if(window.CardinalPay) window.CardinalPay.open(); break;
-        case 'owner':           if(window.CardinalOwner) window.CardinalOwner.open(); break;
+        /* 1129: the console is a hub with areas now, so the restore has to carry
+           WHICH area - open() with no argument always lands on the hub, which
+           would make Back out of an area look like it did nothing. Same shape
+           as the contract case above, which restores by its recorded id. */
+        case 'owner':           if(window.CardinalOwner) window.CardinalOwner.open(state.data && state.data.area); break;
         /* 1022: the three full-screen views 1022 taught hideAllViews about record
            history too, or Back walks straight past them — the other half of the
            convention. cr-can and cr-lil are argument-less; the contract viewer
@@ -42188,6 +42192,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1129, d:'2026-08-29', t:'The Owner Console is a hub now, not one long scroll',
+  s:'Your words: \u201Cthe owner console is just 1 looooong page.\u201D It was \u2014 eight sections stacked into one scroller, 2,907px on a phone, which is three and a half screenfuls. And that was measured with every list EMPTY, so in real use it was longer than that, never shorter. It now opens on a hub: one card per area \u2014 Today, On the horizon, Renewals, Reminders, The Ledger, The Vault, Strategy \u2014 and each card carries its own live figure, so the question \u201Cdoes anything need me today\u201D is answered before you tap anything. Tap a card to open that area on its own; the back button at the top left returns you to the hub. On a desktop the cards go two across. The hub is 1,376px, a little over one and a half screens, and the areas themselves are unchanged \u2014 each one is exactly the section that was already there, just no longer stacked on top of the other seven. Your phone\u2019s own back gesture works properly too: back from an area returns to the hub, and back again leaves the console, instead of throwing you out to the home screen from three levels deep.' },
 { b:1128, d:'2026-08-28', t:'The two levels of grey text are two levels again \u2014 in both themes',
   s:'Yesterday\u2019s readability fix had a cost, and this pays it. The app uses two shades of grey for secondary text \u2014 one for \u201Cquieter than the main text\u201D and a second for \u201Cquieter still\u201D. Build 1127 had to brighten the quieter one to make it readable on a roof, and it landed on exactly the shade the first one was already using, so two levels became one and a deliberate bit of visual hierarchy quietly disappeared. Rather than dim it back \u2014 which is what was unreadable in the first place \u2014 the brighter level moves further up, making room underneath. Three distinct levels now, evenly spaced, every one of them comfortably readable. Light mode got the same treatment, and there it also fixed something that was still broken: the punch-out description that 1127 repaired in dark mode was still too faint in light, at 3.22 against a floor of 4.5. That was missed because the check ran on one screen and the conclusion was drawn for the whole app; sweeping ten screens found it. Nothing anywhere gets fainter \u2014 every one of the 186 places these two greys are used gains contrast or keeps what it had.' },
 { b:1127, d:'2026-08-28', t:'Three unreadable labels, found by reading 195 sweep findings',
@@ -79739,6 +79745,42 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 #cr-owner .ow-hs{font:400 14.5px/1.42 Georgia,serif;color:#6b5f54;margin:10px 0 0;}
 #cr-owner .ow-hs em{font-style:normal;color:#c8202e;font-weight:700;}
 /* section */
+/* 1129 — the hub. Every ink here was COMPUTED against the card ground #fffdf9,
+   not eyeballed: title #231d18 16.40:1, figure #c8202e 5.58:1, both descriptor
+   lines #6b5f54 6.10:1. The console's other muted ink, #8a7d6f, measures 3.94:1
+   on this surface and is deliberately NOT used on a card. The chevron takes the
+   descriptor ink rather than the #c9b8a8 hairline used elsewhere, which is
+   1.90:1 - invisible as a "there is more this way" affordance. */
+#cr-owner .ow-hub{padding:16px 18px 10px;display:grid;grid-template-columns:1fr;gap:11px;}
+@media (min-width:640px){ #cr-owner .ow-hub{grid-template-columns:1fr 1fr;} }
+#cr-owner .ow-card{display:grid;grid-template-columns:1fr auto;
+  grid-template-areas:"t go" "n go" "w go" "d d";
+  align-items:baseline;gap:2px 12px;width:100%;text-align:left;
+  background:#fffdf9;border:1px solid #ddd2c4;border-radius:12px;
+  padding:15px 16px 14px;cursor:pointer;font:inherit;color:#231d18;
+  min-height:44px;   /* the 592/1076 touch rule */
+  box-shadow:0 1px 0 rgba(35,29,24,.04);}
+#cr-owner .ow-card:active{background:#f7f2ea;}
+#cr-owner .ow-card:focus-visible{outline:2px solid #c8202e;outline-offset:2px;}
+#cr-owner .ow-card .oc-t{grid-area:t;font:700 11px/1 "Segoe UI",Arial,sans-serif;
+  letter-spacing:.16em;text-transform:uppercase;color:#c8202e;}
+#cr-owner .ow-card .oc-n{grid-area:n;font:400 27px/1.08 Georgia,serif;color:#231d18;margin-top:5px;}
+#cr-owner .ow-card .oc-w{grid-area:w;font:400 12.5px/1.3 "Segoe UI",Arial,sans-serif;color:#6b5f54;}
+#cr-owner .ow-card .oc-d{grid-area:d;font:400 12.5px/1.35 "Segoe UI",Arial,sans-serif;
+  color:#6b5f54;margin-top:9px;padding-top:9px;border-top:1px solid #efe7db;}
+#cr-owner .ow-card .oc-go{grid-area:go;align-self:center;
+  font:400 26px/1 "Segoe UI",Arial,sans-serif;color:#6b5f54;}
+/* the area header: back to the hub, and which area you are in */
+#cr-owner .ow-abar{display:flex;align-items:center;gap:12px;
+  padding:calc(14px + env(safe-area-inset-top,0px)) 18px 12px;border-bottom:1px solid #e5ded3;}
+#cr-owner .ow-back{flex:none;display:inline-flex;align-items:center;gap:5px;
+  min-height:44px;padding:0 13px 0 10px;   /* 44px, same rule as the cards */
+  background:#fffdf9;border:1px solid #ddd2c4;border-radius:10px;cursor:pointer;
+  font:600 13px/1 "Segoe UI",Arial,sans-serif;color:#231d18;}
+#cr-owner .ow-back span{font-size:19px;line-height:1;color:#c8202e;}
+#cr-owner .ow-back:active{background:#f0e8df;}
+#cr-owner .ow-at{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.16em;
+  text-transform:uppercase;color:#6b5f54;}
 #cr-owner .ow-sec{padding:19px 22px 6px;}
 #cr-owner .ow-sl{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;
   color:#c8202e;margin:0 0 13px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
@@ -79850,6 +79892,10 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 /* The Owner Console — build 895. window.CardinalOwner = { open, close }. */
 (function(){
   var view = null, built = false;
+  /* 1129: null = the hub; otherwise the key of the open area. The console
+     was eight sections stacked in one scroller - 2,907px on a phone with
+     every list EMPTY, so real data only ever made it longer. */
+  var area = null;
   var TASKS = [], OITEMS = [], DOCS = [], REMINDERS = [];
   var LEDGER = [], LTXNS = [], openAcct = null;   /* 899: The Ledger */
   var VAULT = [], vaultBusy = false;   /* 900: The Vault */
@@ -80275,11 +80321,107 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
       + kpiHTML()
       + '</div>';
   }
+  /* 1129: ONE table that knows the console's areas. The hub cards, the router,
+     the deep link and the back bar all read it, so adding an area is one row
+     here and nothing else - the same rule STAGES and IC_SKIP follow.
+     `fn` reuses the EXISTING section builder verbatim: the areas are the same
+     eight sections, re-hung on a hub, not rewritten. */
+  var AREAS = [
+    { k:'today', t:'Today', d:'Your Top 10 for the day',
+      fn:function(){ return top10HTML(); },
+      stat:function(){
+        var n = TASKS.filter(function(t){ return !t.done; }).length;
+        return { n:String(n), w:(n === 1 ? 'thing open' : 'things open') }; } },
+    { k:'horizon', t:'On the horizon', d:'Tax and compliance calendar',
+      fn:function(){ return oblHTML(); },
+      stat:function(){
+        /* dueClass() has meant "red at 30 days, amber at 60" since this console
+           shipped; the hub counts on the same threshold rather than inventing a
+           second idea of "soon". */
+        var n = taxCalendar().filter(function(r){ return daysTo(r.date) <= 60; }).length;
+        OITEMS.forEach(function(i){
+          if(i.kind !== 'obligation') return;
+          var d = parseDate(i.due_date);
+          if(d && daysTo(d) <= 60) n++;
+        });
+        return { n:String(n), w:'due within 60 days' }; } },
+    { k:'renewals', t:'Renewals', d:'Subcontractor certificates and expirations',
+      fn:function(){ return renewHTML(); },
+      stat:function(){
+        var n = DOCS.filter(function(d){ return daysTo(d.expires) <= 60; }).length;
+        OITEMS.forEach(function(i){
+          if(i.kind !== 'renewal') return;
+          var d = parseDate(i.due_date);
+          if(d && daysTo(d) <= 60) n++;
+        });
+        return { n:String(n), w:'expiring within 60 days' }; } },
+    { k:'reminders', t:'Reminders', d:'What you want to see each time',
+      fn:function(){ return remindHTML(); },
+      stat:function(){
+        var n = REMINDERS.filter(function(r){ return !r.done_at; }).length;
+        return { n:String(n), w:(n === 1 ? 'reminder set' : 'reminders set') }; } },
+    { k:'ledger', t:'The Ledger', d:'Loans, draws and money you lent',
+      fn:function(){ return ledgerHTML(); },
+      stat:function(){
+        var op = LEDGER.filter(function(a){ return !a.settled_at; });
+        var oweTot = op.filter(function(a){ return a.kind === 'borrowed'; })
+                       .reduce(function(s, a){ return s + balanceOf(a.id); }, 0);
+        return { n:fmtMoney(oweTot), w:'you owe' }; } },
+    { k:'vault', t:'The Vault', d:'Company documents, admin only',
+      fn:function(){ return vaultHTML(); },
+      stat:function(){
+        return { n:String(VAULT.length), w:(VAULT.length === 1 ? 'document filed' : 'documents filed') }; } },
+    { k:'strategy', t:'Strategy', d:'The business plan and the market',
+      fn:function(){ return strategyHTML(); },
+      stat:function(){
+        var have = 0;
+        if(STRATEGY && STRATEGY.owner_biz_plan) have++;
+        if(STRATEGY && STRATEGY.owner_competitors) have++;
+        return { n:String(have) + '/2', w:'documents written' }; } }
+  ];
+
+  function areaOf(k){
+    for(var i = 0; i < AREAS.length; i++) if(AREAS[i].k === k) return AREAS[i];
+    return null;
+  }
+
+  function cardHTML(a){
+    var s;
+    /* a stat that throws must not take the whole hub down with it - the console
+       loads eight tables and any one of them can come back empty or odd. */
+    try{ s = a.stat() || {}; }catch(_){ s = { n:'\u2014', w:'not available' }; }
+    return '<button type="button" class="ow-card" data-act="ow-go" data-area="' + esc(a.k) + '">' +
+             '<span class="oc-t">' + esc(a.t) + '</span>' +
+             '<span class="oc-n">' + esc(String(s.n == null ? '\u2014' : s.n)) + '</span>' +
+             '<span class="oc-w">' + esc(String(s.w || '')) + '</span>' +
+             '<span class="oc-d">' + esc(a.d) + '</span>' +
+             '<span class="oc-go" aria-hidden="true">\u203A</span>' +
+           '</button>';
+  }
+
+  function hubHTML(){
+    return headHTML() +
+      '<div class="ow-hub">' + AREAS.map(cardHTML).join('') + '</div>';
+  }
+
+  function areaHTML(k){
+    var a = areaOf(k);
+    if(!a) return hubHTML();
+    return '<div class="ow-abar">' +
+             '<button type="button" class="ow-back" data-act="ow-back">' +
+               '<span aria-hidden="true">\u2039</span> Owner hub</button>' +
+             '<div class="ow-at">' + esc(a.t) + '</div>' +
+           '</div>' + a.fn();
+  }
+
   function render(){
     if(!view) return;
     var body = view.querySelector('.ow-wrap');
-    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() + vaultHTML() + strategyHTML() +
-      '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations · Owner</div></div>';
+    body.innerHTML = (area ? areaHTML(area) : hubHTML()) +
+      '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations &middot; Owner</div></div>';
+    /* a fresh area starts at the top; without this you land mid-page because the
+       scroller keeps the hub's offset. */
+    try{ view.scrollTop = 0; }catch(_){}
   }
 
   function rowId(el){ var r = el.closest('[data-id]'); return r ? r.getAttribute('data-id') : null; }
@@ -80289,6 +80431,21 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     if(!t) return;
     var act = t.getAttribute('data-act'), c = cl(), id = rowId(t);
     try{
+      /* 1129: hub <-> area. Each area is its own history entry, so the phone's
+         back gesture walks area -> hub -> out of the console instead of
+         dumping you onto the home screen from three levels deep. */
+      if(act === 'ow-go'){
+        var _k = t.getAttribute('data-area');
+        if(!areaOf(_k)) return;
+        area = _k; render();
+        try{ window.navSetView('owner', { area:_k }); }catch(_e){}
+        return;
+      }
+      if(act === 'ow-back'){
+        area = null; editing = null; render();
+        try{ window.navSetView('owner', null); }catch(_e){}
+        return;
+      }
       if(act === 'strat-edit'){ stratEdit = t.getAttribute('data-slug'); render(); }
       else if(act === 'strat-cancel'){ stratEdit = null; render(); }
       else if(act === 'strat-save'){
@@ -80511,8 +80668,12 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     built = true;
   }
 
-  async function open(){
+  async function open(a){
     if(!amAdmin()){ try{ crTell('Owner Console is admin only.'); }catch(_){ } return; }
+    /* 1129: an explicit area opens straight to it (that is what the history
+       restore and a deep link pass); anything unrecognised falls back to the
+       hub rather than a blank screen. */
+    area = (a && areaOf(a)) ? a : null;
     ensureView();
     if(typeof hideAllViews === 'function') try{ hideAllViews(); }catch(_){ }
     var hdr = document.querySelector('header.site'); if(hdr) hdr.style.display = 'none';
@@ -80525,6 +80686,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 
   function close(){
     editing = null;
+    area = null;   /* 1129: or the next open resumes inside an area */
     if(view) view.style.display = 'none';
     var hdr = document.querySelector('header.site'); if(hdr) hdr.style.display = '';
     if(typeof showHome === 'function'){ try{ showHome(); return; }catch(_){ } }
