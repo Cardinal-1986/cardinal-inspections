@@ -159,7 +159,7 @@ let   ALL    = argv.includes('--all');
    it reported build 817's FIX as the defect). Silence from an instrument
    that has never been seen to speak is not evidence of anything. */
 const SELFTEST = argv.includes('--selftest');
-const EXPECT = ['INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'FLOOR', 'CONTAIN', 'UNWIRED'];
+const EXPECT = ['INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'FLOOR', 'CONTAIN', 'UNWIRED', 'DEADTAP', 'DUPE', 'BOOK'];
 const on = id => !ONLY.length || ONLY.includes(id);
 
 if (SINCE && !existsSync(SINCE)) {
@@ -427,6 +427,26 @@ async function sweep(HTML, findings) {
               key: `${f.el}`,
               detail: `${f.el} hides ${f.over}px with no scrollbar (${f.bar})` +
                       (f.hidden && f.hidden.length ? ` — off the edge: ${f.hidden.join(', ')}` : '') });
+
+    /* DEADTAP — BUG_CLASSES 71: styles as pressable, computes
+       pointer-events:none. The 1164 header title, found by Theo's finger. */
+    if (on('DEADTAP') && (res.deadtap || []).length)
+      for (const f of capped(res.deadtap, 20, 'DEADTAP'))
+        add({ id: 'DEADTAP', where: at, key: `${f.el}|${f.reason}`,
+              detail: `${f.el}${f.label ? ' "' + f.label + '"' : ''} styles as pressable but computes ${f.reason} — no finger can reach it (class 71)` });
+
+    /* DUPE — build 1171: one concept, two doors in one menu. */
+    if (on('DUPE') && (res.dupes || []).length)
+      for (const f of capped(res.dupes, 20, 'DUPE'))
+        add({ id: 'DUPE', where: at, key: `${f.root}|${f.label}`,
+              detail: `two controls named "${f.label}" in ${f.root} (${f.a} and ${f.b}) — one concept, two doors` });
+
+    /* BOOK — build 1173: the board must equal the book of the portal the
+       body claims, or the dashboard is wearing another portal's numbers. */
+    if (on('BOOK') && (res.book || []).length)
+      for (const f of capped(res.book, 20, 'BOOK'))
+        add({ id: 'BOOK', where: at, key: `book|${f.stage}`,
+              detail: `pipeline ${f.stage} shows ${f.got} but the ${f.crm} book holds ${f.exp} — the board is wearing another portal's numbers (1173 class)` });
 
     /* UNWIRED needs CDP — the page cannot list its own listeners. */
     if (on('UNWIRED') && res.unwired.length) {
@@ -718,6 +738,27 @@ if (SELFTEST) {
   console.log((dataDel ? '  FAIL  ' : '  PASS  ') +
     'a data-hooked, document-delegated button is NOT reported as unwired');
   if (dataDel) bad++;
+  /* DEADTAP pair: a plain pass-through with no pressable styling must stay
+     quiet, and one defect must not print once per inherited descendant. */
+  const dtPlain = all.some(r => r.id === 'DEADTAP' && /dt-plain/.test(r.detail));
+  console.log((dtPlain ? '  FAIL  ' : '  PASS  ') +
+    'a pass-through with no pressable styling is NOT reported as DEADTAP');
+  if (dtPlain) bad++;
+  const dtInner = all.some(r => r.id === 'DEADTAP' && /dt-inner/.test(r.detail));
+  console.log((dtInner ? '  FAIL  ' : '  PASS  ') +
+    'a descendant inheriting the dead boundary is NOT reported twice');
+  if (dtInner) bad++;
+  /* DUPE pair: two same-name buttons in a NON-menu container are two
+     different objects' actions and must stay quiet. */
+  const dupeCards = all.some(r => r.id === 'DUPE' && /dupe-cards/.test(r.detail));
+  console.log((dupeCards ? '  FAIL  ' : '  PASS  ') +
+    'two same-name buttons in a plain list are NOT reported as DUPE');
+  if (dupeCards) bad++;
+  /* BOOK pair: the matching stage in the same fixture must stay quiet. */
+  const bookOk = all.some(r => r.id === 'BOOK' && /Prospect/.test(r.detail));
+  console.log((bookOk ? '  FAIL  ' : '  PASS  ') +
+    'a pipeline stage that MATCHES its book is NOT reported as BOOK');
+  if (bookOk) bad++;
   console.log(bad ? `SELFTEST RED — ${bad} check(s) cannot be trusted`
                   : `SELFTEST GREEN — all ${EXPECT.length} checks fire, and neither look-alike is misreported`);
   process.exit(bad ? 1 : 0);

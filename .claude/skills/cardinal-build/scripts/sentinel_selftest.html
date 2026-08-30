@@ -287,5 +287,47 @@
   document.getElementById('floor-btn').addEventListener('click', function () {});
   document.getElementById('floor-pad-btn').addEventListener('click', function () {});
 </script>
+
+<h2>DEADTAP — pressable styling, pointer-events:none (class 71, build 1172)</h2>
+<div class="case">
+  <div id="dt-dead" style="cursor:pointer;pointer-events:none;padding:12px">
+    Dead switcher <span id="dt-inner">inherited child</span>
+  </div>
+  <div id="dt-plain" style="pointer-events:none;padding:4px">decorative pass-through, no pressable styling</div>
+  <button id="dt-live" onclick="void 0" style="cursor:pointer;padding:10px">a live button</button>
+</div>
+
+<h2>DUPE — one concept, two doors in one menu (build 1171)</h2>
+<div class="case">
+  <nav id="dupe-nav">
+    <button onclick="void 0">Switch portal</button>
+    <button onclick="void 0">Switch Portal</button>
+    <button onclick="void 0">Clients</button>
+  </nav>
+  <div id="dupe-cards">
+    <div><b>Card one</b> <button onclick="void 0">Delete</button></div>
+    <div><b>Card two</b> <button onclick="void 0">Delete</button></div>
+  </div>
+</div>
+
+<h2>BOOK — the board wearing another portal's numbers (build 1173)</h2>
+<div class="case">
+  <div id="mainView"><div id="pipeRow">
+    <button class="pipebtn" data-stg="Lead" onclick="void 0"><span class="pcount">5</span> Lead</button>
+    <button class="pipebtn" data-stg="Prospect" onclick="void 0"><span class="pcount">1</span> Prospect</button>
+  </div></div>
+</div>
+<script>
+  /* the app-shaped globals BOOK needs: one retail Lead and one retail
+     Prospect, so the rendered "5" is a lie and the rendered "1" is true —
+     the firing and the quiet direction live in one fixture. */
+  window.cacheProjects = [
+    { stage: 'Lead',     checklist: '{"lead":{"claim_type":"retail"}}' },
+    { stage: 'Prospect', checklist: '{"lead":{"claim_type":"retail"}}' }
+  ];
+  window.projClaimType = function (p) { try { return JSON.parse(p.checklist).lead.claim_type; } catch (e) { return 'unknown'; } };
+  window.normStage = function (st) { return st; };
+  document.body.dataset.crm = 'retail';
+</script>
 </body>
 </html>

@@ -3924,7 +3924,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1172<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1173<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42561,6 +42561,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1173, d: '2026-08-30', t: 'One pipeline per portal \u2014 the numbers stop wandering', s: 'Theo, with three screenshots of three different pipelines under one Retail header: the board was reading which portal it was in a beat before the header finished switching, so coming back from Community or Cardinal Truth could paint the retail dashboard with the other book\u2019s numbers \u2014 and nothing re-rendered until something else did. The board now re-renders itself the instant the portal actually flips, on every path. And the home button in the header is retired \u2014 its one real job was accidentally repairing this bug.' },
   { b: 1172, d: '2026-08-30', t: 'The header switcher actually taps', s: 'Theo: \u201cThere\u2019s no actual switcher on the header.\u201d He was right \u2014 the header title has carried pointer-events:none since it was a decorative label, so the \u25be shipped at 1164 sat on an element no finger could ever reach, and every gate had opened the panel through the API instead of tapping it. The title now takes the tap (and its hit area meets the 44px floor), and the new gate drives every door with real taps \u2014 title, drawer row, drawer icon, panel rows, scrim \u2014 never the function.' },
   { b: 1171, d: '2026-08-30', t: 'One way to switch portals, not four', s: 'The Front Door (1164) had been ADDED beside the old switching doors instead of replacing them \u2014 the drawer carried two \u201cSwitch portal\u201d rows over two different pickers, and the drawer-header icon and the insurance header\u2019s Switch CRM chip still opened the old sheet. One row now, and every switch door \u2014 the drawer row, the drawer-header icon, the insurance chip, the header title \u2014 opens the same Front Door. The old picker sheet keeps working only as a fallback if the panel is ever missing.' },
   { b: 1170, d: '2026-08-30', t: 'Needs sorting \u2014 the unfiled clients get their door back', s: 'Nineteen clients are filed under no CRM, so they sit in no portal\u2019s numbers. The app already had the tool for this \u2014 Assign Portals, a bulk sorter with an Untyped tab that ticks clients into Retail, Cardinal Truth or Community in one go \u2014 but its only door was a card on the Landing screen, which retired at 1165. Two doors reconnect it: a \u201cNeeds sorting\u201d row at the bottom of the Front Door panel (it only appears while the count is above zero), and the line under the home pipeline now opens the sorter instead of a read-only list. The sorter is also registered in the app\u2019s navigation teardown, so opening another screen can no longer strand it.' },
@@ -62200,23 +62201,14 @@ rib = document.createElement('div');
 rib.id = 'cr-hd2-ribbon';
 head.appendChild(rib);
 }
-var home = document.getElementById('cr-hd2-home');
-if(!home){
-home = document.createElement('button');
-home.id = 'cr-hd2-home';
-home.type = 'button';
-home.title = 'Home';
-home.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.8 21v-6h4.4v6"/></svg>';
-/* 756: this ladder used to live here, inline, as the ONLY CRM-aware home in
-   the app — while #cr-home-btn and the mounts' floating exit button each called
-   showHome() and landed on retail. It is goHome() now, exported, and this
-   button is simply its first caller. One pipeline per concept. */
-home.onclick = function(){ goHome(); };
-}
+/* 1173: the ⌂ home button is retired (Theo's ask). goHome() itself survives —
+   the mounts' exit buttons still call it. The removal is idempotent because
+   build() re-runs from an observer and older markup may still carry the node. */
+var _oldHome = document.getElementById('cr-hd2-home');
+if(_oldHome && _oldHome.parentNode) _oldHome.parentNode.removeChild(_oldHome);
 /* 416: home now anchors the RIGHT END OF THE BAR, not the ribbon. Appended last so
    it sits outside the absolutely-centred title. */
 var _bar = document.getElementById('cr-hd2-bar');
-if(_bar && home.parentNode !== _bar) _bar.appendChild(home);
 /* 804: the search lens. Same idempotent shape as the Home append above -
    build() re-runs from a body observer, so "create only if absent" is the
    rule here, not an optimisation. ICO('search') is the app's own glyph and
@@ -62557,9 +62549,24 @@ var kh = crmHead();
    here and in build(). */
 var ks = sharedScreen();
 if(k === lastCrm && kh === lastHead && ks === lastScreen) return;
+var _crmFlip = (k !== lastCrm);
 lastCrm = k; lastHead = kh; lastScreen = ks;
 document.body.dataset.crm = k;
 document.body.dataset.crmHead = kh;
+/* 1173: the board follows the stamp, not the other way round. The dashboard's
+   renders read dataset.crm at their own moment, which can precede this write
+   (the 369 lag class) — Theo saw three different pipelines under one Retail
+   header. When the portal genuinely flips and the dashboard is on screen,
+   re-render it now. Idempotent, and the change guard above stops any loop. */
+if(_crmFlip){
+  try{
+    var _mv1173 = document.getElementById('mainView');
+    if(_mv1173 && _mv1173.style.display !== 'none'){
+      if(typeof renderPipeline === 'function') renderPipeline();
+      if(typeof renderHome === 'function') renderHome();
+    }
+  }catch(_bs){}
+}
 /* 1088: the status bar follows the header. Theo, with three screenshots: the
    retail dashboard with its correct steel header and an INSURANCE-RED band
    above it; Community green over green; retail correct again after a round

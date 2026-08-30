@@ -12,7 +12,7 @@
  * anything outside the page.
  */
 globalThis.__sentinelProbe = () => {
-  const out = { clipped: [], ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], contain: [], overflow: null };
+  const out = { clipped: [], ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], contain: [], overflow: null, deadtap: [], dupes: [], book: [] };
 
   /* ── colour ─────────────────────────────────────────────────────────── */
   function parse(c) {
@@ -649,6 +649,90 @@ globalThis.__sentinelProbe = () => {
       label: (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 32) });
     n++;
   }
+
+
+  /* ── DEADTAP ────────────────────────────────────────────────────────
+     BUG_CLASSES 71 — the header title styled cursor:pointer and carried a
+     delegated click handler while `pointer-events:none` made it untouchable;
+     the ▾ shipped at 1164 on an element no finger could reach, and every
+     gate opened the panel through the API. This is the DETERMINISTIC form
+     of the class: an element that STYLES as pressable (pointer cursor, or a
+     button/role/data hook) but computes pointer-events:none. The combo is
+     inherently contradictory — a genuine pass-through never advertises a
+     pointer cursor, because the cursor could never be earned by a press.
+     The buried-under-z-index cousin (build 325's Attach bar) is NOT here:
+     a hit-test check drowns in legitimate overlays during a state walk, so
+     that class stays with the per-build finger gates (gate_1172's shape). */
+  for (const el of all) {
+    const cs = getComputedStyle(el);
+    if (cs.pointerEvents !== 'none') continue;
+    const pressy = cs.cursor === 'pointer' || el.tagName === 'BUTTON' ||
+      el.getAttribute('role') === 'button' ||
+      (el.tagName === 'A' && el.hasAttribute('href'));
+    if (!pressy) continue;
+    const r = el.getBoundingClientRect();
+    if (!visible(el, r)) continue;
+    /* children inherit pointer-events:none — report only the boundary
+       element, or one defect prints once per descendant. */
+    const par = el.parentElement;
+    if (par && getComputedStyle(par).pointerEvents === 'none') continue;
+    out.deadtap.push({ el: where(el),
+      label: (ownText(el) || el.getAttribute('aria-label') || '').trim().slice(0, 32),
+      reason: 'pointer-events:none' });
+  }
+
+  /* ── DUPE ───────────────────────────────────────────────────────────
+     Build 1171 — the drawer carried "Switch portal" AND "Switch Portal",
+     two rows over two mechanisms, and Theo read it as the new design merely
+     covering the old. Scoped to MENU containers on purpose: two "Delete"
+     buttons in two cards of a list are two different objects' deletes and
+     are fine; two identical names in one navigation menu are one concept
+     with two doors. Checked from MARKUP, not visibility — a closed drawer's
+     duplicate rows are just as wrong, and the walk keeps drawers closed. */
+  for (const root of document.querySelectorAll('#navMenu, #cr-fd, nav, [role="menu"], [role="menubar"]')) {
+    const seen = {};
+    for (const b of root.querySelectorAll('button, [role="button"], a[href]')) {
+      if (b.hasAttribute('hidden')) continue;
+      const label = (b.textContent || b.getAttribute('aria-label') || '')
+        .trim().replace(/\s+/g, ' ').toLowerCase();
+      if (label.length < 3) continue;
+      if (seen[label]) out.dupes.push({ root: where(root), label, a: seen[label], b: where(b) });
+      else seen[label] = where(b);
+    }
+  }
+
+  /* ── BOOK ───────────────────────────────────────────────────────────
+     Build 1173 — three different pipelines under one Retail header: the
+     board read body.dataset.crm a beat before skin() finished writing it,
+     so the retail dashboard could wear another portal's numbers. The page
+     holds everything needed to verify the invariant about itself: the
+     rendered counts must equal the book of the portal the body claims.
+     Guarded so it no-ops (never crashes) on any page without the app's own
+     globals — class 37, the control that dies instead of reporting. */
+  (function bookCheck() {
+    try {
+      const row = document.getElementById('pipeRow');
+      const mv = document.getElementById('mainView');
+      if (!row || !mv || mv.style.display === 'none') return;
+      const cp = window.cacheProjects, pct = window.projClaimType, ns = window.normStage;
+      if (!Array.isArray(cp) || !cp.length || typeof pct !== 'function' || typeof ns !== 'function') return;
+      const crm = document.body.dataset.crm || 'retail';
+      const want = {};
+      for (const pr of cp) {
+        if (pct(pr) !== crm) continue;
+        let st = ns(pr.stage);
+        if (st === 'Scheduled') st = 'Approved';   /* renderPipeline's own merge */
+        want[st] = (want[st] || 0) + 1;
+      }
+      for (const b of row.querySelectorAll('.pipebtn')) {
+        const k = b.getAttribute('data-stg');
+        const cnt = b.querySelector('.pcount');
+        const got = cnt ? parseInt(cnt.textContent, 10) : NaN;
+        const exp = want[k] || 0;
+        if (!isNaN(got) && got !== exp) out.book.push({ stage: k, crm, got, exp });
+      }
+    } catch (e) { /* absent globals: not this page's check */ }
+  })();
 
   return out;
 };
