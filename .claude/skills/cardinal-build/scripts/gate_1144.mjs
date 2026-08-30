@@ -174,7 +174,12 @@ for (const s of sweeps) {
      and a row that is fixed makes the entry stale and reports itself. Its cause
      is known: `#cr-hd2-bar .cr-ib.primary` is a filled accent button and several
      ink rules lose to it — the same shape as #addProjectBtn in 1144. */
-  const DEBT = [{ crm:'retail', th:'dark', sel:'button.cr-ib', txt:'＋', was:3.79 }];
+  /* 1152 FIXED IT — entry retired, not just emptied. The + button's gradient
+     bottom stop went #4f7396 -> #5981a8 (4.61:1), so there is no carried debt
+     left in the header chrome. The list stays as the mechanism: a future
+     pre-existing failure gets an entry with its measured value, never a blanket
+     skip, so it still fails if it gets WORSE. */
+  const DEBT = [];
   const known = x => DEBT.some(d => d.crm === s.crm && d.th === s.th &&
                                     d.sel === x.sel && d.txt === x.txt && x.r >= d.was - 0.01);
   const bad = s.rows.filter(x => x.r < floorOf(x) && !known(x)).sort((a,b) => a.r - b.r);

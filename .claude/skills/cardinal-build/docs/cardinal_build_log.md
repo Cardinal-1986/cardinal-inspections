@@ -30395,3 +30395,37 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
   `checkout.session.expired` (a client who abandons the payment page is
   invisible). **ACH also has to be enabled in the Stripe dashboard** — Settings
   → Payment methods → ACH Direct Debit — before the option appears at checkout.
+
+## Build 1152 — the + button, and the last carried debt in the header retired
+
+- **1152** · Theo picked this off the "available when you want them" list. The
+  header's **+ button (`#addProjectBtn`)** was the last contrast failure in the
+  chrome: **3.79:1** against a 4.5 floor (18px/400 is body text — the large-text
+  3.0 floor does not apply, checked before assuming).
+
+  **It is a GRADIENT, which is the whole lesson.** The ink `#0b1218` sits on
+  `linear-gradient(180deg,#b9d3ec,#8fb4d8 52%,#4f7396)` — 12.20 and 8.70 against
+  the top two stops, **3.79 against the bottom one**. An average would have said
+  this button was fine. Ink on a gradient must clear its DARKEST stop.
+
+  Bottom stop `#4f7396` → **`#5981a8`** (4.61:1), hue held exactly at 209.6°.
+  `border-color` moves with it or the button gains a dark rim where the old stop
+  was. **Scoped to the one rule** — `#4f7396` appears 6× in the file and the
+  other 4 are untouched, asserted.
+
+  ⚠️ Only **retail** defines a `.cr-ib.primary` gradient; the other three CRMs
+  fall back to the flat accent and already passed. Checked before fixing, because
+  1144 fixed retail and missed production doing exactly this.
+
+  **`gate_1144`'s carried-debt entry is RETIRED, not emptied into a skip.** The
+  `DEBT` list stays as the mechanism (a future pre-existing failure gets an entry
+  with its measured value, so it still fails if it gets WORSE) — it is now `[]`.
+  With the list empty: **GREEN 29/29 on 1152, RED on 1151** naming
+  `3.79:1 button.cr-ib "＋"`. All 43 chrome elements across 4 CRMs × 2 themes
+  clear their floor; **no carried debt remains in the header.**
+
+  ⚠️ **My first patch attempt aborted on its own assertion, correctly.** I
+  asserted `src.count('#5981a8') == 2` file-wide — but the explanatory comment I
+  was inserting *mentions* `#5981a8`, making it 3. This file's own
+  comment-pollution trap, in my own assertion, on the same build that documents
+  it. Re-scoped to assert on the DECLARATIONS before the comment is attached.
