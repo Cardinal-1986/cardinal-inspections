@@ -30779,3 +30779,14 @@ before push.
   shipped module (crAsk answered, `__WRITES__` shows `claim_type: retail`), RED (6) on the 1169
   control. Gate seed ids are strings — numeric ids failed the module's strict-eq join and burned a
   round (test data lying, again).
+
+## Build 1171 — one way to switch portals, not four
+- Theo, with a screenshot of the drawer carrying BOTH "Switch portal" (1165, → Front Door) and
+  "Switch Portal" (799, → the old picker sheet): *"it's like the new design is just covering the
+  previous… just adding a few buttons redundantly."* He was right — 1164 added the Front Door
+  beside the old doors instead of replacing them. Four doors, two mechanisms.
+- Consolidated: the 799 drawer row deleted at source; the `data-nav="portal"` case, the
+  drawer-header `.cr-dh-switch` icon, and the insurance header's Switch CRM chip all route to
+  `CardinalFrontDoor.open()` (old `pick()` kept only as a code fallback — no UI door reaches it).
+- Gates: check_build green (1170→1171) · `gate_1171.mjs` 9/9, RED (3) on the 1170 control, whose
+  failure line names the defect verbatim ("got 2: Switch portal | Switch Portal").
