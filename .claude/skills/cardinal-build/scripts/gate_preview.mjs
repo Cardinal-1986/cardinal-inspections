@@ -1,7 +1,7 @@
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
 const FILE = 'file:///home/user/cardinal-inspections/docs/landing_retail_previews.html';
-const DIRS = ['1','2','3'], THEMES = ['dark','light'], WIDTHS = ['phone','desk'];
+const DIRS = ['1','2','3','4'], THEMES = ['dark','light'], WIDTHS = ['phone','desk'];
 let fail = 0, checks = 0;
 const bad = [];
 function say(ok, msg){ checks++; if(!ok){ fail++; bad.push(msg); } }

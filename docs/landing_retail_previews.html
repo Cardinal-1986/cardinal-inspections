@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cardinal — Landing &amp; Retail, three directions</title>
+<title>Cardinal — Landing &amp; Retail, four directions</title>
 <style>
 /* ─────────────────────────────────────────────────────────────────────────
    PREVIEW CHROME — this is the harness, not the app. Everything inside a
@@ -188,24 +188,81 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
 .actstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .actbox{background:#0b0b0d;border-radius:10px;padding:11px 9px;text-align:center;color:#fff;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
-.shell[data-t="light"] .actbox{background:#0b0b0d}
+/* 557: the obsidian tiles have a sanctioned LIGHT TWIN — same geometry,
+   shadow-led, computed inks (#C25A18 4.40:1). An earlier revision of this
+   file pinned them black in light, silently undoing it. */
+.shell[data-t="light"] .actbox{background:#ffffff;border:1px solid #e2ddd7;
+  box-shadow:0 2px 7px rgba(40,30,22,.13)}
+.shell[data-t="light"] .actbox span{color:#5f6670}
+.shell[data-t="light"] .actbox b{color:#C25A18}
 .actbox span{display:block;font:700 11px/1.25 'Segoe UI',Arial,sans-serif;color:#b9bec6}
-.actbox b{display:block;margin-top:5px;font:800 16px/1 ui-monospace,Menlo,monospace;color:#E8722A}
+.actbox b{display:block;margin-top:5px;font:800 19px/1 ui-monospace,Menlo,monospace;color:#E8722A}
 .shell[data-w="desk"] .cols{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
 .note{margin:0 0 12px;padding:10px 12px;border-left:3px solid var(--warn);background:var(--acard);
       border-radius:0 8px 8px 0;font-size:12.5px;color:var(--amute)}
 .note b{color:var(--aink)}
 .tiny{font-size:11.5px;color:var(--amute);margin:6px 0 0}
+/* ── D4: the header switcher ── */
+.hd .sw{display:flex;align-items:center;gap:7px;min-height:44px;padding:0 13px;cursor:pointer;
+        background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:9px;
+        color:#fff;font:700 14.5px/1 Georgia,serif}
+.hd .sw .chv{font-size:11px;opacity:.85}
+.swmenu{margin:10px 12px 0;background:var(--acard);border:1px solid var(--aline);border-radius:12px;
+        overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.5)}
+.swrow{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:11px 14px;
+       background:none;border:0;border-top:1px solid var(--aline);cursor:pointer;font:inherit;
+       color:var(--aink);text-align:left}
+.swrow:first-of-type{border-top:0}
+.swrow .tag{flex:0 0 auto;width:4px;align-self:stretch;border-radius:2px;background:var(--acc)}
+.swrow .tx{flex:1;min-width:0}
+.swrow b{display:block;font:700 14.5px/1.2 Georgia,serif}
+.swrow small{display:block;margin-top:3px;font-size:11.5px;color:var(--amute)}
+.swrow small .hot{color:var(--hot);font-weight:700}
+.swrow small .warn{color:var(--warn);font-weight:700}
+.swrow .chk{flex:0 0 auto;color:var(--hot);font-weight:800}
+.swdiv{height:1px;background:var(--aline)}
+.skel{margin:12px 14px 14px;opacity:.5}
+.skel .sb1{height:64px;border-radius:12px;background:var(--acard);border:1px solid var(--aline);margin-bottom:10px}
+.skel .sb2{height:110px;border-radius:12px;background:var(--acard);border:1px solid var(--aline)}
+/* D4 desktop: the regrouped left nav from the concept, real destinations only */
+.d4wrap{display:block}
+.snav{display:none}
+.shell[data-w="desk"] .d4wrap{display:grid;grid-template-columns:216px 1fr;align-items:start}
+.shell[data-w="desk"] .snav{display:block;background:var(--acard);border-right:1px solid var(--aline);
+       padding:12px 0 20px;min-height:640px}
+.snav .g{margin:14px 14px 4px;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;
+         text-transform:uppercase;color:var(--amute)}
+.snav button{display:block;width:100%;min-height:44px;padding:0 14px 0 17px;background:none;border:0;
+             border-left:3px solid transparent;cursor:pointer;font:600 13px/44px 'Segoe UI',Arial,sans-serif;
+             color:var(--amute);text-align:left}
+.snav button.on{border-left-color:var(--red);color:var(--aink);background:rgba(200,32,46,.07)}
+.statrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.statrow .pipebtn{min-width:86px;padding:12px 10px}
+.arbig{font:800 24px/1 ui-monospace,Menlo,monospace;color:var(--aink)}
+.arbig .lbl{display:block;margin-top:5px;font:600 11.5px/1.3 'Segoe UI',Arial,sans-serif;color:var(--amute)}
+.arrow2{display:flex;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;
+        border-top:1px solid var(--aline);font-size:12px;color:var(--amute)}
+.leadrow{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 0;
+         background:none;border:0;border-top:1px solid var(--aline);cursor:pointer;font:inherit;
+         color:var(--aink);text-align:left}
+.leadrow:first-of-type{border-top:0}
+.leadrow .av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:rgba(200,32,46,.16);
+             color:var(--hot);display:grid;place-items:center;font:800 11px/1 'Segoe UI',Arial,sans-serif}
+.leadrow .nm2{flex:1;font-weight:600;font-size:13.5px}
+.leadrow .st{flex:0 0 auto;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;
+             text-transform:uppercase;color:var(--amute);border:1px solid var(--aline);
+             border-radius:999px;padding:5px 9px}
 </style>
 </head>
 <body>
 
 <header class="pv-bar">
-  <h1>Cardinal — Landing &amp; Retail<em>.</em> three directions</h1>
+  <h1>Cardinal — Landing &amp; Retail<em>.</em> four directions</h1>
   <div class="seg" id="segDir" role="group" aria-label="Direction">
     <button data-d="1" aria-pressed="true">1 · The Brief</button>
     <button data-d="2" aria-pressed="false">2 · The Board</button>
     <button data-d="3" aria-pressed="false">3 · The Desk</button>
+    <button data-d="4" aria-pressed="false">4 · The Switcher</button>
   </div>
   <div class="seg" id="segT" role="group" aria-label="Theme">
     <button data-t="dark" aria-pressed="true">Dark</button>
@@ -228,9 +285,10 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
 <!-- ══════════════════════ DIRECTION 1 — THE BRIEF ══════════════════════ -->
 <section class="dir" data-dir="1">
   <h2><span>Direction 1</span>The Brief — keep the editorial landing, add the state layer</h2>
-  <p class="why">The least disruptive of the three. The Georgia-serif landing stays exactly as it
+  <p class="why">The least disruptive of the four. The Georgia-serif landing stays exactly as it
   is; build 1048's chip strip moves up onto it and grows a Community chip; each of the three
-  courses gains a live state line under its subtitle. Emoji become Cardinal marks. A three-item
+  courses gains a live state line under its subtitle. Emoji become Cardinal marks. The awaiting-contract
+  chip opens the retail home at its Approvals card &mdash; 1048&#39;s door, given a landing address. A three-item
   utility row (you / settings / sign out) replaces the missing menu — the landing <em>is</em> the
   menu, so a burger inside it would be a menu inside a menu.</p>
   <p class="cost"><b>Cost:</b> retail only gets an accent, so it is still the quietest of the
@@ -309,30 +367,32 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
         <div class="hd steel steelrule"><span class="b">&#9776;</span><span class="nm">Retail</span><span class="b">&#43;</span></div>
         <div class="appbody">
           <div class="cols"><div>
-            <div class="card"><h3>Cardinal Pipeline</h3>
+            <div class="card"><h3>Cardinal Pipeline &middot; all three CRMs, as the shipped home really counts</h3>
               <div class="piperow">
-                <button class="pipebtn"><b>10</b><span>L</span></button>
-                <button class="pipebtn"><b>7</b><span>P</span></button>
-                <button class="pipebtn"><b>3</b><span>A</span></button>
+                <button class="pipebtn"><b>37</b><span>L</span></button>
+                <button class="pipebtn"><b>11</b><span>P</span></button>
+                <button class="pipebtn"><b>7</b><span>A</span></button>
                 <button class="pipebtn"><b>1</b><span>C</span></button>
                 <button class="pipebtn"><b>2</b><span>I</span></button>
-                <button class="pipebtn"><b>0</b><span>Closed</span></button>
+                <button class="pipebtn"><b>1</b><span>Closed</span></button>
                 <button class="pipebtn"><b>1</b><span>On Hold</span></button>
               </div></div>
             <div class="card"><h3>Work Schedule</h3>
               <div class="ops">
-                <div class="o"><b style="background:#26639f">1</b><small>Completed<br>This Month</small></div>
+                <div class="o"><b style="background:#26639f">0</b><small>Completed<br>Today</small></div>
                 <div class="o"><b style="background:#7a4dc4">0</b><small>Jobs<br>Today</small></div>
                 <div class="o"><b style="background:#275936">0</b><small>30 Day<br>Outlook</small></div>
-              </div></div>
+              </div>
+              <p class="tiny">Circle inks are deepened here on purpose &mdash; the shipped #2f7fd0 / #8b5fd6
+              measure 4.14:1 / 4.46:1 under white ink, below the 4.5 floor. The build should carry the same fix.</p></div>
             <div class="card"><h3>Activity — last 30 days</h3>
               <div class="actstrip">
-                <div class="actbox"><span>New<br>Leads</span><b>6</b></div>
-                <div class="actbox"><span>Jobs<br>Approved</span><b>3</b></div>
-                <div class="actbox"><span>Jobs<br>Completed</span><b>1</b></div>
+                <div class="actbox"><span>New<br>Leads</span><b>42</b></div>
+                <div class="actbox"><span>Jobs<br>Approved</span><b>14</b></div>
+                <div class="actbox"><span>Jobs<br>Completed</span><b>7</b></div>
                 <div class="actbox"><span>Money<br>Collected</span><b>$0</b></div>
-                <div class="actbox"><span>Jobs<br>Invoiced</span><b>2</b></div>
-                <div class="actbox"><span>Jobs<br>Closed</span><b>0</b></div>
+                <div class="actbox"><span>Jobs<br>Invoiced</span><b>5</b></div>
+                <div class="actbox"><span>Jobs<br>Closed</span><b>2</b></div>
               </div></div>
           </div></div>
         </div>
@@ -349,7 +409,7 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
   phone, spreads to three columns on the ultrawide — which is the screen this direction is
   really for. The retail home narrows to Pipeline + Today + AR; the KP cards, activity strip and
   month calendar move behind a <em>More</em> row.</p>
-  <p class="cost"><b>Cost:</b> the biggest layout change of the three, and the phone version is
+  <p class="cost"><b>Cost:</b> the biggest change to the home&#39;s own layout, and the phone version is
   a long scroll. <b>Buys:</b> the most information per screen, and it is the only direction where
   you can see a specific overdue bid without tapping anything.</p>
 
@@ -368,14 +428,14 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
         <div class="board">
           <div class="bcol" style="--acc:#5590b5">
             <div class="bhead"><span class="tt">Retail</span><span class="ct">23</span></div>
-            <button class="brow"><span class="r1">Rita Monigold</span><span class="r2"><span class="warn">Awaiting contract</span> &middot; signed estimate</span></button>
+            <button class="brow"><span class="r1">Rita Monigold</span><span class="r2"><span class="hot">Urgent punch-out</span> &middot; fix storm door</span></button>
             <button class="brow"><span class="r1">Jarrett Chenalt</span><span class="r2"><span class="hot">2 urgent punch-outs</span> &middot; gutter, 4&Prime; too long</span></button>
             <button class="brow"><span class="r1">Kathy May</span><span class="r2"><span class="hot">Urgent</span> &middot; remove rear chimney</span></button>
             <button class="bmore">All 23 retail clients &rsaquo;</button>
           </div>
           <div class="bcol" style="--acc:#d9282a;--acct:#e35c63">
             <div class="bhead"><span class="tt">Cardinal Truth</span><span class="ct">2</span></div>
-            <button class="brow"><span class="r1">Maker Space Solutions</span><span class="r2">State Farm &hellip;158W &middot; <span class="hot">awaiting RCV</span></span></button>
+            <button class="brow"><span class="r1">Maker Space Solutions LLC</span><span class="r2">State Farm &hellip;158W &middot; <span class="hot">awaiting RCV</span></span></button>
             <button class="brow"><span class="r1">Adam Gunn</span><span class="r2">Allstate &hellip;9162 &middot; filed</span></button>
             <button class="bmore">Insurance clients &rsaquo;</button>
           </div>
@@ -407,20 +467,21 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
       <div class="app">
         <div class="hd warmred"><span class="b">&#9776;</span><span class="nm">Retail</span><span class="b">&#43;</span></div>
         <div class="appbody">
-          <div class="card"><h3>Cardinal Pipeline</h3>
+          <div class="card"><h3>Cardinal Pipeline &middot; all three CRMs, as the shipped home really counts</h3>
             <div class="piperow">
-              <button class="pipebtn"><b>10</b><span>L</span></button>
-              <button class="pipebtn"><b>7</b><span>P</span></button>
-              <button class="pipebtn"><b>3</b><span>A</span></button>
+              <button class="pipebtn"><b>37</b><span>L</span></button>
+              <button class="pipebtn"><b>11</b><span>P</span></button>
+              <button class="pipebtn"><b>7</b><span>A</span></button>
               <button class="pipebtn"><b>1</b><span>C</span></button>
               <button class="pipebtn"><b>2</b><span>I</span></button>
-              <button class="pipebtn"><b>0</b><span>Closed</span></button>
+              <button class="pipebtn"><b>1</b><span>Closed</span></button>
               <button class="pipebtn"><b>1</b><span>On&nbsp;Hold</span></button>
             </div></div>
           <div class="card"><h3>Today</h3>
-            <p class="tiny" style="margin:0">Nothing scheduled. Next: <b style="color:var(--aink)">Jim Arnette</b>, client meeting — 24 Aug.</p></div>
+            <p class="tiny" style="margin:0">Nothing scheduled &mdash; and nothing booked ahead. Last: <b style="color:var(--aink)">Jim Arnette</b>, client meeting, 24 Aug.</p></div>
           <div class="card"><h3>Accounts Receivable</h3>
-            <p class="tiny" style="margin:0">2 invoiced &middot; <b style="color:var(--aink)">$0 collected</b> logged this month</p></div>
+            <div class="arbig">$24,471<span class="lbl">outstanding across 2 invoices &middot; nothing collected yet</span></div>
+            <button class="bmore">Invoices &amp; AR &rsaquo;</button></div>
           <button class="pipebtn" style="width:100%;min-height:44px">More — activity, calendar, KP cards &rsaquo;</button>
         </div>
       </div>
@@ -433,9 +494,9 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
   <h2><span>Direction 3</span>The Desk — one list, ordered by urgency, CRM as a colour</h2>
   <p class="why">The landing stops being three compartments and becomes one prioritised list of
   everything waiting on you, each row stamped with its CRM's colour. The three portal doors drop
-  underneath as a quiet strip. This is <em>exactly</em> how <code>api/digest.js</code> already
-  composes the morning email — so for the first time the screen and the email would say the same
-  thing in the same order. And because the landing is now CRM-neutral by construction, retail is
+  underneath as a quiet strip. It is the closest of the four to how <code>api/digest.js</code> already assembles the
+  morning email &mdash; the same signals on one surface (the email still groups them by kind) &mdash;
+  so the screen and the email finally carry the same facts. And because the landing is now CRM-neutral by construction, retail is
   free to take a full identity on its own home screen.</p>
   <p class="cost"><b>Cost:</b> the most opinionated, and it demotes "which CRM am I in" — which
   may be wrong for Curtis and Scottie, who never see this screen anyway (build 854).
@@ -473,8 +534,8 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
             <span class="t2">State Farm &hellip;158W &middot; awaiting RCV — chase the carrier</span></span>
             <span class="age hot">&#9679;</span></button>
           <button class="drow" style="--acc:#e0762a"><span class="tag"></span><span class="tx">
-            <span class="t1">Jarrett Chenalt &middot; Betty Mann &middot; Kathy May &middot; Rita Monigold</span>
-            <span class="t2">5 urgent punch-outs open</span></span>
+            <span class="t1">5 urgent punch-outs open</span>
+            <span class="t2">Jarrett Chenalt, Betty Mann, Kathy May, Rita Monigold</span></span>
             <span class="age hot">5</span></button>
           <button class="drow" style="--acc:#5590b5"><span class="tag"></span><span class="tx">
             <span class="t1">2 signed estimates awaiting a contract</span>
@@ -509,31 +570,137 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
           Reports, Gallery, Documents, Library, Quick Inspection, Address check, iTel — inherit
           retail's header. A solid red band tints all of them too. That is either the point, or
           the identity has to live below the header instead.</p>
-          <div class="card"><h3>Cardinal Pipeline</h3>
+          <div class="card"><h3>Cardinal Pipeline &middot; all three CRMs, as the shipped home really counts</h3>
             <div class="piperow">
-              <button class="pipebtn"><b>10</b><span>L</span></button>
-              <button class="pipebtn"><b>7</b><span>P</span></button>
-              <button class="pipebtn"><b>3</b><span>A</span></button>
+              <button class="pipebtn"><b>37</b><span>L</span></button>
+              <button class="pipebtn"><b>11</b><span>P</span></button>
+              <button class="pipebtn"><b>7</b><span>A</span></button>
               <button class="pipebtn"><b>1</b><span>C</span></button>
               <button class="pipebtn"><b>2</b><span>I</span></button>
-              <button class="pipebtn"><b>0</b><span>Closed</span></button>
+              <button class="pipebtn"><b>1</b><span>Closed</span></button>
               <button class="pipebtn"><b>1</b><span>On&nbsp;Hold</span></button>
             </div></div>
           <div class="card"><h3>Work Schedule</h3>
             <div class="ops">
-              <div class="o"><b style="background:#26639f">1</b><small>Completed<br>This Month</small></div>
+              <div class="o"><b style="background:#26639f">0</b><small>Completed<br>Today</small></div>
               <div class="o"><b style="background:#7a4dc4">0</b><small>Jobs<br>Today</small></div>
               <div class="o"><b style="background:#275936">0</b><small>30 Day<br>Outlook</small></div>
-            </div></div>
+            </div>
+              <p class="tiny">Circle inks are deepened here on purpose &mdash; the shipped #2f7fd0 / #8b5fd6
+              measure 4.14:1 / 4.46:1 under white ink, below the 4.5 floor. The build should carry the same fix.</p></div>
           <div class="card"><h3>Activity — last 30 days</h3>
             <div class="actstrip">
-              <div class="actbox"><span>New<br>Leads</span><b>6</b></div>
-              <div class="actbox"><span>Jobs<br>Approved</span><b>3</b></div>
-              <div class="actbox"><span>Jobs<br>Completed</span><b>1</b></div>
+              <div class="actbox"><span>New<br>Leads</span><b>42</b></div>
+              <div class="actbox"><span>Jobs<br>Approved</span><b>14</b></div>
+              <div class="actbox"><span>Jobs<br>Completed</span><b>7</b></div>
               <div class="actbox"><span>Money<br>Collected</span><b>$0</b></div>
-              <div class="actbox"><span>Jobs<br>Invoiced</span><b>2</b></div>
-              <div class="actbox"><span>Jobs<br>Closed</span><b>0</b></div>
+              <div class="actbox"><span>Jobs<br>Invoiced</span><b>5</b></div>
+              <div class="actbox"><span>Jobs<br>Closed</span><b>2</b></div>
             </div></div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+</section>
+
+<!-- ═══ DIRECTION 4 — THE SWITCHER ═══ -->
+<section class="dir" data-dir="4" hidden>
+  <h2><span>Direction 4</span>The Switcher — no front door; the portal lives in the header</h2>
+  <p class="why">This is what the concept render actually drew: no Landing at all. The header
+  carries <b style="color:#fff">Retail ⌄</b>, tapping it drops the portal switcher, and every row
+  in that dropdown is a door with a live state line — so "what's going on everywhere" is one tap
+  from any screen instead of a screen of its own. The dashboard is then <em>honestly</em>
+  retail-filtered. Today's home says Retail while counting all three CRMs — the concept's
+  "37 leads / 11 proposals" are the all-CRM totals; retail alone is 10 and 7. This direction is
+  the one that makes the label true. It also adopts the concept's grouped left nav on desktop
+  (CRM / Jobs / Sales / Finance / Resources / Reports / System &mdash; the concept's grouping, real destinations only), and fixes the AR
+  card so the big number is the money owed, not the chart's axis ceiling.</p>
+  <p class="cost"><b>Cost:</b> deletes the Landing — the morning brief loses its full-screen
+  moment and the only all-CRM view becomes a dropdown behind one tap. Sign-in lands per role
+  (Production already lands on its hub, build 854). <b>Buys:</b> zero screens between opening the
+  app and working, the header always says where you are, and it is the closest to your
+  reviewer's picture. Note 1087 is not re-crossed: the Landing could not claim a portal because
+  it is where you choose one — here every screen genuinely is inside a portal.</p>
+
+  <figure>
+    <figcaption>The switcher, open — every row is a door with a state line</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="app">
+        <div class="hd steel steelrule"><span class="b">&#9776;</span>
+          <button class="sw" aria-expanded="true">Retail <span class="chv">▼</span></button>
+          <span style="flex:1"></span><span class="b">&#43;</span></div>
+        <div class="swmenu">
+          <button class="swrow" style="--acc:#5590b5"><span class="tag"></span><span class="tx">
+            <b>Retail</b><small><span class="warn">2 awaiting contract</span> &middot; 23 clients</small></span>
+            <span class="chk">✓</span></button>
+          <button class="swrow" style="--acc:#d9282a"><span class="tag"></span><span class="tx">
+            <b>Cardinal Truth</b><small><span class="hot">1 carrier to chase</span> &middot; 2 claims</small></span></button>
+          <button class="swrow" style="--acc:#3faa6d"><span class="tag"></span><span class="tx">
+            <b>Community</b><small><span class="hot">3 bids past due</span> &middot; 16 open</small></span></button>
+          <div class="swdiv"></div>
+          <button class="swrow" style="--acc:#e0762a"><span class="tag"></span><span class="tx">
+            <b>Production</b><small><span class="hot">5 urgent punch-outs</span> open</small></span></button>
+          <button class="swrow" style="--acc:#e8544f"><span class="tag"></span><span class="tx">
+            <b>Sales Floor</b><small>Objections, talk tracks, the Coach</small></span></button>
+          <div class="swdiv"></div>
+          <button class="swrow" style="--acc:#8b8b98"><span class="tag"></span><span class="tx">
+            <b>Needs sorting</b><small><span class="warn">19 clients</span> filed under no CRM</small></span></button>
+        </div>
+        <div class="skel"><div class="sb1"></div><div class="sb2"></div></div>
+      </div>
+    </div></div>
+  </figure>
+
+  <figure>
+    <figcaption>The dashboard, closed — retail-only numbers under a Retail header; desktop adds the grouped nav</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="app">
+        <div class="hd steel steelrule"><span class="b">&#9776;</span>
+          <button class="sw">Retail <span class="chv">▼</span></button>
+          <span style="flex:1"></span><span class="b">&#43;</span></div>
+        <div class="d4wrap">
+          <nav class="snav">
+            <div class="g">CRM</div>
+            <button class="on">Dashboard</button><button>Clients</button><button>Leads &amp; Jobs</button><button>Photos</button>
+            <div class="g">Jobs</div>
+            <button>Production Board</button><button>Crew Dispatch</button><button>Schedule Board</button><button>Punch &amp; Repairs</button>
+            <div class="g">Sales</div>
+            <button>Estimates</button><button>Sales Floor</button><button>Storm Data</button><button>Objection Coach</button>
+            <div class="g">Finance</div>
+            <button>Invoices &amp; AR</button><button>Financing Rates</button><button>Commissions</button>
+            <div class="g">Resources</div>
+            <button>Pricing Catalog</button><button>Documents</button><button>Crews</button><button>Library</button>
+            <div class="g">Reports</div>
+            <button>Reports</button><button>Analytics</button>
+            <div class="g">System</div>
+            <button>Settings</button><button>Team Directory</button>
+          </nav>
+          <div class="appbody">
+            <div class="card"><h3>Retail pipeline &middot; retail only, not all-CRM</h3>
+              <div class="statrow">
+                <button class="pipebtn"><b>10</b><span>Leads</span></button>
+                <button class="pipebtn"><b>7</b><span>Prospects</span></button>
+                <button class="pipebtn"><b>3</b><span>Approved</span></button>
+                <button class="pipebtn"><b>1</b><span>Completed</span></button>
+                <button class="pipebtn"><b>2</b><span>Invoiced</span></button>
+                <button class="pipebtn"><b>0</b><span>Closed</span></button>
+                <button class="pipebtn"><b>0</b><span>On Hold</span></button>
+              </div></div>
+            <div class="card"><h3>Accounts Receivable</h3>
+              <div class="arbig">$24,471<span class="lbl">outstanding across 2 invoices &middot; nothing collected yet</span></div>
+              <div class="arrow2"><span>Dan Thompson &middot; $11,921</span><span>Vandalyn Robinson &middot; $12,550</span></div>
+              <button class="bmore">Invoices &amp; AR &rsaquo;</button>
+              <p class="tiny">The big number is the money owed &mdash; the shipped card leads with the chart's
+              axis ceiling ("$50K"), which is what the concept misread as the balance.</p></div>
+            <div class="card"><h3>Recent retail leads</h3>
+              <button class="leadrow"><span class="av">JC</span><span class="nm2">Jarrett Chenalt</span><span class="st">Completed</span></button>
+              <button class="leadrow"><span class="av">JA</span><span class="nm2">Jim Arnett</span><span class="st">Prospect</span></button>
+              <button class="leadrow"><span class="av">MD</span><span class="nm2">Mark Diamond</span><span class="st">Approved</span></button>
+              <p class="tiny">Kimberly Lawson &mdash; the concept's top "recent lead" &mdash; is a Community job,
+              so on a retail-filtered dashboard she correctly does not appear.</p></div>
+            <div class="card"><h3>Today</h3>
+              <p class="tiny" style="margin:0">Nothing on the calendar. <b style="color:var(--aink)">5 urgent punch-outs</b> are open &mdash; Jarrett Chenalt, Betty Mann, Kathy May, Rita Monigold.</p></div>
+          </div>
         </div>
       </div>
     </div></div>
