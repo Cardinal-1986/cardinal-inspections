@@ -272,6 +272,10 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
     <button data-w="phone" aria-pressed="true">Phone 390</button>
     <button data-w="desk" aria-pressed="false">Desktop 1194</button>
   </div>
+  <p id="pvNoJs" style="flex-basis:100%;margin:6px 0 0;font-size:12px;color:#f0a24a">
+    This viewer blocked the page's scripts, so the buttons above are inert &mdash;
+    <b>all four directions are stacked below, just scroll.</b> Frames show dark &middot; phone.
+    Open the file in a browser for the working toggles.</p>
 </header>
 
 <p class="lede">
@@ -402,7 +406,7 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
 </section>
 
 <!-- ══════════════════════ DIRECTION 2 — THE BOARD ══════════════════════ -->
-<section class="dir" data-dir="2" hidden>
+<section class="dir" data-dir="2">
   <h2><span>Direction 2</span>The Board — three columns, real rows, not counts</h2>
   <p class="why">The landing becomes a board: one column per CRM, each showing the actual work
   waiting rather than a number. You read names on the front door. Stacks to three cards on a
@@ -490,7 +494,7 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
 </section>
 
 <!-- ══════════════════════ DIRECTION 3 — THE DESK ══════════════════════ -->
-<section class="dir" data-dir="3" hidden>
+<section class="dir" data-dir="3">
   <h2><span>Direction 3</span>The Desk — one list, ordered by urgency, CRM as a colour</h2>
   <p class="why">The landing stops being three compartments and becomes one prioritised list of
   everything waiting on you, each row stamped with its CRM's colour. The three portal doors drop
@@ -604,7 +608,7 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
 </section>
 
 <!-- ═══ DIRECTION 4 — THE SWITCHER ═══ -->
-<section class="dir" data-dir="4" hidden>
+<section class="dir" data-dir="4">
   <h2><span>Direction 4</span>The Switcher — no front door; the portal lives in the header</h2>
   <p class="why">This is what the concept render actually drew: no Landing at all. The header
   carries <b style="color:#fff">Retail ⌄</b>, tapping it drops the portal switcher, and every row
@@ -737,6 +741,13 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
     press(this, w, 'data-w');
     shells().forEach(function(s){ s.setAttribute('data-w', w); });
   });
+  /* boot: tab mode. Where scripts are stripped (static file viewers), none of
+     this runs and the markup above stands on its own: four sections stacked. */
+  document.querySelectorAll('section.dir').forEach(function(sec){
+    sec.hidden = sec.getAttribute('data-dir') !== '1';
+  });
+  var hint = document.getElementById('pvNoJs');
+  if(hint) hint.hidden = true;
 })();
 </script>
 </body>
