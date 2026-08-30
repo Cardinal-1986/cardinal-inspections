@@ -30958,3 +30958,39 @@ before push.
   full runs produced identical counts.
 - Sentinel sweep for 1174–1175 (`--since` 1173, both viewports): **CLEAN, 58 renders, nothing
   new**, 199 carried. Posted to PR #568.
+
+## Build 1176 — the header puts New and Search back on the right
+- **Theo, with three screenshots: "the header is still messed up… move the search icon back over to
+  the right and take the plus new right along side it."** Reproduced in Chromium **at 440px** — and
+  the width is the whole story. Above 430px `#cr-hd2-mid` is `position:absolute`, so the title is
+  OUT OF FLOW and cannot separate the two button groups; the only thing holding + and the lens on
+  the right was `#cr-hd2-home{margin-left:auto}`, and **1173 deleted the home button that carried
+  it**. Measured on the 1175 tree at 440px: navBtn@12, +@66, lens@120, ins-theme@174, with the
+  centred title starting at **178 — on top of the last icon**. Exactly his screenshot.
+- ⚠️ **Every earlier header gate ran at 390px, where the ≤430px media query hides this completely.**
+  The bug lives only above the breakpoint and nothing here had ever looked there. That is how 1173
+  shipped it green. `gate_1176.mjs` runs at 440 AND re-checks 390 so the fix cannot leak downward
+  (an auto margin below the breakpoint would eat the title's flex-grow — the 1053 trap).
+- The auto margin moves to `.cr-ib.primary` (+, order:8 — the lowest of the right group), scoped
+  `@media (min-width:431px)`.
+- **Insurance had TWO light/dark buttons**, which is the 1174 one-door rule broken by a control that
+  never knew about the other: its own ◐ in the header, plus the retail `#cr-dark-toggle` floating
+  over the pipeline at bottom-right. The floating one is now hidden inside insurance (the search-row
+  copy already was, since 417). Gate asserts the count is exactly 1.
+- **The ◐ was painting near-black on the near-black insurance bar** — Theo's screenshot shows a
+  bordered box with nothing in it, and I read it as an empty fourth button before finding the glyph
+  inside. Now `var(--hac)`, the header's own accent — the same token the + ground and the icon
+  borders use, both plainly readable in that same screenshot.
+  ⚠️ **My rig could not reproduce the ground**: its ancestor walk found white and scored 17.75:1,
+  which is CLAUDE.md's "background-color is not the background" trap wearing a different hat. The
+  screenshot is the measurement that counts. **Theo's eyes are the gate for this one.**
+  ⚠️ And the first attempt SILENTLY LOST: a bare `.cr-ins-theme{color:…}` is one class against
+  `#cr-hd2-bar .cr-ib`'s id+class. Only gate_1176 reading the colour back caught it.
+- **NOT fixed, because I could not reproduce it: "Retail screen has community header."** Walked
+  retail→community→insurance→retail through the Front Door at both widths; `data-crm` and
+  `data-crm-head` stayed in step every leg and the title always matched. The two ARE separate
+  attributes, so the drift he describes is possible — I just have not found the route that causes
+  it. Asked him which path he took. Do not mark this done.
+- Gates: check_build green (1175→1176, marker + negative control) · **gate_1176 14/14, RED 7/14 on
+  the 1175 control** (packed-left group, title overlapping, and "got 2" light/dark controls) ·
+  regressions gate_1171 9/9, gate_1172 15/15, gate_1173 9/9, gate_1174 7/7, gate_1175 5/5.

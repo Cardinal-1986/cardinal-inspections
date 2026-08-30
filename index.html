@@ -3485,6 +3485,23 @@ body.rl-at-book #rlAskBtn{display:none !important;}
 /* + sits just inside home, so home is always the outermost thing on the right */
 #cr-hd2-bar .cr-ib.primary{order:8}
 #cr-hd2-bar #cr-hd2-home{order:9}
+/* 1176: ⚠ THE RIGHT-HAND GROUP LOST ITS PUSH AT 1173. Above 430px #cr-hd2-mid is
+   position:absolute, so it is OUT OF FLOW and cannot separate the two button
+   groups — the only thing holding + and the lens on the right was
+   #cr-hd2-home{margin-left:auto}, and 1173 deleted the home button that carried
+   it. Everything then packed against the burger and the absolutely-centred
+   title landed ON TOP of the last icon. MEASURED at 440px before the fix:
+   navBtn@12, +@66, lens@120, ins-theme@174 — with the title starting at 178.
+   The auto margin moves to the first member of the right group (+ is order:8,
+   the lowest of the three), which is where it has to live now.
+   ⚠ Scoped ABOVE 430px on purpose: below it the media query above returns the
+   title to normal flow as flex:1 1 auto, and a main-axis auto margin absorbs
+   all free space BEFORE flex-grow gets any — the exact trap the 1053 note on
+   #cr-hd2-home records. Under 430 the title's own growth already pushes the
+   group right (measured 390px: +@280, lens@334), so no margin is wanted. */
+@media (min-width:431px){
+  #cr-hd2-bar .cr-ib.primary{margin-left:auto}
+}
 
 /* the search row: attached under the bar, CRM strip colour, toggle closing it */
 #cr-hd2-srch{display:flex;align-items:center;gap:0;
@@ -3923,7 +3940,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1175<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1176<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42565,6 +42582,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1176, d: '2026-08-30', t: 'The header puts New and Search back on the right', s: 'On a phone wider than 430px every header control had packed against the burger and the centred portal name was landing on top of the last one. The cause was build 1173 retiring the home button: it was the thing carrying the margin that held New and Search over on the right, and nothing took that job over. They are back on the right, together, with the name clear of them. Insurance also had TWO light/dark buttons — its own moon in the header, painting near-black on a near-black bar so it looked like an empty box, plus the retail one floating over the pipeline. The moon now uses the header’s own accent so you can see it, and the floating one no longer appears inside Insurance.' },
   { b: 1175, d: '2026-08-30', t: 'The Vision hub\u2019s two dim lines', s: 'Two inks on the Vision hub sat under the readability floor and the new empty-book sweep measured them: the small \u201cCARDINAL\u201d word above the title (3.44:1 \u2014 brand red is built for light grounds, not near-black) and the Studio \u2192 promote \u2192 Showroom line (3.24:1). The word now uses the app\u2019s approved lighter red and the flow line uses the hub\u2019s own muted grey \u2014 5.55 and 7.41, computed, both themes N/A (the hub is Blackout by design). The 27 Aug header-audit rows for the \u25be and \uFF0B were re-measured and are already settled at 1116 \u2014 nothing re-fixed.' },
   { b: 1174, d: '2026-08-30', t: 'The drawer stops doubling its doors', s: 'Two catches from the new duplicate-door check, fixed at source: the people icon in the drawer header is retired (it duplicated the \u201cSwitch portal\u201d row \u2014 both have opened the same Front Door since 1171), and Community Partners stops being added to the menu twice \u2014 the old second copy was merely hidden, which papers over a duplicate rather than removing it. One door per destination.' },
   { b: 1173, d: '2026-08-30', t: 'One pipeline per portal \u2014 the numbers stop wandering', s: 'Theo, with three screenshots of three different pipelines under one Retail header: the board was reading which portal it was in a beat before the header finished switching, so coming back from Community or Cardinal Truth could paint the retail dashboard with the other book\u2019s numbers \u2014 and nothing re-rendered until something else did. The board now re-renders itself the instant the portal actually flips, on every path. And the home button in the header is retired \u2014 its one real job was accidentally repairing this bug.' },
@@ -65985,6 +66003,33 @@ window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
    .cr-ib for geometry and only overrides what it needs. It is hidden outside the
    insurance CRM because --ct-* does not govern retail or community chrome. */
 .cr-ins-theme{font:400 15px/1 "Segoe UI",Arial,sans-serif;}
+/* ⚠ 1176: scoped to #cr-hd2-bar ON PURPOSE, and the first attempt without it
+   FAILED. `#cr-hd2-bar .cr-ib{color:var(--hmt)}` in cr-hd2-styles is id+class;
+   a bare `.cr-ins-theme` is one class and loses outright — gate_1176 read the
+   colour back as the same near-black and went red, which is the only reason I
+   know. Matching its specificity and sitting later in the document wins it. */
+#cr-hd2-bar .cr-ins-theme{color:var(--hac,#c8202e);}
+/* 1176: the glyph was inheriting .cr-ib's --hmt and painting NEAR-BLACK on the
+   near-black insurance header — Theo's screenshot shows a bordered box with
+   nothing in it, and I read it as an empty fourth button before finding the ◐
+   inside it. ⚠ My rig could NOT reproduce the ground: its ancestor walk found
+   white and scored 17.75:1, which is the "background-color is not the
+   background" trap in CLAUDE.md wearing a different hat. The screenshot is the
+   measurement that counts here. --hac is the header's own accent — the same
+   token the + button's ground and the icon borders use, both plainly visible
+   on that header in the same screenshot — so the glyph now matches chrome that
+   is already proven readable rather than a colour I invented.
+   ⚠ THEO'S EYES ARE THE GATE for this one. Say so; do not report it measured. */
+
+/* 1176: ONE light/dark control per portal. Insurance carries its own theme
+   (docket/siren, the ◐ above); #cr-dark-toggle is the RETAIL app theme and has
+   nothing to say inside insurance, yet its fixed fallback still floated over
+   the pipeline at bottom-right — two theme buttons on one screen, which is the
+   1174 "one door per destination" rule broken by a control that simply never
+   knew about the other. The search-row copy was already hidden here (the 417
+   rule in cr-hd3-styles); this hides the floating one for the same reason.
+   !important is required: #cr-dark-toggle.show sets display:flex. */
+body[data-crm="insurance"] #cr-dark-toggle{display:none !important;}
 .cr-ins-theme:hover{border-color:var(--hac);color:var(--hac);}
 .cr-ins-theme:focus-visible{outline:2px solid var(--hac);outline-offset:2px;}
 body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
