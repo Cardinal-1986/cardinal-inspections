@@ -322,11 +322,25 @@ Sequence, one build each:
   + tarps-up; summary strip Out-for-pricing/Awarded/Win-rate/Tarps-up; a chart door in
   the tab strip, Analytics removed from Tools. ⚠ Card tap-through to a partner's
   estimates is a deliberate follow-up, not in 1092.
-- ⏭ **#2 (1b) — strip the home** to one attention list; Bids/Partners → doors.
-  PREVIEW before shipping (his rule; and it reverses the 853 "calendar/tiles/day"
-  ordering only for Community, so show it).
-- ⏭ **#3 — the Tarps tab.** Aging list over `tarped_at` (already a real field, build
-  977). Scope: community tarped clients; non-community tarps are a separate question.
+- ✅ **#2 (1b) — strip the home. SHIPPED at 1179.** Previewed first, per his rule — four
+  390px frames (today + three options) in the shipped `--ccm-*` palette. **He picked option 3**
+  ("search stays on top") **and asked for the tabs to become doors**, so all three went: Community
+  opens on the search, then one attention list (overdue/due soon · chase · schedule · invoice ·
+  tarps), then Clients/Estimates/Partners as doors. Same `data-pane` machinery, no second one.
+  ⚠ The dispatch was scoped to `.tabbar [data-pane]` and the doors live in the home pane — left
+  alone every door would have rendered and done nothing (BUG_CLASSES 16). `gate_1179` drives a real
+  tap on each door and on Back, 19/19, RED 4/13 on the 1178 control.
+- ✅ **#3 — the Tarps list. SHIPPED at 1179, and NOT as a tab.** Theo asked whether there was
+  anywhere else to put it. **There was, and it already existed:** build 1092 put a tarps-up count on
+  the partner stats page, per partner and as a total. A Tarps tab would have been a second surface
+  for a number already on screen — the prime doctrine again. So the list joined the attention
+  queues, where an aging tarp belongs: it is waiting on you exactly like a decision or an invoice.
+  `TARP_DONE` mirrors cr-can's 1092 rule verbatim rather than inventing a second answer to "is this
+  tarp still up".
+  🟠 **Still open, small:** the tarps-up NUMBER on the stats page does not tap through to that list.
+  One handler; not done here because 1179 was already a screen rework and widening it further is the
+  scope creep this project's own notes warn about. Scope stays community-only; non-community tarps
+  remain a separate question.
 
 ---
 

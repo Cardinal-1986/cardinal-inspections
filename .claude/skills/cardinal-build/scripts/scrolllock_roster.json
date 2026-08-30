@@ -1,0 +1,22 @@
+{
+  "note": "modules writing document.body.style.overflow. A NEW name here is the thing the no-new-writer rule exists to catch. See audit_scrolllock.py.",
+  "modules": [
+    "@662628",
+    "cr-ar-script",
+    "cr-ce-script",
+    "cr-ci-script",
+    "cr-epub-script",
+    "cr-est-script",
+    "cr-fin-script",
+    "cr-guide-script",
+    "cr-lil-script",
+    "cr-lrs-script",
+    "cr-pb-script",
+    "cr-ped-script",
+    "cr-ri-script",
+    "cr-sc-script",
+    "cr-sf-script",
+    "cr-sol-script",
+    "cr-sp-script"
+  ]
+}

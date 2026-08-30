@@ -31086,3 +31086,89 @@ fails every run trains people to ignore the RUN line.
 **Theo also asked what item 4 was** (the remaining 305 a11y findings). Explained and **skipped on
 my recommendation**: they are landmark/region structure, invisible to anyone who uses the app by
 looking and tapping, and already baselined so they cannot grow.
+
+## Instruments — audit_scrolllock.py, and the 17-writer question answered (30 Aug 2026)
+- Theo picked the scroll-lock audit as item 3 after the 1178 re-measure found **17 modules writing
+  `document.body.style.overflow`, against the 13 CLAUDE.md states as an invariant**. Built as a
+  script rather than eyeballed, per the standing rule that a question needing three passes wants an
+  instrument.
+- **THE ANSWER IS NO LEAKS.** 17 modules, 41 code sites, and **every module balances or
+  over-releases** — zero with more locks than releases. Five (`cr-ar`, `cr-guide`, `cr-lrs`,
+  `cr-pb`, `cr-sf`) release on close paths they never locked, which is the healthy direction, and
+  block 1's single `read` is the documented self-heal. **So the rule that mattered held; the rule as
+  written was broken without harm.** The four newcomers since 808 are well-behaved.
+- The roster is recorded (`scrolllock_roster.json`) and the audit exits RED on a **new name**, which
+  is the part worth automating: the invariant was prose for 234 builds and prose is what let four
+  writers in unnoticed. It is now a script that fails.
+- ⚠️ **Its selftest caught a total false negative on the first run.** The classifier compared the
+  lexer's state against the string `'code'` — `JL.CODE` is the integer **0** — so every hit was
+  discarded and the audit reported **zero writers on a file containing 41**. "No leaks found" is
+  precisely what a *working* audit of a healthy file prints, so nothing but the selftest could have
+  distinguished the two. The four-shape / two-decoy fixture is why it took one minute, not a build.
+- Reported as a REVIEW LIST, not a verdict, and the header says so: one release can legitimately
+  serve two locks, and a release can live in a handler a static pass cannot see. The one thing it
+  asserts outright is the roster.
+
+## Community home — preview delivered, awaiting Theo's pick (30 Aug 2026)
+- Item 1 of his 1/2/3/4 order is **strip the Community home to one attention list; Estimates and
+  Partners become doors** (his pick 1b, 27 Aug). **His standing rule is PREVIEW BEFORE SHIPPING**
+  here, because it reverses the 853 calendar/tiles/day ordering for Community only — so nothing was
+  built. Three labelled options at 390px, plus today's screen for comparison, in the **shipped
+  `--ccm-*` palette read out of `index.html`** rather than a preview palette, with a real light/dark
+  toggle driving the same tokens the app switches.
+  - **1 — grouped by what you do** (Chase a decision / Get on the calendar / Invoice the partner:
+    the three queues the Estimates tab already computes, promoted to the home).
+  - **2 — most urgent first**, one flat list, the action as a chip per row.
+  - **3 — search stays on top**, since the module's own 711 banner calls the client list the daily
+    driver; costs a screen-inch before the work.
+- Recorded in all three: nothing is deleted — By partner and By stage move to the partner stats page
+  built at 1092. Habitat sorts first. The day chips stay the same clock, so an overdue check-back
+  still goes red (the 975 fix).
+- ⏸ **Item 2 (the Tarps tab) is BLOCKED ON THE SAME ANSWER, deliberately**: if the tabs become
+  doors, "a new tab" has nowhere to be. Not started.
+
+## Build 1179 — the Community home is one list of what needs you
+- Theo's option **3** from the 30 Aug preview, plus his added instruction: **"make the tabs become
+  doors."** So all three went. Community now opens on the search bar (option 3's whole distinction —
+  the module's own 711 banner calls the client list the daily driver), then ONE attention list, then
+  Clients / Estimates / Partners as doors.
+- **The attention list is per-job, not per-queue.** `queue()` already rendered a summary row and is
+  untouched for the Estimates pane; `attnRow()` is the per-job form the home needs, because
+  "11 waiting" does not tell you whose roof it is. Groups: overdue & due soon · chase a decision ·
+  get on the calendar · invoice the partner · **tarps still up**.
+- ⚠️ **THE TWO CLOCKS ARE NOT THE SAME NUMBER**, and the chip must not pretend they are. `due`
+  carries days UNTIL the date (negative = overdue, and only that one goes red); every other queue
+  carries days SINCE the stage changed, which is an age. Conflating them would repaint an
+  eight-day-old estimate as eight days late. `attnRow(rec, overdueClock)` takes the clock as an
+  argument for exactly this reason.
+- **Tarps did not get a tab, and the reason is the prime doctrine.** Theo asked whether there was
+  anywhere else to put it. **Build 1092 already shows a tarps-up count on the partner stats page**,
+  per partner and as a total — a tab would have been a second surface for a number already on
+  screen. The list joined the attention queues instead. `TARP_DONE` is cr-can's 1092 map verbatim,
+  not a second answer to "is this tarp still up".
+- ⚠️ **The door dispatch was scoped to `.tabbar [data-pane]`**, and the doors live in the home pane.
+  Left as it was, **every door would have rendered perfectly and done nothing** — BUG_CLASSES 16,
+  the Studio Archive shape. Widened, with a `tagName !== 'BUTTON'` guard because the panes
+  themselves carry `data-pane`. `gate_1179` drives a **real tap** on each door and on Back rather
+  than calling the function (class 71's standing rule).
+- Nothing was deleted: By partner and By stage remain on the 1092 stats page. Every new colour is an
+  existing `--ccm-*` token with a literal fallback, so the light twin comes through the tokens
+  rather than a second block; the two red inks that cannot tokenise carry an explicit `rb-light`
+  twin.
+- ✅ **Theo picked placement 1 for tarps** (a queue in the attention list) — which is what shipped,
+  so no code changed. **But his pick exposed a hole in my own gate and it was hardened to 25/25:**
+  the seed carried NO tarped job, so `d.tarps` was empty, the queue never rendered, and every tarps
+  assertion passed **vacuously** — the "check that cannot fail" this project has already shipped
+  twice. The seed now carries both halves: a tarped **Prospect** that must appear, and a tarped
+  **Completed** that `TARP_DONE` must keep out. Without the second, the queue could simply be
+  listing every tarped job ever and the gate would applaud.
+- ⚠️ **Hardening it surfaced two coordinate traps, and both failed CORRECT code** — the mirror image
+  of each other. Two extra seeded jobs lengthened the attention list and pushed the third door
+  **below the 844px fold**, so the tap landed on empty space; scrolling to reach it then left the
+  page scrolled, putting **Back above the fold** with a negative y. A person scrolls before
+  pressing, so the gate does too — scroll into view, then RE-READ the box, because scrolling moves
+  what you are aiming at. A real-tap gate is only honest if it aims where the finger would land.
+- Gates: check_build green (1178→1179, marker + negative control) · **gate_1179 25/25, RED on the
+  1178 control** · regressions gate_1171/1172/1173/1174/1175/1176/1178 all green · gate_types
+  GREEN · gate_dupes GREEN · audit_scrolllock GREEN (17, unchanged — the rework added no writer) ·
+  sentinel sweep running (layout build).

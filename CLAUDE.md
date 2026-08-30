@@ -35,6 +35,18 @@ Live at **app.cardinalroster.com** · Vercel deploys on merge to `main` · Supab
 > | CHANGELOG entries / span | 503 / 166–808 | **826 / 166–1178** (551 new-shape, 275 old-shape) |
 > | version strings / distinct builds | 38 / 19 | **49 / 30** |
 >
+> ✅ **AUDITED 30 Aug, SAME DAY — and the answer is NO LEAKS.** `scripts/audit_scrolllock.py`
+> pairs locks against releases per module, through the lexer: **every one of the 17 balances or
+> over-releases; not one has more locks than releases.** Five release defensively on close paths
+> they never locked, which is the healthy direction. So the rule that MATTERED (never leave the
+> page unscrollable) held; the rule as WRITTEN (no 14th writer) was broken without harm. The
+> roster is now recorded in `scrolllock_roster.json` and the audit goes RED on a new name, so
+> the next writer is caught by a script rather than by a frozen phone.
+> ⚠️ Its own selftest earned its keep immediately: the first version compared the lexer's state
+> against the string `'code'` when `JL.CODE` is the integer `0`, so it discarded every hit and
+> reported **zero writers on a file with 41**. A clean sheet is exactly what a working audit of a
+> healthy file prints — nothing but the selftest would have caught it.
+>
 > ⚠️ **THE ONE THAT IS NOT BOOKKEEPING: the global scroll lock now has 17 writers, not 13.**
 > This file states the 13 as an invariant and says *"the no-14th-writer rule has now held across
 > 234 builds."* **It has not. Four more modules write `document.body.style.overflow`**, measured

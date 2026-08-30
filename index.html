@@ -3940,7 +3940,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1178<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1179<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42582,6 +42582,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1179, d: '2026-08-30', t: 'The Community home is one list of what needs you', s: 'Third time you said this screen had a lot going on. The three tabs are gone: Community now opens on the search bar, then one list of every job waiting on you \u2014 overdue and due soon, chase a decision, get on the calendar, invoice the partner, and tarps still up \u2014 each with the homeowner, the partner and how long it has been sitting. Clients, Estimates and Partners are doors underneath. Nothing was deleted: By partner and By stage are still on the stats page. Tarps did not need a tab \u2014 the count has been on the partner stats page since build 1092, so the list joined the queue instead.' },
   { b: 1178, d: '2026-08-30', t: 'The header names the portal you are actually in', s: 'Signing in could show the header and colours of whichever portal you used last, sitting over the retail dashboard \u2014 a green Community bar above retail numbers. This was fixed once before, but that fix watched the old Landing screen, and when the Landing was retired the check quietly stopped working and nobody could tell. The header now reads the dashboard itself, so the name at the top and the numbers underneath always agree. Switching portals still works exactly as before: the community dashboard still says Community.' },
   { b: 1177, d: '2026-08-30', t: 'Sixteen controls get their names back', s: 'Sixteen form controls had no name attached to them in the markup \u2014 four dropdowns on the client card (Job Category, Work Type, Lead Source and the reassign picker), the whole Crews document upload row, the Estimate Library\u2019s Status, Valid Through, Deposit %, Discount and Payment Instructions fields, and the supplement Outcome picker. Each now carries the name that was already printed beside it. Nothing moved on screen: this is what voice control and a screen reader read out, and fifteen of the sixteen are what the new accessibility gate found on its first run.' },
   { b: 1176, d: '2026-08-30', t: 'The header puts New and Search back on the right', s: 'On a phone wider than 430px every header control had packed against the burger and the centred portal name was landing on top of the last one. The cause was build 1173 retiring the home button: it was the thing carrying the margin that held New and Search over on the right, and nothing took that job over. They are back on the right, together, with the name clear of them. Insurance also had TWO light/dark buttons — its own moon in the header, painting near-black on a near-black bar so it looked like an empty box, plus the retail one floating over the pipeline. The moon now uses the header’s own accent so you can see it, and the floating one no longer appears inside Insurance.' },
@@ -59141,6 +59142,53 @@ box-shadow:var(--ccm-sh-xs)}
 #cr-ch2 .tools{grid-template-columns:1fr}
 }
 @media print{#cr-ch2{color:#000}}
+
+/* ── 1179: the home is one attention list, and the tabs became doors ───────
+   Every colour here is an existing --ccm-* token with a literal fallback, the
+   pattern the Crews and Showcase modules use — nothing new is invented, so the
+   light twin comes for free through the tokens rather than a second block. */
+#cr-ch2 .cc-here{font:700 14px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-back{background:none;border:0;padding:8px 10px 8px 0;cursor:pointer;
+  font:700 14px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ac,#34D399);min-height:44px}
+#cr-ch2 .cc-back:focus-visible{outline:2px solid var(--ccm-ac,#34D399);outline-offset:2px}
+
+#cr-ch2 .cc-atop{display:flex;align-items:baseline;gap:8px;margin:10px 0 8px}
+#cr-ch2 .cc-atop b{font:800 22px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-atop span{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-atop .cc-aover{margin-left:auto;color:#ff9a9a;font-weight:700}
+:root[data-theme="rb-light"] #cr-ch2 .cc-atop .cc-aover{color:#8f1620}
+
+#cr-ch2 .cc-acard{background:var(--ccm-card,#161918);border:1px solid var(--ccm-line,#2a2f2c);
+  border-radius:11px;padding:4px 12px 10px}
+#cr-ch2 .cc-aqh{font:800 11.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ccm-dim,#828c86);margin:12px 0 2px}
+#cr-ch2 .cc-arow{display:flex;align-items:flex-start;gap:9px;padding:10px 0;min-height:44px;
+  border-bottom:1px solid var(--ccm-line,#2a2f2c);cursor:pointer}
+#cr-ch2 .cc-arow:last-child{border-bottom:0}
+#cr-ch2 .cc-awho{flex:1;min-width:0}
+#cr-ch2 .cc-anm{display:block;font:700 14px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-amt{display:block;font:400 12.5px 'Segoe UI',Arial,sans-serif;
+  color:var(--ccm-dim,#828c86);margin-top:2px}
+#cr-ch2 .cc-apill{flex:0 0 auto;background:var(--ccm-chip,#242927);color:var(--ccm-chipink,#b8c1bd);
+  border-radius:20px;padding:3px 9px;font:700 11.5px 'Segoe UI',Arial,sans-serif;
+  font-variant-numeric:tabular-nums}
+#cr-ch2 .cc-apill.due{background:rgba(200,32,46,.16);color:#ff9a9a}
+:root[data-theme="rb-light"] #cr-ch2 .cc-apill.due{background:#fbe3e3;color:#8f1620}
+#cr-ch2 .cc-amore{font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86);
+  padding:8px 0 2px}
+
+#cr-ch2 .cc-doors{display:flex;flex-direction:column;gap:8px;margin-top:11px}
+#cr-ch2 .cc-door{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  background:var(--ccm-card,#161918);border:1px solid var(--ccm-line,#2a2f2c);
+  border-radius:11px;padding:12px;min-height:56px;cursor:pointer;color:inherit}
+#cr-ch2 .cc-door:focus-visible{outline:2px solid var(--ccm-ac,#34D399);outline-offset:2px}
+#cr-ch2 .cc-door .i{width:32px;height:32px;border-radius:9px;flex:0 0 auto;
+  background:var(--ccm-chip,#242927);display:flex;align-items:center;justify-content:center}
+#cr-ch2 .cc-door .i svg{width:17px;height:17px}
+#cr-ch2 .cc-door .x{flex:1;min-width:0}
+#cr-ch2 .cc-door b{display:block;font:700 14px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-door small{color:var(--ccm-dim,#828c86);font-size:12px}
+#cr-ch2 .cc-door .ar{color:var(--ccm-dim,#828c86);font-size:17px;flex:0 0 auto}
 </style>
 <script id="cr-ch2-script">
 
@@ -59148,7 +59196,12 @@ box-shadow:var(--ccm-sh-xs)}
 'use strict';
 /* 711: Theo's pick — Clients, Bids, Partners. The client list is the
    daily driver; the Bids dashboard is the second stop. */
-var pane = 'clients';
+var pane = 'home';
+/* 1179: was 'clients'. Theo, on the third pass of "this screen has a lot going
+   on", picked option 3 from the preview: the search keeps the top line, then
+   ONE attention list, then doors. The three tabs are GONE — Clients, Estimates
+   and Partners became doors, which is the SAME data-pane machinery underneath
+   rather than a second one beside it. */
 var query = '';
 var closed = {};
 var closedStamp = 0;
@@ -59574,7 +59627,16 @@ var out = 0, owed = 0, won = 0, lost = 0, parked = 0;
 var open = 0, openAmt = 0, wait = 0;
 var OPENSET = {};
 openKeys().forEach(function(k){ OPENSET[k] = 1; });
-var due = [], chase = [], sched = [], inv = [];
+var TARP_DONE = { Completed:1, Invoiced:1, Closed:1 };   /* 1092's rule, verbatim */
+var due = [], chase = [], sched = [], inv = [], tarps = [];
+/* 1179: Theo asked where else Tarps could live, since the tabs were going.
+   ⚠ IT ALREADY HAD A HOME: build 1092 put a tarps-up count on the partner
+   stats page, per partner AND as a total. A Tarps TAB would have been a second
+   surface for a number that already exists — the prime doctrine, again. So the
+   list joins the attention queues instead, where an aging tarp belongs: it is
+   waiting on you exactly like a decision or an invoice is.
+   DONE mirrors cr-can's rule from 1092 verbatim rather than inventing a second
+   answer to "is this tarp still up". */
 all.forEach(function(pr){
 var st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
 /* 977: a waitlisted job has NO bid, so it is not an open bid. 975 made that
@@ -59599,6 +59661,8 @@ chase.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
 if(st === 'Approved') sched.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
 if(st === 'Completed') inv.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
 if(st === 'Invoiced') owed += amt;
+if(ck(pr).lead && ck(pr).lead.tarped_at && !TARP_DONE[st])
+tarps.push({ pr:pr, d:since(ck(pr).lead.tarped_at), amt:amt });
 /* 710: parked money was in no figure at all. It is not "out for decision"
    — nobody is deciding — so it gets its own, shown only when it exists. */
 if(st === 'OnHold') parked += amt;
@@ -59614,13 +59678,14 @@ return a.d - b.d;
 chase.sort(function(a,b){ return (b.d||0) - (a.d||0); });
 sched.sort(function(a,b){ return (b.d||0) - (a.d||0); });
 inv.sort(function(a,b){ return (b.d||0) - (a.d||0); });
+tarps.sort(function(a,b){ return (b.d||0) - (a.d||0); });   /* oldest tarp first */
 var decided = won + lost;
 return {
 all:all, out:out, owed:owed, parked:parked,
 open:open, openAmt:openAmt, wait:wait,
 win: decided ? Math.round(won / decided * 100) : null,
 won:won, decided:decided,
-due:due, chase:chase, sched:sched, inv:inv,
+due:due, chase:chase, sched:sched, inv:inv, tarps:tarps,
 };
 }
 function normType(v){
@@ -60105,6 +60170,53 @@ esc(LABEL[st] || st) + '</span></td>' +
 (rows.length ? 'No client matches those filters.'
 : (query ? 'Nothing matches that.' : 'No community clients yet.')) + '</div>';
 
+/* 1179: one row per job that is waiting on you. `queue()` above renders a
+   SUMMARY row (a label and a count) and stays exactly as it is for the
+   Estimates pane — this is the per-job form the home needs, because "11
+   waiting" does not tell you whose roof it is.
+   ⚠ THE TWO CLOCKS ARE NOT THE SAME NUMBER and the chip must not pretend they
+   are: `due` carries days UNTIL the date (negative = overdue, and it goes red),
+   every other queue carries days SINCE the stage changed (an age, never red).
+   Conflating them would repaint an eight-day-old estimate as eight days late. */
+function attnRow(rec, overdueClock){
+var pr = rec.pr, l = lead(pr), n = rec.d;
+var late = overdueClock && n != null && n < 0;
+var chip = n == null ? '\u2014' : (overdueClock ? n + ' d' : n + ' d');
+return '<div class="cc-arow" data-open="' + esc(pr.id) + '">' +
+'<span class="cc-awho"><span class="cc-anm">' + esc(pr.name || 'Unnamed') + '</span>' +
+'<span class="cc-amt">' + pName(l.partner_name) +
+(role === 'prod' || !rec.amt ? '' : ' \u00b7 ' + usd(rec.amt)) + '</span></span>' +
+'<span class="cc-apill' + (late ? ' due' : '') + '">' + chip + '</span></div>';
+}
+function attnGroup(label, list, overdueClock){
+if(!list.length) return '';
+return '<p class="cc-aqh">' + label + '</p>' +
+list.slice(0, 6).map(function(r){ return attnRow(r, overdueClock); }).join('') +
+(list.length > 6 ? '<div class="cc-amore">+ ' + (list.length - 6) + ' more</div>' : '');
+}
+var attnBody =
+attnGroup('Overdue and due soon', d.due, true) +
+attnGroup('Chase a decision', d.chase, false) +
+attnGroup('Get on the calendar', d.sched, false) +
+attnGroup('Invoice the partner', d.inv, false) +
+attnGroup('Tarps still up', d.tarps, false);
+var attnCount = d.due.length + d.chase.length + d.sched.length + d.inv.length + d.tarps.length;
+var overdueCount = d.due.filter(function(r){ return r.d != null && r.d < 0; }).length;
+
+var homePane = '<div data-pane="home" class="' + (pane === 'home' ? 'on' : '') + '">' +
+'<div class="cc-srch"><input type="search" id="cr-ch2-search" placeholder="Name, address, partner, work type\u2026" value="' + esc(query) + '"></div>' +
+'<div class="cc-atop"><b>' + attnCount + '</b><span>waiting on you</span>' +
+(overdueCount ? '<span class="cc-aover">' + overdueCount + ' overdue</span>' : '') + '</div>' +
+'<div class="cc-acard">' + (attnBody || '<div class="cc-empty">Nothing waiting on you.</div>') + '</div>' +
+'<div class="cc-doors">' +
+'<button class="cc-door" data-pane="clients" type="button"><span class="i">' + ICO('people') + '</span>' +
+'<span class="x"><b>Clients</b><small>' + rows.length + ' \u00b7 search and browse</small></span><span class="ar">\u203A</span></button>' +
+'<button class="cc-door" data-pane="bids" type="button"><span class="i">' + ICO('pencil') + '</span>' +
+'<span class="x"><b>Estimates</b><small>' + d.all.length + ' \u00b7 ' + d.due.length + ' due</small></span><span class="ar">\u203A</span></button>' +
+'<button class="cc-door" data-pane="partners" type="button"><span class="i">' + ICO('people') + '</span>' +
+'<span class="x"><b>Partners</b><small>' + ps.length + ' \u00b7 terms and contacts</small></span><span class="ar">\u203A</span></button>' +
+'</div></div>';
+
 var clientsPane = '<div data-pane="clients" class="' + (pane === 'clients' ? 'on' : '') + '">' +
 '<div class="cc-srch"><input type="search" id="cr-ch2-search" placeholder="Name, address, partner, work type\u2026" value="' + esc(query) + '"></div>' +
 chBar(cRows.length, rows.length) +
@@ -60114,16 +60226,25 @@ fold('bypartner', 'By partner', Object.keys(byPartner).length, tally(byPartner, 
 fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false, 'stage')) +
 '</div></div>';
 
+/* 1179: the three tabs are gone. On the home there is nothing to switch
+   between — the doors ARE the navigation — so the strip carries only the
+   analytics button. Inside a pane it becomes one Back control, which is what
+   a door needs and a tab never did. The .tabbar class stays because the click
+   dispatch below keys on it and widening that selector is the only other
+   change needed. */
+var strip = pane === 'home'
+? '<div class="cc-tabs"><div class="tabbar"><span class="cc-here">Community</span>' +
+  '<button class="cc-analytics" data-go="analytics" type="button" title="Community Analytics" aria-label="Community Analytics">' + ICO('chart') + '</button>' +
+  '</div></div>'
+: '<div class="cc-tabs"><div class="tabbar">' +
+  '<button class="cc-back" data-pane="home" type="button">\u2039 Back</button>' +
+  '<span class="cc-here">' + (pane === 'clients' ? 'Clients' : pane === 'bids' ? 'Estimates' : 'Partners') + '</span>' +
+  '<button class="cc-analytics" data-go="analytics" type="button" title="Community Analytics" aria-label="Community Analytics">' + ICO('chart') + '</button>' +
+  '</div></div>';
+
 host.innerHTML =
-'<div class="cc-tabs"><div class="tabbar">' +
-'<button data-pane="clients" class="' + (pane==='clients'?'on':'') + '" type="button">Clients</button>' +
-'<span class="cc-sep">|</span>' +
-'<button data-pane="bids" class="' + (pane==='bids'?'on':'') + '" type="button">Estimates</button>' +
-'<span class="cc-sep">|</span>' +
-'<button data-pane="partners" class="' + (pane==='partners'?'on':'') + '" type="button">Partners</button>' +
-'<button class="cc-analytics" data-go="analytics" type="button" title="Community Analytics" aria-label="Community Analytics">' + ICO('chart') + '</button>' +
-'</div></div>' +
-clientsPane + bidsPane + partnersPane +
+strip +
+homePane + clientsPane + bidsPane + partnersPane +
 '<div class="cc-rule">Tools</div>' +
 '<div class="tools">' +
 '<button class="primary" data-go="newbid" type="button"><span class="i">' + ICO('pencil') + '</span>' +
@@ -60177,7 +60298,12 @@ if(b) b.onclick = function(){
 if(typeof window.goToLanding === 'function') window.goToLanding();
 else if(typeof window.showHome === 'function') window.showHome();
 };
-host.querySelectorAll('.tabbar [data-pane]').forEach(function(el){
+/* 1179: was scoped to '.tabbar [data-pane]'. The doors are the navigation now
+   and they sit in the home pane, not the strip — left as it was, every door
+   would have rendered perfectly and done nothing, which is BUG_CLASSES 16 and
+   exactly what gate_1179 drives a real tap to prove. */
+host.querySelectorAll('[data-pane]').forEach(function(el){
+if(el.tagName !== 'BUTTON') return;   /* the panes themselves carry data-pane */
 el.onclick = function(){ pane = el.dataset.pane; render(); };
 });
 var sb = host.querySelector('#cr-ch2-search');
