@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1152<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1153<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3947,6 +3947,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <span class="cbi" data-go="aiest" data-cri="bolt lg">AI Estimates</span>
       <span class="cbi" data-go="pricing" data-cri="money lg">Pricing Catalog</span>
       <span class="cbi" data-go="coach" data-cri="target lg">Objection Coach</span>
+      <span class="cbi" data-go="finrates" data-cri="cash lg">Financing Rates</span>
       <span class="cbi" data-go="adjusters" data-cri="group lg">Adjuster Directory</span>
       <small>Supply</small>
       <span class="cbi" data-go="abc" data-cri="warehouse lg">Suppliers</span>
@@ -18901,6 +18902,8 @@ function hideAllViews(){
      leave it covering the next screen (the 570-572 class). */
   var _occ = document.getElementById('cr-occ');
   if(_occ) _occ.style.display = 'none';
+  var _fin = document.getElementById('cr-fin');
+  if(_fin) _fin.style.display = 'none';   /* 1153 finance rates */
   /* 895: the Owner Console is a fixed inset:0 view, DISPLAY-shown like cr-occ,
      so display:none is the correct lever. */
   var _own = document.getElementById('cr-owner');
@@ -27883,6 +27886,7 @@ function __histPush(st){
         case 'leads':           if(typeof openLeadsView === 'function') openLeadsView(); break;
         case 'board':           if(typeof openScheduleBoard === 'function') openScheduleBoard(); break;
         case 'settings':        if(typeof openSettingsView === 'function') openSettingsView(); break;
+        case 'finrates':        if(typeof showFinanceRates === 'function') showFinanceRates(); break;
         case 'audit':           if(typeof openAuditLog === 'function') openAuditLog(); break;
         case 'companydocs':     if(typeof openCompanyDocs === 'function') openCompanyDocs(); break;
         case 'profile':         if(typeof openMyProfile === 'function') openMyProfile(); break;
@@ -27992,6 +27996,7 @@ function __histPush(st){
     wrapNav('openAuditLog',        'audit');
     wrapNav('openCompanyDocs',     'companydocs');
     wrapNav('openMyProfile',       'profile');
+    wrapNav('showFinanceRates',    'finrates');
     /* These three had restore cases in navRestore but were never wrapped,
        so entering them recorded nothing and the bottom arrows walked
        straight past them. */
@@ -42376,6 +42381,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1153, d:'2026-08-30', t:'Service Financial plan reference (staff)', s:'A new Financing Rates screen in the menu (Selling group) puts your whole Service Financial program list in one place \u2014 every plan grouped like the portal, with rate, term, payment factor, and loan range. Type an estimate amount at the top and every plan shows its own monthly payment. It\u2019s a staff reference, never shown to a customer. Your dealer fees are included, but ONLY you and Joan see them: they live in an admin-only database table, not in the app file, so a rep (or anyone viewing the public site) never sees your cost. Needs the finance_plan_fees.sql migration.' },
 { b:1152, d:'2026-08-30', t:'The + button in the header is readable again',
   s:'The + button you tap to add a project had the faintest text of anything in the header \u2014 dark lettering sitting on the darkest part of its own blue gradient, which measured 3.79 against a readability floor of 4.5. It is the sort of thing you stop noticing on your own screen and that someone in bright sun cannot read at all. The bottom of the gradient is a half-shade lighter now, exactly the same blue, and the letter clears the floor at 4.61. Its border moved with it so the edge still matches. Nothing else on the button changes. This was the last known readability failure in the header \u2014 all forty-three pieces of text across every CRM and both light and dark now clear the floor, with none carried as known debt.' },
 { b:1151, d:'2026-08-30', t:'Clients can pay by bank transfer, not just card',
@@ -42394,6 +42400,7 @@ var CHANGELOG = [
   s:'A correction to yesterday\u2019s light-mode build, found by the contrast sweep rather than by eye. The section headings in the side menu \u2014 \u201cDaily\u201d, \u201cOwner\u201d and the rest \u2014 were drawn in a blue that sat just under the readability floor where the header shades from light to slightly darker: 4.37 against a floor of 4.5. Production\u2019s amber had exactly the same fault and simply had not been caught. Both are now a half-shade deeper \u2014 the same colours, not new ones \u2014 and clear the floor at 4.63 and 4.66. Nothing else moves, and dark mode is untouched. The check that measured these in the first place was itself scoring the lighter end of the header and so passed a real failure; it now scores the worst point, which is the part of this that stops it happening again.' },
 { b:1144, d:'2026-08-29', t:'Light mode finally reaches the header and the menu',
   s:'You asked why the side menu stayed dark. It was: switching to light mode turned the whole app white except the header, the coloured strip under it and the slide-out menu \u2014 those three run on their own colour system, separate from the rest of the app, and it had no light version at all. They do now. Every colour was worked out rather than picked by eye, and each CRM keeps its own identity: Retail stays blue, Community green, Production amber, Sales red \u2014 the same hue, deepened until it is genuinely readable on a light background. That mattered more than it sounds: the existing accent colours were chosen for a dark background and are close to invisible on a light one \u2014 Community\u2019s mint green measured 1.2 against a readable floor of 4.5. Checked across all four CRMs in both modes: every piece of text in the header, the strip and the menu now clears the readability floor, and dark mode is byte-for-byte untouched.' },
+
 { b:1143, d:'2026-08-29', t:'The full Service Financial menu on Roof Options', s:'The Roof Options financing dropdown now carries your whole Service Financial program list, grouped: Same-as-cash (no payments), 0% equal-payment plans, deferred-interest plans, the reduced-interest loans (6.99%\u201312.99% across 60\u2013240 months), and the FEMA storm plans. Pick any one and each option shows its own monthly \u2014 the reduced-interest loans use Service Financial\u2019s own payment factors so the number matches their sheet exactly, the 0% plans divide evenly by the term, and the same-as-cash / deferred plans show the promo in the footer with no monthly. The plan number is on each choice so you know which one to submit. Your dealer fees are deliberately NOT in the app \u2014 that\u2019s your cost, and this file is public.' },
 { b:1142, d:'2026-08-29', t:'Real financing on the Roof Options sheet', s:'The Roof Options builder now has a Financing plan dropdown with your Service Financial programs \u2014 9.99% APR for 120 months, 6.99% APR for 60 months, and 24 months no payment / no interest. Pick one and each option on the sheet shows its own monthly payment, calculated from that option\u2019s price, with the plan terms and \u201csubject to credit approval (W.A.C.)\u201d in the footer. The deferred plan shows the no-payment promo instead of a monthly. Leave it on None to hide financing entirely. No typing a payment by hand anymore \u2014 the math is done for you.' },
 { b:1141, d:'2026-08-29', t:'Text an estimate for signature in one tap', s:'Open a published estimate or document and there is now a \u201cText to sign\u201d button next to Email to client: one tap saves it, makes the secure link, and opens your phone\u2019s Messages already addressed to the client with a friendly note and the link \u2014 you just hit send. They open it on their phone, review, and sign right there with a finger; you get notified the moment they do. Two fixes came with it: the estimate proposal is now actually signable from that link (the redesign had quietly left it review-only), and if a client has no phone on file the button copies the link instead so nothing is lost.' },
@@ -49930,6 +49937,15 @@ function gbbMonthlyPayment(principal, apr, months){
   if(r === 0) return P / n;
   return P * r / (1 - Math.pow(1 + r, -n));
 }
+function gbbPlanMonthly(plan, total){
+  total = Number(total) || 0;
+  if(!plan || total <= 0) return 0;
+  if((plan.min && total < plan.min) || (plan.max && total > plan.max)) return 0;
+  if(plan.kind === 'factor') return total * (Number(plan.factor) || 0) / 100;
+  if(plan.kind === 'equal0') return plan.months > 0 ? total / plan.months : 0;
+  if(plan.kind === 'fema')   return gbbMonthlyPayment(total, plan.rate, plan.payMonths);
+  return 0;
+}
 function gbbBullets(est){
   var lines = Array.isArray(est.line_items) ? est.line_items : [];
   var seen = {}, out = [];
@@ -49961,13 +49977,8 @@ function buildGbbHtml(tiers, project, plan){
   var noMonthly = !!(plan && (plan.kind === 'samecash' || plan.kind === 'defermin'));
   function tierMonthly(t){
     var est = (t && t.est) || {};
-    var total = Number(est.total) || 0;
     if(!plan) return Number(t.monthly) || 0;                 /* legacy manual value */
-    if(total > 0 && ((plan.min && total < plan.min) || (plan.max && total > plan.max))) return 0;
-    if(plan.kind === 'factor') return total * (Number(plan.factor) || 0) / 100;
-    if(plan.kind === 'equal0') return plan.months > 0 ? total / plan.months : 0;
-    if(plan.kind === 'fema')   return gbbMonthlyPayment(total, plan.rate, plan.payMonths);
-    return 0;                                                /* samecash, defermin */
+    return gbbPlanMonthly(plan, Number(est.total) || 0);
   }
   var anyMonthly = !noMonthly && tiers.some(function(t){ return tierMonthly(t) > 0; });
   var n = tiers.length;
@@ -50372,6 +50383,10 @@ publish      : publish,
 publishGbb   : publishGbb,
 openOptions  : gbbOpen,
 openDoc      : openDoc,
+plans        : GBB_PLANS,
+planGroups   : GBB_GROUPS,
+planFooter   : gbbPlanFooter,
+planMonthly  : gbbPlanMonthly,
 };
 })();
 </script>
@@ -63698,6 +63713,7 @@ var ROUTES = {
   adjusters: 'CardinalAdjusters.open',
   abc:       'CardinalABC.open',
   selfcheck: 'CardinalSelfCheck.open',
+  finrates:  'showFinanceRates',
   whatsnew:  'CardinalChangelog.show',
   walk:      'CardinalWalk.showRunner',
   itellab:   'CardinalItelLab.open',
@@ -85031,5 +85047,199 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   });
 })();
 </script>
+
+<style id="cr-fin-styles">
+/* 1153 — Service Financial plan reference. Blackout reference surface (the
+   Showcase/OC pattern): single-theme, every colour pinned with a literal, so
+   it is immune to the token-strip class and never borrows a light ground.
+   The dealer-fee column renders only when finance_plan_fees returns rows,
+   which its RLS grants to admins alone. */
+#cr-fin{position:fixed;inset:0;z-index:4200;display:none;flex-direction:column;background:#0B0C0F;color:#ECEAE6;font-family:'Segoe UI',Arial,sans-serif;-webkit-overflow-scrolling:touch}
+#cr-fin.open{display:flex}
+#cr-fin .finhd{flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:16px 20px;background:linear-gradient(180deg,#141619,#0E0F12);border-bottom:1px solid #23262d}
+#cr-fin .finhd .fin-back{background:#1b1e23;color:#ECEAE6;border:1px solid #333842;border-radius:10px;min-height:44px;padding:0 16px;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+#cr-fin .finhd .fin-back:hover{background:#23272d;border-color:#4a515c}
+#cr-fin .finhd .fin-ttl{min-width:0}
+#cr-fin .finhd .fin-eyebrow{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#E45864}
+#cr-fin .finhd .fin-h{font:700 19px 'Segoe UI',Arial,sans-serif;letter-spacing:.01em;color:#fff;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cr-fin .finhd .fin-calc{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+#cr-fin .finhd .fin-calc label{font:700 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA2AE}
+#cr-fin .finhd .fin-calc .box{display:flex;align-items:center;gap:3px;background:#0F1114;border:1px solid #333842;border-radius:10px;padding:0 10px;min-height:44px}
+#cr-fin .finhd .fin-calc .box span{color:#9AA2AE;font-size:14px}
+#cr-fin .finhd .fin-calc input{width:120px;background:transparent;border:0;color:#ECEAE6;font:700 16px 'Segoe UI',Arial,sans-serif;text-align:right;outline:none}
+#cr-fin .finbody{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:18px 20px 40px}
+#cr-fin .fin-wrap{max-width:1120px;margin:0 auto}
+#cr-fin .fin-note-top{font-size:13.5px;line-height:1.55;color:#B7BEC8;margin:0 0 18px;max-width:80ch}
+#cr-fin .fin-note-top b{color:#ECEAE6}
+#cr-fin .fin-sect{margin:0 0 18px;background:#121317;border:1px solid #23262d;border-radius:14px;overflow:hidden}
+#cr-fin .fin-sect > h3{margin:0;padding:12px 16px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:linear-gradient(90deg,rgba(200,32,46,.20),rgba(200,32,46,0));border-left:3px solid #C8202E}
+#cr-fin .fin-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#cr-fin table.fin-tbl{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+#cr-fin table.fin-tbl th{text-align:left;padding:9px 14px;font:700 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#8A929C;border-bottom:1px solid #23262d;white-space:nowrap}
+#cr-fin table.fin-tbl td{padding:11px 14px;border-bottom:1px solid #191b1f;vertical-align:middle;color:#D7DBE0}
+#cr-fin table.fin-tbl tr:last-child td{border-bottom:0}
+#cr-fin table.fin-tbl tr:hover td{background:#15171b}
+#cr-fin .fin-plan{font:800 13px 'Segoe UI',Arial,sans-serif;color:#fff;font-variant-numeric:tabular-nums}
+#cr-fin .fin-prog{color:#C3C9D1;font-size:12.5px;line-height:1.4;min-width:200px}
+#cr-fin td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+#cr-fin td.fin-mo{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:800;color:#fff}
+#cr-fin td.fin-mo .muted{color:#8A929C;font-weight:600}
+#cr-fin td.fin-fee{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#E8B45A;font-weight:700}
+#cr-fin th.fin-fee-h{color:#E8B45A}
+#cr-fin .fin-feebadge{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:99px;background:rgba(232,180,90,.14);color:#E8B45A;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;vertical-align:2px}
+#cr-fin .fin-fine{margin-top:8px;font-size:11.5px;line-height:1.6;color:#7d848d;max-width:88ch}
+#cr-fin .fin-fine b{color:#9AA2AE}
+#cr-fin .fin-empty{padding:40px 8px;color:#9AA2AE;font-size:14px;text-align:center}
+@media (max-width:640px){
+  #cr-fin .finhd{flex-wrap:wrap;gap:10px}
+  #cr-fin .finhd .fin-calc{margin-left:0;width:100%}
+  #cr-fin .finhd .fin-calc .box{flex:1}
+  #cr-fin .finhd .fin-calc input{width:100%}
+  #cr-fin .finbody{padding:14px 12px 32px}
+}
+</style>
+<script id="cr-fin-script">
+(function(){
+  'use strict';
+  var el = null, feeMap = null, amount = 0;
+
+  function P(){ return window.CardinalEstimatePublish || null; }
+  function money0(v){ return '$' + (Number(v)||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
+  function esc(s){ return String(s==null?'':s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); }
+
+  /* the portal's section order, split reduced by loan floor (short = $1k, long = $3k) */
+  var SECTIONS = [
+    { key:'samecash', title:'Same as cash — no payments', match:function(p){ return p.kind==='samecash'; } },
+    { key:'equal0',   title:'0% interest — equal monthly payments', match:function(p){ return p.kind==='equal0'; } },
+    { key:'defermin', title:'Deferred interest — minimum payments', match:function(p){ return p.kind==='defermin'; } },
+    { key:'rshort',   title:'Reduced interest — short term', match:function(p){ return p.kind==='factor' && p.min < 3000; } },
+    { key:'rlong',    title:'Reduced interest — long term',  match:function(p){ return p.kind==='factor' && p.min >= 3000; } },
+    { key:'fema',     title:'FEMA / storm plans', match:function(p){ return p.kind==='fema'; } }
+  ];
+
+  function rateText(p){
+    if(p.kind==='factor' || p.kind==='fema') return esc(p.rate) + '%';
+    if(p.kind==='equal0' || p.kind==='samecash') return '0%';
+    return 'Deferred';
+  }
+  function termText(p){
+    if(p.kind==='fema') return p.deferMonths + ' + ' + p.payMonths + ' mo';
+    return p.months + ' mo';
+  }
+  function factorText(p){ return (p.kind==='factor') ? esc(p.factor) + '%' : '—'; }
+  function rangeText(p){ return money0(p.min) + '–' + money0(p.max); }
+  function progText(p){
+    var pf = P();
+    if(pf && typeof pf.planFooter==='function'){ var s = pf.planFooter(p); if(s) return esc(s); }
+    return '';
+  }
+  function monthlyCell(p){
+    if(!amount) return '<td class="fin-mo"><span class="muted">—</span></td>';
+    if(p.kind==='samecash' || p.kind==='defermin') return '<td class="fin-mo"><span class="muted">no monthly</span></td>';
+    if((p.min && amount < p.min)) return '<td class="fin-mo"><span class="muted">min ' + money0(p.min) + '</span></td>';
+    if((p.max && amount > p.max)) return '<td class="fin-mo"><span class="muted">over ' + money0(p.max) + '</span></td>';
+    var pf = P();
+    var m = (pf && typeof pf.planMonthly==='function') ? pf.planMonthly(p, amount) : 0;
+    return '<td class="fin-mo">' + (m>0 ? money0(m) + '<span class="muted">/mo</span>' : '<span class="muted">—</span>') + '</td>';
+  }
+
+  function render(){
+    if(!el) return;
+    var body = el.querySelector('.fin-wrap');
+    var pf = P();
+    var plans = (pf && Array.isArray(pf.plans)) ? pf.plans : [];
+    if(!plans.length){ body.innerHTML = '<div class="fin-empty">The plan catalog is not loaded yet. Reopen this screen in a moment.</div>'; return; }
+    var showFee = !!(feeMap && Object.keys(feeMap).length);
+    var feeH = showFee ? '<th class="fin-fee-h" style="text-align:right;">Dealer fee</th>' : '';
+    var moH  = '<th style="text-align:right;">Est. monthly</th>';
+
+    var html = '';
+    html += '<p class="fin-note-top"><b>Cardinal’s Service Financial programs.</b> This is a staff reference for choosing which plan to offer — it is never shown to a customer. Type an estimate amount above and each plan shows its own monthly payment. Reduced-interest monthlies use Service Financial’s own payment factors.' + (showFee ? ' <span class="fin-feebadge">admin</span> The dealer-fee column is visible to you only.' : '') + '</p>';
+
+    SECTIONS.forEach(function(sec){
+      var rows = plans.filter(sec.match);
+      if(!rows.length) return;
+      var body2 = rows.map(function(p){
+        var fee = showFee ? '<td class="fin-fee">' + (feeMap[p.id]!=null ? Number(feeMap[p.id]).toFixed(2) + '%' : '—') + '</td>' : '';
+        return '<tr>' +
+          '<td class="fin-plan">#' + esc(p.id) + '</td>' +
+          '<td class="fin-prog">' + progText(p) + '</td>' +
+          '<td class="num">' + rateText(p) + '</td>' +
+          '<td class="num">' + termText(p) + '</td>' +
+          '<td class="num">' + factorText(p) + '</td>' +
+          '<td class="num">' + rangeText(p) + '</td>' +
+          monthlyCell(p) + fee +
+        '</tr>';
+      }).join('');
+      html += '<div class="fin-sect"><h3>' + esc(sec.title) + '</h3><div class="fin-scroll"><table class="fin-tbl"><thead><tr>' +
+        '<th>Plan</th><th>Program</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Term</th><th style="text-align:right;">Factor</th><th style="text-align:right;">Loan range</th>' + moH + feeH +
+        '</tr></thead><tbody>' + body2 + '</tbody></table></div></div>';
+    });
+
+    /* Buy Deeper is a call-the-concierge special, not a Roof Options plan, so it
+       lives here as reference only. Fee comes from the same admin-only map. */
+    if(showFee && feeMap['BD580'] != null){
+      html += '<div class="fin-sect"><h3>Buy Deeper — second-look</h3><div class="fin-scroll"><table class="fin-tbl"><thead><tr>' +
+        '<th>Plan</th><th>Program</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Term</th><th style="text-align:right;">Factor</th><th style="text-align:right;">Loan range</th>' + moH +
+        '<th class="fin-fee-h" style="text-align:right;">Dealer fee</th></tr></thead><tbody>' +
+        '<tr><td class="fin-plan">Buy Deeper</td><td class="fin-prog">6-month WPDI · 580 FICO minimum</td><td class="num">—</td><td class="num">6 mo</td><td class="num">—</td><td class="num">' + money0(500) + '–' + money0(7500) + '</td>' +
+        '<td class="fin-mo"><span class="muted">—</span></td><td class="fin-fee">' + Number(feeMap['BD580']).toFixed(2) + '%</td></tr>' +
+        '</tbody></table></div></div>';
+    }
+
+    html += '<p class="fin-fine">Loan programs, interest rates, terms and discounts subject to change without notice. Available in all 50 states and DC. Default interest rates are state-specific and range from <b>17.99% to 24.99%</b>. Same-as-cash and deferred plans require the balance be paid within the promo window to avoid interest. Dealer fees apply to primary pricing only and may be higher on second-look applications. Service Finance Company, LLC — dealer support 877-661-6793 · 877-393-0033.</p>';
+
+    body.innerHTML = html;
+  }
+
+  function ensure(){
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'cr-fin';
+    el.innerHTML =
+      '<div class="finhd">' +
+        '<button type="button" class="fin-back" data-act="fin-close">‹ Back</button>' +
+        '<div class="fin-ttl"><div class="fin-eyebrow">Service Financial</div><div class="fin-h">Plan Reference</div></div>' +
+        '<div class="fin-calc"><label>Estimate</label><div class="box"><span>$</span><input type="number" min="0" step="100" inputmode="numeric" placeholder="0" data-slot="fin-amt"></div></div>' +
+      '</div>' +
+      '<div class="finbody"><div class="fin-wrap"></div></div>';
+    document.body.appendChild(el);
+    el.querySelector('[data-act="fin-close"]').addEventListener('click', close);
+    var amt = el.querySelector('[data-slot="fin-amt"]');
+    amt.addEventListener('input', function(){ amount = Number(amt.value) || 0; render(); });
+    return el;
+  }
+
+  async function loadFees(){
+    if(feeMap) return feeMap;
+    feeMap = {};
+    try{
+      if(window.supa){
+        var r = await window.supa.from('finance_plan_fees').select('plan_id,dealer_fee');
+        if(r && Array.isArray(r.data)){ r.data.forEach(function(row){ feeMap[row.plan_id] = row.dealer_fee; }); }
+      }
+    }catch(_e){ /* non-admins are blocked by RLS -> empty map, no fee column */ }
+    return feeMap;
+  }
+
+  function open(){
+    ensure();
+    if(typeof window.hideAllViews === 'function'){ try{ window.hideAllViews(); }catch(_e){} }
+    el.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    render();                              /* paint immediately from the catalog */
+    loadFees().then(render);               /* then fill the admin fee column */
+  }
+  function close(){
+    if(el){ el.classList.remove('open'); }
+    document.body.style.overflow = '';
+    if(typeof window.showHome === 'function'){ try{ window.showHome(); }catch(_e){} }
+  }
+
+  window.CardinalFinanceRates = Object.assign(window.CardinalFinanceRates || {}, { open: open, close: close });
+  window.showFinanceRates = function(){ open(); };
+})();
+</script>
+
 </body>
 </html>
