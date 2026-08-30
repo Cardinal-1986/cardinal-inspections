@@ -3814,7 +3814,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <button type="button" class="cr-dh-switch" data-cri="group" aria-label="Switch portal" title="Switch portal"></button>
           </div>
           <div class="navsec">Daily</div>
-          <button class="navopt" data-nav="landing" data-cri="home lg">Landing</button>
+          <button class="navopt" data-nav="landing" data-cri="home lg">Switch portal</button>
           <!-- 799: the portal switcher, formerly its own row under the search
                bar (#crPortalChip, hidden below). Same sheet, same
                window.CardinalPortal.pick() - see the click handler at ~18753. -->
@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1165<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1166<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27074,6 +27074,13 @@ window.addEventListener('visibilitychange', function(){
 });
 
 function showLanding(userEmail){
+  /* 1165: retired on ordinary hosts along with goToLanding() above — the two
+     mean the same thing to their callers (the logo and portal-sync's
+     [data-cr-landing] both say "take me to the hub"). The vision host keeps
+     the real pane below; showMain()'s own vision branch is untouched. */
+  var _visS = false;
+  try{ _visS = !!(window.CardinalLanding && window.CardinalLanding.isVisionHost && window.CardinalLanding.isVisionHost()); }catch(_vs){}
+  if(!_visS){ goToLanding(); return; }
   var lv = document.getElementById('landingView');
   var nm = '';
   try{ nm = currentUser ? (', ' + String(displayNameFor(currentUser)).split(' ')[0]) : ''; }catch(e){}
@@ -27298,6 +27305,40 @@ function backToLanding(){
 /* Same as backToLanding, but called from the app menu — also clears main-app views
    so the transition is clean. */
 function goToLanding(){
+  /* 1165 — THE LANDING IS RETIRED ON ORDINARY HOSTS. The Front Door (1164) is
+     the portal picker now, so "go to the picker" no longer means "show a
+     screen": it means land somewhere real and open the picker over it.
+
+     Changed HERE rather than at the eight call sites — the logo, the drawer's
+     Landing row, the dashboard and cover-card chips, the Cardinal Truth banner
+     chip, the Resource Library exit (via backToLanding), the Production board
+     exit and the Owner Console back button all mean the same thing by this
+     function, and one pipeline per concept is the standing rule.
+
+     ⚠ #landingView ITSELF IS NOT DELETED and must not be: on a showroom.*
+     host it is the Vision hub's container (593/625). The vision branch below
+     keeps the real pane, which is why this is a behaviour change and not a
+     removal.
+
+     ⚠ 1038's doctrine holds: a production account exiting the board must not
+     be dropped on the retail home (pipeline counts, AR money). They land back
+     on their own hub with the picker over it. */
+  var _vis = false;
+  try{ _vis = !!(window.CardinalLanding && window.CardinalLanding.isVisionHost && window.CardinalLanding.isVisionHost()); }catch(_ve){}
+  if(!_vis){
+    try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_e){}
+    try{ document.getElementById('cardinalTruthView').style.display = 'none'; }catch(_e2){}
+    try{ document.getElementById('resourceLibraryView').style.display = 'none'; }catch(_e3){}
+    var _ic0 = document.getElementById('insClientsView'); if(_ic0) _ic0.style.display = 'none';
+    if(typeof isProductionUser === 'function' && isProductionUser() &&
+       window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
+      try{ window.CardinalProduction.open(); }catch(_pe){ if(typeof showHome === 'function') showHome(); }
+    }else if(typeof showHome === 'function'){
+      showHome();
+    }
+    try{ if(window.CardinalFrontDoor) window.CardinalFrontDoor.open(); }catch(_fe){}
+    return;
+  }
   try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_e){}
   document.getElementById('cardinalTruthView').style.display = 'none';
   document.getElementById('resourceLibraryView').style.display = 'none';
@@ -27719,7 +27760,17 @@ var hd = document.querySelector('header.site');
     try{ var _plv = document.getElementById('landingView'); if(_plv) _plv.style.display = 'none'; }catch(_pl){}
     try{ window.CardinalProduction.open(); }catch(_pe){ showLanding(userEmail); }
   }else{
-    showLanding(userEmail);
+    /* 1165: sign-in used to stop at the Landing. It lands on the CRM home now
+       — zero screens between opening the app and working — with the Front Door
+       one tap away on the header title. Deliberately does NOT auto-open the
+       panel: a picker that opens itself every launch is the screen we just
+       retired, wearing a different shape.
+       ⚠ The vision branch above returned long before this line, so showroom.*
+       still boots straight into the Vision hub. */
+    var _lvR = document.getElementById('landingView');
+    if(_lvR) _lvR.style.display = 'none';
+    try{ document.body.classList.remove('cr-landing-on'); }catch(_lc){}
+    if(typeof showHome === 'function') showHome(); else showLanding(userEmail);
   }
   if(TEAM){
     whoami.textContent = currentUser ? displayNameFor(currentUser) : (userEmail || '');
@@ -42458,7 +42509,9 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b: 1165, d: '2026-08-30', t: 'The presentation suite and the front door, together', s: 'A bookkeeping build: the in-home presentation work (1159\u20131162) and the main line\u2019s builds (1163 the morning strip, 1164 the Front Door) were made in parallel, and this build is the lines merged into one app \u2014 nothing new, everything from all of them.' },  { b: 1164, d: '2026-08-30', t: 'The header title opens the Front Door', s: 'Tap the portal name in the header — anywhere in the app — and the Brief drops down: good morning, the date, the daily quote, and every portal as a door with a live state line (bids past due under Community, carriers to chase under Cardinal Truth, urgent punch-outs under Production, estimates awaiting contract under Retail), plus Sales Floor, the Resource Library, and a Presentation group — Showroom, Exterior Designer, Colors. State lines are admin-only, like the morning strip they read from; everyone gets the doors and the quote. Additive: the Landing screen is untouched for now.' },
+  { b: 1166, d: '2026-08-30', t: 'The presentation suite and the front door, together', s: 'A bookkeeping build: the in-home presentation work (1159\u20131162) and the main line\u2019s builds (1163 the morning strip, 1164 the Front Door, 1165 the Landing retired) were made in parallel, and this build is the lines merged into one app \u2014 nothing new, everything from all of them.' },
+  { b: 1165, d: '2026-08-30', t: 'Signing in opens the app, not a front door', s: 'The Landing screen is retired. Signing in now lands you straight on your CRM home — no screen in between — and the portal picker lives where you already are: tap the portal name in the header and the Front Door drops down. Everything that used to say “take me to the landing” now means that: the logo, the drawer (renamed “Switch portal”), the dashboard and client-card chips, the Cardinal Truth banner, and backing out of the Resource Library. Curtis and Scottie still land on the Production hub and back out to it, never to the retail home. The showroom tablet is untouched — it still boots straight into the Vision hub, which is the one thing the Landing pane still exists for.' },
+  { b: 1164, d: '2026-08-30', t: 'The header title opens the Front Door', s: 'Tap the portal name in the header — anywhere in the app — and the Brief drops down: good morning, the date, the daily quote, and every portal as a door with a live state line (bids past due under Community, carriers to chase under Cardinal Truth, urgent punch-outs under Production, estimates awaiting contract under Retail), plus Sales Floor, the Resource Library, and a Presentation group — Showroom, Exterior Designer, Colors. State lines are admin-only, like the morning strip they read from; everyone gets the doors and the quote. Additive: the Landing screen is untouched for now.' },
   { b: 1163, d: '2026-08-30', t: 'The morning strip counts Community, and shares its resolver', s: 'The “Where things stand” strip (1048) watched retail, insurance and production — and never Community, whose three overdue bids sat invisible from the home screen. It now carries a “bids past due” chip, counted by the Community hub’s own due clocks (bid_due_at, or the check-back date on a parked job; waitlisted jobs have no bid and never count) and opening the hub on tap. The strip’s counts are also exported as CardinalStands, so the front-door work ahead reads these same numbers instead of growing a second set.' },
   { b: 1162, d: '2026-08-30', t: 'The Appointment closes \u2014 options and signature on the tablet', s: 'The visit now ends where it happens. Two steps join the running order: Options shows the job\u2019s published Good / Better / Best sheet full-screen, and Sign lists the job\u2019s paperwork \u2014 pick a document and it opens with its own Accept & Sign, the same secure page a client signs on their own phone, so the homeowner signs with a finger right on the tablet and the rep is notified the moment it lands. The signature can only land on the document that is open on the screen. Nothing signs that never could: documents without a signature block say so and open for review. Prepare the estimate, contract and options sheet at the office; the appointment finds them by itself.' },
   { b: 1161, d: '2026-08-30', t: 'The Appointment \u2014 the visit, in order', s: 'One tile on the Vision hub now runs the whole in-home visit as a sequence: pick the job, then their roof (The Walk, hands-off showroom mode), what good work looks like beside bad (Hall of Fame), why Cardinal, and their own house wearing your materials \u2014 approved visualizations only, with the shingle colour wall one tap away. A small bar at the bottom of the screen carries the steps: next, back, jump, end. Nothing here is new content \u2014 it is the screens the app already had, played in the right order so a rep never hunts for the next door in front of a homeowner. Options and signing join the sequence next.' },
@@ -62583,15 +62636,18 @@ body.standalone #landingView .cr-lr{padding-bottom:calc(120px + env(safe-area-in
 (function(){
 'use strict';
 var SURFACES = [
-{ name:'Landing', open:function(){
-if(typeof window.showLanding === 'function') window.showLanding();
+/* 1165: was the Landing pane, which ordinary hosts no longer paint — probing
+   #landingView's buttons would have reported five phantom dead controls in the
+   one tool whose whole job is telling the truth about dead controls. */
+{ name:'Front Door', open:function(){
+if(window.CardinalFrontDoor && typeof window.CardinalFrontDoor.open === 'function') window.CardinalFrontDoor.open();
 },
 controls:[
-['#landingView [data-go="retail"]',     'Retail portal'],
-['#landingView [data-go="insurance"]',  'Insurance portal'],
-['#landingView [data-go="community"]',  'Community portal'],
-['#landingView [data-go="production"]', 'Production'],
-['#landingView [data-go="sales"]',      'Sales Floor'],
+['#cr-fd [data-fd="retail"]',     'Retail portal'],
+['#cr-fd [data-fd="insurance"]',  'Cardinal Truth portal'],
+['#cr-fd [data-fd="community"]',  'Community portal'],
+['#cr-fd [data-fd="production"]', 'Production'],
+['#cr-fd [data-fd="sales"]',      'Sales Floor'],
 ] },
 { name:'Cardinal Claims', open:function(){
 if(typeof window.showCardinalTruth === 'function') window.showCardinalTruth();

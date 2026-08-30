@@ -7976,3 +7976,11 @@ as a drop-down: greeting, date, daily quote (reuses `CardinalLanding.today()`), 
 portal/tool doors with admin-only state lines from `CardinalStands.counts()`. Exported as
 `window.CardinalFrontDoor` (open/close/isOpen). Class-shown, registered in `hideAllViews()`,
 no body observer, no scroll-lock write. Additive — the Landing still exists.
+
+## Build 1165 — the Landing retired; the Front Door is the picker
+`goToLanding()`/`showLanding()` now land on the CRM home (Production hub for production
+accounts) and open `CardinalFrontDoor` — all eight callers inherit it. `showMain()` signs
+in straight to `showHome()`. Drawer row renamed "Switch portal"; Self Check probes
+`#cr-fd` instead of the retired pane. **`#landingView` markup survives on purpose** — it
+is the Vision hub's container on `showroom.*`, and both functions keep the real pane on a
+vision host.
