@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1157<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1158<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42445,6 +42445,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1158, d: '2026-08-30', t: 'The reminders switch works on an empty screen', s: 'Fixes a bug shipped hours earlier in 1157: when nothing was owed, the Invoices & AR screen returned early and the automatic-reminders switch never finished loading \u2014 it sat on \u201cChecking\u2026\u201d with a dead button, which is exactly the state a paid-up book is in. The switch now paints whether or not any invoice is outstanding.' },
   { b: 1157, d: '2026-08-30', t: 'Reminders master switch', s: 'The Invoices & AR screen now carries a company-wide On/Off switch for automatic payment reminders. It ships OFF \u2014 nothing texts a client until an admin turns it on \u2014 and the daily run checks the same switch server-side, so off means off everywhere. Rows show \u201cPaused \u2014 reminders are off company-wide\u201d while it is off.' },
   { b: 1156, d: '2026-08-30', t: 'Automatic payment reminders', s: 'Retail clients with a sent, unpaid invoice now get a friendly text from the company number \u2014 3 days after the invoice goes out, then weekly, at most 4 \u2014 with their balance and the secure pay link. It stops the moment any payment is recorded or is processing, and every job has a Mute switch on the Invoices & AR screen. Insurance and Community jobs are never texted.' },
 { b:1155, d:'2026-08-30', t:'Contracts print the address in four fields',
@@ -84041,24 +84042,32 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if(q('crarKpiOver')) q('crarKpiOver').textContent = money(overdue);
     if(q('crarKpiOutSub')) q('crarKpiOutSub').textContent = list.length + (list.length === 1 ? ' open invoice' : ' open invoices');
     if(q('crarKpiOverSub')) q('crarKpiOverSub').textContent = overdueN ? (overdueN + (overdueN === 1 ? ' invoice needs a nudge' : ' invoices need a nudge')) : 'nothing overdue';
-    var body = q('crarBody'); if(!body) return;
-    if(!list.length){
-      body.innerHTML = '<div class="crar-empty"><b>All clear.</b><br>No open balances right now.</div>';
-      return;
+    /* 1158: ONE remWire() call, on every path. 1157 put it after the bucket
+       loop, behind an early `return` taken whenever the list was empty — so
+       with nothing owed the master switch never painted and sat on
+       "Checking…" with a dead button. That is the NORMAL state of a paid-up
+       book, and it is the screen the switch lives on. The list rendering is
+       now a branch rather than an exit, so the switch cannot be skipped. */
+    var body = q('crarBody');
+    if(body){
+      if(!list.length){
+        body.innerHTML = '<div class="crar-empty"><b>All clear.</b><br>No open balances right now.</div>';
+      } else {
+        var buckets = [[], [], []];
+        list.forEach(function(x){ buckets[bucketOf(x.age)].push(x); });
+        var labels = ['Current &middot; 0&ndash;14 days', '15&ndash;30 days', '30+ days &middot; overdue'];
+        var html = '';
+        for(var i = 0; i < 3; i++){
+          if(!buckets[i].length) continue;
+          var sub = 0; buckets[i].forEach(function(x){ sub += x.fin.balance; });
+          html += '<div class="crar-grp' + (i === 2 ? ' over' : '') + '">'
+            + '<div class="crar-grphd"><b>' + labels[i] + '</b><span class="crar-line"></span><span class="crar-sub">' + money(sub) + '</span></div>'
+            + buckets[i].map(rowHtml).join('')
+            + '</div>';
+        }
+        body.innerHTML = html;
+      }
     }
-    var buckets = [[], [], []];
-    list.forEach(function(x){ buckets[bucketOf(x.age)].push(x); });
-    var labels = ['Current &middot; 0&ndash;14 days', '15&ndash;30 days', '30+ days &middot; overdue'];
-    var html = '';
-    for(var i = 0; i < 3; i++){
-      if(!buckets[i].length) continue;
-      var sub = 0; buckets[i].forEach(function(x){ sub += x.fin.balance; });
-      html += '<div class="crar-grp' + (i === 2 ? ' over' : '') + '">'
-        + '<div class="crar-grphd"><b>' + labels[i] + '</b><span class="crar-line"></span><span class="crar-sub">' + money(sub) + '</span></div>'
-        + buckets[i].map(rowHtml).join('')
-        + '</div>';
-    }
-    body.innerHTML = html;
     remWire();
   }
 

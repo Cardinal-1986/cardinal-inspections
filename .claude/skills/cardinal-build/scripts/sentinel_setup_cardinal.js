@@ -160,6 +160,14 @@
     /* honestly empty — the app must render these states, and it has shipped
        bugs in exactly this direction before */
     estimates: [], project_photos: [], inspection_reports: [],
+    /* 1158: the Invoices & AR view (1107-1157) reads these two. Both are
+       ADDITIVE — no other state reads either table, so seeding them cannot
+       move an existing render. `app_settings` carries the reminders master
+       switch (1157) so the header paints its real Off state rather than the
+       "Switch unavailable" error state a missing table produces; flip this
+       to true to sweep the On copy, which is the longer of the two strings. */
+    app_settings: [{ key:'payment_reminders_enabled', value:false }],
+    payment_reminders: [],
     /* 992: the Line Item Library's category strip. The eight TABS are static —
        seeding cannot add or remove one — so this is here for the COUNT PILLS
        and for the estimates "Add from Library" sheet, which reads the same
@@ -753,6 +761,35 @@
        call and it REMOVES the fourth button, so copying that line measures a
        different strip. And close() with no argument navigates home; hideAllViews()
        already closes this one correctly with close(false). */
+    /* 1158: Invoices & AR — the standing gate was BLIND to this screen while it
+       grew across four builds (1107 dashboard, 1108 job card, 1156 reminder
+       rows, 1157 the master switch). Admin-only, so it copies `lineitems`'
+       shape: a non-admin refusal is CORRECT and contributes no renders rather
+       than throwing. The seed carries no invoices on purpose, so this sweeps
+       the chrome, the KPI tray, the empty state and the whole 1157 master row;
+       the per-row reminder line (.crar-rem) needs a seeded invoice with a
+       balance and is NOT covered yet — stated so nobody reads a green run as
+       covering it. Shown by DISPLAY and registered in hideAllViews(). */
+    { name:'ar',           run: async function () {
+        leaveLanding(); closeAll();
+        var admin = ['theo@cardinalrenovations.net','joan@cardinalrenovations.net']
+          .indexOf(((window.currentUser && window.currentUser.email) || '').toLowerCase()) !== -1;
+        if (!admin) { await pause(120); return; }
+        var m = window.CardinalAR;
+        if (!m || !m.open) throw new Error('CardinalAR.open missing');
+        m.open(); await pause(900);
+        var v = document.getElementById('cr-ar-view');
+        if (!v || v.style.display === 'none')
+          throw new Error('#cr-ar-view did not open as an admin');
+        var master = v.querySelector('.crar-master');
+        if (!onScreen(master))
+          throw new Error('the reminders master row is not on screen — 1157 put it above the KPI tray');
+        /* remWire() paints this asynchronously off two reads; without it the
+           row still says "Checking…" and the state/ink under test never renders. */
+        var st = document.getElementById('crarMasterState');
+        for (var i = 0; i < 12 && st && /Checking/.test(st.textContent); i++) await pause(150);
+        if (st && /Checking/.test(st.textContent))
+          throw new Error('the master switch never resolved past "Checking…" — remWire did not settle'); } },
     { name:'showcase',     run: async function () {
         leaveLanding(); closeAll();
         var m = api('CardinalShowcase'); if (!m) throw new Error('CardinalShowcase.open missing');

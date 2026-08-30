@@ -5518,9 +5518,22 @@ New Project, the checklist, the signature pad). Run it whenever a screen changes
 
 ```
 node sentinel.js index.html \
-  --setup .../e2e_mock_supa.js,.../sentinel_setup_cardinal.js \
+  --setup .../sentinel_setup_cardinal.js,.../e2e_mock_supa.js \
   --since <previous artifact>
 ```
+
+⚠️ **CORRECTED 30 Aug 2026 (build 1158) — this block had the two setup files in the
+WRONG ORDER, and had had it since it was written.** The seed must come FIRST;
+`e2e_mock_supa.js,sentinel_setup_cardinal.js` makes the mock read `__SEED__`
+before it exists, and one wrong argument silently kills four states (home, album,
+claimdetail, and the milestone groups). `BUG_CLASSES.md` already recorded this as
+a named operator error — **while this copy, the one a reader actually copies out,
+still printed the broken order.** A trap documented in one file and reproduced in
+another is not documented. The setup file's own guard catches it and says so in
+its thrown message; read the RUN lines rather than only the findings.
+
+**The state list above is also stale** — the sweep now walks **26** states, not
+twelve. Count them in `sentinel_setup_cardinal.js`'s `__sentinelStates`, not here.
 
 `--since` is what keeps it usable — it subtracts the carried debt so the report is what *this* build
 did. The current baseline is **11 DEAD findings, all triaged as benign** (touch-target residue, one

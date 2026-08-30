@@ -2,6 +2,22 @@
 
 ---
 
+## 🟠 OPEN — the sentinel's AR coverage stops at the chrome (build 1158)
+
+The `ar` state added at 1158 sweeps the Invoices & AR header, KPI tray, empty
+state and the whole 1157 master row. **It does not cover the per-row reminder
+line (`.crar-rem` / `.crar-remtx`)**, because the seed carries no invoices, so
+`arList()` is empty by construction. Covering it needs a seeded invoice with a
+signed-contract total and a balance — which touches `jobFinance()`'s money model
+and would move the `client` and `estimates` renders too, so it is its own build,
+not a tack-on. Until then a green AR sweep says nothing about the reminder rows.
+
+Also open, cheap, and worth doing when someone is next in there: the sentinel's
+**heavy default (4 viewports × `--since`) exceeds this sandbox** and dies as a
+crash that reads like patience (build log, 1158 correction). One viewport
+completes fine. A `--viewports` narrowing or a documented note would stop the
+next session losing the same twenty minutes.
+
 ## ✅ SETTLED 30 Aug 2026 (Theo) — automatic payment reminders (build 1156)
 
 Four picks, each made from rendered options: **retail only** (insurance waits on carrier

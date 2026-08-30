@@ -158,15 +158,45 @@ catch(e){ console.log('module threw on eval: ' + e.message); console.log('\nRED'
   const s1d = w.document.querySelector('[data-remfor="P1"]');
   ok(!!s1d && /Reminded ×2 · last/.test(s1d.textContent), 'and the rows return to their own state (P1 has history, so "Reminded ×2") — got ' + JSON.stringify(s1d ? s1d.textContent : null));
 
+  /* ── 1158 REGRESSION: the switch must paint when NOTHING is owed ──
+     1157 called remWire() after the bucket loop, behind an early return taken
+     whenever the AR list was empty. So on a paid-up book — the normal state —
+     the master switch never painted and sat on "Checking…" with a dead
+     button. Every 1157 assertion above stayed green because they all run with
+     two owed invoices. THIS is the case that was missing. */
+  MASTER_DB = { present: true, value: true };
+  FIN = { P1: { value: 9200, paid: 9200, balance: 0 }, P2: { value: 7000, paid: 7000, balance: 0 } };
+  const mstBefore = w.document.getElementById('crarMasterState');
+  if(mstBefore) mstBefore.textContent = 'Checking…';
+  w.renderAR();
+  await new Promise(r => setTimeout(r, 40));
+  const emptyBody = w.document.getElementById('crarBody');
+  ok(!!emptyBody && /All clear/.test(emptyBody.textContent), 'with nothing owed the list shows the empty state');
+  ok(w.document.querySelectorAll('[data-remfor]').length === 0, 'and there are no per-job reminder slots');
+  const mstEmpty = w.document.getElementById('crarMasterState');
+  ok(!!mstEmpty && !/Checking/.test(mstEmpty.textContent),
+     'THE SWITCH STILL PAINTS — it does not sit on "Checking…" — got ' + JSON.stringify(mstEmpty ? mstEmpty.textContent : null));
+  ok(!!mstEmpty && /On — unpaid retail invoices/.test(mstEmpty.textContent), 'and it reads its real On state');
+  const mbtnEmpty = w.document.getElementById('crarMaster');
+  ok(!!mbtnEmpty && !mbtnEmpty.disabled && mbtnEmpty.textContent === 'Turn off',
+     'and the button is live, not the disabled "…" placeholder');
+
   /* the artifact around the module */
-  ok(html.indexOf('v2026-08-30 build 1157') !== -1, 'the app stamp reads build 1157');
+  /* the stamp assertion is a FLOOR, not an equality — this harness now spans
+     1156/1157/1158 and a hardcoded number fails every future build that
+     touches this module. The behavioural assertions above are what make the
+     negative control meaningful, not this one. */
+  const stampNum = Number((html.match(/v2026-\d\d-\d\d build (\d+)/) || [])[1] || 0);
+  ok(stampNum >= 1158, 'the app stamp is at or above build 1158 — got ' + stampNum);
+  ok(/\{ b: 1158, d: '2026-08-30', t: 'The reminders switch works on an empty screen'/.test(html),
+     'the CHANGELOG carries the 1158 entry');
   ok(/\{ b: 1157, d: '2026-08-30', t: 'Reminders master switch'/.test(html), 'the CHANGELOG carries the 1157 entry');
   ok(html.indexOf('#cr-ar-view .crar-master{') !== -1, 'the master-switch CSS shipped');
   ok(/\{ b: 1156, d: '2026-08-30', t: 'Automatic payment reminders'/.test(html), 'the CHANGELOG carries the 1156 entry');
   ok(html.indexOf('#cr-ar-view .crar-remtx') !== -1, 'the reminder-line CSS shipped in cr-ar-styles');
   ok(html.indexOf('#cr-ar-view .crar-remtx.off') !== -1, 'including the muted (amber) state');
 
-  const FLOOR = 26;
+  const FLOOR = 31;
   ok(checks >= FLOOR, 'coverage floor: ' + checks + ' checks ran (>= ' + FLOOR + ')');
   clearTimeout(wd);
   console.log(fails ? ('\nRED — ' + fails + ' of ' + checks + ' failed')
