@@ -7969,3 +7969,10 @@ Walk's rule, inherited from the Visualizer's own REVIEW screen.
 opening the Community hub on tap. The strip's `counts()` resolver is exported as
 **`window.CardinalStands`** — the single source the coming front-door/switcher work must read.
 Admin-only, as the strip has always been.
+
+## Build 1164 — the Front Door panel (`cr-fd`)
+Tap the header portal title (chevron affordance via `body.cr-fd-able`) → `#cr-fd`, the Brief
+as a drop-down: greeting, date, daily quote (reuses `CardinalLanding.today()`), and nine
+portal/tool doors with admin-only state lines from `CardinalStands.counts()`. Exported as
+`window.CardinalFrontDoor` (open/close/isOpen). Class-shown, registered in `hideAllViews()`,
+no body observer, no scroll-lock write. Additive — the Landing still exists.
