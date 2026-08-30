@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1152<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1154<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8264,7 +8264,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <div class="ldbox">
         <div class="ldhead">Location Information <span class="ldreq">* Required</span></div>
         <label style="position:relative;">Street *
-          <input type="text" id="ldStreet" autocomplete="off" placeholder="Start typing &#8212; address auto-completes">
+          <input type="text" id="ldStreet" autocomplete="off" data-cr-gmap="skip" placeholder="Start typing &#8212; address auto-completes">
           <div id="ldSugg" class="ldsugg" style="display:none;"></div>
         </label>
         <label class="ldmore">Suite/Apt/Unit<input type="text" id="ldSuite" autocomplete="off"></label>
@@ -42376,6 +42376,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1154, d:'2026-08-30', t:'Addresses fill street, city, state and zip \u2014 not one long line',
+  s:'When you pick an address from the suggestions, the pieces now go where they belong. Two things were wrong. On the new-lead form the Street box had two different autocompletes attached to it at once, and the wrong one was winning: Google was writing the entire address \u2014 \u201c804 Burleigh Ave, Dayton, OH 45402, USA\u201d \u2014 into the box labelled Street, and then the form appended the city, state and zip a second time when it saved. That is exactly what is sitting in your records: \u201c804 Burleigh Ave, Dayton, OH 45402, USA, Dayton, OH 45414\u201d, with two different zips in one line. Only one autocomplete is attached now, the one that splits a pick properly. Second, everywhere else in the app the address suggestions were throwing away the split Google already hands over and keeping only the single formatted line, which is why nothing but the lead form has ever had a usable city or zip. Both suggestion paths now read the pieces, fill city, state and zip when the form has boxes for them, and keep the parts on hand when it does not. The trailing \u201c, USA\u201d that Google appends is gone \u2014 it was noise on a Dayton roofing job and part of why no two stored addresses looked alike. Contracts still print one address line for now; giving them four real fields is the next step, and it needs the database to have somewhere to put them.' },
 { b:1152, d:'2026-08-30', t:'The + button in the header is readable again',
   s:'The + button you tap to add a project had the faintest text of anything in the header \u2014 dark lettering sitting on the darkest part of its own blue gradient, which measured 3.79 against a readability floor of 4.5. It is the sort of thing you stop noticing on your own screen and that someone in bright sun cannot read at all. The bottom of the gradient is a half-shade lighter now, exactly the same blue, and the letter clears the floor at 4.61. Its border moved with it so the edge still matches. Nothing else on the button changes. This was the last known readability failure in the header \u2014 all forty-three pieces of text across every CRM and both light and dark now clear the floor, with none carried as known debt.' },
 { b:1151, d:'2026-08-30', t:'Clients can pay by bank transfer, not just card',
@@ -45626,6 +45628,75 @@ throw e;
 });
 return mapsPromise;
 }
+/* 1154 — ONE place that turns a Google place into street / city / state / zip,
+   used by BOTH Places paths (legacy widget and the 719 suggestions list) so the
+   two can never drift into two answers for the same pick. The old code took
+   `formatted_address` whole, which is why every stored address carries ", USA"
+   on the Google path and nothing carries a usable split. */
+function crAddrParts(components){
+  var out = { street:'', city:'', state:'', zip:'', zip4:'' };
+  if(!components) return out;
+  var num = '', route = '';
+  for(var i = 0; i < components.length; i++){
+    var c = components[i];
+    /* the legacy widget gives {types, long_name, short_name}; the 2024 Places
+       library gives {types, longText, shortText}. Read both — a build that
+       handles only one silently produces empty parts on the other path. */
+    var types = c.types || [];
+    var long_ = c.long_name  != null ? c.long_name  : c.longText;
+    var short = c.short_name != null ? c.short_name : c.shortText;
+    if(types.indexOf('street_number') >= 0)                num   = long_ || '';
+    else if(types.indexOf('route') >= 0)                   route = long_ || '';
+    else if(types.indexOf('locality') >= 0)                out.city  = long_ || '';
+    else if(!out.city && types.indexOf('sublocality') >= 0)    out.city = long_ || '';
+    else if(!out.city && types.indexOf('postal_town') >= 0)    out.city = long_ || '';
+    else if(types.indexOf('administrative_area_level_1') >= 0) out.state = short || '';
+    else if(types.indexOf('postal_code') >= 0)             out.zip   = long_ || '';
+    else if(types.indexOf('postal_code_suffix') >= 0)      out.zip4  = long_ || '';
+  }
+  out.street = (num + ' ' + route).trim();
+  /* a rural or unnumbered pick has a route and no number — still a street */
+  if(!out.street && route) out.street = route;
+  return out;
+}
+/* Fill the sibling city / state / zip fields when the form HAS them, and put
+   only the street line in the address input. When it has none (every form but
+   the lead intake, today), keep the full string so nothing regresses — but
+   strip the ", USA" Google appends, which is noise on a Dayton roofing job and
+   is why stored addresses are inconsistent. Either way the parsed parts are
+   stashed on the element, so a caller that wants them does not have to re-parse
+   a string that was already structured when we had it. */
+function crAddrApply(input, parts, fallback){
+  var scope = input.closest('form') || input.closest('[data-addr-scope]')
+           || input.parentElement || document;
+  function addrPick(sel){ try{ return scope.querySelector(sel); }catch(e){ return null; } }
+  var cityEl  = addrPick('[autocomplete="address-level2"]');
+  var stateEl = addrPick('[autocomplete="address-level1"], select[id$="State" i]');
+  var zipEl   = addrPick('[autocomplete="postal-code"]');
+  var split   = !!(cityEl || stateEl || zipEl) && !!parts.street;
+  if(parts.street || parts.city || parts.state || parts.zip){
+    input.dataset.addrStreet = parts.street || '';
+    input.dataset.addrCity   = parts.city   || '';
+    input.dataset.addrState  = parts.state  || '';
+    input.dataset.addrZip    = parts.zip + (parts.zip4 ? '-' + parts.zip4 : '');
+  }
+  function addrSet(el, v){
+    if(!el || !v) return;
+    el.value = v;
+    el.dispatchEvent(new Event('input',  { bubbles:true }));
+    el.dispatchEvent(new Event('change', { bubbles:true }));
+  }
+  if(split){
+    addrSet(cityEl,  parts.city);
+    addrSet(stateEl, parts.state);
+    addrSet(zipEl,   parts.zip + (parts.zip4 ? '-' + parts.zip4 : ''));
+    input.value = parts.street;
+    return parts.street;
+  }
+  var whole = String(fallback || '').replace(/,\s*USA\s*$/i, '').trim();
+  input.value = whole;
+  return whole;
+}
 function isAddressInput(el){
 if(!el || el.tagName !== 'INPUT') return false;
 if(el.dataset.crGmap === 'skip') return false;
@@ -45633,7 +45704,16 @@ var t = (el.type || 'text').toLowerCase();
 if(!(t === 'text' || t === 'search' || t === '')) return false;
 if(el.dataset.field === 'address') return true;
 if(el.dataset.crGmap === 'address') return true;
-if(/^(ldStreet|qiAddrInp|qiNpAddr)$/.test(el.id || '')) return true;
+/* 1154: ldStreet is REMOVED from this list. It already has its own Photon
+   autocomplete (cr-lead-script) that splits a pick into ldStreet / ldCity /
+   ldState / ldZip correctly. Attaching Google's here too put the WHOLE
+   formatted address — "804 Burleigh Ave, Dayton, OH 45402, USA" — into the
+   field labelled Street, and ldSave then appended city + state + zip again.
+   That is verbatim what is in the database:
+     804 Burleigh Ave, Dayton, OH 45402, USA, Dayton, OH 45414
+     5735 Webster St,  Dayton, OH 45414, USA, dayton, OH 45432
+   Two autocompletes fighting over one field. The splitting one wins. */
+if(/^(qiAddrInp|qiNpAddr)$/.test(el.id || '')) return true;
 var probe = (el.placeholder || '') + ' ' + (el.name || '') + ' ' + (el.id || '');
 probe = probe.toLowerCase();
 if(/address|location/.test(probe)){
@@ -45730,10 +45810,12 @@ acClose();
 clearTimeout(acTimer);   /* a keystroke's debounce would re-open the list */
 try{
 var place = s.placePrediction.toPlace();
-await place.fetchFields({ fields: ['formattedAddress', 'location', 'displayName'] });
-var addr = place.formattedAddress || place.displayName || input.value;
+/* 1154: addressComponents added — this path was not requesting them at all, so
+   there was nothing to split even in principle. */
+await place.fetchFields({ fields: ['formattedAddress', 'location', 'displayName', 'addressComponents'] });
+var parts = crAddrParts(place.addressComponents);
 acSilent = true;
-input.value = addr;
+var addr = crAddrApply(input, parts, place.formattedAddress || place.displayName || input.value);
 input.dispatchEvent(new Event('input',  { bubbles:true }));
 input.dispatchEvent(new Event('change', { bubbles:true }));
 acSilent = false;
@@ -45788,8 +45870,10 @@ fields: ['formatted_address', 'geometry', 'address_components', 'name']
 });
 ac.addListener('place_changed', function(){
 var place = ac.getPlace();
-var addr = place.formatted_address || place.name || input.value;
-input.value = addr;
+/* 1154: address_components was ALREADY in the fields list above and was being
+   discarded — the split data was fetched on every pick and thrown away. */
+var parts = crAddrParts(place.address_components);
+var addr = crAddrApply(input, parts, place.formatted_address || place.name || input.value);
 input.dispatchEvent(new Event('input',  { bubbles:true }));
 input.dispatchEvent(new Event('change', { bubbles:true }));
 var loc = place.geometry && place.geometry.location;
