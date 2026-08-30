@@ -31194,3 +31194,43 @@ looking and tapping, and already baselined so they cannot grow.
   test is a **real touchscreen tap** that must flip `data-rltheme` and flip it back, plus the
   insurance-only fence · regressions gate_1176 14/14, gate_1178 11/11, gate_1179 25/25 · sentinel
   sweep running.
+
+## Build 1181 — one light/dark button, the same one, in every portal
+- **Theo: "Just make it just like retail and community, [insurance] doesn't have to be the unique
+  one, that's no good."** He is right, and the measurement said so before a line was written: at
+  1180 retail and community both used `#cr-dark-toggle` floating at **(372,832)**, while insurance
+  alone had `.cr-ins-theme` in the banner. One concept, two doors — the 1174 rule, across portals.
+- **The insurance-only button is RETIRED (`HOSTS = []`), and the module stays.** It still owns the
+  insurance theme — `cur()`, `apply()`, the `--ct-*` switch, the storage key — it simply renders no
+  button. Deleting the module would take the theme with it. ⚠️ **Do not "fix" this by putting the
+  button back:** 1176 hid a duplicate, 1180 moved this one down a row, 1181 is the answer that ends
+  the sequence — there was never supposed to be a second control.
+- **The button is shared; the DISPATCH is by portal, because the palettes are genuinely two
+  systems.** Retail and community are the app theme (`data-theme="rb-light"`, `--rbe-*`); insurance
+  is docket/siren (`data-rltheme`, `--ct-*`). Flipping the wrong one would be a button that visibly
+  does nothing — the exact "control that lies" the 694 note already refuses to ship.
+- **Three defects of mine, each caught by a gate rather than by Theo:**
+  - ⚠️ **A guessed storage key.** I invented `cardinal.theme.ins`; the real one is `cardinalRLTheme`,
+    read out of the module. `apply()` painted the new theme and the module's own `cur()` re-read the
+    REAL key on the next paint and put it straight back — **`docket -> docket`, a tap that visibly
+    did nothing.** Read the key; never guess it.
+  - ⚠️ **A stale glyph.** It was repainted only on tap, so walking retail → insurance left retail's
+    icon on a button now reporting insurance's theme (`🌙 -> 🌙`). `apply()` now rides the existing
+    1s `refreshVisibility` sweep — idempotent, and **no fourteenth body observer**.
+  - ⚠️ **A name collision, caught by `gate_dupes`.** My helper took a name `cr-insstage-script`
+    already uses — and reading it showed the two mean different things: that one asks *is this CLAIM
+    an insurance claim*, mine asks *which PORTAL am I in*. Renamed rather than shared: a common
+    helper would have answered the wrong question half the time. ⚠️ And the first rename FAILED its
+    own count because the comment explaining it spelled the retired name, putting the string back —
+    the comment-pollution trap, on the build that was fixing a string count.
+- ⚠️ **`gate_1176` went RED and the TEST was wrong, not the app.** It asserted insurance showed its
+  own moon and that the shared toggle was hidden there — exactly what Theo reversed. Those two
+  assertions are **deleted, not patched**, or the gate would demand the thing the next build
+  removed. **The "exactly ONE light/dark control" check is KEPT**, because that invariant survived
+  the reversal: 1176 satisfied it with the module's button, 1181 with the shared one, and two is a
+  defect either way. Still fails on its own 1175 control at `got 2`.
+- Gates: check_build green (1180→1181, marker + negative control) · **gate_1181 16/16, RED 11/16 on
+  the 1180 control** — including that the button is at the *identical* coordinates in all three
+  portals, which is what "just like retail and community" means as a measurement · regressions
+  gate_1171/1172/1173/1174/1175/1176/1178/1179 all green · gate_types GREEN · gate_dupes GREEN ·
+  audit_scrolllock GREEN · sentinel sweep running.
