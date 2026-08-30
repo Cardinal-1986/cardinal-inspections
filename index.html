@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1163<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1164<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18901,6 +18901,11 @@ function hideAllViews(){
      is permanent damage, per BUG_CLASSES). Clearing it directly rather than through
      the module is safe because openForm() clears `pending` unconditionally on every
      open, which is the only state closeForm() carries. */
+  /* 1164: the Front Door panel is CLASS-shown and carries no state between
+     opens (render() rebuilds on every open) — safe to clear directly, same as
+     cr-show-form below. */
+  var _fd = document.getElementById('cr-fd');
+  if(_fd) _fd.classList.remove('open');
   var _shf = document.getElementById('cr-show-form');
   if(_shf) _shf.classList.remove('open');
   /* 653: cr-itellab is class-shown (.open) and carries no state of its own
@@ -42445,6 +42450,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1164, d: '2026-08-30', t: 'The header title opens the Front Door', s: 'Tap the portal name in the header — anywhere in the app — and the Brief drops down: good morning, the date, the daily quote, and every portal as a door with a live state line (bids past due under Community, carriers to chase under Cardinal Truth, urgent punch-outs under Production, estimates awaiting contract under Retail), plus Sales Floor, the Resource Library, and a Presentation group — Showroom, Exterior Designer, Colors. State lines are admin-only, like the morning strip they read from; everyone gets the doors and the quote. Additive: the Landing screen is untouched for now.' },
   { b: 1163, d: '2026-08-30', t: 'The morning strip counts Community, and shares its resolver', s: 'The “Where things stand” strip (1048) watched retail, insurance and production — and never Community, whose three overdue bids sat invisible from the home screen. It now carries a “bids past due” chip, counted by the Community hub’s own due clocks (bid_due_at, or the check-back date on a parked job; waitlisted jobs have no bid and never count) and opening the hub on tap. The strip’s counts are also exported as CardinalStands, so the front-door work ahead reads these same numbers instead of growing a second set.' },
   { b: 1158, d: '2026-08-30', t: 'The reminders switch works on an empty screen', s: 'Fixes a bug shipped hours earlier in 1157: when nothing was owed, the Invoices & AR screen returned early and the automatic-reminders switch never finished loading \u2014 it sat on \u201cChecking\u2026\u201d with a dead button, which is exactly the state a paid-up book is in. The switch now paints whether or not any invoice is outstanding.' },
   { b: 1157, d: '2026-08-30', t: 'Reminders master switch', s: 'The Invoices & AR screen now carries a company-wide On/Off switch for automatic payment reminders. It ships OFF \u2014 nothing texts a client until an admin turns it on \u2014 and the daily run checks the same switch server-side, so off means off everywhere. Rows show \u201cPaused \u2014 reminders are off company-wide\u201d while it is off.' },
@@ -85650,5 +85656,176 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 })();
 </script>
 
+
+<style id="cr-fd-styles">
+/* ── The Front Door (1164) · v2026-08-30 build 1164 ─────────────────────────
+   The header title opens the Brief: greeting, the daily quote, and every
+   portal as a door with a live state line. Additive — the Landing still
+   exists; a later build reroutes sign-in. Every token carries a literal
+   fallback (448-449); the light twin is scoped under rb-light; no gradient
+   text; nothing under 11px; every control ≥44px. */
+body.cr-fd-able #brandTitle{cursor:pointer}
+body.cr-fd-able #brandTitle h1::after{content:' \25BE';opacity:.72;font-size:.72em}
+#cr-fd{display:none;position:fixed;inset:0;z-index:9540;background:rgba(0,0,0,.55)}
+#cr-fd.open{display:block}
+#cr-fd .fd-sheet{position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:min(480px,100vw);max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:var(--fd-card,#241b17);color:var(--fd-ink,#e8ded4);
+  border-radius:0 0 16px 16px;box-shadow:0 24px 60px rgba(0,0,0,.55);
+  padding:calc(14px + env(safe-area-inset-top,0px)) 16px 18px;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+#cr-fd .fd-mark{font:700 24px/1 Georgia,'Times New Roman',serif;letter-spacing:-.02em}
+#cr-fd .fd-mark em{font-style:normal;color:var(--fd-redt,#e35c63)}
+#cr-fd .fd-greet{margin:9px 0 0;font:400 17px/1.3 Georgia,serif}
+#cr-fd .fd-greet b{font-weight:700;color:var(--fd-redt,#e35c63)}
+#cr-fd .fd-stamp{margin:4px 0 0;font:600 11px/1 ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--fd-mute,#a89a8d)}
+#cr-fd .fd-quote{margin:12px 0 0;padding:8px 0 8px 13px;border-left:2px solid #c8202e}
+#cr-fd .fd-quote p{margin:0;font:400 14px/1.45 Georgia,serif}
+#cr-fd .fd-quote cite{display:block;margin-top:5px;font:600 11px/1 ui-monospace,Menlo,monospace;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--fd-mute,#a89a8d);font-style:normal}
+#cr-fd .fd-eyebrow{display:flex;align-items:center;gap:8px;margin:14px 0 6px;
+  font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--fd-mute,#a89a8d)}
+#cr-fd .fd-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}
+#cr-fd .fdrow{display:flex;align-items:center;gap:11px;width:100%;min-height:48px;
+  padding:9px 12px;margin:0;background:none;border:0;border-top:1px solid var(--fd-line,rgba(255,255,255,.07));
+  cursor:pointer;font:inherit;color:var(--fd-ink,#e8ded4);text-align:left}
+#cr-fd .fdrow:first-of-type{border-top:0}
+#cr-fd .fdrow .tag{flex:0 0 auto;width:4px;align-self:stretch;border-radius:2px;background:var(--acc,#8b8b98)}
+#cr-fd .fdrow .tx{flex:1;min-width:0}
+#cr-fd .fdrow b{display:block;font:700 14.5px/1.2 Georgia,serif}
+#cr-fd .fdrow small{display:block;margin-top:2px;font-size:11.5px;color:var(--fd-mute,#a89a8d)}
+#cr-fd .fdrow small .hot{color:var(--fd-hot,#f07e84);font-weight:700}
+#cr-fd .fdrow small .warn{color:var(--fd-warn,#f0a24a);font-weight:700}
+#cr-fd .fd-grp{padding:10px 2px 3px;font:700 11px/1 ui-monospace,Menlo,monospace;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--fd-mute,#a89a8d)}
+:root[data-theme="rb-light"] #cr-fd .fd-sheet{--fd-card:#ffffff;--fd-ink:#1a1614;
+  --fd-mute:#6b6058;--fd-line:#ded7cf;--fd-redt:#c8202e;--fd-hot:#8f1620;--fd-warn:#8a5500}
+</style>
+<script id="cr-fd-script">
+/* ── The Front Door (1164) ── the header title opens the Brief.
+   Adds NO document.body observer (the census stays at 45) and NO scroll-lock
+   writer (the no-14th rule holds; the sheet scrolls internally). Class-shown,
+   stateless between opens, registered in hideAllViews(). */
+(function(){
+'use strict';
+function q(id){ return document.getElementById(id); }
+function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){
+  return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+function firstName(){
+  try{
+    if(typeof displayNameFor === 'function' && typeof currentUser !== 'undefined' && currentUser){
+      return String(displayNameFor(currentUser)).split(' ')[0];
+    }
+  }catch(_e){}
+  return '';
+}
+function hello(){
+  var h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
+function todayLine(){
+  return new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+}
+function quote(){
+  try{
+    if(window.CardinalLanding && typeof window.CardinalLanding.today === 'function'){
+      return window.CardinalLanding.today();
+    }
+  }catch(_e){}
+  return null;
+}
+function stands(){
+  try{
+    if(typeof isAdminUser === 'function' && !isAdminUser()) return null; /* the strip's own gate — no stats for production */
+    if(window.CardinalStands && typeof window.CardinalStands.counts === 'function'){
+      return window.CardinalStands.counts();
+    }
+  }catch(_e){}
+  return null;
+}
+function line(parts){ return parts.filter(Boolean).join(' · '); }
+function rowHtml(go, acc, title, sub){
+  return '<button type="button" class="fdrow" data-fd="' + go + '" style="--acc:' + acc + '">' +
+    '<span class="tag"></span><span class="tx"><b>' + title + '</b>' +
+    (sub ? '<small>' + sub + '</small>' : '') + '</span></button>';
+}
+function render(){
+  var v = q('cr-fd');
+  var c = stands();
+  var nm = firstName();
+  var qt = quote();
+  var html =
+    '<div class="fd-sheet" role="dialog" aria-label="Cardinal front door">' +
+    '<div class="fd-mark">Cardinal<em>.</em></div>' +
+    '<p class="fd-greet">' + hello() + (nm ? ', <b>' + esc(nm) + '</b>' : '') + '.</p>' +
+    '<p class="fd-stamp">' + todayLine() + '</p>' +
+    (qt ? '<blockquote class="fd-quote"><p>“' + esc(qt.t) + '”</p><cite>' + esc(qt.c) + '</cite></blockquote>' : '') +
+    '<div class="fd-eyebrow"><span>Where things stand</span><span class="ln"></span></div>' +
+    rowHtml('retail', '#5590b5', 'Retail',
+      c ? line([c.appr ? '<span class="warn">' + c.appr + ' awaiting contract</span>' : '']) || 'Homeowner work' : 'Homeowner work') +
+    rowHtml('insurance', '#d9282a', 'Cardinal Truth',
+      c ? line([c.chase ? '<span class="hot">' + c.chase + (c.chase === 1 ? ' carrier to chase' : ' carriers to chase') + '</span>' : '']) || 'Storm and claim work' : 'Storm and claim work') +
+    rowHtml('community', '#3faa6d', 'Community',
+      c ? line([c.bids ? '<span class="hot">' + c.bids + (c.bids === 1 ? ' bid past due' : ' bids past due') + '</span>' : '']) || 'Partners, non-profits, HOAs' : 'Partners, non-profits, HOAs') +
+    rowHtml('production', '#e0762a', 'Production',
+      c && c.punch ? '<span class="hot">' + c.punch + ' urgent punch-outs</span> open' : 'Jobs in flight, punch list') +
+    rowHtml('sales', '#e8544f', 'Sales Floor', 'Objections, talk tracks, the Coach') +
+    rowHtml('library', '#7fa6d6', 'Resource Library', 'Building code, specs, references') +
+    '<div class="fd-grp">Presentation</div>' +
+    rowHtml('showroom', '#aab4c2', 'Showroom', 'Hand the tablet across the table') +
+    rowHtml('designer', '#caa25a', 'Exterior Designer', 'Their house, your materials') +
+    rowHtml('colors', '#EC008C', 'Colors', 'Owens Corning shingle colours') +
+    '</div>';
+  v.innerHTML = html;
+}
+function ensureView(){
+  if(q('cr-fd')) return;
+  var v = document.createElement('div');
+  v.id = 'cr-fd';
+  document.body.appendChild(v);
+}
+function open(){
+  ensureView();
+  render();  /* fresh counts and quote on every open */
+  q('cr-fd').classList.add('open');
+}
+function close(){
+  var v = q('cr-fd');
+  if(v) v.classList.remove('open');
+}
+function isOpen(){
+  var v = q('cr-fd');
+  return !!(v && v.classList.contains('open'));
+}
+function go(d){
+  close();
+  try{ if(window.CardinalPortal && typeof window.CardinalPortal.set === 'function' &&
+        (d === 'retail' || d === 'insurance' || d === 'community')) window.CardinalPortal.set(d, false); }catch(_e){}
+  if(d === 'retail'){ if(typeof hideAllViews === 'function') hideAllViews(); if(typeof showHome === 'function') showHome(); return; }
+  if(d === 'insurance'){ if(typeof showCardinalTruth === 'function') showCardinalTruth(); return; }
+  if(d === 'community'){ if(window.CardinalCommunityHub) window.CardinalCommunityHub.show(); return; }
+  if(d === 'production'){ if(window.CardinalProduction) window.CardinalProduction.open(); return; }
+  if(d === 'sales'){ if(window.CardinalSalesFloor) window.CardinalSalesFloor.open(); return; }
+  if(d === 'library'){ if(typeof showResourceLibrary === 'function') showResourceLibrary(); return; }
+  if(d === 'showroom'){ if(window.CardinalShowcase) window.CardinalShowcase.open({ showroom: (window.innerWidth || 0) >= 820 }); return; }
+  if(d === 'designer'){ try{ window.location.href = (window.CR_VISUALIZER_URL || '/visualizer/'); }catch(_e){} return; }
+  if(d === 'colors'){ if(window.CardinalColors) window.CardinalColors.open(); return; }
+}
+document.addEventListener('click', function(e){
+  var row = e.target.closest && e.target.closest('#cr-fd .fdrow');
+  if(row){ go(row.getAttribute('data-fd')); return; }
+  var pane = e.target.closest && e.target.closest('#cr-fd');
+  if(pane && !e.target.closest('#cr-fd .fd-sheet')){ close(); return; }  /* scrim tap */
+  var bt = e.target.closest && e.target.closest('#brandTitle');
+  if(bt){ if(isOpen()) close(); else open(); }
+});
+try{ document.body.classList.add('cr-fd-able'); }catch(_e){}
+window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
+  open: open, close: close, isOpen: isOpen,
+});
+})();
+</script>
 </body>
 </html>

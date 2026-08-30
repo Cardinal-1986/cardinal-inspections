@@ -30628,3 +30628,36 @@ parked-with-future-check-back excluded, waitlist excluded, non-community exclude
 ⚠ The harness's first run failed CORRECT code: the shipped `ck()` delegates to
 `window.parseCkAll`, which the sandbox did not provide — the mock was wrong, not the app.
 Sentinel run per the 27 Aug rule (wiring build → run, don't block).
+
+## Build 1164 — the header title opens the Front Door
+
+The switcher arc's first visible piece, additive: tap the portal name in the header — any
+screen — and the Brief drops down. `cr-fd-styles` + `cr-fd-script`, appended at the file end.
+
+- **The panel**: Cardinal. mark, greeting (displayNameFor), the date, the daily quote
+  (`CardinalLanding.today()` — the landing's own 31-quote rotation, reused not duplicated),
+  a "Where things stand" rail, and nine door rows: Retail / Cardinal Truth / Community /
+  Production / Sales Floor / Resource Library + a Presentation group (Showroom, Exterior
+  Designer, Colors). Every row routes through the door that already exists — showHome,
+  showCardinalTruth, CommunityHub.show, Production.open, SalesFloor.open,
+  showResourceLibrary, Showcase.open({showroom:≥820}), CR_VISUALIZER_URL, Colors.open —
+  with CardinalPortal.set for the three CRMs.
+- **State lines read `CardinalStands.counts()`** (1163's export) and render for admins only —
+  the morning strip's own gate, so the no-stats-for-Production doctrine holds. Everyone
+  gets the doors and the quote.
+- **The disciplines, by construction**: NO document.body observer (census stays 45), NO
+  scroll-lock write (the sheet scrolls internally), class-shown with a stateless direct
+  clear registered in `hideAllViews()` (the cr-show-form precedent), every token carries a
+  literal fallback, light twin under rb-light, nothing under 11px, every row ≥48px.
+  Menu-class overlay (closes on scrim tap / any action), so no history entry — same as the
+  drawer. The Landing is untouched; rerouting sign-in is a later build.
+
+Gates: check_build green (stamp 1163→1164, marker `cr-fd-script` + negative control).
+**`render_fd1164.mjs`** — a REAL Chromium render: export + affordance, panel geometry, 9
+rows ≥44px, the quote, the mocked community line, all 7 spy-able doors fired in order by
+real taps, scrim close, hideAllViews close, and every sheet ink ≥4.5:1 composited in BOTH
+themes — **GREEN 14/14 on 1164, RED on the 1163 control.** Sentinel: CLEAN, nothing new.
+
+⚠ Observed while gating, NOT this build's doing: the global scroll-lock census is now
+**17 blocks / 41 CODE sites** (CLAUDE.md's row says 13/35 @808) — the growth happened across
+809–1163. 1164 adds zero (asserted). The doc row needs re-measuring, not the app.
