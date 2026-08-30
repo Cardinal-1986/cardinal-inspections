@@ -23,4 +23,10 @@ visualizer/node_modules/
 #     ln -sfn /opt/node22/lib/node_modules .claude/skills/cardinal-build/scripts/node_modules
 # It is a local convenience, never a dependency of the app. Committed once by
 # accident at 1063 and removed in the same session.
+#
+# Two gates need a package that is NOT in the global install, so point the
+# symlink at a directory you own and add them there:
+#     npm install jsdom axe-core
+# jsdom runs the harness_*.js family; axe-core runs gate_a11y.mjs. Both refuse
+# to run with a usage error when their package is missing — never a quiet pass.
 .claude/skills/cardinal-build/scripts/node_modules

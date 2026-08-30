@@ -30907,3 +30907,54 @@ before push.
   208 names at 2+. Both gates GREEN on the 1175 tree. Lesson re-learned: standing gates are
   per-build, not per-mood — running them at merge time on a 12-build arc turns each finding
   into archaeology.
+
+## Instruments — gate_a11y.mjs, the accessibility ratchet (30 Aug)
+- **What it is.** axe-core over the sentinel's own state walk, with a baseline per RULE ID that
+  may fall but never grow. It is the honest version of the `eslint-plugin-jsx-a11y` idea for an
+  app with no JSX and no build step: same rules, applied to the rendered document instead of to
+  source that does not exist here. Third member of the ratcheted standing family beside
+  `gate_types` and `gate_dupes`, and written to their shape deliberately.
+- **What it looks for that nothing here has ever looked for:** a control whose accessible name is
+  empty, a form field with no label, a skipped heading level, a missing landmark. That class was
+  manufactured wholesale by the emoji-to-drawn-icon sweep (686–699) — every emoji that became an
+  inline `<path>` took its control's name with it — and the sentinel structurally cannot see it:
+  INK/COLLAPSE/DEADTAP score what a screen LOOKS like, never what it MEANS.
+- ⚠️ **`color-contrast` is DISABLED in it, and that is a decision.** The sentinel's INK already
+  scores every ink against its COMPOSITED ground, gradient stops included — which axe cannot see,
+  and which this project has been burned by twice. Two instruments answering one question in two
+  numbers is how a real failure gets argued about instead of fixed. INK owns contrast; this gate
+  owns names, roles, labels and structure.
+- **Why a separate gate and not a sentinel check:** axe on a 5 MB document is seconds per render,
+  and the sentinel walks 116. Adding it there would have retired the sentinel by making it too
+  slow to run, which is the failure mode its own header warns about.
+- **It is NOT a claim the app is accessible.** axe settles a mechanical subset — roughly a third
+  of WCAG in practice. Everything it stays quiet about is unmeasured, not proven, and the header
+  says so in those words.
+- **`--selftest` proves both directions**: a deliberately broken document must trip `image-alt`,
+  `button-name` and `label` (it trips 8 rules), a clean one must trip nothing, and the RATCHET
+  itself is exercised through `grownRules()` — the shipped comparison, not a re-implementation.
+  ⚠️ My first version of that last assertion was the vacuous-check trap this project already
+  names: `v > ({...})[k] ?? 0` binds as `(v > undefined) ?? 0`, so it passed by luck on one key
+  and could not have failed. Caught by reading it, not by running it — it was green either way.
+- Coverage floors, because a test that quietly loses checks is the 1174 shape: the walk asserts a
+  minimum of states walked and rules evaluated, a state that throws is a recorded FAILURE rather
+  than a crash (class 37), and `--rebaseline` REFUSES to lock in an incomplete walk.
+- **First real run, and its baseline: 336 violation nodes across 7 rules over 29 states** —
+  `region` x305, `label` x9, `landmark-one-main` x8, `select-name` x6, `heading-order` x5,
+  `scrollable-region-focusable` x2, `empty-table-header` x1. Two independent full runs produced
+  IDENTICAL counts, which is the determinism check the ratchet depends on (a gate whose numbers
+  wander is a gate that cries wolf every build).
+- **What is actually in that debt, read rather than counted.** The 305 `region` nodes are one
+  structural fact repeated — almost nothing in this app sits inside a landmark — and they scale
+  with rendered rows, not with defects. **The 15 that are real: 9 form inputs with no label and
+  6 `<select>`s with no accessible name**, all critical, clustered on the client card (`#acxCat`),
+  Crews (`[data-u=...]`) and the Estimate Library (`[data-f=...]`). Not fixed here: Theo asked
+  for the instrument, not a remediation build, and 15 named controls is a build of its own to
+  put to him with options.
+- Cost: **55 seconds for the full 29-state walk, measured** — cheap enough to run every build,
+  and `--states a,b` narrows it further. ⚠ The first figure recorded here was "~15 minutes",
+  read off two runs that were competing with a sentinel sweep for the CPU. Wall-clock under
+  contention is not a cost measurement; the third run, uncontended, was 55s. Three independent
+  full runs produced identical counts.
+- Sentinel sweep for 1174–1175 (`--since` 1173, both viewports): **CLEAN, 58 renders, nothing
+  new**, 199 carried. Posted to PR #568.
