@@ -3818,11 +3818,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <button type="button" class="cr-dh-switch" data-cri="group" aria-label="Switch portal" title="Switch portal"></button>
           </div>
           <div class="navsec">Daily</div>
+          <!-- 1171: ONE switch row. The 799 "Switch Portal" row (the old
+               picker sheet) sat beside 1165's renamed row — two rows, two
+               mechanisms, one concept. The Front Door is the picker now;
+               data-nav="portal" below routes there too, defensively. -->
           <button class="navopt" data-nav="landing" data-cri="home lg">Switch portal</button>
-          <!-- 799: the portal switcher, formerly its own row under the search
-               bar (#crPortalChip, hidden below). Same sheet, same
-               window.CardinalPortal.pick() - see the click handler at ~18753. -->
-          <button class="navopt" data-nav="portal" data-cri="group lg">Switch Portal</button>
           <button class="navopt" data-nav="clients" data-cri="people lg">Clients</button>
           <button class="navopt" data-nav="leads" data-cri="clipboard lg">Leads &amp; Jobs</button>
           <button class="navopt" data-nav="board" data-cri="calendar lg">Schedule Board</button>
@@ -3924,7 +3924,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1170<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1172<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20471,7 +20471,7 @@ navMenu.addEventListener('click', function(e){
   var nav = opt.getAttribute('data-nav');
   if(nav === 'home'){ showHome(); }
   else if(nav === 'landing'){ goToLanding(); }
-  else if(nav === 'portal'){ if(window.CardinalPortal) window.CardinalPortal.pick(); }
+  else if(nav === 'portal'){ if(window.CardinalFrontDoor) window.CardinalFrontDoor.open(); else if(window.CardinalPortal) window.CardinalPortal.pick(); }
   else if(nav === 'profile'){ openMyProfile(); }
   else if(nav === 'clients'){ openClientsDirectory(); }
   else if(nav === 'crews'){ if(window.CardinalCrews) window.CardinalCrews.open(); }
@@ -38188,7 +38188,11 @@ chip.id = CHIP_ID;
 chip.title = 'Switch CRM';
 chip.onclick = function(e){
 e.stopPropagation();
-if(window.CardinalPortal && typeof window.CardinalPortal.pick === 'function'){
+/* 1171: the Front Door is the one picker; the old sheet stays only as a
+   fallback if the fd module is somehow absent. */
+if(window.CardinalFrontDoor && typeof window.CardinalFrontDoor.open === 'function'){
+window.CardinalFrontDoor.open();
+}else if(window.CardinalPortal && typeof window.CardinalPortal.pick === 'function'){
 window.CardinalPortal.pick();
 }
 };
@@ -42557,6 +42561,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1172, d: '2026-08-30', t: 'The header switcher actually taps', s: 'Theo: \u201cThere\u2019s no actual switcher on the header.\u201d He was right \u2014 the header title has carried pointer-events:none since it was a decorative label, so the \u25be shipped at 1164 sat on an element no finger could ever reach, and every gate had opened the panel through the API instead of tapping it. The title now takes the tap (and its hit area meets the 44px floor), and the new gate drives every door with real taps \u2014 title, drawer row, drawer icon, panel rows, scrim \u2014 never the function.' },
+  { b: 1171, d: '2026-08-30', t: 'One way to switch portals, not four', s: 'The Front Door (1164) had been ADDED beside the old switching doors instead of replacing them \u2014 the drawer carried two \u201cSwitch portal\u201d rows over two different pickers, and the drawer-header icon and the insurance header\u2019s Switch CRM chip still opened the old sheet. One row now, and every switch door \u2014 the drawer row, the drawer-header icon, the insurance chip, the header title \u2014 opens the same Front Door. The old picker sheet keeps working only as a fallback if the panel is ever missing.' },
   { b: 1170, d: '2026-08-30', t: 'Needs sorting \u2014 the unfiled clients get their door back', s: 'Nineteen clients are filed under no CRM, so they sit in no portal\u2019s numbers. The app already had the tool for this \u2014 Assign Portals, a bulk sorter with an Untyped tab that ticks clients into Retail, Cardinal Truth or Community in one go \u2014 but its only door was a card on the Landing screen, which retired at 1165. Two doors reconnect it: a \u201cNeeds sorting\u201d row at the bottom of the Front Door panel (it only appears while the count is above zero), and the line under the home pipeline now opens the sorter instead of a read-only list. The sorter is also registered in the app\u2019s navigation teardown, so opening another screen can no longer strand it.' },
   { b: 1169, d: '2026-08-30', t: 'The Front Door, finished to the approved picture', s: 'Four gaps between the shipped panel and the design you approved, closed: the header reads \u201cCardinal \u25be\u201d while the panel is open (you are choosing a portal, so the header stops claiming one); a check mark sits on the portal you are in; each CRM door carries its book beside its alert \u2014 \u201c2 awaiting contract \u00b7 23 clients\u201d, \u201c16 open\u201d under Community \u2014 counting the clients you can see; and a divider separates the CRMs from the tools, with the red dot back on the \u201cWhere things stand\u201d line.' },
   { b: 1168, d: '2026-08-30', t: 'The money you are owed, and the next 30 days', s: 'Two home cards rebuilt to the approved front-door plan. Accounts Receivable now leads with the real total outstanding and who owes it \u2014 the card used to lead with the chart\u2019s axis ceiling (\u201c$50K\u201d), which reads like a balance and never was one; the aging chart stays underneath. And the Work Schedule circles are replaced by a 30-day calendar \u2014 the \u201c30 Day Outlook\u201d number drawn out day by day, today ringed, booked days marked, the real date range and count said underneath \u2014 tap it for the Schedule Board. Both cards count the portal you are in, like the pipeline since 1167.' },
@@ -83024,7 +83030,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     if(head) head.addEventListener('click', function(e){ e.stopPropagation(); });
     /* the header switch opens the portal picker (data-nav="portal" equivalent). */
     var sw = menu.querySelector('.cr-dh-switch');
-    if(sw) sw.addEventListener('click', function(e){ e.stopPropagation(); menu.style.display = 'none'; try{ if(window.CardinalPortal) window.CardinalPortal.pick(); }catch(_){} });
+    if(sw) sw.addEventListener('click', function(e){ e.stopPropagation(); menu.style.display = 'none'; try{ if(window.CardinalFrontDoor) window.CardinalFrontDoor.open(); else if(window.CardinalPortal) window.CardinalPortal.pick(); }catch(_){} });
     /* swipe-left on the open drawer closes it. */
     var sx=null, sy=null;
     menu.addEventListener('touchstart', function(e){ if(!isDrawer() || !menu.classList.contains('cr-drawer-open')) return; var t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, { passive:true });
@@ -86644,6 +86650,9 @@ window.CardinalAppointment = Object.assign(window.CardinalAppointment || {}, {
    fallback (448-449); the light twin is scoped under rb-light; no gradient
    text; nothing under 11px; every control ≥44px. */
 body.cr-fd-able #brandTitle{cursor:pointer}
+/* --cr-stack:"1172: hd2 made the title decorative (pointer-events:none so taps
+   pass to the bar); with the Front Door on it the title IS the control" */
+body.cr-fd-able #cr-hd2-bar #cr-hd2-mid #brandTitle{pointer-events:auto;padding:6px 10px;height:auto;min-height:44px}
 body.cr-fd-able #brandTitle h1::after{content:' \25BE';opacity:.72;font-size:.72em}
 #cr-fd{display:none;position:fixed;inset:0;z-index:9540;background:rgba(0,0,0,.55)}
 #cr-fd.open{display:block}

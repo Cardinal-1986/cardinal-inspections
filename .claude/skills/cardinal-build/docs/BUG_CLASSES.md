@@ -4274,3 +4274,18 @@ Two of these four were only found that way.
 Record them with their MEASURED value, not as a skip: a row that gets worse still
 fails, and a row that is fixed makes the entry stale and reports itself. Fixing
 them is a separate build — chasing debt a better instrument revealed is scope creep.
+
+## Class 71 — a control with a live handler on an element that cannot receive events
+Build 1164 hung the Front Door on the header title via a delegated document click handler —
+and the title has carried `pointer-events:none` since it was a decorative label (`#cr-hd2-bar
+#cr-hd2-mid #brandTitle`, THREE ids; a first fix at two ids lost silently — selector_audit's
+"find every definition" rule applies to pointer-events too). Every gate opened the panel through
+`CardinalFrontDoor.open()`, proving the function and never the route, so the dead tap shipped and
+Theo's finger was the first honest test. Two standing rules out of it:
+1. **A gate for a tap drives a REAL tap** (`page.touchscreen.tap` at real coordinates), never the
+   exported function. gate_1172 is the shape to copy.
+2. **Before wiring a click to an element, read its computed `pointer-events` and its hit box** —
+   `cursor:pointer` on a `pointer-events:none` element styles a control nobody can press.
+The sentinel's UNWIRED check cannot see this class (the handler exists); a probe check for
+visible elements with a pointer cursor and computed pointer-events:none is the mechanical form,
+not yet written — this paragraph is the explicit note until it is.

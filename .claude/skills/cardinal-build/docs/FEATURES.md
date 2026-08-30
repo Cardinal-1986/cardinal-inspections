@@ -7994,3 +7994,4 @@ vision host.
 | 30-day calendar replaces the Work Schedule circles | `#cal30Grid`/`#cal30Note` in the opscard; `renderOps()` | today ringed, booked days marked, card opens Schedule Board (1168) |
 | Front Door finish: "Cardinal ▾" while open, ✓ on current portal, book totals on doors, dividers | `cr-fd-script`, cr-hd2 title writer | totals from `bookCounts()` — the viewer's own visible clients (1169) |
 | Needs sorting row + pipeline chip → Assign Portals (`cr-bpa-script`, pre-existing) | Front Door bottom row; `#pipeScopeNote` | sorter registered in `hideAllViews()` (1170) |
+| One portal-switch mechanism — drawer row, drawer-header icon, insurance chip, header title all open the Front Door | drawer markup, `data-nav` handler, cr-dh module, ins-header chip | old `CardinalPortal.pick()` sheet is a code-only fallback (1171) |
