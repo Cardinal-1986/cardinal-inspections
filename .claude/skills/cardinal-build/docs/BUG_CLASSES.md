@@ -4294,3 +4294,28 @@ drowns in legitimate overlays during a state walk — and stays with the per-bui
 (gate_1172's shape). Two sibling checks landed with it: **DUPE** (two controls, one name, one
 menu — the 1171 drawer) and **BOOK** (the pipeline must equal the book of the portal the body
 claims — the 1173 wandering numbers), each with firing and quiet fixtures in the selftest.
+
+## Class 72 — a control whose accessible name went out with its emoji
+The emoji-to-drawn-icon sweep (681, 686–699) replaced emoji labels with inline `<svg><path>`.
+An emoji is TEXT and carries the control's name; a `<path>` is not and does not. So every
+control that became icon-only lost its accessible name in the same edit, silently, and nothing
+in the gate ladder looked: `check_build` parses, the sentinel scores what a screen LOOKS like,
+and a nameless button looks perfect. The same shape covers a `<select>` with no label and an
+input whose only label is placeholder text.
+
+**Why it went unmeasured for 150 builds:** every instrument here answers "is this visible and
+does it work with a finger". None answered "does this have a name". A class no instrument is
+pointed at is not a class anyone finds by reading.
+
+✅ The mechanical form is WRITTEN: **`gate_a11y.mjs`** (30 Aug), axe-core over the sentinel's
+own state walk, ratcheted per rule id — `button-name`, `select-name`, `label`, `image-alt`,
+`aria-*`. Baselined at 336 nodes / 7 rules / 29 states so the existing debt blocks nothing and a
+NEW nameless control is red the build it lands. Selftested in both directions against a broken
+and a clean document.
+⚠ **The baseline holds 15 REAL instances of this class right now** — 9 unlabelled inputs and 6
+unnamed `<select>`s on the client card, Crews and the Estimate Library. They are recorded, not
+fixed: chasing debt a new instrument revealed is the scope creep the corollary above names, and
+15 named controls is its own build to put to Theo with options.
+⚠ **Do not read the whole 336 as this class.** 305 of them are `region` — one structural fact
+(almost nothing sits in a landmark) repeated per rendered row, and it scales with the SEED, not
+with defects. Per-control rules count defects; structural rules count content. See the header.

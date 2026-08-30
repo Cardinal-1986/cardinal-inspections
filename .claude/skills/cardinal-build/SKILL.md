@@ -176,6 +176,32 @@ explicit written note saying no mechanical check is possible and why. Prose has
 lost to this project 45 times. A class with neither a check nor that note is an
 open wound.
 
+### Gate 0b — the three RATCHETED standing gates. Run them EVERY build.
+
+```bash
+python3 <skill>/scripts/gate_types.py            # tsc TS2304 — the ReferenceError class
+python3 <skill>/scripts/gate_dupes.py            # a name gaining a definition
+node     <skill>/scripts/gate_a11y.mjs           # axe-core — names, roles, labels, structure
+```
+
+Each keeps a baseline (per TS code / per name / per axe rule) that **may fall but
+never grow**, so the existing debt blocks nothing and a NEW defect is red the build
+it lands. `--rebaseline` accepts current counts; do it **with a written reason**.
+
+- **`gate_types.py` IS this repo's cross-block `no-undef`** — it concatenates every
+  inline block (they share one runtime scope) and generates the globals list from the
+  file's own `window.X=` assignments. **Do not build a second globals lint beside it.**
+- **`gate_a11y.mjs` needs `npm install axe-core`** in the scripts `node_modules`
+  symlink, and it disables `color-contrast` on purpose — the sentinel's `INK` owns
+  contrast, and two instruments answering one question in two numbers is how a real
+  failure gets argued about instead of fixed.
+- Cost, measured rather than guessed: `gate_a11y` is **55s** for all 29 states (a figure first
+  recorded as "~15 min" off runs contending with a sentinel sweep — wall-clock under load is not
+  a cost). `gate_dupes` is seconds; `gate_types` is the slow one, since it runs tsc over 5 MB.
+- ⚠ **Run them every build, not at merge.** Run once on a twelve-build arc (30 Aug),
+  every finding becomes archaeology: 16 type errors and 15 duplicate names all had to
+  be traced back through builds nobody remembered, and all 31 turned out to be noise.
+
 ### Then the mechanical gates:
 
 ```bash
