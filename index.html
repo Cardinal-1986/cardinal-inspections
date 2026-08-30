@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1165<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1166<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18924,6 +18924,14 @@ function hideAllViews(){
   if(_occ) _occ.style.display = 'none';
   var _fin = document.getElementById('cr-fin');
   if(_fin) _fin.style.display = 'none';   /* 1153 finance rates */
+  /* 1160: Why Cardinal is a fixed inset:0 view, DISPLAY-shown like
+     cr-occ and cr-fin, so display:none is the correct lever. */
+  var _why = document.getElementById('cr-why');
+  if(_why) _why.style.display = 'none';
+  /* 1161: The Appointment's own pane. Its RAIL is chrome (like #pwaNav)
+     and is deliberately NOT here - the conductor manages it. */
+  var _apt = document.getElementById('cr-appt');
+  if(_apt) _apt.style.display = 'none';
   /* 895: the Owner Console is a fixed inset:0 view, DISPLAY-shown like cr-occ,
      so display:none is the correct lever. */
   var _own = document.getElementById('cr-owner');
@@ -42501,10 +42509,14 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1166, d: '2026-08-30', t: 'The presentation suite and the front door, together', s: 'A bookkeeping build: the in-home presentation work (1159\u20131162) and the main line\u2019s builds (1163 the morning strip, 1164 the Front Door, 1165 the Landing retired) were made in parallel, and this build is the lines merged into one app \u2014 nothing new, everything from all of them.' },
   { b: 1165, d: '2026-08-30', t: 'Signing in opens the app, not a front door', s: 'The Landing screen is retired. Signing in now lands you straight on your CRM home — no screen in between — and the portal picker lives where you already are: tap the portal name in the header and the Front Door drops down. Everything that used to say “take me to the landing” now means that: the logo, the drawer (renamed “Switch portal”), the dashboard and client-card chips, the Cardinal Truth banner, and backing out of the Resource Library. Curtis and Scottie still land on the Production hub and back out to it, never to the retail home. The showroom tablet is untouched — it still boots straight into the Vision hub, which is the one thing the Landing pane still exists for.' },
   { b: 1164, d: '2026-08-30', t: 'The header title opens the Front Door', s: 'Tap the portal name in the header — anywhere in the app — and the Brief drops down: good morning, the date, the daily quote, and every portal as a door with a live state line (bids past due under Community, carriers to chase under Cardinal Truth, urgent punch-outs under Production, estimates awaiting contract under Retail), plus Sales Floor, the Resource Library, and a Presentation group — Showroom, Exterior Designer, Colors. State lines are admin-only, like the morning strip they read from; everyone gets the doors and the quote. Additive: the Landing screen is untouched for now.' },
   { b: 1163, d: '2026-08-30', t: 'The morning strip counts Community, and shares its resolver', s: 'The “Where things stand” strip (1048) watched retail, insurance and production — and never Community, whose three overdue bids sat invisible from the home screen. It now carries a “bids past due” chip, counted by the Community hub’s own due clocks (bid_due_at, or the check-back date on a parked job; waitlisted jobs have no bid and never count) and opening the hub on tap. The strip’s counts are also exported as CardinalStands, so the front-door work ahead reads these same numbers instead of growing a second set.' },
-  { b: 1158, d: '2026-08-30', t: 'The reminders switch works on an empty screen', s: 'Fixes a bug shipped hours earlier in 1157: when nothing was owed, the Invoices & AR screen returned early and the automatic-reminders switch never finished loading \u2014 it sat on \u201cChecking\u2026\u201d with a dead button, which is exactly the state a paid-up book is in. The switch now paints whether or not any invoice is outstanding.' },
+  { b: 1162, d: '2026-08-30', t: 'The Appointment closes \u2014 options and signature on the tablet', s: 'The visit now ends where it happens. Two steps join the running order: Options shows the job\u2019s published Good / Better / Best sheet full-screen, and Sign lists the job\u2019s paperwork \u2014 pick a document and it opens with its own Accept & Sign, the same secure page a client signs on their own phone, so the homeowner signs with a finger right on the tablet and the rep is notified the moment it lands. The signature can only land on the document that is open on the screen. Nothing signs that never could: documents without a signature block say so and open for review. Prepare the estimate, contract and options sheet at the office; the appointment finds them by itself.' },
+  { b: 1161, d: '2026-08-30', t: 'The Appointment \u2014 the visit, in order', s: 'One tile on the Vision hub now runs the whole in-home visit as a sequence: pick the job, then their roof (The Walk, hands-off showroom mode), what good work looks like beside bad (Hall of Fame), why Cardinal, and their own house wearing your materials \u2014 approved visualizations only, with the shingle colour wall one tap away. A small bar at the bottom of the screen carries the steps: next, back, jump, end. Nothing here is new content \u2014 it is the screens the app already had, played in the right order so a rep never hunts for the next door in front of a homeowner. Options and signing join the sequence next.' },
+  { b: 1160, d: '2026-08-30', t: 'Why Cardinal \u2014 a screen the client can read', s: 'Every client-facing screen we had was about their roof. This one is about Cardinal: locally owned in Dayton, licensed and insured, we pull the permit, magnetic sweep every job; the Owens Corning Preferred Contractor status and what it lets us register; the full warranty ladder rather than one number \u2014 Standard, System Protection and Preferred Protection side by side, with the honest note that the workmanship years are the ones that matter; what actually goes on the roof (full tear-off, sheathing priced per sheet up front, ice and water, synthetic, new boots, ventilation); and their three-day right to cancel under ORC 1345.23, stated before they ask. It is on the Vision hub beside Presentations and Colors. The facts are the Sales Floor Proof pane\u2019s, refaced from the rep\u2019s voice into the homeowner\u2019s \u2014 nothing new was invented.' },
+  { b: 1159, d: '2026-08-30', t: 'The presentation doors a rep actually uses', s: 'Three doors that existed but could not be reached from where you stand at a kitchen table. The Pop-Up Roof now has a tile on the home screen and on the Vision hub \u2014 until now the book was reachable only from the Sales Floor or by typing the presentation address, so on a showroom tablet it could not be opened at all. Its tile had been fully styled since build 761 and the markup was never written. And the Designer tile, opened from the Vision hub, now lands on Present \u2014 approved renders, one tap \u2014 instead of Prep, the office workbench for queueing renders. Opened from the ordinary home screen it still lands on Prep, which is the right screen there.' },  { b: 1158, d: '2026-08-30', t: 'The reminders switch works on an empty screen', s: 'Fixes a bug shipped hours earlier in 1157: when nothing was owed, the Invoices & AR screen returned early and the automatic-reminders switch never finished loading \u2014 it sat on \u201cChecking\u2026\u201d with a dead button, which is exactly the state a paid-up book is in. The switch now paints whether or not any invoice is outstanding.' },
   { b: 1157, d: '2026-08-30', t: 'Reminders master switch', s: 'The Invoices & AR screen now carries a company-wide On/Off switch for automatic payment reminders. It ships OFF \u2014 nothing texts a client until an admin turns it on \u2014 and the daily run checks the same switch server-side, so off means off everywhere. Rows show \u201cPaused \u2014 reminders are off company-wide\u201d while it is off.' },
   { b: 1156, d: '2026-08-30', t: 'Automatic payment reminders', s: 'Retail clients with a sent, unpaid invoice now get a friendly text from the company number \u2014 3 days after the invoice goes out, then weekly, at most 4 \u2014 with their balance and the secure pay link. It stops the moment any payment is recorded or is processing, and every job has a Mute switch on the Invoices & AR screen. Insurance and Community jobs are never texted.' },
 { b:1155, d:'2026-08-30', t:'Contracts print the address in four fields',
@@ -51546,6 +51558,15 @@ return (
 '<span class="sb">Showroom \u2014 Showcase, Workmanship &amp; The Walk</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
+/* 1161: The Appointment - the running order over everything below.
+   Theo's pick (b): the whole visit stays on this tablet. */
+'<button type="button" class="cr-vh-tile" data-go="appt">' +
+'<span class="ic">\u25B8</span>' +
+'<span class="tx">' +
+'<span class="tt">The Appointment<span class="cr-vh-badge">NEW</span></span>' +
+'<span class="sb">Run the visit in order \u2014 their roof, our work, why Cardinal, their house</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
 (isAdmin ?
 ('<div class="cr-vh-flow"><span>Studio</span><span class="ar">\u2192</span>' +
 '<span>promote</span><span class="ar">\u2192</span><span>Showroom</span></div>' +
@@ -51569,6 +51590,26 @@ return (
 '<span class="tx">' +
 '<span class="tt">Colors</span>' +
 '<span class="sb">Owens Corning shingle colours &amp; our roofs</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
+/* 1159: the book was reachable only from the Sales Floor (a CRM screen
+   this host does not draw) and from presentation.cardinalroofer.com.
+   On the showroom tablet it was unreachable. Same plain <a> as Studio. */
+'<a class="cr-vh-tile" href="/popup.html" target="_blank" rel="noopener">' +
+'<span class="ic">\u25A4</span>' +
+'<span class="tx">' +
+'<span class="tt">The Pop-Up Roof</span>' +
+'<span class="sb">How a roof gets built \u2014 a book they can hold</span>' +
+'</span><span class="go">\u2192</span>' +
+'</a>' +
+/* 1160: Why Cardinal. Every other tile here is about THEIR roof;
+   this is the one that is about Cardinal. Content is PANES.proof
+   (cr-sf-script) refaced from the rep's voice into the homeowner's. */
+'<button type="button" class="cr-vh-tile" data-go="why">' +
+'<span class="ic">\u2713</span>' +
+'<span class="tx">' +
+'<span class="tt">Why Cardinal</span>' +
+'<span class="sb">Licence, warranty, and what actually goes on the roof</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
 '</div></div>'
@@ -51697,6 +51738,18 @@ lv.innerHTML =
 '<span class="sb">Photograph the house, then change the roof, siding, trim, gutters or windows to your materials \u2014 in front of the client.</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
+/* 1159: The Pop-Up Roof. Styled since 761 as .cr-lr-book and never
+   emitted - the CSS, its hover, its light twin and its own comment all
+   shipped; the markup did not. A plain <a> (the Studio tile's pattern),
+   and deliberately NOT width-gated: the book is phone-shaped, so it is
+   offered everywhere the >=820px Showroom row is hidden. */
+'<a class="cr-lr-book" href="/popup.html" target="_blank" rel="noopener">' +
+'<span class="ic">\u25A4</span>' +
+'<span class="tx">' +
+'<span class="tt">The Pop-Up Roof</span>' +
+'<span class="sb">A tap-through book of how a roof gets built \u2014 hand it over while you measure.</span>' +
+'</span><span class="go">\u2192</span>' +
+'</a>' +
 /* what is left is an admin shortcut, not a destination - and it renders
    for nobody else, so the row has to be able to vanish. */
 '<div class="cr-lr-minor">' +
@@ -51769,7 +51822,26 @@ if(d === 'designer'){
    separate anything. One constant, so moving it to its own subdomain is
    a one-line edit here and nothing else changes. */
 leave();
-try{ window.location.href = (window.CR_VISUALIZER_URL || '/visualizer/'); }catch(_e){}
+/* 1159: which door you came through decides which screen you land on.
+   The ordinary landing's Designer tile is the office workbench - queue
+   renders, the Spark draws them. The Vision hub's tile is the same tool
+   in front of a homeowner, where Prep is the wrong screen: approved
+   renders only, one tap. isVisionHost() already decides exactly this. */
+try{
+var _vz = (window.CR_VISUALIZER_URL || '/visualizer/');
+if(isVisionHost()) _vz += (_vz.indexOf('?') === -1 ? '?' : '&') + 'present=1';
+window.location.href = _vz;
+}catch(_e){}
+return;
+}
+if(d === 'appt'){
+leave();
+if(window.CardinalAppointment) window.CardinalAppointment.open();
+return;
+}
+if(d === 'why'){
+leave();
+if(window.CardinalWhy) window.CardinalWhy.open();
 return;
 }
 if(d === 'colors'){
@@ -75151,11 +75223,15 @@ function open(opts){
    No history case and no hideAllViews() entry: open() already registers
    'showcase' with navSetView and calls hideAllViews itself.  This is a
    different TAB of a view that is already wired, not a fifteenth view. */
-async function openForProject(pr){
+async function openForProject(pr, opts){
   if(!pr || !pr.id) return;
   tab = 'walk';
   curWalk = null; shots = []; review = null; pendingProject = null;
-  open();
+  /* 1161: The Appointment drives this door in showroom mode. open()'s
+     showroom path deliberately resets tab to 'showcase' (a handed-over
+     tablet must start clean), so the walk tab is re-asserted after. */
+  open(opts);
+  if(opts && opts.showroom) tab = 'walk';
   if(!walksLoaded){
     try{ await loadWalks(); }catch(_){ walksLoaded = true; }
   }
@@ -85711,6 +85787,796 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 })();
 </script>
 
+<style id="cr-why-styles">
+/* 1160 — Why Cardinal. The first client-facing surface on this project that
+   is about CARDINAL rather than about their roof.
+
+   The content is NOT new. It is PANES.proof in cr-sf-script, refaced: that
+   pane is written for the rep ("the facts you should be able to give without
+   looking anything up", "ask a competitor whether they do"), and this is the
+   same facts in the homeowner's second person with the coaching stripped.
+   The warranty ladder is the ROOFING WARRANTY table's own three rows, not a
+   flattened single number — the proof pane's "25 years" is System Protection,
+   one of three, and quoting it flat understates what Preferred can register.
+   Platinum Protection is deliberately absent: OC_BRAND_RULES says it is
+   Platinum Preferred only and Cardinal is Preferred.
+
+   NO Owens Corning mark is on this screen, deliberately. The status is stated
+   as TEXT, which index.html already does at three sites that agree. The
+   Preferred Contractor lockup needs official artwork (the PDF is 100-150ppi
+   and cropping it is forbidden outright) AND OC Local Marketing approval at
+   LMARoofing@owenscorning.com. A session can build this; a session cannot
+   approve it.
+
+   Blackout, single-theme, the cr-show / cr-occ / cr-fin pattern: every colour
+   is a literal, so it is immune to the 448-449 token-strip class by
+   construction and can never borrow a light ground. Inks are computed, not
+   picked: on #050607 the body ink #b9b3ad is 9.77:1 and the red accent
+   #f08a90 is 8.44:1. Cardinal red #c8202e is 3.57:1 here and is therefore
+   NEVER text on this screen — grounds and rules only. */
+#cr-why{position:fixed;inset:0;z-index:4200;display:none;background:#050607;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-why .why-wrap{max-width:760px;margin:0 auto;padding:0 22px 64px;box-sizing:border-box;}
+#cr-why .why-top{position:sticky;top:0;z-index:2;background:#050607;
+  display:flex;align-items:center;gap:12px;padding:14px 0 12px;}
+#cr-why .why-x{flex:0 0 auto;width:44px;height:44px;border-radius:12px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+  color:#f2f4f2;font-size:19px;line-height:1;cursor:pointer;font-family:inherit;}
+#cr-why .why-x:hover{background:rgba(255,255,255,.13);}
+#cr-why .why-eyebrow{font:700 11px/1 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.18em;text-transform:uppercase;color:#8f9296;}
+#cr-why .why-h{margin:18px 0 6px;font:700 clamp(30px,5.4vw,44px)/1.06 Georgia,'Times New Roman',serif;
+  color:#f2f4f2;letter-spacing:-.01em;}
+#cr-why .why-lede{margin:0 0 6px;font-size:16.5px;line-height:1.5;color:#b9b3ad;}
+#cr-why .why-rule{height:2px;background:#c8202e;width:64px;margin:20px 0 4px;border-radius:2px;}
+#cr-why .why-sec{margin:34px 0 0;padding:22px 0 0;border-top:1px solid rgba(255,255,255,.10);}
+#cr-why .why-sec:first-of-type{border-top:0;}
+#cr-why .why-k{margin:0 0 12px;font:700 12px/1 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.16em;text-transform:uppercase;color:#f08a90;}
+#cr-why .why-l{list-style:none;margin:0;padding:0;}
+#cr-why .why-l li{position:relative;padding:0 0 0 26px;margin:0 0 13px;
+  font-size:16.5px;line-height:1.5;color:#d8d2cb;}
+#cr-why .why-l li::before{content:'';position:absolute;left:4px;top:9px;
+  width:7px;height:7px;border-radius:50%;background:#c8202e;}
+#cr-why .why-l li b{color:#f2f4f2;font-weight:700;}
+#cr-why .why-p{margin:0 0 13px;font-size:16.5px;line-height:1.55;color:#d8d2cb;}
+#cr-why .why-p b{color:#f2f4f2;}
+#cr-why .why-note{margin:14px 0 0;padding:14px 16px;border-radius:12px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
+  font-size:15.5px;line-height:1.5;color:#b9b3ad;}
+#cr-why .why-note b{color:#f2f4f2;}
+/* the warranty ladder — a table on a phone is a scroller, not a squeeze */
+#cr-why .why-wtab{width:100%;border-collapse:collapse;margin:2px 0 0;}
+#cr-why .why-wtab th,#cr-why .why-wtab td{text-align:left;padding:11px 12px;
+  font-size:15px;line-height:1.35;border-bottom:1px solid rgba(255,255,255,.09);}
+#cr-why .why-wtab th{font:700 11px/1.2 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.13em;text-transform:uppercase;color:#8f9296;white-space:nowrap;}
+#cr-why .why-wtab td{color:#d8d2cb;}
+#cr-why .why-wtab td.tier{color:#f2f4f2;font-weight:700;white-space:nowrap;}
+#cr-why .why-wscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+#cr-why .why-foot{margin:38px 0 0;padding:20px 0 0;border-top:1px solid rgba(255,255,255,.10);
+  font-size:14.5px;line-height:1.5;color:#8f9296;}
+@media (max-width:520px){
+  #cr-why .why-wrap{padding:0 16px 56px;}
+  #cr-why .why-l li,#cr-why .why-p{font-size:16px;}
+}
+</style>
+<script id="cr-why-script">
+(function(){
+'use strict';
+/* 1160 — Why Cardinal · v2026-08-30 build 1160
+   Reached from the Vision hub only (data-go="why"), like Colors.
+   Copies cr-occ's lever exactly: a fixed inset:0 view shown by DISPLAY, so
+   hideAllViews() clears it with style.display='none' and close() puts the
+   home screen back. It writes NO scroll lock — the count stays at 13 — and
+   scrolls inside itself instead. window.navPush is called guarded, matching
+   cr-occ; it does not exist today, so both calls are inert no-ops kept for
+   the day it does. */
+var VIEW = null;
+
+function esc(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+/* The three rows are the ROOFING WARRANTY table's own, verbatim. Platinum
+   Protection is absent on purpose — Platinum Preferred only. */
+var WARRANTY = [
+  { tier:'Standard',           mfr:'25-year manufacturer', work:'5-year workmanship',  xfer:'' },
+  { tier:'System Protection',  mfr:'25-year manufacturer', work:'10-year workmanship', xfer:'Transferable' },
+  { tier:'Preferred Protection', mfr:'50-year manufacturer', work:'10-year workmanship', xfer:'Transferable' }
+];
+
+function warrantyRows(){
+  return WARRANTY.map(function(w){
+    return '<tr>' +
+      '<td class="tier">' + esc(w.tier) + '</td>' +
+      '<td>' + esc(w.mfr) + '</td>' +
+      '<td>' + esc(w.work) + '</td>' +
+      '<td>' + esc(w.xfer) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function bodyHtml(){
+  return '' +
+  '<div class="why-sec">' +
+    '<div class="why-k">The company</div>' +
+    '<ul class="why-l">' +
+      '<li><b>Dayton, Ohio.</b> Locally owned and operated.</li>' +
+      '<li><b>Licensed and insured.</b> Ask us for the certificate and we will hand it to you.</li>' +
+      '<li><b>We pull the permit</b> on your job.</li>' +
+      '<li><b>A magnetic sweep</b> of your drive and lawn before we pull out. Every job, every time.</li>' +
+    '</ul>' +
+  '</div>' +
+
+  '<div class="why-sec">' +
+    '<div class="why-k">Owens Corning</div>' +
+    '<p class="why-p">Cardinal is an <b>Owens Corning™ Roofing Preferred Contractor</b>.</p>' +
+    '<p class="why-p">That is what lets us register the manufacturer warranties below in your name. ' +
+      'A roofer without it cannot.</p>' +
+  '</div>' +
+
+  '<div class="why-sec">' +
+    '<div class="why-k">The warranty</div>' +
+    '<div class="why-wscroll"><table class="why-wtab">' +
+      '<thead><tr><th>Coverage</th><th>On the shingle</th><th>On our work</th><th></th></tr></thead>' +
+      '<tbody>' + warrantyRows() + '</tbody>' +
+    '</table></div>' +
+    '<div class="why-note">Both of those are promises. <b>The second one is the one that matters</b> — ' +
+      'a manufacturer defect is rare, and bad installation is not.</div>' +
+  '</div>' +
+
+  '<div class="why-sec">' +
+    '<div class="why-k">What goes on your roof</div>' +
+    '<ul class="why-l">' +
+      '<li><b>Full tear-off to the deck.</b> No layovers.</li>' +
+      '<li><b>Rotten sheathing replaced</b> — priced per sheet up front, so there is no surprise.</li>' +
+      '<li><b>Ice and water shield</b> in every valley and to the wall line.</li>' +
+      '<li><b>Synthetic underlayment</b>, not felt.</li>' +
+      '<li><b>New pipe boots.</b> Reusing the old ones is where leaks come back.</li>' +
+      '<li><b>Proper intake and exhaust ventilation</b> — this is what most bids leave out.</li>' +
+    '</ul>' +
+  '</div>' +
+
+  '<div class="why-sec">' +
+    '<div class="why-k">Your right to cancel</div>' +
+    '<p class="why-p">Ohio gives you <b>three business days</b> to cancel a contract you sign at your home ' +
+      '— ORC §1345.23.</p>' +
+    '<p class="why-p">Two copies of that notice are in every contract we hand you.</p>' +
+  '</div>' +
+
+  '<div class="why-foot">Cardinal Roofing &amp; Renovations, LLC · Dayton, Ohio</div>';
+}
+
+function ensureView(){
+  if(VIEW && VIEW.isConnected) return VIEW;
+  VIEW = document.getElementById('cr-why');
+  if(!VIEW){
+    VIEW = document.createElement('div');
+    VIEW.id = 'cr-why';
+    document.body.appendChild(VIEW);
+  }
+  VIEW.innerHTML =
+    '<div class="why-wrap">' +
+      '<div class="why-top">' +
+        '<button type="button" class="why-x" data-why="close" aria-label="Close">✕</button>' +
+        '<span class="why-eyebrow">Cardinal Roofing &amp; Renovations</span>' +
+      '</div>' +
+      '<h1 class="why-h">Why Cardinal</h1>' +
+      '<p class="why-lede">What backs up the roof, and what you are entitled to.</p>' +
+      '<div class="why-rule"></div>' +
+      bodyHtml() +
+    '</div>';
+  var x = VIEW.querySelector('[data-why="close"]');
+  if(x) x.onclick = function(){ close(); };
+  return VIEW;
+}
+
+function open(){
+  ensureView();
+  try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
+  VIEW.style.display = 'block';
+  VIEW.scrollTop = 0;
+  try{ if(window.navPush) window.navPush('cr-why'); }catch(_){}
+}
+
+function close(){
+  if(VIEW) VIEW.style.display = 'none';
+  try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
+}
+
+window.CardinalWhy = Object.assign(window.CardinalWhy || {}, {
+  open  : open,
+  close : close
+});
+})();
+</script>
+
+<style id="cr-appt-styles">
+/* 1161 — The Appointment. A conductor, not a surface: it owns a running
+   order over screens that already exist and adds no new content. Theo's
+   pick (b): the whole visit stays on the tablet — 1162 adds the Options
+   and Sign steps through the existing /api/share page, which is already
+   client-facing and finger-signable.
+
+   Blackout, single-theme, all literals (the cr-why/cr-show/cr-occ pattern —
+   448-449 immune by construction). Inks are the computed cr-why set: on
+   #050607 body #b9b3ad = 9.77:1, accent #f08a90 = 8.44:1; #c8202e is
+   3.57:1 here and is GROUNDS ONLY, never text. White on #c8202e is the
+   app-wide semantic white-on-coloured-ground, deliberately kept.
+
+   Two layers. The PANE (#cr-appt, z 9550) hosts the conductor's own
+   steps — the job picker and the renders wall — and is registered in
+   hideAllViews() with the DISPLAY lever. The RAIL (#cr-appt-rail, z 9600)
+   is chrome, like #pwaNav: NOT in hideAllViews(), shown only while an
+   appointment is running, and it must sit above #cr-show's 9500 or Next
+   dies inside the showroom. */
+#cr-appt{position:fixed;inset:0;z-index:9550;display:none;background:#050607;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-appt .ap-wrap{max-width:900px;margin:0 auto;padding:20px 22px 120px;box-sizing:border-box;}
+#cr-appt .ap-eyebrow{font:700 11px/1 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.18em;text-transform:uppercase;color:#8f9296;margin:8px 0 0;}
+#cr-appt .ap-h{margin:10px 0 6px;font:700 clamp(26px,4.6vw,38px)/1.08 Georgia,'Times New Roman',serif;
+  color:#f2f4f2;letter-spacing:-.01em;}
+#cr-appt .ap-sub{margin:0 0 18px;font-size:15.5px;line-height:1.5;color:#b9b3ad;}
+#cr-appt .ap-search{width:100%;box-sizing:border-box;padding:13px 15px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#f2f4f2;
+  font:600 16px 'Segoe UI',Arial,sans-serif;outline:none;}
+#cr-appt .ap-search::placeholder{color:#8f9296;}
+#cr-appt .ap-list{margin:14px 0 0;display:flex;flex-direction:column;gap:9px;}
+#cr-appt .ap-job{display:flex;align-items:center;gap:13px;width:100%;box-sizing:border-box;
+  text-align:left;padding:15px 16px;border-radius:13px;cursor:pointer;font-family:inherit;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);min-height:56px;}
+#cr-appt .ap-job:hover{border-color:rgba(242,244,242,.34);}
+#cr-appt .ap-job .nm{flex:1;min-width:0;font:700 16.5px 'Segoe UI',Arial,sans-serif;
+  color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt .ap-job .st{flex:0 0 auto;font:700 11px/1 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.12em;text-transform:uppercase;color:#8f9296;}
+#cr-appt .ap-job .go{flex:0 0 auto;color:#8f9296;font-size:15px;}
+#cr-appt .ap-empty{margin:26px 0 0;padding:18px;border-radius:13px;text-align:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
+  font-size:15.5px;line-height:1.55;color:#b9b3ad;}
+#cr-appt .ap-empty b{color:#f2f4f2;}
+/* the renders wall (step: house) */
+#cr-appt .ap-grid{margin:16px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+#cr-appt .ap-card{position:relative;border-radius:13px;overflow:hidden;cursor:pointer;
+  border:1px solid rgba(255,255,255,.14);background:#0e1013;padding:0;font-family:inherit;}
+#cr-appt .ap-card img{display:block;width:100%;height:190px;object-fit:cover;background:#0e1013;}
+#cr-appt .ap-card .tt{display:block;padding:10px 12px;font:600 13.5px 'Segoe UI',Arial,sans-serif;
+  color:#d8d2cb;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt .ap-actions{margin:20px 0 0;display:flex;gap:11px;flex-wrap:wrap;}
+#cr-appt .ap-btn{display:inline-flex;align-items:center;gap:9px;padding:13px 20px;min-height:48px;
+  border-radius:12px;cursor:pointer;font:700 14.5px 'Segoe UI',Arial,sans-serif;font-family:inherit;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#f2f4f2;box-sizing:border-box;}
+#cr-appt .ap-btn:hover{border-color:rgba(242,244,242,.36);}
+/* the lightbox inside the pane */
+#cr-appt .ap-light{position:fixed;inset:0;z-index:5;background:rgba(3,4,5,.94);
+  display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;}
+#cr-appt .ap-light.on{display:flex;}
+#cr-appt .ap-light img{max-width:100%;max-height:92vh;border-radius:10px;}
+/* 1162: a shared document fills the step, and stops 92px short of the
+   bottom so the share page's own fixed Accept & Sign bar (csBar,
+   bottom:0 INSIDE the iframe viewport) lands above the rail instead of
+   underneath it. The wrap loses its padding for these steps. */
+#cr-appt .ap-wrap-doc{max-width:none;padding:14px 14px 0;height:100%;box-sizing:border-box;
+  display:flex;flex-direction:column;}
+#cr-appt .ap-wrap-doc .ap-h{font-size:clamp(21px,3.4vw,28px);margin:6px 0 4px;}
+#cr-appt .ap-wrap-doc .ap-sub{margin:0 0 10px;}
+#cr-appt .ap-doc{flex:1;min-height:0;margin:4px 0 92px;border-radius:12px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.16);background:#fff;}
+#cr-appt .ap-doc iframe{display:block;width:100%;height:100%;border:0;background:#fff;}
+#cr-appt .ap-signed{color:#7fc98f;}
+#cr-appt .ap-light .x{position:absolute;top:14px;right:14px;width:46px;height:46px;border-radius:12px;
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);color:#f2f4f2;
+  font-size:19px;cursor:pointer;font-family:inherit;}
+/* ── the rail ── */
+#cr-appt-rail{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9600;
+  display:none;align-items:center;gap:6px;padding:8px 10px;border-radius:16px;
+  background:rgba(10,11,13,.94);border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 10px 30px rgba(0,0,0,.55);max-width:calc(100vw - 16px);box-sizing:border-box;
+  font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-appt-rail.on{display:flex;}
+#cr-appt-rail button{font-family:inherit;cursor:pointer;box-sizing:border-box;flex:0 0 auto;}
+#cr-appt-rail .ar-nav{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#f2f4f2;font-size:17px;}
+#cr-appt-rail .ar-nav:disabled{opacity:.35;cursor:default;}
+#cr-appt-rail .ar-step{min-width:46px;height:46px;padding:0 10px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.13);background:transparent;color:#b9b3ad;
+  font:700 11px/1.15 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;}
+#cr-appt-rail .ar-step.on{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-appt-rail .ar-x{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#b9b3ad;font-size:16px;}
+#cr-appt-rail .ar-who{max-width:150px;padding:0 8px;font:700 12px 'Segoe UI',Arial,sans-serif;
+  color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt-rail .ar-count{display:none;padding:0 9px;font:700 13px 'Segoe UI',Arial,sans-serif;color:#f2f4f2;}
+@media (max-width:700px){
+  /* eight 44px targets do not fit in 390px — measured, not assumed —
+     and 1162's seven stops moved the threshold to 700px. The
+     jump buttons give way to a step counter; Back/Next carry the walk. */
+  #cr-appt-rail .ar-step{display:none;}
+  #cr-appt-rail .ar-count{display:inline;}
+  #cr-appt-rail .ar-who{display:none;}
+}
+</style>
+<script id="cr-appt-script">
+(function(){
+'use strict';
+/* 1161 — The Appointment · v2026-08-30 build 1161
+   The running order for the in-home visit, over surfaces that already
+   exist: their roof (The Walk, in showroom mode) → what good looks like
+   (Hall of Fame) → why Cardinal (1160) → their house (approved Visualizer
+   renders + Colors). 1162 adds Options & Sign via /api/share.
+
+   It is a CONDUCTOR: it opens each module through that module's own
+   public API and closes through the same door hideAllViews() uses, per
+   surface (the 570-572 lever rule). It writes NO scroll lock (count
+   stays 13), reads design_renders under its own RLS (admin-or-own, the
+   same rows the Visualizer's Present shows this rep), and renders the
+   client's name and nothing else about them on the rail. */
+var PANE = null, RAIL = null;
+var proj = null;        /* the picked job {id,name,stage} */
+var stepIx = 0;         /* index into STEPS */
+var running = false;
+var projects = [];
+var renders = [];       /* approved design_renders rows for proj */
+
+/* One array is the whole running order — 1162 extends it, nothing else
+   changes. kind 'pane' renders inside #cr-appt; kind 'module' delegates
+   to an existing surface and hides the pane. */
+var STEPS = [
+  { id:'pick',  label:'Job',   kind:'pane'   },
+  { id:'roof',  label:'Roof',  kind:'module' },
+  { id:'good',  label:'Good',  kind:'module' },
+  { id:'why',   label:'Why',   kind:'module' },
+  { id:'house', label:'House', kind:'pane'   },
+  /* 1162 - option (b): the visit ends on this tablet. Both steps ride
+     the EXISTING /api/share page - the same one a client signs on their
+     own phone - in an iframe: it is public-by-token, carries no CRM,
+     and injects Accept & Sign itself when the document is signable. */
+  { id:'options', label:'Options', kind:'pane' },
+  { id:'sign',    label:'Sign',    kind:'pane' }
+];
+
+function esc(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+function sb(){ return window.supa || null; }
+
+function ensure(){
+  if(PANE && PANE.isConnected && RAIL && RAIL.isConnected) return;
+  PANE = document.getElementById('cr-appt');
+  if(!PANE){
+    PANE = document.createElement('div');
+    PANE.id = 'cr-appt';
+    document.body.appendChild(PANE);
+  }
+  RAIL = document.getElementById('cr-appt-rail');
+  if(!RAIL){
+    RAIL = document.createElement('div');
+    RAIL.id = 'cr-appt-rail';
+    document.body.appendChild(RAIL);
+  }
+  RAIL.innerHTML =
+    '<button type="button" class="ar-x" data-ap="end" aria-label="End the appointment">✕</button>' +
+    '<span class="ar-who" data-slot="who"></span>' +
+    '<button type="button" class="ar-nav" data-ap="back" aria-label="Back">‹</button>' +
+    STEPS.map(function(st, i){
+      return '<button type="button" class="ar-step" data-ap="step" data-ix="' + i + '">' +
+        esc(st.label) + '</button>';
+    }).join('') +
+    '<span class="ar-count" data-slot="count"></span>' +
+    '<button type="button" class="ar-nav" data-ap="next" aria-label="Next">›</button>';
+  RAIL.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-ap]') : null;
+    if(!b) return;
+    var act = b.getAttribute('data-ap');
+    if(act === 'end')  return void end();
+    if(act === 'back') return void go(stepIx - 1);
+    if(act === 'next') return void go(stepIx + 1);
+    if(act === 'step') return void go(parseInt(b.getAttribute('data-ix'), 10));
+  };
+}
+
+function paintRail(){
+  if(!RAIL) return;
+  RAIL.classList.toggle('on', running);
+  var who = RAIL.querySelector('[data-slot="who"]');
+  if(who) who.textContent = proj ? (proj.name || '') : '';
+  RAIL.querySelectorAll('.ar-step').forEach(function(b, i){
+    b.classList.toggle('on', i === stepIx);
+    /* until a job is picked the only live stop is the picker */
+    b.disabled = !proj && i > 0;
+  });
+  var ct = RAIL.querySelector('[data-slot="count"]');
+  if(ct) ct.textContent = (stepIx + 1) + '/' + STEPS.length;
+  var back = RAIL.querySelector('[data-ap="back"]');
+  var next = RAIL.querySelector('[data-ap="next"]');
+  if(back) back.disabled = stepIx <= 0;
+  if(next) next.disabled = (stepIx >= STEPS.length - 1) || (!proj && stepIx === 0);
+}
+
+/* Close every module a step may have opened, through each one's OWN door.
+   A module's close() can no-op without throwing (the 570-572 class), so
+   the display-shown ones are also cleared directly, same lever
+   hideAllViews() uses on them. */
+function closeModules(){
+  try{ if(window.CardinalShowcase && window.CardinalShowcase.close) window.CardinalShowcase.close(false); }catch(_){}
+  try{ if(window.CardinalWhy && window.CardinalWhy.close) window.CardinalWhy.close(); }catch(_){}
+  try{ if(window.CardinalColors && window.CardinalColors.close) window.CardinalColors.close(); }catch(_){}
+  var w = document.getElementById('cr-why');   if(w) w.style.display = 'none';
+  var o = document.getElementById('cr-occ');   if(o) o.style.display = 'none';
+}
+
+function showPane(){ ensure(); PANE.style.display = 'block'; PANE.scrollTop = 0; }
+function hidePane(){ if(PANE) PANE.style.display = 'none'; }
+
+/* ── steps ─────────────────────────────────────────────────────────── */
+async function loadProjects(){
+  var c = sb();
+  if(!c) return [];
+  var r = await c.from('projects').select('id,name,stage')
+    .order('created_at', { ascending:false }).limit(400);
+  return (r && r.data) || [];
+}
+
+function paintPick(){
+  var rows = projects;
+  PANE.innerHTML =
+    '<div class="ap-wrap">' +
+      '<p class="ap-eyebrow">The Appointment</p>' +
+      '<h1 class="ap-h">Whose house are we at?</h1>' +
+      '<p class="ap-sub">Pick the job and the visit runs in order — their roof, our work, why Cardinal, their house in colour, the options, the signature.</p>' +
+      '<input type="search" class="ap-search" data-slot="q" placeholder="Search by name…">' +
+      '<div class="ap-list" data-slot="list"></div>' +
+    '</div>';
+  var list = PANE.querySelector('[data-slot="list"]');
+  var q = PANE.querySelector('[data-slot="q"]');
+  function draw(){
+    var needle = (q.value || '').trim().toLowerCase();
+    var vis = rows.filter(function(p){
+      return !needle || String(p.name || '').toLowerCase().indexOf(needle) !== -1;
+    }).slice(0, 60);
+    if(!vis.length){
+      list.innerHTML = '<div class="ap-empty">' +
+        (rows.length ? 'No job matches that.' :
+         '<b>No jobs you can see.</b> Jobs are scoped to your sign-in.') + '</div>';
+      return;
+    }
+    list.innerHTML = vis.map(function(p){
+      return '<button type="button" class="ap-job" data-id="' + esc(p.id) + '">' +
+        '<span class="nm">' + esc(p.name || '(no name)') + '</span>' +
+        (p.stage ? '<span class="st">' + esc(p.stage) + '</span>' : '') +
+        '<span class="go">→</span></button>';
+    }).join('');
+  }
+  q.oninput = draw;
+  list.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('.ap-job') : null;
+    if(!b) return;
+    var id = b.getAttribute('data-id');
+    for(var i = 0; i < rows.length; i++){
+      if(String(rows[i].id) === String(id)){ proj = rows[i]; break; }
+    }
+    renders = []; docs = null;
+    go(1);
+  };
+  draw();
+}
+
+async function paintHouse(){
+  PANE.innerHTML =
+    '<div class="ap-wrap">' +
+      '<p class="ap-eyebrow">' + esc(proj ? proj.name : '') + '</p>' +
+      '<h1 class="ap-h">Their house, your materials</h1>' +
+      '<p class="ap-sub">Approved visualizations for this job — reviewed by a person before anyone at this table sees them.</p>' +
+      '<div data-slot="wall"><div class="ap-empty">Loading…</div></div>' +
+      '<div class="ap-actions">' +
+        '<button type="button" class="ap-btn" data-ap-open="colors">Shingle colours →</button>' +
+      '</div>' +
+      '<div class="ap-light" data-slot="light">' +
+        '<button type="button" class="x" data-ap-light="x" aria-label="Close">✕</button>' +
+        '<img alt="">' +
+      '</div>' +
+    '</div>';
+  PANE.querySelector('[data-ap-open="colors"]').onclick = function(){
+    /* a side door, not a step: Colors opens over everything at its own z;
+       Back on the rail is still the way home. */
+    hidePane();
+    try{ if(window.CardinalColors) window.CardinalColors.open(); }catch(_){}
+    paintRail();
+  };
+  var light = PANE.querySelector('[data-slot="light"]');
+  light.querySelector('[data-ap-light="x"]').onclick = function(){ light.classList.remove('on'); };
+  var wall = PANE.querySelector('[data-slot="wall"]');
+  var c = sb();
+  if(!c){ wall.innerHTML = '<div class="ap-empty">Not signed in.</div>'; return; }
+  if(!renders.length){
+    try{
+      var r = await c.from('design_renders')
+        .select('id,title,render_path,preview_path,approved')
+        .eq('project_id', proj.id).eq('approved', true)
+        .order('created_at', { ascending:false }).limit(40);
+      renders = (r && r.data) || [];
+    }catch(_){ renders = []; }
+  }
+  if(!renders.length){
+    wall.innerHTML = '<div class="ap-empty"><b>No approved visualizations for this job yet.</b><br>' +
+      'Queue them in the Designer before the visit and approve each one — ' +
+      'nothing unreviewed reaches this screen.</div>';
+    return;
+  }
+  /* one round trip signs every path — the 633 lesson */
+  var paths = [];
+  renders.forEach(function(rd){
+    var p = rd.preview_path || rd.render_path;
+    if(p && paths.indexOf(p) === -1) paths.push(p);
+  });
+  var urls = {};
+  try{
+    var sr = await c.storage.from('photos').createSignedUrls(paths, 3600);
+    ((sr && sr.data) || []).forEach(function(row){
+      if(row && row.path && row.signedUrl) urls[row.path] = row.signedUrl;
+    });
+  }catch(_){}
+  wall.innerHTML = '<div class="ap-grid">' + renders.map(function(rd, i){
+    var p = rd.preview_path || rd.render_path;
+    var u = urls[p] || '';
+    return '<button type="button" class="ap-card" data-ix="' + i + '">' +
+      '<img alt="" ' + (u ? 'src="' + esc(u) + '"' : '') + '>' +
+      '<span class="tt">' + esc(rd.title || 'Visualization') + '</span></button>';
+  }).join('') + '</div>';
+  wall.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('.ap-card') : null;
+    if(!b) return;
+    var rd = renders[parseInt(b.getAttribute('data-ix'), 10)];
+    if(!rd) return;
+    var full = rd.render_path || rd.preview_path;
+    var img = light.querySelector('img');
+    img.src = urls[full] || urls[rd.preview_path || ''] || '';
+    if(!urls[full] && full){
+      c.storage.from('photos').createSignedUrl(full, 3600).then(function(r2){
+        var u2 = r2 && r2.data && r2.data.signedUrl;
+        if(u2){ urls[full] = u2; img.src = u2; }
+      });
+    }
+    light.classList.add('on');
+  };
+}
+
+/* ── documents (1162) ─────────────────────────────────────────────────
+   Both steps read this job's inspection_reports rows - the same table
+   every estimate, contract and options sheet already lives in - and
+   show them through /api/share?t=<token>, the page that is already
+   client-facing, review-clean and finger-signable. Nothing new signs. */
+var docs = null;      /* cached rows for proj, cleared on pick */
+
+async function loadDocs(){
+  if(docs) return docs;
+  var c = sb();
+  if(!c || !proj) return (docs = []);
+  try{
+    var r = await c.from('inspection_reports')
+      .select('id,title,share_token,signed_at,status,created_at')
+      .eq('project_id', proj.id)
+      .order('created_at', { ascending:false }).limit(60);
+    docs = (r && r.data) || [];
+  }catch(_){ docs = []; }
+  return docs;
+}
+
+/* the ensureShareToken convention (731), reachable outside the editor:
+   same mint, same db.update rails, so one token per document ever. */
+async function docToken(row){
+  if(row.share_token) return row.share_token;
+  var tok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+          : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+  if(!window.db || typeof window.db.update !== 'function') return null;
+  await window.db.update(row.id, { share_token: tok });
+  row.share_token = tok;
+  return tok;
+}
+
+/* mirrors api/share.js exactly - SIGN_RX ('Client Acceptance' footer),
+   SLOT_RX (an unfilled buyer sigslot), and the already-signed stamp. */
+function docSignable(html){
+  if(!html) return false;
+  if(html.indexOf('data-clientsigned') !== -1) return false;
+  return /class="lbl">\s*Client Acceptance/.test(html) ||
+         /class="sigslot" data-sig="buyer"/.test(html);
+}
+
+function docFrame(tok){
+  return '<div class="ap-doc"><iframe src="/api/share?t=' + esc(tok) + '"></iframe></div>';
+}
+
+function docShell(eyebrow, h, sub, body){
+  return '<div class="ap-wrap ap-wrap-doc">' +
+    '<p class="ap-eyebrow">' + esc(eyebrow) + '</p>' +
+    '<h1 class="ap-h">' + h + '</h1>' +
+    (sub ? '<p class="ap-sub">' + sub + '</p>' : '') +
+    body + '</div>';
+}
+
+async function paintOptions(){
+  PANE.innerHTML = docShell(proj ? proj.name : '', 'Your options',
+    'Good, Better, Best — side by side.', '<div class="ap-empty">Loading…</div>');
+  var rows = await loadDocs();
+  var gbb = null;
+  for(var i = 0; i < rows.length; i++){
+    if(String(rows[i].title || '').indexOf('Roof Options') === 0){ gbb = rows[i]; break; }
+  }
+  if(!gbb){
+    PANE.innerHTML = docShell(proj ? proj.name : '', 'Your options', '',
+      '<div class="ap-empty"><b>No options sheet on this job yet.</b><br>' +
+      'Build one before the visit: open an estimate, tap <b>Options</b> in its ' +
+      'toolbar, pick the Good / Better / Best tiers and publish. It will be ' +
+      'waiting here.</div>');
+    return;
+  }
+  var tok = null;
+  try{ tok = await docToken(gbb); }catch(_){}
+  if(!tok){
+    PANE.innerHTML = docShell(proj ? proj.name : '', 'Your options', '',
+      '<div class="ap-empty"><b>Could not open the options sheet.</b><br>' +
+      'The share link could not be created from this sign-in — open the ' +
+      'document once from the estimate editor and it will work here.</div>');
+    return;
+  }
+  PANE.innerHTML = docShell(proj ? proj.name : '', 'Your options',
+    'Initial the option you want us to proceed with — then the next step signs it.',
+    docFrame(tok));
+}
+
+async function paintSign(){
+  PANE.innerHTML = docShell(proj ? proj.name : '', 'Make it official',
+    'Pick the paperwork to sign.', '<div class="ap-empty">Loading…</div>');
+  var rows = await loadDocs();
+  if(!rows.length){
+    PANE.innerHTML = docShell(proj ? proj.name : '', 'Make it official', '',
+      '<div class="ap-empty"><b>No documents on this job yet.</b><br>' +
+      'Publish the estimate or generate the contract before the visit and ' +
+      'it will be waiting here to sign.</div>');
+    return;
+  }
+  /* 1149's lesson is the whole design: the client signs THE DOCUMENT THEY
+     ARE LOOKING AT. One list, one explicit pick, then that document alone
+     fills the screen with its own Accept & Sign. */
+  PANE.innerHTML = docShell(proj ? proj.name : '', 'Make it official',
+    'Pick the paperwork — the signature lands on the document you open, and only that one.',
+    '<div class="ap-list" data-slot="doclist">' + rows.map(function(d, i){
+      return '<button type="button" class="ap-job" data-ix="' + i + '">' +
+        '<span class="nm">' + esc(d.title || '(untitled)') + '</span>' +
+        (d.signed_at ? '<span class="st ap-signed">Signed ✓</span>' :
+                       '<span class="st">' + esc(d.status || '') + '</span>') +
+        '<span class="go">→</span></button>';
+    }).join('') + '</div>' +
+    '<div data-slot="opensign"></div>');
+  var list = PANE.querySelector('[data-slot="doclist"]');
+  var host = PANE.querySelector('[data-slot="opensign"]');
+  list.onclick = async function(e){
+    var b = e.target.closest ? e.target.closest('.ap-job') : null;
+    if(!b) return;
+    var row = rows[parseInt(b.getAttribute('data-ix'), 10)];
+    if(!row) return;
+    host.innerHTML = '<div class="ap-empty">Opening…</div>';
+    var c = sb(), html = '';
+    try{
+      var r = await c.from('inspection_reports').select('html').eq('id', row.id).single();
+      html = (r && r.data && r.data.html) || '';
+    }catch(_){}
+    if(!row.signed_at && !docSignable(html)){
+      host.innerHTML = '<div class="ap-empty"><b>' + esc(row.title || 'This document') +
+        '</b> has no signature block, so it opens for review only. The estimate ' +
+        'proposal and the contracts are the ones that sign.</div>';
+    }else{
+      host.innerHTML = '';
+    }
+    var tok = null;
+    try{ tok = await docToken(row); }catch(_){}
+    if(!tok){
+      host.innerHTML = '<div class="ap-empty"><b>Could not create the signing link</b> ' +
+        'from this sign-in — open the document once from the editor first.</div>';
+      return;
+    }
+    list.style.display = 'none';
+    host.innerHTML =
+      '<div class="ap-actions"><button type="button" class="ap-btn" data-ap-doc="back">‹ Other paperwork</button></div>' +
+      (host.querySelector('.ap-empty') ? host.querySelector('.ap-empty').outerHTML : '') +
+      docFrame(tok);
+    host.querySelector('[data-ap-doc="back"]').onclick = function(){
+      host.innerHTML = ''; list.style.display = '';
+    };
+  };
+}
+
+/* the delegated steps — open through public APIs only */
+function openRoof(){
+  hidePane();
+  try{
+    if(window.CardinalShowcase && window.CardinalShowcase.openForProject){
+      window.CardinalShowcase.openForProject(proj, { showroom:true });
+    }
+  }catch(_){}
+}
+function openGood(){
+  var el = document.getElementById('cr-show');
+  var opened = el && el.classList.contains('open');
+  hidePane();
+  try{
+    if(!opened && window.CardinalShowcase) window.CardinalShowcase.open({ showroom:true });
+  }catch(_){}
+  /* drive the module's own tab control — the same tap a finger makes.
+     Deferred a beat so a fresh open() has painted its tabs. */
+  setTimeout(function(){
+    var b = document.querySelector('#cr-show [data-tab="work"]');
+    if(b) b.click();
+  }, opened ? 0 : 380);
+}
+function openWhy(){
+  hidePane();
+  try{ if(window.CardinalWhy) window.CardinalWhy.open(); }catch(_){}
+}
+
+async function go(ix){
+  if(!running) return;
+  if(ix < 0 || ix >= STEPS.length) return;
+  if(ix > 0 && !proj) return;         /* nothing past the picker without a job */
+  stepIx = ix;
+  var st = STEPS[stepIx];
+  /* leave whatever the previous step opened, through the modules' own doors */
+  closeModules();
+  if(st.kind === 'pane'){
+    showPane();
+    if(st.id === 'pick')  paintPick();
+    if(st.id === 'house') await paintHouse();
+    if(st.id === 'options') await paintOptions();
+    if(st.id === 'sign')    await paintSign();
+  }else{
+    if(st.id === 'roof') openRoof();
+    if(st.id === 'good') openGood();
+    if(st.id === 'why')  openWhy();
+  }
+  /* every delegated open() runs hideAllViews(), which clears the pane —
+     correct for module steps; the rail is chrome and survives on its own. */
+  paintRail();
+}
+
+async function open(){
+  ensure();
+  try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
+  running = true;
+  proj = null; stepIx = 0; renders = []; docs = null;
+  showPane();
+  PANE.innerHTML = '<div class="ap-wrap"><div class="ap-empty">Loading jobs…</div></div>';
+  paintRail();
+  try{ projects = await loadProjects(); }catch(_){ projects = []; }
+  if(!running) return;
+  paintPick();
+  paintRail();
+  try{ if(window.navPush) window.navPush('cr-appt'); }catch(_){}
+}
+
+function end(){
+  running = false;
+  closeModules();
+  hidePane();
+  if(RAIL) RAIL.classList.remove('on');
+  proj = null; stepIx = 0;
+  try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
+}
+
+window.CardinalAppointment = Object.assign(window.CardinalAppointment || {}, {
+  open  : open,
+  close : end
+});
+})();
+</script>
 
 <style id="cr-fd-styles">
 /* ── The Front Door (1164) · v2026-08-30 build 1164 ─────────────────────────

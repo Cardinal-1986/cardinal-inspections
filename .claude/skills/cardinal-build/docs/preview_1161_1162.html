@@ -1,0 +1,1835 @@
+<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cardinal — The Appointment (1161–1162) preview</title>
+<style>
+:root{color-scheme:dark;}
+body{margin:0;background:#121014;color:#e9e4de;font:15px/1.55 'Segoe UI',Arial,sans-serif;}
+.wrap{max-width:1320px;margin:0 auto;padding:26px 18px 80px;}
+h1{font:700 30px/1.15 Georgia,serif;margin:0 0 6px;color:#fff;}
+.sub{color:#a89a8d;margin:0 0 4px;}
+.note{margin:16px 0 0;padding:13px 15px;border-radius:11px;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.11);color:#b9b3ad;font-size:14.5px;}
+.note b{color:#fff;}
+h2{margin:44px 0 2px;font:700 21px/1.2 'Segoe UI',Arial,sans-serif;color:#fff;
+  padding-top:20px;border-top:1px solid rgba(255,255,255,.12);}
+.row{display:flex;flex-wrap:wrap;gap:26px;margin:20px 0 0;align-items:flex-start;}
+.cap{font:700 11.5px/1 'Segoe UI',Arial,sans-serif;letter-spacing:.13em;
+  text-transform:uppercase;color:#8f9296;margin:0 0 8px;}
+.screen{border:1px solid rgba(255,255,255,.16);border-radius:13px;overflow:hidden;
+  background:#000;box-shadow:0 10px 34px rgba(0,0,0,.5);}
+iframe{display:block;border:0;background:#000;}
+@media (max-width:900px){.dev{width:100%;}.screen{overflow-x:auto;}}
+</style>
+<div class="wrap">
+<h1>The Appointment — builds 1161–1162</h1>
+<p class="sub">Preview for Theo &middot; 30 Aug 2026</p>
+<div class="note"><b>The shipped module, verbatim, running against sample data.</b>
+The running order is Job &rarr; Roof &rarr; Good &rarr; Why &rarr; House &rarr; Options &rarr; Sign.
+Steps 2&ndash;4 open the Showroom, Hall of Fame and Why Cardinal you already have,
+so they are not re-shown here; Options and Sign open the same secure share page a
+client signs on their own phone &mdash; the document frame is blank in this preview
+because <code>/api/share</code> is a live route, not a file.</div>
+<h2>Step 1 — pick the job</h2><div class="row"><div class="dev"><p class="cap">iPad landscape · 1194</p><div class="screen"><iframe width="1194" height="834" srcdoc="&lt;!doctype html&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;html,body{margin:0;background:#050607;}
+/* 1161 — The Appointment. A conductor, not a surface: it owns a running
+   order over screens that already exist and adds no new content. Theo&#x27;s
+   pick (b): the whole visit stays on the tablet — 1162 adds the Options
+   and Sign steps through the existing /api/share page, which is already
+   client-facing and finger-signable.
+
+   Blackout, single-theme, all literals (the cr-why/cr-show/cr-occ pattern —
+   448-449 immune by construction). Inks are the computed cr-why set: on
+   #050607 body #b9b3ad = 9.77:1, accent #f08a90 = 8.44:1; #c8202e is
+   3.57:1 here and is GROUNDS ONLY, never text. White on #c8202e is the
+   app-wide semantic white-on-coloured-ground, deliberately kept.
+
+   Two layers. The PANE (#cr-appt, z 9550) hosts the conductor&#x27;s own
+   steps — the job picker and the renders wall — and is registered in
+   hideAllViews() with the DISPLAY lever. The RAIL (#cr-appt-rail, z 9600)
+   is chrome, like #pwaNav: NOT in hideAllViews(), shown only while an
+   appointment is running, and it must sit above #cr-show&#x27;s 9500 or Next
+   dies inside the showroom. */
+#cr-appt{position:fixed;inset:0;z-index:9550;display:none;background:#050607;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  font-family:&#x27;Segoe UI&#x27;,-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-appt .ap-wrap{max-width:900px;margin:0 auto;padding:20px 22px 120px;box-sizing:border-box;}
+#cr-appt .ap-eyebrow{font:700 11px/1 &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  letter-spacing:.18em;text-transform:uppercase;color:#8f9296;margin:8px 0 0;}
+#cr-appt .ap-h{margin:10px 0 6px;font:700 clamp(26px,4.6vw,38px)/1.08 Georgia,&#x27;Times New Roman&#x27;,serif;
+  color:#f2f4f2;letter-spacing:-.01em;}
+#cr-appt .ap-sub{margin:0 0 18px;font-size:15.5px;line-height:1.5;color:#b9b3ad;}
+#cr-appt .ap-search{width:100%;box-sizing:border-box;padding:13px 15px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#f2f4f2;
+  font:600 16px &#x27;Segoe UI&#x27;,Arial,sans-serif;outline:none;}
+#cr-appt .ap-search::placeholder{color:#8f9296;}
+#cr-appt .ap-list{margin:14px 0 0;display:flex;flex-direction:column;gap:9px;}
+#cr-appt .ap-job{display:flex;align-items:center;gap:13px;width:100%;box-sizing:border-box;
+  text-align:left;padding:15px 16px;border-radius:13px;cursor:pointer;font-family:inherit;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);min-height:56px;}
+#cr-appt .ap-job:hover{border-color:rgba(242,244,242,.34);}
+#cr-appt .ap-job .nm{flex:1;min-width:0;font:700 16.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt .ap-job .st{flex:0 0 auto;font:700 11px/1 &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  letter-spacing:.12em;text-transform:uppercase;color:#8f9296;}
+#cr-appt .ap-job .go{flex:0 0 auto;color:#8f9296;font-size:15px;}
+#cr-appt .ap-empty{margin:26px 0 0;padding:18px;border-radius:13px;text-align:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
+  font-size:15.5px;line-height:1.55;color:#b9b3ad;}
+#cr-appt .ap-empty b{color:#f2f4f2;}
+/* the renders wall (step: house) */
+#cr-appt .ap-grid{margin:16px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+#cr-appt .ap-card{position:relative;border-radius:13px;overflow:hidden;cursor:pointer;
+  border:1px solid rgba(255,255,255,.14);background:#0e1013;padding:0;font-family:inherit;}
+#cr-appt .ap-card img{display:block;width:100%;height:190px;object-fit:cover;background:#0e1013;}
+#cr-appt .ap-card .tt{display:block;padding:10px 12px;font:600 13.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#d8d2cb;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt .ap-actions{margin:20px 0 0;display:flex;gap:11px;flex-wrap:wrap;}
+#cr-appt .ap-btn{display:inline-flex;align-items:center;gap:9px;padding:13px 20px;min-height:48px;
+  border-radius:12px;cursor:pointer;font:700 14.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;font-family:inherit;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#f2f4f2;box-sizing:border-box;}
+#cr-appt .ap-btn:hover{border-color:rgba(242,244,242,.36);}
+/* the lightbox inside the pane */
+#cr-appt .ap-light{position:fixed;inset:0;z-index:5;background:rgba(3,4,5,.94);
+  display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;}
+#cr-appt .ap-light.on{display:flex;}
+#cr-appt .ap-light img{max-width:100%;max-height:92vh;border-radius:10px;}
+/* 1162: a shared document fills the step, and stops 92px short of the
+   bottom so the share page&#x27;s own fixed Accept &amp; Sign bar (csBar,
+   bottom:0 INSIDE the iframe viewport) lands above the rail instead of
+   underneath it. The wrap loses its padding for these steps. */
+#cr-appt .ap-wrap-doc{max-width:none;padding:14px 14px 0;height:100%;box-sizing:border-box;
+  display:flex;flex-direction:column;}
+#cr-appt .ap-wrap-doc .ap-h{font-size:clamp(21px,3.4vw,28px);margin:6px 0 4px;}
+#cr-appt .ap-wrap-doc .ap-sub{margin:0 0 10px;}
+#cr-appt .ap-doc{flex:1;min-height:0;margin:4px 0 92px;border-radius:12px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.16);background:#fff;}
+#cr-appt .ap-doc iframe{display:block;width:100%;height:100%;border:0;background:#fff;}
+#cr-appt .ap-signed{color:#7fc98f;}
+#cr-appt .ap-light .x{position:absolute;top:14px;right:14px;width:46px;height:46px;border-radius:12px;
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);color:#f2f4f2;
+  font-size:19px;cursor:pointer;font-family:inherit;}
+/* ── the rail ── */
+#cr-appt-rail{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9600;
+  display:none;align-items:center;gap:6px;padding:8px 10px;border-radius:16px;
+  background:rgba(10,11,13,.94);border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 10px 30px rgba(0,0,0,.55);max-width:calc(100vw - 16px);box-sizing:border-box;
+  font-family:&#x27;Segoe UI&#x27;,-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-appt-rail.on{display:flex;}
+#cr-appt-rail button{font-family:inherit;cursor:pointer;box-sizing:border-box;flex:0 0 auto;}
+#cr-appt-rail .ar-nav{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#f2f4f2;font-size:17px;}
+#cr-appt-rail .ar-nav:disabled{opacity:.35;cursor:default;}
+#cr-appt-rail .ar-step{min-width:46px;height:46px;padding:0 10px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.13);background:transparent;color:#b9b3ad;
+  font:700 11px/1.15 &#x27;Segoe UI&#x27;,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;}
+#cr-appt-rail .ar-step.on{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-appt-rail .ar-x{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#b9b3ad;font-size:16px;}
+#cr-appt-rail .ar-who{max-width:150px;padding:0 8px;font:700 12px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt-rail .ar-count{display:none;padding:0 9px;font:700 13px &#x27;Segoe UI&#x27;,Arial,sans-serif;color:#f2f4f2;}
+@media (max-width:700px){
+  /* eight 44px targets do not fit in 390px — measured, not assumed —
+     and 1162&#x27;s seven stops moved the threshold to 700px. The
+     jump buttons give way to a step counter; Back/Next carry the walk. */
+  #cr-appt-rail .ar-step{display:none;}
+  #cr-appt-rail .ar-count{display:inline;}
+  #cr-appt-rail .ar-who{display:none;}
+}
+&lt;/style&gt;&lt;body&gt;&lt;script&gt;
+var rows=[{id:&#x27;p1&#x27;,name:&#x27;Kim Lawson&#x27;,stage:&#x27;Approved&#x27;},
+          {id:&#x27;p2&#x27;,name:&#x27;Dave &amp; Sandy Miller&#x27;,stage:&#x27;Scheduled&#x27;},
+          {id:&#x27;p3&#x27;,name:&#x27;Habitat for Humanity - Elm St&#x27;,stage:&#x27;Approved&#x27;}];
+var docs=[{id:&#x27;d1&#x27;,title:&#x27;Roof Options — Kim Lawson&#x27;,share_token:&#x27;tokO&#x27;,signed_at:null,status:&#x27;draft&#x27;},
+          {id:&#x27;d2&#x27;,title:&#x27;Estimate — Kim Lawson&#x27;,share_token:&#x27;tokE&#x27;,signed_at:null,status:&#x27;sent&#x27;},
+          {id:&#x27;d3&#x27;,title:&#x27;Contract — Roofing — Kim Lawson&#x27;,share_token:null,signed_at:&#x27;2026-08-29&#x27;,status:&#x27;sent&#x27;}];
+function q(t){var o={_eq:{}};[&#x27;select&#x27;,&#x27;order&#x27;,&#x27;limit&#x27;].forEach(function(m){o[m]=function(){return o;}});
+o.eq=function(k,v){o._eq[k]=v;return o;};
+o.single=function(){return{then:function(res){return Promise.resolve({data:{html:&#x27;&lt;div class=&quot;lbl&quot;&gt;Client Acceptance&lt;/div&gt;&#x27;}}).then(res);}}};
+o.then=function(res){var d=[];if(t===&#x27;projects&#x27;)d=rows;if(t===&#x27;inspection_reports&#x27;)d=docs;
+if(t===&#x27;design_renders&#x27;)d=[];return Promise.resolve({data:d}).then(res);};return o;}
+Object.defineProperty(window,&#x27;supa&#x27;,{value:{from:q,
+  storage:{from:function(){return{createSignedUrls:function(){return Promise.resolve({data:[]});},
+                                  createSignedUrl:function(){return Promise.resolve({data:{}});}}}}},writable:false});
+window.db={update:function(){return Promise.resolve();}};
+window.CardinalShowcase={openForProject:function(){},open:function(){},close:function(){}};
+window.CardinalWhy={open:function(){},close:function(){}};
+window.CardinalColors={open:function(){},close:function(){}};
+
+(function(){
+&#x27;use strict&#x27;;
+/* 1161 — The Appointment · v2026-08-30 build 1161
+   The running order for the in-home visit, over surfaces that already
+   exist: their roof (The Walk, in showroom mode) → what good looks like
+   (Hall of Fame) → why Cardinal (1160) → their house (approved Visualizer
+   renders + Colors). 1162 adds Options &amp; Sign via /api/share.
+
+   It is a CONDUCTOR: it opens each module through that module&#x27;s own
+   public API and closes through the same door hideAllViews() uses, per
+   surface (the 570-572 lever rule). It writes NO scroll lock (count
+   stays 13), reads design_renders under its own RLS (admin-or-own, the
+   same rows the Visualizer&#x27;s Present shows this rep), and renders the
+   client&#x27;s name and nothing else about them on the rail. */
+var PANE = null, RAIL = null;
+var proj = null;        /* the picked job {id,name,stage} */
+var stepIx = 0;         /* index into STEPS */
+var running = false;
+var projects = [];
+var renders = [];       /* approved design_renders rows for proj */
+
+/* One array is the whole running order — 1162 extends it, nothing else
+   changes. kind &#x27;pane&#x27; renders inside #cr-appt; kind &#x27;module&#x27; delegates
+   to an existing surface and hides the pane. */
+var STEPS = [
+  { id:&#x27;pick&#x27;,  label:&#x27;Job&#x27;,   kind:&#x27;pane&#x27;   },
+  { id:&#x27;roof&#x27;,  label:&#x27;Roof&#x27;,  kind:&#x27;module&#x27; },
+  { id:&#x27;good&#x27;,  label:&#x27;Good&#x27;,  kind:&#x27;module&#x27; },
+  { id:&#x27;why&#x27;,   label:&#x27;Why&#x27;,   kind:&#x27;module&#x27; },
+  { id:&#x27;house&#x27;, label:&#x27;House&#x27;, kind:&#x27;pane&#x27;   },
+  /* 1162 - option (b): the visit ends on this tablet. Both steps ride
+     the EXISTING /api/share page - the same one a client signs on their
+     own phone - in an iframe: it is public-by-token, carries no CRM,
+     and injects Accept &amp; Sign itself when the document is signable. */
+  { id:&#x27;options&#x27;, label:&#x27;Options&#x27;, kind:&#x27;pane&#x27; },
+  { id:&#x27;sign&#x27;,    label:&#x27;Sign&#x27;,    kind:&#x27;pane&#x27; }
+];
+
+function esc(v){
+  return String(v == null ? &#x27;&#x27; : v)
+    .replace(/&amp;/g,&#x27;&amp;amp;&#x27;).replace(/&lt;/g,&#x27;&amp;lt;&#x27;).replace(/&gt;/g,&#x27;&amp;gt;&#x27;)
+    .replace(/&quot;/g,&#x27;&amp;quot;&#x27;);
+}
+function sb(){ return window.supa || null; }
+
+function ensure(){
+  if(PANE &amp;&amp; PANE.isConnected &amp;&amp; RAIL &amp;&amp; RAIL.isConnected) return;
+  PANE = document.getElementById(&#x27;cr-appt&#x27;);
+  if(!PANE){
+    PANE = document.createElement(&#x27;div&#x27;);
+    PANE.id = &#x27;cr-appt&#x27;;
+    document.body.appendChild(PANE);
+  }
+  RAIL = document.getElementById(&#x27;cr-appt-rail&#x27;);
+  if(!RAIL){
+    RAIL = document.createElement(&#x27;div&#x27;);
+    RAIL.id = &#x27;cr-appt-rail&#x27;;
+    document.body.appendChild(RAIL);
+  }
+  RAIL.innerHTML =
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-x&quot; data-ap=&quot;end&quot; aria-label=&quot;End the appointment&quot;&gt;✕&lt;/button&gt;&#x27; +
+    &#x27;&lt;span class=&quot;ar-who&quot; data-slot=&quot;who&quot;&gt;&lt;/span&gt;&#x27; +
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-nav&quot; data-ap=&quot;back&quot; aria-label=&quot;Back&quot;&gt;‹&lt;/button&gt;&#x27; +
+    STEPS.map(function(st, i){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-step&quot; data-ap=&quot;step&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+        esc(st.label) + &#x27;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;) +
+    &#x27;&lt;span class=&quot;ar-count&quot; data-slot=&quot;count&quot;&gt;&lt;/span&gt;&#x27; +
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-nav&quot; data-ap=&quot;next&quot; aria-label=&quot;Next&quot;&gt;›&lt;/button&gt;&#x27;;
+  RAIL.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;[data-ap]&#x27;) : null;
+    if(!b) return;
+    var act = b.getAttribute(&#x27;data-ap&#x27;);
+    if(act === &#x27;end&#x27;)  return void end();
+    if(act === &#x27;back&#x27;) return void go(stepIx - 1);
+    if(act === &#x27;next&#x27;) return void go(stepIx + 1);
+    if(act === &#x27;step&#x27;) return void go(parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10));
+  };
+}
+
+function paintRail(){
+  if(!RAIL) return;
+  RAIL.classList.toggle(&#x27;on&#x27;, running);
+  var who = RAIL.querySelector(&#x27;[data-slot=&quot;who&quot;]&#x27;);
+  if(who) who.textContent = proj ? (proj.name || &#x27;&#x27;) : &#x27;&#x27;;
+  RAIL.querySelectorAll(&#x27;.ar-step&#x27;).forEach(function(b, i){
+    b.classList.toggle(&#x27;on&#x27;, i === stepIx);
+    /* until a job is picked the only live stop is the picker */
+    b.disabled = !proj &amp;&amp; i &gt; 0;
+  });
+  var ct = RAIL.querySelector(&#x27;[data-slot=&quot;count&quot;]&#x27;);
+  if(ct) ct.textContent = (stepIx + 1) + &#x27;/&#x27; + STEPS.length;
+  var back = RAIL.querySelector(&#x27;[data-ap=&quot;back&quot;]&#x27;);
+  var next = RAIL.querySelector(&#x27;[data-ap=&quot;next&quot;]&#x27;);
+  if(back) back.disabled = stepIx &lt;= 0;
+  if(next) next.disabled = (stepIx &gt;= STEPS.length - 1) || (!proj &amp;&amp; stepIx === 0);
+}
+
+/* Close every module a step may have opened, through each one&#x27;s OWN door.
+   A module&#x27;s close() can no-op without throwing (the 570-572 class), so
+   the display-shown ones are also cleared directly, same lever
+   hideAllViews() uses on them. */
+function closeModules(){
+  try{ if(window.CardinalShowcase &amp;&amp; window.CardinalShowcase.close) window.CardinalShowcase.close(false); }catch(_){}
+  try{ if(window.CardinalWhy &amp;&amp; window.CardinalWhy.close) window.CardinalWhy.close(); }catch(_){}
+  try{ if(window.CardinalColors &amp;&amp; window.CardinalColors.close) window.CardinalColors.close(); }catch(_){}
+  var w = document.getElementById(&#x27;cr-why&#x27;);   if(w) w.style.display = &#x27;none&#x27;;
+  var o = document.getElementById(&#x27;cr-occ&#x27;);   if(o) o.style.display = &#x27;none&#x27;;
+}
+
+function showPane(){ ensure(); PANE.style.display = &#x27;block&#x27;; PANE.scrollTop = 0; }
+function hidePane(){ if(PANE) PANE.style.display = &#x27;none&#x27;; }
+
+/* ── steps ─────────────────────────────────────────────────────────── */
+async function loadProjects(){
+  var c = sb();
+  if(!c) return [];
+  var r = await c.from(&#x27;projects&#x27;).select(&#x27;id,name,stage&#x27;)
+    .order(&#x27;created_at&#x27;, { ascending:false }).limit(400);
+  return (r &amp;&amp; r.data) || [];
+}
+
+function paintPick(){
+  var rows = projects;
+  PANE.innerHTML =
+    &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;The Appointment&lt;/p&gt;&#x27; +
+      &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;Whose house are we at?&lt;/h1&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-sub&quot;&gt;Pick the job and the visit runs in order — their roof, our work, why Cardinal, their house in colour, the options, the signature.&lt;/p&gt;&#x27; +
+      &#x27;&lt;input type=&quot;search&quot; class=&quot;ap-search&quot; data-slot=&quot;q&quot; placeholder=&quot;Search by name…&quot;&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-list&quot; data-slot=&quot;list&quot;&gt;&lt;/div&gt;&#x27; +
+    &#x27;&lt;/div&gt;&#x27;;
+  var list = PANE.querySelector(&#x27;[data-slot=&quot;list&quot;]&#x27;);
+  var q = PANE.querySelector(&#x27;[data-slot=&quot;q&quot;]&#x27;);
+  function draw(){
+    var needle = (q.value || &#x27;&#x27;).trim().toLowerCase();
+    var vis = rows.filter(function(p){
+      return !needle || String(p.name || &#x27;&#x27;).toLowerCase().indexOf(needle) !== -1;
+    }).slice(0, 60);
+    if(!vis.length){
+      list.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&#x27; +
+        (rows.length ? &#x27;No job matches that.&#x27; :
+         &#x27;&lt;b&gt;No jobs you can see.&lt;/b&gt; Jobs are scoped to your sign-in.&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+      return;
+    }
+    list.innerHTML = vis.map(function(p){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-job&quot; data-id=&quot;&#x27; + esc(p.id) + &#x27;&quot;&gt;&#x27; +
+        &#x27;&lt;span class=&quot;nm&quot;&gt;&#x27; + esc(p.name || &#x27;(no name)&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+        (p.stage ? &#x27;&lt;span class=&quot;st&quot;&gt;&#x27; + esc(p.stage) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) +
+        &#x27;&lt;span class=&quot;go&quot;&gt;→&lt;/span&gt;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;);
+  }
+  q.oninput = draw;
+  list.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-job&#x27;) : null;
+    if(!b) return;
+    var id = b.getAttribute(&#x27;data-id&#x27;);
+    for(var i = 0; i &lt; rows.length; i++){
+      if(String(rows[i].id) === String(id)){ proj = rows[i]; break; }
+    }
+    renders = []; docs = null;
+    go(1);
+  };
+  draw();
+}
+
+async function paintHouse(){
+  PANE.innerHTML =
+    &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;&#x27; + esc(proj ? proj.name : &#x27;&#x27;) + &#x27;&lt;/p&gt;&#x27; +
+      &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;Their house, your materials&lt;/h1&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-sub&quot;&gt;Approved visualizations for this job — reviewed by a person before anyone at this table sees them.&lt;/p&gt;&#x27; +
+      &#x27;&lt;div data-slot=&quot;wall&quot;&gt;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-actions&quot;&gt;&#x27; +
+        &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-btn&quot; data-ap-open=&quot;colors&quot;&gt;Shingle colours →&lt;/button&gt;&#x27; +
+      &#x27;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-light&quot; data-slot=&quot;light&quot;&gt;&#x27; +
+        &#x27;&lt;button type=&quot;button&quot; class=&quot;x&quot; data-ap-light=&quot;x&quot; aria-label=&quot;Close&quot;&gt;✕&lt;/button&gt;&#x27; +
+        &#x27;&lt;img alt=&quot;&quot;&gt;&#x27; +
+      &#x27;&lt;/div&gt;&#x27; +
+    &#x27;&lt;/div&gt;&#x27;;
+  PANE.querySelector(&#x27;[data-ap-open=&quot;colors&quot;]&#x27;).onclick = function(){
+    /* a side door, not a step: Colors opens over everything at its own z;
+       Back on the rail is still the way home. */
+    hidePane();
+    try{ if(window.CardinalColors) window.CardinalColors.open(); }catch(_){}
+    paintRail();
+  };
+  var light = PANE.querySelector(&#x27;[data-slot=&quot;light&quot;]&#x27;);
+  light.querySelector(&#x27;[data-ap-light=&quot;x&quot;]&#x27;).onclick = function(){ light.classList.remove(&#x27;on&#x27;); };
+  var wall = PANE.querySelector(&#x27;[data-slot=&quot;wall&quot;]&#x27;);
+  var c = sb();
+  if(!c){ wall.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Not signed in.&lt;/div&gt;&#x27;; return; }
+  if(!renders.length){
+    try{
+      var r = await c.from(&#x27;design_renders&#x27;)
+        .select(&#x27;id,title,render_path,preview_path,approved&#x27;)
+        .eq(&#x27;project_id&#x27;, proj.id).eq(&#x27;approved&#x27;, true)
+        .order(&#x27;created_at&#x27;, { ascending:false }).limit(40);
+      renders = (r &amp;&amp; r.data) || [];
+    }catch(_){ renders = []; }
+  }
+  if(!renders.length){
+    wall.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No approved visualizations for this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Queue them in the Designer before the visit and approve each one — &#x27; +
+      &#x27;nothing unreviewed reaches this screen.&lt;/div&gt;&#x27;;
+    return;
+  }
+  /* one round trip signs every path — the 633 lesson */
+  var paths = [];
+  renders.forEach(function(rd){
+    var p = rd.preview_path || rd.render_path;
+    if(p &amp;&amp; paths.indexOf(p) === -1) paths.push(p);
+  });
+  var urls = {};
+  try{
+    var sr = await c.storage.from(&#x27;photos&#x27;).createSignedUrls(paths, 3600);
+    ((sr &amp;&amp; sr.data) || []).forEach(function(row){
+      if(row &amp;&amp; row.path &amp;&amp; row.signedUrl) urls[row.path] = row.signedUrl;
+    });
+  }catch(_){}
+  wall.innerHTML = &#x27;&lt;div class=&quot;ap-grid&quot;&gt;&#x27; + renders.map(function(rd, i){
+    var p = rd.preview_path || rd.render_path;
+    var u = urls[p] || &#x27;&#x27;;
+    return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-card&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+      &#x27;&lt;img alt=&quot;&quot; &#x27; + (u ? &#x27;src=&quot;&#x27; + esc(u) + &#x27;&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; +
+      &#x27;&lt;span class=&quot;tt&quot;&gt;&#x27; + esc(rd.title || &#x27;Visualization&#x27;) + &#x27;&lt;/span&gt;&lt;/button&gt;&#x27;;
+  }).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+  wall.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-card&#x27;) : null;
+    if(!b) return;
+    var rd = renders[parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10)];
+    if(!rd) return;
+    var full = rd.render_path || rd.preview_path;
+    var img = light.querySelector(&#x27;img&#x27;);
+    img.src = urls[full] || urls[rd.preview_path || &#x27;&#x27;] || &#x27;&#x27;;
+    if(!urls[full] &amp;&amp; full){
+      c.storage.from(&#x27;photos&#x27;).createSignedUrl(full, 3600).then(function(r2){
+        var u2 = r2 &amp;&amp; r2.data &amp;&amp; r2.data.signedUrl;
+        if(u2){ urls[full] = u2; img.src = u2; }
+      });
+    }
+    light.classList.add(&#x27;on&#x27;);
+  };
+}
+
+/* ── documents (1162) ─────────────────────────────────────────────────
+   Both steps read this job&#x27;s inspection_reports rows - the same table
+   every estimate, contract and options sheet already lives in - and
+   show them through /api/share?t=&lt;token&gt;, the page that is already
+   client-facing, review-clean and finger-signable. Nothing new signs. */
+var docs = null;      /* cached rows for proj, cleared on pick */
+
+async function loadDocs(){
+  if(docs) return docs;
+  var c = sb();
+  if(!c || !proj) return (docs = []);
+  try{
+    var r = await c.from(&#x27;inspection_reports&#x27;)
+      .select(&#x27;id,title,share_token,signed_at,status,created_at&#x27;)
+      .eq(&#x27;project_id&#x27;, proj.id)
+      .order(&#x27;created_at&#x27;, { ascending:false }).limit(60);
+    docs = (r &amp;&amp; r.data) || [];
+  }catch(_){ docs = []; }
+  return docs;
+}
+
+/* the ensureShareToken convention (731), reachable outside the editor:
+   same mint, same db.update rails, so one token per document ever. */
+async function docToken(row){
+  if(row.share_token) return row.share_token;
+  var tok = (window.crypto &amp;&amp; crypto.randomUUID) ? crypto.randomUUID()
+          : (&#x27;t&#x27; + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+  if(!window.db || typeof window.db.update !== &#x27;function&#x27;) return null;
+  await window.db.update(row.id, { share_token: tok });
+  row.share_token = tok;
+  return tok;
+}
+
+/* mirrors api/share.js exactly - SIGN_RX (&#x27;Client Acceptance&#x27; footer),
+   SLOT_RX (an unfilled buyer sigslot), and the already-signed stamp. */
+function docSignable(html){
+  if(!html) return false;
+  if(html.indexOf(&#x27;data-clientsigned&#x27;) !== -1) return false;
+  return /class=&quot;lbl&quot;&gt;\s*Client Acceptance/.test(html) ||
+         /class=&quot;sigslot&quot; data-sig=&quot;buyer&quot;/.test(html);
+}
+
+function docFrame(tok){
+  return &#x27;&lt;div class=&quot;ap-doc&quot;&gt;&lt;iframe src=&quot;/api/share?t=&#x27; + esc(tok) + &#x27;&quot;&gt;&lt;/iframe&gt;&lt;/div&gt;&#x27;;
+}
+
+function docShell(eyebrow, h, sub, body){
+  return &#x27;&lt;div class=&quot;ap-wrap ap-wrap-doc&quot;&gt;&#x27; +
+    &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;&#x27; + esc(eyebrow) + &#x27;&lt;/p&gt;&#x27; +
+    &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;&#x27; + h + &#x27;&lt;/h1&gt;&#x27; +
+    (sub ? &#x27;&lt;p class=&quot;ap-sub&quot;&gt;&#x27; + sub + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) +
+    body + &#x27;&lt;/div&gt;&#x27;;
+}
+
+async function paintOptions(){
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;,
+    &#x27;Good, Better, Best — side by side.&#x27;, &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&#x27;);
+  var rows = await loadDocs();
+  var gbb = null;
+  for(var i = 0; i &lt; rows.length; i++){
+    if(String(rows[i].title || &#x27;&#x27;).indexOf(&#x27;Roof Options&#x27;) === 0){ gbb = rows[i]; break; }
+  }
+  if(!gbb){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No options sheet on this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Build one before the visit: open an estimate, tap &lt;b&gt;Options&lt;/b&gt; in its &#x27; +
+      &#x27;toolbar, pick the Good / Better / Best tiers and publish. It will be &#x27; +
+      &#x27;waiting here.&lt;/div&gt;&#x27;);
+    return;
+  }
+  var tok = null;
+  try{ tok = await docToken(gbb); }catch(_){}
+  if(!tok){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;Could not open the options sheet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;The share link could not be created from this sign-in — open the &#x27; +
+      &#x27;document once from the estimate editor and it will work here.&lt;/div&gt;&#x27;);
+    return;
+  }
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;,
+    &#x27;Initial the option you want us to proceed with — then the next step signs it.&#x27;,
+    docFrame(tok));
+}
+
+async function paintSign(){
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;,
+    &#x27;Pick the paperwork to sign.&#x27;, &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&#x27;);
+  var rows = await loadDocs();
+  if(!rows.length){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No documents on this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Publish the estimate or generate the contract before the visit and &#x27; +
+      &#x27;it will be waiting here to sign.&lt;/div&gt;&#x27;);
+    return;
+  }
+  /* 1149&#x27;s lesson is the whole design: the client signs THE DOCUMENT THEY
+     ARE LOOKING AT. One list, one explicit pick, then that document alone
+     fills the screen with its own Accept &amp; Sign. */
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;,
+    &#x27;Pick the paperwork — the signature lands on the document you open, and only that one.&#x27;,
+    &#x27;&lt;div class=&quot;ap-list&quot; data-slot=&quot;doclist&quot;&gt;&#x27; + rows.map(function(d, i){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-job&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+        &#x27;&lt;span class=&quot;nm&quot;&gt;&#x27; + esc(d.title || &#x27;(untitled)&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+        (d.signed_at ? &#x27;&lt;span class=&quot;st ap-signed&quot;&gt;Signed ✓&lt;/span&gt;&#x27; :
+                       &#x27;&lt;span class=&quot;st&quot;&gt;&#x27; + esc(d.status || &#x27;&#x27;) + &#x27;&lt;/span&gt;&#x27;) +
+        &#x27;&lt;span class=&quot;go&quot;&gt;→&lt;/span&gt;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27; +
+    &#x27;&lt;div data-slot=&quot;opensign&quot;&gt;&lt;/div&gt;&#x27;);
+  var list = PANE.querySelector(&#x27;[data-slot=&quot;doclist&quot;]&#x27;);
+  var host = PANE.querySelector(&#x27;[data-slot=&quot;opensign&quot;]&#x27;);
+  list.onclick = async function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-job&#x27;) : null;
+    if(!b) return;
+    var row = rows[parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10)];
+    if(!row) return;
+    host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Opening…&lt;/div&gt;&#x27;;
+    var c = sb(), html = &#x27;&#x27;;
+    try{
+      var r = await c.from(&#x27;inspection_reports&#x27;).select(&#x27;html&#x27;).eq(&#x27;id&#x27;, row.id).single();
+      html = (r &amp;&amp; r.data &amp;&amp; r.data.html) || &#x27;&#x27;;
+    }catch(_){}
+    if(!row.signed_at &amp;&amp; !docSignable(html)){
+      host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;&#x27; + esc(row.title || &#x27;This document&#x27;) +
+        &#x27;&lt;/b&gt; has no signature block, so it opens for review only. The estimate &#x27; +
+        &#x27;proposal and the contracts are the ones that sign.&lt;/div&gt;&#x27;;
+    }else{
+      host.innerHTML = &#x27;&#x27;;
+    }
+    var tok = null;
+    try{ tok = await docToken(row); }catch(_){}
+    if(!tok){
+      host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;Could not create the signing link&lt;/b&gt; &#x27; +
+        &#x27;from this sign-in — open the document once from the editor first.&lt;/div&gt;&#x27;;
+      return;
+    }
+    list.style.display = &#x27;none&#x27;;
+    host.innerHTML =
+      &#x27;&lt;div class=&quot;ap-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;ap-btn&quot; data-ap-doc=&quot;back&quot;&gt;‹ Other paperwork&lt;/button&gt;&lt;/div&gt;&#x27; +
+      (host.querySelector(&#x27;.ap-empty&#x27;) ? host.querySelector(&#x27;.ap-empty&#x27;).outerHTML : &#x27;&#x27;) +
+      docFrame(tok);
+    host.querySelector(&#x27;[data-ap-doc=&quot;back&quot;]&#x27;).onclick = function(){
+      host.innerHTML = &#x27;&#x27;; list.style.display = &#x27;&#x27;;
+    };
+  };
+}
+
+/* the delegated steps — open through public APIs only */
+function openRoof(){
+  hidePane();
+  try{
+    if(window.CardinalShowcase &amp;&amp; window.CardinalShowcase.openForProject){
+      window.CardinalShowcase.openForProject(proj, { showroom:true });
+    }
+  }catch(_){}
+}
+function openGood(){
+  var el = document.getElementById(&#x27;cr-show&#x27;);
+  var opened = el &amp;&amp; el.classList.contains(&#x27;open&#x27;);
+  hidePane();
+  try{
+    if(!opened &amp;&amp; window.CardinalShowcase) window.CardinalShowcase.open({ showroom:true });
+  }catch(_){}
+  /* drive the module&#x27;s own tab control — the same tap a finger makes.
+     Deferred a beat so a fresh open() has painted its tabs. */
+  setTimeout(function(){
+    var b = document.querySelector(&#x27;#cr-show [data-tab=&quot;work&quot;]&#x27;);
+    if(b) b.click();
+  }, opened ? 0 : 380);
+}
+function openWhy(){
+  hidePane();
+  try{ if(window.CardinalWhy) window.CardinalWhy.open(); }catch(_){}
+}
+
+async function go(ix){
+  if(!running) return;
+  if(ix &lt; 0 || ix &gt;= STEPS.length) return;
+  if(ix &gt; 0 &amp;&amp; !proj) return;         /* nothing past the picker without a job */
+  stepIx = ix;
+  var st = STEPS[stepIx];
+  /* leave whatever the previous step opened, through the modules&#x27; own doors */
+  closeModules();
+  if(st.kind === &#x27;pane&#x27;){
+    showPane();
+    if(st.id === &#x27;pick&#x27;)  paintPick();
+    if(st.id === &#x27;house&#x27;) await paintHouse();
+    if(st.id === &#x27;options&#x27;) await paintOptions();
+    if(st.id === &#x27;sign&#x27;)    await paintSign();
+  }else{
+    if(st.id === &#x27;roof&#x27;) openRoof();
+    if(st.id === &#x27;good&#x27;) openGood();
+    if(st.id === &#x27;why&#x27;)  openWhy();
+  }
+  /* every delegated open() runs hideAllViews(), which clears the pane —
+     correct for module steps; the rail is chrome and survives on its own. */
+  paintRail();
+}
+
+async function open(){
+  ensure();
+  try{ if(typeof window.hideAllViews === &#x27;function&#x27;) window.hideAllViews(); }catch(_){}
+  running = true;
+  proj = null; stepIx = 0; renders = []; docs = null;
+  showPane();
+  PANE.innerHTML = &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&lt;div class=&quot;ap-empty&quot;&gt;Loading jobs…&lt;/div&gt;&lt;/div&gt;&#x27;;
+  paintRail();
+  try{ projects = await loadProjects(); }catch(_){ projects = []; }
+  if(!running) return;
+  paintPick();
+  paintRail();
+  try{ if(window.navPush) window.navPush(&#x27;cr-appt&#x27;); }catch(_){}
+}
+
+function end(){
+  running = false;
+  closeModules();
+  hidePane();
+  if(RAIL) RAIL.classList.remove(&#x27;on&#x27;);
+  proj = null; stepIx = 0;
+  try{ if(typeof window.showHome === &#x27;function&#x27;) window.showHome(); }catch(_){}
+}
+
+window.CardinalAppointment = Object.assign(window.CardinalAppointment || {}, {
+  open  : open,
+  close : end
+});
+})();
+window.CardinalAppointment.open();&lt;/script&gt;&lt;/body&gt;"></iframe></div></div><div class="dev"><p class="cap">Phone · 390 — the rail folds to a counter</p><div class="screen"><iframe width="390" height="780" srcdoc="&lt;!doctype html&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;html,body{margin:0;background:#050607;}
+/* 1161 — The Appointment. A conductor, not a surface: it owns a running
+   order over screens that already exist and adds no new content. Theo&#x27;s
+   pick (b): the whole visit stays on the tablet — 1162 adds the Options
+   and Sign steps through the existing /api/share page, which is already
+   client-facing and finger-signable.
+
+   Blackout, single-theme, all literals (the cr-why/cr-show/cr-occ pattern —
+   448-449 immune by construction). Inks are the computed cr-why set: on
+   #050607 body #b9b3ad = 9.77:1, accent #f08a90 = 8.44:1; #c8202e is
+   3.57:1 here and is GROUNDS ONLY, never text. White on #c8202e is the
+   app-wide semantic white-on-coloured-ground, deliberately kept.
+
+   Two layers. The PANE (#cr-appt, z 9550) hosts the conductor&#x27;s own
+   steps — the job picker and the renders wall — and is registered in
+   hideAllViews() with the DISPLAY lever. The RAIL (#cr-appt-rail, z 9600)
+   is chrome, like #pwaNav: NOT in hideAllViews(), shown only while an
+   appointment is running, and it must sit above #cr-show&#x27;s 9500 or Next
+   dies inside the showroom. */
+#cr-appt{position:fixed;inset:0;z-index:9550;display:none;background:#050607;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  font-family:&#x27;Segoe UI&#x27;,-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-appt .ap-wrap{max-width:900px;margin:0 auto;padding:20px 22px 120px;box-sizing:border-box;}
+#cr-appt .ap-eyebrow{font:700 11px/1 &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  letter-spacing:.18em;text-transform:uppercase;color:#8f9296;margin:8px 0 0;}
+#cr-appt .ap-h{margin:10px 0 6px;font:700 clamp(26px,4.6vw,38px)/1.08 Georgia,&#x27;Times New Roman&#x27;,serif;
+  color:#f2f4f2;letter-spacing:-.01em;}
+#cr-appt .ap-sub{margin:0 0 18px;font-size:15.5px;line-height:1.5;color:#b9b3ad;}
+#cr-appt .ap-search{width:100%;box-sizing:border-box;padding:13px 15px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#f2f4f2;
+  font:600 16px &#x27;Segoe UI&#x27;,Arial,sans-serif;outline:none;}
+#cr-appt .ap-search::placeholder{color:#8f9296;}
+#cr-appt .ap-list{margin:14px 0 0;display:flex;flex-direction:column;gap:9px;}
+#cr-appt .ap-job{display:flex;align-items:center;gap:13px;width:100%;box-sizing:border-box;
+  text-align:left;padding:15px 16px;border-radius:13px;cursor:pointer;font-family:inherit;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);min-height:56px;}
+#cr-appt .ap-job:hover{border-color:rgba(242,244,242,.34);}
+#cr-appt .ap-job .nm{flex:1;min-width:0;font:700 16.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt .ap-job .st{flex:0 0 auto;font:700 11px/1 &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  letter-spacing:.12em;text-transform:uppercase;color:#8f9296;}
+#cr-appt .ap-job .go{flex:0 0 auto;color:#8f9296;font-size:15px;}
+#cr-appt .ap-empty{margin:26px 0 0;padding:18px;border-radius:13px;text-align:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
+  font-size:15.5px;line-height:1.55;color:#b9b3ad;}
+#cr-appt .ap-empty b{color:#f2f4f2;}
+/* the renders wall (step: house) */
+#cr-appt .ap-grid{margin:16px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+#cr-appt .ap-card{position:relative;border-radius:13px;overflow:hidden;cursor:pointer;
+  border:1px solid rgba(255,255,255,.14);background:#0e1013;padding:0;font-family:inherit;}
+#cr-appt .ap-card img{display:block;width:100%;height:190px;object-fit:cover;background:#0e1013;}
+#cr-appt .ap-card .tt{display:block;padding:10px 12px;font:600 13.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#d8d2cb;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt .ap-actions{margin:20px 0 0;display:flex;gap:11px;flex-wrap:wrap;}
+#cr-appt .ap-btn{display:inline-flex;align-items:center;gap:9px;padding:13px 20px;min-height:48px;
+  border-radius:12px;cursor:pointer;font:700 14.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;font-family:inherit;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#f2f4f2;box-sizing:border-box;}
+#cr-appt .ap-btn:hover{border-color:rgba(242,244,242,.36);}
+/* the lightbox inside the pane */
+#cr-appt .ap-light{position:fixed;inset:0;z-index:5;background:rgba(3,4,5,.94);
+  display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;}
+#cr-appt .ap-light.on{display:flex;}
+#cr-appt .ap-light img{max-width:100%;max-height:92vh;border-radius:10px;}
+/* 1162: a shared document fills the step, and stops 92px short of the
+   bottom so the share page&#x27;s own fixed Accept &amp; Sign bar (csBar,
+   bottom:0 INSIDE the iframe viewport) lands above the rail instead of
+   underneath it. The wrap loses its padding for these steps. */
+#cr-appt .ap-wrap-doc{max-width:none;padding:14px 14px 0;height:100%;box-sizing:border-box;
+  display:flex;flex-direction:column;}
+#cr-appt .ap-wrap-doc .ap-h{font-size:clamp(21px,3.4vw,28px);margin:6px 0 4px;}
+#cr-appt .ap-wrap-doc .ap-sub{margin:0 0 10px;}
+#cr-appt .ap-doc{flex:1;min-height:0;margin:4px 0 92px;border-radius:12px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.16);background:#fff;}
+#cr-appt .ap-doc iframe{display:block;width:100%;height:100%;border:0;background:#fff;}
+#cr-appt .ap-signed{color:#7fc98f;}
+#cr-appt .ap-light .x{position:absolute;top:14px;right:14px;width:46px;height:46px;border-radius:12px;
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);color:#f2f4f2;
+  font-size:19px;cursor:pointer;font-family:inherit;}
+/* ── the rail ── */
+#cr-appt-rail{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9600;
+  display:none;align-items:center;gap:6px;padding:8px 10px;border-radius:16px;
+  background:rgba(10,11,13,.94);border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 10px 30px rgba(0,0,0,.55);max-width:calc(100vw - 16px);box-sizing:border-box;
+  font-family:&#x27;Segoe UI&#x27;,-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-appt-rail.on{display:flex;}
+#cr-appt-rail button{font-family:inherit;cursor:pointer;box-sizing:border-box;flex:0 0 auto;}
+#cr-appt-rail .ar-nav{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#f2f4f2;font-size:17px;}
+#cr-appt-rail .ar-nav:disabled{opacity:.35;cursor:default;}
+#cr-appt-rail .ar-step{min-width:46px;height:46px;padding:0 10px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.13);background:transparent;color:#b9b3ad;
+  font:700 11px/1.15 &#x27;Segoe UI&#x27;,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;}
+#cr-appt-rail .ar-step.on{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-appt-rail .ar-x{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#b9b3ad;font-size:16px;}
+#cr-appt-rail .ar-who{max-width:150px;padding:0 8px;font:700 12px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt-rail .ar-count{display:none;padding:0 9px;font:700 13px &#x27;Segoe UI&#x27;,Arial,sans-serif;color:#f2f4f2;}
+@media (max-width:700px){
+  /* eight 44px targets do not fit in 390px — measured, not assumed —
+     and 1162&#x27;s seven stops moved the threshold to 700px. The
+     jump buttons give way to a step counter; Back/Next carry the walk. */
+  #cr-appt-rail .ar-step{display:none;}
+  #cr-appt-rail .ar-count{display:inline;}
+  #cr-appt-rail .ar-who{display:none;}
+}
+&lt;/style&gt;&lt;body&gt;&lt;script&gt;
+var rows=[{id:&#x27;p1&#x27;,name:&#x27;Kim Lawson&#x27;,stage:&#x27;Approved&#x27;},
+          {id:&#x27;p2&#x27;,name:&#x27;Dave &amp; Sandy Miller&#x27;,stage:&#x27;Scheduled&#x27;},
+          {id:&#x27;p3&#x27;,name:&#x27;Habitat for Humanity - Elm St&#x27;,stage:&#x27;Approved&#x27;}];
+var docs=[{id:&#x27;d1&#x27;,title:&#x27;Roof Options — Kim Lawson&#x27;,share_token:&#x27;tokO&#x27;,signed_at:null,status:&#x27;draft&#x27;},
+          {id:&#x27;d2&#x27;,title:&#x27;Estimate — Kim Lawson&#x27;,share_token:&#x27;tokE&#x27;,signed_at:null,status:&#x27;sent&#x27;},
+          {id:&#x27;d3&#x27;,title:&#x27;Contract — Roofing — Kim Lawson&#x27;,share_token:null,signed_at:&#x27;2026-08-29&#x27;,status:&#x27;sent&#x27;}];
+function q(t){var o={_eq:{}};[&#x27;select&#x27;,&#x27;order&#x27;,&#x27;limit&#x27;].forEach(function(m){o[m]=function(){return o;}});
+o.eq=function(k,v){o._eq[k]=v;return o;};
+o.single=function(){return{then:function(res){return Promise.resolve({data:{html:&#x27;&lt;div class=&quot;lbl&quot;&gt;Client Acceptance&lt;/div&gt;&#x27;}}).then(res);}}};
+o.then=function(res){var d=[];if(t===&#x27;projects&#x27;)d=rows;if(t===&#x27;inspection_reports&#x27;)d=docs;
+if(t===&#x27;design_renders&#x27;)d=[];return Promise.resolve({data:d}).then(res);};return o;}
+Object.defineProperty(window,&#x27;supa&#x27;,{value:{from:q,
+  storage:{from:function(){return{createSignedUrls:function(){return Promise.resolve({data:[]});},
+                                  createSignedUrl:function(){return Promise.resolve({data:{}});}}}}},writable:false});
+window.db={update:function(){return Promise.resolve();}};
+window.CardinalShowcase={openForProject:function(){},open:function(){},close:function(){}};
+window.CardinalWhy={open:function(){},close:function(){}};
+window.CardinalColors={open:function(){},close:function(){}};
+
+(function(){
+&#x27;use strict&#x27;;
+/* 1161 — The Appointment · v2026-08-30 build 1161
+   The running order for the in-home visit, over surfaces that already
+   exist: their roof (The Walk, in showroom mode) → what good looks like
+   (Hall of Fame) → why Cardinal (1160) → their house (approved Visualizer
+   renders + Colors). 1162 adds Options &amp; Sign via /api/share.
+
+   It is a CONDUCTOR: it opens each module through that module&#x27;s own
+   public API and closes through the same door hideAllViews() uses, per
+   surface (the 570-572 lever rule). It writes NO scroll lock (count
+   stays 13), reads design_renders under its own RLS (admin-or-own, the
+   same rows the Visualizer&#x27;s Present shows this rep), and renders the
+   client&#x27;s name and nothing else about them on the rail. */
+var PANE = null, RAIL = null;
+var proj = null;        /* the picked job {id,name,stage} */
+var stepIx = 0;         /* index into STEPS */
+var running = false;
+var projects = [];
+var renders = [];       /* approved design_renders rows for proj */
+
+/* One array is the whole running order — 1162 extends it, nothing else
+   changes. kind &#x27;pane&#x27; renders inside #cr-appt; kind &#x27;module&#x27; delegates
+   to an existing surface and hides the pane. */
+var STEPS = [
+  { id:&#x27;pick&#x27;,  label:&#x27;Job&#x27;,   kind:&#x27;pane&#x27;   },
+  { id:&#x27;roof&#x27;,  label:&#x27;Roof&#x27;,  kind:&#x27;module&#x27; },
+  { id:&#x27;good&#x27;,  label:&#x27;Good&#x27;,  kind:&#x27;module&#x27; },
+  { id:&#x27;why&#x27;,   label:&#x27;Why&#x27;,   kind:&#x27;module&#x27; },
+  { id:&#x27;house&#x27;, label:&#x27;House&#x27;, kind:&#x27;pane&#x27;   },
+  /* 1162 - option (b): the visit ends on this tablet. Both steps ride
+     the EXISTING /api/share page - the same one a client signs on their
+     own phone - in an iframe: it is public-by-token, carries no CRM,
+     and injects Accept &amp; Sign itself when the document is signable. */
+  { id:&#x27;options&#x27;, label:&#x27;Options&#x27;, kind:&#x27;pane&#x27; },
+  { id:&#x27;sign&#x27;,    label:&#x27;Sign&#x27;,    kind:&#x27;pane&#x27; }
+];
+
+function esc(v){
+  return String(v == null ? &#x27;&#x27; : v)
+    .replace(/&amp;/g,&#x27;&amp;amp;&#x27;).replace(/&lt;/g,&#x27;&amp;lt;&#x27;).replace(/&gt;/g,&#x27;&amp;gt;&#x27;)
+    .replace(/&quot;/g,&#x27;&amp;quot;&#x27;);
+}
+function sb(){ return window.supa || null; }
+
+function ensure(){
+  if(PANE &amp;&amp; PANE.isConnected &amp;&amp; RAIL &amp;&amp; RAIL.isConnected) return;
+  PANE = document.getElementById(&#x27;cr-appt&#x27;);
+  if(!PANE){
+    PANE = document.createElement(&#x27;div&#x27;);
+    PANE.id = &#x27;cr-appt&#x27;;
+    document.body.appendChild(PANE);
+  }
+  RAIL = document.getElementById(&#x27;cr-appt-rail&#x27;);
+  if(!RAIL){
+    RAIL = document.createElement(&#x27;div&#x27;);
+    RAIL.id = &#x27;cr-appt-rail&#x27;;
+    document.body.appendChild(RAIL);
+  }
+  RAIL.innerHTML =
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-x&quot; data-ap=&quot;end&quot; aria-label=&quot;End the appointment&quot;&gt;✕&lt;/button&gt;&#x27; +
+    &#x27;&lt;span class=&quot;ar-who&quot; data-slot=&quot;who&quot;&gt;&lt;/span&gt;&#x27; +
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-nav&quot; data-ap=&quot;back&quot; aria-label=&quot;Back&quot;&gt;‹&lt;/button&gt;&#x27; +
+    STEPS.map(function(st, i){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-step&quot; data-ap=&quot;step&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+        esc(st.label) + &#x27;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;) +
+    &#x27;&lt;span class=&quot;ar-count&quot; data-slot=&quot;count&quot;&gt;&lt;/span&gt;&#x27; +
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-nav&quot; data-ap=&quot;next&quot; aria-label=&quot;Next&quot;&gt;›&lt;/button&gt;&#x27;;
+  RAIL.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;[data-ap]&#x27;) : null;
+    if(!b) return;
+    var act = b.getAttribute(&#x27;data-ap&#x27;);
+    if(act === &#x27;end&#x27;)  return void end();
+    if(act === &#x27;back&#x27;) return void go(stepIx - 1);
+    if(act === &#x27;next&#x27;) return void go(stepIx + 1);
+    if(act === &#x27;step&#x27;) return void go(parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10));
+  };
+}
+
+function paintRail(){
+  if(!RAIL) return;
+  RAIL.classList.toggle(&#x27;on&#x27;, running);
+  var who = RAIL.querySelector(&#x27;[data-slot=&quot;who&quot;]&#x27;);
+  if(who) who.textContent = proj ? (proj.name || &#x27;&#x27;) : &#x27;&#x27;;
+  RAIL.querySelectorAll(&#x27;.ar-step&#x27;).forEach(function(b, i){
+    b.classList.toggle(&#x27;on&#x27;, i === stepIx);
+    /* until a job is picked the only live stop is the picker */
+    b.disabled = !proj &amp;&amp; i &gt; 0;
+  });
+  var ct = RAIL.querySelector(&#x27;[data-slot=&quot;count&quot;]&#x27;);
+  if(ct) ct.textContent = (stepIx + 1) + &#x27;/&#x27; + STEPS.length;
+  var back = RAIL.querySelector(&#x27;[data-ap=&quot;back&quot;]&#x27;);
+  var next = RAIL.querySelector(&#x27;[data-ap=&quot;next&quot;]&#x27;);
+  if(back) back.disabled = stepIx &lt;= 0;
+  if(next) next.disabled = (stepIx &gt;= STEPS.length - 1) || (!proj &amp;&amp; stepIx === 0);
+}
+
+/* Close every module a step may have opened, through each one&#x27;s OWN door.
+   A module&#x27;s close() can no-op without throwing (the 570-572 class), so
+   the display-shown ones are also cleared directly, same lever
+   hideAllViews() uses on them. */
+function closeModules(){
+  try{ if(window.CardinalShowcase &amp;&amp; window.CardinalShowcase.close) window.CardinalShowcase.close(false); }catch(_){}
+  try{ if(window.CardinalWhy &amp;&amp; window.CardinalWhy.close) window.CardinalWhy.close(); }catch(_){}
+  try{ if(window.CardinalColors &amp;&amp; window.CardinalColors.close) window.CardinalColors.close(); }catch(_){}
+  var w = document.getElementById(&#x27;cr-why&#x27;);   if(w) w.style.display = &#x27;none&#x27;;
+  var o = document.getElementById(&#x27;cr-occ&#x27;);   if(o) o.style.display = &#x27;none&#x27;;
+}
+
+function showPane(){ ensure(); PANE.style.display = &#x27;block&#x27;; PANE.scrollTop = 0; }
+function hidePane(){ if(PANE) PANE.style.display = &#x27;none&#x27;; }
+
+/* ── steps ─────────────────────────────────────────────────────────── */
+async function loadProjects(){
+  var c = sb();
+  if(!c) return [];
+  var r = await c.from(&#x27;projects&#x27;).select(&#x27;id,name,stage&#x27;)
+    .order(&#x27;created_at&#x27;, { ascending:false }).limit(400);
+  return (r &amp;&amp; r.data) || [];
+}
+
+function paintPick(){
+  var rows = projects;
+  PANE.innerHTML =
+    &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;The Appointment&lt;/p&gt;&#x27; +
+      &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;Whose house are we at?&lt;/h1&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-sub&quot;&gt;Pick the job and the visit runs in order — their roof, our work, why Cardinal, their house in colour, the options, the signature.&lt;/p&gt;&#x27; +
+      &#x27;&lt;input type=&quot;search&quot; class=&quot;ap-search&quot; data-slot=&quot;q&quot; placeholder=&quot;Search by name…&quot;&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-list&quot; data-slot=&quot;list&quot;&gt;&lt;/div&gt;&#x27; +
+    &#x27;&lt;/div&gt;&#x27;;
+  var list = PANE.querySelector(&#x27;[data-slot=&quot;list&quot;]&#x27;);
+  var q = PANE.querySelector(&#x27;[data-slot=&quot;q&quot;]&#x27;);
+  function draw(){
+    var needle = (q.value || &#x27;&#x27;).trim().toLowerCase();
+    var vis = rows.filter(function(p){
+      return !needle || String(p.name || &#x27;&#x27;).toLowerCase().indexOf(needle) !== -1;
+    }).slice(0, 60);
+    if(!vis.length){
+      list.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&#x27; +
+        (rows.length ? &#x27;No job matches that.&#x27; :
+         &#x27;&lt;b&gt;No jobs you can see.&lt;/b&gt; Jobs are scoped to your sign-in.&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+      return;
+    }
+    list.innerHTML = vis.map(function(p){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-job&quot; data-id=&quot;&#x27; + esc(p.id) + &#x27;&quot;&gt;&#x27; +
+        &#x27;&lt;span class=&quot;nm&quot;&gt;&#x27; + esc(p.name || &#x27;(no name)&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+        (p.stage ? &#x27;&lt;span class=&quot;st&quot;&gt;&#x27; + esc(p.stage) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) +
+        &#x27;&lt;span class=&quot;go&quot;&gt;→&lt;/span&gt;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;);
+  }
+  q.oninput = draw;
+  list.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-job&#x27;) : null;
+    if(!b) return;
+    var id = b.getAttribute(&#x27;data-id&#x27;);
+    for(var i = 0; i &lt; rows.length; i++){
+      if(String(rows[i].id) === String(id)){ proj = rows[i]; break; }
+    }
+    renders = []; docs = null;
+    go(1);
+  };
+  draw();
+}
+
+async function paintHouse(){
+  PANE.innerHTML =
+    &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;&#x27; + esc(proj ? proj.name : &#x27;&#x27;) + &#x27;&lt;/p&gt;&#x27; +
+      &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;Their house, your materials&lt;/h1&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-sub&quot;&gt;Approved visualizations for this job — reviewed by a person before anyone at this table sees them.&lt;/p&gt;&#x27; +
+      &#x27;&lt;div data-slot=&quot;wall&quot;&gt;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-actions&quot;&gt;&#x27; +
+        &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-btn&quot; data-ap-open=&quot;colors&quot;&gt;Shingle colours →&lt;/button&gt;&#x27; +
+      &#x27;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-light&quot; data-slot=&quot;light&quot;&gt;&#x27; +
+        &#x27;&lt;button type=&quot;button&quot; class=&quot;x&quot; data-ap-light=&quot;x&quot; aria-label=&quot;Close&quot;&gt;✕&lt;/button&gt;&#x27; +
+        &#x27;&lt;img alt=&quot;&quot;&gt;&#x27; +
+      &#x27;&lt;/div&gt;&#x27; +
+    &#x27;&lt;/div&gt;&#x27;;
+  PANE.querySelector(&#x27;[data-ap-open=&quot;colors&quot;]&#x27;).onclick = function(){
+    /* a side door, not a step: Colors opens over everything at its own z;
+       Back on the rail is still the way home. */
+    hidePane();
+    try{ if(window.CardinalColors) window.CardinalColors.open(); }catch(_){}
+    paintRail();
+  };
+  var light = PANE.querySelector(&#x27;[data-slot=&quot;light&quot;]&#x27;);
+  light.querySelector(&#x27;[data-ap-light=&quot;x&quot;]&#x27;).onclick = function(){ light.classList.remove(&#x27;on&#x27;); };
+  var wall = PANE.querySelector(&#x27;[data-slot=&quot;wall&quot;]&#x27;);
+  var c = sb();
+  if(!c){ wall.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Not signed in.&lt;/div&gt;&#x27;; return; }
+  if(!renders.length){
+    try{
+      var r = await c.from(&#x27;design_renders&#x27;)
+        .select(&#x27;id,title,render_path,preview_path,approved&#x27;)
+        .eq(&#x27;project_id&#x27;, proj.id).eq(&#x27;approved&#x27;, true)
+        .order(&#x27;created_at&#x27;, { ascending:false }).limit(40);
+      renders = (r &amp;&amp; r.data) || [];
+    }catch(_){ renders = []; }
+  }
+  if(!renders.length){
+    wall.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No approved visualizations for this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Queue them in the Designer before the visit and approve each one — &#x27; +
+      &#x27;nothing unreviewed reaches this screen.&lt;/div&gt;&#x27;;
+    return;
+  }
+  /* one round trip signs every path — the 633 lesson */
+  var paths = [];
+  renders.forEach(function(rd){
+    var p = rd.preview_path || rd.render_path;
+    if(p &amp;&amp; paths.indexOf(p) === -1) paths.push(p);
+  });
+  var urls = {};
+  try{
+    var sr = await c.storage.from(&#x27;photos&#x27;).createSignedUrls(paths, 3600);
+    ((sr &amp;&amp; sr.data) || []).forEach(function(row){
+      if(row &amp;&amp; row.path &amp;&amp; row.signedUrl) urls[row.path] = row.signedUrl;
+    });
+  }catch(_){}
+  wall.innerHTML = &#x27;&lt;div class=&quot;ap-grid&quot;&gt;&#x27; + renders.map(function(rd, i){
+    var p = rd.preview_path || rd.render_path;
+    var u = urls[p] || &#x27;&#x27;;
+    return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-card&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+      &#x27;&lt;img alt=&quot;&quot; &#x27; + (u ? &#x27;src=&quot;&#x27; + esc(u) + &#x27;&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; +
+      &#x27;&lt;span class=&quot;tt&quot;&gt;&#x27; + esc(rd.title || &#x27;Visualization&#x27;) + &#x27;&lt;/span&gt;&lt;/button&gt;&#x27;;
+  }).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+  wall.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-card&#x27;) : null;
+    if(!b) return;
+    var rd = renders[parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10)];
+    if(!rd) return;
+    var full = rd.render_path || rd.preview_path;
+    var img = light.querySelector(&#x27;img&#x27;);
+    img.src = urls[full] || urls[rd.preview_path || &#x27;&#x27;] || &#x27;&#x27;;
+    if(!urls[full] &amp;&amp; full){
+      c.storage.from(&#x27;photos&#x27;).createSignedUrl(full, 3600).then(function(r2){
+        var u2 = r2 &amp;&amp; r2.data &amp;&amp; r2.data.signedUrl;
+        if(u2){ urls[full] = u2; img.src = u2; }
+      });
+    }
+    light.classList.add(&#x27;on&#x27;);
+  };
+}
+
+/* ── documents (1162) ─────────────────────────────────────────────────
+   Both steps read this job&#x27;s inspection_reports rows - the same table
+   every estimate, contract and options sheet already lives in - and
+   show them through /api/share?t=&lt;token&gt;, the page that is already
+   client-facing, review-clean and finger-signable. Nothing new signs. */
+var docs = null;      /* cached rows for proj, cleared on pick */
+
+async function loadDocs(){
+  if(docs) return docs;
+  var c = sb();
+  if(!c || !proj) return (docs = []);
+  try{
+    var r = await c.from(&#x27;inspection_reports&#x27;)
+      .select(&#x27;id,title,share_token,signed_at,status,created_at&#x27;)
+      .eq(&#x27;project_id&#x27;, proj.id)
+      .order(&#x27;created_at&#x27;, { ascending:false }).limit(60);
+    docs = (r &amp;&amp; r.data) || [];
+  }catch(_){ docs = []; }
+  return docs;
+}
+
+/* the ensureShareToken convention (731), reachable outside the editor:
+   same mint, same db.update rails, so one token per document ever. */
+async function docToken(row){
+  if(row.share_token) return row.share_token;
+  var tok = (window.crypto &amp;&amp; crypto.randomUUID) ? crypto.randomUUID()
+          : (&#x27;t&#x27; + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+  if(!window.db || typeof window.db.update !== &#x27;function&#x27;) return null;
+  await window.db.update(row.id, { share_token: tok });
+  row.share_token = tok;
+  return tok;
+}
+
+/* mirrors api/share.js exactly - SIGN_RX (&#x27;Client Acceptance&#x27; footer),
+   SLOT_RX (an unfilled buyer sigslot), and the already-signed stamp. */
+function docSignable(html){
+  if(!html) return false;
+  if(html.indexOf(&#x27;data-clientsigned&#x27;) !== -1) return false;
+  return /class=&quot;lbl&quot;&gt;\s*Client Acceptance/.test(html) ||
+         /class=&quot;sigslot&quot; data-sig=&quot;buyer&quot;/.test(html);
+}
+
+function docFrame(tok){
+  return &#x27;&lt;div class=&quot;ap-doc&quot;&gt;&lt;iframe src=&quot;/api/share?t=&#x27; + esc(tok) + &#x27;&quot;&gt;&lt;/iframe&gt;&lt;/div&gt;&#x27;;
+}
+
+function docShell(eyebrow, h, sub, body){
+  return &#x27;&lt;div class=&quot;ap-wrap ap-wrap-doc&quot;&gt;&#x27; +
+    &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;&#x27; + esc(eyebrow) + &#x27;&lt;/p&gt;&#x27; +
+    &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;&#x27; + h + &#x27;&lt;/h1&gt;&#x27; +
+    (sub ? &#x27;&lt;p class=&quot;ap-sub&quot;&gt;&#x27; + sub + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) +
+    body + &#x27;&lt;/div&gt;&#x27;;
+}
+
+async function paintOptions(){
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;,
+    &#x27;Good, Better, Best — side by side.&#x27;, &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&#x27;);
+  var rows = await loadDocs();
+  var gbb = null;
+  for(var i = 0; i &lt; rows.length; i++){
+    if(String(rows[i].title || &#x27;&#x27;).indexOf(&#x27;Roof Options&#x27;) === 0){ gbb = rows[i]; break; }
+  }
+  if(!gbb){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No options sheet on this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Build one before the visit: open an estimate, tap &lt;b&gt;Options&lt;/b&gt; in its &#x27; +
+      &#x27;toolbar, pick the Good / Better / Best tiers and publish. It will be &#x27; +
+      &#x27;waiting here.&lt;/div&gt;&#x27;);
+    return;
+  }
+  var tok = null;
+  try{ tok = await docToken(gbb); }catch(_){}
+  if(!tok){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;Could not open the options sheet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;The share link could not be created from this sign-in — open the &#x27; +
+      &#x27;document once from the estimate editor and it will work here.&lt;/div&gt;&#x27;);
+    return;
+  }
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;,
+    &#x27;Initial the option you want us to proceed with — then the next step signs it.&#x27;,
+    docFrame(tok));
+}
+
+async function paintSign(){
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;,
+    &#x27;Pick the paperwork to sign.&#x27;, &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&#x27;);
+  var rows = await loadDocs();
+  if(!rows.length){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No documents on this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Publish the estimate or generate the contract before the visit and &#x27; +
+      &#x27;it will be waiting here to sign.&lt;/div&gt;&#x27;);
+    return;
+  }
+  /* 1149&#x27;s lesson is the whole design: the client signs THE DOCUMENT THEY
+     ARE LOOKING AT. One list, one explicit pick, then that document alone
+     fills the screen with its own Accept &amp; Sign. */
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;,
+    &#x27;Pick the paperwork — the signature lands on the document you open, and only that one.&#x27;,
+    &#x27;&lt;div class=&quot;ap-list&quot; data-slot=&quot;doclist&quot;&gt;&#x27; + rows.map(function(d, i){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-job&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+        &#x27;&lt;span class=&quot;nm&quot;&gt;&#x27; + esc(d.title || &#x27;(untitled)&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+        (d.signed_at ? &#x27;&lt;span class=&quot;st ap-signed&quot;&gt;Signed ✓&lt;/span&gt;&#x27; :
+                       &#x27;&lt;span class=&quot;st&quot;&gt;&#x27; + esc(d.status || &#x27;&#x27;) + &#x27;&lt;/span&gt;&#x27;) +
+        &#x27;&lt;span class=&quot;go&quot;&gt;→&lt;/span&gt;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27; +
+    &#x27;&lt;div data-slot=&quot;opensign&quot;&gt;&lt;/div&gt;&#x27;);
+  var list = PANE.querySelector(&#x27;[data-slot=&quot;doclist&quot;]&#x27;);
+  var host = PANE.querySelector(&#x27;[data-slot=&quot;opensign&quot;]&#x27;);
+  list.onclick = async function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-job&#x27;) : null;
+    if(!b) return;
+    var row = rows[parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10)];
+    if(!row) return;
+    host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Opening…&lt;/div&gt;&#x27;;
+    var c = sb(), html = &#x27;&#x27;;
+    try{
+      var r = await c.from(&#x27;inspection_reports&#x27;).select(&#x27;html&#x27;).eq(&#x27;id&#x27;, row.id).single();
+      html = (r &amp;&amp; r.data &amp;&amp; r.data.html) || &#x27;&#x27;;
+    }catch(_){}
+    if(!row.signed_at &amp;&amp; !docSignable(html)){
+      host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;&#x27; + esc(row.title || &#x27;This document&#x27;) +
+        &#x27;&lt;/b&gt; has no signature block, so it opens for review only. The estimate &#x27; +
+        &#x27;proposal and the contracts are the ones that sign.&lt;/div&gt;&#x27;;
+    }else{
+      host.innerHTML = &#x27;&#x27;;
+    }
+    var tok = null;
+    try{ tok = await docToken(row); }catch(_){}
+    if(!tok){
+      host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;Could not create the signing link&lt;/b&gt; &#x27; +
+        &#x27;from this sign-in — open the document once from the editor first.&lt;/div&gt;&#x27;;
+      return;
+    }
+    list.style.display = &#x27;none&#x27;;
+    host.innerHTML =
+      &#x27;&lt;div class=&quot;ap-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;ap-btn&quot; data-ap-doc=&quot;back&quot;&gt;‹ Other paperwork&lt;/button&gt;&lt;/div&gt;&#x27; +
+      (host.querySelector(&#x27;.ap-empty&#x27;) ? host.querySelector(&#x27;.ap-empty&#x27;).outerHTML : &#x27;&#x27;) +
+      docFrame(tok);
+    host.querySelector(&#x27;[data-ap-doc=&quot;back&quot;]&#x27;).onclick = function(){
+      host.innerHTML = &#x27;&#x27;; list.style.display = &#x27;&#x27;;
+    };
+  };
+}
+
+/* the delegated steps — open through public APIs only */
+function openRoof(){
+  hidePane();
+  try{
+    if(window.CardinalShowcase &amp;&amp; window.CardinalShowcase.openForProject){
+      window.CardinalShowcase.openForProject(proj, { showroom:true });
+    }
+  }catch(_){}
+}
+function openGood(){
+  var el = document.getElementById(&#x27;cr-show&#x27;);
+  var opened = el &amp;&amp; el.classList.contains(&#x27;open&#x27;);
+  hidePane();
+  try{
+    if(!opened &amp;&amp; window.CardinalShowcase) window.CardinalShowcase.open({ showroom:true });
+  }catch(_){}
+  /* drive the module&#x27;s own tab control — the same tap a finger makes.
+     Deferred a beat so a fresh open() has painted its tabs. */
+  setTimeout(function(){
+    var b = document.querySelector(&#x27;#cr-show [data-tab=&quot;work&quot;]&#x27;);
+    if(b) b.click();
+  }, opened ? 0 : 380);
+}
+function openWhy(){
+  hidePane();
+  try{ if(window.CardinalWhy) window.CardinalWhy.open(); }catch(_){}
+}
+
+async function go(ix){
+  if(!running) return;
+  if(ix &lt; 0 || ix &gt;= STEPS.length) return;
+  if(ix &gt; 0 &amp;&amp; !proj) return;         /* nothing past the picker without a job */
+  stepIx = ix;
+  var st = STEPS[stepIx];
+  /* leave whatever the previous step opened, through the modules&#x27; own doors */
+  closeModules();
+  if(st.kind === &#x27;pane&#x27;){
+    showPane();
+    if(st.id === &#x27;pick&#x27;)  paintPick();
+    if(st.id === &#x27;house&#x27;) await paintHouse();
+    if(st.id === &#x27;options&#x27;) await paintOptions();
+    if(st.id === &#x27;sign&#x27;)    await paintSign();
+  }else{
+    if(st.id === &#x27;roof&#x27;) openRoof();
+    if(st.id === &#x27;good&#x27;) openGood();
+    if(st.id === &#x27;why&#x27;)  openWhy();
+  }
+  /* every delegated open() runs hideAllViews(), which clears the pane —
+     correct for module steps; the rail is chrome and survives on its own. */
+  paintRail();
+}
+
+async function open(){
+  ensure();
+  try{ if(typeof window.hideAllViews === &#x27;function&#x27;) window.hideAllViews(); }catch(_){}
+  running = true;
+  proj = null; stepIx = 0; renders = []; docs = null;
+  showPane();
+  PANE.innerHTML = &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&lt;div class=&quot;ap-empty&quot;&gt;Loading jobs…&lt;/div&gt;&lt;/div&gt;&#x27;;
+  paintRail();
+  try{ projects = await loadProjects(); }catch(_){ projects = []; }
+  if(!running) return;
+  paintPick();
+  paintRail();
+  try{ if(window.navPush) window.navPush(&#x27;cr-appt&#x27;); }catch(_){}
+}
+
+function end(){
+  running = false;
+  closeModules();
+  hidePane();
+  if(RAIL) RAIL.classList.remove(&#x27;on&#x27;);
+  proj = null; stepIx = 0;
+  try{ if(typeof window.showHome === &#x27;function&#x27;) window.showHome(); }catch(_){}
+}
+
+window.CardinalAppointment = Object.assign(window.CardinalAppointment || {}, {
+  open  : open,
+  close : end
+});
+})();
+window.CardinalAppointment.open();&lt;/script&gt;&lt;/body&gt;"></iframe></div></div></div><h2>Step 7 — Sign: pick the paperwork, then it signs on the tablet</h2><div class="row"><div class="dev"><p class="cap">iPad landscape · 1194</p><div class="screen"><iframe width="1194" height="834" srcdoc="&lt;!doctype html&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;html,body{margin:0;background:#050607;}
+/* 1161 — The Appointment. A conductor, not a surface: it owns a running
+   order over screens that already exist and adds no new content. Theo&#x27;s
+   pick (b): the whole visit stays on the tablet — 1162 adds the Options
+   and Sign steps through the existing /api/share page, which is already
+   client-facing and finger-signable.
+
+   Blackout, single-theme, all literals (the cr-why/cr-show/cr-occ pattern —
+   448-449 immune by construction). Inks are the computed cr-why set: on
+   #050607 body #b9b3ad = 9.77:1, accent #f08a90 = 8.44:1; #c8202e is
+   3.57:1 here and is GROUNDS ONLY, never text. White on #c8202e is the
+   app-wide semantic white-on-coloured-ground, deliberately kept.
+
+   Two layers. The PANE (#cr-appt, z 9550) hosts the conductor&#x27;s own
+   steps — the job picker and the renders wall — and is registered in
+   hideAllViews() with the DISPLAY lever. The RAIL (#cr-appt-rail, z 9600)
+   is chrome, like #pwaNav: NOT in hideAllViews(), shown only while an
+   appointment is running, and it must sit above #cr-show&#x27;s 9500 or Next
+   dies inside the showroom. */
+#cr-appt{position:fixed;inset:0;z-index:9550;display:none;background:#050607;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  font-family:&#x27;Segoe UI&#x27;,-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-appt .ap-wrap{max-width:900px;margin:0 auto;padding:20px 22px 120px;box-sizing:border-box;}
+#cr-appt .ap-eyebrow{font:700 11px/1 &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  letter-spacing:.18em;text-transform:uppercase;color:#8f9296;margin:8px 0 0;}
+#cr-appt .ap-h{margin:10px 0 6px;font:700 clamp(26px,4.6vw,38px)/1.08 Georgia,&#x27;Times New Roman&#x27;,serif;
+  color:#f2f4f2;letter-spacing:-.01em;}
+#cr-appt .ap-sub{margin:0 0 18px;font-size:15.5px;line-height:1.5;color:#b9b3ad;}
+#cr-appt .ap-search{width:100%;box-sizing:border-box;padding:13px 15px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#f2f4f2;
+  font:600 16px &#x27;Segoe UI&#x27;,Arial,sans-serif;outline:none;}
+#cr-appt .ap-search::placeholder{color:#8f9296;}
+#cr-appt .ap-list{margin:14px 0 0;display:flex;flex-direction:column;gap:9px;}
+#cr-appt .ap-job{display:flex;align-items:center;gap:13px;width:100%;box-sizing:border-box;
+  text-align:left;padding:15px 16px;border-radius:13px;cursor:pointer;font-family:inherit;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);min-height:56px;}
+#cr-appt .ap-job:hover{border-color:rgba(242,244,242,.34);}
+#cr-appt .ap-job .nm{flex:1;min-width:0;font:700 16.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt .ap-job .st{flex:0 0 auto;font:700 11px/1 &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  letter-spacing:.12em;text-transform:uppercase;color:#8f9296;}
+#cr-appt .ap-job .go{flex:0 0 auto;color:#8f9296;font-size:15px;}
+#cr-appt .ap-empty{margin:26px 0 0;padding:18px;border-radius:13px;text-align:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
+  font-size:15.5px;line-height:1.55;color:#b9b3ad;}
+#cr-appt .ap-empty b{color:#f2f4f2;}
+/* the renders wall (step: house) */
+#cr-appt .ap-grid{margin:16px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+#cr-appt .ap-card{position:relative;border-radius:13px;overflow:hidden;cursor:pointer;
+  border:1px solid rgba(255,255,255,.14);background:#0e1013;padding:0;font-family:inherit;}
+#cr-appt .ap-card img{display:block;width:100%;height:190px;object-fit:cover;background:#0e1013;}
+#cr-appt .ap-card .tt{display:block;padding:10px 12px;font:600 13.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#d8d2cb;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt .ap-actions{margin:20px 0 0;display:flex;gap:11px;flex-wrap:wrap;}
+#cr-appt .ap-btn{display:inline-flex;align-items:center;gap:9px;padding:13px 20px;min-height:48px;
+  border-radius:12px;cursor:pointer;font:700 14.5px &#x27;Segoe UI&#x27;,Arial,sans-serif;font-family:inherit;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#f2f4f2;box-sizing:border-box;}
+#cr-appt .ap-btn:hover{border-color:rgba(242,244,242,.36);}
+/* the lightbox inside the pane */
+#cr-appt .ap-light{position:fixed;inset:0;z-index:5;background:rgba(3,4,5,.94);
+  display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;}
+#cr-appt .ap-light.on{display:flex;}
+#cr-appt .ap-light img{max-width:100%;max-height:92vh;border-radius:10px;}
+/* 1162: a shared document fills the step, and stops 92px short of the
+   bottom so the share page&#x27;s own fixed Accept &amp; Sign bar (csBar,
+   bottom:0 INSIDE the iframe viewport) lands above the rail instead of
+   underneath it. The wrap loses its padding for these steps. */
+#cr-appt .ap-wrap-doc{max-width:none;padding:14px 14px 0;height:100%;box-sizing:border-box;
+  display:flex;flex-direction:column;}
+#cr-appt .ap-wrap-doc .ap-h{font-size:clamp(21px,3.4vw,28px);margin:6px 0 4px;}
+#cr-appt .ap-wrap-doc .ap-sub{margin:0 0 10px;}
+#cr-appt .ap-doc{flex:1;min-height:0;margin:4px 0 92px;border-radius:12px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.16);background:#fff;}
+#cr-appt .ap-doc iframe{display:block;width:100%;height:100%;border:0;background:#fff;}
+#cr-appt .ap-signed{color:#7fc98f;}
+#cr-appt .ap-light .x{position:absolute;top:14px;right:14px;width:46px;height:46px;border-radius:12px;
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);color:#f2f4f2;
+  font-size:19px;cursor:pointer;font-family:inherit;}
+/* ── the rail ── */
+#cr-appt-rail{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9600;
+  display:none;align-items:center;gap:6px;padding:8px 10px;border-radius:16px;
+  background:rgba(10,11,13,.94);border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 10px 30px rgba(0,0,0,.55);max-width:calc(100vw - 16px);box-sizing:border-box;
+  font-family:&#x27;Segoe UI&#x27;,-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-appt-rail.on{display:flex;}
+#cr-appt-rail button{font-family:inherit;cursor:pointer;box-sizing:border-box;flex:0 0 auto;}
+#cr-appt-rail .ar-nav{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#f2f4f2;font-size:17px;}
+#cr-appt-rail .ar-nav:disabled{opacity:.35;cursor:default;}
+#cr-appt-rail .ar-step{min-width:46px;height:46px;padding:0 10px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.13);background:transparent;color:#b9b3ad;
+  font:700 11px/1.15 &#x27;Segoe UI&#x27;,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;}
+#cr-appt-rail .ar-step.on{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-appt-rail .ar-x{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#b9b3ad;font-size:16px;}
+#cr-appt-rail .ar-who{max-width:150px;padding:0 8px;font:700 12px &#x27;Segoe UI&#x27;,Arial,sans-serif;
+  color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-appt-rail .ar-count{display:none;padding:0 9px;font:700 13px &#x27;Segoe UI&#x27;,Arial,sans-serif;color:#f2f4f2;}
+@media (max-width:700px){
+  /* eight 44px targets do not fit in 390px — measured, not assumed —
+     and 1162&#x27;s seven stops moved the threshold to 700px. The
+     jump buttons give way to a step counter; Back/Next carry the walk. */
+  #cr-appt-rail .ar-step{display:none;}
+  #cr-appt-rail .ar-count{display:inline;}
+  #cr-appt-rail .ar-who{display:none;}
+}
+&lt;/style&gt;&lt;body&gt;&lt;script&gt;
+var rows=[{id:&#x27;p1&#x27;,name:&#x27;Kim Lawson&#x27;,stage:&#x27;Approved&#x27;},
+          {id:&#x27;p2&#x27;,name:&#x27;Dave &amp; Sandy Miller&#x27;,stage:&#x27;Scheduled&#x27;},
+          {id:&#x27;p3&#x27;,name:&#x27;Habitat for Humanity - Elm St&#x27;,stage:&#x27;Approved&#x27;}];
+var docs=[{id:&#x27;d1&#x27;,title:&#x27;Roof Options — Kim Lawson&#x27;,share_token:&#x27;tokO&#x27;,signed_at:null,status:&#x27;draft&#x27;},
+          {id:&#x27;d2&#x27;,title:&#x27;Estimate — Kim Lawson&#x27;,share_token:&#x27;tokE&#x27;,signed_at:null,status:&#x27;sent&#x27;},
+          {id:&#x27;d3&#x27;,title:&#x27;Contract — Roofing — Kim Lawson&#x27;,share_token:null,signed_at:&#x27;2026-08-29&#x27;,status:&#x27;sent&#x27;}];
+function q(t){var o={_eq:{}};[&#x27;select&#x27;,&#x27;order&#x27;,&#x27;limit&#x27;].forEach(function(m){o[m]=function(){return o;}});
+o.eq=function(k,v){o._eq[k]=v;return o;};
+o.single=function(){return{then:function(res){return Promise.resolve({data:{html:&#x27;&lt;div class=&quot;lbl&quot;&gt;Client Acceptance&lt;/div&gt;&#x27;}}).then(res);}}};
+o.then=function(res){var d=[];if(t===&#x27;projects&#x27;)d=rows;if(t===&#x27;inspection_reports&#x27;)d=docs;
+if(t===&#x27;design_renders&#x27;)d=[];return Promise.resolve({data:d}).then(res);};return o;}
+Object.defineProperty(window,&#x27;supa&#x27;,{value:{from:q,
+  storage:{from:function(){return{createSignedUrls:function(){return Promise.resolve({data:[]});},
+                                  createSignedUrl:function(){return Promise.resolve({data:{}});}}}}},writable:false});
+window.db={update:function(){return Promise.resolve();}};
+window.CardinalShowcase={openForProject:function(){},open:function(){},close:function(){}};
+window.CardinalWhy={open:function(){},close:function(){}};
+window.CardinalColors={open:function(){},close:function(){}};
+
+(function(){
+&#x27;use strict&#x27;;
+/* 1161 — The Appointment · v2026-08-30 build 1161
+   The running order for the in-home visit, over surfaces that already
+   exist: their roof (The Walk, in showroom mode) → what good looks like
+   (Hall of Fame) → why Cardinal (1160) → their house (approved Visualizer
+   renders + Colors). 1162 adds Options &amp; Sign via /api/share.
+
+   It is a CONDUCTOR: it opens each module through that module&#x27;s own
+   public API and closes through the same door hideAllViews() uses, per
+   surface (the 570-572 lever rule). It writes NO scroll lock (count
+   stays 13), reads design_renders under its own RLS (admin-or-own, the
+   same rows the Visualizer&#x27;s Present shows this rep), and renders the
+   client&#x27;s name and nothing else about them on the rail. */
+var PANE = null, RAIL = null;
+var proj = null;        /* the picked job {id,name,stage} */
+var stepIx = 0;         /* index into STEPS */
+var running = false;
+var projects = [];
+var renders = [];       /* approved design_renders rows for proj */
+
+/* One array is the whole running order — 1162 extends it, nothing else
+   changes. kind &#x27;pane&#x27; renders inside #cr-appt; kind &#x27;module&#x27; delegates
+   to an existing surface and hides the pane. */
+var STEPS = [
+  { id:&#x27;pick&#x27;,  label:&#x27;Job&#x27;,   kind:&#x27;pane&#x27;   },
+  { id:&#x27;roof&#x27;,  label:&#x27;Roof&#x27;,  kind:&#x27;module&#x27; },
+  { id:&#x27;good&#x27;,  label:&#x27;Good&#x27;,  kind:&#x27;module&#x27; },
+  { id:&#x27;why&#x27;,   label:&#x27;Why&#x27;,   kind:&#x27;module&#x27; },
+  { id:&#x27;house&#x27;, label:&#x27;House&#x27;, kind:&#x27;pane&#x27;   },
+  /* 1162 - option (b): the visit ends on this tablet. Both steps ride
+     the EXISTING /api/share page - the same one a client signs on their
+     own phone - in an iframe: it is public-by-token, carries no CRM,
+     and injects Accept &amp; Sign itself when the document is signable. */
+  { id:&#x27;options&#x27;, label:&#x27;Options&#x27;, kind:&#x27;pane&#x27; },
+  { id:&#x27;sign&#x27;,    label:&#x27;Sign&#x27;,    kind:&#x27;pane&#x27; }
+];
+
+function esc(v){
+  return String(v == null ? &#x27;&#x27; : v)
+    .replace(/&amp;/g,&#x27;&amp;amp;&#x27;).replace(/&lt;/g,&#x27;&amp;lt;&#x27;).replace(/&gt;/g,&#x27;&amp;gt;&#x27;)
+    .replace(/&quot;/g,&#x27;&amp;quot;&#x27;);
+}
+function sb(){ return window.supa || null; }
+
+function ensure(){
+  if(PANE &amp;&amp; PANE.isConnected &amp;&amp; RAIL &amp;&amp; RAIL.isConnected) return;
+  PANE = document.getElementById(&#x27;cr-appt&#x27;);
+  if(!PANE){
+    PANE = document.createElement(&#x27;div&#x27;);
+    PANE.id = &#x27;cr-appt&#x27;;
+    document.body.appendChild(PANE);
+  }
+  RAIL = document.getElementById(&#x27;cr-appt-rail&#x27;);
+  if(!RAIL){
+    RAIL = document.createElement(&#x27;div&#x27;);
+    RAIL.id = &#x27;cr-appt-rail&#x27;;
+    document.body.appendChild(RAIL);
+  }
+  RAIL.innerHTML =
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-x&quot; data-ap=&quot;end&quot; aria-label=&quot;End the appointment&quot;&gt;✕&lt;/button&gt;&#x27; +
+    &#x27;&lt;span class=&quot;ar-who&quot; data-slot=&quot;who&quot;&gt;&lt;/span&gt;&#x27; +
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-nav&quot; data-ap=&quot;back&quot; aria-label=&quot;Back&quot;&gt;‹&lt;/button&gt;&#x27; +
+    STEPS.map(function(st, i){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-step&quot; data-ap=&quot;step&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+        esc(st.label) + &#x27;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;) +
+    &#x27;&lt;span class=&quot;ar-count&quot; data-slot=&quot;count&quot;&gt;&lt;/span&gt;&#x27; +
+    &#x27;&lt;button type=&quot;button&quot; class=&quot;ar-nav&quot; data-ap=&quot;next&quot; aria-label=&quot;Next&quot;&gt;›&lt;/button&gt;&#x27;;
+  RAIL.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;[data-ap]&#x27;) : null;
+    if(!b) return;
+    var act = b.getAttribute(&#x27;data-ap&#x27;);
+    if(act === &#x27;end&#x27;)  return void end();
+    if(act === &#x27;back&#x27;) return void go(stepIx - 1);
+    if(act === &#x27;next&#x27;) return void go(stepIx + 1);
+    if(act === &#x27;step&#x27;) return void go(parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10));
+  };
+}
+
+function paintRail(){
+  if(!RAIL) return;
+  RAIL.classList.toggle(&#x27;on&#x27;, running);
+  var who = RAIL.querySelector(&#x27;[data-slot=&quot;who&quot;]&#x27;);
+  if(who) who.textContent = proj ? (proj.name || &#x27;&#x27;) : &#x27;&#x27;;
+  RAIL.querySelectorAll(&#x27;.ar-step&#x27;).forEach(function(b, i){
+    b.classList.toggle(&#x27;on&#x27;, i === stepIx);
+    /* until a job is picked the only live stop is the picker */
+    b.disabled = !proj &amp;&amp; i &gt; 0;
+  });
+  var ct = RAIL.querySelector(&#x27;[data-slot=&quot;count&quot;]&#x27;);
+  if(ct) ct.textContent = (stepIx + 1) + &#x27;/&#x27; + STEPS.length;
+  var back = RAIL.querySelector(&#x27;[data-ap=&quot;back&quot;]&#x27;);
+  var next = RAIL.querySelector(&#x27;[data-ap=&quot;next&quot;]&#x27;);
+  if(back) back.disabled = stepIx &lt;= 0;
+  if(next) next.disabled = (stepIx &gt;= STEPS.length - 1) || (!proj &amp;&amp; stepIx === 0);
+}
+
+/* Close every module a step may have opened, through each one&#x27;s OWN door.
+   A module&#x27;s close() can no-op without throwing (the 570-572 class), so
+   the display-shown ones are also cleared directly, same lever
+   hideAllViews() uses on them. */
+function closeModules(){
+  try{ if(window.CardinalShowcase &amp;&amp; window.CardinalShowcase.close) window.CardinalShowcase.close(false); }catch(_){}
+  try{ if(window.CardinalWhy &amp;&amp; window.CardinalWhy.close) window.CardinalWhy.close(); }catch(_){}
+  try{ if(window.CardinalColors &amp;&amp; window.CardinalColors.close) window.CardinalColors.close(); }catch(_){}
+  var w = document.getElementById(&#x27;cr-why&#x27;);   if(w) w.style.display = &#x27;none&#x27;;
+  var o = document.getElementById(&#x27;cr-occ&#x27;);   if(o) o.style.display = &#x27;none&#x27;;
+}
+
+function showPane(){ ensure(); PANE.style.display = &#x27;block&#x27;; PANE.scrollTop = 0; }
+function hidePane(){ if(PANE) PANE.style.display = &#x27;none&#x27;; }
+
+/* ── steps ─────────────────────────────────────────────────────────── */
+async function loadProjects(){
+  var c = sb();
+  if(!c) return [];
+  var r = await c.from(&#x27;projects&#x27;).select(&#x27;id,name,stage&#x27;)
+    .order(&#x27;created_at&#x27;, { ascending:false }).limit(400);
+  return (r &amp;&amp; r.data) || [];
+}
+
+function paintPick(){
+  var rows = projects;
+  PANE.innerHTML =
+    &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;The Appointment&lt;/p&gt;&#x27; +
+      &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;Whose house are we at?&lt;/h1&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-sub&quot;&gt;Pick the job and the visit runs in order — their roof, our work, why Cardinal, their house in colour, the options, the signature.&lt;/p&gt;&#x27; +
+      &#x27;&lt;input type=&quot;search&quot; class=&quot;ap-search&quot; data-slot=&quot;q&quot; placeholder=&quot;Search by name…&quot;&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-list&quot; data-slot=&quot;list&quot;&gt;&lt;/div&gt;&#x27; +
+    &#x27;&lt;/div&gt;&#x27;;
+  var list = PANE.querySelector(&#x27;[data-slot=&quot;list&quot;]&#x27;);
+  var q = PANE.querySelector(&#x27;[data-slot=&quot;q&quot;]&#x27;);
+  function draw(){
+    var needle = (q.value || &#x27;&#x27;).trim().toLowerCase();
+    var vis = rows.filter(function(p){
+      return !needle || String(p.name || &#x27;&#x27;).toLowerCase().indexOf(needle) !== -1;
+    }).slice(0, 60);
+    if(!vis.length){
+      list.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&#x27; +
+        (rows.length ? &#x27;No job matches that.&#x27; :
+         &#x27;&lt;b&gt;No jobs you can see.&lt;/b&gt; Jobs are scoped to your sign-in.&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+      return;
+    }
+    list.innerHTML = vis.map(function(p){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-job&quot; data-id=&quot;&#x27; + esc(p.id) + &#x27;&quot;&gt;&#x27; +
+        &#x27;&lt;span class=&quot;nm&quot;&gt;&#x27; + esc(p.name || &#x27;(no name)&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+        (p.stage ? &#x27;&lt;span class=&quot;st&quot;&gt;&#x27; + esc(p.stage) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) +
+        &#x27;&lt;span class=&quot;go&quot;&gt;→&lt;/span&gt;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;);
+  }
+  q.oninput = draw;
+  list.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-job&#x27;) : null;
+    if(!b) return;
+    var id = b.getAttribute(&#x27;data-id&#x27;);
+    for(var i = 0; i &lt; rows.length; i++){
+      if(String(rows[i].id) === String(id)){ proj = rows[i]; break; }
+    }
+    renders = []; docs = null;
+    go(1);
+  };
+  draw();
+}
+
+async function paintHouse(){
+  PANE.innerHTML =
+    &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;&#x27; + esc(proj ? proj.name : &#x27;&#x27;) + &#x27;&lt;/p&gt;&#x27; +
+      &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;Their house, your materials&lt;/h1&gt;&#x27; +
+      &#x27;&lt;p class=&quot;ap-sub&quot;&gt;Approved visualizations for this job — reviewed by a person before anyone at this table sees them.&lt;/p&gt;&#x27; +
+      &#x27;&lt;div data-slot=&quot;wall&quot;&gt;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-actions&quot;&gt;&#x27; +
+        &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-btn&quot; data-ap-open=&quot;colors&quot;&gt;Shingle colours →&lt;/button&gt;&#x27; +
+      &#x27;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;ap-light&quot; data-slot=&quot;light&quot;&gt;&#x27; +
+        &#x27;&lt;button type=&quot;button&quot; class=&quot;x&quot; data-ap-light=&quot;x&quot; aria-label=&quot;Close&quot;&gt;✕&lt;/button&gt;&#x27; +
+        &#x27;&lt;img alt=&quot;&quot;&gt;&#x27; +
+      &#x27;&lt;/div&gt;&#x27; +
+    &#x27;&lt;/div&gt;&#x27;;
+  PANE.querySelector(&#x27;[data-ap-open=&quot;colors&quot;]&#x27;).onclick = function(){
+    /* a side door, not a step: Colors opens over everything at its own z;
+       Back on the rail is still the way home. */
+    hidePane();
+    try{ if(window.CardinalColors) window.CardinalColors.open(); }catch(_){}
+    paintRail();
+  };
+  var light = PANE.querySelector(&#x27;[data-slot=&quot;light&quot;]&#x27;);
+  light.querySelector(&#x27;[data-ap-light=&quot;x&quot;]&#x27;).onclick = function(){ light.classList.remove(&#x27;on&#x27;); };
+  var wall = PANE.querySelector(&#x27;[data-slot=&quot;wall&quot;]&#x27;);
+  var c = sb();
+  if(!c){ wall.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Not signed in.&lt;/div&gt;&#x27;; return; }
+  if(!renders.length){
+    try{
+      var r = await c.from(&#x27;design_renders&#x27;)
+        .select(&#x27;id,title,render_path,preview_path,approved&#x27;)
+        .eq(&#x27;project_id&#x27;, proj.id).eq(&#x27;approved&#x27;, true)
+        .order(&#x27;created_at&#x27;, { ascending:false }).limit(40);
+      renders = (r &amp;&amp; r.data) || [];
+    }catch(_){ renders = []; }
+  }
+  if(!renders.length){
+    wall.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No approved visualizations for this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Queue them in the Designer before the visit and approve each one — &#x27; +
+      &#x27;nothing unreviewed reaches this screen.&lt;/div&gt;&#x27;;
+    return;
+  }
+  /* one round trip signs every path — the 633 lesson */
+  var paths = [];
+  renders.forEach(function(rd){
+    var p = rd.preview_path || rd.render_path;
+    if(p &amp;&amp; paths.indexOf(p) === -1) paths.push(p);
+  });
+  var urls = {};
+  try{
+    var sr = await c.storage.from(&#x27;photos&#x27;).createSignedUrls(paths, 3600);
+    ((sr &amp;&amp; sr.data) || []).forEach(function(row){
+      if(row &amp;&amp; row.path &amp;&amp; row.signedUrl) urls[row.path] = row.signedUrl;
+    });
+  }catch(_){}
+  wall.innerHTML = &#x27;&lt;div class=&quot;ap-grid&quot;&gt;&#x27; + renders.map(function(rd, i){
+    var p = rd.preview_path || rd.render_path;
+    var u = urls[p] || &#x27;&#x27;;
+    return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-card&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+      &#x27;&lt;img alt=&quot;&quot; &#x27; + (u ? &#x27;src=&quot;&#x27; + esc(u) + &#x27;&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; +
+      &#x27;&lt;span class=&quot;tt&quot;&gt;&#x27; + esc(rd.title || &#x27;Visualization&#x27;) + &#x27;&lt;/span&gt;&lt;/button&gt;&#x27;;
+  }).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+  wall.onclick = function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-card&#x27;) : null;
+    if(!b) return;
+    var rd = renders[parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10)];
+    if(!rd) return;
+    var full = rd.render_path || rd.preview_path;
+    var img = light.querySelector(&#x27;img&#x27;);
+    img.src = urls[full] || urls[rd.preview_path || &#x27;&#x27;] || &#x27;&#x27;;
+    if(!urls[full] &amp;&amp; full){
+      c.storage.from(&#x27;photos&#x27;).createSignedUrl(full, 3600).then(function(r2){
+        var u2 = r2 &amp;&amp; r2.data &amp;&amp; r2.data.signedUrl;
+        if(u2){ urls[full] = u2; img.src = u2; }
+      });
+    }
+    light.classList.add(&#x27;on&#x27;);
+  };
+}
+
+/* ── documents (1162) ─────────────────────────────────────────────────
+   Both steps read this job&#x27;s inspection_reports rows - the same table
+   every estimate, contract and options sheet already lives in - and
+   show them through /api/share?t=&lt;token&gt;, the page that is already
+   client-facing, review-clean and finger-signable. Nothing new signs. */
+var docs = null;      /* cached rows for proj, cleared on pick */
+
+async function loadDocs(){
+  if(docs) return docs;
+  var c = sb();
+  if(!c || !proj) return (docs = []);
+  try{
+    var r = await c.from(&#x27;inspection_reports&#x27;)
+      .select(&#x27;id,title,share_token,signed_at,status,created_at&#x27;)
+      .eq(&#x27;project_id&#x27;, proj.id)
+      .order(&#x27;created_at&#x27;, { ascending:false }).limit(60);
+    docs = (r &amp;&amp; r.data) || [];
+  }catch(_){ docs = []; }
+  return docs;
+}
+
+/* the ensureShareToken convention (731), reachable outside the editor:
+   same mint, same db.update rails, so one token per document ever. */
+async function docToken(row){
+  if(row.share_token) return row.share_token;
+  var tok = (window.crypto &amp;&amp; crypto.randomUUID) ? crypto.randomUUID()
+          : (&#x27;t&#x27; + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+  if(!window.db || typeof window.db.update !== &#x27;function&#x27;) return null;
+  await window.db.update(row.id, { share_token: tok });
+  row.share_token = tok;
+  return tok;
+}
+
+/* mirrors api/share.js exactly - SIGN_RX (&#x27;Client Acceptance&#x27; footer),
+   SLOT_RX (an unfilled buyer sigslot), and the already-signed stamp. */
+function docSignable(html){
+  if(!html) return false;
+  if(html.indexOf(&#x27;data-clientsigned&#x27;) !== -1) return false;
+  return /class=&quot;lbl&quot;&gt;\s*Client Acceptance/.test(html) ||
+         /class=&quot;sigslot&quot; data-sig=&quot;buyer&quot;/.test(html);
+}
+
+function docFrame(tok){
+  return &#x27;&lt;div class=&quot;ap-doc&quot;&gt;&lt;iframe src=&quot;/api/share?t=&#x27; + esc(tok) + &#x27;&quot;&gt;&lt;/iframe&gt;&lt;/div&gt;&#x27;;
+}
+
+function docShell(eyebrow, h, sub, body){
+  return &#x27;&lt;div class=&quot;ap-wrap ap-wrap-doc&quot;&gt;&#x27; +
+    &#x27;&lt;p class=&quot;ap-eyebrow&quot;&gt;&#x27; + esc(eyebrow) + &#x27;&lt;/p&gt;&#x27; +
+    &#x27;&lt;h1 class=&quot;ap-h&quot;&gt;&#x27; + h + &#x27;&lt;/h1&gt;&#x27; +
+    (sub ? &#x27;&lt;p class=&quot;ap-sub&quot;&gt;&#x27; + sub + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) +
+    body + &#x27;&lt;/div&gt;&#x27;;
+}
+
+async function paintOptions(){
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;,
+    &#x27;Good, Better, Best — side by side.&#x27;, &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&#x27;);
+  var rows = await loadDocs();
+  var gbb = null;
+  for(var i = 0; i &lt; rows.length; i++){
+    if(String(rows[i].title || &#x27;&#x27;).indexOf(&#x27;Roof Options&#x27;) === 0){ gbb = rows[i]; break; }
+  }
+  if(!gbb){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No options sheet on this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Build one before the visit: open an estimate, tap &lt;b&gt;Options&lt;/b&gt; in its &#x27; +
+      &#x27;toolbar, pick the Good / Better / Best tiers and publish. It will be &#x27; +
+      &#x27;waiting here.&lt;/div&gt;&#x27;);
+    return;
+  }
+  var tok = null;
+  try{ tok = await docToken(gbb); }catch(_){}
+  if(!tok){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;Could not open the options sheet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;The share link could not be created from this sign-in — open the &#x27; +
+      &#x27;document once from the estimate editor and it will work here.&lt;/div&gt;&#x27;);
+    return;
+  }
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Your options&#x27;,
+    &#x27;Initial the option you want us to proceed with — then the next step signs it.&#x27;,
+    docFrame(tok));
+}
+
+async function paintSign(){
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;,
+    &#x27;Pick the paperwork to sign.&#x27;, &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Loading…&lt;/div&gt;&#x27;);
+  var rows = await loadDocs();
+  if(!rows.length){
+    PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;, &#x27;&#x27;,
+      &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;No documents on this job yet.&lt;/b&gt;&lt;br&gt;&#x27; +
+      &#x27;Publish the estimate or generate the contract before the visit and &#x27; +
+      &#x27;it will be waiting here to sign.&lt;/div&gt;&#x27;);
+    return;
+  }
+  /* 1149&#x27;s lesson is the whole design: the client signs THE DOCUMENT THEY
+     ARE LOOKING AT. One list, one explicit pick, then that document alone
+     fills the screen with its own Accept &amp; Sign. */
+  PANE.innerHTML = docShell(proj ? proj.name : &#x27;&#x27;, &#x27;Make it official&#x27;,
+    &#x27;Pick the paperwork — the signature lands on the document you open, and only that one.&#x27;,
+    &#x27;&lt;div class=&quot;ap-list&quot; data-slot=&quot;doclist&quot;&gt;&#x27; + rows.map(function(d, i){
+      return &#x27;&lt;button type=&quot;button&quot; class=&quot;ap-job&quot; data-ix=&quot;&#x27; + i + &#x27;&quot;&gt;&#x27; +
+        &#x27;&lt;span class=&quot;nm&quot;&gt;&#x27; + esc(d.title || &#x27;(untitled)&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+        (d.signed_at ? &#x27;&lt;span class=&quot;st ap-signed&quot;&gt;Signed ✓&lt;/span&gt;&#x27; :
+                       &#x27;&lt;span class=&quot;st&quot;&gt;&#x27; + esc(d.status || &#x27;&#x27;) + &#x27;&lt;/span&gt;&#x27;) +
+        &#x27;&lt;span class=&quot;go&quot;&gt;→&lt;/span&gt;&lt;/button&gt;&#x27;;
+    }).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27; +
+    &#x27;&lt;div data-slot=&quot;opensign&quot;&gt;&lt;/div&gt;&#x27;);
+  var list = PANE.querySelector(&#x27;[data-slot=&quot;doclist&quot;]&#x27;);
+  var host = PANE.querySelector(&#x27;[data-slot=&quot;opensign&quot;]&#x27;);
+  list.onclick = async function(e){
+    var b = e.target.closest ? e.target.closest(&#x27;.ap-job&#x27;) : null;
+    if(!b) return;
+    var row = rows[parseInt(b.getAttribute(&#x27;data-ix&#x27;), 10)];
+    if(!row) return;
+    host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;Opening…&lt;/div&gt;&#x27;;
+    var c = sb(), html = &#x27;&#x27;;
+    try{
+      var r = await c.from(&#x27;inspection_reports&#x27;).select(&#x27;html&#x27;).eq(&#x27;id&#x27;, row.id).single();
+      html = (r &amp;&amp; r.data &amp;&amp; r.data.html) || &#x27;&#x27;;
+    }catch(_){}
+    if(!row.signed_at &amp;&amp; !docSignable(html)){
+      host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;&#x27; + esc(row.title || &#x27;This document&#x27;) +
+        &#x27;&lt;/b&gt; has no signature block, so it opens for review only. The estimate &#x27; +
+        &#x27;proposal and the contracts are the ones that sign.&lt;/div&gt;&#x27;;
+    }else{
+      host.innerHTML = &#x27;&#x27;;
+    }
+    var tok = null;
+    try{ tok = await docToken(row); }catch(_){}
+    if(!tok){
+      host.innerHTML = &#x27;&lt;div class=&quot;ap-empty&quot;&gt;&lt;b&gt;Could not create the signing link&lt;/b&gt; &#x27; +
+        &#x27;from this sign-in — open the document once from the editor first.&lt;/div&gt;&#x27;;
+      return;
+    }
+    list.style.display = &#x27;none&#x27;;
+    host.innerHTML =
+      &#x27;&lt;div class=&quot;ap-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;ap-btn&quot; data-ap-doc=&quot;back&quot;&gt;‹ Other paperwork&lt;/button&gt;&lt;/div&gt;&#x27; +
+      (host.querySelector(&#x27;.ap-empty&#x27;) ? host.querySelector(&#x27;.ap-empty&#x27;).outerHTML : &#x27;&#x27;) +
+      docFrame(tok);
+    host.querySelector(&#x27;[data-ap-doc=&quot;back&quot;]&#x27;).onclick = function(){
+      host.innerHTML = &#x27;&#x27;; list.style.display = &#x27;&#x27;;
+    };
+  };
+}
+
+/* the delegated steps — open through public APIs only */
+function openRoof(){
+  hidePane();
+  try{
+    if(window.CardinalShowcase &amp;&amp; window.CardinalShowcase.openForProject){
+      window.CardinalShowcase.openForProject(proj, { showroom:true });
+    }
+  }catch(_){}
+}
+function openGood(){
+  var el = document.getElementById(&#x27;cr-show&#x27;);
+  var opened = el &amp;&amp; el.classList.contains(&#x27;open&#x27;);
+  hidePane();
+  try{
+    if(!opened &amp;&amp; window.CardinalShowcase) window.CardinalShowcase.open({ showroom:true });
+  }catch(_){}
+  /* drive the module&#x27;s own tab control — the same tap a finger makes.
+     Deferred a beat so a fresh open() has painted its tabs. */
+  setTimeout(function(){
+    var b = document.querySelector(&#x27;#cr-show [data-tab=&quot;work&quot;]&#x27;);
+    if(b) b.click();
+  }, opened ? 0 : 380);
+}
+function openWhy(){
+  hidePane();
+  try{ if(window.CardinalWhy) window.CardinalWhy.open(); }catch(_){}
+}
+
+async function go(ix){
+  if(!running) return;
+  if(ix &lt; 0 || ix &gt;= STEPS.length) return;
+  if(ix &gt; 0 &amp;&amp; !proj) return;         /* nothing past the picker without a job */
+  stepIx = ix;
+  var st = STEPS[stepIx];
+  /* leave whatever the previous step opened, through the modules&#x27; own doors */
+  closeModules();
+  if(st.kind === &#x27;pane&#x27;){
+    showPane();
+    if(st.id === &#x27;pick&#x27;)  paintPick();
+    if(st.id === &#x27;house&#x27;) await paintHouse();
+    if(st.id === &#x27;options&#x27;) await paintOptions();
+    if(st.id === &#x27;sign&#x27;)    await paintSign();
+  }else{
+    if(st.id === &#x27;roof&#x27;) openRoof();
+    if(st.id === &#x27;good&#x27;) openGood();
+    if(st.id === &#x27;why&#x27;)  openWhy();
+  }
+  /* every delegated open() runs hideAllViews(), which clears the pane —
+     correct for module steps; the rail is chrome and survives on its own. */
+  paintRail();
+}
+
+async function open(){
+  ensure();
+  try{ if(typeof window.hideAllViews === &#x27;function&#x27;) window.hideAllViews(); }catch(_){}
+  running = true;
+  proj = null; stepIx = 0; renders = []; docs = null;
+  showPane();
+  PANE.innerHTML = &#x27;&lt;div class=&quot;ap-wrap&quot;&gt;&lt;div class=&quot;ap-empty&quot;&gt;Loading jobs…&lt;/div&gt;&lt;/div&gt;&#x27;;
+  paintRail();
+  try{ projects = await loadProjects(); }catch(_){ projects = []; }
+  if(!running) return;
+  paintPick();
+  paintRail();
+  try{ if(window.navPush) window.navPush(&#x27;cr-appt&#x27;); }catch(_){}
+}
+
+function end(){
+  running = false;
+  closeModules();
+  hidePane();
+  if(RAIL) RAIL.classList.remove(&#x27;on&#x27;);
+  proj = null; stepIx = 0;
+  try{ if(typeof window.showHome === &#x27;function&#x27;) window.showHome(); }catch(_){}
+}
+
+window.CardinalAppointment = Object.assign(window.CardinalAppointment || {}, {
+  open  : open,
+  close : end
+});
+})();
+window.CardinalAppointment.open().then(function(){return new Promise(function(r){setTimeout(r,350);});}).then(function(){document.querySelector(&#x27;#cr-appt .ap-job&#x27;).click();return new Promise(function(r){setTimeout(r,350);});}).then(function(){document.querySelectorAll(&#x27;#cr-appt-rail .ar-step&#x27;)[6].click();});&lt;/script&gt;&lt;/body&gt;"></iframe></div></div></div>
+<div class="note"><b>The sign rule, from the Kimberly Lawson incident (1149):</b>
+the list hides while a document is open, exactly one document frame exists at a
+time, and it opens on that document&rsquo;s own token &mdash; a signature can only
+land on the paperwork on the screen. Signed documents badge <b style="color:#7fc98f">Signed &#10003;</b>
+and never re-offer.</div>
+</div>

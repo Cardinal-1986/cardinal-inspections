@@ -7753,6 +7753,216 @@ Retail clients with a sent, unpaid invoice get a friendly text from the company 
 - A check recorded offline stops reminders like any payment — the cron reads the collections ledger, not the payment channel.
 - **The master switch (build 1157):** the AR header carries a company-wide On/Off (`app_settings.payment_reminders_enabled`, staff read / admin write; the cron checks the same key server-side, and a missing row means OFF). **It ships OFF** — nothing texts a client until an admin turns it on; rows read *"Paused — reminders are off company-wide"* until then, and `?dry=1` previews eligibility while off.
 
+---
+
+## The presentation doors (build 1159) — what a rep can reach, and from where
+
+*Added 30 Aug 2026. This section exists because the suite is now large enough that
+"is it built?" and "can a rep reach it standing in a living room?" are different
+questions, and the second one is the one that had been going unasked.*
+
+**The Vision hub is five tiles now**, not four — `visionHtml()` in `cr-lr-script`,
+gated by `isVisionHost()` (`showroom.` prefix, or `?vision=1`):
+
+| Tile | Opens | Note |
+|---|---|---|
+| **Presentations** | `CardinalShowcase.open({showroom:…})` | Showcase · Hall of Fame · The Walk, plus Spotlight / Chalk / Lens / Curtain Call |
+| **Studio** | `/studio.html` | admin only, `window.is_admin()` — a UI hint; `studio_photos` RLS is the real gate |
+| **Designer** | `/visualizer/?present=1` | **1159: `?present=1` is new and only on this door** |
+| **Colors** | `CardinalColors.open()` | OC lines, colours, wind warranty. **This tile is the only door to Colors anywhere in the app** |
+| **The Pop-Up Roof** | `/popup.html` | **1159: new.** Plain `<a>`, new tab |
+
+**The ordinary landing** carries the Showroom row, the Designer row (both `.cr-lr-show`,
+**≥820px only** — a phone is not a screen you present from) and, since 1159, the
+**Pop-Up Roof tile** (`.cr-lr-book`) which is deliberately **not** width-gated.
+
+### The rule 1159 established: one tile, two doors, two screens
+
+The Designer tile exists on both the ordinary landing and the Vision hub, and until
+1159 both dispatched through one `d === 'designer'` branch to `/visualizer/`, which
+lands on **Prep** — the office workbench where you pick a house, pick combinations and
+queue renders for the Spark to draw. That is the right screen at a desk and the wrong
+screen in front of a homeowner, where the point is approved renders and one tap.
+
+The branch now asks `isVisionHost()` — the predicate that already decides this
+question everywhere else — and appends `?present=1` on the showroom host only.
+`visualizer/index.html` reads it in `showApp()`, after `loadCatalog().then(loadProjects)`
+so Present has data, and calls `tab('present'); refresh();` — the same pair the Present
+tab's own click handler calls. **Prep stays the default for every other way in.**
+
+**If you add a surface with an office face and a client face, copy this shape.** Do not
+add a second tile, a second URL constant or a second predicate — ask which door.
+
+### `.cr-lr-book` — the prime doctrine, in its purest form
+
+The tile was **fully styled at 761 and the markup was never written.** Nine CSS
+references — icon well, serif title, subtitle, arrow, hover, radial red wash, a
+`html[data-mode="light"]` twin — and `grep -c 'class="cr-lr-book'` returned **0**. Its
+own comment explains that it is a plain `<a>` rather than a `data-go` dispatch, and
+that it is **deliberately not width-gated** because "the book is phone-shaped and always
+has been, so it is offered everywhere the Showroom card is hidden below 820px."
+
+That comment is a specification for markup that did not exist. 1159 wrote it to spec.
+**`gate_1159.mjs` brace-matches every `@media` block in the file to prove the book is in
+none of them — and proves the Showroom row still is, so the check can tell them apart.**
+
+### What is NOT on the hub, and why
+
+- **Roof Options / Good-Better-Best (1140)** — proposed for the hub, and it does not
+  belong there. `gbbOpen()` opens with `CardinalEstimates.currentProject()` and refuses
+  without it. On the showroom host there is no CRM, no client list and no estimate
+  editor, so reaching it would need a client picker — i.e. showing a homeowner a list of
+  your other clients. It stays in the estimate toolbar, where the *document* it
+  publishes is client-facing and the *screen* that builds it is not.
+- **`drivewaytest.html`** — linked from nowhere, deliberately. It is a leave-behind, not
+  a presentation surface.
+- **`popup.html`'s other doors are unchanged**: the Sales Floor tile, and the
+  `presentation.cardinalroofer.com` / `presentation.cardinalrenovations.com` rewrites in
+  `vercel.json`.
+
+### Related, and still rep-facing: `PANES.proof`
+
+`cr-sf-script` carries a written **Proof** pane — company (Dayton, locally owned,
+licensed and insured, permit pulled, magnetic sweep), warranty (25yr shingle / 10yr
+workmanship, and which of the two actually matters), what goes on the roof (tear-off,
+sheathing per sheet, ice & water, synthetic, new boots, ventilation) and the ORC
+§1345.23 three-day right. It is **written for the rep** — *"the facts you should be able
+to give without looking anything up"*, *"ask a competitor whether they do"*. A
+client-facing version of it is a **reface, not a write**.
+
+## Why Cardinal (build 1160) — `cr-why-styles` + `cr-why-script`, `window.CardinalWhy`
+
+`#cr-why` · a Vision hub tile (`data-go="why"`) · Blackout, single-theme.
+
+**The first client-facing surface on this project that is about Cardinal
+rather than about their roof.** Showcase, Hall of Fame, The Walk, Colors,
+Designer and the Visualizer are all about the house in front of you. Nothing
+said why this contractor.
+
+### The content is a REFACE, not a write — this matters if you edit it
+
+`PANES.proof` in `cr-sf-script` has carried these facts for builds. It is
+written **for the rep**: *"the facts you should be able to give without
+looking anything up"*, *"Ask a competitor whether they do"*, *"Bring it up
+yourself. Saying it first is worth more than the three days cost you."*
+
+1160 is that pane in the **homeowner's second person with the coaching
+stripped**. `gate_1160.mjs` asserts both halves — **thirteen facts kept**
+(Dayton, licensed and insured, permit, magnetic sweep, Preferred Contractor,
+no layovers, per sheet, ice and water, not felt, pipe boots, ventilation,
+three business days, §1345.23) and **four coaching asides gone**.
+
+**So the two are one source with two voices. If a fact changes, change it in
+BOTH** — `PANES.proof` and `bodyHtml()` — or the rep and the screen will
+disagree in front of a client.
+
+### The warranty is a ladder, and flattening it is a real error
+
+The proof pane says *"25 years on the shingle"*. That is **System
+Protection**, one of three rows in the ROOFING WARRANTY table, and quoting it
+flat **understates what a Preferred contractor can register**. The screen
+shows the app's own three rows:
+
+| | On the shingle | On our work | |
+|---|---|---|---|
+| Standard | 25-year | 5-year | |
+| System Protection | 25-year | 10-year | transferable |
+| Preferred Protection | **50-year** | 10-year | transferable |
+
+**Platinum Protection is deliberately absent.** `OC_BRAND_RULES.md`: it is
+Platinum Preferred only and Cardinal is Preferred, so quoting it is an
+over-claim. Asserted present *and* asserted absent.
+
+### ⚠ No Owens Corning mark is on this screen — that is a gate
+
+The status is stated as **text** (`Owens Corning™ Roofing Preferred
+Contractor`), which `index.html` already does at three agreeing sites. The
+**lockup** is not here because it needs two things a session cannot supply:
+
+1. **Official artwork.** The guidelines PDF's embedded lockups are 100–150ppi;
+   cropping one ships a blurry, proportion-drifted mark, which the guidelines
+   forbid outright.
+2. **OC Local Marketing approval** — `LMARoofing@owenscorning.com`, with the
+   test URL. *"Once you receive approval from Local Marketing, then you may
+   launch."*
+
+`gate_1160.mjs` counts `<img>`, `<svg>`, `background-image` and `url(` on the
+surface and asserts **zero**. If a mark appears here later, that gate was
+skipped, not passed. The variant, when it is approved, is settled in
+`OC_BRAND_RULES.md` by arithmetic: **red roundel, white lockup type** (the
+"50% black or more" version) — this ground is ~98% black.
+
+**Still open, and Theo's call, not a session's:** the required co-branding
+disclaimer (*"Cardinal Roofing & Renovations, LLC is an independent contractor
+and is not an affiliate of Owens Corning Roofing and Asphalt, LLC…"*) appears
+**zero** times in the whole app, including on the ROOFING ESTIMATE, which
+already co-brands with `.est-oc`. This screen inherits that question; it does
+not create it.
+
+### House rules it follows
+
+- **Blackout, every colour a literal** — immune to the 448–449 token-strip
+  class by construction, like `cr-show` / `cr-occ` / `cr-fin`.
+- **Inks computed, not picked.** On `#050607`: body `#b9b3ad` 9.77:1, accent
+  `#f08a90` 8.44:1. **Cardinal red `#c8202e` is 3.57:1 here** — grounds and
+  rules only, never text. Asserted, and re-checked in real Chromium against
+  the *composited* ground.
+- **DISPLAY-shown**, registered in `hideAllViews()` beside `cr-occ` and
+  `cr-fin`, closed with `style.display='none'`.
+- **Writes no scroll lock.** The count stays at 13. It scrolls inside itself.
+- `window.navPush` is called guarded, matching `cr-occ` — it does not exist
+  today, so both calls are inert no-ops kept for the day it does. Like
+  `cr-occ`, it is **not** in the `navRestore` switch; the Vision hub is a
+  front door where back means leave.
+
+## The Appointment (build 1161) — `cr-appt-styles` + `cr-appt-script`, `window.CardinalAppointment`
+
+`#cr-appt` (pane, z 9550) + `#cr-appt-rail` (rail, z 9600) · Vision hub tile
+`data-go="appt"` · Blackout, single-theme, all literals.
+
+**The running order for the in-home visit, over surfaces that already exist.**
+Theo's pick: option (b) — the whole visit stays on the tablet. `STEPS` is the
+single source of the order: **Job → Roof → Good → Why → House**, with **Options
+& Sign shipped at 1162** by extending that array and nothing else:
+
+| Options | the job's newest published Roof Options sheet | `/api/share?t=` in an iframe — review; the initial boxes are print-only by design |
+| Sign | the job's paperwork, one picked document at a time | same share page; `share.js` injects Accept & Sign when signable, `clientsign.js` stamps + notifies. **The 1149 rule is structural: the list hides while a document is open, exactly one frame, its own token** |
+
+`docToken()` = `ensureShareToken`'s 731 convention outside the editor
+(reuse-never-remint asserted); `docSignable()` mirrors `api/share.js`
+(SIGN_RX / SLOT_RX / `data-clientsigned`), fixture-proven. The doc frame
+stops 92px short of the bottom so the share page's own fixed sign bar
+clears the rail. **No new signature code exists anywhere in this module.**
+
+| Step | What opens | How |
+|---|---|---|
+| Job | the conductor's own picker | `projects` select, RLS-scoped (the Visualizer's own pattern) |
+| Roof | The Walk, showroom mode, this job's walk | `CardinalShowcase.openForProject(pr, {showroom:true})` — the opts parameter is new at 1161 |
+| Good | Hall of Fame | clicks the showcase's own `[data-tab="work"]` — the same tap a finger makes |
+| Why | Why Cardinal (1160) | `CardinalWhy.open()` |
+| House | approved `design_renders` for this job | one `createSignedUrls` round trip; Colors is a side door, not a step |
+
+### The two-layer rule — read before touching the rail
+
+The **pane** is a full-screen view: registered in `hideAllViews()`, DISPLAY
+lever, beside `cr-why`/`cr-fin`. The **rail** is **chrome, like `#pwaNav`,
+and deliberately NOT registered** — every delegated `open()` calls
+`hideAllViews()`, which must clear the pane (correct) and must not kill the
+step controls (the whole point). The rail sits at z **9600** because
+`#cr-show` is 9500; put anything below that and Next dies inside the
+showroom. If you register the rail in `hideAllViews()` you will re-discover
+this as "the bar vanishes when any step opens."
+
+**Leaving a step** goes through `closeModules()` — each module's own
+`close()`, then the DISPLAY lever directly on the display-shown ones,
+because a module's `close()` can no-op without throwing (the 570–572 class).
+
+**≤620px** the per-step jump buttons give way to a `2/5` counter — eight
+44px targets do not fit in 390px, measured. Back/Next carry the walk.
+
+**It writes no scroll lock** (count stays 13), touches no client data beyond
+the job's name on the rail, and shows only renders a person approved — the
+Walk's rule, inherited from the Visualizer's own REVIEW screen.
 ## Build 1163 — Community on the morning strip
 `#crMorning` ("Where things stand", 1048) now carries a **bids past due** chip — counted by
 `CardinalCommunityHub.dueBids()` (new export in `cr-ch2-script`, the hub's own due clocks) and

@@ -2,6 +2,98 @@
 
 ---
 
+## 🟠 OPEN — the in-home presentation: 1159 did the wiring, not the arc (30 Aug 2026)
+
+Theo, 30 Aug: *"Can you make a professional sales presentation? In home on
+an iPad."* The audit found the suite is large and **scattered across ~16
+doors with no running order**. Three numbered options were put to him; he
+picked **3, then 2, then 1**. Build **1159 is option 3** and is shipped.
+
+**Option 2 — "Why Cardinal", client-facing. ✅ SHIPPED at 1160.** Every client-facing
+surface today is about *their* roof; nothing says why Cardinal. The content
+is **already written**: `PANES.proof` in `cr-sf-script` (company, warranty,
+roof spec, ORC §1345.23) — but it is written **for the rep**
+(*"the facts you should be able to give without looking anything up"*,
+*"ask a competitor whether they do"*). So this is a **reface, not a write**:
+Blackout, homeowner voice, coaching asides removed, as a Vision hub tile.
+Add the OC **Preferred** status — `OC_BRAND_RULES.md` governs the mark
+and the approval gate is Theo's. **Do not** put Google reviews on it without
+asking: the review card in the app is staff-facing reputation tracking.
+
+**Option 1 — The Appointment. ✅ SHIPPED — 1161 the conductor and
+steps 1–4, 1162 Options & Sign. Theo picked
+**(b)**: Options & Sign stay on the tablet — 1162 extends `STEPS` with an
+Options step (the job's Roof Options document via `/api/share?t=` in an
+iframe, review) and a Sign step (the job's signable document — SIGN_RX
+'Client Acceptance' or SLOT_RX sigslot — same share page, which injects
+Accept & Sign; `clientsign.js` stamps and notifies). Recon done and
+verified: `/api/share` sends no frame-blocking headers; the GBB sheet's
+initial boxes are print-only (`.gbb-box`), so GBB shares as REVIEW and the
+signature lands on the estimate/contract, which has been remotely signable
+since 1141/1015.** One tile that
+runs a fixed sequence over surfaces that already exist: *their roof* (Walk /
+Spotlight) → *what good looks like* (Hall of Fame) → *why Cardinal*
+(option 2) → *their house in colour* (Designer / Colors) → *options*
+(Good/Better/Best) → *payment* (Service Finance) → *sign*. A
+conductor, not new content. **The hard parts, measured, not guessed:** each
+surface closes differently (`display` vs class — see the `hideAllViews()`
+rules), the scroll lock has 13 writers and no reconciler, and the last two
+steps live in the **CRM**, which the showroom host does not draw. Expect it
+to force the separation question below.
+
+**Option 4 — the leave-behind.** Not picked yet. `drivewaytest.html`
+already exists, is public, login-free and linked from nowhere — it is
+the obvious first payload.
+
+---
+
+## 🟠 OPEN — the Owens Corning mark on Why Cardinal (build 1160)
+
+`cr-why` states the **Owens Corning™ Roofing Preferred Contractor**
+status as **text** and carries **no mark** — `gate_1160.mjs` asserts
+zero `<img>`, `<svg>`, `background-image` and `url(`. Two things are
+needed before a lockup can go on it, and **neither is a session's to
+supply**:
+
+1. **Official artwork.** The guidelines PDF's embedded lockups are
+   100–150ppi; cropping one ships a blurry, proportion-drifted mark,
+   which the guidelines forbid outright. It has to come from Theo or OC.
+2. **OC Local Marketing approval** — `LMARoofing@owenscorning.com`,
+   sending the layout **and the test URL**. Approval precedes launch.
+
+The variant is already settled by arithmetic in `OC_BRAND_RULES.md`:
+**red roundel, white lockup type** (the "50% black or more" version) —
+`#050607` is ~98% black.
+
+**Separate and older, and still Theo's call:** the required co-branding
+disclaimer (*"…is an independent contractor and is not an affiliate of
+Owens Corning Roofing and Asphalt, LLC…"*) appears **zero** times in the
+whole app, including on the ROOFING ESTIMATE, which already co-brands via
+`.est-oc`. 1160 inherits that question; it did not create it.
+
+---
+
+## 🟠 OPEN — the sentinel could not see the landing or the Vision hub (found 1159, half-fixed 1160)
+
+Every state in `sentinel_setup_cardinal.js` opened with `leaveLanding()`,
+so **no state ever swept the landing screen or the Vision hub** — and
+1159 changed only those. A green sweep would have said nothing about it.
+
+**1160 added `vision` and `why`.** Still uncovered: the landing's own
+launcher at both widths (the ≥820px Showroom/Designer rows and the
+phone shape below it), and every surface the hub leads to that has no
+state — Presentations (`cr-show`), the Designer/Visualizer (a separate
+app, which has its own `sentinel_setup_visualizer.js`).
+
+⚠️ **Also measured 30 Aug: a full two-artifact sweep does not finish in
+this sandbox.** `DEADLINE_MS` defaults to `60000 + RENDERS*14000` — with
+~24 states × 2 viewports that is ~12 min **per artifact**, and a
+`--since` run renders both. A 15-min cap killed it at `EXIT=124` with no
+report, which reads as "not green" but **proves nothing** (BUG_CLASSES 37).
+Scope with `--only` when the build is scoped, or budget ≥40 min.
+
+---
+
 ## 🟠 OPEN — the sentinel's AR coverage stops at the chrome (build 1158)
 
 The `ar` state added at 1158 sweeps the Invoices & AR header, KPI tray, empty

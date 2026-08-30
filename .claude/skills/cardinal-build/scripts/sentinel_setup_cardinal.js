@@ -532,6 +532,46 @@
         leaveLanding(); closeAll();
         var m = api('CardinalStorm'); if (!m) throw new Error('CardinalStorm.open missing');
         m.open(); await pause(700); } },
+    /* 1160: the Vision hub and Why Cardinal. Added because 1159 and
+       1160 both changed the LANDING and the hub, and every state above
+       calls leaveLanding() first — so the sentinel had no state that
+       ever swept either surface, and a green run said nothing about
+       them. 'vision' forces the hub branch on this hostname (the
+       ?vision=1 override) and rebuilds the landing; 'why' opens the
+       screen the hub now leads to. */
+    { name:'vision',    run: async function () {
+        closeAll();
+        var lv = document.getElementById('landingView');
+        if (!lv) throw new Error('no #landingView');
+        /* Drive the REAL path. isVisionHost() is a LOCAL function inside
+           cr-lr-script that build() calls directly; the window.CardinalLanding
+           copy is an export, so overriding it changes nothing and the hub
+           silently never renders (cost a run, 30 Aug). The local one reads
+           location.search, so put ?vision=1 there instead. */
+        try { history.replaceState(null, '', location.pathname + '?vision=1'); } catch (e) {}
+        lv.dataset.crLrBuilt = '';
+        if (typeof window.showLanding === 'function') { try { window.showLanding(); } catch (e) {} }
+        lv.style.display = 'block';
+        await pause(700);
+        if (!lv.querySelector('.cr-vh'))
+          throw new Error('the Vision hub did not render — .cr-vh absent');
+      } },
+    { name:'why',       run: async function () {
+        closeAll();
+        var m = api('CardinalWhy'); if (!m) throw new Error('CardinalWhy.open missing');
+        m.open(); await pause(600);
+        var v = document.getElementById('cr-why');
+        if (!v || getComputedStyle(v).display === 'none')
+          throw new Error('#cr-why did not open');
+      } },
+    { name:'appt',      run: async function () {
+        closeAll();
+        var m = api('CardinalAppointment'); if (!m) throw new Error('CardinalAppointment.open missing');
+        await m.open(); await pause(700);
+        var v = document.getElementById('cr-appt');
+        if (!v || getComputedStyle(v).display === 'none')
+          throw new Error('#cr-appt did not open');
+      } },
     { name:'colors',      run: async function () {
         leaveLanding(); closeAll();
         var m = api('CardinalColors'); if (!m) throw new Error('CardinalColors.open missing');
