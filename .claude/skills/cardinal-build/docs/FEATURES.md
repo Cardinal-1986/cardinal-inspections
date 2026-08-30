@@ -7914,3 +7914,43 @@ not create it.
   today, so both calls are inert no-ops kept for the day it does. Like
   `cr-occ`, it is **not** in the `navRestore` switch; the Vision hub is a
   front door where back means leave.
+
+## The Appointment (build 1161) — `cr-appt-styles` + `cr-appt-script`, `window.CardinalAppointment`
+
+`#cr-appt` (pane, z 9550) + `#cr-appt-rail` (rail, z 9600) · Vision hub tile
+`data-go="appt"` · Blackout, single-theme, all literals.
+
+**The running order for the in-home visit, over surfaces that already exist.**
+Theo's pick: option (b) — the whole visit stays on the tablet. `STEPS` is the
+single source of the order: **Job → Roof → Good → Why → House**, with Options
+& Sign joining at 1162 by extending that array and nothing else.
+
+| Step | What opens | How |
+|---|---|---|
+| Job | the conductor's own picker | `projects` select, RLS-scoped (the Visualizer's own pattern) |
+| Roof | The Walk, showroom mode, this job's walk | `CardinalShowcase.openForProject(pr, {showroom:true})` — the opts parameter is new at 1161 |
+| Good | Hall of Fame | clicks the showcase's own `[data-tab="work"]` — the same tap a finger makes |
+| Why | Why Cardinal (1160) | `CardinalWhy.open()` |
+| House | approved `design_renders` for this job | one `createSignedUrls` round trip; Colors is a side door, not a step |
+
+### The two-layer rule — read before touching the rail
+
+The **pane** is a full-screen view: registered in `hideAllViews()`, DISPLAY
+lever, beside `cr-why`/`cr-fin`. The **rail** is **chrome, like `#pwaNav`,
+and deliberately NOT registered** — every delegated `open()` calls
+`hideAllViews()`, which must clear the pane (correct) and must not kill the
+step controls (the whole point). The rail sits at z **9600** because
+`#cr-show` is 9500; put anything below that and Next dies inside the
+showroom. If you register the rail in `hideAllViews()` you will re-discover
+this as "the bar vanishes when any step opens."
+
+**Leaving a step** goes through `closeModules()` — each module's own
+`close()`, then the DISPLAY lever directly on the display-shown ones,
+because a module's `close()` can no-op without throwing (the 570–572 class).
+
+**≤620px** the per-step jump buttons give way to a `2/5` counter — eight
+44px targets do not fit in 390px, measured. Back/Next carry the walk.
+
+**It writes no scroll lock** (count stays 13), touches no client data beyond
+the job's name on the rail, and shows only renders a person approved — the
+Walk's rule, inherited from the Visualizer's own REVIEW screen.

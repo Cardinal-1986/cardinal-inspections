@@ -564,6 +564,14 @@
         if (!v || getComputedStyle(v).display === 'none')
           throw new Error('#cr-why did not open');
       } },
+    { name:'appt',      run: async function () {
+        closeAll();
+        var m = api('CardinalAppointment'); if (!m) throw new Error('CardinalAppointment.open missing');
+        await m.open(); await pause(700);
+        var v = document.getElementById('cr-appt');
+        if (!v || getComputedStyle(v).display === 'none')
+          throw new Error('#cr-appt did not open');
+      } },
     { name:'colors',      run: async function () {
         leaveLanding(); closeAll();
         var m = api('CardinalColors'); if (!m) throw new Error('CardinalColors.open missing');

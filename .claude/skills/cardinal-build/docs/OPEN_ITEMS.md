@@ -20,7 +20,17 @@ Add the OC **Preferred** status — `OC_BRAND_RULES.md` governs the mark
 and the approval gate is Theo's. **Do not** put Google reviews on it without
 asking: the review card in the app is staff-facing reputation tracking.
 
-**Option 1 — The Appointment (a running order). NEXT.** One tile that
+**Option 1 — The Appointment. ⏳ IN PROGRESS — 1161 shipped the
+conductor and steps 1–4 (Job → Roof → Good → Why → House). Theo picked
+**(b)**: Options & Sign stay on the tablet — 1162 extends `STEPS` with an
+Options step (the job's Roof Options document via `/api/share?t=` in an
+iframe, review) and a Sign step (the job's signable document — SIGN_RX
+'Client Acceptance' or SLOT_RX sigslot — same share page, which injects
+Accept & Sign; `clientsign.js` stamps and notifies). Recon done and
+verified: `/api/share` sends no frame-blocking headers; the GBB sheet's
+initial boxes are print-only (`.gbb-box`), so GBB shares as REVIEW and the
+signature lands on the estimate/contract, which has been remotely signable
+since 1141/1015.** One tile that
 runs a fixed sequence over surfaces that already exist: *their roof* (Walk /
 Spotlight) → *what good looks like* (Hall of Fame) → *why Cardinal*
 (option 2) → *their house in colour* (Designer / Colors) → *options*
