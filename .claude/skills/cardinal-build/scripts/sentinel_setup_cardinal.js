@@ -543,13 +543,12 @@
         closeAll();
         var lv = document.getElementById('landingView');
         if (!lv) throw new Error('no #landingView');
-        window.__crForceVision = true;
-        var L = window.CardinalLanding;
-        if (L && L.isVisionHost) {
-          var real = L.isVisionHost;
-          L.isVisionHost = function(){ return true; };
-          L.__crRealIsVision = real;
-        }
+        /* Drive the REAL path. isVisionHost() is a LOCAL function inside
+           cr-lr-script that build() calls directly; the window.CardinalLanding
+           copy is an export, so overriding it changes nothing and the hub
+           silently never renders (cost a run, 30 Aug). The local one reads
+           location.search, so put ?vision=1 there instead. */
+        try { history.replaceState(null, '', location.pathname + '?vision=1'); } catch (e) {}
         lv.dataset.crLrBuilt = '';
         if (typeof window.showLanding === 'function') { try { window.showLanding(); } catch (e) {} }
         lv.style.display = 'block';
