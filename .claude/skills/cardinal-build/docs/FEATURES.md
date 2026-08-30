@@ -7963,3 +7963,9 @@ because a module's `close()` can no-op without throwing (the 570–572 class).
 **It writes no scroll lock** (count stays 13), touches no client data beyond
 the job's name on the rail, and shows only renders a person approved — the
 Walk's rule, inherited from the Visualizer's own REVIEW screen.
+## Build 1163 — Community on the morning strip
+`#crMorning` ("Where things stand", 1048) now carries a **bids past due** chip — counted by
+`CardinalCommunityHub.dueBids()` (new export in `cr-ch2-script`, the hub's own due clocks) and
+opening the Community hub on tap. The strip's `counts()` resolver is exported as
+**`window.CardinalStands`** — the single source the coming front-door/switcher work must read.
+Admin-only, as the strip has always been.

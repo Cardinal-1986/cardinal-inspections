@@ -30635,3 +30635,29 @@ documented in one file and reproduced in another is not documented.
 - The doc frame stops **92px** short of the bottom so the share page's own fixed sign bar (`csBar`, `bottom:0` *inside the iframe viewport*) lands above the rail instead of under it. Seven stops moved the rail's counter breakpoint 620→**700px**. Picking a job clears the doc cache — job A's paperwork must never surface at job B's table.
 - ⚠️ Two instrument notes: the first `check_build` marker (`function paintSign`) substring-matched the pre-existing `paintSignedPhotoImgs` and read as a failed negative control on a healthy file — *a name is not a contract*, including in markers. And `gate_1161`'s "house is the last step" assertion went stale the moment STEPS grew; the gate now asserts the contract (the final stop has no dead-end forward), red on 1160 still.
 - Gates: `check_build` green (stamp 1161→1162, changelog, unique marker + negative control). `gate_1162.mjs` **26 green** / control on 1161 **RED at 5** — drives both steps end to end against mocked docs. `gate_1161.mjs` still **51 green** on this artifact / RED 15 on 1160. `render_appt.mjs` **21 green** in real Chromium, three viewports. Patch replays onto the 1161 pre-image **byte-for-byte**. **Sentinel: CLEAN, 58 renders** (`appt`/`vision`/`why` states, 390px + 1194px) — recorded after the entry above was written, because the sweep was still running at commit time; 1161's own sweep was also clean at 58. No SQL.
+## Build 1163 — the morning strip counts Community, and shares its resolver
+
+The "Where things stand" strip (1048) watched retail approvals, build dates, punch-outs and
+insurance chases — and never Community, whose three overdue bids were invisible from the home
+screen. Theo picked the front-door direction whose whole premise is that strip; this is its
+first build, shippable on its own.
+
+- **`cr-ch2-script` exports `dueBids`** — `chDueBidsCount()`, counted by the hub's OWN clocks
+  (`chDueIso`: `bid_due_at`, or `check_back_at` on a parked job per 975's second clock;
+  `chWaiting` excluded per 977 — a waitlisted job has no bid). One due rule, not a second.
+- **`cr-morning` gains the `bids past due` chip** (hot), a DOOR to `CardinalCommunityHub.show()`;
+  the zero-guard now includes it so the strip cannot hide while bids are overdue.
+- **`window.CardinalStands = Object.assign(...{ counts })`** — the strip's resolver exported so
+  the front-door work ahead reads the SAME numbers. One pipeline per concept.
+
+Gates: check_build green (stamp 1158→1163 — 1159–1162 are claimed on other branches, per
+next_build.py — marker `dueBids` + negative control). `harness_stands1163.js` extracts the
+SHIPPED functions by brace-matching and runs them against production shapes (overdue Lead,
+parked-with-future-check-back excluded, waitlist excluded, non-community excluded, hub-missing
+→ 0), coverage floor ≥18: **GREEN 19/19 on 1163, RED on the 1158 control.**
+⚠ The harness's first run failed CORRECT code: the shipped `ck()` delegates to
+`window.parseCkAll`, which the sandbox did not provide — the mock was wrong, not the app.
+Sentinel run per the 27 Aug rule (wiring build → run, don't block).
+
+## Build 1164 — merging 1163 into the 1159–1162 branch
+- **1164** · Main took **1163** (the Community morning-strip build) while the presentation branch was open — `next_build.py` doing its job: both lines picked non-colliding numbers. The merge resolved three files, all the both-appended shape: the app stamp (1162 vs 1163 → **1164**), the `CHANGELOG` head (1164 merge entry + 1163 interleaved above 1162–1159), and the two docs (both sections kept in build order). **No code region conflicted** — 1163 touched the morning strip and `CardinalStands`; 1159–1162 touched the Vision suite; the two lines share no block. All four presentation gates re-run green on the merged artifact, plus 1163's own `gate_preview.mjs`/`harness_stands1163.js` where runnable. The 1117 pattern, third time.
