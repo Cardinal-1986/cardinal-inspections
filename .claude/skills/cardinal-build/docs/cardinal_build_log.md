@@ -30857,3 +30857,53 @@ before push.
     string, full walk). Pass either BEFORE the cardinal setup in --setup. Not a fuzzer: three
     boundary values on the primary fixtures, per the settled scope.
 - `--selftest` GREEN: all 14 checks fire.
+
+## Build 1174 — the drawer stops doubling its doors
+- The DUPE check's two first-run catches, fixed at source: the drawer-header people icon is
+  deleted (it duplicated the "Switch portal" row — both opened the Front Door since 1171), and
+  Community Partners stops entering the menu twice. The second copy was a 953-era paper-over —
+  appended by cr-cpartners' tick loop, then HIDDEN by the menu builder; hiding survives in markup
+  and the DUPE check reads markup on purpose. Two-sided fix for the boot race: the appender skips
+  when `#cr-nav-communitypartners` exists, and the 953 loop now REMOVES (first pass merely added
+  the guard and the race still left one hidden row — gate_1174 caught it before staging).
+- Gates: check_build green (1173→1174) · `gate_1174.mjs` 7/7 (icon gone, one CP door, one switch
+  row, both surviving doors driven and working), RED (3) on the 1173 control · regressions
+  gate_1171 9/9, gate_1172 15/15, gate_1173 9/9.
+
+## Build 1175 — the Vision hub's two dim lines
+- The empty-book sweep's two live INK findings, fixed with computed inks: `.cr-vh-word` was brand
+  red #c8202e at 3.44:1 on the hub's #0b0d0c (brand red is a light-ground ink) → #e35c63, the
+  app's approved lighter twin, 5.55; the Studio→promote→Showroom flow line was #5d655f at 3.24 →
+  #98A29C, the hub's own `.cr-vh-sub` muted, 7.41. Single-theme surface (Blackout by design) — no
+  light twin exists to break.
+- ⚠ THE 27 AUG HEADER-AUDIT ROWS ARE STALE — re-measured before fixing, and everything the audit
+  flagged was already settled at 1116: the ▼ is #8a9199 (5.3–5.9 on all grounds), community's ＋
+  was pixel-sampled and re-inked (#02593d, 5.26), and retail's ＋ was deliberately left (the glyph
+  samples 7.10 where it actually sits; 3.79 was the gradient stop it never touches). Nothing
+  re-fixed; recorded so nobody fixes them a second time.
+- Gates: check_build green (1174→1175; the changelog stores \u2019 as an escape, so the marker
+  must avoid the apostrophe) · `gate_1175.mjs` measures both inks in Chromium on the real
+  ?vision=1 pane — 5/5 GREEN, RED on the 1174 control at exactly 3.44/3.24 · sentinel sweep
+  (since 1173) running; colour build, so its result gates the merge.
+
+## Instruments — the standing quality gates, run late on the arc and rebaselined (30 Aug)
+- The "cross-block globals lint" recommended in the tooling review RESOLVES TO A GATE THAT
+  ALREADY EXISTS: `gate_types.py` (shipped at 1121) is tsc's TS2304 on the concatenated blocks
+  with a globals.d.ts generated from the artifact's own `window.X=` assignments — no-undef with
+  the correct shared-scope model. A second parallel mechanism was NOT built (prime-doctrine
+  corollary: grep for the convention before inventing a mechanism).
+- Both standing gates had not been run since ~1153 and went RED on the 1163–1175 arc. Every
+  finding read before rebaselining, none real:
+  - `gate_types` +16 TS2339 — eleven are `e.target.closest(...)` (`closest` on `EventTarget`)
+    from the Front Door arc's delegated handlers, five are `disabled`/`click`/`onclick`/`style`/
+    `title` on un-narrowed `Element`. DOM-typing noise, same shape as the 1,347 grandfathered;
+    zero property drift on app data shapes. Verified 1174–1175 added ZERO (main-1173 and the
+    current tree have byte-identical TS2339 sets).
+  - `gate_dupes` 15 names over — module-local naming reuse in `cr-fd-script` (1164 arc) and
+    `cr-appt-script` (1156–1162 arc). The three 1→2 names (`end`, `isOpen`, `loadProjects`)
+    individually verified IIFE-local: all five defining blocks open `(function(){ 'use strict'`.
+    No shared-scope collision.
+- Baselines locked: types 1525 across 16 codes (TS2322 improved 19→17 in the same lock), dupes
+  208 names at 2+. Both gates GREEN on the 1175 tree. Lesson re-learned: standing gates are
+  per-build, not per-mood — running them at merge time on a 12-build arc turns each finding
+  into archaeology.
