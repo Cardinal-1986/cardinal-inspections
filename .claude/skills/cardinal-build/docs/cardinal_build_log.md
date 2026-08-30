@@ -30885,3 +30885,25 @@ before push.
   must avoid the apostrophe) · `gate_1175.mjs` measures both inks in Chromium on the real
   ?vision=1 pane — 5/5 GREEN, RED on the 1174 control at exactly 3.44/3.24 · sentinel sweep
   (since 1173) running; colour build, so its result gates the merge.
+
+## Instruments — the standing quality gates, run late on the arc and rebaselined (30 Aug)
+- The "cross-block globals lint" recommended in the tooling review RESOLVES TO A GATE THAT
+  ALREADY EXISTS: `gate_types.py` (shipped at 1121) is tsc's TS2304 on the concatenated blocks
+  with a globals.d.ts generated from the artifact's own `window.X=` assignments — no-undef with
+  the correct shared-scope model. A second parallel mechanism was NOT built (prime-doctrine
+  corollary: grep for the convention before inventing a mechanism).
+- Both standing gates had not been run since ~1153 and went RED on the 1163–1175 arc. Every
+  finding read before rebaselining, none real:
+  - `gate_types` +16 TS2339 — eleven are `e.target.closest(...)` (`closest` on `EventTarget`)
+    from the Front Door arc's delegated handlers, five are `disabled`/`click`/`onclick`/`style`/
+    `title` on un-narrowed `Element`. DOM-typing noise, same shape as the 1,347 grandfathered;
+    zero property drift on app data shapes. Verified 1174–1175 added ZERO (main-1173 and the
+    current tree have byte-identical TS2339 sets).
+  - `gate_dupes` 15 names over — module-local naming reuse in `cr-fd-script` (1164 arc) and
+    `cr-appt-script` (1156–1162 arc). The three 1→2 names (`end`, `isOpen`, `loadProjects`)
+    individually verified IIFE-local: all five defining blocks open `(function(){ 'use strict'`.
+    No shared-scope collision.
+- Baselines locked: types 1525 across 16 codes (TS2322 improved 19→17 in the same lock), dupes
+  208 names at 2+. Both gates GREEN on the 1175 tree. Lesson re-learned: standing gates are
+  per-build, not per-mood — running them at merge time on a 12-build arc turns each finding
+  into archaeology.
