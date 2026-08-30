@@ -31086,3 +31086,43 @@ fails every run trains people to ignore the RUN line.
 **Theo also asked what item 4 was** (the remaining 305 a11y findings). Explained and **skipped on
 my recommendation**: they are landmark/region structure, invisible to anyone who uses the app by
 looking and tapping, and already baselined so they cannot grow.
+
+## Instruments — audit_scrolllock.py, and the 17-writer question answered (30 Aug 2026)
+- Theo picked the scroll-lock audit as item 3 after the 1178 re-measure found **17 modules writing
+  `document.body.style.overflow`, against the 13 CLAUDE.md states as an invariant**. Built as a
+  script rather than eyeballed, per the standing rule that a question needing three passes wants an
+  instrument.
+- **THE ANSWER IS NO LEAKS.** 17 modules, 41 code sites, and **every module balances or
+  over-releases** — zero with more locks than releases. Five (`cr-ar`, `cr-guide`, `cr-lrs`,
+  `cr-pb`, `cr-sf`) release on close paths they never locked, which is the healthy direction, and
+  block 1's single `read` is the documented self-heal. **So the rule that mattered held; the rule as
+  written was broken without harm.** The four newcomers since 808 are well-behaved.
+- The roster is recorded (`scrolllock_roster.json`) and the audit exits RED on a **new name**, which
+  is the part worth automating: the invariant was prose for 234 builds and prose is what let four
+  writers in unnoticed. It is now a script that fails.
+- ⚠️ **Its selftest caught a total false negative on the first run.** The classifier compared the
+  lexer's state against the string `'code'` — `JL.CODE` is the integer **0** — so every hit was
+  discarded and the audit reported **zero writers on a file containing 41**. "No leaks found" is
+  precisely what a *working* audit of a healthy file prints, so nothing but the selftest could have
+  distinguished the two. The four-shape / two-decoy fixture is why it took one minute, not a build.
+- Reported as a REVIEW LIST, not a verdict, and the header says so: one release can legitimately
+  serve two locks, and a release can live in a handler a static pass cannot see. The one thing it
+  asserts outright is the roster.
+
+## Community home — preview delivered, awaiting Theo's pick (30 Aug 2026)
+- Item 1 of his 1/2/3/4 order is **strip the Community home to one attention list; Estimates and
+  Partners become doors** (his pick 1b, 27 Aug). **His standing rule is PREVIEW BEFORE SHIPPING**
+  here, because it reverses the 853 calendar/tiles/day ordering for Community only — so nothing was
+  built. Three labelled options at 390px, plus today's screen for comparison, in the **shipped
+  `--ccm-*` palette read out of `index.html`** rather than a preview palette, with a real light/dark
+  toggle driving the same tokens the app switches.
+  - **1 — grouped by what you do** (Chase a decision / Get on the calendar / Invoice the partner:
+    the three queues the Estimates tab already computes, promoted to the home).
+  - **2 — most urgent first**, one flat list, the action as a chip per row.
+  - **3 — search stays on top**, since the module's own 711 banner calls the client list the daily
+    driver; costs a screen-inch before the work.
+- Recorded in all three: nothing is deleted — By partner and By stage move to the partner stats page
+  built at 1092. Habitat sorts first. The day chips stay the same clock, so an overdue check-back
+  still goes red (the 975 fix).
+- ⏸ **Item 2 (the Tarps tab) is BLOCKED ON THE SAME ANSWER, deliberately**: if the tabs become
+  doors, "a new tab" has nowhere to be. Not started.
