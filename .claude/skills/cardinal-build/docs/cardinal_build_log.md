@@ -30807,3 +30807,21 @@ before push.
   opens it (expanding the Daily section like a finger would), and the bar's burger/+ still take
   their taps at all three text sizes. **15/15 GREEN; RED (6) on the 1171 control, whose first
   failure is Theo's exact report.** BUG_CLASSES 71 written.
+
+## Build 1173 — one pipeline per portal; the numbers stop wandering; the ⌂ retires
+- Theo, with three screenshots of three DIFFERENT pipelines under one "Retail" header (16-L, the
+  correct 10/7/3, then 0/1) plus AR flipping between $16,462 and "nothing outstanding": the 1167
+  board reads `body.dataset.crm` at render time, and `skin()` writes that stamp a beat later (the
+  369 lag class, documented in the file's own comments) — so returning from Community or Cardinal
+  Truth painted the retail dashboard with the OUTGOING portal's book, and nothing re-rendered.
+  Tapping the ⌂ (goHome, the CRM-aware router) accidentally repaired it, which is how he found it.
+- Fix: inside `skin()`'s change guard, when the crm stamp genuinely flips and `mainView` is
+  visible, re-render `renderPipeline()` + `renderHome()` — every path self-heals (panel doors, hub
+  exits, back-swipes), and the guard prevents any loop. The ⌂ header home button is retired on
+  Theo's ask (its creation deleted; the removal is idempotent because build() re-runs from an
+  observer); `goHome()` survives for its other callers.
+- Gates: check_build green (1172→1173) · `gate_1173.mjs` drives Theo's exact round trips in
+  Chromium and asserts the board equals the book of the portal the header names after every leg,
+  plus a 700ms stability read — **9/9 GREEN; the 1172 control goes RED reproducing his screenshots
+  verbatim ("got L3/P0 under header Retail" = the community book, "L1/P0" = insurance)**.
+  Regression: gate_1172 15/15, gate_1167 17/17, render_landing1165 16/16 on the new artifact.

@@ -7995,3 +7995,4 @@ vision host.
 | Front Door finish: "Cardinal ▾" while open, ✓ on current portal, book totals on doors, dividers | `cr-fd-script`, cr-hd2 title writer | totals from `bookCounts()` — the viewer's own visible clients (1169) |
 | Needs sorting row + pipeline chip → Assign Portals (`cr-bpa-script`, pre-existing) | Front Door bottom row; `#pipeScopeNote` | sorter registered in `hideAllViews()` (1170) |
 | One portal-switch mechanism — drawer row, drawer-header icon, insurance chip, header title all open the Front Door | drawer markup, `data-nav` handler, cr-dh module, ins-header chip | old `CardinalPortal.pick()` sheet is a code-only fallback (1171) |
+| Board coherence — the dashboard re-renders when the portal stamp flips; ⌂ header home button retired | `skin()` in cr-hd2; ensureRibbon | goHome() survives for the mounts' exits (1173) |
