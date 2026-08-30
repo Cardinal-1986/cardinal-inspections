@@ -2556,11 +2556,16 @@ body.restoring #restoreVeil{display:flex;}
 .rowfil{height:1px;margin:14px 8px;background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
 .opsrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;}
 .opscard{margin:0 !important;}
-.opsstats{display:flex;justify-content:space-around;align-items:flex-start;gap:6px;margin-top:10px;}
-.opsstat{text-align:center;flex:1;}
-.opsc{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;
-  margin:0 auto 6px;color:#fff;font:800 20px 'Segoe UI',Arial,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.18);}
-.opsstat small{font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);line-height:1.25;display:block;}
+.cal30{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:10px;}
+.cal30 .ch{font:700 11px/1 ui-monospace,'SF Mono',Menlo,Consolas,monospace;color:var(--rbe-mute,#9aa3ad);text-align:center;padding:2px 0 4px;}
+.cal30 .cd{font:600 11.5px/30px ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;text-align:center;color:var(--rbe-ink,#e8e8e8);min-height:30px;}
+.cal30 .cd.has{background:rgba(200,32,46,.16);border-radius:8px;font-weight:800;}
+.cal30 .cd.today{color:#fff;background:#c8202e;border-radius:50%;width:30px;margin:0 auto;}
+.cal30note{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa3ad);}
+.arbig{margin-top:8px;font:800 26px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#e8e8e8);letter-spacing:-.01em;}
+.arbig .arbigl{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa3ad);margin-top:2px;letter-spacing:0;}
+.arcli{display:flex;flex-wrap:wrap;gap:4px 14px;font:700 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#e8e8e8);}
+.arcli span{white-space:nowrap;}
 .arwrap{margin-top:10px;display:flex;flex-direction:column;gap:7px;}
 .arrow2{display:flex;align-items:center;gap:8px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#5c4a42;}
 .arrow2 .arlbl{flex:0 0 42px;}
@@ -2569,8 +2574,7 @@ body.restoring #restoreVeil{display:flex;}
 .arrow2 .aramt{flex:0 0 auto;font-weight:800;color:#2b2b2b;}
 .artotal{margin-top:9px;font:800 13px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;text-align:right;}
 @media (max-width:640px){
-  .opsc{width:42px;height:42px;font-size:16px;}
-  .opsstat small{font-size:11px;}
+  .cal30 .cd{font-size:11px;}
   .arrow2{font-size:11px;} .arrow2 .arlbl{flex-basis:38px;}
 }
 
@@ -3920,7 +3924,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1166<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1170<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4018,6 +4022,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="12" width="4.4" height="9" rx="1"/><rect x="9.8" y="7" width="4.4" height="14" rx="1"/><rect x="16.6" y="3" width="4.4" height="18" rx="1"/></g><g class="i5"><path d="M4 20V13" class="m"/><path d="M10 20V8"/><path d="M16 20V4" class="m"/><path d="M4 20h16" class="m"/></g></svg>Cardinal Pipeline</div>
           <div class="piperow" id="pipeRow"></div>
         </div>
+        <div id="pipeScopeNote" style="margin:8px 2px 0;"></div>
         <div class="pipecard" id="approvalsCard" style="display:none;margin-top:14px;border-left:5px solid #C8202E;">
           <h3 class="projsec" style="margin:0 0 8px;" data-cri="bell lg">Approvals &#8212; signed estimates awaiting contract</h3>
           <div id="approvalsList"></div>
@@ -4025,12 +4030,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <div class="rowfil"></div>
         <div class="opsrow">
           <div class="pipecard opscard">
-            <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM6.6 9.4h10.8v9.6H6.6z"/><rect x="8.4" y="11" width="7.2" height="1.9" rx=".95"/><rect x="8.4" y="14.4" width="5" height="1.9" rx=".95"/></g><g class="i5"><path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="M8.2 11.6h7.6" class="m"/><path d="M8.2 15.4h5" class="m"/></g></svg>Work Schedule</div>
-            <div class="opsstats">
-              <div class="opsstat" data-opsnav="completed" style="cursor:pointer;" title="View completed jobs"><span class="opsc" style="background:#2f7fd0;" id="opsDone">0</span><small>Completed<br>Today</small></div>
-              <div class="opsstat" data-opsnav="today" style="cursor:pointer;" title="Jump to Team Calendar"><span class="opsc" style="background:#8b5fd6;" id="opsToday">0</span><small>Jobs<br>Today</small></div>
-              <div class="opsstat" data-opsnav="outlook" style="cursor:pointer;" title="Open Schedule Board"><span class="opsc" style="background:#2f6b3f;" id="opsOutlook">0</span><small>30 Day<br>Outlook</small></div>
-            </div>
+            <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM6.6 9.4h10.8v9.6H6.6z"/><rect x="8.4" y="11" width="7.2" height="1.9" rx=".95"/><rect x="8.4" y="14.4" width="5" height="1.9" rx=".95"/></g><g class="i5"><path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="M8.2 11.6h7.6" class="m"/><path d="M8.2 15.4h5" class="m"/></g></svg>Next 30 Days</div>
+            <div class="cal30" id="cal30Grid"></div>
+            <div class="cal30note" id="cal30Note"></div>
           </div>
           <div class="pipecard opscard" id="arCard">
             <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><ellipse cx="12" cy="6.2" rx="7.4" ry="2.4"/><ellipse cx="12" cy="12" rx="7.4" ry="2.4"/><ellipse cx="12" cy="17.8" rx="7.4" ry="2.4"/></g><g class="i5"><ellipse cx="12" cy="6.4" rx="7" ry="2.6"/><path d="M5 6.4v11.2c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6.4" class="m"/><path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6" class="m"/></g></svg>Accounts Receivable</div>
@@ -11570,14 +11572,30 @@ function upgradeNearbyRow(cands){
     step();
   }, function(){ /* denied/unavailable: zip ranking stays */ }, { maximumAge: 600000, timeout: 8000 });
 }
+/* 1167: the board wears one CRM. The dashboard's numbers and rows count the
+   portal it is skinned as (projClaimType, the one classifier) — the 37-lead
+   pipeline was every CRM's clients in retail clothing. Search stays unscoped:
+   a search is a lens over everything and must never hide a client. Clients
+   filed under NO crm are excluded from the board and said out loud in
+   #pipeScopeNote — never silently. */
+function boardCrm(){ return document.body.dataset.crm || 'retail'; }
+function boardProjects(){
+  var crm = boardCrm();
+  return cacheProjects.filter(function(pr){ return projClaimType(pr) === crm; });
+}
+function unsortedProjects(){
+  return cacheProjects.filter(function(pr){ return projClaimType(pr) === 'unknown'; });
+}
 function renderHome(){
   var q = searchText.trim().toLowerCase();
-  var projs = cacheProjects.filter(function(pr){
+  var _base = q ? cacheProjects : boardProjects();
+  var projs = _base.filter(function(pr){
     if(!q) return ['Closed','Lost'].indexOf(normStage(pr.stage)) === -1; /* archived/lost: off the board */
     var hay = [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   });
-  countLabel.textContent = projs.length + ' project' + (projs.length === 1 ? '' : 's');
+  var _scopeWord = q ? '' : boardCrm() + ' ';
+  countLabel.textContent = projs.length + ' ' + _scopeWord + 'project' + (projs.length === 1 ? '' : 's');
   renderTeamCal();
   renderOps();
 
@@ -11592,7 +11610,8 @@ function renderHome(){
     out += '<div class="empty"><b>No client projects yet.</b><br>' +
       'Use the <b>\uFF0B</b> button at the top and pick <b>Lead</b> to create your first client profile.</div>';
   }else if(!projs.length){
-    out += '<div class="empty"><b>No projects match your search.</b></div>';
+    out += '<div class="empty"><b>' + (q ? 'No projects match your search.'
+      : 'Nothing filed under ' + boardCrm() + ' yet.') + '</b></div>';
   }else{
     var isMobile = window.innerWidth <= 640;
     projs = favSort(projs);
@@ -11617,7 +11636,7 @@ function renderHome(){
         '<div class="rowdiv"></div>' +
         '<div class="rowlab">Nearby</div>' +
         '<div class="projgrid swipe' + (nearby.length > 1 ? ' loop' : '') + '" id="nearbyRow">' + rowHtml(nearby) + '</div>' +
-        '<div class="seeall"><button class="chipbtn" id="seeAllBtn">See all ' + totalN + ' clients &#8250;</button></div>';
+        '<div class="seeall"><button class="chipbtn" id="seeAllBtn">See all ' + totalN + ' ' + boardCrm() + ' clients &#8250;</button></div>';
     }else{
       out += '<div class="projgrid' + (isMobile ? ' swipe' : '') + '">' + projs.map(cardHtml).join('') + '</div>';
     }
@@ -11678,45 +11697,45 @@ function renderActivityCount(){
 }
 function renderOps(){
   /* wire the three Work Schedule counters once — they route to the right view */
+  /* 1168: the three circles are gone — the 30-day calendar is the outlook,
+     drawn out day by day, and the whole card opens the Schedule Board. */
   if(!renderOps._wired){
-    var opsBar = document.querySelector('.pipecard.opscard .opsstats');
-    if(opsBar){
-      opsBar.addEventListener('click', function(e){
-        var t = e.target.closest('[data-opsnav]');
-        if(!t) return;
-        var nav = t.getAttribute('data-opsnav');
-        if(nav === 'completed'){
-          openLeadsView('Completed');
-        } else if(nav === 'outlook'){
-          openScheduleBoard();
-        } else if(nav === 'today'){
-          var pc = document.getElementById('teamCalMount');
-          var card = pc ? pc.closest('.pipecard') : null;
-          if(card){ card.scrollIntoView({ behavior:'smooth', block:'start' }); }
-        }
-      });
+    var _c30 = document.getElementById('cal30Grid');
+    var _c30card = _c30 ? _c30.closest('.pipecard') : null;
+    if(_c30card){
+      _c30card.style.cursor = 'pointer';
+      _c30card.title = 'Open Schedule Board';
+      _c30card.addEventListener('click', function(){ openScheduleBoard(); });
       renderOps._wired = true;
     }
   }
-  var todayStr = (function(){ var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
   var now = new Date(); now.setHours(0,0,0,0);
-  var in30 = new Date(now.getTime() + 30*86400000);
   var appts = (typeof cacheAppts !== 'undefined' ? cacheAppts : []);
-  var doneToday = cacheProjects.filter(function(p){
-    var ck = parseCkAll(p);
-    return ck.t_Completed && ck.t_Completed.slice(0,10) === todayStr;
-  }).length;
-  var jobsToday = appts.filter(function(a){ return a.appt_date === todayStr; }).length;
-  var outlook = appts.filter(function(a){
-    if(!a.appt_date) return false;
-    var d = new Date(a.appt_date + 'T00:00:00');
-    return d >= now && d <= in30;
-  }).length;
-  var e1 = document.getElementById('opsDone'), e2 = document.getElementById('opsToday'), e3 = document.getElementById('opsOutlook');
-  if(e1) e1.textContent = doneToday;
-  if(e2) e2.textContent = jobsToday;
-  if(e3) e3.textContent = outlook;
+  var byDay = {};
+  appts.forEach(function(a){ if(a.appt_date) byDay[a.appt_date] = (byDay[a.appt_date] || 0) + 1; });
+  var c30 = document.getElementById('cal30Grid');
+  if(c30){
+    var g = '<span class="ch">S</span><span class="ch">M</span><span class="ch">T</span><span class="ch">W</span><span class="ch">T</span><span class="ch">F</span><span class="ch">S</span>';
+    var lead = now.getDay(), booked = 0, last = now, di;
+    for(di = 0; di < lead; di++) g += '<span class="cd"></span>';
+    for(di = 0; di < 30; di++){
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + di);
+      var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      var nb = byDay[key] || 0;
+      if(nb) booked += nb;
+      g += '<span class="cd' + (di === 0 ? ' today' : '') + (nb && di !== 0 ? ' has' : '') + '"' +
+        (nb ? ' title="' + nb + ' booked"' : '') + '>' + d.getDate() + '</span>';
+      last = d;
+    }
+    var trail = (7 - ((lead + 30) % 7)) % 7;
+    for(di = 0; di < trail; di++) g += '<span class="cd"></span>';
+    c30.innerHTML = g;
+    var mo = function(x){ return x.toLocaleDateString('en-US', { month:'short', day:'numeric' }); };
+    var noteEl = document.getElementById('cal30Note');
+    if(noteEl) noteEl.textContent = mo(now) + ' \u2013 ' + mo(last) + ' \u00b7 ' +
+      (booked ? booked + ' appointment' + (booked === 1 ? '' : 's') + ' booked \u2014 tap for the Schedule Board'
+              : 'nothing booked \u2014 tap for the Schedule Board');
+  }
 
   /* AR aging: invoiced projects, aged from invoice date */
   var buckets = [
@@ -11726,7 +11745,9 @@ function renderOps(){
     { lbl:'>90',   min:91, max:Infinity, amt:0, col:'#C8202E' }
   ];
   var total = 0;
-  cacheProjects.forEach(function(p){
+  var _arBoard = (typeof boardProjects === 'function') ? boardProjects() : cacheProjects;
+  var _arRows = [];
+  _arBoard.forEach(function(p){
     if(normStage(p.stage) !== 'Invoiced') return;
     var ck = parseCkAll(p);
     var inv = ck.t_Invoiced || ck.stage_since || p.updated_at;
@@ -11737,6 +11758,7 @@ function renderOps(){
     var v = jobFinance(p).balance;
     if(v <= 0) return;
     total += v;
+    _arRows.push({ name: p.name || 'Client', v: v });
     for(var i=0;i<buckets.length;i++){
       if(days >= buckets[i].min && days <= buckets[i].max){ buckets[i].amt += v; break; }
     }
@@ -11752,18 +11774,28 @@ function renderOps(){
   var scale = niceCeil(maxAmt);
   var wrap = document.getElementById('arWrap');
   if(wrap){
+    /* 1168: the headline is the money OWED — the card used to lead with the
+       chart's nice-ceiling axis label ("$50K"), which reads as a balance and
+       is not one. The real total leads; the aging chart stays below it. */
+    var _esc = function(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); };
+    _arRows.sort(function(a, b){ return b.v - a.v; });
     wrap.innerHTML =
-      '<div class="arhead"><b>$' + (scale >= 1000 ? Math.round(scale/1000) + 'K' : scale) + '</b>Unpaid balance by days since invoice</div>' +
-      '<div class="archart">' + buckets.map(function(b){
+      '<div class="arbig">' + fmtMoney(total) +
+        '<span class="arbigl">' + (total
+          ? 'outstanding across ' + _arRows.length + ' invoice' + (_arRows.length === 1 ? '' : 's')
+          : 'nothing outstanding \u2014 every invoice is collected') + '</span></div>' +
+      (_arRows.length ? '<div class="arcli">' + _arRows.slice(0, 3).map(function(r){
+        return '<span>' + _esc(r.name) + ' \u00b7 ' + fmtMoney(r.v) + '</span>';
+      }).join('') + '</div>' : '') +
+      (total ? '<div class="archart">' + buckets.map(function(b){
         var h = Math.round(100 * b.amt / scale);
         return '<div class="arcol"><div class="arplot">' +
           (b.amt > 0 ? '<span class="arval">$' + b.amt.toLocaleString('en-US', { maximumFractionDigits: 2 }) + '</span>' : '') +
           '<span class="arbarv" style="height:' + h + '%;"></span></div>' +
           '<span class="arx">' + b.lbl + '</span></div>';
-      }).join('') + '</div>';
-    document.getElementById('arTotal').innerHTML = total
-      ? 'Outstanding: <span style="color:var(--red);">' + fmtMoney(total) + '</span>'
-      : '';
+      }).join('') + '</div>' : '');
+    document.getElementById('arTotal').innerHTML = '';
   }
   renderActivityCount();
 }
@@ -18905,6 +18937,7 @@ function hideAllViews(){
      opens (render() rebuilds on every open) — safe to clear directly, same as
      cr-show-form below. */
   var _fd = document.getElementById('cr-fd');
+  var _bm = document.getElementById('cr-bulk-mount'); if(_bm) _bm.style.display = 'none';
   if(_fd) _fd.classList.remove('open');
   var _shf = document.getElementById('cr-show-form');
   if(_shf) _shf.classList.remove('open');
@@ -22785,8 +22818,9 @@ function renderPipeline(){
   if(!row) return;
   var _crm = document.body.dataset.crm || 'retail';
   var _skip = (typeof PIPE_SKIP !== 'undefined' && PIPE_SKIP[_crm]) || {};
+  var _board = (typeof boardProjects === 'function') ? boardProjects() : cacheProjects;
   row.innerHTML = PIPE_BUCKETS.filter(function(b){ return !_skip[b.key]; }).map(function(b){
-    var inBucket = cacheProjects.filter(function(pr){
+    var inBucket = _board.filter(function(pr){
       var s = normStage(pr.stage);
       return s === b.key || (b.key === 'Approved' && s === 'Scheduled');
     });
@@ -22804,12 +22838,26 @@ function renderPipeline(){
       '<span class="pcount">' + n + '</span>' +
       '<span class="pmoney">' + fmtMoney(money) + '</span></button>';
   }).join('');
+  var _sn = document.getElementById('pipeScopeNote');
+  if(_sn){
+    var _un = unsortedProjects().length;
+    _sn.innerHTML = _un
+      ? '<button type="button" class="chipbtn" data-unsorted-open>' + _un + ' client' + (_un === 1 ? '' : 's') + ' filed under no CRM &#8212; sort them &#8250;</button>'
+      : '';
+  }
   renderApprovals();
 }
 document.getElementById('pipeRow').addEventListener('click', function(e){
   var btn = e.target.closest('.pipebtn');
   if(!btn) return;
   openLeadsView(btn.getAttribute('data-stg'));
+});
+document.getElementById('pipeScopeNote').addEventListener('click', function(e){
+  if(!e.target.closest('[data-unsorted-open]')) return;
+  /* 1170: the chip opens Assign Portals — the sorter that already existed and
+     lost its only door when the Landing retired. It writes the same field the
+     claim-type chip on a client card sets. */
+  if(window.CardinalPortalAssign) window.CardinalPortalAssign.open();
 });
 
 function timeAgo(iso){
@@ -42509,6 +42557,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1170, d: '2026-08-30', t: 'Needs sorting \u2014 the unfiled clients get their door back', s: 'Nineteen clients are filed under no CRM, so they sit in no portal\u2019s numbers. The app already had the tool for this \u2014 Assign Portals, a bulk sorter with an Untyped tab that ticks clients into Retail, Cardinal Truth or Community in one go \u2014 but its only door was a card on the Landing screen, which retired at 1165. Two doors reconnect it: a \u201cNeeds sorting\u201d row at the bottom of the Front Door panel (it only appears while the count is above zero), and the line under the home pipeline now opens the sorter instead of a read-only list. The sorter is also registered in the app\u2019s navigation teardown, so opening another screen can no longer strand it.' },
+  { b: 1169, d: '2026-08-30', t: 'The Front Door, finished to the approved picture', s: 'Four gaps between the shipped panel and the design you approved, closed: the header reads \u201cCardinal \u25be\u201d while the panel is open (you are choosing a portal, so the header stops claiming one); a check mark sits on the portal you are in; each CRM door carries its book beside its alert \u2014 \u201c2 awaiting contract \u00b7 23 clients\u201d, \u201c16 open\u201d under Community \u2014 counting the clients you can see; and a divider separates the CRMs from the tools, with the red dot back on the \u201cWhere things stand\u201d line.' },
+  { b: 1168, d: '2026-08-30', t: 'The money you are owed, and the next 30 days', s: 'Two home cards rebuilt to the approved front-door plan. Accounts Receivable now leads with the real total outstanding and who owes it \u2014 the card used to lead with the chart\u2019s axis ceiling (\u201c$50K\u201d), which reads like a balance and never was one; the aging chart stays underneath. And the Work Schedule circles are replaced by a 30-day calendar \u2014 the \u201c30 Day Outlook\u201d number drawn out day by day, today ringed, booked days marked, the real date range and count said underneath \u2014 tap it for the Schedule Board. Both cards count the portal you are in, like the pipeline since 1167.' },
+  { b: 1167, d: '2026-08-30', t: 'The retail board counts retail', s: 'The home dashboard\u2019s numbers were every CRM\u2019s clients wearing retail clothing \u2014 the 37-lead pipeline counted Community bids and insurance claims too. The Cardinal Pipeline, Most Recent, Nearby and the See-all count now cover only the portal you are in (a Community job lives under Community\u2019s door), and search deliberately still looks across everything, so no client is ever unreachable. Clients filed under no CRM are not silently dropped: a line under the pipeline says how many there are and taps through to the list \u2014 giving them a proper home is the next build.' },
   { b: 1166, d: '2026-08-30', t: 'The presentation suite and the front door, together', s: 'A bookkeeping build: the in-home presentation work (1159\u20131162) and the main line\u2019s builds (1163 the morning strip, 1164 the Front Door, 1165 the Landing retired) were made in parallel, and this build is the lines merged into one app \u2014 nothing new, everything from all of them.' },
   { b: 1165, d: '2026-08-30', t: 'Signing in opens the app, not a front door', s: 'The Landing screen is retired. Signing in now lands you straight on your CRM home — no screen in between — and the portal picker lives where you already are: tap the portal name in the header and the Front Door drops down. Everything that used to say “take me to the landing” now means that: the logo, the drawer (renamed “Switch portal”), the dashboard and client-card chips, the Cardinal Truth banner, and backing out of the Resource Library. Curtis and Scottie still land on the Production hub and back out to it, never to the retail home. The showroom tablet is untouched — it still boots straight into the Vision hub, which is the one thing the Landing pane still exists for.' },
   { b: 1164, d: '2026-08-30', t: 'The header title opens the Front Door', s: 'Tap the portal name in the header — anywhere in the app — and the Brief drops down: good morning, the date, the daily quote, and every portal as a door with a live state line (bids past due under Community, carriers to chase under Cardinal Truth, urgent punch-outs under Production, estimates awaiting contract under Retail), plus Sales Floor, the Resource Library, and a Presentation group — Showroom, Exterior Designer, Colors. State lines are admin-only, like the morning strip they read from; everyone gets the doors and the quote. Additive: the Landing screen is untouched for now.' },
@@ -62546,6 +62598,12 @@ if(h1){
      ReferenceError here and kill the header module on every paint. The branch
      is dropped, not renamed: with the slogan gone every portal title is plain
      text, which is exactly what the surviving `TITLES[kh]` line does. */
+  /* 1169: while the Front Door is open the header stops claiming a portal —
+     you are choosing one. The class is toggled by cr-fd's open()/close(). */
+  if(document.body.classList.contains('cr-fd-open')){
+    if(h1.textContent !== 'Cardinal') h1.textContent = 'Cardinal';
+    return;
+  }
   var _scr = SHARED_HEAD[ks];
   if(_scr){ if(h1.textContent !== _scr) h1.textContent = _scr; }
   else if(h1.textContent !== TITLES[kh]) h1.textContent = TITLES[kh];
@@ -86619,6 +86677,9 @@ body.cr-fd-able #brandTitle h1::after{content:' \25BE';opacity:.72;font-size:.72
 #cr-fd .fdrow small{display:block;margin-top:2px;font-size:11.5px;color:var(--fd-mute,#a89a8d)}
 #cr-fd .fdrow small .hot{color:var(--fd-hot,#f07e84);font-weight:700}
 #cr-fd .fdrow small .warn{color:var(--fd-warn,#f0a24a);font-weight:700}
+#cr-fd .fd-div{height:1px;margin:4px 0;background:var(--fd-line,rgba(255,255,255,.07))}
+#cr-fd .fd-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:#c8202e;flex:0 0 auto}
+#cr-fd .fdrow .chk{flex:0 0 auto;font:700 15px/1 Georgia,serif;color:var(--fd-redt,#e35c63)}
 #cr-fd .fd-grp{padding:10px 2px 3px;font:700 11px/1 ui-monospace,Menlo,monospace;
   letter-spacing:.18em;text-transform:uppercase;color:var(--fd-mute,#a89a8d)}
 :root[data-theme="rb-light"] #cr-fd .fd-sheet{--fd-card:#ffffff;--fd-ink:#1a1614;
@@ -86667,14 +86728,34 @@ function stands(){
   return null;
 }
 function line(parts){ return parts.filter(Boolean).join(' · '); }
+function bookCounts(){
+  try{
+    if(typeof projClaimType === 'function' && typeof cacheProjects !== 'undefined' && cacheProjects.length){
+      var m = { retail: 0, insurance: 0, community: 0, communityOpen: 0, unknown: 0 };
+      var closedish = { Closed: 1, Lost: 1 };
+      cacheProjects.forEach(function(p){
+        var t = projClaimType(p);
+        m[t] = (m[t] || 0) + 1;
+        if(t === 'community' && !closedish[typeof normStage === 'function' ? normStage(p.stage) : p.stage]) m.communityOpen++;
+      });
+      return m;
+    }
+  }catch(_e){}
+  return null;
+}
 function rowHtml(go, acc, title, sub){
-  return '<button type="button" class="fdrow" data-fd="' + go + '" style="--acc:' + acc + '">' +
+  var cur = document.body.dataset.crm || 'retail';
+  var here = (go === cur && (go === 'retail' || go === 'insurance' || go === 'community'));
+  return '<button type="button" class="fdrow" data-fd="' + go + '" style="--acc:' + acc + '"' +
+    (here ? ' aria-current="true"' : '') + '>' +
     '<span class="tag"></span><span class="tx"><b>' + title + '</b>' +
-    (sub ? '<small>' + sub + '</small>' : '') + '</span></button>';
+    (sub ? '<small>' + sub + '</small>' : '') + '</span>' +
+    (here ? '<span class="chk" aria-hidden="true">\u2713</span>' : '') + '</button>';
 }
 function render(){
   var v = q('cr-fd');
   var c = stands();
+  var bk = bookCounts();
   var nm = firstName();
   var qt = quote();
   var html =
@@ -86683,21 +86764,29 @@ function render(){
     '<p class="fd-greet">' + hello() + (nm ? ', <b>' + esc(nm) + '</b>' : '') + '.</p>' +
     '<p class="fd-stamp">' + todayLine() + '</p>' +
     (qt ? '<blockquote class="fd-quote"><p>“' + esc(qt.t) + '”</p><cite>' + esc(qt.c) + '</cite></blockquote>' : '') +
-    '<div class="fd-eyebrow"><span>Where things stand</span><span class="ln"></span></div>' +
+    '<div class="fd-eyebrow"><span class="dot"></span><span>Where things stand</span><span class="ln"></span></div>' +
     rowHtml('retail', '#5590b5', 'Retail',
-      c ? line([c.appr ? '<span class="warn">' + c.appr + ' awaiting contract</span>' : '']) || 'Homeowner work' : 'Homeowner work') +
+      line([c && c.appr ? '<span class="warn">' + c.appr + ' awaiting contract</span>' : '',
+            bk ? bk.retail + ' client' + (bk.retail === 1 ? '' : 's') : '']) || 'Homeowner work') +
     rowHtml('insurance', '#d9282a', 'Cardinal Truth',
-      c ? line([c.chase ? '<span class="hot">' + c.chase + (c.chase === 1 ? ' carrier to chase' : ' carriers to chase') + '</span>' : '']) || 'Storm and claim work' : 'Storm and claim work') +
+      line([c && c.chase ? '<span class="hot">' + c.chase + (c.chase === 1 ? ' carrier to chase' : ' carriers to chase') + '</span>' : '',
+            bk ? bk.insurance + ' claim' + (bk.insurance === 1 ? '' : 's') : '']) || 'Storm and claim work') +
     rowHtml('community', '#3faa6d', 'Community',
-      c ? line([c.bids ? '<span class="hot">' + c.bids + (c.bids === 1 ? ' bid past due' : ' bids past due') + '</span>' : '']) || 'Partners, non-profits, HOAs' : 'Partners, non-profits, HOAs') +
+      line([c && c.bids ? '<span class="hot">' + c.bids + (c.bids === 1 ? ' bid past due' : ' bids past due') + '</span>' : '',
+            bk ? bk.communityOpen + ' open' : '']) || 'Partners, non-profits, HOAs') +
+    '<div class="fd-div"></div>' +
     rowHtml('production', '#e0762a', 'Production',
       c && c.punch ? '<span class="hot">' + c.punch + ' urgent punch-outs</span> open' : 'Jobs in flight, punch list') +
     rowHtml('sales', '#e8544f', 'Sales Floor', 'Objections, talk tracks, the Coach') +
+
     rowHtml('library', '#7fa6d6', 'Resource Library', 'Building code, specs, references') +
     '<div class="fd-grp">Presentation</div>' +
     rowHtml('showroom', '#aab4c2', 'Showroom', 'Hand the tablet across the table') +
     rowHtml('designer', '#caa25a', 'Exterior Designer', 'Their house, your materials') +
     rowHtml('colors', '#EC008C', 'Colors', 'Owens Corning shingle colours') +
+    (bk && bk.unknown ? '<div class="fd-div"></div>' +
+      rowHtml('sort', '#8b8b98', 'Needs sorting',
+        '<span class="warn">' + bk.unknown + ' client' + (bk.unknown === 1 ? '' : 's') + '</span> filed under no CRM') : '') +
     '</div>';
   v.innerHTML = html;
 }
@@ -86711,10 +86800,25 @@ function open(){
   ensureView();
   render();  /* fresh counts and quote on every open */
   q('cr-fd').classList.add('open');
+  try{
+    document.body.classList.add('cr-fd-open');
+    var _h = document.querySelector('#brandTitle h1');
+    if(_h){ _fdPrevTitle = _h.textContent; _h.textContent = 'Cardinal'; }
+    var _bt = q('brandTitle'); if(_bt) _bt.setAttribute('aria-expanded', 'true');
+  }catch(_e){}
 }
+var _fdPrevTitle = null;
 function close(){
   var v = q('cr-fd');
   if(v) v.classList.remove('open');
+  try{
+    document.body.classList.remove('cr-fd-open');
+    /* restore what was there; the header module's next scan re-derives the
+       right title from the live view anyway, so a stale restore self-heals. */
+    var _h = document.querySelector('#brandTitle h1');
+    if(_h && _fdPrevTitle != null){ _h.textContent = _fdPrevTitle; _fdPrevTitle = null; }
+    var _bt = q('brandTitle'); if(_bt) _bt.setAttribute('aria-expanded', 'false');
+  }catch(_e){}
 }
 function isOpen(){
   var v = q('cr-fd');
@@ -86733,6 +86837,7 @@ function go(d){
   if(d === 'showroom'){ if(window.CardinalShowcase) window.CardinalShowcase.open({ showroom: (window.innerWidth || 0) >= 820 }); return; }
   if(d === 'designer'){ try{ window.location.href = (window.CR_VISUALIZER_URL || '/visualizer/'); }catch(_e){} return; }
   if(d === 'colors'){ if(window.CardinalColors) window.CardinalColors.open(); return; }
+  if(d === 'sort'){ if(window.CardinalPortalAssign) window.CardinalPortalAssign.open(); return; }
 }
 document.addEventListener('click', function(e){
   var row = e.target.closest && e.target.closest('#cr-fd .fdrow');

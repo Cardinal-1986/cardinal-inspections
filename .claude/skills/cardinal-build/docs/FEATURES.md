@@ -7984,3 +7984,13 @@ in straight to `showHome()`. Drawer row renamed "Switch portal"; Self Check prob
 `#cr-fd` instead of the retired pane. **`#landingView` markup survives on purpose** — it
 is the Vision hub's container on `showroom.*`, and both functions keep the real pane on a
 vision host.
+
+## Builds 1167–1170 — the retail dashboard to the approved front-door plan (30 Aug 2026)
+
+| What | Where | Notes |
+|---|---|---|
+| Board scoping — pipeline, Most Recent, Nearby, see-all count follow the active portal | `boardProjects()`/`boardCrm()` beside `renderHome()`; `renderPipeline()` | search stays unscoped; unfiled clients announced via `#pipeScopeNote`, never dropped (1167) |
+| AR card leads with money owed + top debtors; aging chart beneath | `renderOps()`, `.arbig`/`.arcli` | board-scoped; axis-ceiling headline deleted (1168) |
+| 30-day calendar replaces the Work Schedule circles | `#cal30Grid`/`#cal30Note` in the opscard; `renderOps()` | today ringed, booked days marked, card opens Schedule Board (1168) |
+| Front Door finish: "Cardinal ▾" while open, ✓ on current portal, book totals on doors, dividers | `cr-fd-script`, cr-hd2 title writer | totals from `bookCounts()` — the viewer's own visible clients (1169) |
+| Needs sorting row + pipeline chip → Assign Portals (`cr-bpa-script`, pre-existing) | Front Door bottom row; `#pipeScopeNote` | sorter registered in `hideAllViews()` (1170) |

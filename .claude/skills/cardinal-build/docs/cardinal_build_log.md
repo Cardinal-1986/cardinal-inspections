@@ -30735,3 +30735,47 @@ head: main's 1165+1164 entries kept, this merge entry renumbered to **1166**) an
 stamp to 1166. No code region conflicted — 1165 touched goToLanding/showLanding/showMain and the
 Self Check surface list; this branch touched the Vision suite. Gates re-run on the merged artifact
 before push.
+
+## Build 1167 — the retail board counts retail
+- The home dashboard's numbers were every CRM's clients wearing retail clothing — `renderPipeline()`
+  and `renderHome()` walked `cacheProjects` unfiltered, so the "37 leads" were retail + community +
+  insurance + 19 unfiled. Both now scope to `boardProjects()` — `projClaimType(pr) === body.dataset.crm`
+  — one classifier, the existing one. Search is deliberately unscoped (a lens over everything), and the
+  unfiled clients are announced under the pipeline (`#pipeScopeNote`), never silently dropped.
+- Gates: check_build green (1166→1167) · `gate_1167.mjs` Chromium+mock 17/17, RED on the 1166 control
+  ("See all 7 clients" is the all-CRM bug, seen failing).
+
+## Build 1168 — the money you are owed, and the next 30 days
+- Accounts Receivable leads with the real total outstanding + who owes it (top 3 by balance); the
+  axis-ceiling headline ("$50K") is gone — it read as a balance and never was one. Aging chart kept
+  underneath; AR is board-scoped like 1167. The Work Schedule circles are replaced by a 30-day
+  calendar (`#cal30Grid`): today ringed, booked days marked, real range + count line, whole card
+  opens the Schedule Board. Component date math — no `*86400000` stepping across the Nov DST wall.
+- This also retires the Work Schedule circle-ink contrast findings from the 2026-08-27 header audit —
+  the circles no longer exist.
+- Gates: check_build green (div balance caught a stray close on first pass — fixed before staging) ·
+  `gate_1168.mjs` 14/14, RED (12) on the 1167 control.
+
+## Build 1169 — the Front Door, finished to the approved picture
+- Four gaps vs the approved Direction 4 panel, closed: the header reads "Cardinal ▾" while the panel
+  is open (a branch INSIDE the cr-hd2 writer — its rAF scan owns that text; an outside write would be
+  repainted over), restored on close; a ✓ sits on the portal you are in (`aria-current`); each CRM
+  door carries its book beside its alert ("2 awaiting contract · 23 clients", "16 open") via
+  `bookCounts()` over the clients the viewer can see; a divider separates CRMs from tools; the red
+  dot returns to the eyebrow.
+- Gates: check_build green · `gate_1169.mjs` 11/11, RED (9) on the 1168 control.
+
+## Build 1170 — Needs sorting: the unfiled clients get their door back
+- THE PRIME DOCTRINE AGAIN: the bulk sorter already existed — `cr-bpa-script`, "Assign Portals",
+  Untyped tab, multi-select, batch assign writing `checklist.lead.claim_type` — and its ONLY door
+  was the Landing's All Clients card, which retired at 1165. Reconnected, not rebuilt: a "Needs
+  sorting" row at the bottom of the Front Door (renders only while the count is >0), and 1167's
+  pipeline chip now opens the sorter instead of the read-only browse view (which is deleted; its
+  changelog entry promised exactly this hand-off). `gate_1167.mjs` updated for the deliberate change.
+- ⚠ `#cr-bulk-mount` was a fixed full-screen view NOT registered in `hideAllViews()` — a latent nav
+  trap that became real the moment the Front Door could open it over the live app. Registered
+  (display lever). Known gap, stated: it has no history/back-button case; its own ← Back works.
+- Gates: check_build green · `gate_1170.mjs` 8/8 including a REAL assignment driven through the
+  shipped module (crAsk answered, `__WRITES__` shows `claim_type: retail`), RED (6) on the 1169
+  control. Gate seed ids are strings — numeric ids failed the module's strict-eq join and burned a
+  round (test data lying, again).
