@@ -283,6 +283,9 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
 .cal30 .cd{font:600 11.5px/30px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;
            color:var(--amute);text-align:center;height:30px}
 .cal30 .cd.today{color:#fff;background:#c8202e;border-radius:50%;width:30px;margin:0 auto}
+.subh{font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;
+      color:var(--amute);margin:12px 0 3px}
+.subh:first-of-type{margin-top:2px}
 </style>
 </head>
 <body>
@@ -656,7 +659,9 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
   own daily quote (the shipped landing already rotates 31 of them by day-of-year; today's really is
   the Lincoln), so nothing the Landing did is lost when the Landing goes. Production is already a row
   in the dropdown, with its punch count. The dashboard gains the 30-day calendar, fed by the same
-  <code>cacheAppts</code> window the outlook circle already reads. Name for the open panel &mdash; numbered picks:
+  <code>cacheAppts</code> window the outlook circle already reads, and <b style="color:#fff">keeps the shipped
+  home's Client Projects card</b> &mdash; Most Recent and Nearby, the two rows Theo asked to hold onto &mdash;
+  now honestly retail-filtered. Name for the open panel &mdash; numbered picks:
   <b style="color:#fff">1. Cardinal. (shown)</b> &middot; 2. &ldquo;Where things stand&rdquo; as the title &middot; 3. &ldquo;Home Base&rdquo;.</p>
   <p class="cost"><b>Cost:</b> deletes the Landing — the morning brief loses its full-screen
   moment and the only all-CRM view becomes a dropdown behind one tap. Sign-in lands per role
@@ -749,12 +754,20 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
               <div class="cal30"><span class="ch">S</span><span class="ch">M</span><span class="ch">T</span><span class="ch">W</span><span class="ch">T</span><span class="ch">F</span><span class="ch">S</span><span class="cd today">30</span><span class="cd">31</span><span class="cd">1</span><span class="cd">2</span><span class="cd">3</span><span class="cd">4</span><span class="cd">5</span><span class="cd">6</span><span class="cd">7</span><span class="cd">8</span><span class="cd">9</span><span class="cd">10</span><span class="cd">11</span><span class="cd">12</span><span class="cd">13</span><span class="cd">14</span><span class="cd">15</span><span class="cd">16</span><span class="cd">17</span><span class="cd">18</span><span class="cd">19</span><span class="cd">20</span><span class="cd">21</span><span class="cd">22</span><span class="cd">23</span><span class="cd">24</span><span class="cd">25</span><span class="cd">26</span><span class="cd">27</span><span class="cd">28</span><span class="cd"></span><span class="cd"></span><span class="cd"></span><span class="cd"></span><span class="cd"></span></div>
               <p class="tiny">Nothing booked in the next 30 days &mdash; this is the Work Schedule circle&rsquo;s 0, drawn out day by day.</p>
               <button class="bmore">Schedule Board &rsaquo;</button></div>
-            <div class="card"><h3>Recent retail leads</h3>
+            <div class="card"><h3>Client Projects</h3>
+              <div class="subh">Most Recent</div>
               <button class="leadrow"><span class="av">JC</span><span class="nm2">Jarrett Chenalt</span><span class="st">Completed</span></button>
               <button class="leadrow"><span class="av">JA</span><span class="nm2">Jim Arnett</span><span class="st">Prospect</span></button>
               <button class="leadrow"><span class="av">MD</span><span class="nm2">Mark Diamond</span><span class="st">Approved</span></button>
-              <p class="tiny">Kimberly Lawson &mdash; the concept's top "recent lead" &mdash; is a Community job,
-              so on a retail-filtered dashboard she correctly does not appear.</p></div>
+              <div class="subh">Nearby</div>
+              <button class="leadrow"><span class="av">BM</span><span class="nm2">Betty Mann</span><span class="st">45417</span></button>
+              <button class="leadrow"><span class="av">YN</span><span class="nm2">Yolanda Newsome</span><span class="st">45417</span></button>
+              <button class="leadrow"><span class="av">KG</span><span class="nm2">Kim Guy</span><span class="st">45420</span></button>
+              <p class="tiny">Kept from the shipped home on Theo&rsquo;s word &mdash; and now retail-filtered:
+              Kimberly Lawson, top of the shipped Most Recent row, is a Community job, so here she
+              lives under Community&rsquo;s door instead. Nearby ranks by distance from 45414, the
+              shipped rule.</p>
+              <button class="bmore">See all 23 retail clients &rsaquo;</button></div>
             <div class="card"><h3>Today</h3>
               <p class="tiny" style="margin:0">Nothing on the calendar. <b style="color:var(--aink)">5 urgent punch-outs</b> are open &mdash; Jarrett Chenalt, Betty Mann, Kathy May, Rita Monigold.</p></div>
           </div>
