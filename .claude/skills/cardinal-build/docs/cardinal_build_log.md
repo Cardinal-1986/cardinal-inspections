@@ -30545,3 +30545,62 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
 ## Build 1157 — the reminders master switch
 
 - **1157** · Theo: *"Can you make it to where I can toggle this feature on and off in the admin area."* A company-wide On/Off for the automatic payment reminders, on the admin-only Invoices & AR header. **Grep-the-convention first: no settings store existed anywhere** — `app_settings.sql` creates one (kv jsonb; staff read, `is_cardinal_admin()` insert/update; **seeded `payment_reminders_enabled = false`, so the feature ARRIVES OFF** and nothing texts a client until the switch is flipped). `api/remind.js` reads the SAME key server-side before doing anything: a missing row is OFF, a failed read refuses to guess (500, nothing sent), and `?dry=1` still previews eligibility while off — the switch can be trusted before it is ever turned on. index.html: the `.crar-master` header row ("On — unpaid retail invoices get up to 4 friendly texts" / "Off — no reminder texts go out"; inks computed, #166534 at 7.13:1 and #8a6420 at 5.35:1), AR rows read *"Paused — reminders are off company-wide"* while off (the per-job Mute stays visible and stays honored), and the toggle upserts through RLS. Gates: `check_build` green (stamp 1156→1157, marker `crarMaster`, negative control) · the route harness is now **41 GREEN with a FOURTH mutation control** (master guard stripped from a copy → texts flow while off → leak visible) · the UI harness is **30 GREEN and a clean RED 11-of-30 against the 1156 control** — one first-run assertion was MINE and wrong (expected "Auto-reminders on" where "Reminded ×2" is the correct paint for a row with history; the gate was fixed, the artifact untouched) · 1107/1108 regressions green · MIGRATIONS.md regenerated. SQL: **`app_settings.sql` runs before deploy**, beside `payment_reminders.sql` (either order).
+
+## Build 1158 — the reminders switch paints when nothing is owed (and the gate that found it)
+
+- **1158** · **A bug I shipped at 1157, found by the sentinel hours later, on the
+  first sweep that ever looked at that screen.** `render()` in `cr-ar-script`
+  called `remWire()` after the bucket loop — **behind an early `return` taken
+  whenever the AR list is empty.** `remWire()` is what paints the master switch,
+  so with **nothing owed** the switch never resolved: it sat on *"Checking…"*
+  with a disabled `…` button, permanently. That is the NORMAL state of a paid-up
+  book, and it is the screen Theo had just been told to go and flip the switch
+  on. Every 1157 assertion stayed green because all of them run with two owed
+  invoices — **the empty case was the one shape nobody tested.** The list render
+  is now a branch rather than an exit, so there is exactly ONE `remWire()` call
+  and no path can skip it.
+- **The gate is the other half of this build, and it is why the bug was found at
+  all.** `sentinel_setup_cardinal.js` gains an **`ar` state** — the standing
+  visual gate had been BLIND to Invoices & AR while it grew across four builds
+  (1107 dashboard, 1108 job card, 1156 reminder rows, 1157 the master switch).
+  It copies `lineitems`' admin shape (a non-admin refusal is CORRECT and
+  contributes no renders rather than throwing) and polls past *"Checking…"*,
+  which is precisely the assertion that failed. Seed gains `app_settings` +
+  `payment_reminders` — both **additive**, read by no other state, so no
+  existing render moved. ⚠️ **The per-row reminder line (`.crar-rem`) is still
+  NOT covered** — that needs a seeded invoice carrying a balance; stated so a
+  green run is not read as covering it.
+- Gates: `check_build` green (1157→1158, marker `1158: ONE remWire() call`,
+  negative control) · **`harness_ar1156.js` GREEN 36, and its new empty-book
+  scenario goes RED on the 1157 artifact with the exact symptom** (`got
+  "Checking…"`) — the regression test has been seen to fail on the broken code ·
+  route harness 41 green (untouched) · 1107/1108 regressions green · **sentinel
+  26 of 26 renders, zero RUN skips** (was 25 with 1 skip), no INK findings; the
+  two AR findings are DEAD-class, the documented low-signal one.
+- ⚠️ **Its stamp assertion was made a FLOOR (`>= 1158`), not an equality.** A
+  hardcoded stamp in a harness that now spans three builds fails every future
+  build that touches the module — a gate that goes red for being old teaches
+  people to ignore it.
+
+### ⚠️ CORRECTION to the 1156 entry — the sentinel note there is WRONG
+
+It says the sweep *"did not complete inside the session's Chromium budget."*
+**That was an inference stated as fact, and it is not what happened.** The run
+**crashed ~30 s in**: `browser.newContext: Target page, context or browser has
+been closed`, after repeated `handshake failed … net_error -202` from Chromium's
+own background networking against the sandbox proxy. It then sat as a live
+process with an empty log for twenty minutes, which reads as *still running*
+rather than as *proved nothing* — **BUG_CLASSES 37 again, in its most deceptive
+form yet: not a crash that looks like a red, but a crash that looks like
+patience.** Chromium is fine here; `--selftest` is green and a 26-state sweep
+completes at one viewport. The heavy default (4 viewports × `--since`, which
+renders the baseline too) is what exceeded the sandbox. The rest of the 1156
+note stands: the sweep genuinely could not have covered the AR screen, because
+no `ar` state existed until this build.
+
+⚠️ **`FEATURES.md`'s sentinel command had the two `--setup` files in the WRONG
+ORDER and had had it since it was written** — the seed must come first, and
+passing it backwards silently kills four states. `BUG_CLASSES.md` already
+recorded that as a named operator error **while the copy a reader actually
+copies out still printed the broken order.** Corrected at the source. A trap
+documented in one file and reproduced in another is not documented.
