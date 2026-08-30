@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1159<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1160<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18919,6 +18919,10 @@ function hideAllViews(){
   if(_occ) _occ.style.display = 'none';
   var _fin = document.getElementById('cr-fin');
   if(_fin) _fin.style.display = 'none';   /* 1153 finance rates */
+  /* 1160: Why Cardinal is a fixed inset:0 view, DISPLAY-shown like
+     cr-occ and cr-fin, so display:none is the correct lever. */
+  var _why = document.getElementById('cr-why');
+  if(_why) _why.style.display = 'none';
   /* 895: the Owner Console is a fixed inset:0 view, DISPLAY-shown like cr-occ,
      so display:none is the correct lever. */
   var _own = document.getElementById('cr-owner');
@@ -42445,6 +42449,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1160, d: '2026-08-30', t: 'Why Cardinal \u2014 a screen the client can read', s: 'Every client-facing screen we had was about their roof. This one is about Cardinal: locally owned in Dayton, licensed and insured, we pull the permit, magnetic sweep every job; the Owens Corning Preferred Contractor status and what it lets us register; the full warranty ladder rather than one number \u2014 Standard, System Protection and Preferred Protection side by side, with the honest note that the workmanship years are the ones that matter; what actually goes on the roof (full tear-off, sheathing priced per sheet up front, ice and water, synthetic, new boots, ventilation); and their three-day right to cancel under ORC 1345.23, stated before they ask. It is on the Vision hub beside Presentations and Colors. The facts are the Sales Floor Proof pane\u2019s, refaced from the rep\u2019s voice into the homeowner\u2019s \u2014 nothing new was invented.' },
   { b: 1159, d: '2026-08-30', t: 'The presentation doors a rep actually uses', s: 'Three doors that existed but could not be reached from where you stand at a kitchen table. The Pop-Up Roof now has a tile on the home screen and on the Vision hub \u2014 until now the book was reachable only from the Sales Floor or by typing the presentation address, so on a showroom tablet it could not be opened at all. Its tile had been fully styled since build 761 and the markup was never written. And the Designer tile, opened from the Vision hub, now lands on Present \u2014 approved renders, one tap \u2014 instead of Prep, the office workbench for queueing renders. Opened from the ordinary home screen it still lands on Prep, which is the right screen there.' },
   { b: 1158, d: '2026-08-30', t: 'The reminders switch works on an empty screen', s: 'Fixes a bug shipped hours earlier in 1157: when nothing was owed, the Invoices & AR screen returned early and the automatic-reminders switch never finished loading \u2014 it sat on \u201cChecking\u2026\u201d with a dead button, which is exactly the state a paid-up book is in. The switch now paints whether or not any invoice is outstanding.' },
   { b: 1157, d: '2026-08-30', t: 'Reminders master switch', s: 'The Invoices & AR screen now carries a company-wide On/Off switch for automatic payment reminders. It ships OFF \u2014 nothing texts a client until an admin turns it on \u2014 and the daily run checks the same switch server-side, so off means off everywhere. Rows show \u201cPaused \u2014 reminders are off company-wide\u201d while it is off.' },
@@ -51523,6 +51528,16 @@ return (
 '<span class="sb">How a roof gets built \u2014 a book they can hold</span>' +
 '</span><span class="go">\u2192</span>' +
 '</a>' +
+/* 1160: Why Cardinal. Every other tile here is about THEIR roof;
+   this is the one that is about Cardinal. Content is PANES.proof
+   (cr-sf-script) refaced from the rep's voice into the homeowner's. */
+'<button type="button" class="cr-vh-tile" data-go="why">' +
+'<span class="ic">\u2713</span>' +
+'<span class="tx">' +
+'<span class="tt">Why Cardinal</span>' +
+'<span class="sb">Licence, warranty, and what actually goes on the roof</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
 '</div></div>'
 );
 }
@@ -51743,6 +51758,11 @@ var _vz = (window.CR_VISUALIZER_URL || '/visualizer/');
 if(isVisionHost()) _vz += (_vz.indexOf('?') === -1 ? '?' : '&') + 'present=1';
 window.location.href = _vz;
 }catch(_e){}
+return;
+}
+if(d === 'why'){
+leave();
+if(window.CardinalWhy) window.CardinalWhy.open();
 return;
 }
 if(d === 'colors'){
@@ -85650,6 +85670,214 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 
   window.CardinalFinanceRates = Object.assign(window.CardinalFinanceRates || {}, { open: open, close: close });
   window.showFinanceRates = function(){ open(); };
+})();
+</script>
+
+<style id="cr-why-styles">
+/* 1160 — Why Cardinal. The first client-facing surface on this project that
+   is about CARDINAL rather than about their roof.
+
+   The content is NOT new. It is PANES.proof in cr-sf-script, refaced: that
+   pane is written for the rep ("the facts you should be able to give without
+   looking anything up", "ask a competitor whether they do"), and this is the
+   same facts in the homeowner's second person with the coaching stripped.
+   The warranty ladder is the ROOFING WARRANTY table's own three rows, not a
+   flattened single number — the proof pane's "25 years" is System Protection,
+   one of three, and quoting it flat understates what Preferred can register.
+   Platinum Protection is deliberately absent: OC_BRAND_RULES says it is
+   Platinum Preferred only and Cardinal is Preferred.
+
+   NO Owens Corning mark is on this screen, deliberately. The status is stated
+   as TEXT, which index.html already does at three sites that agree. The
+   Preferred Contractor lockup needs official artwork (the PDF is 100-150ppi
+   and cropping it is forbidden outright) AND OC Local Marketing approval at
+   LMARoofing@owenscorning.com. A session can build this; a session cannot
+   approve it.
+
+   Blackout, single-theme, the cr-show / cr-occ / cr-fin pattern: every colour
+   is a literal, so it is immune to the 448-449 token-strip class by
+   construction and can never borrow a light ground. Inks are computed, not
+   picked: on #050607 the body ink #b9b3ad is 9.77:1 and the red accent
+   #f08a90 is 8.44:1. Cardinal red #c8202e is 3.57:1 here and is therefore
+   NEVER text on this screen — grounds and rules only. */
+#cr-why{position:fixed;inset:0;z-index:4200;display:none;background:#050607;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+#cr-why .why-wrap{max-width:760px;margin:0 auto;padding:0 22px 64px;box-sizing:border-box;}
+#cr-why .why-top{position:sticky;top:0;z-index:2;background:#050607;
+  display:flex;align-items:center;gap:12px;padding:14px 0 12px;}
+#cr-why .why-x{flex:0 0 auto;width:44px;height:44px;border-radius:12px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+  color:#f2f4f2;font-size:19px;line-height:1;cursor:pointer;font-family:inherit;}
+#cr-why .why-x:hover{background:rgba(255,255,255,.13);}
+#cr-why .why-eyebrow{font:700 11px/1 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.18em;text-transform:uppercase;color:#8f9296;}
+#cr-why .why-h{margin:18px 0 6px;font:700 clamp(30px,5.4vw,44px)/1.06 Georgia,'Times New Roman',serif;
+  color:#f2f4f2;letter-spacing:-.01em;}
+#cr-why .why-lede{margin:0 0 6px;font-size:16.5px;line-height:1.5;color:#b9b3ad;}
+#cr-why .why-rule{height:2px;background:#c8202e;width:64px;margin:20px 0 4px;border-radius:2px;}
+#cr-why .why-sec{margin:34px 0 0;padding:22px 0 0;border-top:1px solid rgba(255,255,255,.10);}
+#cr-why .why-sec:first-of-type{border-top:0;}
+#cr-why .why-k{margin:0 0 12px;font:700 12px/1 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.16em;text-transform:uppercase;color:#f08a90;}
+#cr-why .why-l{list-style:none;margin:0;padding:0;}
+#cr-why .why-l li{position:relative;padding:0 0 0 26px;margin:0 0 13px;
+  font-size:16.5px;line-height:1.5;color:#d8d2cb;}
+#cr-why .why-l li::before{content:'';position:absolute;left:4px;top:9px;
+  width:7px;height:7px;border-radius:50%;background:#c8202e;}
+#cr-why .why-l li b{color:#f2f4f2;font-weight:700;}
+#cr-why .why-p{margin:0 0 13px;font-size:16.5px;line-height:1.55;color:#d8d2cb;}
+#cr-why .why-p b{color:#f2f4f2;}
+#cr-why .why-note{margin:14px 0 0;padding:14px 16px;border-radius:12px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
+  font-size:15.5px;line-height:1.5;color:#b9b3ad;}
+#cr-why .why-note b{color:#f2f4f2;}
+/* the warranty ladder — a table on a phone is a scroller, not a squeeze */
+#cr-why .why-wtab{width:100%;border-collapse:collapse;margin:2px 0 0;}
+#cr-why .why-wtab th,#cr-why .why-wtab td{text-align:left;padding:11px 12px;
+  font-size:15px;line-height:1.35;border-bottom:1px solid rgba(255,255,255,.09);}
+#cr-why .why-wtab th{font:700 11px/1.2 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.13em;text-transform:uppercase;color:#8f9296;white-space:nowrap;}
+#cr-why .why-wtab td{color:#d8d2cb;}
+#cr-why .why-wtab td.tier{color:#f2f4f2;font-weight:700;white-space:nowrap;}
+#cr-why .why-wscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+#cr-why .why-foot{margin:38px 0 0;padding:20px 0 0;border-top:1px solid rgba(255,255,255,.10);
+  font-size:14.5px;line-height:1.5;color:#8f9296;}
+@media (max-width:520px){
+  #cr-why .why-wrap{padding:0 16px 56px;}
+  #cr-why .why-l li,#cr-why .why-p{font-size:16px;}
+}
+</style>
+<script id="cr-why-script">
+(function(){
+'use strict';
+/* 1160 — Why Cardinal · v2026-08-30 build 1160
+   Reached from the Vision hub only (data-go="why"), like Colors.
+   Copies cr-occ's lever exactly: a fixed inset:0 view shown by DISPLAY, so
+   hideAllViews() clears it with style.display='none' and close() puts the
+   home screen back. It writes NO scroll lock — the count stays at 13 — and
+   scrolls inside itself instead. window.navPush is called guarded, matching
+   cr-occ; it does not exist today, so both calls are inert no-ops kept for
+   the day it does. */
+var VIEW = null;
+
+function esc(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+/* The three rows are the ROOFING WARRANTY table's own, verbatim. Platinum
+   Protection is absent on purpose — Platinum Preferred only. */
+var WARRANTY = [
+  { tier:'Standard',           mfr:'25-year manufacturer', work:'5-year workmanship',  xfer:'' },
+  { tier:'System Protection',  mfr:'25-year manufacturer', work:'10-year workmanship', xfer:'Transferable' },
+  { tier:'Preferred Protection', mfr:'50-year manufacturer', work:'10-year workmanship', xfer:'Transferable' }
+];
+
+function warrantyRows(){
+  return WARRANTY.map(function(w){
+    return '<tr>' +
+      '<td class="tier">' + esc(w.tier) + '</td>' +
+      '<td>' + esc(w.mfr) + '</td>' +
+      '<td>' + esc(w.work) + '</td>' +
+      '<td>' + esc(w.xfer) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function bodyHtml(){
+  return '' +
+  '<div class="why-sec">' +
+    '<div class="why-k">The company</div>' +
+    '<ul class="why-l">' +
+      '<li><b>Dayton, Ohio.</b> Locally owned and operated.</li>' +
+      '<li><b>Licensed and insured.</b> Ask us for the certificate and we will hand it to you.</li>' +
+      '<li><b>We pull the permit</b> on your job.</li>' +
+      '<li><b>A magnetic sweep</b> of your drive and lawn before we pull out. Every job, every time.</li>' +
+    '</ul>' +
+  '</div>' +
+
+  '<div class="why-sec">' +
+    '<div class="why-k">Owens Corning</div>' +
+    '<p class="why-p">Cardinal is an <b>Owens Corning™ Roofing Preferred Contractor</b>.</p>' +
+    '<p class="why-p">That is what lets us register the manufacturer warranties below in your name. ' +
+      'A roofer without it cannot.</p>' +
+  '</div>' +
+
+  '<div class="why-sec">' +
+    '<div class="why-k">The warranty</div>' +
+    '<div class="why-wscroll"><table class="why-wtab">' +
+      '<thead><tr><th>Coverage</th><th>On the shingle</th><th>On our work</th><th></th></tr></thead>' +
+      '<tbody>' + warrantyRows() + '</tbody>' +
+    '</table></div>' +
+    '<div class="why-note">Both of those are promises. <b>The second one is the one that matters</b> — ' +
+      'a manufacturer defect is rare, and bad installation is not.</div>' +
+  '</div>' +
+
+  '<div class="why-sec">' +
+    '<div class="why-k">What goes on your roof</div>' +
+    '<ul class="why-l">' +
+      '<li><b>Full tear-off to the deck.</b> No layovers.</li>' +
+      '<li><b>Rotten sheathing replaced</b> — priced per sheet up front, so there is no surprise.</li>' +
+      '<li><b>Ice and water shield</b> in every valley and to the wall line.</li>' +
+      '<li><b>Synthetic underlayment</b>, not felt.</li>' +
+      '<li><b>New pipe boots.</b> Reusing the old ones is where leaks come back.</li>' +
+      '<li><b>Proper intake and exhaust ventilation</b> — this is what most bids leave out.</li>' +
+    '</ul>' +
+  '</div>' +
+
+  '<div class="why-sec">' +
+    '<div class="why-k">Your right to cancel</div>' +
+    '<p class="why-p">Ohio gives you <b>three business days</b> to cancel a contract you sign at your home ' +
+      '— ORC §1345.23.</p>' +
+    '<p class="why-p">Two copies of that notice are in every contract we hand you.</p>' +
+  '</div>' +
+
+  '<div class="why-foot">Cardinal Roofing &amp; Renovations, LLC · Dayton, Ohio</div>';
+}
+
+function ensureView(){
+  if(VIEW && VIEW.isConnected) return VIEW;
+  VIEW = document.getElementById('cr-why');
+  if(!VIEW){
+    VIEW = document.createElement('div');
+    VIEW.id = 'cr-why';
+    document.body.appendChild(VIEW);
+  }
+  VIEW.innerHTML =
+    '<div class="why-wrap">' +
+      '<div class="why-top">' +
+        '<button type="button" class="why-x" data-why="close" aria-label="Close">✕</button>' +
+        '<span class="why-eyebrow">Cardinal Roofing &amp; Renovations</span>' +
+      '</div>' +
+      '<h1 class="why-h">Why Cardinal</h1>' +
+      '<p class="why-lede">What backs up the roof, and what you are entitled to.</p>' +
+      '<div class="why-rule"></div>' +
+      bodyHtml() +
+    '</div>';
+  var x = VIEW.querySelector('[data-why="close"]');
+  if(x) x.onclick = function(){ close(); };
+  return VIEW;
+}
+
+function open(){
+  ensureView();
+  try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
+  VIEW.style.display = 'block';
+  VIEW.scrollTop = 0;
+  try{ if(window.navPush) window.navPush('cr-why'); }catch(_){}
+}
+
+function close(){
+  if(VIEW) VIEW.style.display = 'none';
+  try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
+}
+
+window.CardinalWhy = Object.assign(window.CardinalWhy || {}, {
+  open  : open,
+  close : close
+});
 })();
 </script>
 

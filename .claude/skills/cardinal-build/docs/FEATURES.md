@@ -7829,3 +7829,88 @@ sheathing per sheet, ice & water, synthetic, new boots, ventilation) and the ORC
 §1345.23 three-day right. It is **written for the rep** — *"the facts you should be able
 to give without looking anything up"*, *"ask a competitor whether they do"*. A
 client-facing version of it is a **reface, not a write**.
+
+## Why Cardinal (build 1160) — `cr-why-styles` + `cr-why-script`, `window.CardinalWhy`
+
+`#cr-why` · a Vision hub tile (`data-go="why"`) · Blackout, single-theme.
+
+**The first client-facing surface on this project that is about Cardinal
+rather than about their roof.** Showcase, Hall of Fame, The Walk, Colors,
+Designer and the Visualizer are all about the house in front of you. Nothing
+said why this contractor.
+
+### The content is a REFACE, not a write — this matters if you edit it
+
+`PANES.proof` in `cr-sf-script` has carried these facts for builds. It is
+written **for the rep**: *"the facts you should be able to give without
+looking anything up"*, *"Ask a competitor whether they do"*, *"Bring it up
+yourself. Saying it first is worth more than the three days cost you."*
+
+1160 is that pane in the **homeowner's second person with the coaching
+stripped**. `gate_1160.mjs` asserts both halves — **thirteen facts kept**
+(Dayton, licensed and insured, permit, magnetic sweep, Preferred Contractor,
+no layovers, per sheet, ice and water, not felt, pipe boots, ventilation,
+three business days, §1345.23) and **four coaching asides gone**.
+
+**So the two are one source with two voices. If a fact changes, change it in
+BOTH** — `PANES.proof` and `bodyHtml()` — or the rep and the screen will
+disagree in front of a client.
+
+### The warranty is a ladder, and flattening it is a real error
+
+The proof pane says *"25 years on the shingle"*. That is **System
+Protection**, one of three rows in the ROOFING WARRANTY table, and quoting it
+flat **understates what a Preferred contractor can register**. The screen
+shows the app's own three rows:
+
+| | On the shingle | On our work | |
+|---|---|---|---|
+| Standard | 25-year | 5-year | |
+| System Protection | 25-year | 10-year | transferable |
+| Preferred Protection | **50-year** | 10-year | transferable |
+
+**Platinum Protection is deliberately absent.** `OC_BRAND_RULES.md`: it is
+Platinum Preferred only and Cardinal is Preferred, so quoting it is an
+over-claim. Asserted present *and* asserted absent.
+
+### ⚠ No Owens Corning mark is on this screen — that is a gate
+
+The status is stated as **text** (`Owens Corning™ Roofing Preferred
+Contractor`), which `index.html` already does at three agreeing sites. The
+**lockup** is not here because it needs two things a session cannot supply:
+
+1. **Official artwork.** The guidelines PDF's embedded lockups are 100–150ppi;
+   cropping one ships a blurry, proportion-drifted mark, which the guidelines
+   forbid outright.
+2. **OC Local Marketing approval** — `LMARoofing@owenscorning.com`, with the
+   test URL. *"Once you receive approval from Local Marketing, then you may
+   launch."*
+
+`gate_1160.mjs` counts `<img>`, `<svg>`, `background-image` and `url(` on the
+surface and asserts **zero**. If a mark appears here later, that gate was
+skipped, not passed. The variant, when it is approved, is settled in
+`OC_BRAND_RULES.md` by arithmetic: **red roundel, white lockup type** (the
+"50% black or more" version) — this ground is ~98% black.
+
+**Still open, and Theo's call, not a session's:** the required co-branding
+disclaimer (*"Cardinal Roofing & Renovations, LLC is an independent contractor
+and is not an affiliate of Owens Corning Roofing and Asphalt, LLC…"*) appears
+**zero** times in the whole app, including on the ROOFING ESTIMATE, which
+already co-brands with `.est-oc`. This screen inherits that question; it does
+not create it.
+
+### House rules it follows
+
+- **Blackout, every colour a literal** — immune to the 448–449 token-strip
+  class by construction, like `cr-show` / `cr-occ` / `cr-fin`.
+- **Inks computed, not picked.** On `#050607`: body `#b9b3ad` 9.77:1, accent
+  `#f08a90` 8.44:1. **Cardinal red `#c8202e` is 3.57:1 here** — grounds and
+  rules only, never text. Asserted, and re-checked in real Chromium against
+  the *composited* ground.
+- **DISPLAY-shown**, registered in `hideAllViews()` beside `cr-occ` and
+  `cr-fin`, closed with `style.display='none'`.
+- **Writes no scroll lock.** The count stays at 13. It scrolls inside itself.
+- `window.navPush` is called guarded, matching `cr-occ` — it does not exist
+  today, so both calls are inert no-ops kept for the day it does. Like
+  `cr-occ`, it is **not** in the `navRestore` switch; the Vision hub is a
+  front door where back means leave.

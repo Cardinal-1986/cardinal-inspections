@@ -532,6 +532,39 @@
         leaveLanding(); closeAll();
         var m = api('CardinalStorm'); if (!m) throw new Error('CardinalStorm.open missing');
         m.open(); await pause(700); } },
+    /* 1160: the Vision hub and Why Cardinal. Added because 1159 and
+       1160 both changed the LANDING and the hub, and every state above
+       calls leaveLanding() first — so the sentinel had no state that
+       ever swept either surface, and a green run said nothing about
+       them. 'vision' forces the hub branch on this hostname (the
+       ?vision=1 override) and rebuilds the landing; 'why' opens the
+       screen the hub now leads to. */
+    { name:'vision',    run: async function () {
+        closeAll();
+        var lv = document.getElementById('landingView');
+        if (!lv) throw new Error('no #landingView');
+        window.__crForceVision = true;
+        var L = window.CardinalLanding;
+        if (L && L.isVisionHost) {
+          var real = L.isVisionHost;
+          L.isVisionHost = function(){ return true; };
+          L.__crRealIsVision = real;
+        }
+        lv.dataset.crLrBuilt = '';
+        if (typeof window.showLanding === 'function') { try { window.showLanding(); } catch (e) {} }
+        lv.style.display = 'block';
+        await pause(700);
+        if (!lv.querySelector('.cr-vh'))
+          throw new Error('the Vision hub did not render — .cr-vh absent');
+      } },
+    { name:'why',       run: async function () {
+        closeAll();
+        var m = api('CardinalWhy'); if (!m) throw new Error('CardinalWhy.open missing');
+        m.open(); await pause(600);
+        var v = document.getElementById('cr-why');
+        if (!v || getComputedStyle(v).display === 'none')
+          throw new Error('#cr-why did not open');
+      } },
     { name:'colors',      run: async function () {
         leaveLanding(); closeAll();
         var m = api('CardinalColors'); if (!m) throw new Error('CardinalColors.open missing');
