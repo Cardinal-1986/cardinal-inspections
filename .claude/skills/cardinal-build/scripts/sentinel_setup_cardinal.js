@@ -84,8 +84,13 @@
              'north elevation; the drip edge is undersized and the valley metal is rusted through.';
 
   function ck(po, extra) {
+    /* 1167 made the home board count claim_type (projClaimType). These
+       fixtures always MEANT retail — the row's own crm:'retail' column says
+       so — but the checklist never carried the real discriminator, so the
+       board filtered all three out and seedLanded() threw on the home state.
+       The fixture was stale, not the app. */
     return JSON.stringify(Object.assign({
-      po: po, lead: { assigned: [] }, meas: { squares: 32, pitch: '6/12' }
+      po: po, lead: { assigned: [], claim_type: 'retail' }, meas: { squares: 32, pitch: '6/12' }
     }, extra || {}));
   }
 
