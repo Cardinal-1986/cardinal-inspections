@@ -867,7 +867,55 @@
         if (!el || !el.classList.contains('open'))
           throw new Error('#cr-show did not open — it is shown by .open, never by display');
         var strip = el.querySelector('.cr-sh-tabs');
-        if (!onScreen(strip)) throw new Error('the Showcase tab strip is not on screen'); } }
+        if (!onScreen(strip)) throw new Error('the Showcase tab strip is not on screen'); } },
+
+    /* ── 30 Aug: three surfaces the walk could not see ────────────────────
+       The open item that prompted this said "no state ever swept the LANDING",
+       and that is now MOOT — 1165 retired the landing and 1178 confirmed it is
+       display:none permanently, so there is nothing there to sweep. These are
+       the gaps that actually matter at 1178, and each is chosen because a real
+       defect has already hidden in it:
+         frontdoor  — the 1164 panel. Three defects shipped on it in one
+                      session (a dead tap target at 1172, duplicate doors at
+                      1174, the header it renames at 1169) and the sentinel has
+                      never once opened it.
+         lrs        — the Labor Rate Schedule (1123). A whole screen, gated only
+                      by its own build's gate, never swept.
+       ⚠ Each throws with a NAMED reason rather than returning quietly. A state
+       that silently no-ops is a state that reports CLEAN about nothing.
+
+       ⚠ A THIRD state — the supplement Outcome step — was WRITTEN AND REMOVED
+       the same hour, and the removal is the point. Build 1177 found a nameless
+       <select> on that screen which the a11y gate could not see, because no
+       state reaches it. The state opened the module and then threw:
+
+           TypeError: Cannot read properties of undefined (reading 'approved_rcv')
+
+       It needs a seeded insurance claim. Adding one moves the `truth`,
+       `claimdetail` and `insclients` renders as well, so the next sweep would
+       report a wave of "new" findings that are really just a seed change —
+       noise indistinguishable from regressions. Same call, and the same
+       reasoning, as the AR reminder-row gap in OPEN_ITEMS: **covering it is its
+       own build, not a tack-on.** Recorded there rather than left here half
+       working, because a state that throws every run trains people to ignore
+       the RUN line. */
+    { name:'frontdoor',    run: async function () {
+        leaveLanding(); closeAll();
+        var m = api('CardinalFrontDoor'); if (!m) throw new Error('CardinalFrontDoor missing');
+        m.open(); await pause(600);
+        var el = document.getElementById('cr-fd');
+        if (!el) throw new Error('#cr-fd does not exist');
+        if (!onScreen(el)) throw new Error('the Front Door opened but is not on screen');
+        if (!el.querySelector('.fdrow')) throw new Error('the Front Door rendered no door rows'); } },
+    { name:'lrs',          run: async function () {
+        leaveLanding(); closeAll();
+        var opened = false;
+        try { if (typeof window.openLRS === 'function') { window.openLRS(); opened = true; } } catch (e) {}
+        if (!opened) { var m = api('CardinalLRS'); if (m && m.open) { m.open(); opened = true; } }
+        if (!opened) throw new Error('neither openLRS() nor CardinalLRS.open exists');
+        await pause(900);
+        var v = document.getElementById('cr-lrs-view');
+        if (!onScreen(v)) throw new Error('#cr-lrs-view did not come on screen'); } },
   ];
   if ((globalThis.__SENTINEL_MODE__ || 'normal') === 'empty') {
     /* states that open a SPECIFIC project cannot run against an empty book;

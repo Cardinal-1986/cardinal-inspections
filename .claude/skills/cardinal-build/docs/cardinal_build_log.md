@@ -31045,3 +31045,44 @@ before push.
 - Gates: check_build green (1177→1178, marker + negative control) · **gate_1178 11/11, RED 8/11 on
   the 1177 control**, failing on Theo's exact sentence · regressions gate_1171 9/9, gate_1172 15/15,
   gate_1173 9/9, gate_1174 7/7, gate_1175 5/5, gate_1176 14/14.
+
+## Maintenance — 30 Aug 2026, Theo's picks 1/2/3 (no build number: `index.html` untouched)
+
+**1. The Labor Rate Schedule, crew-list first — ALREADY BUILT, at 1123.** Offered as the top
+recommendation for the next build because `OPEN_ITEMS.md` said *"Unstarted — nothing half-built."*
+**It was wrong.** Found during recon, before a line was written: `cr-lrs-script` carries
+`loadCrews()`, `renderCrewList()`, `crewBtn()` and `renderSheet()`; `catalogFor()` is the one-line
+trade rule; `crew_rates` is the store. **`gate_1123` 25/25 and `harness_lrs1123` 45/45, both run
+fresh on the 1178 tree.** Not rebuilt. The prime doctrine — *things that look missing are usually
+buried* — applied to the doc set itself. **Standing rule restated: strike the item in the SAME PR
+that closes it.**
+⚠️ Running `gate_1123` first required a rig fix: it imports `playwright` by bare name, and the
+`scripts/node_modules` symlink points at a scratchpad holding jsdom and axe-core but not playwright,
+so it died with ERR_MODULE_NOT_FOUND — a whole family of gates silently unrunnable. Symlinked.
+
+**2. `CLAUDE.md` re-measured at 1178** — it opened with *"The app is at build 836"* and its whole
+figures table was `@808`, **342 builds behind**, and it is the first thing every session reads. A
+dated block now sits at the top with every row re-measured by `measure_counts.py`. Bookkeeping,
+except for one row:
+- ⚠️ **THE GLOBAL SCROLL LOCK HAS 17 WRITERS, NOT 13.** This file states 13 as an invariant and
+  says *"the no-14th-writer rule has now held across 234 builds."* It has not — four more modules
+  write `document.body.style.overflow` (41 CODE sites, up from 35). Nobody repealed the rule;
+  nobody noticed. That is the leak-prone class BUG_CLASSES records as having recurred three times.
+  **Not audited here** — recorded so it is not discovered a fourth time by a frozen screen.
+- ⚠️ And the file's own trap fired while measuring it: naive comment-stripping answered **15**,
+  the lexer answered **17**. The warning reproducing itself in the same hour.
+
+**3. The sentinel's walk, 29 → 31 states.** The open item's premise was obsolete: it said no state
+swept the LANDING, but 1165 retired the landing (that dead screen is exactly what broke 1087's
+guard, per the 1178 entry) — there is nothing there to measure. The real gaps at 1178 were
+**`frontdoor`** (the 1164 panel: three defects shipped on it in one session and the standing gate
+had never opened it) and **`lrs`**. Both added, both sweep clean — 31 renders, CLEAN on
+INK/DEADTAP/DUPE/OVERFLOW/COLLAPSE.
+⚠️ A third state, the supplement Outcome step, was written and REMOVED the same hour: it needs a
+seeded claim (`approved_rcv`), and seeding one moves three other renders, so the next sweep would
+report seed churn as regressions. Its own build. Left out rather than left throwing — a state that
+fails every run trains people to ignore the RUN line.
+
+**Theo also asked what item 4 was** (the remaining 305 a11y findings). Explained and **skipped on
+my recommendation**: they are landmark/region structure, invisible to anyone who uses the app by
+looking and tapping, and already baselined so they cannot grow.

@@ -73,6 +73,36 @@ whole app, including on the ROOFING ESTIMATE, which already co-brands via
 
 ---
 
+## ✅ MOSTLY CLOSED 30 Aug 2026 — the sentinel's walk (was: landing / Vision hub)
+
+**The premise below is now partly OBSOLETE, and that matters more than the fix.** It says no
+state ever swept the LANDING. **There is no landing to sweep:** 1165 retired it and 1178 confirmed
+`#landingView` is `display:none` permanently (that dead screen is what broke 1087's guard — see the
+1178 log entry). Sweeping it would have measured nothing.
+
+**What was actually uncovered at 1178, and is now covered — the walk is 29 → 31 states:**
+- **`frontdoor`** — the 1164 panel. **Three defects shipped on it in one session** (a dead tap
+  target at 1172, duplicate doors at 1174, the header rename at 1169) and the sentinel had never
+  once opened it. The single most-changed new surface in the app was invisible to the standing gate.
+- **`lrs`** — the Labor Rate Schedule (1123). A whole screen, covered only by its own build's gate.
+
+Verified: 31 renders, CLEAN on INK/DEADTAP/DUPE/OVERFLOW/COLLAPSE at 390px.
+
+### 🟠 STILL OPEN — the supplement Outcome step needs a seeded claim
+A third state was written and removed the same hour. Build 1177 found a nameless `<select>` on that
+screen **which the a11y gate could not see, because no state reaches it** — a rule reading zero
+means zero *on the screens the walk visits*. The state opens the module and throws:
+
+    TypeError: Cannot read properties of undefined (reading 'approved_rcv')
+
+It needs a seeded `insurance_claims` row, and adding one moves the `truth`, `claimdetail` and
+`insclients` renders too — the next sweep would report a wave of "new" findings that are really a
+seed change, noise indistinguishable from regressions. **Its own build, not a tack-on** — the same
+call and the same reasoning as the AR reminder-row gap below. Left OUT rather than left half
+working: a state that throws every run trains people to ignore the RUN line.
+
+<details><summary>The original entry (found 1159, half-fixed 1160) — kept for its reasoning</summary>
+
 ## 🟠 OPEN — the sentinel could not see the landing or the Vision hub (found 1159, half-fixed 1160)
 
 Every state in `sentinel_setup_cardinal.js` opened with `leaveLanding()`,
@@ -91,6 +121,8 @@ this sandbox.** `DEADLINE_MS` defaults to `60000 + RENDERS*14000` — with
 `--since` run renders both. A 15-min cap killed it at `EXIT=124` with no
 report, which reads as "not green" but **proves nothing** (BUG_CLASSES 37).
 Scope with `--only` when the build is scoped, or budget ≥40 min.
+
+</details>
 
 ---
 
@@ -197,10 +229,23 @@ is OFF by design. `app_settings.sql` + `payment_reminders.sql` both run before d
   `cardinal.lnav.sections` (the desktop rail owns that key), and 954's insurance-portal
   auto-open no longer reaches the drawer. **Do not restore the persistence.**
 
-## 🟠 OWED — the Labor Rate Schedule, crew-list first (28 Aug 2026)
+## ✅ DONE — the Labor Rate Schedule, crew-list first (asked 28 Aug, SHIPPED AT 1123)
 
 Theo, on the 1110 screen: *"Labor rate schedule shouldn't go straight to Santiago. It should
-[list] all the crews, then tap to see the labor rates."* Unstarted — nothing half-built.
+[list] all the crews, then tap to see the labor rates."*
+
+⚠️ **THIS ENTRY SAID "Unstarted — nothing half-built" UNTIL 30 Aug, AND IT WAS WRONG.** The work
+shipped at **build 1123** and nobody struck the item. Offered to Theo on 30 Aug as the top
+recommendation for the next build; found already built during recon, before a line was written.
+The prime doctrine, on the doc set itself: *things that look missing are usually buried.*
+
+**Verified on the 1178 tree, not assumed** — `cr-lrs-script` carries `loadCrews()`,
+`renderCrewList()`, `crewBtn()` and `renderSheet()`; `catalogFor()` is the one-line trade rule;
+`crew_rates` is the store with no second one added. **`gate_1123.mjs` GREEN 25/25 and
+`harness_lrs1123.js` GREEN 45/45**, both run fresh.
+
+**The standing rule this cost:** an item is struck in the SAME PR that closes it. Everything
+below is retained because the design notes are still the design.
 
 - **Shape:** `openLRS()` currently loads every `pricing_items` row where `template='roofing_labor'`
   and renders Santiago's sheet directly. It becomes a **crew list first** (from `crews`), then tap a

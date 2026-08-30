@@ -5,7 +5,50 @@ Live at **app.cardinalroster.com** · Vercel deploys on merge to `main` · Supab
 
 ### ⚠ FIRST, THE THING THAT CHANGED MOST: **a build number is no longer `index.html`'s**
 
-**The app is at build 836. `index.html` is at build 808 — and that is correct, not stale.**
+> ### ⚠️ RE-MEASURED 30 Aug 2026 — THE APP IS AT BUILD **1178**, AND EVERY `@808` FIGURE BELOW IS STALE
+>
+> The section immediately below, and the measurements table further down, were written at
+> **808/836 and are 342 builds behind.** They are kept because the *reasoning* in them is still
+> right — the counting traps, the two-separator regex, SITES vs DISTINCT — but **do not quote a
+> number from them.** Re-run `scripts/measure_counts.py`; it prints every row.
+>
+> **Measured on the shipped 1178 tree (`measure_counts.py`, 30 Aug 2026):**
+>
+> | Thing | @808 (below) | **@1178** |
+> |---|---:|---:|
+> | bytes on disk / characters | 4,467,167 / 4,442,369 | **5,705,006 / 5,674,745** |
+> | inline `<script>` | 113 | **133** |
+> | `<script>` total / CDN | 116 / 3 | **136 / 3** |
+> | `<style>` blocks / with an id | 135 / 127 | **158 / 149** |
+> | `window.Cardinal*` distinct | 94 | **113** |
+> | `</body>` | 12 | **13** |
+> | `.observe(document.body …)` real | 45 | **46** |
+> | **scroll-lock modules / CODE sites** | **13 / 35** | **⚠ 17 / 41 — SEE BELOW** |
+> | `.single()` / `.maybeSingle()` / `.throwOnError(` | 55 / 6 / 0 | **63 / 8 / 0** ✅ |
+> | `--ccm-*` sites/distinct/refs | 64/32/162 | **75/37/198** |
+> | `--rbe-*` | 167/76/739 | **176/79/807** |
+> | `--cr-*` | 177/21/603 | **186/23/605** |
+> | `--lb-*` / `--crw-*` / `--sh-*` / `--occ-*` | unchanged | **22/11/85 · 0/0/96 · 1/1/180 · 14/12/150** |
+> | `api/*.js` | 29 | **37** |
+> | `*.sql` at root | 62 | **98** |
+> | `*.html` at root | 17 | **20** |
+> | CHANGELOG entries / span | 503 / 166–808 | **826 / 166–1178** (551 new-shape, 275 old-shape) |
+> | version strings / distinct builds | 38 / 19 | **49 / 30** |
+>
+> ⚠️ **THE ONE THAT IS NOT BOOKKEEPING: the global scroll lock now has 17 writers, not 13.**
+> This file states the 13 as an invariant and says *"the no-14th-writer rule has now held across
+> 234 builds."* **It has not. Four more modules write `document.body.style.overflow`**, measured
+> with the lexer this file tells you to use. The rule was not repealed — nobody noticed. That is
+> the leak-prone class BUG_CLASSES records as having recurred three times, so **the roster wants
+> reading before the next module joins it.** Not audited here; recorded so it is not discovered
+> a fourth time by a frozen screen.
+> ⚠️ And the trap fired again while measuring it: a naive comment-strip answered **15** and the
+> lexer answered **17** — this file's own warning, reproducing itself in the same hour.
+
+**The app is at build 1178.** ⚠️ *The paragraph below is the 16 Aug 2026 state and is retained
+for its argument, not its numbers: `index.html` is no longer the lagging artifact.*
+
+**~~The app is at build 836. `index.html` is at build 808 — and that is correct, not stale.~~**
 Builds **809–836 shipped entirely outside `index.html`**: in `visualizer/index.html` (its own
 stamp, `v2026-08-15 build 826`) and in `spark/visualizer_worker.py` (its own `WORKER_BUILD`,
 currently **`wb-2026-08-16.17`**). Verified against `git log -- index.html`, whose newest commit
@@ -76,7 +119,11 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 *The one thing that has never changed: **`cardinal_build_log.md` has no entry for roughly 468–542**, because much of that span was built through a different tool that never read this folder.*
 
-**As of 16 Aug 2026 the app is at build 836** — `index.html` at **808**, `visualizer/index.html` at **826**, the Spark worker at **`wb-2026-08-16.17`**. Current state:
+⚠️ **STALE — re-measured 30 Aug 2026: the app is at build 1178** and `index.html` carries that
+stamp itself. The table below is the 16 Aug state; `cardinal_build_log.md` is current and remains
+the one doc that has never fallen behind. The original line, kept so the gap is visible:
+
+**~~As of 16 Aug 2026 the app is at build 836~~** — `index.html` at **808**, `visualizer/index.html` at **826**, the Spark worker at **`wb-2026-08-16.17`**. Current state:
 
 | File | Worked forward to | Trust it? |
 |---|---|---|
