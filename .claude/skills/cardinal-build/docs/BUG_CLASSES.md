@@ -4286,6 +4286,11 @@ Theo's finger was the first honest test. Two standing rules out of it:
    exported function. gate_1172 is the shape to copy.
 2. **Before wiring a click to an element, read its computed `pointer-events` and its hit box** —
    `cursor:pointer` on a `pointer-events:none` element styles a control nobody can press.
-The sentinel's UNWIRED check cannot see this class (the handler exists); a probe check for
-visible elements with a pointer cursor and computed pointer-events:none is the mechanical form,
-not yet written — this paragraph is the explicit note until it is.
+✅ The mechanical form is WRITTEN: the sentinel's **DEADTAP** check (30 Aug) flags any visible
+element that styles as pressable (pointer cursor, button/role, live href) while computing
+pointer-events:none, reporting only the inheritance boundary. Selftested in both directions.
+The buried-under-z-index cousin (build 325's Attach bar) is deliberately NOT in it — a hit-test
+drowns in legitimate overlays during a state walk — and stays with the per-build finger gates
+(gate_1172's shape). Two sibling checks landed with it: **DUPE** (two controls, one name, one
+menu — the 1171 drawer) and **BOOK** (the pipeline must equal the book of the portal the body
+claims — the 1173 wandering numbers), each with firing and quiet fixtures in the selftest.

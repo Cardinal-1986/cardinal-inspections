@@ -30825,3 +30825,17 @@ before push.
   plus a 700ms stability read — **9/9 GREEN; the 1172 control goes RED reproducing his screenshots
   verbatim ("got L3/P0 under header Retail" = the community book, "L1/P0" = insurance)**.
   Regression: gate_1172 15/15, gate_1167 17/17, render_landing1165 16/16 on the new artifact.
+
+## Instruments — the sentinel learns this session's three classes (30 Aug, no build number: scripts only)
+- Theo asked what would catch this session's exception-free bugs; the honest answer was "checks we
+  owe the sentinel", and he said build them. Three new standing checks, each keyed to the build
+  that taught it, each with firing AND quiet fixtures in `sentinel_selftest.html`:
+  - **DEADTAP** (class 71 / build 1172): styles as pressable, computes pointer-events:none —
+    reported at the inheritance boundary only. The hit-test cousin stays with finger gates.
+  - **DUPE** (build 1171): two controls with one name in one MENU container, checked from markup
+    (a closed drawer's duplicate rows are just as wrong); two same-name buttons in a plain list
+    stay quiet — different objects' actions.
+  - **BOOK** (build 1173): the rendered pipeline must equal the book of the portal
+    `body.dataset.crm` claims, using the app's own globals; no-ops guarded on any page without
+    them (class 37).
+- `--selftest` GREEN: all 12 checks fire and every look-alike is quiet.
