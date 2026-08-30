@@ -31155,7 +31155,20 @@ looking and tapping, and already baselined so they cannot grow.
   existing `--ccm-*` token with a literal fallback, so the light twin comes through the tokens
   rather than a second block; the two red inks that cannot tokenise carry an explicit `rb-light`
   twin.
-- Gates: check_build green (1178→1179, marker + negative control) · **gate_1179 19/19, RED 4/13 on
-  the 1178 control** · regressions gate_1171/1172/1173/1174/1175/1176/1178 all green · gate_types
+- ✅ **Theo picked placement 1 for tarps** (a queue in the attention list) — which is what shipped,
+  so no code changed. **But his pick exposed a hole in my own gate and it was hardened to 25/25:**
+  the seed carried NO tarped job, so `d.tarps` was empty, the queue never rendered, and every tarps
+  assertion passed **vacuously** — the "check that cannot fail" this project has already shipped
+  twice. The seed now carries both halves: a tarped **Prospect** that must appear, and a tarped
+  **Completed** that `TARP_DONE` must keep out. Without the second, the queue could simply be
+  listing every tarped job ever and the gate would applaud.
+- ⚠️ **Hardening it surfaced two coordinate traps, and both failed CORRECT code** — the mirror image
+  of each other. Two extra seeded jobs lengthened the attention list and pushed the third door
+  **below the 844px fold**, so the tap landed on empty space; scrolling to reach it then left the
+  page scrolled, putting **Back above the fold** with a negative y. A person scrolls before
+  pressing, so the gate does too — scroll into view, then RE-READ the box, because scrolling moves
+  what you are aiming at. A real-tap gate is only honest if it aims where the finger would land.
+- Gates: check_build green (1178→1179, marker + negative control) · **gate_1179 25/25, RED on the
+  1178 control** · regressions gate_1171/1172/1173/1174/1175/1176/1178 all green · gate_types
   GREEN · gate_dupes GREEN · audit_scrolllock GREEN (17, unchanged — the rework added no writer) ·
   sentinel sweep running (layout build).

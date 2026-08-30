@@ -17,12 +17,23 @@ const MOCK = fs.readFileSync(HERE + 'e2e_mock_supa.js', 'utf8');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 150000);
 
 const ck = t => JSON.stringify({ lead: { claim_type: t } });
+/* Theo picked placement 1 for tarps — a queue in the attention list — so the
+   queue needs a real assertion, not just "it did not become a door". Without a
+   TARPED job in the seed d.tarps is empty, the group never renders, and every
+   tarps check passes vacuously: the "check that cannot fail" this project has
+   already shipped twice. This seed carries one. */
+const ckTarp = (t, iso) => JSON.stringify({ lead: { claim_type: t, tarped_at: iso } });
 const P = (id, name, stage, type) => ({ id, name, stage, address: '', phone: '', email: '',
   checklist: ck(type), created_at: '2026-08-10T12:00:00Z', updated_at: '2026-08-10T12:00:00Z' });
 const SEED = {
   team_profiles: [{ email: 'theo@cardinalrenovations.net', name: 'Theo Dorion', role: 'admin', title: 'Owner' }],
   projects: [P('r1','R Lead','Lead','retail'), P('r2','R Pro','Prospect','retail'),
     P('c1','C One','Lead','community'), P('c2','C Two','Lead','community'), P('c3','C Three','Lead','community'),
+    /* tarped and NOT finished -> must appear in the queue */
+    Object.assign(P('c4','Tarped Tessa','Prospect','community'), { checklist: ckTarp('community','2026-07-02') }),
+    /* tarped but Completed -> TARP_DONE must keep it OUT; the negative half,
+       without which the queue could simply be listing every tarped job ever */
+    Object.assign(P('c5','Done Dora','Completed','community'), { checklist: ckTarp('community','2026-06-01') }),
     P('i1','I One','Lead','insurance')],
   inspection_reports: [], appointments: [], estimates: [], collections: [], commissions: [], contracts: [], punch_items: [], insurance_claims: []
 };
@@ -99,17 +110,43 @@ ok(s.doors.every(d => d.vis && d.h >= 44), 'every door is visible and clears the
 // ---- the whole point: a REAL TAP on each door must change the pane
 for (const want of ['clients', 'bids', 'partners']) {
   s = await look();
-  const door = s.doors.find(d => d.pane === want);
+  let door = s.doors.find(d => d.pane === want);
   if (!door) { ok(false, 'no door for ' + want); continue; }
-  await page.touchscreen.tap(door.x, door.y);
+  /* ⚠ SCROLL IT INTO VIEW FIRST, THEN RE-READ THE COORDINATES. Seeding two more
+     community jobs lengthened the attention list and pushed the third door
+     BELOW THE 844px fold; the tap then landed on empty space and the gate went
+     red on correct code. A person scrolls before pressing, so the gate must
+     too — and re-read, because scrolling moves the box it is aiming at. */
+  await page.evaluate(w => {
+    const d = document.querySelector(`#cr-ch2 .cc-door[data-pane="${w}"]`);
+    if (d) d.scrollIntoView({ block: 'center' });
+  }, want);
+  await page.waitForTimeout(350);
+  const box = await page.evaluate(w => {
+    const d = document.querySelector(`#cr-ch2 .cc-door[data-pane="${w}"]`);
+    if (!d) return null;
+    const r = d.getBoundingClientRect();
+    return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2),
+             onScreen: r.top >= 0 && r.bottom <= window.innerHeight };
+  }, want);
+  ok(!!box && box.onScreen, `the ${want} door can be scrolled fully into view`);
+  await page.touchscreen.tap(box.x, box.y);
   await page.waitForTimeout(700);
   let after = await look();
   ok(after.onPane.includes(want), `tapping the ${want} door actually opens it (on: ${after.onPane.join(',')})`);
   ok(after.back, `${want} shows a Back control`);
   // and Back returns home
+  /* ⚠ AND BACK IS AT THE TOP. Scrolling down to reach a door leaves the page
+     scrolled, so Back sits ABOVE the fold with a negative y — the mirror image
+     of the trap two blocks up, and it failed the same way on correct code. */
   const bk = await page.evaluate(() => {
+    window.scrollTo(0, 0);
+    const sc = document.querySelector('#cr-ch2'); if (sc) sc.scrollTop = 0;
     const b = document.querySelector('#cr-ch2 .cc-back'); if (!b) return null;
-    const r = b.getBoundingClientRect(); return { x: Math.round(r.x + r.width/2), y: Math.round(r.y + r.height/2) };
+    const r = b.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) b.scrollIntoView({ block: 'center' });
+    const r2 = b.getBoundingClientRect();
+    return { x: Math.round(r2.x + r2.width/2), y: Math.round(r2.y + r2.height/2) };
   });
   if (bk) { await page.touchscreen.tap(bk.x, bk.y); await page.waitForTimeout(700); }
   after = await look();
@@ -120,6 +157,23 @@ for (const want of ['clients', 'bids', 'partners']) {
 s = await look();
 ok(!s.doors.some(d => /tarp/i.test(d.label)), 'Tarps did NOT become a fourth door');
 ok(s.groups.length >= 1, 'the attention list has grouped queues (' + s.groups.join(' / ') + ')');
+
+// ---- Theo's placement 1: tarps ride IN the attention list, both directions
+ok(s.groups.some(g => /tarps still up/i.test(g)),
+   'the "Tarps still up" queue renders (groups: ' + s.groups.join(' / ') + ')');
+const tarpNames = await page.evaluate(() => {
+  const hs = [...document.querySelectorAll('#cr-ch2 .cc-aqh')];
+  const h = hs.find(e => /tarps still up/i.test(e.textContent));
+  if (!h) return null;
+  const out = [];
+  for (let n = h.nextElementSibling; n && n.classList.contains('cc-arow'); n = n.nextElementSibling)
+    out.push((n.querySelector('.cc-anm') || {}).textContent || '');
+  return out;
+});
+ok(!!tarpNames && tarpNames.includes('Tarped Tessa'),
+   'the tarped, unfinished job is IN the queue (got: ' + JSON.stringify(tarpNames) + ')');
+ok(!!tarpNames && !tarpNames.includes('Done Dora'),
+   'a tarped job that is Completed is NOT in the queue — TARP_DONE holds (got: ' + JSON.stringify(tarpNames) + ')');
 
 await browser.close();
 console.log((fail ? 'RED  ' : 'GREEN  ') + pass + '/' + (pass + fail) + (fail ? '\n  - ' + bad.join('\n  - ') : ''));
