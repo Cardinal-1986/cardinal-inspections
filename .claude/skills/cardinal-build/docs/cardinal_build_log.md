@@ -30604,3 +30604,27 @@ passing it backwards silently kills four states. `BUG_CLASSES.md` already
 recorded that as a named operator error **while the copy a reader actually
 copies out still printed the broken order.** Corrected at the source. A trap
 documented in one file and reproduced in another is not documented.
+
+## Build 1163 — the morning strip counts Community, and shares its resolver
+
+The "Where things stand" strip (1048) watched retail approvals, build dates, punch-outs and
+insurance chases — and never Community, whose three overdue bids were invisible from the home
+screen. Theo picked the front-door direction whose whole premise is that strip; this is its
+first build, shippable on its own.
+
+- **`cr-ch2-script` exports `dueBids`** — `chDueBidsCount()`, counted by the hub's OWN clocks
+  (`chDueIso`: `bid_due_at`, or `check_back_at` on a parked job per 975's second clock;
+  `chWaiting` excluded per 977 — a waitlisted job has no bid). One due rule, not a second.
+- **`cr-morning` gains the `bids past due` chip** (hot), a DOOR to `CardinalCommunityHub.show()`;
+  the zero-guard now includes it so the strip cannot hide while bids are overdue.
+- **`window.CardinalStands = Object.assign(...{ counts })`** — the strip's resolver exported so
+  the front-door work ahead reads the SAME numbers. One pipeline per concept.
+
+Gates: check_build green (stamp 1158→1163 — 1159–1162 are claimed on other branches, per
+next_build.py — marker `dueBids` + negative control). `harness_stands1163.js` extracts the
+SHIPPED functions by brace-matching and runs them against production shapes (overdue Lead,
+parked-with-future-check-back excluded, waitlist excluded, non-community excluded, hub-missing
+→ 0), coverage floor ≥18: **GREEN 19/19 on 1163, RED on the 1158 control.**
+⚠ The harness's first run failed CORRECT code: the shipped `ck()` delegates to
+`window.parseCkAll`, which the sandbox did not provide — the mock was wrong, not the app.
+Sentinel run per the 27 Aug rule (wiring build → run, don't block).

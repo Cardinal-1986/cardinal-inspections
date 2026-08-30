@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1158<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1163<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42445,6 +42445,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1163, d: '2026-08-30', t: 'The morning strip counts Community, and shares its resolver', s: 'The “Where things stand” strip (1048) watched retail, insurance and production — and never Community, whose three overdue bids sat invisible from the home screen. It now carries a “bids past due” chip, counted by the Community hub’s own due clocks (bid_due_at, or the check-back date on a parked job; waitlisted jobs have no bid and never count) and opening the hub on tap. The strip’s counts are also exported as CardinalStands, so the front-door work ahead reads these same numbers instead of growing a second set.' },
   { b: 1158, d: '2026-08-30', t: 'The reminders switch works on an empty screen', s: 'Fixes a bug shipped hours earlier in 1157: when nothing was owed, the Invoices & AR screen returned early and the automatic-reminders switch never finished loading \u2014 it sat on \u201cChecking\u2026\u201d with a dead button, which is exactly the state a paid-up book is in. The switch now paints whether or not any invoice is outstanding.' },
   { b: 1157, d: '2026-08-30', t: 'Reminders master switch', s: 'The Invoices & AR screen now carries a company-wide On/Off switch for automatic payment reminders. It ships OFF \u2014 nothing texts a client until an admin turns it on \u2014 and the daily run checks the same switch server-side, so off means off everywhere. Rows show \u201cPaused \u2014 reminders are off company-wide\u201d while it is off.' },
   { b: 1156, d: '2026-08-30', t: 'Automatic payment reminders', s: 'Retail clients with a sent, unpaid invoice now get a friendly text from the company number \u2014 3 days after the invoice goes out, then weekly, at most 4 \u2014 with their balance and the secure pay link. It stops the moment any payment is recorded or is processing, and every job has a Mute switch on the Invoices & AR screen. Insurance and Community jobs are never texted.' },
@@ -59127,6 +59128,21 @@ return normStage(pr.stage) === 'OnHold' && !!lead(pr).check_back_at;
 /* 977: free tarp done, nothing bid yet. Per-module like chOnHold above — the
    hub reads the checklist for every other fact the same way. */
 function chWaiting(pr){ return !!lead(pr).waitlist_at; }
+/* 1163: the count the morning strip asks for. Same clocks as the hub's own
+   Due list (975/977): a job holds an open bid at Lead, or parked with a
+   check-back (chOnHold); a waitlisted job has NO bid and never counts; and
+   chDueIso() answers which clock the job is on. Negative days = past due. */
+function chDueBidsCount(){
+try{
+return projects().filter(function(pr){
+var st = normStage(pr.stage);
+if(!(st === 'Lead' || chOnHold(pr))) return false;
+if(chWaiting(pr)) return false;
+var d = days(chDueIso(pr));
+return d != null && d < 0;
+}).length;
+}catch(_e){ return 0; }
+}
 /* Bands, not raw dates - 'Overdue' is the filter you actually want at 7am. */
 function chDueBand(pr){
 var dd = days(chDueIso(pr));
@@ -60162,6 +60178,8 @@ isOpen : isOpen,
 /* 974: Analytics is fully synchronous and has no Supabase call of its own, so
    the estimate totals the hub already fetched are the only source it can have. */
 estTotal : function(pid){ return Number(estTot[pid]) || 0; },
+/* 1163: read-only count for the morning strip — one due rule, not a second. */
+dueBids  : chDueBidsCount,
 };
 })();
 </script>
@@ -83444,6 +83462,7 @@ document.addEventListener('click', function(e){
      needs date  CardinalProduction.schedFor()    (972's exported answer)
      punch       CardinalPunch.rows()             (the one punch cache)
      chase       CardinalTruthHome.chase()        (1048's export)
+     bids        CardinalCommunityHub.dueBids()   (1163's export — the hub's own clocks)
      today       cacheAppts, dated today
    Every chip is a door to a screen that already exists — this strip adds no
    new destination, and it hides itself entirely when every count is zero. */
@@ -83474,6 +83493,11 @@ function counts(){
       if(!window.CardinalTruthHome || typeof window.CardinalTruthHome.chase !== 'function') return 0;
       return window.CardinalTruthHome.chase();
     }),
+    bids: n(function(){
+      var h = window.CardinalCommunityHub;
+      if(!h || typeof h.dueBids !== 'function') return 0;
+      return h.dueBids();
+    }),
     today: n(function(){
       var k = todayKey();
       return (window.cacheAppts || []).filter(function(a){ return a && a.appt_date === k; });
@@ -83493,12 +83517,13 @@ window.renderMorningStrip = function(){
   if(!host) return;
   if(typeof isAdminUser !== 'function' || !isAdminUser()){ host.style.display = 'none'; return; }
   var c = counts();
-  if(!c.appr && !c.date && !c.punch && !c.chase && !c.today){ host.style.display = 'none'; return; }
+  if(!c.appr && !c.date && !c.punch && !c.chase && !c.bids && !c.today){ host.style.display = 'none'; return; }
   var html = '';
   if(c.appr)  html += chip('warn', c.appr,  c.appr === 1 ? 'awaiting contract' : 'awaiting contract', 'appr');
   if(c.date)  html += chip('warn', c.date,  'need a build date', 'date');
   if(c.punch) html += chip('hot',  c.punch, 'urgent punch-outs', 'punch');
   if(c.chase) html += chip('hot',  c.chase, 'carriers to chase', 'chase');
+  if(c.bids)  html += chip('hot',  c.bids,  c.bids === 1 ? 'bid past due' : 'bids past due', 'bids');
   if(c.today) html += chip('',     c.today, c.today === 1 ? 'thing today' : 'things today', 'today');
   host.innerHTML = '<div class="mrow">' + html + '</div>';
   host.style.display = 'block';
@@ -83512,7 +83537,11 @@ document.addEventListener('click', function(e){
   if(a === 'date'  && window.CardinalProduction) return window.CardinalProduction.open();
   if(a === 'punch' && typeof window.openPunchView === 'function') return window.openPunchView();
   if(a === 'chase' && typeof window.showCardinalTruth === 'function') return window.showCardinalTruth();
+  if(a === 'bids'  && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function') return window.CardinalCommunityHub.show();
 });
+/* 1163: the strip's resolver, exported so the front-door work ahead reads the
+   SAME numbers — one pipeline per concept, never a second set of counts. */
+window.CardinalStands = Object.assign(window.CardinalStands || {}, { counts: counts });
 })();
 </script>
 <style id="cr-landing-flow">
