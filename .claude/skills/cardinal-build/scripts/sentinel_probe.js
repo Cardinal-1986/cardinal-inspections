@@ -693,6 +693,11 @@ globalThis.__sentinelProbe = () => {
     const seen = {};
     for (const b of root.querySelectorAll('button, [role="button"], a[href]')) {
       if (b.hasAttribute('hidden')) continue;
+      /* a disclosure header (the collapsible section's own toggle) is not a
+         door — a section named like a row it contains is accordion design,
+         not redundancy. First run flagged the drawer's "Production" section
+         header against the Production row; this is that lesson. */
+      if (b.hasAttribute('aria-expanded')) continue;
       const label = (b.textContent || b.getAttribute('aria-label') || '')
         .trim().replace(/\s+/g, ' ').toLowerCase();
       if (label.length < 3) continue;

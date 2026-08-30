@@ -774,6 +774,10 @@ if (SELFTEST) {
   console.log((dupeCards ? '  FAIL  ' : '  PASS  ') +
     'two same-name buttons in a plain list are NOT reported as DUPE');
   if (dupeCards) bad++;
+  const dupeSec = all.some(r => r.id === 'DUPE' && /dupe-sec/.test(r.detail));
+  console.log((dupeSec ? '  FAIL  ' : '  PASS  ') +
+    'a disclosure section header sharing a row name is NOT reported as DUPE');
+  if (dupeSec) bad++;
   /* BOOK pair: the matching stage in the same fixture must stay quiet. */
   const bookOk = all.some(r => r.id === 'BOOK' && /Prospect/.test(r.detail));
   console.log((bookOk ? '  FAIL  ' : '  PASS  ') +
