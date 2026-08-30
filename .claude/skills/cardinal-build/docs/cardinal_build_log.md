@@ -31172,3 +31172,25 @@ looking and tapping, and already baselined so they cannot grow.
   1178 control** · regressions gate_1171/1172/1173/1174/1175/1176/1178 all green · gate_types
   GREEN · gate_dupes GREEN · audit_scrolllock GREEN (17, unchanged — the rework added no writer) ·
   sentinel sweep running (layout build).
+
+## Build 1180 — the Insurance light/dark moves one row down
+- **Theo, with a screenshot of 1176's fix: "Still off, the light dark should be one row down."**
+  1176 made the moon VISIBLE (its ink was near-black on a near-black bar); it was still in the top
+  bar beside New and Search. Measured at 440px on the 1179 tree: moon at **y=10** inside
+  `#cr-hd2-bar`; `#crBanner` — the Home / Clients / Claims / Photos / Production / Tools strip — at
+  **y=65**. One row, exactly. `HOSTS` is now `['#crBanner']`.
+- ⚠️ **THIS IS NOT A RETURN TO THE 804 MISTAKE, and the difference is the whole reason it is safe.**
+  804 moved this button OUT of `#cr-hd2-srch` because that row is **collapsed by default**
+  (`body:not(.cr-srch-open) #cr-hd2-srch{display:none}`), so it rendered into something nobody could
+  reach — and unlike `#cr-dark-toggle` it has no floating fallback. `#crBanner` is always on screen;
+  it is the row in his screenshot. **The question when moving this is never "which row looks
+  tidier", it is "is that row displayed"** — and `gate_1180` asserts exactly that, by name.
+- It takes the banner's OWN accent (`--bacclt`), not the header's `--hac`: `#crBanner` is a **third
+  chrome system** with its own per-CRM grounds (the 1144 note says so), so the bar's ink would have
+  been a colour from the wrong palette on the wrong ground. Sized 44×44 — `.cr-ib`'s 34px is a
+  header-bar size and this is no longer the header bar.
+- Gates: check_build green (1179→1180, marker + negative control) · **gate_1180 12/12, RED 8/12 on
+  the 1179 control**, failing on exactly what Theo flagged (`moon y=10, bar height=65`) · the tap
+  test is a **real touchscreen tap** that must flip `data-rltheme` and flip it back, plus the
+  insurance-only fence · regressions gate_1176 14/14, gate_1178 11/11, gate_1179 25/25 · sentinel
+  sweep running.
