@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1154<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1155<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -16301,6 +16301,13 @@ document.getElementById('ldSave').addEventListener('click', async function(){
     var pid = await pdb.create({
       name: first + ' ' + last,
       address: addr,
+      /* 1155: the intake already HAS the four parts -- it composed `addr` out
+         of them a few lines up. Store them rather than making the contract
+         re-derive them from the string we just built. */
+      street: street || null,
+      city:   city   || null,
+      state:  state  || null,
+      zip:    zip    || null,
       phone: phones.length ? phones[0].v : '',
       email: emails.length ? emails[0].v : '',
       notes: document.getElementById('ldNotes').value.trim(),
@@ -18355,9 +18362,17 @@ document.getElementById('pfSave').addEventListener('click', async function(){
   var name = document.getElementById('pfName').value.trim();
   if(!name){ document.getElementById('pfError').textContent = 'Client name is required.';
     window.crValid.require(document.getElementById('pfName'), 'Client name is required.'); return; }
+  var _pfAddrEl = document.getElementById('pfAddress');
+  var _pfParts  = (window.CardinalAddress && window.CardinalAddress.fields)
+                ? window.CardinalAddress.fields(_pfAddrEl)
+                : { street:'', city:'', state:'', zip:'' };   /* 1155 */
   var fields = {
     name: name,
-    address: document.getElementById('pfAddress').value.trim() || null,
+    address: _pfAddrEl.value.trim() || null,
+    street:  _pfParts.street || null,
+    city:    _pfParts.city   || null,
+    state:   _pfParts.state  || null,
+    zip:     _pfParts.zip    || null,
     phone:   document.getElementById('pfPhone').value.trim()   || null,
     email:   document.getElementById('pfEmail').value.trim()   || null
   };
@@ -20763,8 +20778,14 @@ document.getElementById('qiNpCreate').addEventListener('click', async function()
   var st = document.getElementById('qiFinStatus');
   st.textContent = 'Creating prospect\u2026';
   try{
+    var _qiAddrEl = document.getElementById('qiNpAddr');
+    var _qiParts  = (window.CardinalAddress && window.CardinalAddress.fields)
+                  ? window.CardinalAddress.fields(_qiAddrEl)
+                  : { street:'', city:'', state:'', zip:'' };   /* 1155 */
     var pid = await pdb.create({ name:nm, phone:(document.getElementById('qiNpPhone').value||'').trim(),
-      address:(document.getElementById('qiNpAddr').value||'').trim(), email:'', notes:'', stage:'Lead',
+      address:(_qiAddrEl.value||'').trim(), email:'', notes:'', stage:'Lead',
+      street:_qiParts.street || null, city:_qiParts.city || null,
+      state:_qiParts.state || null,   zip:_qiParts.zip  || null,
       checklist: JSON.stringify({ po: nextPo(), stage_since: new Date().toISOString() }) });
     auditLog('lead', 'Lead created via Quick Inspection \u2014 ' + nm, pid);
     await reload();
@@ -23694,13 +23715,50 @@ function prefillClientInfo(tpl, pr){
      disagree with the map. */
   var _loc = (parseCkAll(pr).lead || {}).location || {};
   var _flatAddr = String(pr.address || '').trim();
-  var _rebuilt = _loc.street
-    ? _loc.street + (_loc.suite ? ', ' + _loc.suite : '') +
-      (_loc.city ? ', ' + _loc.city : '') + (_loc.state ? ', ' + _loc.state : '') +
-      (_loc.zip ? ' ' + _loc.zip : '')
-    : '';
-  var _normAddr = function(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
-  if(_rebuilt && _flatAddr && _normAddr(_rebuilt) === _normAddr(_flatAddr)){
+  /* 1155: 1004's comparison was too literal, and cosmetic noise was defeating
+     it rather than a real disagreement. Measured over all 60 rows: 5 addresses
+     differed from their own parts ONLY by a trailing "USA", 10 only by "Ohio"
+     against "OH", 1 only by a city typed twice. All 16 fell back to a single
+     line on the contract for no reason at all.
+
+     Normalise those away and the guard keeps doing exactly the job 1004 gave
+     it -- a different street, city or zip still fails, which is the whole
+     point. It took the split from 38 clients to 53 of 60; the 7 that still print
+     one line are the 6 self-contradictory doubled addresses (where the stored
+     address really does disagree with itself, and a person has to pick) plus
+     the one client with no address at all. */
+  var _normAddr = function(s){
+    return String(s || '')
+      .toLowerCase()
+      .replace(/(ohio|indiana|kentucky|michigan)(\d)/g, '$1 $2')  /* "ohio46416" */
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\bohio\b/g, 'oh').replace(/\bindiana\b/g, 'in')
+      .replace(/\bkentucky\b/g, 'ky').replace(/\bmichigan\b/g, 'mi')
+      .replace(/\s*\busa\b\s*$/, '')
+      .replace(/\b(\S+)(\s+\1\b)+/g, '$1')                      /* a token typed twice */
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+  /* 1155: THREE sources now, best first, and 1004's staleness guard applies to
+     each one unchanged -- a split that does not reconstruct the current
+     pr.address is never printed.
+       (a) the real columns, written beside pr.address by every writer
+       (b) checklist.lead.location, the old copy, for rows written before 1155
+       (c) the flat line on [STREET], which is what 1004 fell back to and what
+           this client has been printing ever since. */
+  function _fits(st, ci, sa, zp, suite){
+    if(!st) return '';
+    return st + (suite ? ', ' + suite : '') +
+           (ci ? ', ' + ci : '') + (sa ? ', ' + sa : '') + (zp ? ' ' + zp : '');
+  }
+  var _colFit = _fits(pr.street, pr.city, pr.state, pr.zip, '');
+  var _locFit = _fits(_loc.street, _loc.city, _loc.state, _loc.zip, _loc.suite);
+  if(_colFit && _flatAddr && _normAddr(_colFit) === _normAddr(_flatAddr)){
+    put('[STREET]', pr.street);
+    put('[CITY]',   pr.city  || '');
+    put('[STATE]',  pr.state || '');
+    put('[ZIP]',    pr.zip   || '');
+  }else if(_locFit && _flatAddr && _normAddr(_locFit) === _normAddr(_flatAddr)){
     put('[STREET]', [_loc.street, _loc.suite].filter(Boolean).join(' '));
     put('[CITY]', _loc.city);
     put('[STATE]', _loc.state);
@@ -37181,7 +37239,13 @@ if(editPr){
     notes           : notes
   });
   await patchProjectCk(editPr, { lead: mergedLead });
-  await pdb.update(editPr.id, { name: clientName, address: address, phone: hoPhone || editPr.phone || null });
+  /* 1155: keep the parts with the address */
+  var _edParts = (window.CardinalAddress && window.CardinalAddress.split)
+               ? window.CardinalAddress.split(address)
+               : { street:'', city:'', state:'', zip:'' };
+  await pdb.update(editPr.id, { name: clientName, address: address, phone: hoPhone || editPr.phone || null,
+    street: _edParts.street || null, city: _edParts.city || null,
+    state:  _edParts.state  || null, zip:  _edParts.zip  || null });
   if(typeof window.reload === 'function'){ try{ await window.reload(); }catch(_r){} }
   close();
   if(typeof window.openProject === 'function'){ setTimeout(function(){ window.openProject(editPr.id); }, 80); }
@@ -42376,6 +42440,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1155, d:'2026-08-30', t:'Contracts print the address in four fields',
+  s:'The Construction Agreement has four boxes \u2014 Street, City, State, Zip \u2014 and for almost every client it was printing the whole address on the Street line and leaving the other three blank. That was not the contract being careless. Until now the app had exactly one address column, a single line of text, so there was nothing to put in the other three boxes; the contract used a split copy that was written once when the lead was created and never updated, and build 1004 correctly made it refuse to print that copy whenever it no longer matched the real address \u2014 which, after any edit, was almost always. The refusal was right. The missing half was that nothing was keeping a correct split anywhere. Now the address is stored split as well as whole: every place that saves an address \u2014 the new-lead intake, the client profile, the quick inspection, the lead editor \u2014 writes street, city, state and zip beside it. The intake already had all four typed into separate boxes and was throwing three of them away. Existing clients were filled in from what was already stored: of 59 addresses on file, 56 now have a full city and state and 53 have all four, and the three that do not are the ones with no city in them at all. The full address line every reader uses \u2014 the map, the directions, the work order \u2014 is untouched and unchanged. The contract still refuses to print a split that disagrees with it, so it can never put a different address on a signed agreement than the one on the map.' },
 { b:1154, d:'2026-08-30', t:'Addresses fill street, city, state and zip \u2014 not one long line',
   s:'When you pick an address from the suggestions, the pieces now go where they belong. Two things were wrong. On the new-lead form the Street box had two different autocompletes attached to it at once, and the wrong one was winning: Google was writing the entire address \u2014 \u201c804 Burleigh Ave, Dayton, OH 45402, USA\u201d \u2014 into the box labelled Street, and then the form appended the city, state and zip a second time when it saved. That is exactly what is sitting in your records: \u201c804 Burleigh Ave, Dayton, OH 45402, USA, Dayton, OH 45414\u201d, with two different zips in one line. Only one autocomplete is attached now, the one that splits a pick properly. Second, everywhere else in the app the address suggestions were throwing away the split Google already hands over and keeping only the single formatted line, which is why nothing but the lead form has ever had a usable city or zip. Both suggestion paths now read the pieces, fill city, state and zip when the form has boxes for them, and keep the parts on hand when it does not. The trailing \u201c, USA\u201d that Google appends is gone \u2014 it was noise on a Dayton roofing job and part of why no two stored addresses looked alike. Contracts still print one address line for now; giving them four real fields is the next step, and it needs the database to have somewhere to put them.' },
 { b:1152, d:'2026-08-30', t:'The + button in the header is readable again',
@@ -45666,6 +45732,95 @@ function crAddrParts(components){
    is why stored addresses are inconsistent. Either way the parsed parts are
    stashed on the element, so a caller that wants them does not have to re-parse
    a string that was already structured when we had it. */
+/* 1155 -- split an address STRING into the same four parts crAddrParts gets
+   from Google. This is the fallback path: when somebody types an address by
+   hand there are no components to read, and every writer still has to put
+   something in street / city / state / zip.
+
+   It mirrors projects_address_parts.sql line for line on purpose. If you
+   change one, change the other -- a browser that splits an address one way
+   and a backfill that splits it another is two answers to one question.
+
+   Conservative: it parses what is unambiguous and leaves the rest empty. It
+   never invents a city and never guesses a zip. */
+var CR_STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS',
+'KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH',
+'OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','DC','WV','WI','WY'];
+var CR_SPELLED = { ohio:'OH', indiana:'IN', kentucky:'KY', michigan:'MI' };
+/* Cardinal's actual service area. Used ONLY for the hand-typed case where
+   there is no comma to split on -- "4115 Shenandoah dr Dayton Ohio 45417".
+   Without it the city would be swallowed into the street. An address outside
+   this list simply keeps its city empty rather than having its street chopped
+   in half on a guess. */
+var CR_CITIES = ['Washington Township','West Carrollton','Huber Heights','New Carlisle',
+'Beavercreek','Centerville','Springboro','Miamisburg','Lawrenceburg','Brookville','Germantown',
+'Kettering','Lewisburg','Tipp City','Englewood','Fairborn','Riverside','Trotwood','Vandalia',
+'Clayton','Dayton','Moraine','Oakwood','Xenia','Union'];
+function crSplitAddress(str){
+  var out = { street:'', city:'', state:'', zip:'' };
+  var a = String(str == null ? '' : str).replace(/\s+/g, ' ').trim();
+  if(!a) return out;
+  /* the doubled shape 1154 fixed: "<google>, USA, <hand-typed>" -- keep the
+     Google half, which is the one Google validated */
+  a = /,\s*USA\s*,/i.test(a) ? a.replace(/,\s*USA\s*,[\s\S]*$/i, '')
+                             : a.replace(/,?\s*USA\s*$/i, '');
+  a = a.replace(/(ohio|indiana|kentucky|michigan)(\d{5})/ig, '$1 $2');  /* "ohio46416" */
+  var m = a.match(/(\d{5}(?:-\d{4})?)\s*$/);
+  if(m){ out.zip = m[1]; a = a.slice(0, m.index).replace(/[\s,]+$/, ''); }
+  m = a.match(/[,\s]([A-Za-z]{2})\s*$/);
+  if(m && CR_STATES.indexOf(m[1].toUpperCase()) >= 0){
+    out.state = m[1].toUpperCase();
+    a = a.slice(0, m.index).replace(/[\s,]+$/, '');
+  }else{
+    m = a.match(/[,\s]([A-Za-z]+)\s*$/);
+    if(m && CR_SPELLED[m[1].toLowerCase()]){
+      out.state = CR_SPELLED[m[1].toLowerCase()];
+      a = a.slice(0, m.index).replace(/[\s,]+$/, '');
+    }
+  }
+  if(a.indexOf(',') >= 0){
+    var i = a.lastIndexOf(',');
+    var tail = a.slice(i + 1).trim();
+    /* a chunk starting with a digit is still part of the street, not a city */
+    if(tail && !/^\d/.test(tail) && tail.length <= 40){
+      out.city = tail;
+      a = a.slice(0, i).trim();
+    }
+  }else{
+    for(var k = 0; k < CR_CITIES.length; k++){
+      var re = new RegExp('[,\\s]' + CR_CITIES[k].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'i');
+      var mm = a.match(re);
+      if(mm){ out.city = CR_CITIES[k]; a = a.slice(0, mm.index).replace(/[\s,]+$/, ''); break; }
+    }
+  }
+  /* "804 E Center St, Germantown, Germantown" -- the city typed twice */
+  if(out.city){
+    var dup = new RegExp(',\\s*' + out.city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'i');
+    a = a.replace(dup, '');
+  }
+  out.street = a.replace(/[\s,]+$/, '').trim();
+  return out;
+}
+/* The one call every writer uses. Prefers the parts Google itself supplied
+   (stashed on the element by crAddrApply) over re-parsing a string we already
+   had structured -- re-parsing throws away information we were handed. */
+function crAddrFields(inputOrString){
+  var el = (inputOrString && inputOrString.nodeType === 1) ? inputOrString : null;
+  var s  = el ? el.value : inputOrString;
+  if(el && el.dataset && (el.dataset.addrStreet || el.dataset.addrCity)){
+    var stashed = String(el.dataset.addrStreet || '');
+    /* only trust the stash if the box still holds what Google put there --
+       the same staleness guard build 1004 put on the contract */
+    var same = stashed && String(el.value || '').trim().indexOf(stashed) === 0;
+    if(same) return {
+      street: stashed,
+      city:   el.dataset.addrCity  || '',
+      state:  el.dataset.addrState || '',
+      zip:    el.dataset.addrZip   || ''
+    };
+  }
+  return crSplitAddress(s);
+}
 function crAddrApply(input, parts, fallback){
   var scope = input.closest('form') || input.closest('[data-addr-scope]')
            || input.parentElement || document;
@@ -45984,6 +46139,17 @@ subtree: true});
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
+/* 1155: cr-gmap-script is an IIFE, so crSplitAddress / crAddrFields are
+   module-private. The four writers that need them live in other script
+   blocks, so they have to be exported or every call is a ReferenceError.
+   Own namespace rather than bolted onto CardinalMaps: splitting an address
+   string has nothing to do with Google, and the fallback path runs whether
+   or not Maps ever loads. */
+window.CardinalAddress = Object.assign(window.CardinalAddress || {}, {
+split  : crSplitAddress,
+fields : crAddrFields,
+parts  : crAddrParts
+});
 window.CardinalMaps = {
 loadConfig       : loadConfig,
 loadMaps         : loadMaps,
