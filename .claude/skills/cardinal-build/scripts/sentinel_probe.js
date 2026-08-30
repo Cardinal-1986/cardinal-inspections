@@ -12,7 +12,7 @@
  * anything outside the page.
  */
 globalThis.__sentinelProbe = () => {
-  const out = { clipped: [], ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], contain: [], overflow: null, deadtap: [], dupes: [], book: [] };
+  const out = { clipped: [], ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], contain: [], overflow: null, deadtap: [], dupes: [], book: [], xss: !!window.__XSS__ };
 
   /* ── colour ─────────────────────────────────────────────────────────── */
   function parse(c) {
