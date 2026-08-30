@@ -4193,3 +4193,84 @@ population is not empty.**
 
 ⚠️ And a mechanical trap in the same file: the probe is a **template literal**, so
 a backtick inside one of its comments ends the string and the file stops parsing.
+
+---
+
+## 82 — a theme override scoped to a class, beaten by an ID it never looked for
+
+**Build 1144**, twice in one build, with an identical symptom both times: the
+override is written, the gate stays red, and the ink keeps reporting the old
+value as though the rule were never added.
+
+| the winner | specificity | my override | specificity |
+|---|---|---|---|
+| `#navMenu .cr-ts button[aria-pressed="true"]` | (1,2,1) | `:root[data-theme] header.site button` | (0,2,2) |
+| `#cr-hd2-bar .cr-ib` | (1,1,1) | `:root[data-theme] header.site button.cr-ib` | (0,2,2) |
+
+**An ID beats any number of classes and attributes.** `:root[data-theme="…"]`
+feels like it should win because it is "more scoped" — it adds an attribute, not
+an id, so it does not.
+
+**Before writing a theme override, ask the BROWSER which rule currently wins**
+(walk `document.styleSheets`, `el.matches(rule.selectorText)`) rather than
+grepping for the selector you expect. Both of these were invisible to a grep of
+the stylesheet I was editing, because the winner lived in a different block.
+
+⚠️ **And check the SHAPE, not just the colour.** `#addProjectBtn` swallowed four
+successive ink rules because it is a *filled* accent button painting its own
+gradient, not text on chrome. The fix was to keep it filled in the light accent
+with white on top — no ink rule would ever have been right.
+
+## 83 — a gradient's stops are ALTERNATIVES, not stacked layers
+
+**Cost: build 1144 shipped two labels under the contrast floor with its own gate green.**
+
+The composited-ground walk (classes 78 and 80) says to collect every gradient stop.
+It does not say what to do with them, and the obvious reading is wrong. Stops are
+not layers painted on top of each other — they are *different points on the same
+surface*. Push them into one list and composite it and you do not get a blend: with
+opaque stops each iteration overwrites the last, so you get **whichever stop happens
+to be first**, and the other is collected and silently thrown away.
+
+`linear-gradient(180deg,#F0F4F7,#E6ECF2)` scored as `#F0F4F7`. The accent read
+**4.71:1** and was really **4.37:1** against the other end. Both numbers came out of
+the same "correct" composited-ground code.
+
+**The rule: return one candidate ground PER STOP of the top painted layer, and score
+the WORST.** Layers below the top are genuinely stacked and still flatten normally.
+
+⚠ **The tell is that the failure is invisible in the direction that flatters you.**
+A wrong ground that reads too dark makes a passing colour fail and somebody
+investigates. A wrong ground that reads too light makes a failing colour pass and
+nobody ever looks.
+
+## 84 — a gate whose SETUP silently no-ops, and the fix chain that hides it
+
+Four faults in `gate_1144.mjs`, and the instructive part is that they were **serial**:
+fixing each one revealed the next still concealing the same defect.
+
+| # | fault | what it looked like |
+|---|---|---|
+| 1 | scored the flattering gradient stop (class 83) | a plausible 4.71 |
+| 2 | scanned `header.site` only, though its banner claimed "header and drawer" | fixing 1 still gave **4.62 PASS** |
+| 3 | clicked `#menuBtn`/`.burger`/`#navToggle`; the button is `#navBtn` | drawer never opened; every element zero-size and skipped |
+| 4 | flat 4.5 floor while collecting `size` and never using it | large text failed a floor that does not apply |
+
+**Fault 3 is the one to internalise.** The click was wrapped in `.catch(() => {})`,
+so a selector that matched nothing produced no error, no warning and a full green
+run over a screen that was never on screen. This is class 81 ("a check that cannot
+fail") arriving through the *setup* rather than the assertion — and setup code is
+not where anyone looks for a broken check.
+
+**The rule: a setup step that opens, navigates or signs in must PROVE it worked and
+assert on that proof.** `ok(drawerRows > 5, 'the drawer actually OPENED')` costs one
+line and converts a silent no-op into a red run.
+
+**And after fixing a gate, re-run it against the tree it wrongly passed.** If the
+verdict does not flip, the fix changed a number and not an outcome — keep going.
+Two of these four were only found that way.
+
+⚠ **Corollary on carried debt.** A sharpened gate surfaces pre-existing failures.
+Record them with their MEASURED value, not as a skip: a row that gets worse still
+fails, and a row that is fixed makes the entry stale and reports itself. Fixing
+them is a separate build — chasing debt a better instrument revealed is scope creep.

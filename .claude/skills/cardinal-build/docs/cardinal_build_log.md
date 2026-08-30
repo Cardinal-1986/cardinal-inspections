@@ -29674,6 +29674,70 @@ No SQL (reuses `estimates`, the existing insert path). `index.html` + this entry
 
 ---
 
+## Build 1144 — light chrome: the header, the banner and the drawer follow the theme
+
+Theo, of the drawer: *"why dark mode?"* Measured: in light mode the page went
+white and **three** surfaces stayed dark, because they run on their own per-CRM
+`--h*` / `--b*` token systems rather than on `--rbe-*`.
+
+**He was offered three options and picked the third**, which was the right call:
+leave it · light drawer only · light chrome throughout. A light drawer alone
+would have hung a white panel off a dark navy header.
+
+### ⚠ Two corrections to what I told him first
+
+- I said the drawer "looks like it simply never got a light twin." **Wrong** —
+  it is wired to the header's tokens on purpose, so it inherited a decision
+  rather than missing one.
+- I said the header was `#000000` in both themes. **Wrong, and it is BUG_CLASSES
+  78/80 again**: the header paints a GRADIENT, so `backgroundColor` reads
+  `rgba(0,0,0,0)` and my hex converter turned that into black. It is dark navy
+  `#243342 → #16202b`. The conclusion held; the number did not.
+
+### The accents could not carry over
+
+Every `--hac` is picked for a dark ground. On light: retail **2.02**, community
+**1.20** (invisible), production **1.89**, sales **3.37**. Each light twin is the
+same hue deepened until it clears 4.5 on **both** the header ground and the
+drawer panel it itself tints — solved by iteration, since the panel is
+`color-mix(accent 9%, #fff)` and therefore moves with the accent.
+
+| CRM | dark | light | on header / on panel |
+|---|---|---|---|
+| retail | `#8fb4d8` | `#3970A5` | 4.73 / 4.64 |
+| community | `#A7F3D0` | `#117C4B` | 4.83 / 4.64 |
+| production | `#f5a623` | `#976107` | 4.72 / 4.65 |
+| sales | `#e8544f` | `#D0211B` | 4.81 / 4.63 |
+
+### ⚠ Light chrome is not one surface — it took SIX passes to find them all
+
+Each round the gate found fewer, and each was a separate system:
+`--h*` tokens → the header's own hardcoded `#fff !important` inks →
+`cr-drawer-styles` → **`cr-textsize-styles`** (the A/A/A control) → the Admin row
+in `cr-menu-styles` → **`#crBanner`**, a third token system with its own per-CRM
+darks (`#15171b`, community `#08211a`, insurance `#1a0e0d`).
+**Overriding one stylesheet and calling the surface done is how a light pass ends
+up six elements short.**
+
+### ⚠ The specificity trap, twice in one build (BUG_CLASSES 82)
+
+`#navMenu .cr-ts button` and `#cr-hd2-bar .cr-ib` both carry an **ID** — (1,2,1)
+and (1,1,1). Anything scoped to `header.site …` is (0,2,2) and **loses**. Both
+times the symptom was identical: the rule was written, the gate stayed red, and
+the ink kept reading as the old value. **Scope to the ID or do not bother.**
+
+And `#addProjectBtn` was the wrong SHAPE, not the wrong colour: a filled accent
+button painting its own gradient, which four successive text-ink rules lost to.
+It stays filled, in the light accent, white on top (5.20–5.36:1).
+
+**Gate.** `gate_1144.mjs` — GREEN 27 / **RED 11 on 1143**, no crash. Walks all
+four CRMs × both themes, scoring every text in the header, banner and drawer
+against its composited ground; asserts the theme actually changes, that each
+accent has a light twin, the 11px floor, and that **the dark rules are
+byte-identical** — a light twin that moves dark is a regression.
+
+---
+
 ## Build 1137 — the Owner Console becomes a hub
 
 Theo: *"The owner console is just 1 looooong page. Can we make it more presentable
@@ -30001,5 +30065,371 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
 ## Build 1143 — the full Service Financial plan catalog on Roof Options
 - **1143** · `GBB_PLANS` grows from 3 placeholders to the **whole Service Financial program list** (34 plans), grouped by `GBB_GROUPS` into `<optgroup>`s in the picker: **same-as-cash** (2003–2024), **0% equal-payment** (3025–3072), **deferred-interest** (1006–1024), **reduced-interest loans** (the 4xxx short/long-term, 2.99%–12.99% across 60–240 mo), and **FEMA** (4398/4316/4612/4632). Monthly math per family in `buildGbbHtml`'s `tierMonthly`: `factor` → `total × payment_factor` (Service Financial's own factor, so the number matches their sheet), `equal0` → `total / months` (0%), `fema` → `gbbMonthlyPayment(total, rate, payMonths)`, `samecash`/`defermin` → no per-column monthly (promo only). `gbbPlanFooter(plan)` builds the kind-specific footer sentence; `gbbPlanLabel(plan)` builds the dropdown option (with the plan **#** so the rep knows which to submit). A tier total outside a plan's `[min,max]` shows no monthly for that tier. **Dealer fees are deliberately NOT stored** — Cardinal's cost, and `index.html` ships publicly. Gates: `check_build` green; `gate_1142.mjs` rewritten for the four families (factor #4212 exact factor math + per-tier differ, 0% #3060 = total/60, same-as-cash #2024 promo + no "/mo", FEMA #4612 amortized, no-plan clean, and the picker groups the real catalog with ≥30 options in ≥4 optgroups; **control RED on 1142** — placeholder ids only, 4 options). `gate_1140.mjs` plan value updated to a real id (#4198) and still green. `gate_dupes`/`gate_types`(no growth)/`gate_944`/`gate_1081` green. No SQL. **Still open:** a live dealer apply-link (needs the Service Financial application URL).
 
+## Build 1145 — the light accents corrected, and the gate that passed them
+
+- **1145** · **The correction to 1144, plus four faults in the gate that let it ship.**
+  The `rb-light` sentinel sweep found two of 1144's four light accents under the
+  contrast floor. Both were measured against the LIGHTER stop of their own header
+  gradient and shipped: retail `#3970A5` and production `#976107` each read
+  **4.37:1** against the darker stop, floor 4.5. Hue held, half a shade deeper —
+  `#376CA0` (worst 4.63) and `#915D07` (worst 4.66), all 11 literals, declaration
+  and every `var(--hac,…)` fallback. Production light measured 4.64 → 4.91.
+  Dark is untouched and asserted byte-identical.
+
+  **The gate is the real content of this build.** `gate_1144.mjs` was green on the
+  failure, and once each fault was fixed the next one was still hiding it:
+
+  1. **It scored the flattering gradient stop.** Every stop was pushed into one
+     list and composited — but a gradient's stops are ALTERNATIVES at one level,
+     not stacked layers, so compositing opaque stops just returns the first.
+     `#E6ECF2` was collected and discarded. Read 4.71 where the truth was 4.37.
+     Now returns one ground per stop; the caller takes the worst.
+  2. **It never scanned the drawer.** `scan()` walked `header.site` only, while
+     the file's own banner claimed "the header and the drawer". Both flagged
+     labels are in the drawer. With fault 1 fixed it STILL reported retail light
+     as 4.62 PASS — a fix that changes a number without changing a verdict.
+  3. **The drawer never opened.** It clicked `#menuBtn`/`.burger`/`#navToggle`;
+     the button is `#navBtn`. `x` was null and `.catch(() => {})` swallowed it,
+     so every drawer element had a zero box and `scan()` skipped the lot. It now
+     PROVES the drawer opened (33 elements) rather than trusting the click.
+  4. **A flat 4.5 floor.** `size` was collected and never used, so large text was
+     judged against the body floor. Now 4.5 body / 3.0 large (WCAG), and the row
+     reports which floor judged it so a pass can never look like a relaxed one.
+
+  ⚠ Fault 4 did NOT rescue the `＋` button: it is 18px/400, so 4.5 genuinely
+  applies and it genuinely fails at **3.79:1** in retail dark. Verified against
+  the 1143 tree — it PREDATES the light-chrome work. Carried as dated debt with
+  its measured value, so a row that gets worse still fails and a row that is
+  fixed makes the entry report itself stale. Not fixed here: chasing pre-existing
+  debt surfaced by a sharper instrument is scope creep.
+
+  ⚠ **The fixed gate still does not reproduce the sentinel's 4.37 finding**, and
+  why is not yet known. Stated rather than papered over: this gate is materially
+  better and is not yet equal to the sentinel on that surface.
+
+## Build 1146 — the estimate description box stops trapping text
+
+- **1146** · **Theo, from a client's scope of work: "Can you make scrolling better
+  within the text body. It gets stuck."** It was not a scrolling problem. Past a
+  certain length the box stopped growing and the surplus became unreachable by
+  **any** gesture: measured on a real scope, **598px of box over 828px of content
+  — 28% of what he had typed**, with `scrollTop` staying 0 after both a wheel and
+  a touch drag. `overflow:hidden` on a textarea means only the caret can move it.
+
+  **Cause: two pipelines doing one job, the project's own "one pipeline per
+  concept" rule.** `autosizeDesc()` (1135) grew the box to fit; `autoGrow()` capped
+  it at 600px. `autoGrow` ran LAST — on the target's own `oninput`, after the
+  delegated capture listener — so the cap always won and 1135's fix was silently
+  undone for any long scope. `autoGrow`/`autoGrowAll` are deleted; both call sites
+  point at the survivor. Theo picked grow-to-fit from three options, so there is now
+  **no inner scroll region at all** — one scrolling surface, the page.
+
+  Two things went with it, both found while verifying rather than assumed:
+  - **`autosizeDesc` clipped 2px off the last line of EVERY description**, long or
+    short: `box-sizing:border-box` counts the 1px borders in `height` and
+    `scrollHeight` excludes them. `autoGrow`'s `+2` had been compensating. Now
+    measured off the element (`offsetHeight - clientHeight`) so a border change
+    cannot quietly restart it.
+  - **A resize re-measure.** A grow-to-fit box is sized for ONE width; rotating the
+    phone re-wraps the text taller than the height set for it and `overflow:hidden`
+    clips it again — the whole bug, back. Debounced, and gated on the editor being
+    on screen (a hidden view measures `scrollHeight` 0 and would collapse every box
+    to 38px).
+
+  `gate_1146.mjs` extracts the SHIPPED CSS rule and the SHIPPED sizer from the file
+  under test and drives a real Chromium wheel and touch drag. **RED 6 / GREEN 4 on
+  the 1145 control** (reproducing 810px unreachable, 58% of the scope, wheel
+  `scrollTop` 0), GREEN 10/10 on 1146.
+
+  ⚠ **One of its own checks was a false pass and was caught on the control.** "the
+  artifact wires a resize re-measure" tested for `addEventListener('resize'` and
+  `autosizeDescs` anywhere in 5 MB — both exist independently, so it PASSED on the
+  tree with no such wiring. Scoped to a resize handler body that actually reaches
+  the sizer. Third over-broad regex this session to produce a check that could not
+  fail; the control is the only reason any of them were found.
+
+  Regression-checked: `gate_1135` GREEN. `harness_estflat1096` and
+  `harness_estasm1098` are RED — **verified identical failure messages on the 1145
+  control, so pre-existing and not this build's.** (`renderLine threw: not found:
+  function renderLine(l, idx, total){` is a harness extracting a function by an
+  exact signature that has since drifted — a stale assertion, not an app fault.)
+
+## Build 1147 — the texts about a job link back to the job
+
+- **1147** · **Theo, with a screenshot of three Cardinal texts: "Can you also make
+  hyperlinks in anything that texts client info back to the app?"**
+
+  **The prime doctrine again: the mechanism was already built.** 1125 gave
+  `/api/notify` a `url` — validated same-site-only (a scheme or a protocol-relative
+  `//` is dropped to `/`, so a caller cannot make the route send an arbitrary
+  link), resolved against the request host, and appended to the SMS **after** the
+  320-char trim so a long subject cannot truncate it. `notifyTeam(to, subject,
+  html, url)` has taken it since. Nothing was missing but callers sending it.
+
+  Measured before building: **6 of 21 call sites carried a link** — all six the
+  punch-out/supplement family 1125 wired for Curtis. The other fifteen sent none,
+  **and every one of them names a client in its subject line.** Now **20 of 21**.
+  The twenty-first is `'Cardinal test alert'`, which names no client and has
+  nowhere to point.
+
+  ⚠ **`_notifyOrQueue(to, subject, html)` had no `url` parameter at all**, so the
+  two stage alerts in Theo's screenshot could not carry one even though notifyTeam
+  would have taken it. Threaded through, **and into the offline outbox entry and
+  its flush** — without that, an alert sent with no signal arrives on reconnect
+  stripped of the one useful part and nothing says so.
+
+  `clientLink(pid)` sits beside `punchLink(pid)`: one place that knows `#p/<id>`,
+  so twelve call sites cannot drift into twelve spellings. Punch-out alerts keep
+  `punchLink` and land on the punch-out.
+
+  **Also fixed, straight off the screenshot:** the text read *"is marked
+  COMPLETED.Next: do the final walk-around"*. The HTML→text strip dropped every
+  tag to `''`, so `</p><p>` vanished instead of becoming a space. A block END is
+  now a space; inline tags still strip to nothing, so `<b>word</b>s` stays
+  `words`. **Both strips fixed** — `notifyTeam`'s and `api/notify.js`'s — because
+  a caller may send `html` with no `body`, and then the API side builds the SMS.
+
+  `gate_1147.mjs` executes the SHIPPED helpers rather than describing them:
+  GREEN 16/16, **RED 9/5 on the 1146 control**.
+
+  ⚠ **Three faults in my own gate, each caught by the control:**
+  - it **crashed** on the control instead of reporting red — `new Function('' +
+    '; return clientLink')` throws where the function does not exist yet, and a
+    crash reads as "broken gate", not "correctly red". **BUG_CLASSES 37, again.**
+  - the one-line `punchLink` was extracted by slicing to the next `\n}`, which
+    overshot into unrelated code and reported a FALSE failure against a function
+    that was present and correct. Brace-matched now.
+  - the `api/notify.js` check is **not** selected by the path argument, so it can
+    never go red on a control. Kept, but now labelled as a working-tree check.
+
+  The link-coverage assertion is a **floor** (`>= 20`), not a tally, so coverage
+  that shrinks goes red rather than quietly reporting a smaller number.
+
+## Build 1148 — the nav loses its scroll bar
+
+- **1148** · **Theo, with two photographs: "Why does my screen have a scroll bar,
+  and the second screen from someone trying the app out have no scroll bar. I
+  prefer no scroll bar."**
+
+  **Neither machine was misconfigured and both were scrolling.** Measured in
+  Chromium: the nav holds **2755px of content and overflows at every viewport
+  height from 720 to 1440** — 1955px below the fold at 800px tall. So the bar was
+  always THERE on both screens. What differed is how the OS draws it: Windows
+  (and macOS set to "always show") draws a CLASSIC bar that reserves layout width
+  and never hides; macOS default draws an OVERLAY one, invisible until you
+  scroll. Same build, same overflow, two scrollbar modes.
+
+  The cause in the code is that **neither nav scroller styled its scrollbar** —
+  `#navMenu` (the overlay drawer) and `#cr-lnav` (the docked desktop rail) both
+  carry `overflow-y:auto` and zero scrollbar rules, so each inherited the OS
+  default. Hidden now on both, using the pair this app **already** uses at ten
+  other sites (`scrollbar-width:none` + `::-webkit-scrollbar{display:none}`) —
+  the convention existed; the nav had simply never been given it.
+
+  ⚠ **Build 984's lesson was weighed and is the reason the gate is shaped as it
+  is.** 984 records that `scrollbar-width:none` "left no affordance that anything
+  was hidden" and content got clipped; there the fix was to WRAP instead of
+  scroll, which a vertical nav list cannot do. So `gate_1148.mjs`'s load-bearing
+  assertions are not "the bar is invisible" but **"it still overflows"** and
+  **"it still scrolls"** — hiding the BAR must never become hiding the CONTENT.
+  RED 1/2 on the 1147 control, GREEN 3/3 on this build.
+
+  ⚠ **Two faults in that gate, both caught on the control:**
+  - the **gutter check could not fail** — headless Chromium draws OVERLAY
+    scrollbars, so a hidden bar and a visible one both measure 0px, and the
+    launch flag I claimed forced classic bars was an unrelated one. The browser's
+    scrollbar mode is now **detected at run time** off a throwaway overflowing
+    div, and the gutter assertion is made only when the mode is actually classic
+    — otherwise it prints SKIP with the reason. It skips in CI today; that is
+    stated rather than hidden.
+  - **`#cr-lnav` is absent from the harness**, so failing on it was a false red,
+    not a finding. It now SKIPs, and the rail is covered instead by a standalone
+    check that lifts the shipped rules verbatim and proves both ids are selected
+    and both still scroll.
+
+## Build 1149 — a signature can only land on the document you are looking at
+
+- **1149** · **INCIDENT, reported by Theo from a client's house: "I went to a
+  clients home and worked through the estimate then went to contract, it pulled
+  up a service contract so i backed out, went to roofing contract but when i hit
+  client signature and a signature field came up it signed the service
+  contract."** A client's signature landed on paperwork she was not shown.
+
+  **Confirmed in the production database before touching any code** (read-only;
+  Theo chose to leave both records alone pending his call with the client):
+
+  | id | title | `data-sig` slots | signature | updated |
+  |---|---|---:|---|---|
+  | `7f1777ba` | Contract — Kimberly Lawson | **0** | **YES, client column** | 22:20:35 |
+  | `924dbd32` | Contract — Roofing — Kimberly Lawson | **6** | none | untouched since 18:25 |
+
+  ⚠️ **The `contracts` TABLE is empty — zero rows.** The first hypothesis (stale
+  `CURRENT` in `cr-ce-script`, whose `openSigner(contract, cb)` accepts the
+  document and never uses it) was therefore WRONG, and checking the data rather
+  than shipping that fix is the only reason it was not chased. The signature went
+  through the `inspection_reports` document editor.
+
+  **Root cause — a silent return, and why it fired at a client's house.**
+  `db.get()` does not throw on a miss; offline it is
+  `lsLoad().find(...)`, which returns **undefined** for a document created on
+  another device and not in this one's cache. `openEditor(id)` had:
+
+      catch(err){ showError('Could not open report: ' + …); return; }   // throw: reported
+      if(!r) return;                                                    // MISS: silent
+
+  The roofing contract was created at 18:25 on another device. On bad signal the
+  fetch returned nothing, `openEditor` bailed **without a word**, and the editor
+  carried on showing the previously-opened contract. It looked loaded. She signed.
+
+  ⚠️ **`current` and the frame go stale TOGETHER on that path**, so an id-match
+  check alone could never have caught it — they always agreed. That is why the
+  primary fix has to be at the miss itself.
+
+  **Three changes, all refusing to fail quietly:** the miss now names itself and
+  says *do not sign what is on screen*; the frame stamps `dataset.docId` with the
+  document it is actually showing; and the signature button refuses unless that
+  stamp matches `current.id` — **checked before the slots branch**, so the
+  0-slot legacy contract (which skips the 781 "whose signature is this?" picker
+  entirely and falls straight to the pad) cannot be signed either. The frame's
+  content is deliberately NOT blanked — that would discard unsaved edits in
+  whatever is genuinely open — but with no stamp it cannot be signed.
+
+  **`gate_1149b.mjs` drives the actual incident** in Chromium: stub `db.get` to
+  return undefined, then click sign. **1148: stamp kept, no message, PAD OPENS
+  (RED 4/0). 1149: stamp cleared, warned, PAD REFUSES (GREEN 4/4).**
+
+  ⚠️ **Three faults in my own gates, all caught by the control:** two checks
+  PASSED on the buggy tree (over-broad matches — `/return/ && /crTell/` anywhere
+  in a 2400-char window, and a fall-through shape that never varied), now tied to
+  the guard statement itself and to the ORDER of the two guards; and one check
+  FAILED the correct fix because `[^\n]{0,200}` stopped at the first newline and
+  never reached the `showError` two lines down. Fix the test when the test is wrong.
+
+## Build 1150 — the second signature pad is bound to its contract too
+
+- **1150** · Companion to 1149, closing the same class on the OTHER signing path
+  **before it can fire**. Theo, on being told it existed: *"take care of 2"*.
+
+  `window.openSigner(contract, cb)` accepted the document to sign and **threw it
+  away** — it armed `__ceSigner` and opened the pad, and the destination was
+  decided at APPLY time by the caller's closure over `CURRENT`. Identical shape
+  to the 1149 incident: nothing tied the pen to a document.
+
+  **It has never bitten because the `contracts` table has zero rows** — which is
+  precisely why it was worth fixing now. The moment that screen has data, a
+  second contract opened behind the pad, a reload, or a stale view puts the
+  signature on the wrong row with no error.
+
+  The pad now records `__ceSignerId` from the `contract` it is handed, `sigApply`
+  passes it back as a second argument, `sigCancel` clears it, and
+  `onContractSigned(pngDataUrl, armedId)` **refuses on a mismatch before writing
+  anything** — the guard sits ahead of `homeowner_signature`, asserted by
+  position (`guard@392 < write@753`) rather than by its presence. An unsaved
+  contract is refused up front instead of opening a pad that could not have
+  saved anything.
+
+  `gate_1150.mjs`: **GREEN 10/10 · RED 9/1 on the 1149 control.**
+  `gate_1149` and `gate_1149b` re-run green — the two pads do not interfere.
+
+### The incident record — Kimberly Lawson, resolved
+  Theo's call, taken after he spoke to the client: **strip the signature, leave
+  the roofing contract to be signed properly.** Done on `7f1777ba`:
+  171,826 → 154,845 chars (the 16,981-char signature PNG removed), the
+  "Signed August 29, 2026" label restored to "Client Acceptance | Date", both
+  signature columns symmetric and blank again, one PNG left (the logo).
+  **The pre-strip row is preserved in `_sig_incident_backup_20260829`.**
+  `924dbd32` (Contract — Roofing) was never touched at any point.
+
+## Build 1151 — ACH, and the settlement bug it would have exposed
+
+- **1151** · Theo, after the live Stripe rail was proven end to end with a real
+  $1 card payment: *"whats next with stripe?"* → ACH, chosen because it is the
+  only item on the list that pays for itself.
+
+  **Why it is worth doing.** Card is 2.9% + 30¢ **uncapped**; a US bank debit is
+  0.8% **capped at $5**. On a $12,000 deposit that is ~$348 against $5. On
+  roofing-sized money the fee difference is not cosmetic. `payment_method_types`
+  goes `['card']` → `['card','us_bank_account']`; Stripe Checkout collects the
+  ACH mandate itself.
+
+  ⚠️ **THE REAL FIND — a money bug that was invisible until ACH was switched on.**
+  The webhook's paid test was:
+
+      const paid = s.payment_status === 'paid' || s.status === 'complete';
+
+  For a card those agree. **For ACH they do not.** `checkout.session.completed`
+  fires with `status:'complete'` while `payment_status` is still `'unpaid'` —
+  the debit takes days and can bounce. Driven through the shipped 1150 handler,
+  the old code did **both halves wrong**:
+
+  | event | 1150 (control) | 1151 |
+  |---|---|---|
+  | `completed` (unpaid) | **1 row — books $12,000 that has not arrived** | 0 rows |
+  | `async_payment_succeeded` | **0 rows — the real money never recorded** | 1 row, $12,000 |
+  | `async_payment_failed` | 0 rows | 0 rows |
+
+  So a bounced debit would have left a **phantom $12,000 permanently in the
+  ledger** — inflating AR and firing the 10% commission trigger on money never
+  received. The test is now `payment_status === 'paid'` and nothing else: money
+  is recorded when it has ARRIVED.
+
+  `async_payment_succeeded` joins `completed` as a recording event (identical
+  write, so a card row and an ACH row are the same shape);
+  `async_payment_failed` answers 200 and records nothing — there was never a row
+  to undo, which is the point of waiting.
+
+  **`gate_1151.mjs` drives the real three-event ACH sequence through the SHIPPED
+  handler** (byte-identical copy, local test secret, Supabase stubbed):
+  **GREEN 8/8**, and **RED 4/4 on the 1150 control** — the control is the proof
+  the hazard was real rather than theoretical.
+
+  ⚠️ **check_build marker note:** the code change is in `api/`, which
+  `check_build.py` does not see (it gates ONE artifact). A first run marked on
+  `us_bank_account` went RED because that string is in `api/pay.js`, not
+  `index.html`. The `api/` half is gated separately (`node --check` on both
+  routes + the ACH gate). The documented one-artifact trap, walked into live.
+
+  **Not yet wired, and stated so it is not mistaken for done:** `charge.refunded`
+  (a refund in Stripe still leaves the collection row — the ledger drifts),
+  `charge.dispute.created` (a chargeback arrives silently), and
+  `checkout.session.expired` (a client who abandons the payment page is
+  invisible). **ACH also has to be enabled in the Stripe dashboard** — Settings
+  → Payment methods → ACH Direct Debit — before the option appears at checkout.
+
+## Build 1152 — the + button, and the last carried debt in the header retired
+
+- **1152** · Theo picked this off the "available when you want them" list. The
+  header's **+ button (`#addProjectBtn`)** was the last contrast failure in the
+  chrome: **3.79:1** against a 4.5 floor (18px/400 is body text — the large-text
+  3.0 floor does not apply, checked before assuming).
+
+  **It is a GRADIENT, which is the whole lesson.** The ink `#0b1218` sits on
+  `linear-gradient(180deg,#b9d3ec,#8fb4d8 52%,#4f7396)` — 12.20 and 8.70 against
+  the top two stops, **3.79 against the bottom one**. An average would have said
+  this button was fine. Ink on a gradient must clear its DARKEST stop.
+
+  Bottom stop `#4f7396` → **`#5981a8`** (4.61:1), hue held exactly at 209.6°.
+  `border-color` moves with it or the button gains a dark rim where the old stop
+  was. **Scoped to the one rule** — `#4f7396` appears 6× in the file and the
+  other 4 are untouched, asserted.
+
+  ⚠️ Only **retail** defines a `.cr-ib.primary` gradient; the other three CRMs
+  fall back to the flat accent and already passed. Checked before fixing, because
+  1144 fixed retail and missed production doing exactly this.
+
+  **`gate_1144`'s carried-debt entry is RETIRED, not emptied into a skip.** The
+  `DEBT` list stays as the mechanism (a future pre-existing failure gets an entry
+  with its measured value, so it still fails if it gets WORSE) — it is now `[]`.
+  With the list empty: **GREEN 29/29 on 1152, RED on 1151** naming
+  `3.79:1 button.cr-ib "＋"`. All 43 chrome elements across 4 CRMs × 2 themes
+  clear their floor; **no carried debt remains in the header.**
+
+  ⚠️ **My first patch attempt aborted on its own assertion, correctly.** I
+  asserted `src.count('#5981a8') == 2` file-wide — but the explanatory comment I
+  was inserting *mentions* `#5981a8`, making it 3. This file's own
+  comment-pollution trap, in my own assertion, on the same build that documents
+  it. Re-scoped to assert on the DECLARATIONS before the comment is attached.
+
 ## Build 1153 — Service Financial plan reference (staff screen)
 - **1153** · A menu-launched full-screen reference (**Menu → Selling → Financing Rates**, `#cr-fin`, `window.CardinalFinanceRates` / `showFinanceRates`) listing the whole Service Financial catalog grouped like the portal (same-as-cash, 0% equal, deferred, reduced short/long split by loan floor, FEMA, Buy Deeper). Columns: plan #, program, rate, term, payment factor, loan range. An **amount box** in the header computes each plan's monthly live via the exported `CardinalEstimatePublish.planMonthly` (factor / 0%÷term / FEMA-amortized; same-as-cash & deferred read "no monthly"). **Reuses one catalog** — `cr-epub-script` now exports `plans`/`planGroups`/`planFooter`/`planMonthly` (and `tierMonthly` was refactored to delegate to the new module-level `gbbPlanMonthly`, no duplicated math). **Dealer fees are admin-only and never in the app file:** `finance_plan_fees` (`finance_plan_fees.sql` — table + `is_cardinal_admin()` RLS committed; the 39 fee VALUES loaded straight into Supabase, not committed). The screen fetches the table — admins get rows and a gold "Dealer fee" column, everyone else is blocked by RLS and sees no fee column at all. Blackout single-theme surface (Showcase/OC pattern), every colour a literal. Registered at all five nav sites: `hideAllViews` (`#cr-fin` display:none), `ROUTES.finrates`, the Selling menu item (`data-cri="cash lg"`), `wrapNav('showFinanceRates','finrates')`, and the `navRestore` case. Gates: `check_build` green; `gate_1153.mjs` (Chromium — opens the view, ≥5 grouped sections, the amount calc computes factor/0%/no-monthly correctly, the fee column shows WITH admin rows and is ABSENT without them, and `hideAllViews` hides it; **control RED on 1152**). `gate_1081` (type floor — three header sizes bumped 10.5/9.5→11px), `gate_944`, `gate_1140`, `gate_1142` green. `gate_dupes`/`gate_types` rebaselined (+4 idiom names esc/open/close/ensure, +1 TS2339 — the new module following the app's per-module convention). MIGRATIONS.md regenerated (95 files). **SQL runs before the HTML; already applied.**
+
