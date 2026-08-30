@@ -30661,3 +30661,35 @@ themes — **GREEN 14/14 on 1164, RED on the 1163 control.** Sentinel: CLEAN, no
 ⚠ Observed while gating, NOT this build's doing: the global scroll-lock census is now
 **17 blocks / 41 CODE sites** (CLAUDE.md's row says 13/35 @808) — the growth happened across
 809–1163. 1164 adds zero (asserted). The doc row needs re-measuring, not the app.
+
+## Build 1165 — signing in opens the app, not a front door
+
+The switcher arc closes: the Landing screen is retired on ordinary hosts. Sign-in lands
+straight on the CRM home; the portal picker is the Front Door (1164) on the header title.
+
+- **Changed at the two functions, not the eight call sites.** `goToLanding()` now means
+  "land somewhere real and open the picker over it" — home (or the Production hub for
+  Curtis and Scottie, 1038's doctrine held) + `CardinalFrontDoor.open()`. `showLanding()`
+  delegates to it. The logo, the drawer row, the dashboard/cover-card chips, the Cardinal
+  Truth banner chip, the Library exit and the board exit all inherit the change through
+  the one pipeline.
+- **`showMain()`'s sign-in branch** hides the pane and calls `showHome()` — zero screens
+  between opening the app and working. Deliberately does NOT auto-open the panel: a
+  picker that opens itself every launch is the screen we just retired, reshaped.
+- **⚠ `#landingView` IS NOT DELETED, and must never be** — on `showroom.*` it is the
+  Vision hub's container (593/625). Both functions branch on
+  `CardinalLanding.isVisionHost()` and keep the real pane there; `showMain()`'s vision
+  branch still returns first. The tablet is untouched.
+- The drawer row renames **Landing → Switch portal**; **Self Check's Landing surface
+  becomes the Front Door surface** — probing the retired pane's five buttons would have
+  reported five phantom dead controls in the one tool whose job is truth about dead
+  controls.
+
+Gates: check_build green (1164→1165, marker + negative control). **`render_landing1165.mjs`**
+— shipped functions in a real engine: ordinary host paints no Landing and opens the panel
+over the home; production exits to its own hub with the picker; **the vision host still
+paints the pane**; structural checks on showMain's branch order, the drawer rename, the
+Self Check swap, the five panel selectors resolving live, and `#landingView` markup
+surviving — **GREEN 16/16 on 1165, RED (11 failures) on the 1164 control.**
+⚠ Sentinel: NOT run on this build — Theo interrupted the walk to ship; the next build's
+`--since` sweep covers both. Said here so the skip is never silent.
