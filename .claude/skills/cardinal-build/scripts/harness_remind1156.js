@@ -58,6 +58,7 @@ const REMLOG = []
 
 /* ── the fetch stub: routes every outbound request the handler makes ───── */
 let sent = [], logged = [], patched = [], stripeAsked = [];
+let ENABLED = true;   /* the 1157 master switch: true/false = row value, null = row missing */
 function installFetch(){
   sent = []; logged = []; patched = []; stripeAsked = [];
   globalThis.fetch = async function(url, opts){
@@ -85,6 +86,8 @@ function installFetch(){
       patched.push({ url: u, body: JSON.parse(opts.body) });
       return { ok: true, json: async () => ({}), text: async () => '' };
     }
+    if(u.indexOf('/rest/v1/app_settings') !== -1)
+      return { ok: true, json: async () => (ENABLED === null ? [] : [{ value: ENABLED }]) };
     if(u.indexOf('/rest/v1/inspection_reports') !== -1 && u.indexOf('status=eq.sent') !== -1)
       return { ok: true, json: async () => INVOICES };
     if(u.indexOf('/rest/v1/inspection_reports') !== -1 && u.indexOf('project_id=in.') !== -1)
@@ -186,6 +189,22 @@ async function call(handler, { auth, query } = {}){
      'missing Twilio keys → sms_not_configured, nothing dialed');
   setEnv();
 
+  /* 7 ── the master switch (1157): off means off, missing means off */
+  installFetch(); ENABLED = false;
+  r = await call(handler, { auth: 'Bearer testsecret' });
+  ok(r.code === 200 && r.out && r.out.ok === true && r.out.enabled === false && r.out.reason === 'disabled',
+     'switch OFF → the live run answers disabled');
+  ok(sent.length === 0 && logged.length === 0 && stripeAsked.length === 0, 'and dials, logs and asks NOTHING');
+  installFetch();
+  r = await call(handler, { auth: 'Bearer testsecret', query: { dry: '1' } });
+  ok(r.out && r.out.enabled === false && (r.out.would_text || []).length === 3,
+     'a dry run still previews eligibility while OFF (' + ((r.out||{}).would_text || []).length + ') — the preview works before the switch is ever flipped');
+  ok(sent.length === 0, 'and still texts nobody');
+  installFetch(); ENABLED = null;
+  r = await call(handler, { auth: 'Bearer testsecret' });
+  ok(r.out && r.out.enabled === false && sent.length === 0, 'a MISSING settings row reads as OFF — the feature ships dark');
+  ENABLED = true;
+
   /* ── MUTATION CONTROLS: strip a guard, expect the leak to show ───────── */
   async function mutate(name, from, to, leakTest){
     const mSrc = routeSrc.replace(from, to);
@@ -204,11 +223,16 @@ async function call(handler, { auth, query } = {}){
   await mutate('cap',
     "if (okSends.length >= MAX_OK || lg.length >= MAX_ATTEMPTS) { skipped.capped++; continue; }", '',
     () => sent.some(s => s.to === '+19375550108'));
+  ENABLED = false;
+  await mutate('master',
+    "if (!enabled && !dry) { res.status(200).json({ ok: true, enabled: false, reason: 'disabled', checked: 0, eligible: 0, sent: 0, skipped: skipped }); return; }", '',
+    () => sent.length > 0);
+  ENABLED = true;
   await mutate('auth',
     "if (auth !== 'Bearer ' + secret) { res.status(401).json({ ok: false, error: 'Unauthorized' }); return; }", '',
     (rr) => rr.code === 200 && sent.length > 0);
 
-  const FLOOR = 30;
+  const FLOOR = 38;
   ok(checks >= FLOOR, 'coverage floor: ' + checks + ' checks ran (>= ' + FLOOR + ')');
   clearTimeout(wd);
   console.log(fails ? ('\nRED — ' + fails + ' of ' + checks + ' failed')

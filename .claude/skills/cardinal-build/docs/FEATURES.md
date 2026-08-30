@@ -7738,3 +7738,4 @@ Retail clients with a sent, unpaid invoice get a friendly text from the company 
 - STOP (Twilio 21610) auto-mutes the job. Every attempt logs to `payment_reminders` (service-role write; admin read).
 - Invoices & AR rows show *"Reminded ×N · last <date>"* and a **Mute / Turn on** toggle (`data-armute`) writing `projects.reminders_muted` — read directly, not from `cacheProjects`, whose loader selects explicit columns.
 - A check recorded offline stops reminders like any payment — the cron reads the collections ledger, not the payment channel.
+- **The master switch (build 1157):** the AR header carries a company-wide On/Off (`app_settings.payment_reminders_enabled`, staff read / admin write; the cron checks the same key server-side, and a missing row means OFF). **It ships OFF** — nothing texts a client until an admin turns it on; rows read *"Paused — reminders are off company-wide"* until then, and `?dry=1` previews eligibility while off.

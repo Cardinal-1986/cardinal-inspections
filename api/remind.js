@@ -116,6 +116,16 @@ export default async function handler(req, res) {
   var skipped = { not_retail: 0, muted: 0, paid: 0, recent_payment: 0, processing: 0, too_soon: 0, capped: 0, no_phone: 0, no_token: 0, stripe_error: 0 };
 
   try {
+    // 0) THE MASTER SWITCH (1157) — the AR header's toggle, app_settings key
+    //    payment_reminders_enabled. A MISSING row reads as OFF: the feature
+    //    arrives dark and Theo turns it on. A failed read refuses to guess.
+    //    Dry runs continue either way so the switch can be previewed while off.
+    var sw = await fetch(SUPABASE_URL + '/rest/v1/app_settings?key=eq.payment_reminders_enabled&select=value&limit=1', { headers: H });
+    if (!sw.ok) { res.status(500).json({ ok: false, error: 'settings read failed (' + sw.status + ')' }); return; }
+    var swRows = await sw.json();
+    var enabled = !!(Array.isArray(swRows) && swRows.length && swRows[0].value === true);
+    if (!enabled && !dry) { res.status(200).json({ ok: true, enabled: false, reason: 'disabled', checked: 0, eligible: 0, sent: 0, skipped: skipped }); return; }
+
     // 1) every sent, invoice-titled document (newest per project wins, as
     //    invoiceFor() does in the app)
     var ir = await fetch(SUPABASE_URL + '/rest/v1/inspection_reports'
@@ -197,7 +207,7 @@ export default async function handler(req, res) {
 
     if (dry) {
       res.status(200).json({
-        ok: true, dry: true, checked: pids.length, eligible: eligible.length, sent: 0, skipped: skipped,
+        ok: true, dry: true, enabled: enabled, checked: pids.length, eligible: eligible.length, sent: 0, skipped: skipped,
         would_text: eligible.map(function (e) { return { project_id: e.pid, name: e.p.name || '', balance: e.balance }; })
       });
       return;
@@ -269,7 +279,7 @@ export default async function handler(req, res) {
       } catch (_) { }
     }
 
-    res.status(200).json({ ok: true, dry: false, checked: pids.length, eligible: eligible.length, sent: sent, skipped: skipped });
+    res.status(200).json({ ok: true, dry: false, enabled: true, checked: pids.length, eligible: eligible.length, sent: sent, skipped: skipped });
   } catch (err) {
     res.status(500).json({ ok: false, error: String((err && err.message) || err) });
   }

@@ -14,6 +14,10 @@ recorded check stops reminders because the cron reads the ledger, not the channe
 not** widen scope past retail without a new decision. The AR arc's "Build 3" is now
 closed (ACH at 1151, reminders at 1156). **Needs Theo once: `CRON_SECRET` in Vercel**
 — all five crons fail closed without it (measured unset at 1062).
+**1157 added the master switch he asked for**: a company-wide On/Off on the AR header,
+backed by `app_settings.payment_reminders_enabled` — **seeded OFF**, so the feature texts
+nobody until Theo flips it on; the cron reads the same key server-side and a missing row
+is OFF by design. `app_settings.sql` + `payment_reminders.sql` both run before deploy.
 
 ## ✅ The 195 carried sentinel findings — TRIAGED 28 Aug 2026 (build 1127)
 

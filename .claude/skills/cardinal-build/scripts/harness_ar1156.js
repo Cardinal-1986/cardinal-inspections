@@ -25,6 +25,7 @@ const dom = new JSDOM(`<!doctype html><html><body>
   <div id="arCard"></div>
   <div id="cr-ar-view" style="display:block;">
     <button id="crarClose"></button><button id="crarRefresh"></button>
+    <div class="crar-master"><span class="crar-mstate" id="crarMasterState">Checking…</span><button id="crarMaster" disabled>…</button></div>
     <span id="crarKpiOut"></span><span id="crarKpiMonth"></span>
     <span id="crarKpiOver"></span><span id="crarKpiOutSub"></span><span id="crarKpiOverSub"></span>
     <div id="crarBody"></div>
@@ -64,7 +65,8 @@ const REMLOG = [
   { project_id: 'P1', sent_at: daysAgo(16), ok: false }   /* a failed attempt must NOT count */
 ];
 let MUTED = { P1: false, P2: true };
-let updates = [], queried = [];
+let MASTER_DB = { present: true, value: true };   /* the 1157 switch row */
+let updates = [], upserts = [], queried = [];
 w.sb = { from: function(table){
   const q = { t: table, op: 'select' };
   const self = {
@@ -72,6 +74,7 @@ w.sb = { from: function(table){
     in: function(col, ids){ q.ids = ids; return self; },
     order: function(){ return self; },
     update: function(fields){ q.op = 'update'; q.fields = fields; return self; },
+    upsert: function(row){ q.op = 'upsert'; q.row = row; return self; },
     eq: function(col, v){ q.eq = v; return self; },
     then: function(fn, rej){
       queried.push(q.t + ':' + q.op);
@@ -79,6 +82,8 @@ w.sb = { from: function(table){
       if(q.t === 'payment_reminders') out = { data: REMLOG.slice().sort((a, b) => a.sent_at < b.sent_at ? 1 : -1), error: null };
       else if(q.t === 'projects' && q.op === 'select') out = { data: Object.keys(MUTED).map(id => ({ id, reminders_muted: MUTED[id] })), error: null };
       else if(q.t === 'projects' && q.op === 'update'){ updates.push({ id: q.eq, fields: q.fields }); MUTED[q.eq] = !!q.fields.reminders_muted; out = { data: null, error: null }; }
+      else if(q.t === 'app_settings' && q.op === 'select') out = { data: MASTER_DB.present ? [{ value: MASTER_DB.value }] : [], error: null };
+      else if(q.t === 'app_settings' && q.op === 'upsert'){ upserts.push(q.row); MASTER_DB = { present: true, value: q.row.value === true }; out = { data: null, error: null }; }
       else out = { data: [], error: null };
       return Promise.resolve(out).then(fn, rej);
     }
@@ -127,13 +132,41 @@ catch(e){ console.log('module threw on eval: ' + e.message); console.log('\nRED'
   await new Promise(r => setTimeout(r, 30));
   ok(updates.length === 1 && updates[0].fields.reminders_muted === false, 'Turn on writes reminders_muted=false');
 
+  /* ── the 1157 MASTER SWITCH ── */
+  const mst = w.document.getElementById('crarMasterState'), mbtn = w.document.getElementById('crarMaster');
+  ok(queried.indexOf('app_settings:select') !== -1, 'remWire reads the master switch from app_settings');
+  ok(!!mst && /On — unpaid retail invoices/.test(mst.textContent), 'header reads On when the row says true — got ' + JSON.stringify(mst ? mst.textContent : null));
+  ok(!!mbtn && mbtn.textContent === 'Turn off' && !mbtn.disabled, 'the button offers Turn off');
+  told = []; upserts = [];
+  if(mbtn) mbtn.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  ok(upserts.length === 1 && upserts[0].key === 'payment_reminders_enabled' && upserts[0].value === false,
+     'Turn off upserts payment_reminders_enabled=false');
+  ok(told.length === 1 && /OFF/.test(told[0]), 'and says so (' + JSON.stringify(told[0] || null) + ')');
+  const mst2 = w.document.getElementById('crarMasterState');
+  ok(!!mst2 && /Off — no reminder texts go out/.test(mst2.textContent), 'header repaints as Off');
+  const s1c = w.document.querySelector('[data-remfor="P1"]');
+  ok(!!s1c && /Paused — reminders are off company-wide/.test(s1c.textContent),
+     'an unmuted row reads "Paused — company-wide" while the switch is off');
+  const s2c = w.document.querySelector('[data-remfor="P2"]');
+  ok(!!s2c && /Auto-reminders off/.test(s2c.textContent), 'a per-job muted row keeps its own label');
+  upserts = [];
+  const mbtn2 = w.document.getElementById('crarMaster');
+  if(mbtn2) mbtn2.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  ok(upserts.length === 1 && upserts[0].value === true, 'Turn on flips it back');
+  const s1d = w.document.querySelector('[data-remfor="P1"]');
+  ok(!!s1d && /Reminded ×2 · last/.test(s1d.textContent), 'and the rows return to their own state (P1 has history, so "Reminded ×2") — got ' + JSON.stringify(s1d ? s1d.textContent : null));
+
   /* the artifact around the module */
-  ok(html.indexOf('v2026-08-30 build 1156') !== -1, 'the app stamp reads build 1156');
+  ok(html.indexOf('v2026-08-30 build 1157') !== -1, 'the app stamp reads build 1157');
+  ok(/\{ b: 1157, d: '2026-08-30', t: 'Reminders master switch'/.test(html), 'the CHANGELOG carries the 1157 entry');
+  ok(html.indexOf('#cr-ar-view .crar-master{') !== -1, 'the master-switch CSS shipped');
   ok(/\{ b: 1156, d: '2026-08-30', t: 'Automatic payment reminders'/.test(html), 'the CHANGELOG carries the 1156 entry');
   ok(html.indexOf('#cr-ar-view .crar-remtx') !== -1, 'the reminder-line CSS shipped in cr-ar-styles');
   ok(html.indexOf('#cr-ar-view .crar-remtx.off') !== -1, 'including the muted (amber) state');
 
-  const FLOOR = 16;
+  const FLOOR = 26;
   ok(checks >= FLOOR, 'coverage floor: ' + checks + ' checks ran (>= ' + FLOOR + ')');
   clearTimeout(wd);
   console.log(fails ? ('\nRED — ' + fails + ' of ' + checks + ' failed')
