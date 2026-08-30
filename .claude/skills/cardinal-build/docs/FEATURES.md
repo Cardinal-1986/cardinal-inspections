@@ -7752,3 +7752,10 @@ Retail clients with a sent, unpaid invoice get a friendly text from the company 
 - Invoices & AR rows show *"Reminded ×N · last <date>"* and a **Mute / Turn on** toggle (`data-armute`) writing `projects.reminders_muted` — read directly, not from `cacheProjects`, whose loader selects explicit columns.
 - A check recorded offline stops reminders like any payment — the cron reads the collections ledger, not the payment channel.
 - **The master switch (build 1157):** the AR header carries a company-wide On/Off (`app_settings.payment_reminders_enabled`, staff read / admin write; the cron checks the same key server-side, and a missing row means OFF). **It ships OFF** — nothing texts a client until an admin turns it on; rows read *"Paused — reminders are off company-wide"* until then, and `?dry=1` previews eligibility while off.
+
+## Build 1163 — Community on the morning strip
+`#crMorning` ("Where things stand", 1048) now carries a **bids past due** chip — counted by
+`CardinalCommunityHub.dueBids()` (new export in `cr-ch2-script`, the hub's own due clocks) and
+opening the Community hub on tap. The strip's `counts()` resolver is exported as
+**`window.CardinalStands`** — the single source the coming front-door/switcher work must read.
+Admin-only, as the strip has always been.

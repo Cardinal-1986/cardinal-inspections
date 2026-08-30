@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Cardinal Front Door</title>
+<style>
+/* ─────────────────────────────────────────────────────────────────────────
+   PREVIEW CHROME — this is the harness, not the app. Everything inside a
+   .shell is the mockup. The harness never uses @media for the frames:
+   width and theme are ATTRIBUTES, so the toggle drives what you see rather
+   than the browser window. (CLAUDE.md: a mock driven by @media keys off the
+   window, not the preview frame — that has shipped a wrong preview here.)
+   ───────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box}
+body{margin:0;background:#101014;color:#e7e7ea;
+     font:400 14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+.pv-bar{position:sticky;top:0;z-index:50;background:#17171c;border-bottom:1px solid #2b2b33;
+        padding:12px 16px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.pv-bar h1{margin:0;font:700 15px/1.2 Georgia,'Times New Roman',serif;color:#fff;flex:1 1 220px}
+.pv-bar h1 em{font-style:normal;color:#e35c63}
+.seg{display:flex;border:1px solid #35353f;border-radius:8px;overflow:hidden}
+.seg button{appearance:none;background:#1e1e25;border:0;color:#b7b7c2;cursor:pointer;
+            padding:9px 13px;font:600 12px/1 inherit;min-height:36px}
+.seg button+button{border-left:1px solid #35353f}
+.seg button[aria-pressed="true"]{background:#c8202e;color:#fff}
+.seg button:focus-visible{outline:2px solid #8fb4d8;outline-offset:-2px}
+.lede{max-width:900px;padding:20px 16px 4px;color:#b7b7c2;font-size:13.5px}
+.lede b{color:#fff}
+.lede code{font:600 12px ui-monospace,Menlo,monospace;color:#f0a24a}
+section.dir{padding:8px 16px 40px;border-top:1px solid #23232b;margin-top:22px}
+section.dir[hidden]{display:none}
+section.dir h2{margin:22px 0 6px;font:700 21px/1.25 Georgia,serif;color:#fff}
+section.dir h2 span{color:#8b8b98;font:600 12px/1 ui-monospace,Menlo,monospace;
+                    letter-spacing:.16em;text-transform:uppercase;display:block;margin-bottom:7px}
+section.dir .why{max-width:860px;color:#b7b7c2;font-size:13.5px;margin:0 0 4px}
+section.dir .cost{max-width:860px;color:#8b8b98;font-size:12.5px;margin:8px 0 20px}
+section.dir .cost b{color:#f0a24a}
+figure{margin:0 0 30px}
+figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
+           text-transform:uppercase;color:#8b8b98;margin-bottom:9px}
+.scroller{overflow-x:auto;padding-bottom:10px}
+/* the device shell */
+.shell{border:1px solid #2f2f38;border-radius:14px;overflow:hidden;
+       font:400 14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+.shell[data-w="phone"]{width:390px}
+.shell[data-w="desk"]{width:1194px}
+/* ── scoped palettes. No prefers-color-scheme anywhere: the toggle owns it ── */
+.shell[data-t="dark"]{
+  --lbg:#09090c; --link:#e8ded4; --lmute:#a89a8d; --lcard:#241b17; --lcard2:#1d1613;
+  --lline:rgba(255,255,255,.07); --red:#c8202e; --redt:#e35c63; --hot:#f07e84; --warn:#f0a24a;
+  --abg:#09090C; --acard:#15171b; --aink:#f2f3f5; --amute:#9aa0a8; --aline:#22252b;
+}
+.shell[data-t="light"]{
+  --lbg:#f7f5f2; --link:#1a1614; --lmute:#6b6058; --lcard:#ffffff; --lcard2:#ffffff;
+  --lline:#ded7cf; --red:#c8202e; --redt:#c8202e; --hot:#8f1620; --warn:#8a5500;
+  --abg:#f7f7f7; --acard:#ffffff; --aink:#161616; --amute:#5f564f; --aline:#e2ddd7;
+}
+/* landing surface */
+.lnd{background:var(--lbg);color:var(--link);padding:26px 20px 34px;position:relative}
+.lnd::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0,transparent 62%)}
+.lnd>*{position:relative}
+.eyebrow{display:flex;align-items:center;gap:10px;font:600 11px/1 ui-monospace,Menlo,monospace;
+         letter-spacing:.22em;text-transform:uppercase;color:var(--lmute);margin-bottom:22px}
+.eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red)}
+.eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}
+.util{display:flex;gap:7px;align-items:center}
+.util .ub{width:44px;height:44px;border-radius:50%;border:1px solid var(--lline);
+          background:transparent;color:var(--lmute);display:grid;place-items:center;cursor:pointer}
+.util .me{width:44px;height:44px;border-radius:50%;background:var(--red);color:#fff;
+          display:grid;place-items:center;font:800 11px/1 inherit}
+.mark{font:700 clamp(34px,11vw,52px)/.92 Georgia,serif;letter-spacing:-.025em;margin:0;color:var(--link)}
+.mark em{font-style:normal;color:var(--red)}
+.sub{font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.3em;text-transform:uppercase;
+     color:var(--redt);margin:9px 0 0}
+.greet{margin:28px 0 0;font:400 clamp(20px,5.4vw,26px)/1.25 Georgia,serif;color:var(--link)}
+.greet strong{font-weight:700;color:var(--red)}
+.stamp{margin:7px 0 0;font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
+       text-transform:uppercase;color:var(--lmute)}
+/* the 1048 chip strip, relocated */
+.mrow{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 0}
+.mchip{display:flex;align-items:center;gap:9px;min-height:44px;padding:8px 13px;cursor:pointer;
+       border:1px solid var(--lline);border-radius:10px;background:var(--lcard2);color:var(--link);
+       font:inherit;text-align:left}
+.mchip .n{font:800 16px/1 ui-monospace,Menlo,monospace}
+.mchip .l{font:600 11.5px/1.25 'Segoe UI',Arial,sans-serif;color:var(--lmute)}
+.mchip.warn{border-color:rgba(240,162,74,.45)} .mchip.warn .n{color:var(--warn)}
+.mchip.hot{border-color:rgba(240,126,132,.45)} .mchip.hot .n{color:var(--hot)}
+.quiet{margin:20px 0 0;padding:13px 15px;border-left:2px solid var(--lline);
+       color:var(--lmute);font:400 13.5px/1.45 Georgia,serif}
+/* courses */
+.roof{border-radius:12px;overflow:hidden;margin-top:22px;box-shadow:0 20px 46px rgba(0,0,0,.45)}
+.course{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:18px;
+        border:0;cursor:pointer;text-align:left;font:inherit;color:var(--link);
+        background:var(--lcard)}
+.course+.course{border-top:1px solid var(--lline)}
+.course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc)}
+.course .ic{flex:0 0 auto;width:36px;height:36px;border-radius:8px;display:grid;place-items:center;
+            background:rgba(255,255,255,.05)}
+.shell[data-t="light"] .course{border:1px solid var(--lline)}
+.shell[data-t="light"] .course .ic{background:rgba(0,0,0,.045)}
+/* the shipped landing already does exactly this: in light the accent keeps the
+   left rule and the TITLE goes near-black. Dropping it failed 5 titles at once. */
+.shell[data-t="light"] .course .tt,
+.shell[data-t="light"] .bhead .tt,
+.shell[data-t="light"] .pair b{color:#12100e}
+.course .tx{flex:1;min-width:0}
+.course .tt{display:block;font:700 17px/1.2 Georgia,serif;color:var(--acct,var(--acc))}
+.course .sb{display:block;margin-top:3px;font-size:12.5px;color:var(--lmute)}
+.course .n{display:block;margin-top:6px;font:800 11px/1 'Segoe UI',Arial,sans-serif;
+           letter-spacing:.13em;text-transform:uppercase;color:var(--lmute)}
+.course .n .hot{color:var(--hot)} .course .n .warn{color:var(--warn)}
+.course .go{flex:0 0 auto;color:var(--lmute)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.pair button{display:flex;flex-direction:column;gap:5px;padding:14px;border-radius:10px;cursor:pointer;
+             background:var(--lcard2);border:1px solid var(--lline);border-top:2px solid var(--racc);
+             color:var(--link);font:inherit;text-align:left}
+.pair b{font:700 15px/1.15 Georgia,serif;color:var(--racct,var(--racc))}
+.pair small{font-size:11.5px;color:var(--lmute)}
+.foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--lline);display:flex;
+      justify-content:space-between;align-items:baseline;gap:12px}
+.foot .pp{font:400 13px/1.55 Georgia,serif;color:var(--lmute)}
+.foot .pp b{color:var(--redt)}
+.foot .sk{background:none;border:0;cursor:pointer;color:var(--lmute);min-height:44px;padding:0 4px;
+          font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase}
+/* ── D2 board ── */
+.board{display:grid;gap:12px;margin-top:22px}
+.shell[data-w="desk"] .board{grid-template-columns:repeat(3,1fr)}
+.bcol{background:var(--lcard);border:1px solid var(--lline);border-radius:12px;overflow:hidden}
+.bhead{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--lline);
+       border-top:3px solid var(--acc)}
+.bhead .tt{font:700 15px/1.1 Georgia,serif;color:var(--acct,var(--acc));flex:1}
+.bhead .ct{font:800 11px/1 ui-monospace,Menlo,monospace;color:var(--lmute)}
+.brow{display:block;width:100%;text-align:left;background:none;border:0;cursor:pointer;font:inherit;
+      padding:11px 15px;color:var(--link);border-top:1px solid var(--lline)}
+.brow:first-of-type{border-top:0}
+.brow .r1{display:block;font:600 13.5px/1.3 'Segoe UI',Arial,sans-serif}
+.brow .r2{display:block;margin-top:3px;font-size:11.5px;color:var(--lmute)}
+.brow .r2 .hot{color:var(--hot);font-weight:700}
+.brow .r2 .warn{color:var(--warn);font-weight:700}
+.bmore{display:block;width:100%;background:none;border:0;border-top:1px solid var(--lline);
+       cursor:pointer;padding:11px;color:var(--lmute);font:600 11.5px/1 inherit;text-align:center;min-height:44px}
+/* ── D3 desk list ── */
+.desk{margin-top:20px;border:1px solid var(--lline);border-radius:12px;overflow:hidden;
+      background:var(--lcard)}
+.dhead{padding:12px 15px;border-bottom:1px solid var(--lline);
+       font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;
+       color:var(--lmute);display:flex;justify-content:space-between}
+.drow{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;cursor:pointer;
+      font:inherit;color:var(--link);text-align:left;padding:13px 15px;border-top:1px solid var(--lline);
+      min-height:44px}
+.drow:first-of-type{border-top:0}
+.drow .tag{flex:0 0 auto;width:4px;align-self:stretch;border-radius:2px;background:var(--acc)}
+.drow .tx{flex:1;min-width:0}
+.drow .t1{display:block;font:600 13.5px/1.3 'Segoe UI',Arial,sans-serif}
+.drow .t2{display:block;margin-top:3px;font-size:11.5px;color:var(--lmute)}
+.drow .age{flex:0 0 auto;font:800 12px/1 ui-monospace,Menlo,monospace;color:var(--lmute)}
+.drow .age.hot{color:var(--hot)} .drow .age.warn{color:var(--warn)}
+.doors{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.doors button{flex:1 1 110px;min-height:44px;padding:11px 12px;border-radius:10px;cursor:pointer;
+              background:transparent;border:1px solid var(--lline);border-left:3px solid var(--acc);
+              color:var(--link);font:600 12.5px/1.2 inherit;text-align:left}
+.doors button small{display:block;margin-top:3px;font-weight:400;font-size:11px;color:var(--lmute)}
+/* ── APP (retail home) surface ── */
+.app{background:var(--abg);color:var(--aink);min-height:520px}
+.hd{padding:11px 14px;display:flex;align-items:center;gap:10px;color:#fff}
+.hd .nm{font:700 16px/1 Georgia,serif;flex:1}
+.hd .b{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.12);
+       display:grid;place-items:center;font-size:15px}
+.hd.steel{background:linear-gradient(180deg,#243342,#16202b)}
+.hd.steel .nm{color:#fff} .hd.steelrule{border-bottom:3px solid #c8202e}
+.hd.warmred{background:linear-gradient(180deg,#2a1614,#1b100f);border-bottom:3px solid #c8202e}
+.hd.solidred{background:#8f1620}
+.appbody{padding:14px}
+.card{background:var(--acard);border:1px solid var(--aline);border-radius:12px;padding:13px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font:700 13px/1 'Segoe UI',Arial,sans-serif;letter-spacing:.02em;
+         color:var(--aink);display:flex;align-items:center;gap:8px}
+.piperow{display:flex;gap:6px;overflow-x:auto}
+.pipebtn{flex:0 0 auto;min-width:64px;padding:10px 8px;border-radius:9px;border:1px solid var(--aline);
+         background:transparent;color:var(--aink);cursor:pointer;text-align:center;font:inherit}
+.pipebtn b{display:block;font:800 17px/1 ui-monospace,Menlo,monospace}
+.pipebtn span{display:block;margin-top:4px;font:700 11px/1 'Segoe UI',Arial,sans-serif;color:var(--amute)}
+.ops{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center}
+.ops .o b{display:block;width:38px;height:38px;border-radius:50%;margin:0 auto 6px;color:#fff;
+          font:800 15px/38px ui-monospace,Menlo,monospace}
+.ops .o small{font-size:11px;color:var(--amute);line-height:1.25;display:block}
+.actstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.actbox{background:#0b0b0d;border-radius:10px;padding:11px 9px;text-align:center;color:#fff;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
+/* 557: the obsidian tiles have a sanctioned LIGHT TWIN — same geometry,
+   shadow-led, computed inks (#C25A18 4.40:1). An earlier revision of this
+   file pinned them black in light, silently undoing it. */
+.shell[data-t="light"] .actbox{background:#ffffff;border:1px solid #e2ddd7;
+  box-shadow:0 2px 7px rgba(40,30,22,.13)}
+.shell[data-t="light"] .actbox span{color:#5f6670}
+.shell[data-t="light"] .actbox b{color:#C25A18}
+.actbox span{display:block;font:700 11px/1.25 'Segoe UI',Arial,sans-serif;color:#b9bec6}
+.actbox b{display:block;margin-top:5px;font:800 19px/1 ui-monospace,Menlo,monospace;color:#E8722A}
+.shell[data-w="desk"] .cols{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+.note{margin:0 0 12px;padding:10px 12px;border-left:3px solid var(--warn);background:var(--acard);
+      border-radius:0 8px 8px 0;font-size:12.5px;color:var(--amute)}
+.note b{color:var(--aink)}
+.tiny{font-size:11.5px;color:var(--amute);margin:6px 0 0}
+/* ── D4: the header switcher ── */
+.hd .sw{display:flex;align-items:center;gap:7px;min-height:44px;padding:0 13px;cursor:pointer;
+        background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:9px;
+        color:#fff;font:700 14.5px/1 Georgia,serif}
+.hd .sw .chv{font-size:11px;opacity:.85}
+.swmenu{margin:10px 12px 0;background:var(--acard);border:1px solid var(--aline);border-radius:12px;
+        overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.5)}
+.swrow{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:11px 14px;
+       background:none;border:0;border-top:1px solid var(--aline);cursor:pointer;font:inherit;
+       color:var(--aink);text-align:left}
+.swrow:first-of-type{border-top:0}
+.swrow .tag{flex:0 0 auto;width:4px;align-self:stretch;border-radius:2px;background:var(--acc)}
+.swrow .tx{flex:1;min-width:0}
+.swrow b{display:block;font:700 14.5px/1.2 Georgia,serif}
+.swrow small{display:block;margin-top:3px;font-size:11.5px;color:var(--amute)}
+.swrow small .hot{color:var(--hot);font-weight:700}
+.swrow small .warn{color:var(--warn);font-weight:700}
+.swrow .chk{flex:0 0 auto;color:var(--hot);font-weight:800}
+.swdiv{height:1px;background:var(--aline)}
+.swgrp{padding:11px 14px 3px;font:700 11px/1 ui-monospace,Menlo,monospace;
+       letter-spacing:.18em;text-transform:uppercase;color:var(--lmute)}
+.skel{margin:12px 14px 14px;opacity:.5}
+.skel .sb1{height:64px;border-radius:12px;background:var(--acard);border:1px solid var(--aline);margin-bottom:10px}
+.skel .sb2{height:110px;border-radius:12px;background:var(--acard);border:1px solid var(--aline)}
+/* D4 desktop: the regrouped left nav from the concept, real destinations only */
+.d4wrap{display:block}
+.snav{display:none}
+.shell[data-w="desk"] .d4wrap{display:grid;grid-template-columns:216px 1fr;align-items:start}
+.shell[data-w="desk"] .snav{display:block;background:var(--acard);border-right:1px solid var(--aline);
+       padding:12px 0 20px;min-height:640px}
+.snav .g{margin:14px 14px 4px;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;
+         text-transform:uppercase;color:var(--amute)}
+.snav button{display:block;width:100%;min-height:44px;padding:0 14px 0 17px;background:none;border:0;
+             border-left:3px solid transparent;cursor:pointer;font:600 13px/44px 'Segoe UI',Arial,sans-serif;
+             color:var(--amute);text-align:left}
+.snav button.on{border-left-color:var(--red);color:var(--aink);background:rgba(200,32,46,.07)}
+.statrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.statrow .pipebtn{min-width:86px;padding:12px 10px}
+.arbig{font:800 24px/1 ui-monospace,Menlo,monospace;color:var(--aink)}
+.arbig .lbl{display:block;margin-top:5px;font:600 11.5px/1.3 'Segoe UI',Arial,sans-serif;color:var(--amute)}
+.arrow2{display:flex;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;
+        border-top:1px solid var(--aline);font-size:12px;color:var(--amute)}
+.leadrow{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 0;
+         background:none;border:0;border-top:1px solid var(--aline);cursor:pointer;font:inherit;
+         color:var(--aink);text-align:left}
+.leadrow:first-of-type{border-top:0}
+.leadrow .av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:rgba(200,32,46,.16);
+             color:var(--hot);display:grid;place-items:center;font:800 11px/1 'Segoe UI',Arial,sans-serif}
+.leadrow .nm2{flex:1;font-weight:600;font-size:13.5px}
+.leadrow .st{flex:0 0 auto;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;
+             text-transform:uppercase;color:var(--amute);border:1px solid var(--aline);
+             border-radius:999px;padding:5px 9px}
+/* D4 refinement: the open switcher takes the Brief's editorial treatment.
+   Landing tokens (--l*) inside the app frame — they flip with the theme. */
+.sbhead{margin:10px 12px 0;padding:16px 16px 13px;background:var(--lcard);
+        border:1px solid var(--lline);border-bottom:0;border-radius:12px 12px 0 0}
+.sb-mark{font:700 25px/1 Georgia,'Times New Roman',serif;letter-spacing:-.02em;color:var(--link)}
+.sb-mark em{font-style:normal;color:var(--redt)}
+.sb-greet{margin:10px 0 0;font:400 18px/1.3 Georgia,serif;color:var(--link)}
+.sb-greet strong{font-weight:700;color:var(--redt)}
+.sb-stamp{margin:5px 0 0;font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
+          text-transform:uppercase;color:var(--lmute)}
+.sb-quote{margin:13px 0 0;padding:9px 0 9px 14px;border-left:2px solid var(--red)}
+.sb-quote p{margin:0;font:400 14.5px/1.45 Georgia,serif;color:var(--link)}
+.sb-quote cite{display:block;margin-top:6px;font:600 11px/1 ui-monospace,Menlo,monospace;
+               letter-spacing:.12em;text-transform:uppercase;color:var(--lmute);font-style:normal}
+.sb-eyebrow{display:flex;align-items:center;gap:9px;margin:15px 0 0;
+            font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;
+            text-transform:uppercase;color:var(--lmute)}
+.sb-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red)}
+.sb-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}
+.swmenu.warm{margin-top:0;border-radius:0 0 12px 12px;border-top:0;
+             background:var(--lcard);border-color:var(--lline)}
+.swmenu.warm .swrow{border-top-color:var(--lline);color:var(--link)}
+.swmenu.warm .swrow small{color:var(--lmute)}
+.swmenu.warm .swdiv{background:var(--lline)}
+/* D4: the 30-day calendar — static HTML, no scripts, honest zero-state */
+.cal30{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:4px}
+.cal30 .ch{font:700 11px/1 ui-monospace,Menlo,monospace;color:var(--amute);
+           text-align:center;padding:4px 0 7px}
+.cal30 .cd{font:600 11.5px/30px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;
+           color:var(--amute);text-align:center;height:30px}
+.cal30 .cd.today{color:#fff;background:#c8202e;border-radius:50%;width:30px;margin:0 auto}
+.subh{font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;
+      color:var(--amute);margin:12px 0 3px}
+.subh:first-of-type{margin-top:2px}
+</style>
+</head>
+<body>
+
+<header class="pv-bar">
+  <h1>Cardinal — Landing &amp; Retail<em>.</em> four directions</h1>
+  <div class="seg" id="segDir" role="group" aria-label="Direction">
+    <button data-d="1" aria-pressed="true">1 · The Brief</button>
+    <button data-d="2" aria-pressed="false">2 · The Board</button>
+    <button data-d="3" aria-pressed="false">3 · The Desk</button>
+    <button data-d="4" aria-pressed="false">4 · The Switcher</button>
+  </div>
+  <div class="seg" id="segT" role="group" aria-label="Theme">
+    <button data-t="dark" aria-pressed="true">Dark</button>
+    <button data-t="light" aria-pressed="false">Light</button>
+  </div>
+  <div class="seg" id="segW" role="group" aria-label="Width">
+    <button data-w="phone" aria-pressed="true">Phone 390</button>
+    <button data-w="desk" aria-pressed="false">Desktop 1194</button>
+  </div>
+  <p id="pvNoJs" style="flex-basis:100%;margin:6px 0 0;font-size:12px;color:#f0a24a">
+    This viewer blocked the page's scripts, so the buttons above are inert &mdash;
+    <b>all four directions are stacked below, just scroll.</b> Frames show dark &middot; phone.
+    Open the file in a browser for the working toggles.</p>
+</header>
+
+<p class="lede">
+  Every number below is <b>real, queried 30 Aug 2026</b> — 60 clients (retail 23,
+  community 16, insurance 2, <b>19 filed under no CRM</b>), 3 community bids past due,
+  5 open urgent punch-outs, 2 claims, <b>nothing on today's calendar</b>. The zero-state
+  is shown on purpose. Icons here are placeholders for the real
+  <code>cardinal-transparent.png</code> / <code>cardinal-logo-insurance.svg</code> marks.
+</p>
+
+<!-- ══════════════════════ DIRECTION 1 — THE BRIEF ══════════════════════ -->
+<section class="dir" data-dir="1">
+  <h2><span>Direction 1</span>The Brief — keep the editorial landing, add the state layer</h2>
+  <p class="why">The least disruptive of the four. The Georgia-serif landing stays exactly as it
+  is; build 1048's chip strip moves up onto it and grows a Community chip; each of the three
+  courses gains a live state line under its subtitle. Emoji become Cardinal marks. The awaiting-contract
+  chip opens the retail home at its Approvals card &mdash; 1048&#39;s door, given a landing address. A three-item
+  utility row (you / settings / sign out) replaces the missing menu — the landing <em>is</em> the
+  menu, so a burger inside it would be a menu inside a menu.</p>
+  <p class="cost"><b>Cost:</b> retail only gets an accent, so it is still the quietest of the
+  three CRMs. <b>Buys:</b> the smallest diff, no layout risk, and it is the only direction that
+  could ship in one build.</p>
+
+  <figure>
+    <figcaption>Landing</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="lnd">
+        <div class="eyebrow"><span class="dot"></span><span>Cardinal Roster</span><span class="ln"></span>
+          <span class="util">
+            <span class="me">TD</span>
+            <button class="ub" title="Settings" aria-label="Settings">&#9881;</button>
+            <button class="ub" title="Sign out" aria-label="Sign out">&#9099;</button>
+          </span>
+        </div>
+        <h1 class="mark">Cardinal<em>.</em></h1>
+        <p class="sub">Roofing &amp; Renovations</p>
+        <p class="greet">Good morning, <strong>Theo</strong>.</p>
+        <p class="stamp">Sunday, August 30, 2026</p>
+
+        <div class="mrow">
+          <button class="mchip hot"><span class="n">3</span><span class="l">bids past due</span></button>
+          <button class="mchip hot"><span class="n">5</span><span class="l">urgent punch-outs</span></button>
+          <button class="mchip hot"><span class="n">1</span><span class="l">carrier to chase</span></button>
+          <button class="mchip warn"><span class="n">2</span><span class="l">awaiting contract</span></button>
+          <button class="mchip warn"><span class="n">19</span><span class="l">need sorting</span></button>
+        </div>
+        <p class="quiet">Nothing on the calendar today.</p>
+
+        <div class="roof">
+          <button class="course" style="--acc:#5590b5">
+            <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="#5590b5"><path d="M12 3 2.5 11h3v9h5v-6h3v6h5v-9h3z"/></svg></span>
+            <span class="tx"><span class="tt">Retail</span>
+              <span class="sb">Homeowner work — roofs, siding, windows, gutters.</span>
+              <span class="n"><span class="warn">2 awaiting contract</span> &middot; 23 clients</span></span>
+            <span class="go">&rarr;</span>
+          </button>
+          <button class="course" style="--acc:#d9282a;--acct:#e35c63">
+            <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="#d9282a"><path d="M12 2 4 5v7c0 5 3.4 8.8 8 10 4.6-1.2 8-5 8-10V5z"/></svg></span>
+            <span class="tx"><span class="tt">Cardinal Truth</span>
+              <span class="sb">Storm and claim work — carriers, adjusters, supplements.</span>
+              <span class="n"><span class="hot">1 carrier to chase</span> &middot; 2 claims</span></span>
+            <span class="go">&rarr;</span>
+          </button>
+          <button class="course" style="--acc:#3faa6d">
+            <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="#3faa6d"><path d="M3 20v-8l5-4 5 4v8H9v-5H7v5zm12 0v-9l3-2.4 3 2.4v9z"/></svg></span>
+            <span class="tx"><span class="tt">Community</span>
+              <span class="sb">Partners, non-profits, HOAs — bids and awards.</span>
+              <span class="n"><span class="hot">3 bids past due</span> &middot; 16 open</span></span>
+            <span class="go">&rarr;</span>
+          </button>
+        </div>
+
+        <div class="pair">
+          <button style="--racc:#e0762a;--racct:#e0762a"><b>Production</b><small>Jobs in flight, punch list, callbacks</small></button>
+          <button style="--racc:#e8544f"><b>Sales Floor</b><small>Objections, talk tracks, the Coach</small></button>
+        </div>
+        <div class="pair" style="grid-template-columns:1fr">
+          <button style="--racc:#7fa6d6"><b>Resource Library</b><small>Building code, specs, manufacturer references</small></button>
+        </div>
+
+        <div class="foot">
+          <div class="pp">Every client, every photo, every document.<br><b>One source of truth.</b></div>
+          <button class="sk">Skip</button>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+
+  <figure>
+    <figcaption>Retail home — steel kept, cardinal-red rule added</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="app">
+        <div class="hd steel steelrule"><span class="b">&#9776;</span><span class="nm">Retail</span><span class="b">&#43;</span></div>
+        <div class="appbody">
+          <div class="cols"><div>
+            <div class="card"><h3>Cardinal Pipeline &middot; all three CRMs, as the shipped home really counts</h3>
+              <div class="piperow">
+                <button class="pipebtn"><b>37</b><span>L</span></button>
+                <button class="pipebtn"><b>11</b><span>P</span></button>
+                <button class="pipebtn"><b>7</b><span>A</span></button>
+                <button class="pipebtn"><b>1</b><span>C</span></button>
+                <button class="pipebtn"><b>2</b><span>I</span></button>
+                <button class="pipebtn"><b>1</b><span>Closed</span></button>
+                <button class="pipebtn"><b>1</b><span>On Hold</span></button>
+              </div></div>
+            <div class="card"><h3>Work Schedule</h3>
+              <div class="ops">
+                <div class="o"><b style="background:#26639f">0</b><small>Completed<br>Today</small></div>
+                <div class="o"><b style="background:#7a4dc4">0</b><small>Jobs<br>Today</small></div>
+                <div class="o"><b style="background:#275936">0</b><small>30 Day<br>Outlook</small></div>
+              </div>
+              <p class="tiny">Circle inks are deepened here on purpose &mdash; the shipped #2f7fd0 / #8b5fd6
+              measure 4.14:1 / 4.46:1 under white ink, below the 4.5 floor. The build should carry the same fix.</p></div>
+            <div class="card"><h3>Activity — last 30 days</h3>
+              <div class="actstrip">
+                <div class="actbox"><span>New<br>Leads</span><b>42</b></div>
+                <div class="actbox"><span>Jobs<br>Approved</span><b>14</b></div>
+                <div class="actbox"><span>Jobs<br>Completed</span><b>7</b></div>
+                <div class="actbox"><span>Money<br>Collected</span><b>$0</b></div>
+                <div class="actbox"><span>Jobs<br>Invoiced</span><b>5</b></div>
+                <div class="actbox"><span>Jobs<br>Closed</span><b>2</b></div>
+              </div></div>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+</section>
+
+<!-- ══════════════════════ DIRECTION 2 — THE BOARD ══════════════════════ -->
+<section class="dir" data-dir="2">
+  <h2><span>Direction 2</span>The Board — three columns, real rows, not counts</h2>
+  <p class="why">The landing becomes a board: one column per CRM, each showing the actual work
+  waiting rather than a number. You read names on the front door. Stacks to three cards on a
+  phone, spreads to three columns on the ultrawide — which is the screen this direction is
+  really for. The retail home narrows to Pipeline + Today + AR; the KP cards, activity strip and
+  month calendar move behind a <em>More</em> row.</p>
+  <p class="cost"><b>Cost:</b> the biggest change to the home&#39;s own layout, and the phone version is
+  a long scroll. <b>Buys:</b> the most information per screen, and it is the only direction where
+  you can see a specific overdue bid without tapping anything.</p>
+
+  <figure>
+    <figcaption>Landing</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="lnd">
+        <div class="eyebrow"><span class="dot"></span><span>Sunday 30 Aug</span><span class="ln"></span>
+          <span class="util"><span class="me">TD</span>
+            <button class="ub" aria-label="Settings">&#9881;</button>
+            <button class="ub" aria-label="Sign out">&#9099;</button></span>
+        </div>
+        <h1 class="mark">Cardinal<em>.</em></h1>
+        <p class="greet" style="margin-top:16px">Good morning, <strong>Theo</strong>.</p>
+
+        <div class="board">
+          <div class="bcol" style="--acc:#5590b5">
+            <div class="bhead"><span class="tt">Retail</span><span class="ct">23</span></div>
+            <button class="brow"><span class="r1">Rita Monigold</span><span class="r2"><span class="hot">Urgent punch-out</span> &middot; fix storm door</span></button>
+            <button class="brow"><span class="r1">Jarrett Chenalt</span><span class="r2"><span class="hot">2 urgent punch-outs</span> &middot; gutter, 4&Prime; too long</span></button>
+            <button class="brow"><span class="r1">Kathy May</span><span class="r2"><span class="hot">Urgent</span> &middot; remove rear chimney</span></button>
+            <button class="bmore">All 23 retail clients &rsaquo;</button>
+          </div>
+          <div class="bcol" style="--acc:#d9282a;--acct:#e35c63">
+            <div class="bhead"><span class="tt">Cardinal Truth</span><span class="ct">2</span></div>
+            <button class="brow"><span class="r1">Maker Space Solutions LLC</span><span class="r2">State Farm &hellip;158W &middot; <span class="hot">awaiting RCV</span></span></button>
+            <button class="brow"><span class="r1">Adam Gunn</span><span class="r2">Allstate &hellip;9162 &middot; filed</span></button>
+            <button class="bmore">Insurance clients &rsaquo;</button>
+          </div>
+          <div class="bcol" style="--acc:#3faa6d">
+            <div class="bhead"><span class="tt">Community</span><span class="ct">16</span></div>
+            <button class="brow"><span class="r1">Jacob — Habitat</span><span class="r2"><span class="hot">Bid due 27 Jul &middot; 34 days over</span> &middot; $18,425</span></button>
+            <button class="brow"><span class="r1">Kimberly Lawson — ReBuild</span><span class="r2"><span class="hot">Bid due 10 Aug &middot; 20 days over</span></span></button>
+            <button class="brow"><span class="r1">Willie Parson — ReBuild</span><span class="r2"><span class="hot">Bid due 11 Aug &middot; 19 days over</span></span></button>
+            <button class="bmore">All 16 community jobs &rsaquo;</button>
+          </div>
+        </div>
+
+        <div class="mrow" style="margin-top:14px">
+          <button class="mchip warn"><span class="n">19</span><span class="l">clients filed under no CRM</span></button>
+        </div>
+
+        <div class="pair" style="margin-top:14px">
+          <button style="--racc:#e0762a;--racct:#e0762a"><b>Production</b><small>5 urgent punch-outs open</small></button>
+          <button style="--racc:#e8544f"><b>Sales Floor</b><small>Objections, talk tracks, the Coach</small></button>
+        </div>
+        <div class="foot"><div class="pp">Nothing on the calendar today.</div><button class="sk">Skip</button></div>
+      </div>
+    </div></div>
+  </figure>
+
+  <figure>
+    <figcaption>Retail home — narrowed, and retail gets its own warm ground</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="app">
+        <div class="hd warmred"><span class="b">&#9776;</span><span class="nm">Retail</span><span class="b">&#43;</span></div>
+        <div class="appbody">
+          <div class="card"><h3>Cardinal Pipeline &middot; all three CRMs, as the shipped home really counts</h3>
+            <div class="piperow">
+              <button class="pipebtn"><b>37</b><span>L</span></button>
+              <button class="pipebtn"><b>11</b><span>P</span></button>
+              <button class="pipebtn"><b>7</b><span>A</span></button>
+              <button class="pipebtn"><b>1</b><span>C</span></button>
+              <button class="pipebtn"><b>2</b><span>I</span></button>
+              <button class="pipebtn"><b>1</b><span>Closed</span></button>
+              <button class="pipebtn"><b>1</b><span>On&nbsp;Hold</span></button>
+            </div></div>
+          <div class="card"><h3>Today</h3>
+            <p class="tiny" style="margin:0">Nothing scheduled &mdash; and nothing booked ahead. Last: <b style="color:var(--aink)">Jim Arnette</b>, client meeting, 24 Aug.</p></div>
+          <div class="card"><h3>Accounts Receivable</h3>
+            <div class="arbig">$24,471<span class="lbl">outstanding across 2 invoices &middot; nothing collected yet</span></div>
+            <button class="bmore">Invoices &amp; AR &rsaquo;</button></div>
+          <button class="pipebtn" style="width:100%;min-height:44px">More — activity, calendar, KP cards &rsaquo;</button>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+</section>
+
+<!-- ══════════════════════ DIRECTION 3 — THE DESK ══════════════════════ -->
+<section class="dir" data-dir="3">
+  <h2><span>Direction 3</span>The Desk — one list, ordered by urgency, CRM as a colour</h2>
+  <p class="why">The landing stops being three compartments and becomes one prioritised list of
+  everything waiting on you, each row stamped with its CRM's colour. The three portal doors drop
+  underneath as a quiet strip. It is the closest of the four to how <code>api/digest.js</code> already assembles the
+  morning email &mdash; the same signals on one surface (the email still groups them by kind) &mdash;
+  so the screen and the email finally carry the same facts. And because the landing is now CRM-neutral by construction, retail is
+  free to take a full identity on its own home screen.</p>
+  <p class="cost"><b>Cost:</b> the most opinionated, and it demotes "which CRM am I in" — which
+  may be wrong for Curtis and Scottie, who never see this screen anyway (build 854).
+  <b>Buys:</b> one place that answers "what do I do next", and it never shows an empty
+  compartment.</p>
+
+  <figure>
+    <figcaption>Landing</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="lnd">
+        <div class="eyebrow"><span class="dot"></span><span>Sunday 30 Aug</span><span class="ln"></span>
+          <span class="util"><span class="me">TD</span>
+            <button class="ub" aria-label="Settings">&#9881;</button>
+            <button class="ub" aria-label="Sign out">&#9099;</button></span>
+        </div>
+        <h1 class="mark">Good morning,<br><em>Theo.</em></h1>
+        <p class="stamp">7 things waiting &middot; nothing on the calendar today</p>
+
+        <div class="desk">
+          <div class="dhead"><span>Waiting on you</span><span>7</span></div>
+          <button class="drow" style="--acc:#3faa6d"><span class="tag"></span><span class="tx">
+            <span class="t1">Jacob — Habitat for Humanity</span>
+            <span class="t2">Bid was due 27 Jul &middot; $18,425 &middot; Dayton</span></span>
+            <span class="age hot">34d</span></button>
+          <button class="drow" style="--acc:#3faa6d"><span class="tag"></span><span class="tx">
+            <span class="t1">Kimberly Lawson — ReBuild</span>
+            <span class="t2">Bid was due 10 Aug &middot; not yet priced</span></span>
+            <span class="age hot">20d</span></button>
+          <button class="drow" style="--acc:#3faa6d"><span class="tag"></span><span class="tx">
+            <span class="t1">Willie Parson — ReBuild</span>
+            <span class="t2">Bid was due 11 Aug &middot; not yet priced</span></span>
+            <span class="age hot">19d</span></button>
+          <button class="drow" style="--acc:#d9282a;--acct:#e35c63"><span class="tag"></span><span class="tx">
+            <span class="t1">Maker Space Solutions LLC</span>
+            <span class="t2">State Farm &hellip;158W &middot; awaiting RCV — chase the carrier</span></span>
+            <span class="age hot">&#9679;</span></button>
+          <button class="drow" style="--acc:#e0762a"><span class="tag"></span><span class="tx">
+            <span class="t1">5 urgent punch-outs open</span>
+            <span class="t2">Jarrett Chenalt, Betty Mann, Kathy May, Rita Monigold</span></span>
+            <span class="age hot">5</span></button>
+          <button class="drow" style="--acc:#5590b5"><span class="tag"></span><span class="tx">
+            <span class="t1">2 signed estimates awaiting a contract</span>
+            <span class="t2">Retail &middot; ready to send</span></span>
+            <span class="age warn">2</span></button>
+          <button class="drow" style="--acc:#8b8b98"><span class="tag"></span><span class="tx">
+            <span class="t1">19 clients are filed under no CRM</span>
+            <span class="t2">AccuLynx imports — tap to sort them</span></span>
+            <span class="age warn">19</span></button>
+        </div>
+
+        <div class="doors">
+          <button style="--acc:#5590b5">Retail<small>23 clients</small></button>
+          <button style="--acc:#d9282a;--acct:#e35c63">Cardinal Truth<small>2 claims</small></button>
+          <button style="--acc:#3faa6d">Community<small>16 jobs</small></button>
+          <button style="--acc:#e0762a">Production<small>Board &amp; punch</small></button>
+          <button style="--acc:#e8544f">Sales Floor<small>The Coach</small></button>
+          <button style="--acc:#7fa6d6">Library<small>Code &amp; specs</small></button>
+        </div>
+        <div class="foot"><div class="pp">Every client, every photo, every document.<br><b>One source of truth.</b></div><button class="sk">Skip</button></div>
+      </div>
+    </div></div>
+  </figure>
+
+  <figure>
+    <figcaption>Retail home — a full red band, the sibling of community's emerald</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="app">
+        <div class="hd solidred"><span class="b">&#9776;</span><span class="nm">Retail</span><span class="b">&#43;</span></div>
+        <div class="appbody">
+          <p class="note"><b>Blast radius, stated up front.</b> Ten shared screens — Leads, Photos,
+          Reports, Gallery, Documents, Library, Quick Inspection, Address check, iTel — inherit
+          retail's header. A solid red band tints all of them too. That is either the point, or
+          the identity has to live below the header instead.</p>
+          <div class="card"><h3>Cardinal Pipeline &middot; all three CRMs, as the shipped home really counts</h3>
+            <div class="piperow">
+              <button class="pipebtn"><b>37</b><span>L</span></button>
+              <button class="pipebtn"><b>11</b><span>P</span></button>
+              <button class="pipebtn"><b>7</b><span>A</span></button>
+              <button class="pipebtn"><b>1</b><span>C</span></button>
+              <button class="pipebtn"><b>2</b><span>I</span></button>
+              <button class="pipebtn"><b>1</b><span>Closed</span></button>
+              <button class="pipebtn"><b>1</b><span>On&nbsp;Hold</span></button>
+            </div></div>
+          <div class="card"><h3>Work Schedule</h3>
+            <div class="ops">
+              <div class="o"><b style="background:#26639f">0</b><small>Completed<br>Today</small></div>
+              <div class="o"><b style="background:#7a4dc4">0</b><small>Jobs<br>Today</small></div>
+              <div class="o"><b style="background:#275936">0</b><small>30 Day<br>Outlook</small></div>
+            </div>
+              <p class="tiny">Circle inks are deepened here on purpose &mdash; the shipped #2f7fd0 / #8b5fd6
+              measure 4.14:1 / 4.46:1 under white ink, below the 4.5 floor. The build should carry the same fix.</p></div>
+          <div class="card"><h3>Activity — last 30 days</h3>
+            <div class="actstrip">
+              <div class="actbox"><span>New<br>Leads</span><b>42</b></div>
+              <div class="actbox"><span>Jobs<br>Approved</span><b>14</b></div>
+              <div class="actbox"><span>Jobs<br>Completed</span><b>7</b></div>
+              <div class="actbox"><span>Money<br>Collected</span><b>$0</b></div>
+              <div class="actbox"><span>Jobs<br>Invoiced</span><b>5</b></div>
+              <div class="actbox"><span>Jobs<br>Closed</span><b>2</b></div>
+            </div></div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+</section>
+
+<!-- ═══ DIRECTION 4 — THE SWITCHER ═══ -->
+<section class="dir" data-dir="4">
+  <h2><span>Direction 4</span>The Switcher — no front door; the portal lives in the header</h2>
+  <p class="why">This is what the concept render actually drew: no Landing at all. The header
+  carries <b style="color:#fff">Retail ⌄</b>, tapping it drops the portal switcher, and every row
+  in that dropdown is a door with a live state line — so "what's going on everywhere" is one tap
+  from any screen instead of a screen of its own. The dashboard is then <em>honestly</em>
+  retail-filtered. Today's home says Retail while counting all three CRMs — the concept's
+  "37 leads / 11 proposals" are the all-CRM totals; retail alone is 10 and 7. This direction is
+  the one that makes the label true. It also adopts the concept's grouped left nav on desktop
+  (CRM / Jobs / Sales / Finance / Resources / Reports / System &mdash; the concept's grouping, real destinations only), and fixes the AR
+  card so the big number is the money owed, not the chart's axis ceiling.
+  <b style="color:#fff">Refined after Theo's screenshots:</b> while the switcher is <em>open</em> the header stops
+  saying Retail and reads <b style="color:#fff">Cardinal</b> &mdash; an open picker claims no portal, 1087's rule &mdash;
+  and the open panel takes the Brief's editorial treatment: the greeting, the date, and the app's
+  own daily quote (the shipped landing already rotates 31 of them by day-of-year; today's really is
+  the Lincoln), so nothing the Landing did is lost when the Landing goes. Production is already a row
+  in the dropdown, with its punch count. The dashboard gains the 30-day calendar, fed by the same
+  <code>cacheAppts</code> window the outlook circle already reads, and <b style="color:#fff">keeps the shipped
+  home's Client Projects card</b> &mdash; Most Recent and Nearby, the two rows Theo asked to hold onto &mdash;
+  now honestly retail-filtered. <b style="color:#fff">The drawer menu stays.</b> The switcher replaces the Landing screen, not
+  the burger &mdash; the drawer keeps Settings, My Profile, the Owner section, Admin and the tools,
+  exactly as it is (the &#9776; is in both frames). Its one change: the "Landing" row repoints to
+  opening this panel, since there is no Landing screen to go to. On desktop the grouped sidebar is
+  the existing &ge;1100px rail regrouped, not a new mechanism.
+  <b style="color:#fff">The Vision suite keeps both of its doors.</b> The dropdown gains a
+  Presentation group &mdash; Showroom, Exterior Designer, Colors &mdash; plus Resource Library among the
+  modes, so nothing the Landing offered goes missing. And the showroom.* front door (the Vision
+  hub the tablet boots into) is untouched: it is a separate host-gated screen, deliberately split
+  from the CRM at 805/807, and deleting the CRM landing does not reach it.
+  Name for the open panel &mdash; numbered picks:
+  <b style="color:#fff">1. Cardinal. (shown)</b> &middot; 2. &ldquo;Where things stand&rdquo; as the title &middot; 3. &ldquo;Home Base&rdquo;.</p>
+  <p class="cost"><b>Cost:</b> deletes the Landing — the morning brief loses its full-screen
+  moment and the only all-CRM view becomes a dropdown behind one tap. Sign-in lands per role
+  (Production already lands on its hub, build 854). <b>Buys:</b> zero screens between opening the
+  app and working, the header always says where you are, and it is the closest to your
+  reviewer's picture. Note 1087 is not re-crossed: the Landing could not claim a portal because
+  it is where you choose one — here every screen genuinely is inside a portal.</p>
+
+  <figure>
+    <figcaption>The switcher, open — the Brief, one tap from any screen. The header stops claiming a portal while you choose.</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="app">
+        <div class="hd steel steelrule"><span class="b">&#9776;</span>
+          <button class="sw" aria-expanded="true">Cardinal <span class="chv">▾</span></button>
+          <span style="flex:1"></span><span class="b">&#43;</span></div>
+        <div class="sbhead">
+          <div class="sb-mark">Cardinal<em>.</em></div>
+          <p class="sb-greet">Good morning, <strong>Theo</strong>.</p>
+          <p class="sb-stamp">Sunday, August 30, 2026</p>
+          <blockquote class="sb-quote">
+            <p>&ldquo;Whatever you are, be a good one.&rdquo;</p>
+            <cite>Abraham Lincoln &middot; today&rsquo;s pick from the app&rsquo;s own 31-quote rotation</cite>
+          </blockquote>
+          <div class="sb-eyebrow"><span class="dot"></span><span>Where things stand</span><span class="ln"></span></div>
+        </div>
+        <div class="swmenu warm">
+          <button class="swrow" style="--acc:#5590b5"><span class="tag"></span><span class="tx">
+            <b>Retail</b><small><span class="warn">2 awaiting contract</span> &middot; 23 clients</small></span>
+            <span class="chk">✓</span></button>
+          <button class="swrow" style="--acc:#d9282a"><span class="tag"></span><span class="tx">
+            <b>Cardinal Truth</b><small><span class="hot">1 carrier to chase</span> &middot; 2 claims</small></span></button>
+          <button class="swrow" style="--acc:#3faa6d"><span class="tag"></span><span class="tx">
+            <b>Community</b><small><span class="hot">3 bids past due</span> &middot; 16 open</small></span></button>
+          <div class="swdiv"></div>
+          <button class="swrow" style="--acc:#e0762a"><span class="tag"></span><span class="tx">
+            <b>Production</b><small><span class="hot">5 urgent punch-outs</span> open</small></span></button>
+          <button class="swrow" style="--acc:#e8544f"><span class="tag"></span><span class="tx">
+            <b>Sales Floor</b><small>Objections, talk tracks, the Coach</small></span></button>
+          <button class="swrow" style="--acc:#7fa6d6"><span class="tag"></span><span class="tx">
+            <b>Resource Library</b><small>Building code, specs, manufacturer references</small></span></button>
+          <div class="swdiv"></div>
+          <div class="swgrp">Presentation</div>
+          <button class="swrow" style="--acc:#aab4c2"><span class="tag"></span><span class="tx">
+            <b>Showroom</b><small>Hand the tablet across the table &mdash; Showcase, Workmanship, The Walk</small></span></button>
+          <button class="swrow" style="--acc:#caa25a"><span class="tag"></span><span class="tx">
+            <b>Exterior Designer</b><small>Their house, your materials</small></span></button>
+          <button class="swrow" style="--acc:#EC008C"><span class="tag"></span><span class="tx">
+            <b>Colors</b><small>Owens Corning shingle colours &amp; our roofs</small></span></button>
+          <div class="swdiv"></div>
+          <button class="swrow" style="--acc:#8b8b98"><span class="tag"></span><span class="tx">
+            <b>Needs sorting</b><small><span class="warn">19 clients</span> filed under no CRM</small></span></button>
+        </div>
+        <div class="skel"><div class="sb1"></div><div class="sb2"></div></div>
+      </div>
+    </div></div>
+  </figure>
+
+  <figure>
+    <figcaption>The dashboard, closed — retail-only numbers, the 30-day calendar, and (on desktop) the grouped nav</figcaption>
+    <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
+      <div class="app">
+        <div class="hd steel steelrule"><span class="b">&#9776;</span>
+          <button class="sw">Retail <span class="chv">▼</span></button>
+          <span style="flex:1"></span><span class="b">&#43;</span></div>
+        <div class="d4wrap">
+          <nav class="snav">
+            <div class="g">CRM</div>
+            <button class="on">Dashboard</button><button>Clients</button><button>Leads &amp; Jobs</button><button>Photos</button>
+            <div class="g">Jobs</div>
+            <button>Production Board</button><button>Crew Dispatch</button><button>Schedule Board</button><button>Punch &amp; Repairs</button>
+            <div class="g">Sales</div>
+            <button>Estimates</button><button>Sales Floor</button><button>Storm Data</button><button>Objection Coach</button>
+            <div class="g">Finance</div>
+            <button>Invoices &amp; AR</button><button>Financing Rates</button><button>Commissions</button>
+            <div class="g">Resources</div>
+            <button>Pricing Catalog</button><button>Documents</button><button>Crews</button><button>Library</button>
+            <div class="g">Reports</div>
+            <button>Reports</button><button>Analytics</button>
+            <div class="g">System</div>
+            <button>Settings</button><button>Team Directory</button>
+          </nav>
+          <div class="appbody">
+            <div class="card"><h3>Retail pipeline &middot; retail only, not all-CRM</h3>
+              <div class="statrow">
+                <button class="pipebtn"><b>10</b><span>Leads</span></button>
+                <button class="pipebtn"><b>7</b><span>Prospects</span></button>
+                <button class="pipebtn"><b>3</b><span>Approved</span></button>
+                <button class="pipebtn"><b>1</b><span>Completed</span></button>
+                <button class="pipebtn"><b>2</b><span>Invoiced</span></button>
+                <button class="pipebtn"><b>0</b><span>Closed</span></button>
+                <button class="pipebtn"><b>0</b><span>On Hold</span></button>
+              </div></div>
+            <div class="card"><h3>Accounts Receivable</h3>
+              <div class="arbig">$24,471<span class="lbl">outstanding across 2 invoices &middot; nothing collected yet</span></div>
+              <div class="arrow2"><span>Dan Thompson &middot; $11,921</span><span>Vandalyn Robinson &middot; $12,550</span></div>
+              <button class="bmore">Invoices &amp; AR &rsaquo;</button>
+              <p class="tiny">The big number is the money owed &mdash; the shipped card leads with the chart's
+              axis ceiling ("$50K"), which is what the concept misread as the balance.</p></div>
+            <div class="card"><h3>Next 30 days &middot; Aug 30 &ndash; Sep 28</h3>
+              <div class="cal30"><span class="ch">S</span><span class="ch">M</span><span class="ch">T</span><span class="ch">W</span><span class="ch">T</span><span class="ch">F</span><span class="ch">S</span><span class="cd today">30</span><span class="cd">31</span><span class="cd">1</span><span class="cd">2</span><span class="cd">3</span><span class="cd">4</span><span class="cd">5</span><span class="cd">6</span><span class="cd">7</span><span class="cd">8</span><span class="cd">9</span><span class="cd">10</span><span class="cd">11</span><span class="cd">12</span><span class="cd">13</span><span class="cd">14</span><span class="cd">15</span><span class="cd">16</span><span class="cd">17</span><span class="cd">18</span><span class="cd">19</span><span class="cd">20</span><span class="cd">21</span><span class="cd">22</span><span class="cd">23</span><span class="cd">24</span><span class="cd">25</span><span class="cd">26</span><span class="cd">27</span><span class="cd">28</span><span class="cd"></span><span class="cd"></span><span class="cd"></span><span class="cd"></span><span class="cd"></span></div>
+              <p class="tiny">Nothing booked in the next 30 days &mdash; this is the Work Schedule circle&rsquo;s 0, drawn out day by day.</p>
+              <button class="bmore">Schedule Board &rsaquo;</button></div>
+            <div class="card"><h3>Client Projects</h3>
+              <div class="subh">Most Recent</div>
+              <button class="leadrow"><span class="av">JC</span><span class="nm2">Jarrett Chenalt</span><span class="st">Completed</span></button>
+              <button class="leadrow"><span class="av">JA</span><span class="nm2">Jim Arnett</span><span class="st">Prospect</span></button>
+              <button class="leadrow"><span class="av">MD</span><span class="nm2">Mark Diamond</span><span class="st">Approved</span></button>
+              <div class="subh">Nearby</div>
+              <button class="leadrow"><span class="av">BM</span><span class="nm2">Betty Mann</span><span class="st">45417</span></button>
+              <button class="leadrow"><span class="av">YN</span><span class="nm2">Yolanda Newsome</span><span class="st">45417</span></button>
+              <button class="leadrow"><span class="av">KG</span><span class="nm2">Kim Guy</span><span class="st">45420</span></button>
+              <p class="tiny">Kept from the shipped home on Theo&rsquo;s word &mdash; and now retail-filtered:
+              Kimberly Lawson, top of the shipped Most Recent row, is a Community job, so here she
+              lives under Community&rsquo;s door instead. Nearby ranks by distance from 45414, the
+              shipped rule.</p>
+              <button class="bmore">See all 23 retail clients &rsaquo;</button></div>
+            <div class="card"><h3>Today</h3>
+              <p class="tiny" style="margin:0">Nothing on the calendar. <b style="color:var(--aink)">5 urgent punch-outs</b> are open &mdash; Jarrett Chenalt, Betty Mann, Kathy May, Rita Monigold.</p></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </figure>
+</section>
+
+<script>
+(function(){
+  'use strict';
+  function press(seg, val, attr){
+    seg.querySelectorAll('button').forEach(function(b){
+      b.setAttribute('aria-pressed', String(b.getAttribute(attr) === val));
+    });
+  }
+  var shells = function(){ return document.querySelectorAll('.shell'); };
+  document.getElementById('segDir').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    var d = b.getAttribute('data-d');
+    press(this, d, 'data-d');
+    document.querySelectorAll('section.dir').forEach(function(s){
+      s.hidden = s.getAttribute('data-dir') !== d;
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.getElementById('segT').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    var t = b.getAttribute('data-t');
+    press(this, t, 'data-t');
+    shells().forEach(function(s){ s.setAttribute('data-t', t); });
+  });
+  document.getElementById('segW').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    var w = b.getAttribute('data-w');
+    press(this, w, 'data-w');
+    shells().forEach(function(s){ s.setAttribute('data-w', w); });
+  });
+  /* boot: tab mode. Where scripts are stripped (static file viewers), none of
+     this runs and the markup above stands on its own: four sections stacked. */
+  document.querySelectorAll('section.dir').forEach(function(sec){
+    sec.hidden = sec.getAttribute('data-dir') !== '1';
+  });
+  var hint = document.getElementById('pvNoJs');
+  if(hint) hint.hidden = true;
+})();
+</script>
+</body>
+</html>
