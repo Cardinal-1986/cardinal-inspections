@@ -3940,7 +3940,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1176<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1177<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12238,14 +12238,14 @@ function renderAcxOverview(){
   var _acxTr = ljTrades(pr);
   html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('tag') + 'Job Details</h3>' +
   '<div class="acxsec acxjdsec"><div class="acxbody"><div class="ackv acxjd">' +
-    '<span>Job Category</span><div class="acxsl"><select class="acxsel" id="acxCat">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
-    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
+    '<span>Job Category</span><div class="acxsl"><select class="acxsel" id="acxCat" aria-label="Job Category">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
+    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt" aria-label="Work Type">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
     '<span>Trade Type</span><div class="acxsl"><button type="button" class="acxsel acxtrbtn" id="acxTrBtn" aria-expanded="' + (acxTrOpen ? 'true' : 'false') + '">' +
       (_acxTr.length ? esc(_acxTr.join(', ')) : '\u2014') + '</button></div>' +
     '<div class="acxtrs" id="acxTrPanel"' + (acxTrOpen ? '' : ' hidden') + '>' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
       return '<label><input type="checkbox" class="cbx acxTr" value="' + t + '"' + (_acxTr.indexOf(t) !== -1 ? ' checked' : '') + '><span>' + t + '</span></label>';
     }).join('') + '</div>' +
-    '<span>Lead Source</span><div class="acxsl"><select class="acxsel" id="acxSrc">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
+    '<span>Lead Source</span><div class="acxsl"><select class="acxsel" id="acxSrc" aria-label="Lead Source">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
   '</div></div></div>';
   /* ---- google review (dark card) ---- */
   var rvAt = ck.review_requested_at, rvVia = ck.review_via;
@@ -12276,7 +12276,7 @@ function renderAcxOverview(){
      card, and there is no sibling to key off the way the trade chips could. */
   '<div class="acxsec acxassignsec"><div class="acxbody dbassign">' +
     '<span class="dbrep">&#128100; <b>' + esc(rptRepName(rep) || rep || 'Unassigned') + '</b></span>' +
-    (isAdminUser() ? '<select id="dbAssignSel" class="acxsel" style="margin-left:auto;">' +
+    (isAdminUser() ? '<select id="dbAssignSel" class="acxsel" aria-label="Reassign this job to another rep" style="margin-left:auto;">' +
       '<option value="">reassign\u2026</option>' +
       TEAM_ROSTER.map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
     '</select>' : '') +
@@ -42582,6 +42582,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1177, d: '2026-08-30', t: 'Sixteen controls get their names back', s: 'Sixteen form controls had no name attached to them in the markup \u2014 four dropdowns on the client card (Job Category, Work Type, Lead Source and the reassign picker), the whole Crews document upload row, the Estimate Library\u2019s Status, Valid Through, Deposit %, Discount and Payment Instructions fields, and the supplement Outcome picker. Each now carries the name that was already printed beside it. Nothing moved on screen: this is what voice control and a screen reader read out, and fifteen of the sixteen are what the new accessibility gate found on its first run.' },
   { b: 1176, d: '2026-08-30', t: 'The header puts New and Search back on the right', s: 'On a phone wider than 430px every header control had packed against the burger and the centred portal name was landing on top of the last one. The cause was build 1173 retiring the home button: it was the thing carrying the margin that held New and Search over on the right, and nothing took that job over. They are back on the right, together, with the name clear of them. Insurance also had TWO light/dark buttons — its own moon in the header, painting near-black on a near-black bar so it looked like an empty box, plus the retail one floating over the pipeline. The moon now uses the header’s own accent so you can see it, and the floating one no longer appears inside Insurance.' },
   { b: 1175, d: '2026-08-30', t: 'The Vision hub\u2019s two dim lines', s: 'Two inks on the Vision hub sat under the readability floor and the new empty-book sweep measured them: the small \u201cCARDINAL\u201d word above the title (3.44:1 \u2014 brand red is built for light grounds, not near-black) and the Studio \u2192 promote \u2192 Showroom line (3.24:1). The word now uses the app\u2019s approved lighter red and the flow line uses the hub\u2019s own muted grey \u2014 5.55 and 7.41, computed, both themes N/A (the hub is Blackout by design). The 27 Aug header-audit rows for the \u25be and \uFF0B were re-measured and are already settled at 1116 \u2014 nothing re-fixed.' },
   { b: 1174, d: '2026-08-30', t: 'The drawer stops doubling its doors', s: 'Two catches from the new duplicate-door check, fixed at source: the people icon in the drawer header is retired (it duplicated the \u201cSwitch portal\u201d row \u2014 both have opened the same Front Door since 1171), and Community Partners stops being added to the menu twice \u2014 the old second copy was merely hidden, which papers over a duplicate rather than removing it. One door per destination.' },
@@ -48568,7 +48569,7 @@ estNavHtml(s) +
 '<div class="cr-est-row3">' +
 '<div>' +
 '<label>Status</label>' +
-'<select data-f="status">' +
+'<select data-f="status" aria-label="Status">' +
 STATUSES.map(function(o){
 return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '>' + o.label + '</option>';
 }).join('') +
@@ -48576,11 +48577,11 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 '</div>' +
 '<div>' +
 '<label>Valid Through</label>' +
-'<input type="date" data-f="valid_through" value="' + esc(s.valid_through) + '" />' +
+'<input type="date" data-f="valid_through" aria-label="Valid through" value="' + esc(s.valid_through) + '" />' +
 '</div>' +
 '<div>' +
 '<label>Deposit %</label>' +
-'<input type="number" data-f="deposit_pct" value="' + esc(s.deposit_pct) + '" min="0" max="100" step="0.5" inputmode="decimal" />' +
+'<input type="number" data-f="deposit_pct" aria-label="Deposit percent" value="' + esc(s.deposit_pct) + '" min="0" max="100" step="0.5" inputmode="decimal" />' +
 '</div>' +
 '</div>' +
 '<div class="cr-est-items-head" data-navsec="items">' +
@@ -48611,7 +48612,7 @@ renderTotals(t) +
 '<label>Scope Notes (optional)</label>' +
 '<textarea data-f="notes" placeholder="Additional details for the crew or homeowner\u2026">' + esc(s.notes) + '</textarea>' +
 '<label>Payment Instructions</label>' +
-'<textarea data-f="payment_instructions">' + esc(s.payment_instructions) + '</textarea>' +
+'<textarea data-f="payment_instructions" aria-label="Payment Instructions">' + esc(s.payment_instructions) + '</textarea>' +
 '</div>' +
 '</div>';
 wire();
@@ -49075,13 +49076,13 @@ return '<div class="cr-est-totals" data-slot="totals">' +
 '<span class="lbl">Subtotal</span>' +
 '<span class="val" data-t="subtotal">' + money(t.subtotal) + '</span>' +
 '<span class="lbl">Discount</span>' +
-'<span class="val"><input type="number" data-f="discount" value="' + (Number(state.discount) || 0) + '" step="0.01" min="0" inputmode="decimal" /></span>' +
+'<span class="val"><input type="number" data-f="discount" aria-label="Discount" value="' + (Number(state.discount) || 0) + '" step="0.01" min="0" inputmode="decimal" /></span>' +
 '<span class="rule"></span>' +
 '<span class="grand-lbl">Total</span>' +
 '<span class="grand-val" data-t="total">' + money(t.total) + '</span>' +
 '<div class="deposit">' +
 '<span style="font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#c8202e;">Deposit</span>' +
-'<input type="number" class="pct" data-f="deposit_pct" value="' + t.deposit_pct + '" min="0" max="100" step="0.5" />' +
+'<input type="number" class="pct" data-f="deposit_pct" aria-label="Deposit percent" value="' + t.deposit_pct + '" min="0" max="100" step="0.5" />' +
 '<span class="amt" data-t="deposit">' + money(t.deposit) + '</span>' +
 '</div>' +
 '</div>';
@@ -57787,7 +57788,7 @@ modal.innerHTML =
 '<textarea data-f="notes" placeholder="Missing ridge vent, ice &amp; water to code, ' +
 'drip edge \u2014 photos attached">' + esc(c.supplement_notes || '') + '</textarea>'
 : '<label>Outcome</label>' +
-'<select data-f="status">' +
+'<select data-f="status" aria-label="Outcome">' +
 '<option value="approved">Approved in full</option>' +
 '<option value="partial">Approved in part</option>' +
 '<option value="denied">Denied</option>' +
@@ -71435,14 +71436,14 @@ function complianceHtml(c){
   return out +
     '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
     '<div class="crw-grid2">' +
-      '<div><label>Document</label><select data-u="kind">' +
+      '<div><label>Document</label><select data-u="kind" aria-label="Document type">' +
         DOCS.map(function(d){ return '<option value="' + d[0] + '">' + d[1] + '</option>'; }).join('') +
       '</select></div>' +
-      '<div><label>Expires (leave blank for a W-9)</label><input type="date" data-u="expires_on"></div>' +
-      '<div><label>Carrier</label><input type="text" data-u="carrier"></div>' +
-      '<div><label>Policy #</label><input type="text" data-u="policy_number"></div>' +
+      '<div><label>Expires (leave blank for a W-9)</label><input type="date" data-u="expires_on" aria-label="Expires (leave blank for a W-9)"></div>' +
+      '<div><label>Carrier</label><input type="text" data-u="carrier" aria-label="Carrier"></div>' +
+      '<div><label>Policy #</label><input type="text" data-u="policy_number" aria-label="Policy number"></div>' +
       '<div><label>Limits</label><input type="text" data-u="coverage_limits" placeholder="$1M / $2M"></div>' +
-      '<div><label>File</label><input type="file" data-u="file" accept=".pdf,.png,.jpg,.jpeg,.heic"></div>' +
+      '<div><label>File</label><input type="file" data-u="file" accept=".pdf,.png,.jpg,.jpeg,.heic" aria-label="File"></div>' +
     '</div>' +
     '<button class="crw-btn primary" style="margin-top:12px" data-act="upload">Upload</button>' +
     '<span class="crw-mut" data-upmsg style="margin-left:10px;font-size:12px"></span>' +

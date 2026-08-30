@@ -30994,3 +30994,27 @@ before push.
 - Gates: check_build green (1175→1176, marker + negative control) · **gate_1176 14/14, RED 7/14 on
   the 1175 control** (packed-left group, title overlapping, and "got 2" light/dark controls) ·
   regressions gate_1171 9/9, gate_1172 15/15, gate_1173 9/9, gate_1174 7/7, gate_1175 5/5.
+
+## Build 1177 — sixteen controls get their names back
+- The gate_a11y baseline's fifteen real findings, fixed at source: four client-card dropdowns
+  (`#acxCat`, `#acxWt`, `#acxSrc`, `#dbAssignSel`), the whole Crews compliance-vault upload row
+  (`kind`, `expires_on`, `carrier`, `policy_number`, `file`) and six Estimate Library fields
+  (`status`, `valid_through`, `deposit_pct` ×2, `discount`, `payment_instructions`).
+- **Each aria-label is the text ALREADY PRINTED beside the control** — no wording invented, and
+  nothing moved on screen. Crews and the Estimate Library already had real `<label>` elements; they
+  simply were never associated (no `for`, no wrapping), which is why axe scored them nameless while
+  the screen looks perfectly labelled. `aria-label` over a `for`/`id` pass on purpose: zero layout
+  risk on a 5 MB file, and a bare `<label>` gives no click-to-focus either, so nothing is lost.
+  A proper `for`/`id` association remains the fuller fix and is not done here.
+- ⚠️ **SIXTEEN, not fifteen.** `'<select data-f="status">'` exists in TWO modules — the Estimate
+  Library and the supplement Outcome picker — and `pl.sub` aborted on the ambiguity rather than
+  patching the wrong one. Only the Library one is in the gate's baseline, because the sentinel walk
+  never reaches the supplement Outcome screen. Same defect, invisible to the instrument: **the walk
+  is the coverage limit, and a rule reading zero means zero ON THE SCREENS IT VISITS.** Both fixed.
+- ⚠️ A second anchor failed for the same family of reason — the discount input is preceded by
+  `<span class="val">` inside its own JS string, so an anchor starting at `<input` matched nothing.
+  Abort-before-write caught both; `pl.context()` gave the real text.
+- Gates: check_build green (1176→1177, marker + negative control) · **gate_a11y GREEN with
+  `select-name 6 → 0` and `label 9 → 0`** — both critical rules eliminated, then rebaselined so the
+  ratchet now catches the very next nameless control · regressions gate_1171 9/9, gate_1172 15/15,
+  gate_1173 9/9, gate_1174 7/7, gate_1175 5/5, gate_1176 14/14 · gate_types GREEN · gate_dupes GREEN.
