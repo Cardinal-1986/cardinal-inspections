@@ -3940,7 +3940,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1177<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1178<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42582,6 +42582,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1178, d: '2026-08-30', t: 'The header names the portal you are actually in', s: 'Signing in could show the header and colours of whichever portal you used last, sitting over the retail dashboard \u2014 a green Community bar above retail numbers. This was fixed once before, but that fix watched the old Landing screen, and when the Landing was retired the check quietly stopped working and nobody could tell. The header now reads the dashboard itself, so the name at the top and the numbers underneath always agree. Switching portals still works exactly as before: the community dashboard still says Community.' },
   { b: 1177, d: '2026-08-30', t: 'Sixteen controls get their names back', s: 'Sixteen form controls had no name attached to them in the markup \u2014 four dropdowns on the client card (Job Category, Work Type, Lead Source and the reassign picker), the whole Crews document upload row, the Estimate Library\u2019s Status, Valid Through, Deposit %, Discount and Payment Instructions fields, and the supplement Outcome picker. Each now carries the name that was already printed beside it. Nothing moved on screen: this is what voice control and a screen reader read out, and fifteen of the sixteen are what the new accessibility gate found on its first run.' },
   { b: 1176, d: '2026-08-30', t: 'The header puts New and Search back on the right', s: 'On a phone wider than 430px every header control had packed against the burger and the centred portal name was landing on top of the last one. The cause was build 1173 retiring the home button: it was the thing carrying the margin that held New and Search over on the right, and nothing took that job over. They are back on the right, together, with the name clear of them. Insurance also had TWO light/dark buttons — its own moon in the header, painting near-black on a near-black bar so it looked like an empty box, plus the retail one floating over the pipeline. The moon now uses the header’s own accent so you can see it, and the floating one no longer appears inside Insurance.' },
   { b: 1175, d: '2026-08-30', t: 'The Vision hub\u2019s two dim lines', s: 'Two inks on the Vision hub sat under the readability floor and the new empty-book sweep measured them: the small \u201cCARDINAL\u201d word above the title (3.44:1 \u2014 brand red is built for light grounds, not near-black) and the Studio \u2192 promote \u2192 Showroom line (3.24:1). The word now uses the app\u2019s approved lighter red and the flow line uses the hub\u2019s own muted grey \u2014 5.55 and 7.41, computed, both themes N/A (the hub is Blackout by design). The 27 Aug header-audit rows for the \u25be and \uFF0B were re-measured and are already settled at 1116 \u2014 nothing re-fixed.' },
@@ -62564,6 +62565,31 @@ if(sharedScreen()) return 'production';
    doctrine warns about. */
 var lv1087 = document.getElementById('landingView');
 if(lv1087 && lv1087.style.display !== 'none') return 'retail';
+/* 1178 — ⚠ THE 1087 GUARD ABOVE HAS BEEN DEAD SINCE 1165, AND THIS IS THE SAME
+   BUG REPORTED A SECOND TIME. Theo, 30 Aug: "The community header appeared as I
+   logged in." At 1087 it was insurance; the fix keyed on #landingView being
+   visible, because the Landing WAS the portal picker and a picker cannot sit
+   inside a portal. Then 1165 retired the Landing — it is now display:none
+   forever — so the guard stopped being able to fire and nothing announced that.
+   A guard that looks right and can never be satisfied: the 567/569 class,
+   verbatim.
+
+   Reproduced at 440px with the sticky portal set to community and a fresh
+   sign-in: dataset.crm 'retail', dataset.crmHead 'community', #brandTitle
+   "Community" — a Community header over the retail board.
+
+   The replacement keys on the screen that REPLACED the landing as the place you
+   arrive: the dashboard. There the board reads crmNow(), so the header must
+   read it too or the two disagree — which is the entire substance of both
+   reports. Everywhere else 754's sticky behaviour is untouched, deliberately:
+   shared screens (Leads, Photos, Reports) still follow the portal, and that is
+   the design working.
+
+   ⚠ This does NOT pin the header to retail. After a Front Door pick, crmNow()
+   is the chosen portal and the dashboard is that portal's board, so the header
+   still says Community on the community dashboard. Measured both ways. */
+var mv1178 = document.getElementById('mainView');
+if(mv1178 && mv1178.style.display !== 'none') return crmNow();
 return stickyCrm();
 }
 function skin(){
