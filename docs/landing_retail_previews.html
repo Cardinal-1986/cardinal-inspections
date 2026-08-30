@@ -252,6 +252,37 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
 .leadrow .st{flex:0 0 auto;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;
              text-transform:uppercase;color:var(--amute);border:1px solid var(--aline);
              border-radius:999px;padding:5px 9px}
+/* D4 refinement: the open switcher takes the Brief's editorial treatment.
+   Landing tokens (--l*) inside the app frame — they flip with the theme. */
+.sbhead{margin:10px 12px 0;padding:16px 16px 13px;background:var(--lcard);
+        border:1px solid var(--lline);border-bottom:0;border-radius:12px 12px 0 0}
+.sb-mark{font:700 25px/1 Georgia,'Times New Roman',serif;letter-spacing:-.02em;color:var(--link)}
+.sb-mark em{font-style:normal;color:var(--redt)}
+.sb-greet{margin:10px 0 0;font:400 18px/1.3 Georgia,serif;color:var(--link)}
+.sb-greet strong{font-weight:700;color:var(--redt)}
+.sb-stamp{margin:5px 0 0;font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
+          text-transform:uppercase;color:var(--lmute)}
+.sb-quote{margin:13px 0 0;padding:9px 0 9px 14px;border-left:2px solid var(--red)}
+.sb-quote p{margin:0;font:400 14.5px/1.45 Georgia,serif;color:var(--link)}
+.sb-quote cite{display:block;margin-top:6px;font:600 11px/1 ui-monospace,Menlo,monospace;
+               letter-spacing:.12em;text-transform:uppercase;color:var(--lmute);font-style:normal}
+.sb-eyebrow{display:flex;align-items:center;gap:9px;margin:15px 0 0;
+            font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;
+            text-transform:uppercase;color:var(--lmute)}
+.sb-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red)}
+.sb-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}
+.swmenu.warm{margin-top:0;border-radius:0 0 12px 12px;border-top:0;
+             background:var(--lcard);border-color:var(--lline)}
+.swmenu.warm .swrow{border-top-color:var(--lline);color:var(--link)}
+.swmenu.warm .swrow small{color:var(--lmute)}
+.swmenu.warm .swdiv{background:var(--lline)}
+/* D4: the 30-day calendar — static HTML, no scripts, honest zero-state */
+.cal30{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:4px}
+.cal30 .ch{font:700 11px/1 ui-monospace,Menlo,monospace;color:var(--amute);
+           text-align:center;padding:4px 0 7px}
+.cal30 .cd{font:600 11.5px/30px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;
+           color:var(--amute);text-align:center;height:30px}
+.cal30 .cd.today{color:#fff;background:#c8202e;border-radius:50%;width:30px;margin:0 auto}
 </style>
 </head>
 <body>
@@ -618,7 +649,15 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
   "37 leads / 11 proposals" are the all-CRM totals; retail alone is 10 and 7. This direction is
   the one that makes the label true. It also adopts the concept's grouped left nav on desktop
   (CRM / Jobs / Sales / Finance / Resources / Reports / System &mdash; the concept's grouping, real destinations only), and fixes the AR
-  card so the big number is the money owed, not the chart's axis ceiling.</p>
+  card so the big number is the money owed, not the chart's axis ceiling.
+  <b style="color:#fff">Refined after Theo's screenshots:</b> while the switcher is <em>open</em> the header stops
+  saying Retail and reads <b style="color:#fff">Cardinal</b> &mdash; an open picker claims no portal, 1087's rule &mdash;
+  and the open panel takes the Brief's editorial treatment: the greeting, the date, and the app's
+  own daily quote (the shipped landing already rotates 31 of them by day-of-year; today's really is
+  the Lincoln), so nothing the Landing did is lost when the Landing goes. Production is already a row
+  in the dropdown, with its punch count. The dashboard gains the 30-day calendar, fed by the same
+  <code>cacheAppts</code> window the outlook circle already reads. Name for the open panel &mdash; numbered picks:
+  <b style="color:#fff">1. Cardinal. (shown)</b> &middot; 2. &ldquo;Where things stand&rdquo; as the title &middot; 3. &ldquo;Home Base&rdquo;.</p>
   <p class="cost"><b>Cost:</b> deletes the Landing — the morning brief loses its full-screen
   moment and the only all-CRM view becomes a dropdown behind one tap. Sign-in lands per role
   (Production already lands on its hub, build 854). <b>Buys:</b> zero screens between opening the
@@ -627,13 +666,23 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
   it is where you choose one — here every screen genuinely is inside a portal.</p>
 
   <figure>
-    <figcaption>The switcher, open — every row is a door with a state line</figcaption>
+    <figcaption>The switcher, open — the Brief, one tap from any screen. The header stops claiming a portal while you choose.</figcaption>
     <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
       <div class="app">
         <div class="hd steel steelrule"><span class="b">&#9776;</span>
-          <button class="sw" aria-expanded="true">Retail <span class="chv">▼</span></button>
+          <button class="sw" aria-expanded="true">Cardinal <span class="chv">▾</span></button>
           <span style="flex:1"></span><span class="b">&#43;</span></div>
-        <div class="swmenu">
+        <div class="sbhead">
+          <div class="sb-mark">Cardinal<em>.</em></div>
+          <p class="sb-greet">Good morning, <strong>Theo</strong>.</p>
+          <p class="sb-stamp">Sunday, August 30, 2026</p>
+          <blockquote class="sb-quote">
+            <p>&ldquo;Whatever you are, be a good one.&rdquo;</p>
+            <cite>Abraham Lincoln &middot; today&rsquo;s pick from the app&rsquo;s own 31-quote rotation</cite>
+          </blockquote>
+          <div class="sb-eyebrow"><span class="dot"></span><span>Where things stand</span><span class="ln"></span></div>
+        </div>
+        <div class="swmenu warm">
           <button class="swrow" style="--acc:#5590b5"><span class="tag"></span><span class="tx">
             <b>Retail</b><small><span class="warn">2 awaiting contract</span> &middot; 23 clients</small></span>
             <span class="chk">✓</span></button>
@@ -656,7 +705,7 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
   </figure>
 
   <figure>
-    <figcaption>The dashboard, closed — retail-only numbers under a Retail header; desktop adds the grouped nav</figcaption>
+    <figcaption>The dashboard, closed — retail-only numbers, the 30-day calendar, and (on desktop) the grouped nav</figcaption>
     <div class="scroller"><div class="shell" data-t="dark" data-w="phone">
       <div class="app">
         <div class="hd steel steelrule"><span class="b">&#9776;</span>
@@ -696,6 +745,10 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
               <button class="bmore">Invoices &amp; AR &rsaquo;</button>
               <p class="tiny">The big number is the money owed &mdash; the shipped card leads with the chart's
               axis ceiling ("$50K"), which is what the concept misread as the balance.</p></div>
+            <div class="card"><h3>Next 30 days &middot; Aug 30 &ndash; Sep 28</h3>
+              <div class="cal30"><span class="ch">S</span><span class="ch">M</span><span class="ch">T</span><span class="ch">W</span><span class="ch">T</span><span class="ch">F</span><span class="ch">S</span><span class="cd today">30</span><span class="cd">31</span><span class="cd">1</span><span class="cd">2</span><span class="cd">3</span><span class="cd">4</span><span class="cd">5</span><span class="cd">6</span><span class="cd">7</span><span class="cd">8</span><span class="cd">9</span><span class="cd">10</span><span class="cd">11</span><span class="cd">12</span><span class="cd">13</span><span class="cd">14</span><span class="cd">15</span><span class="cd">16</span><span class="cd">17</span><span class="cd">18</span><span class="cd">19</span><span class="cd">20</span><span class="cd">21</span><span class="cd">22</span><span class="cd">23</span><span class="cd">24</span><span class="cd">25</span><span class="cd">26</span><span class="cd">27</span><span class="cd">28</span><span class="cd"></span><span class="cd"></span><span class="cd"></span><span class="cd"></span><span class="cd"></span></div>
+              <p class="tiny">Nothing booked in the next 30 days &mdash; this is the Work Schedule circle&rsquo;s 0, drawn out day by day.</p>
+              <button class="bmore">Schedule Board &rsaquo;</button></div>
             <div class="card"><h3>Recent retail leads</h3>
               <button class="leadrow"><span class="av">JC</span><span class="nm2">Jarrett Chenalt</span><span class="st">Completed</span></button>
               <button class="leadrow"><span class="av">JA</span><span class="nm2">Jim Arnett</span><span class="st">Prospect</span></button>
