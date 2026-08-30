@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1161<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1162<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42453,6 +42453,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1162, d: '2026-08-30', t: 'The Appointment closes \u2014 options and signature on the tablet', s: 'The visit now ends where it happens. Two steps join the running order: Options shows the job\u2019s published Good / Better / Best sheet full-screen, and Sign lists the job\u2019s paperwork \u2014 pick a document and it opens with its own Accept & Sign, the same secure page a client signs on their own phone, so the homeowner signs with a finger right on the tablet and the rep is notified the moment it lands. The signature can only land on the document that is open on the screen. Nothing signs that never could: documents without a signature block say so and open for review. Prepare the estimate, contract and options sheet at the office; the appointment finds them by itself.' },
   { b: 1161, d: '2026-08-30', t: 'The Appointment \u2014 the visit, in order', s: 'One tile on the Vision hub now runs the whole in-home visit as a sequence: pick the job, then their roof (The Walk, hands-off showroom mode), what good work looks like beside bad (Hall of Fame), why Cardinal, and their own house wearing your materials \u2014 approved visualizations only, with the shingle colour wall one tap away. A small bar at the bottom of the screen carries the steps: next, back, jump, end. Nothing here is new content \u2014 it is the screens the app already had, played in the right order so a rep never hunts for the next door in front of a homeowner. Options and signing join the sequence next.' },
   { b: 1160, d: '2026-08-30', t: 'Why Cardinal \u2014 a screen the client can read', s: 'Every client-facing screen we had was about their roof. This one is about Cardinal: locally owned in Dayton, licensed and insured, we pull the permit, magnetic sweep every job; the Owens Corning Preferred Contractor status and what it lets us register; the full warranty ladder rather than one number \u2014 Standard, System Protection and Preferred Protection side by side, with the honest note that the workmanship years are the ones that matter; what actually goes on the roof (full tear-off, sheathing priced per sheet up front, ice and water, synthetic, new boots, ventilation); and their three-day right to cancel under ORC 1345.23, stated before they ask. It is on the Vision hub beside Presentations and Colors. The facts are the Sales Floor Proof pane\u2019s, refaced from the rep\u2019s voice into the homeowner\u2019s \u2014 nothing new was invented.' },
   { b: 1159, d: '2026-08-30', t: 'The presentation doors a rep actually uses', s: 'Three doors that existed but could not be reached from where you stand at a kitchen table. The Pop-Up Roof now has a tile on the home screen and on the Vision hub \u2014 until now the book was reachable only from the Sales Floor or by typing the presentation address, so on a showroom tablet it could not be opened at all. Its tile had been fully styled since build 761 and the markup was never written. And the Designer tile, opened from the Vision hub, now lands on Present \u2014 approved renders, one tap \u2014 instead of Prep, the office workbench for queueing renders. Opened from the ordinary home screen it still lands on Prep, which is the right screen there.' },
@@ -85967,6 +85968,18 @@ window.CardinalWhy = Object.assign(window.CardinalWhy || {}, {
   display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;}
 #cr-appt .ap-light.on{display:flex;}
 #cr-appt .ap-light img{max-width:100%;max-height:92vh;border-radius:10px;}
+/* 1162: a shared document fills the step, and stops 92px short of the
+   bottom so the share page's own fixed Accept & Sign bar (csBar,
+   bottom:0 INSIDE the iframe viewport) lands above the rail instead of
+   underneath it. The wrap loses its padding for these steps. */
+#cr-appt .ap-wrap-doc{max-width:none;padding:14px 14px 0;height:100%;box-sizing:border-box;
+  display:flex;flex-direction:column;}
+#cr-appt .ap-wrap-doc .ap-h{font-size:clamp(21px,3.4vw,28px);margin:6px 0 4px;}
+#cr-appt .ap-wrap-doc .ap-sub{margin:0 0 10px;}
+#cr-appt .ap-doc{flex:1;min-height:0;margin:4px 0 92px;border-radius:12px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.16);background:#fff;}
+#cr-appt .ap-doc iframe{display:block;width:100%;height:100%;border:0;background:#fff;}
+#cr-appt .ap-signed{color:#7fc98f;}
 #cr-appt .ap-light .x{position:absolute;top:14px;right:14px;width:46px;height:46px;border-radius:12px;
   background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);color:#f2f4f2;
   font-size:19px;cursor:pointer;font-family:inherit;}
@@ -85990,8 +86003,9 @@ window.CardinalWhy = Object.assign(window.CardinalWhy || {}, {
 #cr-appt-rail .ar-who{max-width:150px;padding:0 8px;font:700 12px 'Segoe UI',Arial,sans-serif;
   color:#f2f4f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #cr-appt-rail .ar-count{display:none;padding:0 9px;font:700 13px 'Segoe UI',Arial,sans-serif;color:#f2f4f2;}
-@media (max-width:620px){
-  /* eight 44px targets do not fit in 390px — measured, not assumed. The
+@media (max-width:700px){
+  /* eight 44px targets do not fit in 390px — measured, not assumed —
+     and 1162's seven stops moved the threshold to 700px. The
      jump buttons give way to a step counter; Back/Next carry the walk. */
   #cr-appt-rail .ar-step{display:none;}
   #cr-appt-rail .ar-count{display:inline;}
@@ -86028,7 +86042,13 @@ var STEPS = [
   { id:'roof',  label:'Roof',  kind:'module' },
   { id:'good',  label:'Good',  kind:'module' },
   { id:'why',   label:'Why',   kind:'module' },
-  { id:'house', label:'House', kind:'pane'   }
+  { id:'house', label:'House', kind:'pane'   },
+  /* 1162 - option (b): the visit ends on this tablet. Both steps ride
+     the EXISTING /api/share page - the same one a client signs on their
+     own phone - in an iframe: it is public-by-token, carries no CRM,
+     and injects Accept & Sign itself when the document is signable. */
+  { id:'options', label:'Options', kind:'pane' },
+  { id:'sign',    label:'Sign',    kind:'pane' }
 ];
 
 function esc(v){
@@ -86121,7 +86141,7 @@ function paintPick(){
     '<div class="ap-wrap">' +
       '<p class="ap-eyebrow">The Appointment</p>' +
       '<h1 class="ap-h">Whose house are we at?</h1>' +
-      '<p class="ap-sub">Pick the job and the visit runs in order — their roof, our work, why Cardinal, their house in colour.</p>' +
+      '<p class="ap-sub">Pick the job and the visit runs in order — their roof, our work, why Cardinal, their house in colour, the options, the signature.</p>' +
       '<input type="search" class="ap-search" data-slot="q" placeholder="Search by name…">' +
       '<div class="ap-list" data-slot="list"></div>' +
     '</div>';
@@ -86153,7 +86173,7 @@ function paintPick(){
     for(var i = 0; i < rows.length; i++){
       if(String(rows[i].id) === String(id)){ proj = rows[i]; break; }
     }
-    renders = [];
+    renders = []; docs = null;
     go(1);
   };
   draw();
@@ -86239,6 +86259,152 @@ async function paintHouse(){
   };
 }
 
+/* ── documents (1162) ─────────────────────────────────────────────────
+   Both steps read this job's inspection_reports rows - the same table
+   every estimate, contract and options sheet already lives in - and
+   show them through /api/share?t=<token>, the page that is already
+   client-facing, review-clean and finger-signable. Nothing new signs. */
+var docs = null;      /* cached rows for proj, cleared on pick */
+
+async function loadDocs(){
+  if(docs) return docs;
+  var c = sb();
+  if(!c || !proj) return (docs = []);
+  try{
+    var r = await c.from('inspection_reports')
+      .select('id,title,share_token,signed_at,status,created_at')
+      .eq('project_id', proj.id)
+      .order('created_at', { ascending:false }).limit(60);
+    docs = (r && r.data) || [];
+  }catch(_){ docs = []; }
+  return docs;
+}
+
+/* the ensureShareToken convention (731), reachable outside the editor:
+   same mint, same db.update rails, so one token per document ever. */
+async function docToken(row){
+  if(row.share_token) return row.share_token;
+  var tok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+          : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+  if(!window.db || typeof window.db.update !== 'function') return null;
+  await window.db.update(row.id, { share_token: tok });
+  row.share_token = tok;
+  return tok;
+}
+
+/* mirrors api/share.js exactly - SIGN_RX ('Client Acceptance' footer),
+   SLOT_RX (an unfilled buyer sigslot), and the already-signed stamp. */
+function docSignable(html){
+  if(!html) return false;
+  if(html.indexOf('data-clientsigned') !== -1) return false;
+  return /class="lbl">\s*Client Acceptance/.test(html) ||
+         /class="sigslot" data-sig="buyer"/.test(html);
+}
+
+function docFrame(tok){
+  return '<div class="ap-doc"><iframe src="/api/share?t=' + esc(tok) + '"></iframe></div>';
+}
+
+function docShell(eyebrow, h, sub, body){
+  return '<div class="ap-wrap ap-wrap-doc">' +
+    '<p class="ap-eyebrow">' + esc(eyebrow) + '</p>' +
+    '<h1 class="ap-h">' + h + '</h1>' +
+    (sub ? '<p class="ap-sub">' + sub + '</p>' : '') +
+    body + '</div>';
+}
+
+async function paintOptions(){
+  PANE.innerHTML = docShell(proj ? proj.name : '', 'Your options',
+    'Good, Better, Best — side by side.', '<div class="ap-empty">Loading…</div>');
+  var rows = await loadDocs();
+  var gbb = null;
+  for(var i = 0; i < rows.length; i++){
+    if(String(rows[i].title || '').indexOf('Roof Options') === 0){ gbb = rows[i]; break; }
+  }
+  if(!gbb){
+    PANE.innerHTML = docShell(proj ? proj.name : '', 'Your options', '',
+      '<div class="ap-empty"><b>No options sheet on this job yet.</b><br>' +
+      'Build one before the visit: open an estimate, tap <b>Options</b> in its ' +
+      'toolbar, pick the Good / Better / Best tiers and publish. It will be ' +
+      'waiting here.</div>');
+    return;
+  }
+  var tok = null;
+  try{ tok = await docToken(gbb); }catch(_){}
+  if(!tok){
+    PANE.innerHTML = docShell(proj ? proj.name : '', 'Your options', '',
+      '<div class="ap-empty"><b>Could not open the options sheet.</b><br>' +
+      'The share link could not be created from this sign-in — open the ' +
+      'document once from the estimate editor and it will work here.</div>');
+    return;
+  }
+  PANE.innerHTML = docShell(proj ? proj.name : '', 'Your options',
+    'Initial the option you want us to proceed with — then the next step signs it.',
+    docFrame(tok));
+}
+
+async function paintSign(){
+  PANE.innerHTML = docShell(proj ? proj.name : '', 'Make it official',
+    'Pick the paperwork to sign.', '<div class="ap-empty">Loading…</div>');
+  var rows = await loadDocs();
+  if(!rows.length){
+    PANE.innerHTML = docShell(proj ? proj.name : '', 'Make it official', '',
+      '<div class="ap-empty"><b>No documents on this job yet.</b><br>' +
+      'Publish the estimate or generate the contract before the visit and ' +
+      'it will be waiting here to sign.</div>');
+    return;
+  }
+  /* 1149's lesson is the whole design: the client signs THE DOCUMENT THEY
+     ARE LOOKING AT. One list, one explicit pick, then that document alone
+     fills the screen with its own Accept & Sign. */
+  PANE.innerHTML = docShell(proj ? proj.name : '', 'Make it official',
+    'Pick the paperwork — the signature lands on the document you open, and only that one.',
+    '<div class="ap-list" data-slot="doclist">' + rows.map(function(d, i){
+      return '<button type="button" class="ap-job" data-ix="' + i + '">' +
+        '<span class="nm">' + esc(d.title || '(untitled)') + '</span>' +
+        (d.signed_at ? '<span class="st ap-signed">Signed ✓</span>' :
+                       '<span class="st">' + esc(d.status || '') + '</span>') +
+        '<span class="go">→</span></button>';
+    }).join('') + '</div>' +
+    '<div data-slot="opensign"></div>');
+  var list = PANE.querySelector('[data-slot="doclist"]');
+  var host = PANE.querySelector('[data-slot="opensign"]');
+  list.onclick = async function(e){
+    var b = e.target.closest ? e.target.closest('.ap-job') : null;
+    if(!b) return;
+    var row = rows[parseInt(b.getAttribute('data-ix'), 10)];
+    if(!row) return;
+    host.innerHTML = '<div class="ap-empty">Opening…</div>';
+    var c = sb(), html = '';
+    try{
+      var r = await c.from('inspection_reports').select('html').eq('id', row.id).single();
+      html = (r && r.data && r.data.html) || '';
+    }catch(_){}
+    if(!row.signed_at && !docSignable(html)){
+      host.innerHTML = '<div class="ap-empty"><b>' + esc(row.title || 'This document') +
+        '</b> has no signature block, so it opens for review only. The estimate ' +
+        'proposal and the contracts are the ones that sign.</div>';
+    }else{
+      host.innerHTML = '';
+    }
+    var tok = null;
+    try{ tok = await docToken(row); }catch(_){}
+    if(!tok){
+      host.innerHTML = '<div class="ap-empty"><b>Could not create the signing link</b> ' +
+        'from this sign-in — open the document once from the editor first.</div>';
+      return;
+    }
+    list.style.display = 'none';
+    host.innerHTML =
+      '<div class="ap-actions"><button type="button" class="ap-btn" data-ap-doc="back">‹ Other paperwork</button></div>' +
+      (host.querySelector('.ap-empty') ? host.querySelector('.ap-empty').outerHTML : '') +
+      docFrame(tok);
+    host.querySelector('[data-ap-doc="back"]').onclick = function(){
+      host.innerHTML = ''; list.style.display = '';
+    };
+  };
+}
+
 /* the delegated steps — open through public APIs only */
 function openRoof(){
   hidePane();
@@ -86279,6 +86445,8 @@ async function go(ix){
     showPane();
     if(st.id === 'pick')  paintPick();
     if(st.id === 'house') await paintHouse();
+    if(st.id === 'options') await paintOptions();
+    if(st.id === 'sign')    await paintSign();
   }else{
     if(st.id === 'roof') openRoof();
     if(st.id === 'good') openGood();
@@ -86293,7 +86461,7 @@ async function open(){
   ensure();
   try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
   running = true;
-  proj = null; stepIx = 0; renders = [];
+  proj = null; stepIx = 0; renders = []; docs = null;
   showPane();
   PANE.innerHTML = '<div class="ap-wrap"><div class="ap-empty">Loading jobs…</div></div>';
   paintRail();

@@ -20,8 +20,8 @@ Add the OC **Preferred** status — `OC_BRAND_RULES.md` governs the mark
 and the approval gate is Theo's. **Do not** put Google reviews on it without
 asking: the review card in the app is staff-facing reputation tracking.
 
-**Option 1 — The Appointment. ⏳ IN PROGRESS — 1161 shipped the
-conductor and steps 1–4 (Job → Roof → Good → Why → House). Theo picked
+**Option 1 — The Appointment. ✅ SHIPPED — 1161 the conductor and
+steps 1–4, 1162 Options & Sign. Theo picked
 **(b)**: Options & Sign stay on the tablet — 1162 extends `STEPS` with an
 Options step (the job's Roof Options document via `/api/share?t=` in an
 iframe, review) and a Sign step (the job's signable document — SIGN_RX

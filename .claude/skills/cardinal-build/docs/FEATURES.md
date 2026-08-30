@@ -7922,8 +7922,17 @@ not create it.
 
 **The running order for the in-home visit, over surfaces that already exist.**
 Theo's pick: option (b) — the whole visit stays on the tablet. `STEPS` is the
-single source of the order: **Job → Roof → Good → Why → House**, with Options
-& Sign joining at 1162 by extending that array and nothing else.
+single source of the order: **Job → Roof → Good → Why → House**, with **Options
+& Sign shipped at 1162** by extending that array and nothing else:
+
+| Options | the job's newest published Roof Options sheet | `/api/share?t=` in an iframe — review; the initial boxes are print-only by design |
+| Sign | the job's paperwork, one picked document at a time | same share page; `share.js` injects Accept & Sign when signable, `clientsign.js` stamps + notifies. **The 1149 rule is structural: the list hides while a document is open, exactly one frame, its own token** |
+
+`docToken()` = `ensureShareToken`'s 731 convention outside the editor
+(reuse-never-remint asserted); `docSignable()` mirrors `api/share.js`
+(SIGN_RX / SLOT_RX / `data-clientsigned`), fixture-proven. The doc frame
+stops 92px short of the bottom so the share page's own fixed sign bar
+clears the rail. **No new signature code exists anywhere in this module.**
 
 | Step | What opens | How |
 |---|---|---|

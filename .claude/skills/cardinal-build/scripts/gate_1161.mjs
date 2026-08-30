@@ -194,8 +194,16 @@ for (const id of ['pick', 'roof', 'good', 'why', 'house'])
        pane.textContent.includes('Duration Onyx'));
     ok('Colors is a side door on the house step',
        !!pane.querySelector('[data-ap-open="colors"]'));
-    ok('Next is dead on the last step (no dead-end forward)',
+    /* 1162 grew STEPS past house, so "house is last" went stale — the
+       CONTRACT is that the final stop, whichever it is, has no dead-end
+       forward. Walk to the last rail step and assert there. */
+    const stepsAll = rail.querySelectorAll('.ar-step');
+    stepsAll[stepsAll.length - 1].click();
+    await step();
+    ok('Next is dead on the LAST step (no dead-end forward)',
        rail.querySelector('[data-ap="next"]').disabled);
+    stepsAll[4].click();          /* back to house for the walk below */
+    await step();
 
     /* back works */
     rail.querySelector('[data-ap="back"]').click();
