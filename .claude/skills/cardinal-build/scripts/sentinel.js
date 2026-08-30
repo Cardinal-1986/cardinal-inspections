@@ -270,7 +270,10 @@ async function sweep(HTML, findings) {
     page.on('console', m => {
       if (m.type() !== 'error') return;
       const t = m.text();
-      if (/Failed to load resource|net::ERR|ERR_FAILED|status of \d+|CORS|Access-Control/.test(t)) return;
+      if (/Failed to load resource|net::ERR|ERR_FAILED|status of \d+|CORS|Access-Control|unknown error occurred when fetching the script|ServiceWorker|serviceworker/i.test(t)) return;
+      /* the line above grew on the hostile sweep's first run: the rig aborts
+         sw.js, and its registration failure logs a load error in different
+         words. Same class — the mock's own abort, not app code. */
       cerrs.push(t.split('\n')[0].slice(0, 160));
     });
     await page.route('**/*', async r => {
