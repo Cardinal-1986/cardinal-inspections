@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1155<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1156<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42445,6 +42445,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1156, d: '2026-08-30', t: 'Automatic payment reminders', s: 'Retail clients with a sent, unpaid invoice now get a friendly text from the company number \u2014 3 days after the invoice goes out, then weekly, at most 4 \u2014 with their balance and the secure pay link. It stops the moment any payment is recorded or is processing, and every job has a Mute switch on the Invoices & AR screen. Insurance and Community jobs are never texted.' },
 { b:1155, d:'2026-08-30', t:'Contracts print the address in four fields',
   s:'The Construction Agreement has four boxes \u2014 Street, City, State, Zip \u2014 and for almost every client it was printing the whole address on the Street line and leaving the other three blank. That was not the contract being careless. Until now the app had exactly one address column, a single line of text, so there was nothing to put in the other three boxes; the contract used a split copy that was written once when the lead was created and never updated, and build 1004 correctly made it refuse to print that copy whenever it no longer matched the real address \u2014 which, after any edit, was almost always. The refusal was right. The missing half was that nothing was keeping a correct split anywhere. Now the address is stored split as well as whole: every place that saves an address \u2014 the new-lead intake, the client profile, the quick inspection, the lead editor \u2014 writes street, city, state and zip beside it. The intake already had all four typed into separate boxes and was throwing three of them away. Existing clients were filled in from what was already stored: of 59 addresses on file, 56 now have a full city and state and 53 have all four, and the three that do not are the ones with no city in them at all. The full address line every reader uses \u2014 the map, the directions, the work order \u2014 is untouched and unchanged. The contract still refuses to print a split that disagrees with it, so it can never put a different address on a signed agreement than the one on the map.' },
 { b:1154, d:'2026-08-30', t:'Addresses fill street, city, state and zip \u2014 not one long line',
@@ -83869,6 +83870,14 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 #cr-pay-modal .crpay-seg button{border:0;background:transparent;color:#475569;font-size:13px;font-weight:600;padding:10px 6px;border-radius:9px;cursor:pointer;}
 #cr-pay-modal .crpay-seg button.on{background:#FFFFFF;color:#0F172A;box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 10px rgba(15,23,42,.1);}
 #cr-pay-modal .crpay-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+/* ── 1156: automatic payment reminders — history line + mute, per AR row.
+      Buttons reuse .crar-btn so the 44px touch floor holds. ── */
+#cr-ar-view .crar-rem{display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:5px;}
+#cr-ar-view .crar-remtx{font:600 11.5px/1.35 'Segoe UI',Arial,sans-serif; color:var(--est-dim,#475569);}
+#cr-ar-view .crar-remtx.off{color:var(--est-warn,#8a6420);}
+#cr-ar-view .crar-rembtn{padding:6px 12px;}
+#cr-ar-view .crar-rembtn:focus-visible{outline:2px solid #c8202e; outline-offset:1px;}
 </style>
 
 <div id="cr-ar-view" style="display:none;" aria-hidden="true">
@@ -83996,7 +84005,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
                     : (x.inv && x.inv.status === 'sent' ? ('Sent ' + x.age + 'd ago') : (x.age + 'd'));
     return '<div class="crar-row' + (od ? ' od' : '') + '">'
       + '<div class="crar-who"><div class="crar-nm">' + nm + ' ' + pill(x.st) + '</div>'
-      +   '<div class="crar-addr">' + (addr || '&mdash;') + note + '</div></div>'
+      +   '<div class="crar-addr">' + (addr || '&mdash;') + note + '</div>'
+      +   '<div class="crar-rem" data-remfor="' + esc2(pr.id) + '"></div></div>'
       + '<div class="crar-money">'
       +   '<div class="crar-col"><span class="crar-cl">Billed</span><span class="crar-mv dim">' + money(x.fin.value) + '</span></div>'
       +   '<div class="crar-col"><span class="crar-cl">Collected</span><span class="crar-mv' + (x.fin.paid > 0 ? ' pos' : ' dim') + '">' + money(x.fin.paid) + '</span></div>'
@@ -84035,6 +84045,41 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
         + '</div>';
     }
     body.innerHTML = html;
+    remWire();
+  }
+
+  /* ═══ Build 1156: automatic payment reminders (AR arc Build 3 — the
+        reminders half; ACH was 1151). api/remind.js texts retail clients with
+        a sent, unpaid invoice — 3 days after send, then weekly, max 4 — and
+        never when a payment landed, is processing, or the job is muted. This
+        paints each AR row's reminder history and the mute switch. It reads
+        payment_reminders and projects.reminders_muted DIRECTLY, not from the
+        caches: the project loader selects explicit columns and does not carry
+        reminders_muted. ═══ */
+  function remWire(){
+    var view = q('cr-ar-view'); if(!view || view.style.display === 'none') return;
+    var slots = view.querySelectorAll('[data-remfor]'); if(!slots.length) return;
+    var ids = Array.prototype.map.call(slots, function(el){ return el.getAttribute('data-remfor'); });
+    var cx = window.sb || window.supa; if(!cx || !cx.from) return;
+    Promise.all([
+      cx.from('payment_reminders').select('project_id,sent_at,ok').in('project_id', ids).order('sent_at', { ascending:false }),
+      cx.from('projects').select('id,reminders_muted').in('id', ids)
+    ]).then(function(rs){
+      var logRows = (rs[0] && rs[0].data) || [], mutedBy = {};
+      ((rs[1] && rs[1].data) || []).forEach(function(p){ mutedBy[p.id] = !!p.reminders_muted; });
+      var byP = {};
+      logRows.forEach(function(r){ if(r.ok === false) return; (byP[r.project_id] = byP[r.project_id] || []).push(r); });
+      Array.prototype.forEach.call(slots, function(el){
+        var pid = el.getAttribute('data-remfor');
+        var sends = byP[pid] || [], off = !!mutedBy[pid];
+        var last = sends.length ? new Date(sends[0].sent_at).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
+        var word = off ? 'Auto-reminders off'
+                 : (sends.length ? ('Reminded ×' + sends.length + ' · last ' + last) : 'Auto-reminders on');
+        el.innerHTML = '<span class="crar-remtx' + (off ? ' off' : '') + '">' + word + '</span>'
+          + '<button type="button" class="crar-btn ghost crar-rembtn" data-armute="' + esc2(pid) + '" data-on="' + (off ? '0' : '1') + '">'
+          + (off ? 'Turn on' : 'Mute') + '</button>';
+      });
+    }).catch(function(){});
   }
 
   function open(){
@@ -84077,6 +84122,19 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if((t = e.target.closest('#crarClose'))){ close(); return; }
     if((t = e.target.closest('#crarRefresh'))){ if(typeof reload === 'function') reload(); else render(); return; }
     if((t = e.target.closest('#arCard')) && isAdm()){ open(); return; }
+    if((t = e.target.closest('[data-armute]'))){
+      var pidM = t.getAttribute('data-armute'), toOff = t.getAttribute('data-on') === '1';
+      var cxm = window.sb || window.supa;
+      if(cxm && cxm.from){
+        t.disabled = true;
+        cxm.from('projects').update({ reminders_muted: toOff }).eq('id', pidM).then(function(r){
+          if(r && r.error){ t.disabled = false; fail(new Error(r.error.message || 'Could not update reminders')); return; }
+          if(typeof crTell === 'function') crTell(toOff ? 'Auto-reminders muted for this job.' : 'Auto-reminders back on for this job.');
+          remWire();
+        });
+      }
+      return;
+    }
     if((t = e.target.closest('[data-aropen]'))){ if(window.openProject) window.openProject(t.getAttribute('data-aropen')); return; }
     if((t = e.target.closest('[data-armkinv]'))){
       var pr = prById(t.getAttribute('data-armkinv'));

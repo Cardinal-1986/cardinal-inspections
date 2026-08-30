@@ -2,6 +2,19 @@
 
 ---
 
+## ✅ SETTLED 30 Aug 2026 (Theo) — automatic payment reminders (build 1156)
+
+Four picks, each made from rendered options: **retail only** (insurance waits on carrier
+money; Community bills the partner — never auto-text the occupant); **3 days after send,
+then weekly, max 4**, stopping on any payment, an in-flight Stripe payment, or mute;
+**SMS only** until the Resend domain is verified; **copy approved verbatim, amount
+included**. Checkout deliberately unchanged — *"Most people pay with check tho"* — a
+recorded check stops reminders because the cron reads the ledger, not the channel.
+**Do not** add email reminders before `DIGEST_FROM` + the verified domain exist; **do
+not** widen scope past retail without a new decision. The AR arc's "Build 3" is now
+closed (ACH at 1151, reminders at 1156). **Needs Theo once: `CRON_SECRET` in Vercel**
+— all five crons fail closed without it (measured unset at 1062).
+
 ## ✅ The 195 carried sentinel findings — TRIAGED 28 Aug 2026 (build 1127)
 
 **Read once so nobody reads them again.** A full `--all` sweep of build 1126 across

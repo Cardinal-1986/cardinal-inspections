@@ -7728,3 +7728,13 @@ link the app's own hash router understands (`#p/<id>/<tab>`, `#leads`, `#board`,
   truncate it.
 - Gates: `harness_deeplink1125.js` (drives the shipped route, reads the real
   Twilio body) and `gate_1125.mjs` (Chromium: the address actually lands).
+
+## Automatic payment reminders (build 1156, 30 Aug 2026)
+
+Retail clients with a sent, unpaid invoice get a friendly text from the company number — 3 days after the invoice goes out, then weekly, at most 4 — carrying the balance and the secure pay link. The approved copy, verbatim: *"Hi {first}, it's Cardinal Roofing & Renovations — a friendly reminder that your invoice has a balance of {$X}. Review and pay securely (bank transfer or card) here: {link}. Questions? Just call or text us back."*
+
+- `api/remind.js`, the fifth cron (`vercel.json`, 15:10 UTC daily), fail-closed on `CRON_SECRET`; `?dry=1` = eligibility report, nothing texted.
+- **Never texted:** insurance and Community jobs (the payer/occupant split — settled), muted jobs, paid jobs, anything with a payment in the last 3 days or **a Stripe payment still processing** (the 1151 ACH settlement gap — Stripe is asked first, and a Stripe error skips rather than texts), no-phone / no-token rows.
+- STOP (Twilio 21610) auto-mutes the job. Every attempt logs to `payment_reminders` (service-role write; admin read).
+- Invoices & AR rows show *"Reminded ×N · last <date>"* and a **Mute / Turn on** toggle (`data-armute`) writing `projects.reminders_muted` — read directly, not from `cacheProjects`, whose loader selects explicit columns.
+- A check recorded offline stops reminders like any payment — the cron reads the collections ledger, not the payment channel.
