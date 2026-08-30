@@ -30433,3 +30433,107 @@ Gates: `check_build.py` green (1124 → 1125, marker `function punchLink(` + neg
 ## Build 1153 — Service Financial plan reference (staff screen)
 - **1153** · A menu-launched full-screen reference (**Menu → Selling → Financing Rates**, `#cr-fin`, `window.CardinalFinanceRates` / `showFinanceRates`) listing the whole Service Financial catalog grouped like the portal (same-as-cash, 0% equal, deferred, reduced short/long split by loan floor, FEMA, Buy Deeper). Columns: plan #, program, rate, term, payment factor, loan range. An **amount box** in the header computes each plan's monthly live via the exported `CardinalEstimatePublish.planMonthly` (factor / 0%÷term / FEMA-amortized; same-as-cash & deferred read "no monthly"). **Reuses one catalog** — `cr-epub-script` now exports `plans`/`planGroups`/`planFooter`/`planMonthly` (and `tierMonthly` was refactored to delegate to the new module-level `gbbPlanMonthly`, no duplicated math). **Dealer fees are admin-only and never in the app file:** `finance_plan_fees` (`finance_plan_fees.sql` — table + `is_cardinal_admin()` RLS committed; the 39 fee VALUES loaded straight into Supabase, not committed). The screen fetches the table — admins get rows and a gold "Dealer fee" column, everyone else is blocked by RLS and sees no fee column at all. Blackout single-theme surface (Showcase/OC pattern), every colour a literal. Registered at all five nav sites: `hideAllViews` (`#cr-fin` display:none), `ROUTES.finrates`, the Selling menu item (`data-cri="cash lg"`), `wrapNav('showFinanceRates','finrates')`, and the `navRestore` case. Gates: `check_build` green; `gate_1153.mjs` (Chromium — opens the view, ≥5 grouped sections, the amount calc computes factor/0%/no-monthly correctly, the fee column shows WITH admin rows and is ABSENT without them, and `hideAllViews` hides it; **control RED on 1152**). `gate_1081` (type floor — three header sizes bumped 10.5/9.5→11px), `gate_944`, `gate_1140`, `gate_1142` green. `gate_dupes`/`gate_types` rebaselined (+4 idiom names esc/open/close/ensure, +1 TS2339 — the new module following the app's per-module convention). MIGRATIONS.md regenerated (95 files). **SQL runs before the HTML; already applied.**
 
+## Build 1154 — addresses fill street, city, state and zip
+
+- **1154** · Theo: *"Can you please check that anywhere an address is input that
+  in any auto field it goes into street, city, state, zip. It does not do so in
+  the contracts. Check everywhere."* The audit found two faults and one of them
+  is visible in production data.
+
+  **Fault 1 — the new-lead Street box had TWO autocompletes on it.**
+  `isAddressInput()` explicitly force-matched `#ldStreet`, so Google Places
+  attached alongside the Photon autocomplete `cr-lead-script` already had there.
+  Google won and wrote the whole `formatted_address` into the box labelled
+  **Street**; `ldSave()` then appended city + state + zip a second time. Six rows
+  in `projects` carry the result, and **two disagree with themselves about the
+  zip**:
+
+      804 Burleigh Ave, Dayton, OH 45402, USA, Dayton, OH 45414
+      5735 Webster St,  Dayton, OH 45414, USA, dayton, OH 45432
+
+  ⚠️ **Removing `ldStreet` from the id whitelist was NOT enough** — its
+  placeholder is *"Start typing — address auto-completes"*, so the generic probe
+  matched on the word "address" and Google attached anyway. It now carries
+  `data-cr-gmap="skip"`, **the deny mechanism `isAddressInput` already had**.
+  Grep for the convention before inventing a second one.
+
+  **Fault 2 — both Places paths discarded the split.** The legacy widget was
+  already *requesting* `address_components` and throwing them away; the modern
+  path was not requesting them at all. Both now go through one parser, so the
+  two can never drift into two answers for the same pick. `crAddrParts()` reads
+  **both** component shapes (`long_name`/`short_name` and `longText`/`shortText`)
+  — handling only one produces silent empty parts on the other path.
+
+  **Stated plainly at ship time:** the split branch does not fire in production
+  yet, because the lead intake is the only form with partner fields and its
+  street box is now the skipped one. What shipped visibly is the doubling fixed
+  and `, USA` gone. 1155 is the half that makes it real.
+
+  `gate_1154.mjs` — **47 assertions GREEN, RED at 10 on the 1152 control.** It
+  executes the *shipped* functions against the real Google shapes.
+
+  ⚠️ **Two faults in the gate itself, both caught by the control.** Its brace
+  matcher desynced on an apostrophe inside a block comment (`Google's`), opened a
+  phantom string and swallowed the next module — this file's own
+  comments-lie-in-both-directions trap, inside the instrument. And two checks
+  asserted on a spelling the old code never had
+  (`input.value = place.formatted_address`), so they **passed on both trees and
+  could never have failed**.
+
+  ⚠️ **Build number: 1153 collided.** Another session claimed it in the same
+  `next_build.py` window for the Financing Rates screen. Moved to 1154. Two
+  sessions running `next_build.py` seconds apart both get the same answer — the
+  script asks the remote, and neither branch was pushed yet.
+
+## Build 1155 — the address is stored split as well as whole
+
+- **1155** · The other half of 1154, and the answer to *"it does not do so in the
+  contracts."*
+
+  **The contract was not being careless — it had nothing to read.** The app had
+  exactly ONE address column. The Construction Agreement's four boxes were filled
+  from `checklist.lead.location`, a copy written once at lead creation and never
+  updated, and **build 1004 correctly made it refuse to print that copy whenever
+  it no longer reconstructed `pr.address`** — which, after any edit, was almost
+  always. *The refusal was right.* The missing half was that nothing kept a
+  correct split anywhere.
+
+  **`projects_address_parts.sql`** adds `street` / `city` / `state` / `zip` (plus
+  `address_parse_note`) and backfills them. **Applied 30 Aug 2026, before the
+  HTML change**, per convention. Additive: `address` is **untouched** and stays
+  the display string every existing reader uses — verified byte-identical
+  afterwards on five independent counts.
+
+  Backfill result on the 59 non-blank rows: **56 have city + state, 53 have all
+  four, 59 have a street.** The three without a city genuinely have none in the
+  source (`921 Testing Way`, `2420 Brookline`, `1049 Cicillion Ave`). The six
+  doubled rows keep the **Google half** (the validated one) and the dropped
+  hand-typed tail is preserved in `address_parse_note` rather than discarded
+  silently — two of them contradict themselves and Theo is the one who knows
+  which zip is right.
+
+  **`crSplitAddress()` mirrors that SQL line for line, on purpose.** A browser
+  that splits an address one way and a backfill that splits it another is two
+  answers to one question. `gate_1155` cross-checks them: 23 real production
+  strings, with the parts **read back out of Postgres**, not hand-written.
+
+  Four writers now store the parts: the intake (which already HAD all four typed
+  into separate boxes and was throwing three away), the profile, the quick
+  inspection, and the lead editor. `crAddrFields()` prefers the parts Google
+  itself supplied over re-parsing a string that was structured when we had it.
+
+  The contract now has **three sources, best first — and 1004's staleness guard
+  applies to every one of them unchanged.** Columns, then the old checklist copy,
+  then the flat line. It still cannot print an address the map disagrees with.
+
+  ⚠️ **`gate_types` caught a crash that would have shipped.** `cr-gmap-script` is
+  an **IIFE**, so `crSplitAddress` / `crAddrFields` are module-private — my first
+  draft called them bare from four *other* script blocks, which is a
+  `ReferenceError` on **every client save**. Three new `TS2304`s were the only
+  signal; `check_build`, `gate_dupes` and `gate_1155`'s own 29 assertions were
+  all green over it. Exported as `window.CardinalAddress` (`Object.assign`), each
+  call site guarded. **The gate now asserts no bare cross-block call survives,
+  and goes RED on my own broken draft** — the control that proves it.
+
+  `gate_1155.mjs` — **36 GREEN**, RED at 19 on the 1154 control and RED at 6 on
+  the broken draft.
