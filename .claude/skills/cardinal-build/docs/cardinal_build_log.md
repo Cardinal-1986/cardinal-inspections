@@ -31018,3 +31018,30 @@ before push.
   `select-name 6 → 0` and `label 9 → 0`** — both critical rules eliminated, then rebaselined so the
   ratchet now catches the very next nameless control · regressions gate_1171 9/9, gate_1172 15/15,
   gate_1173 9/9, gate_1174 7/7, gate_1175 5/5, gate_1176 14/14 · gate_types GREEN · gate_dupes GREEN.
+
+## Build 1178 — the header names the portal you are actually in
+- **Theo: "The community header appeared as I logged in."** That one sentence was the whole
+  reproduction I had been missing at 1176, where I walked every Front Door route and could not
+  make crm and crmHead disagree. The route is not a switch at all — **it is sign-in.**
+- Reproduced first try at 440px with the sticky portal seeded to community: `dataset.crm` retail,
+  `dataset.crmHead` **community**, `#brandTitle` "Community" — a green Community bar over the
+  retail board.
+- ⚠️ **THIS IS THE SECOND TIME THIS SHIPPED, AND THE FIRST FIX IS WHY.** Build 1087 answered the
+  identical complaint (insurance, that time) with a guard keyed on `#landingView` being visible:
+  the Landing was the portal picker, and a picker cannot sit inside a portal. **Build 1165 then
+  retired the Landing** — permanently `display:none` — so that guard has been unable to fire since,
+  and nothing anywhere announced it. A guard that looks correct and can never be satisfied: the
+  567/569 class, verbatim, and the second entry in this log to carry that sentence.
+- **The lesson, stated so the third one does not happen:** when a build retires a screen, grep for
+  every guard that keys on that screen's visibility. `hideAllViews`/`navRestore`/`__crNav`/`BLACKOUT`
+  is the checklist for retiring a VIEW (807); this adds a fifth site — **any predicate that asks
+  "is this screen showing?"**. 1165 unpicked the view and left the predicate.
+- The replacement keys on the screen that replaced the landing as the place you arrive: the
+  dashboard. There the board reads `crmNow()`, so the header must read it too or the two disagree —
+  which is the entire substance of both reports. 754's sticky behaviour on shared screens
+  (Leads, Photos, Reports) is untouched, deliberately.
+- ⚠️ **It does NOT pin the header to retail** — after a Front Door pick `crmNow()` is the chosen
+  portal, so the community dashboard still says Community. Gate asserts all three portals both ways.
+- Gates: check_build green (1177→1178, marker + negative control) · **gate_1178 11/11, RED 8/11 on
+  the 1177 control**, failing on Theo's exact sentence · regressions gate_1171 9/9, gate_1172 15/15,
+  gate_1173 9/9, gate_1174 7/7, gate_1175 5/5, gate_1176 14/14.
