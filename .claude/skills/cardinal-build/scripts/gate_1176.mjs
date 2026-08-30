@@ -118,9 +118,14 @@ await page.evaluate(() => { const r = document.querySelector('#cr-fd .fdrow[data
 await page.waitForTimeout(1200);
 s = await state();
 ok(s.crm === 'insurance', 'on insurance (crm=' + s.crm + ')');
-ok(!!s.insTheme && s.insTheme.shown, 'the insurance moon is shown in the header');
-ok(!!s.darkToggle && !s.darkToggle.shown,
-   'the floating retail light/dark is HIDDEN inside insurance (was ' + JSON.stringify(s.darkToggle && s.darkToggle.shown) + ')');
+/* ⚠ SUPERSEDED BY 1181, and these are removed rather than "fixed". 1176
+   asserted that insurance showed its OWN moon in the header and that the shared
+   floating toggle was hidden there. Theo reversed exactly that at 1181 — "it
+   doesn't have to be the unique one" — so the insurance-only button is retired
+   and the shared toggle is the control everywhere. Asserting the old shape here
+   would make this gate demand the very thing the next build deleted, which is
+   how a stale test starts dictating the app. gate_1181 owns the light/dark
+   question now; what stays below is 1176's OWN subject, the header layout. */
 const themeCount = await page.evaluate(() => {
   const vis = el => el && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
   let n = 0;
@@ -130,15 +135,12 @@ const themeCount = await page.evaluate(() => {
 });
 ok(themeCount === 1, 'exactly ONE light/dark control on the insurance screen (got ' + themeCount + ')');
 
-// the moon must not be painted in the header's own background colour
-const inkOk = await page.evaluate(() => {
-  const ins = document.querySelector('.cr-ins-theme');
-  if (!ins) return { ok: false, why: 'no moon' };
-  const c = getComputedStyle(ins).color;
-  const acc = getComputedStyle(document.querySelector('header.site')).getPropertyValue('--hac').trim();
-  return { ok: !!acc && c !== 'rgb(23, 24, 27)', color: c, hac: acc };
-});
-ok(inkOk.ok, 'the moon no longer paints the old near-black ink (color=' + inkOk.color + ', --hac=' + inkOk.hac + ')');
+/* the ink assertion that sat here went with the control it measured — see the
+   note above. The "exactly one light/dark control" check below is kept, because
+   that invariant SURVIVED the reversal: 1176 satisfied it with the module's own
+   button, 1181 satisfies it with the shared one, and either way two would be a
+   defect. An assertion that outlives the implementation it was written against
+   is the one worth keeping. */
 
 // ---- 4. retail keeps its floating toggle (this build narrowed insurance only)
 await page.evaluate(() => window.CardinalFrontDoor.open());

@@ -3940,7 +3940,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1179<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1181<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42499,9 +42499,56 @@ function apply(){
 if(isLight()) document.documentElement.setAttribute('data-theme','rb-light');
 else document.documentElement.removeAttribute('data-theme');
 var btn = document.getElementById('cr-dark-toggle');
-if(btn) btn.textContent = isLight() ? '\u2600' : '\uD83C\uDF19';
+/* 1181: on insurance the glyph reads the INSURANCE theme — a sun that never
+   changes while the screen does is exactly the "control that lies" the 694
+   note below refuses to ship. */
+var lit = inInsurancePortal() ? insLight() : isLight();
+if(btn) btn.textContent = lit ? '\u2600' : '\uD83C\uDF19';
 }
-function toggle(){ setLight(!isLight()); }
+/* 1181 — Theo: "Just make it just like retail and community, [insurance]
+   doesn't have to be the unique one, that's no good." He is right, and the
+   measurement said so: at 1180 retail and community both used THIS button,
+   floating bottom-right at (372, 832), while insurance alone had its own ◐ in
+   the banner. One concept, two doors — the 1174 rule, across portals.
+
+   So there is now ONE control in ONE place for all three. What it cannot do is
+   pretend the palettes are the same: retail and community are the app theme
+   (`data-theme="rb-light"`, --rbe-*), insurance is docket/siren
+   (`data-rltheme`, --ct-*). Two real systems, and flipping the wrong one would
+   be a button that visibly does nothing. So the BUTTON is shared and the
+   DISPATCH is by portal — same finger, same corner, right palette. */
+/* ⚠ RENAMED. The obvious name for this collided with a helper of the same name
+   in cr-insstage-script, and gate_dupes caught it. Reading that one showed the
+   two mean DIFFERENT things: it asks "is this CLAIM an insurance claim"
+   (body.claim-insurance); this asks "which PORTAL am I in" (dataset.crm). Same
+   word, two concepts — so the fix is a name that says which, not a shared
+   helper that would answer the wrong question half the time.
+   ⚠ The old name is deliberately NOT spelled anywhere in this comment: writing
+   it here would put the string back in the file and gate_dupes counts strings,
+   not scopes. Same discipline the 975 note in cr-ch2-script uses for div tags. */
+function inInsurancePortal(){
+  try{ return (document.body.dataset.crm || '') === 'insurance'; }catch(e){ return false; }
+}
+function insLight(){
+  try{ return !!(window.CardinalInsTheme && window.CardinalInsTheme.get() !== 'siren'); }
+  catch(e){ return false; }
+}
+function toggle(){
+  if(inInsurancePortal() && window.CardinalInsTheme && window.CardinalInsTheme.apply){
+    var next = insLight() ? 'siren' : 'docket';
+    /* ⚠ 'cardinalRLTheme' is READ OUT of cr-instheme-script, not guessed. My
+       first version invented 'cardinal.theme.ins'; apply() then painted the new
+       theme and the module's own cur() re-read the REAL key on the next paint
+       and put it straight back — gate_1181 caught it as "docket -> docket",
+       a tap that visibly did nothing. The two modules that share
+       [data-rltheme] (this and the Resource Library) both key off this name. */
+    try{ localStorage.setItem('cardinalRLTheme', next); }catch(e){}
+    window.CardinalInsTheme.apply(next);
+    apply();
+    return;
+  }
+  setLight(!isLight());
+}
 function ensureButton(){
 if(document.getElementById('cr-dark-toggle')) return;
 var btn = document.createElement('button');
@@ -42567,8 +42614,15 @@ btn.classList.toggle('show', crm === 'retail' || crm === 'community');
 function start(){
 ensureButton();
 apply();
-refreshVisibility();
-setInterval(refreshVisibility, 1000);
+/* 1181: the glyph has to follow the PORTAL now, not just its own clicks. It was
+   only repainted on tap, so walking retail -> insurance left retail's icon on a
+   button that now reports insurance's theme — gate_1181 caught it as
+   "🌙 -> 🌙", a control showing the wrong state until you pressed it. apply()
+   is idempotent (it sets an attribute and a glyph), so riding the existing
+   1s sweep costs nothing and needs no fourteenth body observer. */
+function refreshAll(){ refreshVisibility(); apply(); }
+refreshAll();
+setInterval(refreshAll, 1000);
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
@@ -42582,6 +42636,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1181, d: '2026-08-30', t: 'One light/dark button, the same in every portal', s: 'Insurance had its own light/dark button in its own spot while Retail and Community shared a different one. Now there is one button in one place for all three \u2014 the same corner you already use \u2014 and it switches whichever portal you are standing in. Insurance keeps its own colours underneath; only the button is shared.' },
+  { b: 1180, d: '2026-08-30', t: 'The Insurance light/dark moves one row down', s: 'You could see the moon after the last build, but it was sitting in the top bar beside New and Search. It now lives on the row below \u2014 the Home / Clients / Claims / Photos strip \u2014 at the far right end, in that row\u2019s own colour, and sized to a proper finger target.' },
   { b: 1179, d: '2026-08-30', t: 'The Community home is one list of what needs you', s: 'Third time you said this screen had a lot going on. The three tabs are gone: Community now opens on the search bar, then one list of every job waiting on you \u2014 overdue and due soon, chase a decision, get on the calendar, invoice the partner, and tarps still up \u2014 each with the homeowner, the partner and how long it has been sitting. Clients, Estimates and Partners are doors underneath. Nothing was deleted: By partner and By stage are still on the stats page. Tarps did not need a tab \u2014 the count has been on the partner stats page since build 1092, so the list joined the queue instead.' },
   { b: 1178, d: '2026-08-30', t: 'The header names the portal you are actually in', s: 'Signing in could show the header and colours of whichever portal you used last, sitting over the retail dashboard \u2014 a green Community bar above retail numbers. This was fixed once before, but that fix watched the old Landing screen, and when the Landing was retired the check quietly stopped working and nobody could tell. The header now reads the dashboard itself, so the name at the top and the numbers underneath always agree. Switching portals still works exactly as before: the community dashboard still says Community.' },
   { b: 1177, d: '2026-08-30', t: 'Sixteen controls get their names back', s: 'Sixteen form controls had no name attached to them in the markup \u2014 four dropdowns on the client card (Job Category, Work Type, Lead Source and the reassign picker), the whole Crews document upload row, the Estimate Library\u2019s Status, Valid Through, Deposit %, Discount and Payment Instructions fields, and the supplement Outcome picker. Each now carries the name that was already printed beside it. Nothing moved on screen: this is what voice control and a screen reader read out, and fifteen of the sixteen are what the new accessibility gate found on its first run.' },
@@ -66162,6 +66218,10 @@ window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
    colour back as the same near-black and went red, which is the only reason I
    know. Matching its specificity and sitting later in the document wins it. */
 #cr-hd2-bar .cr-ins-theme{color:var(--hac,#c8202e);}
+/* 1180 styled this control inside #crBanner. 1181 retired the control itself, so
+   those rules are DELETED rather than left to rot — dead CSS is what the
+   sentinel's DEAD check and gate_stack exist to catch, and leaving it behind
+   hands the next reader a styled selector that matches nothing. */
 /* 1176: the glyph was inheriting .cr-ib's --hmt and painting NEAR-BLACK on the
    near-black insurance header — Theo's screenshot shows a bordered box with
    nothing in it, and I read it as an empty fourth button before finding the ◐
@@ -66174,15 +66234,13 @@ window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
    is already proven readable rather than a colour I invented.
    ⚠ THEO'S EYES ARE THE GATE for this one. Say so; do not report it measured. */
 
-/* 1176: ONE light/dark control per portal. Insurance carries its own theme
-   (docket/siren, the ◐ above); #cr-dark-toggle is the RETAIL app theme and has
-   nothing to say inside insurance, yet its fixed fallback still floated over
-   the pipeline at bottom-right — two theme buttons on one screen, which is the
-   1174 "one door per destination" rule broken by a control that simply never
-   knew about the other. The search-row copy was already hidden here (the 417
-   rule in cr-hd3-styles); this hides the floating one for the same reason.
-   !important is required: #cr-dark-toggle.show sets display:flex. */
-body[data-crm="insurance"] #cr-dark-toggle{display:none !important;}
+/* 1176 kept ONE control per portal by hiding the shared toggle on insurance and
+   leaving this module's own ◐. **1181 reverses which one survives**, on Theo's
+   instruction: the shared toggle is the control everywhere and the
+   insurance-only button is retired (HOSTS is empty). The rule that hid
+   #cr-dark-toggle here is therefore GONE — it would now hide the only control
+   insurance has. The count is still exactly one; it is simply the same one the
+   other two portals use. */
 .cr-ins-theme:hover{border-color:var(--hac);color:var(--hac);}
 .cr-ins-theme:focus-visible{outline:2px solid var(--hac);outline-offset:2px;}
 body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
@@ -66205,11 +66263,35 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
      reason: 'retired in build 301 - the unified header owns insurance chrome'.
      #cr-hd2-bar IS that chrome, and it is present on every CRM, so the button is
      hidden by CSS unless body[data-crm="insurance"]. */
-  var HOSTS = ['#cr-hd2-bar'];   /* 804: was '#cr-hd2-srch'. That row is
-     collapsed by default now, and unlike #cr-dark-toggle this button has
-     NO floating fallback - left in the row it would have become a control
-     that renders and can never be reached. It rides in the header bar
-     instead, beside the lens, inheriting .cr-ib sizing. */
+  var HOSTS = [];
+  /* 1181 — ⚠ THE SEPARATE INSURANCE BUTTON IS RETIRED, on Theo's instruction:
+     "Just make it just like retail and community, [it] doesn't have to be the
+     unique one, that's no good." #cr-dark-toggle now drives this module through
+     CardinalInsTheme.apply() (see the 1181 note in cr-rbtheme-toggle-script),
+     so there is one control in one place across all three portals.
+
+     EVERYTHING BELOW STAYS AND IS STILL LIVE. This module still owns the
+     insurance theme — cur(), apply(), the --ct-* switch and its storage key —
+     it simply no longer renders a button of its own. Deleting the module would
+     take the theme with it. An empty HOSTS is the whole retirement: mount()
+     iterates it, so it becomes a no-op, and the apply path is untouched.
+
+     ⚠ Do NOT "fix" this by putting the button back. 1176 hid a duplicate, 1180
+     moved this one down a row, and 1181 is the answer that ends the sequence:
+     there was never supposed to be a second control. */
+  /* 1180 — Theo, with a screenshot of 1176's fix: "Still off, the light dark
+     should be one row down." So it moves to #crBanner, the Home/Clients/Claims/
+     Photos/Production/Tools strip that sits directly under the bar. Measured at
+     440px: the bar is y=0 and the banner y=65 — one row, exactly.
+
+     ⚠ THIS IS NOT A RETURN TO THE 804 MISTAKE, and the difference is the whole
+     reason it is safe. 804 moved this button OUT of '#cr-hd2-srch' because that
+     row is COLLAPSED BY DEFAULT (`body:not(.cr-srch-open) #cr-hd2-srch{display:
+     none}`), so the button rendered into something nobody could reach — and
+     unlike #cr-dark-toggle it has no floating fallback to save it. #crBanner is
+     always on screen: it is the row in Theo's screenshot. Check that before
+     ever moving this again — the question is not "which row looks tidier", it
+     is "is that row displayed". */
 
   function cur(){
     try { return localStorage.getItem(KEY) === 'siren' ? 'siren' : 'docket'; }
@@ -66252,10 +66334,13 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
     });
     apply(cur());
   }
+  /* 1181: with HOSTS empty there is no button to wait for, so the old poll
+     would have spun its full 40 tries on every load, every time. It applies the
+     stored theme once and stops. */
   var tries = 0;
   var iv = setInterval(function(){
     mount();
-    if (document.querySelector('.cr-ins-theme') || ++tries > 40) clearInterval(iv);
+    if (!HOSTS.length || document.querySelector('.cr-ins-theme') || ++tries > 40) clearInterval(iv);
   }, 200);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
   else mount();
