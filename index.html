@@ -3920,7 +3920,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1158<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1159<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42445,6 +42445,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1159, d: '2026-08-30', t: 'The presentation doors a rep actually uses', s: 'Three doors that existed but could not be reached from where you stand at a kitchen table. The Pop-Up Roof now has a tile on the home screen and on the Vision hub \u2014 until now the book was reachable only from the Sales Floor or by typing the presentation address, so on a showroom tablet it could not be opened at all. Its tile had been fully styled since build 761 and the markup was never written. And the Designer tile, opened from the Vision hub, now lands on Present \u2014 approved renders, one tap \u2014 instead of Prep, the office workbench for queueing renders. Opened from the ordinary home screen it still lands on Prep, which is the right screen there.' },
   { b: 1158, d: '2026-08-30', t: 'The reminders switch works on an empty screen', s: 'Fixes a bug shipped hours earlier in 1157: when nothing was owed, the Invoices & AR screen returned early and the automatic-reminders switch never finished loading \u2014 it sat on \u201cChecking\u2026\u201d with a dead button, which is exactly the state a paid-up book is in. The switch now paints whether or not any invoice is outstanding.' },
   { b: 1157, d: '2026-08-30', t: 'Reminders master switch', s: 'The Invoices & AR screen now carries a company-wide On/Off switch for automatic payment reminders. It ships OFF \u2014 nothing texts a client until an admin turns it on \u2014 and the daily run checks the same switch server-side, so off means off everywhere. Rows show \u201cPaused \u2014 reminders are off company-wide\u201d while it is off.' },
   { b: 1156, d: '2026-08-30', t: 'Automatic payment reminders', s: 'Retail clients with a sent, unpaid invoice now get a friendly text from the company number \u2014 3 days after the invoice goes out, then weekly, at most 4 \u2014 with their balance and the secure pay link. It stops the moment any payment is recorded or is processing, and every job has a Mute switch on the Invoices & AR screen. Insurance and Community jobs are never texted.' },
@@ -51512,6 +51513,16 @@ return (
 '<span class="sb">Owens Corning shingle colours &amp; our roofs</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
+/* 1159: the book was reachable only from the Sales Floor (a CRM screen
+   this host does not draw) and from presentation.cardinalroofer.com.
+   On the showroom tablet it was unreachable. Same plain <a> as Studio. */
+'<a class="cr-vh-tile" href="/popup.html" target="_blank" rel="noopener">' +
+'<span class="ic">\u25A4</span>' +
+'<span class="tx">' +
+'<span class="tt">The Pop-Up Roof</span>' +
+'<span class="sb">How a roof gets built \u2014 a book they can hold</span>' +
+'</span><span class="go">\u2192</span>' +
+'</a>' +
 '</div></div>'
 );
 }
@@ -51638,6 +51649,18 @@ lv.innerHTML =
 '<span class="sb">Photograph the house, then change the roof, siding, trim, gutters or windows to your materials \u2014 in front of the client.</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
+/* 1159: The Pop-Up Roof. Styled since 761 as .cr-lr-book and never
+   emitted - the CSS, its hover, its light twin and its own comment all
+   shipped; the markup did not. A plain <a> (the Studio tile's pattern),
+   and deliberately NOT width-gated: the book is phone-shaped, so it is
+   offered everywhere the >=820px Showroom row is hidden. */
+'<a class="cr-lr-book" href="/popup.html" target="_blank" rel="noopener">' +
+'<span class="ic">\u25A4</span>' +
+'<span class="tx">' +
+'<span class="tt">The Pop-Up Roof</span>' +
+'<span class="sb">A tap-through book of how a roof gets built \u2014 hand it over while you measure.</span>' +
+'</span><span class="go">\u2192</span>' +
+'</a>' +
 /* what is left is an admin shortcut, not a destination - and it renders
    for nobody else, so the row has to be able to vanish. */
 '<div class="cr-lr-minor">' +
@@ -51710,7 +51733,16 @@ if(d === 'designer'){
    separate anything. One constant, so moving it to its own subdomain is
    a one-line edit here and nothing else changes. */
 leave();
-try{ window.location.href = (window.CR_VISUALIZER_URL || '/visualizer/'); }catch(_e){}
+/* 1159: which door you came through decides which screen you land on.
+   The ordinary landing's Designer tile is the office workbench - queue
+   renders, the Spark draws them. The Vision hub's tile is the same tool
+   in front of a homeowner, where Prep is the wrong screen: approved
+   renders only, one tap. isVisionHost() already decides exactly this. */
+try{
+var _vz = (window.CR_VISUALIZER_URL || '/visualizer/');
+if(isVisionHost()) _vz += (_vz.indexOf('?') === -1 ? '?' : '&') + 'present=1';
+window.location.href = _vz;
+}catch(_e){}
 return;
 }
 if(d === 'colors'){

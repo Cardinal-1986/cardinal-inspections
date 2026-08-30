@@ -7752,3 +7752,80 @@ Retail clients with a sent, unpaid invoice get a friendly text from the company 
 - Invoices & AR rows show *"Reminded ×N · last <date>"* and a **Mute / Turn on** toggle (`data-armute`) writing `projects.reminders_muted` — read directly, not from `cacheProjects`, whose loader selects explicit columns.
 - A check recorded offline stops reminders like any payment — the cron reads the collections ledger, not the payment channel.
 - **The master switch (build 1157):** the AR header carries a company-wide On/Off (`app_settings.payment_reminders_enabled`, staff read / admin write; the cron checks the same key server-side, and a missing row means OFF). **It ships OFF** — nothing texts a client until an admin turns it on; rows read *"Paused — reminders are off company-wide"* until then, and `?dry=1` previews eligibility while off.
+
+---
+
+## The presentation doors (build 1159) — what a rep can reach, and from where
+
+*Added 30 Aug 2026. This section exists because the suite is now large enough that
+"is it built?" and "can a rep reach it standing in a living room?" are different
+questions, and the second one is the one that had been going unasked.*
+
+**The Vision hub is five tiles now**, not four — `visionHtml()` in `cr-lr-script`,
+gated by `isVisionHost()` (`showroom.` prefix, or `?vision=1`):
+
+| Tile | Opens | Note |
+|---|---|---|
+| **Presentations** | `CardinalShowcase.open({showroom:…})` | Showcase · Hall of Fame · The Walk, plus Spotlight / Chalk / Lens / Curtain Call |
+| **Studio** | `/studio.html` | admin only, `window.is_admin()` — a UI hint; `studio_photos` RLS is the real gate |
+| **Designer** | `/visualizer/?present=1` | **1159: `?present=1` is new and only on this door** |
+| **Colors** | `CardinalColors.open()` | OC lines, colours, wind warranty. **This tile is the only door to Colors anywhere in the app** |
+| **The Pop-Up Roof** | `/popup.html` | **1159: new.** Plain `<a>`, new tab |
+
+**The ordinary landing** carries the Showroom row, the Designer row (both `.cr-lr-show`,
+**≥820px only** — a phone is not a screen you present from) and, since 1159, the
+**Pop-Up Roof tile** (`.cr-lr-book`) which is deliberately **not** width-gated.
+
+### The rule 1159 established: one tile, two doors, two screens
+
+The Designer tile exists on both the ordinary landing and the Vision hub, and until
+1159 both dispatched through one `d === 'designer'` branch to `/visualizer/`, which
+lands on **Prep** — the office workbench where you pick a house, pick combinations and
+queue renders for the Spark to draw. That is the right screen at a desk and the wrong
+screen in front of a homeowner, where the point is approved renders and one tap.
+
+The branch now asks `isVisionHost()` — the predicate that already decides this
+question everywhere else — and appends `?present=1` on the showroom host only.
+`visualizer/index.html` reads it in `showApp()`, after `loadCatalog().then(loadProjects)`
+so Present has data, and calls `tab('present'); refresh();` — the same pair the Present
+tab's own click handler calls. **Prep stays the default for every other way in.**
+
+**If you add a surface with an office face and a client face, copy this shape.** Do not
+add a second tile, a second URL constant or a second predicate — ask which door.
+
+### `.cr-lr-book` — the prime doctrine, in its purest form
+
+The tile was **fully styled at 761 and the markup was never written.** Nine CSS
+references — icon well, serif title, subtitle, arrow, hover, radial red wash, a
+`html[data-mode="light"]` twin — and `grep -c 'class="cr-lr-book'` returned **0**. Its
+own comment explains that it is a plain `<a>` rather than a `data-go` dispatch, and
+that it is **deliberately not width-gated** because "the book is phone-shaped and always
+has been, so it is offered everywhere the Showroom card is hidden below 820px."
+
+That comment is a specification for markup that did not exist. 1159 wrote it to spec.
+**`gate_1159.mjs` brace-matches every `@media` block in the file to prove the book is in
+none of them — and proves the Showroom row still is, so the check can tell them apart.**
+
+### What is NOT on the hub, and why
+
+- **Roof Options / Good-Better-Best (1140)** — proposed for the hub, and it does not
+  belong there. `gbbOpen()` opens with `CardinalEstimates.currentProject()` and refuses
+  without it. On the showroom host there is no CRM, no client list and no estimate
+  editor, so reaching it would need a client picker — i.e. showing a homeowner a list of
+  your other clients. It stays in the estimate toolbar, where the *document* it
+  publishes is client-facing and the *screen* that builds it is not.
+- **`drivewaytest.html`** — linked from nowhere, deliberately. It is a leave-behind, not
+  a presentation surface.
+- **`popup.html`'s other doors are unchanged**: the Sales Floor tile, and the
+  `presentation.cardinalroofer.com` / `presentation.cardinalrenovations.com` rewrites in
+  `vercel.json`.
+
+### Related, and still rep-facing: `PANES.proof`
+
+`cr-sf-script` carries a written **Proof** pane — company (Dayton, locally owned,
+licensed and insured, permit pulled, magnetic sweep), warranty (25yr shingle / 10yr
+workmanship, and which of the two actually matters), what goes on the roof (tear-off,
+sheathing per sheet, ice & water, synthetic, new boots, ventilation) and the ORC
+§1345.23 three-day right. It is **written for the rep** — *"the facts you should be able
+to give without looking anything up"*, *"ask a competitor whether they do"*. A
+client-facing version of it is a **reface, not a write**.

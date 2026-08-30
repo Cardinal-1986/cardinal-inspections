@@ -2,6 +2,41 @@
 
 ---
 
+## 🟠 OPEN — the in-home presentation: 1159 did the wiring, not the arc (30 Aug 2026)
+
+Theo, 30 Aug: *"Can you make a professional sales presentation? In home on
+an iPad."* The audit found the suite is large and **scattered across ~16
+doors with no running order**. Three numbered options were put to him; he
+picked **3, then 2, then 1**. Build **1159 is option 3** and is shipped.
+
+**Option 2 — "Why Cardinal", client-facing. NEXT.** Every client-facing
+surface today is about *their* roof; nothing says why Cardinal. The content
+is **already written**: `PANES.proof` in `cr-sf-script` (company, warranty,
+roof spec, ORC §1345.23) — but it is written **for the rep**
+(*"the facts you should be able to give without looking anything up"*,
+*"ask a competitor whether they do"*). So this is a **reface, not a write**:
+Blackout, homeowner voice, coaching asides removed, as a Vision hub tile.
+Add the OC **Preferred** status — `OC_BRAND_RULES.md` governs the mark
+and the approval gate is Theo's. **Do not** put Google reviews on it without
+asking: the review card in the app is staff-facing reputation tracking.
+
+**Option 1 — The Appointment (a running order). AFTER 2.** One tile that
+runs a fixed sequence over surfaces that already exist: *their roof* (Walk /
+Spotlight) → *what good looks like* (Hall of Fame) → *why Cardinal*
+(option 2) → *their house in colour* (Designer / Colors) → *options*
+(Good/Better/Best) → *payment* (Service Finance) → *sign*. A
+conductor, not new content. **The hard parts, measured, not guessed:** each
+surface closes differently (`display` vs class — see the `hideAllViews()`
+rules), the scroll lock has 13 writers and no reconciler, and the last two
+steps live in the **CRM**, which the showroom host does not draw. Expect it
+to force the separation question below.
+
+**Option 4 — the leave-behind.** Not picked yet. `drivewaytest.html`
+already exists, is public, login-free and linked from nowhere — it is
+the obvious first payload.
+
+---
+
 ## 🟠 OPEN — the sentinel's AR coverage stops at the chrome (build 1158)
 
 The `ar` state added at 1158 sweeps the Invoices & AR header, KPI tray, empty

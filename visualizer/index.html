@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 826
+  v2026-08-30 build 1159
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -986,7 +986,15 @@ function showApp(email){
   document.body.classList.add('vz-prep');   /* Prep is the landing tab */
   fitShell();
   ccProbe();
-  loadCatalog().then(loadProjects);
+  /* 1159: ?present=1 lands on Present instead. The Vision hub's Designer
+     tile passes it, because that door is the one used in front of a
+     homeowner, where Prep - the queue-and-render workbench - is the wrong
+     screen. Prep stays the default for every other way in. tab() is
+     hoisted; refresh() runs after the catalog so Present has data, and
+     with no job chosen yet it draws its own empty state, same as a tap. */
+  loadCatalog().then(loadProjects).then(function(){
+    if(/[?&]present=1(&|$)/.test(location.search)){ tab('present'); refresh(); }
+  });
 }
 $('vzForm').addEventListener('submit', function(e){
   e.preventDefault();
