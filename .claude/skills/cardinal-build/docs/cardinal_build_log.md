@@ -31126,3 +31126,36 @@ looking and tapping, and already baselined so they cannot grow.
   still goes red (the 975 fix).
 - ⏸ **Item 2 (the Tarps tab) is BLOCKED ON THE SAME ANSWER, deliberately**: if the tabs become
   doors, "a new tab" has nowhere to be. Not started.
+
+## Build 1179 — the Community home is one list of what needs you
+- Theo's option **3** from the 30 Aug preview, plus his added instruction: **"make the tabs become
+  doors."** So all three went. Community now opens on the search bar (option 3's whole distinction —
+  the module's own 711 banner calls the client list the daily driver), then ONE attention list, then
+  Clients / Estimates / Partners as doors.
+- **The attention list is per-job, not per-queue.** `queue()` already rendered a summary row and is
+  untouched for the Estimates pane; `attnRow()` is the per-job form the home needs, because
+  "11 waiting" does not tell you whose roof it is. Groups: overdue & due soon · chase a decision ·
+  get on the calendar · invoice the partner · **tarps still up**.
+- ⚠️ **THE TWO CLOCKS ARE NOT THE SAME NUMBER**, and the chip must not pretend they are. `due`
+  carries days UNTIL the date (negative = overdue, and only that one goes red); every other queue
+  carries days SINCE the stage changed, which is an age. Conflating them would repaint an
+  eight-day-old estimate as eight days late. `attnRow(rec, overdueClock)` takes the clock as an
+  argument for exactly this reason.
+- **Tarps did not get a tab, and the reason is the prime doctrine.** Theo asked whether there was
+  anywhere else to put it. **Build 1092 already shows a tarps-up count on the partner stats page**,
+  per partner and as a total — a tab would have been a second surface for a number already on
+  screen. The list joined the attention queues instead. `TARP_DONE` is cr-can's 1092 map verbatim,
+  not a second answer to "is this tarp still up".
+- ⚠️ **The door dispatch was scoped to `.tabbar [data-pane]`**, and the doors live in the home pane.
+  Left as it was, **every door would have rendered perfectly and done nothing** — BUG_CLASSES 16,
+  the Studio Archive shape. Widened, with a `tagName !== 'BUTTON'` guard because the panes
+  themselves carry `data-pane`. `gate_1179` drives a **real tap** on each door and on Back rather
+  than calling the function (class 71's standing rule).
+- Nothing was deleted: By partner and By stage remain on the 1092 stats page. Every new colour is an
+  existing `--ccm-*` token with a literal fallback, so the light twin comes through the tokens
+  rather than a second block; the two red inks that cannot tokenise carry an explicit `rb-light`
+  twin.
+- Gates: check_build green (1178→1179, marker + negative control) · **gate_1179 19/19, RED 4/13 on
+  the 1178 control** · regressions gate_1171/1172/1173/1174/1175/1176/1178 all green · gate_types
+  GREEN · gate_dupes GREEN · audit_scrolllock GREEN (17, unchanged — the rework added no writer) ·
+  sentinel sweep running (layout build).
