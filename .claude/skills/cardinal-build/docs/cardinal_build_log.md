@@ -30839,3 +30839,21 @@ before push.
     `body.dataset.crm` claims, using the app's own globals; no-ops guarded on any page without
     them (class 37).
 - `--selftest` GREEN: all 12 checks fire and every look-alike is quiet.
+
+## Instruments II — the error trap, the XSS canary, and the boundary sweeps (30 Aug, scripts only)
+- Theo brought three suggestions and asked "worth doing?". Verdict, measured against what exists:
+  the layout/clipping one was already built four ways (OVERFLOW/CLIPPED/COLLAPSE/OVERLAP); the
+  other two shipped here:
+  - **CONSOLE**: a render fails on `console.error` from app code. Filtered for the rig's own
+    aborted loads (images/fonts/api — the mock's doing, not the app's), because an unfiltered
+    trap cries wolf on its own harness. Firing direction fixtured in the selftest; the filter is
+    proven by clean sweeps over the real artifact, whose rig aborts hundreds of loads. PAGEERROR
+    (thrown + unhandled rejections) already existed.
+  - **XSS**: a one-boolean canary — `window.__XSS__` — that a seeded hostile string sets if any
+    renderer lets a name execute as markup. Fixtured with a real `<img onerror>` injection.
+  - **Boundary sweeps**: `sentinel_mode_empty.js` (empties every collection, relaxes the
+    seed-landed guard — an empty store IS the state under test — and trims the walk to the 18
+    project-independent states) and `sentinel_mode_hostile.js` (100-char names + an injection
+    string, full walk). Pass either BEFORE the cardinal setup in --setup. Not a fuzzer: three
+    boundary values on the primary fixtures, per the settled scope.
+- `--selftest` GREEN: all 14 checks fire.

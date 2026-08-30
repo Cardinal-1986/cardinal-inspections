@@ -261,6 +261,27 @@
     owner_docs: [], pricing_items: [], commissions: [], community_partners: [], punch_steps: []
   };
 
+  /* ── boundary modes (sentinel_mode_empty.js / sentinel_mode_hostile.js) ── */
+  var MODE = globalThis.__SENTINEL_MODE__ || 'normal';
+  if (MODE === 'empty') {
+    Object.keys(window.__SEED__).forEach(function (k) {
+      if (Array.isArray(window.__SEED__[k])) window.__SEED__[k] = [];
+    });
+    /* the walk still needs someone signed in */
+    window.__SEED__.team_profiles = [
+      { email:'theo@cardinalrenovations.net', name:'Theo Dorion', role:'admin', phone:null }
+    ];
+  }
+  if (MODE === 'hostile') {
+    var HOSTILE_LONG = Array(101).join('A');
+    var HOSTILE_XSS = '"><img src=x onerror="window.__XSS__=1">';
+    window.__SEED__.projects.forEach(function (pr, n) {
+      if (n === 0) { pr.name = HOSTILE_LONG; pr.address = HOSTILE_LONG + ' Very Long Road'; }
+      if (n === 1) { pr.name = HOSTILE_XSS; }
+    });
+  }
+
+
   /* ── the walk ─────────────────────────────────────────────────────────────
      Each state leaves the app on ONE screen. A state that fails to open is
      REPORTED by the sentinel rather than swallowed — a state that silently
@@ -506,6 +527,9 @@
      sweep. `seen` is checked against the fixtures this file actually declares,
      so it cannot pass vacuously. */
   function seedLanded() {
+    /* in the empty-book sweep an empty store IS the state under test — the
+       guard would otherwise fail the exact sweep it exists to protect. */
+    if ((globalThis.__SENTINEL_MODE__ || 'normal') === 'empty') return 0;
     var n = (window.__SEED__ && window.__SEED__.projects || []).length;
     if (n < 3) throw new Error('seed missing: __SEED__.projects has ' + n + ', expected 3');
     var rows = document.querySelectorAll(
@@ -845,4 +869,14 @@
         var strip = el.querySelector('.cr-sh-tabs');
         if (!onScreen(strip)) throw new Error('the Showcase tab strip is not on screen'); } }
   ];
+  if ((globalThis.__SENTINEL_MODE__ || 'normal') === 'empty') {
+    /* states that open a SPECIFIC project cannot run against an empty book;
+       everything else must render its honest empty state. */
+    var EMPTY_OK = ['home','production','salesfloor','storm','vision','why','colors',
+      'crews','estimates','nav','dispatch','punch','clientdir','photoactivity',
+      'insclients','truth','ar','leads'];
+    window.__sentinelStates = window.__sentinelStates.filter(function (st) {
+      return EMPTY_OK.indexOf(st.name) !== -1;
+    });
+  }
 })();

@@ -303,6 +303,8 @@
     <button onclick="void 0">Switch portal</button>
     <button onclick="void 0">Switch Portal</button>
     <button onclick="void 0">Clients</button>
+    <div id="dupe-sec" role="button" aria-expanded="false" onclick="void 0">Production</div>
+    <button onclick="void 0">Production</button>
   </nav>
   <div id="dupe-cards">
     <div><b>Card one</b> <button onclick="void 0">Delete</button></div>
@@ -328,6 +330,20 @@
   window.projClaimType = function (p) { try { return JSON.parse(p.checklist).lead.claim_type; } catch (e) { return 'unknown'; } };
   window.normStage = function (st) { return st; };
   document.body.dataset.crm = 'retail';
+</script>
+
+<h2>CONSOLE — app code logging an error (only the firing direction can be
+staged here: the rig-abort filter needs the real mock's aborted loads)</h2>
+<div class="case"><script>console.error('selftest: a component logged an error');</script>
+  <span>the script above logged one console.error</span></div>
+
+<h2>XSS — a hostile string executing as markup (the canary the hostile seed watches)</h2>
+<div class="case" id="xss-sink"></div>
+<script>
+  /* a renderer that innerHTML'd a hostile name unescaped looks exactly like
+     this — the img fires onerror and sets the canary. */
+  document.getElementById('xss-sink').innerHTML =
+    '<img src="data:image/gif;base64,x" onerror="window.__XSS__=1" alt="">';
 </script>
 </body>
 </html>

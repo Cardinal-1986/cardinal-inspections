@@ -159,7 +159,7 @@ let   ALL    = argv.includes('--all');
    it reported build 817's FIX as the defect). Silence from an instrument
    that has never been seen to speak is not evidence of anything. */
 const SELFTEST = argv.includes('--selftest');
-const EXPECT = ['INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'FLOOR', 'CONTAIN', 'UNWIRED', 'DEADTAP', 'DUPE', 'BOOK'];
+const EXPECT = ['INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'FLOOR', 'CONTAIN', 'UNWIRED', 'DEADTAP', 'DUPE', 'BOOK', 'CONSOLE', 'XSS'];
 const on = id => !ONLY.length || ONLY.includes(id);
 
 if (SINCE && !existsSync(SINCE)) {
@@ -260,6 +260,22 @@ async function sweep(HTML, findings) {
     const page = await ctx.newPage();
     const errs = [];
     page.on('pageerror', e => errs.push(String(e).split('\n')[0]));
+    /* console.error from APP CODE fails the render. The rig itself aborts
+       images, fonts and api calls, and every abort logs a resource error —
+       that is the mock's own doing, filtered so the trap cannot cry wolf on
+       its own harness. Unfilterable in the selftest, so only the firing
+       direction is fixtured there; the filter is proven by every clean sweep
+       over the real artifact, whose rig aborts hundreds of loads. */
+    const cerrs = [];
+    page.on('console', m => {
+      if (m.type() !== 'error') return;
+      const t = m.text();
+      if (/Failed to load resource|net::ERR|ERR_FAILED|status of \d+|CORS|Access-Control|unknown error occurred when fetching the script|ServiceWorker|serviceworker/i.test(t)) return;
+      /* the line above grew on the hostile sweep's first run: the rig aborts
+         sw.js, and its registration failure logs a load error in different
+         words. Same class — the mock's own abort, not app code. */
+      cerrs.push(t.split('\n')[0].slice(0, 160));
+    });
     await page.route('**/*', async r => {
       const u = r.request().url();
       if (u.startsWith('https://sentinel.test/'))
@@ -448,6 +464,12 @@ async function sweep(HTML, findings) {
         add({ id: 'BOOK', where: at, key: `book|${f.stage}`,
               detail: `pipeline ${f.stage} shows ${f.got} but the ${f.crm} book holds ${f.exp} — the board is wearing another portal's numbers (1173 class)` });
 
+    /* XSS — the canary flag a hostile-seed string sets if any renderer ever
+       let markup through unescaped. One boolean, zero noise. */
+    if (on('XSS') && res.xss)
+      add({ id: 'XSS', where: at, key: 'xss',
+            detail: 'window.__XSS__ is set — a seeded hostile string executed as markup somewhere on this render path' });
+
     /* UNWIRED needs CDP — the page cannot list its own listeners. */
     if (on('UNWIRED') && res.unwired.length) {
       const cdp = await ctx.newCDPSession(page);
@@ -496,6 +518,7 @@ async function sweep(HTML, findings) {
     }
 
     if (errs.length) add({ id: 'PAGEERROR', where: at, detail: errs[0] });
+    if (cerrs.length) add({ id: 'CONSOLE', where: at, key: 'console|' + cerrs[0].slice(0, 60), detail: 'console.error: ' + cerrs[0] });
     }   /* states */
     await ctx.close();
   }
@@ -754,6 +777,10 @@ if (SELFTEST) {
   console.log((dupeCards ? '  FAIL  ' : '  PASS  ') +
     'two same-name buttons in a plain list are NOT reported as DUPE');
   if (dupeCards) bad++;
+  const dupeSec = all.some(r => r.id === 'DUPE' && /dupe-sec/.test(r.detail));
+  console.log((dupeSec ? '  FAIL  ' : '  PASS  ') +
+    'a disclosure section header sharing a row name is NOT reported as DUPE');
+  if (dupeSec) bad++;
   /* BOOK pair: the matching stage in the same fixture must stay quiet. */
   const bookOk = all.some(r => r.id === 'BOOK' && /Prospect/.test(r.detail));
   console.log((bookOk ? '  FAIL  ' : '  PASS  ') +
