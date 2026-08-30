@@ -3815,7 +3815,6 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
               <div class="cr-dh-name" id="crDrawerUser">Cardinal</div>
               <div class="cr-dh-co">Cardinal Roofing &amp; Renovations</div>
             </div>
-            <button type="button" class="cr-dh-switch" data-cri="group" aria-label="Switch portal" title="Switch portal"></button>
           </div>
           <div class="navsec">Daily</div>
           <!-- 1171: ONE switch row. The 799 "Switch Portal" row (the old
@@ -3924,7 +3923,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1173<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-30 build 1175<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -36875,6 +36874,11 @@ function ensureMenuOption(){
 var menu = document.getElementById('navMenu') || document.querySelector('#navMenu, .navmenu');
 if(!menu) return;
 if(menu.querySelector('[data-nav="community-partners"]')) return;
+/* 1174: the 953 menu build owns this door now (#cr-nav-communitypartners,
+   sitting in the Community section). Appending a second one and hiding it
+   was the papered-over duplicate the DUPE check flagged — do not append at
+   all when the sectioned row exists. */
+if(document.getElementById('cr-nav-communitypartners')) return;
 var portal = null;
 try{ portal = window.CardinalPortal && window.CardinalPortal.get(); }catch(_){ }
 if(portal && portal !== 'community' && portal !== 'all') return;
@@ -42561,6 +42565,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1175, d: '2026-08-30', t: 'The Vision hub\u2019s two dim lines', s: 'Two inks on the Vision hub sat under the readability floor and the new empty-book sweep measured them: the small \u201cCARDINAL\u201d word above the title (3.44:1 \u2014 brand red is built for light grounds, not near-black) and the Studio \u2192 promote \u2192 Showroom line (3.24:1). The word now uses the app\u2019s approved lighter red and the flow line uses the hub\u2019s own muted grey \u2014 5.55 and 7.41, computed, both themes N/A (the hub is Blackout by design). The 27 Aug header-audit rows for the \u25be and \uFF0B were re-measured and are already settled at 1116 \u2014 nothing re-fixed.' },
+  { b: 1174, d: '2026-08-30', t: 'The drawer stops doubling its doors', s: 'Two catches from the new duplicate-door check, fixed at source: the people icon in the drawer header is retired (it duplicated the \u201cSwitch portal\u201d row \u2014 both have opened the same Front Door since 1171), and Community Partners stops being added to the menu twice \u2014 the old second copy was merely hidden, which papers over a duplicate rather than removing it. One door per destination.' },
   { b: 1173, d: '2026-08-30', t: 'One pipeline per portal \u2014 the numbers stop wandering', s: 'Theo, with three screenshots of three different pipelines under one Retail header: the board was reading which portal it was in a beat before the header finished switching, so coming back from Community or Cardinal Truth could paint the retail dashboard with the other book\u2019s numbers \u2014 and nothing re-rendered until something else did. The board now re-renders itself the instant the portal actually flips, on every path. And the home button in the header is retired \u2014 its one real job was accidentally repairing this bug.' },
   { b: 1172, d: '2026-08-30', t: 'The header switcher actually taps', s: 'Theo: \u201cThere\u2019s no actual switcher on the header.\u201d He was right \u2014 the header title has carried pointer-events:none since it was a decorative label, so the \u25be shipped at 1164 sat on an element no finger could ever reach, and every gate had opened the panel through the API instead of tapping it. The title now takes the tap (and its hit area meets the 44px floor), and the new gate drives every door with real taps \u2014 title, drawer row, drawer icon, panel rows, scrim \u2014 never the function.' },
   { b: 1171, d: '2026-08-30', t: 'One way to switch portals, not four', s: 'The Front Door (1164) had been ADDED beside the old switching doors instead of replacing them \u2014 the drawer carried two \u201cSwitch portal\u201d rows over two different pickers, and the drawer-header icon and the insurance header\u2019s Switch CRM chip still opened the old sheet. One row now, and every switch door \u2014 the drawer row, the drawer-header icon, the insurance chip, the header title \u2014 opens the same Front Door. The old picker sheet keeps working only as a fallback if the panel is ever missing.' },
@@ -44227,9 +44233,13 @@ if(adminSec) moveAfter(adminSec, menu.querySelector('.navopt[data-nav="suppliers
       menu TWICE - cr-menu-script puts one under CRMs and cr-cpartners-script
       appends its own at the end. Keep the one that sits in a section. */
 if(document.getElementById('cr-nav-communitypartners')){
+/* 1174: REMOVE, not hide. cr-cpartners' tick loop can append its row before
+   this builder runs (boot race), and a hidden duplicate is still a duplicate
+   — the DUPE check reads markup on purpose. The appender's own guards stop
+   any re-add once this row exists. */
 Array.prototype.forEach.call(
 menu.querySelectorAll('.navopt[data-nav="community-partners"]'),
-function(el){ el.style.display = 'none'; }
+function(el){ if(el.parentNode) el.parentNode.removeChild(el); }
 );
 }
 }
@@ -72544,7 +72554,9 @@ html[data-mode="light"] .cr-lr-book .sb{color:#8a8078}
 #landingView>.cr-vh{display:flex}
 .cr-vh-in{width:100%;max-width:420px}
 .cr-vh-word{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;
-  text-transform:uppercase;color:#c8202e;margin-bottom:4px}
+  text-transform:uppercase;color:#e35c63;margin-bottom:4px}/* 1175: was #c8202e — 3.44:1
+  on the hub's #0b0d0c, under the 4.5 floor. #e35c63 is the app's approved lighter
+  red twin and reads 5.55. */
 .cr-vh-h{font:800 30px Georgia,'Times New Roman',serif;color:#F2F4F2;margin:0 0 6px;
   letter-spacing:-.01em}
 .cr-vh-sub{font-size:13px;color:#98A29C;margin:0 0 26px}
@@ -72571,7 +72583,7 @@ html[data-mode="light"] .cr-lr-book .sb{color:#8a8078}
 .cr-vh-badge.soon{background:rgba(255,255,255,.06);color:#5d655f}
 .cr-vh-flow{display:flex;align-items:center;gap:5px;
   font:700 11px ui-monospace,'SF Mono',Menlo,monospace;
-  color:#5d655f;letter-spacing:.02em;margin:-2px 0 12px 4px}
+  color:#98A29C/* 1175: was #5d655f, 3.24:1 — the module's own .cr-vh-sub muted, 7.41 */;letter-spacing:.02em;margin:-2px 0 12px 4px}
 .cr-vh-flow .ar{color:#32372f}
 
 /* ── Promoting a job to a pair (591) ─────────────────────────────
@@ -82699,8 +82711,6 @@ body:not(.cr-lnav-on) #navMenu .cr-drawer-head{
 body:not(.cr-lnav-on) #navMenu .cr-dh-txt{flex:1;min-width:0;}
 body:not(.cr-lnav-on) #navMenu .cr-dh-name{font:800 18px Georgia,'Times New Roman',serif;color:var(--hin,#fff);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 body:not(.cr-lnav-on) #navMenu .cr-dh-co{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--hin,#cfd6df);opacity:.72;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-body:not(.cr-lnav-on) #navMenu .cr-dh-switch{flex:none;width:40px;height:40px;border-radius:11px;cursor:pointer;background:color-mix(in srgb,var(--hac,#c8202e) 16%,transparent);border:1px solid var(--hac,#c8202e);color:var(--hac,#e35c63);display:flex;align-items:center;justify-content:center;padding:0;}
-body:not(.cr-lnav-on) #navMenu .cr-dh-switch svg{width:19px;height:19px;}
 
 body:not(.cr-lnav-on) #navMenu .navsec{
   background:transparent !important;color:var(--hac,#7f8792) !important;
@@ -83036,8 +83046,9 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     var head = menu.querySelector('.cr-drawer-head');
     if(head) head.addEventListener('click', function(e){ e.stopPropagation(); });
     /* the header switch opens the portal picker (data-nav="portal" equivalent). */
-    var sw = menu.querySelector('.cr-dh-switch');
-    if(sw) sw.addEventListener('click', function(e){ e.stopPropagation(); menu.style.display = 'none'; try{ if(window.CardinalFrontDoor) window.CardinalFrontDoor.open(); else if(window.CardinalPortal) window.CardinalPortal.pick(); }catch(_){} });
+    /* 1174: the header switch icon is retired — it duplicated the drawer's
+       own "Switch portal" row (both opened the Front Door since 1171), and
+       the DUPE check flagged the pair on its first run. */
     /* swipe-left on the open drawer closes it. */
     var sx=null, sy=null;
     menu.addEventListener('touchstart', function(e){ if(!isDrawer() || !menu.classList.contains('cr-drawer-open')) return; var t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, { passive:true });
