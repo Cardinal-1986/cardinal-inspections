@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1184<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1185<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42662,7 +42662,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b: 1184, d: '2026-08-31', t: 'The header title is a real button', s: 'Tapping the portal name in the header opens the Front Door, so it has been a control since build 1164 \u2014 but underneath it was still an ordinary piece of text. It told screen readers it could be opened while not being something that can be opened, and it could not be reached or pressed from a keyboard at all. It is now a proper button: reachable by Tab, pressed with Enter or Space, and it announces itself correctly. Nothing changes about how it looks or how it behaves on a phone.' },
+  { b: 1185, d: '2026-08-31', t: 'The header title is a real button', s: 'Tapping the portal name in the header opens the Front Door, so it has been a control since build 1164 \u2014 but underneath it was still an ordinary piece of text. It told screen readers it could be opened while not being something that can be opened, and it could not be reached or pressed from a keyboard at all. It is now a proper button: reachable by Tab, pressed with Enter or Space, and it announces itself correctly. Nothing changes about how it looks or how it behaves on a phone.' },
   { b: 1183, d: '2026-08-31', t: 'The hammer on the schedule card, and two dead files gone', s: 'The Cardinal-on-a-hammer drawing has been in the app since build 1086 and had never once appeared on a screen. It was drawn, and the rule that paints it faintly behind a card was written \u2014 but the card was never given the name the rule looks for, so nothing ever matched it. It is now the watermark behind Next 30 Days on the home screen, which is the work schedule, and it sits beside the Cardinal-on-a-pencil that already watermarks the Team Calendar. Two other picture files that nothing in the app could reach have been deleted, along with the leftover styling that pointed at one of them.' },
   { b: 1182, d: '2026-08-31', t: 'The inspection reports stop carrying the logo twice', s: 'The cover logo was written into the app file twice \u2014 once inside the roof report and once inside the exterior report, the same image both times, about 280,000 characters between them. It is a normal picture file now and both reports point at it, so the app file is a quarter of a megabyte smaller and the logo is fetched once and reused. Nothing changed on the reports themselves, and if the picture ever fails to load they fall back to the main Cardinal logo.' },
   { b: 1181, d: '2026-08-30', t: 'One light/dark button, the same in every portal', s: 'Insurance had its own light/dark button in its own spot while Retail and Community shared a different one. Now there is one button in one place for all three \u2014 the same corner you already use \u2014 and it switches whichever portal you are standing in. Insurance keeps its own colours underneath; only the button is shared.' },
@@ -87188,7 +87188,7 @@ document.addEventListener('click', function(e){
   var bt = e.target.closest && e.target.closest('#brandTitle');
   if(bt){ if(isOpen()) close(); else open(); }
 });
-/* 1184: the title is a CONTROL, so give it a control's role.
+/* 1185: the title is a CONTROL, so give it a control's role.
    1164 put `aria-expanded` on #brandTitle, which is a plain division element
    with no role of its own — a generic
    element does not support that attribute, and axe reports it CRITICAL

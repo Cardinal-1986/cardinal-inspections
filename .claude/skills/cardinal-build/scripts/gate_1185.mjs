@@ -1,4 +1,4 @@
-/* gate_1184 — the header title is a real button, not text pretending.
+/* gate_1185 — the header title is a real button, not text pretending.
  *
  * WHY. Since 1164, tapping the portal name opens the Front Door, and the module
  * sets `aria-expanded` on #brandTitle. But #brandTitle is a plain division with
@@ -20,7 +20,7 @@
  * This gate holds the fix at the level that matters: not "the attribute is
  * allowed now" but "a keyboard user can actually operate it".
  *
- * Optional path arg -> negative control (1183 must go RED). */
+ * Optional path arg -> negative control (the pre-fix tree must go RED). */
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import fs from 'fs';
 import { waitAppReady, waitForSoft, settle } from './gate_ready.mjs';
