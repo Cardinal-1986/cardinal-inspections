@@ -124,7 +124,11 @@ need('4a the six inline style attributes were repaired',
      inlineFixed >= 5,
      'found ' + inlineFixed + ' repaired inline declarations (want >= 5)');
 
-const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']});
+/* ⚠ BROWSER PATH COMES FROM chromium_launch.cjs, NOT FROM A LITERAL.
+   This gate hard-coded a path inside the sandbox it was written in, so it died
+   at launch — before its first assertion — on any other machine, CI included.
+   Same class as the absolute .sql paths that made harness_tray unrunnable. */
+const browser=await (require_983('./chromium_launch.cjs').launchChromium)(chromium);
 const watchdog=setTimeout(()=>{ console.log('GATE TIMEOUT'); process.exit(1); },150000);
 
 async function survives(appText){

@@ -30,6 +30,7 @@ for (const _p of ['playwright', 'playwright-core',
   try { chromium = require(_p).chromium; break; } catch (_) {}
 }
 if (!chromium) { console.error('audit_contrast.js: playwright not found - cannot run'); process.exit(2); }
+const CR_ROOT = require('./script_paths.cjs').ROOT + '/';  /* not a path to one machine */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 
 /* 675: this was a bare path into the writing session's scratchpad, so the
@@ -38,15 +39,31 @@ const fs = require('fs'), path = require('path'), crypto = require('crypto');
    they stood at 616) and final/*.jpg (the cover images). Point CR_OCC_FIXTURES
    at a directory holding both, or accept that this 618 audit cannot be re-run
    as-is. Saying that out loud beats a stack trace that reads like a crash. */
-const SP   = process.env.CR_OCC_FIXTURES || '';
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+/* ✅ THE FIXTURES ARE COMMITTED NOW, AND THIS NO LONGER SELF-DISABLES.
+   It needed `$CR_OCC_FIXTURES/rows616.json` and `final/*.jpg` — a scratchpad
+   that was never committed — so it exited 2 with an honest "NOT RUN" and had
+   audited nothing for a very long time. An audit that cannot run is not a
+   safety net; it is a comment.
+
+   ⚠ THE ROWS WERE NOT INVENTED. harness_colors already carried a real-shaped
+   `oc_colors` set, documented as "verbatim proportions from the live table".
+   That set is now fixtures/oc_colors_rows.json and BOTH gates read it, so they
+   cannot drift into disagreeing about what the table looks like.
+
+   ⚠ THE COVER IMAGES ARE DELIBERATELY TRIVIAL, and that is sound rather than
+   lazy: this audit resolves a text node's ground by walking backgroundCOLOR up
+   its ancestors, so a photograph never enters the arithmetic — its own header
+   says so. The covers exist only so a card lays out as it does in production.
+   A photo-realistic fixture would change nothing it measures. */
+const SP   = process.env.CR_OCC_FIXTURES || (__dirname + '/fixtures');
+const ROWS_FILE = fs.existsSync(SP + '/oc_colors_rows.json')
+  ? SP + '/oc_colors_rows.json' : SP + '/rows616.json';
+const COVERS = fs.existsSync(SP + '/oc_covers') ? SP + '/oc_covers' : SP + '/final';
+const FILE = process.argv[2] || CR_ROOT + 'index.html';
 const html = fs.readFileSync(FILE, 'utf8');
-if (!SP || !fs.existsSync(SP + '/rows616.json') || !fs.existsSync(SP + '/final')) {
-  console.log('audit_contrast: NOT RUN — the 616 colour fixtures are missing.');
-  console.log('  needs  $CR_OCC_FIXTURES/rows616.json  and  $CR_OCC_FIXTURES/final/*.jpg');
-  console.log('  (they lived in the scratchpad of the session that wrote this and were');
-  console.log('   never committed. harness_colors.js and harness_occhead.js cover this');
-  console.log('   surface from the shipped artifact and both run today.)');
+if (!fs.existsSync(ROWS_FILE) || !fs.existsSync(COVERS)) {
+  console.error('::error::audit_contrast: fixtures missing (' + ROWS_FILE + ', ' + COVERS +
+                ') — this gate must not silently skip; skipping is what it did for months.');
   process.exit(2);
 }
 /* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
@@ -62,13 +79,16 @@ if (!SP || !fs.existsSync(SP + '/rows616.json') || !fs.existsSync(SP + '/final')
    stylesheet" and scored contrast against it. A named throw is the honest
    answer; garbage that looks like CSS is not. */
 const MS = require('./module_source.cjs');
-const CSS = MS.moduleText(html, 'colors.css', { htmlPath: FILE, missing: 'throw' });
+let CSS = MS.moduleText(html, 'colors.css', { htmlPath: FILE, missing: 'throw' });
+/* --selftest appends a rule that MUST be caught. See the bottom of the file. */
+const SELFTEST = process.argv.includes('--selftest');
+if (SELFTEST) CSS += '\n#cr-occ, #cr-occ *{color:#3a3a3a !important;}\n';
 const JS  = MS.moduleText(html, 'colors.js',  { htmlPath: FILE, missing: 'throw' });
-const ROWS = JSON.parse(fs.readFileSync(SP + '/rows616.json', 'utf8'));
+const ROWS = JSON.parse(fs.readFileSync(ROWS_FILE, 'utf8'));
 const IMG = {};
-for(const f of fs.readdirSync(SP + '/final')){
+for(const f of fs.readdirSync(COVERS)){
   if(f.endsWith('.jpg')) IMG['oc-colors/covers/' + f] =
-    'data:image/jpeg;base64,' + fs.readFileSync(path.join(SP,'final',f)).toString('base64');
+    'data:image/jpeg;base64,' + fs.readFileSync(path.join(COVERS,f)).toString('base64');
 }
 
 let pass = 0, fail = 0;
@@ -111,7 +131,11 @@ const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex').slice
    anything under the WCAG floor (4.5 body / 3.0 for >=18.66px or bold >=14px).
    jsdom cannot do this — it returns rgba(0,0,0,0) for var() in a shorthand. */
 (async () => {
-  const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium' });
+  /* ⚠ BROWSER PATH COMES FROM chromium_launch.cjs, NOT FROM A LITERAL.
+   This gate hard-coded a path inside the sandbox it was written in, so it died
+   at launch — before its first assertion — on any other machine, CI included.
+   Same class as the absolute .sql paths that made harness_tray unrunnable. */
+const browser = await require('./chromium_launch.cjs').launchChromium(chromium);
   const out = [];
   for (const [style, w, h, label] of [['roofs',1194,900,'iPad roofs'],
                                       ['compare',1194,900,'iPad compare'],
@@ -150,7 +174,25 @@ const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex').slice
     await page.close();
   }
   await browser.close();
-  if (!out.length) { console.log('CLEAN — every text node meets its contrast floor'); }
-  else { console.log('BELOW FLOOR (' + out.length + '):');
+  if (out.length) { console.log('BELOW FLOOR (' + out.length + '):');
     out.forEach(f => console.log(`  [${f.where}] ${f.ratio}:1 (needs ${f.floor}) ${f.px}px  ${f.cls}\n        "${f.txt}"  ${f.fg} on ${f.bg}`)); }
+
+  /* ⚠ IT USED TO PRINT FINDINGS AND EXIT 0. Twenty-five text nodes below their
+     floor and a green process — an "audit" in the sense that it produced prose
+     nobody was obliged to read. A gate that cannot fail is worse than no gate,
+     so a finding is now a non-zero exit. There is no baseline here on purpose:
+     the shipped file is CLEAN today, so the honest ratchet is zero. */
+  if (SELFTEST) {
+    /* NEGATIVE CONTROL: the CSS above was poisoned with #3a3a3a text on the
+       module's dark ground. If this run comes back clean the audit is blind and
+       its CLEAN verdict on the real file means nothing. */
+    const okSelf = out.length > 0;
+    console.log(okSelf
+      ? `  ok   a deliberate contrast regression is CAUGHT (${out.length} node(s) below floor)`
+      : '  FAIL a deliberate contrast regression was NOT caught — this audit is blind');
+    console.log('SELFTEST ' + (okSelf ? 'PASS' : 'FAIL') + ' (1/1)');
+    process.exit(okSelf ? 0 : 1);
+  }
+  if (!out.length) console.log('CLEAN — every text node meets its contrast floor');
+  process.exit(out.length ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
