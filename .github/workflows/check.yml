@@ -84,6 +84,48 @@ jobs:
             console.log('all ' + blocks.length + ' inline scripts parse OK');
           "
 
+      # ─────────────────────────────────────────────────────
+      # NEW (1186) — THE BLIND SPOT IN THE STEP ABOVE. Its regex
+      # is /<script(?![^>]*\bsrc=)[^>]*>/ — it deliberately skips
+      # every tag carrying src=, because for years every module
+      # lived inline and the only src= tags were CDN. Correct
+      # then; a coverage hole the moment any module moves to its
+      # own file, which the Showroom relocation
+      # (SHOWROOM_EXTRACTION_SPIKE.md) is about to do. The hole
+      # would not break anything loudly — it would report GREEN
+      # over an unchecked file, which is the failure shape this
+      # project keeps paying for.
+      #
+      # It also catches the worse case: a src pointing at a file
+      # that is not in the repo. That deploys perfectly and 404s
+      # in the browser, with nothing red anywhere.
+      #
+      # ⚠ --selftest FIRST, AND IT IS NOT CEREMONY. Measured
+      # 31 Aug 2026: zero local external scripts exist, so over
+      # the real artifacts this check has NOTHING to inspect and
+      # passes trivially. The selftest is therefore the only
+      # thing proving the checker can fail at all — it builds
+      # fixtures with a syntax error and with a missing file and
+      # requires both to be caught. If it ever stops catching
+      # them, this step goes red here, in CI.
+      #
+      # ONE IMPLEMENTATION, TWO CALLERS: check_build.py shells
+      # out to this same script. Do not reimplement it in YAML.
+      # ─────────────────────────────────────────────────────
+      - name: External <script src> files parse and exist
+        run: |
+          T=.claude/skills/cardinal-build/scripts/check_external_scripts.mjs
+          if [ ! -f "$T" ]; then
+            echo "::error::$T is missing - external scripts are unchecked"
+            exit 1
+          fi
+          echo "--- regression proof: the checker still fails on a broken external script"
+          node "$T" --selftest || { echo "::error::external-script checker selftest FAILED - it can no longer be trusted"; exit 1; }
+          echo "--- the shipped artifacts"
+          node "$T" index.html popup.html studio.html supplement.html \
+                    ai-field-manual.html drivewaytest.html bulk_assign.html \
+                    visualizer/index.html
+
       - name: Structural balance (CSS braces, divs, scripts)
         run: |
           node -e "

@@ -3556,6 +3556,20 @@ APIs. The real cost is 11 gates that slice by block id, plus one CI blind spot t
 be closed first (`check_build` and `check.yml` both skip `<script src>`, so an extracted
 file silently stops being syntax-checked).
 
+✅ **THAT BLIND SPOT IS CLOSED — Phase 1, 31 Aug 2026, no build number.**
+`scripts/check_external_scripts.mjs`, called by both `check_build.py` and a new CI step.
+Existence checked before syntax, because a `src` at a path not in the repo deploys
+perfectly and 404s in the browser. `--selftest` **11/11 on node 20 and node 22** and CI
+runs it first — with **zero local external scripts today** (all six `<script src>` are
+CDN, measured) the real-artifact pass has nothing to inspect, so the selftest is the only
+thing proving the checker can fail. **No existing script was exposed as invalid; there
+were none to expose.** Nothing shipped changed: `index.html` is untouched at build 1185.
+Details, including two defects of my own it caught, in the build log's
+*"Gate infrastructure — external `<script src>` coverage"* entry.
+
+**Still open before any relocation: the 11 gates that slice `index.html` by block id.**
+They are the remaining mechanical cost, and none of them is touched yet.
+
 ⚠️ **Newly found, and it constrains the order: OC Colors DEPENDS ON Showcase.**
 `shrinkOne()` reaches `window.CardinalShowcase` for the image toolchain (build 633's
 deliberate single checkpoint). **The two must move together.**

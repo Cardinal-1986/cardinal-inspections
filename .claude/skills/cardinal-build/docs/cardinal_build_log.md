@@ -31718,3 +31718,77 @@ this trap**, and it still caught me. Assert on a form prose cannot forge.
 **I did not run `scripts/next_build.py` before starting — the one tool that exists to
 prevent exactly this.** The merged build keeps 1184; this one moved. Never renumber
 history: theirs was on `main` first.
+
+---
+
+## Gate infrastructure — external `<script src>` coverage (no build number)
+
+**Nothing shipped changes.** `index.html` is untouched and still stamps **build 1185**;
+there is no app-stamp bump and no `CHANGELOG` entry, because no artifact served to
+anyone moved. This is Phase 1 of the Showroom relocation — the gate work that has to
+land *before* any module becomes a file, not the relocation itself.
+
+### The hole
+
+Both syntax gates find scripts with a pattern that deliberately skips `src=`:
+
+```
+/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g
+```
+
+`check_build.py` and two steps in `.github/workflows/check.yml` all use it. It was
+correct for as long as every module lived inline and the only `src=` tags were CDN —
+**measured 31 Aug 2026, that is still true: six `<script src>` across every shipped
+artifact, all six remote, zero local.** So this changes no existing verdict and
+**exposes no existing script as invalid**; there is nothing to expose.
+
+It stops being correct the moment Showcase or OC Colors becomes a file. Not with a
+break — with a **green report over an unchecked file**, which is the shape this project
+keeps paying for.
+
+### What landed
+
+`scripts/check_external_scripts.mjs` — one implementation, two callers
+(`check_build.py` shells out to it; CI runs it directly). Checks **existence first**,
+because a `src` pointing at a file not in the repo deploys perfectly and 404s in the
+browser with nothing red anywhere — the worse failure of the two.
+
+**Proven both ways, on a fixture, before it was believed:**
+
+| | old logic | new checker |
+|---|---|---|
+| page with a broken external script | `all 1 inline scripts parse OK`, **exit 0** | `SyntaxError: Unexpected number`, **exit 1** |
+
+`check_build.py` red on a poisoned staged artifact (exit 1) and green on the same
+artifact with the file repaired (exit 0); the CI step body run verbatim goes red on a
+poisoned `drivewaytest.html` and names the file.
+
+### ⚠ TWO OF MY OWN DEFECTS, BOTH CAUGHT BY TESTING THE HARD CASE
+
+**1. A hardcoded runtime assumption.** The selftest first asserted that `node --check`
+distinguishes `.js` from `.mjs` for `import`. **It does not** — measured on **v22.22.2
+(local) and v20.20.2 (what CI runs), both ACCEPT `import`, `export` and top-level
+`await` in a plain `.js`.** So the `.mjs` switch in `parses()` catches nothing on either
+runtime; it is kept for older/stricter node and for parity with `check_build.py`'s
+identical inline switch, and the comment now says so. The assertion is **measured at
+runtime** rather than hardcoded, so it cannot go red on the other node.
+
+**2. A false RED on correct code — the one that matters.** The checker took its root
+from `process.cwd()`, and `check_build.py` ran it with `cwd` set to *the artifact's*
+directory. Point it at a **staged** copy — which is the normal way this project builds —
+and a site-absolute `src="/showcase.js"` resolved under the scratch directory and was
+reported **MISSING while the file sat perfectly present at the repo root.** The deploy
+root is the repo, always. Fixed at both ends: the checker walks up for `.git` and tries
+every plausible root, and `check_build.py` runs it **from the repo**, not from the
+artifact.
+
+⚠ **The in-place run passes either way and proves nothing.** `check_build.py index.html`
+was green through both the broken and the fixed version. It only surfaced by pointing
+the gate at a staged artifact — the case the gate actually gets used in.
+
+### The selftest is the gate
+
+With zero local external scripts, the real-artifact pass has **nothing to inspect** and
+succeeds trivially. `--selftest` (**11/11 on node 20 and node 22**) is therefore the only
+thing proving the checker can fail at all, which is why **CI runs it first** and treats
+its failure as a hard error. A prophylactic check nobody proves can fail is decoration.
