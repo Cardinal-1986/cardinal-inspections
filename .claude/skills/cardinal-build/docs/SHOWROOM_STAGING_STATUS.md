@@ -3,6 +3,13 @@
 *31 Aug 2026. `index.html` (Cardinal) is byte-identical at build **1185**. No CRM call site,
 hostname behaviour, DNS or production deployment was touched.*
 
+> ⚠️ **UPDATED after Theo used it. Five defects were found on the deployed app — every one of
+> them in the shell I wrote, none in the relocated modules, and none visible to any mechanical
+> gate.** Three were reported by Theo from a screenshot (`bd9a907`); two more were found by
+> looking at the app afterwards (`fa14733`). **§5 is the record — read it before trusting the
+> “verified” language elsewhere in this document.** The relocation itself has held: the five
+> module files have not changed a byte since the first push.
+
 ## 1. ✅ DEPLOYED — the staging URL
 
 **https://cardinal-showroom.vercel.app**
@@ -12,7 +19,11 @@ branch alias: `https://cardinal-showroom-git-main-theodorion1986-8546s-projects.
 production branch — it is not a PR preview. It is staging in the sense that matters: it is **not**
 `showroom.cardinalroster.com`, and **no DNS was touched.**
 
-**Repository:** `Cardinal-1986/cardinal-showroom`, `main` at **`9b771a5`**.
+**Repository:** `Cardinal-1986/cardinal-showroom`, `main` at **`fa14733`**.
+
+Five commits: `a9f9f45` the app · `9b771a5` the `maxDuration` budget · `3d9ccaa` the missing
+`_staff.js` · **`bd9a907` the three broken destinations** · **`fa14733` black photographs and a
+header that pushed Present off the phone**. The last two are §5.
 
 ### Hash verification — the deployed bytes, not just a 200
 
@@ -21,15 +32,24 @@ evidence that what is serving is what was gated:
 
 | file | deployed | local | |
 |---|---|---|---|
-| `index.html` | `adff0a09e61c11c5` | `adff0a09e61c11c5` | ✅ |
+| `index.html` | `3cb012a7d4092ebf` | `3cb012a7d4092ebf` | ✅ |
 | `showcase.js` | `d52d272efd6be661` | `d52d272efd6be661` | ✅ |
 | `showcase.css` | `67aa2502a4f1a9c8` | `67aa2502a4f1a9c8` | ✅ |
 | `colors.js` | `f7e706d1b4d9e4e4` | `f7e706d1b4d9e4e4` | ✅ |
 | `colors.css` | `c4d1bb3572e4a80f` | `c4d1bb3572e4a80f` | ✅ |
 | `showroom-images.js` | `ac7cab8e517717b9` | `ac7cab8e517717b9` | ✅ |
 
-Every one matches the manifest gated on PR #584. Serving `<title>Cardinal Showroom</title>` and
-`cr-showroom-auth`.
+Re-fetched and re-hashed at **`fa14733`**, after the §5 fixes. Serving
+`<title>Cardinal Showroom</title>` and `cr-showroom-auth`.
+
+⚠️ **`index.html` no longer matches PR #584's manifest, and that is correct** — it carries the
+shell fixes made after the PR was gated (it was `adff0a09e61c11c5` at `9b771a5`). **The five
+module files ARE byte-identical to the manifest** and have not moved since the first push, which
+is the proof that everything found since was the shell rather than the relocation.
+
+The two §5 fixes were confirmed **in the deployed bytes**, not merely in the commit: the live file
+contains `out[list[i]] = d.signedUrl` once, contains `out[row.path]` **zero** times, and carries
+both `flex-wrap:wrap` and the `max-width:560px` query.
 
 **`.vercelignore` holds:** `.claude/…/module_source.cjs`, `README.md` and
 `.github/workflows/check.yml` all return **404**. The gates and the doc set are not served.
@@ -64,7 +84,7 @@ import in `api/`, so there is not a third.
 ⚠️ **Whether `GEMINI_API_KEY` is set still cannot be confirmed from outside**, and this document
 must not claim it either way. The key is read only *after* the auth chain passes, so every
 reachable response stops at 401 by design. It shows on the first authenticated call with a real
-photograph. See §6.
+photograph. See §7.
 
 ### Why it did not deploy on the first push, and the real defect that fixed it
 
@@ -196,9 +216,90 @@ also records the module-load bug this document originally mis-attributed to the 
 I have no staff credentials; the supabase CDN is unreachable from this sandbox, and Chromium's
 tunnel to `cardinal-showroom.vercel.app` resets here (curl reaches it, the browser does not). So
 the sign-in screen is unverified *visually* — **the first real sign-in is Theo's to do**, using
-the checklist in §6.
+the checklist in §7.
 
-## 5. Cutover checklist
+## 5. What broke after deployment — five defects, all mine, none in the modules
+
+*Written 31 Aug 2026, after Theo opened the staging URL. **Every mechanical gate was green while
+all five were live.** Three came from one screenshot he sent; two more came from looking at the
+app the same way afterwards. Recorded in full because the pattern is the finding.*
+
+**The pattern: the relocation was sound and the SHELL was not.** The five module files are
+byte-identical to the gated manifest and have never moved. Everything below is code I wrote to
+host them — a mount, a close lever, a link, a signing shim, a header row. Ported code arrives
+with its conventions; new host code arrives with none, and that is where the defects were.
+
+| # | Symptom Theo saw | Cause | Commit |
+|---|---|---|---|
+| 1 | **OC Colors is a black screen** | I pre-created an empty `#cr-occ`; `ensureView()` adopts an existing element and returns before building its scaffold | `bd9a907` |
+| 2 | **Showcase button doesn't work** | `hideAllViews()` wrote `display:none` onto a **class-shown** view, permanently outranking its own open path | `bd9a907` |
+| 3 | **Studio 404** | I linked `studio.cardinalroster.com`, a subdomain I invented and never checked | `bd9a907` |
+| 4 | **The screens still load black** | `signedPhotoMap` keyed its result by `row.path` instead of `list[i]` — the map came back empty, so no photograph resolved | `fa14733` |
+| 5 | (not reported — found in a screenshot) | The header row did not wrap: at 414px **Present was pushed off-screen entirely** | `fa14733` |
+
+### 1 — providing a mount anchor was not neutral
+
+`ensureView()` reads `VIEW = getElementById('cr-occ'); if (VIEW) return VIEW;` and only builds its
+scaffold otherwise. An empty div that already exists is **adopted**, its scaffold never built, and
+`showHub()` then dies on a missing `occTitle`. The extraction spike had measured this and said it
+plainly — **both modules are self-mounting and take zero DOM anchors from outside** — and I
+supplied anchors anyway, on the assumption that an extra empty div could only help. Both are gone;
+the modules create their own, as they do in Cardinal.
+
+### 2 — the close lever must match how the view is shown
+
+Showcase is **class-shown** (`classList.add('open')`, six sites). An inline `display:none` outranks
+the class rule its own open path sets, so the first close left it **permanently dead** — dead on
+the second visit, not the first, which is why it reads as an intermittent fault. `CLAUDE.md`
+documents this damage in those words, under *“Full-screen views must be registered in
+`hideAllViews()` — and the lever must match”*, and I wrote the bug anyway. `hideAllViews()` now
+calls the module's own `close()` **and confirms the class went** (a `close()` can no-op without
+throwing while its view reference is still null). **OC Colors really is display-shown, so
+`display:none` stays correct for it: one function, two levers, on purpose.**
+
+### 3 — a URL I never fetched
+
+Studio is at `app.cardinalroster.com/studio.html`, verified 200. There was no reason to guess.
+
+### 4 — the empty map, and a comment that defended it with the wrong lesson
+
+`createSignedUrls` is asked for a list of paths and every consumer looks its URL up **by the path
+it passed in**. Cardinal's own `signedPhotoMap` therefore keys by `list[i]`. Mine keyed by
+`row.path`; against a response carrying no usable `path` the map is `{}`, nothing resolves, and you
+get correct chrome drawn around black rectangles — **exactly the symptom Theo described, on both
+screens, after the three visible defects were fixed.**
+
+⚠️ **Worse than the bug: I had written a comment defending the wrong key, citing build 633.** 633's
+lesson — *key by the path the API answered for, never by array position* — belongs to `signMany()`
+in the Showcase module, a **different function** with a different response shape. A real lesson
+applied to the wrong function reads as diligence and prevents the fix. **Extend the existing
+convention; do not import a rule from a neighbour that looks similar.** The shim now also returns
+an empty map on an error or a non-array payload rather than throwing.
+
+### 5 — Present unreachable on the device the app is used on
+
+The header row had no `flex-wrap`. At 414px “Prepare” clipped mid-word, **Present was off-screen
+entirely** and “Sign out” broke over two lines. Present is half the product and the Showroom is
+used on a phone at a kitchen table. The bar now wraps, the mode buttons and the sign-out link no
+longer break internally, the identity line ellipsises, and below 560px the wordmark takes its own
+row while the spacer collapses.
+
+### What this costs the rest of this document
+
+⚠️ **§4's “verified in Chromium” was true and was not enough.** It proved the modules *load* and
+export live objects. It did not open either screen, and four of these five defects are one click
+past where that check stopped — the fifth is only visible at a phone width. **This is the sentinel
+rule from `CLAUDE.md` — a sweep of the front door reports CLEAN and means nothing by it — and the
+Showroom does not yet have a sentinel setup file.** That is now on the checklist.
+
+⚠️ **A CI step added at `bd9a907` refuses a pre-created `cr-show` or `cr-occ` element**, with a
+control proving it fires on the reintroduced bug. Defects 2, 4 and 5 have no mechanical gate yet.
+
+**Not fixed here, because it is not this app's:** the Visualizer link is correct and `?present=1`
+is the right parameter, but its Prep landing is **Cardinal's own logic** — it only switches tabs
+after `loadCatalog().then(loadProjects)` resolves. That is a Cardinal build and Theo's approval.
+
+## 6. Cutover checklist
 
 - [x] **Theo:** create empty `Cardinal-1986/cardinal-showroom` — done
 - [x] Grant the Claude GitHub App access to that repo — done; it was the last blocker
@@ -206,11 +307,18 @@ the checklist in §6.
 - [x] Vercel project linked and deployed — **https://cardinal-showroom.vercel.app**
 - [x] Fix `/api/detect` — it crashed at module load for a missing sibling import, NOT the key
       (`3d9ccaa`); it now answers 405/401 correctly
+- [x] **Fix the three destinations Theo reported** — black OC Colors, dead Showcase, 404 Studio
+      (`bd9a907`), plus a CI step that refuses a pre-created `cr-show` / `cr-occ` element
+- [x] **Fix the black photographs and the header that pushed Present off a phone** (`fa14733`),
+      hash-verified in the deployed bytes — §5
+- [ ] **Write a `sentinel_setup_showroom.js`** and run the sentinel on both screens at 390px.
+      Four of §5's five defects live one click past where the current Chromium check stops, and
+      the fifth is only visible at a phone width — that gap is why Theo found them, not the gates
 - [ ] ⚠ **`GEMINI_API_KEY` on the Showroom project** (The Walk only), never in the repo.
       **Unverifiable from outside** — the key is read only after auth passes — so it is confirmed
       by the first authenticated call with a real photograph, not by probing the route
 - [ ] Delete `.claude/showroom-staging/` from Cardinal once the repo is the single source
-- [ ] **Theo signs in on staging** — the first real auth test
+- [ ] **Theo signs in on staging** — the first real auth test, now that the destinations work
 - [ ] Open `#/project/eb81f3f4-…`; confirm the pack and photos load
 - [ ] Open Showcase and OC Colors; confirm both present
 - [ ] Drop `harness_vision` from the Showroom set (CRM-only) and re-scope `gate_983`, `gate_1076`,
@@ -220,7 +328,7 @@ the checklist in §6.
 - [ ] **Only then:** the `isVisionHost` retirement (matrix), then the repoint, then `cr-show-*`
       and `cr-occ-*` removal — each its own build, in that order
 
-## 6. Remaining, and the sign-in test checklist
+## 7. Remaining, and the sign-in test checklist
 
 **One configuration step outstanding: `GEMINI_API_KEY` on the Showroom Vercel project.** It is
 needed only by The Walk's `/api/detect`; everything else runs without it. It must be set in the
