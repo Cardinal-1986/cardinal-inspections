@@ -1,0 +1,48 @@
+{
+  "harness_showcase.js": {
+    "passes": 121,
+    "fails": 3,
+    "names": [
+      "Sales Floor has the entry button",
+      "app stamp matches the newest CHANGELOG entry",
+      "registered in hideAllViews array"
+    ],
+    "code": 1
+  },
+  "harness_walk.js": {
+    "passes": 50,
+    "fails": 0,
+    "names": [],
+    "code": 1
+  },
+  "harness_tray.js": {
+    "passes": 57,
+    "fails": 0,
+    "names": [],
+    "code": 0
+  },
+  "harness_ourroofs.js": {
+    "passes": 58,
+    "fails": 0,
+    "names": [],
+    "code": 0
+  },
+  "harness_colors.js": {
+    "passes": 109,
+    "fails": 1,
+    "names": [
+      "#cr-occ still registered in OVERLAY_IDS and PANES"
+    ],
+    "code": 1
+  },
+  "harness_vision.js": {
+    "passes": 20,
+    "fails": 3,
+    "names": [
+      "and it is scoped — exactly 2 declarations in the whole file, both here",
+      "showMain asks the gate defensively (falls back to CRM, the safe direction)",
+      "the app itself still shows — this hides chrome, not the page"
+    ],
+    "code": 1
+  }
+}

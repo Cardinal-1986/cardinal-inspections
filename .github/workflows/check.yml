@@ -11,9 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ─────────────────────────────────────────────────────
+      # WAS `node-version: 20`, AND THAT WAS A REAL MISMATCH:
+      # package.json declares "engines": { "node": "22.x" },
+      # which is what Vercel runs. CI was testing every push
+      # on a runtime the app never executes on.
+      # ─────────────────────────────────────────────────────
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # ─────────────────────────────────────────────────────
       # NEW — Vercel rejects the ENTIRE build if any function
@@ -254,3 +260,88 @@ jobs:
               console.log('VAPID keys: ' + (a && b ? 'matched' : 'not applicable'));
             "
           fi
+
+  # ═══════════════════════════════════════════════════════════
+  # NEW — the harnesses run in CI at last, on node 22.
+  #
+  # THE GAP: these six were covered by NOTHING here. jsdom was
+  # never a repo dependency (it lived in a session scratchpad),
+  # and the job pinned node 20 — on which jsdom 30 does not run
+  # at all. Its own engines field says
+  # "^22.22.2 || ^24.15.0 || >=26.0.0". On node 20 every one of
+  # them dies inside jsdom before its first assertion: a silent
+  # zero, which is strictly worse than a red.
+  #
+  # WHY NOT "pin a compatible jsdom": that pins BACKWARDS to
+  # accommodate a CI runtime production does not use. Vercel
+  # runs node 22 (package.json engines). The runtime was the
+  # thing that was wrong.
+  #
+  # RATCHETED, because four of the six are RED on main today for
+  # reasons that predate this job. The known failures are
+  # baselined BY NAME in harness_baseline.json and printed on
+  # every run; a NEW one is red the build it lands. The
+  # alternative was bending or deleting real assertions.
+  #
+  # ⚠ NOT COVERED HERE: gate_983, gate_1076, harness_occhead and
+  # audit_contrast drive Chromium through playwright. Installing
+  # a browser in CI is a separate decision with its own failure
+  # modes; claiming them as covered would be a lie this job
+  # cannot honour.
+  # ═══════════════════════════════════════════════════════════
+  harnesses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # --no-save on purpose: package.json is production config that
+      # Vercel reads, and a test-only dependency does not belong in it.
+      # Pinned exactly so a jsdom release cannot silently change a verdict.
+      - name: Install jsdom (test-only, pinned, not saved)
+        run: npm install --no-save --no-audit --no-fund jsdom@30.0.1
+
+      # ⚠ THE GATE'S OWN NEGATIVE CONTROL, RUN FIRST AND IN CI.
+      # A ratcheted gate that has never been seen to fail is a gate that
+      # has quietly baselined everything. This proves, on this runner,
+      # that a new failure goes red, that a harness which stops asserting
+      # goes red, and that a dropped harness goes red.
+      - name: The harness gate can fail (selftest)
+        run: |
+          node .claude/skills/cardinal-build/scripts/gate_harnesses.mjs --selftest
+
+      # ⚠ SECOND NEGATIVE CONTROL — END TO END, ON A POISONED ARTIFACT.
+      # The selftest exercises the comparison in isolation; this proves the
+      # whole job fails when the real thing breaks. It corrupts the Showcase
+      # public-API assignment in a COPY of index.html (never the real file)
+      # and requires a non-zero exit.
+      #   It also demonstrates why the pass-count rule exists: this break makes
+      # harness_showcase's three baselined failures DISAPPEAR, because the
+      # harness bails out early. A gate watching only the FAIL count would have
+      # scored that as an improvement.
+      - name: A broken module actually fails this job (end-to-end control)
+        run: |
+          cp index.html /tmp/poisoned.html
+          node -e "
+            const fs=require('fs');
+            const p='/tmp/poisoned.html';
+            const s=fs.readFileSync(p,'utf8');
+            const m='window.CardinalShowcase = Object.assign(window.CardinalShowcase';
+            if(s.split(m).length-1 !== 1){ console.error('::error::control anchor is not unique - the control would be vacuous'); process.exit(1); }
+            fs.writeFileSync(p, s.replace(m,'window.CardinalShowcase = Object.NOPE(window.CardinalShowcase'));
+          "
+          if node .claude/skills/cardinal-build/scripts/gate_harnesses.mjs /tmp/poisoned.html studio.html > /tmp/ctl.log 2>&1; then
+            echo "::error::the harness gate stayed GREEN on a deliberately broken Showcase - it proves nothing"
+            cat /tmp/ctl.log
+            exit 1
+          fi
+          echo "control OK - the gate went red on a broken module:"
+          grep -E '^::error::' /tmp/ctl.log || true
+          rm -f /tmp/poisoned.html /tmp/ctl.log
+
+      - name: Harnesses (ratcheted against harness_baseline.json)
+        run: |
+          node .claude/skills/cardinal-build/scripts/gate_harnesses.mjs

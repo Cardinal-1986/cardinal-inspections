@@ -9,9 +9,17 @@
  * Everything asserted below is structural. Theo's eyes remain the visual gate.
  */
 const fs = require('fs');
+/* ⚠ REPO ROOT, NOT A HARDCODED ABSOLUTE PATH. These harnesses carried
+   an absolute path to one particular machine baked in — the sandbox they were
+   written in. They ran perfectly there and are unrunnable anywhere else,
+   which stayed invisible for as long as nothing else ever ran them. The first
+   real CI run found it in 27 seconds: harness_tray reads three .sql files by
+   absolute path UNCONDITIONALLY, so on the runner it fell 57 passes -> 4 and
+   the ratchet went red on the pass count. Resolved from the repo instead. */
+const CR_ROOT = require('./script_paths.cjs').ROOT + '/';
 const { JSDOM } = require('jsdom');
 
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const FILE = process.argv[2] || CR_ROOT + 'index.html';
 const HTML = fs.readFileSync(FILE, 'utf8');
 let fails = 0, passes = 0;
 function ok(name, cond, extra) {

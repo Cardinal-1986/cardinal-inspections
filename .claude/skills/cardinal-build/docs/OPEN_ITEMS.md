@@ -3583,9 +3583,40 @@ hits in `scripts/` are historical patch scripts, not gates.
 from `confirm()` to `crAsk()` and the harness still spies the old way, so it dies after 50
 passes. Deliberately left for its own build rather than mixed into the conversion.
 
-⚠️ **The jsdom harnesses cannot run on node 20 here at all** — the installed jsdom calls
-`webidl.util.markAsUncloneable`, a node 22 API. Not caused by this change; `gate_relocation`
-reports it instead of scoring two identical crashes as agreement.
+✅ **AND THAT CI GAP IS CLOSED — 31 Aug 2026, no build number.** Both CI jobs now run **node 22**
+(matching `package.json`'s `"engines": { "node": "22.x" }` — the old `node-version: 20` was
+testing every push on a runtime the app never executes on), and a new `harnesses` job runs the six
+browser-free gates through `gate_harnesses.mjs`, ratcheted against `harness_baseline.json`.
+**jsdom was never a repo dependency at all** — it lived in a session scratchpad — so CI installs
+`jsdom@30.0.1` with `--no-save`, keeping a test-only dependency out of production config.
+Two negative controls run **in CI**: `--selftest` (8/8) and an end-to-end poisoned-artifact
+control that fails the build if the gate stays green.
+
+⚠️ **Pinning an older jsdom was the wrong fix and was rejected on measurement:** jsdom 30.0.1
+declares `"node": "^22.22.2 || ^24.15.0 || >=26.0.0"` — it does not support node 20 at all, so
+pinning would have pinned *backwards* to match a runtime Vercel does not use.
+
+⚠️ **7 pre-existing failures are baselined by name and printed every run.** They may shrink; they
+may never grow. Bending or deleting them was the alternative and is not allowed here.
+
+⚠️ **Four gates remain uncovered in CI** — `gate_983`, `gate_1076`, `harness_occhead`,
+`audit_contrast` — because they drive Chromium. Stated rather than quietly claimed.
+
+### ⚠️ 31 Aug — the destination CHANGED: see `SHOWROOM_DEPLOYMENT_BOUNDARY.md`
+
+Theo: *"Do not put the final relocated implementation in a path that Cardinal continues to serve
+as a shared runtime dependency. Trigger 1 requires independent deployment, not merely external
+script files."* **The spike's `showroom/showcase.js`-under-Cardinal destination is withdrawn** —
+it is still built by the Cardinal deploy and still down when Cardinal is down. Destination is a
+**separate repo and its own Vercel project**.
+
+⚠️ **Blocker on file: `cr-show-*` cannot be deleted while `cr-occ-*` remains.** `shrinkOne()` in
+`cr-occ-script` calls `window.CardinalShowcase.shrink`; Showcase leaving turns that into a refusal
+to upload. Three ways out are costed in the boundary doc; recommendation is to duplicate the
+helper first, then move both.
+
+⚠️ **`showroom.cardinalroster.com` is already load-bearing in `index.html`** (`isVisionHost()`, 13
+sites). The **DNS repoint is the cutover switch**, and it is the most reversible step in the plan.
 
 ⚠️ **Newly found, and it constrains the order: OC Colors DEPENDS ON Showcase.**
 `shrinkOne()` reaches `window.CardinalShowcase` for the image toolchain (build 633's
