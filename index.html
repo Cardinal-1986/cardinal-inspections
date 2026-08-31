@@ -1676,6 +1676,27 @@ html, body{overflow-x:hidden;max-width:100%;}
   -webkit-mask:url(/cardinal-board.png) center 58% / 68% no-repeat;
   mask:url(/cardinal-board.png) center 58% / 68% no-repeat;
   opacity:.24;pointer-events:none;z-index:5;}
+/* 1183: the hammer finally paints. The cardinal-on-a-roofing-hatchet artwork
+   was drawn and masked here at 1086, but NOTHING EVER APPLIED THE CLASS: it
+   occurred exactly twice in the whole file and both were these stylesheet
+   rules, so it had never once been on screen. Proved in Chromium, not by grep
+   — the selector matched 0 elements.
+   ⚠ AND THE CLASS ALONE WOULD NOT HAVE BEEN ENOUGH. This ::before is
+   position:absolute, and `.pipecard` sets NO position — only `.pipecard.teamcal`
+   does (position:relative;overflow:hidden), because the rule was written for a
+   second hero calendar that was never built. On any other .pipecard the
+   watermark would escape to the nearest positioned ancestor and paint across
+   the page. So the host context is declared here rather than assumed. */
+.pipecard.prodcal{position:relative;overflow:hidden;}
+/* ⚠ AND THE CONTENT HAS TO BE LIFTED, or the watermark paints ON TOP OF THE
+   DATES. Measured, not assumed: with the numbers left in normal flow, 13.8% of
+   their glyph pixels changed when the watermark came on — a positioned
+   ::before paints above non-positioned in-flow siblings whatever its z-index,
+   so dropping it to 0 changed nothing (13.1%). Lifting the content is what
+   works, and it is the same move `.cr-pcard.community .t` already makes.
+   After: 2.2%, which is glyph anti-aliasing against a changed ground, not
+   text being covered. */
+.pipecard.prodcal > *{position:relative;z-index:6;}
 .pipecard.prodcal::before{content:'';position:absolute;inset:0;
   background:linear-gradient(125deg,#e2574a 20%,#c8202e 58%,#e35c63);
   -webkit-mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
@@ -3940,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1182<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1183<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4045,7 +4066,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         </div>
         <div class="rowfil"></div>
         <div class="opsrow">
-          <div class="pipecard opscard">
+          <div class="pipecard opscard prodcal">
             <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM6.6 9.4h10.8v9.6H6.6z"/><rect x="8.4" y="11" width="7.2" height="1.9" rx=".95"/><rect x="8.4" y="14.4" width="5" height="1.9" rx=".95"/></g><g class="i5"><path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="M8.2 11.6h7.6" class="m"/><path d="M8.2 15.4h5" class="m"/></g></svg>Next 30 Days</div>
             <div class="cal30" id="cal30Grid"></div>
             <div class="cal30note" id="cal30Note"></div>
@@ -35545,11 +35566,6 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
   .cr-pcard.community .d,
   .cr-pcard.community .n{ position:relative; z-index:1; }
 
-  .cr-cmark{
-    display:inline-block; width:21px; height:21px; border-radius:3px; vertical-align:-5px; margin-right:7px;
-    background:url("/community-action-icon.png") center/contain no-repeat;
-  }
-  .cr-portal-chip.community .cr-cmark{ width:14px; height:14px; vertical-align:-2px; margin-right:4px; }
 
   /* Hero version for the community portal header */
   .cr-chero{ display:block; width:100%; max-width:238px; margin:0 auto 14px; }
@@ -42646,6 +42662,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1183, d: '2026-08-31', t: 'The hammer on the schedule card, and two dead files gone', s: 'The Cardinal-on-a-hammer drawing has been in the app since build 1086 and had never once appeared on a screen. It was drawn, and the rule that paints it faintly behind a card was written \u2014 but the card was never given the name the rule looks for, so nothing ever matched it. It is now the watermark behind Next 30 Days on the home screen, which is the work schedule, and it sits beside the Cardinal-on-a-pencil that already watermarks the Team Calendar. Two other picture files that nothing in the app could reach have been deleted, along with the leftover styling that pointed at one of them.' },
   { b: 1182, d: '2026-08-31', t: 'The inspection reports stop carrying the logo twice', s: 'The cover logo was written into the app file twice \u2014 once inside the roof report and once inside the exterior report, the same image both times, about 280,000 characters between them. It is a normal picture file now and both reports point at it, so the app file is a quarter of a megabyte smaller and the logo is fetched once and reused. Nothing changed on the reports themselves, and if the picture ever fails to load they fall back to the main Cardinal logo.' },
   { b: 1181, d: '2026-08-30', t: 'One light/dark button, the same in every portal', s: 'Insurance had its own light/dark button in its own spot while Retail and Community shared a different one. Now there is one button in one place for all three \u2014 the same corner you already use \u2014 and it switches whichever portal you are standing in. Insurance keeps its own colours underneath; only the button is shared.' },
   { b: 1180, d: '2026-08-30', t: 'The Insurance light/dark moves one row down', s: 'You could see the moon after the last build, but it was sitting in the top bar beside New and Search. It now lives on the row below \u2014 the Home / Clients / Claims / Photos strip \u2014 at the far right end, in that row\u2019s own colour, and sized to a proper finger target.' },
@@ -70331,6 +70348,13 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* the watermark bird was set for a cream ground and muddies the navy */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.teamcal::before{
   opacity:.10;
+}
+/* 1183: the same correction for the hammer. The .24 in the base rule was drawn
+   for teamcal's white paper card; on the navy ground the schedule card actually
+   has, it reads as a dark smudge rather than a watermark. Measured at .24/.18/
+   .14/.10 and rendered — .14 shows the artwork and leaves the dates clean. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.prodcal::before{
+  opacity:.14;
 }
 /* "Take the all jobs off the calander it makes the calander in level."
    Hidden rather than deleted from the JS: the string is still computed and

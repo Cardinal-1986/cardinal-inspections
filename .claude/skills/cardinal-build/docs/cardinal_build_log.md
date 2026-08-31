@@ -31332,3 +31332,88 @@ reveals, and nothing hides it.
   **gate_1182 19/19, RED on both controls** · regressions gate_1176/1178/1179/1181 green ·
   gate_types GREEN (and hardened) · gate_dupes GREEN · audit_scrolllock GREEN at 17 modules ·
   sentinel run on the build.
+
+## Build 1183 — the hammer finally paints, and two files nothing could reach are gone
+
+Theo, after the 1182 slimming: *"Was there a Cardinal logo with a hammer that's in there?"* — then
+*"Wire the hammer and clean up things that aren't relevant but is safe to clean up."*
+
+**There were two hammers, and neither had ever been on screen.**
+
+`cardinal-prod.png` is a cardinal perched on a roofing hatchet, drawn at 1086 alongside
+`cardinal-board.png` (the same bird on a pencil). The pencil watermarks the Team Calendar. The
+hammer was given the matching mask rule — and **nothing ever applied the class it hangs off.**
+`prodcal` occurred exactly twice in the whole file and both were the stylesheet rules themselves.
+Grep said "referenced"; **Chromium said 0 matching elements.**
+
+It is now the watermark on **Next 30 Days** — the work schedule that replaced the Work Schedule
+circles at 1168 — beside the pencil on the Team Calendar.
+
+### ⚠ THE CLASS ALONE WOULD HAVE BEEN WRONG, TWICE
+
+Both caught by rendering, neither visible to an assertion on the class list.
+
+**1. It would have escaped the card.** The `::before` is `position:absolute`, and **`.pipecard`
+sets no position** — only `.pipecard.teamcal` does (`position:relative;overflow:hidden`), because
+the rule was written for a **second hero calendar that was never built** (`.herorow`'s media query
+still talks about "the two stacked calendars"). On any other `.pipecard` the watermark takes the
+nearest positioned ancestor and paints across the page: class present, rule applying, screen wrong.
+The host context is now declared rather than inherited by luck.
+
+**2. It painted ON TOP OF THE DATES.** Measured by rendering the card with the watermark
+suppressed and then as shipped, and comparing the glyph pixels:
+
+| | glyph pixels disturbed |
+|---|---:|
+| as the rule shipped | **13.8%** |
+| `z-index:0` on the `::before` | **13.1%** — no help at all |
+| lifting the card's own content above it | **2.2%** |
+
+`z-index:0` cannot work: a **positioned** `::before` paints above **non-positioned** in-flow
+siblings whatever its z-index. Lifting the content is the fix, and it is the same move
+`.cr-pcard.community .t` already makes. The 2.2% residue is glyph anti-aliasing against a changed
+ground, not text being covered.
+
+**Opacity.** The base rule's `.24` was drawn for teamcal's **white paper** card; on the navy
+schedule card it read as a dark smudge. Rendered at `.24/.18/.14/.10` and set to **`.14`** under
+the *same dark override the pencil already uses* — the artwork is visible and the dates are clean.
+⚠ Note the precedent this follows: teamcal is `.24` base with a `.10` dark override. The base stays
+`.24` for light mode; only the dark ground is corrected.
+
+### The cleanup, and where it deliberately STOPPED
+
+| file | verdict |
+|---|---|
+| `cardinal-hammer.png` (42 KB) | **deleted** — a plain claw hammer, no bird. Zero references of any kind: not in any artifact, not a constructed path, not in `sw.js`, not in the manifest |
+| `community-action-icon.png` (9.6 KB) | **deleted**, with its two orphaned `.cr-cmark` rules — same shape as the hammer, `cr-cmark` appeared twice and both were CSS |
+| **`community-action-dayton.png` (244 KB)** | **KEPT.** It is wired, into `CardinalPortal.pick()` — but both call sites are `else` branches that only run if `CardinalFrontDoor` is missing, so it never fetches. That makes it a **deliberate fallback, not dead weight**; deleting it turns a safety net into a broken image. 1182's lesson applied in the other direction |
+
+⚠ **After 1182, "unreferenced" was checked properly rather than by filename**: constructed paths,
+`sw.js` precache, the manifest, and CSS `url()` were each swept before either delete.
+
+### Gates
+
+- **`gate_1183` 24/24, RED 9/24 on the 1182 control** — and it reports red rather than crashing
+  (BUG_CLASSES 37). It carries the **glyph-drift check** above, so "the watermark paints over the
+  dates" cannot come back silently; it also asserts the two deletions stay deleted **and the three
+  live files plus the deliberate fallback stay present**, because a cleanup that keeps going is how
+  a live asset gets removed next time.
+- ⚠ **Its first control run printed two failures that were not real** — `teamcalStillThere` sat
+  behind the `if (!el) return` early exit, so the Team Calendar read as missing on a tree where it
+  plainly exists. Independent facts are now computed **before** the early return. A control that
+  prints a wrong reason is only marginally better than one that crashes.
+- check_build green (1182→1183, marker + negative control) · regressions gate_1176/1178/1181/1182
+  all green.
+- ⚠ **`audit_scrolllock` went RED on this build and it was a FALSE POSITIVE — now fixed.** The
+  un-id'd main block is named by `script_blocks` as `@<character offset>`, so adding ~1 KB of CSS
+  ahead of it renamed `@662628` to `@664105` and the audit reported *"a NEW module started writing
+  the global scroll lock"* beside *"gone: @662628"* — the same block, renamed by arithmetic. **A
+  standing gate that cries wolf whenever the file grows is a gate people learn to skip**, which is
+  exactly how the class it guards comes back. Un-id'd blocks are keyed by their **ordinal** among
+  un-id'd blocks now, so a name only moves if a script block is genuinely added or removed. Fixed
+  in the auditor, not in the shared `script_blocks`, which `gate_types` and `gate_dupes` also use.
+  The selftest covers it and **fails against the old naming** — verified by reverting it.
+- ⚠ **Comment pollution fired FIVE times across 1182–1183** — counting `class="cover-logo"`, the
+  `window.` assignment, the reworded comment, `prodcal`, and the filename in a comment. Every time
+  the fix was the same: **assert on a form prose cannot forge** (the `url(...)` wrapper, the full
+  `<img ...>` tag), never on a bare token count.

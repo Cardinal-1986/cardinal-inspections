@@ -8012,3 +8012,20 @@ vision host.
 on its `style` attribute, backed by `display:none !important` in `cr-lg-styles` — the header's own
 gold home made it redundant. `#editorLogo` is the one the brand-logo IIFE actually reveals. Do not
 "fix" `#brandLogo` into view.
+
+## Build 1183 — the hammer watermark, and two unreachable files removed (31 Aug 2026)
+
+| What | Where | Notes |
+|---|---|---|
+| **The cardinal-on-a-hammer watermarks Next 30 Days** | `class="pipecard opscard prodcal"`; `.pipecard.prodcal` rules | drawn at 1086 and **never once on screen** — the class the mask rule needs was applied to nothing. Pairs with the bird-on-a-pencil already watermarking the Team Calendar |
+| `.pipecard.prodcal{position:relative;overflow:hidden;}` | beside the mask rule | ⚠ **required, not decorative.** `.pipecard` sets NO position; only `.pipecard.teamcal` does. Without this the absolutely-positioned watermark escapes to the nearest positioned ancestor and paints across the page |
+| `.pipecard.prodcal > *{position:relative;z-index:6;}` | same block | ⚠ **also required.** The watermark otherwise paints **over the date numbers** — measured at 13.8% of glyph pixels disturbed. `z-index:0` does NOT fix it (13.1%): a positioned `::before` paints above non-positioned in-flow siblings whatever its z-index. Lifting the content is the fix, as `.cr-pcard.community .t` already does |
+| Dark-ground opacity `.14` | beside teamcal's `.10` dark override | the base `.24` was drawn for teamcal's white paper card and reads as a smudge on the navy schedule card. Rendered at .24/.18/.14/.10 before choosing |
+| **Deleted: `cardinal-hammer.png`, `community-action-icon.png`** + the two orphaned `.cr-cmark` rules | repo root | zero references each, checked against constructed paths, `sw.js`, the manifest and CSS `url()` — not just by filename |
+| **Kept: `community-action-dayton.png`** | `CardinalPortal.pick()` | ⚠ **do not delete.** Wired, but only into `else` branches that run when `CardinalFrontDoor` is missing — a deliberate fallback, not dead weight |
+
+**The root-image census, as of 1183** — live: `cardinal-transparent.png`, `cardinal-landing.PNG`
+(onerror fallback), `cardinal-board.png` (Team Calendar), `cardinal-prod.png` (Next 30 Days, from
+this build), `cardinal-report-logo.png` (reports/estimates, 1182), `cardinal-logo-insurance.svg`
+(insurance header), `icon-192`/`icon-512`/`apple-touch-icon` (PWA). Deliberate-but-unfetched:
+`community-action-dayton.png`. **Nothing else is at the root.**
