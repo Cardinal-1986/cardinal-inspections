@@ -53,11 +53,20 @@ function varLiteral(name) {
   const footer = varLiteral('SIGN_FOOTER');
   if (fn && footer) {
     try {
+      /* ⚠ 1183: CARDINAL_LOGO_SRC joined this list when build 1182 moved the
+         report logo out of index.html into a file. buildEstimate() reads that
+         constant now, and running the function standalone without injecting it
+         fails with "CARDINAL_LOGO_SRC is not defined" — which is this gate
+         being out of date, not the app being broken (in the app the constant is
+         a top-level var in the same block, and gate_1182/gate_1183 verify the
+         real behaviour). If you add a dependency to buildEstimate, add it here
+         in the same edit. */
       const make = new Function('REPORT_TEMPLATE', 'ESTIMATE_BASE_RAW', 'EST_TERMS_PH', 'SIGN_FOOTER',
+        'CARDINAL_LOGO_SRC',
         fn + '\nreturn buildEstimate;');
       const FOOTER = new Function('return (' + footer + ');')();
       const BASE = '__EST_TITLE__ __EST_BODY__ __EST_TERMS__ ' + FOOTER;
-      const be = make('', BASE, '', FOOTER);
+      const be = make('', BASE, '', FOOTER, '/cardinal-report-logo.png');
       const svc = be('SERVICE <span>CONTRACT</span>', '<p>no slots here</p>');   // deal, no data-sig
       const agr = be('ROOFING <span>AGREEMENT</span>', '<span class="sigslot" data-sig="buyer"><span class="ph">[sign]</span></span>');
       const est = be('REPAIR <span>ESTIMATE</span>', '<p>body</p>');
