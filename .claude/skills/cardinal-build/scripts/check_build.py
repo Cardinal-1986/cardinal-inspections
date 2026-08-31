@@ -93,6 +93,54 @@ def gate_syntax(src):
     return len(blocks)
 
 
+def gate_external_scripts(path):
+    """External <script src> files get the same coverage as inline blocks.
+
+    ⚠ THE HOLE THIS CLOSES. gate_syntax() above skips any script carrying a
+    `src=` — correct while every module is inline, and a silent coverage hole
+    the moment one is not. The Showroom relocation makes Showcase and OC Colors
+    external files (SHOWROOM_EXTRACTION_SPIKE.md), and without this they would
+    stop being syntax-checked while everything still reported green.
+
+    ⚠ ONE IMPLEMENTATION, TWO CALLERS. The work is done by
+    check_external_scripts.mjs, which CI runs directly too. Reimplementing it
+    here in Python would give two copies to drift apart; that is the mistake
+    this project names as "one pipeline per concept".
+
+    ⚠ AND IT HAS NOTHING TO CHECK TODAY — measured 31 Aug 2026, all six
+    `<script src>` in the shipped artifacts are CDN, zero local. Its
+    `--selftest` is therefore the only thing exercising it until Showcase moves.
+    """
+    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "check_external_scripts.mjs")
+    if not os.path.exists(tool):
+        report(False, "external-script gate: check_external_scripts.mjs is MISSING")
+        return
+    # ⚠ RUN IT FROM THE REPO, NOT FROM THE ARTIFACT'S DIRECTORY. A site-absolute
+    # `src="/showcase.js"` is served from the DEPLOY root, which is the repo —
+    # never wherever a build happens to be staged. Running with cwd set to the
+    # artifact's directory (which is what this did first) left the checker with
+    # no idea where the repo was, so a staged copy reported a perfectly present
+    # file as MISSING: a gate going RED on correct code. Caught by pointing it
+    # at a staged artifact rather than at index.html in place — the in-place run
+    # passes either way and proves nothing.
+    repo = os.path.dirname(os.path.abspath(__file__))
+    while repo != os.path.dirname(repo) and not os.path.isdir(os.path.join(repo, ".git")):
+        repo = os.path.dirname(repo)
+    if not os.path.isdir(os.path.join(repo, ".git")):
+        repo = os.getcwd()
+    r = subprocess.run(["node", tool, os.path.abspath(path)],
+                       capture_output=True, text=True, cwd=repo)
+    ok = r.returncode == 0
+    tail = [l for l in (r.stdout or "").strip().splitlines() if l.startswith("EXTERNAL")]
+    report(ok, "external <script src> files parse and exist"
+               + (f"  — {tail[-1]}" if tail else ""))
+    if not ok:
+        for l in (r.stdout + r.stderr).splitlines():
+            if l.strip().startswith(("✗", "EXTERNAL")):
+                print("      ", l.strip())
+
+
 def gate_tag_balance(src):
     so = len(re.findall(r"<script\b", src, re.I))
     sc = len(re.findall(r"</script\s*>", src, re.I))
@@ -353,6 +401,7 @@ def main():
 
     print(f"check_build: {args.new} ({len(src):,} bytes)")
     gate_syntax(src)
+    gate_external_scripts(args.new)
     gate_tag_balance(src)
     gate_css_braces(src)
     gate_dupe_style_ids(src)
