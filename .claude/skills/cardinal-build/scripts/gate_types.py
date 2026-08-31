@@ -38,6 +38,7 @@ import json, os, re, shutil, subprocess, sys, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from gate_dupes import script_blocks
+import jslex_count as JL
 
 BASELINE = os.path.join(HERE, 'types_baseline.json')
 TSC = shutil.which('tsc')
@@ -47,6 +48,33 @@ TSCONFIG = {"compilerOptions": {"allowJs": True, "checkJs": True, "noEmit": True
     "strict": False, "noImplicitAny": False, "skipLibCheck": True},
     "files": ["globals.d.ts", "app.js"]}
 
+WIN_ASSIGN = re.compile(r'window\.([A-Za-z_$][\w$]*)\s*=[^=]')
+
+
+def _globals(blocks):
+    """Names this artifact really assigns onto window — CODE hits only.
+
+    ⚠ THIS USED TO SCAN THE RAW HTML WITH A BARE REGEX, and a bare regex cannot
+    tell code from prose. A comment saying `window.Foo =` therefore INVENTED a
+    global, and an invented global is not cosmetic here: this gate exists to
+    catch TS2304 "Cannot find name", so a ghost declaration MASKS exactly the
+    defect it was written for — a check quietly losing the ability to fail.
+
+    It is not hypothetical. Build 1182 wrote a comment warning the next reader
+    not to assign a name onto window; the warning's own text conjured the
+    global and moved a real error into a different bucket.
+
+    Measured at 1182 before the change: naive 193 names, lexer 193, zero
+    ghosts — so this closed the hole without moving a single count."""
+    out = set()
+    for _bid, js in blocks:
+        spans = JL.lex_spans(js)
+        for m in WIN_ASSIGN.finditer(js):
+            if JL.classify(js, m.start(), spans) == JL.CODE:
+                out.add(m.group(1))
+    return out
+
+
 def build_workdir(html, d):
     blocks = script_blocks(html)
     parts = []
@@ -54,7 +82,7 @@ def build_workdir(html, d):
         parts.append(f'// ===== BLOCK {bid} =====')
         parts.append(js)
     open(os.path.join(d, 'app.js'), 'w', encoding='utf8').write('\n'.join(parts))
-    names = sorted(set(re.findall(r'window\.([A-Za-z_$][\w$]*)\s*=[^=]', html)))
+    names = sorted(_globals(blocks))
     decls = ['// GENERATED from the artifact: every window.X= assignment is a runtime global',
              'interface Window { [k: string]: any; }',
              'declare var supabase: any, Chart: any, Papa: any, google: any, L: any;']

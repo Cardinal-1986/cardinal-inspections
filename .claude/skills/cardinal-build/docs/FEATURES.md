@@ -7998,3 +7998,17 @@ vision host.
 | Board coherence — the dashboard re-renders when the portal stamp flips; ⌂ header home button retired | `skin()` in cr-hd2; ensureRibbon | goHome() survives for the mounts' exits (1173) |
 | One door per destination — drawer switch icon deleted; Community Partners appended once | drawer head markup, cr-cpartners appender, 953 menu builder | DUPE check's first catches (1174) |
 | Vision hub inks meet the floor — wordmark #e35c63, flow line #98A29C | cr-vh styles | computed 5.55 / 7.41; header-audit rows re-measured stale (1175) |
+
+## Build 1182 — the inspection-report logo becomes a file (31 Aug 2026)
+
+| What | Where | Notes |
+|---|---|---|
+| **`cardinal-report-logo.png`** at the repo root replaces a 139,982-char base64 PNG written into `index.html` **twice** | both report templates in the main block | `index.html` 5,689,948 → 5,411,417 chars. **Ships; must never be added to `.vercelignore`** — the letterhead 404s on client documents if it does |
+| **`CARDINAL_LOGO_SRC` — the one place the logo path lives** | main block, declared just above `REPORT_TEMPLATE` | read directly by the three main-block consumers; `cr-epub-script` takes `window.CARDINAL_LOGO_SRC \|\| '/cardinal-report-logo.png'` because it is a different block. ⚠ Do **not** add a `window.` assignment beside the `var` — a top-level `var` is already a window property, and both together send `gate_types` red with TS2403 |
+| ⚠ **Five consumers used to extract the logo from a template by regex** — all replaced | `ESTIMATE_TEMPLATE`, `buildEstimate()`, the login/editor brand-logo IIFE, the daily login quote (inside that IIFE), `cardinalLogo()` in `cr-epub-script` | with the blob gone they matched nothing: three substituted `''`, the IIFE did `if(!m) return;` and abandoned its whole body. **Nothing threw and every mechanical gate stayed green.** `gate_1182` fails if any extraction returns |
+| `onerror` fallback to `/cardinal-transparent.png` on both report covers | both templates | a smaller mark, not a substitute — the fallback is for a failed fetch, not a licence to drop the file |
+
+⚠ **`#brandLogo` is hidden ON PURPOSE** and `cr-lg-script` re-hides it through a MutationObserver
+on its `style` attribute, backed by `display:none !important` in `cr-lg-styles` — the header's own
+gold home made it redundant. `#editorLogo` is the one the brand-logo IIFE actually reveals. Do not
+"fix" `#brandLogo` into view.

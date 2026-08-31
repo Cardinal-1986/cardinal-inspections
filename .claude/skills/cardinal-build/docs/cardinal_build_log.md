@@ -31234,3 +31234,101 @@ looking and tapping, and already baselined so they cannot grow.
   portals, which is what "just like retail and community" means as a measurement · regressions
   gate_1171/1172/1173/1174/1175/1176/1178/1179 all green · gate_types GREEN · gate_dupes GREEN ·
   audit_scrolllock GREEN · sentinel sweep running.
+
+## Build 1182 — the report logo is a file, and the five things reading it out of the file
+
+Theo asked whether anything could come out of `index.html` to slim it down **if it was not
+needed**. The biggest single answer measured: the inspection-report cover logo, a 139,982-char
+base64 PNG written into the file **twice** — once in the roof report template, once in the
+exterior report, **sha1 6859fb78351b both times**. The two templates are genuinely different
+documents (roof: Aerial Overview / Shingles & Fasteners / Chimney / Attic; exterior: Siding &
+Trim / Windows & Doors / Gutters), so both templates stay; only the image was redundant.
+
+Extracted to **`cardinal-report-logo.png`** (104,968 bytes at the repo root, served by Vercel like
+any other asset) and both templates now point at it with an `onerror` fallback to
+`/cardinal-transparent.png`. **`index.html` 5,689,948 → 5,411,417 characters (−278,531);
+272 KB smaller on disk.**
+
+⚠️ **State the NET, not the flattering half.** The app file is 272 KB smaller but a 103 KB file
+joined the deploy, so the **deployed tree drops 169 KB, not 272**. What genuinely improves is the
+first load — `index.html` is what every visitor downloads, and the logo is now fetched once,
+cached, and only by the report and estimate paths.
+
+### ⚠ THE THING THAT MATTERED, AND IT WAS NOT THE SIZE
+
+Deleting the blob **broke five consumers**, and every mechanical gate stayed green while it did.
+Nothing in the app referenced the logo by name — **five separate places dug the data URI back out
+of a template constant with `.match(/class="…-logo" src="(data:image\/[^"]+)"/)`**:
+
+| consumer | what it did with the blob gone |
+|---|---|
+| `ESTIMATE_TEMPLATE` | substituted `''` → the estimate letterhead vanished |
+| `buildEstimate()` | same → every contract and agreement lost its letterhead |
+| the login/editor brand-logo IIFE | `if(!m) return;` — **abandoned the whole function** |
+| the daily login quote | collateral: it lives *inside* that same IIFE |
+| `cardinalLogo()` in `cr-epub-script` | tried both templates in turn, returned `''` → `buildDocHtml()` built every estimate document with no logo |
+
+**Nothing threw.** These are client-facing documents; a homeowner would have received an
+estimate with no letterhead and nobody would have got an error. `check_build.py` was green
+throughout — 133 scripts parse, braces balance, stamp bumped, marker present, negative control
+clean. **The prime doctrine in its other direction: things that look independent are wired.**
+
+The repair is one source of truth — `var CARDINAL_LOGO_SRC = '/cardinal-report-logo.png';`
+declared once in the main block, read directly by the three main-block consumers and as
+`window.CARDINAL_LOGO_SRC || '/cardinal-report-logo.png'` by `cr-epub-script`, which is a
+different block (the JS spelling of the `var(--token,#literal)` habit). **All five regex
+extractions are gone**; a surviving one is now a gate failure.
+
+Safe because both share paths are `location.origin` — `shareUrlFor()` is
+`location.origin + '/api/share?t='` and `shareUrl()` is `location.origin + '/?share='` — so a
+root-relative path resolves for a client opening a share link, and print-to-PDF renders from the
+loaded image.
+
+### ⚠ THE FIRST GATE COULD NOT FAIL — the reason this build nearly shipped broken
+
+`gate_1182`'s first version asked `document.querySelectorAll('img.cover-logo')` and found **zero**,
+because the report templates live inside a `<script>` block as **JavaScript string constants**;
+nothing named `cover-logo` is ever in the resting DOM. Two of its six checks were `.every()` over
+that empty array and **passed vacuously**. It reported 5/6 and the one red was itself the wrong
+question.
+
+Rewritten to assert on the **artifact text** for what only text can show, and on **runtime values**
+for all five consumers, plus a real render of `REPORT_TEMPLATE` in Chromium serving the actual PNG
+over HTTP, confirming it decodes and occupies space — the only check that answers *would a
+homeowner see a broken-image icon*. **19/19 green, and RED on both controls**: 8/19 on 1181, and
+**10/19 on a purpose-built `index_v1182_broken.html`** — the swap without the consumer repair,
+i.e. the exact state I nearly shipped — where it names all five broken consumers and the vanished
+login quote by hand.
+
+⚠ `cardinalLogo()` is **not** a global (`cr-epub-script` wraps everything in an IIFE), so the
+obvious `typeof cardinalLogo === 'function'` check reports `(not defined)` on a healthy tree. The
+gate lifts the **shipped function text** out of the artifact by brace-matching and runs that.
+
+⚠ And **do not assert `#brandLogo` is visible**: `cr-lg-script` hides it on purpose and re-hides it
+through a MutationObserver on its `style` attribute, backed by `display:none !important`. The first
+draft asserted it was shown and went red on correct code. `#editorLogo` is what that IIFE actually
+reveals, and nothing hides it.
+
+### Instruments
+
+- **`gate_types` had a hole of exactly the same shape, and this build fell into it.** Its
+  `globals.d.ts` was generated with a **bare regex over the raw HTML**, so a *comment* saying
+  `window.Foo =` invented a global — and an invented global **masks TS2304, the one class the gate
+  exists to catch**. It happened live: the comment I wrote warning the next reader not to assign
+  that name onto window conjured the global and moved a real error into another bucket. The
+  generator now runs through the lexer, CODE hits only. **Measured before the change: naive 193
+  names, lexer 193, zero ghosts** — the hole is closed without a single count moving. Selftest
+  still 4/4.
+- **`gate_1180` is RETIRED, not fixed.** Every one of its assertions tests the insurance-only
+  banner button that **1181 deliberately removed** on Theo's instruction, and it had been
+  *crashing* — `Cannot read properties of null (reading 'cx')` — on `main` ever since, which is
+  BUG_CLASSES 37: a gate that dies reads as "not green" rather than "proved nothing". `gate_1181`
+  covers the replacement. Debt from my own previous build.
+- **Comment pollution struck three times in this one build** — once counting `class="cover-logo"`,
+  once on the `window.` assignment above, and once in the rewording. It is the most reliable trap
+  in this repo.
+
+- Gates: check_build green (1181→1182, marker `CARDINAL_LOGO_SRC` + negative control) ·
+  **gate_1182 19/19, RED on both controls** · regressions gate_1176/1178/1179/1181 green ·
+  gate_types GREEN (and hardened) · gate_dupes GREEN · audit_scrolllock GREEN at 17 modules ·
+  sentinel run on the build.
