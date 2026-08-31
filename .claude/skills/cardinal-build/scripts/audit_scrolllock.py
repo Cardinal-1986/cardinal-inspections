@@ -75,9 +75,32 @@ def kind_at(js, pos):
     return 'computed'                      # a ternary: releases on one branch
 
 
+def stable_ids(blocks):
+    """script_blocks names an un-id'd block `@<character offset>`. That is fine
+    for reporting inside one run and USELESS as an identity across builds.
+
+    ⚠ IT COST A FALSE RED THE FIRST TIME THE FILE GREW. Build 1183 added ~1 KB
+    of CSS ahead of the main block and the roster went from `@662628` to
+    `@664105` — the same block, renamed by arithmetic, reported as "a NEW module
+    started writing the global scroll lock" beside "gone: @662628". A standing
+    gate that cries wolf on every build that adds a byte is a gate people learn
+    to skip, which is exactly how the thing it guards comes back.
+
+    Un-id'd blocks are keyed by their ORDINAL among un-id'd blocks instead, so
+    the name only moves if a script block is genuinely added or removed ahead of
+    it — which is itself worth a red."""
+    out, n = [], 0
+    for bid, js in blocks:
+        if bid.startswith('@'):
+            out.append((f'@unnamed#{n}', js)); n += 1
+        else:
+            out.append((bid, js))
+    return out
+
+
 def scan(html):
     mods = {}
-    for bid, js in script_blocks(html):
+    for bid, js in stable_ids(script_blocks(html)):
         hits = code_hits(js)
         if not hits:
             continue
@@ -169,10 +192,18 @@ def selftest():
         bad.append('risk() does not add up')
     if risk({'lock': 1, 'release': 1, 'computed': 0}) != 0:
         bad.append('a balanced module did not read as balanced')
+    # the false-red that actually happened: an un-id'd block must keep its name
+    # when bytes are inserted ahead of it
+    a = stable_ids([('@100', 'x'), ('cr-a-script', 'y'), ('@900', 'z')])
+    b = stable_ids([('@412', 'x'), ('cr-a-script', 'y'), ('@1210', 'z')])
+    if [n for n, _ in a] != [n for n, _ in b]:
+        bad.append(f'un-id\'d block names still drift with file size: {[n for n,_ in a]} vs {[n for n,_ in b]}')
+    if [n for n, _ in a] != ['@unnamed#0', 'cr-a-script', '@unnamed#1']:
+        bad.append(f'unexpected stable naming: {[n for n,_ in a]}')
     for b in bad:
         print('  MISSORTED ' + b)
     print('SELFTEST ' + ('FAIL' if bad else 'PASS') +
-          f' — 4 shapes sorted, 2 decoys ignored, risk() both directions')
+          f' — 4 shapes sorted, 2 decoys ignored, risk() both directions, names stable')
     return 1 if bad else 0
 
 

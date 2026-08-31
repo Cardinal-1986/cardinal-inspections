@@ -31234,3 +31234,262 @@ looking and tapping, and already baselined so they cannot grow.
   portals, which is what "just like retail and community" means as a measurement · regressions
   gate_1171/1172/1173/1174/1175/1176/1178/1179 all green · gate_types GREEN · gate_dupes GREEN ·
   audit_scrolllock GREEN · sentinel sweep running.
+
+## Build 1182 — the report logo is a file, and the five things reading it out of the file
+
+Theo asked whether anything could come out of `index.html` to slim it down **if it was not
+needed**. The biggest single answer measured: the inspection-report cover logo, a 139,982-char
+base64 PNG written into the file **twice** — once in the roof report template, once in the
+exterior report, **sha1 6859fb78351b both times**. The two templates are genuinely different
+documents (roof: Aerial Overview / Shingles & Fasteners / Chimney / Attic; exterior: Siding &
+Trim / Windows & Doors / Gutters), so both templates stay; only the image was redundant.
+
+Extracted to **`cardinal-report-logo.png`** (104,968 bytes at the repo root, served by Vercel like
+any other asset) and both templates now point at it with an `onerror` fallback to
+`/cardinal-transparent.png`. **`index.html` 5,689,948 → 5,411,417 characters (−278,531);
+272 KB smaller on disk.**
+
+⚠️ **State the NET, not the flattering half.** The app file is 272 KB smaller but a 103 KB file
+joined the deploy, so the **deployed tree drops 169 KB, not 272**. What genuinely improves is the
+first load — `index.html` is what every visitor downloads, and the logo is now fetched once,
+cached, and only by the report and estimate paths.
+
+### ⚠ THE THING THAT MATTERED, AND IT WAS NOT THE SIZE
+
+Deleting the blob **broke five consumers**, and every mechanical gate stayed green while it did.
+Nothing in the app referenced the logo by name — **five separate places dug the data URI back out
+of a template constant with `.match(/class="…-logo" src="(data:image\/[^"]+)"/)`**:
+
+| consumer | what it did with the blob gone |
+|---|---|
+| `ESTIMATE_TEMPLATE` | substituted `''` → the estimate letterhead vanished |
+| `buildEstimate()` | same → every contract and agreement lost its letterhead |
+| the login/editor brand-logo IIFE | `if(!m) return;` — **abandoned the whole function** |
+| the daily login quote | collateral: it lives *inside* that same IIFE |
+| `cardinalLogo()` in `cr-epub-script` | tried both templates in turn, returned `''` → `buildDocHtml()` built every estimate document with no logo |
+
+**Nothing threw.** These are client-facing documents; a homeowner would have received an
+estimate with no letterhead and nobody would have got an error. `check_build.py` was green
+throughout — 133 scripts parse, braces balance, stamp bumped, marker present, negative control
+clean. **The prime doctrine in its other direction: things that look independent are wired.**
+
+The repair is one source of truth — `var CARDINAL_LOGO_SRC = '/cardinal-report-logo.png';`
+declared once in the main block, read directly by the three main-block consumers and as
+`window.CARDINAL_LOGO_SRC || '/cardinal-report-logo.png'` by `cr-epub-script`, which is a
+different block (the JS spelling of the `var(--token,#literal)` habit). **All five regex
+extractions are gone**; a surviving one is now a gate failure.
+
+Safe because both share paths are `location.origin` — `shareUrlFor()` is
+`location.origin + '/api/share?t='` and `shareUrl()` is `location.origin + '/?share='` — so a
+root-relative path resolves for a client opening a share link, and print-to-PDF renders from the
+loaded image.
+
+### ⚠ THE FIRST GATE COULD NOT FAIL — the reason this build nearly shipped broken
+
+`gate_1182`'s first version asked `document.querySelectorAll('img.cover-logo')` and found **zero**,
+because the report templates live inside a `<script>` block as **JavaScript string constants**;
+nothing named `cover-logo` is ever in the resting DOM. Two of its six checks were `.every()` over
+that empty array and **passed vacuously**. It reported 5/6 and the one red was itself the wrong
+question.
+
+Rewritten to assert on the **artifact text** for what only text can show, and on **runtime values**
+for all five consumers, plus a real render of `REPORT_TEMPLATE` in Chromium serving the actual PNG
+over HTTP, confirming it decodes and occupies space — the only check that answers *would a
+homeowner see a broken-image icon*. **19/19 green, and RED on both controls**: 8/19 on 1181, and
+**10/19 on a purpose-built `index_v1182_broken.html`** — the swap without the consumer repair,
+i.e. the exact state I nearly shipped — where it names all five broken consumers and the vanished
+login quote by hand.
+
+⚠ `cardinalLogo()` is **not** a global (`cr-epub-script` wraps everything in an IIFE), so the
+obvious `typeof cardinalLogo === 'function'` check reports `(not defined)` on a healthy tree. The
+gate lifts the **shipped function text** out of the artifact by brace-matching and runs that.
+
+⚠ And **do not assert `#brandLogo` is visible**: `cr-lg-script` hides it on purpose and re-hides it
+through a MutationObserver on its `style` attribute, backed by `display:none !important`. The first
+draft asserted it was shown and went red on correct code. `#editorLogo` is what that IIFE actually
+reveals, and nothing hides it.
+
+### Instruments
+
+- **`gate_types` had a hole of exactly the same shape, and this build fell into it.** Its
+  `globals.d.ts` was generated with a **bare regex over the raw HTML**, so a *comment* saying
+  `window.Foo =` invented a global — and an invented global **masks TS2304, the one class the gate
+  exists to catch**. It happened live: the comment I wrote warning the next reader not to assign
+  that name onto window conjured the global and moved a real error into another bucket. The
+  generator now runs through the lexer, CODE hits only. **Measured before the change: naive 193
+  names, lexer 193, zero ghosts** — the hole is closed without a single count moving. Selftest
+  still 4/4.
+- **`gate_1180` is RETIRED, not fixed.** Every one of its assertions tests the insurance-only
+  banner button that **1181 deliberately removed** on Theo's instruction, and it had been
+  *crashing* — `Cannot read properties of null (reading 'cx')` — on `main` ever since, which is
+  BUG_CLASSES 37: a gate that dies reads as "not green" rather than "proved nothing". `gate_1181`
+  covers the replacement. Debt from my own previous build.
+- **Comment pollution struck three times in this one build** — once counting `class="cover-logo"`,
+  once on the `window.` assignment above, and once in the rewording. It is the most reliable trap
+  in this repo.
+
+- Gates: check_build green (1181→1182, marker `CARDINAL_LOGO_SRC` + negative control) ·
+  **gate_1182 19/19, RED on both controls** · regressions gate_1176/1178/1179/1181 green ·
+  gate_types GREEN (and hardened) · gate_dupes GREEN · audit_scrolllock GREEN at 17 modules ·
+  sentinel run on the build.
+
+## Build 1183 — the hammer finally paints, and two files nothing could reach are gone
+
+Theo, after the 1182 slimming: *"Was there a Cardinal logo with a hammer that's in there?"* — then
+*"Wire the hammer and clean up things that aren't relevant but is safe to clean up."*
+
+**There were two hammers, and neither had ever been on screen.**
+
+`cardinal-prod.png` is a cardinal perched on a roofing hatchet, drawn at 1086 alongside
+`cardinal-board.png` (the same bird on a pencil). The pencil watermarks the Team Calendar. The
+hammer was given the matching mask rule — and **nothing ever applied the class it hangs off.**
+`prodcal` occurred exactly twice in the whole file and both were the stylesheet rules themselves.
+Grep said "referenced"; **Chromium said 0 matching elements.**
+
+It is now the watermark on **Next 30 Days** — the work schedule that replaced the Work Schedule
+circles at 1168 — beside the pencil on the Team Calendar.
+
+### ⚠ THE CLASS ALONE WOULD HAVE BEEN WRONG, TWICE
+
+Both caught by rendering, neither visible to an assertion on the class list.
+
+**1. It would have escaped the card.** The `::before` is `position:absolute`, and **`.pipecard`
+sets no position** — only `.pipecard.teamcal` does (`position:relative;overflow:hidden`), because
+the rule was written for a **second hero calendar that was never built** (`.herorow`'s media query
+still talks about "the two stacked calendars"). On any other `.pipecard` the watermark takes the
+nearest positioned ancestor and paints across the page: class present, rule applying, screen wrong.
+The host context is now declared rather than inherited by luck.
+
+**2. It painted ON TOP OF THE DATES.** Measured by rendering the card with the watermark
+suppressed and then as shipped, and comparing the glyph pixels:
+
+| | glyph pixels disturbed |
+|---|---:|
+| as the rule shipped | **13.8%** |
+| `z-index:0` on the `::before` | **13.1%** — no help at all |
+| lifting the card's own content above it | **2.2%** |
+
+`z-index:0` cannot work: a **positioned** `::before` paints above **non-positioned** in-flow
+siblings whatever its z-index. Lifting the content is the fix, and it is the same move
+`.cr-pcard.community .t` already makes. The 2.2% residue is glyph anti-aliasing against a changed
+ground, not text being covered.
+
+**Opacity.** The base rule's `.24` was drawn for teamcal's **white paper** card; on the navy
+schedule card it read as a dark smudge. Rendered at `.24/.18/.14/.10` and set to **`.14`** under
+the *same dark override the pencil already uses* — the artwork is visible and the dates are clean.
+⚠ Note the precedent this follows: teamcal is `.24` base with a `.10` dark override. The base stays
+`.24` for light mode; only the dark ground is corrected.
+
+### The cleanup, and where it deliberately STOPPED
+
+| file | verdict |
+|---|---|
+| `cardinal-hammer.png` (42 KB) | **deleted** — a plain claw hammer, no bird. Zero references of any kind: not in any artifact, not a constructed path, not in `sw.js`, not in the manifest |
+| `community-action-icon.png` (9.6 KB) | **deleted**, with its two orphaned `.cr-cmark` rules — same shape as the hammer, `cr-cmark` appeared twice and both were CSS |
+| **`community-action-dayton.png` (244 KB)** | **KEPT.** It is wired, into `CardinalPortal.pick()` — but both call sites are `else` branches that only run if `CardinalFrontDoor` is missing, so it never fetches. That makes it a **deliberate fallback, not dead weight**; deleting it turns a safety net into a broken image. 1182's lesson applied in the other direction |
+
+⚠ **After 1182, "unreferenced" was checked properly rather than by filename**: constructed paths,
+`sw.js` precache, the manifest, and CSS `url()` were each swept before either delete.
+
+### Gates
+
+- **`gate_1183` 24/24, RED 9/24 on the 1182 control** — and it reports red rather than crashing
+  (BUG_CLASSES 37). It carries the **glyph-drift check** above, so "the watermark paints over the
+  dates" cannot come back silently; it also asserts the two deletions stay deleted **and the three
+  live files plus the deliberate fallback stay present**, because a cleanup that keeps going is how
+  a live asset gets removed next time.
+- ⚠ **Its first control run printed two failures that were not real** — `teamcalStillThere` sat
+  behind the `if (!el) return` early exit, so the Team Calendar read as missing on a tree where it
+  plainly exists. Independent facts are now computed **before** the early return. A control that
+  prints a wrong reason is only marginally better than one that crashes.
+- check_build green (1182→1183, marker + negative control) · regressions gate_1176/1178/1181/1182
+  all green.
+- ⚠ **`audit_scrolllock` went RED on this build and it was a FALSE POSITIVE — now fixed.** The
+  un-id'd main block is named by `script_blocks` as `@<character offset>`, so adding ~1 KB of CSS
+  ahead of it renamed `@662628` to `@664105` and the audit reported *"a NEW module started writing
+  the global scroll lock"* beside *"gone: @662628"* — the same block, renamed by arithmetic. **A
+  standing gate that cries wolf whenever the file grows is a gate people learn to skip**, which is
+  exactly how the class it guards comes back. Un-id'd blocks are keyed by their **ordinal** among
+  un-id'd blocks now, so a name only moves if a script block is genuinely added or removed. Fixed
+  in the auditor, not in the shared `script_blocks`, which `gate_types` and `gate_dupes` also use.
+  The selftest covers it and **fails against the old naming** — verified by reverting it.
+- ⚠ **Comment pollution fired FIVE times across 1182–1183** — counting `class="cover-logo"`, the
+  `window.` assignment, the reworded comment, `prodcal`, and the filename in a comment. Every time
+  the fix was the same: **assert on a form prose cannot forge** (the `url(...)` wrapper, the full
+  `<img ...>` tag), never on a bare token count.
+
+## Instruments — the gates stop guessing how long the app takes to boot (31 Aug 2026)
+
+**No build number: this touches no shipped artifact.** `index.html` is untouched; this is the
+gate ladder only.
+
+**The measurement that started it.** Across `scripts/*.mjs`: **933 `waitForTimeout` calls totalling
+1,111,716 ms — 18.5 minutes of pure sleeping** — against **61 `waitForFunction` and zero
+`waitForSelector`**. Then, on the shipped tree, when the app is actually ready:
+
+| signal | first true |
+|---|---:|
+| pipecards / teamcal rendered | 84 ms |
+| main view visible · 30-day calendar filled | 226 ms |
+| supabase client present | 277 ms |
+| `CardinalFrontDoor` available | 474 ms |
+| DOM complete · header · crm stamp | **555 ms** |
+
+**The gates were sleeping 3500 ms.** Six times too long — and the waste is the small half. A fixed
+sleep is a **guess**, and it fails in both directions: too short on a loaded machine reads a
+half-booted app and goes red on correct code, or reads an empty DOM and passes **vacuously**.
+
+⚠️ **And Playwright's auto-waiting does NOT cover this**, which is worth stating because it sounds
+like it should. Auto-waiting applies to `locator()` actions and `waitForSelector`; these gates use
+**neither** — they sleep, then `page.evaluate`. Determinism had to be written, not inherited.
+
+**`gate_ready.mjs`** is the fix: `waitAppReady()` polls real app signals; `waitFor()` /
+`waitForSoft()` replace settle sleeps; `settle()` is the one honest fixed wait (a CSS transition,
+where there is no predicate to name). Selftest **9/9**, and it proves the FAILURE directions, not
+just the passes.
+
+**The design decision that paid for itself immediately: it throws, and it NAMES the stuck signal.**
+
+### ⚠ Two failures on the way, both mine, both instructive
+
+**1. A throwing helper puts the burden on the predicate — and it killed a gate.** The first
+conversion replaced the post-navigation sleep with a throwing `waitFor` on *"the home board
+rendered"* (`>=3 .pipecard`). That is not true on every gate's flow, so **`gate_1176` died instead
+of reporting** — BUG_CLASSES 37, a gate that crashes reads as "not green" rather than "proved
+nothing". Hence **`waitForSoft()`**: replacing a sleep must never be able to make a gate crash
+where it used to report. Worst case it degrades to exactly the old behaviour, a bounded wait.
+
+**2. A readiness signal that measured THE TEST RIG instead of the app.** `document.readyState ===
+'complete'` was the obvious first signal. It broke **five of six gates**, each hanging the full 30s
+and throwing `domComplete=false`. Cause: those gates **abort images, fonts and stylesheets** in
+their route handler, so the window `load` event never fires and readyState never leaves
+`'interactive'`. `gate_1183` passed only because it serves images. **Same shape as the `gate_types`
+bug earlier the same day** — an instrument reporting on itself. Signal removed; the three that
+remain are app-level facts.
+
+⚠️ **Finding that took one run instead of five files' worth of guessing, purely because the error
+said `still false: domComplete=false`.** A bare "timeout" would have cost a round. If you extend
+this helper, keep the naming.
+
+### Result — six gates converted, all green, all still RED on their controls
+
+| gate | before | after | control |
+|---|---:|---:|---|
+| gate_1176 | ~28 s | **7.5 s** | — |
+| gate_1178 | ~30 s | **6.9 s** | — |
+| gate_1179 | ~35 s | **10.8 s** | — |
+| gate_1181 | ~40 s | **13.6 s** | — |
+| gate_1182 | ~30 s | **3.0 s** | RED 8/19 vs 1181, exit 1 |
+| gate_1183 | ~28 s | **5.0 s** | RED 10/24 vs 1182, exit 1 |
+
+**The control column is the point, not the timings.** Both controls fail with the *same counts as
+before the conversion*, so the gates got faster without losing the ability to catch a regression —
+a faster gate that stopped being able to fail would be a straight downgrade.
+
+⚠️ **The other ~900 sleeps are untouched, deliberately.** These six are the ones whose boot guess
+was measured. Converting the rest is a separate job and wants the same standard: green, and still
+red on a control.
+
+⚠️ **Comment pollution fired a SIXTH time here** — the conversion's own comment spelled the literal
+`waitForTimeout(3500)`, so the "no boot sleep survives" assertion failed on correct code. Same fix
+as the five before it: assert on a form prose cannot forge, and never on a bare token count.

@@ -13,6 +13,7 @@
  * retail board at sign-in; must go RED). */
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import fs from 'fs';
+import { waitAppReady, waitForSoft, settle } from './gate_ready.mjs';
 const HERE = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
 const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
 const APP_HTML = fs.readFileSync(FILE, 'utf8');
@@ -51,7 +52,10 @@ await page.addInitScript(() => {
 });
 await page.addInitScript(MOCK);
 await page.goto('https://app.cardinalroster.com/', { waitUntil: 'domcontentloaded' });
-await page.waitForTimeout(3500);
+/* was a fixed 3.5-second sleep — a guess. Measured on the shipped tree: the app
+   is fully booted at 555ms, so that was six times too long AND still unsafe
+   under load. waitAppReady polls real signals and throws naming the stuck one. */
+await waitAppReady(page);
 
 
 const state = () => page.evaluate(() => {

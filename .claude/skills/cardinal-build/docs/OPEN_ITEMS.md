@@ -3448,6 +3448,36 @@ load time ever becomes an actual complaint, start there**, not with a bundler.
 what the audit did. A 3.6 MB single file *looks* alarming, compresses to ~750 KB,
 and is reported as fine by the person using it.
 
+### ✅ 31 Aug — Theo asked directly, and 263 KB came out. Read the cost before doing it again.
+
+*"Is there anything in the file that can be removed to slim the file size down IF
+it's not needed?"* — so this is his ask, not the audit's, and it is narrow: remove
+what is **not needed**, not re-architect. **Build 1182 removed the biggest single
+answer** — the inspection-report cover logo, a 139,982-char base64 PNG written into
+the file **twice** (sha1 `6859fb78351b` both times). It is `cardinal-report-logo.png`
+now: **5,674,745 → 5,411,417 characters.**
+
+⚠️ **AND IT SILENTLY BROKE FIVE THINGS, with every mechanical gate green.** Nothing
+referenced the image by name — five places dug the data URI back out of a template
+constant by regex, so with the blob gone three substituted `''` and the login/editor
+IIFE did `if(!m) return;`, abandoning its whole body and taking the daily login quote
+with it. **Every client-facing estimate and contract would have printed with no
+letterhead and nothing would have thrown.** Full write-up in the build log at 1182.
+
+**The lesson is the rule for the remaining candidates: an embedded asset is not
+unreferenced just because nothing names it.** Grep for a regex that reads it back out
+of its own host constant.
+
+**What is left, measured, with a recommendation on each:**
+
+| candidate | size | verdict |
+|---|---:|---|
+| the roof-diagram base64 (~129 KB) + two embedded SVG logos | ~300 KB | ⚠️ **only with the 1182 treatment** — find every consumer first. Worth it only if Theo asks again |
+| the in-app `CHANGELOG` — 826 entries back to build 166 | ~491 KB | ❌ **NO.** `CLAUDE.md` makes this the record that outranks the docs for everything since 166, precisely because it survives work done outside `.claude/`. The oldest 275 entries are 70 KB and buy the whole pre-543 history |
+| comments | ~937 KB | ❌ **NO.** They are the accumulated cost of the traps in `BUG_CLASSES.md`. Every one of them is a build somebody already paid for |
+
+**None of these is worth a round unless Theo raises it.** 263 KB was the free one.
+
 **The sandbox cannot measure load time — confirmed twice.** The agent proxy
 returns **403 to CONNECT** for `app.cardinalroster.com` *and* for the
 `*.vercel.app` preview domain. Do not burn a turn retrying; ask Theo or read it

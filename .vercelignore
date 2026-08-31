@@ -105,3 +105,20 @@ spark/
 #     public, and no other secret — checked, not assumed (gate_807.mjs).
 #     Build 805 is why this is a separate file rather than a screen in
 #     index.html: a hostname check inside one big file separates nothing. ---
+
+# --- cardinal-report-logo.png DELIBERATELY SHIPS (build 1182). It is the
+#     Cardinal mark on the cover of an inspection report, and it MUST NOT be
+#     added to this file. It was a base64 data URI written into index.html
+#     TWICE (139,982 chars each, sha1 6859fb78351b both times, once in the roof
+#     report template and once in the exterior); extracting it took 263 KB out
+#     of the app file. It is now fetched at runtime by both report templates,
+#     by ESTIMATE_TEMPLATE and buildEstimate(), by cardinalLogo(), and by the
+#     login and editor brand logos — all through the one constant
+#     CARDINAL_LOGO_SRC.
+#     It is a public logo and contains nothing private. Excluding it would
+#     404 the letterhead on documents CLIENTS open: both share paths are
+#     location.origin (shareUrlFor -> /api/share?t=, shareUrl -> /?share=),
+#     so the root-relative path resolves only because this file serves. There
+#     is an onerror fallback to /cardinal-transparent.png, which is a smaller
+#     mark and not a substitute. gate_1182.mjs serves the real bytes over HTTP
+#     and asserts the rendered report actually paints it. ---
