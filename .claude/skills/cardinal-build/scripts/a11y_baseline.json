@@ -1,11 +1,11 @@
 {
   "note": "axe-core violation NODES per rule id. A rule may not grow. See gate_a11y.mjs.",
   "axe": "4.13.0",
-  "states": 29,
+  "states": 31,
   "counts": {
     "landmark-one-main": 8,
     "heading-order": 5,
-    "region": 305,
+    "region": 316,
     "empty-table-header": 1,
     "scrollable-region-focusable": 2
   }
