@@ -48,6 +48,61 @@ wrong; it is corrected here so the next reader does not plan around it.
 
 ---
 
+## ✅ Condition 1 MET · ⚠ Condition 2 IS NOT — the Showroom covers 4 of the hub's 7 doors
+
+*31 Aug, after build 1186. Theo verified `app.cardinalroster.com/?vision=1` himself: "yes it goes
+to the menu with presentation, studio, etc."*
+
+**That satisfies the second half of his condition — Vision is verified WITHOUT the `showroom.`
+hostname.** The testing door works, so the hostname is no longer the only way to reach the hub.
+
+⚠️ **It does NOT satisfy the first half, and checking it found a gap nobody had measured.**
+The condition is *"all dependencies have explicit replacements"*, and the hub's own tiles are
+dependencies. Enumerated from `visionHtml()` and its `wire()` dispatch, then checked against the
+Showroom's `TILES`:
+
+| # | Vision hub tile | how it works | in the Showroom? |
+|---|---|---|---|
+| 1 | **Presentations** — Showcase, Workmanship & The Walk | `data-go="showroom"` | ✅ relocated |
+| 2 | **The Appointment** | `data-go="appt"` → `CardinalAppointment.open()` | ❌ **absent** |
+| 3 | **Studio** | `href="/studio.html"` | ✅ linked, absolute |
+| 4 | **Designer** | `data-go="designer"` → the Visualizer | ✅ linked, absolute |
+| 5 | **Colors** | `data-go="colors"` → `CardinalColors.open()` | ✅ relocated |
+| 6 | **The Pop-Up Roof** | `href="/popup.html"` | ❌ **excluded by decision** |
+| 7 | **Why Cardinal** | `data-go="why"` → `CardinalWhy.open()` | ❌ **absent** |
+
+**`CardinalAppointment` and `CardinalWhy` are each assigned exactly once — real modules, not
+stubs.** They were never mentioned in the extraction spike, the deployment boundary or this
+matrix, because every one of those documents scoped the relocation as *Showcase + OC Colors*. The
+hub is wider than the two modules that moved.
+
+⚠️ **THE POP-UP ROOF EXCLUSION IS NOT NEUTRAL AFTER A REPOINT.** Leaving it out of a NEW launcher
+adds nothing; leaving it out of a launcher that REPLACES the hub **removes a door Theo has today**.
+The settled decision was made about a new app, not about a substitution — worth putting to him in
+those terms rather than treating it as already answered.
+
+⚠️ **And two hub links break on the repoint even though they look fine.** `/studio.html` and
+`/popup.html` are RELATIVE. Measured:
+
+| URL | today |
+|---|---|
+| `showroom.cardinalroster.com/studio.html` | **200** |
+| `showroom.cardinalroster.com/popup.html` | **200** |
+| `cardinal-showroom.vercel.app/studio.html` | **404** |
+| `cardinal-showroom.vercel.app/popup.html` | **404** |
+
+They resolve today only because that hostname serves Cardinal's whole deployment. Point it at the
+Showroom project and both 404 — **the same defect as the invented `studio.cardinalroster.com`, in
+the other direction.** The Showroom's own tiles already use absolute `app.cardinalroster.com`
+URLs and are unaffected.
+
+**So the repoint is still blocked, and the blocker has moved**: it is no longer "prove Vision
+works without the hostname" — that is done — it is **"decide what happens to The Appointment, Why
+Cardinal and the Pop-Up Roof."** Three answers are possible for each: relocate it, link it, or
+knowingly drop it. None of them is a code change until Theo picks.
+
+---
+
 ## ⚠ FIRST: "13 dependencies" is 13 OCCURRENCES, and it is SIX code locations
 
 The figure 13 is real — `grep -c isVisionHost index.html` returns 13, and I quoted it that way
