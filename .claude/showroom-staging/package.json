@@ -1,0 +1,5 @@
+{
+  "name": "cardinal-showroom",
+  "private": true,
+  "engines": { "node": "22.x" }
+}

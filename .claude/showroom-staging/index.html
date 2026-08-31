@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en" data-theme="blackout">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050607">
+<meta name="robots" content="noindex,nofollow">
+<title>Cardinal Showroom</title>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     CARDINAL SHOWROOM — the client-facing sales presentation app.
+     STAGING. v2026-08-31 showroom-staging.1
+
+     WHY THIS IS A SEPARATE APPLICATION, not a folder in the CRM.
+     Theo: "I want the sales presentation experience independently deployable
+     so CRM changes cannot destabilize it." A file served by the Cardinal
+     project is still built by the Cardinal deploy, still invalidated by a
+     Cardinal push, and still down when Cardinal is down. So: own repository,
+     own Vercel project, own sign-in, own deploy.
+
+     ⚠ THERE IS NO CRM CODE IN THIS FILE. No pipeline, no stages, no money, no
+     client directory, no claims. If you find yourself needing one, you are
+     building the wrong thing here.
+
+     ⚠ AND NO RUNTIME DEPENDENCY ON CARDINAL. Showcase calls /api/detect for
+     The Walk; that route is COPIED into this project rather than called across
+     to app.cardinalroster.com, because a cross-app fetch is precisely the
+     coupling this move exists to remove.
+
+     WHAT LIVES HERE: Showcase and OC Colors, relocated together, sharing ONE
+     Showroom-owned image utility. Studio and the Visualizer stay separate
+     applications and are linked, never embedded.
+
+     ⚠ POP-UP ROOF IS DELIBERATELY ABSENT FROM THE LAUNCHER. It is not a
+     completed sales tool. Recorded as a future pre-install customer
+     experience; it is not wired to anything here and must not be added to the
+     connected sales-tool launcher until it is finished.
+     ══════════════════════════════════════════════════════════════════════ -->
+
+<link rel="stylesheet" href="/showcase.css">
+<link rel="stylesheet" href="/colors.css">
+
+<style id="cr-sr-styles">
+/* Blackout. Both relocated modules are Blackout by design and deliberately sit
+   outside the CRM's light/dark themes; the shell matches them rather than
+   inventing a third palette. Every colour carries a literal — the 448/449
+   lesson: a bare var() went transparent when another module stripped it. */
+:root{
+  --sr-bg:#050607; --sr-panel:#0e1013; --sr-line:#1e2227;
+  --sr-ink:#f4f6f8; --sr-dim:#98a2ad; --sr-red:#c8202e; --sr-gold:#c9a227;
+  --sr-ok:#3f9e5a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--sr-bg,#050607); color:var(--sr-ink,#f4f6f8);
+  font:400 16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; min-height:100dvh;
+}
+/* 1081's floor: nothing below 11px. Theo works off a phone, on roofs, in daylight. */
+.sr-hide{display:none !important}
+
+#srAuth{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+.sr-card{width:100%;max-width:380px;background:var(--sr-panel,#0e1013);
+  border:1px solid var(--sr-line,#1e2227);border-radius:14px;padding:28px 24px}
+.sr-mark{font:700 13px/1 -apple-system,sans-serif;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--sr-red,#c8202e);margin:0 0 6px}
+.sr-h1{font:600 22px/1.25 -apple-system,sans-serif;margin:0 0 4px;color:var(--sr-ink,#f4f6f8)}
+.sr-sub{font:400 13px/1.45 -apple-system,sans-serif;color:var(--sr-dim,#98a2ad);margin:0 0 20px}
+.sr-field{display:block;margin:0 0 12px}
+.sr-field span{display:block;font:600 11px/1 -apple-system,sans-serif;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--sr-dim,#98a2ad);margin:0 0 6px}
+.sr-field input{width:100%;padding:11px 12px;border-radius:9px;
+  border:1px solid var(--sr-line,#1e2227);background:#070809;color:var(--sr-ink,#f4f6f8);
+  font:400 15px/1.2 -apple-system,sans-serif}
+.sr-field input:focus{outline:2px solid var(--sr-red,#c8202e);outline-offset:1px}
+.sr-btn{width:100%;padding:12px;border:0;border-radius:9px;background:var(--sr-red,#c8202e);
+  color:#fff;font:600 15px/1 -apple-system,sans-serif;cursor:pointer;min-height:44px}
+.sr-btn:disabled{opacity:.55;cursor:default}
+.sr-msg{margin:12px 0 0;font:400 13px/1.4 -apple-system,sans-serif;color:#ff8d95;min-height:18px}
+
+#srApp{display:none}
+#srApp.sr-on{display:block}
+.sr-bar{position:sticky;top:0;z-index:40;display:flex;gap:12px;align-items:center;
+  padding:10px 14px;background:#08090b;border-bottom:1px solid var(--sr-line,#1e2227)}
+.sr-bar .sr-name{font:700 12px/1 -apple-system,sans-serif;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--sr-red,#c8202e)}
+.sr-spacer{flex:1}
+.sr-mode{display:flex;border:1px solid var(--sr-line,#1e2227);border-radius:999px;overflow:hidden}
+.sr-mode button{border:0;background:transparent;color:var(--sr-dim,#98a2ad);
+  font:600 12px/1 -apple-system,sans-serif;padding:9px 14px;cursor:pointer;min-height:36px}
+.sr-mode button[aria-pressed="true"]{background:var(--sr-red,#c8202e);color:#fff}
+.sr-who{font:400 12px/1 -apple-system,sans-serif;color:var(--sr-dim,#98a2ad)}
+.sr-link{background:none;border:0;color:var(--sr-dim,#98a2ad);
+  font:400 12px/1 -apple-system,sans-serif;cursor:pointer;text-decoration:underline;min-height:36px}
+
+.sr-wrap{max-width:1100px;margin:0 auto;padding:26px 16px 60px}
+.sr-pack{background:var(--sr-panel,#0e1013);border:1px solid var(--sr-line,#1e2227);
+  border-radius:14px;padding:18px 18px 16px;margin:0 0 22px}
+.sr-pack h2{font:600 18px/1.25 -apple-system,sans-serif;margin:0 0 4px;color:var(--sr-ink,#f4f6f8)}
+.sr-pack p{margin:0;font:400 13px/1.5 -apple-system,sans-serif;color:var(--sr-dim,#98a2ad)}
+.sr-pill{display:inline-block;padding:4px 10px;border-radius:999px;font:600 11px/1.4 -apple-system,sans-serif;
+  letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--sr-line,#1e2227);
+  color:var(--sr-dim,#98a2ad);margin:0 0 10px}
+.sr-pill.sr-live{color:var(--sr-ok,#3f9e5a);border-color:#204a2c}
+
+.sr-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.sr-tile{display:block;width:100%;text-align:left;cursor:pointer;min-height:112px;
+  background:var(--sr-panel,#0e1013);border:1px solid var(--sr-line,#1e2227);
+  border-radius:14px;padding:16px;color:var(--sr-ink,#f4f6f8);text-decoration:none}
+.sr-tile:hover{border-color:#33393f}
+.sr-tile:focus-visible{outline:2px solid var(--sr-red,#c8202e);outline-offset:2px}
+.sr-tile h3{margin:0 0 5px;font:600 16px/1.25 -apple-system,sans-serif}
+.sr-tile p{margin:0;font:400 12.5px/1.45 -apple-system,sans-serif;color:var(--sr-dim,#98a2ad)}
+.sr-tile .sr-tag{display:block;margin:0 0 8px;font:700 11px/1 -apple-system,sans-serif;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--sr-gold,#c9a227)}
+.sr-tile[data-ext="1"] .sr-tag{color:var(--sr-dim,#98a2ad)}
+
+.sr-head{font:600 12px/1 -apple-system,sans-serif;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--sr-dim,#98a2ad);margin:26px 0 12px}
+#srPhotos{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin:0}
+#srPhotos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;
+  background:#101215;border:1px solid var(--sr-line,#1e2227)}
+#srPhotos p{grid-column:1/-1;margin:0;font:400 13px/1.5 -apple-system,sans-serif;color:var(--sr-dim,#98a2ad)}
+
+/* PRESENT hides everything a customer should not be reading over your shoulder.
+   ⚠ THIS IS A DISPLAY BOUNDARY, NOT AN AUTHENTICATION ONE — settled with Theo.
+   It never decides what MAY be fetched; RLS does that, server-side. */
+body[data-mode="present"] .sr-prep-only{display:none !important}
+.sr-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:9000;
+  background:#15181c;border:1px solid var(--sr-line,#1e2227);color:var(--sr-ink,#f4f6f8);
+  padding:11px 16px;border-radius:10px;font:400 13.5px/1.35 -apple-system,sans-serif;
+  max-width:88vw;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+
+<!-- ── sign in ───────────────────────────────────────────────────────────── -->
+<div id="srAuth">
+  <form class="sr-card" id="srForm" autocomplete="on">
+    <p class="sr-mark">Cardinal</p>
+    <h1 class="sr-h1">Showroom</h1>
+    <p class="sr-sub">Staff sign-in. This is a separate application from the Cardinal CRM and keeps its own session.</p>
+    <label class="sr-field"><span>Email</span>
+      <input id="srEmail" type="email" autocomplete="username" required></label>
+    <label class="sr-field"><span>Password</span>
+      <input id="srPass" type="password" autocomplete="current-password" required></label>
+    <button class="sr-btn" id="srGo" type="submit">Sign in</button>
+    <p class="sr-msg" id="srMsg" role="status" aria-live="polite"></p>
+  </form>
+</div>
+
+<!-- ── the app ───────────────────────────────────────────────────────────── -->
+<div id="srApp">
+  <div class="sr-bar">
+    <span class="sr-name">Cardinal Showroom</span>
+    <span class="sr-spacer"></span>
+    <div class="sr-mode" role="group" aria-label="Mode">
+      <button id="srPrep" type="button" aria-pressed="true">Prepare</button>
+      <button id="srPres" type="button" aria-pressed="false">Present</button>
+    </div>
+    <span class="sr-who sr-prep-only" id="srWho"></span>
+    <button class="sr-link sr-prep-only" id="srOut" type="button">Sign out</button>
+  </div>
+
+  <div class="sr-wrap">
+    <section class="sr-pack" id="srPack">
+      <span class="sr-pill" id="srPackPill">No project</span>
+      <h2 id="srPackName">Showroom</h2>
+      <p id="srPackNote">Open with a project link to load its pack, or present the catalogue on its own.</p>
+    </section>
+
+    <div class="sr-grid" id="srLauncher"></div>
+
+    <h3 class="sr-head sr-prep-only" id="srPhotosHead" hidden>Project photos</h3>
+    <div id="srPhotos" hidden></div>
+  </div>
+</div>
+
+<!-- Showcase and OC Colors mount themselves into these. Both are self-mounting
+     and take no DOM anchor from outside — measured in the extraction spike. -->
+<div id="cr-show"></div>
+<div id="cr-occ"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script id="cr-sr-script">
+/* The Showroom shell: sign-in, the host contract the two relocated modules
+   expect, the opaque project hand-off, and the launcher.
+   v2026-08-31 showroom-staging.1 */
+(function () {
+  'use strict';
+
+  function MSG_EARLY(text) {
+    var el = document.getElementById('srMsg');
+    if (el) el.textContent = text;
+    var btn = document.getElementById('srGo');
+    if (btn) btn.disabled = true;
+    console.error('[showroom]', text);
+  }
+
+  /* Public by design and safe in the file — the same two values Cardinal and
+     the Visualizer already carry. NOTHING ELSE may ever be committed here:
+     a service-role key bypasses every RLS policy in the database. And there is
+     no build step, so a NEXT_PUBLIC_* env var would do nothing at all. */
+  var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
+
+  /* ⚠ ITS OWN SESSION KEY. Studio and the CRM both use the supabase-js default
+     and fight over one session on a shared origin — which is why "Studio keeps
+     logging in" is still open. The Visualizer fixed it for itself with
+     cr-viz-auth (807); this is the same fix, and the Showroom must not join
+     the two that never got it. */
+  /* ⚠ SAY WHY, RATHER THAN DYING SILENTLY. If the supabase CDN does not load,
+     `window.supabase` is undefined and the next line throws — leaving a
+     sign-in form that looks perfectly normal and simply never works. Build 808
+     exists because a correct-but-unexplained state cost a round; this is the
+     same shape. Fail loudly, on the screen, naming the cause. */
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+    MSG_EARLY('Could not load the sign-in library. Check the connection and reload.');
+    return;
+  }
+
+  var supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { storageKey: 'cr-showroom-auth', persistSession: true, autoRefreshToken: true }
+  });
+  window.supa = supa;
+
+  var AUTH = document.getElementById('srAuth');
+  var APP  = document.getElementById('srApp');
+  var MSG  = document.getElementById('srMsg');
+
+  /* ── the host contract ───────────────────────────────────────────────────
+     Measured, not guessed: showcase.js references 13 window.* names and
+     colors.js 10. Every one of them is answered here. A missing shim does not
+     throw at load — it fails later, inside a click, which is the shape of bug
+     this project keeps paying for. */
+
+  window.currentUser = null;
+  window.is_admin = function () { return !!window.__srAdmin; };
+
+  window.hideAllViews = function () {
+    ['cr-show', 'cr-occ'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  };
+  window.showHome = function () {
+    window.hideAllViews();
+    try { document.body.style.overflow = ''; } catch (_) {}
+  };
+
+  /* History, so the back button leaves a presentation instead of the app.
+     hideAllViews() alone is half the convention — a view registered there but
+     not in the history switch is one the back button walks straight past. */
+  window.navPush = function (view) {
+    try { history.pushState({ srView: view }, '', location.pathname + location.hash); } catch (_) {}
+  };
+  window.navSetView = window.navPush;
+  window.addEventListener('popstate', function () { window.showHome(); });
+
+  function toast(msg) {
+    var t = document.createElement('div');
+    t.className = 'sr-toast'; t.textContent = String(msg);
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 4200);
+  }
+  window.toast = toast;
+  window.crTell = toast;
+  window.report = function (e, where, what) {
+    /* Say what failed and where. A silent catch is how a broken screen looks
+       exactly like an empty one. */
+    console.error('[showroom]', where, what, e);
+    toast((where || 'Showroom') + ': ' + ((e && e.message) || 'something went wrong'));
+  };
+
+  /* Cardinal's inspection reports are a CRM surface and are NOT in this app.
+     Answer honestly rather than leaving the global undefined — an undefined
+     global here is a TypeError inside a click. */
+  window.openReportsView = function () {
+    toast('Inspection reports live in the Cardinal CRM, not the Showroom.');
+  };
+
+  /* Auth headers for this app's own /api/detect. Same shape Cardinal uses. */
+  window.aiHeaders = function () {
+    var h = { 'Content-Type': 'application/json' };
+    try {
+      var raw = localStorage.getItem('cr-showroom-auth');
+      var tok = raw && JSON.parse(raw);
+      var at = tok && (tok.access_token || (tok.currentSession && tok.currentSession.access_token));
+      if (at) h.Authorization = 'Bearer ' + at;
+    } catch (_) {}
+    return h;
+  };
+
+  /* Sign photo paths for display. ⚠ SIGN FOR DISPLAY ONLY — never write a
+     signed, expiring URL back into a stored record; that corrupts it
+     permanently. This returns a map and persists nothing. */
+  window.signedPhotoMap = function (paths, secs) {
+    var list = (paths || []).filter(Boolean);
+    if (!list.length) return Promise.resolve({});
+    return supa.storage.from('photos').createSignedUrls(list, secs || 3600)
+      .then(function (r) {
+        var out = {};
+        /* Key by the path the API answered for, never by array position —
+           a latent corruption fixed at 633 and not worth reintroducing. */
+        (r && r.data || []).forEach(function (row) {
+          if (row && row.path && row.signedUrl) out[row.path] = row.signedUrl;
+        });
+        return out;
+      })
+      .catch(function (e) { window.report(e, 'Showroom', 'sign'); return {}; });
+  };
+
+  /* ── the opaque project hand-off ─────────────────────────────────────────
+     `#/project/<uuid>` and nothing else. NO customer information in the URL:
+     not a name, not an address, not a token. The Showroom authenticates in its
+     own right and looks the project up itself, so RLS — server-side, the same
+     rule on both sides — decides what this viewer may see. A URL carrying
+     client details would put them in browser history, in referrer headers and
+     in every log along the way, for a boundary the database already enforces. */
+  var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  function projectIdFromHash() {
+    var m = /^#\/project\/([^/?#]+)$/.exec(location.hash || '');
+    if (!m) return null;
+    var id = decodeURIComponent(m[1]);
+    return UUID.test(id) ? id : null;
+  }
+
+  function renderPack(p) {
+    var pill = document.getElementById('srPackPill');
+    var name = document.getElementById('srPackName');
+    var note = document.getElementById('srPackNote');
+    if (!p) {
+      pill.textContent = 'No project'; pill.className = 'sr-pill';
+      name.textContent = 'Showroom';
+      note.textContent = 'Open with a project link to load its pack, or present the catalogue on its own.';
+      return;
+    }
+    pill.textContent = 'Project pack'; pill.className = 'sr-pill sr-live';
+    name.textContent = p.name || 'Project';
+    note.textContent = [p.stage, p.address].filter(Boolean).join(' · ') || 'Loaded.';
+  }
+
+  function loadProject(id) {
+    if (!id) { renderPack(null); return Promise.resolve(null); }
+    return supa.from('projects').select('id,name,stage,address').eq('id', id).maybeSingle()
+      .then(function (r) {
+        /* maybeSingle: absence is legal here and must not manufacture an error
+           object the caller then has to tell apart from a real failure. */
+        if (r.error) { window.report(r.error, 'Showroom', 'project'); renderPack(null); return null; }
+        if (!r.data) {
+          renderPack(null);
+          toast('That project is not visible to this account.');
+          return null;
+        }
+        renderPack(r.data);
+        loadPhotos(id);
+        return r.data;
+      });
+  }
+
+  function loadPhotos(id) {
+    var head = document.getElementById('srPhotosHead');
+    var grid = document.getElementById('srPhotos');
+    head.hidden = false; grid.hidden = false;
+    grid.innerHTML = '<p>Loading photos…</p>';
+    supa.from('project_photos').select('storage_path').eq('project_id', id).limit(24)
+      .then(function (r) {
+        if (r.error) { grid.innerHTML = '<p>Could not load photos.</p>'; window.report(r.error, 'Showroom', 'photos'); return; }
+        var paths = (r.data || []).map(function (x) { return x.storage_path; }).filter(Boolean);
+        if (!paths.length) { grid.innerHTML = '<p>No photos on this project.</p>'; return; }
+        window.signedPhotoMap(paths, 3600).then(function (map) {
+          grid.innerHTML = '';
+          paths.forEach(function (p) {
+            if (!map[p]) return;
+            var im = new Image();
+            im.loading = 'lazy'; im.src = map[p]; im.alt = 'Project photo';
+            grid.appendChild(im);
+          });
+          if (!grid.children.length) grid.innerHTML = '<p>No photos could be signed.</p>';
+        });
+      });
+  }
+
+  /* ── the launcher ────────────────────────────────────────────────────────
+     Showcase and OC Colors are NATIVE — they are in this app. Studio and the
+     Visualizer are SEPARATE APPLICATIONS and are linked, never embedded.
+
+     ⚠ POP-UP ROOF IS NOT HERE ON PURPOSE. It is not a completed sales tool.
+     Recorded as a future pre-install customer experience; do not add it to
+     this launcher until it is finished. */
+  var TILES = [
+    { key: 'showcase', tag: 'Native', name: 'Showcase',
+      note: 'Before and after, the Hall of Fame and The Walk.',
+      open: function () { if (window.CardinalShowcase) window.CardinalShowcase.open(); else toast('Showcase did not load.'); } },
+    { key: 'colors', tag: 'Native', name: 'OC Colors',
+      note: 'Owens Corning shingle lines, colours and specs.',
+      open: function () { if (window.CardinalColors) window.CardinalColors.open(); else toast('OC Colors did not load.'); } },
+    { key: 'studio', tag: 'Separate app', ext: 1, name: 'Studio',
+      note: 'The tagged photo archive. Admin only, and its own application.',
+      href: 'https://studio.cardinalroster.com/' },
+    { key: 'visualizer', tag: 'Separate app', ext: 1, name: 'Exterior Visualizer',
+      note: 'Approved renders, one tap. Its own application.',
+      href: 'https://app.cardinalroster.com/visualizer/?present=1' }
+  ];
+
+  function drawLauncher() {
+    var wrap = document.getElementById('srLauncher');
+    wrap.innerHTML = '';
+    TILES.forEach(function (t) {
+      var el = document.createElement(t.href ? 'a' : 'button');
+      el.className = 'sr-tile';
+      if (t.href) { el.href = t.href; el.target = '_blank'; el.rel = 'noopener'; el.setAttribute('data-ext', '1'); }
+      else { el.type = 'button'; el.addEventListener('click', t.open); }
+      el.setAttribute('data-sr-tile', t.key);
+      el.innerHTML = '<span class="sr-tag"></span><h3></h3><p></p>';
+      el.querySelector('.sr-tag').textContent = t.tag;
+      el.querySelector('h3').textContent = t.name;
+      el.querySelector('p').textContent = t.note;
+      wrap.appendChild(el);
+    });
+  }
+
+  /* ── Prepare / Present ───────────────────────────────────────────────────
+     A DISPLAY boundary. It changes what is drawn; it never changes what may be
+     fetched. Anything that relied on hiding a control would be one devtools
+     tab from being no boundary at all. */
+  function setMode(m) {
+    document.body.setAttribute('data-mode', m);
+    document.getElementById('srPrep').setAttribute('aria-pressed', String(m === 'prepare'));
+    document.getElementById('srPres').setAttribute('aria-pressed', String(m === 'present'));
+    try { localStorage.setItem('cr-showroom-mode', m); } catch (_) {}
+  }
+  document.getElementById('srPrep').addEventListener('click', function () { setMode('prepare'); });
+  document.getElementById('srPres').addEventListener('click', function () { setMode('present'); });
+
+  /* ── session ─────────────────────────────────────────────────────────── */
+  function enter(session) {
+    window.currentUser = session.user;
+    document.getElementById('srWho').textContent = session.user.email || '';
+    AUTH.style.display = 'none';
+    APP.classList.add('sr-on');
+    var saved = 'prepare';
+    try { saved = localStorage.getItem('cr-showroom-mode') || 'prepare'; } catch (_) {}
+    setMode(saved === 'present' ? 'present' : 'prepare');
+
+    /* is_admin is asked of the DATABASE, never assumed from an email string.
+       It gates what is DRAWN; RLS gates what can be read or written, and the
+       two are not the same thing. */
+    supa.rpc('is_cardinal_admin')
+      .then(function (r) { window.__srAdmin = !!(r && r.data); })
+      .catch(function () { window.__srAdmin = false; })
+      .then(function () {
+        drawLauncher();
+        loadProject(projectIdFromHash());
+      });
+  }
+
+  function leave() {
+    window.currentUser = null;
+    APP.classList.remove('sr-on');
+    AUTH.style.display = '';
+  }
+
+  document.getElementById('srForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var btn = document.getElementById('srGo');
+    MSG.textContent = ''; btn.disabled = true; btn.textContent = 'Signing in…';
+    supa.auth.signInWithPassword({
+      email: document.getElementById('srEmail').value.trim(),
+      password: document.getElementById('srPass').value
+    }).then(function (r) {
+      btn.disabled = false; btn.textContent = 'Sign in';
+      if (r.error) { MSG.textContent = r.error.message || 'Sign-in failed.'; return; }
+      enter(r.data.session);
+    });
+  });
+
+  document.getElementById('srOut').addEventListener('click', function () {
+    supa.auth.signOut().then(leave);
+  });
+
+  window.addEventListener('hashchange', function () {
+    if (window.currentUser) loadProject(projectIdFromHash());
+  });
+
+  supa.auth.getSession().then(function (r) {
+    if (r && r.data && r.data.session) enter(r.data.session);
+  });
+
+  window.CardinalShowroom = Object.assign(window.CardinalShowroom || {}, {
+    build: 'showroom-staging.1',
+    projectIdFromHash: projectIdFromHash,
+    loadProject: loadProject,
+    setMode: setMode,
+    tiles: TILES
+  });
+})();
+</script>
+
+<script src="/showroom-images.js"></script>
+<script src="/showcase.js"></script>
+<script src="/colors.js"></script>
+</body>
+</html>
