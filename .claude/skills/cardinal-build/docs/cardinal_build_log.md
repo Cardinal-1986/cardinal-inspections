@@ -31653,3 +31653,68 @@ say one thing. Table fingerprint unchanged afterwards.
 
 **Deliberately untouched, as instructed:** `clientsign` atomicity, the ACH-recorded-as-card
 misclassification, and all historical data.
+## Build 1185 — the header title is a real button
+
+Found by accident, and that is the point. The container restarted mid-session and
+killed a background wait on a `gate_a11y --rebaseline`. Checking whether that
+rebaseline was still needed is what surfaced this.
+
+**`gate_a11y` was RED for two unrelated reasons, and only one was bookkeeping:**
+
+| rule | | |
+|---|---|---|
+| `region` | 305 → 316 (+11) | **bookkeeping.** The sentinel walk gained `frontdoor` and `lrs` (29 → 31 states), so more elements are counted. Nothing got worse; more got looked at |
+| **`aria-allowed-attr`** | **0 → 2, CRITICAL** | **a real defect, shipped at 1164 and invisible for twenty builds** |
+
+### The defect
+
+Since **1164** the portal name in the header opens the Front Door, and the module
+sets `aria-expanded` on `#brandTitle` on open and close. But `#brandTitle` is a
+plain division with no role, and a generic element **does not support that
+attribute**. So it announced an expanded/collapsed state while not being
+something that can expand — and it could not be reached or fired from a keyboard
+at all.
+
+**Proved, not asserted:** `gate_1185` on the 1183 control reports the element
+*cannot take keyboard focus* and *ENTER does not open the Front Door*. A mouse
+user has had that control since 1164; a keyboard user never has.
+
+### ⚠ TWO THINGS ABOUT HOW IT STAYED HIDDEN — both worth more than the fix
+
+**1. A check cannot report on a screen it never visits.** `gate_a11y` has been
+green for twenty builds *because its walk had no `frontdoor` state*. The
+violation only exists while the Front Door is open. Adding the state is what
+found it — coverage, not cleverness.
+
+**2. It was one keystroke from being laundered into the baseline.** The same run
+showed `region` growing legitimately, so the obvious move was `--rebaseline` —
+which would have written the CRITICAL finding in as accepted debt, permanently
+and silently. **`gate_a11y` demanding a REASON for a rebaseline is the only thing
+that forced the two apart.** A ratchet that can be advanced without argument is
+not a ratchet.
+
+### The fix, and why it is not one line
+
+Adding `role="button"` alone would have satisfied axe and left the real problem:
+an element that opens a sheet, announces expanded state, and cannot be operated
+by keyboard is still not a button. Role, tab stop, initial state and Enter/Space
+activation ship together. Nothing changes visually or on a phone.
+
+- `gate_1185` **11/11**, **RED 4/11 on the 1183 control** — including that ENTER
+  does nothing there. It asserts **Space as well as Enter**: testing only Enter
+  would let a Space-only regression through.
+- `gate_a11y` after the fix: `aria-allowed-attr` **gone from the report
+  entirely** (6 rules → 5). Rebaselined at **31 states / region 316** — the
+  coverage growth only, with the critical finding **fixed rather than accepted**.
+- check_build green (1183→1184, marker + negative control).
+
+⚠️ **Comment pollution fired for the SEVENTH time this session** — the
+explanatory comment contained a literal `<div>`, which unbalanced the tag count
+because CI counts tags with a bare regex. **The gate's own error message names
+this trap**, and it still caught me. Assert on a form prose cannot forge.
+
+⚠️ **RENUMBERED 1184 → 1185 on merge.** Another session shipped its own build 1184 (the
+`push_subs` containment fix, PR #577) while this was open, with its own `gate_1184.mjs`.
+**I did not run `scripts/next_build.py` before starting — the one tool that exists to
+prevent exactly this.** The merged build keeps 1184; this one moved. Never renumber
+history: theirs was on `main` first.
