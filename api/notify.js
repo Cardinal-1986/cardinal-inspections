@@ -9,8 +9,23 @@
  *
  * Email is best-effort and never blocks push: no RESEND_API_KEY simply means
  * mailed:0, which is the previous behaviour rather than a failure. */
+/* 1184: the staff gate. Build 1016 added api/_staff.js and wired it into 14
+   routes; this one and api/librarian.js were missed by that sweep, so both went
+   on trusting ANY confirmed Supabase session while public signup is enabled —
+   here that meant an outsider could fan mail out through Cardinal's Resend
+   account to arbitrary recipients. */
+import { isStaff } from './_staff.js';
+
 const SUPA_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
+/* 1184: push_subs used to be readable by anyone because its only policy was
+   ALL/public/USING true — and THIS ROUTE was why nobody could simply close it:
+   the subscription read below ran on the PUBLISHABLE key, so tightening the
+   policy alone would have returned [] and killed every push while still
+   reporting ok:true. push_subs_rls.sql narrows the table to staff-read /
+   own-device-write, and the two server-side touches move here instead.
+   service_role bypasses RLS; it is already what the crons and pay-webhook use. */
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const VAPID_PUBLIC = 'BMSHf0GA9pwE6xzqOYb4vlLE4pMs9sdP9ZuxXzgZXLR2UaXYVD-9-4o6zDjr5XHOa5runSWlKSNDaEWPfmo07uU';
 /* 612: whether the private key came from the environment or from the literal
    below is the single most useful fact when push silently fails — a fallback
@@ -38,6 +53,7 @@ async function requireSession(req, res){
     if(!who.ok){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
     const user = await who.json();
     if(!user || !user.email){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
+    if(!isStaff(user.email)){ res.status(403).json({ ok:false, error:'Cardinal staff only' }); return null; }
     /* 1103: hand the caller's own token back. The SMS phone lookup needs it —
        team_profiles' only SELECT policy is roles={authenticated} using=is_staff(),
        so a query sent with the publishable key arrives as `anon`, matches no
@@ -190,7 +206,15 @@ export default async function handler(req, res){
     if(pushReady){
     var q = SUPA_URL + '/rest/v1/push_subs?select=email,endpoint,sub&email=in.(' +
       emails.map(function(e){ return '"' + e.replace(/"/g,'') + '"'; }).join(',') + ')';
-    var r = await fetch(q, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } });
+    /* 1184: service_role first (bypasses RLS, so the fan-out is independent of
+       who is calling). If SUPABASE_SERVICE_ROLE_KEY is ever unset, fall back to
+       the CALLER's token rather than the publishable key — the caller is proven
+       staff two lines into this request, and push_subs_select_staff lets staff
+       read the table. The publishable key now reads as `anon`, matches no policy
+       and would return [] — the exact silent-zero this route already learned to
+       distrust at 612. */
+    var _subsKey = SERVICE_KEY || ((_caller && _caller._token) ? _caller._token : SUPA_KEY);
+    var r = await fetch(q, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + _subsKey } });
     var subsRaw = await r.json();
     if(!Array.isArray(subsRaw)){
       /* 612: this returned sent:0 and looked identical to "nobody is
@@ -210,10 +234,19 @@ export default async function handler(req, res){
         if(code === 404 || code === 410){
           /* the subscription is dead — expected, not a failure */
           gone++;
-          try{
-            await fetch(SUPA_URL + '/rest/v1/push_subs?endpoint=eq.' + encodeURIComponent(row.endpoint),
-              { method:'DELETE', headers:{ apikey: SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY } });
-          }catch(e2){}
+          /* 1184: this deletes ANOTHER employee's dead endpoint, which no staff
+             session may now do (push_subs_delete_own is own-row only, on
+             purpose). It is a server housekeeping job, so it runs as
+             service_role or not at all — a skipped cleanup just means the dead
+             row is retried next fan-out and counted in `gone` again, which is
+             cosmetic. Never fall back to the caller's token here: it would fail
+             silently and look identical to a successful delete. */
+          if(SERVICE_KEY){
+            try{
+              await fetch(SUPA_URL + '/rest/v1/push_subs?endpoint=eq.' + encodeURIComponent(row.endpoint),
+                { method:'DELETE', headers:{ apikey: SERVICE_KEY, Authorization:'Bearer ' + SERVICE_KEY } });
+            }catch(e2){}
+          }
         } else {
           /* 612: everything else used to vanish here. 401/403 is the one that
              matters — it means the signature did not verify, i.e. the private
