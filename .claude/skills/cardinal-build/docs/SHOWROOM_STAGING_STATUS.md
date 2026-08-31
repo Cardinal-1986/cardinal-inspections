@@ -34,8 +34,37 @@ Every one matches the manifest gated on PR #584. Serving `<title>Cardinal Showro
 **`.vercelignore` holds:** `.claude/…/module_source.cjs`, `README.md` and
 `.github/workflows/check.yml` all return **404**. The gates and the doc set are not served.
 
-**`/api/detect` returns 500, not 404** — the function deployed and runs; it fails only for the
-missing key. See §6.
+⚠️ **CORRECTION — `/api/detect` was BROKEN, and this document said otherwise.** The first version
+of this section read *"returns 500, not 404 — the function deployed and runs; it fails only for the
+missing key."* **That was wrong, and it was asserted without checking.** The evidence against it
+was already in the same probe: a **GET** also returned 500, when it should have been a plain 405.
+A route that fails on a GET is failing before it reads any configuration.
+
+The real cause: `detect.js` does `import { isStaff } from './_staff.js'`, and **the route was
+copied into this repo without its sibling module** — `FUNCTION_INVOCATION_FAILED` at module load,
+on every request. ⚠️ `node --check` cannot see this: the file parses perfectly, it simply imports
+something that is not there.
+
+`_staff.js` is not incidental. It is the staff authorization check added at build 1016, after an
+audit found the AI routes trusting any confirmed Supabase session while public signup was enabled
+— a self-registered outsider could burn Cardinal's paid keys. It is now in this repo verbatim.
+
+✅ **Fixed in `3d9ccaa`**, and verified against the live deployment:
+
+| request | before | after |
+|---|---|---|
+| `GET /api/detect` | `FUNCTION_INVOCATION_FAILED` 500 | **405** `{"error":"POST only"}` |
+| `POST`, no auth | 500 | **401** `{"error":"Sign in required"}` |
+| `POST`, bogus token | 500 | **401** `{"error":"Invalid session"}` |
+
+⚠️ **SECOND INSTANCE OF ONE CLASS: copying a serverless route is not copying the route.** First its
+`vercel.json` `maxDuration` budget, then its sibling import. A CI step now resolves every local
+import in `api/`, so there is not a third.
+
+⚠️ **Whether `GEMINI_API_KEY` is set still cannot be confirmed from outside**, and this document
+must not claim it either way. The key is read only *after* the auth chain passes, so every
+reachable response stops at 401 by design. It shows on the first authenticated call with a real
+photograph. See §6.
 
 ### Why it did not deploy on the first push, and the real defect that fixed it
 
@@ -160,7 +189,8 @@ asserted**: the CDN is blocked in this sandbox, so the guard is what actually fi
 
 **Verified against the LIVE deployment** (curl, not assumed): every module file byte-identical to
 the gated manifest, the correct title and `cr-showroom-auth` present, the gates and docs 404, and
-`/api/detect` answering 500 rather than 404 — see §1.
+`/api/detect` answering **405/401** through its auth chain rather than crashing — see §1, which
+also records the module-load bug this document originally mis-attributed to the missing key.
 
 **Not verified, and I cannot verify it here:** an end-to-end sign-in, and the rendered page.
 I have no staff credentials; the supabase CDN is unreachable from this sandbox, and Chromium's
@@ -174,9 +204,11 @@ the checklist in §6.
 - [x] Grant the Claude GitHub App access to that repo — done; it was the last blocker
 - [x] Push the verified tree as the repo root — done, `main` at `9b771a5`, hashes checked live
 - [x] Vercel project linked and deployed — **https://cardinal-showroom.vercel.app**
-- [ ] ⚠ **Set `GEMINI_API_KEY` in the Showroom project** (The Walk only); nowhere else, never in
-      the repo. **This is the one outstanding configuration step** — `/api/detect` currently
-      returns 500 for exactly this reason
+- [x] Fix `/api/detect` — it crashed at module load for a missing sibling import, NOT the key
+      (`3d9ccaa`); it now answers 405/401 correctly
+- [ ] ⚠ **`GEMINI_API_KEY` on the Showroom project** (The Walk only), never in the repo.
+      **Unverifiable from outside** — the key is read only after auth passes — so it is confirmed
+      by the first authenticated call with a real photograph, not by probing the route
 - [ ] Delete `.claude/showroom-staging/` from Cardinal once the repo is the single source
 - [ ] **Theo signs in on staging** — the first real auth test
 - [ ] Open `#/project/eb81f3f4-…`; confirm the pack and photos load
@@ -193,8 +225,12 @@ the checklist in §6.
 **One configuration step outstanding: `GEMINI_API_KEY` on the Showroom Vercel project.** It is
 needed only by The Walk's `/api/detect`; everything else runs without it. It must be set in the
 Vercel dashboard and **never committed** — the standing rule, and the one this repo already has a
-CI check for. ⚠️ **Expect The Walk's detection to fail loudly until it is set**, and that is the
-correct behaviour rather than a fault.
+CI check for.
+
+⚠️ **It cannot be verified by probing the route, and §1 records this document getting that wrong.**
+The key is read only after the auth chain passes, so an unauthenticated probe stops at 401 whether
+the key is set or not. **Step 11 below is the only real test.** Expect The Walk's detection to fail
+loudly if the key is absent — that is correct behaviour, not a fault.
 
 Walk this on the staging URL:
 
@@ -212,3 +248,5 @@ Walk this on the staging URL:
 9. Present mode: the prep-only chrome hides — **confirm it changed only what is drawn.** It is a
    display boundary, not an authentication one.
 10. Sign out → back to the form; reload does not restore the session.
+11. **The Walk on a real photograph** — the only check that proves `GEMINI_API_KEY` is set.
+    Findings come back, or it fails loudly naming the key.
