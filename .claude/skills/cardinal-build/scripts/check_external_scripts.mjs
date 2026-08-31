@@ -39,59 +39,19 @@ import fs from 'fs';
 import path from 'path';
 import { execFileSync } from 'child_process';
 import os from 'os';
+import { createRequire } from 'module';
 
-/* The repo root, found by walking up for .git rather than trusting cwd.
-   ⚠ THIS MATTERS: check_build.py is routinely pointed at a STAGED artifact in a
-   scratch directory outside the repo. With ROOT = cwd, a site-absolute
-   `src="/showcase.js"` then resolved under the scratch dir and reported MISSING
-   on a perfectly correct file — a gate going RED on correct code, which is the
-   failure mode this project pays for over and over. Site-absolute srcs are now
-   tried at every plausible root and only reported missing if found at none. */
-function gitRootFrom(start) {
-  let d = path.resolve(start);
-  for (let i = 0; i < 40; i++) {
-    if (fs.existsSync(path.join(d, '.git'))) return d;
-    const up = path.dirname(d);
-    if (up === d) break;
-    d = up;
-  }
-  return null;
-}
-const ROOT = gitRootFrom(process.cwd()) || process.cwd();
-
-/* <script ...src=...> with single, double, or no quotes. Deliberately NOT the
-   inline pattern's inverse — this one WANTS the src. */
-const SRC_RE = /<script\b([^>]*\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))[^>]*)>/gi;
-
-export function externalRefs(html) {
-  const out = [];
-  for (const m of html.matchAll(SRC_RE)) {
-    const attrs = m[1];
-    const src = (m[2] ?? m[3] ?? m[4] ?? '').trim();
-    if (!src) continue;
-    const ty = (/type\s*=\s*["']?([^"'\s>]+)/i.exec(attrs)?.[1] || '').toLowerCase();
-    out.push({ src, attrs, isModule: ty === 'module' });
-  }
-  return out;
-}
-
-/** Absolute/protocol-relative URLs are somebody else's server: never fetched,
- *  never checked. Only same-repo files are ours to guarantee. */
-export const isRemote = s => /^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(s) || /^data:/i.test(s);
-
-/** Every place a src could legitimately live, best guess first. A relative src
- *  has exactly one answer; a site-absolute one is served from the deploy root,
- *  which is the repo root — but a staged artifact may sit outside it, so the
- *  directory holding the HTML is tried too. Returns candidates, not a path,
- *  because "which of these exists" is the actual question. */
-export function resolveLocal(src, htmlPath) {
-  const clean = src.split(/[?#]/)[0];
-  const here = path.dirname(path.resolve(htmlPath));
-  if (!clean.startsWith('/')) return [path.resolve(here, clean)];
-  const rel = clean.slice(1);
-  const roots = [ROOT, gitRootFrom(here), here].filter(Boolean);
-  return [...new Set(roots.map(r => path.join(r, rel)))];
-}
+/* ⚠ PATH RESOLUTION LIVES IN ONE PLACE — script_paths.cjs — and this file used
+   to carry its own copy. Two copies is how the checker and the gates come to
+   disagree about where `/showcase.js` is, which is precisely the bug that copy
+   already produced once (root taken from cwd, so a staged artifact reported a
+   present file as MISSING). CommonJS because eight of the ten gates that need
+   the same answers cannot `require` an .mjs. */
+const require_ = createRequire(import.meta.url);
+const P = require_('./script_paths.cjs');
+const { ROOT, isRemote, resolveLocal } = P;
+export const externalRefs = P.externalRefs;
+export { isRemote, resolveLocal };
 
 function parses(file, isModule) {
   /* node --check picks its parser from the extension, so a module must be

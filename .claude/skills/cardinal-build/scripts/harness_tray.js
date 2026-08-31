@@ -14,8 +14,18 @@
 const fs = require('fs');
 const IDX = fs.readFileSync(process.argv[2] || '/home/user/cardinal-inspections/index.html', 'utf8');
 const STU = fs.readFileSync(process.argv[3] || '/home/user/cardinal-inspections/studio.html', 'utf8');
-const SH = IDX.slice(IDX.indexOf('<script id="cr-show-script">'),
-                     IDX.indexOf('</script>', IDX.indexOf('<script id="cr-show-script">')));
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<script id="cr-show-script">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+/* includeOpenTag: this slice deliberately started AT the tag, not after it. */
+const MS = require('./module_source.cjs');
+const SH = MS.moduleText(IDX, 'showcase.js',
+             { htmlPath: process.argv[2] || '/home/user/cardinal-inspections/index.html',
+               missing: 'throw', includeOpenTag: true });
 
 let pass = 0, fail = 0;
 const ok = (l, c, n) => { if (c) { pass++; console.log('  PASS ' + l); }

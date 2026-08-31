@@ -19,21 +19,24 @@
 const fs = require('fs');
 const { JSDOM } = require('jsdom');
 
-const HTML = fs.readFileSync(process.argv[2] || '/home/user/cardinal-inspections/index.html', 'utf8');
+const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const HTML = fs.readFileSync(FILE, 'utf8');
 let fails = 0, passes = 0;
 function ok(name, cond, extra) {
   if (cond) { passes++; console.log('  PASS  ' + name); }
   else { fails++; console.log('  FAIL  ' + name + (extra !== undefined ? '  → ' + extra : '')); }
 }
 
-function block(id, tag) {
-  const open = `<${tag} id="${id}">`;
-  const i = HTML.indexOf(open);
-  if (i === -1) throw new Error('block not found: ' + id);
-  return HTML.slice(i + open.length, HTML.indexOf(`</${tag}>`, i));
-}
-const MODULE_JS = block('cr-show-script', 'script');
-const MODULE_CSS = block('cr-show-styles', 'style');
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<script id="cr-show-script">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+const MS = require('./module_source.cjs');
+const MODULE_JS  = MS.moduleText(HTML, 'showcase.js',  { htmlPath: FILE, missing: 'throw' });
+const MODULE_CSS = MS.moduleText(HTML, 'showcase.css', { htmlPath: FILE, missing: 'throw' });
 
 /* Negative control, stated rather than crashed. Run against a pre-579 artifact
    there is no walk tab to click and every test would die on a null deref at the

@@ -20,7 +20,16 @@
 /* FIXED 675 — was a hardcoded absolute path into the writing session's own
    scratchpad, which made this script unrunnable in every later session.
    Resolve through NODE_PATH like the other nine Chromium scripts.        */
-const { chromium } = require('playwright-core');
+/* ⚠ WAS `require('playwright-core')`, WHICH IS NOT INSTALLED — this harness
+   died on MODULE_NOT_FOUND before running a single assertion, and a crash reads
+   as "not green" rather than as "proved nothing" (BUG_CLASSES 37). Same
+   resolution ladder sentinel.js already uses; the package here is `playwright`. */
+let chromium;
+for (const _p of ['playwright', 'playwright-core',
+                  '/opt/node22/lib/node_modules/playwright/index.js']) {
+  try { chromium = require(_p).chromium; break; } catch (_) {}
+}
+if (!chromium) { console.error('audit_contrast.js: playwright not found - cannot run'); process.exit(2); }
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 
 /* 675: this was a bare path into the writing session's scratchpad, so the
@@ -30,7 +39,8 @@ const fs = require('fs'), path = require('path'), crypto = require('crypto');
    at a directory holding both, or accept that this 618 audit cannot be re-run
    as-is. Saying that out loud beats a stack trace that reads like a crash. */
 const SP   = process.env.CR_OCC_FIXTURES || '';
-const html = fs.readFileSync('/home/user/cardinal-inspections/index.html', 'utf8');
+const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const html = fs.readFileSync(FILE, 'utf8');
 if (!SP || !fs.existsSync(SP + '/rows616.json') || !fs.existsSync(SP + '/final')) {
   console.log('audit_contrast: NOT RUN — the 616 colour fixtures are missing.');
   console.log('  needs  $CR_OCC_FIXTURES/rows616.json  and  $CR_OCC_FIXTURES/final/*.jpg');
@@ -39,12 +49,21 @@ if (!SP || !fs.existsSync(SP + '/rows616.json') || !fs.existsSync(SP + '/final')
   console.log('   surface from the shipped artifact and both run today.)');
   process.exit(2);
 }
-const slice = (tag, id) => {
-  const i = html.indexOf(`<${tag} id="${id}">`);
-  return html.slice(html.indexOf('>', i) + 1, html.indexOf(`</${tag}>`, i));
-};
-const CSS  = slice('style', 'cr-occ-styles');
-const JS   = slice('script', 'cr-occ-script');
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<style id="cr-occ-styles">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+/* ⚠ AND `missing` IS NOW 'throw' RATHER THAN THE OLD SILENT GARBAGE. The
+   previous slicer did `html.indexOf('>', -1)` when the block was absent, which
+   JavaScript treats as index 0 — so it returned most of the document as "the
+   stylesheet" and scored contrast against it. A named throw is the honest
+   answer; garbage that looks like CSS is not. */
+const MS = require('./module_source.cjs');
+const CSS = MS.moduleText(html, 'colors.css', { htmlPath: FILE, missing: 'throw' });
+const JS  = MS.moduleText(html, 'colors.js',  { htmlPath: FILE, missing: 'throw' });
 const ROWS = JSON.parse(fs.readFileSync(SP + '/rows616.json', 'utf8'));
 const IMG = {};
 for(const f of fs.readdirSync(SP + '/final')){

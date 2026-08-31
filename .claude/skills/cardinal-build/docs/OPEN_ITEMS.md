@@ -3567,8 +3567,25 @@ were none to expose.** Nothing shipped changed: `index.html` is untouched at bui
 Details, including two defects of my own it caught, in the build log's
 *"Gate infrastructure — external `<script src>` coverage"* entry.
 
-**Still open before any relocation: the 11 gates that slice `index.html` by block id.**
-They are the remaining mechanical cost, and none of them is touched yet.
+✅ **AND THE GATES ARE CONVERTED — Phase 2, 31 Aug 2026, no build number.** All of them now
+ask `module_source.cjs` for their module instead of slicing a block, and `gate_relocation.mjs`
+proves it: against an artifact built by actually cutting the four blocks out into files, **all
+nine exercisable gates reach the identical verdict, and every one goes red when its relocated
+module is broken.** Parity against `origin/main` is byte-identical for 9 of 10 (the tenth
+differs only in line numbers inside a pre-existing stack trace). Nothing was relocated;
+`index.html` is byte-identical at build 1185.
+
+⚠️ **The count in this section was 11 and the real number is 10.** 6 Showcase + 5 Colors, but
+`harness_ourroofs` is in both lists — it is the one gate that spans the seam. The two extra
+hits in `scripts/` are historical patch scripts, not gates.
+
+⚠️ **`harness_walk` carries a pre-existing crash that is NOT relocation work:** the module moved
+from `confirm()` to `crAsk()` and the harness still spies the old way, so it dies after 50
+passes. Deliberately left for its own build rather than mixed into the conversion.
+
+⚠️ **The jsdom harnesses cannot run on node 20 here at all** — the installed jsdom calls
+`webidl.util.markAsUncloneable`, a node 22 API. Not caused by this change; `gate_relocation`
+reports it instead of scoring two identical crashes as agreement.
 
 ⚠️ **Newly found, and it constrains the order: OC Colors DEPENDS ON Showcase.**
 `shrinkOne()` reaches `window.CardinalShowcase` for the image toolchain (build 633's

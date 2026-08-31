@@ -30,13 +30,17 @@ const fs = require('fs');
 const { JSDOM } = require('jsdom');
 
 const html = fs.readFileSync(process.argv[2] || '/home/user/cardinal-inspections/index.html', 'utf8');
-function block(id){
-  const open = html.indexOf(`<script id="${id}">`);
-  if(open < 0) throw new Error(`no ${id}`);
-  const s = html.indexOf('>', open) + 1;
-  return html.slice(s, html.indexOf('<\/script>', s));
-}
-const OCC = block('cr-occ-script');
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<script id="cr-occ-script">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+const MS = require('./module_source.cjs');
+const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+/* threw `no cr-occ-script` before; throws a named error now — same behaviour. */
+const OCC = MS.moduleText(html, 'colors.js', { htmlPath: FILE, missing: 'throw' });
 
 /* Real shapes, verbatim proportions from the live table:
    designer 9 (1 coty + 6 current + 2 new) · duration 11 current + 5 discontinued
@@ -503,7 +507,9 @@ const ok = (l, c) => { if(c){ pass++; console.log('  PASS ' + l); }
   ok('the query still filters on hidden, never status',
      /\.eq\('hidden', false\)/.test(OCC) && !/\.eq\('status'/.test(OCC));
   ok('every --occ-* reference in the new CSS carries a literal fallback', (() => {
-    const css = html.slice(html.indexOf('<style id="cr-occ-styles">'), html.indexOf('</style>', html.indexOf('<style id="cr-occ-styles">')));
+    /* includeOpenTag: this assertion's text began at the `<style id=...>` tag
+       itself, so the tag must survive relocation or the shape changes. */
+    const css = MS.moduleText(html, 'colors.css', { htmlPath: FILE, missing: 'throw', includeOpenTag: true });
     const refs = css.match(/var\(--occ-[a-z0-9-]+[^)]*\)/g) || [];
     return refs.length > 0 && refs.every(r => /,\s*[#a-z0-9]/i.test(r));
   })());

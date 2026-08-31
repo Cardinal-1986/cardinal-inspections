@@ -20,14 +20,31 @@
    of the session that wrote it, so the harness could never run again in any
    other session (MODULE_NOT_FOUND). Resolve through NODE_PATH like the other
    nine Chromium scripts. A harness that cannot run proves nothing.        */
-const { chromium } = require('playwright-core');
+/* ⚠ WAS `require('playwright-core')`, WHICH IS NOT INSTALLED — this harness
+   died on MODULE_NOT_FOUND before running a single assertion, and a crash reads
+   as "not green" rather than as "proved nothing" (BUG_CLASSES 37). Same
+   resolution ladder sentinel.js already uses; the package here is `playwright`. */
+let chromium;
+for (const _p of ['playwright', 'playwright-core',
+                  '/opt/node22/lib/node_modules/playwright/index.js']) {
+  try { chromium = require(_p).chromium; break; } catch (_) {}
+}
+if (!chromium) { console.error('harness_occhead.js: playwright not found - cannot run'); process.exit(2); }
 const fs = require('fs');
 
 const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
 const html = fs.readFileSync(FILE, 'utf8');
-const sl = (t, id) => { const i = html.indexOf(`<${t} id="${id}">`);
-  return html.slice(html.indexOf('>', i) + 1, html.indexOf(`</${t}>`, i)); };
-const CSS = sl('style', 'cr-occ-styles'), JS = sl('script', 'cr-occ-script');
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<style id="cr-occ-styles">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+/* missing:'throw' replaces the old silent garbage — see audit_contrast.js. */
+const MS = require('./module_source.cjs');
+const CSS = MS.moduleText(html, 'colors.css', { htmlPath: FILE, missing: 'throw' });
+const JS  = MS.moduleText(html, 'colors.js',  { htmlPath: FILE, missing: 'throw' });
 
 const WIDTHS = [
   [390, 844, 'iPhone'],
