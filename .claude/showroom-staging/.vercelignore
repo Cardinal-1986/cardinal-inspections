@@ -1,0 +1,10 @@
+# Everything at the root of this repo is served publicly unless it is listed
+# here. Same discipline as Cardinal's: if you add a file, decide whether it
+# ships — and say so here either way.
+
+# The gates, the fixtures and the doc set. Never served.
+.claude/
+.github/
+
+# Notes that are not for a stranger with the URL.
+README.md

@@ -1,0 +1,72 @@
+name: Sanity check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  # index.html here is the SHOWROOM's, not Cardinal's. The modules are external
+  # files, so the external-script gate is not prophylactic in this repo — it is
+  # the check that catches a broken showcase.js before it deploys.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: index.html exists and is not truncated
+        run: |
+          test -f index.html || { echo "::error::index.html is missing"; exit 1; }
+          tail -c 200 index.html | grep -q "</html>" || { echo "::error::truncated"; exit 1; }
+
+      - name: Every inline script parses
+        run: |
+          node -e "
+            const fs=require('fs'); const src=fs.readFileSync('index.html','utf8');
+            const b=[...src.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+            if(!b.length){console.error('::error::no inline scripts');process.exit(1);}
+            let bad=0; b.forEach((x,i)=>{try{new Function(x)}catch(e){bad++;console.error('::error::inline #'+i+': '+e.message)}});
+            if(bad)process.exit(1); console.log('all '+b.length+' inline scripts parse');
+          "
+
+      # The whole point of this repo: the modules are FILES now.
+      - name: External <script src> files parse and exist
+        run: |
+          node .claude/skills/cardinal-build/scripts/check_external_scripts.mjs --selftest
+          node .claude/skills/cardinal-build/scripts/check_external_scripts.mjs index.html
+
+      - name: API functions use ES modules
+        run: |
+          if [ -d api ]; then
+            BAD=$(grep -l 'module\.exports' api/*.js 2>/dev/null || true)
+            if [ -n "$BAD" ]; then echo "::error::CommonJS in api/ breaks every function"; echo "$BAD"; exit 1; fi
+            for f in api/*.js; do node --check "$f"; done
+          fi
+
+      # ⚠ THE FENCE THAT MAKES THIS A SEPARATE APPLICATION. Trigger 1 is not
+      # satisfied by files living in their own repo if CRM code follows them
+      # here. Same shape as gate_807 for the Visualizer.
+      - name: No CRM code in the Showroom
+        run: |
+          node -e "
+            const fs=require('fs');
+            const files=['index.html','showcase.js','colors.js','showroom-images.js'];
+            const BAN=[/CardinalPipeline/,/cardinalTruthView/,/resourceLibraryView/,/is_full_access/,
+                       /crmNow\s*\(/,/data-crm=/,/normStage\s*\(/,/bidAmt\s*\(/];
+            let bad=0;
+            for(const f of files){ if(!fs.existsSync(f)) continue;
+              const s=fs.readFileSync(f,'utf8');
+              for(const re of BAN) if(re.test(s)){ bad++; console.error('::error::CRM marker '+re+' found in '+f); } }
+            if(bad)process.exit(1); console.log('no CRM markers in '+files.length+' files');
+          "
+
+      - name: No secret ever committed here
+        run: |
+          # The publishable anon key is public by design and expected. A
+          # service-role key bypasses every RLS policy and must never appear.
+          if grep -rIl --exclude-dir=.git --exclude-dir=node_modules 'service_role\|SUPABASE_SERVICE' . ; then
+            echo "::error::a service-role reference is present - it must never be committed"; exit 1
+          fi
+          echo "no service-role reference"

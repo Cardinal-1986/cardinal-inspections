@@ -1,0 +1,669 @@
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Showcase — v2026-08-02 · build 574
+   The kitchen-table surface. A rep opens this beside a homeowner and swipes
+   through finished work; an admin curates what is in it.
+
+   PALETTE: every colour is var(--sh-*,#literal). The tokens are declared
+   nowhere on purpose — the fallbacks ARE the palette, exactly as the Crews
+   module (547+) does it. That makes this module immune to the 448-449 class,
+   where another module stripped a background token within a second of load and
+   eight screens rendered see-through.
+
+   SCROLL LOCK: this module deliberately does NOT write document.body.style
+   .overflow. That global has 13 writers and no reconciler and the leak class
+   has recurred three times; overscroll-behavior:contain on the fixed overlay
+   solves the scroll-chaining this would otherwise need a lock for.
+
+   GEOMETRY: base z-index matches #cr-sf/#cr-pb at 9500. The desktop inset and
+   the z-60 drop are added to the SHARED build-572 rules further down this file
+   rather than restated here, so all five overlays keep moving together.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#cr-show{display:none;position:fixed;inset:0;background:var(--sh-bg,#0B0D0C);z-index:9500;
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--sh-ink,#F2F4F2)}
+#cr-show.open{display:block}
+.cr-sh-wrap{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom,0px))}
+.cr-sh-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-back{flex:0 0 auto;background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  color:var(--sh-mut,#98A29C);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:17px;line-height:1}
+.cr-sh-back:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-ttl{flex:1;min-width:0}
+.cr-sh-ttl h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(26px,7vw,34px);letter-spacing:-.02em;line-height:1}
+.cr-sh-ttl h1 span{color:var(--sh-acc,#C8202E)}
+.cr-sh-ttl p{margin:6px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-priv{flex:0 0 auto;display:flex;align-items:center;gap:7px;background:transparent;
+  min-height:44px;box-sizing:border-box;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;padding:7px 12px;cursor:pointer;
+  color:var(--sh-mut,#98A29C);font-weight:600;font-size:11px;font-family:inherit;margin-top:3px}
+.cr-sh-priv .d{width:8px;height:8px;border-radius:50%;background:var(--sh-mut,#98A29C)}
+#cr-show.priv .cr-sh-priv{border-color:var(--sh-ok,#46A758);color:var(--sh-ink,#F2F4F2)}
+#cr-show.priv .cr-sh-priv .d{background:var(--sh-ok,#46A758)}
+#cr-show.priv .cr-sh-priv .n{display:none}
+.cr-sh-priv .y{display:none}
+#cr-show.priv .cr-sh-priv .y{display:inline}
+/* Privacy masking. The real address is REMOVED from the DOM, not merely hidden:
+   a homeowner holding the tablet can select text on the screen. */
+/* Tabs. The Inspections button is styled as a way OUT, not a third tab —
+   it hands off to the reports list that already exists. */
+.cr-sh-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 2px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+.cr-sh-tabs::-webkit-scrollbar{display:none}
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-tabs button{flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;
+  box-sizing:border-box;padding:9px 17px;border-radius:22px;cursor:pointer;
+  background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  color:var(--sh-mut,#98A29C);font-weight:700;font-size:11.5px;font-family:inherit;white-space:nowrap}
+.cr-sh-tabs button:hover{color:var(--sh-ink,#F2F4F2);border-color:var(--sh-acc,#C8202E)}
+.cr-sh-tabs button.on{background:var(--sh-acc,#C8202E);border-color:var(--sh-acc,#C8202E);
+  color:var(--sh-acci,#FFF3F3)}
+.cr-sh-tabs button.out{margin-left:auto;border-style:dashed}
+
+/* A comparison. Two columns on a tablet, stacked on a phone — the pair has to
+   be seen together to mean anything, so they never stack above 560px. */
+.cr-sh-wk{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:11px;padding:13px;margin-top:10px}
+.cr-sh-wk-h{display:flex;align-items:center;gap:9px;font-weight:650;font-size:15px;font-family:inherit}
+.cr-sh-wk-l{margin:7px 0 0;font-size:12.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-x{margin-left:auto;flex:0 0 auto;background:transparent;border:0;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;
+  color:var(--sh-mut,#98A29C);font-size:15px;line-height:1;padding:2px 4px;font-family:inherit}
+.cr-sh-x:hover{color:var(--sh-bad,#E5484D)}
+.cr-sh-wk-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
+@media (max-width:560px){ .cr-sh-wk-g{grid-template-columns:1fr} }
+.cr-sh-side{background:var(--sh-card2,#101312);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:9px;overflow:hidden}
+.cr-sh-side .h{display:flex;align-items:center;gap:7px;padding:9px 11px;
+  font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.cr-sh-side .h .sq{width:9px;height:9px;border-radius:2px}
+.cr-sh-side.bad .h{color:var(--sh-bad,#E5484D)}
+.cr-sh-side.bad .h .sq{background:var(--sh-bad,#E5484D)}
+.cr-sh-side.good .h{color:var(--sh-ok,#46A758)}
+.cr-sh-side.good .h .sq{background:var(--sh-ok,#46A758)}
+.cr-sh-side img{display:block;width:100%;aspect-ratio:8/5;object-fit:cover;background:var(--sh-card2,#101312)}
+.cr-sh-side p{margin:0;padding:9px 11px 11px;font-size:12.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+
+.cr-sh-rule{display:flex;align-items:center;gap:12px;margin:26px 0 4px;
+  font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+.cr-sh-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--sh-line,rgba(148,157,165,.4)),transparent)}
+.cr-sh-empty{padding:30px 18px;text-align:center;font-size:13.5px;line-height:1.65;color:var(--sh-mut,#98A29C)}
+.cr-sh-empty b{display:block;color:var(--sh-ink,#F2F4F2);font-size:15px;margin-bottom:7px}
+
+/* cards */
+.cr-sh-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px}
+.cr-sh-card{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:9px;overflow:hidden;cursor:pointer;padding:0;text-align:left;color:inherit;font-family:inherit;transition:border-color .15s}
+.cr-sh-card:hover{border-color:var(--sh-acc,#C8202E)}
+.cr-sh-card.on{border-color:var(--sh-acc,#C8202E);box-shadow:0 0 0 1px var(--sh-acc,#C8202E)}
+.cr-sh-card img{display:block;width:100%;aspect-ratio:8/4.4;object-fit:cover;background:var(--sh-card2,#101312)}
+.cr-sh-card .m{padding:9px 11px 11px}
+.cr-sh-card .a{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-card .c{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.cr-sh-chip{font-weight:600;font-size:11px;padding:2px 7px;border-radius:4px;background:var(--sh-chip,rgba(148,157,165,.12));color:var(--sh-mut,#98A29C)}
+.cr-sh-score{font-weight:700;font-size:11px;padding:2px 7px;border-radius:4px;color:var(--sh-gold,#C9A227);border:1px solid var(--sh-gold,#C9A227)}
+/* Release state. Green reads "cleared", grey reads "internal" — deliberately not
+   red: no release is the normal, correct state for most work, not an error. */
+.cr-sh-rel-b{font-weight:700;font-size:11px;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.cr-sh-rel-b.ok{color:var(--sh-ok,#46A758);border:1px solid var(--sh-ok,#46A758)}
+.cr-sh-rel-b.no{color:var(--sh-mut,#98A29C);border:1px solid var(--sh-line,rgba(148,157,165,.28))}
+.cr-sh-rel{margin-top:14px;padding-top:12px;border-top:1px solid var(--sh-line,rgba(148,157,165,.20))}
+.cr-sh-rel .ck{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-weight:600;font-size:12.5px;
+  letter-spacing:0;text-transform:none;color:var(--sh-ink,#F2F4F2);cursor:pointer}
+.cr-sh-rel .ck input{width:auto;accent-color:var(--sh-ok,#46A758)}
+
+/* featured + slider */
+.cr-sh-show{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));border-radius:11px;padding:13px;margin-top:10px}
+.cr-sh-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+.cr-sh-head h2{margin:0;font-weight:650;font-size:18px;font-family:inherit}
+.cr-sh-head .s{color:var(--sh-mut,#98A29C);font-size:12.5px;width:100%}
+.cr-sh-step{margin-left:auto;display:flex;align-items:center;gap:4px;flex:none}
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-step button{width:44px;height:44px;border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:8px;
+  background:transparent;color:var(--sh-mut,#98A29C);cursor:pointer;font-size:12px;line-height:1;font-family:inherit}
+.cr-sh-step button:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-step .p{font:600 11.5px ui-monospace,'SF Mono',Menlo,monospace;color:var(--sh-mut,#98A29C);padding:0 4px}
+.cr-sh-cmp{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--sh-card2,#101312);
+  touch-action:none;user-select:none;-webkit-user-select:none}
+.cr-sh-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
+.cr-sh-cmp .bf{clip-path:inset(0 calc(100% - var(--sh-split,52%)) 0 0);z-index:2}
+/* 592: 48px, per the reference design. margin-left is -width/2 and MUST move with
+   it — otherwise the white rule at ::before{left:50%} stops marking the split it
+   is drawn to mark. The drag math reads [data-cmp], never this element, so
+   widening cannot affect where the divider lands. */
+.cr-sh-hd{position:absolute;top:0;bottom:0;left:var(--sh-split,52%);width:48px;margin-left:-24px;z-index:3;
+  cursor:ew-resize;display:flex;align-items:center;justify-content:center}
+.cr-sh-hd::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.6)}
+.cr-sh-grip{position:relative;background:#fff;color:#111;border-radius:999px;
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.5);
+  transition:transform .13s ease,box-shadow .13s ease}
+/* Tactile feedback on grab. A transform, not a re-layout — it cannot move the
+   divider or cost a frame mid-drag. */
+.cr-sh-cmp.grabbing .cr-sh-grip{transform:scale(1.14);box-shadow:0 4px 16px rgba(0,0,0,.6)}
+@media (prefers-reduced-motion:reduce){ .cr-sh-grip{transition:none} }
+.cr-sh-tag{position:absolute;top:9px;z-index:4;font-weight:600;font-size:11px;letter-spacing:.06em;padding:3px 9px;border-radius:4px;
+  background:rgba(10,12,14,.74);color:#fff;pointer-events:none;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-tag.b{left:9px}
+.cr-sh-tag.a{right:9px}
+.cr-sh-dock{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-dock button{font-weight:600;font-size:12px;font-family:inherit;display:inline-flex;align-items:center;
+  min-height:44px;box-sizing:border-box;padding:7px 14px;border-radius:7px;cursor:pointer;
+  background:var(--sh-card2,#101312);border:1px solid var(--sh-line,rgba(148,157,165,.20));color:var(--sh-mut,#98A29C)}
+.cr-sh-dock button.on{background:var(--sh-acc,#C8202E);border-color:var(--sh-acc,#C8202E);color:var(--sh-acci,#FFF3F3)}
+.cr-sh-dock button[disabled]{opacity:.4;cursor:default}
+
+/* admin bar + form */
+.cr-sh-admin{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-btn{font-weight:700;font-size:12.5px;font-family:inherit;display:inline-flex;align-items:center;
+  justify-content:center;min-height:44px;box-sizing:border-box;padding:10px 16px;border-radius:7px;cursor:pointer;
+  background:var(--sh-acc,#C8202E);border:0;color:var(--sh-acci,#FFF3F3)}
+.cr-sh-btn.ghost{background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));color:var(--sh-mut,#98A29C)}
+.cr-sh-btn:disabled{opacity:.55;cursor:wait}
+#cr-show-form{display:none;position:fixed;inset:0;background:rgba(8,10,9,.82);z-index:9996;
+  /* 597: was 9610, UNDER #pwaNav's 9990 !important — the 104px phone bottom bar
+     drew on top of this modal and covered .ft, so Cancel and "Use these" could not
+     be tapped and there was nothing below to scroll to. 9996 clears #pwaNav and
+     .cd-crmbar (9995) and stays under the .cd-sheet/.pu-sheet tier (9997/9998).
+     The bottom padding clears the home indicator now that the box can reach the
+     real bottom of the screen. */
+  align-items:center;justify-content:center;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));overscroll-behavior:contain;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+#cr-show-form.open{display:flex}
+#cr-show-form .bx{background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  border-radius:12px;width:min(430px,100%);max-height:100%;overflow-y:auto;padding:18px;color:var(--sh-ink,#F2F4F2)}
+#cr-show-form h3{margin:0 0 13px;font:700 17px Georgia,serif}
+#cr-show-form label{display:block;margin:12px 0 5px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+#cr-show-form label:first-of-type{margin-top:0}
+#cr-show-form input,#cr-show-form select{width:100%;box-sizing:border-box;padding:10px 12px;
+  background:var(--sh-card2,#101312);color:var(--sh-ink,#F2F4F2);border:1px solid var(--sh-line,rgba(148,157,165,.24));
+  border-radius:8px;font-weight:400;font-size:14px;font-family:inherit;outline:none}
+#cr-show-form input:focus,#cr-show-form select:focus{border-color:var(--sh-acc,#C8202E)}
+#cr-show-form .r2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+#cr-show-form .ft [data-jupload]{margin-right:auto}
+#cr-show-form .ft{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:18px}
+#cr-show-form .note{margin-top:11px;font-size:11.5px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+#cr-show-form .err{margin-top:10px;font-size:12.5px;color:var(--sh-bad,#E5484D);display:none}
+#cr-show-form .err.on{display:block}
+
+/* ── The Walk (579) ────────────────────────────────────────────────────────
+   AI circles the damage, a person checks every circle, then it is shown to the
+   client. The circles are an OVERLAY: absolutely positioned off normalized
+   fractions, so one stored row draws correctly on a phone, on the iPad and at
+   desktop width, and the photograph in storage is never modified.
+
+   No --sh-* token is declared anywhere in this module and none is added here:
+   every reference carries its literal, which is why the 448-449 transparent-
+   screen class cannot reach this stylesheet. Copy the habit.
+
+   Severity inks were computed, not picked: on the card ground #151817 they are
+   4.57 / 8.29 / 5.90:1 — all above the 4.5 body floor. See scripts/contrast.py. */
+.cr-sh-wlk{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:10px;padding:12px 13px;margin-top:9px;cursor:pointer;color:inherit;
+  font-family:inherit;transition:border-color .15s}
+.cr-sh-wlk:hover{border-color:var(--sh-acc,#C8202E)}
+.cr-sh-wlk .t{flex:1;min-width:0}
+.cr-sh-wlk .t b{display:block;font-weight:650;font-size:14.5px;font-family:inherit;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-wlk .t span{display:block;margin-top:3px;font-size:11.5px;color:var(--sh-mut,#98A29C)}
+.cr-sh-wlk .n{flex:0 0 auto;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.06em;padding:5px 9px;border-radius:999px;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));color:var(--sh-mut,#98A29C)}
+.cr-sh-wlk .n.on{border-color:var(--sh-bad,#E5484D);color:var(--sh-bad,#E5484D)}
+
+/* the shots of one walk */
+.cr-sh-shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.cr-sh-shot{position:relative;background:var(--sh-card2,#101312);border:1px solid var(--sh-line,rgba(148,157,165,.20));
+  border-radius:9px;overflow:hidden;padding:0;cursor:pointer;color:inherit;font-family:inherit;text-align:left}
+.cr-sh-shot:hover{border-color:var(--sh-acc,#C8202E)}
+.cr-sh-shot img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;
+  background:var(--sh-card2,#101312);-webkit-user-drag:none}
+.cr-sh-shot .st{display:flex;align-items:center;gap:6px;padding:8px 10px;
+  font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
+.cr-sh-shot .st .sq{width:8px;height:8px;border-radius:2px;flex:0 0 auto}
+.cr-sh-shot.new .st{color:var(--sh-mut,#98A29C)}
+.cr-sh-shot.new .st .sq{background:var(--sh-mut,#98A29C)}
+.cr-sh-shot.done .st{color:var(--sh-ok,#46A758)}
+.cr-sh-shot.done .st .sq{background:var(--sh-ok,#46A758)}
+.cr-sh-shot.hits .st{color:var(--sh-bad,#E5484D)}
+.cr-sh-shot.hits .st .sq{background:var(--sh-bad,#E5484D)}
+
+/* the review stage. Same three declarations the 574 slider needed, and for the
+   same reason — build 578 paid for the third one after a native image drag
+   cancelled the pointer stream mid-gesture. Do not drop -webkit-user-drag. */
+.cr-sh-rev{position:relative;border-radius:9px;overflow:hidden;margin-top:10px;
+  background:var(--sh-card2,#101312);touch-action:none;user-select:none;-webkit-user-select:none}
+.cr-sh-rev img{display:block;width:100%;height:auto;-webkit-user-drag:none}
+.cr-sh-box{position:absolute;border:2.5px solid var(--sh-mut,#98A29C);border-radius:6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.45);cursor:move}
+.cr-sh-box.crit{border-color:var(--sh-bad,#E5484D)}
+.cr-sh-box.warn{border-color:var(--sh-warn,#E8A33D)}
+.cr-sh-box.ok{border-color:var(--sh-ok,#46A758)}
+.cr-sh-box.sel{border-style:solid;box-shadow:0 0 0 2px var(--sh-ink,#F2F4F2),0 0 0 4px rgba(0,0,0,.5)}
+.cr-sh-box .lb{position:absolute;left:-2px;bottom:100%;margin-bottom:3px;white-space:nowrap;
+  font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.04em;
+  padding:3px 6px;border-radius:5px;background:rgba(6,8,7,.86);color:var(--sh-ink,#F2F4F2)}
+/* The grab corner. 22px because this is used on an iPad with a fingertip, and
+   a 10px handle is a rule about a mouse pretending to be a rule about touch. */
+.cr-sh-box .gr{position:absolute;right:-11px;bottom:-11px;width:22px;height:22px;
+  border-radius:50%;background:var(--sh-ink,#F2F4F2);border:2px solid rgba(6,8,7,.7);cursor:nwse-resize}
+.cr-sh-box:not(.sel) .gr{display:none}
+
+/* one finding, in the list under the picture */
+.cr-sh-fnd{display:flex;align-items:flex-start;gap:10px;padding:10px 11px;margin-top:8px;
+  background:var(--sh-card,#151817);border:1px solid var(--sh-line,rgba(148,157,165,.20));border-radius:9px}
+.cr-sh-fnd.sel{border-color:var(--sh-ink,#F2F4F2)}
+.cr-sh-fnd .sq{width:10px;height:10px;border-radius:2px;flex:0 0 auto;margin-top:4px}
+.cr-sh-fnd.crit .sq{background:var(--sh-bad,#E5484D)}
+.cr-sh-fnd.warn .sq{background:var(--sh-warn,#E8A33D)}
+.cr-sh-fnd.ok   .sq{background:var(--sh-ok,#46A758)}
+.cr-sh-fnd .m{flex:1;min-width:0}
+.cr-sh-fnd .m b{display:block;font-weight:650;font-size:13px;font-family:inherit}
+.cr-sh-fnd .m p{margin:3px 0 0;font-size:11.5px;line-height:1.5;color:var(--sh-mut,#98A29C)}
+.cr-sh-fnd select{background:var(--sh-card2,#101312);color:var(--sh-ink,#F2F4F2);
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:6px;padding:5px 7px;
+  font-weight:700;font-size:11px;font-family:inherit;margin-top:6px}
+/* 592: 44px is the floor on a screen you hand across a table. */
+.cr-sh-fnd .x{flex:0 0 auto;background:transparent;border:0;cursor:pointer;padding:2px 5px;
+  display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;
+  color:var(--sh-mut,#98A29C);font-size:15px;line-height:1;font-family:inherit}
+.cr-sh-fnd .x:hover{color:var(--sh-bad,#E5484D)}
+
+/* ── Chalk — draw your own marks (585) ─────────────────────────────────────
+   The drafting state is the only new visual: dashed chalk-white on the
+   stage (16.9:1, computed), adopting its severity colour on classify. */
+.cr-sh-rev.arming{cursor:crosshair}
+.cr-sh-btn.arming{border-style:dashed;border-color:var(--sh-ink,#F2F4F2);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-draft{position:absolute;border:2.5px dashed var(--sh-ink,#F2F4F2);border-radius:6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.45);z-index:5;pointer-events:none}
+.cr-sh-clsheet{margin-top:10px;background:var(--sh-card,#151817);
+  border:1px solid var(--sh-line,rgba(148,157,165,.28));border-radius:12px;padding:13px 15px}
+.cr-sh-clsheet label{display:block;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--sh-mut,#98A29C);margin-bottom:8px}
+.cr-sh-defchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.cr-sh-defchips button{font-weight:700;font-size:11.5px;font-family:inherit;color:var(--sh-ink,#F2F4F2);
+  border:1px solid var(--sh-line,rgba(148,157,165,.35));border-radius:999px;padding:7px 12px;
+  background:transparent;cursor:pointer}
+.cr-sh-defchips button.on{border-color:var(--sh-bad,#E5484D);background:rgba(229,72,77,.13)}
+.cr-sh-sevseg{display:inline-flex;border:1px solid var(--sh-line,rgba(148,157,165,.3));
+  border-radius:9px;overflow:hidden;vertical-align:middle}
+.cr-sh-sevseg button{font-weight:700;font-size:11.5px;font-family:inherit;padding:8px 14px;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer}
+.cr-sh-sevseg button.on.crit{background:var(--sh-bad,#E5484D);color:#FFF3F3}
+.cr-sh-sevseg button.on.warn{background:var(--sh-warn,#E8A33D);color:#14100C}
+.cr-sh-sevseg button.on.ok{background:var(--sh-ok,#46A758);color:#F2FFF4}
+.cr-sh-clsheet .keep{margin-left:10px;font-weight:800;font-size:11.5px;font-family:inherit;color:#FFF3F3;
+  background:var(--sh-acc,#C8202E);border:0;border-radius:9px;padding:9px 15px;cursor:pointer}
+.cr-sh-clsheet .drop{margin-left:6px;font-weight:700;font-size:11.5px;font-family:inherit;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer;padding:9px 6px}
+
+/* the job-photo picker */
+.cr-sh-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;
+  margin-top:10px;max-height:44vh;overflow-y:auto;overscroll-behavior:contain}
+.cr-sh-pick button{position:relative;padding:0;border-radius:7px;overflow:hidden;cursor:pointer;
+  background:var(--sh-card2,#101312);border:2px solid var(--sh-line,rgba(148,157,165,.20))}
+.cr-sh-pick button.on{border-color:var(--sh-acc,#C8202E)}
+.cr-sh-pick img{display:block;width:100%;aspect-ratio:1;object-fit:cover;-webkit-user-drag:none}
+.cr-sh-pick button.on::after{content:'\2713';position:absolute;right:4px;top:3px;
+  font:800 12px ui-monospace,Menlo,monospace;color:var(--sh-acci,#FFF3F3);
+  background:var(--sh-acc,#C8202E);border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center}
+
+/* a plain status line — used for "asking the AI", "3 had no usable location" */
+.cr-sh-note{margin-top:9px;font-size:12px;line-height:1.55;color:var(--sh-mut,#98A29C)}
+.cr-sh-note.warn{color:var(--sh-warn,#E8A33D)}
+.cr-sh-note.bad{color:var(--sh-bad,#E5484D)}
+.cr-sh-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+/* ── Spotlight — present mode (584) ────────────────────────────────────────
+   The Blackout treatment: the app's only true-black surface, so entering it
+   reads as "lights off, look here". White ink; severity colours are the only
+   chroma, which is the semantic-colour doctrine made theatrical. All inks
+   computed on #050607: white 18.35:1 · crit 5.0:1 · warn 9.1:1 · ok 6.5:1. */
+.cr-sh-pres{position:absolute;inset:0;z-index:40;background:#050607;display:none;
+  overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#cr-show.presenting .cr-sh-pres{display:block}
+#cr-show.presenting{overflow:hidden}
+.cr-sh-pr-segs{position:absolute;top:max(10px,env(safe-area-inset-top));left:12px;right:12px;
+  display:flex;gap:5px;z-index:8}
+.cr-sh-pr-segs i{flex:1;height:3px;border-radius:2px;background:rgba(242,244,242,.24)}
+.cr-sh-pr-segs i.done{background:var(--sh-ink,#F2F4F2)}
+.cr-sh-pr-photo{position:absolute;inset:0}
+.cr-sh-pr-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  -webkit-user-drag:none}
+.cr-sh-pr-veil{position:absolute;inset:0;z-index:3;transition:background .55s ease}
+.cr-sh-pr-ring{position:absolute;z-index:4;border:3px solid var(--sh-ink,#F2F4F2);border-radius:10px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6);transition:all .55s cubic-bezier(.3,.8,.3,1)}
+.cr-sh-pr-cap{position:absolute;left:0;right:0;bottom:0;z-index:6;text-align:center;
+  padding:16px 22px calc(18px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(transparent,rgba(5,6,7,.94) 45%)}
+.cr-sh-pr-sev{display:inline-block;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.24em;border-radius:999px;padding:4px 11px;margin-bottom:9px;border:1px solid}
+.cr-sh-pr-cap h3{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;
+  font-size:clamp(18px,4vw,24px);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-pr-cap p{margin:5px 0 0;font-family:Georgia,serif;font-style:italic;font-size:13px;
+  color:rgba(242,244,242,.72)}
+.cr-sh-pr-x{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 14px);right:12px;z-index:9;
+  background:transparent;border:0;cursor:pointer;color:rgba(242,244,242,.8);font-size:19px;
+  padding:6px 10px;font-family:inherit}
+.cr-sh-pr-n{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 20px);left:14px;z-index:8;
+  font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:rgba(242,244,242,.55)}
+.cr-sh-pr-zone{position:absolute;top:0;bottom:0;z-index:7;cursor:pointer}
+@media (prefers-reduced-motion:reduce){
+  .cr-sh-pr-veil,.cr-sh-pr-ring{transition:none}
+}
+
+/* ── The Lens (586) — pinch into every photograph ──────────────────────────
+   Blackout chrome: white ink on the true-black ground, no new hue. The
+   layer owns its gestures via touch-action:none; everything inside the
+   world is fraction-positioned so zoom costs nothing. */
+.cr-sh-lens{position:absolute;inset:0;z-index:45;background:#050607;overflow:hidden;
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.cr-sh-lens .w{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+.cr-sh-lens .w img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  -webkit-user-drag:none}
+.cr-sh-ln-box{position:absolute;border:2.5px solid;border-radius:6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55);pointer-events:none}
+.cr-sh-ln-box.crit{border-color:var(--sh-bad,#E5484D)}
+.cr-sh-ln-box.warn{border-color:var(--sh-warn,#E8A33D)}
+.cr-sh-ln-box.ok{border-color:var(--sh-ok,#46A758)}
+.cr-sh-ln-top{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;
+  gap:10px;padding:calc(max(10px,env(safe-area-inset-top)) + 4px) 15px 12px;
+  background:linear-gradient(rgba(5,6,7,.92),transparent);pointer-events:none}
+.cr-sh-ln-top b{font-weight:650;font-size:12.5px;color:var(--sh-ink,#F2F4F2);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cr-sh-ln-x{position:absolute;top:calc(max(10px,env(safe-area-inset-top)) + 2px);right:10px;z-index:9;
+  background:transparent;border:0;cursor:pointer;color:rgba(242,244,242,.85);font-size:19px;
+  padding:6px 10px;font-family:inherit}
+.cr-sh-ln-zc{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;
+  font:800 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--sh-ink,#F2F4F2);
+  border:1px solid rgba(242,244,242,.4);border-radius:999px;padding:6px 12px;
+  background:rgba(5,6,7,.65);pointer-events:none}
+.cr-sh-ln-hint{position:absolute;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;
+  font-size:11px;color:rgba(242,244,242,.6);pointer-events:none}
+.cr-sh-ln-btns{position:absolute;right:10px;top:calc(max(10px,env(safe-area-inset-top)) + 52px);
+  z-index:6;display:flex;flex-direction:column;gap:7px}
+.cr-sh-ln-btns button{width:44px;height:44px;border-radius:10px;font-size:18px;cursor:pointer;
+  color:var(--sh-ink,#F2F4F2);background:rgba(5,6,7,.65);border:1px solid rgba(242,244,242,.4);
+  font-family:inherit}
+/* the way in: a quiet expand affordance on zoomable photographs */
+/* 592: 44px, and note the cost — wireSlider() hole-punches this element out of
+   the drag surface (589), so the dead corner of the slider grows with it. That is
+   the right trade: a control you cannot hit is worse than a corner you cannot
+   drag from, and the divider is reachable everywhere else along its height. */
+.cr-sh-exp{position:absolute;right:8px;bottom:8px;z-index:6;width:44px;height:44px;border-radius:10px;
+  border:1px solid rgba(242,244,242,.35);background:rgba(5,6,7,.55);color:var(--sh-ink,#F2F4F2);
+  font-size:14px;line-height:1;cursor:pointer;font-family:inherit}
+.cr-sh-side{position:relative}
+.cr-sh-side img{cursor:zoom-in}
+
+/* ── The Release (587) — share cards ───────────────────────────────────────
+   Blackout chrome: white ink, the module's red on the primary action. The
+   frame styles below are the CARD's palette — the thing being exported —
+   not app chrome. */
+.cr-sh-btn.dead{opacity:.45;border-style:dashed;cursor:not-allowed}
+.cr-sh-relnote{flex:1 1 100%;margin:2px 0 0;font-size:11px;line-height:1.5;color:var(--sh-mut,#98A29C)}
+.cr-sh-relnote b{color:var(--sh-ink,#F2F4F2)}
+#cr-show-form .cr-sh-seg{display:inline-flex;border:1px solid rgba(242,244,242,.35);
+  border-radius:9px;overflow:hidden;margin:6px 0 4px}
+#cr-show-form .cr-sh-seg button{font-weight:700;font-size:11.5px;font-family:inherit;padding:8px 14px;
+  color:var(--sh-mut,#98A29C);background:transparent;border:0;cursor:pointer}
+#cr-show-form .cr-sh-seg button.on{background:var(--sh-ink,#F2F4F2);color:#0B0D0C}
+#cr-show-form .cr-sh-shprev{display:block;max-width:100%;height:auto;margin:12px auto 0;
+  border-radius:5px;box-shadow:0 10px 32px rgba(0,0,0,.5);background:#101312}
+#cr-show-form .cr-sh-shwrap{max-height:46vh;overflow:auto;overscroll-behavior-x:contain;text-align:center}
+
+/* ── Curtain Call (588) — the show ─────────────────────────────────────────
+   Blackout gallery: true-black wall, the photograph in a thin white mat,
+   white serif placard ink. Severity colours have no business here — this
+   surface sells finished work, not damage. */
+.cr-sh-cc{position:absolute;inset:0;z-index:50;background:#050607;overflow:hidden;cursor:pointer;
+  user-select:none;-webkit-user-select:none}
+.cr-sh-cc .fr{position:absolute;inset:5% 6% 17%;border:1px solid rgba(242,244,242,.28);
+  padding:clamp(6px,1.2vw,12px);background:#050607}
+.cr-sh-cc .ph{position:absolute;inset:clamp(6px,1.2vw,12px);overflow:hidden}
+.cr-sh-cc .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  -webkit-user-drag:none}
+.cr-sh-cc .ph img.af{clip-path:inset(0 0 0 var(--cc-wipe,0%))}
+.cr-sh-cc .ph .dv{position:absolute;top:0;bottom:0;left:var(--cc-wipe,0%);width:2.5px;z-index:2;
+  background:#fff;box-shadow:0 0 7px rgba(0,0,0,.55)}
+.cr-sh-cc.kb .ph img.af{animation:crShCcKb 8s ease-out forwards}
+@keyframes crShCcKb{from{transform:scale(1)}to{transform:scale(1.06) translate(-1.2%,-0.8%)}}
+.cr-sh-cc .plac{position:absolute;left:6%;bottom:5%;z-index:5;max-width:70%;
+  opacity:0;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}
+.cr-sh-cc .plac.show{opacity:1;transform:none}
+.cr-sh-cc .plac h4{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;
+  font-size:clamp(16px,2.6vw,22px);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-cc .plac hr{border:0;border-top:1px solid rgba(242,244,242,.45);margin:7px 0}
+.cr-sh-cc .plac p{margin:0;font-family:Georgia,serif;font-size:clamp(11px,1.6vw,13.5px);
+  color:rgba(242,244,242,.75)}
+.cr-sh-cc .stopnote{position:absolute;right:14px;bottom:12px;z-index:5;font-size:11px;
+  color:rgba(242,244,242,.55)}
+.cr-sh-play{flex:0 0 auto;background:transparent;border:1px solid var(--sh-line,rgba(148,157,165,.28));
+  color:var(--sh-mut,#98A29C);width:44px;height:44px;border-radius:8px;cursor:pointer;
+  font-size:12px;line-height:1;font-family:inherit}
+.cr-sh-play:hover{border-color:var(--sh-acc,#C8202E);color:var(--sh-ink,#F2F4F2)}
+@media (prefers-reduced-motion:reduce){
+  .cr-sh-cc.kb .ph img.af{animation:none}
+  .cr-sh-cc .plac{transition:none}
+}
+
+/* ── Showroom mode (590) ────────────────────────────────────
+   The same three tabs with the chrome off and every write control gone.
+   NOT a second renderer: a second Showcase is the duplicate-feature class
+   this project keeps paying for. What changes is the skin and what is
+   reachable — the photographs, the slider and the phase dock are the ones
+   that already shipped.
+
+   Blackout, matching 584's Present layer and 588's Curtain Call: true black
+   #050607, white ink, severity colour as the only chroma. Every colour here
+   is a literal or var(--sh-*,#literal), same as the rest of this stylesheet
+   — see the header note on the 448-449 class.
+
+   NOT a kiosk, and the PR says so: this hides the app, it does not lock the
+   device. A browser back gesture still leaves, exactly as it does from any
+   other full-screen view here. The hold is about a client not WANDERING
+   out, not about restraining one. */
+#cr-show.showroom{background:#050607}
+/* 572 insets every full-screen view below the header and right of the left
+   nav so the menu stays reachable. The showroom is the one place where that
+   is exactly wrong — the point is that nothing else is reachable until the
+   rep takes the tablet back — so it takes the whole screen at the base
+   z-index the module ships with.
+
+   This also FIXES A DEAD CONTROL, measured rather than guessed: with 572's
+   inset applied, #cr-show drops to z-index 60 while header.site is fixed at
+   z-index 90 and 138px tall, so elementFromPoint at the exit button returned
+   HEADER.site at both 1180 and 1440 and the ✕ could not be tapped. Raising
+   the BUTTON's z-index would NOT have helped — it lives inside #cr-show's
+   stacking context and cannot escape it; only removing the overlap works.
+   Same dead-control class as 578 and 589, third time. audit_viewports.js
+   caught it, not an eye. */
+body.cr-lnav-on #cr-show.showroom{top:0 !important;left:0 !important;z-index:9500 !important}
+#cr-show.showroom .cr-sh-wrap{max-width:min(1120px,100%);
+  padding:max(20px,env(safe-area-inset-top)) clamp(16px,3vw,34px) calc(72px + env(safe-area-inset-bottom,0px))}
+/* The ✕ is position:fixed at the top right. Reserve its lane so it can
+   never land on the privacy toggle — measured, not eyeballed: the four-
+   viewport sweep caught them overlapping 49% at 820px. */
+#cr-show.showroom .cr-sh-top{padding-right:64px}
+#cr-show.showroom .cr-sh-ttl h1{font-size:clamp(21px,3.4vw,27px)}
+#cr-show.showroom .cr-sh-ttl p{color:rgba(242,244,242,.42)}
+#cr-show.showroom .cr-sh-show,
+#cr-show.showroom .cr-sh-wk,
+#cr-show.showroom .cr-sh-card{background:#0A0C0B;border-color:rgba(242,244,242,.14)}
+/* The placard voice — serif, the way 588's gallery card reads. */
+#cr-show.showroom .cr-sh-head h2{font-family:Georgia,'Times New Roman',serif;
+  font-weight:700;font-size:clamp(19px,2.6vw,26px)}
+#cr-show.showroom .cr-sh-head .s{font-family:Georgia,serif;color:rgba(242,244,242,.72)}
+#cr-show.showroom .cr-sh-cmp{aspect-ratio:16/10}
+/* The read-only twin of the severity <select>. Inks are the module's own
+   severity colours, already computed against this ground at 579:
+   4.57 / 8.29 / 5.90:1, all above the 4.5 body floor. */
+.cr-sh-fnd .sv{display:inline-block;margin-top:6px;padding:2px 8px;border-radius:4px;
+  font-weight:700;font-size:11px;font-family:inherit;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid currentColor}
+.cr-sh-fnd.crit .sv{color:var(--sh-bad,#E5484D)}
+.cr-sh-fnd.warn .sv{color:var(--sh-warn,#E8A33D)}
+.cr-sh-fnd.ok   .sv{color:var(--sh-ok,#46A758)}
+
+/* Hold to exit. The ring is a conic gradient masked to a ring, driven off
+   --sh-hold in degrees by the SAME clock that decides — no CSS animation, so
+   what you see and what happens cannot drift apart. */
+.cr-sh-exit{position:fixed;top:calc(12px + env(safe-area-inset-top));
+  right:calc(12px + env(safe-area-inset-right,0px));z-index:60;width:46px;height:46px;
+  border-radius:50%;border:1px solid rgba(242,244,242,.30);background:rgba(6,8,7,.62);
+  color:rgba(242,244,242,.88);font-size:15px;cursor:pointer;overflow:hidden;
+  padding:0;font-family:inherit;touch-action:none}
+.cr-sh-exit .ring{position:absolute;inset:-1px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(#F2F4F2 var(--sh-hold,0deg),transparent 0);
+  -webkit-mask:radial-gradient(transparent 60%,#000 62%);mask:radial-gradient(transparent 60%,#000 62%)}
+.cr-sh-exit .x{position:relative;z-index:2;display:block;line-height:44px;text-align:center;pointer-events:none}
+.cr-sh-hold{position:fixed;top:calc(60px + env(safe-area-inset-top));
+  right:calc(10px + env(safe-area-inset-right,0px));z-index:60;pointer-events:none;
+  font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.10em;
+  color:rgba(242,244,242,.5);text-align:right}
+
+/* The launcher row, on the landing that ACTUALLY renders.
+
+   This cost a round trip and is worth writing down. The obvious landing
+   markup — #landQuick / #landDash / #landClaims / #landLibrary, ~line 3961 —
+   is DEAD. cr-lr-styles carries `#landingView>*{display:none}` and the cr-lr
+   module replaces the whole view at runtime with .cr-lr and its .cr-lr-course
+   rows; getElementById('landQuick') returns null in a real browser. A card
+   added there passes every mechanical gate and is never seen. The prime
+   doctrine, arriving in its usual shape: grep for the MOUNT, not the name.
+
+   NO inline display on the button — it has to be beatable by a media query,
+   and an inline style beats every stylesheet rule at any specificity (the
+   styleMounts() trap, which build 573 hit in as many words). Every other
+   button on that landing carries inline style= for its accent only. */
+.cr-lr-show{display:none;width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
+  align-items:center;gap:14px;margin-top:12px;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#12100f,#060707);border:1px solid rgba(242,244,242,.22);
+  border-radius:10px;padding:17px 18px;color:#F2F4F2;font-family:inherit}
+.cr-lr-show::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px 120px at 78% 0%,rgba(197,90,40,.18),transparent 70%)}
+.cr-lr-show:hover{border-color:rgba(242,244,242,.42)}
+.cr-lr-show .ic{position:relative;z-index:1;flex:0 0 auto;width:34px;height:34px;
+  display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.06)}
+.cr-lr-show .tx{position:relative;z-index:1;flex:1;min-width:0}
+.cr-lr-show .tt{display:flex;align-items:center;gap:9px;
+  font:700 17px Georgia,'Times New Roman',serif;color:#F2F4F2;line-height:1.2}
+.cr-lr-show .nw{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;
+  color:#0d0908;background:#F2F4F2;border-radius:999px;padding:4px 9px}
+.cr-lr-show .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
+.cr-lr-show .go{position:relative;z-index:1;flex:0 0 auto;font-size:15px;color:#6d645c}
+/* Theo's call, and he is right: a phone is not a screen you present from.
+   The phone loses nothing — the ordinary Showcase is phone-shaped and always
+   has been; it is only this MODE that isn't offered there. */
+@media (min-width:820px){ .cr-lr-show{display:flex} }
+html[data-mode="light"] .cr-lr-show .sb{color:#8a8078}
+
+/* The Pop-Up Roof — a plain link to /popup.html, not a data-go dispatch
+   (same pattern as the Studio tile's <a>). Unlike .cr-lr-show it is NOT
+   width-gated: the book is phone-shaped and always has been, so it is
+   offered everywhere the Showroom card is hidden below 820px. */
+.cr-lr-book{display:flex;width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
+  align-items:center;gap:14px;margin-top:12px;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#1a1410,#0d0906);border:1px solid rgba(242,244,242,.16);
+  border-radius:10px;padding:17px 18px;color:#F2F4F2;font-family:inherit;text-decoration:none}
+.cr-lr-book::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px 120px at 78% 0%,rgba(200,32,46,.16),transparent 70%)}
+.cr-lr-book:hover{border-color:rgba(242,244,242,.36)}
+.cr-lr-book .ic{position:relative;z-index:1;flex:0 0 auto;width:34px;height:34px;
+  display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.06)}
+.cr-lr-book .tx{position:relative;z-index:1;flex:1;min-width:0}
+.cr-lr-book .tt{display:flex;align-items:center;gap:9px;
+  font:700 17px Georgia,'Times New Roman',serif;color:#F2F4F2;line-height:1.2}
+.cr-lr-book .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
+.cr-lr-book .go{position:relative;z-index:1;flex:0 0 auto;font-size:15px;color:#6d645c}
+html[data-mode="light"] .cr-lr-book .sb{color:#8a8078}
+
+/* ── The Vision hub (593) ────────────────────────────────────────────
+   The landing renderer's build() swaps THIS markup into #landingView instead
+   of the ordinary ten-destination launcher when isVisionHost() matches —
+   the dedicated front door for showroom.cardinalroster.com. Committed dark,
+   like Showroom itself: this is the pretty door, not a themed CRM screen,
+   so there is deliberately no light-mode twin, same as .cr-sh-* above.
+
+   #landingView>.cr-vh, NOT plain .cr-vh — cr-lr-styles carries
+   `#landingView>*{display:none}` (ID selector, specificity 1-0-0) to keep
+   the dead #landQuick/#landDash markup hidden, and only an equally-
+   ID-anchored override beats it; a bare class selector never can,
+   regardless of source order. #landingView>.cr-lr{display:block} is the
+   existing instance of this exact pattern — this mirrors it. */
+.cr-vh{min-height:100vh;box-sizing:border-box;background:#0B0D0C;
+  display:flex;flex-direction:column;align-items:center;padding:56px 20px 40px}
+#landingView>.cr-vh{display:flex}
+.cr-vh-in{width:100%;max-width:420px}
+.cr-vh-word{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:#e35c63;margin-bottom:4px}/* 1175: was #c8202e — 3.44:1
+  on the hub's #0b0d0c, under the 4.5 floor. #e35c63 is the app's approved lighter
+  red twin and reads 5.55. */
+.cr-vh-h{font:800 30px Georgia,'Times New Roman',serif;color:#F2F4F2;margin:0 0 6px;
+  letter-spacing:-.01em}
+.cr-vh-sub{font-size:13px;color:#98A29C;margin:0 0 26px}
+.cr-vh-tile{display:flex;align-items:center;gap:13px;width:100%;box-sizing:border-box;
+  text-align:left;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;
+  font-family:inherit;text-decoration:none;border:1px solid #262a28;background:#151817}
+.cr-vh-tile:hover{border-color:#32372f}
+.cr-vh-tile .ic{flex:0 0 auto;width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:17px}
+.cr-vh-tile.primary{background:linear-gradient(160deg,#1a1210,#0d0908);
+  border-color:rgba(200,32,46,.35)}
+.cr-vh-tile.primary .ic{background:rgba(200,32,46,.18);color:#e35c63}
+.cr-vh-tile.admin .ic{background:rgba(139,150,163,.16);color:#8b96a3}
+.cr-vh-tile.soon{opacity:.5;cursor:default}
+.cr-vh-tile.soon .ic{background:rgba(255,255,255,.05);color:#5d655f}
+.cr-vh-tile .tx{flex:1;min-width:0}
+.cr-vh-tile .tt{display:flex;align-items:center;gap:8px;
+  font:700 16px Georgia,'Times New Roman',serif;color:#F2F4F2}
+.cr-vh-tile .sb{font-size:12px;color:#8a9490;margin-top:2px;line-height:1.4}
+.cr-vh-tile .go{flex:0 0 auto;color:#5d655f;font-size:15px}
+.cr-vh-badge{font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 6px;border-radius:4px;
+  background:rgba(139,150,163,.18);color:#8b96a3;margin-left:2px}
+.cr-vh-badge.soon{background:rgba(255,255,255,.06);color:#5d655f}
+.cr-vh-flow{display:flex;align-items:center;gap:5px;
+  font:700 11px ui-monospace,'SF Mono',Menlo,monospace;
+  color:#98A29C/* 1175: was #5d655f, 3.24:1 — the module's own .cr-vh-sub muted, 7.41 */;letter-spacing:.02em;margin:-2px 0 12px 4px}
+.cr-vh-flow .ar{color:#32372f}
+
+/* ── Promoting a job to a pair (591) ─────────────────────────────
+   The walk picker marks a pick with a tick. A tick cannot say WHICH of two
+   slots a photograph went into, and on a before/after pair that is the only
+   thing that matters — so pair mode labels each pick with the word, shows
+   the two slots above the grid, and dims what can no longer be picked. */
+.cr-sh-slots{display:flex;gap:8px;margin:11px 0 2px;flex-wrap:wrap}
+.cr-sh-slot{flex:1 1 40%;min-width:0;display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:9px;cursor:pointer;font-family:inherit;text-align:left;
+  color:var(--sh-mut,#98A29C);background:var(--sh-card2,#101312);
+  border:1px dashed var(--sh-line,rgba(148,157,165,.30))}
+.cr-sh-slot.full{border-style:solid;border-color:var(--sh-ink,#F2F4F2);color:var(--sh-ink,#F2F4F2)}
+.cr-sh-slot img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex:0 0 auto}
+.cr-sh-slot .t{min-width:0}
+.cr-sh-slot .k{display:block;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.16em;text-transform:uppercase}
+.cr-sh-slot .v{display:block;margin-top:2px;font-size:11px;opacity:.75}
+/* The tick and the word are two answers to the same question — never both. */
+.cr-sh-pick button.role::after{content:none}
+.cr-sh-pick .rl{position:absolute;left:0;right:0;bottom:0;padding:3px 0;text-align:center;
+  font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;
+  text-transform:uppercase;
+  background:rgba(5,6,7,.80);color:#F2F4F2}
+/* Both slots full: the rest are inert, so a stray thumb cannot steal a role. */
+.cr-sh-pick button.dim{opacity:.42;cursor:default}
+.cr-sh-prov{margin:9px 0 0;font-size:11px;line-height:1.5;color:var(--sh-mut,#98A29C)}
+/* What a promoted pair shows INSTEAD of three empty file pickers. */
+.cr-sh-from{display:flex;gap:9px;margin:2px 0 4px;flex-wrap:wrap}
+.cr-sh-from figure{margin:0;flex:0 0 auto;width:84px}
+.cr-sh-from img{display:block;width:84px;height:64px;object-fit:cover;border-radius:7px;
+  border:1px solid var(--sh-line,rgba(148,157,165,.28))}
+.cr-sh-from figcaption{margin-top:4px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--sh-mut,#98A29C)}
+.cr-sh-prov b{color:var(--sh-ink,#F2F4F2);font-weight:700}

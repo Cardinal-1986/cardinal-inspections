@@ -321,6 +321,41 @@ globalThis.__sentinelProbe = () => {
     return getComputedStyle(probe).getPropertyValue(prop);
   }
 
+  /* ⚠ BLOCKIFICATION — the third false positive this check has produced, and
+     the reason it raised five findings against correct CSS on 31 Aug.
+
+     `normalise()` resolves a declared value on a DETACHED probe, which is not
+     a flex item. But CSS Display 3 §2.7 says an element that IS one — or is
+     floated, absolutely positioned, or the root — has its outer display type
+     blockified: `inline-flex` computes to `flex`. So a rule that won cleanly
+     reads as a rule that never won, and the sweep reports the cascade working
+     as a source-order accident.
+
+     This is NOT a blanket "close enough" — it is exact, and it is conditional
+     on the element actually meeting the spec's blockification condition. If
+     something else really did beat the rule, the computed value will not be
+     the blockified form either, and the check fires as before. */
+  const BLOCKIFY = {
+    'inline-block':'block', 'inline-table':'table', 'inline-flex':'flex',
+    'inline-grid':'grid', 'inline':'block', 'inline-flow-root':'block',
+    'inline list-item':'list-item'
+  };
+  function isBlockified(el) {
+    const cs = getComputedStyle(el);
+    if (cs.position === 'absolute' || cs.position === 'fixed') return true;
+    if (cs.float && cs.float !== 'none') return true;
+    if (el === document.documentElement) return true;
+    const p = el.parentElement;
+    if (!p) return false;
+    const pd = getComputedStyle(p).display;
+    return pd === 'flex' || pd === 'inline-flex' || pd === 'grid' || pd === 'inline-grid';
+  }
+  function expectedFor(prop, want, el) {
+    if (prop !== 'display') return want;
+    const b = BLOCKIFY[want];
+    return (b && isBlockified(el)) ? b : want;
+  }
+
   /* Specificity (a,b,c) folded into one number. Approximate but honest: it
      counts what the cascade counts, and for a selector LIST it takes the
      branch that actually matches the element in hand. */
@@ -444,7 +479,7 @@ globalThis.__sentinelProbe = () => {
       for (const el of els.slice(0, 30)) {
         if (!visible(el)) continue;
         seen++;
-        if (getComputedStyle(el).getPropertyValue(prop) === want) { won++; continue; }
+        if (getComputedStyle(el).getPropertyValue(prop) === expectedFor(prop, want, el)) { won++; continue; }
         if (el.style && el.style.getPropertyValue(prop)) { outranked = true; continue; }
         const mine = specFor(r.selectorText, el);
         for (let wi = 0; wi < live.length; wi++) {
@@ -676,6 +711,24 @@ globalThis.__sentinelProbe = () => {
        element, or one defect prints once per descendant. */
     const par = el.parentElement;
     if (par && getComputedStyle(par).pointerEvents === 'none') continue;
+    /* ⚠ A DECORATIVE CHILD OF A REAL BUTTON IS THE CORRECT IDIOM, NOT A
+       DEFECT. `cursor` INHERITS, so the <span>s inside a button all advertise
+       a pointer; setting pointer-events:none on them is how you make the click
+       land on the button rather than on whichever glyph the finger hit. The
+       Showcase's showroom exit is exactly this — <button class="cr-sh-exit">
+       wrapping a .ring and an ✕ — and the first sweep of the Showroom reported
+       BOTH children as unreachable while the button they belong to was
+       perfectly pressable.
+       So an INHERITED-cursor-only signal is dismissed when a hit-testable
+       interactive ancestor exists. An element that is ITSELF a button, a
+       role=button or a link still reports — build 1164's header title had no
+       interactive ancestor at all, and that case is what this check is for. */
+    const ownPressy = el.tagName === 'BUTTON' || el.getAttribute('role') === 'button' ||
+                      (el.tagName === 'A' && el.hasAttribute('href'));
+    if (!ownPressy) {
+      const host = par && par.closest('button, [role="button"], a[href], summary, label, [onclick]');
+      if (host && getComputedStyle(host).pointerEvents !== 'none') continue;
+    }
     out.deadtap.push({ el: where(el),
       label: (ownText(el) || el.getAttribute('aria-label') || '').trim().slice(0, 32),
       reason: 'pointer-events:none' });

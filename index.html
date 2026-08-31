@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1185<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1189<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27400,51 +27400,66 @@ function backToLanding(){
 /* Same as backToLanding, but called from the app menu — also clears main-app views
    so the transition is clean. */
 function goToLanding(){
-  /* 1165 — THE LANDING IS RETIRED ON ORDINARY HOSTS. The Front Door (1164) is
-     the portal picker now, so "go to the picker" no longer means "show a
-     screen": it means land somewhere real and open the picker over it.
+  /* 1188 — THE HOSTNAME IS GONE FROM THIS DECISION. There is one path now.
 
-     Changed HERE rather than at the eight call sites — the logo, the drawer's
-     Landing row, the dashboard and cover-card chips, the Cardinal Truth banner
-     chip, the Resource Library exit (via backToLanding), the Production board
-     exit and the Owner Console back button all mean the same thing by this
-     function, and one pipeline per concept is the standing rule.
+     What this replaced: an `isVisionHost()` fork whose true branch showed
+     #landingView (the Vision hub, 593/625) and whose false branch did what
+     everything below does. The fork was a HOST check standing in for a
+     PRODUCT decision, and 805 is the build that proved a hostname test inside
+     one big file separates nothing. The Showroom is its own application now,
+     so the product decision is stated outright: "go to the picker" means
+     Cardinal's Front Door (1164), on every host, for every account.
 
-     ⚠ #landingView ITSELF IS NOT DELETED and must not be: on a showroom.*
-     host it is the Vision hub's container (593/625). The vision branch below
-     keeps the real pane, which is why this is a behaviour change and not a
-     removal.
+     ⚠ #landingView IS STILL NOT DELETED and must not be — cr-lr-script still
+     builds the Vision pane into it under ?vision=1, and showLanding() still
+     has its own vision branch. This build touches neither. What changed is
+     that RETURNING to the hub through this function no longer exists: the
+     way back is the Front Door.
 
      ⚠ 1038's doctrine holds: a production account exiting the board must not
      be dropped on the retail home (pipeline counts, AR money). They land back
-     on their own hub with the picker over it. */
-  var _vis = false;
-  try{ _vis = !!(window.CardinalLanding && window.CardinalLanding.isVisionHost && window.CardinalLanding.isVisionHost()); }catch(_ve){}
-  if(!_vis){
-    try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_e){}
-    try{ document.getElementById('cardinalTruthView').style.display = 'none'; }catch(_e2){}
-    try{ document.getElementById('resourceLibraryView').style.display = 'none'; }catch(_e3){}
-    var _ic0 = document.getElementById('insClientsView'); if(_ic0) _ic0.style.display = 'none';
-    if(typeof isProductionUser === 'function' && isProductionUser() &&
-       window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
-      try{ window.CardinalProduction.open(); }catch(_pe){ if(typeof showHome === 'function') showHome(); }
-    }else if(typeof showHome === 'function'){
-      showHome();
-    }
-    try{ if(window.CardinalFrontDoor) window.CardinalFrontDoor.open(); }catch(_fe){}
-    return;
-  }
+     on their own hub with the picker over it.
+
+     ⚠ hideAllViews() has hidden #landingView and cleared body.cr-landing-on
+     since 1101, and released a leaked scroll lock since 364. So the single
+     path tears the Vision pane down on its own; nothing here has to. */
   try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_e){}
-  document.getElementById('cardinalTruthView').style.display = 'none';
-  document.getElementById('resourceLibraryView').style.display = 'none';
-  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
-  document.getElementById('landingView').style.display = 'block';
-  try{ document.body.classList.add('cr-landing-on'); }catch(_e){}
-      /* a modal elsewhere may have left body scroll locked; the landing is
-         reached by a direct display toggle that never runs hideAllViews(),
-         so nothing else clears it. */
-      try{ document.body.style.overflow = ''; }catch(_e){}
-  window.scrollTo(0, 0);
+  try{ document.getElementById('cardinalTruthView').style.display = 'none'; }catch(_e2){}
+  try{ document.getElementById('resourceLibraryView').style.display = 'none'; }catch(_e3){}
+  var _ic0 = document.getElementById('insClientsView'); if(_ic0) _ic0.style.display = 'none';
+  var _landed = false;
+  if(typeof isProductionUser === 'function' && isProductionUser() &&
+     window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
+    try{ window.CardinalProduction.open(); _landed = true; }catch(_pe){}
+  }
+  if(!_landed && typeof showHome === 'function'){
+    /* wrapped, which it was not before: showHome() paints #mainView on its
+       FIRST statement after the teardown and then calls five renderers. A
+       throw in any of them used to propagate out of goToLanding() and skip
+       the Front Door below — a home screen with no way to the picker. */
+    try{ showHome(); _landed = true; }catch(_he){}
+  }
+  /* ---- THE FLOOR ----------------------------------------------------------
+     hideAllViews() runs BEFORE a destination is chosen, so every statement
+     between it and this line is a window in which the app is showing nothing
+     at all. Until now the only thing between that window and a blank screen
+     was `else if(typeof showHome === 'function')` — an else-if with no else.
+     Nothing has ever made it fail; that is exactly the shape the 570-572 nav
+     traps had before they were taken. #mainView is the app's own floor — it
+     is literally what showHome() paints — so re-showing it costs one style
+     write and cannot make any reachable state worse. */
+  if(!_landed){
+    /* The header needs no repair here: hideAllViews() has carried its own
+       "make sure header.site is visible" self-heal since 364, and it ran at
+       the top of this function. A second copy would be a second pipeline for
+       one concept — and, measured, two fresh TS2339s in gate_types, because
+       querySelector() answers Element and Element has no .style. */
+    try{
+      var _mv = document.getElementById('mainView');
+      if(_mv) _mv.style.display = 'block';
+    }catch(_fl){}
+  }
+  try{ if(window.CardinalFrontDoor) window.CardinalFrontDoor.open(); }catch(_fe){}
 }
 /* Insurance Clients back button */
 (function(){
@@ -42662,6 +42677,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1189, d: '2026-08-31', t: 'The Pop-Up Roof link opens the book again', s: 'Build 1187 changed the two Pop-Up Roof links \u2014 the one on the showroom menu and the one on the ordinary landing \u2014 to point at presentation.cardinalroster.com, on the understanding that the address on its own opens the book. It does not. Opening that address without a page name serves the ordinary app instead, so since 1187 tapping The Pop-Up Roof has been landing people on the CRM home rather than the book. Both links now name the page outright and open the book, which is what they did before 1187. Nothing else changed, and the address a client is given still works exactly as it always has.' },
+  { b: 1188, d: '2026-08-31', t: 'The Landing button stops asking what address you are on', s: 'Every control that means \u201Ctake me to the picker\u201D \u2014 the drawer\u2019s Landing row, the dashboard and cover-card chips, the Cardinal Truth banner chip, the Resource Library exit, the Production board exit and the Owner Console back button \u2014 used to check which web address you had opened the app on before deciding where to send you. On the ordinary app that check always came out the same way, so nothing you do day to day changes: you land on your own home screen with the Front Door over it, and production accounts still land back on the Production board rather than the retail home. What is gone is the second answer, which sent you to the old Vision menu on the showroom address; presentations live in the Showroom now and the Front Door is the way to everything. Underneath, the button can no longer leave you looking at nothing: if the screen it was told to open cannot open, it falls back to your home screen instead of stopping halfway.' },
+  { b: 1187, d: '2026-08-31', t: 'Two more ways in, and links that no longer depend on the address bar', s: 'The Appointment and Why Cardinal could only be reached by opening the Vision hub and tapping a tile \u2014 there was no address you could type, bookmark or send anyone. Both now have one: /?open=appt and /?open=why open them straight from a cold load, and a reload keeps you where you were. Nothing changes if you do not use them; the ordinary landing behaves exactly as before. Separately, the links out to Studio and the Pop-Up Roof were written as bare paths, which meant they quietly resolved against whichever address you happened to be on. Both now point at where those things actually live \u2014 the book at presentation.cardinalroster.com, which is the address a client is given. The Pop-Up Roof link on the ordinary landing had the same problem and was fixed with it.' },
+  { b: 1186, d: '2026-08-31', t: 'OC Colors reads properly again', s: 'Four pieces of text on the Owens Corning colour screens were below the readable floor, and one of them badly \u2014 the SureNail proof captions on the Duration and FLEX pages have been light grey on a white panel since build 623, at 1.62:1. That is the screen you hand across a kitchen table. The selected filter chip, the NEW badge and the Add our roofs button were white on the brand pink at 4.25:1, just under the floor. Nothing new was invented to fix them: build 623 had already measured this exact problem and created the deeper pink for it, then applied it to two controls and missed three. The captions now simply inherit the panel ink they sit on, so they cannot drift again. Also removed a colour rule that had been dead since 623.' },
   { b: 1185, d: '2026-08-31', t: 'The header title is a real button', s: 'Tapping the portal name in the header opens the Front Door, so it has been a control since build 1164 \u2014 but underneath it was still an ordinary piece of text. It told screen readers it could be opened while not being something that can be opened, and it could not be reached or pressed from a keyboard at all. It is now a proper button: reachable by Tab, pressed with Enter or Space, and it announces itself correctly. Nothing changes about how it looks or how it behaves on a phone.' },
   { b: 1183, d: '2026-08-31', t: 'The hammer on the schedule card, and two dead files gone', s: 'The Cardinal-on-a-hammer drawing has been in the app since build 1086 and had never once appeared on a screen. It was drawn, and the rule that paints it faintly behind a card was written \u2014 but the card was never given the name the rule looks for, so nothing ever matched it. It is now the watermark behind Next 30 Days on the home screen, which is the work schedule, and it sits beside the Cardinal-on-a-pencil that already watermarks the Team Calendar. Two other picture files that nothing in the app could reach have been deleted, along with the leftover styling that pointed at one of them.' },
   { b: 1182, d: '2026-08-31', t: 'The inspection reports stop carrying the logo twice', s: 'The cover logo was written into the app file twice \u2014 once inside the roof report and once inside the exterior report, the same image both times, about 280,000 characters between them. It is a normal picture file now and both reports point at it, so the app file is a quarter of a megabyte smaller and the logo is fetched once and reused. Nothing changed on the reports themselves, and if the picture ever fails to load they fall back to the main Cardinal logo.' },
@@ -51740,7 +51759,11 @@ return (
 (isAdmin ?
 ('<div class="cr-vh-flow"><span>Studio</span><span class="ar">\u2192</span>' +
 '<span>promote</span><span class="ar">\u2192</span><span>Showroom</span></div>' +
-'<a class="cr-vh-tile admin" href="/studio.html">' +
+/* 1187: CANONICAL, not relative. `/studio.html` resolved against whatever
+   host served the deployment -- it worked only because
+   showroom.cardinalroster.com serves this same file. Verified 200 at the
+   absolute URL. */
+'<a class="cr-vh-tile admin" href="https://app.cardinalroster.com/studio.html">' +
 '<span class="ic">\u25E7</span>' +
 '<span class="tx">' +
 '<span class="tt">Studio<span class="cr-vh-badge">Admin</span></span>' +
@@ -51765,7 +51788,16 @@ return (
 /* 1159: the book was reachable only from the Sales Floor (a CRM screen
    this host does not draw) and from presentation.cardinalroofer.com.
    On the showroom tablet it was unreachable. Same plain <a> as Studio. */
-'<a class="cr-vh-tile" href="/popup.html" target="_blank" rel="noopener">' +
+/* 1189 — MEASURED, NOT INFERRED. 1187 pointed this at the bare host on the
+   strength of vercel.json's rewrite, which I read and never fetched. In
+   production that rewrite DOES NOT FIRE: https://presentation.cardinalroster.com/
+   returns the 5,446,039-byte CRM titled "Cardinal Client Resources", while
+   /popup.html on the same host returns the 269,247-byte book. So 1187 made
+   this link worse -- it used to reach the book by path and reached the CRM
+   instead. The explicit path is the destination we have actually seen serve
+   The Pop-Up Roof. Repairing the rewrite is a separate decision and is
+   deliberately NOT part of this build. */
+'<a class="cr-vh-tile" href="https://presentation.cardinalroster.com/popup.html" target="_blank" rel="noopener">' +
 '<span class="ic">\u25A4</span>' +
 '<span class="tx">' +
 '<span class="tt">The Pop-Up Roof</span>' +
@@ -51913,7 +51945,12 @@ lv.innerHTML =
    shipped; the markup did not. A plain <a> (the Studio tile's pattern),
    and deliberately NOT width-gated: the book is phone-shaped, so it is
    offered everywhere the >=820px Showroom row is hidden. */
-'<a class="cr-lr-book" href="/popup.html" target="_blank" rel="noopener">' +
+/* 1187: the ORDINARY landing's book link, canonicalised with the hub's. It
+   had the identical hostname dependency and would have been missed by a fix
+   scoped to visionHtml() alone.
+   1189: and corrected with the hub's, for the same measured reason -- the
+   bare host serves the CRM, not the book. See the note on the hub tile. */
+'<a class="cr-lr-book" href="https://presentation.cardinalroster.com/popup.html" target="_blank" rel="noopener">' +
 '<span class="ic">\u25A4</span>' +
 '<span class="tx">' +
 '<span class="tt">The Pop-Up Roof</span>' +
@@ -52077,12 +52114,73 @@ now.toLocaleDateString('en-US', { month:'long', day:'numeric' }));
 }
 try{ build(); }catch(e){ console.warn('[landing] initial build:', e); }
 var scheduled = false;
+/* 1187 -- `?open=appt` and `?open=why`: the canonical way into the two Vision
+   hub destinations that did NOT move to the Showroom.
+
+   THE PROBLEM THIS SOLVES. The Appointment and Why Cardinal are MODULES, not
+   pages -- Cardinal's hash router restores #p/ #e/ #list/ #leads #reports
+   #clients #feed #audit #board #me #team #settings and neither of them. So the
+   only way to reach either was to open the Vision hub and tap a tile, which
+   made the `showroom.` hostname load-bearing for two destinations. The
+   Showroom's launcher needs a real URL to point at, and inventing a link to
+   one that does not resolve is how the Studio 404 happened.
+
+   WHY A LANDING QUERY AND NOT A HASH ROUTE. A `#why` case would live in
+   __tryRestoreFromHash, which is goToLanding()-adjacent -- the "swaps the page
+   underneath itself and traps the user" class. This is contained entirely in
+   this module: it reads a query, waits for the landing to be genuinely on
+   screen, and calls the module's own open(). It touches no router and no
+   navigation lever. It also outlives isVisionHost(): unlike ?vision=1 it does
+   not depend on a door that is scheduled for deletion.
+
+   ⚠ THE READY TEST IS #loginView.open, NOT WHETHER THE LANDING IS VISIBLE.
+   The first version of this gated on `getComputedStyle(landingView).display`,
+   reasoning that a visible landing means a signed-in user. gate_1187 caught it:
+   a session restore takes you STRAIGHT PAST the landing to the home screen, so
+   the landing is hidden for a signed-IN user and the deep link silently did
+   nothing -- the exact "correct-looking state that tells nobody" shape. What
+   actually distinguishes signed-out is showLogin() adding `.open` to
+   #loginView, so that is what is asked.
+
+   AND IT MUST NOT CONSUME THE FLAG WHILE WAITING. Returning without setting
+   openDone lets scan() call again -- and scan() is already driven by the body
+   MutationObserver this module has had since 593, so sign-in DOM churn
+   re-drives it for free. No new observer: the census does not move. */
+var OPEN_TARGETS = {
+  appt: function(){ return window.CardinalAppointment; },
+  why : function(){ return window.CardinalWhy; }
+};
+var openDone = false, openTries = 0;
+function openFromQuery(){
+if(openDone) return;
+var m = /[?&]open=([a-z]+)/i.exec(location.search || '');
+if(!m){ openDone = true; return; }
+var get = OPEN_TARGETS[m[1].toLowerCase()];
+/* an unknown key lands normally rather than erroring -- a stale bookmark
+   should show the launcher, not a dead end. */
+if(!get){ openDone = true; return; }
+var lg = document.getElementById('loginView');
+if(lg && lg.classList.contains('open')) return;   /* signed out -- wait */
+var mod = get();
+if(!mod || typeof mod.open !== 'function'){
+  /* both modules parse ~34,000 lines after this one, so on a cold load this
+     is a matter of milliseconds. Bounded anyway: give up and leave the user
+     wherever they are rather than retrying forever. */
+  if(++openTries > 80){ openDone = true; return; }
+  setTimeout(openFromQuery, 100);
+  return;
+}
+openDone = true;
+leave();
+try{ mod.open(); }catch(e){ console.warn('[landing] ?open=', e); }
+}
 function scan(){
 if(scheduled) return;
 scheduled = true;
 requestAnimationFrame(function(){
 scheduled = false;
 try{ build(); }catch(e){ console.warn('[landing]', e); }
+try{ openFromQuery(); }catch(e){ console.warn('[landing]', e); }
 });
 }
 function start(){
@@ -52090,7 +52188,7 @@ scan();
 var lv = document.getElementById('landingView');
 if(lv){
 new MutationObserver(function(){
-if(lv.style.display !== 'none') { build(); paint(); }
+if(lv.style.display !== 'none') { build(); paint(); openFromQuery(); }
 }).observe(lv, { attributes:true, attributeFilter:['style'] });
 }
 new MutationObserver(scan).observe(document.body, { childList:true, subtree:true });
@@ -75825,7 +75923,12 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   font:600 13.5px var(--occ-sans,sans-serif); -webkit-tap-highlight-color:transparent;
 }
 #cr-occ .occ-chip[aria-pressed="true"]{
-  background:var(--occ-red,#c8202e); border-color:var(--occ-red,#c8202e); color:#fff;
+  /* 1186: --occ-pink-deep, not --occ-red. 623b measured this exact pairing and
+     built the token for it -- "5.79:1 under small WHITE text" -- then applied it
+     to .occ-sty and .cmp-c4 and missed three siblings. White on the brand pink
+     at 13.5px is 4.25:1, under the 4.5 floor. The border moves with the fill:
+     leaving it --occ-red rings a deep-pink chip in a lighter pink. */
+  background:var(--occ-pink-deep,#C4007A); border-color:var(--occ-pink-deep,#C4007A); color:#fff;
 }
 #cr-occ .occ-count{padding:6px 16px 10px; font-size:13px; color:var(--occ-dim,#9AA3AE)}
 
@@ -75858,7 +75961,7 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 }
 #cr-occ .occ-tag.coty{background:var(--occ-gold,#C9A227); color:#1A1400}
 #cr-occ .occ-tag.was{background:var(--occ-goldq,#3A3208); color:var(--occ-gold,#C9A227)}
-#cr-occ .occ-tag.new{background:var(--occ-red,#c8202e); color:#fff}
+#cr-occ .occ-tag.new{background:var(--occ-pink-deep,#C4007A); color:#fff}  /* 1186: 11px white — 4.25:1 on the brand pink */
 #cr-occ .occ-tag.disc{background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE); border:1px solid var(--occ-line,#1D2126)}
 
 #cr-occ .occ-empty{padding:40px 16px; text-align:center; color:var(--occ-dim,#9AA3AE)}
@@ -75959,7 +76062,7 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 #cr-occ .occ-actions{display:flex; flex-wrap:wrap; gap:10px; padding:16px}
 #cr-occ .occ-btn{
   min-height:44px; padding:0 16px; border-radius:10px; cursor:pointer;
-  background:var(--occ-red,#c8202e); color:#fff; border:0;
+  background:var(--occ-pink-deep,#C4007A); color:#fff; border:0;   /* 1186: 15px white — 4.25:1 on the brand pink */
   font:700 15px var(--occ-sans,sans-serif); -webkit-tap-highlight-color:transparent;
 }
 #cr-occ .occ-btn.ghost{background:transparent; color:var(--occ-ink,#EDEFF2); border:1px solid var(--occ-line,#1D2126)}
@@ -76182,7 +76285,12 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     content:attr(data-nophoto); position:absolute; right:26px; top:4px; z-index:0;
     font:800 132px/1 var(--occ-sans,sans-serif); letter-spacing:-.06em; color:#181D24;
   }
-  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lsub{color:#A9B2BC}
+  /* 1186: a light-grey ink rule stood here and is GONE. It was written for a
+     DARK tile; 623 made [data-nophoto] tiles white and set the same elements to
+     --occ-panel-dim at identical specificity, later in the file, so it never
+     applied again. Dead code that would silently take over if the flyer-skin
+     block were ever reordered. Its value is not quoted here on purpose — a
+     retired colour named in a comment is the next grep's false positive. */
 
   /* ---- COMPARE: the hub is a board ---- */
   #cr-occ[data-style="compare"]:not(.line):not(.detail) .occ-hub{max-width:none; padding:24px 40px 60px}
@@ -76287,8 +76395,14 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   color:var(--occ-red,#c8202e);
 }
 #cr-occ .occ-proof .pf span{
+  /* 1186: NO color HERE — it inherits --occ-panel-dim from .pf, 7.05:1.
+     623's flyer skin turned .pf from a dark card into a WHITE panel and
+     recoloured .pf itself, but this child rule is more specific and kept the
+     dark-theme ink, so the SureNail proof captions have been rendering at
+     1.62:1 on white ever since — on a screen handed to a homeowner.
+     Deleting the declaration beats replacing it: the caption can no longer
+     drift from the panel it sits on. */
   display:block; margin-top:7px; font-size:11.5px; line-height:1.35;
-  color:var(--occ-ink2,#C6CCD4);
 }
 #cr-occ .occ-pbasis{
   font-size:11.5px; line-height:1.45; color:var(--occ-dim,#9AA3AE); margin-bottom:4px;

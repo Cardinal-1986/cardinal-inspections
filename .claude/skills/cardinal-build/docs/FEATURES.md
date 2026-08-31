@@ -1687,6 +1687,24 @@ state until then. Nothing here has been verified against a real photograph.
 
 ## OC Colors — the shingle-line hub (builds 615–623, 7–8 Aug 2026)
 
+> ### ⚠️ Build 1186 — four inks on these screens were below the readable floor, and one badly
+>
+> **`.occ-proof .pf span` — the SureNail proof captions — rendered at 1.62:1 from build 623 until
+> 1186.** 623's flyer skin turned `.occ-proof .pf` from a dark card into a **white panel** and
+> recoloured `.pf`, but the child rule is more specific and kept its dark-theme ink. Thirteen of
+> fourteen elements were right, which is exactly why nobody saw it. Now it carries **no `color` at
+> all** and inherits `--occ-panel-dim` from the panel — it cannot drift again.
+>
+> **The selected filter chip, the NEW badge and `.occ-btn` were white on `--occ-red` at 4.25:1.**
+> They now use **`--occ-pink-deep`** (5.79:1), the token **623b already built for this exact
+> pairing** and applied to only two of the five sites.
+>
+> ⚠️ **The palette is split by ROLE and was already complete — do not add a fifth pink.**
+> `--occ-red` brand fill and LARGE type · `--occ-pink-ink` pink on white · `--occ-pink-on-dark`
+> pink on the black ground · `--occ-pink-deep` the ground under small white text.
+>
+> A dead `[data-nophoto] .occ-lsub` colour rule from 623 was removed in the same build.
+
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
 inset:0`.
@@ -7832,6 +7850,24 @@ client-facing version of it is a **reface, not a write**.
 
 ## Why Cardinal (build 1160) — `cr-why-styles` + `cr-why-script`, `window.CardinalWhy`
 
+> ### ⚠️ Build 1187 — this module now has an ADDRESS: `app.cardinalroster.com/?open=why`
+>
+> It was reachable only by opening the Vision hub and tapping a tile — Cardinal's hash router
+> restores twelve views and this is not one of them. That made the `showroom.` hostname
+> load-bearing for it, and left the Showroom launcher nothing real to point at.
+>
+> **`?open=appt` does the same for The Appointment.** Both are handled in **`cr-lr-script` only**
+> — `openFromQuery()` reads the query, waits until `#loginView` no longer has `.open`, and calls
+> the module's own `open()`. **No history router, no `goToLanding()`, no new observer.**
+>
+> ⚠️ **The readiness test is the LOGIN view, not the landing's visibility.** A session restore
+> goes straight past the landing to the home screen, so a visible-landing test silently did
+> nothing for signed-in users. `gate_1187` caught it.
+>
+> ⚠️ **`CardinalWhy` has two callers** — the hub tile and the Appointment's `openWhy()`. Relocating
+> it natively into the Showroom would break the Appointment or fork the module, which is why the
+> Showroom links to it instead.
+
 `#cr-why` · a Vision hub tile (`data-go="why"`) · Blackout, single-theme.
 
 **The first client-facing surface on this project that is about Cardinal
@@ -8029,3 +8065,46 @@ gold home made it redundant. `#editorLogo` is the one the brand-logo IIFE actual
 this build), `cardinal-report-logo.png` (reports/estimates, 1182), `cardinal-logo-insurance.svg`
 (insurance header), `icon-192`/`icon-512`/`apple-touch-icon` (PWA). Deliberate-but-unfetched:
 `community-action-dayton.png`. **Nothing else is at the root.**
+
+## Build 1188 — `goToLanding()` stops asking what hostname it is on
+
+`goToLanding()` is the one pipeline behind eight controls (drawer Landing row, dashboard and
+cover-card chips, the Cardinal Truth banner chip, the Resource Library exit via `backToLanding()`,
+the Production board exit, the Owner Console back button). Until 1188 it forked on
+`isVisionHost()`: ordinary hosts got the CRM home + Front Door, `showroom.*` and `?vision=1` got
+`#landingView` re-shown as the Vision hub.
+
+**Now there is one path**, on every host, for every account:
+
+| account | lands on |
+|---|---|
+| production (Curtis, Scottie) | the Production board — 1038's exit room, unchanged |
+| everyone else | the CRM home |
+| both | with the **Front Door** open over it |
+
+- **The Vision pane is torn down by `hideAllViews()`**, which has hidden `#landingView` and cleared
+  `body.cr-landing-on` since 1101 and released a leaked scroll lock since 364. ⚠ `CLAUDE.md`'s
+  "`#landingView` is DELIBERATELY absent from `hideAllViews()`" is 756-era and no longer true.
+- **A floor was added.** `hideAllViews()` runs *before* a destination is chosen; if none lands,
+  `#mainView` is shown outright rather than leaving the screen blank. `showHome()` is also wrapped
+  now, so a renderer throwing can no longer skip the Front Door.
+- **`?vision=1` still cold-loads the Vision pane** — `showLanding()` and `cr-lr-script`'s `build()`
+  are untouched. Only *returning* to the hub through this function is gone.
+- `gate_1188.mjs` — 42 Chromium assertions across six drives; **RED on the 1187 control with 7
+  failures**, including a measured blank screen (`elementFromPoint` → `HTML`, every container
+  hidden).
+
+## Build 1189 — Pop-Up Roof links name the page, not the host
+
+All three Pop-Up Roof launchers point at **`https://presentation.cardinalroster.com/popup.html`**:
+the Vision hub tile and the ordinary landing's `.cr-lr-book` link (both `cr-lr-script`), and the
+Showroom launcher's `popup` tile.
+
+⚠ **The bare host does NOT serve the book.** Measured 31 Aug 2026: `presentation.cardinalroster.com/`
+returns the 5,446,039-byte CRM titled *Cardinal Client Resources*; `/popup.html` on the same host
+returns the 269,247-byte book. `vercel.json`'s host rewrite is present but does not fire in
+production. 1187 pointed these links at the bare host on the strength of that config and broke
+them; 1189 points them at the only destination measured to serve the book.
+
+`gate_1189.mjs` holds it, and holds it by **fetching** — the opened document's `<title>` must be
+*The Pop-Up Roof*. A URL that merely looks canonical, or answers 200, fails.

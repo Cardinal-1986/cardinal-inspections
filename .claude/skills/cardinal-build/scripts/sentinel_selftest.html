@@ -295,6 +295,16 @@
   </div>
   <div id="dt-plain" style="pointer-events:none;padding:4px">decorative pass-through, no pressable styling</div>
   <button id="dt-live" onclick="void 0" style="cursor:pointer;padding:10px">a live button</button>
+  <!-- The decorative-child idiom. `cursor` INHERITS from the button, so both
+       spans advertise a pointer; pointer-events:none on them is how the click
+       is made to land on the BUTTON rather than on whichever glyph the finger
+       hit. The Showcase's showroom exit is this exact shape, and the first
+       Showroom sweep reported both of its children as unreachable while the
+       button was perfectly pressable. Neither span may be reported. -->
+  <button id="dt-host" onclick="void 0" style="cursor:pointer;padding:10px;position:relative">
+    <span id="dt-ring" style="pointer-events:none;position:absolute;inset:0;border:1px solid #888"></span>
+    <span id="dt-glyph" style="pointer-events:none">&#10005;</span>
+  </button>
 </div>
 
 <h2>DUPE — one concept, two doors in one menu (build 1171)</h2>

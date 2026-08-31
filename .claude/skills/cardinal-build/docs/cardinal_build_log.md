@@ -32133,3 +32133,268 @@ rollback. Two findings worth carrying out of it:
 And the definition is deleted **last, not first** — its `?vision=1` half is exactly the door that
 lets Vision be verified without the `showroom.` hostname, which is what Theo's staging condition
 requires.
+
+---
+
+## Build 1186 — OC Colors reads properly again: four inks below the floor, one dead rule
+
+**Found by the sentinel**, which reached OC Colors for the first time on 31 Aug through the
+Showroom's relocated copy — the module is byte-identical in both trees, so every finding was
+live in Cardinal too.
+
+**Four failures, measured in Chromium at 390px and 1194px, with build 1185 as the control:**
+
+| element | was | now |
+|---|---:|---:|
+| `.occ-proof .pf span` — the SureNail proof captions | **1.62:1** | **7.05:1** |
+| `.occ-chip[aria-pressed="true"]` — the selected filter chip | 4.25:1 | **5.79:1** |
+| `.occ-tag.new` — the NEW badge, 11px | 4.25:1 | **5.79:1** |
+| `.occ-btn` — "Add our roofs" and every primary action | 4.25:1 | **5.79:1** |
+
+⚠ **The 1.62:1 is the one that mattered, and it is the partial-theming shape exactly.** Build 623's
+flyer skin turned `.occ-proof .pf` from a dark card into a WHITE panel and recoloured `.pf` — but
+`.occ-proof .pf span` is more specific and kept its dark-theme ink. So the proof captions on the
+Duration and FLEX pages, the copy that makes the SureNail claim *true*, have been light grey on
+white **since 623** on a screen handed across a kitchen table. **Fixed by DELETING the declaration,
+not replacing it**: the caption now inherits `--occ-panel-dim` from the panel it sits on and can
+never drift from it again.
+
+✅ **NOTHING NEW WAS INVENTED, and I nearly did.** I had designed a token, computed a value and
+written its comment before finding that **623b had already done all three** —
+`--occ-pink-deep:#C4007A /* 5.79:1 under small WHITE text */` — and applied it to `.occ-sty` and
+`.cmp-c4`, missing three siblings. The module's palette is deliberately split by ROLE and was
+already complete: `--occ-red` the brand fill, `--occ-pink-ink` pink on white, `--occ-pink-on-dark`
+pink on black, `--occ-pink-deep` the ground under small white. **The prime doctrine, on a token.**
+
+⚠ **A grep found 5 white-on-pink sites; the sentinel had reported 2.** The other three sit on
+screens its walk never opened. *Ask who else uses the class before deciding the fix is small* —
+and two of the five turned out already fixed at 623b, which only a real render could tell apart.
+
+**Also removed:** a light-grey ink rule for `[data-nophoto] .occ-lsub` that 623 left behind. Its
+replacement sets the same elements at identical specificity, later in the file, so it has been
+dead since 623 — and would have silently taken over if that block were ever reordered.
+
+⚠ **My own comment reintroduced the retired hex, and the assertion caught it.** The first draft of
+the deletion comment quoted the value it was retiring, so the rule went and the string stayed —
+comment pollution, committed in the build whose job was removing it. The comment now names the
+colour in words and the assertion demands **zero** occurrences of the literal, of any kind.
+
+**Gates:** mechanical ladder green (133 blocks parse, 136/136 script, 158/158 style, marker present,
+negative control clean). `gate_types` / `gate_dupes` / `gate_a11y` all GREEN, nothing grew.
+`harness_occhead` 42/42. `harness_colors` 109P/1F — **the same single failure on the 1185 control**,
+so pre-existing. Chromium before/after: **8 FAIL → 0**, the probe seen red on the control first.
+
+---
+
+## Build 1187 — two destinations get an address, and links stop depending on the address bar
+
+**The parity build.** The Vision hub offers **seven** doors; the Showroom launcher had **four**.
+Theo: preserve access rather than knowingly drop existing hub destinations.
+
+### `?open=appt` and `?open=why` — the canonical way in
+
+⚠ **The Appointment and Why Cardinal are MODULES, not pages.** Cardinal's hash router restores
+`#p/ #e/ #list/ #leads #reports #clients #feed #audit #board #me #team #settings` and **neither of
+them**. The only way to reach either was to open the Vision hub and tap a tile — which made the
+`showroom.` hostname load-bearing for two destinations, and left the Showroom's launcher with
+nothing real to point at. *Inventing a link to a URL that does not resolve is how the Studio 404
+happened.*
+
+**Option B of two, Theo's pick.** A `#why` case would have lived in `__tryRestoreFromHash`, which
+is `goToLanding()`-adjacent — the "swaps the page underneath itself and traps the user" class.
+This is **contained entirely in `cr-lr-script`**: read a query, wait until signed in, call the
+module's own `open()`. **No router, no navigation lever.** It also outlives `isVisionHost()`:
+unlike `?vision=1` it does not depend on a door scheduled for deletion.
+
+⚠️ **`gate_1187` caught a real defect in my first version, and it is worth recording.** The
+readiness test was *"is `#landingView` visible?"*, reasoning that a visible landing means a
+signed-in user. **A session restore takes you straight past the landing to the home screen**, so
+for a signed-IN user the landing is hidden and the deep link silently did nothing — a
+correct-looking state that tells nobody, the shape build 808 exists for. The test is now
+**`#loginView.classList.contains('open')`**, which is what `showLogin()` actually sets.
+
+✅ **No new observer.** The waiting path returns *without* consuming its flag, and `scan()` is
+already driven by the body `MutationObserver` this module has had since 593 — so sign-in DOM churn
+re-drives it for free. **The observer census does not move.**
+
+### Links that no longer depend on which hostname served the file
+
+| was | now |
+|---|---|
+| `href="/studio.html"` (hub tile) | `https://app.cardinalroster.com/studio.html` |
+| `href="/popup.html"` (hub tile) | `https://presentation.cardinalroster.com/` |
+| `href="/popup.html"` (**ordinary landing's book link**) | `https://presentation.cardinalroster.com/` |
+
+⚠ **There were TWO `/popup.html` links, not one** — a file-wide assertion of 1 failed and caught
+it. The second is the ordinary landing's book link, which had the identical hostname dependency
+and would have been missed by a fix scoped to `visionHtml()` alone. Measured: both resolve 200 on
+`showroom.cardinalroster.com` today and **404 on the Showroom project** — they worked only because
+that hostname serves Cardinal's whole deployment.
+
+⚠ **The Pop-Up Roof's canonical home is its own domain**, from `vercel.json`'s host rewrite — not
+`app…/popup.html`. That is the address the book was given and the one a client sees.
+
+### Gates
+
+`gate_1187.mjs` — **23/23 in Chromium**, and **RED on the 1186 control with exactly the seven
+checks this build adds**. Mechanical ladder green (133 blocks, 136/136 script, 158/158 style,
+marker + negative control). `gate_types` / `gate_dupes` / `gate_a11y` green, nothing grew.
+`harness_vision` 20P/3F — **identical on the control**, so pre-existing.
+
+⚠ **`function scan(){` occurs 16 times in this file.** The first patch attempt asserted 1 and
+aborted; the edit is applied by slicing `cr-lr-script`, patching, and re-joining, with an identity
+check that nothing outside the block moved. Build 634's lesson: scoping the assertion is not
+enough when `sub()` splices file-wide.
+
+## Build 1188 — the hostname leaves `goToLanding()`, and the function grows a floor
+
+The first of the reserved `isVisionHost()` cutover builds, scoped to `goToLanding()` alone.
+Theo: *"Do not remove the `isVisionHost()` definition yet and do not sweep the other call sites
+into this build."* Nothing else moved.
+
+### The behaviour matrix, as it stood at 1187
+
+| host | account | `goToLanding()` did |
+|---|---|---|
+| `app.cardinalroster.com` | admin / sales | `hideAllViews()` → `showHome()` → Front Door over it |
+| `app.cardinalroster.com` | production | `hideAllViews()` → `CardinalProduction.open()` → Front Door (1038's exit room) |
+| `showroom.*` **or `?vision=1`** | any | `hideAllViews()` → re-show `#landingView`, add `body.cr-landing-on`, clear the scroll lock |
+| any | signed out | unreachable by a control, but callable; `#loginView` is not in `hideAllViews()` so it survives |
+| **any** | **any** | ⚠ **`hideAllViews()` runs BEFORE a destination is chosen.** Everything between them is a window with the whole app hidden |
+
+### What replaced the hostname
+
+One path. "Go to the picker" now means **Cardinal's Front Door (1164), on every host, for every
+account** — the product decision stated outright instead of inferred from an address. 805 is the
+build that proved a hostname test inside one file separates nothing; the Showroom is its own
+application now, so there is nothing left for the fork to choose between.
+
+Three things that made the single path safe without extra work, all pre-existing and verified
+rather than assumed:
+
+- **`hideAllViews()` hides `#landingView` and clears `body.cr-landing-on`** — since **1101**.
+  ⚠ `CLAUDE.md` still says landingView is *"DELIBERATELY absent from hideAllViews()"*; that
+  sentence is 756-era and has been wrong since 1101. So the single path tears the Vision pane
+  down on its own and nothing here has to.
+- **`hideAllViews()` releases a leaked scroll lock** — since **364**. The vision branch's own
+  `body.style.overflow = ''` was doing a job already done. **No new scroll-lock writer; the
+  roster stays at 17.**
+- **`#loginView` is not in `hideAllViews()`**, so a signed-out call cannot tear the login screen
+  down. Driven, not reasoned: gate F2.
+
+### THE FLOOR — the part that is not bookkeeping
+
+Between `hideAllViews()` and the return, the only thing standing between the user and a blank
+screen was `else if(typeof showHome === 'function')` — **an else-if with no else**. Nothing has
+ever made it fail, which is exactly the shape the 570-572 nav traps had. `showHome()` was also
+**unwrapped**, so a throw in any of its five renderers propagated out and skipped the Front Door:
+a home screen with no way to the picker.
+
+Now: each destination reports whether it landed, and if none did, `#mainView` — the app's own
+floor, literally what `showHome()` paints — is shown outright. **Measured on the 1187 control:
+`elementFromPoint` at the centre of the viewport returns `HTML` and every top-level container is
+hidden. The blank screen is proven to exist, not argued for.**
+
+The floor deliberately does **not** re-heal the header: `hideAllViews()` has carried that
+self-heal since 364 and ran at the top. A second copy cost two fresh TS2339s (`querySelector()`
+answers `Element`, and `Element` has no `.style`) — **`gate_types` caught it in the same run**.
+
+### Gates
+
+`gate_1188.mjs` — **42/42 in Chromium**; six drives (deep-screen admin, the drawer row a person
+taps, a production account, `?vision=1`, a broken destination, signed out) plus back/reload, both
+`?open=` deep links and the five Showroom launchers.
+
+**The control is the point: RED on 1187 with 7 failures, all of them in D and E.** A/B/C/F, the
+deep links and the launchers stay green on **both** trees — they are regression checks describing
+behaviour 1187 already had. If the control ever comes back all-green the gate is measuring nothing.
+
+Mechanical ladder green. `gate_types` / `gate_dupes` / `gate_a11y` / `gate_stack` green, nothing
+grew, nothing stacked.
+
+### The one live behaviour change, stated plainly
+
+`showroom.cardinalroster.com` still serves this deployment byte-for-byte. Until DNS moves, a
+"back to the hub" path on that host (the Resource Library exit, the Production exit, the drawer's
+Landing row) lands on the Cardinal home with the Front Door over it instead of the Vision hub —
+and `showMain()`'s vision branch skips `reload()`, so that home has **no client data**. Visible
+and usable, never stranded, but empty. **This makes the DNS repoint more urgent, not less.**
+`?vision=1` still cold-loads the Vision pane; only *returning* to it through this function is gone.
+
+### `isVisionHost()` after this build — 13 occurrences, 7 in CODE (lexer), 2 blocks
+
+| purpose | sites | post-cutover |
+|---|---|---|
+| definition + export | `function isVisionHost(){` · `isVisionHost : isVisionHost,` | the surface, not a decision |
+| **show the Vision pane** | `showLanding()` guard/call · `build()`'s `if(isVisionHost())` | the hub itself; dead once DNS moves |
+| **a presentation FLAG, not a door** | `if(isVisionHost()) _vz += 'present=1'` | ⚠ the only one that would be *lost* rather than merely unreachable — **already reproduced** on the Showroom, whose Visualizer launcher hard-codes `?present=1` |
+| prose | 6 comments | no behaviour |
+
+**No remaining occurrence blocks the DNS cutover.**
+
+## Build 1189 — the Pop-Up Roof link opens the book again
+
+**A corrective build for a regression I shipped in 1187, found while recording pre-cutover state.**
+
+### What 1187 did, and why it was wrong
+
+1187 moved three Pop-Up Roof links from `/popup.html` to
+`https://presentation.cardinalroster.com/`, on the strength of `vercel.json`'s host rewrite. **I
+read the config and never fetched the URL.**
+
+**Measured in production, 31 Aug 2026:**
+
+| request | bytes | title |
+|---|---:|---|
+| `https://presentation.cardinalroster.com/` | **5,446,039** | **Cardinal Client Resources** ❌ |
+| `https://presentation.cardinalroster.com/popup.html` | 269,247 | **The Pop-Up Roof** ✅ |
+
+**The rewrite does not fire in production.** So 1187 made the link *worse*: it used to reach the
+book by path and reached the CRM instead. The build log entry for 1187 called that URL "where those
+things actually live" — that sentence was inferred, not measured, and it was false.
+
+### The three links, corrected
+
+| where | 1187 | 1189 |
+|---|---|---|
+| `visionHtml()` hub tile · `cr-lr-script` | `https://presentation.cardinalroster.com/` | `…/popup.html` |
+| ordinary landing's `.cr-lr-book` · `cr-lr-script` | same | `…/popup.html` |
+| Showroom `TILES` `popup.href` | same | `…/popup.html` |
+
+**Repairing the host rewrite is deliberately NOT in this build** (Theo). The goal was a destination
+we have actually seen serve the book. Whether `presentation.cardinalroster.com/` should also work
+is a separate decision.
+
+### The gate — `gate_1189.mjs`, 17/17
+
+It refuses both of the things that let 1187 through:
+
+- **A URL is fetched, never shape-checked.** The document that comes back must be titled
+  *The Pop-Up Roof*. "Looks canonical" and "answers 200" both fail.
+- **The intercept reproduces production AS MEASURED, not as configured.** `/` on that host answers
+  with the CRM in the harness exactly as it does live, so a build pointing at the bare host lands
+  on the CRM here too.
+
+Real clicks on the real controls, `target="_blank"` and all, asserting on the page that actually
+opens: the Vision hub tile and the Showroom launcher tile both open the book.
+
+⚠ **The ordinary landing's link cannot be clicked and is not pretended otherwise.** `#landingView`
+has been retired on ordinary hosts since 1165/1188, so its container never shows. The gate proves
+that link by fetching the href it carries and says in its own output that this is a destination
+proof, not a reachability proof. Forcing a retired pane visible would be staging a configuration no
+user can reach.
+
+**Control on the 1188 trees: RED, 10 failures** — and the line that matters is
+`clicking it OPENS THE BOOK → {"title":"Cardinal Client Resources"}`. The regression is reproduced
+in a browser, not argued for.
+
+⚠ **`gate_1187` and `gate_1188` both asserted the bare host** and were updated with the fix — a
+gate written against an unverified assumption locks the assumption in.
+
+### Gates
+
+Mechanical ladder green (stamp 1188 → 1189, marker + negative control). `gate_1187` 23/23,
+`gate_1188` 42/42, `gate_types` / `gate_dupes` / `gate_a11y` / `gate_stack` green, nothing grew.
+Showroom tag/brace balance green.
+
+`goToLanding()` and `isVisionHost()` untouched. No DNS record changed, no Vercel domain moved.

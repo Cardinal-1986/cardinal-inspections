@@ -123,7 +123,8 @@
  * Exit 0 clean, 1 with findings, 2 if it could not run — which is NOT the
  * same as clean and must never be read as green.                            */
 
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, statSync } from 'fs';
+import { dirname, join, resolve } from 'path';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
@@ -251,8 +252,22 @@ const browser = await chromium.launch({
    previous build through the IDENTICAL probe — same viewports, same themes,
    same setup — because a comparison between two different instruments is not
    a comparison at all. */
-async function sweep(HTML, findings) {
+/* ⚠ `base` IS NOT OPTIONAL DECORATION — it is what lets this instrument see an
+   app whose code is not inline. Until 31 Aug every URL under sentinel.test was
+   answered with the artifact HTML, so a page loading <script src="/x.js"> got
+   the DOCUMENT back and died on `SyntaxError: Unexpected token '<'`. Cardinal's
+   index.html has no external scripts, so nothing ever noticed; the Showroom is
+   four files and the sentinel could not see three of them.
+
+   Same blind spot check_external_scripts.mjs was written for, in a second
+   instrument. `base` is the directory of the artifact BEING SWEPT — which is
+   not always TARGET's, because --since sweeps a different file that may live in
+   a different tree. */
+async function sweep(HTML, findings, base) {
   const add = f => findings.push(f);
+  /* What actually came off disk, so a sweep can say whether it saw the whole app
+     or only its shell. Silence here is the failure mode this fix exists for. */
+  const served = new Set();
   let ran = 0;
   for (const theme of THEMES) {
   for (const vp of VIEWPORTS) {
@@ -278,8 +293,34 @@ async function sweep(HTML, findings) {
     });
     await page.route('**/*', async r => {
       const u = r.request().url();
-      if (u.startsWith('https://sentinel.test/'))
+      if (u.startsWith('https://sentinel.test/')) {
+        const rel = decodeURIComponent(new URL(u).pathname).replace(/^\/+/, '').split('?')[0];
+        /* The document itself. Anything else is a sibling file to look up. */
+        if (rel && base) {
+          /* ⚠ Refuse to climb out of the artifact's directory. A page asking for
+             ../../etc/passwd is not a page this rig should answer. resolve()
+             first — NOT normalize(): `base` comes from dirname(TARGET), so a
+             relative `index.html` gives base `.`, and `'showcase.js'` does not
+             start with `'./'`, so the guard rejected every sibling and the
+             sweep silently went back to serving the document. Found within the
+             hour, by the RIG check below — which is the whole reason it prints
+             the base directory it looked in. */
+          const abs = resolve(base, rel);
+          if ((abs === base || abs.startsWith(base + '/')) && existsSync(abs)) {
+            let st = null; try { st = statSync(abs); } catch (_) {}
+            if (st && st.isFile()) {
+              const ct = /\.m?js$/.test(abs)  ? 'text/javascript; charset=utf-8'
+                       : /\.css$/.test(abs)   ? 'text/css; charset=utf-8'
+                       : /\.json$/.test(abs)  ? 'application/json; charset=utf-8'
+                       : /\.html?$/.test(abs) ? 'text/html; charset=utf-8'
+                       : 'text/plain; charset=utf-8';
+              served.add(rel);
+              return r.fulfill({ status: 200, contentType: ct, body: readFileSync(abs) });
+            }
+          }
+        }
         return r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML });
+      }
       /* A 1x1 PNG for every image so a lazy or signed photograph still
          produces a real box. An empty body makes every <img> collapse to
          zero and COLLAPSE would then fire on the whole page. */
@@ -523,10 +564,30 @@ async function sweep(HTML, findings) {
     await ctx.close();
   }
   }
+
+  /* ⚠ SAY WHETHER THE WHOLE APP WAS ACTUALLY LOADED. A rig that silently served
+     the document in place of a module reports on the shell and calls it the app
+     — which is precisely what this rig did until 31 Aug, in complete silence,
+     for every multi-file artifact. So enumerate what the HTML asks for and
+     require it: a local external script the sweep never served is a rig
+     failure, not a clean page, and it is reported as a finding rather than
+     printed where nobody reads it. */
+  if (base) {
+    const wanted = [...HTML.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi)]
+      .map(m => m[1])
+      .filter(u => !/^(https?:)?\/\//i.test(u) && !/^data:/i.test(u))
+      .map(u => u.replace(/^\/+/, '').split('?')[0])
+      .filter(Boolean);
+    for (const w of new Set(wanted)) {
+      if (!served.has(w)) add({ id: 'RIG', where: 'load', key: 'rig|' + w,
+        detail: 'external script "' + w + '" was never served from ' + base +
+                ' — the sweep saw the shell, not the app' });
+    }
+  }
   return ran;
 }
 
-const ran = await sweep(APP, findings);
+const ran = await sweep(APP, findings, resolve(dirname(TARGET)));
 const attemptedHere = attempted;   /* freeze before the --since sweep adds its own */
 
 /* The previous build, through the same probe. A finding present in BOTH is
@@ -535,7 +596,7 @@ const priorKeys = new Set();
 let priorRan = 0;
 if (SINCE) {
   const before = [];
-  priorRan = await sweep(readFileSync(SINCE, 'utf8'), before);
+  priorRan = await sweep(readFileSync(SINCE, 'utf8'), before, resolve(dirname(SINCE)));
   for (const f of before) priorKeys.add(keyOf(f));
 }
 
@@ -771,6 +832,12 @@ if (SELFTEST) {
   console.log((dtInner ? '  FAIL  ' : '  PASS  ') +
     'a descendant inheriting the dead boundary is NOT reported twice');
   if (dtInner) bad++;
+  /* And the idiom the Showroom sweep tripped over: a decorative child of a
+     REAL button, opting out of hit-testing so the press lands on the button. */
+  const dtDeco = all.some(r => r.id === 'DEADTAP' && /(dt-ring|dt-glyph)/.test(r.detail));
+  console.log((dtDeco ? '  FAIL  ' : '  PASS  ') +
+    'a decorative child inside a live button is NOT reported as DEADTAP');
+  if (dtDeco) bad++;
   /* DUPE pair: two same-name buttons in a NON-menu container are two
      different objects' actions and must stay quiet. */
   const dupeCards = all.some(r => r.id === 'DUPE' && /dupe-cards/.test(r.detail));

@@ -1,0 +1,668 @@
+
+/* Cardinal OC Colors — the colour wall.  v2026-08-08 · build 623
+   A Vision surface, deliberately outside both app themes. Do NOT wire this to
+   rb-light. It was Blackout like #cr-show until 623; it now carries OWENS
+   CORNING'S OWN flyer palette — pink #EC008C, rich black #231F20, white —
+   sampled from their VentSure RidgeProwler 30 sheet, on Theo's pick. This
+   screen sells OC product, so it looks like OC. The Pink Panther is NOT used —
+   but NOT because Cardinal lacks the right to it, which is what this comment
+   claimed at 623 and was WRONG. Owens Corning's guidelines are written FOR
+   contractors and extend the character to them. It is absent because nothing
+   has been submitted for approval. Before adding ANY OC or Panther mark read
+   docs/OC_BRAND_RULES.md: approval via LMARoofing@owenscorning.com is required
+   before launch, and the OC logo must never be recoloured or reversed.
+   ⚠ The inks are SPLIT BY SURFACE below. --occ-dim is 6.38:1 on the black
+   ground and 2.55:1 on a white panel — it must never be used on white.
+   Every --occ-* reference carries a literal fallback (the Crews/Showcase
+   pattern) so a token stripped by another module cannot make this see-through:
+   builds 448-449 are the proof that is not theoretical. */
+#cr-occ{
+  /* 625: iOS Safari inflates text inside narrow block containers, and
+     .occ-title b is a display:block in a flex item with min-width:0 — the
+     exact shape it boosts. On Theo's iPad the line title rendered at roughly
+     double its authored size and wrapped "TruDefinition(R) Duration(R)
+     FLEX(R)" over six lines with the (R)s orphaned. text-size-adjust appears
+     NOWHERE else in this file.
+     SCOPED TO #cr-occ DELIBERATELY. Boosting has been active on iOS across
+     this whole app for years, so setting this globally on html would shrink
+     text app-wide on the one device Theo uses most — a large unreviewed
+     visual change smuggled in under a bug fix. Widening later is one
+     selector. #cr-show probably wants the same and is NOT included: it was
+     not reported and cannot be verified here.
+     NO GATE CAN SEE THIS. Chromium does not font-boost, which is why every
+     render of this screen looked correct. Theo's iPad is the only proof. */
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  /* 623: the palette is DECLARED here rather than edited across 103 call
+     sites. Every reference keeps its old literal fallback, so if another
+     module ever strips these the screen degrades to the old Blackout instead
+     of going see-through — the 448-449 failure mode stays closed. */
+  --occ-bg:#231F20;        /* OC rich black, sampled */
+  --occ-head:#231F20;
+  --occ-red:#EC008C;       /* OC brand pink — fills and LARGE type only */
+  --occ-line:#3A3536;      /* hairlines on the black ground */
+  /* white-panel set. These exist because a white card cannot reuse the dark
+     ground's inks: --occ-dim is 2.55:1 on white. Split, not shared. */
+  --occ-panel:#FFFFFF;
+  --occ-panel-ink:#231F20; /* 16.30:1 */
+  --occ-panel-dim:#55595E; /*  7.05:1 */
+  --occ-panel-line:#DCDCDC;
+  --occ-pink-ink:#A6006A;  /*  7.42:1 — pink that passes BODY on white */
+  /* The brand pink #EC008C is a FILL and a LARGE-type colour. It fails as small
+     text on the black ground (3.84:1) and fails under small white text
+     (4.25:1). Two measured variants do those two jobs. Same split-by-role rule
+     as the inks — a single value cannot serve three grounds. */
+  --occ-pink-on-dark:#F55CB2;  /* 5.48:1 — small pink TEXT on #231F20 */
+  --occ-pink-deep:#C4007A;     /* 5.79:1 under small WHITE text */
+  --occ-card:#FFFFFF;          /* tiles with no hero photo are white too */
+  display:none; position:fixed; inset:0; z-index:158;
+  background:var(--occ-bg,#050607); color:var(--occ-ink,#EDEFF2);
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  /* 630: the view is position:fixed and scrolls itself, so a flick that reaches
+     either end used to chain into the page behind and the two fought — which is
+     the "scrolling locks up" Theo reported. `contain` keeps the gesture in this
+     scroller. It does NOT fix weight; the shrink work below does that, and the
+     grid was ~40 MB before it. */
+  overscroll-behavior:contain;
+  font:400 16px/1.45 var(--occ-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif);
+}
+#cr-occ *{box-sizing:border-box}
+#cr-occ .occ-head{
+  position:sticky; top:0; z-index:3; display:flex; align-items:center; gap:12px;
+  padding:14px 16px; background:var(--occ-head,#0A0C0E);
+  border-bottom:1px solid var(--occ-line,#1D2126);
+}
+#cr-occ .occ-back{
+  flex:0 0 auto; min-width:44px; min-height:44px; display:inline-flex;
+  align-items:center; justify-content:center; gap:6px; padding:0 12px;
+  background:transparent; color:var(--occ-ink,#EDEFF2);
+  border:1px solid var(--occ-line,#1D2126); border-radius:9px;
+  font:600 15px var(--occ-sans,sans-serif); cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#cr-occ .occ-back:active{background:var(--occ-raise,#12151A)}
+#cr-occ .occ-title{flex:1 1 auto; min-width:0}
+#cr-occ .occ-title b{display:block; font:700 19px var(--occ-sans,sans-serif); letter-spacing:-.02em;
+  /* 626: forbid a break INSIDE a word. The line name is stored
+     'TruDefinition\00ae Duration\00ae FLEX\00ae' with no space before the mark,
+     so an ordinary wrap cannot strand it — yet Theo's iPad put every \00ae on
+     its own line. Chromium will not reproduce that at any width tested, which
+     points at a Safari line-breaking difference around U+00AE that cannot be
+     observed from here. keep-all closes it regardless of the cause. */
+  word-break:keep-all}
+#cr-occ .occ-title span{display:block; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+
+#cr-occ .occ-filters{
+  display:flex; flex-wrap:wrap; gap:8px; padding:12px 16px 4px;
+}
+#cr-occ .occ-chip{
+  min-height:36px; padding:0 13px; border-radius:999px; cursor:pointer;
+  background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE);
+  border:1px solid var(--occ-line,#1D2126);
+  font:600 13.5px var(--occ-sans,sans-serif); -webkit-tap-highlight-color:transparent;
+}
+#cr-occ .occ-chip[aria-pressed="true"]{
+  background:var(--occ-red,#c8202e); border-color:var(--occ-red,#c8202e); color:#fff;
+}
+#cr-occ .occ-count{padding:6px 16px 10px; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+
+#cr-occ .occ-grid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:14px; padding:4px 16px 32px;
+}
+#cr-occ .occ-card{
+  background:var(--occ-panel,#fff); border:1px solid var(--occ-panel-line,#DCDCDC);
+  color:var(--occ-panel-ink,#231F20); border-radius:12px; overflow:hidden; cursor:pointer; text-align:left;
+  padding:0; color:inherit; font:inherit; -webkit-tap-highlight-color:transparent;
+}
+#cr-occ .occ-card:active{border-color:var(--occ-red,#c8202e)}
+#cr-occ .occ-shot{position:relative; width:100%; aspect-ratio:3/2; background:#0A0C0E; overflow:hidden}
+#cr-occ .occ-shot img{width:100%; height:100%; object-fit:cover; display:block}
+/* the hex-swatch fallback. hex_verified is false on every row, so this must
+   never be presented as the product colour — hence the explicit label. */
+#cr-occ .occ-swatch{width:100%; height:100%; display:flex; align-items:flex-end}
+#cr-occ .occ-unver{
+  width:100%; padding:6px 9px; font:600 11px var(--occ-sans,sans-serif);
+  letter-spacing:.02em; color:#fff; background:rgba(0,0,0,.62);
+}
+#cr-occ .occ-meta{padding:11px 12px 13px}
+#cr-occ .occ-name{font:700 15.5px var(--occ-sans,sans-serif); letter-spacing:-.01em}
+#cr-occ .occ-sub{margin-top:3px; font-size:12.5px; color:var(--occ-panel-dim,#55595E)}
+#cr-occ .occ-tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px}
+#cr-occ .occ-tag{
+  padding:3px 8px; border-radius:999px; font:700 11px var(--occ-sans,sans-serif);
+  letter-spacing:.04em; text-transform:uppercase;
+}
+#cr-occ .occ-tag.coty{background:var(--occ-gold,#C9A227); color:#1A1400}
+#cr-occ .occ-tag.was{background:var(--occ-goldq,#3A3208); color:var(--occ-gold,#C9A227)}
+#cr-occ .occ-tag.new{background:var(--occ-red,#c8202e); color:#fff}
+#cr-occ .occ-tag.disc{background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE); border:1px solid var(--occ-line,#1D2126)}
+
+#cr-occ .occ-empty{padding:40px 16px; text-align:center; color:var(--occ-dim,#9AA3AE)}
+
+/* ---- detail ---- */
+#cr-occ .occ-detail{display:none; padding:0 0 40px}
+#cr-occ.detail .occ-filters,#cr-occ.detail .occ-grid,#cr-occ.detail .occ-count{display:none}
+#cr-occ.detail .occ-detail{display:block}
+#cr-occ .occ-hero{width:100%; aspect-ratio:3/2; background:#0A0C0E; overflow:hidden; position:relative}
+#cr-occ .occ-hero img{width:100%; height:100%; object-fit:cover; display:block}
+#cr-occ .occ-credit{
+  position:absolute; right:8px; bottom:8px; padding:4px 8px; border-radius:6px;
+  background:rgba(0,0,0,.6); font-size:11px; color:#D8DCE2;
+}
+#cr-occ .occ-body{padding:18px 16px 0; max-width:760px}
+#cr-occ .occ-h{font:700 24px var(--occ-sans,sans-serif); letter-spacing:-.02em}
+#cr-occ .occ-desc{margin-top:10px; color:var(--occ-ink2,#C6CCD4); font-size:15.5px}
+#cr-occ .occ-note{
+  margin-top:14px; padding:10px 12px; border-left:3px solid var(--occ-red,#c8202e);
+  background:var(--occ-raise,#12151A); font-size:14px; color:var(--occ-ink2,#C6CCD4);
+  border-radius:0 8px 8px 0;
+}
+#cr-occ .occ-sec{margin:26px 0 10px; padding:0 16px; max-width:760px}
+#cr-occ .occ-sec b{display:block; font:700 17px var(--occ-sans,sans-serif)}
+#cr-occ .occ-sec span{display:block; margin-top:3px; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-ours{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px; padding:0 16px;
+}
+#cr-occ .occ-ours figure{margin:0; border:1px solid var(--occ-line,#1D2126); border-radius:10px; overflow:hidden; background:var(--occ-card,#0E1114); position:relative}
+#cr-occ .occ-ours img{cursor:zoom-in}
+/* 630: the delete. Admin-only in the UI and admin-only in RLS — the button is a
+   convenience, the policy is the fence. It sits over the image, not in the
+   caption, so it cannot be hit while reading the label. */
+#cr-occ .occ-del{
+  position:absolute; top:8px; right:8px; z-index:2;
+  width:32px; height:32px; padding:0; border-radius:8px; cursor:pointer;
+  background:rgba(8,10,12,.72); border:1px solid rgba(255,255,255,.30);
+  color:#fff; font:700 15px/1 system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent}
+#cr-occ .occ-del:hover{background:var(--occ-pink-deep,#C4007A); border-color:var(--occ-pink-deep,#C4007A)}
+#cr-occ .occ-del[disabled]{opacity:.5; cursor:default}
+/* 631: secondary to "Add our roofs" — it is a one-off repair, not a daily
+   action, and it disappears once there is nothing left to repair. */
+#cr-occ .occ-btn.ghost{background:transparent; color:var(--occ-pink-on-dark,#F55CB2);
+  border:1px solid var(--occ-pink-on-dark,#F55CB2)}
+#cr-occ .occ-btn.ghost:hover{background:var(--occ-pink-deep,#C4007A); border-color:var(--occ-pink-deep,#C4007A); color:#fff}
+#cr-occ .occ-btn.ghost[disabled]{opacity:.6; cursor:default}
+
+/* 630: full screen, swipe through. Deliberately its OWN element rather than
+   reusing the Showcase's openLens: that one reads data-path against showcase
+   storage paths and belongs to a client-facing presentation surface. This is
+   an internal browse. */
+#cr-occ-shot{
+  display:none; position:fixed; inset:0; z-index:170; background:rgba(8,7,9,.96);
+  touch-action:pan-y; overscroll-behavior:contain}
+#cr-occ-shot.open{display:flex; flex-direction:column; align-items:center; justify-content:center}
+#cr-occ-shot img{max-width:100%; max-height:calc(100% - 96px); object-fit:contain;
+  border-radius:8px; box-shadow:0 20px 50px rgba(0,0,0,.6)}
+#cr-occ-shot .cap{margin-top:14px; max-width:640px; text-align:center;
+  font:650 13.5px var(--occ-sans,system-ui,sans-serif); color:var(--occ-pink-on-dark,#F55CB2)}
+#cr-occ-shot .n{margin-top:5px; font:500 12px var(--occ-sans,system-ui,sans-serif); color:#9AA3AE}
+#cr-occ-shot button{
+  position:absolute; width:48px; height:48px; border-radius:50%; cursor:pointer;
+  background:rgba(255,255,255,.13); border:0; color:#fff; font:600 20px/1 system-ui,sans-serif;
+  display:flex; align-items:center; justify-content:center;
+  -webkit-tap-highlight-color:transparent}
+#cr-occ-shot button:hover{background:rgba(255,255,255,.26)}
+#cr-occ-shot .x{top:calc(14px + env(safe-area-inset-top,0px)); right:16px}
+#cr-occ-shot .prev{left:14px; top:50%; margin-top:-24px}
+#cr-occ-shot .next{right:14px; top:50%; margin-top:-24px}
+#cr-occ-shot .prev[disabled], #cr-occ-shot .next[disabled]{opacity:.25; cursor:default}
+@media (max-width:640px){
+  /* 592's floor still applies, but arrows at the screen edge fight a thumb
+     swipe on a phone. The swipe IS the control there; the arrows step aside. */
+  #cr-occ-shot .prev, #cr-occ-shot .next{display:none}
+}
+#cr-occ .occ-ours img{width:100%; aspect-ratio:3/2; object-fit:cover; display:block;
+  /* 633, Theo: "white boxes then loads slow". The white was not a fault — 623
+     set --occ-card:#FFFFFF and the figure shows through until the image paints,
+     so an ordinary lazy load flashed WHITE on a near-black page and read as
+     something broken. The image carries the dark ground itself, so an unpainted
+     tile looks like a tile waiting rather than a hole. */
+  background:var(--occ-head,#231F20)}
+#cr-occ .occ-ours figcaption{
+  /* 630, Theo: "make those small white labels black with pink letters".
+     He was reading a real defect. 623 set --occ-card:#FFFFFF, and the figure
+     paints from it, so this caption has been grey-on-white at 2.55:1 since —
+     under the 4.5:1 body floor, which is why it looked washed out.
+     The pink is --occ-pink-on-dark (5.48:1 on this ground), NOT the brand pink
+     #EC008C: that is 3.84:1 as small text and is a FILL/large-type colour by
+     OC's own rules. Same shade the rest of this module uses for small pink. */
+  padding:8px 10px; font-size:12.5px; font-weight:650;
+  background:var(--occ-head,#231F20);
+  color:var(--occ-pink-on-dark,#F55CB2);
+  border-top:1px solid var(--occ-line,#3A3536)}
+#cr-occ .occ-none{padding:0 16px; color:var(--occ-dim,#9AA3AE); font-size:14px}
+#cr-occ .occ-actions{display:flex; flex-wrap:wrap; gap:10px; padding:16px}
+#cr-occ .occ-btn{
+  min-height:44px; padding:0 16px; border-radius:10px; cursor:pointer;
+  background:var(--occ-red,#c8202e); color:#fff; border:0;
+  font:700 15px var(--occ-sans,sans-serif); -webkit-tap-highlight-color:transparent;
+}
+#cr-occ .occ-btn.ghost{background:transparent; color:var(--occ-ink,#EDEFF2); border:1px solid var(--occ-line,#1D2126)}
+#cr-occ .occ-btn[disabled]{opacity:.5; cursor:default}
+#cr-occ input[type=file]{display:none}
+@media (max-width:520px){
+  #cr-occ .occ-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px}
+  #cr-occ .occ-h{font-size:21px}
+}
+
+/* ---- 616: the line picker, and the three-level state machine -------------
+   Levels are two classes on #cr-occ:
+       (none)   the hub — pick a product line
+       .line    a line page — description, specs, its colours
+       .detail  one colour
+
+   .detail sits ON TOP of .line (a colour is always opened from a line), so the
+   .detail rules below carry an extra class and out-specify the .line ones
+   rather than relying on source order — which a later edit could quietly
+   reverse. Every --occ-* reference carries a literal fallback: builds 448–449
+   are what happens when a token is stripped by another module at load.
+-------------------------------------------------------------------------- */
+#cr-occ .occ-hub{display:block; padding:14px 16px 40px; max-width:760px}
+#cr-occ .occ-lead{display:none; padding:16px 16px 4px; max-width:760px}
+#cr-occ:not(.line):not(.detail) .occ-filters,
+#cr-occ:not(.line):not(.detail) .occ-count,
+#cr-occ:not(.line):not(.detail) .occ-grid{display:none}
+#cr-occ.line .occ-hub{display:none}
+#cr-occ.line .occ-lead{display:block}
+#cr-occ.detail .occ-hub,
+#cr-occ.detail .occ-lead{display:none}
+
+/* the tiles */
+#cr-occ .occ-line{
+  display:block; width:100%; text-align:left; margin:0 0 10px;
+  padding:15px 16px; min-height:44px; cursor:pointer;
+  background:var(--occ-panel,#fff); color:var(--occ-panel-ink,#231F20);
+  border:1px solid var(--occ-panel-line,#DCDCDC); border-radius:14px;
+  font:inherit; -webkit-appearance:none; appearance:none;
+}
+#cr-occ .occ-line:active{border-color:var(--occ-red,#c8202e)}
+#cr-occ .occ-line.soon{cursor:default; opacity:.62}
+#cr-occ .occ-line.soon:active{border-color:var(--occ-line,#1D2126)}
+#cr-occ .occ-lname{
+  display:flex; align-items:center; gap:9px;
+  font:700 17.5px var(--occ-sans,sans-serif); letter-spacing:-.02em;
+  color:var(--occ-panel-ink,#231F20);
+}
+#cr-occ .occ-go{margin-left:auto; color:var(--occ-dim,#9AA3AE); font-weight:600}
+#cr-occ .occ-soon{
+  margin-left:auto; padding:3px 8px; border-radius:999px;
+  font:700 11px/1.35 var(--occ-sans,sans-serif); letter-spacing:.06em; text-transform:uppercase;
+  background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE);
+  border:1px solid var(--occ-line,#1D2126);
+}
+#cr-occ .occ-lkind{margin-top:4px; font-size:13px; color:var(--occ-panel-dim,#55595E)}
+#cr-occ .occ-lsub{margin-top:6px; font-size:12.5px; color:var(--occ-panel-dim,#55595E)}
+
+/* the line page's description and spec table */
+#cr-occ .occ-blurb{margin:0 0 14px; font-size:15.5px; line-height:1.5; color:var(--occ-ink2,#C6CCD4)}
+#cr-occ .occ-spec{width:100%; border-collapse:collapse; font-size:14px}
+#cr-occ .occ-spec th,
+#cr-occ .occ-spec td{
+  text-align:left; vertical-align:top; padding:9px 0;
+  border-bottom:1px solid var(--occ-line,#1D2126);
+}
+#cr-occ .occ-spec th{
+  width:41%; padding-right:14px; font-weight:600;
+  color:var(--occ-dim,#9AA3AE);
+}
+#cr-occ .occ-spec td{color:var(--occ-ink,#EDEFF2)}
+#cr-occ .occ-src{margin-top:10px; font-size:12px; color:var(--occ-dim,#9AA3AE)}
+
+/* the replacement, on the discontinued card itself */
+#cr-occ .occ-repl{margin-top:7px; font-size:12.5px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-repl b{color:var(--occ-ink2,#C6CCD4); font-weight:600}
+
+/* separates the Designer chips from the shade chips */
+#cr-occ .occ-div{
+  flex:0 0 auto; width:1px; align-self:stretch; margin:2px 4px;
+  background:var(--occ-line,#1D2126);
+}
+
+@media (max-width:520px){
+  #cr-occ .occ-spec th{width:46%; font-size:13px}
+  #cr-occ .occ-spec td{font-size:13.5px}
+  #cr-occ .occ-lname{font-size:16.5px}
+}
+
+/* ---- 617: Designer is a TAB, and the wind-number caution ------------------
+   Theo: "Also tab designer series". A collection is a different kind of choice
+   from a shade, so it must not look like another chip in the same row. The tab
+   strip sits above the chips with an underline indicator; shades stay chips.
+-------------------------------------------------------------------------- */
+#cr-occ .occ-tabs{display:none}
+#cr-occ.line .occ-tabs{
+  display:flex; gap:4px; align-items:flex-end; padding:14px 16px 0;
+  max-width:760px; border-bottom:1px solid var(--occ-line,#1D2126);
+  overflow-x:auto;overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
+}
+#cr-occ.detail .occ-tabs{display:none}
+#cr-occ .occ-tab{
+  flex:0 0 auto; min-height:44px; padding:0 14px; cursor:pointer;
+  background:transparent; color:var(--occ-dim,#9AA3AE);
+  border:0; border-bottom:2px solid transparent; margin-bottom:-1px;
+  font:600 14.5px var(--occ-sans,sans-serif); letter-spacing:-.01em;
+  white-space:nowrap; -webkit-appearance:none; appearance:none;
+}
+#cr-occ .occ-tab[aria-pressed="true"]{
+  color:var(--occ-ink,#EDEFF2);
+  border-bottom-color:var(--occ-red,#c8202e);
+}
+
+/* The Oakridge caution. Deliberately louder than .occ-src: it is the
+   difference between a true and a false statement about a warranty. */
+#cr-occ .occ-note2{
+  margin-top:12px; padding:11px 13px; border-radius:10px;
+  background:var(--occ-raise,#12151A);
+  border:1px solid var(--occ-line,#1D2126);
+  border-left:3px solid var(--occ-red,#c8202e);
+  font-size:13.5px; line-height:1.5; color:var(--occ-ink2,#C6CCD4);
+}
+#cr-occ .occ-note2 b{display:block; margin-bottom:3px; color:var(--occ-ink,#EDEFF2)}
+
+/* ---- 618: three presentation styles, ABOVE 820px ONLY --------------------
+   Theo: "What if you could filter between 3 styles?" — roofs first for a warm
+   lead, the comparison board when you are justifying why not the cheap shingle,
+   the editorial spread when the room wants to be impressed.
+
+   THE PHONE IS UNTOUCHED. Everything below is inside one min-width query, and
+   the switcher itself is display:none under it, because a control that changes
+   nothing you can see is worse than no control.
+
+   The two-column split grids #occBody, NOT #cr-occ — open() writes an inline
+   display:block on #cr-occ, and inline beats every stylesheet rule at any
+   specificity. That is the styleMounts()/showApp() trap, avoided deliberately.
+-------------------------------------------------------------------------- */
+#cr-occ .occ-styles{display:none}
+#cr-occ .cmp,#cr-occ .cmp-right,#cr-occ .cmp-head{display:none}
+
+@media (min-width:820px){
+  #cr-occ .occ-head{padding:16px 40px}
+  #cr-occ .occ-title b{font-size:clamp(19px, 2.1vw, 26px)}   /* 626: fits rather than wraps */
+  #cr-occ .occ-title span{font-size:15px}
+
+  #cr-occ .occ-styles{
+    display:flex; flex:0 0 auto; gap:2px; padding:3px; border-radius:12px;
+    background:var(--occ-raise,#12151A); border:1px solid var(--occ-line,#1D2126);
+  }
+  #cr-occ .occ-sty{
+    min-height:44px; padding:0 16px; border:0; border-radius:9px; cursor:pointer;
+    background:transparent; color:var(--occ-dim,#9AA3AE);
+    font:600 14.5px var(--occ-sans,sans-serif); letter-spacing:-.01em;
+    -webkit-appearance:none; appearance:none; white-space:nowrap;
+  }
+  #cr-occ .occ-sty[aria-pressed="true"]{
+    background:var(--occ-red,#c8202e); color:#fff;
+  }
+
+  /* ---- the split, shared by Roofs and Compare ---- */
+  #cr-occ[data-style="roofs"] .occ-body2,
+  #cr-occ[data-style="compare"] .occ-body2{
+    /* NOT a grid. A grid item spanning all four rows contributes its height
+       back into those tracks, so the tall pitch column pushed the first roof
+       1161px down an 834px screen — and min-content tracks did not stop it.
+       A float is genuinely the right tool: it leaves normal flow for sizing,
+       the rest of the content flows beside it, and position:sticky composes
+       with it. Measured, not assumed. */
+    position:relative;
+  }
+  #cr-occ[data-style="roofs"].line .occ-lead,
+  #cr-occ[data-style="compare"].line .occ-lead{
+    float:left; width:37%; position:sticky; top:80px;
+    max-width:none; padding:26px 24px 30px 40px;
+  }
+  #cr-occ[data-style="roofs"].line .occ-tabs,
+  #cr-occ[data-style="compare"].line .occ-tabs{margin-left:37%; max-width:none; padding:22px 40px 0}
+  #cr-occ[data-style="roofs"].line .occ-filters,
+  #cr-occ[data-style="compare"].line .occ-filters{margin-left:37%; padding:16px 40px 4px}
+  #cr-occ[data-style="roofs"].line .occ-count,
+  #cr-occ[data-style="compare"].line .occ-count{margin-left:37%; padding:6px 40px 12px}
+  #cr-occ[data-style="roofs"].line .occ-grid,
+  #cr-occ[data-style="compare"].line .occ-grid{
+    margin-left:37%; padding:0 40px 60px; gap:18px;
+    grid-template-columns:repeat(auto-fill,minmax(228px,1fr));
+  }
+  #cr-occ[data-style="roofs"] .occ-blurb,
+  #cr-occ[data-style="compare"] .occ-blurb{font-size:17.5px; line-height:1.55}
+  #cr-occ .occ-tab{font-size:16px; padding:0 18px}
+
+  /* ---- ROOFS: the hub is five roofs ---- */
+  #cr-occ[data-style="roofs"]:not(.line):not(.detail) .occ-hub{
+    max-width:none; padding:24px 40px 60px;
+    display:grid; grid-template-columns:1fr 1fr; gap:20px;
+  }
+  #cr-occ[data-style="roofs"] .occ-line{
+    background-image:var(--hero);
+    position:relative; margin:0; padding:0; height:264px; overflow:hidden;
+    border-radius:20px; background-size:cover; background-position:center 62%;
+    display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  #cr-occ[data-style="roofs"] .occ-line::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg,rgba(4,5,7,.10) 0%,rgba(4,5,7,.55) 52%,rgba(4,5,7,.93) 100%);
+  }
+  #cr-occ[data-style="roofs"] .occ-line > *{position:relative; z-index:1; padding:0 26px}
+  #cr-occ[data-style="roofs"] .occ-lname{font-size:28px; letter-spacing:-.025em; text-shadow:0 2px 14px rgba(0,0,0,.6)}
+  #cr-occ[data-style="roofs"] .occ-lkind{font-size:15px; margin-top:6px; color:#D8DDE3}
+  #cr-occ[data-style="roofs"] .occ-lsub{
+    font-size:12px; margin:12px 0 24px; letter-spacing:.09em; text-transform:uppercase;
+    color:#AEB6BF; font-weight:600;
+  }
+  /* the two lines with no catalogue rows and therefore no roof: the wind
+     rating becomes the artwork rather than borrowing another line's photo */
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto]{background:var(--occ-card,#0E1114)}
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto]::after{
+    background:linear-gradient(180deg,rgba(4,5,7,0) 0%,rgba(4,5,7,.65) 100%);
+  }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto]::before{
+    content:attr(data-nophoto); position:absolute; right:26px; top:4px; z-index:0;
+    font:800 132px/1 var(--occ-sans,sans-serif); letter-spacing:-.06em; color:#181D24;
+  }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lsub{color:#A9B2BC}
+
+  /* ---- COMPARE: the hub is a board ---- */
+  #cr-occ[data-style="compare"]:not(.line):not(.detail) .occ-hub{max-width:none; padding:24px 40px 60px}
+  #cr-occ[data-style="compare"] .occ-line{
+    margin:0 0 10px; padding:18px 26px; border-radius:14px; height:auto;
+    display:grid; grid-template-columns:290px 1fr 180px;
+    grid-template-rows:auto auto; align-items:center; column-gap:30px; text-align:left;
+  }
+  #cr-occ[data-style="compare"] .occ-lname{grid-column:1; grid-row:1; font-size:20px}
+  #cr-occ[data-style="compare"] .occ-lkind{grid-column:1; grid-row:2; font-size:13px; margin-top:3px}
+  #cr-occ[data-style="compare"] .occ-lsub{display:none}
+  #cr-occ[data-style="compare"] .occ-go{display:none}
+  #cr-occ .cmp{display:block; grid-column:2; grid-row:1 / span 2; position:relative}
+  #cr-occ .cmp-right{display:block; grid-column:3; grid-row:1 / span 2; text-align:right}
+  #cr-occ .cmp-track{height:26px; border-radius:6px; background:#ECECEC; position:relative; overflow:hidden}
+  #cr-occ .cmp-fill{position:absolute; top:0; bottom:0; left:0; border-radius:6px;
+    background:linear-gradient(90deg,#A6006A,#EC008C)}
+  #cr-occ .cmp-ext{position:absolute; top:0; bottom:0; border-radius:0 6px 6px 0;
+    background:repeating-linear-gradient(115deg,#F7B9DC 0 7px,#FBDCEE 7px 14px);
+    border-right:2px solid var(--occ-red,#EC008C)}
+  #cr-occ .cmp-num{margin-top:8px; font:700 13.5px var(--occ-sans,sans-serif); color:var(--occ-ink,#EDEFF2)}
+  #cr-occ .cmp-num.soft{font-weight:500; color:var(--occ-dim,#9AA3AE); margin-top:0}
+  #cr-occ .cmp-num small{font-weight:500; color:var(--occ-dim,#9AA3AE)}
+  #cr-occ .cmp-chip{display:inline-block; padding:5px 11px; border-radius:999px;
+    font:700 11.5px var(--occ-sans,sans-serif); letter-spacing:.05em; text-transform:uppercase}
+  #cr-occ .cmp-c4{background:var(--occ-red,#c8202e); color:#fff}
+  #cr-occ .cmp-c3{background:#1B2028; color:var(--occ-ink2,#C6CCD4); border:1px solid #262C35}
+  #cr-occ .cmp-cn{background:transparent; color:#6E7681; border:1px dashed #2A3038}
+  #cr-occ .cmp-warr{margin-top:8px; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+  #cr-occ .cmp-head{
+    display:grid; grid-template-columns:290px 1fr 180px; column-gap:30px; padding:0 26px 10px;
+    font:600 11.5px var(--occ-sans,sans-serif); letter-spacing:.1em; text-transform:uppercase;
+    color:#6E7681;
+  }
+  #cr-occ .cmp-head span:last-child{text-align:right}
+
+  /* ---- FEATURE: an editorial spread ---- */
+  #cr-occ[data-style="feature"]:not(.line):not(.detail) .occ-hub{
+    max-width:none; padding:24px 44px 60px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
+  }
+  #cr-occ[data-style="feature"] .occ-line{
+    background-image:var(--hero);
+    position:relative; margin:0; padding:0; height:326px; overflow:hidden;
+    border-radius:4px; background-size:cover; background-position:center 60%;
+    display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  #cr-occ[data-style="feature"] .occ-line::after{content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg,rgba(4,5,7,0) 30%,rgba(4,5,7,.92) 100%)}
+  #cr-occ[data-style="feature"] .occ-line > *{position:relative; z-index:1; padding:0 22px}
+  #cr-occ[data-style="feature"] .occ-lname{font-size:24px; letter-spacing:-.02em}
+  #cr-occ[data-style="feature"] .occ-lkind{font-size:14px; margin-top:5px; color:#CBD2D9}
+  #cr-occ[data-style="feature"] .occ-lsub{font-size:11.5px; margin:10px 0 20px;
+    letter-spacing:.09em; text-transform:uppercase; color:#9AA3AE; font-weight:600}
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto]{background:#0C0F13}
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto]::after{display:none}
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto]::before{
+    content:attr(data-nophoto); position:absolute; left:22px; top:28px;
+    font:800 92px/1 var(--occ-sans,sans-serif); letter-spacing:-.05em; color:#1A2028;
+  }
+  #cr-occ[data-style="feature"] .occ-lead{max-width:none; padding:0 0 10px}
+  #cr-occ[data-style="feature"] .occ-blurb{
+    max-width:820px; margin:0 auto 22px; padding:0 44px;
+    font-size:20px; line-height:1.5; color:#DDE2E8;
+  }
+  #cr-occ[data-style="feature"] .occ-spec{max-width:900px; margin:0 auto; padding:0 44px; font-size:15px}
+  #cr-occ[data-style="feature"] .occ-src,
+  #cr-occ[data-style="feature"] .occ-note2{max-width:900px; margin-left:auto; margin-right:auto}
+  #cr-occ[data-style="feature"].line .occ-tabs{max-width:none; padding:24px 44px 0; justify-content:center; border-bottom:0}
+  #cr-occ[data-style="feature"] .occ-filters{justify-content:center; padding:14px 44px 4px}
+  #cr-occ[data-style="feature"] .occ-count{text-align:center; padding:4px 44px 16px}
+  #cr-occ[data-style="feature"] .occ-grid{padding:0 44px 70px; gap:22px;
+    grid-template-columns:repeat(auto-fill,minmax(292px,1fr))}
+  #cr-occ[data-style="feature"] .occ-card{border-radius:4px}
+  #cr-occ[data-style="feature"] .occ-name{font-size:18px}
+
+  /* a colour reads big in every style */
+  #cr-occ.detail .occ-hero{aspect-ratio:16/7}
+  #cr-occ .occ-body{max-width:900px; padding:26px 40px 0}
+  #cr-occ .occ-h{font-size:32px}
+  #cr-occ .occ-desc{font-size:17.5px}
+  #cr-occ .occ-sec{padding:0 40px; max-width:900px}
+  #cr-occ .occ-ours{padding:0 40px; grid-template-columns:repeat(auto-fill,minmax(255px,1fr))}
+  #cr-occ .occ-none,#cr-occ .occ-actions{padding-left:40px; padding-right:40px}
+}
+
+/* ---- 620: the SureNail proof --------------------------------------------
+   Theo: "Sure nail strip is what sells the duration compared to competitors."
+   The figures read big because that is what a customer carries away; the
+   basis sits under them in small type because that is what makes them true.
+   Never style the basis to disappear — a multiple without it is marketing.
+-------------------------------------------------------------------------- */
+#cr-occ .occ-proof{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0 10px;
+}
+#cr-occ .occ-proof .pf{
+  padding:13px 12px; border-radius:12px; text-align:center;
+  background:var(--occ-raise,#12151A); border:1px solid var(--occ-line,#1D2126);
+}
+#cr-occ .occ-proof .pf b{
+  display:block; font:800 27px/1 var(--occ-sans,sans-serif); letter-spacing:-.03em;
+  color:var(--occ-red,#c8202e);
+}
+#cr-occ .occ-proof .pf span{
+  display:block; margin-top:7px; font-size:11.5px; line-height:1.35;
+  color:var(--occ-ink2,#C6CCD4);
+}
+#cr-occ .occ-pbasis{
+  font-size:11.5px; line-height:1.45; color:var(--occ-dim,#9AA3AE); margin-bottom:4px;
+}
+@media (min-width:820px){
+  #cr-occ .occ-proof .pf b{font-size:31px}
+  #cr-occ .occ-proof .pf span{font-size:12.5px}
+  #cr-occ[data-style="feature"] .occ-proof,
+  #cr-occ[data-style="feature"] .occ-pbasis{
+    max-width:900px; margin-left:auto; margin-right:auto; padding:0 44px;
+  }
+}
+
+/* ---- 623: the flyer skin ------------------------------------------------
+   Only surfaces that CHANGE ROLE (dark card -> white panel) are restated here;
+   everything else moved with the tokens above. Kept small on purpose — retail
+   proved an override layer is a liability past ~20 rules. If this grows, move
+   it into the base rules instead of stacking. */
+#cr-occ .occ-head{ border-bottom:3px solid var(--occ-red,#EC008C); }
+#cr-occ .occ-title span{ color:var(--occ-red,#EC008C); }
+#cr-occ .occ-hub, #cr-occ #occBody, #cr-occ .occ-lead{ background:var(--occ-bg,#231F20); }
+
+/* white panels: cards, tiles, the proof figures, the wind note */
+#cr-occ .occ-name{ color:var(--occ-panel-ink,#231F20); }
+#cr-occ .occ-proof .pf{ background:var(--occ-panel,#fff); border-color:var(--occ-panel-line,#DCDCDC); color:var(--occ-panel-dim,#55595E); }
+#cr-occ .occ-proof .pf b{ color:var(--occ-red,#EC008C); }   /* 27px/800 — large, 4.25:1 */
+#cr-occ .occ-note2{ background:var(--occ-panel,#fff); color:var(--occ-panel-ink,#231F20); border-left-color:var(--occ-red,#EC008C); }
+#cr-occ .occ-note2 b{ color:var(--occ-pink-ink,#A6006A); }  /* body-size pink -> 7.42:1 */
+
+/* the comparison board sits on white rows now */
+#cr-occ .cmp-num{ color:var(--occ-panel-ink,#231F20); }
+#cr-occ .cmp-num small{ color:var(--occ-panel-dim,#55595E); }
+#cr-occ .cmp-warr{ color:var(--occ-panel-dim,#55595E); }
+#cr-occ .cmp-head{ color:var(--occ-red,#EC008C); }
+#cr-occ .cmp-chip.cmp-cn{ color:var(--occ-panel-dim,#55595E); border-color:var(--occ-panel-line,#DCDCDC); }
+/* .cmp-c3 carried background:#1B2028 from the dark scheme. Restating only its
+   INK left dark-on-dark — the chip rendered as an unreadable black pill on a
+   white row, and no gate could see it. Restate the GROUND with the ink. */
+#cr-occ .cmp-chip.cmp-c3{ background:#F1F1F1; color:var(--occ-panel-ink,#231F20); border-color:var(--occ-panel-line,#DCDCDC); }
+/* Discontinued's glance uses .cmp-num.soft -> --occ-dim, which is 2.55:1 on
+   white. The banner above says never to do that; this is the site it meant. */
+#cr-occ .cmp-num.soft{ color:var(--occ-panel-dim,#55595E); }
+
+/* gold survives only as a GROUND. #C9A227 as text on white is 2.42:1. */
+#cr-occ .occ-tag.coty{ color:#1A1400; }
+
+/* ---- 623b: every finding from the real-engine contrast audit ------------
+   25 text nodes measured below their WCAG floor. jsdom cannot see any of this
+   (var() in a shorthand comes back transparent), and most were invisible to me
+   by eye — including .occ-lname at 1.16:1, dark ink on the dark card that the
+   un-photographed Oakridge and Supreme tiles still used. */
+#cr-occ .occ-go{ color:var(--occ-panel-dim,#55595E); }
+#cr-occ .occ-title span{ color:var(--occ-pink-on-dark,#F55CB2); }
+#cr-occ .cmp-head{ color:var(--occ-pink-on-dark,#F55CB2); }
+#cr-occ .cmp-head span{ color:var(--occ-pink-on-dark,#F55CB2); }
+/* small white text needs the deeper pink underneath it */
+#cr-occ .cmp-c4{ background:var(--occ-pink-deep,#C4007A); }
+#cr-occ .occ-sty[aria-pressed="true"]{ background:var(--occ-pink-deep,#C4007A); font-weight:700; }
+
+/* ---- 623c: white is for DATA surfaces, not for photo cards ---------------
+   ⚠ MUST stay inside @media(min-width:820px). `data-style` is set on #cr-occ at
+   EVERY width — only the 618 presentation rules are viewport-gated. Written
+   ungated, these dark photo-cards landed on the PHONE, where tiles are white,
+   and put #231F20 ink on a #171415 card at 1.12:1. The phone is the surface
+   with the pixel baseline; nothing style-specific may reach it.
+
+   The audit read Duration's tile as "light ink on white" in `roofs` — that is
+   the audit's blind spot, not a defect: the tile is a PHOTO card and the ink
+   sits over the hero's scrim, which backgroundColor cannot see. The real bug it
+   exposed is that the colour BENEATH the photo had gone white, so a hero that
+   failed to load would strand light text on white. */
+@media (min-width:820px){
+  /* background-COLOR, never the shorthand: `background:` resets
+     background-image and wiped the hero photograph off every tile. The
+     "really paints a roof" assertion caught it; nothing else would have. */
+  #cr-occ[data-style="roofs"] .occ-line,
+  #cr-occ[data-style="feature"] .occ-line{ background-color:#171415; }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto],
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto]{ background-color:var(--occ-panel,#fff); }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lname,
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto] .occ-lname{ color:var(--occ-panel-ink,#231F20); }
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lkind,
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lsub,
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto] .occ-lkind,
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto] .occ-lsub,
+  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-go,
+  #cr-occ[data-style="feature"] .occ-line[data-nophoto] .occ-go{ color:var(--occ-panel-dim,#55595E); }
+  /* photo tiles keep light ink over the scrim, and the name with it */
+  #cr-occ[data-style="roofs"] .occ-line:not([data-nophoto]) .occ-lname,
+  #cr-occ[data-style="feature"] .occ-line:not([data-nophoto]) .occ-lname{ color:#F4F6F8; }
+  #cr-occ[data-style="roofs"] .occ-line:not([data-nophoto]) .occ-go,
+  #cr-occ[data-style="feature"] .occ-line:not([data-nophoto]) .occ-go{ color:#E7EAEE; }
+  /* the compare board's rows ARE data surfaces */
+  #cr-occ[data-style="compare"] .occ-line{ background-color:var(--occ-panel,#fff); }
+  #cr-occ[data-style="compare"] .occ-lname{ color:var(--occ-panel-ink,#231F20); }
+  #cr-occ[data-style="compare"] .occ-lkind{ color:var(--occ-panel-dim,#55595E); }
+}
+/* the switcher's pressed label: white on the deeper pink, bold so the 3.0
+   large-text floor applies at 14px+ */
+#cr-occ .occ-sty[aria-pressed="true"]{ color:#fff; }
