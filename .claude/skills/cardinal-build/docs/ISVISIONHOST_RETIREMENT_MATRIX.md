@@ -7,6 +7,47 @@ Theo, 31 Aug: *"Keep `showroom.cardinalroster.com` as the intended final hostnam
 repoint it until all 13 `isVisionHost()` dependencies have explicit replacements and Vision is
 verified without that hostname. Use a temporary staging URL until final cutover."*
 
+## ⚠️ MEASURED 31 Aug, AFTER build 1186: **NONE of the four call sites can be inverted yet**
+
+*This section was added when the first cutover build was attempted. It stopped that build.*
+
+**`showroom.cardinalroster.com` is LIVE and serves Cardinal's own `index.html`.** Not inferred —
+both hosts were fetched and compared:
+
+| | |
+|---|---|
+| `showroom.cardinalroster.com` | HTTP 200, **5,446,039 bytes** |
+| `app.cardinalroster.com` | HTTP 200, **5,446,039 bytes** |
+| `cmp` of the two | **byte-identical** |
+| build stamp served on the showroom host | **`v2026-08-31 build 1185`** |
+| `isVisionHost` / `visionHtml` present in what it serves | **10 / 2** |
+
+So `isVisionHost()` returns **true on that hostname today**, and the Vision hub is what a rep
+opening it actually sees. The four call sites are not dormant code waiting to be tidied — they
+are **the live behaviour of a client-facing hostname**.
+
+**Therefore inverting any of them before the repoint is a production regression, not a cutover:**
+
+| site | what inverting it does TODAY |
+|---|---|
+| 3 · `showLanding()` | the Vision hub stops painting; `showroom.*` shows the CRM landing |
+| 4 · `goToLanding()` | the CRM teardown starts running on the Vision hub |
+| 5 · `build()` | `visionHtml()` is deleted; the hub markup no longer exists to swap in |
+| 6 · the Visualizer hand-off | Vision users silently drop from **Present** to **Prep** |
+
+⚠️ **This is what this document's own closing section already says** — *"Nothing above happens
+before the repoint"* — and it is Theo's own settled condition: the hostname is not repointed until
+every dependency has a replacement **and Vision is verified without that hostname**. The order is
+not a preference; the `?vision=1` door exists precisely so step 2 can happen while `showroom.*`
+still works, which is why the definition is deleted **last**.
+
+⚠️ **And "the four SAFE call sites" is not a set that exists.** There are **four call sites in
+total**, and `goToLanding()` is one of them. Excluding it leaves **three**, not four — and on the
+evidence above, the safe count before the repoint is **zero**. The phrase came from me and was
+wrong; it is corrected here so the next reader does not plan around it.
+
+---
+
 ## ⚠ FIRST: "13 dependencies" is 13 OCCURRENCES, and it is SIX code locations
 
 The figure 13 is real — `grep -c isVisionHost index.html` returns 13, and I quoted it that way
