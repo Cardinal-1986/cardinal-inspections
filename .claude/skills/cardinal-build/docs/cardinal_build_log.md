@@ -31417,3 +31417,79 @@ the *same dark override the pencil already uses* — the artwork is visible and 
   `window.` assignment, the reworded comment, `prodcal`, and the filename in a comment. Every time
   the fix was the same: **assert on a form prose cannot forge** (the `url(...)` wrapper, the full
   `<img ...>` tag), never on a bare token count.
+
+## Instruments — the gates stop guessing how long the app takes to boot (31 Aug 2026)
+
+**No build number: this touches no shipped artifact.** `index.html` is untouched; this is the
+gate ladder only.
+
+**The measurement that started it.** Across `scripts/*.mjs`: **933 `waitForTimeout` calls totalling
+1,111,716 ms — 18.5 minutes of pure sleeping** — against **61 `waitForFunction` and zero
+`waitForSelector`**. Then, on the shipped tree, when the app is actually ready:
+
+| signal | first true |
+|---|---:|
+| pipecards / teamcal rendered | 84 ms |
+| main view visible · 30-day calendar filled | 226 ms |
+| supabase client present | 277 ms |
+| `CardinalFrontDoor` available | 474 ms |
+| DOM complete · header · crm stamp | **555 ms** |
+
+**The gates were sleeping 3500 ms.** Six times too long — and the waste is the small half. A fixed
+sleep is a **guess**, and it fails in both directions: too short on a loaded machine reads a
+half-booted app and goes red on correct code, or reads an empty DOM and passes **vacuously**.
+
+⚠️ **And Playwright's auto-waiting does NOT cover this**, which is worth stating because it sounds
+like it should. Auto-waiting applies to `locator()` actions and `waitForSelector`; these gates use
+**neither** — they sleep, then `page.evaluate`. Determinism had to be written, not inherited.
+
+**`gate_ready.mjs`** is the fix: `waitAppReady()` polls real app signals; `waitFor()` /
+`waitForSoft()` replace settle sleeps; `settle()` is the one honest fixed wait (a CSS transition,
+where there is no predicate to name). Selftest **9/9**, and it proves the FAILURE directions, not
+just the passes.
+
+**The design decision that paid for itself immediately: it throws, and it NAMES the stuck signal.**
+
+### ⚠ Two failures on the way, both mine, both instructive
+
+**1. A throwing helper puts the burden on the predicate — and it killed a gate.** The first
+conversion replaced the post-navigation sleep with a throwing `waitFor` on *"the home board
+rendered"* (`>=3 .pipecard`). That is not true on every gate's flow, so **`gate_1176` died instead
+of reporting** — BUG_CLASSES 37, a gate that crashes reads as "not green" rather than "proved
+nothing". Hence **`waitForSoft()`**: replacing a sleep must never be able to make a gate crash
+where it used to report. Worst case it degrades to exactly the old behaviour, a bounded wait.
+
+**2. A readiness signal that measured THE TEST RIG instead of the app.** `document.readyState ===
+'complete'` was the obvious first signal. It broke **five of six gates**, each hanging the full 30s
+and throwing `domComplete=false`. Cause: those gates **abort images, fonts and stylesheets** in
+their route handler, so the window `load` event never fires and readyState never leaves
+`'interactive'`. `gate_1183` passed only because it serves images. **Same shape as the `gate_types`
+bug earlier the same day** — an instrument reporting on itself. Signal removed; the three that
+remain are app-level facts.
+
+⚠️ **Finding that took one run instead of five files' worth of guessing, purely because the error
+said `still false: domComplete=false`.** A bare "timeout" would have cost a round. If you extend
+this helper, keep the naming.
+
+### Result — six gates converted, all green, all still RED on their controls
+
+| gate | before | after | control |
+|---|---:|---:|---|
+| gate_1176 | ~28 s | **7.5 s** | — |
+| gate_1178 | ~30 s | **6.9 s** | — |
+| gate_1179 | ~35 s | **10.8 s** | — |
+| gate_1181 | ~40 s | **13.6 s** | — |
+| gate_1182 | ~30 s | **3.0 s** | RED 8/19 vs 1181, exit 1 |
+| gate_1183 | ~28 s | **5.0 s** | RED 10/24 vs 1182, exit 1 |
+
+**The control column is the point, not the timings.** Both controls fail with the *same counts as
+before the conversion*, so the gates got faster without losing the ability to catch a regression —
+a faster gate that stopped being able to fail would be a straight downgrade.
+
+⚠️ **The other ~900 sleeps are untouched, deliberately.** These six are the ones whose boot guess
+was measured. Converting the rest is a separate job and wants the same standard: green, and still
+red on a control.
+
+⚠️ **Comment pollution fired a SIXTH time here** — the conversion's own comment spelled the literal
+`waitForTimeout(3500)`, so the "no boot sleep survives" assertion failed on correct code. Same fix
+as the five before it: assert on a form prose cannot forge, and never on a bare token count.
