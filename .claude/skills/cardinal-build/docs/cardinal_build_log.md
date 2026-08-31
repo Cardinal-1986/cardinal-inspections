@@ -31493,3 +31493,82 @@ red on a control.
 ⚠️ **Comment pollution fired a SIXTH time here** — the conversion's own comment spelled the literal
 `waitForTimeout(3500)`, so the "no boot sleep survives" assertion failed on correct code. Same fix
 as the five before it: assert on a form prose cannot forge, and never on a bare token count.
+
+## Audit — every gate in the folder run, for the first time (31 Aug 2026)
+
+**No build number: nothing shipped.** 271 `gate_*.mjs` run end to end, which had
+never been done. Prompted by `gate_1180` being found crashing on `main` unnoticed.
+
+### The headline is NOT a decay number — it is that the suite cannot be run as a suite
+
+| the suite has | count |
+|---|---|
+| gates taking `index.html` as their argument | **213** |
+| gates taking something else (`api/clientsign.js`, `api/digest.js`, `sw.js`, `supplement.html`, **`visualizer/index.html`**, a *directory*, a seed JSON) | **19** |
+| gates taking no argument | ~39 |
+| distinct output formats (`GATE GREEN` 36 · `GREEN n/n` 16 · no verdict 33 · other) | **4** |
+| incompatible working-directory assumptions | **2** (some need repo root, some need `scripts/`) |
+
+**That is why nobody has ever run them all, and why a gate can rot in silence.**
+
+### Final state after correcting for invocation
+
+**215 pass · 45 red · 8 crash → 3 CONFIRMED problems**, plus 45 reds still
+uncharacterised. Six of eight "crashes" were healthy gates invoked wrongly:
+
+| gate | it actually needed | result |
+|---|---|---|
+| `gate_1062` | a **directory** (opens `<arg>/vercel.json`) | GREEN 9/9 |
+| `gate_1148` · `gate_1149b` · `gate_preview` | cwd = `scripts/` | GREEN 6/6 · 4/4 · 68/68 |
+| **`gate_807`** | **`visualizer/index.html`** — it tests the Visualizer | GREEN 33/33 |
+| `gate_1151` | a Stripe SDK dir — **its own header says so** | environment-specific |
+| `gate_1007` · `gate_784` · `gate_offline864` · `gate_smsnotify874` · `gate_1009` · `gate_1013` · `gate_1071` · `gate_968` · `gate_abcorder` | their own `api/*` or `supplement.html` | all GREEN |
+
+And **2 of 3 timeouts were merely slow**: `gate_1068` PASS 35/35 in 148s,
+`gate_sheets937` GREEN in 197s. The 75s cap was the defect.
+
+### The three that are real
+
+- **`gate_1015` — MY REGRESSION, red on `main`, now fixed.** Build 1182 gave
+  `buildEstimate()` a new dependency (`CARDINAL_LOGO_SRC`) and the gate
+  hand-injects dependencies into the extracted function. The app was never
+  broken. **I ran four regression gates before merging 1182 and this was not one
+  of them — I did not know it existed.**
+- **`gate_754` — genuine rot.** Deterministic 3/3. Clicks a `#crBanner` nav path
+  the 1164–1174 header rebuilds removed.
+- **`gate_prodwide904` — orphaned.** Needs three args including a seed JSON;
+  nothing in the repo invokes it.
+- **`gate_993` is NOT broken and must not be "fixed" by deleting CSS.** It fails
+  22/23 *on purpose*, refusing to go green while its walk cannot reach
+  `#navMenu` and `#cr-lnav` — a gate that declines to report on coverage it does
+  not have. It wants a wide-viewport state and one that opens the burger.
+
+⚠️ **`#cr-lnav` looked like 87 dead CSS rules and is NOTHING OF THE KIND.** It
+has **0 occurrences in markup** and no `id='cr-lnav'` assignment — because
+`cr-lnav-script` creates it through a variable: `var MOUNT='cr-lnav'` then
+`h=document.createElement('nav'); h.id=MOUNT;`. **Grep the value, not the name.**
+One more inch and this audit would have deleted a live desktop nav.
+
+### ⚠ THE SURVEY ITSELF WAS WRONG THREE TIMES, ALL THE SAME SHAPE
+
+Every failure was the instrument measuring **its own environment** instead of its
+subject — the same class as `gate_types` inventing a global from a comment, and
+`waitAppReady` keying on `readyState` that the harness's own route-aborting
+prevented:
+
+1. **Classified on printed words.** With four output conventions in the folder,
+   five healthy gates read as CRASH. → classify on the **exit code**.
+2. **Ran from `scripts/`.** Older gates read `index.html` relatively and ENOENT
+   in under a second, looking stone dead. → run from the **repo root**.
+3. **Ran every gate bare.** 164 of 271 REQUIRE an argument. → pass the artifact.
+4. Then **passing `index.html` to all of them** broke the 19 that want something
+   else — and made `gate_1007` copy 5.4 MB into the repo as a leaked temp file.
+
+**The first published numbers (199/59/10) overcounted failures badly. Do not
+quote them.**
+
+### What this says about the ~900 remaining fixed waits
+
+**Converting them is not the next job.** A manifest — what each gate needs, and
+one output format — is, because without it "all gates green" is not a claim
+anyone can make honestly, including the person who just ran all 271.
