@@ -3,25 +3,64 @@
 *31 Aug 2026. `index.html` (Cardinal) is byte-identical at build **1185**. No CRM call site,
 hostname behaviour, DNS or production deployment was touched.*
 
-## 1. ⚠ THE ONE THING NOT DELIVERED: there is no staging URL yet
+## 1. ✅ DEPLOYED — the staging URL
 
-**Creating the repository is blocked.** `POST /user/repos` returns **403 Resource not accessible
-by integration** — this session's GitHub App cannot create repositories, only work inside
-`cardinal-inspections`.
+**https://cardinal-showroom.vercel.app**
+branch alias: `https://cardinal-showroom-git-main-theodorion1986-8546s-projects.vercel.app`
 
-**And I did not route around it by pasting the app into Vercel.** `deploy_to_vercel` takes the
-file tree inline, which would mean re-emitting **~290 KB of `showcase.js`, `colors.js`, their
-stylesheets and `api/detect.js` by hand**. I did not author that text in this session; re-typing
-it is a transcription risk whose failure mode is a silently truncated file *that is already
-deployed*. The house rule is to confirm what you push is what you verified, and I could not.
+⚠️ **Precisely: that is the Showroom project's own PRODUCTION domain**, because `main` is its
+production branch — it is not a PR preview. It is staging in the sense that matters: it is **not**
+`showroom.cardinalroster.com`, and **no DNS was touched.**
 
-**Unblock — two steps, the first is Theo's and takes under a minute:**
+**Repository:** `Cardinal-1986/cardinal-showroom`, `main` at **`9b771a5`**.
 
-1. Create an empty **`Cardinal-1986/cardinal-showroom`** (private, no README).
-2. Then, in a session: `add_repo` → push `.claude/showroom-staging/` to it as the repo root →
-   `create_git_project` against it → Vercel returns the **temporary staging URL**. No DNS.
+### Hash verification — the deployed bytes, not just a 200
 
-Everything else below is built, measured and committed.
+Fetched from the live site and hashed against the local tree, because "it returns 200" is not
+evidence that what is serving is what was gated:
+
+| file | deployed | local | |
+|---|---|---|---|
+| `index.html` | `adff0a09e61c11c5` | `adff0a09e61c11c5` | ✅ |
+| `showcase.js` | `d52d272efd6be661` | `d52d272efd6be661` | ✅ |
+| `showcase.css` | `67aa2502a4f1a9c8` | `67aa2502a4f1a9c8` | ✅ |
+| `colors.js` | `f7e706d1b4d9e4e4` | `f7e706d1b4d9e4e4` | ✅ |
+| `colors.css` | `c4d1bb3572e4a80f` | `c4d1bb3572e4a80f` | ✅ |
+| `showroom-images.js` | `ac7cab8e517717b9` | `ac7cab8e517717b9` | ✅ |
+
+Every one matches the manifest gated on PR #584. Serving `<title>Cardinal Showroom</title>` and
+`cr-showroom-auth`.
+
+**`.vercelignore` holds:** `.claude/…/module_source.cjs`, `README.md` and
+`.github/workflows/check.yml` all return **404**. The gates and the doc set are not served.
+
+**`/api/detect` returns 500, not 404** — the function deployed and runs; it fails only for the
+missing key. See §6.
+
+### Why it did not deploy on the first push, and the real defect that fixed it
+
+The Vercel project was linked **after** the initial push, so no webhook had ever fired and the
+project sat at zero deployments. I could not trigger one through the API: the project lives in a
+Vercel scope this token cannot act in — `list_deployments` answers **403, not 404**, which is how
+its existence was established rather than assumed.
+
+So the trigger had to be a push. **It was not an empty commit.** `api/detect.js` had been copied
+into this project *without the configuration that makes it work*: Cardinal's own `vercel.json`
+raises that route to `maxDuration: 60` because it is a Gemini vision call over a full inspection
+photograph, and the Showroom had no `vercel.json` at all. Left alone it would have **timed out on
+every real photograph while looking perfectly deployed** — a correct-looking deployment of a
+broken route. Commit `9b771a5` adds it, and pushing it produced the first build.
+
+⚠️ **Copying a serverless route is not copying the route.** Its `maxDuration`, and any other
+`vercel.json` entry, travel with it or it is a different function.
+
+### The two access blocks, recorded because they were not the ones expected
+
+1. `POST /user/repos` → **403 Resource not accessible by integration.** Creating a repository is
+   simply not a permission the Claude GitHub App holds. Theo created it.
+2. After creation, `add_repo` attached it read-only and the first push was **refused** — the App
+   was not installed *for that repository*. A new repo is not added to an existing installation
+   automatically. Granting it was the last blocker.
 
 ## 2. What was built
 
@@ -119,16 +158,26 @@ silently stops being checked is a signature free to start colliding with a real 
 normal and never works. Build 808's lesson exactly. It now says so on screen. **Proven, not
 asserted**: the CDN is blocked in this sandbox, so the guard is what actually fires.
 
-**Not verified, and I cannot verify it here:** an end-to-end sign-in. I have no staff credentials,
-and the CDN is unreachable from this sandbox. The auth path, the RLS gating and the id resolution
-are built and readable; **the first real sign-in is Theo's to do** once the staging URL exists.
+**Verified against the LIVE deployment** (curl, not assumed): every module file byte-identical to
+the gated manifest, the correct title and `cr-showroom-auth` present, the gates and docs 404, and
+`/api/detect` answering 500 rather than 404 — see §1.
+
+**Not verified, and I cannot verify it here:** an end-to-end sign-in, and the rendered page.
+I have no staff credentials; the supabase CDN is unreachable from this sandbox, and Chromium's
+tunnel to `cardinal-showroom.vercel.app` resets here (curl reaches it, the browser does not). So
+the sign-in screen is unverified *visually* — **the first real sign-in is Theo's to do**, using
+the checklist in §6.
 
 ## 5. Cutover checklist
 
-- [ ] **Theo:** create empty `Cardinal-1986/cardinal-showroom`
-- [ ] Push `.claude/showroom-staging/` as that repo's root; delete it from Cardinal
-- [ ] `create_git_project` → record the staging URL
-- [ ] Set `GEMINI_API_KEY` in the Showroom project (The Walk); nowhere else
+- [x] **Theo:** create empty `Cardinal-1986/cardinal-showroom` — done
+- [x] Grant the Claude GitHub App access to that repo — done; it was the last blocker
+- [x] Push the verified tree as the repo root — done, `main` at `9b771a5`, hashes checked live
+- [x] Vercel project linked and deployed — **https://cardinal-showroom.vercel.app**
+- [ ] ⚠ **Set `GEMINI_API_KEY` in the Showroom project** (The Walk only); nowhere else, never in
+      the repo. **This is the one outstanding configuration step** — `/api/detect` currently
+      returns 500 for exactly this reason
+- [ ] Delete `.claude/showroom-staging/` from Cardinal once the repo is the single source
 - [ ] **Theo signs in on staging** — the first real auth test
 - [ ] Open `#/project/eb81f3f4-…`; confirm the pack and photos load
 - [ ] Open Showcase and OC Colors; confirm both present
@@ -138,3 +187,28 @@ are built and readable; **the first real sign-in is Theo's to do** once the stag
 - [ ] Showroom CI green on its own repo
 - [ ] **Only then:** the `isVisionHost` retirement (matrix), then the repoint, then `cr-show-*`
       and `cr-occ-*` removal — each its own build, in that order
+
+## 6. Remaining, and the sign-in test checklist
+
+**One configuration step outstanding: `GEMINI_API_KEY` on the Showroom Vercel project.** It is
+needed only by The Walk's `/api/detect`; everything else runs without it. It must be set in the
+Vercel dashboard and **never committed** — the standing rule, and the one this repo already has a
+CI check for. ⚠️ **Expect The Walk's detection to fail loudly until it is set**, and that is the
+correct behaviour rather than a fault.
+
+Walk this on the staging URL:
+
+1. Signed out: the form renders; no CRM chrome behind it.
+2. Bad password: the failure message comes from Supabase and the form stays usable.
+3. Valid staff sign-in: the launcher shows Showcase and OC Colors native, Studio and the
+   Visualizer as outbound links, **no Pop-Up Roof**.
+4. **Session isolation:** signing in here does **not** sign you out of `app.cardinalroster.com` —
+   that is `cr-showroom-auth` doing its job.
+5. Reload: still signed in.
+6. `#/project/eb81f3f4-2baf-41cb-86b3-847009fa8e3b` → the pack shows a name and stage; Project
+   Photos load or say plainly there are none.
+7. A random UUID → *"That project is not visible to this account"* — RLS refusing, not a crash.
+8. A non-admin account: the catalogue still opens (all-staff read) and no write control appears.
+9. Present mode: the prep-only chrome hides — **confirm it changed only what is drawn.** It is a
+   display boundary, not an authentication one.
+10. Sign out → back to the form; reload does not restore the session.
