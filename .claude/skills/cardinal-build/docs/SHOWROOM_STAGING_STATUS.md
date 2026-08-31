@@ -3,12 +3,13 @@
 *31 Aug 2026. `index.html` (Cardinal) is byte-identical at build **1185**. No CRM call site,
 hostname behaviour, DNS or production deployment was touched.*
 
-> ⚠️ **UPDATED after Theo used it. Five defects were found on the deployed app — every one of
-> them in the shell I wrote, none in the relocated modules, and none visible to any mechanical
-> gate.** Three were reported by Theo from a screenshot (`bd9a907`); two more were found by
-> looking at the app afterwards (`fa14733`). **§5 is the record — read it before trusting the
-> “verified” language elsewhere in this document.** The relocation itself has held: the five
-> module files have not changed a byte since the first push.
+> ⚠️ **UPDATED after Theo used it. Six defects were found on the deployed app — every one of
+> them in the shell or the CI I wrote, none in the relocated modules, and none visible to any
+> mechanical gate.** Three were reported by Theo from a screenshot (`bd9a907`); two more were
+> found by looking at the app afterwards (`fa14733`); the sixth is that **this repo's own CI had
+> never once passed** (`f61ff7c`). **§5 is the record — read it before trusting the “verified”
+> language elsewhere in this document.** The relocation itself has held: the five module files
+> have not changed a byte since the first push.
 
 ## 1. ✅ DEPLOYED — the staging URL
 
@@ -21,9 +22,13 @@ production branch — it is not a PR preview. It is staging in the sense that ma
 
 **Repository:** `Cardinal-1986/cardinal-showroom`, `main` at **`fa14733`**.
 
-Five commits: `a9f9f45` the app · `9b771a5` the `maxDuration` budget · `3d9ccaa` the missing
+Six commits: `a9f9f45` the app · `9b771a5` the `maxDuration` budget · `3d9ccaa` the missing
 `_staff.js` · **`bd9a907` the three broken destinations** · **`fa14733` black photographs and a
-header that pushed Present off the phone**. The last two are §5.
+header that pushed Present off the phone** · **`f61ff7c` the secret check that failed on its own
+definition**. The last three are §5.
+
+✅ **Showroom CI is GREEN — for the first time, at `f61ff7c`.** Run 6 of 6; runs 1–5 were all red
+and I had looked at none of them. See §5, defect 6.
 
 ### Hash verification — the deployed bytes, not just a 200
 
@@ -218,16 +223,18 @@ tunnel to `cardinal-showroom.vercel.app` resets here (curl reaches it, the brows
 the sign-in screen is unverified *visually* — **the first real sign-in is Theo's to do**, using
 the checklist in §7.
 
-## 5. What broke after deployment — five defects, all mine, none in the modules
+## 5. What broke after deployment — six defects, all mine, none in the modules
 
-*Written 31 Aug 2026, after Theo opened the staging URL. **Every mechanical gate was green while
-all five were live.** Three came from one screenshot he sent; two more came from looking at the
-app the same way afterwards. Recorded in full because the pattern is the finding.*
+*Written 31 Aug 2026, after Theo opened the staging URL. **Every mechanical gate that ran was
+green while the first five were live — and the sixth is that most of them were not running at
+all.** Three came from one screenshot he sent; two more from looking at the app the same way
+afterwards; the sixth from finally reading this repo's own CI. Recorded in full because the
+pattern is the finding.*
 
 **The pattern: the relocation was sound and the SHELL was not.** The five module files are
 byte-identical to the gated manifest and have never moved. Everything below is code I wrote to
-host them — a mount, a close lever, a link, a signing shim, a header row. Ported code arrives
-with its conventions; new host code arrives with none, and that is where the defects were.
+host them — a mount, a close lever, a link, a signing shim, a header row, a CI check. Ported code
+arrives with its conventions; new host code arrives with none, and that is where the defects were.
 
 | # | Symptom Theo saw | Cause | Commit |
 |---|---|---|---|
@@ -236,6 +243,7 @@ with its conventions; new host code arrives with none, and that is where the def
 | 3 | **Studio 404** | I linked `studio.cardinalroster.com`, a subdomain I invented and never checked | `bd9a907` |
 | 4 | **The screens still load black** | `signedPhotoMap` keyed its result by `row.path` instead of `list[i]` — the map came back empty, so no photograph resolved | `fa14733` |
 | 5 | (not reported — found in a screenshot) | The header row did not wrap: at 414px **Present was pushed off-screen entirely** | `fa14733` |
+| 6 | (not visible at all) | **This repo's CI had never once passed.** The secret check grepped the repo for `service_role` — and the only file containing it was the workflow that defines the grep | `f61ff7c` |
 
 ### 1 — providing a mount anchor was not neutral
 
@@ -284,16 +292,43 @@ used on a phone at a kitchen table. The bar now wraps, the mode buttons and the 
 longer break internally, the identity line ellipsises, and below 560px the wordmark takes its own
 row while the spacer collapses.
 
+### 6 — a check that failed on the file that defines it
+
+`grep -rIl 'service_role\|SUPABASE_SERVICE' .` over the whole repository. The only file carrying
+that string is `.github/workflows/check.yml` **because the grep is written in it.** The step
+therefore failed on the very first push and on all five after it: **runs 1–5 all red, and I had
+read none of them.** Every claim in this document about the Showroom's own gates was made under a
+red tick.
+
+**This is comment pollution wearing a green hat** — the class `CLAUDE.md` names more than any
+other, in the one direction that hides itself. *Naming a thing is not carrying it:*
+`process.env.SUPABASE_SERVICE_ROLE_KEY` is correct code, and a comment stating the rule is not a
+leak. It is replaced by `.github/scan_secret.js`, which matches **a form prose cannot forge**: a
+JWT whose **decoded** payload claims `service_role` or `supabase_admin`, and the `sb_secret_`
+prefix. Nothing is matched on source text, so the scanner, its own comment and every env-var name
+are clean by construction.
+
+It runs `--selftest` as the first line of the step — **2/2: a file that only names the key passes,
+a fabricated privileged key is rejected** (built at runtime from its parts, so no key literal is
+committed). A scanner never seen to fail is not evidence, and this one had been red for five
+commits without anyone learning a thing from it.
+
+⚠️ **The lesson is not "fix the grep", it is "a red tick you do not read is worse than no tick".**
+The checklist item *"Showroom CI green on its own repo"* sat unticked and I treated it as pending
+rather than as failing. Verified by extracting all ten steps of `check.yml` and running them
+locally (exit 0) before pushing; **run 6 is the first green one.**
+
 ### What this costs the rest of this document
 
 ⚠️ **§4's “verified in Chromium” was true and was not enough.** It proved the modules *load* and
-export live objects. It did not open either screen, and four of these five defects are one click
-past where that check stopped — the fifth is only visible at a phone width. **This is the sentinel
+export live objects. It did not open either screen, and four of defects 1–5 are one click past
+where that check stopped — the fifth is only visible at a phone width. **This is the sentinel
 rule from `CLAUDE.md` — a sweep of the front door reports CLEAN and means nothing by it — and the
 Showroom does not yet have a sentinel setup file.** That is now on the checklist.
 
 ⚠️ **A CI step added at `bd9a907` refuses a pre-created `cr-show` or `cr-occ` element**, with a
-control proving it fires on the reintroduced bug. Defects 2, 4 and 5 have no mechanical gate yet.
+control proving it fires on the reintroduced bug — and, since `f61ff7c`, that step actually runs.
+**Defects 2, 4 and 5 still have no mechanical gate.**
 
 **Not fixed here, because it is not this app's:** the Visualizer link is correct and `?present=1`
 is the right parameter, but its Prep landing is **Cardinal's own logic** — it only switches tabs
@@ -324,7 +359,8 @@ after `loadCatalog().then(loadProjects)` resolves. That is a Cardinal build and 
 - [ ] Drop `harness_vision` from the Showroom set (CRM-only) and re-scope `gate_983`, `gate_1076`,
       `harness_showcase`, `harness_colors` to the Showroom's own surfaces — baseline what remains
 - [ ] Fix `harness_walk`'s shell DOM gap and the pre-existing `crAsk` drift
-- [ ] Showroom CI green on its own repo
+- [x] **Showroom CI green on its own repo** — `f61ff7c`, run 6. Runs 1–5 were red on a secret
+      check that matched its own definition; §5 defect 6
 - [ ] **Only then:** the `isVisionHost` retirement (matrix), then the repoint, then `cr-show-*`
       and `cr-occ-*` removal — each its own build, in that order
 
