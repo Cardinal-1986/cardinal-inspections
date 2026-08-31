@@ -48,6 +48,91 @@ wrong; it is corrected here so the next reader does not plan around it.
 
 ---
 
+## The parity build, audited 31 Aug — and the two doors that have no URL to link to
+
+*Theo: preserve access rather than knowingly drop hub destinations. The Appointment → outbound
+tile, do not relocate. Pop-Up Roof → outbound tile (the prior decision was "not a native Showroom
+module", not "remove access"). Why Cardinal → audit first, no duplicate launcher for a number.
+And outbound tools must use a canonical absolute production URL, not a path whose behaviour
+depends on which hostname serves the deployment.*
+
+### ✅ WHY CARDINAL: there is only ONE implementation, and it is not in the Showroom
+
+Answering the three-way question directly — **it is (1), the same module, with the qualification
+that the Showroom has no implementation of it at all.**
+
+`grep -rn "Why Cardinal|CardinalWhy|whyCardinal"` over the entire Showroom repo returns **zero
+files**. The "Showroom product definition already includes a Why Cardinal experience" is a line in
+`SHOWROOM_EXTRACTION_SPIKE.md` — *"Not measured here, and required before step 5: The Walk, Why
+Cardinal, The Appointment and Proof are also presentation surfaces inside index.html"* — an
+**intention**, never built. **So an outbound tile is not a duplicate launcher.**
+
+⚠️ **But there ARE two implementations of this content, and both are in Cardinal.** Worth stating
+because it is the thing that looks like a duplicate and is not:
+
+| | `cr-sf-script` → `proof()` | `cr-why-script` → `CardinalWhy` |
+|---|---|---|
+| shipped | Sales Floor, pre-1160 | **build 1160** |
+| audience | **the rep** | **the homeowner** |
+| reached by | Sales Floor → Proof pane | Vision hub `data-go="why"` · the Appointment's `openWhy()` |
+| size | 1,618 chars | 5,217 chars |
+| voice | *"Ask a competitor whether they do."* · *"The facts you should be able to give without looking anything up."* | *"Both of those are promises. The second one is the one that matters."* |
+| sections | company · warranty · what goes on the roof · their rights | company · **Owens Corning** · warranty · what goes on **your** roof · **your** right to cancel |
+
+Same five topics, deliberately refaced — `OPEN_ITEMS` calls it *"a reface, not a write"*. The rep
+version stays in the CRM; the client version is the presentation surface. **Neither is redundant.**
+
+⚠️ **`CardinalWhy` has TWO callers, and the second one constrains the cutover.** Besides the hub
+tile, `openWhy()` in `cr-appt-script` calls it — The Appointment's running order is
+Job → Roof → Good → **Why** → House. **Relocating Why Cardinal natively would break the
+Appointment or force a second copy of it.** That is an independent argument for the outbound tile
+Theo asked for, and it lines up with his instruction not to relocate the Appointment.
+
+### ⚠ THE BLOCKER: The Appointment and Why Cardinal have no canonical URL to point at
+
+They are in-app modules, not pages. Cardinal's hash router (`__tryRestoreFromHash`) restores
+exactly these views:
+
+`#p/… · #e/… · #list/… · #leads · #reports · #clients · #feed · #audit · #board · #me · #team · #settings`
+
+**Neither `why` nor `appt` is among them.** Today the only way to reach either is to open the
+Vision hub — on `showroom.*` or `?vision=1` — and tap the tile. So the instruction *"use its
+intended canonical absolute production URL"* cannot be followed for these two: **the URL does not
+exist yet, and inventing a link to a URL that does not resolve is the studio-subdomain mistake
+again.**
+
+Both modules are otherwise ready for one. `cr-why` is a plain `inset:0` DISPLAY-lever view
+registered in `hideAllViews()`, **not host-gated** — its banner says "Reached from the Vision hub
+only", which is a convention, not a guard. `CardinalWhy.open()` and `CardinalAppointment.open()`
+would both work on any host today.
+
+**Two shapes are possible and it is a product decision, not a mechanical one:**
+
+| | where it lives | cost | risk |
+|---|---|---|---|
+| **A · hash route** — `app.cardinalroster.com/#why`, `/#appt` | two cases in `__tryRestoreFromHash` + two openers | small | ⚠ touches the **history router**, which is `goToLanding()`-adjacent — the class Theo ring-fenced |
+| **B · landing query** — `app.cardinalroster.com/?open=why` | honoured inside `cr-lr-script` only | small | no history-router involvement; survives the `isVisionHost` deletion |
+
+**B is the recommendation** — it keeps the change out of the navigation lever entirely, and unlike
+`?vision=1` it does not depend on a door that is scheduled for deletion.
+
+### The canonical URLs that DO exist and are settled
+
+| destination | canonical absolute URL | evidence |
+|---|---|---|
+| **Studio** | `https://app.cardinalroster.com/studio.html` | verified 200 |
+| **Exterior Visualizer** | `https://app.cardinalroster.com/visualizer/` | shipped in the Showroom's tiles |
+| **The Pop-Up Roof** | **`https://presentation.cardinalroster.com/`** | `vercel.json` host rewrite → `/popup.html`. ⚠ **This, not `app…/popup.html`** — it is the client-facing domain the book was given, and it is exactly the "canonical rather than hostname accident" rule |
+
+⚠️ **Cardinal's own `visionHtml()` still uses relative `/studio.html` and `/popup.html`** and must
+be corrected to these in the same build — that is the hostname-accident fix, and it is
+behaviour-preserving on both hosts today.
+
+**Build not started.** `index.html` untouched at build 1186. Two of the seven rows cannot be
+written until Theo picks A or B.
+
+---
+
 ## ✅ Condition 1 MET · ⚠ Condition 2 IS NOT — the Showroom covers 4 of the hub's 7 doors
 
 *31 Aug, after build 1186. Theo verified `app.cardinalroster.com/?vision=1` himself: "yes it goes
