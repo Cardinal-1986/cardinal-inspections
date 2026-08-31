@@ -32035,3 +32035,101 @@ editing a comment.**
 **This is the whole argument for the job in one run.** A ratchet that only watched FAIL counts
 would have seen `harness_tray` go 0F → 0F and said nothing; the **pass count** is what went red.
 
+
+---
+
+## Gate infrastructure — the four Chromium gates enter CI; audit_contrast is repaired (no build number)
+
+**Nothing shipped changes.** `index.html` byte-identical at build **1185**, all four blocks still
+inline, nothing relocated.
+
+### "Not covered in CI" understated it badly
+
+Two of the four **could not have run anywhere but one machine**:
+
+- **Three hard-coded a browser path inside the writing sandbox — and two DIFFERENT paths.**
+  `gate_983` wanted `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`; `harness_occhead` and
+  `audit_contrast` wanted `/opt/pw-browsers/chromium`. On any other machine they die **at launch,
+  before the first assertion** — which reads as "the gate is broken", not "the gate proved
+  nothing". Same class as the absolute `.sql` paths that made `harness_tray` unrunnable, found the
+  same way: by trying to run them somewhere else.
+- **`audit_contrast` had self-disabled for months.** It needed `$CR_OCC_FIXTURES/rows616.json` and
+  `final/*.jpg`, a scratchpad that was never committed, and exited 2 with an honest `NOT RUN`.
+  **An audit that cannot run is not a safety net; it is a comment.**
+- **`gate_1076`, `harness_occhead` and `audit_contrast` also still carried the absolute
+  `index.html` default** — they were not in the six fixed with `gate_harnesses`.
+
+### The repairs
+
+- **`chromium_launch.cjs`** — one place that knows where Chromium is: `$PW_CHROMIUM` → the known
+  sandbox paths → **undefined**, letting Playwright resolve the browser it installed itself. That
+  last case is CI, and it is the fallback rather than a special case. Proven here by launching
+  with no `executablePath` at all.
+- **The OC colour fixtures are committed**, at `scripts/fixtures/`. ⚠ **They were not invented:**
+  `harness_colors` already carried a real-shaped `oc_colors` set documented as *"verbatim
+  proportions from the live table"*. That set is now `fixtures/oc_colors_rows.json` and **both**
+  gates read it, so they cannot drift into disagreeing about what the table looks like. Proven
+  byte-identical: `harness_colors` output is unchanged by the extraction.
+- ⚠ **The four cover JPEGs are deliberately trivial (64×48, 675 bytes each), and that is sound
+  rather than lazy.** `audit_contrast` resolves a text node's ground by walking `backgroundColor`
+  up the ancestors — its own header says so — so a photograph never enters the arithmetic. The
+  covers exist only so a card lays out as it does in production.
+
+### ⚠ audit_contrast printed findings and EXITED 0
+
+It was written at 623, when 25 text nodes fell below their floor and eyes caught two of them. It
+reported them **and returned success** — an "audit" in the sense that it produced prose nobody was
+obliged to read. It now exits non-zero on any finding, with **no baseline**, because the shipped
+file is genuinely CLEAN and the honest ratchet is therefore zero.
+
+Its negative control is built in: `--selftest` appends `color:#3a3a3a` over the module's dark
+ground and requires the audit to catch it. **It catches 32 nodes.** A CLEAN verdict from an
+instrument never seen to speak is not evidence.
+
+### `gate_chromium.mjs` — the runner, and why it has no baseline
+
+All four are green on the shipped file, so unlike `gate_harnesses` there is no debt register:
+**a baseline file here would only be somewhere for a future failure to hide.**
+
+**Which makes the negative controls the whole value.** Each gate runs a second time against a copy
+of the artifact with the specific thing *that* gate protects broken:
+
+| gate | protects | break | result |
+|---|---|---|---|
+| `gate_983` | no invalid `font:<w> <sz> inherit` shorthand anywhere | inject one into `.occ-title` | exit 1 |
+| `gate_1076` | The Walk's job door — `openForProject` exported and prefilling | rename all 8 sites | exit 1 |
+| `harness_occhead` | the OC title never breaks mid-word, 5 widths × 3 styles | `keep-all` → `break-all` | exit 1 |
+| `audit_contrast` | every text node meets its WCAG floor | its own `--selftest` | 32 caught |
+
+⚠ **The runner's own `--selftest` checks that every break anchor still matches something**, because
+a control whose anchor matches nothing passes by doing nothing — **that already happened twice
+while building `gate_relocation`.**
+
+### CI
+
+A third job, `chromium`, on node 22: installs `playwright@1.56.1` + `jsdom@30.0.1` with
+`--no-save`, runs `npx playwright install --with-deps chromium`, then the anchor selftest, then
+the suite. `package.json` stays untouched — it is production config Vercel reads.
+
+---
+
+## `ISVISIONHOST_RETIREMENT_MATRIX.md`
+
+⚠ **"13 dependencies" is 13 OCCURRENCES, and it is SIX code locations.** The 13 is real — it is
+what `grep -c` returns, and I quoted it that way myself. Classified properly: **4 are prose inside
+comments**, 9 are code, and those 9 collapse to **6 distinct locations** because `X && X()`
+mentions the name twice on one line. Of the six: **1 definition · 1 export · 4 real call sites.**
+
+The matrix gives each one location, current behaviour, replacement route, verification and
+rollback. Two findings worth carrying out of it:
+
+- ⚠ **`goToLanding()` is the riskiest site**, because its guard wraps `hideAllViews()` — the app's
+  single navigation lever, and the "swaps the page underneath itself and traps the user" class.
+  It needs a purpose-built Chromium drive, not a grep, and its own commit.
+- ⚠ **The Visualizer hand-off does NOT simply invert.** `present=1` (approved renders only, one
+  tap) is a real product behaviour, not CRM chrome. It **moves to the Showroom's launcher**; it is
+  not deleted.
+
+And the definition is deleted **last, not first** — its `?vision=1` half is exactly the door that
+lets Vision be verified without the `showroom.` hostname, which is what Theo's staging condition
+requires.

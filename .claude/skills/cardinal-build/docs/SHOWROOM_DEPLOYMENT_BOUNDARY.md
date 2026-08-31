@@ -196,9 +196,27 @@ door works, repoint forward again. A rollback path that has never been walked is
   emigrated, and it must emigrate with it rather than be left resolving to null.
 - `studio_tray` as the only seam from the archive.
 
-## 9. Open questions for Theo
+## 9. ✅ SETTLED 31 Aug 2026 (Theo) — all three, and they change the plan above
 
-1. **§6 — which of the three?** Recommendation: duplicate the helper (3), then move both (1).
-2. **Does Colors follow immediately, or is it a later trip?** Changes stage 6 only.
-3. **Does `showroom.cardinalroster.com` stay the name**, or does the Showroom get its own domain
-   and leave that subdomain to the Vision hub? The plan above assumes it is repointed.
+**1. Option 1 — Showcase and OC Colors move and cut over TOGETHER.** *"Do not add temporary
+production debt to `cr-occ-script`."* My recommendation was option 3 (duplicate the shrink helper
+first) and it was **overruled, correctly**: it traded a real, permanent boundary for a temporary
+one, and temporary debt on this project has a habit of outliving its condition. §6 is therefore
+resolved not by duplicating the helper but by **one Showroom-owned image utility** that both
+relocated modules call — inside the Showroom, so it is not a shared runtime dependency across the
+boundary. The inline modules in Cardinal stay intact and untouched while that is staged.
+
+**2. Colors is in the same release, the same parity decision and the same rollback unit as
+Showcase.** Not a later trip. Stages 6 and 7 below collapse into the joint cutover.
+
+**3. `showroom.cardinalroster.com` stays the intended final hostname — but it is NOT repointed
+until every `isVisionHost()` dependency has an explicit replacement and Vision is verified
+without that hostname.** A temporary staging URL carries the work until final cutover.
+
+⚠️ **That reverses this document's stage order and it is the safer order.** §7 had the repoint at
+stage 5, before the call sites were replaced, on the argument that the repoint is the most
+reversible step. It still is — but "most reversible" is not "safe to do first" when the thing on
+the other side has not been proven yet. Verification now happens on the staging URL, through the
+**`?vision=1`** half of `isVisionHost()`, which is precisely the door that exists for it. See
+`ISVISIONHOST_RETIREMENT_MATRIX.md` — and note the count there: **13 occurrences are 6 code
+locations, 4 of them real call sites; the other 4 hits are comments.**

@@ -30,9 +30,10 @@ for (const _p of ['playwright', 'playwright-core',
   try { chromium = require(_p).chromium; break; } catch (_) {}
 }
 if (!chromium) { console.error('harness_occhead.js: playwright not found - cannot run'); process.exit(2); }
+const CR_ROOT = require('./script_paths.cjs').ROOT + '/';  /* not a path to one machine */
 const fs = require('fs');
 
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const FILE = process.argv[2] || CR_ROOT + 'index.html';
 const html = fs.readFileSync(FILE, 'utf8');
 /* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
    This gate used to cut its module out of index.html by `<style id="cr-occ-styles">`.
@@ -60,7 +61,11 @@ const ok = (l, c, note) => { if (c) { pass++; console.log('  PASS ' + l); }
   else { fail++; console.log('  FAIL ' + l + (note !== undefined ? '  → ' + note : '')); } };
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  /* ⚠ BROWSER PATH COMES FROM chromium_launch.cjs, NOT FROM A LITERAL.
+   This gate hard-coded a path inside the sandbox it was written in, so it died
+   at launch — before its first assertion — on any other machine, CI included.
+   Same class as the absolute .sql paths that made harness_tray unrunnable. */
+const browser = await require('./chromium_launch.cjs').launchChromium(chromium);
   console.log(`\nheader fit — ${FILE.split('/').pop()}\n`);
   console.log('  width  style     font     title box   <b> h   lines  widest word');
   console.log('  ' + '-'.repeat(62));

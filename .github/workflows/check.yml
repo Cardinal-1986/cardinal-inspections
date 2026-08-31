@@ -345,3 +345,55 @@ jobs:
       - name: Harnesses (ratcheted against harness_baseline.json)
         run: |
           node .claude/skills/cardinal-build/scripts/gate_harnesses.mjs
+
+  # ═══════════════════════════════════════════════════════════
+  # NEW — the four CHROMIUM gates, which had never run in CI.
+  #
+  # "Not covered" understated it. Three of the four hard-coded a
+  # browser path inside the sandbox they were written in — and
+  # two DIFFERENT paths at that — so they died at launch on any
+  # other machine, before their first assertion. A fourth,
+  # audit_contrast, had self-disabled for months over fixtures
+  # that were never committed, printing an honest "NOT RUN" and
+  # auditing nothing. Two of the four could not have run
+  # anywhere but one laptop.
+  #
+  # Fixed: chromium_launch.cjs resolves the browser ($PW_CHROMIUM
+  # -> known sandbox paths -> Playwright's own), and the OC colour
+  # fixtures are committed under scripts/fixtures/ — recovered
+  # from harness_colors, which already carried a real-shaped set,
+  # rather than invented.
+  #
+  # NO BASELINE HERE, deliberately: all four are green on the
+  # shipped file, so the honest ratchet is zero. A baseline file
+  # would only be somewhere for a future failure to hide.
+  # ═══════════════════════════════════════════════════════════
+  chromium:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # --no-save: package.json is production config Vercel reads.
+      # Pinned so a release cannot silently change a verdict.
+      - name: Install Playwright and jsdom (test-only, pinned, not saved)
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1 jsdom@30.0.1
+          npx playwright install --with-deps chromium
+
+      # ⚠ THE RUNNER'S OWN CONTROL, FIRST. It proves every break
+      # anchor still matches something in the artifact. A negative
+      # control whose anchor matches nothing "passes" by doing
+      # nothing — that has already happened twice on this project.
+      - name: The break anchors still match (selftest)
+        run: node .claude/skills/cardinal-build/scripts/gate_chromium.mjs --selftest
+
+      # Runs each gate twice: once on the shipped file, where it
+      # must pass, and once on a copy where the specific thing that
+      # gate protects has been broken, where it must go red. Four
+      # gates that have only ever been seen to pass prove nothing.
+      - name: Chromium gates + negative controls
+        run: node .claude/skills/cardinal-build/scripts/gate_chromium.mjs

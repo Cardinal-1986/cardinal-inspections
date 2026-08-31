@@ -18,7 +18,8 @@ import fs from 'fs';
 import { createRequire } from 'module';
 import { chromium } from 'playwright';
 
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const CR_ROOT = createRequire(import.meta.url)('./script_paths.cjs').ROOT + '/';
+const FILE = process.argv[2] || CR_ROOT + 'index.html';
 const HTML = fs.readFileSync(FILE, 'utf8');
 console.log('gate_1076 on ' + FILE + '  (' + HTML.length.toLocaleString() + ' chars)');
 

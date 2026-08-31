@@ -53,22 +53,15 @@ const OCC = MS.moduleText(html, 'colors.js', { htmlPath: FILE, missing: 'throw' 
 /* Real shapes, verbatim proportions from the live table:
    designer 9 (1 coty + 6 current + 2 new) · duration 11 current + 5 discontinued
    · other 5 discontinued · Shasta White hidden. Trimmed to a representative
-   set that still exercises every branch. */
-const R = (o) => Object.assign({
-  hex:'#444', hex_verified:false, replaced_by:null, description:null,
-  cover_image_path:null, cover_credit:'Image: Owens Corning', coty_year:null, hidden:false
-}, o);
-const ROWS = [
-  R({id:'a1',name:'Evergreen Mist',slug:'evergreen-mist',family:'green',product_line:'designer',status:'coty',coty_year:2026,sort_order:1}),
-  R({id:'a2',name:'Merlot',slug:'merlot',family:'red',product_line:'designer',status:'current',coty_year:2025,sort_order:2}),
-  R({id:'a3',name:'Mountain Pine',slug:'mountain-pine',family:'green',product_line:'designer',status:'new',sort_order:3,cover_image_path:'oc-colors/covers/mountain-pine.jpg'}),
-  R({id:'a4',name:'Gray Tweed',slug:'gray-tweed',family:'grey',product_line:'designer',status:'new',sort_order:4}),
-  R({id:'b1',name:'Onyx Black',slug:'onyx-black',family:'black',product_line:'duration',status:'current',sort_order:10,cover_image_path:'oc-colors/covers/onyx-black.jpg'}),
-  R({id:'b2',name:'Estate Gray',slug:'estate-gray',family:'grey',product_line:'duration',status:'current',sort_order:11}),
-  R({id:'c1',name:'Storm Cloud',slug:'storm-cloud',family:'grey',product_line:'duration',status:'discontinued',replaced_by:'Gray Tweed',sort_order:40,cover_image_path:'oc-colors/covers/storm-cloud.jpg'}),
-  R({id:'c2',name:'Amber',slug:'amber',family:'brown',product_line:'duration',status:'discontinued',sort_order:41}),
-  R({id:'d1',name:'Bourbon',slug:'bourbon',family:'brown',product_line:'other',status:'discontinued',replaced_by:'Teak',sort_order:50,cover_image_path:'oc-colors/covers/bourbon.jpg'}),
-];
+   set that still exercises every branch.
+
+   ⚠ THESE ROWS NOW LIVE IN ONE FILE, fixtures/oc_colors_rows.json, because
+   audit_contrast needs the same rows and a second copy is how two gates come to
+   disagree about what "the table" looks like. audit_contrast had been asking for
+   a `rows616.json` that was never committed and self-disabling without it; this
+   IS that fixture, recovered from the one place a real-shaped set already
+   existed rather than invented afresh. */
+const ROWS = JSON.parse(fs.readFileSync(__dirname + '/fixtures/oc_colors_rows.json', 'utf8'));
 const SELLABLE = ROWS.filter(r => r.status !== 'discontinued').length;   // 6
 const DEAD     = ROWS.filter(r => r.status === 'discontinued').length;   // 3
 
