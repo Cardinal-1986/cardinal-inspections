@@ -8093,3 +8093,18 @@ the Production board exit, the Owner Console back button). Until 1188 it forked 
 - `gate_1188.mjs` — 42 Chromium assertions across six drives; **RED on the 1187 control with 7
   failures**, including a measured blank screen (`elementFromPoint` → `HTML`, every container
   hidden).
+
+## Build 1189 — Pop-Up Roof links name the page, not the host
+
+All three Pop-Up Roof launchers point at **`https://presentation.cardinalroster.com/popup.html`**:
+the Vision hub tile and the ordinary landing's `.cr-lr-book` link (both `cr-lr-script`), and the
+Showroom launcher's `popup` tile.
+
+⚠ **The bare host does NOT serve the book.** Measured 31 Aug 2026: `presentation.cardinalroster.com/`
+returns the 5,446,039-byte CRM titled *Cardinal Client Resources*; `/popup.html` on the same host
+returns the 269,247-byte book. `vercel.json`'s host rewrite is present but does not fire in
+production. 1187 pointed these links at the bare host on the strength of that config and broke
+them; 1189 points them at the only destination measured to serve the book.
+
+`gate_1189.mjs` holds it, and holds it by **fetching** — the opened document's `<title>` must be
+*The Pop-Up Roof*. A URL that merely looks canonical, or answers 200, fails.

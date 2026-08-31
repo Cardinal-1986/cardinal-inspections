@@ -121,7 +121,7 @@ for (const [q, id, label] of [['?open=why', 'cr-why', 'Why Cardinal'],
      !!hub && hub.hrefs.includes('https://app.cardinalroster.com/studio.html'),
      hub && hub.hrefs.join(' '));
   ok('the hub Pop-Up link is CANONICAL, not a path',
-     !!hub && hub.hrefs.includes('https://presentation.cardinalroster.com/'), '');
+     !!hub && hub.hrefs.includes('https://presentation.cardinalroster.com/popup.html'), '');
   ok('no relative /studio.html or /popup.html survives anywhere in the hub',
      !!hub && !hub.hrefs.some(h => h === '/studio.html' || h === '/popup.html'), '');
   await ctx.close();
@@ -136,7 +136,9 @@ for (const [q, id, label] of [['?open=why', 'cr-why', 'Why Cardinal'],
     visualizer: 'https://app.cardinalroster.com/visualizer/?present=1',
     appt      : 'https://app.cardinalroster.com/?open=appt',
     why       : 'https://app.cardinalroster.com/?open=why',
-    popup     : 'https://presentation.cardinalroster.com/',
+    /* 1189: was the bare host. Measured in production, that URL serves the
+       CRM, not the book -- gate_1189 is the one that proves the destination. */
+    popup     : 'https://presentation.cardinalroster.com/popup.html',
   };
   const ctx = await browser.newContext({ viewport: { width: 1194, height: 834 } });
   const page = await ctx.newPage();

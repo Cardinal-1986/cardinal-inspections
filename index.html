@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1188<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1189<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42677,6 +42677,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1189, d: '2026-08-31', t: 'The Pop-Up Roof link opens the book again', s: 'Build 1187 changed the two Pop-Up Roof links \u2014 the one on the showroom menu and the one on the ordinary landing \u2014 to point at presentation.cardinalroster.com, on the understanding that the address on its own opens the book. It does not. Opening that address without a page name serves the ordinary app instead, so since 1187 tapping The Pop-Up Roof has been landing people on the CRM home rather than the book. Both links now name the page outright and open the book, which is what they did before 1187. Nothing else changed, and the address a client is given still works exactly as it always has.' },
   { b: 1188, d: '2026-08-31', t: 'The Landing button stops asking what address you are on', s: 'Every control that means \u201Ctake me to the picker\u201D \u2014 the drawer\u2019s Landing row, the dashboard and cover-card chips, the Cardinal Truth banner chip, the Resource Library exit, the Production board exit and the Owner Console back button \u2014 used to check which web address you had opened the app on before deciding where to send you. On the ordinary app that check always came out the same way, so nothing you do day to day changes: you land on your own home screen with the Front Door over it, and production accounts still land back on the Production board rather than the retail home. What is gone is the second answer, which sent you to the old Vision menu on the showroom address; presentations live in the Showroom now and the Front Door is the way to everything. Underneath, the button can no longer leave you looking at nothing: if the screen it was told to open cannot open, it falls back to your home screen instead of stopping halfway.' },
   { b: 1187, d: '2026-08-31', t: 'Two more ways in, and links that no longer depend on the address bar', s: 'The Appointment and Why Cardinal could only be reached by opening the Vision hub and tapping a tile \u2014 there was no address you could type, bookmark or send anyone. Both now have one: /?open=appt and /?open=why open them straight from a cold load, and a reload keeps you where you were. Nothing changes if you do not use them; the ordinary landing behaves exactly as before. Separately, the links out to Studio and the Pop-Up Roof were written as bare paths, which meant they quietly resolved against whichever address you happened to be on. Both now point at where those things actually live \u2014 the book at presentation.cardinalroster.com, which is the address a client is given. The Pop-Up Roof link on the ordinary landing had the same problem and was fixed with it.' },
   { b: 1186, d: '2026-08-31', t: 'OC Colors reads properly again', s: 'Four pieces of text on the Owens Corning colour screens were below the readable floor, and one of them badly \u2014 the SureNail proof captions on the Duration and FLEX pages have been light grey on a white panel since build 623, at 1.62:1. That is the screen you hand across a kitchen table. The selected filter chip, the NEW badge and the Add our roofs button were white on the brand pink at 4.25:1, just under the floor. Nothing new was invented to fix them: build 623 had already measured this exact problem and created the deeper pink for it, then applied it to two controls and missed three. The captions now simply inherit the panel ink they sit on, so they cannot drift again. Also removed a colour rule that had been dead since 623.' },
@@ -51787,10 +51788,16 @@ return (
 /* 1159: the book was reachable only from the Sales Floor (a CRM screen
    this host does not draw) and from presentation.cardinalroofer.com.
    On the showroom tablet it was unreachable. Same plain <a> as Studio. */
-/* 1187: the Pop-Up Roof's canonical home is its OWN domain, not this app's
-   path. vercel.json rewrites presentation.cardinalroster.com/ -> /popup.html;
-   that is the address the book was given and the one a client sees. */
-'<a class="cr-vh-tile" href="https://presentation.cardinalroster.com/" target="_blank" rel="noopener">' +
+/* 1189 — MEASURED, NOT INFERRED. 1187 pointed this at the bare host on the
+   strength of vercel.json's rewrite, which I read and never fetched. In
+   production that rewrite DOES NOT FIRE: https://presentation.cardinalroster.com/
+   returns the 5,446,039-byte CRM titled "Cardinal Client Resources", while
+   /popup.html on the same host returns the 269,247-byte book. So 1187 made
+   this link worse -- it used to reach the book by path and reached the CRM
+   instead. The explicit path is the destination we have actually seen serve
+   The Pop-Up Roof. Repairing the rewrite is a separate decision and is
+   deliberately NOT part of this build. */
+'<a class="cr-vh-tile" href="https://presentation.cardinalroster.com/popup.html" target="_blank" rel="noopener">' +
 '<span class="ic">\u25A4</span>' +
 '<span class="tx">' +
 '<span class="tt">The Pop-Up Roof</span>' +
@@ -51940,8 +51947,10 @@ lv.innerHTML =
    offered everywhere the >=820px Showroom row is hidden. */
 /* 1187: the ORDINARY landing's book link, canonicalised with the hub's. It
    had the identical hostname dependency and would have been missed by a fix
-   scoped to visionHtml() alone. */
-'<a class="cr-lr-book" href="https://presentation.cardinalroster.com/" target="_blank" rel="noopener">' +
+   scoped to visionHtml() alone.
+   1189: and corrected with the hub's, for the same measured reason -- the
+   bare host serves the CRM, not the book. See the note on the hub tile. */
+'<a class="cr-lr-book" href="https://presentation.cardinalroster.com/popup.html" target="_blank" rel="noopener">' +
 '<span class="ic">\u25A4</span>' +
 '<span class="tx">' +
 '<span class="tt">The Pop-Up Roof</span>' +

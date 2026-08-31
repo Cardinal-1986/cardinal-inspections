@@ -32331,3 +32331,70 @@ and usable, never stranded, but empty. **This makes the DNS repoint more urgent,
 | prose | 6 comments | no behaviour |
 
 **No remaining occurrence blocks the DNS cutover.**
+
+## Build 1189 — the Pop-Up Roof link opens the book again
+
+**A corrective build for a regression I shipped in 1187, found while recording pre-cutover state.**
+
+### What 1187 did, and why it was wrong
+
+1187 moved three Pop-Up Roof links from `/popup.html` to
+`https://presentation.cardinalroster.com/`, on the strength of `vercel.json`'s host rewrite. **I
+read the config and never fetched the URL.**
+
+**Measured in production, 31 Aug 2026:**
+
+| request | bytes | title |
+|---|---:|---|
+| `https://presentation.cardinalroster.com/` | **5,446,039** | **Cardinal Client Resources** ❌ |
+| `https://presentation.cardinalroster.com/popup.html` | 269,247 | **The Pop-Up Roof** ✅ |
+
+**The rewrite does not fire in production.** So 1187 made the link *worse*: it used to reach the
+book by path and reached the CRM instead. The build log entry for 1187 called that URL "where those
+things actually live" — that sentence was inferred, not measured, and it was false.
+
+### The three links, corrected
+
+| where | 1187 | 1189 |
+|---|---|---|
+| `visionHtml()` hub tile · `cr-lr-script` | `https://presentation.cardinalroster.com/` | `…/popup.html` |
+| ordinary landing's `.cr-lr-book` · `cr-lr-script` | same | `…/popup.html` |
+| Showroom `TILES` `popup.href` | same | `…/popup.html` |
+
+**Repairing the host rewrite is deliberately NOT in this build** (Theo). The goal was a destination
+we have actually seen serve the book. Whether `presentation.cardinalroster.com/` should also work
+is a separate decision.
+
+### The gate — `gate_1189.mjs`, 17/17
+
+It refuses both of the things that let 1187 through:
+
+- **A URL is fetched, never shape-checked.** The document that comes back must be titled
+  *The Pop-Up Roof*. "Looks canonical" and "answers 200" both fail.
+- **The intercept reproduces production AS MEASURED, not as configured.** `/` on that host answers
+  with the CRM in the harness exactly as it does live, so a build pointing at the bare host lands
+  on the CRM here too.
+
+Real clicks on the real controls, `target="_blank"` and all, asserting on the page that actually
+opens: the Vision hub tile and the Showroom launcher tile both open the book.
+
+⚠ **The ordinary landing's link cannot be clicked and is not pretended otherwise.** `#landingView`
+has been retired on ordinary hosts since 1165/1188, so its container never shows. The gate proves
+that link by fetching the href it carries and says in its own output that this is a destination
+proof, not a reachability proof. Forcing a retired pane visible would be staging a configuration no
+user can reach.
+
+**Control on the 1188 trees: RED, 10 failures** — and the line that matters is
+`clicking it OPENS THE BOOK → {"title":"Cardinal Client Resources"}`. The regression is reproduced
+in a browser, not argued for.
+
+⚠ **`gate_1187` and `gate_1188` both asserted the bare host** and were updated with the fix — a
+gate written against an unverified assumption locks the assumption in.
+
+### Gates
+
+Mechanical ladder green (stamp 1188 → 1189, marker + negative control). `gate_1187` 23/23,
+`gate_1188` 42/42, `gate_types` / `gate_dupes` / `gate_a11y` / `gate_stack` green, nothing grew.
+Showroom tag/brace balance green.
+
+`goToLanding()` and `isVisionHost()` untouched. No DNS record changed, no Vercel domain moved.

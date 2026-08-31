@@ -432,3 +432,49 @@ back-to-the-hub path on that host lands on the Cardinal home with the Front Door
 of the Vision hub — and `showMain()`'s vision branch skips `reload()`, so that home carries **no
 client data**. Visible, usable, never stranded — but empty. **This build makes the repoint more
 urgent, not less.**
+
+---
+
+## ⚠ CORRECTION 31 Aug 2026 — **DNS IS NOT THE CUTOVER MECHANISM**
+
+Every plan above, and every message I sent about the cutover, called it a "DNS repoint". **That is
+wrong, and it was never measured until the cutover was authorised.** Recorded here because acting
+on it would have caused a real outage window for no reason.
+
+**Measured (Cloudflare DoH + curl, 31 Aug 2026):**
+
+| host | record | value |
+|---|---|---|
+| `showroom.cardinalroster.com` | **A** (no CNAME) | `216.150.16.129`, `216.150.16.1` · TTL 1800 |
+| `presentation.cardinalroster.com` | **A** (no CNAME) | `216.150.16.1`, `216.150.1.65` · TTL 1800 |
+| `app.cardinalroster.com` | CNAME | `bbc01c28dda6bf13.vercel-dns-017.com.` · TTL 60 |
+| `cardinal-showroom.vercel.app` | A | `64.29.17.131`, `216.198.79.131` · TTL 300 |
+
+**`showroom.cardinalroster.com` already points at Vercel.** All three Cardinal hostnames answer
+`server: Vercel` and return byte-identical content from *different* IPs, because Vercel routes by
+`Host` header, not by which anycast address you reached.
+
+So the cutover is a **Vercel project-domain reassignment**, not a DNS edit:
+
+1. Vercel → `cardinal-inspections` (`prj_H6uDE65cj42ZqHuBdi7dPYKeZbno`) → Settings → Domains →
+   **remove** `showroom.cardinalroster.com`
+2. the Showroom project → Settings → Domains → **add** `showroom.cardinalroster.com`
+
+**The DNS records above do not change, and must not be edited.** The rollback is therefore not a
+DNS value: it is **re-adding `showroom.cardinalroster.com` to `cardinal-inspections`.** No
+registrar involvement, no propagation wait, no TTL exposure.
+
+**TLS today:** TLSv1.3, ALPN h2, subject `CN=*.cardinalroster.com` — a wildcard, so the certificate
+covers the hostname under either project and is not part of the cutover risk.
+
+### The agreed sequence (Theo, 31 Aug), superseding anything above
+
+1. merge #584, so production `app.cardinalroster.com` actually carries 1186–1189 and the
+   `?open=appt` / `?open=why` entry points exist
+2. smoke-test production Cardinal **first**, including both `?open=` destinations and the Pop-Up Roof
+3. only if that passes, move `showroom.cardinalroster.com` in Vercel
+4. smoke-test the real Showroom hostname
+5. on failure, roll back by reattaching the domain to `cardinal-inspections`
+
+⚠ **Two of the twelve smoke tests could not have passed on 31 Aug**, which is why step 1 comes
+first: production was on **build 1185**, so `?open=` did not exist there at all.

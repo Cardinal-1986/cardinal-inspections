@@ -261,7 +261,7 @@ for (const [q, id, label] of [['?open=appt', 'cr-appt', 'The Appointment'],
   for (const u of ['https://app.cardinalroster.com/studio.html',
                    'https://app.cardinalroster.com/?open=appt',
                    'https://app.cardinalroster.com/?open=why',
-                   'https://presentation.cardinalroster.com/'])
+                   'https://presentation.cardinalroster.com/popup.html'])
     ok('H the Showroom still launches ' + u, S.includes(u));
   ok('H no launcher fell back to a bare path',
      !/url\s*:\s*['"]\/(studio|popup)\.html/.test(S));
