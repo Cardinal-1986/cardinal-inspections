@@ -31911,3 +31911,97 @@ assertion:
 | `harness_walk` | CRASH after 50 passes | app drift: the module moved from `confirm()` to `crAsk()`, which the harness spies on the old way. **A harness repair, not a relocation problem** — deliberately left out of this change rather than mixed into it |
 | `audit_contrast` | NOT RUN | fixtures never committed |
 
+
+---
+
+## Gate infrastructure — the harnesses run in CI at last, on node 22 (no build number)
+
+**Nothing shipped changes.** `index.html` byte-identical at build **1185**; all four blocks still
+inline; nothing relocated.
+
+### The gap was bigger than "node 20"
+
+Two things, and the second had never been stated anywhere:
+
+1. **CI pinned `node-version: 20` while `package.json` declares `"engines": { "node": "22.x" }`.**
+   CI has been testing every push on a runtime the app never executes on.
+2. **jsdom was never a repo dependency at all.** It lived in a session scratchpad. So CI could
+   not have run these harnesses even on the right node — the six were covered by nothing.
+
+**"Pin a compatible jsdom" was offered as an alternative and it is the wrong direction.** jsdom
+30.0.1 declares `"node": "^22.22.2 || ^24.15.0 || >=26.0.0"` — **it does not support node 20 at
+all.** Pinning back would pin *backwards*, to match a CI runtime production does not use. The
+runtime was the thing that was wrong: both jobs now run node 22, which is what Vercel runs.
+
+### What landed
+
+- **`gate_harnesses.mjs`** — runs the six browser-free gates, **ratcheted**: known failures
+  baselined **by name** in `harness_baseline.json`, printed every run as a debt register, allowed
+  to shrink, never to grow.
+- **A second CI job, `harnesses`**, on node 22, installing `jsdom@30.0.1` with `--no-save` —
+  `package.json` is production config Vercel reads, and a test-only dependency does not belong in
+  it.
+- The existing `check` job moved 20 → 22. Verified: 133 inline scripts, `sw.js`, all `api/*.js`
+  and every JSON still pass there.
+
+**Why ratcheted, stated plainly: four of the six are RED on main today**, for reasons that predate
+this gate. Running them raw would paint CI red on main from the first commit, and the only ways
+out would be to bend or delete a real assertion. **7 failures are baselined**, all named in the
+run output.
+
+### ⚠ THE RULE THAT EARNED ITS PLACE IMMEDIATELY: a falling PASS count is a failure
+
+A ratchet watching only the FAIL count would have been worse than useless here, and the
+end-to-end control proves it rather than arguing it. Corrupting the Showcase public-API
+assignment makes `harness_showcase` **bail out early** — so its three baselined failures
+**disappear**:
+
+```
+3 baselined failure(s) NO LONGER FAIL   ← a fail-count ratchet scores this as IMPROVEMENT
+::error::harness_showcase.js: PASS COUNT FELL 121 -> 2
+::error::harness_walk.js: ASSERTED NOTHING (exit 1)
+```
+
+**A harness that stops asserting is red, not quiet.** That is the same lesson node 20 was
+teaching silently, and the same one that let two identical crashes score as agreement in the
+relocation gate a day earlier.
+
+### Two negative controls, both IN CI, because a ratchet never seen to fail has baselined everything
+
+- **`--selftest` (8/8)** — a new failure is red and named; a crash is red; a pass-count drop is
+  red; a dropped harness is red; a harness with no baseline entry is red; a baselined failure
+  *disappearing* is **not** red.
+- **End-to-end, on a poisoned copy of `index.html`** — the job corrupts the Showcase public-API
+  assignment in `/tmp`, requires a non-zero exit, and **fails the build if the gate stays green**.
+  It also asserts its own anchor is unique first, so the control cannot go vacuous.
+
+### Not covered, said plainly
+
+`gate_983`, `gate_1076`, `harness_occhead` and `audit_contrast` drive Chromium through playwright
+and are **not** in this job. A browser install in CI is a separate decision with its own failure
+modes; claiming them as covered would be a coverage claim the job cannot honour.
+
+---
+
+## `SHOWROOM_DEPLOYMENT_BOUNDARY.md` — the independent-deployment plan
+
+⚠️ **It corrects my own earlier plan.** The spike and the Phase-2 gate work both described the
+destination as `showroom/showcase.js` **served by the Cardinal project**. That does not satisfy
+trigger 1: a file inside `cardinal-inspections` is still built by the Cardinal deploy, still
+invalidated by a Cardinal push, and still down when Cardinal is down. Destination is a **separate
+repo and its own Vercel project**.
+
+Two measured findings that shape the whole cutover:
+
+- **`showroom.cardinalroster.com` is already load-bearing inside `index.html`** — `isVisionHost()`,
+  **13 occurrences**. That subdomain *is* Cardinal today. So the **DNS repoint is the cutover
+  switch** (and the most reversible step: no deploy), verification before it must use the Vercel
+  preview URL, and those 13 sites die in the final build, not the first.
+- **⚠ `cr-show-*` CANNOT be deleted while `cr-occ-*` remains**, at one measured site:
+  `shrinkOne()` in `cr-occ-script` calls `window.CardinalShowcase.shrink`. Its own guard turns
+  Showcase's departure into a refusal to upload — correct behaviour, broken feature.
+
+**And the call-site count: 13 distinct code locations, not 15 and not 5.** 8 API invocations
+(only three verbs — `open`, `openForProject`, `close`), plus 5 structural registrations; 22 raw
+identifier mentions, because guards and calls double-count. The "five-site checklist" in earlier
+notes was the **`cr-des` retirement pattern** from 807, not a count of Showcase call sites.
