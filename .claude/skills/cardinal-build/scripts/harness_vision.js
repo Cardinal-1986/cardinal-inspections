@@ -118,8 +118,16 @@ ok('audit nav shown for Theo',      a.audit === 'block', a.audit);
 ok('team nav mirrors audit',        a.team === a.audit, a.team);
 
 console.log('\n── the iOS font-boost fix ──');
-const occ = html.slice(html.indexOf('<style id="cr-occ-styles">'),
-                       html.indexOf('</style>', html.indexOf('<style id="cr-occ-styles">')));
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<style id="cr-occ-styles">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+/* includeOpenTag: this slice deliberately started AT the tag, not after it. */
+const MS = require('./module_source.cjs');
+const occ = MS.moduleText(html, 'colors.css', { htmlPath: FILE, missing: 'throw', includeOpenTag: true });
 ok('#cr-occ declares text-size-adjust',
   /\n\s*-webkit-text-size-adjust:100%;\n\s*text-size-adjust:100%;/.test(occ));
 ok('and it is scoped — exactly 2 declarations in the whole file, both here',

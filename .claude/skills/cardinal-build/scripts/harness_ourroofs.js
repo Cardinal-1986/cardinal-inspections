@@ -23,11 +23,21 @@ const { JSDOM } = require('jsdom');
 
 const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
 const H = fs.readFileSync(FILE, 'utf8');
-const blk = (tag, id) => { const i = H.indexOf(`<${tag} id="${id}">`);
-  return H.slice(H.indexOf('>', i) + 1, H.indexOf(`</${tag}>`, i)); };
-const OCC = blk('script', 'cr-occ-script');
-const CSS = blk('style',  'cr-occ-styles');
-const SH  = blk('script', 'cr-show-script');
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<script id="cr-occ-script">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+/* ⚠ THE ONE GATE THAT SPANS THE SEAM. It reaches into BOTH modules, because
+   OC Colors' shrinkOne() borrows Showcase's image toolchain. If the two are
+   relocated separately this is the gate that notices — which is exactly why
+   Showcase must land first. */
+const MS = require('./module_source.cjs');
+const OCC = MS.moduleText(H, 'colors.js',    { htmlPath: FILE, missing: 'throw' });
+const CSS = MS.moduleText(H, 'colors.css',   { htmlPath: FILE, missing: 'throw' });
+const SH  = MS.moduleText(H, 'showcase.js',  { htmlPath: FILE, missing: 'throw' });
 
 let pass = 0, fail = 0;
 const ok = (l, c, n) => { if (c) { pass++; console.log('  PASS ' + l); }

@@ -15,6 +15,7 @@
  * check never executed at all.
  */
 import fs from 'fs';
+import { createRequire } from 'module';
 import { chromium } from 'playwright';
 
 const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
@@ -34,13 +35,18 @@ async function step(name, fn) {
 }
 
 /* ── slices ──────────────────────────────────────────────────────────────── */
-function block(id, tag) {
-  const open = `<${tag} id="${id}">`;
-  const i = HTML.indexOf(open);
-  if (i === -1) throw new Error('block not found: ' + id);
-  return HTML.slice(i + open.length, HTML.indexOf(`</${tag}>`, i));
-}
-const MODULE_JS = block('cr-show-script', 'script');
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<script id="cr-show-script">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+const require_1076 = createRequire(import.meta.url);
+const MS = require_1076('./module_source.cjs');
+/* missing:'throw' preserves this gate's existing behaviour exactly — it threw
+   'block not found' before and it throws a named error now. */
+const MODULE_JS = MS.moduleText(HTML, 'showcase.js', { htmlPath: FILE, missing: 'throw' });
 
 /* Expand outward from `mark` to the enclosing balanced parentheses. */
 function parenAround(src, mark) {

@@ -31792,3 +31792,122 @@ With zero local external scripts, the real-artifact pass has **nothing to inspec
 succeeds trivially. `--selftest` (**11/11 on node 20 and node 22**) is therefore the only
 thing proving the checker can fail at all, which is why **CI runs it first** and treats
 its failure as a hard error. A prophylactic check nobody proves can fail is decoration.
+
+---
+
+## Gate infrastructure — the ten block-id gates learn to find a relocated module (no build number)
+
+**Nothing shipped changes.** `index.html` is byte-identical and still stamps **build 1185**;
+all four blocks (`cr-show-script`, `cr-show-styles`, `cr-occ-script`, `cr-occ-styles`) are
+still inline. Nothing was relocated. Phase 2 of the Showroom work: the gates learn to find
+their module in a file *before* any module becomes one.
+
+### The count was wrong, and it was my own doc that was wrong
+
+`SHOWROOM_EXTRACTION_SPIKE.md` says **11 gates**. Measured on the tree: **10 live**, plus two
+historical patch scripts (`patch574.py`, `patch_750.py`) that are not gates. The spike lists 6
+under Showcase and 5 under Colors and adds them — but `harness_ourroofs` is in **both** lists,
+because it is the one gate that spans the seam. 6 + 5 − 1 = **10**. The spike even flags
+`harness_ourroofs` as spanning both and still double-counts it in the total.
+
+### The ten, and what each of them was doing
+
+One seam, duplicated ten times under five names — `slice`, `block`, `blockOf`, `sl`, `blk`, plus
+two raw `indexOf` pairs — each cutting a module out of `index.html` by block id, and each
+silently useless the moment that module becomes a file.
+
+They now all call **`module_source.cjs`**, which resolves in this order: an explicit override
+(fixtures) → the inline block by id (today) → **an external file the artifact itself
+references**, identified by a signature in its text.
+
+⚠ **It follows the artifact; it does not guess a filename.** A hardcoded `showroom/showcase.js`
+would pass while the page loaded something else entirely — the gate would be testing a file
+nobody ships.
+
+⚠ **Missing behaviour is the caller's and deliberately varies.** `gate_1076`, `harness_showcase`,
+`harness_walk` and `harness_colors` threw before and throw now; `gate_983` handles a null and
+reports RED with a reason, which is better than throwing. `opts.missing` preserves each rather
+than imposing one policy.
+
+`script_paths.cjs` holds path resolution once, for `module_source.cjs` **and**
+`check_external_scripts.mjs`, which had its own copy — the copy that already produced one
+false RED.
+
+### Proven by measurement, twice over
+
+**PARITY (`--` vs `origin/main`):** every gate run against the shipped `index.html` before and
+after conversion. **9 of 10 byte-identical.** The tenth, `harness_walk`, differs only in its
+own file path and two line numbers inside a **pre-existing** stack trace (198→201, 443→446,
+because the edit added three lines); all 50 passes and the crash point in the module
+(`<anonymous>:2155:27`) are identical.
+
+**RELOCATION (`gate_relocation.mjs`, new):** builds the relocation rather than assuming it —
+cuts all four blocks out of the real `index.html`, writes them as real files, rewrites the
+artifact to `<script src>` / `<link rel=stylesheet>`, and runs every gate against it.
+**All nine exercisable gates reach the identical verdict**, and **every one goes red when its
+relocated module is deliberately broken.** No production file is touched.
+
+### ⚠ FOUR DEFECTS OF MY OWN, EVERY ONE FOUND BY A CONTROL RATHER THAN BY READING
+
+**1. A signature that passed a selftest and matched nothing in production.** `showcase.css` was
+identified by `--sh-x:`. **`cr-show-styles` contains ZERO `--sh-` declarations** — all 182 hits
+are `var(--sh-x,#literal)`, because that module pins every colour with a literal fallback
+instead of declaring tokens. My hand-written fixture had a declaration in it, so the signature
+looked correct and found nothing real. *Test against production shapes, not convenient
+fixtures.* Now enforced: a **signature matrix** selftest takes the four blocks out of the actual
+artifact and requires each signature to match its own module and no other — all four measured
+unique.
+
+**2. A negative control that matched nothing.** `harness_walk`'s break token was
+`walks_findings`, which occurs **0 times** in the module. The "control" passed by doing nothing.
+`gate_relocation` now refuses a break pattern that matches nothing.
+
+**3. A negative control aimed past the crash.** The replacement, `openWalk`, matched — but sits
+beyond the point `harness_walk` already dies. Breaks must hit something the gate asserts on,
+**early**; both were re-chosen from the harnesses' own assertion lists.
+
+**4. Two identical crashes scored as agreement — BUG_CLASSES 37 wearing a green hat.** Under
+node 20 the jsdom harnesses die inside jsdom itself, so inline and relocated both produced
+0P/0F and `0 === 0` read as "same verdict". A run that asserted **nothing** is now refused
+outright with the reason printed. ⚠ And the first version of that refusal then flagged
+`gate_983`, which runs fine but prints `pass 9 fail 0` on a summary line and never emits a
+`PASS` line — **the "classify on printed words" trap, immediately.** The counter now knows all
+four output shapes this repo uses.
+
+### Runtimes — stated plainly
+
+| | node 22 | node 20 (what CI runs) |
+|---|---|---|
+| `module_source --selftest` | **24/24** | **24/24** |
+| `check_external_scripts --selftest` | **11/11** | **11/11** |
+| `gate_ready --selftest` | 9/9 | 9/9 |
+| `gate_relocation` | **GREEN** | **RED — 6 gates cannot run** |
+
+⚠ **The jsdom harnesses cannot run on node 20 in this environment at all**, and it is not this
+change: the installed jsdom calls `webidl.util.markAsUncloneable`, a **node 22** API. On node 20
+they die before the first assertion. `gate_relocation` now says so instead of reporting green.
+CI is unaffected — it runs node 20 but does not run these harnesses.
+
+### Two repairs that are not conversion, named separately
+
+- **`harness_occhead` and `audit_contrast` required `playwright-core`, which is not installed.**
+  Both died on MODULE_NOT_FOUND before a single assertion — crashes that read as "not green"
+  for an unknown number of builds. Switched to the resolution ladder `sentinel.js` already
+  uses. **`harness_occhead` now runs and is GREEN 42/0.** `audit_contrast` now reaches its own
+  honest `NOT RUN` (its 616 colour fixtures were never committed) instead of crashing.
+- **`harness_showcase` and `audit_contrast` hardcoded the artifact path** with no argv override,
+  so neither could be pointed at a control tree. Both now take one.
+
+### Pre-existing failures, NOT touched and NOT mine
+
+Recorded so nobody reads them as caused by this work, and so nobody "fixes" them by bending an
+assertion:
+
+| gate | state on `main` | cause |
+|---|---|---|
+| `harness_showcase` | RED 121P/3F | hideAllViews array, Sales Floor entry button, and app stamp 1185 vs newest CHANGELOG 1155 |
+| `harness_colors` | RED 109P/1F | `#cr-occ` still registered in OVERLAY_IDS and PANES |
+| `harness_vision` | RED 20P/3F | showMain gate defensiveness, chrome-hiding, text-size-adjust scope |
+| `harness_walk` | CRASH after 50 passes | app drift: the module moved from `confirm()` to `crAsk()`, which the harness spies on the old way. **A harness repair, not a relocation problem** — deliberately left out of this change rather than mixed into it |
+| `audit_contrast` | NOT RUN | fixtures never committed |
+

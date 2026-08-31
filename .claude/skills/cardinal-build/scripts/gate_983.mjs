@@ -64,7 +64,26 @@ need('2 ...and the count is 64 lower than build 982',
      'build 982 carried 64; this artifact carries ' + left.length);
 
 /* 3,5,6 — shape of the repair, scoped to the blocks that changed */
-const blockOf = id => { const i=APP.indexOf('<style id="'+id+'"'); if(i===-1) return null;
+/* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
+   This gate used to cut its module out of index.html by `<style id="cr-show-styles">`.
+   That stops working the instant the module becomes an external file, which is
+   what the Showroom relocation does — and it stops working SILENTLY, handing
+   the gate an empty string so every assertion fails for a reason the output
+   never names. The resolver finds the module inline today and in the file it is
+   relocated to tomorrow, and returns byte-identical text either way. */
+/* ⚠ blockOf ALSO serves cr-lib-styles, which is NOT relocating. Only the ids
+   the resolver knows are routed through it; everything else keeps the old slice
+   verbatim. Returning null on absence is preserved — this gate handles a null
+   and reports RED with 'not found', which is better than throwing. */
+const require_983 = createRequire(import.meta.url);
+const MS = require_983('./module_source.cjs');
+const RELOCATING = { 'cr-show-styles':'showcase.css', 'cr-occ-styles':'colors.css' };
+const blockOf = id => {
+  if (RELOCATING[id]) {
+    const t = MS.moduleText(APP, RELOCATING[id], { htmlPath: FILE });
+    return t == null ? null : strip(t);
+  }
+  const i=APP.indexOf('<style id="'+id+'"'); if(i===-1) return null;
   return strip(APP.slice(APP.indexOf('>',i)+1, APP.indexOf('</style>',i))); };
 const SHOW = blockOf('cr-show-styles');
 const showLong = SHOW ? (SHOW.match(/font-weight:\d{3};font-size:[\d.]+px/g) || []).length : 0;
