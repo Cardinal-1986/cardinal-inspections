@@ -27,9 +27,17 @@
  * Usage: node harness_colors.js [path/to/index.html]
  */
 const fs = require('fs');
+/* ⚠ REPO ROOT, NOT A HARDCODED ABSOLUTE PATH. These harnesses carried
+   an absolute path to one particular machine baked in — the sandbox they were
+   written in. They ran perfectly there and are unrunnable anywhere else,
+   which stayed invisible for as long as nothing else ever ran them. The first
+   real CI run found it in 27 seconds: harness_tray reads three .sql files by
+   absolute path UNCONDITIONALLY, so on the runner it fell 57 passes -> 4 and
+   the ratchet went red on the pass count. Resolved from the repo instead. */
+const CR_ROOT = require('./script_paths.cjs').ROOT + '/';
 const { JSDOM } = require('jsdom');
 
-const html = fs.readFileSync(process.argv[2] || '/home/user/cardinal-inspections/index.html', 'utf8');
+const html = fs.readFileSync(process.argv[2] || CR_ROOT + 'index.html', 'utf8');
 /* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
    This gate used to cut its module out of index.html by `<script id="cr-occ-script">`.
    That stops working the instant the module becomes an external file, which is
@@ -38,7 +46,7 @@ const html = fs.readFileSync(process.argv[2] || '/home/user/cardinal-inspections
    never names. The resolver finds the module inline today and in the file it is
    relocated to tomorrow, and returns byte-identical text either way. */
 const MS = require('./module_source.cjs');
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const FILE = process.argv[2] || CR_ROOT + 'index.html';
 /* threw `no cr-occ-script` before; throws a named error now — same behaviour. */
 const OCC = MS.moduleText(html, 'colors.js', { htmlPath: FILE, missing: 'throw' });
 

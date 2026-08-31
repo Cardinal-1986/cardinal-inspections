@@ -12,8 +12,16 @@
 
    Usage: node harness_tray.js [index.html] [studio.html] */
 const fs = require('fs');
-const IDX = fs.readFileSync(process.argv[2] || '/home/user/cardinal-inspections/index.html', 'utf8');
-const STU = fs.readFileSync(process.argv[3] || '/home/user/cardinal-inspections/studio.html', 'utf8');
+/* ⚠ REPO ROOT, NOT A HARDCODED ABSOLUTE PATH. These harnesses carried
+   an absolute path to one particular machine baked in — the sandbox they were
+   written in. They ran perfectly there and are unrunnable anywhere else,
+   which stayed invisible for as long as nothing else ever ran them. The first
+   real CI run found it in 27 seconds: harness_tray reads three .sql files by
+   absolute path UNCONDITIONALLY, so on the runner it fell 57 passes -> 4 and
+   the ratchet went red on the pass count. Resolved from the repo instead. */
+const CR_ROOT = require('./script_paths.cjs').ROOT + '/';
+const IDX = fs.readFileSync(process.argv[2] || CR_ROOT + 'index.html', 'utf8');
+const STU = fs.readFileSync(process.argv[3] || CR_ROOT + 'studio.html', 'utf8');
 /* ⚠ MODULE TEXT COMES FROM module_source.cjs, NOT FROM A BLOCK SLICE.
    This gate used to cut its module out of index.html by `<script id="cr-show-script">`.
    That stops working the instant the module becomes an external file, which is
@@ -24,7 +32,7 @@ const STU = fs.readFileSync(process.argv[3] || '/home/user/cardinal-inspections/
 /* includeOpenTag: this slice deliberately started AT the tag, not after it. */
 const MS = require('./module_source.cjs');
 const SH = MS.moduleText(IDX, 'showcase.js',
-             { htmlPath: process.argv[2] || '/home/user/cardinal-inspections/index.html',
+             { htmlPath: process.argv[2] || CR_ROOT + 'index.html',
                missing: 'throw', includeOpenTag: true });
 
 let pass = 0, fail = 0;
@@ -50,9 +58,9 @@ ok('the tray SELECT still names its columns rather than select(*)',
   /from\('studio_tray'\)[\s\S]{0,200}\.select\('storage_path,project_address,project_name,width,height,added_at,bucket'\)/.test(SH));
 ok('neither tray migration declares a coordinate column',
   !/\b(lat|lon)\b\s+(numeric|double|real)/.test(
-    fs.readFileSync('/home/user/cardinal-inspections/studio_tray.sql', 'utf8') +
-    fs.readFileSync('/home/user/cardinal-inspections/studio_tray_bucket.sql', 'utf8') +
-    fs.readFileSync('/home/user/cardinal-inspections/studio_tray_bins.sql', 'utf8')));
+    fs.readFileSync(CR_ROOT + 'studio_tray.sql', 'utf8') +
+    fs.readFileSync(CR_ROOT + 'studio_tray_bucket.sql', 'utf8') +
+    fs.readFileSync(CR_ROOT + 'studio_tray_bins.sql', 'utf8')));
 
 console.log('\n── 629: three bins, ARMED (628 cycled; that is deliberately gone) ──');
 ok('TRAY is a Map, and its value carries bucket AND trade',

@@ -32005,3 +32005,33 @@ Two measured findings that shape the whole cutover:
 (only three verbs — `open`, `openForProject`, `close`), plus 5 structural registrations; 22 raw
 identifier mentions, because guards and calls double-count. The "five-site checklist" in earlier
 notes was the **`cr-des` retirement pattern** from 807, not a count of Showcase call sites.
+
+### ⚠ AND THE FIRST REAL CI RUN FOUND SOMETHING IN 27 SECONDS
+
+The `harnesses` job went **RED on its first run**, and it was right to.
+
+`harness_tray` scored **57 passes locally and 4 in CI**. Cause: it read three
+`.sql` files by **absolute path — `/home/user/cardinal-inspections/...`, unconditionally**.
+All six harnesses carried a path to the one sandbox they were written in. They ran perfectly
+there and were **unrunnable anywhere else**, which stayed invisible for exactly as long as
+nothing else ever ran them.
+
+**The local run could not have caught this, and neither could reading the code.** The absolute
+path exists on the machine the harnesses were written on, so it resolves; the first honest
+reproduction required *moving the real files aside* so the path was genuinely absent. With that
+done: pre-fix **crashes on ENOENT**, fixed version **GREEN 57**. Then the whole suite, run from a
+relocated copy of the repo with the originals hidden, reproduces every baseline count exactly and
+exits 0.
+
+Paths now resolve through `script_paths.cjs`'s `ROOT`, which walks up for `.git` from the script's
+own directory.
+
+⚠️ **The comment explaining the fix quoted the offending path, so the patch rewrote its own
+prose** — `'/home/user/…'` inside the comment became `CR_ROOT + '…'`, leaving a comment that said
+the opposite of what it meant. Harmless to the code, caught by reading the result. **The
+comment-pollution trap, from the other side: not a comment fooling a count, but a substitution
+editing a comment.**
+
+**This is the whole argument for the job in one run.** A ratchet that only watched FAIL counts
+would have seen `harness_tray` go 0F → 0F and said nothing; the **pass count** is what went red.
+
