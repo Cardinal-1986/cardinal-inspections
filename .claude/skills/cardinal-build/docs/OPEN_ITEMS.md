@@ -3538,6 +3538,28 @@ more at 627. The **argument** is unaffected — Studio was cheap because its
 surface is small, not because it was read-only — but the claim was false and had
 propagated to four places in the doc set. See `CLAUDE.md` → Cardinal Studio.)*
 
+### ✅ 31 Aug 2026 — TRIGGER 1 HAS FIRED. Spike run; see `SHOWROOM_EXTRACTION_SPIKE.md`
+
+Theo: *"I want the sales presentation experience independently deployable so CRM
+changes cannot destabilize it. Trigger 2 is not currently the primary reason."*
+
+⚠️ **The spike CORRECTS the plan below in one important way.** This section frames the
+non-duplication route as *"extract them to shared files."* **For trigger 1 that fails on
+its own terms** — a file both apps load re-couples their deploys, which is exactly what
+Theo asked to stop. The answer is **relocation, not sharing**: the modules move, and the
+CRM's call sites become links.
+
+⚠️ **And the "days, not hours" cost below was overstated for these two modules.**
+Measured: Showcase has **one** bare global, Colors **two**, and **neither needs a single
+DOM anchor from outside itself** — both are self-mounting, with 3- and 4-method public
+APIs. The real cost is 11 gates that slice by block id, plus one CI blind spot that must
+be closed first (`check_build` and `check.yml` both skip `<script src>`, so an extracted
+file silently stops being syntax-checked).
+
+⚠️ **Newly found, and it constrains the order: OC Colors DEPENDS ON Showcase.**
+`shrinkOne()` reaches `window.CardinalShowcase` for the image toolchain (build 633's
+deliberate single checkpoint). **The two must move together.**
+
 ### The trigger to actually do it
 
 Not "someday" — one of these two concrete things:
