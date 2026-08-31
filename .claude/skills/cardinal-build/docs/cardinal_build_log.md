@@ -32133,3 +32133,53 @@ rollback. Two findings worth carrying out of it:
 And the definition is deleted **last, not first** — its `?vision=1` half is exactly the door that
 lets Vision be verified without the `showroom.` hostname, which is what Theo's staging condition
 requires.
+
+---
+
+## Build 1186 — OC Colors reads properly again: four inks below the floor, one dead rule
+
+**Found by the sentinel**, which reached OC Colors for the first time on 31 Aug through the
+Showroom's relocated copy — the module is byte-identical in both trees, so every finding was
+live in Cardinal too.
+
+**Four failures, measured in Chromium at 390px and 1194px, with build 1185 as the control:**
+
+| element | was | now |
+|---|---:|---:|
+| `.occ-proof .pf span` — the SureNail proof captions | **1.62:1** | **7.05:1** |
+| `.occ-chip[aria-pressed="true"]` — the selected filter chip | 4.25:1 | **5.79:1** |
+| `.occ-tag.new` — the NEW badge, 11px | 4.25:1 | **5.79:1** |
+| `.occ-btn` — "Add our roofs" and every primary action | 4.25:1 | **5.79:1** |
+
+⚠ **The 1.62:1 is the one that mattered, and it is the partial-theming shape exactly.** Build 623's
+flyer skin turned `.occ-proof .pf` from a dark card into a WHITE panel and recoloured `.pf` — but
+`.occ-proof .pf span` is more specific and kept its dark-theme ink. So the proof captions on the
+Duration and FLEX pages, the copy that makes the SureNail claim *true*, have been light grey on
+white **since 623** on a screen handed across a kitchen table. **Fixed by DELETING the declaration,
+not replacing it**: the caption now inherits `--occ-panel-dim` from the panel it sits on and can
+never drift from it again.
+
+✅ **NOTHING NEW WAS INVENTED, and I nearly did.** I had designed a token, computed a value and
+written its comment before finding that **623b had already done all three** —
+`--occ-pink-deep:#C4007A /* 5.79:1 under small WHITE text */` — and applied it to `.occ-sty` and
+`.cmp-c4`, missing three siblings. The module's palette is deliberately split by ROLE and was
+already complete: `--occ-red` the brand fill, `--occ-pink-ink` pink on white, `--occ-pink-on-dark`
+pink on black, `--occ-pink-deep` the ground under small white. **The prime doctrine, on a token.**
+
+⚠ **A grep found 5 white-on-pink sites; the sentinel had reported 2.** The other three sit on
+screens its walk never opened. *Ask who else uses the class before deciding the fix is small* —
+and two of the five turned out already fixed at 623b, which only a real render could tell apart.
+
+**Also removed:** a light-grey ink rule for `[data-nophoto] .occ-lsub` that 623 left behind. Its
+replacement sets the same elements at identical specificity, later in the file, so it has been
+dead since 623 — and would have silently taken over if that block were ever reordered.
+
+⚠ **My own comment reintroduced the retired hex, and the assertion caught it.** The first draft of
+the deletion comment quoted the value it was retiring, so the rule went and the string stayed —
+comment pollution, committed in the build whose job was removing it. The comment now names the
+colour in words and the assertion demands **zero** occurrences of the literal, of any kind.
+
+**Gates:** mechanical ladder green (133 blocks parse, 136/136 script, 158/158 style, marker present,
+negative control clean). `gate_types` / `gate_dupes` / `gate_a11y` all GREEN, nothing grew.
+`harness_occhead` 42/42. `harness_colors` 109P/1F — **the same single failure on the 1185 control**,
+so pre-existing. Chromium before/after: **8 FAIL → 0**, the probe seen red on the control first.

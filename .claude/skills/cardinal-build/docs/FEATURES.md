@@ -1687,6 +1687,24 @@ state until then. Nothing here has been verified against a real photograph.
 
 ## OC Colors — the shingle-line hub (builds 615–623, 7–8 Aug 2026)
 
+> ### ⚠️ Build 1186 — four inks on these screens were below the readable floor, and one badly
+>
+> **`.occ-proof .pf span` — the SureNail proof captions — rendered at 1.62:1 from build 623 until
+> 1186.** 623's flyer skin turned `.occ-proof .pf` from a dark card into a **white panel** and
+> recoloured `.pf`, but the child rule is more specific and kept its dark-theme ink. Thirteen of
+> fourteen elements were right, which is exactly why nobody saw it. Now it carries **no `color` at
+> all** and inherits `--occ-panel-dim` from the panel — it cannot drift again.
+>
+> **The selected filter chip, the NEW badge and `.occ-btn` were white on `--occ-red` at 4.25:1.**
+> They now use **`--occ-pink-deep`** (5.79:1), the token **623b already built for this exact
+> pairing** and applied to only two of the five sites.
+>
+> ⚠️ **The palette is split by ROLE and was already complete — do not add a fifth pink.**
+> `--occ-red` brand fill and LARGE type · `--occ-pink-ink` pink on white · `--occ-pink-on-dark`
+> pink on the black ground · `--occ-pink-deep` the ground under small white text.
+>
+> A dead `[data-nophoto] .occ-lsub` colour rule from 623 was removed in the same build.
+
 **Where:** `<style id="cr-occ-styles">` + `<script id="cr-occ-script">`, appended before the last
 `</body>`. Exports `window.CardinalColors` (`open`). Full-screen `#cr-occ`, `position:fixed;
 inset:0`.

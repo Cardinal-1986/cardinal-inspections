@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1185<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1186<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42662,6 +42662,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1186, d: '2026-08-31', t: 'OC Colors reads properly again', s: 'Four pieces of text on the Owens Corning colour screens were below the readable floor, and one of them badly \u2014 the SureNail proof captions on the Duration and FLEX pages have been light grey on a white panel since build 623, at 1.62:1. That is the screen you hand across a kitchen table. The selected filter chip, the NEW badge and the Add our roofs button were white on the brand pink at 4.25:1, just under the floor. Nothing new was invented to fix them: build 623 had already measured this exact problem and created the deeper pink for it, then applied it to two controls and missed three. The captions now simply inherit the panel ink they sit on, so they cannot drift again. Also removed a colour rule that had been dead since 623.' },
   { b: 1185, d: '2026-08-31', t: 'The header title is a real button', s: 'Tapping the portal name in the header opens the Front Door, so it has been a control since build 1164 \u2014 but underneath it was still an ordinary piece of text. It told screen readers it could be opened while not being something that can be opened, and it could not be reached or pressed from a keyboard at all. It is now a proper button: reachable by Tab, pressed with Enter or Space, and it announces itself correctly. Nothing changes about how it looks or how it behaves on a phone.' },
   { b: 1183, d: '2026-08-31', t: 'The hammer on the schedule card, and two dead files gone', s: 'The Cardinal-on-a-hammer drawing has been in the app since build 1086 and had never once appeared on a screen. It was drawn, and the rule that paints it faintly behind a card was written \u2014 but the card was never given the name the rule looks for, so nothing ever matched it. It is now the watermark behind Next 30 Days on the home screen, which is the work schedule, and it sits beside the Cardinal-on-a-pencil that already watermarks the Team Calendar. Two other picture files that nothing in the app could reach have been deleted, along with the leftover styling that pointed at one of them.' },
   { b: 1182, d: '2026-08-31', t: 'The inspection reports stop carrying the logo twice', s: 'The cover logo was written into the app file twice \u2014 once inside the roof report and once inside the exterior report, the same image both times, about 280,000 characters between them. It is a normal picture file now and both reports point at it, so the app file is a quarter of a megabyte smaller and the logo is fetched once and reused. Nothing changed on the reports themselves, and if the picture ever fails to load they fall back to the main Cardinal logo.' },
@@ -75825,7 +75826,12 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   font:600 13.5px var(--occ-sans,sans-serif); -webkit-tap-highlight-color:transparent;
 }
 #cr-occ .occ-chip[aria-pressed="true"]{
-  background:var(--occ-red,#c8202e); border-color:var(--occ-red,#c8202e); color:#fff;
+  /* 1186: --occ-pink-deep, not --occ-red. 623b measured this exact pairing and
+     built the token for it -- "5.79:1 under small WHITE text" -- then applied it
+     to .occ-sty and .cmp-c4 and missed three siblings. White on the brand pink
+     at 13.5px is 4.25:1, under the 4.5 floor. The border moves with the fill:
+     leaving it --occ-red rings a deep-pink chip in a lighter pink. */
+  background:var(--occ-pink-deep,#C4007A); border-color:var(--occ-pink-deep,#C4007A); color:#fff;
 }
 #cr-occ .occ-count{padding:6px 16px 10px; font-size:13px; color:var(--occ-dim,#9AA3AE)}
 
@@ -75858,7 +75864,7 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 }
 #cr-occ .occ-tag.coty{background:var(--occ-gold,#C9A227); color:#1A1400}
 #cr-occ .occ-tag.was{background:var(--occ-goldq,#3A3208); color:var(--occ-gold,#C9A227)}
-#cr-occ .occ-tag.new{background:var(--occ-red,#c8202e); color:#fff}
+#cr-occ .occ-tag.new{background:var(--occ-pink-deep,#C4007A); color:#fff}  /* 1186: 11px white — 4.25:1 on the brand pink */
 #cr-occ .occ-tag.disc{background:var(--occ-raise,#12151A); color:var(--occ-dim,#9AA3AE); border:1px solid var(--occ-line,#1D2126)}
 
 #cr-occ .occ-empty{padding:40px 16px; text-align:center; color:var(--occ-dim,#9AA3AE)}
@@ -75959,7 +75965,7 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 #cr-occ .occ-actions{display:flex; flex-wrap:wrap; gap:10px; padding:16px}
 #cr-occ .occ-btn{
   min-height:44px; padding:0 16px; border-radius:10px; cursor:pointer;
-  background:var(--occ-red,#c8202e); color:#fff; border:0;
+  background:var(--occ-pink-deep,#C4007A); color:#fff; border:0;   /* 1186: 15px white — 4.25:1 on the brand pink */
   font:700 15px var(--occ-sans,sans-serif); -webkit-tap-highlight-color:transparent;
 }
 #cr-occ .occ-btn.ghost{background:transparent; color:var(--occ-ink,#EDEFF2); border:1px solid var(--occ-line,#1D2126)}
@@ -76182,7 +76188,12 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     content:attr(data-nophoto); position:absolute; right:26px; top:4px; z-index:0;
     font:800 132px/1 var(--occ-sans,sans-serif); letter-spacing:-.06em; color:#181D24;
   }
-  #cr-occ[data-style="roofs"] .occ-line[data-nophoto] .occ-lsub{color:#A9B2BC}
+  /* 1186: a light-grey ink rule stood here and is GONE. It was written for a
+     DARK tile; 623 made [data-nophoto] tiles white and set the same elements to
+     --occ-panel-dim at identical specificity, later in the file, so it never
+     applied again. Dead code that would silently take over if the flyer-skin
+     block were ever reordered. Its value is not quoted here on purpose — a
+     retired colour named in a comment is the next grep's false positive. */
 
   /* ---- COMPARE: the hub is a board ---- */
   #cr-occ[data-style="compare"]:not(.line):not(.detail) .occ-hub{max-width:none; padding:24px 40px 60px}
@@ -76287,8 +76298,14 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   color:var(--occ-red,#c8202e);
 }
 #cr-occ .occ-proof .pf span{
+  /* 1186: NO color HERE — it inherits --occ-panel-dim from .pf, 7.05:1.
+     623's flyer skin turned .pf from a dark card into a WHITE panel and
+     recoloured .pf itself, but this child rule is more specific and kept the
+     dark-theme ink, so the SureNail proof captions have been rendering at
+     1.62:1 on white ever since — on a screen handed to a homeowner.
+     Deleting the declaration beats replacing it: the caption can no longer
+     drift from the panel it sits on. */
   display:block; margin-top:7px; font-size:11.5px; line-height:1.35;
-  color:var(--occ-ink2,#C6CCD4);
 }
 #cr-occ .occ-pbasis{
   font-size:11.5px; line-height:1.45; color:var(--occ-dim,#9AA3AE); margin-bottom:4px;
