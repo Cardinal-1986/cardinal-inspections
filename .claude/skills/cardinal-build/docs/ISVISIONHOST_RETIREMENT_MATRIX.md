@@ -48,6 +48,47 @@ wrong; it is corrected here so the next reader does not plan around it.
 
 ---
 
+## ✅ THE PARITY MAP IS BUILT AND PROVEN — build 1187 · Showroom `ea30488`
+
+*All seven doors. `gate_1187.mjs`: **23/23 in Chromium**, RED on the 1186 control.*
+
+| # | old Vision hub door | new Showroom destination | native / outbound | canonical URL |
+|---|---|---|---|---|
+| 1 | **Presentations** — Showcase, Workmanship, The Walk | Showcase tile | **native** | — |
+| 2 | **Colors** | OC Colors tile | **native** | — |
+| 3 | **Studio** | Studio tile | outbound | `https://app.cardinalroster.com/studio.html` |
+| 4 | **Designer** | Exterior Visualizer tile | outbound | `https://app.cardinalroster.com/visualizer/?present=1` |
+| 5 | **The Appointment** | The Appointment tile | outbound | `https://app.cardinalroster.com/?open=appt` |
+| 6 | **Why Cardinal** | Why Cardinal tile | outbound | `https://app.cardinalroster.com/?open=why` |
+| 7 | **The Pop-Up Roof** | The Pop-Up Roof tile | outbound | `https://presentation.cardinalroster.com/` |
+
+**Every outbound URL is absolute and resolves identically wherever the page is served from.**
+`gate_1187` asserts no tile carries a bare path.
+
+### `isVisionHost()` after this build — UNCHANGED, deliberately
+
+**9 code occurrences · 6 locations · 4 call sites · 3 comments.** Build 1187 touched **none** of
+them: it added an entry point and canonicalised four links. The definition, the export and all
+four call sites are exactly as they were.
+
+| # | site | status after 1187 |
+|---|---|---|
+| 1 | the definition, `cr-lr-script` | untouched — deleted **last** |
+| 2 | the export on `window.CardinalLanding` | untouched |
+| 3 | `showLanding()` | untouched — inverts after the repoint |
+| 4 | **`goToLanding()`** | untouched — **its own build, ring-fenced** |
+| 5 | `build()` / `visionHtml()` | untouched — its two hrefs canonicalised, the guard left alone |
+| 6 | the Visualizer hand-off | untouched — `present=1` already relocated to the Showroom's tile |
+| 7–10 | the comments | untouched — rewritten with the definition |
+
+⚠ **The blocker that remains is the repoint itself, and it is now the ONLY one.** Both of Theo's
+conditions are met: Vision is verified without the hostname (`?vision=1`, confirmed by him), and
+every hub dependency now has an explicit replacement that is built and proven rather than planned.
+`showroom.cardinalroster.com` still serves Cardinal byte-identically, so sites 3–6 still cannot be
+inverted until it points at the Showroom project.
+
+---
+
 ## The parity build, audited 31 Aug — and the two doors that have no URL to link to
 
 *Theo: preserve access rather than knowingly drop hub destinations. The Appointment → outbound

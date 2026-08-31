@@ -32183,3 +32183,65 @@ colour in words and the assertion demands **zero** occurrences of the literal, o
 negative control clean). `gate_types` / `gate_dupes` / `gate_a11y` all GREEN, nothing grew.
 `harness_occhead` 42/42. `harness_colors` 109P/1F — **the same single failure on the 1185 control**,
 so pre-existing. Chromium before/after: **8 FAIL → 0**, the probe seen red on the control first.
+
+---
+
+## Build 1187 — two destinations get an address, and links stop depending on the address bar
+
+**The parity build.** The Vision hub offers **seven** doors; the Showroom launcher had **four**.
+Theo: preserve access rather than knowingly drop existing hub destinations.
+
+### `?open=appt` and `?open=why` — the canonical way in
+
+⚠ **The Appointment and Why Cardinal are MODULES, not pages.** Cardinal's hash router restores
+`#p/ #e/ #list/ #leads #reports #clients #feed #audit #board #me #team #settings` and **neither of
+them**. The only way to reach either was to open the Vision hub and tap a tile — which made the
+`showroom.` hostname load-bearing for two destinations, and left the Showroom's launcher with
+nothing real to point at. *Inventing a link to a URL that does not resolve is how the Studio 404
+happened.*
+
+**Option B of two, Theo's pick.** A `#why` case would have lived in `__tryRestoreFromHash`, which
+is `goToLanding()`-adjacent — the "swaps the page underneath itself and traps the user" class.
+This is **contained entirely in `cr-lr-script`**: read a query, wait until signed in, call the
+module's own `open()`. **No router, no navigation lever.** It also outlives `isVisionHost()`:
+unlike `?vision=1` it does not depend on a door scheduled for deletion.
+
+⚠️ **`gate_1187` caught a real defect in my first version, and it is worth recording.** The
+readiness test was *"is `#landingView` visible?"*, reasoning that a visible landing means a
+signed-in user. **A session restore takes you straight past the landing to the home screen**, so
+for a signed-IN user the landing is hidden and the deep link silently did nothing — a
+correct-looking state that tells nobody, the shape build 808 exists for. The test is now
+**`#loginView.classList.contains('open')`**, which is what `showLogin()` actually sets.
+
+✅ **No new observer.** The waiting path returns *without* consuming its flag, and `scan()` is
+already driven by the body `MutationObserver` this module has had since 593 — so sign-in DOM churn
+re-drives it for free. **The observer census does not move.**
+
+### Links that no longer depend on which hostname served the file
+
+| was | now |
+|---|---|
+| `href="/studio.html"` (hub tile) | `https://app.cardinalroster.com/studio.html` |
+| `href="/popup.html"` (hub tile) | `https://presentation.cardinalroster.com/` |
+| `href="/popup.html"` (**ordinary landing's book link**) | `https://presentation.cardinalroster.com/` |
+
+⚠ **There were TWO `/popup.html` links, not one** — a file-wide assertion of 1 failed and caught
+it. The second is the ordinary landing's book link, which had the identical hostname dependency
+and would have been missed by a fix scoped to `visionHtml()` alone. Measured: both resolve 200 on
+`showroom.cardinalroster.com` today and **404 on the Showroom project** — they worked only because
+that hostname serves Cardinal's whole deployment.
+
+⚠ **The Pop-Up Roof's canonical home is its own domain**, from `vercel.json`'s host rewrite — not
+`app…/popup.html`. That is the address the book was given and the one a client sees.
+
+### Gates
+
+`gate_1187.mjs` — **23/23 in Chromium**, and **RED on the 1186 control with exactly the seven
+checks this build adds**. Mechanical ladder green (133 blocks, 136/136 script, 158/158 style,
+marker + negative control). `gate_types` / `gate_dupes` / `gate_a11y` green, nothing grew.
+`harness_vision` 20P/3F — **identical on the control**, so pre-existing.
+
+⚠ **`function scan(){` occurs 16 times in this file.** The first patch attempt asserted 1 and
+aborted; the edit is applied by slicing `cr-lr-script`, patching, and re-joining, with an identity
+check that nothing outside the block moved. Build 634's lesson: scoping the assertion is not
+enough when `sub()` splices file-wide.

@@ -7850,6 +7850,24 @@ client-facing version of it is a **reface, not a write**.
 
 ## Why Cardinal (build 1160) — `cr-why-styles` + `cr-why-script`, `window.CardinalWhy`
 
+> ### ⚠️ Build 1187 — this module now has an ADDRESS: `app.cardinalroster.com/?open=why`
+>
+> It was reachable only by opening the Vision hub and tapping a tile — Cardinal's hash router
+> restores twelve views and this is not one of them. That made the `showroom.` hostname
+> load-bearing for it, and left the Showroom launcher nothing real to point at.
+>
+> **`?open=appt` does the same for The Appointment.** Both are handled in **`cr-lr-script` only**
+> — `openFromQuery()` reads the query, waits until `#loginView` no longer has `.open`, and calls
+> the module's own `open()`. **No history router, no `goToLanding()`, no new observer.**
+>
+> ⚠️ **The readiness test is the LOGIN view, not the landing's visibility.** A session restore
+> goes straight past the landing to the home screen, so a visible-landing test silently did
+> nothing for signed-in users. `gate_1187` caught it.
+>
+> ⚠️ **`CardinalWhy` has two callers** — the hub tile and the Appointment's `openWhy()`. Relocating
+> it natively into the Showroom would break the Appointment or fork the module, which is why the
+> Showroom links to it instead.
+
 `#cr-why` · a Vision hub tile (`data-go="why"`) · Blackout, single-theme.
 
 **The first client-facing surface on this project that is about Cardinal

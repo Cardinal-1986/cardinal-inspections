@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1186<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1187<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42662,6 +42662,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1187, d: '2026-08-31', t: 'Two more ways in, and links that no longer depend on the address bar', s: 'The Appointment and Why Cardinal could only be reached by opening the Vision hub and tapping a tile \u2014 there was no address you could type, bookmark or send anyone. Both now have one: /?open=appt and /?open=why open them straight from a cold load, and a reload keeps you where you were. Nothing changes if you do not use them; the ordinary landing behaves exactly as before. Separately, the links out to Studio and the Pop-Up Roof were written as bare paths, which meant they quietly resolved against whichever address you happened to be on. Both now point at where those things actually live \u2014 the book at presentation.cardinalroster.com, which is the address a client is given. The Pop-Up Roof link on the ordinary landing had the same problem and was fixed with it.' },
   { b: 1186, d: '2026-08-31', t: 'OC Colors reads properly again', s: 'Four pieces of text on the Owens Corning colour screens were below the readable floor, and one of them badly \u2014 the SureNail proof captions on the Duration and FLEX pages have been light grey on a white panel since build 623, at 1.62:1. That is the screen you hand across a kitchen table. The selected filter chip, the NEW badge and the Add our roofs button were white on the brand pink at 4.25:1, just under the floor. Nothing new was invented to fix them: build 623 had already measured this exact problem and created the deeper pink for it, then applied it to two controls and missed three. The captions now simply inherit the panel ink they sit on, so they cannot drift again. Also removed a colour rule that had been dead since 623.' },
   { b: 1185, d: '2026-08-31', t: 'The header title is a real button', s: 'Tapping the portal name in the header opens the Front Door, so it has been a control since build 1164 \u2014 but underneath it was still an ordinary piece of text. It told screen readers it could be opened while not being something that can be opened, and it could not be reached or pressed from a keyboard at all. It is now a proper button: reachable by Tab, pressed with Enter or Space, and it announces itself correctly. Nothing changes about how it looks or how it behaves on a phone.' },
   { b: 1183, d: '2026-08-31', t: 'The hammer on the schedule card, and two dead files gone', s: 'The Cardinal-on-a-hammer drawing has been in the app since build 1086 and had never once appeared on a screen. It was drawn, and the rule that paints it faintly behind a card was written \u2014 but the card was never given the name the rule looks for, so nothing ever matched it. It is now the watermark behind Next 30 Days on the home screen, which is the work schedule, and it sits beside the Cardinal-on-a-pencil that already watermarks the Team Calendar. Two other picture files that nothing in the app could reach have been deleted, along with the leftover styling that pointed at one of them.' },
@@ -51741,7 +51742,11 @@ return (
 (isAdmin ?
 ('<div class="cr-vh-flow"><span>Studio</span><span class="ar">\u2192</span>' +
 '<span>promote</span><span class="ar">\u2192</span><span>Showroom</span></div>' +
-'<a class="cr-vh-tile admin" href="/studio.html">' +
+/* 1187: CANONICAL, not relative. `/studio.html` resolved against whatever
+   host served the deployment -- it worked only because
+   showroom.cardinalroster.com serves this same file. Verified 200 at the
+   absolute URL. */
+'<a class="cr-vh-tile admin" href="https://app.cardinalroster.com/studio.html">' +
 '<span class="ic">\u25E7</span>' +
 '<span class="tx">' +
 '<span class="tt">Studio<span class="cr-vh-badge">Admin</span></span>' +
@@ -51766,7 +51771,10 @@ return (
 /* 1159: the book was reachable only from the Sales Floor (a CRM screen
    this host does not draw) and from presentation.cardinalroofer.com.
    On the showroom tablet it was unreachable. Same plain <a> as Studio. */
-'<a class="cr-vh-tile" href="/popup.html" target="_blank" rel="noopener">' +
+/* 1187: the Pop-Up Roof's canonical home is its OWN domain, not this app's
+   path. vercel.json rewrites presentation.cardinalroster.com/ -> /popup.html;
+   that is the address the book was given and the one a client sees. */
+'<a class="cr-vh-tile" href="https://presentation.cardinalroster.com/" target="_blank" rel="noopener">' +
 '<span class="ic">\u25A4</span>' +
 '<span class="tx">' +
 '<span class="tt">The Pop-Up Roof</span>' +
@@ -51914,7 +51922,10 @@ lv.innerHTML =
    shipped; the markup did not. A plain <a> (the Studio tile's pattern),
    and deliberately NOT width-gated: the book is phone-shaped, so it is
    offered everywhere the >=820px Showroom row is hidden. */
-'<a class="cr-lr-book" href="/popup.html" target="_blank" rel="noopener">' +
+/* 1187: the ORDINARY landing's book link, canonicalised with the hub's. It
+   had the identical hostname dependency and would have been missed by a fix
+   scoped to visionHtml() alone. */
+'<a class="cr-lr-book" href="https://presentation.cardinalroster.com/" target="_blank" rel="noopener">' +
 '<span class="ic">\u25A4</span>' +
 '<span class="tx">' +
 '<span class="tt">The Pop-Up Roof</span>' +
@@ -52078,12 +52089,73 @@ now.toLocaleDateString('en-US', { month:'long', day:'numeric' }));
 }
 try{ build(); }catch(e){ console.warn('[landing] initial build:', e); }
 var scheduled = false;
+/* 1187 -- `?open=appt` and `?open=why`: the canonical way into the two Vision
+   hub destinations that did NOT move to the Showroom.
+
+   THE PROBLEM THIS SOLVES. The Appointment and Why Cardinal are MODULES, not
+   pages -- Cardinal's hash router restores #p/ #e/ #list/ #leads #reports
+   #clients #feed #audit #board #me #team #settings and neither of them. So the
+   only way to reach either was to open the Vision hub and tap a tile, which
+   made the `showroom.` hostname load-bearing for two destinations. The
+   Showroom's launcher needs a real URL to point at, and inventing a link to
+   one that does not resolve is how the Studio 404 happened.
+
+   WHY A LANDING QUERY AND NOT A HASH ROUTE. A `#why` case would live in
+   __tryRestoreFromHash, which is goToLanding()-adjacent -- the "swaps the page
+   underneath itself and traps the user" class. This is contained entirely in
+   this module: it reads a query, waits for the landing to be genuinely on
+   screen, and calls the module's own open(). It touches no router and no
+   navigation lever. It also outlives isVisionHost(): unlike ?vision=1 it does
+   not depend on a door that is scheduled for deletion.
+
+   ⚠ THE READY TEST IS #loginView.open, NOT WHETHER THE LANDING IS VISIBLE.
+   The first version of this gated on `getComputedStyle(landingView).display`,
+   reasoning that a visible landing means a signed-in user. gate_1187 caught it:
+   a session restore takes you STRAIGHT PAST the landing to the home screen, so
+   the landing is hidden for a signed-IN user and the deep link silently did
+   nothing -- the exact "correct-looking state that tells nobody" shape. What
+   actually distinguishes signed-out is showLogin() adding `.open` to
+   #loginView, so that is what is asked.
+
+   AND IT MUST NOT CONSUME THE FLAG WHILE WAITING. Returning without setting
+   openDone lets scan() call again -- and scan() is already driven by the body
+   MutationObserver this module has had since 593, so sign-in DOM churn
+   re-drives it for free. No new observer: the census does not move. */
+var OPEN_TARGETS = {
+  appt: function(){ return window.CardinalAppointment; },
+  why : function(){ return window.CardinalWhy; }
+};
+var openDone = false, openTries = 0;
+function openFromQuery(){
+if(openDone) return;
+var m = /[?&]open=([a-z]+)/i.exec(location.search || '');
+if(!m){ openDone = true; return; }
+var get = OPEN_TARGETS[m[1].toLowerCase()];
+/* an unknown key lands normally rather than erroring -- a stale bookmark
+   should show the launcher, not a dead end. */
+if(!get){ openDone = true; return; }
+var lg = document.getElementById('loginView');
+if(lg && lg.classList.contains('open')) return;   /* signed out -- wait */
+var mod = get();
+if(!mod || typeof mod.open !== 'function'){
+  /* both modules parse ~34,000 lines after this one, so on a cold load this
+     is a matter of milliseconds. Bounded anyway: give up and leave the user
+     wherever they are rather than retrying forever. */
+  if(++openTries > 80){ openDone = true; return; }
+  setTimeout(openFromQuery, 100);
+  return;
+}
+openDone = true;
+leave();
+try{ mod.open(); }catch(e){ console.warn('[landing] ?open=', e); }
+}
 function scan(){
 if(scheduled) return;
 scheduled = true;
 requestAnimationFrame(function(){
 scheduled = false;
 try{ build(); }catch(e){ console.warn('[landing]', e); }
+try{ openFromQuery(); }catch(e){ console.warn('[landing]', e); }
 });
 }
 function start(){
@@ -52091,7 +52163,7 @@ scan();
 var lv = document.getElementById('landingView');
 if(lv){
 new MutationObserver(function(){
-if(lv.style.display !== 'none') { build(); paint(); }
+if(lv.style.display !== 'none') { build(); paint(); openFromQuery(); }
 }).observe(lv, { attributes:true, attributeFilter:['style'] });
 }
 new MutationObserver(scan).observe(document.body, { childList:true, subtree:true });
