@@ -3,6 +3,15 @@
 *31 Aug 2026. `index.html` (Cardinal) is byte-identical at build **1185**. No CRM call site,
 hostname behaviour, DNS or production deployment was touched.*
 
+> ✅ **THEO SIGNED IN AND IT WORKS — 31 Aug, and it is the first time this app has been driven
+> with real credentials against real data.** Sign-in, the project pack, Project Photos, Showcase
+> and OC Colors all confirmed by the only instrument that could confirm them. Everything before
+> this line was hash checks, gates and my own Chromium renders; **this is the first evidence that
+> the relocated app does its job.**
+> ⚠️ **One thing "works" does NOT cover: `GEMINI_API_KEY`.** The Walk's detection on a real
+> photograph is the only test of it, and it was not reported. Still open (§7) — recorded as
+> unconfirmed rather than quietly ticked.
+
 > ⚠️ **UPDATED after Theo used it. Six defects were found on the deployed app — every one of
 > them in the shell or the CI I wrote, none in the relocated modules, and none visible to any
 > mechanical gate.** Three were reported by Theo from a screenshot (`bd9a907`); two more were
@@ -447,11 +456,18 @@ runs the instrument's selftest, then the gate's, then the sweep.
       unreadable wordmarks of mine on its first sweep, and three defects in the instrument itself
 - [ ] ⚠ **`GEMINI_API_KEY` on the Showroom project** (The Walk only), never in the repo.
       **Unverifiable from outside** — the key is read only after auth passes — so it is confirmed
-      by the first authenticated call with a real photograph, not by probing the route
+      by the first authenticated call with a real photograph, not by probing the route.
+      ⚠️ **STILL OPEN after the 31 Aug sign-in.** "Works" covered sign-in, both destinations and
+      the photographs; it does **not** say The Walk ran a detection on a real photograph, and
+      that is the only thing that proves the key. **Recorded as unconfirmed rather than passed** —
+      this document has already been wrong once by inferring the key's state from a response that
+      could not see it (§1)
 - [ ] Delete `.claude/showroom-staging/` from Cardinal once the repo is the single source
-- [ ] **Theo signs in on staging** — the first real auth test, now that the destinations work
-- [ ] Open `#/project/eb81f3f4-…`; confirm the pack and photos load
-- [ ] Open Showcase and OC Colors; confirm both present
+- [x] **Theo signed in on staging, 31 Aug — it works.** The first real auth test, and the first
+      time anyone has driven this app with real credentials against real data. Verbatim: *"works"*
+- [x] Open `#/project/eb81f3f4-…`; the pack and photos load
+- [x] Open Showcase and OC Colors; both present, with real photographs rather than black
+      rectangles — which is the §5 defect 4 fix confirmed by the only instrument that could
 - [ ] Drop `harness_vision` from the Showroom set (CRM-only) and re-scope `gate_983`, `gate_1076`,
       `harness_showcase`, `harness_colors` to the Showroom's own surfaces — baseline what remains
 - [ ] Fix `harness_walk`'s shell DOM gap and the pre-existing `crAsk` drift
