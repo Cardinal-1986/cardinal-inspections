@@ -8065,3 +8065,31 @@ gold home made it redundant. `#editorLogo` is the one the brand-logo IIFE actual
 this build), `cardinal-report-logo.png` (reports/estimates, 1182), `cardinal-logo-insurance.svg`
 (insurance header), `icon-192`/`icon-512`/`apple-touch-icon` (PWA). Deliberate-but-unfetched:
 `community-action-dayton.png`. **Nothing else is at the root.**
+
+## Build 1188 — `goToLanding()` stops asking what hostname it is on
+
+`goToLanding()` is the one pipeline behind eight controls (drawer Landing row, dashboard and
+cover-card chips, the Cardinal Truth banner chip, the Resource Library exit via `backToLanding()`,
+the Production board exit, the Owner Console back button). Until 1188 it forked on
+`isVisionHost()`: ordinary hosts got the CRM home + Front Door, `showroom.*` and `?vision=1` got
+`#landingView` re-shown as the Vision hub.
+
+**Now there is one path**, on every host, for every account:
+
+| account | lands on |
+|---|---|
+| production (Curtis, Scottie) | the Production board — 1038's exit room, unchanged |
+| everyone else | the CRM home |
+| both | with the **Front Door** open over it |
+
+- **The Vision pane is torn down by `hideAllViews()`**, which has hidden `#landingView` and cleared
+  `body.cr-landing-on` since 1101 and released a leaked scroll lock since 364. ⚠ `CLAUDE.md`'s
+  "`#landingView` is DELIBERATELY absent from `hideAllViews()`" is 756-era and no longer true.
+- **A floor was added.** `hideAllViews()` runs *before* a destination is chosen; if none lands,
+  `#mainView` is shown outright rather than leaving the screen blank. `showHome()` is also wrapped
+  now, so a renderer throwing can no longer skip the Front Door.
+- **`?vision=1` still cold-loads the Vision pane** — `showLanding()` and `cr-lr-script`'s `build()`
+  are untouched. Only *returning* to the hub through this function is gone.
+- `gate_1188.mjs` — 42 Chromium assertions across six drives; **RED on the 1187 control with 7
+  failures**, including a measured blank screen (`elementFromPoint` → `HTML`, every container
+  hidden).

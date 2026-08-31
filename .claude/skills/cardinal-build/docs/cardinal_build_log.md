@@ -32245,3 +32245,89 @@ marker + negative control). `gate_types` / `gate_dupes` / `gate_a11y` green, not
 aborted; the edit is applied by slicing `cr-lr-script`, patching, and re-joining, with an identity
 check that nothing outside the block moved. Build 634's lesson: scoping the assertion is not
 enough when `sub()` splices file-wide.
+
+## Build 1188 — the hostname leaves `goToLanding()`, and the function grows a floor
+
+The first of the reserved `isVisionHost()` cutover builds, scoped to `goToLanding()` alone.
+Theo: *"Do not remove the `isVisionHost()` definition yet and do not sweep the other call sites
+into this build."* Nothing else moved.
+
+### The behaviour matrix, as it stood at 1187
+
+| host | account | `goToLanding()` did |
+|---|---|---|
+| `app.cardinalroster.com` | admin / sales | `hideAllViews()` → `showHome()` → Front Door over it |
+| `app.cardinalroster.com` | production | `hideAllViews()` → `CardinalProduction.open()` → Front Door (1038's exit room) |
+| `showroom.*` **or `?vision=1`** | any | `hideAllViews()` → re-show `#landingView`, add `body.cr-landing-on`, clear the scroll lock |
+| any | signed out | unreachable by a control, but callable; `#loginView` is not in `hideAllViews()` so it survives |
+| **any** | **any** | ⚠ **`hideAllViews()` runs BEFORE a destination is chosen.** Everything between them is a window with the whole app hidden |
+
+### What replaced the hostname
+
+One path. "Go to the picker" now means **Cardinal's Front Door (1164), on every host, for every
+account** — the product decision stated outright instead of inferred from an address. 805 is the
+build that proved a hostname test inside one file separates nothing; the Showroom is its own
+application now, so there is nothing left for the fork to choose between.
+
+Three things that made the single path safe without extra work, all pre-existing and verified
+rather than assumed:
+
+- **`hideAllViews()` hides `#landingView` and clears `body.cr-landing-on`** — since **1101**.
+  ⚠ `CLAUDE.md` still says landingView is *"DELIBERATELY absent from hideAllViews()"*; that
+  sentence is 756-era and has been wrong since 1101. So the single path tears the Vision pane
+  down on its own and nothing here has to.
+- **`hideAllViews()` releases a leaked scroll lock** — since **364**. The vision branch's own
+  `body.style.overflow = ''` was doing a job already done. **No new scroll-lock writer; the
+  roster stays at 17.**
+- **`#loginView` is not in `hideAllViews()`**, so a signed-out call cannot tear the login screen
+  down. Driven, not reasoned: gate F2.
+
+### THE FLOOR — the part that is not bookkeeping
+
+Between `hideAllViews()` and the return, the only thing standing between the user and a blank
+screen was `else if(typeof showHome === 'function')` — **an else-if with no else**. Nothing has
+ever made it fail, which is exactly the shape the 570-572 nav traps had. `showHome()` was also
+**unwrapped**, so a throw in any of its five renderers propagated out and skipped the Front Door:
+a home screen with no way to the picker.
+
+Now: each destination reports whether it landed, and if none did, `#mainView` — the app's own
+floor, literally what `showHome()` paints — is shown outright. **Measured on the 1187 control:
+`elementFromPoint` at the centre of the viewport returns `HTML` and every top-level container is
+hidden. The blank screen is proven to exist, not argued for.**
+
+The floor deliberately does **not** re-heal the header: `hideAllViews()` has carried that
+self-heal since 364 and ran at the top. A second copy cost two fresh TS2339s (`querySelector()`
+answers `Element`, and `Element` has no `.style`) — **`gate_types` caught it in the same run**.
+
+### Gates
+
+`gate_1188.mjs` — **42/42 in Chromium**; six drives (deep-screen admin, the drawer row a person
+taps, a production account, `?vision=1`, a broken destination, signed out) plus back/reload, both
+`?open=` deep links and the five Showroom launchers.
+
+**The control is the point: RED on 1187 with 7 failures, all of them in D and E.** A/B/C/F, the
+deep links and the launchers stay green on **both** trees — they are regression checks describing
+behaviour 1187 already had. If the control ever comes back all-green the gate is measuring nothing.
+
+Mechanical ladder green. `gate_types` / `gate_dupes` / `gate_a11y` / `gate_stack` green, nothing
+grew, nothing stacked.
+
+### The one live behaviour change, stated plainly
+
+`showroom.cardinalroster.com` still serves this deployment byte-for-byte. Until DNS moves, a
+"back to the hub" path on that host (the Resource Library exit, the Production exit, the drawer's
+Landing row) lands on the Cardinal home with the Front Door over it instead of the Vision hub —
+and `showMain()`'s vision branch skips `reload()`, so that home has **no client data**. Visible
+and usable, never stranded, but empty. **This makes the DNS repoint more urgent, not less.**
+`?vision=1` still cold-loads the Vision pane; only *returning* to it through this function is gone.
+
+### `isVisionHost()` after this build — 13 occurrences, 7 in CODE (lexer), 2 blocks
+
+| purpose | sites | post-cutover |
+|---|---|---|
+| definition + export | `function isVisionHost(){` · `isVisionHost : isVisionHost,` | the surface, not a decision |
+| **show the Vision pane** | `showLanding()` guard/call · `build()`'s `if(isVisionHost())` | the hub itself; dead once DNS moves |
+| **a presentation FLAG, not a door** | `if(isVisionHost()) _vz += 'present=1'` | ⚠ the only one that would be *lost* rather than merely unreachable — **already reproduced** on the Showroom, whose Visualizer launcher hard-codes `?present=1` |
+| prose | 6 comments | no behaviour |
+
+**No remaining occurrence blocks the DNS cutover.**

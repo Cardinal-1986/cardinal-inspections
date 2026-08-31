@@ -372,3 +372,63 @@ hostname.
 DNS change with no deploy. Sites 3 and 4 edit `hideAllViews()`-adjacent navigation, which is where
 this project has trapped users before — so they land in their own commit, after the repoint has
 been proven, never bundled with it.
+
+---
+
+## ✅ CALL SITE 4 IS DONE — build 1188 took `goToLanding()`
+
+Ring-fenced exactly as reserved: `goToLanding()` only, the definition untouched, no other call
+site swept in.
+
+**The hostname fork is gone.** One path: `hideAllViews()` → the account's real destination
+(Production board for Curtis/Scottie, per 1038; the CRM home for everyone else) → the Front Door
+over it. On every host, for every account.
+
+**Three pre-existing facts made the single path safe, and all three were verified rather than
+assumed** — the earlier plan for this build assumed the opposite of the first one:
+
+| assumed | measured |
+|---|---|
+| `#landingView` is not in `hideAllViews()` (still stated in `CLAUDE.md`) | ❌ **it has been since 1101**, with `body.cr-landing-on`. The single path tears the Vision pane down on its own |
+| the vision branch's `body.style.overflow = ''` had to be preserved | ❌ `hideAllViews()` has released a leaked lock since **364**. **No new scroll-lock writer — the roster stays at 17** |
+| a signed-out call would tear the login screen down | ❌ `#loginView` is not in `hideAllViews()`. Driven in Chromium (gate F2), not reasoned |
+
+**And one thing that was not bookkeeping.** Between `hideAllViews()` and the return, the only
+thing between the user and a blank screen was `else if(typeof showHome === 'function')` — an
+else-if with no else — and `showHome()` was unwrapped, so a renderer throwing skipped the Front
+Door. **The floor now shows `#mainView` when no destination lands.** On the 1187 control,
+`elementFromPoint` at the centre of the viewport returns `HTML` with every container hidden: the
+blank screen is measured, not argued for.
+
+### `isVisionHost()` after 1188 — 13 occurrences, **7 in CODE** (lexer), 2 blocks
+
+⚠ The header above says "13 dependencies". **13 is the raw occurrence count and 6 of them are
+prose.** The lexer answers 7 CODE hits across 2 blocks, and two of those are the definition and
+its export. There are **three real decisions left**, not thirteen.
+
+| # | purpose | site | what happens at cutover |
+|---|---|---|---|
+| 1 | definition | `function isVisionHost(){` · cr-lr-script | the surface, not a decision |
+| 2 | export | `isVisionHost : isVisionHost,` · `window.CardinalLanding` | ditto |
+| 3 | **paint the Vision pane** | `showLanding()`'s guard + call · main block | the hub itself |
+| 4 | **paint the Vision pane** | `build()`'s `if(isVisionHost())` · cr-lr-script | the hub itself |
+| 5 | **a presentation FLAG, not a door** | `if(isVisionHost()) _vz += 'present=1'` · the Designer tile | ⚠ see below |
+| — | prose | 6 comments, incl. 1188's own | no behaviour |
+
+**Does any of it block the DNS cutover? No.**
+
+- 3 and 4 are the Vision hub. After the repoint, `showroom.*` serves the Showroom app and these
+  never run; on `app.*` they are reachable only through `?vision=1`.
+- **5 is the only one whose BEHAVIOUR would be lost rather than merely unreachable** — it is what
+  ever set `?present=1` on the Visualizer, the difference between the office workbench and the
+  screen you hand a homeowner. **It is already reproduced**: the Showroom's Visualizer launcher
+  hard-codes `https://app.cardinalroster.com/visualizer/?present=1`. Verified in the Showroom
+  tree, not assumed.
+
+### The one live cost of shipping 1188 before the repoint
+
+`showroom.cardinalroster.com` still serves this deployment byte-for-byte. Until DNS moves, a
+back-to-the-hub path on that host lands on the Cardinal home with the Front Door over it instead
+of the Vision hub — and `showMain()`'s vision branch skips `reload()`, so that home carries **no
+client data**. Visible, usable, never stranded — but empty. **This build makes the repoint more
+urgent, not less.**
