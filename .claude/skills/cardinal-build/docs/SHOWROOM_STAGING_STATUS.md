@@ -89,7 +89,7 @@ import in `api/`, so there is not a third.
 ⚠️ **Whether `GEMINI_API_KEY` is set still cannot be confirmed from outside**, and this document
 must not claim it either way. The key is read only *after* the auth chain passes, so every
 reachable response stops at 401 by design. It shows on the first authenticated call with a real
-photograph. See §7.
+photograph. See §8.
 
 ### Why it did not deploy on the first push, and the real defect that fixed it
 
@@ -221,7 +221,7 @@ also records the module-load bug this document originally mis-attributed to the 
 I have no staff credentials; the supabase CDN is unreachable from this sandbox, and Chromium's
 tunnel to `cardinal-showroom.vercel.app` resets here (curl reaches it, the browser does not). So
 the sign-in screen is unverified *visually* — **the first real sign-in is Theo's to do**, using
-the checklist in §7.
+the checklist in §8.
 
 ## 5. What broke after deployment — six defects, all mine, none in the modules
 
@@ -334,7 +334,103 @@ control proving it fires on the reintroduced bug — and, since `f61ff7c`, that 
 is the right parameter, but its Prep landing is **Cardinal's own logic** — it only switches tabs
 after `loadCatalog().then(loadProjects)` resolves. That is a Cardinal build and Theo's approval.
 
-## 6. Cutover checklist
+## 6. The sentinel — what it took to make it see this app, and what it found
+
+*31 Aug 2026, after §5. The gap §5 ends on is closed: **the sentinel now runs on every push to
+this repo**, 13 states × 4 viewports, 52 renders, ratcheted so known debt blocks nothing and
+anything new is red the build it lands.*
+
+### It could not see this app at all, and that was silent
+
+⚠️ **The sentinel served the artifact's own HTML in answer to every URL.** A page loading
+`<script src="/showcase.js">` got the DOCUMENT back and died on `SyntaxError: Unexpected token
+'<'`. Cardinal's `index.html` has no external scripts, so in two hundred builds nothing ever
+noticed; **the Showroom is four files and the instrument could see one of them.**
+
+This is the external-script blind spot that `check_external_scripts.mjs` was written for in
+Phase 1, **in a second instrument**. Sibling files now resolve from the directory of the artifact
+*being swept* — which is not always the target's, because `--since` sweeps a different file that
+may live in a different tree.
+
+✅ **And because that failure was silent, the fix ships with a check that makes it loud.** A sweep
+now enumerates the local external scripts the HTML asks for and reports a **RIG** finding for any
+it never served. ⚠️ **It caught my own follow-on bug within the hour**: the traversal guard used
+`normalize()`, so a relative `index.html` gave base `.`, `'showcase.js'` does not start with
+`'./'`, every sibling was refused, and the sweep went straight back to serving the document — with
+the earlier absolute-path runs still green. `resolve()` now. *A silent instrument failure found by
+the check written for silent instrument failures, one hour after it was written.*
+
+### Two of its own checks reported correct code as broken
+
+| check | what it flagged | why it was wrong |
+|---|---|---|
+| **DEAD** | 5 rules "never win" | `normalise()` resolves a declared value on a **detached** probe, which is not a flex item. CSS Display 3 §2.7 **blockifies** an element that is one, so `inline-flex` computes to `flex` — a rule that won cleanly read as one that never won |
+| **DEADTAP** | both children of the showroom exit "unreachable" | `cursor` **inherits**, so every span inside a button advertises a pointer; `pointer-events:none` on them is *how you make the click land on the button*. The button itself was perfectly pressable |
+
+Both fixes are conditional and exact, not "close enough": the blockified value is accepted only
+when the element actually meets the spec's condition (flex/grid item, floated, absolutely
+positioned, or the root), and an inherited-cursor-only signal is dismissed only when a
+hit-testable interactive ancestor exists. An element that is **itself** a button, `role=button`
+or a link still reports — build 1164's header title, the case the check exists for.
+
+**Both carry a look-alike in `sentinel_selftest.html`.** A check that stops firing does more
+damage than the false positive it was silencing, and this instrument's own history records two
+checks that were incapable of firing when written. Selftest: **14/14 fire, both DEADTAP
+look-alikes stay quiet.**
+
+⚠️ **A/B'd against Cardinal rather than reasoned about** — old rig versus new, same page, same
+states: **exactly one finding changes**, `#cr-appt-rail .ar-count { display: inline } never wins`.
+Read rather than trusted: the rail is a flex container (`align-items`, `gap`), `.ar-count` is a
+direct child, so `inline` blockifies to `block` and the rule *did* win at 390px. **A false
+positive Cardinal had been carrying too.**
+
+### What it found in the app, first sweep
+
+✅ **Two unreadable wordmarks, both mine, both fixed.** `.sr-mark` at **3.36:1** on the sign-in
+card and `.sr-name` at **3.51:1** in the header bar of *every single screen*.
+
+**The fix is the shape to copy.** Cardinal red is correct as a **GROUND** — the button and the
+focus ring pair it with white and neither has a defect. As **INK** on this Blackout ground it is
+under the floor. Deepening `--sr-red` would have restyled the button and the focus ring to fix
+something else, which is precisely build 527's mistake. So the ink got its own token,
+**`--sr-red-ink`**, computed: **4.85:1** on the bar, **4.64:1** on the card.
+
+⚠️ **The sign-in screen was nearly missed by the instrument written to catch it.** The first setup
+returned a stored session, so the app entered before the first probe and the login screen was
+never rendered — its 3.36:1 wordmark showed up only in the run with *no setup at all*. `getSession`
+now returns nothing and the first state probes the form, the second signs in through the real
+handler.
+
+### What it carries, and why it is not fixed here
+
+**Four findings, all in the relocated OC Colors module, all equally live in Cardinal today** —
+recorded in `sentinel_baseline.json` **with a reason each**, because a gate that fails from its
+first run is the red tick nobody reads (§5, defect 6).
+
+| finding | verdict |
+|---|---|
+| **1.62:1** `#cr-occ .occ-proof .pf span` grey on white | ⚠️ **REAL, and shipping in Cardinal now.** Build 623's flyer skin flipped `.pf` from a dark card to a **white panel** and recoloured `.pf` — but `.occ-proof .pf span` is more specific and kept its dark-theme ink `#C6CCD4`. **The partial-theming shape `CLAUDE.md` warns about, exactly.** The one-line fix is `--occ-panel-dim` (`#55595E`, 7.05:1), a token already in the file |
+| **4.25:1** white on OC pink, ×2 | A near miss on the 4.5 floor at 13.5px. **OC brand colour** — `OC_BRAND_RULES.md` governs it, and the module already carries the precedent (`--occ-pink-ink` `#A6006A`, 7.42:1). Not changed unilaterally |
+| **DEAD** `colors.css:462` | True positive, harmless today. `#A9B2BC` is a dark-tile ink; the 623 block at `:651` sets the same elements at **identical specificity, later in the file**. Dead since 623 |
+
+**None is applied**, for one reason stated plainly: **the five module files being byte-identical to
+the gated manifest is the property that proves the relocation is sound**, and each of these needs a
+paired Cardinal build. Trading that for a fix to debt that is equally live in production today is
+Theo's call, not a silent divergence.
+
+### The gate
+
+`gate_sentinel.mjs` — sweep, compare against the baseline, red on anything new. The baseline may
+**shrink and never grow**, the same ratchet as `gate_types` / `gate_dupes` / `gate_a11y`.
+
+⚠️ **Four ids can never be baselined: `RUN`, `RIG`, `PAGEERROR`, `CONSOLE`.** They do not describe
+the app — they describe the **sweep failing**, and a sweep that lost its states or never loaded the
+modules proves nothing about anything. BUG_CLASSES 37, written into the gate rather than into prose.
+
+Its own selftest empties the baseline and requires the same sweep to come back **red**; the CI job
+runs the instrument's selftest, then the gate's, then the sweep.
+
+## 7. Cutover checklist
 
 - [x] **Theo:** create empty `Cardinal-1986/cardinal-showroom` — done
 - [x] Grant the Claude GitHub App access to that repo — done; it was the last blocker
@@ -346,9 +442,9 @@ after `loadCatalog().then(loadProjects)` resolves. That is a Cardinal build and 
       (`bd9a907`), plus a CI step that refuses a pre-created `cr-show` / `cr-occ` element
 - [x] **Fix the black photographs and the header that pushed Present off a phone** (`fa14733`),
       hash-verified in the deployed bytes — §5
-- [ ] **Write a `sentinel_setup_showroom.js`** and run the sentinel on both screens at 390px.
-      Four of §5's five defects live one click past where the current Chromium check stops, and
-      the fifth is only visible at a phone width — that gap is why Theo found them, not the gates
+- [x] **Write a `sentinel_setup_showroom.js`** and put the sentinel in this repo's CI — done,
+      §6. 13 states × 4 viewports, 52 renders, ratcheted by `gate_sentinel.mjs`. It found two
+      unreadable wordmarks of mine on its first sweep, and three defects in the instrument itself
 - [ ] ⚠ **`GEMINI_API_KEY` on the Showroom project** (The Walk only), never in the repo.
       **Unverifiable from outside** — the key is read only after auth passes — so it is confirmed
       by the first authenticated call with a real photograph, not by probing the route
@@ -364,7 +460,7 @@ after `loadCatalog().then(loadProjects)` resolves. That is a Cardinal build and 
 - [ ] **Only then:** the `isVisionHost` retirement (matrix), then the repoint, then `cr-show-*`
       and `cr-occ-*` removal — each its own build, in that order
 
-## 7. Remaining, and the sign-in test checklist
+## 8. Remaining, and the sign-in test checklist
 
 **One configuration step outstanding: `GEMINI_API_KEY` on the Showroom Vercel project.** It is
 needed only by The Walk's `/api/detect`; everything else runs without it. It must be set in the
