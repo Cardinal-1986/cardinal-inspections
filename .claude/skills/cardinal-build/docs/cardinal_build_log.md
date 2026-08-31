@@ -31572,3 +31572,84 @@ quote them.**
 **Converting them is not the next job.** A manifest — what each gate needs, and
 one output format — is, because without it "all gates green" is not a claim
 anyone can make honestly, including the person who just ran all 271.
+
+---
+
+## Build 1184 — containment: `push_subs` closed, and the two routes build 1016 missed
+
+**Three fast fixes from a ChatGPT audit Theo brought in, verified before being believed.
+No `index.html` change — SQL plus two `/api` files, so `check_build.py` has nothing to
+say about this build (same shape as 1055, which was `supplement.html` only).**
+
+### 1. `push_subs` had ONE policy and it was `ALL / public / USING true / WITH CHECK true`
+
+RLS was *enabled*, which is why nothing ever flagged it — the table simply allowed
+everyone, and `anon` held real SELECT/INSERT/UPDATE/DELETE grants. **It was the only
+table of the 80 in `public` with that shape.** With the publishable key (which ships in
+`index.html` by design) anyone could read every staff email and device endpoint, insert
+rows as other people, and **delete staff subscriptions — silently ending their alerts.**
+
+**Audited before touching it: all 10 rows were staff** (9 `theo@`, 1 `joan@`), real
+Apple/FCM endpoints. **Nothing was poisoned, so no device needed re-enrolling** — the
+audit's recommendation to re-enrol was declined on that evidence. Row fingerprint
+`79943cab…` is identical before and after.
+
+⚠️ **The reason this could not simply be closed, and the trap in doing so:**
+`api/notify.js` read `push_subs` with the **PUBLISHABLE key**. Tightening the policy
+alone would have made that query return `[]` — and 612 already taught this route that an
+empty subscriber list is indistinguishable from a refusal. **Every push would have died
+while the route still answered `ok:true`.** So the fan-out read *and* the dead-endpoint
+cleanup moved to `SUPABASE_SERVICE_ROLE_KEY` in the same build. **Ship `push_subs_rls.sql`
+FIRST, then the route.**
+
+`push_subs_rls.sql` (applied 31 Aug): staff read the table; you may only insert/update/
+delete a row carrying **your own** email. UPDATE is strict on `USING` as well as
+`WITH CHECK`, so a colleague cannot capture your device even to reassign it to themselves.
+
+⚠️ **Accepted edge case, written down rather than widened away:** if one physical device
+enrolls under employee A and later under B while the browser returns the *same* endpoint,
+B's upsert is refused. That failure is **visible** (`if(r.error) throw r.error;` →
+"Could not enable notifications"), and the fix is to delete the stale row as service_role
+— not to let staff take each other's rows.
+
+⚠️ **`is_staff()` means "present in `team_profiles`", and `theodorion1986@gmail.com`
+(Theo's owner login) is NOT** — though `api/_staff.js` allowlists it. It holds no
+`push_subs` rows so nothing regressed, but **that login cannot enroll a device for push**
+until it is added to `team_profiles`. Recorded rather than papered over with a second
+allowlist in SQL — `_staff.js` stays the one roster.
+
+### 2. `notify.js` and `librarian.js` never got the 1016 staff gate
+
+Build 1016 added `api/_staff.js` and wired it into **14** routes. **These two were missed**,
+so both trusted ANY confirmed Supabase session while public signup is enabled: an outsider
+who registered and confirmed their own email could fan mail out through Cardinal's Resend
+account (`notify`) and spend the Anthropic key (`librarian`).
+
+⚠️ **`notify.js`'s own comment claimed "Same gate as organize.js / analyze.js /
+caption.js / librarian.js."** Those three *do* call `isStaff`; notify and librarian did
+not. **A comment asserting parity that had silently stopped being true** — the same class
+as this file's stale counts.
+
+One line each, copying `organize.js`'s shape exactly. **Not new work — a completed pattern
+with two gaps.**
+
+### The gate: `gate_1184.mjs`
+
+Drives the **shipped** handlers through the whole ladder (no header → 401, bad session →
+401, authenticated non-staff → 403, real staff → not refused) and asserts the fan-out read
+carries the service-role key and **not** the publishable one. Self-contained: it writes
+stub `web-push` / `@anthropic-ai/sdk` modules into a temp copy, because there is no build
+step and no `node_modules` in this repo.
+
+**Negative-controlled against HEAD~ — 8 passed, 11 failed**, and the control is what proves
+the audit's claim rather than restating it: pre-1184, an outsider got **200** from notify.
+⚠️ Read the **exit code**, not the tail of the output — piping through `tail` reports
+`tail`'s status and made the control first look green.
+
+**RLS itself was proven with a self-undoing plpgsql harness** (16 cases across anon /
+non-staff / staff / service_role, each write raising a sentinel to roll back its own
+sub-transaction). It printed both ALLOWED and DENIED, so it is not a check that can only
+say one thing. Table fingerprint unchanged afterwards.
+
+**Deliberately untouched, as instructed:** `clientsign` atomicity, the ACH-recorded-as-card
+misclassification, and all historical data.

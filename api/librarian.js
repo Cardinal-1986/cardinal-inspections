@@ -40,6 +40,11 @@
 // GEMINI_API_KEY is no longer read by this route. It needs ANTHROPIC_API_KEY.
 
 import Anthropic from '@anthropic-ai/sdk';
+/* 1184: the staff gate. Build 1016 added api/_staff.js and wired it into 14
+   routes; this one and api/notify.js were missed by that sweep, so both went on
+   trusting ANY confirmed Supabase session while public signup is enabled — i.e.
+   a self-registered outsider could spend the Anthropic key here. */
+import { isStaff } from './_staff.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
@@ -74,6 +79,7 @@ async function requireSession(req, res){
     if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return null; }
     const user = await who.json();
     if (!user || !user.email) { res.status(401).json({ error: 'Invalid session' }); return null; }
+    if (!isStaff(user.email)) { res.status(403).json({ error: 'Cardinal staff only' }); return null; }
     return user;
   } catch (e) {
     res.status(401).json({ error: 'Could not verify session' });
