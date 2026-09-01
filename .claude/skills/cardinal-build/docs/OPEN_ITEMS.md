@@ -38,6 +38,20 @@
 > unattached walk (measured 1 Sep).** Lighting it up is operational, not
 > software: complete the roofing checklist and walk the roof before the
 > appointment. **Slice 3 waits on Theo's go.**
+>
+> **UPDATE 1 Sep 2026 (the post-Slice-2 bridge) — SHIPPED at 1195 + 1196:**
+> a walk can now be **attached to its job after creation** (admin-only, the
+> existing picker in attach mode; standalone walks stay supported) — so the
+> real 31-Aug walk at 5735 Webster can join its job with two taps, **which is
+> the one operational step left before a real What We Found lights up**
+> (attach it, review its shot, and complete a roofing checklist). And findings
+> now **speak homeowner** (`WF_TALK`/`WF_TOPICS` over an immutable record;
+> certainty contract gate-held). The **Cardinal House whole-home direction**
+> (NOT roofing-only; Andersen capability, no exclusivity copy) is recorded in
+> `GUIDED_SALE_DIRECTION.md`. ⚠️ Known rig rot, recorded not chased:
+> `harness_walk.js`'s 579-era review-rejection section crashes on a stale
+> selector — on 1194 and 1195 identically (pre-bridge). **Slice 3A waits on
+> Theo's go.**
 
 Theo, 30 Aug: *"Can you make a professional sales presentation? In home on
 an iPad."* The audit found the suite is large and **scattered across ~16
