@@ -568,23 +568,16 @@
        them. 'vision' forces the hub branch on this hostname (the
        ?vision=1 override) and rebuilds the landing; 'why' opens the
        screen the hub now leads to. */
-    { name:'vision',    run: async function () {
-        closeAll();
-        var lv = document.getElementById('landingView');
-        if (!lv) throw new Error('no #landingView');
-        /* Drive the REAL path. isVisionHost() is a LOCAL function inside
-           cr-lr-script that build() calls directly; the window.CardinalLanding
-           copy is an export, so overriding it changes nothing and the hub
-           silently never renders (cost a run, 30 Aug). The local one reads
-           location.search, so put ?vision=1 there instead. */
-        try { history.replaceState(null, '', location.pathname + '?vision=1'); } catch (e) {}
-        lv.dataset.crLrBuilt = '';
-        if (typeof window.showLanding === 'function') { try { window.showLanding(); } catch (e) {} }
-        lv.style.display = 'block';
-        await pause(700);
-        if (!lv.querySelector('.cr-vh'))
-          throw new Error('the Vision hub did not render — .cr-vh absent');
-      } },
+    /* ⚠ 1190 RETIRED THE 'vision' STATE, and this note is the record of why.
+       It drove the Vision hub through ?vision=1 and asserted .cr-vh rendered.
+       The hub was deleted at 1190 because the Showroom cutover (31 Aug) gave
+       showroom.cardinalroster.com to the standalone Showroom project, so the
+       branch could no longer be reached by anyone. The state therefore threw
+       on every run — which is exactly how this gate is supposed to behave when
+       a state's subject disappears, and it is what caught the removal.
+       Removing the state is NOT a loss of coverage: the surface is gone. The
+       'why', 'appt' and 'colors' states below still sweep everything the hub
+       used to lead to, and they are unaffected. */
     { name:'why',       run: async function () {
         closeAll();
         var m = api('CardinalWhy'); if (!m) throw new Error('CardinalWhy.open missing');
@@ -920,7 +913,7 @@
   if ((globalThis.__SENTINEL_MODE__ || 'normal') === 'empty') {
     /* states that open a SPECIFIC project cannot run against an empty book;
        everything else must render its honest empty state. */
-    var EMPTY_OK = ['home','production','salesfloor','storm','vision','why','colors',
+    var EMPTY_OK = ['home','production','salesfloor','storm','why','colors',
       'crews','estimates','nav','dispatch','punch','clientdir','photoactivity',
       'insclients','truth','ar','leads'];
     window.__sentinelStates = window.__sentinelStates.filter(function (st) {

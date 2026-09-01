@@ -8108,3 +8108,17 @@ them; 1189 points them at the only destination measured to serve the book.
 
 `gate_1189.mjs` holds it, and holds it by **fetching** — the opened document's `<title>` must be
 *The Pop-Up Roof*. A URL that merely looks canonical, or answers 200, fails.
+
+## Build 1190 — the Vision hub is retired from Cardinal
+
+`?vision=1`, `isVisionHost()`, `visionHtml()` and `showMain()`'s CRM-suppression branch are gone.
+`showroom.cardinalroster.com` has been the standalone Showroom since the 31 Aug cutover, so every
+one of those branches was unreachable. `showLanding()` is now a delegation to `goToLanding()`.
+
+⚠ **`cr-show-*` and `cr-occ-*` REMAIN IN CARDINAL AND ARE NOT DEAD.** They were in the cleanup
+scope and were kept, because eight live consumers reach them that the cutover never touched — the
+client profile's Walk tab, `hideAllViews()`, `navRestore()`, two Front Door doors, the landing's
+Showroom tile, the Sales Floor, **The Appointment (six sites)**, and **`wireColorSelects()`, which
+fills every shingle colour and line dropdown in Cardinal's estimates, contracts and reports from
+`CardinalColors.list()` / `.lines()`**. Deleting them would empty that paperwork silently and break
+`?open=appt`. `gate_1190.mjs` group B holds that, and drives both modules open in Chromium.

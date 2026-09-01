@@ -36,17 +36,29 @@ function fnText(src, header) {
   return null;
 }
 const showMain = fnText(html, 'function showMain(userEmail){');
-const isVision = fnText(html, 'function isVisionHost(){');
 
 console.log('\n── the shipped source ──');
 ok('showMain() extracted', !!showMain);
-ok('isVisionHost() extracted', !!isVision);
-ok('isVisionHost is exported on the EXISTING CardinalLanding object',
-  /isVisionHost\s*:\s*isVisionHost\s*,/.test(html));
 ok('no second window.Cardinal* export was invented',
   (html.match(/window\.CardinalLanding\s*=\s*\{/g) || []).length === 1);
-ok('showMain asks the gate defensively (falls back to CRM, the safe direction)',
-  /window\.CardinalLanding\s*&&\s*window\.CardinalLanding\.isVisionHost/.test(showMain));
+/* ⚠ 1190 REMOVED THE isVisionHost ASSERTIONS AND ADDED THIS ONE IN THEIR PLACE.
+   The gate they tested is deleted: showroom.cardinalroster.com has been the
+   standalone Showroom since the 31 Aug cutover, so the branch was unreachable.
+   The harness was NOT deleted with it — two thirds of what it covers survived,
+   including the admin-chrome assertions below, which are exactly the lines 1190
+   edited. Replacing the old checks with the inverse keeps a resurrection red. */
+/* ⚠ ASSERT ON CODE FORMS, NOT ON THE NAMES. The first version of this tested
+   `!/isVisionHost/` and `!/_vision/` and FAILED a correct tree: showMain's own
+   comments explain the removal and therefore contain both words. That is this
+   file's most-repeated defect, and it has now bitten three assertions written
+   in this very build to prove a removal. A comment cannot contain `var _vision`
+   or `_vision ?` or the guarded call, so those are what is asked. */
+ok('the host gate is gone from showMain — one path, every host',
+  !/window\.CardinalLanding\s*&&\s*window\.CardinalLanding\.isVisionHost/.test(showMain)
+  && !/var\s+_vision/.test(showMain)
+  && !/_vision\s*[?)]/.test(showMain)
+  && !/!_vision\b/.test(showMain),
+  (showMain.match(/var\s+_vision|_vision\s*[?)]|!_vision\b/g) || []).join(','));
 
 /* ---- run it, both ways ---- */
 function run({ vision }) {
@@ -90,7 +102,8 @@ function run({ vision }) {
     reload(){},
   });
   // the real gate, verbatim, plus the real showMain
-  w.eval(isVision + '\nwindow.CardinalLanding = { isVisionHost: isVisionHost };');
+  /* 1190: no gate to install — the export is gone with the function. */
+  w.eval('window.CardinalLanding = {};');
   w.eval(showMain);
   try { w.showMain('theo@cardinalrenovations.net'); } catch (e) { return { err: String(e) }; }
 
@@ -103,18 +116,11 @@ function run({ vision }) {
   };
 }
 
-console.log('\n── showroom.* / ?vision=1 : the CRM shell must be GONE ──');
-const v = run({ vision: true });
-ok('showMain ran without throwing', !v.err, v.err);
-ok('site header hidden',        v.header === 'none', v.header);
-ok('Add-project button hidden', v.addProj === 'none', v.addProj);
-ok('nav strip hidden',          v.navWrap === 'none', v.navWrap);
-ok('backup nav hidden',         v.backup === 'none', v.backup);
-ok('audit nav hidden',          v.audit === 'none', v.audit);
-ok('team nav hidden (mirrors audit, so it follows for free)', v.team === 'none', v.team);
-ok('the app itself still shows — this hides chrome, not the page',
-  v.main === 'block', v.main);
-
+/* ⚠ 1190: the "the CRM shell must be GONE" run is retired with the branch it
+   drove. There is no vision mode to run any more — showMain() has one path.
+   The run({ vision:false }) block below is unchanged and is now simply "the
+   only path", which is the behaviour 1190 hardcoded and therefore the thing
+   most worth still asserting. */
 console.log('\n── app.cardinalroster.com : NOTHING may change ──');
 const a = run({ vision: false });
 ok('showMain ran without throwing', !a.err, a.err);

@@ -112,17 +112,29 @@ for (const [q, id, label] of [['?open=why', 'cr-why', 'Why Cardinal'],
     const lv = document.getElementById('landingView');
     if (!lv) return null;
     return { go: [...lv.querySelectorAll('[data-go]')].map(b => b.dataset.go),
+             vh: lv.querySelectorAll('.cr-vh, .cr-vh-tile').length,
              hrefs: [...lv.querySelectorAll('a[href]')].map(a => a.getAttribute('href')) };
   });
-  ok('the hub still offers its five tile handlers',
-     !!hub && ['showroom','appt','designer','colors','why'].every(k => hub.go.includes(k)),
+  /* ⚠ 1190 INVERTED THESE, IT DID NOT DELETE THEM. The Vision hub is gone —
+     showroom.cardinalroster.com is the standalone Showroom since the 31 Aug
+     cutover, so ?vision=1 painted a door to a place that no longer exists.
+     Deleting the assertions would leave nothing to notice a resurrection, so
+     they now assert the ABSENCE, and the ordinary landing's own tiles are
+     asserted present so this cannot pass by rendering nothing at all. */
+  /* ⚠ NOT `!go.includes('showroom')`. The first version of this used that and
+     failed a correct tree: the ORDINARY landing has its own Showroom tile
+     (it opens CardinalShowcase, which still lives in Cardinal). The tell that
+     the HUB is gone is the hub's own markup, which nothing else emits. */
+  ok('?vision=1 no longer paints a Vision hub',
+     !!hub && hub.vh === 0 && !hub.go.includes('why'),
+     hub && ('cr-vh nodes: ' + hub.vh + ' · ' + hub.go.join(',')));
+  ok('the ordinary landing is what renders instead',
+     !!hub && ['retail','insurance','community','designer'].every(k => hub.go.includes(k)),
      hub && hub.go.join(','));
-  ok('the hub Studio link is CANONICAL, not a path',
-     !!hub && hub.hrefs.includes('https://app.cardinalroster.com/studio.html'),
+  ok('its Pop-Up link is still CANONICAL, not a path',
+     !!hub && hub.hrefs.includes('https://presentation.cardinalroster.com/popup.html'),
      hub && hub.hrefs.join(' '));
-  ok('the hub Pop-Up link is CANONICAL, not a path',
-     !!hub && hub.hrefs.includes('https://presentation.cardinalroster.com/popup.html'), '');
-  ok('no relative /studio.html or /popup.html survives anywhere in the hub',
+  ok('no relative /studio.html or /popup.html survives anywhere',
      !!hub && !hub.hrefs.some(h => h === '/studio.html' || h === '/popup.html'), '');
   await ctx.close();
 }

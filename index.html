@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-31 build 1189<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1190<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27169,29 +27169,14 @@ window.addEventListener('visibilitychange', function(){
 });
 
 function showLanding(userEmail){
-  /* 1165: retired on ordinary hosts along with goToLanding() above — the two
-     mean the same thing to their callers (the logo and portal-sync's
-     [data-cr-landing] both say "take me to the hub"). The vision host keeps
-     the real pane below; showMain()'s own vision branch is untouched. */
-  var _visS = false;
-  try{ _visS = !!(window.CardinalLanding && window.CardinalLanding.isVisionHost && window.CardinalLanding.isVisionHost()); }catch(_vs){}
-  if(!_visS){ goToLanding(); return; }
-  var lv = document.getElementById('landingView');
-  var nm = '';
-  try{ nm = currentUser ? (', ' + String(displayNameFor(currentUser)).split(' ')[0]) : ''; }catch(e){}
-  document.getElementById('landName').textContent = nm;
-  document.getElementById('landDate').textContent = new Date().toLocaleDateString('en-US',
-    { weekday:'long', month:'long', day:'numeric', year:'numeric' });
-  try{
-    var qs = JSON.parse(localStorage.getItem('qi_session') || 'null');
-    var sub = document.querySelector('#landQuick div:last-child');
-    if(qs && qs.projectId && sub){
-      sub.innerHTML = '\u21BB <b style="color:#e35c63;">Resume:</b> ' + esc(qs.projectName || 'inspection') +
-        (qs.up ? ' \u2014 ' + qs.up + ' photo(s) already saved' : '');
-    }
-  }catch(e){}
-  lv.style.display = 'block';
-var _rvL = document.getElementById('restoreVeil'); if(_rvL) _rvL.style.display = 'none';
+  /* 1190 — the vision branch is gone with the hostname it served. Since the
+     Showroom cutover (31 Aug) showroom.cardinalroster.com is served by the
+     standalone Showroom project, so the host test could only ever answer
+     false here and the pane below it was unreachable. What remains is what
+     1165 already made this function mean: the Front Door is the picker.
+     The parameter is kept — showMain() passes it, and this is a delegation,
+     not a signature change. */
+  goToLanding();
 }
 document.getElementById('landDash').addEventListener('click', function(){
   document.getElementById('landingView').style.display = 'none';try{ document.body.classList.remove('cr-landing-on'); }catch(_e){}
@@ -27804,26 +27789,24 @@ function showMain(userEmail){
    inline against the hostname instead, which is exactly what the What's New
    banner ~800 lines below already does, with a comment giving this same
    reason. One of the two had been fixed; this one had not. */
-var _vision = false;
-try{ _vision = (location.search.indexOf('vision=1') !== -1)
-            || (location.hostname.indexOf('showroom.') === 0); }catch(_){}
-try{ if(_vision) document.body.setAttribute('data-cr-vision','1'); }catch(_){}
+/* 1190: the host test and the body attribute it mirrored are both gone —
+   the Showroom hostname is a separate application now. */
 var _rv0 = document.getElementById('restoreVeil');
 if(_rv0){ _rv0.style.display = 'flex'; setTimeout(function(){ _rv0.style.display = 'none'; }, 1600); }
 /* 729: the veil is up, so the splash can go with nothing uncovered between them */
 try{ if(window.crSplashDone) window.crSplashDone(); }catch(_){}
 var hd = document.querySelector('header.site');
-  if(hd) hd.style.display = _vision ? 'none' : '';
+  if(hd) hd.style.display = '';
   fixHeadPad();
   setTimeout(auditStart, 800);
   loginView.classList.remove('open');
   mainView.style.display = 'block';
-  addProjBtn.style.display = _vision ? 'none' : 'inline-block';
-  document.getElementById('navWrap').style.display = _vision ? 'none' : 'inline-block';
+  addProjBtn.style.display = 'inline-block';
+  document.getElementById('navWrap').style.display = 'inline-block';
   document.getElementById('backupNav').style.display =
-    (!_vision && ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
+    (ADMIN_EMAILS.indexOf(userEmail) !== -1) ? 'block' : 'none';
   document.getElementById('auditNav').style.display =
-    (!_vision && userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
+    (userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
   document.getElementById('teamNav').style.display = document.getElementById('auditNav').style.display;
   /* 684: What's New is everyone's again — Theo's call. 600 gated it because
      the CHANGELOG had gone stale and the team was getting a dead popup; it has
@@ -27834,7 +27817,7 @@ var hd = document.querySelector('header.site');
   if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
   hideAllViews();
   /* 805: hiding chrome was never enough, and this is the second half of the
-     same bug. _vision gated five elements -- the header, the add button, the
+     same bug. The host test gated five elements -- the header, the add button, the
      nav strip and two admin links -- while showLanding() and reload() below
      painted the pipeline, the work schedule, accounts receivable, punch
      items and every client project regardless. A real client's name and a
@@ -27846,13 +27829,7 @@ var hd = document.querySelector('header.site');
      ⚠ This stops the CRM being SHOWN, not being DOWNLOADED. Only a separate
      file removes the code -- OPEN_ITEMS' Option 3, which Theo asked to keep
      on the table at 625 ("Option 1 but remember option 3"). */
-  if(_vision){
-    var _lv = document.getElementById('landingView');
-    if(_lv) _lv.style.display = 'block';
-    mainView.style.display = 'none';
-    try{ document.body.style.overflow = ''; }catch(_e){}
-    return;
-  }
+
   mainView.style.display = 'block';
   /* 854: Curtis and Scottie run Production, so on login they land straight on the
      Production hub — their main work screen — instead of the front door. reload()
@@ -28776,10 +28753,8 @@ if('serviceWorker' in navigator){
          hands across the kitchen table; nobody is interrupting a presentation
          to talk about builds. Tested inline rather than through
          isVisionHost(), which is defined far later in this file. */
-      try{
-        if(location.search.indexOf('vision=1') !== -1) return;
-        if(location.hostname.indexOf('showroom.') === 0) return;
-      }catch(_){}
+      /* 1190: the host guard is gone — this file is no longer served on a
+         client-facing hostname, so there is no presentation to interrupt. */
       shown = true;
 
       /* Sit ABOVE the installed app's bottom nav, not on top of it. #pwaNav is
@@ -42677,6 +42652,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1190, d: '2026-09-01', t: 'The old presentation menu is retired', s: 'Presentations moved to their own app at showroom.cardinalroster.com on 31 August, and that address now serves it directly. The old menu this app used to draw on that address \u2014 and the ?vision=1 preview of it \u2014 could no longer be reached by anyone, so it has been removed along with the checks that decided when to show it. Nothing you use day to day changes: the Showcase, the Hall of Fame, The Walk and the Owens Corning colours are all still here in the app, still on the client profile, still in the Front Door and still in The Appointment. The only thing gone is a door that led somewhere that no longer exists.' },
   { b: 1189, d: '2026-08-31', t: 'The Pop-Up Roof link opens the book again', s: 'Build 1187 changed the two Pop-Up Roof links \u2014 the one on the showroom menu and the one on the ordinary landing \u2014 to point at presentation.cardinalroster.com, on the understanding that the address on its own opens the book. It does not. Opening that address without a page name serves the ordinary app instead, so since 1187 tapping The Pop-Up Roof has been landing people on the CRM home rather than the book. Both links now name the page outright and open the book, which is what they did before 1187. Nothing else changed, and the address a client is given still works exactly as it always has.' },
   { b: 1188, d: '2026-08-31', t: 'The Landing button stops asking what address you are on', s: 'Every control that means \u201Ctake me to the picker\u201D \u2014 the drawer\u2019s Landing row, the dashboard and cover-card chips, the Cardinal Truth banner chip, the Resource Library exit, the Production board exit and the Owner Console back button \u2014 used to check which web address you had opened the app on before deciding where to send you. On the ordinary app that check always came out the same way, so nothing you do day to day changes: you land on your own home screen with the Front Door over it, and production accounts still land back on the Production board rather than the retail home. What is gone is the second answer, which sent you to the old Vision menu on the showroom address; presentations live in the Showroom now and the Front Door is the way to everything. Underneath, the button can no longer leave you looking at nothing: if the screen it was told to open cannot open, it falls back to your home screen instead of stopping halfway.' },
   { b: 1187, d: '2026-08-31', t: 'Two more ways in, and links that no longer depend on the address bar', s: 'The Appointment and Why Cardinal could only be reached by opening the Vision hub and tapping a tile \u2014 there was no address you could type, bookmark or send anyone. Both now have one: /?open=appt and /?open=why open them straight from a cold load, and a reload keeps you where you were. Nothing changes if you do not use them; the ordinary landing behaves exactly as before. Separately, the links out to Studio and the Pop-Up Roof were written as bare paths, which meant they quietly resolved against whichever address you happened to be on. Both now point at where those things actually live \u2014 the book at presentation.cardinalroster.com, which is the address a client is given. The Pop-Up Roof link on the ordinary landing had the same problem and was fixed with it.' },
@@ -51526,7 +51502,7 @@ apply : apply,
    restore it with `if(hd.style.display==='none') hd.style.display=''`.
    A stylesheet !important outranks a normal inline style, so this holds
    whatever runs afterwards. #pwaNav is included because an installed
-   tablet would otherwise show the CRM bottom nav under a presentation. */body[data-cr-vision="1"] header.site,body[data-cr-vision="1"] #pwaNav,body[data-cr-vision="1"] #navWrap{display:none!important}#landingView>*{display:none}#landingView>.cr-lr{display:block}#landingView{background:#09090c !important}/* 647: was var(--bg), an APP-theme token, while every .cr-lr-* ink below keys off data-mode — the LANDING theme. Two mechanisms, one surface: put the app in rb-light, leave the landing dark, and the ground went #f7f7f7 under cream #e8ded4 inks. 1.24:1, measured in Chromium, and the red ::before radial over near-white is what made it pink. The landing owns its ground now; html[data-mode="light"] #landingView below still handles light. body{background:var(--bg)} is deliberately untouched — that is 429's overscroll fix and it is not this bug. */#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:var(--red)}.cr-lr-sub{font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#c8202e;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#c8202e}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(200,32,46,.055),transparent 70%);border-left:2px solid #c8202e}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course .wm-c{color:#d9282a}.cr-lr-course .wm-t{color:#9a9a9a}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#c8202e)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #c8202e;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#c8202e);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
+   tablet would otherwise show the CRM bottom nav under a presentation. */#landingView>*{display:none}#landingView>.cr-lr{display:block}#landingView{background:#09090c !important}/* 647: was var(--bg), an APP-theme token, while every .cr-lr-* ink below keys off data-mode — the LANDING theme. Two mechanisms, one surface: put the app in rb-light, leave the landing dark, and the ground went #f7f7f7 under cream #e8ded4 inks. 1.24:1, measured in Chromium, and the red ::before radial over near-white is what made it pink. The landing owns its ground now; html[data-mode="light"] #landingView below still handles light. body{background:var(--bg)} is deliberately untouched — that is 429's overscroll fix and it is not this bug. */#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:var(--red)}.cr-lr-sub{font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#c8202e;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#c8202e}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(200,32,46,.055),transparent 70%);border-left:2px solid #c8202e}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course .wm-c{color:#d9282a}.cr-lr-course .wm-t{color:#9a9a9a}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#c8202e)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #c8202e;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#c8202e);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
 /* 701: these three are <span>s, so they sat on one line and the title ran
    straight into the subtitle - 'Quick InspectionWalk the roof'. The
    margin-top above (and on .n) is the tell: it does nothing on an inline
@@ -51726,97 +51702,6 @@ return '\u21BB Resume: ' + (qs.projectName || 'inspection') +
 }catch(_){}
 return null;
 }
-function isVisionHost(){
-try{
-if(location.search.indexOf('vision=1') !== -1) return true;
-return location.hostname.indexOf('showroom.') === 0;
-}catch(_){ return false; }
-}
-function visionHtml(){
-var isAdmin = false;
-try{ isAdmin = !!(window.is_admin && window.is_admin()); }catch(_){}
-return (
-'<div class="cr-vh"><div class="cr-vh-in">' +
-'<div class="cr-vh-word">Cardinal</div>' +
-'<h1 class="cr-vh-h">Vision</h1>' +
-'<p class="cr-vh-sub">Presentations built from your own work</p>' +
-'<button type="button" class="cr-vh-tile primary" data-go="showroom">' +
-'<span class="ic">\u25B6</span>' +
-'<span class="tx">' +
-'<span class="tt">Presentations</span>' +
-'<span class="sb">Showroom \u2014 Showcase, Workmanship &amp; The Walk</span>' +
-'</span><span class="go">\u2192</span>' +
-'</button>' +
-/* 1161: The Appointment - the running order over everything below.
-   Theo's pick (b): the whole visit stays on this tablet. */
-'<button type="button" class="cr-vh-tile" data-go="appt">' +
-'<span class="ic">\u25B8</span>' +
-'<span class="tx">' +
-'<span class="tt">The Appointment<span class="cr-vh-badge">NEW</span></span>' +
-'<span class="sb">Run the visit in order \u2014 their roof, our work, why Cardinal, their house</span>' +
-'</span><span class="go">\u2192</span>' +
-'</button>' +
-(isAdmin ?
-('<div class="cr-vh-flow"><span>Studio</span><span class="ar">\u2192</span>' +
-'<span>promote</span><span class="ar">\u2192</span><span>Showroom</span></div>' +
-/* 1187: CANONICAL, not relative. `/studio.html` resolved against whatever
-   host served the deployment -- it worked only because
-   showroom.cardinalroster.com serves this same file. Verified 200 at the
-   absolute URL. */
-'<a class="cr-vh-tile admin" href="https://app.cardinalroster.com/studio.html">' +
-'<span class="ic">\u25E7</span>' +
-'<span class="tx">' +
-'<span class="tt">Studio<span class="cr-vh-badge">Admin</span></span>' +
-'<span class="sb">Your photo library \u2014 search, tag, curate</span>' +
-'</span><span class="go">\u2192</span>' +
-'</a>')
-: '') +
-'<button type="button" class="cr-vh-tile" data-go="designer">' +
-'<span class="ic">\u270E</span>' +
-'<span class="tx">' +
-'<span class="tt">Designer<span class="cr-vh-badge">NEW</span></span>' +
-'<span class="sb">Their house, your materials \u2014 an AI exterior visualizer</span>' +
-'</span><span class="go">\u2192</span>' +
-'</button>' +
-'<button type="button" class="cr-vh-tile" data-go="colors">' +
-'<span class="ic">\u25D4</span>' +
-'<span class="tx">' +
-'<span class="tt">Colors</span>' +
-'<span class="sb">Owens Corning shingle colours &amp; our roofs</span>' +
-'</span><span class="go">\u2192</span>' +
-'</button>' +
-/* 1159: the book was reachable only from the Sales Floor (a CRM screen
-   this host does not draw) and from presentation.cardinalroofer.com.
-   On the showroom tablet it was unreachable. Same plain <a> as Studio. */
-/* 1189 — MEASURED, NOT INFERRED. 1187 pointed this at the bare host on the
-   strength of vercel.json's rewrite, which I read and never fetched. In
-   production that rewrite DOES NOT FIRE: https://presentation.cardinalroster.com/
-   returns the 5,446,039-byte CRM titled "Cardinal Client Resources", while
-   /popup.html on the same host returns the 269,247-byte book. So 1187 made
-   this link worse -- it used to reach the book by path and reached the CRM
-   instead. The explicit path is the destination we have actually seen serve
-   The Pop-Up Roof. Repairing the rewrite is a separate decision and is
-   deliberately NOT part of this build. */
-'<a class="cr-vh-tile" href="https://presentation.cardinalroster.com/popup.html" target="_blank" rel="noopener">' +
-'<span class="ic">\u25A4</span>' +
-'<span class="tx">' +
-'<span class="tt">The Pop-Up Roof</span>' +
-'<span class="sb">How a roof gets built \u2014 a book they can hold</span>' +
-'</span><span class="go">\u2192</span>' +
-'</a>' +
-/* 1160: Why Cardinal. Every other tile here is about THEIR roof;
-   this is the one that is about Cardinal. Content is PANES.proof
-   (cr-sf-script) refaced from the rep's voice into the homeowner's. */
-'<button type="button" class="cr-vh-tile" data-go="why">' +
-'<span class="ic">\u2713</span>' +
-'<span class="tx">' +
-'<span class="tt">Why Cardinal</span>' +
-'<span class="sb">Licence, warranty, and what actually goes on the roof</span>' +
-'</span><span class="go">\u2192</span>' +
-'</button>' +
-'</div></div>'
-);
-}
 function build(){
 var lv = document.getElementById('landingView');
 if(!lv) return false;
@@ -51837,13 +51722,6 @@ if(lv.dataset.crLrBuilt === '1'){ paint(); return true; }
    not guessed. The matching #landingView>.cr-vh{display:flex} override
    below is the other half, mirroring #landingView>.cr-lr{display:block}
    exactly. */
-if(isVisionHost()){
-lv.innerHTML = visionHtml();
-wire(lv);
-lv.dataset.crLrBuilt = '1';
-lv.dataset.crPortalBuilt = '1';
-return true;
-}
 lv.dataset.crPortalBuilt = '1';
 var c = counts();
 var seeAll = canSeeAll();
@@ -52036,7 +51914,10 @@ leave();
    renders only, one tap. isVisionHost() already decides exactly this. */
 try{
 var _vz = (window.CR_VISUALIZER_URL || '/visualizer/');
-if(isVisionHost()) _vz += (_vz.indexOf('?') === -1 ? '?' : '&') + 'present=1';
+/* 1190: the present=1 append went with the host test. It is NOT lost —
+   the Showroom's own Visualizer launcher hard-codes
+   https://app.cardinalroster.com/visualizer/?present=1, verified in that
+   tree. Cardinal's own tile is the office workbench and wants Prep. */
 window.location.href = _vz;
 }catch(_e){}
 return;
@@ -52201,7 +52082,6 @@ window.CardinalLanding = {
    over the Vision hub on showroom.cardinalroster.com. Added to the EXISTING
    export object on purpose: a second window.Cardinal* would trip the
    dupe-API gate, and "extend, don't add" is the standing rule. */
-isVisionHost : isVisionHost,
 rebuild : function(){
 var lv = document.getElementById('landingView');
 if(lv) delete lv.dataset.crLrBuilt;

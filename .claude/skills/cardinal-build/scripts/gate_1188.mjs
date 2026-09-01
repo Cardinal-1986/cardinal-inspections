@@ -187,8 +187,13 @@ console.log('gate_1188 ' + (CONTROL ? '(CONTROL — D and E must FAIL here)' : '
 {
   const { ctx, page, errs } = await open('?vision=1');
   const pre = await screenState(page);
-  ok('D0 ?vision=1 still cold-loads the Vision pane (untouched)',
-     pre.landing === 'shown', JSON.stringify(pre.landing));
+  /* 1190: was "?vision=1 still cold-loads the Vision pane". It does not any
+     more, and that is this build's subject rather than a regression — the
+     hub's hostname is the standalone Showroom now. Inverted, not deleted, so
+     a resurrection would still be caught. D1-D5 below are unchanged and are
+     what actually proves goToLanding's behaviour. */
+  ok('D0 ?vision=1 no longer paints a Vision pane',
+     pre.landing !== 'shown', JSON.stringify(pre.landing));
   await page.evaluate(() => window.goToLanding());
   await page.waitForTimeout(900);
   const s = await screenState(page);
