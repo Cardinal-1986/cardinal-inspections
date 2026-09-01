@@ -99,6 +99,45 @@ floor when new copy classes appear — a check, not a paragraph.
   correct, not a fault. Lighting it up is OPERATIONAL: complete the checklist and
   walk the roof before the appointment. Software waits ready.
 
+## Decided in the post-Slice-2 bridge (shipped: 1195 + 1196)
+
+- **Walk → job attachment is ONE mechanism with two halves.** Creation from a
+  job attaches automatically (1076, now gate-covered); 1195 added the second
+  half — an admin-only Attach/Detach on the walk view, riding the same picker
+  and the same `walks` update rails, because a walk legitimately started
+  standalone (the schema's own "a walk often happens before the prospect is a
+  project") could never join its job afterwards. Standalone walks remain fully
+  supported; nothing auto-attaches without a person picking the job.
+- **The homeowner-language layer (1196) is presentation over an immutable
+  record.** RECORDED OBSERVATION (the transform's text — what the printed
+  report says, byte-identical) → HOMEOWNER EXPLANATION (`WF_TALK`, per RULE
+  via the transform's new `f.id`) → EDUCATIONAL MEANING (`WF_TOPICS[k].m`) →
+  `data-gs-topic` → later, education. **The certainty contract** is written at
+  the map and held by gates: reported stays reported, observed stays we-found,
+  assessed stays condition language, severity carries over, no diagnosis, no
+  causation beyond evidence, no urgency. A rule without a translation renders
+  its recorded wording — the layer can clarify, never blank or soften. The
+  coverage floor (21/21 rules translated, no orphans) makes a future untranslated
+  rule a RED, not a silent fallback.
+
+## FUTURE — THE CARDINAL HOUSE is a WHOLE-HOME platform (Theo, 1 Sep 2026 — record only, do NOT build)
+
+**Cardinal is not a roofing-only company.** Core exterior systems: **roofing,
+gutters, siding, windows, soffit, fascia.** The future "Cardinal House" 3D asset
+is therefore NOT a roofing model — it is Cardinal's interactive whole-home
+exterior/envelope platform. Roofing/ventilation will likely be the first major
+educational implementation, but **architecture and asset selection must not
+prevent** independently presenting, revealing, highlighting, replacing, or
+educating around: ROOF · GUTTERS · DOWNSPOUTS · SIDING · WINDOWS · SOFFIT ·
+FASCIA — **and the interfaces between them**: roof runoff → gutters/downspouts ·
+gutters → fascia · soffit → attic ventilation · roof/eave → fascia/soffit ·
+siding → window openings/water management · windows → wall/flashing/water
+management. Cardinal has an important **Andersen window relationship**: the
+asset must be capable of supporting a premium Andersen/window education and
+visualization experience — but **no exclusivity marketing claim goes into
+production copy**. Slice 3A must not begin from a roofing-only assumption; the
+3D asset is NOT selected in the bridge.
+
 ## Decided direction (build later, on his go)
 
 7. **Good/Better/Best (his §8):** eventually a proper interactive homeowner-facing

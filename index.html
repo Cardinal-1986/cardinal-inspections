@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1195<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1196<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18721,28 +18721,32 @@ function buildChecklistFindings(cl){
      education - off a stable identity. The report path reads
      f.area/f.text/f.pr and is byte-identical without f.k. One transform,
      two consumers; never a second copy of these rules. */
-  function add(k, area, text, pr){ F.push({ k:k, area:area, text:text, pr:pr }); }
-  if(cl.leak === 'Yes') add('leak', 'Interior / roof system', 'Homeowner reports an active leak at time of inspection.', 'high');
-  if(cl.layers === '3+ Layers (Code Violation)') add('layers', 'Roof system', 'Three or more roofing layers present \u2014 code violation; full tear-off required.', 'high');
-  else if(cl.layers === '2 Layers') add('layers', 'Roof system', 'Two roofing layers present \u2014 complete tear-off required at replacement.', 'mod');
-  if(cl.wind === 'Yes') add('wind', 'Roof covering', 'Wind damage observed \u2014 missing, lifted, torn, or creased shingles.', 'high');
-  if(cl.hail === 'Yes') add('hail', 'Roof covering', 'Hail impact observed \u2014 pockmarks, bruised shingle mats, or fractured reinforcement layers.', 'high');
-  if(cl.granule === 'Critical') add('granule', 'Roof covering', 'Critical granule loss / bald spots \u2014 exposed fiberglass mat; covering at end of service life.', 'high');
-  else if(cl.granule === 'Heavy') add('granule', 'Roof covering', 'Heavy granule loss / bald spots \u2014 asphalt bleeding and accelerated shingle wear.', 'high');
-  else if(cl.granule === 'Mild') add('granule', 'Roof covering', 'Mild granule loss observed on shingle surfaces.', 'mon');
-  if(cl.bio === 'Yes') add('bio', 'Roof covering / valleys', 'Biological growth \u2014 moss, lichen, or organic debris build-up holding water in valleys.', 'mod');
-  if(cl.flash === 'Yes') add('flash', 'Flashings', 'Flashing failures \u2014 lifted or rusted wall flashing, step flashing, or chimney counter-flashing.', 'high');
-  if(cl.boot === 'Yes') add('boot', 'Penetrations', 'Pipe boot degradation \u2014 cracked, split, or dry-rotted rubber collars at plumbing boots.', 'high');
-  if(cl.fluecond === 'Poor') add('flue', 'Flue', 'Flue storm base, cap, and/or collar in poor condition.', 'mod');
-  if(cl.attic_deck === 'Active Rot / Mold') add('attic', 'Attic / roof decking', 'Active rot and/or mold observed on roof decking between rafters.', 'high');
-  else if(cl.attic_deck === 'Stained / Tracked') add('attic', 'Attic / roof decking', 'Water staining and dark tracking observed on roof decking between rafters.', 'mod');
-  if(cl.deckcond === 'Poor') add('deck', 'Roof decking', 'Decking condition assessed as poor from exterior inspection.', 'high');
-  if(cl.light === 'Yes') add('light', 'Attic / roof decking', 'Daylight visible through raw wood at valleys/ridges with lights off \u2014 deck penetration present.', 'high');
-  if(cl.baffles === 'Blocked') add('vent', 'Ventilation', 'Soffit intake baffles physically blocked by insulation \u2014 intake airflow restricted.', 'mod');
-  if(cl.soffit === 'No') add('vent', 'Ventilation', 'No soffit intake present \u2014 system lacks balanced intake ventilation.', 'mod');
-  if(cl.ductout === 'No') add('vent', 'Ventilation', 'Bathroom/kitchen exhaust fans not vented to the exterior \u2014 humid air discharging directly into the attic.', 'mod');
-  if((cl.ventcond || '').indexOf('Critical') !== -1) add('vent', 'Ventilation', 'Ventilation condition assessed as critical.', 'high');
-  else if((cl.ventcond || '').indexOf('Poor') !== -1) add('vent', 'Ventilation', 'Ventilation condition assessed as poor.', 'mod');
+  /* 1196: each rule also carries its own id (f.id) beside the topic (f.k),
+     so a presentation layer can translate PER RULE without ever touching
+     this text - the recorded observation is the source of truth and the
+     report path reads f.area/f.text/f.pr, byte-identical since 1069. */
+  function add(k, id, area, text, pr){ F.push({ k:k, id:id, area:area, text:text, pr:pr }); }
+  if(cl.leak === 'Yes') add('leak', 'leak', 'Interior / roof system', 'Homeowner reports an active leak at time of inspection.', 'high');
+  if(cl.layers === '3+ Layers (Code Violation)') add('layers', 'layers3', 'Roof system', 'Three or more roofing layers present \u2014 code violation; full tear-off required.', 'high');
+  else if(cl.layers === '2 Layers') add('layers', 'layers2', 'Roof system', 'Two roofing layers present \u2014 complete tear-off required at replacement.', 'mod');
+  if(cl.wind === 'Yes') add('wind', 'wind', 'Roof covering', 'Wind damage observed \u2014 missing, lifted, torn, or creased shingles.', 'high');
+  if(cl.hail === 'Yes') add('hail', 'hail', 'Roof covering', 'Hail impact observed \u2014 pockmarks, bruised shingle mats, or fractured reinforcement layers.', 'high');
+  if(cl.granule === 'Critical') add('granule', 'granule_crit', 'Roof covering', 'Critical granule loss / bald spots \u2014 exposed fiberglass mat; covering at end of service life.', 'high');
+  else if(cl.granule === 'Heavy') add('granule', 'granule_heavy', 'Roof covering', 'Heavy granule loss / bald spots \u2014 asphalt bleeding and accelerated shingle wear.', 'high');
+  else if(cl.granule === 'Mild') add('granule', 'granule_mild', 'Roof covering', 'Mild granule loss observed on shingle surfaces.', 'mon');
+  if(cl.bio === 'Yes') add('bio', 'bio', 'Roof covering / valleys', 'Biological growth \u2014 moss, lichen, or organic debris build-up holding water in valleys.', 'mod');
+  if(cl.flash === 'Yes') add('flash', 'flash', 'Flashings', 'Flashing failures \u2014 lifted or rusted wall flashing, step flashing, or chimney counter-flashing.', 'high');
+  if(cl.boot === 'Yes') add('boot', 'boot', 'Penetrations', 'Pipe boot degradation \u2014 cracked, split, or dry-rotted rubber collars at plumbing boots.', 'high');
+  if(cl.fluecond === 'Poor') add('flue', 'flue', 'Flue', 'Flue storm base, cap, and/or collar in poor condition.', 'mod');
+  if(cl.attic_deck === 'Active Rot / Mold') add('attic', 'attic_rot', 'Attic / roof decking', 'Active rot and/or mold observed on roof decking between rafters.', 'high');
+  else if(cl.attic_deck === 'Stained / Tracked') add('attic', 'attic_stain', 'Attic / roof decking', 'Water staining and dark tracking observed on roof decking between rafters.', 'mod');
+  if(cl.deckcond === 'Poor') add('deck', 'deck', 'Roof decking', 'Decking condition assessed as poor from exterior inspection.', 'high');
+  if(cl.light === 'Yes') add('light', 'light', 'Attic / roof decking', 'Daylight visible through raw wood at valleys/ridges with lights off \u2014 deck penetration present.', 'high');
+  if(cl.baffles === 'Blocked') add('vent', 'baffles', 'Ventilation', 'Soffit intake baffles physically blocked by insulation \u2014 intake airflow restricted.', 'mod');
+  if(cl.soffit === 'No') add('vent', 'soffit', 'Ventilation', 'No soffit intake present \u2014 system lacks balanced intake ventilation.', 'mod');
+  if(cl.ductout === 'No') add('vent', 'ductout', 'Ventilation', 'Bathroom/kitchen exhaust fans not vented to the exterior \u2014 humid air discharging directly into the attic.', 'mod');
+  if((cl.ventcond || '').indexOf('Critical') !== -1) add('vent', 'vent_crit', 'Ventilation', 'Ventilation condition assessed as critical.', 'high');
+  else if((cl.ventcond || '').indexOf('Poor') !== -1) add('vent', 'vent_poor', 'Ventilation', 'Ventilation condition assessed as poor.', 'mod');
   return F;
 }
 var CK_PR = { high:['high','HIGH'], mod:['mod','MODERATE'], mon:['mon','MONITOR'] };
@@ -42657,6 +42661,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1196, d: '2026-09-01', t: 'Findings speak homeowner', s: 'The What We Found chapter now introduces each finding in homeowner language \u2014 \u201cSurface wear\u201d instead of a report heading, \u201cWe found early wear in the protective granule surface\u201d instead of report prose \u2014 while the inspection record itself stays exactly as written: the printed report is unchanged, and any finding without a translation shows its recorded wording. Every translation keeps the meaning, certainty and seriousness of what was recorded \u2014 reported stays reported, assessed stays assessed \u2014 it just says it across the kitchen table instead of across a clipboard.' },
   { b: 1195, d: '2026-09-01', t: 'A walk can join its job', s: 'A walk started on its own \u2014 before the prospect was a job, which the system has always allowed \u2014 could never be attached to the job afterwards, so its photographs could not appear in that customer\u2019s visit. The walk screen now carries an Attach to job button (admins only): pick the job from the same list the rest of the Showcase uses and the walk belongs to it \u2014 its Roof stop and What We Found chapter find it immediately. Attached walks show Job \u2713 and can be moved or detached the same way. Starting a walk from a job still attaches automatically, exactly as before.' },
   { b: 1194, d: '2026-09-01', t: 'The visit shows what we found', s: 'A new chapter in the guided visit: after the homeowner\u2019s plans, the room quiets down and the visit turns to their roof \u2014 \u201cLet\u2019s look at your roof.\u201d The photographs from the inspection walk appear with their confirmed marks drawn on (never burned into the photo), what deserves attention and what\u2019s worth keeping an eye on read in plain language with a line on why each matters, what\u2019s holding up well gets said too, and the roof\u2019s measurements close the page. Everything on the screen comes from evidence that already exists \u2014 the roofing checklist and reviewed walk photographs \u2014 and a visit with no inspection evidence simply skips the chapter, as chapters without content already do.' },
   { b: 1193, d: '2026-09-01', t: 'The visit reads like a consultation, not a script', s: 'The opening screens stopped narrating a sales process. The welcome page is now the title page of a visit about THEIR home \u2014 the address as the headline, \u201CPrepared for\u201D beneath it \u2014 instead of an agenda that walked from questions to price. The question screens lost their form-speak: no meta-commentary about the visit, no tap-by-tap instructions, no selling lines on the answer cards \u2014 just \u201CWhat brought us out?\u201D, \u201CWhat matters most?\u201D and \u201CHow long will this be your home?\u201D with quiet, factual descriptions. Everything underneath \u2014 what gets saved, how the visit resumes, the running order \u2014 is unchanged.' },
@@ -87494,27 +87499,80 @@ function gsCk(pr){
   try{ var c = JSON.parse((pr && pr.checklist) || '{}'); return (c && c.structure) ? c : null; }
   catch(_){ return null; }
 }
-/* why each observation is worth understanding - educational, factual,
-   no urgency. Keyed by buildChecklistFindings' f.k. */
-var WF_MEANS = {
-  leak:    'Where water shows up inside is rarely where it comes in \u2014 the path matters more than the spot.',
-  layers:  'Shingles need a flat, solid base. Stacked layers hold heat and hide the decking underneath.',
-  wind:    'Wind works on edges and seams first \u2014 one lifted shingle gives the next gust somewhere to pull.',
-  hail:    'Hail bruises the reinforcing mat beneath the granules \u2014 the bruise matters more than the dent.',
-  granule: 'Granules are the shingle\u2019s sunscreen. As they wear away, the sun works directly on the asphalt underneath.',
-  bio:     'Moss and debris hold moisture against the roof long after the rain has stopped.',
-  flash:   'Flashings seal the places a roof meets anything else \u2014 most water finds a joint, not the open field.',
-  boot:    'The rubber collars around plumbing pipes age faster than the shingles around them.',
-  flue:    'The cap and collar are what keep weather out of the chimney system.',
-  attic:   'The attic is the roof\u2019s history book \u2014 the boards record where water has been.',
-  deck:    'The decking is what every layer above it fastens to.',
-  light:   'Daylight through the boards means weather has a path through them too.',
-  vent:    'A roof system breathes \u2014 air in low at the eaves, out high at the ridge. Heat and moisture leave with it.'
+/* \u2500\u2500 1196: the homeowner-language layer \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+   RECORDED OBSERVATION (immutable, the transform's f.text - what the
+   printed report says) \u2192 HOMEOWNER EXPLANATION (WF_TALK, per RULE via
+   f.id) \u2192 EDUCATIONAL MEANING (WF_TOPICS[k].m) \u2192 later, education \u2192
+   back to their home. Presentation only: nothing here rewrites, stores
+   or restates the evidence record.
+
+   THE CERTAINTY CONTRACT, which every WF_TALK line must keep: reported
+   stays reported, observed stays we-found, assessed stays condition
+   language; severity words carry over (critical stays critical, mild
+   stays early); no diagnosis, no causation the evidence does not state,
+   no urgency, no consequence beyond the recorded text. A rule WITHOUT a
+   translation renders its recorded text - the layer can only clarify,
+   never blank or soften a finding. */
+var WF_TOPICS = {
+  leak:    { t:'Water inside',
+             m:'Where water shows up inside is rarely where it comes in \u2014 the path matters more than the spot.' },
+  layers:  { t:'Roofing layers',
+             m:'Shingles need a flat, solid base. Stacked layers hold heat and hide the decking underneath.' },
+  wind:    { t:'Wind damage',
+             m:'Wind works on edges and seams first \u2014 one lifted shingle gives the next gust somewhere to pull.' },
+  hail:    { t:'Hail impact',
+             m:'Hail bruises the reinforcing mat beneath the granules \u2014 the bruise matters more than the dent.' },
+  granule: { t:'Surface wear',
+             m:'Granules are the shingle\u2019s sunscreen. As they wear away, the sun works directly on the asphalt underneath.' },
+  bio:     { t:'Growth & debris',
+             m:'Moss and debris hold moisture against the roof long after the rain has stopped.' },
+  flash:   { t:'Flashings',
+             m:'Flashings seal the places a roof meets anything else \u2014 most water finds a joint, not the open field.' },
+  boot:    { t:'Pipe seals',
+             m:'The rubber collars around plumbing pipes age faster than the shingles around them.' },
+  flue:    { t:'The chimney flue',
+             m:'The cap and collar are what keep weather out of the chimney system.' },
+  attic:   { t:'Inside the attic',
+             m:'The attic is the roof\u2019s history book \u2014 the boards record where water has been.' },
+  deck:    { t:'The roof deck',
+             m:'The decking is what every layer above it fastens to.' },
+  light:   { t:'Daylight through the deck',
+             m:'Daylight through the boards means weather has a path through them too.' },
+  vent:    { t:'How your attic breathes',
+             m:'A roof system breathes \u2014 air in low at the eaves, out high at the ridge. Heat and moisture leave with it.' }
+};
+var WF_TALK = {
+  leak:          'You reported an active leak at the time of our inspection.',
+  layers3:       'Your roof carries three or more layers of shingles \u2014 more than building code allows. Replacement means a full tear-off.',
+  layers2:       'Your roof carries two layers of shingles \u2014 at replacement, both come off.',
+  wind:          'We found wind damage \u2014 shingles that are missing, lifted, torn, or creased.',
+  hail:          'We found hail impact \u2014 pockmarks, bruising, or fractures in the shingle surface.',
+  granule_crit:  'The protective granule surface has worn through in places \u2014 bare mat is showing, and the covering is at the end of its service life.',
+  granule_heavy: 'Large areas of the protective granule surface have worn away, and the shingles are wearing faster because of it.',
+  granule_mild:  'We found early wear in the protective granule surface.',
+  bio:           'Moss, lichen, or built-up debris is holding water on the roof, mostly in the valleys.',
+  flash:         'Some of the metal flashing \u2014 the seals where the roof meets walls and the chimney \u2014 has lifted or rusted.',
+  boot:          'The rubber collars sealing your plumbing pipes have cracked or dried out.',
+  flue:          'The chimney flue\u2019s cap and collar are in poor condition.',
+  attic_rot:     'From inside the attic, we found active rot or mold on the roof boards.',
+  attic_stain:   'From inside the attic, we found water staining on the roof boards \u2014 marks where water has traveled.',
+  deck:          'From the outside, the roof decking appears to be in poor condition.',
+  light:         'With the attic lights off, daylight shows through the boards \u2014 there are open paths through the deck.',
+  baffles:       'The intake vents under your eaves are blocked by insulation, so air can\u2019t come in the way it should.',
+  soffit:        'Your roof system has no intake vents under the eaves \u2014 air has no low way in.',
+  ductout:       'Your bathroom or kitchen fans blow moist air into the attic instead of outside.',
+  vent_crit:     'The ventilation system is in critical condition.',
+  vent_poor:     'The ventilation system is in poor condition.'
 };
 function wfStories(cl){
   var F = (cl && typeof buildChecklistFindings === 'function') ? (buildChecklistFindings(cl) || []) : [];
   return F.map(function(f){
-    return { k: f.k || 'other', area: f.area, saw: f.text, pr: f.pr, means: WF_MEANS[f.k] || '' };
+    var tp = WF_TOPICS[f.k] || {};
+    return { k: f.k || 'other', area: f.area, saw: f.text, pr: f.pr,
+             title: tp.t || f.area,
+             say: WF_TALK[f.id] || f.text,
+             means: tp.m || '' };
   });
 }
 function wfMeasRead(){
@@ -87638,8 +87696,8 @@ async function paintFound(){
   function storyCards(list){
     return '<div class="wf-list">' + list.map(function(s){
       return '<button type="button" class="wf-story" data-gs-topic="' + esc(s.k) + '" aria-expanded="false">' +
-        '<span class="wf-area">' + esc(s.area) + '</span>' +
-        '<span class="wf-saw">' + esc(s.saw) + '</span>' +
+        '<span class="wf-area">' + esc(s.title) + '</span>' +
+        '<span class="wf-saw">' + esc(s.say) + '</span>' +
         (s.means ? '<span class="wf-means">' + esc(s.means) + '</span>' : '') +
       '</button>';
     }).join('') + '</div>';

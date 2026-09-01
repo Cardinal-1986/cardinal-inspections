@@ -8047,6 +8047,18 @@ grouping, leak-proof `.eq('project_id')`, checklist-only realm, reload realm) ·
 `render_1194.mjs` (real Chromium 18, control RED 7 — the light→dark transition
 measured, ink floors, marks inside the photo, §17 screenshots).
 
+**1195 — a walk can join its job.** The walk view (admin) carries **Attach to
+job / Job ✓ / Detach** — the existing job picker in a fourth mode (`attach`),
+writing `walks.project_id` through the same update rails as the publish toggle.
+Creation-from-a-job still attaches automatically (1076); standalone walks stay
+supported; the tray pseudo-project is excluded. `gate_1195.mjs` (Chromium, 18).
+
+**1196 — findings speak homeowner.** `buildChecklistFindings` rules carry a
+stable `f.id`; the Appointment translates per rule (`WF_TALK`, certainty-
+preserving) under per-topic titles + education (`WF_TOPICS`). The record and
+the printed report are byte-identical; untranslated rules render their recorded
+wording. `gate_1196.mjs` (25 — coverage 21/21 + vocabulary floors, control RED 11).
+
 | Options | the job's newest published Roof Options sheet | `/api/share?t=` in an iframe — review; the initial boxes are print-only by design |
 | Sign | the job's paperwork, one picked document at a time | same share page; `share.js` injects Accept & Sign when signable, `clientsign.js` stamps + notifies. **The 1149 rule is structural: the list hides while a document is open, exactly one frame, its own token** |
 
