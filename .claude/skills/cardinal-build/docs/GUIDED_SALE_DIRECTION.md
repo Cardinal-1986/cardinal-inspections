@@ -56,6 +56,22 @@ floor when new copy classes appear — a check, not a paragraph.
 6. **Price (his §7):** no dollar figure before the intentional Price/Options stage.
    Monthly-payment framing may appear at Price but must not obscure the project price.
 
+## Decided at Slice-1 approval (Theo, 1 Sep 2026 — post-1193)
+
+- **Slice 1 behavior and architecture: APPROVED.**
+- **Do NOT propagate the light language into later chapters yet.** The warm-light →
+  dark crossover is an **intentional presentation transition**, not a defect:
+  **warm/light** = conversation, discovery, homeowner participation, their goals and
+  home; **dark/focus** = inspection evidence, immersive/cinematic presentation, the
+  moments where the room should visually quiet down. Later work may make the
+  Plans → Roof shift *composed* (e.g. a deliberate "Let's look at your roof" beat)
+  rather than incidental — that larger transition is NOT Slice-1 work.
+- **Welcome's type-only treatment is an accepted engineering state, not the final
+  bar** — production Welcome eventually carries strong premium imagery / customer-home
+  context.
+- **Auto-skip is confirmed correct. Never manufacture placeholder Showcase/Walk
+  content merely to keep chapters visible.**
+
 ## Decided direction (build later, on his go)
 
 7. **Good/Better/Best (his §8):** eventually a proper interactive homeowner-facing
