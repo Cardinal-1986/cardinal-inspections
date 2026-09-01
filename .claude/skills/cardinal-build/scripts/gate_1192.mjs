@@ -70,6 +70,11 @@ function realm(seed) {
       if (table === 'projects') data = rows.projects;
       else if (seed === 'full') {
         if (table === 'walks') data = [{ id: 'w1' }];
+        if (table === 'walk_shots') data = [{ id: 's1', path: 'walks/w1/a.jpg',
+          caption: '', findings: [{ defect: 'hail_impact', severity: 'crit',
+            label: 'Impact bruising, south slope',
+            box: { x: 0.31, y: 0.42, w: 0.18, h: 0.14 } }],
+          ai_quality: null, reviewed_at: '2026-08-30', sort_order: 0 }];
         if (table === 'workmanship_pairs') data = [{ id: 'wp1' }];
         if (table === 'design_renders') data = [{ id: 'r1', title: 'Onyx',
           render_path: 'v/a.jpg', preview_path: 'v/a-p.jpg', approved: true }];
@@ -123,7 +128,8 @@ const INTERNAL = /Theo|scoped to your sign-in|Queue them in the Designer|Publish
   ok('Welcome paints on the light canvas (gs-lit)',
      pane.classList.contains('gs-lit') && !!pane.querySelector('[data-gs-pane="welcome"]'));
   const chips = rail.querySelectorAll('.ar-step');
-  const idx = { roof: 5, good: 6, why: 7, house: 8, options: 9, sign: 10 };
+  /* 1194: Findings joined at 5 — an empty job dims it like the rest */
+  const idx = { found: 5, roof: 6, good: 7, why: 8, house: 9, options: 10, sign: 11 };
   for (const [nm, i] of Object.entries(idx)) {
     if (nm === 'why') continue;
     const b = chips[i];
@@ -131,7 +137,7 @@ const INTERNAL = /Theo|scoped to your sign-in|Queue them in the Designer|Publish
        b.disabled && b.getAttribute('aria-disabled') === 'true');
   }
   ok('Why us stays available (its content is static)',
-     !!chips[7] && !chips[7].classList.contains('ar-off') && !chips[7].disabled);
+     !!chips[8] && !chips[8].classList.contains('ar-off') && !chips[8].disabled);
   /* a tap on a dimmed chip is refused */
   if (chips[5]) chips[5].click();
   await step();
@@ -188,7 +194,23 @@ const INTERNAL = /Theo|scoped to your sign-in|Queue them in the Designer|Publish
     ok('with content present NOTHING dims', offs.length === 0,
        'dimmed=' + offs.length);
     const chips = rail.querySelectorAll('.ar-step');
+    /* 1194: the Findings chapter paints as a pane — actual-evidence marked,
+       photograph figure with its human-accepted mark, no internal grading
+       or raw keys anywhere a homeowner looks */
     if (chips[5]) chips[5].click();
+    await step(460);
+    const fp = pane.querySelector('[data-gs-pane="found"]');
+    ok('Findings paints in the pane (never a module)', !!fp && pane.style.display === 'block');
+    ok('Findings is marked as ACTUAL evidence',
+       !!fp && fp.getAttribute('data-gs-evidence') === 'actual');
+    ok('the walk photograph renders as a figure with its mark',
+       !!pane.querySelector('.wf-shot') && !!pane.querySelector('.wf-mark'));
+    ok('the human label shows; the raw defect key does not',
+       pane.textContent.includes('Impact bruising, south slope') &&
+       !pane.textContent.includes('hail_impact'));
+    ok('no internal grading words on the homeowner screen',
+       !/\b(HIGH|MODERATE|MONITOR|crit|warn|ai_quality|severity)\b/.test(pane.textContent));
+    if (chips[6]) chips[6].click();
     await step(460);
     ok('roof opens normally when a walk exists', calls.includes('ofp'));
     ok('the shield paints on the light canvas',

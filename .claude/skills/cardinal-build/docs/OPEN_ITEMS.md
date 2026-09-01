@@ -26,6 +26,18 @@
 > light canvas is (rep layer stays dark). Still Theo's: content stocking (the walks /
 > pairs shelves are still near-empty), and the §14+ 3D north-star work is
 > spec-recorded, not authorized to build.**
+>
+> **UPDATE 1 Sep 2026 (Slice 2) — SHIPPED at build 1194: What We Found**, the
+> homeowner-facing inspection story (a `found` pane between Plans and Roof:
+> checklist findings through the report's own transform, reviewed walk
+> photography with overlay marks, serviceable list, honest unreadable count,
+> measurements — grades never printed; `data-gs-evidence`/`data-gs-topic` are
+> the §8/§9 architecture hooks). Slice-2 decisions recorded in
+> `GUIDED_SALE_DIRECTION.md`. ⚠️ **The chapter dims on every real job today
+> because production has ZERO completed roofing checklists and one unreviewed,
+> unattached walk (measured 1 Sep).** Lighting it up is operational, not
+> software: complete the roofing checklist and walk the roof before the
+> appointment. **Slice 3 waits on Theo's go.**
 
 Theo, 30 Aug: *"Can you make a professional sales presentation? In home on
 an iPad."* The audit found the suite is large and **scattered across ~16

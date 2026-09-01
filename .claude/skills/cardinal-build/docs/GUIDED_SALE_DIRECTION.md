@@ -72,6 +72,33 @@ floor when new copy classes appear — a check, not a paragraph.
 - **Auto-skip is confirmed correct. Never manufacture placeholder Showcase/Walk
   content merely to keep chapters visible.**
 
+## Decided for Slice 2 (shipped: 1194 — What We Found)
+
+- **The inspection story consumes EXISTING evidence only**: the completed roofing
+  checklist (through the report's own `buildChecklistFindings`/`buildServiceableList`,
+  extended additively with a per-rule key) and this job's `walks`/`walk_shots`
+  (human-accepted findings, published-RLS). **`project_photos` is deliberately not
+  homeowner-presented — unreviewed photographs stay behind the Walk's person-first
+  fence.** No new tables, no new persistence; the chapter is read-only.
+- **His §11 transition shipped as a composed opener, not theatre:** Plans (warm
+  light) → *"Let's look at your roof."* on the pane's dark ground with a dated
+  provenance line. Measured >0.8 → <0.15 luminance. A larger cinematic beat stays
+  future work.
+- **His §8 boundary is architectural:** actual-evidence surfaces carry
+  `data-gs-evidence="actual"`; a future educational/UNDERSTAND surface must NEVER
+  carry that attribute, and must be visually unmistakable from evidence.
+- **His §9 bridge exists:** every finding renders `data-gs-topic="<k>"` off the
+  transform's stable key (leak/layers/wind/hail/granule/bio/flash/boot/flue/attic/
+  deck/light/vent) — the launch identity for later education. `WF_MEANS` carries the
+  one-line "why it matters" per topic: educational, factual, no urgency.
+- **Severity never prints.** Grouping carries it: *What deserves attention*
+  (high+mod) · *Worth keeping an eye on* (mon) · *Holding up well* (serviceable) ·
+  an honest unreadable-photograph count (`ai_quality`) — his §6 four-way answer.
+- **Production reality at ship (1 Sep): zero completed roofing checklists, one
+  walk (unattached, unreviewed).** Findings therefore dims on every real job today —
+  correct, not a fault. Lighting it up is OPERATIONAL: complete the checklist and
+  walk the roof before the appointment. Software waits ready.
+
 ## Decided direction (build later, on his go)
 
 7. **Good/Better/Best (his §8):** eventually a proper interactive homeowner-facing

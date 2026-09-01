@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1193<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1194<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18716,28 +18716,33 @@ document.getElementById('ckSave').addEventListener('click', async function(){
 /* build findings rows from checklist problem answers */
 function buildChecklistFindings(cl){
   var F = [];
-  function add(area, text, pr){ F.push({ area:area, text:text, pr:pr }); }
-  if(cl.leak === 'Yes') add('Interior / roof system', 'Homeowner reports an active leak at time of inspection.', 'high');
-  if(cl.layers === '3+ Layers (Code Violation)') add('Roof system', 'Three or more roofing layers present \u2014 code violation; full tear-off required.', 'high');
-  else if(cl.layers === '2 Layers') add('Roof system', 'Two roofing layers present \u2014 complete tear-off required at replacement.', 'mod');
-  if(cl.wind === 'Yes') add('Roof covering', 'Wind damage observed \u2014 missing, lifted, torn, or creased shingles.', 'high');
-  if(cl.hail === 'Yes') add('Roof covering', 'Hail impact observed \u2014 pockmarks, bruised shingle mats, or fractured reinforcement layers.', 'high');
-  if(cl.granule === 'Critical') add('Roof covering', 'Critical granule loss / bald spots \u2014 exposed fiberglass mat; covering at end of service life.', 'high');
-  else if(cl.granule === 'Heavy') add('Roof covering', 'Heavy granule loss / bald spots \u2014 asphalt bleeding and accelerated shingle wear.', 'high');
-  else if(cl.granule === 'Mild') add('Roof covering', 'Mild granule loss observed on shingle surfaces.', 'mon');
-  if(cl.bio === 'Yes') add('Roof covering / valleys', 'Biological growth \u2014 moss, lichen, or organic debris build-up holding water in valleys.', 'mod');
-  if(cl.flash === 'Yes') add('Flashings', 'Flashing failures \u2014 lifted or rusted wall flashing, step flashing, or chimney counter-flashing.', 'high');
-  if(cl.boot === 'Yes') add('Penetrations', 'Pipe boot degradation \u2014 cracked, split, or dry-rotted rubber collars at plumbing boots.', 'high');
-  if(cl.fluecond === 'Poor') add('Flue', 'Flue storm base, cap, and/or collar in poor condition.', 'mod');
-  if(cl.attic_deck === 'Active Rot / Mold') add('Attic / roof decking', 'Active rot and/or mold observed on roof decking between rafters.', 'high');
-  else if(cl.attic_deck === 'Stained / Tracked') add('Attic / roof decking', 'Water staining and dark tracking observed on roof decking between rafters.', 'mod');
-  if(cl.deckcond === 'Poor') add('Roof decking', 'Decking condition assessed as poor from exterior inspection.', 'high');
-  if(cl.light === 'Yes') add('Attic / roof decking', 'Daylight visible through raw wood at valleys/ridges with lights off \u2014 deck penetration present.', 'high');
-  if(cl.baffles === 'Blocked') add('Ventilation', 'Soffit intake baffles physically blocked by insulation \u2014 intake airflow restricted.', 'mod');
-  if(cl.soffit === 'No') add('Ventilation', 'No soffit intake present \u2014 system lacks balanced intake ventilation.', 'mod');
-  if(cl.ductout === 'No') add('Ventilation', 'Bathroom/kitchen exhaust fans not vented to the exterior \u2014 humid air discharging directly into the attic.', 'mod');
-  if((cl.ventcond || '').indexOf('Critical') !== -1) add('Ventilation', 'Ventilation condition assessed as critical.', 'high');
-  else if((cl.ventcond || '').indexOf('Poor') !== -1) add('Ventilation', 'Ventilation condition assessed as poor.', 'mod');
+  /* 1194: each rule carries its checklist key (f.k) so the Appointment's
+     What We Found chapter can hang topic presentation - and, later,
+     education - off a stable identity. The report path reads
+     f.area/f.text/f.pr and is byte-identical without f.k. One transform,
+     two consumers; never a second copy of these rules. */
+  function add(k, area, text, pr){ F.push({ k:k, area:area, text:text, pr:pr }); }
+  if(cl.leak === 'Yes') add('leak', 'Interior / roof system', 'Homeowner reports an active leak at time of inspection.', 'high');
+  if(cl.layers === '3+ Layers (Code Violation)') add('layers', 'Roof system', 'Three or more roofing layers present \u2014 code violation; full tear-off required.', 'high');
+  else if(cl.layers === '2 Layers') add('layers', 'Roof system', 'Two roofing layers present \u2014 complete tear-off required at replacement.', 'mod');
+  if(cl.wind === 'Yes') add('wind', 'Roof covering', 'Wind damage observed \u2014 missing, lifted, torn, or creased shingles.', 'high');
+  if(cl.hail === 'Yes') add('hail', 'Roof covering', 'Hail impact observed \u2014 pockmarks, bruised shingle mats, or fractured reinforcement layers.', 'high');
+  if(cl.granule === 'Critical') add('granule', 'Roof covering', 'Critical granule loss / bald spots \u2014 exposed fiberglass mat; covering at end of service life.', 'high');
+  else if(cl.granule === 'Heavy') add('granule', 'Roof covering', 'Heavy granule loss / bald spots \u2014 asphalt bleeding and accelerated shingle wear.', 'high');
+  else if(cl.granule === 'Mild') add('granule', 'Roof covering', 'Mild granule loss observed on shingle surfaces.', 'mon');
+  if(cl.bio === 'Yes') add('bio', 'Roof covering / valleys', 'Biological growth \u2014 moss, lichen, or organic debris build-up holding water in valleys.', 'mod');
+  if(cl.flash === 'Yes') add('flash', 'Flashings', 'Flashing failures \u2014 lifted or rusted wall flashing, step flashing, or chimney counter-flashing.', 'high');
+  if(cl.boot === 'Yes') add('boot', 'Penetrations', 'Pipe boot degradation \u2014 cracked, split, or dry-rotted rubber collars at plumbing boots.', 'high');
+  if(cl.fluecond === 'Poor') add('flue', 'Flue', 'Flue storm base, cap, and/or collar in poor condition.', 'mod');
+  if(cl.attic_deck === 'Active Rot / Mold') add('attic', 'Attic / roof decking', 'Active rot and/or mold observed on roof decking between rafters.', 'high');
+  else if(cl.attic_deck === 'Stained / Tracked') add('attic', 'Attic / roof decking', 'Water staining and dark tracking observed on roof decking between rafters.', 'mod');
+  if(cl.deckcond === 'Poor') add('deck', 'Roof decking', 'Decking condition assessed as poor from exterior inspection.', 'high');
+  if(cl.light === 'Yes') add('light', 'Attic / roof decking', 'Daylight visible through raw wood at valleys/ridges with lights off \u2014 deck penetration present.', 'high');
+  if(cl.baffles === 'Blocked') add('vent', 'Ventilation', 'Soffit intake baffles physically blocked by insulation \u2014 intake airflow restricted.', 'mod');
+  if(cl.soffit === 'No') add('vent', 'Ventilation', 'No soffit intake present \u2014 system lacks balanced intake ventilation.', 'mod');
+  if(cl.ductout === 'No') add('vent', 'Ventilation', 'Bathroom/kitchen exhaust fans not vented to the exterior \u2014 humid air discharging directly into the attic.', 'mod');
+  if((cl.ventcond || '').indexOf('Critical') !== -1) add('vent', 'Ventilation', 'Ventilation condition assessed as critical.', 'high');
+  else if((cl.ventcond || '').indexOf('Poor') !== -1) add('vent', 'Ventilation', 'Ventilation condition assessed as poor.', 'mod');
   return F;
 }
 var CK_PR = { high:['high','HIGH'], mod:['mod','MODERATE'], mon:['mon','MONITOR'] };
@@ -42652,6 +42657,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1194, d: '2026-09-01', t: 'The visit shows what we found', s: 'A new chapter in the guided visit: after the homeowner\u2019s plans, the room quiets down and the visit turns to their roof \u2014 \u201cLet\u2019s look at your roof.\u201d The photographs from the inspection walk appear with their confirmed marks drawn on (never burned into the photo), what deserves attention and what\u2019s worth keeping an eye on read in plain language with a line on why each matters, what\u2019s holding up well gets said too, and the roof\u2019s measurements close the page. Everything on the screen comes from evidence that already exists \u2014 the roofing checklist and reviewed walk photographs \u2014 and a visit with no inspection evidence simply skips the chapter, as chapters without content already do.' },
   { b: 1193, d: '2026-09-01', t: 'The visit reads like a consultation, not a script', s: 'The opening screens stopped narrating a sales process. The welcome page is now the title page of a visit about THEIR home \u2014 the address as the headline, \u201CPrepared for\u201D beneath it \u2014 instead of an agenda that walked from questions to price. The question screens lost their form-speak: no meta-commentary about the visit, no tap-by-tap instructions, no selling lines on the answer cards \u2014 just \u201CWhat brought us out?\u201D, \u201CWhat matters most?\u201D and \u201CHow long will this be your home?\u201D with quiet, factual descriptions. Everything underneath \u2014 what gets saved, how the visit resumes, the running order \u2014 is unchanged.' },
   { b: 1192, d: '2026-09-01', t: 'The visit steps into the light', s: 'The discovery screens \u2014 the welcome, what brought us out, what matters most, and how long you\u2019ll be in the house \u2014 now paint on a warm, bright canvas instead of the black presentation ground: white cards, soft shadows, a restrained line of Cardinal red. The black stays where it belongs \u2014 the rep\u2019s own screens and the step rail \u2014 so the tablet itself shows whose moment it is. And the visit stopped walking homeowners into empty rooms: a chapter with nothing prepared for this job \u2014 no walk, no approved visualizations, no options sheet, no paperwork \u2014 now dims on the rep\u2019s rail and the running order flows past it. Nothing a homeowner sees ever says a screen is empty.' },
   { b: 1191, d: '2026-09-01', t: 'The Appointment asks first \u2014 and survives a refresh', s: 'The in-home visit now opens the way a good appointment actually starts: with listening. After you pick the job, four new stops come before the roof \u2014 a welcome page with the visit\u2019s promise on it, what brought us out (storm, leak, age, selling, insurance), what matters most to the homeowner, tapped in order, and how long they plan to be in the house. Every answer saves to the client\u2019s record the moment it\u2019s tapped \u2014 on a bad connection it queues and syncs like the rest of the app \u2014 so the later screens, and the next visit, can speak to what they said instead of asking again. The visit itself is no longer glass: if Safari refreshes or the iPad locks, opening The Appointment offers to pick up exactly where you left off, answers intact. Two smaller things: you can create a brand-new customer right from the picker without leaving the kitchen table, and once a visit is running the client list sits behind a hold-to-open shield, so a handed-over tablet can\u2019t wander into your other jobs.' },
@@ -86585,6 +86591,55 @@ window.CardinalWhy = Object.assign(window.CardinalWhy || {}, {
 /* 1192: a chapter with nothing behind it dims for the rep (his §6). The
    homeowner never lands on it — go() refuses and Next/Back walk past. */
 #cr-appt-rail .ar-step.ar-off{opacity:.35;cursor:default;}
+/* \u2500\u2500 1194: WHAT WE FOUND \u2014 the evidence chapter \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   The dark side of the two-layer grammar (his \u00a711): discovery is warm
+   light; the inspection story quiets the room on the pane's own composed
+   #050607 ground. Inks are the module's computed set \u2014 #f2f4f2 headings,
+   #b9b3ad body 9.77:1, #8f9296 small labels \u2014 and #c8202e stays GROUNDS
+   AND RULES ONLY on this ground (3.57:1), never text. Nothing under 11px;
+   every control \u2265 44px; marks are an overlay, never burned in. */
+#cr-appt .wf-wrap .ap-h{font-size:clamp(30px,4.8vw,46px);}
+#cr-appt .wf-prov{margin:2px 0 12px;font:600 11.5px/1 ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.16em;text-transform:uppercase;color:#8f9296;}
+#cr-appt .wf-sec{margin:30px 0 4px;padding-top:16px;border-top:1px solid rgba(255,255,255,.10);
+  font:700 20px/1.2 Georgia,'Times New Roman',serif;color:#f2f4f2;letter-spacing:-.01em;}
+#cr-appt .wf-shots{margin:18px 0 0;display:grid;gap:16px;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));}
+#cr-appt .wf-shot{margin:0;}
+#cr-appt .wf-ph{position:relative;display:block;width:100%;padding:0;border:1px solid rgba(255,255,255,.14);
+  border-radius:14px;overflow:hidden;cursor:pointer;background:#0e1013;min-height:64px;}
+#cr-appt .wf-ph img{display:block;width:100%;height:300px;object-fit:cover;background:#0e1013;}
+#cr-appt .wf-noimg{display:block;padding:120px 0;text-align:center;
+  font:600 13px 'Segoe UI',Arial,sans-serif;color:#8f9296;}
+#cr-appt .wf-mark{position:absolute;border:2px solid rgba(255,255,255,.85);border-radius:10px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.45);pointer-events:none;}
+#cr-appt .wf-mark.crit{border-color:#c8202e;border-width:3px;}
+#cr-appt .wf-mark.warn{border-color:#e8b04a;}
+#cr-appt .wf-mark.ok{border-color:rgba(255,255,255,.55);}
+#cr-appt .wf-shot figcaption{margin:8px 2px 0;font:400 13px/1.45 'Segoe UI',Arial,sans-serif;color:#b9b3ad;}
+#cr-appt .wf-list{margin:12px 0 0;display:flex;flex-direction:column;gap:10px;}
+#cr-appt .wf-story{display:flex;flex-direction:column;gap:5px;width:100%;box-sizing:border-box;
+  text-align:left;padding:15px 17px;min-height:56px;border-radius:13px;cursor:pointer;font-family:inherit;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-left:3px solid rgba(255,255,255,.18);}
+#cr-appt .wf-story:hover{border-color:rgba(242,244,242,.32);}
+#cr-appt .wf-story .wf-area{font:700 11px/1 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.14em;text-transform:uppercase;color:#8f9296;}
+#cr-appt .wf-story .wf-saw{font:600 16px/1.4 'Segoe UI',Arial,sans-serif;color:#f2f4f2;}
+#cr-appt .wf-story .wf-means{display:none;font:400 14.5px/1.5 Georgia,'Times New Roman',serif;
+  font-style:italic;color:#b9b3ad;}
+#cr-appt .wf-story.on{border-left-color:#c8202e;background:rgba(255,255,255,.07);}
+#cr-appt .wf-story.on .wf-means{display:block;}
+#cr-appt .wf-good{margin:12px 0 0;display:flex;flex-wrap:wrap;gap:8px 10px;padding:16px 17px;
+  border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);}
+#cr-appt .wf-good span{font:400 14px/1.5 'Segoe UI',Arial,sans-serif;color:#b9b3ad;}
+#cr-appt .wf-good span::after{content:' \00b7';color:#8f9296;}
+#cr-appt .wf-good span:last-child::after{content:'';}
+#cr-appt .wf-unread{margin:14px 2px 0;font:400 13.5px/1.5 'Segoe UI',Arial,sans-serif;color:#8f9296;}
+#cr-appt .wf-nums{margin:14px 0 0;display:flex;flex-wrap:wrap;gap:12px;}
+#cr-appt .wf-num{display:flex;flex-direction:column;gap:3px;padding:14px 18px;min-width:120px;
+  border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);box-sizing:border-box;
+  font:600 12px/1.3 'Segoe UI',Arial,sans-serif;color:#8f9296;letter-spacing:.06em;text-transform:uppercase;}
+#cr-appt .wf-num b{font:700 22px/1 Georgia,'Times New Roman',serif;color:#f2f4f2;letter-spacing:0;}
 </style>
 <script id="cr-appt-script">
 (function(){
@@ -86610,6 +86665,7 @@ var renders = [];       /* approved design_renders rows for proj */
 var guided = null;      /* 1191: parsed checklist.guided for proj */
 var prevIx = 0;         /* 1191: the step before this one - the shield's way back */
 var avail = null;       /* 1192: which data-backed chapters have content for this job */
+var wf = null;          /* 1194: cached walk evidence for proj {shots, signed} */
 
 /* One array is the whole running order — 1162 extends it, nothing else
    changes. kind 'pane' renders inside #cr-appt; kind 'module' delegates
@@ -86623,6 +86679,11 @@ var STEPS = [
   { id:'whynow',     label:'Why now',    kind:'pane'   },
   { id:'priorities', label:'Priorities', kind:'pane'   },
   { id:'plans',      label:'Plans',      kind:'pane'   },
+  /* 1194 - the inspection story: what we found on THEIR home, told from
+     evidence that already exists (the completed roofing checklist and
+     published, human-reviewed walk photographs). Never manufactured;
+     dims like any other chapter when nothing is behind it. */
+  { id:'found',      label:'Findings',   kind:'pane'   },
   { id:'roof',       label:'Roof',       kind:'module' },
   { id:'good',       label:'Our work',   kind:'module' },
   { id:'why',        label:'Why us',     kind:'module' },
@@ -86793,7 +86854,7 @@ function paintPick(){
    the discovery steps have their saved answers and Welcome has the address.
    loadProjects() stays narrow on purpose - 400 rows never carry checklists. */
 async function pickJobData(p){
-  proj = p; renders = []; docs = null; guided = null;
+  proj = p; renders = []; docs = null; guided = null; wf = null;
   var c = sb();
   if(c){
     try{
@@ -86814,7 +86875,7 @@ async function pickJobData(p){
    driving), an EMPTY answer dims the chapter. Docs ride the existing
    loadDocs() cache, so Options/Sign cost nothing extra later. */
 async function gsProbeAvail(){
-  var out = { roof:true, good:true, house:true, options:true, sign:true };
+  var out = { roof:true, found:true, good:true, house:true, options:true, sign:true };
   var cl = sb();
   if(!cl || !proj) return out;
   async function gsHas(q){
@@ -86826,7 +86887,7 @@ async function gsProbeAvail(){
   }
   var jobs = [
     gsHas(cl.from('walks').select('id').eq('project_id', proj.id).limit(1))
-      .then(function(v){ out.roof = v; }),
+      .then(function(v){ out.roof = v; out.found = v || !!gsCk(proj); }),
     gsHas(cl.from('workmanship_pairs').select('id').eq('published', true).limit(1))
       .then(function(v){ out.good = v; }),
     gsHas(cl.from('design_renders').select('id').eq('project_id', proj.id)
@@ -87346,6 +87407,230 @@ function paintPlans(){
   drawPlanCards();
 }
 
+/* \u2500\u2500 1194: WHAT WE FOUND \u2014 the inspection story \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+   YOUR HOME \u2192 WHAT WE FOUND \u2192 WHY IT MATTERS. Every element on this
+   screen is actual evidence that already exists in production paths:
+   the completed roofing checklist rendered through the SAME transform
+   the printed report uses (buildChecklistFindings / buildServiceableList),
+   and photographs from this job's walks \u2014 walk_shots.findings is
+   human-accepted by schema contract, and RLS already hides unpublished
+   walks from non-admins, so the review fence is server-side.
+
+   What it deliberately does NOT do: invent evidence (a chapter with
+   nothing behind it dims - his \u00a715), print internal grading (the pr /
+   severity codes group the story and never render as text), reach into
+   project_photos (unreviewed - the Walk's person-first rule), or write
+   anything (this chapter CONSUMES; presentation state is ephemeral).
+
+   The actual-vs-education boundary (his \u00a78): this whole pane is the
+   YOUR HOME side - the wrap carries the evidence attribute (value
+   "actual") plus a dated provenance line; educational surfaces must
+   never carry it. Each story carries a data-gs-topic key - the stable
+   identity a later educational layer launches from (his \u00a79) without
+   rebuilding this. */
+function gsCk(pr){
+  if(typeof getChecklist === 'function') return getChecklist(pr);
+  try{ var c = JSON.parse((pr && pr.checklist) || '{}'); return (c && c.structure) ? c : null; }
+  catch(_){ return null; }
+}
+/* why each observation is worth understanding - educational, factual,
+   no urgency. Keyed by buildChecklistFindings' f.k. */
+var WF_MEANS = {
+  leak:    'Where water shows up inside is rarely where it comes in \u2014 the path matters more than the spot.',
+  layers:  'Shingles need a flat, solid base. Stacked layers hold heat and hide the decking underneath.',
+  wind:    'Wind works on edges and seams first \u2014 one lifted shingle gives the next gust somewhere to pull.',
+  hail:    'Hail bruises the reinforcing mat beneath the granules \u2014 the bruise matters more than the dent.',
+  granule: 'Granules are the shingle\u2019s sunscreen. As they wear away, the sun works directly on the asphalt underneath.',
+  bio:     'Moss and debris hold moisture against the roof long after the rain has stopped.',
+  flash:   'Flashings seal the places a roof meets anything else \u2014 most water finds a joint, not the open field.',
+  boot:    'The rubber collars around plumbing pipes age faster than the shingles around them.',
+  flue:    'The cap and collar are what keep weather out of the chimney system.',
+  attic:   'The attic is the roof\u2019s history book \u2014 the boards record where water has been.',
+  deck:    'The decking is what every layer above it fastens to.',
+  light:   'Daylight through the boards means weather has a path through them too.',
+  vent:    'A roof system breathes \u2014 air in low at the eaves, out high at the ridge. Heat and moisture leave with it.'
+};
+function wfStories(cl){
+  var F = (cl && typeof buildChecklistFindings === 'function') ? (buildChecklistFindings(cl) || []) : [];
+  return F.map(function(f){
+    return { k: f.k || 'other', area: f.area, saw: f.text, pr: f.pr, means: WF_MEANS[f.k] || '' };
+  });
+}
+function wfMeasRead(){
+  try{
+    var all = (typeof parseCkAll === 'function') ? parseCkAll(proj)
+            : (JSON.parse((proj && proj.checklist) || '{}') || {});
+    return all || {};
+  }catch(_){ return {}; }
+}
+function wfDay(iso){
+  try{ return new Date(iso).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }); }
+  catch(_){ return ''; }
+}
+/* plain words for a walk defect key. The Walk's own DEF_LABEL lives inside
+   cr-show-script; a shot's human-written label wins anyway, so this is
+   only the fallback for an unlabelled finding \u2014 words, never raw keys. */
+function wfDefect(k){ return String(k || '').replace(/_/g, ' '); }
+
+async function wfLoad(){
+  if(wf) return wf;
+  wf = { shots: [], signed: {} };
+  var c = sb();
+  if(!c || !proj) return wf;
+  try{
+    var w = await c.from('walks').select('id').eq('project_id', proj.id)
+      .order('created_at', { ascending:false }).limit(12);
+    var ids = ((w && w.data) || []).map(function(r){ return r.id; });
+    for(var i = 0; i < ids.length && wf.shots.length < 24; i++){
+      var s = await c.from('walk_shots')
+        .select('id,path,caption,findings,ai_quality,reviewed_at,sort_order')
+        .eq('walk_id', ids[i])
+        .order('sort_order', { ascending:true }).limit(24);
+      ((s && s.data) || []).forEach(function(sh){ if(sh) wf.shots.push(sh); });
+    }
+  }catch(_){}
+  /* sign for DISPLAY only, preferring the -d rendition (the 633 lesson);
+     never written back onto any row. */
+  var paths = [];
+  wf.shots.forEach(function(sh){
+    if(sh.path){ paths.push(sh.path); paths.push(String(sh.path).replace(/\.jpg$/, '-d.jpg')); }
+  });
+  if(paths.length && typeof window.signedPhotoMap === 'function'){
+    try{ wf.signed = (await window.signedPhotoMap(paths, 3600)) || {}; }catch(_){}
+  }
+  return wf;
+}
+function wfSrc(path){
+  if(!path) return '';
+  return wf.signed[String(path).replace(/\.jpg$/, '-d.jpg')] || wf.signed[path] || '';
+}
+
+async function paintFound(){
+  paneMode(false);   /* the evidence chapter \u2014 the room quiets down (his \u00a711) */
+  var nm = proj ? (proj.name || '') : '';
+  PANE.innerHTML =
+    '<div class="ap-wrap wf-wrap" data-gs-pane="found" data-gs-evidence="actual">' +
+      '<p class="ap-eyebrow">' + esc(nm) + '</p>' +
+      '<h1 class="ap-h">Let\u2019s look at your roof.</h1>' +
+      '<div data-slot="wfprov"></div>' +
+      '<p class="ap-sub" data-slot="wfsub">Here\u2019s what we saw when we looked at your home.</p>' +
+      '<div data-slot="wfbody"></div>' +
+      '<div class="ap-actions"><button type="button" class="ap-btn gs-primary" data-gs="next">Continue \u2192</button></div>' +
+      '<div class="ap-light" data-slot="wflight">' +
+        '<button type="button" class="x" data-wf-light="x" aria-label="Close">\u2715</button>' +
+        '<img alt=""></div>' +
+    '</div>';
+  gsWireNext();
+  var light = PANE.querySelector('[data-slot="wflight"]');
+  light.querySelector('[data-wf-light="x"]').onclick = function(){ light.classList.remove('on'); };
+
+  var cl = gsCk(proj);
+  var data = await wfLoad();
+  /* the rep may have moved on while photographs signed */
+  if(!running || STEPS[stepIx].id !== 'found' || !PANE.querySelector('[data-gs-pane="found"]')) return;
+
+  var stories = wfStories(cl);
+  var attention = stories.filter(function(s){ return s.pr === 'high' || s.pr === 'mod'; });
+  var watch = stories.filter(function(s){ return s.pr === 'mon'; });
+  var good = (cl && typeof buildServiceableList === 'function') ? (buildServiceableList(cl) || []) : [];
+  var shots = data.shots.filter(function(sh){ return Array.isArray(sh.findings) && sh.findings.length; }).slice(0, 8);
+  var unread = data.shots.filter(function(sh){ return sh.ai_quality && !(Array.isArray(sh.findings) && sh.findings.length); }).length;
+  var all = wfMeasRead();
+  var ms = all.meas || {};
+  var when = (cl && cl.completed_at) ? wfDay(cl.completed_at) : '';
+
+  var prov = PANE.querySelector('[data-slot="wfprov"]');
+  var sub = PANE.querySelector('[data-slot="wfsub"]');
+  var hasAny = !!(stories.length || good.length || shots.length);
+  if(hasAny && prov){
+    prov.innerHTML = '<p class="wf-prov">From your inspection' + (when ? ' \u00b7 ' + esc(when) : '') + '</p>';
+  }
+  if(!hasAny && sub){
+    /* the probe said available but nothing loaded (a network blip, or a
+       walk with no reviewed photographs yet). A composed beat, never an
+       empty room \u2014 the next chapter is one tap away. */
+    sub.textContent = 'We\u2019ll walk through it together.';
+  }
+
+  var h = '';
+  if(shots.length){
+    h += '<div class="wf-shots">' + shots.map(function(sh, i){
+      var u = wfSrc(sh.path);
+      var marks = (sh.findings || []).map(function(f){
+        var b = f.box || { x:0, y:0, w:0, h:0 };
+        var sev = (f.severity === 'crit' || f.severity === 'warn' || f.severity === 'ok') ? f.severity : 'warn';
+        return '<span class="wf-mark ' + sev + '" style="left:' + (b.x * 100).toFixed(2) + '%;top:' +
+          (b.y * 100).toFixed(2) + '%;width:' + (b.w * 100).toFixed(2) + '%;height:' + (b.h * 100).toFixed(2) + '%"></span>';
+      }).join('');
+      var labels = (sh.findings || []).map(function(f){
+        return f.label || wfDefect(f.defect);
+      }).filter(Boolean).join(' \u00b7 ');
+      var capline = sh.caption || labels;
+      return '<figure class="wf-shot">' +
+        '<button type="button" class="wf-ph" data-wf-shot="' + i + '" aria-label="See this photograph larger">' +
+          (u ? '<img src="' + esc(u) + '" alt="">' : '<span class="wf-noimg">Photograph</span>') + marks +
+        '</button>' +
+        (capline ? '<figcaption>' + esc(capline) + '</figcaption>' : '') +
+      '</figure>';
+    }).join('') + '</div>';
+  }
+  function storyCards(list){
+    return '<div class="wf-list">' + list.map(function(s){
+      return '<button type="button" class="wf-story" data-gs-topic="' + esc(s.k) + '" aria-expanded="false">' +
+        '<span class="wf-area">' + esc(s.area) + '</span>' +
+        '<span class="wf-saw">' + esc(s.saw) + '</span>' +
+        (s.means ? '<span class="wf-means">' + esc(s.means) + '</span>' : '') +
+      '</button>';
+    }).join('') + '</div>';
+  }
+  if(attention.length) h += '<h2 class="wf-sec">What deserves attention</h2>' + storyCards(attention);
+  if(watch.length)     h += '<h2 class="wf-sec">Worth keeping an eye on</h2>' + storyCards(watch);
+  if(good.length){
+    h += '<h2 class="wf-sec">Holding up well</h2>' +
+      '<div class="wf-good">' + good.map(function(g){ return '<span>' + esc(g) + '</span>'; }).join('') + '</div>';
+  }
+  if(unread){
+    h += '<p class="wf-unread">' + unread + (unread === 1 ? ' photograph' : ' photographs') +
+      ' couldn\u2019t be read clearly enough to call either way.</p>';
+  }
+  var nums = [];
+  if(ms.sq)    nums.push({ n: ms.sq, l: 'squares of covering' });
+  var pitch = ms.pitch || all.pitch;
+  if(pitch)    nums.push({ n: pitch, l: 'roof pitch' });
+  if(ms.ridge) nums.push({ n: ms.ridge + ' ft', l: 'of ridge line' });
+  if(ms.valley) nums.push({ n: ms.valley + ' ft', l: 'of valleys' });
+  if(ms.eave)  nums.push({ n: ms.eave + ' ft', l: 'of eaves' });
+  if(nums.length){
+    h += '<h2 class="wf-sec">Your roof, by the numbers</h2>' +
+      '<div class="wf-nums">' + nums.map(function(x){
+        return '<span class="wf-num"><b>' + esc(x.n) + '</b>' + esc(x.l) + '</span>';
+      }).join('') + '</div>';
+  }
+  var body = PANE.querySelector('[data-slot="wfbody"]');
+  if(body) body.innerHTML = h;
+
+  /* rep control (his \u00a710): a tap brings one finding forward; a tap on a
+     photograph opens it full screen. Nothing advances by itself. */
+  if(body) body.onclick = function(e){
+    var ph = e.target.closest ? e.target.closest('[data-wf-shot]') : null;
+    if(ph){
+      var sh = shots[parseInt(ph.getAttribute('data-wf-shot'), 10)];
+      if(sh){
+        var img = light.querySelector('img');
+        img.src = wf.signed[sh.path] || wfSrc(sh.path) || '';
+        light.classList.add('on');
+      }
+      return;
+    }
+    var st = e.target.closest ? e.target.closest('.wf-story') : null;
+    if(st){
+      var on = st.classList.toggle('on');
+      st.setAttribute('aria-expanded', on ? 'true' : 'false');
+    }
+  };
+}
+
 /* 1191: once a visit is running, the Job stop is a shield, not the list -
    a handed-over tablet is one tap from the rep's whole book of business.
    Hold for 600ms (finger or Enter held) to actually open the picker. */
@@ -87463,6 +87748,7 @@ async function go(ix){
     if(st.id === 'whynow')     paintWhyNow();
     if(st.id === 'priorities') paintPriorities();
     if(st.id === 'plans')      paintPlans();
+    if(st.id === 'found') await paintFound();
     if(st.id === 'house') await paintHouse();
     if(st.id === 'options') await paintOptions();
     if(st.id === 'sign')    await paintSign();

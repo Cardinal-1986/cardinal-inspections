@@ -98,16 +98,17 @@ ok('still writes NO scroll lock', !/style\.overflow/.test(js));
     const rail = w.document.getElementById('cr-appt-rail');
     pane.querySelector('.ap-job').click();      /* pick Kim */
     await step();
-    /* 1191 grew STEPS to eleven (discovery in front); Options/Sign moved 5,6 -> 9,10 */
-    ok('rail carries eleven stops', rail.querySelectorAll('.ar-step').length === 11,
+    /* 1191 grew STEPS to eleven (discovery in front); 1194 added Findings
+       at 5, so Options/Sign now sit at 10,11 of twelve */
+    ok('rail carries twelve stops', rail.querySelectorAll('.ar-step').length === 12,
        'n=' + rail.querySelectorAll('.ar-step').length);
 
-    /* jump to Options (index 9). Guarded so the 1190 control (7 chips)
+    /* jump to Options (index 10). Guarded so an older control
        REPORTS red instead of crashing — BUG_CLASSES 37. */
     const chip = ix => { const b = rail.querySelectorAll('.ar-step')[ix];
       if (b) b.click(); else ok('chip ' + ix + ' exists', false, 'rail has ' +
         rail.querySelectorAll('.ar-step').length + ' chips'); };
-    chip(9);
+    chip(10);
     await step();
     ok('Options minted a token through db.update (731 convention)',
        calls.includes('db.update:d1:share_token'), calls.join(' | '));
@@ -118,8 +119,8 @@ ok('still writes NO scroll lock', !/style\.overflow/.test(js));
     ok('Options picked the Roof Options row, not another doc',
        pane.textContent.includes('Your options'));
 
-    /* Sign step (index 10) */
-    chip(10);
+    /* Sign step (index 11) */
+    chip(11);
     await step();
     const items = pane.querySelectorAll('[data-slot="doclist"] .ap-job');
     ok('Sign lists all three documents', items.length === 3, 'n=' + items.length);
