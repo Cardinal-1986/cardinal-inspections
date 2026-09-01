@@ -7979,6 +7979,29 @@ stops at 1191, the Guided Sale workstream's first slice — audit in
 Gate: `gate_1191.mjs` (jsdom drive, 45 checks, control RED at 29 and
 reporting) + `render_gs1191.mjs` (real Chromium, 128 checks, three viewports).
 
+### 1192 — the homeowner canvas + auto-skip (Theo's Slice-1 direction — `GUIDED_SALE_DIRECTION.md`)
+
+**Two visual layers, toggled by `paneMode()` → `#cr-appt.gs-lit`.** Discovery, the
+resume card and the shield paint on the warm light canvas (`#F7F4EF`, white cards,
+ink serif, restrained cardinal red — inks computed 13.7/7.6/5.1/8.2:1); the picker,
+quick-create and the rail stay dark — **the rep's room. The contrast IS the
+homeowner/rep boundary.** Blackout remains the delegated surfaces' look (Walk / Hall
+of Fame / Why us / Colors) and the 1162 doc steps' — restyling those is a later call.
+
+**Auto-skip:** `gsProbeAvail()` at pick time dims data-empty chapters (`.ar-off` +
+`disabled` + `aria-disabled`) — roof (walks), good (published pairs), house (approved
+renders), options/sign (the `loadDocs()` cache). `go()` refuses dimmed targets;
+Next/Back and every pane Continue walk past them (`nextAvail`/`prevAvail`). A failed
+probe counts as available (a blip must not hide a prepared walk). **The homeowner
+never sees an empty room or internal voice.**
+
+**`guided.v = 1`** marks the persisted shape: `checklist.guided` is the v1 storage
+location, NOT the permanent semantic home (the §4 note lives at `gsSave()`).
+
+Gates: `gate_1192.mjs` (27, control RED 18) · `render_1192.mjs` (real Chromium 9 —
+the two layers by composited luminance + the REAL reload-and-resume drive, control
+RED 4).
+
 | Options | the job's newest published Roof Options sheet | `/api/share?t=` in an iframe — review; the initial boxes are print-only by design |
 | Sign | the job's paperwork, one picked document at a time | same share page; `share.js` injects Accept & Sign when signable, `clientsign.js` stamps + notifies. **The 1149 rule is structural: the list hides while a document is open, exactly one frame, its own token** |
 

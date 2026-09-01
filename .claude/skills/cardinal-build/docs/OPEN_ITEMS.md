@@ -14,6 +14,18 @@
 > The eight decisions that need Theo before/while those build are audit §J — the two
 > that gate everything: content stocking / empty-step auto-skip, and the
 > no-price-before-Options rule. Option 4 below (the leave-behind) is still unpicked.
+>
+> **UPDATE 1 Sep 2026 (later) — Theo's Slice-1 authorization landed and is recorded
+> whole in `GUIDED_SALE_DIRECTION.md`. Answered from §J: auto-skip = YES (shipped,
+> 1192) · no-price-before-Options = confirmed · ghost roof = pre-signature only ·
+> ventilation = system-derived, REP CONFIRMS · GBB = future interactive selector,
+> the sheet never the primary control · OC = text-only until art + approval ·
+> What-Happens-Next promises gated on the real process · Pop-Up Roof = optional
+> specialist tool, never auto-shown, never the education visual basis. Build 1192
+> also settled the visual language: Blackout is NOT the homeowner ground — the warm
+> light canvas is (rep layer stays dark). Still Theo's: content stocking (the walks /
+> pairs shelves are still near-empty), and the §14+ 3D north-star work is
+> spec-recorded, not authorized to build.**
 
 Theo, 30 Aug: *"Can you make a professional sales presentation? In home on
 an iPad."* The audit found the suite is large and **scattered across ~16

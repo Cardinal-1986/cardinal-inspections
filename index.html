@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1191<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1192<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42652,6 +42652,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1192, d: '2026-09-01', t: 'The visit steps into the light', s: 'The discovery screens \u2014 the welcome, what brought us out, what matters most, and how long you\u2019ll be in the house \u2014 now paint on a warm, bright canvas instead of the black presentation ground: white cards, soft shadows, a restrained line of Cardinal red. The black stays where it belongs \u2014 the rep\u2019s own screens and the step rail \u2014 so the tablet itself shows whose moment it is. And the visit stopped walking homeowners into empty rooms: a chapter with nothing prepared for this job \u2014 no walk, no approved visualizations, no options sheet, no paperwork \u2014 now dims on the rep\u2019s rail and the running order flows past it. Nothing a homeowner sees ever says a screen is empty.' },
   { b: 1191, d: '2026-09-01', t: 'The Appointment asks first \u2014 and survives a refresh', s: 'The in-home visit now opens the way a good appointment actually starts: with listening. After you pick the job, four new stops come before the roof \u2014 a welcome page with the visit\u2019s promise on it, what brought us out (storm, leak, age, selling, insurance), what matters most to the homeowner, tapped in order, and how long they plan to be in the house. Every answer saves to the client\u2019s record the moment it\u2019s tapped \u2014 on a bad connection it queues and syncs like the rest of the app \u2014 so the later screens, and the next visit, can speak to what they said instead of asking again. The visit itself is no longer glass: if Safari refreshes or the iPad locks, opening The Appointment offers to pick up exactly where you left off, answers intact. Two smaller things: you can create a brand-new customer right from the picker without leaving the kitchen table, and once a visit is running the client list sits behind a hold-to-open shield, so a handed-over tablet can\u2019t wander into your other jobs.' },
   { b: 1190, d: '2026-09-01', t: 'The old presentation menu is retired', s: 'Presentations moved to their own app at showroom.cardinalroster.com on 31 August, and that address now serves it directly. The old menu this app used to draw on that address \u2014 and the ?vision=1 preview of it \u2014 could no longer be reached by anyone, so it has been removed along with the checks that decided when to show it. Nothing you use day to day changes: the Showcase, the Hall of Fame, The Walk and the Owens Corning colours are all still here in the app, still on the client profile, still in the Front Door and still in The Appointment. The only thing gone is a door that led somewhere that no longer exists.' },
   { b: 1189, d: '2026-08-31', t: 'The Pop-Up Roof link opens the book again', s: 'Build 1187 changed the two Pop-Up Roof links \u2014 the one on the showroom menu and the one on the ordinary landing \u2014 to point at presentation.cardinalroster.com, on the understanding that the address on its own opens the book. It does not. Opening that address without a page name serves the ordinary app instead, so since 1187 tapping The Pop-Up Roof has been landing people on the CRM home rather than the book. Both links now name the page outright and open the book, which is what they did before 1187. Nothing else changed, and the address a client is given still works exactly as it always has.' },
@@ -86536,6 +86537,53 @@ window.CardinalWhy = Object.assign(window.CardinalWhy || {}, {
 @media (max-width:700px){
   #cr-appt-rail .ar-strip{display:none;}
 }
+/* ── 1192: THE HOMEOWNER CANVAS ───────────────────────────────────────
+   Theo's Slice-1 direction: the prototype's Blackout is NOT the production
+   homeowner language. Discovery (and the resume card and the shield) paint
+   on a warm architectural light ground — premium, calm, residential.
+   The REP layer stays dark: the picker, the quick-create form and the rail
+   are the private working room, and the contrast between the two layers IS
+   the homeowner/rep boundary made visible.
+   Single-look light literals (no theme wiring) — the cr-occ call, inverted.
+   Inks computed, not eyeballed: #211D19 on #F7F4EF = 13.7:1 · #4A443D =
+   7.6:1 · #6B6259 = 5.1:1 · #9E2B33 eyebrow = 8.2:1 · white on #c8202e =
+   5.6:1. Toggled per surface by paneMode() -> #cr-appt.gs-lit. */
+#cr-appt.gs-lit{background:#F7F4EF;}
+#cr-appt.gs-lit .ap-wrap{animation:gsRise .26s ease-out;}
+@keyframes gsRise{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion: reduce){
+  #cr-appt.gs-lit .ap-wrap{animation:none;}
+}
+#cr-appt.gs-lit .ap-eyebrow{color:#9E2B33;}
+#cr-appt.gs-lit .ap-h{color:#211D19;font-size:clamp(32px,5vw,48px);}
+#cr-appt.gs-lit .ap-sub{color:#4A443D;font-size:17px;max-width:62ch;}
+#cr-appt.gs-lit .gs-addr{color:#6B6259;}
+#cr-appt.gs-lit .gs-grid{gap:14px;}
+#cr-appt.gs-lit .gs-card{background:#fff;border:1px solid #E5DFD6;
+  box-shadow:0 1px 2px rgba(33,29,25,.04),0 10px 28px rgba(33,29,25,.06);}
+#cr-appt.gs-lit .gs-card:hover{border-color:#C9BFB2;}
+#cr-appt.gs-lit .gs-card .gs-t{color:#211D19;}
+#cr-appt.gs-lit .gs-card .gs-d{color:#6B6259;}
+/* selected = white card, cardinal border, red badge — the restrained accent.
+   Padding drops 1px so the 2px border never makes the card jump. */
+#cr-appt.gs-lit .gs-card.on{background:#fff;border:2px solid #c8202e;
+  padding:15px 15px 14px;
+  box-shadow:0 2px 4px rgba(200,32,46,.08),0 14px 34px rgba(33,29,25,.10);}
+#cr-appt.gs-lit .gs-card.on .gs-t{color:#211D19;}
+#cr-appt.gs-lit .gs-card.on .gs-d{color:#4A443D;}
+#cr-appt.gs-lit .gs-rank{background:#c8202e;color:#fff;}
+#cr-appt.gs-lit .gs-note{background:#fff;border-color:#E5DFD6;color:#211D19;}
+#cr-appt.gs-lit .gs-note::placeholder{color:#6B6259;}
+#cr-appt.gs-lit .ap-btn{background:#fff;border:1px solid #D8D0C4;color:#211D19;}
+#cr-appt.gs-lit .ap-btn:hover{border-color:#A99E8F;}
+#cr-appt.gs-lit .gs-primary{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-appt.gs-lit .gs-primary:hover{border-color:#8f1620;}
+#cr-appt.gs-lit .gs-hold.arming{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-appt.gs-lit .ap-empty{background:#fff;border:1px solid #E5DFD6;color:#4A443D;}
+#cr-appt.gs-lit .ap-empty b{color:#211D19;}
+/* 1192: a chapter with nothing behind it dims for the rep (his §6). The
+   homeowner never lands on it — go() refuses and Next/Back walk past. */
+#cr-appt-rail .ar-step.ar-off{opacity:.35;cursor:default;}
 </style>
 <script id="cr-appt-script">
 (function(){
@@ -86560,6 +86608,7 @@ var projects = [];
 var renders = [];       /* approved design_renders rows for proj */
 var guided = null;      /* 1191: parsed checklist.guided for proj */
 var prevIx = 0;         /* 1191: the step before this one - the shield's way back */
+var avail = null;       /* 1192: which data-backed chapters have content for this job */
 
 /* One array is the whole running order — 1162 extends it, nothing else
    changes. kind 'pane' renders inside #cr-appt; kind 'module' delegates
@@ -86623,8 +86672,8 @@ function ensure(){
     if(!b) return;
     var act = b.getAttribute('data-ap');
     if(act === 'end')  return void end();
-    if(act === 'back') return void go(stepIx - 1);
-    if(act === 'next') return void go(stepIx + 1);
+    if(act === 'back') return void go(prevAvail(stepIx));
+    if(act === 'next') return void go(nextAvail(stepIx));
     if(act === 'step') return void go(parseInt(b.getAttribute('data-ix'), 10));
   };
 }
@@ -86636,15 +86685,19 @@ function paintRail(){
   if(who) who.textContent = proj ? (proj.name || '') : '';
   RAIL.querySelectorAll('.ar-step').forEach(function(b, i){
     b.classList.toggle('on', i === stepIx);
-    /* until a job is picked the only live stop is the picker */
-    b.disabled = !proj && i > 0;
+    /* until a job is picked the only live stop is the picker; a picked
+       job dims the chapters that have nothing behind them (1192) */
+    var off = !!proj && !stepAvail(i);
+    b.classList.toggle('ar-off', off);
+    if(off) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
+    b.disabled = (!proj && i > 0) || off;
   });
   var ct = RAIL.querySelector('[data-slot="count"]');
   if(ct) ct.textContent = (stepIx + 1) + '/' + STEPS.length;
   var back = RAIL.querySelector('[data-ap="back"]');
   var next = RAIL.querySelector('[data-ap="next"]');
   if(back) back.disabled = stepIx <= 0;
-  if(next) next.disabled = (stepIx >= STEPS.length - 1) || (!proj && stepIx === 0);
+  if(next) next.disabled = (nextAvail(stepIx) === -1) || (!proj && stepIx === 0);
   /* 1191: eleven chips scroll inside the strip - keep the active one visible.
      scrollLeft math, not scrollIntoView (which also scrolls the page). */
   var strip = RAIL.querySelector('[data-slot="strip"]');
@@ -86667,7 +86720,11 @@ function closeModules(){
   var o = document.getElementById('cr-occ');   if(o) o.style.display = 'none';
 }
 
-function showPane(){ ensure(); PANE.style.display = 'block'; PANE.scrollTop = 0; }
+/* 1192: the two visual layers. Homeowner surfaces (discovery, resume,
+   shield) paint on the light canvas; everything rep-facing stays dark.
+   showPane() defaults dark; each homeowner paint opts in. */
+function paneMode(light){ if(PANE) PANE.classList.toggle('gs-lit', !!light); }
+function showPane(){ ensure(); paneMode(false); PANE.style.display = 'block'; PANE.scrollTop = 0; }
 function hidePane(){ if(PANE) PANE.style.display = 'none'; }
 
 /* ── steps ─────────────────────────────────────────────────────────── */
@@ -86680,6 +86737,7 @@ async function loadProjects(){
 }
 
 function paintPick(){
+  paneMode(false);          /* the client list is the rep's room - dark */
   var rows = projects;
   PANE.innerHTML =
     '<div class="ap-wrap">' +
@@ -86745,6 +86803,59 @@ async function pickJobData(p){
     }catch(_){}
   }
   guided = gsParse(proj);
+  avail = await gsProbeAvail();
+}
+
+/* 1192 (Theo's §6): a chapter with nothing behind it must never put an
+   empty room - or internal voice - in front of a homeowner. One light
+   read per data-backed chapter at pick time; a FAILED probe counts as
+   available (a network blip must not hide a prepared walk - the rep is
+   driving), an EMPTY answer dims the chapter. Docs ride the existing
+   loadDocs() cache, so Options/Sign cost nothing extra later. */
+async function gsProbeAvail(){
+  var out = { roof:true, good:true, house:true, options:true, sign:true };
+  var cl = sb();
+  if(!cl || !proj) return out;
+  async function gsHas(q){
+    try{
+      var r = await q;
+      var data = r && r.data;
+      return Array.isArray(data) ? data.length > 0 : !!data;
+    }catch(_){ return true; }
+  }
+  var jobs = [
+    gsHas(cl.from('walks').select('id').eq('project_id', proj.id).limit(1))
+      .then(function(v){ out.roof = v; }),
+    gsHas(cl.from('workmanship_pairs').select('id').eq('published', true).limit(1))
+      .then(function(v){ out.good = v; }),
+    gsHas(cl.from('design_renders').select('id').eq('project_id', proj.id)
+      .eq('approved', true).limit(1))
+      .then(function(v){ out.house = v; }),
+    loadDocs().then(function(rows){
+      rows = rows || [];
+      out.sign = rows.length > 0;
+      out.options = rows.some(function(r2){
+        return String(r2.title || '').indexOf('Roof Options') === 0;
+      });
+    }).catch(function(){})
+  ];
+  try{ await Promise.all(jobs); }catch(_){}
+  return out;
+}
+function stepAvail(ix){
+  var st = STEPS[ix];
+  if(!st) return false;
+  if(!avail) return true;
+  if(st.id in avail) return !!avail[st.id];
+  return true;
+}
+function nextAvail(from){
+  for(var i = from + 1; i < STEPS.length; i++){ if(stepAvail(i)) return i; }
+  return -1;
+}
+function prevAvail(from){
+  for(var i = from - 1; i >= 0; i--){ if(stepAvail(i)) return i; }
+  return -1;
 }
 
 /* 1191: quick-create - the QI new-prospect shape (20883), same pdb.create
@@ -87070,8 +87181,18 @@ function gsParse(pr){
     return (g && typeof g === 'object') ? JSON.parse(JSON.stringify(g)) : {};
   }catch(_){ return {}; }
 }
+/* 1192 - WHERE THIS LIVES vs WHO OWNS IT (Theo's §4, recorded where the
+   write happens): checklist.guided is the v1 STORAGE LOCATION, chosen
+   because patchProjectCk rides the offline outbox today. It is NOT the
+   permanent semantic home - why-now / priorities / horizon describe this
+   APPOINTMENT/OPPORTUNITY as much as the customer, and a later
+   guided_sessions (or per-appointment) store may take ownership.
+   guided.v = 1 marks the shape so that migration can find and move it.
+   Do not hang future architecture off this key merely because it is
+   already here. */
 function gsSave(){
   if(!proj || !guided) return;
+  guided.v = 1;
   guided.updated_at = new Date().toISOString();
   var pr = proj;
   gsSaveQ = gsSaveQ.then(function(){
@@ -87126,10 +87247,11 @@ function gsShell(h1, sub, body){
 }
 function gsWireNext(){
   var b = PANE.querySelector('[data-gs="next"]');
-  if(b) b.onclick = function(){ go(stepIx + 1); };
+  if(b) b.onclick = function(){ go(nextAvail(stepIx)); };  /* 1192: skip dimmed */
 }
 
 function paintWelcome(){
+  paneMode(true);
   var addr = (proj && proj.address) ? String(proj.address) : '';
   PANE.innerHTML =
     '<div class="ap-wrap">' +
@@ -87145,6 +87267,7 @@ function paintWelcome(){
 }
 
 function paintWhyNow(){
+  paneMode(true);
   if(!guided) guided = gsParse(proj);
   if(!Array.isArray(guided.why_now)) guided.why_now = [];
   PANE.innerHTML = gsShell('What brought us out?',
@@ -87175,6 +87298,7 @@ function paintWhyNow(){
 }
 
 function paintPriorities(){
+  paneMode(true);
   if(!guided) guided = gsParse(proj);
   if(!Array.isArray(guided.priorities)) guided.priorities = [];
   PANE.innerHTML = gsShell('What matters most to you?',
@@ -87195,6 +87319,7 @@ function paintPriorities(){
 }
 
 function paintPlans(){
+  paneMode(true);
   if(!guided) guided = gsParse(proj);
   PANE.innerHTML = gsShell('How long will this be your home?',
     'It changes what we\u2019ll recommend.',
@@ -87216,6 +87341,7 @@ function paintPlans(){
    a handed-over tablet is one tap from the rep's whole book of business.
    Hold for 600ms (finger or Enter held) to actually open the picker. */
 function paintShield(){
+  paneMode(true);
   PANE.innerHTML =
     '<div class="ap-wrap">' +
       '<p class="ap-eyebrow">' + esc(proj ? (proj.name || '') : '') + '</p>' +
@@ -87251,6 +87377,7 @@ function paintShield(){
 /* 1191: the resume card. The hint says where; checklist.guided says what -
    answers were never only local, so resume restores both. */
 function paintResume(h){
+  paneMode(true);
   var ix = stepIndexOf(h.stepId);
   var lbl = ix > 0 ? STEPS[ix].label : '';
   PANE.innerHTML =
@@ -87313,6 +87440,7 @@ async function go(ix){
   if(!running) return;
   if(ix < 0 || ix >= STEPS.length) return;
   if(ix > 0 && !proj) return;         /* nothing past the picker without a job */
+  if(ix > 0 && !stepAvail(ix)) return; /* 1192: dimmed chapters do not open */
   prevIx = stepIx;
   stepIx = ix;
   var st = STEPS[stepIx];

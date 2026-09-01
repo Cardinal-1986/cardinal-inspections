@@ -95,6 +95,14 @@ for (const id of ['pick', 'welcome', 'whynow', 'priorities', 'plans',
       let data = [];
       if (table === 'projects') data = rows.projects;
       if (table === 'design_renders') data = rows.renders;
+      /* 1192: the availability probe dims empty chapters — this gate drives
+         the FULL journey, so every data-backed chapter has content here.
+         (gate_1192 owns the empty/skip behavior.) */
+      if (table === 'walks') data = [{ id: 'w1', project_id: 'p1' }];
+      if (table === 'workmanship_pairs') data = [{ id: 'wp1' }];
+      if (table === 'inspection_reports')
+        data = [{ id: 'd1', title: 'Roof Options — Kim Lawson', share_token: 'tokG',
+                  signed_at: null, status: 'sent', created_at: '2026-08-30' }];
       return Promise.resolve({ data }).then(res, rej);
     };
     return q;
