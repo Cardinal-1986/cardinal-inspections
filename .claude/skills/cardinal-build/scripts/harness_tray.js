@@ -163,8 +163,10 @@ ok('the signing round trip is cancellable, like the job path',
   /if\(!jobPick\) return;\s*\/\* the signing round trip is the one worth cancelling \*\//.test(SH));
 
 console.log('\n── 628: each bucket reaches only the table it belongs to ──');
-ok('the picker has three modes and compares them by ===, never truthiness',
-  /mode = \(mode === 'pair' \|\| mode === 'work'\) \? mode : 'walk';/.test(SH));
+/* 1195 grew the whitelist to four (attach) — the CONTRACT is unchanged:
+   explicit === comparisons with 'walk' as the MouseEvent-safe default. */
+ok('the picker has four modes and compares them by ===, never truthiness',
+  /mode = \(mode === 'pair' \|\| mode === 'work' \|\| mode === 'attach'\) \? mode : 'walk';/.test(SH));
 ok('the work shape carries its own slots',
   /var slots = \(mode === 'work'\) \? \['bad', 'good'\] : \['before', 'after'\];/.test(SH));
 ok('BOTH tray reads filter by bucket — the count and the rows',
