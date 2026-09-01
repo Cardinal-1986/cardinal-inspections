@@ -34,6 +34,13 @@ MIGRATIONS.md
 CLAUDE.md
 .github/
 
+# --- Agent tool config, not app content. .mcp.json registers the Playwright
+#     MCP server (npx @playwright/mcp@latest) for local browser-driven checks.
+#     Nothing in index.html or any shipped artifact reads it, it holds no
+#     credentials, and a build/test tool's wiring does not belong on a
+#     customer-facing domain. ---
+.mcp.json
+
 # --- Reference notes. Written for Theo, not for the app. Zero references from
 #     index.html; nothing fetches it. It carries vendor pricing, our read on
 #     it, and notes on how we work — none of which belongs on a customer-facing
