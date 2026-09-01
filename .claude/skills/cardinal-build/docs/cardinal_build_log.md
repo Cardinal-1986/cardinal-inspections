@@ -32398,3 +32398,86 @@ Mechanical ladder green (stamp 1188 → 1189, marker + negative control). `gate_
 Showroom tag/brace balance green.
 
 `goToLanding()` and `isVisionHost()` untouched. No DNS record changed, no Vercel domain moved.
+
+## Build 1190 — the Vision path is retired, and TWO THIRDS of the cleanup scope was refused
+
+The legacy cleanup after the 31 Aug Showroom cutover. **Scope was cut deliberately, and the
+refusal is the most important thing in this entry.**
+
+### What was removed — proven unreachable by the cutover
+
+| # | site | block |
+|---|---|---|
+| 1 | `function isVisionHost(){…}` — the definition | `cr-lr-script` |
+| 2 | `function visionHtml(){…}` — the whole hub markup, 4,214 chars | `cr-lr-script` |
+| 3 | `build()`'s `if(isVisionHost()){ lv.innerHTML = visionHtml(); … }` | `cr-lr-script` |
+| 4 | the `?present=1` append on the Designer tile | `cr-lr-script` |
+| 5 | `isVisionHost : isVisionHost,` from `window.CardinalLanding` | `cr-lr-script` |
+| 6 | `showLanding()`'s vision branch — the function collapses to `goToLanding()` | main |
+| 7 | `showMain()`'s `_vision` test, its `data-cr-vision` mirror **and its five uses** | main |
+| 8 | the shell-updated banner's `?vision=1` / `showroom.` host guard | main |
+| 9 | `body[data-cr-vision="1"] …{display:none!important}` | `cr-lr-styles` |
+
+**−5,690 characters.** `?present=1` is **not lost**: the Showroom's own Visualizer launcher
+hard-codes it, verified in that tree. Cardinal's tile is the office workbench and wants Prep.
+
+### ⚠ WHAT WAS REFUSED — `cr-show-*` and `cr-occ-*` ARE NOT UNREACHABLE
+
+The scope said to remove them "now that those modules live on the standalone Showroom", under the
+qualifier *"remove only code/assets proven unreachable because of the completed cutover"*. **They
+are not.** The cutover removed ONE door — the showroom hostname. The audit found **eight live
+consumers inside Cardinal that it never touched:**
+
+| consumer | what breaks if the modules go |
+|---|---|
+| the client profile's job menu, `data-jm="walk"` | **The Walk**, on a real client, from the profile |
+| `hideAllViews()`'s `{ id:'cr-show', api:… }` | the teardown registry |
+| `navRestore()`'s `case 'showcase'` | the back button |
+| the Front Door's `d === 'showroom'` and `d === 'colors'` | two doors of the picker |
+| the ordinary landing's Showroom tile | a landing tile |
+| the Sales Floor's `d === 'showcase'` | the rep's own path |
+| **`cr-appt-script` — six sites** | **The Appointment**, which `?open=appt` reaches, and which the same instruction requires to keep working |
+| **`wireColorSelects()` — `CardinalColors.list()` / `.lines()`** | **every shingle colour and line dropdown in Cardinal's estimates, contracts and reports** |
+
+The last two are decisive. The instruction to delete the modules and the instruction to keep
+`?open=appt` working cannot both be satisfied — The Appointment *drives* the Showcase. And
+`cr-occ-script` is the data source for the paperwork's colour dropdowns; deleting it would empty
+every one of them silently. **268 KB across four blocks stayed.**
+
+### The gate — `gate_1190.mjs`, 28/28
+
+Two halves. **A** proves the removal, through the **lexer** — every removed name still appears in
+prose explaining its own removal, so a raw count cannot tell an explanation from a call. **B and C**
+prove the refusal: the four blocks are present, all eight consumers still wired, and the Showcase
+and OC Colors are *driven open in Chromium* rather than merely found in the text.
+
+**Control on 1189: RED, 8 failures, all in group A.** B and C pass on both trees — they are
+regression checks, which is the point: "we cleaned up" can never quietly mean "we broke The Walk".
+
+### Three reds on the way, and only one was the app
+
+- **`gate_types` caught a real defect of mine.** I removed `_vision`'s declaration and one branch
+  and **missed five more uses** — `ReferenceError` in `showMain()`, which is sign-in for everybody.
+  Exactly the dangling-reference class 807's five-site checklist exists for. Fixed and re-proven
+  through the lexer.
+- **`gate_1187` / `1188` / `1189` went red on stale assertions** about the hub. **Inverted, not
+  deleted** — they now assert the absence, so a resurrection is still caught. ⚠ The first inversion
+  used `!go.includes('showroom')` as the tell and failed a correct tree: the **ordinary** landing
+  has its own Showroom tile. The tell is `.cr-vh`, which only the hub ever emitted.
+- **`gate_a11y` went red on COVERAGE, not violations** — its `vision` state threw because the hub
+  is gone. That is the gate working: it refuses to lose a state silently. State retired with a
+  written reason; baseline re-tightened (`landmark-one-main` 8→7, `region` 316→310 — genuinely
+  fewer nodes).
+
+⚠ **`drive_lifecycle.mjs` crashes — and it crashes identically on the 1189 control.** Pre-existing,
+not this build, not fixed here (out of scope).
+
+⚠ **Cardinal no longer links to Studio from any UI.** Its only link lived in `visionHtml()`. No
+*reachable* behaviour was lost — that hub was already unreachable — but the in-app door is
+formally gone; the Showroom's launcher carries it.
+
+### Gates
+
+check_build green (1189 → 1190, marker + negative control) · `gate_1187` 23/23 · `gate_1188` 42/42 ·
+`gate_1189` 15/15 · `gate_1190` 28/28 with a red control · `gate_1076` 34/34 · `gate_types` /
+`gate_dupes` / `gate_stack` green, nothing grew or stacked · `gate_a11y` green on a tightened baseline.

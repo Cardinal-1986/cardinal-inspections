@@ -155,18 +155,25 @@ console.log('gate_1189 ' + (CONTROL ? '(CONTROL — the click proofs MUST fail)'
   await ctx.close();
 }
 
-/* ── 2 · Cardinal, the Vision hub tile ─────────────────────────────────── */
+/* ── 2 · Cardinal, the Vision hub tile — RETIRED AT 1190 ──────────────── */
 {
+  /* ⚠ INVERTED, NOT DELETED. The Vision hub went with the Showroom cutover:
+     ?vision=1 painted a door to a hostname this file no longer serves. The
+     tile it used to carry cannot be clicked because it no longer exists, so
+     the honest check is that it is GONE — and that nothing resurrected it
+     pointing at the bare host. The ordinary landing's link (check 1) and the
+     Showroom launcher (check 3) are where the destination is proved now. */
   const ctx = await ctxFor('cardinal');
   const page = await ctx.newPage();
   await page.goto('https://cardinal.test/?vision=1', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2600);
-  const r = await clickAndRead(page, ctx, 'a.cr-vh-tile[href*="presentation"]', 'hub');
-  ok('2a the Vision hub still HAS a Pop-Up Roof tile', r.found && !r.error, r.error || '');
-  ok('2a2 and it is actually visible to a tap', r.visible === true);
-  ok('2b it names popup.html explicitly', r.href === BOOK, r.href || '(none)');
-  ok('2c clicking it OPENS THE BOOK', r.opened && r.title === 'The Pop-Up Roof',
-     JSON.stringify({ url: r.url, title: r.title }));
+  const hub = await page.evaluate(() => ({
+    tiles: document.querySelectorAll('a.cr-vh-tile, .cr-vh').length,
+    bare : [...document.querySelectorAll('a[href]')]
+             .filter(a => a.getAttribute('href') === 'https://presentation.cardinalroster.com/').length
+  }));
+  ok('2a the Vision hub is gone under ?vision=1', hub.tiles === 0, JSON.stringify(hub));
+  ok('2b nothing resurrected a bare-host link', hub.bare === 0, String(hub.bare));
   await ctx.close();
 }
 
@@ -208,8 +215,12 @@ console.log('gate_1189 ' + (CONTROL ? '(CONTROL — the click proofs MUST fail)'
     const hits = src.match(badHref) || [];
     ok('4 ' + name + ' has no link to the bare host', hits.length === 0, hits.join(' · '));
   }
-  ok('4 index.html links the book twice, by path',
-     (HTML.match(new RegExp('href="' + BOOK + '"', 'g')) || []).length === 2);
+  /* 1190: was 2 — the hub tile and the ordinary landing's link. The hub is
+     retired, so ONE remains. Asserted exactly, not >=, so losing the last one
+     is still red. */
+  ok('4 index.html links the book once, by path',
+     (HTML.match(new RegExp('href="' + BOOK + '"', 'g')) || []).length === 1,
+     String((HTML.match(new RegExp('href="' + BOOK + '"', 'g')) || []).length));
   ok('4 the Showroom links the book once, by path',
      SHTML.includes("href: '" + BOOK + "'"));
 }
