@@ -36,12 +36,10 @@
     "code": 1
   },
   "harness_vision.js": {
-    "passes": 20,
-    "fails": 3,
+    "passes": 12,
+    "fails": 1,
     "names": [
-      "and it is scoped — exactly 2 declarations in the whole file, both here",
-      "showMain asks the gate defensively (falls back to CRM, the safe direction)",
-      "the app itself still shows — this hides chrome, not the page"
+      "and it is scoped — exactly 2 declarations in the whole file, both here"
     ],
     "code": 1
   }
