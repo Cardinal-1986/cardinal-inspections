@@ -4,6 +4,17 @@
 
 ## 🟠 OPEN — the in-home presentation: 1159 did the wiring, not the arc (30 Aug 2026)
 
+> **UPDATE 1 Sep 2026 — this arc is now the GUIDED SALE workstream.** Theo's brief
+> (production v1) is audited in **`GUIDED_SALE_AUDIT_2026-09.md`** (PR #587) and the
+> **first slice SHIPPED at build 1191**: discovery (Welcome / Why now / Priorities /
+> Plans) grown onto `cr-appt`, answers persisted to `checklist.guided.*` on the tap,
+> device resume (`gs_session`), quick-create, and the client-list shield. **Next arcs,
+> in the audit's order: Understand Your Roof (§G — TWELVE LAYERS first), tier capture
+> at Options (§J-4), personalization consumers reading `guided.*`, the rep drawer.**
+> The eight decisions that need Theo before/while those build are audit §J — the two
+> that gate everything: content stocking / empty-step auto-skip, and the
+> no-price-before-Options rule. Option 4 below (the leave-behind) is still unpicked.
+
 Theo, 30 Aug: *"Can you make a professional sales presentation? In home on
 an iPad."* The audit found the suite is large and **scattered across ~16
 doors with no running order**. Three numbered options were put to him; he

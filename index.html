@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1190<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1191<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42652,6 +42652,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1191, d: '2026-09-01', t: 'The Appointment asks first \u2014 and survives a refresh', s: 'The in-home visit now opens the way a good appointment actually starts: with listening. After you pick the job, four new stops come before the roof \u2014 a welcome page with the visit\u2019s promise on it, what brought us out (storm, leak, age, selling, insurance), what matters most to the homeowner, tapped in order, and how long they plan to be in the house. Every answer saves to the client\u2019s record the moment it\u2019s tapped \u2014 on a bad connection it queues and syncs like the rest of the app \u2014 so the later screens, and the next visit, can speak to what they said instead of asking again. The visit itself is no longer glass: if Safari refreshes or the iPad locks, opening The Appointment offers to pick up exactly where you left off, answers intact. Two smaller things: you can create a brand-new customer right from the picker without leaving the kitchen table, and once a visit is running the client list sits behind a hold-to-open shield, so a handed-over tablet can\u2019t wander into your other jobs.' },
   { b: 1190, d: '2026-09-01', t: 'The old presentation menu is retired', s: 'Presentations moved to their own app at showroom.cardinalroster.com on 31 August, and that address now serves it directly. The old menu this app used to draw on that address \u2014 and the ?vision=1 preview of it \u2014 could no longer be reached by anyone, so it has been removed along with the checks that decided when to show it. Nothing you use day to day changes: the Showcase, the Hall of Fame, The Walk and the Owens Corning colours are all still here in the app, still on the client profile, still in the Front Door and still in The Appointment. The only thing gone is a door that led somewhere that no longer exists.' },
   { b: 1189, d: '2026-08-31', t: 'The Pop-Up Roof link opens the book again', s: 'Build 1187 changed the two Pop-Up Roof links \u2014 the one on the showroom menu and the one on the ordinary landing \u2014 to point at presentation.cardinalroster.com, on the understanding that the address on its own opens the book. It does not. Opening that address without a page name serves the ordinary app instead, so since 1187 tapping The Pop-Up Roof has been landing people on the CRM home rather than the book. Both links now name the page outright and open the book, which is what they did before 1187. Nothing else changed, and the address a client is given still works exactly as it always has.' },
   { b: 1188, d: '2026-08-31', t: 'The Landing button stops asking what address you are on', s: 'Every control that means \u201Ctake me to the picker\u201D \u2014 the drawer\u2019s Landing row, the dashboard and cover-card chips, the Cardinal Truth banner chip, the Resource Library exit, the Production board exit and the Owner Console back button \u2014 used to check which web address you had opened the app on before deciding where to send you. On the ordinary app that check always came out the same way, so nothing you do day to day changes: you land on your own home screen with the Front Door over it, and production accounts still land back on the Production board rather than the retail home. What is gone is the second answer, which sent you to the old Vision menu on the showroom address; presentations live in the Showroom now and the Front Door is the way to everything. Underneath, the button can no longer leave you looking at nothing: if the screen it was told to open cannot open, it falls back to your home screen instead of stopping halfway.' },
@@ -86491,6 +86492,50 @@ window.CardinalWhy = Object.assign(window.CardinalWhy || {}, {
   #cr-appt-rail .ar-count{display:inline;}
   #cr-appt-rail .ar-who{display:none;}
 }
+/* ── 1191: the Guided Sale spine ──────────────────────────────────────
+   Discovery tap-cards, the resume card, the client-list shield, the
+   quick-create form, and the rail's scrollable step strip (eleven stops
+   no longer fit as fixed chips on an iPad — the strip scrolls with a
+   visible thin bar and the active chip is centred; under 700px the
+   counter still takes over). */
+#cr-appt-rail .ar-strip{display:flex;gap:6px;flex:0 1 auto;min-width:0;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:5px;margin-bottom:-5px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.28) transparent;}
+/* the bar stays VISIBLE on purpose - a scroller that hides its bar while
+   overflowing is silent clipping (the sentinel's CLIPPED class, build 984).
+   4px thumb in its own lane; the negative margin keeps the rail height. */
+#cr-appt-rail .ar-strip::-webkit-scrollbar{height:4px;}
+#cr-appt-rail .ar-strip::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:2px;}
+#cr-appt-rail .ar-strip::-webkit-scrollbar-track{background:transparent;}
+#cr-appt .gs-addr{margin:2px 0 14px;font:600 14px 'Segoe UI',Arial,sans-serif;
+  color:#8f9296;letter-spacing:.02em;}
+#cr-appt .gs-grid{margin:16px 0 0;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+#cr-appt .gs-card{position:relative;display:flex;flex-direction:column;gap:5px;
+  text-align:left;padding:16px 16px 15px;min-height:76px;border-radius:14px;
+  cursor:pointer;font-family:inherit;box-sizing:border-box;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);}
+#cr-appt .gs-card:hover{border-color:rgba(242,244,242,.34);}
+/* selected = white on cardinal red, the app-wide semantic pair */
+#cr-appt .gs-card.on{background:#c8202e;border-color:#c8202e;}
+#cr-appt .gs-card .gs-t{font:700 16.5px 'Segoe UI',Arial,sans-serif;color:#f2f4f2;}
+#cr-appt .gs-card .gs-d{font:400 13px/1.4 'Segoe UI',Arial,sans-serif;color:#b9b3ad;}
+#cr-appt .gs-card.on .gs-t,#cr-appt .gs-card.on .gs-d{color:#fff;}
+#cr-appt .gs-rank{position:absolute;top:10px;right:10px;width:26px;height:26px;
+  border-radius:9px;background:#fff;color:#c8202e;
+  font:700 14px/26px 'Segoe UI',Arial,sans-serif;text-align:center;}
+#cr-appt .gs-note{width:100%;box-sizing:border-box;margin:14px 0 0;padding:13px 15px;
+  min-height:74px;border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);color:#f2f4f2;
+  font:400 15px/1.5 'Segoe UI',Arial,sans-serif;resize:vertical;outline:none;}
+#cr-appt .gs-note::placeholder{color:#8f9296;}
+#cr-appt .gs-primary{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-appt .gs-primary:hover{border-color:#e35c63;}
+#cr-appt .gs-hold.arming{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-appt .gs-newform{display:flex;flex-direction:column;gap:10px;margin:14px 0 0;}
+@media (max-width:700px){
+  #cr-appt-rail .ar-strip{display:none;}
+}
 </style>
 <script id="cr-appt-script">
 (function(){
@@ -86513,16 +86558,25 @@ var stepIx = 0;         /* index into STEPS */
 var running = false;
 var projects = [];
 var renders = [];       /* approved design_renders rows for proj */
+var guided = null;      /* 1191: parsed checklist.guided for proj */
+var prevIx = 0;         /* 1191: the step before this one - the shield's way back */
 
 /* One array is the whole running order — 1162 extends it, nothing else
    changes. kind 'pane' renders inside #cr-appt; kind 'module' delegates
    to an existing surface and hides the pane. */
 var STEPS = [
-  { id:'pick',  label:'Job',   kind:'pane'   },
-  { id:'roof',  label:'Roof',  kind:'module' },
-  { id:'good',  label:'Good',  kind:'module' },
-  { id:'why',   label:'Why',   kind:'module' },
-  { id:'house', label:'House', kind:'pane'   },
+  { id:'pick',       label:'Job',        kind:'pane'   },
+  /* 1191 - discovery first: listen, then show. Answers persist to
+     checklist.guided the moment they are tapped (customer truth on the
+     customer record), so later screens and later visits can read them. */
+  { id:'welcome',    label:'Welcome',    kind:'pane'   },
+  { id:'whynow',     label:'Why now',    kind:'pane'   },
+  { id:'priorities', label:'Priorities', kind:'pane'   },
+  { id:'plans',      label:'Plans',      kind:'pane'   },
+  { id:'roof',       label:'Roof',       kind:'module' },
+  { id:'good',       label:'Our work',   kind:'module' },
+  { id:'why',        label:'Why us',     kind:'module' },
+  { id:'house',      label:'House',      kind:'pane'   },
   /* 1162 - option (b): the visit ends on this tablet. Both steps ride
      the EXISTING /api/share page - the same one a client signs on their
      own phone - in an iframe: it is public-by-token, carries no CRM,
@@ -86556,10 +86610,12 @@ function ensure(){
     '<button type="button" class="ar-x" data-ap="end" aria-label="End the appointment">✕</button>' +
     '<span class="ar-who" data-slot="who"></span>' +
     '<button type="button" class="ar-nav" data-ap="back" aria-label="Back">‹</button>' +
+    '<span class="ar-strip" data-slot="strip">' +
     STEPS.map(function(st, i){
       return '<button type="button" class="ar-step" data-ap="step" data-ix="' + i + '">' +
         esc(st.label) + '</button>';
     }).join('') +
+    '</span>' +
     '<span class="ar-count" data-slot="count"></span>' +
     '<button type="button" class="ar-nav" data-ap="next" aria-label="Next">›</button>';
   RAIL.onclick = function(e){
@@ -86589,6 +86645,14 @@ function paintRail(){
   var next = RAIL.querySelector('[data-ap="next"]');
   if(back) back.disabled = stepIx <= 0;
   if(next) next.disabled = (stepIx >= STEPS.length - 1) || (!proj && stepIx === 0);
+  /* 1191: eleven chips scroll inside the strip - keep the active one visible.
+     scrollLeft math, not scrollIntoView (which also scrolls the page). */
+  var strip = RAIL.querySelector('[data-slot="strip"]');
+  var onChip = strip ? strip.querySelector('.ar-step.on') : null;
+  if(strip && onChip && strip.clientWidth && strip.scrollWidth > strip.clientWidth){
+    var target = onChip.offsetLeft - (strip.clientWidth - onChip.offsetWidth) / 2;
+    strip.scrollLeft = target > 0 ? target : 0;
+  }
 }
 
 /* Close every module a step may have opened, through each one's OWN door.
@@ -86624,6 +86688,8 @@ function paintPick(){
       '<p class="ap-sub">Pick the job and the visit runs in order — their roof, our work, why Cardinal, their house in colour, the options, the signature.</p>' +
       '<input type="search" class="ap-search" data-slot="q" placeholder="Search by name…">' +
       '<div class="ap-list" data-slot="list"></div>' +
+      '<div class="ap-actions"><button type="button" class="ap-btn" data-gs="new">+ New customer</button></div>' +
+      '<div data-slot="newform"></div>' +
     '</div>';
   var list = PANE.querySelector('[data-slot="list"]');
   var q = PANE.querySelector('[data-slot="q"]');
@@ -86646,17 +86712,89 @@ function paintPick(){
     }).join('');
   }
   q.oninput = draw;
-  list.onclick = function(e){
+  list.onclick = async function(e){
     var b = e.target.closest ? e.target.closest('.ap-job') : null;
     if(!b) return;
     var id = b.getAttribute('data-id');
+    var row = null;
     for(var i = 0; i < rows.length; i++){
-      if(String(rows[i].id) === String(id)){ proj = rows[i]; break; }
+      if(String(rows[i].id) === String(id)){ row = rows[i]; break; }
     }
-    renders = []; docs = null;
+    if(!row) return;
+    await pickJobData(row);
     go(1);
   };
+  PANE.querySelector('[data-gs="new"]').onclick = function(){
+    drawNewForm(PANE.querySelector('[data-slot="newform"]'));
+  };
   draw();
+}
+
+/* 1191: fetch the picked job's checklist + address in one narrow read, so
+   the discovery steps have their saved answers and Welcome has the address.
+   loadProjects() stays narrow on purpose - 400 rows never carry checklists. */
+async function pickJobData(p){
+  proj = p; renders = []; docs = null; guided = null;
+  var c = sb();
+  if(c){
+    try{
+      var r = await c.from('projects').select('id,name,stage,address,checklist')
+        .eq('id', p.id).limit(1);
+      var row = r && r.data ? (Array.isArray(r.data) ? r.data[0] : r.data) : null;
+      if(row && row.id) proj = row;
+    }catch(_){}
+  }
+  guided = gsParse(proj);
+}
+
+/* 1191: quick-create - the QI new-prospect shape (20883), same pdb.create
+   chokepoint, stage_since written on creation per the invariant. Offline
+   create stays deferred by the settled 17 Aug decision: pdb.create throws
+   with no signal and the message says so honestly. */
+function drawNewForm(host){
+  if(!host) return;
+  host.innerHTML =
+    '<div class="gs-newform">' +
+      '<input type="text" class="ap-search" data-slot="nn" placeholder="Name (required)">' +
+      '<input type="tel" class="ap-search" data-slot="np" placeholder="Phone">' +
+      '<input type="text" class="ap-search" data-slot="na" placeholder="Address">' +
+      '<div class="ap-actions">' +
+        '<button type="button" class="ap-btn gs-primary" data-gs="create">Create &amp; begin \u2192</button>' +
+        '<button type="button" class="ap-btn" data-gs="cancelnew">Cancel</button>' +
+      '</div>' +
+      '<div class="ap-empty" data-slot="nst" style="display:none;"></div>' +
+    '</div>';
+  var nn = host.querySelector('[data-slot="nn"]');
+  var st = host.querySelector('[data-slot="nst"]');
+  function sayNf(m){ st.style.display = 'block'; st.textContent = m; }
+  host.querySelector('[data-gs="cancelnew"]').onclick = function(){ host.innerHTML = ''; };
+  host.querySelector('[data-gs="create"]').onclick = async function(){
+    var nm = (nn.value || '').trim();
+    if(!nm){ sayNf('Name is required.'); return; }
+    sayNf('Creating\u2026');
+    try{
+      if(typeof pdb === 'undefined' || !pdb || typeof pdb.create !== 'function'){
+        throw new Error('creating clients is not available in this session');
+      }
+      var ck = { stage_since: new Date().toISOString() };
+      try{ if(typeof nextPo === 'function'){ var po = nextPo(); if(po) ck.po = po; } }catch(_){}
+      var fields = {
+        name: nm,
+        phone: (host.querySelector('[data-slot="np"]').value || '').trim(),
+        address: (host.querySelector('[data-slot="na"]').value || '').trim(),
+        email: '', notes: '', stage: 'Lead',
+        checklist: JSON.stringify(ck)
+      };
+      var pid = await pdb.create(fields);
+      try{ if(typeof auditLog === 'function') auditLog('lead', 'Lead created in The Appointment \u2014 ' + nm, pid); }catch(_){}
+      var row = { id: pid, name: nm, stage: 'Lead', address: fields.address, checklist: fields.checklist };
+      projects.unshift(row);
+      await pickJobData(row);
+      go(1);
+    }catch(err){
+      sayNf('Could not create: ' + ((err && err.message) || err));
+    }
+  };
 }
 
 async function paintHouse(){
@@ -86885,6 +87023,264 @@ async function paintSign(){
   };
 }
 
+
+/* \u2500\u2500 1191: the Guided Sale spine \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+   Customer truth lives on the customer: every discovery answer writes
+   checklist.guided through patchProjectCk() the moment it is tapped, so
+   it rides pdb.update and the offline outbox (868) and follows the
+   CLIENT, not the iPad. The VISIT position lives on the device: one
+   localStorage hint in the qi_session shape, so a killed Safari resumes
+   in two taps. Writes are serialized through one promise chain so two
+   fast taps can never land out of order. No new tables, no observers,
+   no scroll lock. */
+var GS_KEY = 'gs_session';
+var GS_FRESH_MS = 12 * 60 * 60 * 1000;
+var gsSaveQ = Promise.resolve();
+
+var GS_WHY = [
+  { k:'storm',     t:'Storm damage',          d:'Hail or wind got to it' },
+  { k:'leak',      t:'A leak',                d:'Water is getting in' },
+  { k:'age',       t:'Age & wear',            d:'It is simply time' },
+  { k:'selling',   t:'Getting ready to sell', d:'The roof is part of the sale' },
+  { k:'insurance', t:'Insurance said so',     d:'The carrier or an inspector flagged it' },
+  { k:'looks',     t:'How it looks',          d:'The house deserves better' }
+];
+var GS_PRI = [
+  { k:'price',     t:'The price',         d:'Best number wins' },
+  { k:'looks',     t:'How it looks',      d:'Colour and curb appeal' },
+  { k:'longevity', t:'How long it lasts', d:'Do it once, do it right' },
+  { k:'warranty',  t:'The warranty',      d:'Who stands behind it' },
+  { k:'schedule',  t:'The schedule',      d:'Sooner is better' },
+  { k:'payments',  t:'Monthly payments',  d:'Spreading it out matters' }
+];
+var GS_PLANS = [
+  { k:'forever', t:'10+ years',           d:'This is our home' },
+  { k:'awhile',  t:'3\u201310 years',      d:'Here for a while yet' },
+  { k:'selling', t:'Selling soon',        d:'Within a few years' },
+  { k:'rental',  t:'Rental / investment', d:'Someone else lives here' },
+  { k:'unsure',  t:'Not sure yet',        d:'Life decides' }
+];
+
+function gsParse(pr){
+  try{
+    var all = (typeof parseCkAll === 'function') ? parseCkAll(pr)
+            : (JSON.parse((pr && pr.checklist) || '{}') || {});
+    var g = all && all.guided;
+    return (g && typeof g === 'object') ? JSON.parse(JSON.stringify(g)) : {};
+  }catch(_){ return {}; }
+}
+function gsSave(){
+  if(!proj || !guided) return;
+  guided.updated_at = new Date().toISOString();
+  var pr = proj;
+  gsSaveQ = gsSaveQ.then(function(){
+    if(typeof patchProjectCk !== 'function') return;
+    return patchProjectCk(pr, { guided: guided });
+  }).catch(function(e){
+    try{ console.warn('[appt] guided save:', (e && e.message) || e); }catch(_){}
+  });
+}
+function gsHintWrite(){
+  if(!running || !proj || stepIx < 1) return;
+  try{
+    localStorage.setItem(GS_KEY, JSON.stringify({
+      projectId: proj.id, projectName: proj.name || '',
+      stepId: (STEPS[stepIx] || {}).id || '', at: Date.now()
+    }));
+  }catch(_){}
+}
+function gsHintRead(){
+  try{
+    var h = JSON.parse(localStorage.getItem(GS_KEY) || 'null');
+    if(!h || !h.projectId || !h.stepId) return null;
+    if((Date.now() - (h.at || 0)) > GS_FRESH_MS) return null;
+    return h;
+  }catch(_){ return null; }
+}
+function gsHintClear(){ try{ localStorage.removeItem(GS_KEY); }catch(_){} }
+function stepIndexOf(id){
+  for(var i = 0; i < STEPS.length; i++){ if(STEPS[i].id === id) return i; }
+  return -1;
+}
+
+function gsCards(list, picked, opts){
+  var rank = !!(opts && opts.rank);
+  return '<div class="gs-grid">' + list.map(function(o){
+    var at = picked.indexOf(o.k), on = at !== -1;
+    return '<button type="button" class="gs-card' + (on ? ' on' : '') + '" data-k="' + esc(o.k) + '"' +
+      ' aria-pressed="' + (on ? 'true' : 'false') + '">' +
+      (rank && on ? '<span class="gs-rank">' + (at + 1) + '</span>' : '') +
+      '<span class="gs-t">' + esc(o.t) + '</span>' +
+      '<span class="gs-d">' + esc(o.d) + '</span></button>';
+  }).join('') + '</div>';
+}
+function gsShell(h1, sub, body){
+  return '<div class="ap-wrap">' +
+    '<p class="ap-eyebrow">' + esc(proj ? (proj.name || '') : '') + '</p>' +
+    '<h1 class="ap-h">' + h1 + '</h1>' +
+    (sub ? '<p class="ap-sub">' + sub + '</p>' : '') +
+    body +
+    '<div class="ap-actions"><button type="button" class="ap-btn gs-primary" data-gs="next">Continue \u2192</button></div>' +
+  '</div>';
+}
+function gsWireNext(){
+  var b = PANE.querySelector('[data-gs="next"]');
+  if(b) b.onclick = function(){ go(stepIx + 1); };
+}
+
+function paintWelcome(){
+  var addr = (proj && proj.address) ? String(proj.address) : '';
+  PANE.innerHTML =
+    '<div class="ap-wrap">' +
+      '<p class="ap-eyebrow">Cardinal Roofing &amp; Renovations</p>' +
+      '<h1 class="ap-h">Let\u2019s look at your roof.</h1>' +
+      '<p class="gs-addr">' + esc(proj ? (proj.name || '') : '') + (addr ? ' \u00b7 ' + esc(addr) : '') + '</p>' +
+      '<p class="ap-sub">Here\u2019s how the visit goes: what brought us out, what matters to you, ' +
+      'what we found on your roof, what we recommend and why \u2014 and only then, what it costs. ' +
+      'Stop us with questions any time.</p>' +
+      '<div class="ap-actions"><button type="button" class="ap-btn gs-primary" data-gs="next">Begin \u2192</button></div>' +
+    '</div>';
+  gsWireNext();
+}
+
+function paintWhyNow(){
+  if(!guided) guided = gsParse(proj);
+  if(!Array.isArray(guided.why_now)) guided.why_now = [];
+  PANE.innerHTML = gsShell('What brought us out?',
+    'Tap everything that\u2019s true \u2014 it shapes the rest of the visit.',
+    '<div data-slot="cards"></div>' +
+    '<textarea class="gs-note" data-slot="note" placeholder="Anything else we should know\u2026"></textarea>');
+  var host = PANE.querySelector('[data-slot="cards"]');
+  function drawWhyCards(){ host.innerHTML = gsCards(GS_WHY, guided.why_now); }
+  host.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('.gs-card') : null;
+    if(!b) return;
+    var k = b.getAttribute('data-k');
+    var i = guided.why_now.indexOf(k);
+    if(i === -1) guided.why_now.push(k); else guided.why_now.splice(i, 1);
+    drawWhyCards(); gsSave();
+  };
+  var note = PANE.querySelector('[data-slot="note"]');
+  note.value = guided.why_now_note || '';
+  var nt = null;
+  note.oninput = function(){
+    guided.why_now_note = note.value;
+    if(nt) clearTimeout(nt);
+    nt = setTimeout(function(){ nt = null; gsSave(); }, 900);
+  };
+  note.onblur = function(){ if(nt){ clearTimeout(nt); nt = null; } gsSave(); };
+  gsWireNext();
+  drawWhyCards();
+}
+
+function paintPriorities(){
+  if(!guided) guided = gsParse(proj);
+  if(!Array.isArray(guided.priorities)) guided.priorities = [];
+  PANE.innerHTML = gsShell('What matters most to you?',
+    'Tap in order \u2014 the first tap is the first priority. Tap again to remove.',
+    '<div data-slot="cards"></div>');
+  var host = PANE.querySelector('[data-slot="cards"]');
+  function drawPriCards(){ host.innerHTML = gsCards(GS_PRI, guided.priorities, { rank:true }); }
+  host.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('.gs-card') : null;
+    if(!b) return;
+    var k = b.getAttribute('data-k');
+    var i = guided.priorities.indexOf(k);
+    if(i === -1) guided.priorities.push(k); else guided.priorities.splice(i, 1);
+    drawPriCards(); gsSave();
+  };
+  gsWireNext();
+  drawPriCards();
+}
+
+function paintPlans(){
+  if(!guided) guided = gsParse(proj);
+  PANE.innerHTML = gsShell('How long will this be your home?',
+    'It changes what we\u2019ll recommend.',
+    '<div data-slot="cards"></div>');
+  var host = PANE.querySelector('[data-slot="cards"]');
+  function drawPlanCards(){ host.innerHTML = gsCards(GS_PLANS, guided.horizon ? [guided.horizon] : []); }
+  host.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('.gs-card') : null;
+    if(!b) return;
+    var k = b.getAttribute('data-k');
+    guided.horizon = (guided.horizon === k) ? null : k;
+    drawPlanCards(); gsSave();
+  };
+  gsWireNext();
+  drawPlanCards();
+}
+
+/* 1191: once a visit is running, the Job stop is a shield, not the list -
+   a handed-over tablet is one tap from the rep's whole book of business.
+   Hold for 600ms (finger or Enter held) to actually open the picker. */
+function paintShield(){
+  PANE.innerHTML =
+    '<div class="ap-wrap">' +
+      '<p class="ap-eyebrow">' + esc(proj ? (proj.name || '') : '') + '</p>' +
+      '<h1 class="ap-h">One moment \u2014 back to your rep.</h1>' +
+      '<p class="ap-sub">The rest of Cardinal\u2019s client list stays private during your visit.</p>' +
+      '<div class="ap-actions">' +
+        '<button type="button" class="ap-btn" data-gs="backvisit">\u2039 Back to the visit</button>' +
+        '<button type="button" class="ap-btn gs-hold" data-gs="unlock" aria-label="Hold to open the client list">Hold to open the client list</button>' +
+      '</div>' +
+    '</div>';
+  PANE.querySelector('[data-gs="backvisit"]').onclick = function(){
+    go(prevIx > 0 ? prevIx : 1);
+  };
+  var hold = PANE.querySelector('[data-gs="unlock"]');
+  var t = null;
+  function arm(){
+    if(t) return;
+    hold.classList.add('arming');
+    t = setTimeout(function(){ t = null; paintPick(); paintRail(); }, 600);
+  }
+  function disarm(){
+    if(t){ clearTimeout(t); t = null; }
+    hold.classList.remove('arming');
+  }
+  hold.onpointerdown = arm;
+  hold.onpointerup = disarm;
+  hold.onpointercancel = disarm;
+  hold.onpointerleave = disarm;
+  hold.onkeydown = function(e){ if((e.key === 'Enter' || e.key === ' ') && !e.repeat) arm(); };
+  hold.onkeyup = function(e){ if(e.key === 'Enter' || e.key === ' ') disarm(); };
+}
+
+/* 1191: the resume card. The hint says where; checklist.guided says what -
+   answers were never only local, so resume restores both. */
+function paintResume(h){
+  var ix = stepIndexOf(h.stepId);
+  var lbl = ix > 0 ? STEPS[ix].label : '';
+  PANE.innerHTML =
+    '<div class="ap-wrap">' +
+      '<p class="ap-eyebrow">The Appointment</p>' +
+      '<h1 class="ap-h">Pick up where you left off?</h1>' +
+      '<p class="ap-sub"><b>' + esc(h.projectName || 'This visit') + '</b>' +
+        (lbl ? ' \u2014 ' + esc(lbl) + '.' : '.') +
+        ' Everything answered so far is saved.</p>' +
+      '<div class="ap-actions">' +
+        '<button type="button" class="ap-btn gs-primary" data-gs="resume">Resume \u2192</button>' +
+        '<button type="button" class="ap-btn" data-gs="fresh">Start fresh</button>' +
+      '</div>' +
+    '</div>';
+  PANE.querySelector('[data-gs="resume"]').onclick = async function(){
+    var p = null;
+    for(var i = 0; i < projects.length; i++){
+      if(String(projects[i].id) === String(h.projectId)){ p = projects[i]; break; }
+    }
+    if(!p){ gsHintClear(); paintPick(); paintRail(); return; }
+    PANE.innerHTML = '<div class="ap-wrap"><div class="ap-empty">Loading\u2026</div></div>';
+    await pickJobData(p);
+    var ix2 = stepIndexOf(h.stepId);
+    go(ix2 > 0 ? ix2 : 1);
+  };
+  PANE.querySelector('[data-gs="fresh"]').onclick = function(){
+    gsHintClear(); paintPick(); paintRail();
+  };
+}
+
 /* the delegated steps — open through public APIs only */
 function openRoof(){
   hidePane();
@@ -86917,13 +87313,19 @@ async function go(ix){
   if(!running) return;
   if(ix < 0 || ix >= STEPS.length) return;
   if(ix > 0 && !proj) return;         /* nothing past the picker without a job */
+  prevIx = stepIx;
   stepIx = ix;
   var st = STEPS[stepIx];
   /* leave whatever the previous step opened, through the modules' own doors */
   closeModules();
   if(st.kind === 'pane'){
     showPane();
-    if(st.id === 'pick')  paintPick();
+    /* 1191: mid-visit the Job stop is the shield, never the raw list */
+    if(st.id === 'pick')       (proj ? paintShield() : paintPick());
+    if(st.id === 'welcome')    paintWelcome();
+    if(st.id === 'whynow')     paintWhyNow();
+    if(st.id === 'priorities') paintPriorities();
+    if(st.id === 'plans')      paintPlans();
     if(st.id === 'house') await paintHouse();
     if(st.id === 'options') await paintOptions();
     if(st.id === 'sign')    await paintSign();
@@ -86935,19 +87337,21 @@ async function go(ix){
   /* every delegated open() runs hideAllViews(), which clears the pane —
      correct for module steps; the rail is chrome and survives on its own. */
   paintRail();
+  gsHintWrite();
 }
 
 async function open(){
   ensure();
   try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
   running = true;
-  proj = null; stepIx = 0; renders = []; docs = null;
+  proj = null; stepIx = 0; prevIx = 0; renders = []; docs = null; guided = null;
   showPane();
   PANE.innerHTML = '<div class="ap-wrap"><div class="ap-empty">Loading jobs…</div></div>';
   paintRail();
   try{ projects = await loadProjects(); }catch(_){ projects = []; }
   if(!running) return;
-  paintPick();
+  var h = gsHintRead();               /* 1191: two taps back to where you were */
+  if(h) paintResume(h); else paintPick();
   paintRail();
   try{ if(window.navPush) window.navPush('cr-appt'); }catch(_){}
 }
@@ -86957,7 +87361,8 @@ function end(){
   closeModules();
   hidePane();
   if(RAIL) RAIL.classList.remove('on');
-  proj = null; stepIx = 0;
+  proj = null; stepIx = 0; prevIx = 0; guided = null;
+  gsHintClear();                      /* the visit is over; the answers stay */
   try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
 }
 
