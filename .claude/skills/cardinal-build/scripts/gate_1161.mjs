@@ -41,39 +41,16 @@ ok('exported once via Object.assign',
    /Object\.assign\(\s*window\.CardinalAppointment\s*\|\|/.test(js));
 ok('writes NO scroll lock', !/style\.overflow/.test(js));
 
-/* ── 1 · hub tile + dispatch + hideAllViews ────────────────── */
+/* ── 1 · doors + hideAllViews ──────────────────────────────────
+   1190 retired the Vision hub: visionHtml() and its tiles are GONE, and
+   staying gone is now the assertion (inverted, not deleted — the 1190
+   pattern). The doors that remain are the Front Door's `appt` case and
+   the 1187 ?open=appt deep link. */
 {
-  const at = src.indexOf('\nfunction visionHtml(');
-  let vh = null;
-  if (at > -1) {
-    const open = src.indexOf('{', at);
-    let d = 0;
-    for (let i = open; i < src.length; i++) {
-      const ch = src[i], nx = src[i + 1];
-      if (ch === '/' && nx === '/') { i = src.indexOf('\n', i); if (i < 0) break; continue; }
-      if (ch === '/' && nx === '*') { i = src.indexOf('*/', i + 2); if (i < 0) break; i++; continue; }
-      if (ch === '"' || ch === "'" || ch === '`') {
-        const q = ch;
-        for (i++; i < src.length; i++) { if (src[i] === '\\') { i++; continue; } if (src[i] === q) break; }
-        continue;
-      }
-      if (ch === '{') d++;
-      else if (ch === '}') { d--; if (!d) { vh = src.slice(at + 1, i + 1); break; } }
-    }
-  }
-  ok('visionHtml() found', !!vh);
-  if (vh) for (const admin of [true, false]) {
-    let html = '';
-    try { html = new Function('window', 'return (' + vh + ')()')({ is_admin: () => admin }); }
-    catch (e) { ok('visionHtml runs (admin=' + admin + ')', false, e.message); continue; }
-    const d = new JSDOM('<div>' + html + '</div>').window.document;
-    ok('hub: Appointment tile (admin=' + admin + ')', !!d.querySelector('[data-go="appt"]'));
-    for (const sel of ['[data-go="showroom"]', '[data-go="designer"]', '[data-go="colors"]',
-                       '[data-go="why"]', 'a[href="/popup.html"]'])
-      ok('hub: ' + sel + ' survives (admin=' + admin + ')', !!d.querySelector(sel));
-    ok('hub: Studio admin-only (admin=' + admin + ')',
-       !!d.querySelector('a[href="/studio.html"]') === admin);
-  }
+  ok('visionHtml() stays retired (1190)', src.indexOf('\nfunction visionHtml(') === -1);
+  ok('the hub markup is never emitted (.cr-vh is the tell)',
+     !src.includes("class=\"cr-vh\""));
+  ok('?open=appt door survives', src.includes("appt: function(){ return window.CardinalAppointment; }"));
   ok('dispatch routes appt',
      /if\(d === 'appt'\)\{[\s\S]{0,120}CardinalAppointment\.open\(\)/.test(src));
   const hv = src.indexOf('function hideAllViews');
@@ -97,8 +74,9 @@ ok('writes NO scroll lock', !/style\.overflow/.test(js));
 ok('openForProject takes (pr, opts)', src.includes('function openForProject(pr, opts){'));
 ok('openForProject passes opts to open()', /open\(opts\);\s*\n\s*if\(opts && opts\.showroom\) tab = 'walk';/.test(src));
 
-/* ── 4 · STEPS floor ───────────────────────────────────────── */
-for (const id of ['pick', 'roof', 'good', 'why', 'house'])
+/* ── 4 · STEPS floor (1191 added the four discovery stops) ─── */
+for (const id of ['pick', 'welcome', 'whynow', 'priorities', 'plans',
+                  'roof', 'good', 'why', 'house'])
   ok('STEPS floor: ' + id, new RegExp("id:'" + id + "'").test(js));
 
 /* ── 2 · drive the shipped module ──────────────────────────── */
@@ -117,6 +95,14 @@ for (const id of ['pick', 'roof', 'good', 'why', 'house'])
       let data = [];
       if (table === 'projects') data = rows.projects;
       if (table === 'design_renders') data = rows.renders;
+      /* 1192: the availability probe dims empty chapters — this gate drives
+         the FULL journey, so every data-backed chapter has content here.
+         (gate_1192 owns the empty/skip behavior.) */
+      if (table === 'walks') data = [{ id: 'w1', project_id: 'p1' }];
+      if (table === 'workmanship_pairs') data = [{ id: 'wp1' }];
+      if (table === 'inspection_reports')
+        data = [{ id: 'd1', title: 'Roof Options — Kim Lawson', share_token: 'tokG',
+                  signed_at: null, status: 'sent', created_at: '2026-08-30' }];
       return Promise.resolve({ data }).then(res, rej);
     };
     return q;
@@ -162,13 +148,26 @@ for (const id of ['pick', 'roof', 'good', 'why', 'house'])
     ok('rail: steps beyond Job disabled before a pick',
        [...rail.querySelectorAll('.ar-step')].slice(1).every(b => b.disabled));
 
-    /* pick the first job -> roof step */
+    /* pick the first job -> 1191: discovery first. Welcome paints; the
+       roof does NOT open until its own stop. */
     pane.querySelector('.ap-job').click();
     await step();
-    ok('pick -> openForProject with showroom',
+    ok('pick -> Welcome paints (discovery before the roof)',
+       pane.style.display === 'block' && !!pane.querySelector('[data-gs-pane="welcome"]'));
+    ok('pick did NOT open the showroom yet',
+       !calls.some(c => c.startsWith('show.ofp:')));
+    ok('rail names the client', rail.textContent.includes('Kim Lawson'));
+
+    /* jump to Roof (index 5). Chip access is guarded so the 1190 control
+       (7 chips) REPORTS red instead of crashing — BUG_CLASSES 37. */
+    const chip = ix => { const b = rail.querySelectorAll('.ar-step')[ix];
+      if (b) b.click(); else ok('chip ' + ix + ' exists', false, 'rail has ' +
+        rail.querySelectorAll('.ar-step').length + ' chips'); };
+    chip(5);
+    await step();
+    ok('roof -> openForProject with showroom',
        calls.some(c => c === 'show.ofp:p1:{"showroom":true}'), calls.join(' | '));
     ok('roof step hides the pane', pane.style.display === 'none');
-    ok('rail names the client', rail.textContent.includes('Kim Lawson'));
 
     /* next -> good: clicks the showcase's own tab */
     rail.querySelector('[data-ap="next"]').click();
@@ -202,7 +201,7 @@ for (const id of ['pick', 'roof', 'good', 'why', 'house'])
     await step();
     ok('Next is dead on the LAST step (no dead-end forward)',
        rail.querySelector('[data-ap="next"]').disabled);
-    stepsAll[4].click();          /* back to house for the walk below */
+    chip(8);                      /* back to house for the walk below */
     await step();
 
     /* back works */

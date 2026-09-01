@@ -30,3 +30,11 @@ visualizer/node_modules/
 # jsdom runs the harness_*.js family; axe-core runs gate_a11y.mjs. Both refuse
 # to run with a usage error when their package is missing — never a quiet pass.
 .claude/skills/cardinal-build/scripts/node_modules
+
+# A gate's negative-control artifact — a local copy of the previous build that
+# gate_*.mjs / render_*.mjs / sentinel.js are pointed at (every one takes a
+# path argument for exactly this). Session-local, ~5 MB, never committed.
+# ⚠ Do not delete it while a sentinel sweep is still running — the 1192 log
+# records the 1191 sweep dying on exactly that (ENOENT mid-run).
+.claude/skills/cardinal-build/scripts/prev_control.html
+.claude/skills/cardinal-build/scripts/prev_*.html

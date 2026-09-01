@@ -7953,13 +7953,62 @@ not create it.
 
 ## The Appointment (build 1161) — `cr-appt-styles` + `cr-appt-script`, `window.CardinalAppointment`
 
-`#cr-appt` (pane, z 9550) + `#cr-appt-rail` (rail, z 9600) · Vision hub tile
-`data-go="appt"` · Blackout, single-theme, all literals.
+`#cr-appt` (pane, z 9550) + `#cr-appt-rail` (rail, z 9600) · doors: the Front
+Door's `appt` case + `/?open=appt` (1187; the Vision hub tile died with the hub
+at 1190) · Blackout, single-theme, all literals.
 
 **The running order for the in-home visit, over surfaces that already exist.**
 Theo's pick: option (b) — the whole visit stays on the tablet. `STEPS` is the
-single source of the order: **Job → Roof → Good → Why → House**, with **Options
-& Sign shipped at 1162** by extending that array and nothing else:
+single source of the order — **eleven stops since 1191**:
+**Job → Welcome → Why now → Priorities → Plans → Roof → Our work → Why us →
+House → Options → Sign** (Options & Sign shipped at 1162; the four discovery
+stops at 1191, the Guided Sale workstream's first slice — audit in
+`GUIDED_SALE_AUDIT_2026-09.md`):
+
+### 1191 — the Guided Sale spine (discovery · persistence · resume · quick-create · shield)
+
+| Piece | What |
+|---|---|
+| Discovery | Welcome (name + address + the visit's promise) · Why now (multi-tap + note) · Priorities (tap-in-order ranking, numbered badges) · Plans (ownership horizon, single-select). Tap-cards `.gs-card`, selected = white on cardinal red. |
+| Persistence | every answer → `checklist.guided.*` via `patchProjectCk()` **on the tap** — rides the offline outbox; writes serialized through `gsSaveQ`. Customer truth lives on the customer. |
+| Resume | `gs_session` localStorage hint (the `qi_session` shape) tracks the step; `open()` with a fresh hint paints the resume card; Resume refetches the checklist and repaints the answers; Start fresh / End clear the hint (answers stay). |
+| Quick-create | picker's “+ New customer” → `pdb.create`, stage Lead, **`stage_since` in the checklist on creation** — the QI shape, no second pipeline. |
+| The shield | mid-visit the Job stop paints a shield, not the client list; **hold 600 ms** (pointer or Enter) to open the picker; Back returns to the step you came from. |
+| The strip | eleven chips scroll inside `.ar-strip` with a **visible** 4px bar (the sentinel's CLIPPED class forbids a silent one) and the active chip auto-centred; ≤700px the counter still takes over. |
+
+Gate: `gate_1191.mjs` (jsdom drive, 45 checks, control RED at 29 and
+reporting) + `render_gs1191.mjs` (real Chromium, 128 checks, three viewports).
+
+### 1192 — the homeowner canvas + auto-skip (Theo's Slice-1 direction — `GUIDED_SALE_DIRECTION.md`)
+
+**Two visual layers, toggled by `paneMode()` → `#cr-appt.gs-lit`.** Discovery, the
+resume card and the shield paint on the warm light canvas (`#F7F4EF`, white cards,
+ink serif, restrained cardinal red — inks computed 13.7/7.6/5.1/8.2:1); the picker,
+quick-create and the rail stay dark — **the rep's room. The contrast IS the
+homeowner/rep boundary.** Blackout remains the delegated surfaces' look (Walk / Hall
+of Fame / Why us / Colors) and the 1162 doc steps' — restyling those is a later call.
+
+**Auto-skip:** `gsProbeAvail()` at pick time dims data-empty chapters (`.ar-off` +
+`disabled` + `aria-disabled`) — roof (walks), good (published pairs), house (approved
+renders), options/sign (the `loadDocs()` cache). `go()` refuses dimmed targets;
+Next/Back and every pane Continue walk past them (`nextAvail`/`prevAvail`). A failed
+probe counts as available (a blip must not hide a prepared walk). **The homeowner
+never sees an empty room or internal voice.**
+
+**`guided.v = 1`** marks the persisted shape: `checklist.guided` is the v1 storage
+location, NOT the permanent semantic home (the §4 note lives at `gsSave()`).
+
+Gates: `gate_1192.mjs` (27, control RED 18) · `render_1192.mjs` (real Chromium 9 —
+the two layers by composited luminance + the REAL reload-and-resume drive, control
+RED 4).
+
+**1193 — the tone correction (the over-the-shoulder test, `GUIDED_SALE_DIRECTION.md`).**
+Homeowner discovery reads as a consultation, never as sales software: Welcome is the
+title page of a visit about THEIR home (address as headline, "Prepared for …"); no
+process narration, form-speak or persuasion glosses anywhere homeowner-facing. Every
+discovery/boundary wrap carries `data-gs-pane="<id>"` — **gates assert structure, not
+copy**, so the words stay free to change in Theo's voice. `gate_1192` grew a six-phrase
+process/persuasion floor (33 checks now, RED 7 on the 1192 control).
 
 | Options | the job's newest published Roof Options sheet | `/api/share?t=` in an iframe — review; the initial boxes are print-only by design |
 | Sign | the job's paperwork, one picked document at a time | same share page; `share.js` injects Accept & Sign when signable, `clientsign.js` stamps + notifies. **The 1149 rule is structural: the list hides while a document is open, exactly one frame, its own token** |
