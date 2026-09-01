@@ -153,7 +153,7 @@ for (const id of ['pick', 'welcome', 'whynow', 'priorities', 'plans',
     pane.querySelector('.ap-job').click();
     await step();
     ok('pick -> Welcome paints (discovery before the roof)',
-       pane.style.display === 'block' && /Let’s look at your roof/.test(pane.textContent));
+       pane.style.display === 'block' && !!pane.querySelector('[data-gs-pane="welcome"]'));
     ok('pick did NOT open the showroom yet',
        !calls.some(c => c.startsWith('show.ofp:')));
     ok('rail names the client', rail.textContent.includes('Kim Lawson'));

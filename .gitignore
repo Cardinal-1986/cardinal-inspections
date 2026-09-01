@@ -37,3 +37,4 @@ visualizer/node_modules/
 # ⚠ Do not delete it while a sentinel sweep is still running — the 1192 log
 # records the 1191 sweep dying on exactly that (ENOENT mid-run).
 .claude/skills/cardinal-build/scripts/prev_control.html
+.claude/skills/cardinal-build/scripts/prev_*.html

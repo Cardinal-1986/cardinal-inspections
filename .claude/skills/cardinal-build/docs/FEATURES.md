@@ -8002,6 +8002,14 @@ Gates: `gate_1192.mjs` (27, control RED 18) · `render_1192.mjs` (real Chromium 
 the two layers by composited luminance + the REAL reload-and-resume drive, control
 RED 4).
 
+**1193 — the tone correction (the over-the-shoulder test, `GUIDED_SALE_DIRECTION.md`).**
+Homeowner discovery reads as a consultation, never as sales software: Welcome is the
+title page of a visit about THEIR home (address as headline, "Prepared for …"); no
+process narration, form-speak or persuasion glosses anywhere homeowner-facing. Every
+discovery/boundary wrap carries `data-gs-pane="<id>"` — **gates assert structure, not
+copy**, so the words stay free to change in Theo's voice. `gate_1192` grew a six-phrase
+process/persuasion floor (33 checks now, RED 7 on the 1192 control).
+
 | Options | the job's newest published Roof Options sheet | `/api/share?t=` in an iframe — review; the initial boxes are print-only by design |
 | Sign | the job's paperwork, one picked document at a time | same share page; `share.js` injects Accept & Sign when signable, `clientsign.js` stamps + notifies. **The 1149 rule is structural: the list hides while a document is open, exactly one frame, its own token** |
 

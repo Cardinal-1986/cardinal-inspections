@@ -130,7 +130,7 @@ const tapCard = (pane, k) => { const b = pane.querySelector('.gs-card[data-k="' 
   if (job) job.click(); else ok('a job row exists', false);
   await step(480);
   ok('pick -> Welcome, with the address on it',
-     /Let’s look at your roof/.test(pane.textContent) && pane.textContent.includes('12 Oak St'));
+     !!pane.querySelector('[data-gs-pane="welcome"]') && pane.textContent.includes('12 Oak St'));
   ok('hint tracks the step (welcome)',
      (JSON.parse(w.localStorage.getItem('gs_session') || '{}').stepId) === 'welcome');
   const begin = pane.querySelector('[data-gs="next"]');
@@ -285,7 +285,7 @@ const tapCard = (pane, k) => { const b = pane.querySelector('.gs-card[data-k="' 
       try { ckOK = !!JSON.parse(f.checklist).stage_since; } catch (_) {}
       ok('checklist carries stage_since on creation (the invariant)', ckOK);
       ok('…and lands on Welcome for the new customer',
-         /Let’s look at your roof/.test(pane.textContent) && pane.textContent.includes('New Homeowner'));
+         !!pane.querySelector('[data-gs-pane="welcome"]') && pane.textContent.includes('New Homeowner'));
     } else ok('create button exists', false);
   } else ok('module exported in realm D', false);
 }

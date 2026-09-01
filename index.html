@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1192<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1193<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42652,6 +42652,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1193, d: '2026-09-01', t: 'The visit reads like a consultation, not a script', s: 'The opening screens stopped narrating a sales process. The welcome page is now the title page of a visit about THEIR home \u2014 the address as the headline, \u201CPrepared for\u201D beneath it \u2014 instead of an agenda that walked from questions to price. The question screens lost their form-speak: no meta-commentary about the visit, no tap-by-tap instructions, no selling lines on the answer cards \u2014 just \u201CWhat brought us out?\u201D, \u201CWhat matters most?\u201D and \u201CHow long will this be your home?\u201D with quiet, factual descriptions. Everything underneath \u2014 what gets saved, how the visit resumes, the running order \u2014 is unchanged.' },
   { b: 1192, d: '2026-09-01', t: 'The visit steps into the light', s: 'The discovery screens \u2014 the welcome, what brought us out, what matters most, and how long you\u2019ll be in the house \u2014 now paint on a warm, bright canvas instead of the black presentation ground: white cards, soft shadows, a restrained line of Cardinal red. The black stays where it belongs \u2014 the rep\u2019s own screens and the step rail \u2014 so the tablet itself shows whose moment it is. And the visit stopped walking homeowners into empty rooms: a chapter with nothing prepared for this job \u2014 no walk, no approved visualizations, no options sheet, no paperwork \u2014 now dims on the rep\u2019s rail and the running order flows past it. Nothing a homeowner sees ever says a screen is empty.' },
   { b: 1191, d: '2026-09-01', t: 'The Appointment asks first \u2014 and survives a refresh', s: 'The in-home visit now opens the way a good appointment actually starts: with listening. After you pick the job, four new stops come before the roof \u2014 a welcome page with the visit\u2019s promise on it, what brought us out (storm, leak, age, selling, insurance), what matters most to the homeowner, tapped in order, and how long they plan to be in the house. Every answer saves to the client\u2019s record the moment it\u2019s tapped \u2014 on a bad connection it queues and syncs like the rest of the app \u2014 so the later screens, and the next visit, can speak to what they said instead of asking again. The visit itself is no longer glass: if Safari refreshes or the iPad locks, opening The Appointment offers to pick up exactly where you left off, answers intact. Two smaller things: you can create a brand-new customer right from the picker without leaving the kitchen table, and once a visit is running the client list sits behind a hold-to-open shield, so a handed-over tablet can\u2019t wander into your other jobs.' },
   { b: 1190, d: '2026-09-01', t: 'The old presentation menu is retired', s: 'Presentations moved to their own app at showroom.cardinalroster.com on 31 August, and that address now serves it directly. The old menu this app used to draw on that address \u2014 and the ?vision=1 preview of it \u2014 could no longer be reached by anyone, so it has been removed along with the checks that decided when to show it. Nothing you use day to day changes: the Showcase, the Hall of Fame, The Walk and the Owens Corning colours are all still here in the app, still on the client profile, still in the Front Door and still in The Appointment. The only thing gone is a door that led somewhere that no longer exists.' },
@@ -87155,22 +87156,22 @@ var GS_WHY = [
   { k:'age',       t:'Age & wear',            d:'It is simply time' },
   { k:'selling',   t:'Getting ready to sell', d:'The roof is part of the sale' },
   { k:'insurance', t:'Insurance said so',     d:'The carrier or an inspector flagged it' },
-  { k:'looks',     t:'How it looks',          d:'The house deserves better' }
+  { k:'looks',     t:'How it looks',          d:'Colour and curb appeal' }
 ];
 var GS_PRI = [
-  { k:'price',     t:'The price',         d:'Best number wins' },
+  { k:'price',     t:'The price',         d:'Total cost' },
   { k:'looks',     t:'How it looks',      d:'Colour and curb appeal' },
-  { k:'longevity', t:'How long it lasts', d:'Do it once, do it right' },
-  { k:'warranty',  t:'The warranty',      d:'Who stands behind it' },
-  { k:'schedule',  t:'The schedule',      d:'Sooner is better' },
-  { k:'payments',  t:'Monthly payments',  d:'Spreading it out matters' }
+  { k:'longevity', t:'How long it lasts', d:'Years of service' },
+  { k:'warranty',  t:'The warranty',      d:'The coverage behind it' },
+  { k:'schedule',  t:'The schedule',      d:'How soon it happens' },
+  { k:'payments',  t:'Monthly payments',  d:'Monthly options' }
 ];
 var GS_PLANS = [
-  { k:'forever', t:'10+ years',           d:'This is our home' },
-  { k:'awhile',  t:'3\u201310 years',      d:'Here for a while yet' },
-  { k:'selling', t:'Selling soon',        d:'Within a few years' },
-  { k:'rental',  t:'Rental / investment', d:'Someone else lives here' },
-  { k:'unsure',  t:'Not sure yet',        d:'Life decides' }
+  { k:'forever', t:'Staying 10+ years',   d:'Long term' },
+  { k:'awhile',  t:'Staying 3\u201310 years', d:'A while yet' },
+  { k:'selling', t:'Selling soon',        d:'In the next few years' },
+  { k:'rental',  t:'Rental / investment', d:'An investment property' },
+  { k:'unsure',  t:'Not sure yet',        d:'Still deciding' }
 ];
 
 function gsParse(pr){
@@ -87236,8 +87237,8 @@ function gsCards(list, picked, opts){
       '<span class="gs-d">' + esc(o.d) + '</span></button>';
   }).join('') + '</div>';
 }
-function gsShell(h1, sub, body){
-  return '<div class="ap-wrap">' +
+function gsShell(id, h1, sub, body){
+  return '<div class="ap-wrap" data-gs-pane="' + esc(id) + '">' +
     '<p class="ap-eyebrow">' + esc(proj ? (proj.name || '') : '') + '</p>' +
     '<h1 class="ap-h">' + h1 + '</h1>' +
     (sub ? '<p class="ap-sub">' + sub + '</p>' : '') +
@@ -87252,15 +87253,23 @@ function gsWireNext(){
 
 function paintWelcome(){
   paneMode(true);
+  /* 1193: the title page of a consultation about THEIR home - the address
+     is the headline, the visit is "prepared for" them. No process
+     narration, no cost sequencing, no pitch. */
   var addr = (proj && proj.address) ? String(proj.address) : '';
+  var nm = proj ? (proj.name || '') : '';
+  var when = '';
+  try{
+    when = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  }catch(_){}
+  var prepared = nm ? ('Prepared for ' + esc(nm) + (when ? ' \u00b7 ' + esc(when) : ''))
+                    : esc(when);
   PANE.innerHTML =
-    '<div class="ap-wrap">' +
+    '<div class="ap-wrap" data-gs-pane="welcome">' +
       '<p class="ap-eyebrow">Cardinal Roofing &amp; Renovations</p>' +
-      '<h1 class="ap-h">Let\u2019s look at your roof.</h1>' +
-      '<p class="gs-addr">' + esc(proj ? (proj.name || '') : '') + (addr ? ' \u00b7 ' + esc(addr) : '') + '</p>' +
-      '<p class="ap-sub">Here\u2019s how the visit goes: what brought us out, what matters to you, ' +
-      'what we found on your roof, what we recommend and why \u2014 and only then, what it costs. ' +
-      'Stop us with questions any time.</p>' +
+      '<h1 class="ap-h">' + (addr ? esc(addr) : (nm ? esc(nm) : 'Your home.')) + '</h1>' +
+      (prepared ? '<p class="gs-addr">' + prepared + '</p>' : '') +
+      '<p class="ap-sub">Where your roof stands today, and every option you have.</p>' +
       '<div class="ap-actions"><button type="button" class="ap-btn gs-primary" data-gs="next">Begin \u2192</button></div>' +
     '</div>';
   gsWireNext();
@@ -87270,8 +87279,8 @@ function paintWhyNow(){
   paneMode(true);
   if(!guided) guided = gsParse(proj);
   if(!Array.isArray(guided.why_now)) guided.why_now = [];
-  PANE.innerHTML = gsShell('What brought us out?',
-    'Tap everything that\u2019s true \u2014 it shapes the rest of the visit.',
+  PANE.innerHTML = gsShell('whynow', 'What brought us out?',
+    'Tap anything that fits.',
     '<div data-slot="cards"></div>' +
     '<textarea class="gs-note" data-slot="note" placeholder="Anything else we should know\u2026"></textarea>');
   var host = PANE.querySelector('[data-slot="cards"]');
@@ -87301,8 +87310,8 @@ function paintPriorities(){
   paneMode(true);
   if(!guided) guided = gsParse(proj);
   if(!Array.isArray(guided.priorities)) guided.priorities = [];
-  PANE.innerHTML = gsShell('What matters most to you?',
-    'Tap in order \u2014 the first tap is the first priority. Tap again to remove.',
+  PANE.innerHTML = gsShell('priorities', 'What matters most?',
+    'In whatever order feels right.',
     '<div data-slot="cards"></div>');
   var host = PANE.querySelector('[data-slot="cards"]');
   function drawPriCards(){ host.innerHTML = gsCards(GS_PRI, guided.priorities, { rank:true }); }
@@ -87321,8 +87330,8 @@ function paintPriorities(){
 function paintPlans(){
   paneMode(true);
   if(!guided) guided = gsParse(proj);
-  PANE.innerHTML = gsShell('How long will this be your home?',
-    'It changes what we\u2019ll recommend.',
+  PANE.innerHTML = gsShell('plans', 'How long will this be your home?',
+    'A forever home and a five-year home can point to different roofs.',
     '<div data-slot="cards"></div>');
   var host = PANE.querySelector('[data-slot="cards"]');
   function drawPlanCards(){ host.innerHTML = gsCards(GS_PLANS, guided.horizon ? [guided.horizon] : []); }
@@ -87343,7 +87352,7 @@ function paintPlans(){
 function paintShield(){
   paneMode(true);
   PANE.innerHTML =
-    '<div class="ap-wrap">' +
+    '<div class="ap-wrap" data-gs-pane="shield">' +
       '<p class="ap-eyebrow">' + esc(proj ? (proj.name || '') : '') + '</p>' +
       '<h1 class="ap-h">One moment \u2014 back to your rep.</h1>' +
       '<p class="ap-sub">The rest of Cardinal\u2019s client list stays private during your visit.</p>' +
@@ -87381,12 +87390,12 @@ function paintResume(h){
   var ix = stepIndexOf(h.stepId);
   var lbl = ix > 0 ? STEPS[ix].label : '';
   PANE.innerHTML =
-    '<div class="ap-wrap">' +
+    '<div class="ap-wrap" data-gs-pane="resume">' +
       '<p class="ap-eyebrow">The Appointment</p>' +
       '<h1 class="ap-h">Pick up where you left off?</h1>' +
       '<p class="ap-sub"><b>' + esc(h.projectName || 'This visit') + '</b>' +
         (lbl ? ' \u2014 ' + esc(lbl) + '.' : '.') +
-        ' Everything answered so far is saved.</p>' +
+        ' Everything so far is saved.</p>' +
       '<div class="ap-actions">' +
         '<button type="button" class="ap-btn gs-primary" data-gs="resume">Resume \u2192</button>' +
         '<button type="button" class="ap-btn" data-gs="fresh">Start fresh</button>' +

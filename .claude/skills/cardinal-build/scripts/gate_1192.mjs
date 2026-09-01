@@ -41,6 +41,15 @@ ok('dimmed-chip CSS shipped', css.includes('.ar-step.ar-off'));
 ok('reduced motion respected', css.includes('prefers-reduced-motion'));
 ok('availability probe exists', js.includes('function gsProbeAvail'));
 ok('persisted shape is versioned', js.includes('guided.v = 1;'));
+/* 1193 (Theo's tone correction): the over-the-shoulder test, held by a
+   gate. Homeowner discovery copy must not narrate the sales process or
+   the form mechanics — the recurring-class rule: a check, not a
+   paragraph. Source-level, so it also catches strings a state walk
+   never renders. */
+for (const meta of ['shapes the rest of the visit', 'only then, what it costs',
+                    'first tap is the first priority', 'answered so far is saved',
+                    'Best number wins', 'deserves better'])
+  ok('no process/persuasion copy: "' + meta + '"', !js.includes(meta));
 ok('still writes NO scroll lock', !/style\.overflow/.test(js));
 ok('still adds NO document.body observer', !js.includes('.observe(document.body'));
 
@@ -112,7 +121,7 @@ const INTERNAL = /Theo|scoped to your sign-in|Queue them in the Designer|Publish
   if (job) job.click(); else ok('a job row exists', false);
   await step(520);
   ok('Welcome paints on the light canvas (gs-lit)',
-     pane.classList.contains('gs-lit') && /Let’s look at your roof/.test(pane.textContent));
+     pane.classList.contains('gs-lit') && !!pane.querySelector('[data-gs-pane="welcome"]'));
   const chips = rail.querySelectorAll('.ar-step');
   const idx = { roof: 5, good: 6, why: 7, house: 8, options: 9, sign: 10 };
   for (const [nm, i] of Object.entries(idx)) {

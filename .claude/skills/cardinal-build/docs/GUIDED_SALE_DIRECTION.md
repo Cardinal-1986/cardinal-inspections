@@ -7,7 +7,30 @@ do not build them without his go, and do not let today's architecture close thei
 
 ---
 
-## Decided for Slice 1 (shipped: 1191 behavior + 1192 visual language)
+## THE OVER-THE-SHOULDER TEST (Theo, 1 Sep 2026 — governs ALL homeowner copy and UX)
+
+**The homeowner-facing experience must never feel like a sales funnel, scripted close,
+qualification flow, or digital sales trainer.** The hierarchy is: INFORMATIONAL /
+EDUCATIONAL / PRESENTATIONAL first · CONSULTATIVE second · SALES MECHANICS mostly
+invisible underneath. The homeowner should feel *"Cardinal is helping me understand my
+home and make a good decision"* — never *"Cardinal is walking me through a sales
+process."* The center of gravity is **their home → what we found → how the system
+works → why it matters → possible solutions → design/visualization → clear options →
+decision** — not question → commitment → pitch → close. The 10-step sales intelligence
+stays, private to the rep, invisible to the homeowner.
+
+**The test:** if a homeowner looked over the rep's shoulder, would this feel like an
+elegant consultation/presentation about their home — or like sales software? It must
+be the former. Concretely banned from homeowner surfaces: process narration ("this
+shapes the visit", cost sequencing talk), form-UX narration (tap-by-tap instructions),
+qualification rationale ("this changes what we recommend"), persuasion glosses,
+artificial commitments, closing language. Discovery stays conversational, lightweight,
+visual, fast — the Welcome is the title page of a consultation about THEIR home
+(address as the headline, "Prepared for…"), not the opening of a pitch.
+`gate_1192`'s process/persuasion floor holds this mechanically (1193); extend the
+floor when new copy classes appear — a check, not a paragraph.
+
+## Decided for Slice 1 (shipped: 1191 behavior + 1192 visual language + 1193 tone)
 
 1. **The prototype's BEHAVIOR is source of truth; its Blackout skin is not.** The
    production homeowner language is warm, architectural, residential, photography-led:

@@ -124,8 +124,8 @@ for (const vp of [{w:390,h:844,n:'phone'},{w:1194,h:834,n:'iPad landscape'},{w:8
   await p.waitForTimeout(700);
   await p.evaluate(() => { const j = document.querySelector('#cr-appt .ap-job'); j && j.click(); });
   await p.waitForTimeout(700);
-  const onWelcome = await p.evaluate(() => /Let’s look at your roof/.test(
-    (document.getElementById('cr-appt')||{}).textContent || ''));
+  const onWelcome = await p.evaluate(() =>
+    !!document.querySelector('#cr-appt [data-gs-pane="welcome"]'));
   ok('['+vp.n+'] pick lands on Welcome', onWelcome);
 
   await probe('welcome', () => {});
