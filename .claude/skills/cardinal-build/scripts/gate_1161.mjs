@@ -76,7 +76,7 @@ ok('openForProject passes opts to open()', /open\(opts\);\s*\n\s*if\(opts && opt
 
 /* ── 4 · STEPS floor (1191 added the four discovery stops) ─── */
 for (const id of ['pick', 'welcome', 'whynow', 'priorities', 'plans',
-                  'roof', 'good', 'why', 'house'])
+                  'found', 'roof', 'good', 'why', 'house'])
   ok('STEPS floor: ' + id, new RegExp("id:'" + id + "'").test(js));
 
 /* ── 2 · drive the shipped module ──────────────────────────── */
@@ -158,12 +158,13 @@ for (const id of ['pick', 'welcome', 'whynow', 'priorities', 'plans',
        !calls.some(c => c.startsWith('show.ofp:')));
     ok('rail names the client', rail.textContent.includes('Kim Lawson'));
 
-    /* jump to Roof (index 5). Chip access is guarded so the 1190 control
-       (7 chips) REPORTS red instead of crashing — BUG_CLASSES 37. */
+    /* jump to Roof (index 6 since 1194 put Findings at 5). Chip access is
+       guarded so an older control REPORTS red instead of crashing —
+       BUG_CLASSES 37. */
     const chip = ix => { const b = rail.querySelectorAll('.ar-step')[ix];
       if (b) b.click(); else ok('chip ' + ix + ' exists', false, 'rail has ' +
         rail.querySelectorAll('.ar-step').length + ' chips'); };
-    chip(5);
+    chip(6);
     await step();
     ok('roof -> openForProject with showroom',
        calls.some(c => c === 'show.ofp:p1:{"showroom":true}'), calls.join(' | '));
@@ -201,7 +202,7 @@ for (const id of ['pick', 'welcome', 'whynow', 'priorities', 'plans',
     await step();
     ok('Next is dead on the LAST step (no dead-end forward)',
        rail.querySelector('[data-ap="next"]').disabled);
-    chip(8);                      /* back to house for the walk below */
+    chip(9);                      /* back to house for the walk below */
     await step();
 
     /* back works */

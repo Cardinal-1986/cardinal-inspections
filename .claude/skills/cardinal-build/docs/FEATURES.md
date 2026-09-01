@@ -7959,11 +7959,11 @@ at 1190) · Blackout, single-theme, all literals.
 
 **The running order for the in-home visit, over surfaces that already exist.**
 Theo's pick: option (b) — the whole visit stays on the tablet. `STEPS` is the
-single source of the order — **eleven stops since 1191**:
-**Job → Welcome → Why now → Priorities → Plans → Roof → Our work → Why us →
-House → Options → Sign** (Options & Sign shipped at 1162; the four discovery
-stops at 1191, the Guided Sale workstream's first slice — audit in
-`GUIDED_SALE_AUDIT_2026-09.md`):
+single source of the order — **twelve stops since 1194**:
+**Job → Welcome → Why now → Priorities → Plans → Findings → Roof → Our work →
+Why us → House → Options → Sign** (Options & Sign shipped at 1162; the four
+discovery stops at 1191, the Guided Sale workstream's first slice — audit in
+`GUIDED_SALE_AUDIT_2026-09.md`; the Findings chapter at 1194, Slice 2):
 
 ### 1191 — the Guided Sale spine (discovery · persistence · resume · quick-create · shield)
 
@@ -7989,8 +7989,9 @@ homeowner/rep boundary.** Blackout remains the delegated surfaces' look (Walk / 
 of Fame / Why us / Colors) and the 1162 doc steps' — restyling those is a later call.
 
 **Auto-skip:** `gsProbeAvail()` at pick time dims data-empty chapters (`.ar-off` +
-`disabled` + `aria-disabled`) — roof (walks), good (published pairs), house (approved
-renders), options/sign (the `loadDocs()` cache). `go()` refuses dimmed targets;
+`disabled` + `aria-disabled`) — found (walks OR a completed checklist, 1194), roof
+(walks), good (published pairs), house (approved renders), options/sign (the
+`loadDocs()` cache). `go()` refuses dimmed targets;
 Next/Back and every pane Continue walk past them (`nextAvail`/`prevAvail`). A failed
 probe counts as available (a blip must not hide a prepared walk). **The homeowner
 never sees an empty room or internal voice.**
@@ -8010,6 +8011,42 @@ discovery/boundary wrap carries `data-gs-pane="<id>"` — **gates assert structu
 copy**, so the words stay free to change in Theo's voice. `gate_1192` grew a six-phrase
 process/persuasion floor (33 checks now, RED 7 on the 1192 control).
 
+### 1194 — What We Found: the inspection story (Slice 2)
+
+A new **pane** step `found` ("Findings") between Plans and Roof — the homeowner-facing
+answer to *"here is what we found on your home."* The room quiets down on purpose
+(the §11 two-layer grammar): discovery is warm light, this chapter opens dark on the
+pane's own `#050607` — *"Let's look at your roof."* + a dated mono provenance line —
+measured in Chromium at >0.8 → <0.15 luminance across the Plans → Findings tap.
+
+**Sources — existing production evidence ONLY, read-only:** the completed roofing
+checklist through **the same `buildChecklistFindings` / `buildServiceableList` the
+printed report uses** (the function gained a per-rule `k` additively; report view
+byte-identical, asserted by executing the shipped function), this job's `walks` →
+`walk_shots` (human-accepted `findings`, published-RLS server-side; marks drawn as
+percent overlay spans off the stored box fractions, never burned in), and
+`checklist.meas` for the numbers row. **`project_photos` deliberately NOT consumed**
+(unreviewed — the Walk's person-first rule). Nothing writes; presentation state is
+ephemeral.
+
+**The story, grouped without grades:** photographs → *What deserves attention*
+(high+mod) → *Worth keeping an eye on* (mon) → *Holding up well* (serviceable) →
+an honest unreadable-photo count (`ai_quality`) → *Your roof, by the numbers*.
+Internal grading words and raw defect keys never render (gate floor). Tap a finding
+→ it comes forward with its `WF_MEANS` "why it matters" line; tap a photo → lightbox.
+Rep drives; nothing autoplays.
+
+**The boundary hooks:** the wrap carries `data-gs-evidence="actual"` (the YOUR-HOME
+side of actual-vs-education — a future educational layer must never carry it) and
+every story `data-gs-topic="<k>"` — the §9 bridge a later "Understand" layer launches
+from. Availability: `found = walks OR completed checklist` (zero extra reads for the
+checklist half); empty jobs dim it like any chapter.
+
+Gates: `gate_1194.mjs` (47, control RED 13 — extracted-transform equivalence,
+grouping, leak-proof `.eq('project_id')`, checklist-only realm, reload realm) ·
+`render_1194.mjs` (real Chromium 18, control RED 7 — the light→dark transition
+measured, ink floors, marks inside the photo, §17 screenshots).
+
 | Options | the job's newest published Roof Options sheet | `/api/share?t=` in an iframe — review; the initial boxes are print-only by design |
 | Sign | the job's paperwork, one picked document at a time | same share page; `share.js` injects Accept & Sign when signable, `clientsign.js` stamps + notifies. **The 1149 rule is structural: the list hides while a document is open, exactly one frame, its own token** |
 
@@ -8022,6 +8059,7 @@ clears the rail. **No new signature code exists anywhere in this module.**
 | Step | What opens | How |
 |---|---|---|
 | Job | the conductor's own picker | `projects` select, RLS-scoped (the Visualizer's own pattern) |
+| Findings | What We Found — the inspection story (1194) | own pane; checklist + walk evidence, read-only |
 | Roof | The Walk, showroom mode, this job's walk | `CardinalShowcase.openForProject(pr, {showroom:true})` — the opts parameter is new at 1161 |
 | Good | Hall of Fame | clicks the showcase's own `[data-tab="work"]` — the same tap a finger makes |
 | Why | Why Cardinal (1160) | `CardinalWhy.open()` |
