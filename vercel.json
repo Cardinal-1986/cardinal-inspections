@@ -21,7 +21,7 @@
       "schedule": "10 15 * * *"
     }
   ],
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
       "has": [
@@ -30,7 +30,8 @@
           "value": "presentation.cardinalroster.com"
         }
       ],
-      "destination": "/popup.html"
+      "destination": "/popup.html",
+      "permanent": false
     },
     {
       "source": "/",
@@ -40,7 +41,8 @@
           "value": "presentation.cardinalrenovations.com"
         }
       ],
-      "destination": "/popup.html"
+      "destination": "/popup.html",
+      "permanent": false
     }
   ],
   "functions": {

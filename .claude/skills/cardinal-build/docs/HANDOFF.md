@@ -4,6 +4,53 @@
 
 ---
 
+# Session of 2 September 2026 — the post-cutover production audit, then build 1197
+
+**Two halves. First a read-only audit of production after the 31 Aug Showroom cutover** (CRM at
+1196, byte-identical to `main@c9f65b4`; the Showroom host byte-identical to its repo head), with
+the full report published as an artifact page. **Then the four confirmed fixes as build 1197**,
+built and gated on branch `claude/cardinal-crm-migration-audit-ng009f` and held uncommitted until
+Theo asked for the commit and the deploy the same day (one commit, one squash-merged PR).
+
+## What 1197 does (the build-log entry has the detail)
+1. **The Appointment's rail follows every exit** — `hideAllViews()` → `CardinalAppointment.abandon()`,
+   with the conductor marking its own teardown/open calls (`apDriving`). Resume hint kept. Pre-existing
+   since 1161, not the migration.
+2. **System Health tells reachable / missing / refused apart** (`select('*')`, no HEAD), the digest row
+   reads `at` / `type = digest_sent`, and `api/digest.js` writes that event on an accepted send only.
+   `estimate-to-contract.js` writes the real audit columns. Registry: `insurance_payments` /
+   `insurance_supplements`.
+3. **`presentation.cardinalroster.com/` → `/popup.html`** by `redirects` (the rewrites never fired:
+   the filesystem serves `index.html` first).
+4. **Two light inks**: `.db-guiderow .dbg-t` → `var(--rbe-mute,…)`; `.cr-lil-tabs button` → `#575757`.
+
+## What the audit found that this build does NOT touch (decisions, not fixes)
+- The Front Door's "Showroom" door opens the retained in-app Showcase, and the CRM has **no link at
+  all** to `showroom.cardinalroster.com`. Theo: product decision, out of scope.
+- **Public sign-up is still ON and leaked-password protection OFF** on the Supabase project
+  (measured 2 Sep: `disable_signup:false`; advisor `auth_leaked_password_protection`). Both are on
+  the open-items list as Theo's own dashboard action. The presentation tables admit any
+  `authenticated` user, so a self-registered outsider could read published Showcase / Walk content
+  and the `photos` bucket outside `studio/`, `private/`, `owner-vault/`.
+
+## Manual steps after this merges (production, none of them code)
+- Fetch `https://presentation.cardinalroster.com/` after the deploy and confirm a 307 to
+  `/popup.html` — the config was verified statically only.
+- Sign in as admin and open System Health: `team_profiles` should read *Reachable · N rows*; the
+  digest row stays *No digest email sent in the last 3 days* until the Resend domain is verified and
+  `DIGEST_FROM` is set — that is the honest state, not a bug.
+- Close and reopen the PWA twice.
+
+## Rig notes recorded so nobody re-chases them
+- `test_digest898` and `harness_commissions_digest` are red on the 1196 pristine (rig rot); the
+  three digest gates 1058 / 784 / 960 take NO positional argument.
+- The sentinel with `--since` at one viewport is ~120 renders and blows a 25-minute deadline while
+  another Chromium job runs; sweep each tree alone and diff the finding keys instead.
+- Chromium in the build container has no network path; production was fetched with curl and driven
+  on the identical bytes through the mock.
+
+---
+
 # Session of 17 August 2026 — offline-first (builds 864–873), team alerts by text (874), a test button (875), and the notifications setup
 
 **Two arcs this session, both shipped and merged to `main`: a ten-build offline-first program, then the notification channels.** Everything below is on `main`. No `index.html` regressions; every build was gated with a real-app Chromium harness plus a negative control against its predecessor, and merged via `gate_ship.py` on CI green.

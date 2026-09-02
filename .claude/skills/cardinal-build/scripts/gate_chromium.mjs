@@ -46,6 +46,12 @@ const GATES = [
   { name: 'audit_contrast.js',
     protects: 'every text node in OC Colors meets its WCAG floor, measured in a real engine',
     selftestFlag: true },
+  /* 1197: the Appointment's rail must follow every exit the conductor did not
+     choose. The break removes the one call hideAllViews() makes into the
+     module, which is exactly the 1196 leak. */
+  { name: 'gate_1197.mjs',
+    protects: "The Appointment's rail comes down on Back, a notification, a Front Door door — every exit but its own",
+    break: { find: 'window.CardinalAppointment.abandon();', repl: 'void 0;' } },
 ];
 
 function run(script, args) {

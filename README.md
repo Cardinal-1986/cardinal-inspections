@@ -36,7 +36,7 @@ routes in a single app.
 | `index.html` | 5,232,847 | **The app** — CRM, claims, production, estimates, crews, inspections. Also the Vision hub front door when the hostname starts with `showroom.` |
 | `visualizer/index.html` | 157,323 | **The Exterior Visualizer** — a separate application. No CRM code in it. A folder on purpose, so it can become the root of its own Vercel project |
 | `ai-field-manual.html` | 329,656 | A 17-part manual the Resource Library iframes |
-| `popup.html` | 269,247 | **The Pop-Up Roof** — the client-facing book behind the `presentation.*` rewrites |
+| `popup.html` | 269,247 | **The Pop-Up Roof** — the client-facing book behind the `presentation.*` redirects |
 | `supplement.html` | 95,496 | **The Supplement Desk** — insurance supplements, admin-only |
 | `studio.html` | 86,222 | **Cardinal Studio** — the photo-curation browser, admin-only |
 | `drivewaytest.html` | 29,077 | The Driveway Test — public, standalone, no login and no database |
@@ -162,8 +162,11 @@ Vercel builds from `main` on merge. `vercel.json` carries:
 
 - **Four crons** — `/api/digest` daily 11:00 UTC, `/api/commissions-digest` Fridays 11:00 UTC,
   `/api/companycam-sync` daily 03:00 UTC, `/api/requeue-stale` hourly at :20.
-- **Two host rewrites** — `presentation.cardinalroster.com` and
-  `presentation.cardinalrenovations.com` → `/popup.html`.
+- **Two host redirects** — `presentation.cardinalroster.com` and
+  `presentation.cardinalrenovations.com` → `/popup.html` (temporary, 307). They were
+  *rewrites* until 1197 and never fired: Vercel serves a static file at the path before it
+  applies rewrites, and `/` is `index.html`, so the bare host opened the CRM sign-in. A
+  redirect runs before the filesystem lookup.
 - **A `functions` block raising `maxDuration` to 60s on 15 slow routes.** A new AI or
   long-running route needs an entry here or it times out at the default.
 

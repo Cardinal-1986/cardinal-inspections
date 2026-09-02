@@ -361,8 +361,34 @@ export default async function handler(req, res) {
       results.push({ to: msg.to, ok: r.ok, detail: r.ok ? undefined : (await r.text()).slice(0, 200) });
     }
 
+    // 1197: System Health's "Daily digest emails" row reads audit_events for a
+    // digest_sent event within three days. Nothing had ever written one, so the
+    // row could never turn green (audit 2 Sep 2026, finding A4). One row per
+    // morning on which at least one email was ACCEPTED by Resend — never on a
+    // failed send, so the panel's "no digest in 3 days" stays an honest warning
+    // while the sender domain is unverified. Best-effort: a refused audit write
+    // is reported in the response and never fails the digest itself. The
+    // columns are audit_events' real ones (type / email / detail), the same
+    // shape the app's own audit writer uses.
+    const accepted = results.filter(x => x.ok);
+    let audit = 'skipped';
+    if (accepted.length) {
+      try {
+        const aud = await fetch(`${SUPABASE_URL}/rest/v1/audit_events`, {
+          method: 'POST',
+          headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({
+            type: 'digest_sent', email: null,
+            detail: (`${today} · ${accepted.length} email${accepted.length === 1 ? '' : 's'} · ` +
+                     accepted.map(x => x.to).join(', ')).slice(0, 300)
+          })
+        });
+        audit = aud.ok ? 'written' : 'failed';
+      } catch (e) { audit = 'failed'; }
+    }
+
     res.status(200).json({ date: today, appointments: appts.length, stale_estimates: stale.length,
-      reminders: reminders.length, stale_days: STALE_DAYS, emails_sent: results.filter(x => x.ok).length, results });
+      reminders: reminders.length, stale_days: STALE_DAYS, emails_sent: accepted.length, audit, results });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }
