@@ -244,19 +244,26 @@ export default async function handler(req, res) {
     .update({ contract_id: inserted.id })
     .eq('id', project_id);
 
-  // 7. Audit row (best-effort)
+  // 7. Audit row (best-effort).
+  // 1197: this wrote actor_email / kind / payload — columns audit_events has
+  // never had (its columns are email, type, detail, project_id, at) — so the
+  // insert was refused on every call and the catch swallowed it: no conversion
+  // has ever left an audit row. Now the table's real shape, the same one the
+  // app's own audit writer uses (audit 2 Sep 2026, finding A6).
   supa.from('audit_events').insert({
-    actor_email: userEmail,
-    kind:        'estimate_converted_to_contract',
-    payload: {
-      contract_id:       inserted.id,
-      contract_number:   inserted.contract_number,
-      source_type:       ai_estimate_id ? 'ai_estimate' : 'project_manual',
-      source_id:         ai_estimate_id || project_id,
-      total:             contract.total,
+    email:      userEmail || null,
+    type:       'estimate_converted_to_contract',
+    detail:     JSON.stringify({
+      contract_id:     inserted.id,
+      contract_number: inserted.contract_number,
+      source_type:     ai_estimate_id ? 'ai_estimate' : 'project_manual',
+      source_id:       ai_estimate_id || project_id,
+      total:           contract.total,
       template,
-    },
-  }).then(() => {}).catch(e => console.warn('audit insert failed:', e.message));
+    }).slice(0, 300),
+    project_id: project_id || null,
+  }).then(({ error }) => { if (error) console.warn('audit insert failed:', error.message); },
+          e => console.warn('audit insert failed:', e.message));
 
   // 8. Return the fully hydrated contract
   return res.status(200).json({

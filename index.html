@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-01 build 1196<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-02 build 1197<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19023,6 +19023,17 @@ function hideAllViews(){
      and is deliberately NOT here - the conductor manages it. */
   var _apt = document.getElementById('cr-appt');
   if(_apt) _apt.style.display = 'none';
+  /* 1197: ...but a teardown the conductor did NOT ask for takes the rail with
+     it. The back button, a notification opening a client, a Front Door door:
+     each used to hide the pane and leave the rail painted over every CRM
+     screen (audit 2 Sep 2026, finding A1). The conductor marks its own
+     teardown and open calls (apDriving), so abandon() no-ops while a step is
+     being driven and the running order is untouched. */
+  try{
+    if(window.CardinalAppointment && typeof window.CardinalAppointment.abandon === 'function'){
+      window.CardinalAppointment.abandon();
+    }
+  }catch(_ab){}
   /* 895: the Owner Console is a fixed inset:0 view, DISPLAY-shown like cr-occ,
      so display:none is the correct lever. */
   var _own = document.getElementById('cr-owner');
@@ -40307,8 +40318,8 @@ var REQUIREMENTS = [
 { key:'push_subscriptions',  group:'Core',      purpose:'Web-push notifications' },
 { key:'contracts',           group:'Estimates', purpose:'Contracts (converted from estimates)' },
 { key:'insurance_claims',    group:'Claims',    purpose:'Insurance claim records' },
-{ key:'payments',            group:'Claims',    purpose:'Payments logged on claims' },
-{ key:'supplements',         group:'Claims',    purpose:'Supplement filings on claims' },
+{ key:'insurance_payments',  group:'Claims',    purpose:'Payments logged on claims' },
+{ key:'insurance_supplements', group:'Claims', purpose:'Supplement filings on claims' },
 { key:'pricing_items',       group:'Pricing',   purpose:'Line-item pricing catalog',
 fix:'Run pricing_setup.sql in Supabase SQL editor.' },
 { key:'pricing_categories',  group:'Pricing',   purpose:'Pricing category grouping + order',
@@ -40332,20 +40343,30 @@ function isAdmin(){
 var email = currentEmail();
 return ADMIN_EMAILS.indexOf((email || '').toLowerCase()) !== -1;
 }
+/* 1197: three states, told apart by the answer rather than guessed.
+   The old check selected `id` (team_profiles is keyed by email, so it 400'd on
+   every run) with head:true — a HEAD answer has no body, so a missing TABLE
+   came back as a bodiless 404 that supabase-js reports as success, and a real
+   refusal arrived with an empty message that printed as "Query failed · check
+   RLS". select('*') names no column; a GET carries PostgREST's own reason;
+   PGRST205 / 42P01 is "no such table" and nothing else is. Audit 2 Sep 2026,
+   findings A3 and A5. */
 async function checkTable(name){
 if(!window.supa) return { status:'crit', message:'Supabase client unavailable', fix:'Reload the page.' };
 try{
 var r = await window.supa.from(name)
-.select('id', { count:'exact', head:true })
+.select('*', { count:'exact' })
 .limit(1);
 if(r.error){
-var missing = /does not exist|42P01/i.test(r.error.message || '');
+var code = String(r.error.code || '');
+var msg  = r.error.message || ('HTTP ' + (r.status || '?') + ' with no message');
+var missing = code === 'PGRST205' || code === '42P01' || /schema cache|relation .* does not exist/i.test(msg);
 return {
 status : missing ? 'crit' : 'warn',
-message: r.error.message || 'Query failed',
+message: (missing ? 'Missing — ' : 'Query failed — ') + msg,
 fix    : missing
-? 'The ' + name + ' table doesn\'t exist yet. Run the corresponding setup SQL in Supabase.'
-: 'Check RLS policies for ' + name + '.',
+? 'The ' + name + ' table doesn\'t exist. Run the corresponding setup SQL in Supabase.'
+: 'Read the reason: a column name is this check’s bug, a permission denial is RLS on ' + name + '.',
 };
 }
 return { status:'ok', message:'Reachable · ' + (r.count == null ? '?' : r.count) + ' rows' };
@@ -40353,14 +40374,20 @@ return { status:'ok', message:'Reachable · ' + (r.count == null ? '?' : r.count
 return { status:'crit', message:e.message || 'Unknown error', fix:'Check network + Supabase URL.' };
 }
 }
+/* 1197: the columns are `at` and `type` — created_at / event_type never
+   existed on audit_events — and the event this looks for is now WRITTEN:
+   api/digest.js records one digest_sent row per morning on which at least one
+   email was accepted, and nothing on failure. Exact match on the type, so a
+   failure event, if one is ever added, can never read as a send. */
 async function checkDigestEmail(){
 if(!window.supa) return { status:'warn', message:'Cannot verify', fix:'' };
 try{
 var threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
 var r = await window.supa.from('audit_events')
-.select('id')
-.gte('created_at', threeDaysAgo)
-.ilike('event_type', '%digest%')
+.select('id, at')
+.eq('type', 'digest_sent')
+.gte('at', threeDaysAgo)
+.order('at', { ascending:false })
 .limit(1);
 if(r.error){
 return { status:'warn', message:'Could not verify: ' + r.error.message,
@@ -40371,11 +40398,12 @@ return {
 status:'warn',
 message:'No digest email sent in the last 3 days',
 fix:'Likely cause: Resend sender domain not verified. ' +
-'Verify cardinalrenovations.net (or your chosen domain) in Resend dashboard, ' +
-'then set the sender in api/digest.js to a verified address.',
+'Verify cardinalrenovations.net (or your chosen domain) in the Resend dashboard, ' +
+'then set DIGEST_FROM in Vercel to an address at that domain and redeploy.',
 };
 }
-return { status:'ok', message:'Digest sent within 3 days' };
+var when = r.data[0] && r.data[0].at ? String(r.data[0].at).slice(0, 10) : '';
+return { status:'ok', message:'Digest sent ' + (when ? 'on ' + when : 'within 3 days') };
 }catch(e){
 return { status:'warn', message:e.message, fix:'' };
 }
@@ -42661,6 +42689,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1197, d: '2026-09-02', t: 'Leaving The Appointment takes its rail along, and System Health tells the truth', s: 'Leaving The Appointment by the Back button, a notification, or any door other than its own \u2715 used to leave the bottom rail painted over every screen you went to next; every exit now removes it, and the next visit still offers to pick up where you left off. System Health stopped reporting its own mistakes as database failures: the team-roster row no longer asks for a column that table never had, the daily-digest row reads the real audit columns and the morning digest now records each successful send, and a table that truly does not exist shows as missing instead of reachable. The book\u2019s own address, presentation.cardinalroster.com, now opens the Pop-Up Roof instead of the sign-in screen. Two light-theme labels (the guide row on a client profile and the category tabs in the line-item library) are darker so they read at the contrast floor.' },
   { b: 1196, d: '2026-09-01', t: 'Findings speak homeowner', s: 'The What We Found chapter now introduces each finding in homeowner language \u2014 \u201cSurface wear\u201d instead of a report heading, \u201cWe found early wear in the protective granule surface\u201d instead of report prose \u2014 while the inspection record itself stays exactly as written: the printed report is unchanged, and any finding without a translation shows its recorded wording. Every translation keeps the meaning, certainty and seriousness of what was recorded \u2014 reported stays reported, assessed stays assessed \u2014 it just says it across the kitchen table instead of across a clipboard.' },
   { b: 1195, d: '2026-09-01', t: 'A walk can join its job', s: 'A walk started on its own \u2014 before the prospect was a job, which the system has always allowed \u2014 could never be attached to the job afterwards, so its photographs could not appear in that customer\u2019s visit. The walk screen now carries an Attach to job button (admins only): pick the job from the same list the rest of the Showcase uses and the walk belongs to it \u2014 its Roof stop and What We Found chapter find it immediately. Attached walks show Job \u2713 and can be moved or detached the same way. Starting a walk from a job still attaches automatically, exactly as before.' },
   { b: 1194, d: '2026-09-01', t: 'The visit shows what we found', s: 'A new chapter in the guided visit: after the homeowner\u2019s plans, the room quiets down and the visit turns to their roof \u2014 \u201cLet\u2019s look at your roof.\u201d The photographs from the inspection walk appear with their confirmed marks drawn on (never burned into the photo), what deserves attention and what\u2019s worth keeping an eye on read in plain language with a line on why each matters, what\u2019s holding up well gets said too, and the roof\u2019s measurements close the page. Everything on the screen comes from evidence that already exists \u2014 the roofing checklist and reviewed walk photographs \u2014 and a visit with no inspection evidence simply skips the chapter, as chapters without content already do.' },
@@ -46528,7 +46557,7 @@ window.CardinalPO = { from: from, next: nextNumber, ensure: ensure };
 })();
 </script>
 
-<style id="cr-lil-styles">#cr-lil-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9400;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-lil-view.open{display:flex}.cr-lil-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-head h2{margin:0;flex:1;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.02em}.cr-lil-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-lil-head button:hover{background:rgba(200,32,46,.14)}.cr-lil-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-lil-head button.primary:hover{background:#B01F21}.cr-lil-search{padding:10px 16px;background:#fdfcf7;border-bottom:1px solid #e8dfc8;flex:0 0 auto}.cr-lil-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;font-family:inherit}.cr-lil-search input:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-tabs{padding:0 12px 12px;background:#fdfcf7;display:flex;gap:6px;flex-wrap:wrap;flex:0 0 auto;border-bottom:1px solid #e8dfc8;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-lil-tabs::-webkit-scrollbar{display:none}.cr-lil-tabs button{background:#f0e8d0;color:#6b6b6b;border:0;padding:8px 14px;border-radius:8px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}.cr-lil-tabs button.active{background:#c8202e;color:#fff}.cr-lil-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:11px}/* 1068: near-black on a darkened wash over #c8202e (light) or #3b3b41
+<style id="cr-lil-styles">#cr-lil-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9400;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-lil-view.open{display:flex}.cr-lil-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-head h2{margin:0;flex:1;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.02em}.cr-lil-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-lil-head button:hover{background:rgba(200,32,46,.14)}.cr-lil-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-lil-head button.primary:hover{background:#B01F21}.cr-lil-search{padding:10px 16px;background:#fdfcf7;border-bottom:1px solid #e8dfc8;flex:0 0 auto}.cr-lil-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;font-family:inherit}.cr-lil-search input:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-tabs{padding:0 12px 12px;background:#fdfcf7;display:flex;gap:6px;flex-wrap:wrap;flex:0 0 auto;border-bottom:1px solid #e8dfc8;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-lil-tabs::-webkit-scrollbar{display:none}.cr-lil-tabs button{background:#f0e8d0;color:#575757;/* 1197: the old ink read 4.35:1 on this wash; this one is 5.90:1 */border:0;padding:8px 14px;border-radius:8px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}.cr-lil-tabs button.active{background:#c8202e;color:#fff}.cr-lil-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:11px}/* 1068: near-black on a darkened wash over #c8202e (light) or #3b3b41
    (dark) — 2.14:1 and 1.56:1. Its own parent .cr-lil-tabs button.active is
    already color:#fff; the badge simply never followed. */
 .cr-lil-tabs button.active .count{background:rgba(0,0,0,.22);color:#ffffff}.cr-lil-list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;background:#fff}
@@ -85659,7 +85688,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 .cd-guiderow .btn{ flex:none; }
 /* the manual re-send row on the job profile overview */
 .db-guiderow{ display:flex; align-items:center; gap:10px; margin:10px 0 2px; flex-wrap:wrap; }
-.db-guiderow .dbg-t{ font-size:12.5px; font-weight:700; color:var(--rbe-dim,#8a93a1); }
+.db-guiderow .dbg-t{ font-size:12.5px; font-weight:700; color:var(--rbe-mute,#8a93a1); } /* 1197: --rbe-dim was never declared, so the fallback painted BOTH themes and read 2.9:1 on the light ground; --rbe-mute is a declared pair (#b8bec6 dark / #585858 light, 6.9:1) */
 </style>
 
 <div id="cr-guide-editor" style="display:none;" aria-hidden="true">
@@ -86725,6 +86754,7 @@ var PANE = null, RAIL = null;
 var proj = null;        /* the picked job {id,name,stage} */
 var stepIx = 0;         /* index into STEPS */
 var running = false;
+var apDriving = 0;      /* 1197: >0 while the conductor itself tears down or opens a step */
 var projects = [];
 var renders = [];       /* approved design_renders rows for proj */
 var guided = null;      /* 1191: parsed checklist.guided for proj */
@@ -87054,7 +87084,9 @@ async function paintHouse(){
     /* a side door, not a step: Colors opens over everything at its own z;
        Back on the rail is still the way home. */
     hidePane();
+    apDriving++;                      /* 1197: Colors' hideAllViews() is ours */
     try{ if(window.CardinalColors) window.CardinalColors.open(); }catch(_){}
+    apDriving--;
     paintRail();
   };
   var light = PANE.querySelector('[data-slot="light"]');
@@ -87856,8 +87888,11 @@ async function go(ix){
   prevIx = stepIx;
   stepIx = ix;
   var st = STEPS[stepIx];
-  /* leave whatever the previous step opened, through the modules' own doors */
-  closeModules();
+  /* leave whatever the previous step opened, through the modules' own doors.
+     1197: marked as the conductor's own teardown — a module's close() lands
+     on showHome() → hideAllViews(), which must not read as an exit. */
+  apDriving++;
+  try{ closeModules(); }finally{ apDriving--; }
   if(st.kind === 'pane'){
     showPane();
     /* 1191: mid-visit the Job stop is the shield, never the raw list */
@@ -87871,9 +87906,15 @@ async function go(ix){
     if(st.id === 'options') await paintOptions();
     if(st.id === 'sign')    await paintSign();
   }else{
-    if(st.id === 'roof') openRoof();
-    if(st.id === 'good') openGood();
-    if(st.id === 'why')  openWhy();
+    /* 1197: each delegated open() reaches hideAllViews() synchronously (read:
+       Showcase.open / openForProject, Why.open, Colors.open) — marked, so the
+       teardown they run counts as the conductor's own. */
+    apDriving++;
+    try{
+      if(st.id === 'roof') openRoof();
+      if(st.id === 'good') openGood();
+      if(st.id === 'why')  openWhy();
+    }finally{ apDriving--; }
   }
   /* every delegated open() runs hideAllViews(), which clears the pane —
      correct for module steps; the rail is chrome and survives on its own. */
@@ -87883,7 +87924,9 @@ async function go(ix){
 
 async function open(){
   ensure();
+  apDriving++;                        /* 1197: our own teardown, not an exit */
   try{ if(typeof window.hideAllViews === 'function') window.hideAllViews(); }catch(_){}
+  apDriving--;
   running = true;
   proj = null; stepIx = 0; prevIx = 0; renders = []; docs = null; guided = null;
   showPane();
@@ -87907,9 +87950,25 @@ function end(){
   try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
 }
 
+/* 1197: the exit the conductor did NOT choose. hideAllViews() calls this on
+   every teardown. It no-ops while a step is being driven (apDriving) and when
+   nothing is running. It does NOT clear the resume hint — an accidental exit
+   (Back, a notification) should still offer "Pick up where you left off" —
+   and it does NOT navigate: whoever tore the views down already chose where
+   to go. Before this, only the rail's own ✕ ever took the rail down. */
+function abandon(){
+  if(apDriving > 0) return;
+  if(!running && !(RAIL && RAIL.classList.contains('on'))) return;
+  running = false;
+  hidePane();
+  if(RAIL) RAIL.classList.remove('on');
+  proj = null; stepIx = 0; prevIx = 0; guided = null;
+}
+
 window.CardinalAppointment = Object.assign(window.CardinalAppointment || {}, {
-  open  : open,
-  close : end
+  open    : open,
+  close   : end,
+  abandon : abandon
 });
 })();
 </script>

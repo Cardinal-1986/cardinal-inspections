@@ -2306,7 +2306,17 @@ and 573 deliberately left the light side byte-identical rather than smuggle in a
 had not asked for. The dark twin is 5.40:1. Fixing light is a real visible change to four screens and
 wants its own build and Theo's eyes.
 
-### 🔴 Admin Health reports four of its OWN bugs as infrastructure failures
+### ~~🔴 Admin Health reports four of its OWN bugs as infrastructure failures~~ ✅ FIXED at 1197
+
+**Done at build 1197**, after the 2 Sep 2026 production audit found all four still firing (the
+Postgres log carried `column team_profiles.id does not exist` and `column audit_events.created_at
+does not exist` on every admin sign-in). `checkTable()` now selects `*` with a GET, so a missing
+table (PGRST205 / 42P01) is **Missing**, a refused query is **Query failed — <reason>**, and a
+reachable one counts rows; `checkDigestEmail()` reads `at` / `type = digest_sent`, and
+`api/digest.js` writes that event on a morning with an accepted send (never on failure, so the
+row stays an honest warning while the Resend domain is unverified); `payments` / `supplements`
+became `insurance_payments` / `insurance_supplements`, the tables that exist. `gate_1197` B holds
+it. The original entry, kept for the reasoning:
 
 Every one of these is the health check being wrong, not the database. Verified against the live
 schema 2 Aug:

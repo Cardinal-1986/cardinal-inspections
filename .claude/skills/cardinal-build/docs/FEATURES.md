@@ -7835,8 +7835,8 @@ none of them — and proves the Showroom row still is, so the check can tell the
 - **`drivewaytest.html`** — linked from nowhere, deliberately. It is a leave-behind, not
   a presentation surface.
 - **`popup.html`'s other doors are unchanged**: the Sales Floor tile, and the
-  `presentation.cardinalroofer.com` / `presentation.cardinalrenovations.com` rewrites in
-  `vercel.json`.
+  `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` redirects in
+  `vercel.json` (rewrites until 1197; see the correction under 1189 below).
 
 ### Related, and still rep-facing: `PANES.proof`
 
@@ -8204,6 +8204,13 @@ returns the 5,446,039-byte CRM titled *Cardinal Client Resources*; `/popup.html`
 returns the 269,247-byte book. `vercel.json`'s host rewrite is present but does not fire in
 production. 1187 pointed these links at the bare host on the strength of that config and broke
 them; 1189 points them at the only destination measured to serve the book.
+
+✅ **1197 repairs the bare host** — the two `rewrites` became `redirects` (temporary, to
+`/popup.html`). Why the rewrite never fired: Vercel resolves a static file at the requested path
+*before* it applies rewrites, and `/` is `index.html`, so the CRM always won. A redirect runs before
+the filesystem lookup. The links 1189 canonicalised stay on `/popup.html`; nothing in the Showroom
+changed. ⚠ Confirmed statically (`gate_1197` D1/D2) — the live host must still be fetched after the
+deploy, which is the lesson 1189 paid for.
 
 `gate_1189.mjs` holds it, and holds it by **fetching** — the opened document's `<title>` must be
 *The Pop-Up Roof*. A URL that merely looks canonical, or answers 200, fails.
