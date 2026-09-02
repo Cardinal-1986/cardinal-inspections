@@ -1852,6 +1852,22 @@ serves over `http://` and **asserts the portal actually changed before reporting
   `/api/ai-status`, not assumed. `cardinal-ap` has an entirely empty env and
   `0d6e4079e367` has no production deployment (404); both build on every push and serve
   nothing. Deleting them is unclaimed tidy-up.
+  ⚠️ **STILL OPEN 2 Sep 2026, and it is Theo's click, not a script's.** Re-measured after
+  build 1197 deployed: `cardinal-ap.vercel.app` serves a **full public copy of the CRM at
+  build 1197** (it deploys from this repo's `main` on every merge) with **no server keys** —
+  anyone can sign in there against the same Supabase and every `/api` route fails —
+  and `0d6e4079e367.vercel.app` still 404s while building a preview of every push. The Vercel
+  integration this repo's sessions use is scoped to `cardinal-inspections` only (`get_project`
+  on either stray id answers 404), so neither can be paused, unlinked or deleted from a
+  session. **Vercel dashboard → the project → Settings → General → Delete Project**, for both.
+  Nothing in the repo or the doc set links to either name; `app.cardinalroster.com`,
+  `apps.cardinalroster.com` and `presentation.cardinalroster.com` all belong to
+  `cardinal-inspections` (its domain list, read 2 Sep).
+  ✅ **Done from a session the same day:** `cardinal-inspections` had **no deployment
+  protection at all**; **Vercel Authentication is now ON for preview deployments** (production
+  untouched), so a preview URL of the CRM asks for a Vercel team login instead of serving the
+  app to anyone holding the link. Revert: Settings → Deployment Protection, if it ever gets in
+  the way.
 - **Verify with the 875 button:** Phone Notifications → "Send a test alert to myself" reads each
   channel's real status.
 

@@ -33,6 +33,21 @@ Theo asked for the commit and the deploy the same day (one commit, one squash-me
   `authenticated` user, so a self-registered outsider could read published Showcase / Walk content
   and the `photos` bucket outside `studio/`, `private/`, `owner-vault/`.
 
+## Vercel, after the 1197 deploy (2 Sep, later the same day)
+- **Preview deployments of `cardinal-inspections` are now behind Vercel Authentication** (they
+  had no protection of any kind). Production is untouched. Recorded in OPEN_ITEMS beside the
+  stray-projects entry.
+- **Two stray Vercel projects still build this repo on every push and only Theo can remove
+  them** — the session token cannot see them (404). `cardinal-ap.vercel.app` serves a public copy
+  of the CRM with an empty env; `0d6e4079e367.vercel.app` serves nothing. Dashboard → project →
+  Settings → General → Delete Project, both.
+- **Not a fault, recorded so it is not chased:** the `url.parse()` deprecation warning (DEP0169)
+  in the runtime logs is emitted by Vercel's own request helper, not by any route in `api/`
+  (none calls it — grepped). `engines.node` is `22.x` and, per Vercel's docs, overrides the
+  project's Node setting (24.x), so the functions run 22. `presentation.cardinalrenovations.com`
+  is not attached to the project and the `.com` is parked at a domain reseller, so its redirect
+  entry in `vercel.json` is inert; `presentation.cardinalroster.com` is the live one.
+
 ## Manual steps after this merges (production, none of them code)
 - Fetch `https://presentation.cardinalroster.com/` after the deploy and confirm a 307 to
   `/popup.html` — the config was verified statically only.
