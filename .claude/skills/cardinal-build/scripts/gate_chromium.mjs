@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-/* gate_chromium.mjs — the four Chromium gates, in CI, each with a negative control.
+/* gate_chromium.mjs — the Chromium gates, in CI, each with a negative control.
  *
- * WHY THESE FOUR WERE OUTSIDE CI. They drive a real browser, and until now the
+ * WHY THE ORIGINAL FOUR WERE OUTSIDE CI. They drive a real browser, and until now the
  * repo had no CI job that installed one. Three of them also hard-coded a browser
  * path inside the sandbox they were written in, and one had self-disabled for
  * months over fixtures that were never committed. So "not covered" understated
  * it: two of the four could not have run anywhere but one machine.
  *
- * ⚠ ALL FOUR ARE GREEN ON THE SHIPPED FILE, SO THERE IS NO BASELINE HERE, AND
+ * ⚠ ALL GATES ARE GREEN ON THE SHIPPED FILE, SO THERE IS NO BASELINE HERE, AND
  * THAT IS DELIBERATE. gate_harnesses carries a debt register because four of its
  * six are legitimately red; these four are not. The honest ratchet is zero, and
  * a baseline file would only be somewhere for a future failure to hide.
@@ -52,6 +52,15 @@ const GATES = [
   { name: 'gate_1197.mjs',
     protects: "The Appointment's rail comes down on Back, a notification, a Front Door door — every exit but its own",
     break: { find: 'window.CardinalAppointment.abandon();', repl: 'void 0;' } },
+  /* 1198: Retail's portal-specific dark button gradient outranked the generic
+     rb-light surface. The negative control removes the winning surface again,
+     recreating the navy-currentColor-on-navy control seen on the phone. */
+  { name: 'gate_1198.mjs',
+    protects: 'Retail light mode gives the menu and search icons a light button surface in the winning rule',
+    break: {
+      find: '  color:var(--hin,#2B3D4F);\n  background:color-mix(in srgb,var(--hac,#376CA0) 10%,#ffffff);',
+      repl: '  color:var(--hin,#2B3D4F);'
+    } },
 ];
 
 function run(script, args) {
@@ -121,5 +130,5 @@ for (const g of GATES) {
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log('');
 console.log(bad ? `GATE CHROMIUM RED — ${bad} problem(s)`
-                : 'GATE CHROMIUM GREEN — all four pass on the shipped file and all four go red when what they protect is broken');
+                : `GATE CHROMIUM GREEN — all ${GATES.length} pass on the shipped file and all ${GATES.length} go red when what they protect is broken`);
 process.exit(bad ? 1 : 0);

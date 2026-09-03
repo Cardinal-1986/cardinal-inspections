@@ -8212,6 +8212,13 @@ the filesystem lookup. The links 1189 canonicalised stay on `/popup.html`; nothi
 changed. ⚠ Confirmed statically (`gate_1197` D1/D2) — the live host must still be fetched after the
 deploy, which is the lesson 1189 paid for.
 
+## Build 1198 — Retail light header icon contrast
+
+The Retail home keeps its established header design. In `rb-light`, the ID-scoped header-icon rule
+now supplies the ink, light button surface and border together, so Retail's more-specific dark
+gradient cannot leave the hamburger and search marks navy-on-navy. The filled `+` retains its later
+accent override; dark mode and every action are unchanged. `gate_1198.mjs` protects that cascade.
+
 `gate_1189.mjs` holds it, and holds it by **fetching** — the opened document's `<title>` must be
 *The Pop-Up Roof*. A URL that merely looks canonical, or answers 200, fails.
 

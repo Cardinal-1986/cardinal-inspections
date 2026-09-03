@@ -347,7 +347,7 @@ jobs:
           node .claude/skills/cardinal-build/scripts/gate_harnesses.mjs
 
   # ═══════════════════════════════════════════════════════════
-  # NEW — the four CHROMIUM gates, which had never run in CI.
+  # The Chromium gates, including the original four brought into CI.
   #
   # "Not covered" understated it. Three of the four hard-coded a
   # browser path inside the sandbox they were written in — and
@@ -364,7 +364,7 @@ jobs:
   # from harness_colors, which already carried a real-shaped set,
   # rather than invented.
   #
-  # NO BASELINE HERE, deliberately: all four are green on the
+  # NO BASELINE HERE, deliberately: every gate is green on the
   # shipped file, so the honest ratchet is zero. A baseline file
   # would only be somewhere for a future failure to hide.
   # ═══════════════════════════════════════════════════════════
@@ -393,7 +393,7 @@ jobs:
 
       # Runs each gate twice: once on the shipped file, where it
       # must pass, and once on a copy where the specific thing that
-      # gate protects has been broken, where it must go red. Four
+      # gate protects has been broken, where it must go red. Browser
       # gates that have only ever been seen to pass prove nothing.
       - name: Chromium gates + negative controls
         run: node .claude/skills/cardinal-build/scripts/gate_chromium.mjs

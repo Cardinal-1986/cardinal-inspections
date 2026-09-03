@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-02 build 1197<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-03 build 1198<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -42689,6 +42689,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1198, d: '2026-09-03', t: 'The menu and search marks are visible again in light mode', s: 'The Retail header keeps its existing design. In light mode the hamburger and search buttons now receive the same light surface as the rest of the header chrome, so their navy icon strokes no longer disappear into a navy button. Dark mode and every button action are unchanged.' },
   { b: 1197, d: '2026-09-02', t: 'Leaving The Appointment takes its rail along, and System Health tells the truth', s: 'Leaving The Appointment by the Back button, a notification, or any door other than its own \u2715 used to leave the bottom rail painted over every screen you went to next; every exit now removes it, and the next visit still offers to pick up where you left off. System Health stopped reporting its own mistakes as database failures: the team-roster row no longer asks for a column that table never had, the daily-digest row reads the real audit columns and the morning digest now records each successful send, and a table that truly does not exist shows as missing instead of reachable. The book\u2019s own address, presentation.cardinalroster.com, now opens the Pop-Up Roof instead of the sign-in screen. Two light-theme labels (the guide row on a client profile and the category tabs in the line-item library) are darker so they read at the contrast floor.' },
   { b: 1196, d: '2026-09-01', t: 'Findings speak homeowner', s: 'The What We Found chapter now introduces each finding in homeowner language \u2014 \u201cSurface wear\u201d instead of a report heading, \u201cWe found early wear in the protective granule surface\u201d instead of report prose \u2014 while the inspection record itself stays exactly as written: the printed report is unchanged, and any finding without a translation shows its recorded wording. Every translation keeps the meaning, certainty and seriousness of what was recorded \u2014 reported stays reported, assessed stays assessed \u2014 it just says it across the kitchen table instead of across a clipboard.' },
   { b: 1195, d: '2026-09-01', t: 'A walk can join its job', s: 'A walk started on its own \u2014 before the prospect was a job, which the system has always allowed \u2014 could never be attached to the job afterwards, so its photographs could not appear in that customer\u2019s visit. The walk screen now carries an Attach to job button (admins only): pick the job from the same list the rest of the Showcase uses and the walk belongs to it \u2014 its Roof stop and What We Found chapter find it immediately. Attached walks show Job \u2713 and can be moved or detached the same way. Starting a walk from a job still attaches automatically, exactly as before.' },
@@ -64379,7 +64380,16 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
    reading as the accent — accent ink on an accent-tinted ground, 4.16-4.39:1.
    Second time this exact specificity trap bit in this build; the text-size
    control was the first. Scope to the ID or do not bother writing the rule. */
-:root[data-theme="rb-light"] #cr-hd2-bar .cr-ib{color:var(--hin,#2B3D4F);}
+:root[data-theme="rb-light"] #cr-hd2-bar .cr-ib{
+  /* 1198: this ID-scoped rule existed only for ink. The lower-specificity
+     light-surface rule above lost to Retail's portal-specific dark gradient,
+     leaving navy strokes on a navy button (the controls still worked, but
+     looked empty). Move the surface and border into the same winning rule.
+     #addProjectBtn keeps its later filled-accent override. */
+  color:var(--hin,#2B3D4F);
+  background:color-mix(in srgb,var(--hac,#376CA0) 10%,#ffffff);
+  border-color:rgba(0,0,0,.20);
+}
 :root[data-theme="rb-light"] #cr-hd2-bar .cr-ib:hover{
   color:var(--hin,#2B3D4F);border-color:var(--hac,#376CA0);}
 /* ⚠ #addProjectBtn is not chrome text — it is a FILLED accent button that paints
