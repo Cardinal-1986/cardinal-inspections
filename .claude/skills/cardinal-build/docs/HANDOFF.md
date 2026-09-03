@@ -4,6 +4,24 @@
 
 ---
 
+# Session of 3 September 2026 — Retail light header icons, build 1198
+
+Theo reported that the hamburger and search controls looked empty on the Retail home in light
+mode. The controls and their handlers were present; their SVGs use `currentColor`. Retail's
+portal-specific dark button gradient had greater specificity than the generic light-surface rule,
+while a later ID-scoped light rule changed only the icon ink to navy. The result was navy marks on
+navy buttons.
+
+Build 1198 keeps the current Retail design and moves the light surface and border into that same
+winning ID-scoped rule. The filled blue `+` keeps its later explicit override. Dark mode,
+Production, navigation, search behavior, data, APIs, Vercel configuration and Supabase are
+untouched. `gate_1198.mjs` holds the winning rule, the two `currentColor` icon paths and the `+`
+override; it is also registered in the CI negative-control runner, whose poisoned copy removes the
+surface and must go red. Close and reopen the installed app twice after deployment so the service
+worker picks up 1198.
+
+---
+
 # Session of 2 September 2026 — the post-cutover production audit, then build 1197
 
 **Two halves. First a read-only audit of production after the 31 Aug Showroom cutover** (CRM at
