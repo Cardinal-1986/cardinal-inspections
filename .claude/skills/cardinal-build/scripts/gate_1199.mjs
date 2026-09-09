@@ -77,7 +77,11 @@ function extract(text, head) {
 
 /* ── A · static ─────────────────────────────────────────────────────────── */
 console.log('A · static');
-ok(html.includes('v2026-09-09 build 1199'), 'app stamp is 1199');
+/* the FLOOR, not the literal stamp: gate_chromium runs this against every later
+   build too, and a literal stamp is red the moment 1200 ships (gate_1198's fault
+   on this very build) */
+const stampBuild = Number((html.match(/data-cr-footer[^>]*>v\d{4}-\d\d-\d\d build (\d+)/) || [])[1] || 0);
+ok(stampBuild >= 1199, 'app stamp is 1199 or later', 'stamp ' + stampBuild);
 ok(html.includes('{ b: 1199,'), 'CHANGELOG carries 1199');
 ok(!html.includes('you@cardinalroofing.com') && html.includes('you@cardinalrenovations.net'),
    'sign-in placeholder uses the company domain');

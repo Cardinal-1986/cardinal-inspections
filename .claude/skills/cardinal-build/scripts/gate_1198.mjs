@@ -18,7 +18,12 @@ function ok(name, condition, detail = ''){
   console.log((condition ? '  PASS  ' : '  FAIL  ') + name + (detail ? ' → ' + detail : ''));
   condition ? pass++ : fail++;
 }
-ok('Build stamp is 1198', html.includes('v2026-09-03 build 1198'));
+/* 1199: this used to assert the LITERAL stamp `v2026-09-03 build 1198`, which
+   can only be true on one build — gate_chromium runs every registered gate
+   against the shipped file, so the first later build (1199) went red in CI
+   on this line alone. Assert the floor, not the exact build. */
+const stampBuild = Number((html.match(/data-cr-footer[^>]*>v\d{4}-\d\d-\d\d build (\d+)/) || [])[1] || 0);
+ok('Build stamp is 1198 or later', stampBuild >= 1198, 'stamp ' + stampBuild);
 ok('Changelog names the header-icon change', html.includes("{ b: 1198,"));
 const rule = html.match(/:root\[data-theme="rb-light"\] #cr-hd2-bar \.cr-ib\s*\{([\s\S]*?)\}/);
 ok('Winning light-mode icon rule exists once', (html.match(/:root\[data-theme="rb-light"\] #cr-hd2-bar \.cr-ib\s*\{/g) || []).length === 1);

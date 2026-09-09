@@ -4275,6 +4275,28 @@ Record them with their MEASURED value, not as a skip: a row that gets worse stil
 fails, and a row that is fixed makes the entry stale and reports itself. Fixing
 them is a separate build — chasing debt a better instrument revealed is scope creep.
 
+## 85 — a per-build gate that asserts the LITERAL stamp, and goes red on every build after its own
+
+`gate_1198.mjs` opened with `ok('Build stamp is 1198', html.includes('v2026-09-03 build 1198'))`.
+True on exactly one artifact. `gate_chromium.mjs` runs **every registered gate against the shipped
+file on every push**, so the first later build — 1199 — went red in CI on that one line, with all
+40 of its own checks green, every other gate green, and every negative control firing. Nothing
+about the app was wrong; the only thing that could ever have satisfied that line was the build
+that wrote it. `gate_1199.mjs` shipped with the identical line and would have done the same to 1200.
+
+**Why it hid:** a per-build gate is run twice in its author's session — green on its build, red on
+its control — and both runs are on trees where the literal is either exactly right or exactly
+absent. The runner is the first thing that ever shows the gate a *later* build, and by then the
+author is gone.
+
+**The rule:** a per-build gate asserts the **floor** — `stampBuild >= N`, read off `data-cr-footer` —
+never the literal string. Its changelog check (`{ b: N,`) may stay literal, because entries persist.
+The negative control still works: the previous tree's stamp is below the floor. Both gates now do
+this, and the fix was re-verified in the runner (1198: 13/13 on 1199, RED 6 on its 1197 control).
+
+**How to find the rest:** `grep -n "html.includes('v2026-" scripts/gate_*.mjs` — any hit that is
+not inside a floor comparison is this class waiting for the next build.
+
 ## Class 71 — a control with a live handler on an element that cannot receive events
 Build 1164 hung the Front Door on the header title via a delegated document click handler —
 and the title has carried `pointer-events:none` since it was a decorative label (`#cr-hd2-bar
