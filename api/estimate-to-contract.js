@@ -176,6 +176,14 @@ export default async function handler(req, res) {
       .eq('id', project_id)
       .single();
     if (error || !proj)      return res.status(404).json({ error: 'Project not found' });
+    /* 1199: AUTHORIZE BEFORE ANY READ OF THE PROJECT'S DOCUMENTS. The access
+       check used to sit below the idempotency return, so a roster account
+       that neither created nor was assigned this job received its existing
+       contract with a 200 — the check was simply never reached on that path.
+       Now: is this person allowed on this project, then everything else.
+       (External assessment 9 Sep 2026, finding 3.) */
+    const canConvert = proj.created_by === userEmail || await canUserAccessProject(supa, userEmail, proj.id);
+    if (!canConvert) return res.status(403).json({ error: 'Not authorized on this project' });
     if (!proj.estimate)      return res.status(400).json({ error: 'Project has no estimate to convert' });
 
     // Idempotency
@@ -187,8 +195,6 @@ export default async function handler(req, res) {
         .single();
       return res.status(200).json({ id: existing?.id, contract: existing?.contract, existed: true });
     }
-    const canConvert = proj.created_by === userEmail || await canUserAccessProject(supa, userEmail, proj.id);
-    if (!canConvert) return res.status(403).json({ error: 'Not authorized on this project' });
 
     estimate = proj.estimate;
     template = proj.estimate.template || 'roofing';  // manual might not carry template — default
@@ -275,6 +281,19 @@ export default async function handler(req, res) {
   });
 }
 
+/* 1199: projects.checklist is SERIALIZED JSON (every migration reads it as
+   checklist::jsonb and the app parses it), so the old
+   `proj.checklist?.lead?.assigned?.[0]` read a property off a string and was
+   undefined for every project: an assigned rep who did not create the job
+   was always refused. Parse when it is a string; tolerate an object, null or
+   junk; compare case-insensitively, as RLS compares emails. */
+function assignedRepFromChecklist(checklist) {
+  let ck = checklist;
+  if (typeof ck === 'string') { try { ck = JSON.parse(ck); } catch (_) { return null; } }
+  const a = ck && ck.lead && Array.isArray(ck.lead.assigned) ? ck.lead.assigned[0] : null;
+  return typeof a === 'string' && a.trim() ? a.trim().toLowerCase() : null;
+}
+
 // ── Helper: full-access OR project owner OR assigned rep ────
 async function canUserAccessProject(supa, userEmail, projectId) {
   if (!projectId) return true; // no project context = allow if creator
@@ -287,8 +306,8 @@ async function canUserAccessProject(supa, userEmail, projectId) {
   if (proj.created_by === userEmail) return true;
 
   // Check assignment (per project doc: lead.assigned[0] in checklist JSON)
-  const assigned = proj.checklist?.lead?.assigned?.[0];
-  if (assigned === userEmail) return true;
+  const assigned = assignedRepFromChecklist(proj.checklist);
+  if (assigned && assigned === String(userEmail || '').trim().toLowerCase()) return true;
 
   // Fallback to admin/production membership
   const admins = [

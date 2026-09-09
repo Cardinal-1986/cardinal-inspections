@@ -152,6 +152,7 @@ Owner: **Theo Dorion** · theo@cardinalrenovations.net
 | `.claude/skills/cardinal-build/docs/CR_AUDIT_2026-08.md` (+ `_COMMUNITY_`, `CR_E2E_WORKFLOW_VALIDATION_2026-08.md`) | Picking up audit follow-ups — the CR-AUD / CR-COM item ids the build log cites by number |
 | `.claude/skills/cardinal-build/docs/ABC_SETUP.md` | ABC Supply / Suppliers work (688, 774) |
 | `.claude/skills/cardinal-build/docs/OC_BRAND_RULES.md` | **Before putting any Owens Corning or Pink Panther mark on a screen** — the approval gate is Theo's to pass, and the Panther IS available to contractors (a claim to the contrary shipped at 615–623 and was wrong) |
+| `.claude/skills/cardinal-build/docs/CR_EXTERNAL_ASSESSMENT_2026-09-09.md` | Picking up the money-route, dead-route, load-cost and billing-parity follow-ups from the 9 Sep 2026 outside review — what build 1199 fixed, what is held for Theo, and the two corrections it forced on this doc set (production ships 1.64 MB `br`, and `api/estimate-to-contract.js` is dead) |
 
 The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It triggers on any Cardinal work — features, bug fixes, theming, SQL, `/api`, audits.
 

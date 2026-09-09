@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-03 build 1198<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-09 build 1199<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4025,7 +4025,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <h2>Team sign in</h2>
     <p style="font:italic 600 15px Georgia,'Times New Roman',serif;margin-bottom:4px;">&#8220;The Single Source Of Truth&#8221;</p>
     <label for="loginEmail">Email</label>
-    <input id="loginEmail" type="email" autocomplete="username" placeholder="you@cardinalroofing.com">
+    <input id="loginEmail" type="email" autocomplete="username" placeholder="you@cardinalrenovations.net">
     <label for="loginPassword">Password</label>
     <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••">
     <button class="btn" id="loginBtn">Sign in</button>
@@ -42689,6 +42689,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1199, d: '2026-09-09', t: 'Online payments fail safe, bank payments are labelled right, and Maps waits until it is needed', s: 'A pay link now refuses to open a checkout when the payment history cannot be read, instead of quietly treating a failed read as \u201cnothing paid yet\u201d and asking for the full amount \u2014 the shared document says the balance could not be verified and to try again shortly. A bank (ACH) payment that clears is recorded as ACH rather than as a card payment. Google Maps no longer downloads on every launch before anyone has signed in; it loads the first time an address field is touched. The sign-in screen\u2019s example email uses the company domain. The old estimate-to-contract route checks that you are on the job before it hands back a contract.' },
   { b: 1198, d: '2026-09-03', t: 'The menu and search marks are visible again in light mode', s: 'The Retail header keeps its existing design. In light mode the hamburger and search buttons now receive the same light surface as the rest of the header chrome, so their navy icon strokes no longer disappear into a navy button. Dark mode and every button action are unchanged.' },
   { b: 1197, d: '2026-09-02', t: 'Leaving The Appointment takes its rail along, and System Health tells the truth', s: 'Leaving The Appointment by the Back button, a notification, or any door other than its own \u2715 used to leave the bottom rail painted over every screen you went to next; every exit now removes it, and the next visit still offers to pick up where you left off. System Health stopped reporting its own mistakes as database failures: the team-roster row no longer asks for a column that table never had, the daily-digest row reads the real audit columns and the morning digest now records each successful send, and a table that truly does not exist shows as missing instead of reachable. The book\u2019s own address, presentation.cardinalroster.com, now opens the Pop-Up Roof instead of the sign-in screen. Two light-theme labels (the guide row on a client profile and the category tabs in the line-item library) are darker so they read at the contrast floor.' },
   { b: 1196, d: '2026-09-01', t: 'Findings speak homeowner', s: 'The What We Found chapter now introduces each finding in homeowner language \u2014 \u201cSurface wear\u201d instead of a report heading, \u201cWe found early wear in the protective granule surface\u201d instead of report prose \u2014 while the inspection record itself stays exactly as written: the printed report is unchanged, and any finding without a translation shows its recorded wording. Every translation keeps the meaning, certainty and seriousness of what was recorded \u2014 reported stays reported, assessed stays assessed \u2014 it just says it across the kitchen table instead of across a clipboard.' },
@@ -46339,6 +46340,21 @@ bubbles: true,
 }));
 });
 }
+/* 1199: Maps loads on the first FOCUS of an address field, not at boot. scan()
+   used to attach autocomplete to every address-shaped input the moment it
+   existed — six of them sit hidden behind the sign-in screen — so the Google
+   Maps JS API and its Places library were fetched on every launch, before
+   anyone had signed in, let alone typed an address. Arming instead of
+   attaching keeps the scan cheap and defers the download to the first field
+   a person actually touches. A field that is already focused when it is
+   armed (an autofocused form) attaches at once, so nothing is stranded.
+   attachAutocomplete itself is unchanged and still exported. */
+function armAutocomplete(input){
+if(!input || input.dataset.crGmapArmed === '1' || input.dataset.crAutocomplete === '1') return;
+input.dataset.crGmapArmed = '1';
+if(document.activeElement === input){ attachAutocomplete(input); return; }
+input.addEventListener('focus', function(){ attachAutocomplete(input); }, { once: true });
+}
 async function attachAutocomplete(input){
 if(!input || input.dataset.crAutocomplete === '1') return;
 input.dataset.crAutocomplete = '1';
@@ -46413,8 +46429,8 @@ requestAnimationFrame(function(){
 scanScheduled = false;
 try{
 document.querySelectorAll('input').forEach(function(input){
-if(input.dataset.crAutocomplete === '1') return;
-if(isAddressInput(input)) attachAutocomplete(input);
+if(input.dataset.crAutocomplete === '1' || input.dataset.crGmapArmed === '1') return;
+if(isAddressInput(input)) armAutocomplete(input);
 });
 /* 636: maybeInsertProfileMap() removed. It injected a SECOND Google map into
    #projectView on every scan — and scan runs off a MutationObserver on
@@ -46450,6 +46466,7 @@ window.CardinalMaps = {
 loadConfig       : loadConfig,
 loadMaps         : loadMaps,
 attachAutocomplete: attachAutocomplete,
+armAutocomplete  : armAutocomplete,
 scan             : scan,
 staticMapUrl     : staticMapUrl,
 directionsUrl    : directionsUrl,
