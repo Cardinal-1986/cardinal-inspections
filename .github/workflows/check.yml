@@ -381,6 +381,17 @@ jobs:
       # Pinned so a release cannot silently change a verdict.
       - name: Install Playwright and jsdom (test-only, pinned, not saved)
         run: |
+          # 9 Sep 2026: an apt "Hash Sum mismatch" on Google's chrome-stable repo
+          # aborted `--with-deps` before any gate ran, twice (run 34383830339 and
+          # its re-run), and a docs-only commit went red. This job never installs
+          # from that repo — Playwright fetches its own Chromium — so the source
+          # is dropped BY CONTENT (the filename differs between runner images)
+          # before the apt-get update that --with-deps performs.
+          for f in /etc/apt/sources.list.d/*; do
+            if grep -qs 'dl.google.com/linux/chrome' "$f"; then
+              echo "dropping unused apt source $f"; sudo rm -f "$f"
+            fi
+          done
           npm install --no-save --no-audit --no-fund playwright@1.56.1 jsdom@30.0.1
           npx playwright install --with-deps chromium
 
