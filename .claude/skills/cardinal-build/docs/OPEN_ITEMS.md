@@ -5761,16 +5761,24 @@ shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks t
   Clients and the live search all use `crClientHay()` now; folding Home in would silently start
   matching the board on a rep's email address, which is a behaviour change and therefore Theo's
   call, not a tidy-up.
-- ⚠ **Option 9 — the phone profile's client band above the money ring. HELD, because it REVERSES A
-  DECISION THEO MADE ON A PREVIEW.** The audit marked it "yours" without saying why; the reason is
-  in the build log. **Build 797** shipped *"Job Value/circle/Balance Due merge with Payment
-  Information into one full-bleed card … and that card moves **above the client name band**"* —
-  from preview_v3/v4, which he reviewed and confirmed, then reviewed again live on his phone.
-  `syncMoneyCard()` does it deliberately, on `matchMedia('(max-width:560px)')`, with a resize
-  listener so a rotation cannot undo it. Reversing that is a one-line change and is **not mine to
-  make**. The finding behind it is still real — a rep opening a Lead reads *$0.00* twice before the
-  homeowner's name, and the name truncates to "Mark Diamo…" — so it is worth putting to him as a
-  question, with the 797 history attached.
+- ✅ **Option 9 SHIPPED at 1209 — and it REVERSED build 797, on Theo's word, asked for and given.**
+  It was held for exactly one reason: **797 was a decision he made on a preview.** 797 shipped
+  *"Job Value/circle/Balance Due merge with Payment Information into one full-bleed card … and that
+  card moves **above the client name band**"* — from preview_v3/v4, which he reviewed and confirmed,
+  then reviewed again live on his phone. The finding was real all the same (a rep opening a Lead
+  read *$0.00* twice before the homeowner's name, truncated to "Mark Diamo…"), so it was put to him
+  as a question with the 797 history attached, and on **10 Sep 2026 he chose the reversal**.
+  **Only the POSITION reversed.** 797's other half — the merge into one full-bleed rectangle — is
+  untouched and asserted at three sites in `patch_1209.py`. Desktop and iPad take the identical
+  path they always did.
+  ⚠ **Two things a future session must not undo.** `gate_797.mjs` section B asserted the OLD order;
+  it was flipped in the same build rather than left to rot, so running 797's own gate can no longer
+  argue for restoring 797's layout. And the idempotence guard had to flip with the insertion point
+  — `previousElementSibling`, not `nextElementSibling`. That is not style: with the card inserted at
+  `namebar.nextSibling`, a `nextElementSibling` test can never be satisfied, so every resize tick
+  reparents the node and wakes all ~46 body observers. Measured, not reasoned about — a poisoned
+  copy carrying the new insertion point with the old guard moved the card **10 times in 5 ticks**
+  while looking perfectly correct on screen. `gate_1209.mjs` section C holds it.
 - ✅ **Option 14 SHIPPED at 1206**, and it left a measured list behind. `gate_1206` baselines **24
   under-floor targets** across 32 states — existing debt that blocks nothing and can never grow.
   `node gate_1206.mjs --list` prints them. The biggest families, if Theo wants another pass:

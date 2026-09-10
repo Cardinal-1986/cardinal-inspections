@@ -5,8 +5,9 @@
  *
  *   A. Job Value/circle/Balance Due + Payment Information are ONE full-bleed
  *      card, no split, no hairline, no ridge-cap bevel left over
- *   B. that card sits ABOVE the client name band (a real reparent — namebar
- *      is not inside #acxMount, CSS order can't reach it)
+ *   B. that card sits UNDER the client name band (a real reparent — namebar
+ *      is not inside #acxMount, CSS order can't reach it). ⚠ 797 shipped it
+ *      ABOVE; Theo reversed that at 1209. Updated, not deleted — see below.
  *   C. Job Details sits directly under the map, full-bleed like Location
  *   D. Money In & Commissions stays its OWN row (only Payment Information was
  *      named for the merge) but is full-bleed to match
@@ -34,6 +35,10 @@ for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright/index.js
   try { chromium = require(p).chromium; break; } catch (e) {}
 }
 if (!chromium) { console.error('playwright not found'); process.exit(2); }
+/* 1209: was a hard-coded sandbox browser path — dead on any CI runner, and a
+   launch failure reads as "the gate is broken" rather than "the gate proved
+   nothing" (BUG_CLASSES 37/87). One resolver for every gate. */
+const { launchChromium } = require('./chromium_launch.cjs');
 import { readFileSync } from 'fs';
 import { createHash } from 'crypto';
 
@@ -60,7 +65,7 @@ const mkSeed = kind => ({
 });
 
 async function boot(html, width, kind) {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const browser = await launchChromium(chromium);
   const page = await (await browser.newContext({ viewport: { width, height: 900 },
     deviceScaleFactor: width > 700 ? 1 : 2, isMobile: width <= 700, hasTouch: width <= 700 })).newPage();
   page.on('dialog', d => d.accept());
@@ -133,19 +138,29 @@ ok('neither carries the ridge-cap bevel (the 794 hairline trap)', !A.none && A.m
 ok('zero gap between them — no split', !A.none && A.gap === 0, JSON.stringify(A.gap));
 ok('the real Job Value is in it, not a placeholder', !A.none && /24,000|24000/.test(A.jobValue || ''), JSON.stringify(A.jobValue));
 
-console.log('\n--- B. the card sits above the client name ---');
+/* ⚠ REVERSED AT BUILD 1209, DELIBERATELY, AND THIS SECTION FOLLOWED IT.
+   797 put this card ABOVE the name band and these three assertions held that.
+   Theo reversed the call on 10 Sep 2026 (audit option 9 / finding A6: on a
+   phone a rep opening a Lead read "$0.00" twice before the homeowner's name).
+   The card is still a direct child of .wrap and still the merged full-bleed
+   rectangle — only its position relative to the band changed, so section A and
+   everything below are untouched. gate_1209.mjs owns the new order too; this
+   section is updated rather than deleted so a run of 797's own gate cannot
+   quietly argue for restoring 797's order. */
+console.log('\n--- B. the card sits UNDER the client name (1209 reversed 797) ---');
 const B = await P.page.evaluate(() => {
   const card = document.getElementById('dbMoneyCard'), bar = document.getElementById('cr-namebar');
   if (!card || !bar) return { none: true };
   const wrap = document.querySelector('#projectView .wrap');
   const c = card.getBoundingClientRect(), n = bar.getBoundingClientRect();
   return { none: false, cardParentIsWrap: card.parentNode === wrap,
-    cardIsFirstChildOfWrap: wrap.firstElementChild === card,
-    cardAboveNamebar: c.bottom <= n.top + 1 };
+    cardFollowsNamebar: card.previousElementSibling === bar,
+    real: c.height > 20 && n.height > 20,
+    namebarAboveCard: n.bottom <= c.top + 1 };
 });
 ok('the money card is a direct child of .wrap, not #acxMount', !B.none && B.cardParentIsWrap, JSON.stringify(B));
-ok('it is the FIRST thing in .wrap', !B.none && B.cardIsFirstChildOfWrap, JSON.stringify(B));
-ok('and it renders above the name band', !B.none && B.cardAboveNamebar, JSON.stringify(B));
+ok('it sits immediately after the name band in .wrap', !B.none && B.cardFollowsNamebar, JSON.stringify(B));
+ok('and the name band renders above it (1209)', !B.none && B.real && B.namebarAboveCard, JSON.stringify(B));
 
 console.log('\n--- C. Job Details, directly under the map ---');
 const C = await P.page.evaluate(() => {

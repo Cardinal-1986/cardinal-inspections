@@ -8437,3 +8437,24 @@ address autocomplete still overwrites it from a picked Google place.
 ⚠ **Do not "fix" the address requirement back to unconditional**, and do not add a `*` to those four
 labels — the block head says what makes them required.
 
+
+### The phone client profile — the name band comes first (1209, reversing 797)
+
+On a phone (`max-width:560px`), `syncMoneyCard()` in `cr-namebar-script` merges `.dbmoney` and
+`#dbPayRow` into one full-bleed `#dbMoneyCard` and reparents it into `#projectView .wrap`,
+**immediately after `#cr-namebar`**. Desktop and iPad are unaffected — there the card goes home to
+`#acxMount` at `moneyCardHomeNext`.
+
+⚠ **The card sat ABOVE the name band from 797 until 1209.** That was deliberate, shipped from
+preview_v3/v4 and confirmed by Theo twice, and it was reversed only when he was asked directly
+(audit option 9 / finding A6: a rep opening a Lead read *$0.00* twice before the homeowner's name).
+**Do not restore 797's order on the strength of 797's build-log entry** — `gate_797.mjs` section B
+was flipped in the same build and now asserts the 1209 order, as does `gate_1209.mjs`.
+
+⚠ **The reparent's idempotence guard is `previousElementSibling`, and it must stay that way.** The
+insertion point is `namebar.nextSibling`, so the settled position is `namebar → card`; a
+`nextElementSibling` test can never be satisfied and would reparent the node on **every resize
+tick**, waking all ~46 body observers with the screen still looking correct. Measured: 10 moves in
+5 ticks on a poisoned copy. `gate_1209.mjs` section C holds it, driving the real resize listener —
+counting reparents across `renderOverview()` calls measures 797's rebuild-per-render architecture
+instead, and reports the same number on both builds.

@@ -4033,7 +4033,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1208<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1209<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43006,6 +43006,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1209, d: '2026-09-10', t: 'On a phone, your client comes before the money', s: 'Opening a client on a phone put <b>Job Value $0.00</b>, the percentage circle, <b>Balance Due $0.00</b> and Payment Information above the name band \u2014 so on a brand-new lead you read <b>$0.00</b> twice before finding out whose lead it was, and the name itself was cut short next to the call and text buttons. The name band is first now and the money card sits directly under it. Nothing was removed and nothing was restyled \u2014 the card is the same full-bleed rectangle it has been since build 797, only lower. Tablet and desktop are untouched.' },
   { b: 1208, d: '2026-09-10', t: 'The Lead form stops refusing a phone call', s: 'Taking a lead over the phone meant fighting the long Lead form: it refused to save without a <b>street, city, state and zip</b>, and then refused a second time with \u201cRequired: State\u201d even after you had filled everything, because the state box opened blank. <b>It opens on OH now</b> \u2014 every other state is still one tap away \u2014 and <b>the address is only required once you set a Job Category</b>. A name and a way to reach someone is a lead; the address arrives when the job does. Nothing you could save before has stopped being savable, and the address boxes no longer carry a star that was not telling you the truth.' },
   { b: 1207, d: '2026-09-10', t: 'The search box answers while you type', s: 'Typing in the header search used to do <b>nothing at all</b> until you pressed Return \u2014 and nothing on the screen said Return was what it wanted. Now the <b>top five matching clients appear under the box as you type</b>, with the PO number, the stage and the address, and tapping one opens that client straight away. Return still opens the full Clients list filtered the way it always did, and if there are more than five matches the panel says so. It searches the same things the Clients list searches \u2014 name, address, phone, email and PO number \u2014 because it now uses the very same matcher, so the five you see can never disagree with the list Return gives you.' },
   { b: 1206, d: '2026-09-10', t: 'Five more controls big enough for a thumb', s: 'A sweep of every screen in the app, measured on a phone, looking for anything too small to hit reliably with a thumb. Five were: <b>the A / A / A text-size buttons in the menu</b> (the control you reach for precisely because you are struggling to hit things), <b>the photo album\u2019s section chips</b>, <b>the day squares on the Production mini-calendar</b>, <b>the lead-source chips on the new-lead form</b>, and <b>the document editor\u2019s own buttons</b>, which build 1204 left two pixels short. All five are now the full 44 pixels. Nothing was renamed and nothing moved. <b>The Dispatch grip was checked and is fine</b> \u2014 it looks tiny but carries an invisible pad that makes it 45 across, which is why it was left alone.' },
@@ -80004,7 +80005,11 @@ select{min-height:44px;}
     }
   }
   /* 797: the Job Value/circle card + Payment Information, merged into one
-     full-bleed card and (phone only) moved above the name band. Not reachable
+     full-bleed card and (phone only) reparented beside the name band — ABOVE
+     it at 797, and UNDER it since 1209, which is a decision Theo reversed and
+     not a defect either way. Do not “restore” 797's order on the strength of
+     its own build-log entry; gate_797.mjs section B now asserts the 1209
+     order. Not reachable
      with data-cr-ord/CSS order — #cr-namebar lives outside #acxMount, across
      a flex boundary order cannot cross. See the build-log comment above this
      patch for why this needs BOTH a render-time call and a resize listener. */
@@ -80043,8 +80048,19 @@ select{min-height:44px;}
     if(!namebar || !wrapEl) return;
     var phone = window.matchMedia('(max-width:560px)').matches;
     if(phone){
-      if(moneyCard.parentNode !== wrapEl || moneyCard.nextElementSibling !== namebar){
-        wrapEl.insertBefore(moneyCard, namebar);
+      /* 1209: UNDER the name band, not above it. 797 shipped it above, from
+         preview_v3/v4 and confirmed live; Theo reversed that call on 10 Sep
+         (audit A6 — a rep opening a Lead read “$0.00” twice before the
+         homeowner's name). Everything else about 797 stands: still the merged
+         full-bleed rectangle, still in .wrap so it keeps its bleed, still
+         phone-only, still retail-fenced.
+         ⚠ The guard MUST be previousElementSibling. With the insertion point
+         at namebar.nextSibling the settled position is namebar -> card, so a
+         nextElementSibling test could never be satisfied and every render would
+         reparent the node again, waking every body observer. A guard that
+         cannot succeed is the 567/569 repaint class, twice paid for. */
+      if(moneyCard.parentNode !== wrapEl || moneyCard.previousElementSibling !== namebar){
+        wrapEl.insertBefore(moneyCard, namebar.nextSibling);
       }
     }else if(moneyCard.parentNode !== mount){
       mount.insertBefore(moneyCard, moneyCardHomeNext);

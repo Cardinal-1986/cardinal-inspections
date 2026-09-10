@@ -407,7 +407,7 @@ plus its gate; every option ships with a negative control against 1199.
 | **7b** | ✅ **SHIPPED, build 1208.** State opens on OH; the address is required only when a Job Category is set | A1 | small | measured on 1207: *"Required: Street, City, State, Zip"*, then *"Required: State"* |
 | **7c** | One door: the Contact form with an "Add address now / later" step; the Lead form's insurance and mailing blocks become the "+ More detail" expander | A1 | medium · 1–2 builds | the real fix; 7a+7b is the patch |
 | **8** | ✅ **SHIPPED, build 1203** — hidden for non-admins, the value preserved | A2 | trivial | |
-| **9** | Phone profile: client band above the money ring | A6 | one line in `syncMoneyCard()` | ⚠ **HELD — it REVERSES build 797**, which you confirmed from preview_v3/v4 and again live. Needs your yes |
+| **9** | ✅ **SHIPPED, build 1209.** Name band first, money card directly under it, phone only | A6 | one line in `syncMoneyCard()` + its guard | ⚠ **This REVERSED build 797**, which Theo confirmed from preview_v3/v4 and again live. Held until he chose it on 10 Sep. `gate_797.mjs` section B was flipped in the same build, so 797's own gate can no longer argue for restoring 797's order |
 | **10** | ✅ **SHIPPED, build 1205.** 44 px on every toolbar and Add button; the row wraps instead of scrolling | A11 | small · render 390 and 1194 | measured: 26 px and three buttons off the right edge on 1204 |
 | **11** | ✅ **SHIPPED, build 1203** — the labels WRAP instead, so nothing is renamed | A10 | trivial | |
 | **12** | ✅ **SHIPPED, build 1203** | A9 | trivial | |
