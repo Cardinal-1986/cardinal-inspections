@@ -22,8 +22,14 @@ Page 1 carries the full letterhead. A letter that runs onto page 2 gets a slim
 continuation header — company name and page number — instead of the logo.
 
 **None of these values were typed from memory.** They were read out of shipped
-code: the logo from the `cover-logo` data URI in `index.html`, the address and
-email from `api/estimate-to-contract.js` and the print footer in `api/share.js`.
+code — but two of the three citations went stale and were repointed on 10 Sep
+2026, so check a source still exists before trusting a note like this one:
+
+| value | live source |
+|---|---|
+| logo | **`cardinal-report-logo.png`**, referenced once as `CARDINAL_LOGO_SRC` in `index.html`. ⚠ It was a base64 `cover-logo` data URI until build 1182 |
+| address, phone, email | `api/share.js` and `api/senddoc.js` (and `index.html`). ⚠ This used to cite `api/estimate-to-contract.js`, **retired at build 1212** — nothing called it and every call 404'd |
+
 If any of them change, they need changing in those places too — this folder is
 not the source of truth for them.
 

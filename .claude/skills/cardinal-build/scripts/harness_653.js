@@ -49,15 +49,31 @@ function braceMatch(startIdx) {
   return -1;
 }
 
-console.log('\n── P1: Convert-to-Contract endpoint name ──');
-ok('the functional fetch call uses the hyphenated path', SRC.includes("api('/api/estimate-to-contract'"));
-ok('the underscore path is gone from functional code', !SRC.includes("api('/api/estimate_to_contract'"));
-ok('the setup-instructions comment matches the real filename', SRC.includes('Add api/estimate-to-contract.js to your repo'));
-{
-  const apiFile = fs.readFileSync('/home/user/cardinal-inspections/api/estimate-to-contract.js', 'utf8');
-  ok('the api file itself exists and its header names itself correctly',
-    apiFile.startsWith('// api/estimate-to-contract.js'));
-}
+console.log('\n── P1: Convert-to-Contract — the ROUTE IS RETIRED (1212) ──');
+/* 653 checked that the client called the hyphenated path and that the file
+   existed. Build 1212 deleted the route: nothing called it, and its select
+   named `client_name` and `estimate`, columns `projects` has never had, so
+   every call 404'd before reaching any of its logic.
+
+   ⚠ THESE FOUR CHECKS HAD ALREADY GONE STALE BEFORE 1212 TOUCHED THEM. The
+   first asserted `api('/api/estimate-to-contract'` was in index.html and that
+   string had not been there for some time, so this section was red on a
+   healthy app - the same failure mode as test_leadnotify901. Inverting it
+   keeps the section watching the same subject from the other side, instead of
+   deleting coverage because its answer changed. The rest of this file (P2-P6)
+   covers five other live things and is untouched. */
+ok('no functional call to the route survives, in either spelling',
+  !SRC.includes("api('/api/estimate-to-contract'") && !SRC.includes("api('/api/estimate_to_contract'"));
+ok('the install instructions no longer tell anyone to add it',
+  !SRC.includes('• Add api/estimate-to-contract.js to your repo'));
+ok('...and say plainly that it was retired, so it is not re-added',
+  SRC.includes('was RETIRED at build 1212'));
+ok('the api file is gone from the repo',
+  !fs.existsSync('/home/user/cardinal-inspections/api/estimate-to-contract.js'));
+ok('the → Contract button still builds the contract in the browser (cr-e2c is untouched)',
+  SRC.includes("btn.id = 'cr-e2c-btn';") && SRC.includes('var docId = await generate(est, project);'));
+ok('the contracts TABLE is still read and written by the client - the feature stays',
+  (SRC.match(/from\('contracts'\)/g) || []).length >= 8);
 
 console.log('\n── P2: AI-estimate Send, executed for real ──');
 {

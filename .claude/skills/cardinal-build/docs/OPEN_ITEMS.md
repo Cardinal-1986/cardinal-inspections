@@ -18,20 +18,42 @@
    each, how many carry an invoice/estimate document with a share token. Zero on both = preventive
    work; the correction is two additive reads of the project checklist server-side, not a
    shared-definition refactor. Rank by count and reachability.
-2. **The sign-in logo is 1.14 MB (`cardinal-transparent.png`) and loads before sign-in.**
-   Re-encode (WebP/AVIF or a trimmed PNG) or vectorize; **visual — labelled previews first**,
-   per the standing rule. The `onerror` fallback `cardinal-landing.PNG` (1.73 MB) is live and
-   must stay.
-3. **Retire `api/estimate-to-contract.js`.** No caller; its `select` names `client_name` and
-   `estimate`, which `projects` has never had, so it 404s on every call; the 1197 audit-row fix
-   targeted it in vain. 1199 fixed its authorization order anyway. Delete the file and the prose
-   line in `index.html`'s install instructions; check `vercel.json`'s functions block. A deletion,
-   so Theo's.
+2. ~~**The sign-in logo is 1.14 MB and loads before sign-in.**~~ **PREVIEW BUILT 10 Sep 2026 —
+   waiting on Theo to say A, B, C or D.** `scripts/preview_logo.mjs` re-encodes the real file and
+   writes the candidates; the labelled comparison page is at
+   **https://claude.ai/code/artifact/a68093a9-0cd2-4c2f-b207-3c3729ad1769** (each candidate at the
+   app's true `min(78vw,340px)`, on both real grounds, plus a magnified detail strip).
+
+   | | pixels | format | bytes | vs today |
+   |---|---:|---|---:|---:|
+   | as shipped | 1176×912 | PNG | **1,144,792** | — |
+   | **A** | 1020×791 | WebP q92 | 167,898 | **−85%** |
+   | **B** | 1020×791 | WebP q85 | 132,858 | −88% |
+   | **C** | 680×527 | WebP q85 | 82,929 | −93% |
+   | **D** | 680×527 | WebP q80 | 75,018 | −93% |
+
+   The mark is capped at **340 CSS px**, so 680 covers a 2× phone and 1020 a 3×. ⚠ The encoder is
+   **Chromium's own**, via canvas — this container has no PIL, no ImageMagick, no cwebp, and **npm
+   is blocked** (403 from `registry.npmjs.org`). It is the same encoder `shrinkOne()` already uses,
+   so a size measured there is a size the app could produce.
+   ⚠ **Shipping it is a six-site edit** in `index.html` — the sign-in mark, two header buttons and
+   the `onerror` fallback on **both** report templates — and the `onerror` fallback
+   `cardinal-landing.PNG` (1.73 MB) is live and **must stay** whatever is picked.
+3. ✅ ~~**Retire `api/estimate-to-contract.js`.**~~ **DONE at build 1212** on Theo's word, 10 Sep.
+   Verified before deleting rather than after: nothing called it (the two remaining hyphenated
+   mentions are an install bullet and the 1199 changelog; `auditLog('estimate_to_contract', …)` is
+   an **event type** that merely shares the words), the `→ Contract` button builds its contract
+   in the browser via `cr-e2c` and is untouched, and `vercel.json`'s functions block never named
+   it. The `contracts` table and `contracts_setup.sql` are untouched — a dead HTTP route is not
+   the feature. `api/*.js` is now **36**. `harness_653`'s P1 was **inverted, not deleted** (it
+   carries five other live sections, and its route checks had already gone stale).
 4. **Defer Chart.js and PapaParse** (both load unconditionally) until the analytics and CSV
    screens open. Regression risk on every chart consumer — its own build, gated per consumer.
-5. **WeatherLock vs RhinoRoof Granulated.** `WARRANTIES.roofing` in `api/estimate-to-contract.js`
-   and the Library name WeatherLock as the ice & water barrier; Cardinal's field truth (the roof
-   matrix) is RhinoRoof Granulated. Both are current OC products. His wording.
+5. **WeatherLock vs RhinoRoof Granulated.** Still Theo's wording call — but **narrowed to ONE
+   site by build 1212**: the route's `WARRANTIES.roofing` copy went with the route, so
+   `WeatherLock` now appears **exactly once in the whole repo**, at `index.html:6246` (the
+   Platinum Protection note). Cardinal's field truth (the roof matrix) is RhinoRoof Granulated;
+   both are current OC products.
 6. **Production transfer size is 1.64 MB `br`** at Vercel's compression level (gzip parity); the
    doc set's 1.1 MB belief was a local measurement. Only source size moves it.
 
@@ -5803,11 +5825,30 @@ shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks t
   Item Library's tabs and head buttons at 26–30px**, and two native checkboxes at 17–18px
   (`#pfTrades .cbx`, `.ckvent`). ⚠ **The Dispatch grip is NOT on that list and must not be "fixed"**
   — 15×15 box, 45×45 target, build 1040's pad. See BUG_CLASSES 89.
-- ⚠ **New, out of 1205: the estimate builder's phone header is now 150px tall** (52px before),
-  because six 44px buttons wrap onto three rows. `.cr-est-phonebar` (1029) already carries **Save
-  Draft and Publish** under the thumb, so the header duplicates both on a phone. **Dropping those
-  two from the header at ≤760px would be the cheap fix** and is one rule — but it removes a control
-  from a screen, so it is a pick, not a tidy-up.
+- ✅ ~~**the estimate builder's phone header is now 150px tall**~~ **SHIPPED at build 1211** on
+  Theo's word, 10 Sep — **and two things in the sentence above were wrong. Do not re-derive them.**
+
+  ⚠ **1. "≤760px" WOULD HAVE SHIPPED A HOLE.** `.cr-est-phonebar` appears at
+  `@media (max-width:700px)`; **760 is 1205's WRAP breakpoint**, a different rule. Hiding the pair
+  at ≤760 leaves **701–760px with no Save and no Publish anywhere** — header hidden, bar not yet
+  present — and it looks perfect at 390 and at 1194, the two widths anyone checks. The shipped rule
+  therefore lives **inside the phone bar's own media block**. `gate_1211`'s control reds 6 of 31 on
+  the ≤760 version. **BUG_CLASSES 92.**
+
+  ⚠ **2. IT DOES NOT MAKE THE HEADER SHORTER, and I said it would.** `audit_estheader.mjs` measures
+  it: at 390px the header is **150px before and 150px after**, because `→ Contract` still holds the
+  third row on its own. The rows at 390 are h2 / Close+Preview+Options / →Contract+Publish+Save.
+  **Only removing a THIRD control recovers the row** — the cheapest is Options (86px) — and none of
+  the remaining three is duplicated anywhere, so that is a product call, not a tidy-up. This build
+  is a **declutter**, not a height fix.
+
+  ⚠ **HIDDEN, NEVER REMOVED.** `cr-epub`'s `injectButton()` returns early unless it can find
+  `[data-act="save"]`, and `cr-e2c` anchors on `#cr-epub-btn` or that same button. Deleting either
+  strips Preview, Options, Publish **and** → Contract from the header. `querySelector` finds a
+  `display:none` node; it does not find a deleted one.
+
+  Publish progress now lands on the bar's button too (`pubSet()`), copying what `save()` already
+  does for Save — without it the bar's Publish taps and appears to do nothing on a money screen.
 - ⚠ **New, out of 1204 and 1205: two sentinel states brought 15 pre-existing findings into view.**
   Nothing had ever swept the **document editor** (`doceditor`, 1204) or the **estimate builder**
   (`estbuilder`, 1205 — `#cr-est-view`, not the menu's `#cr-estimates-mount`), so their debt had
@@ -5867,14 +5908,38 @@ working and audit the design of the whole hub and wiring."*
   container.
 - ⚠ **`test_leadnotify901.mjs` is RED 6 of 11 on main and the app is FINE — a STALE TEST since
   1147.** Its sandbox does not supply `clientLink`, which 1147 added to both blocks it extracts, so
-  the fragment throws inside the block's own `try{}catch(_){}` and the spy sees no call. **Fix:
-  pass `clientLink` and `pid` into the two `new Function(...)` sandboxes.** Left red deliberately
-  rather than folded into 1210 — but a permanently red test is noise that will mask a real failure,
-  so it wants doing.
+  the fragment throws inside the block's own `try{}catch(_){}` and the spy sees no call.
+  ✅ **FIXED 10 Sep 2026 (audit item 3) — GREEN 14/14.** The sandboxes now supply `clientLink` and
+  `pid`, **and the spy captures `notifyTeam`'s fourth argument**, so the deep link 1147 added is
+  asserted rather than merely tolerated: the bug that broke the test is now the thing it checks. A
+  coverage floor was added so it cannot shrink quietly. Negative-controlled twice — strip
+  `clientLink(...)` from both blocks and the two url checks fail; strip the self-assignment guard
+  and the two "NOT called" checks fail. ⚠ **`harness_653`'s P1 was stale the same way** and was
+  inverted at 1212 rather than deleted. **BUG_CLASSES 94.**
 - ⚠ **`harness_notifyindep1126` is RED 5 of 19 in the build container ONLY** — `web-push` is not
   installed, so the route answers `push_unavailable` rather than the VAPID-specific reasons.
   **Identical on 1209 and 1210**; CI installs the module. Same class as `gate_1076` / `gate_1198`.
   Do not "fix" the route on the strength of a local run.
+- ⚠ **`gate_stack` had been exiting 2 — "could not run" — on EVERY build in this container, and
+  nobody noticed, because 2 is not 0 so it read as noise rather than as a gate that had stopped
+  running.** Two faults, the second only visible once the first was fixed: `await
+  import('playwright')` ignores `NODE_PATH`, **and playwright is CJS**, so importing it from ESM
+  yields `{ default: … }` and the obvious destructure gets `undefined` — indistinguishable from
+  "not installed". ✅ **Fixed 10 Sep**; it now runs (CLEAN on 1211) and its `--selftest` passes.
+  **BUG_CLASSES 93.**
+- ⚠ **Deleting `api/estimate-to-contract.js` broke THREE gates, and my pre-delete reference sweep
+  could not see two of them.** The grep carried `--include=*.md --include=*.js --include=*.json
+  --include=*.html`; **`.mjs` was missing, and every per-build Chromium gate here is `.mjs`.**
+  `gate_1197` D4 and `gate_1199` section E both `readFileSync` the route and died with `ENOENT`
+  before printing a line. **Grep with NO `--include` before any deletion** — `git grep -n <name>`
+  over the whole tree is free on this repo. **BUG_CLASSES 95.** All three repaired by inverting or
+  scoping, never deleting: 1197 **48/48**, 1199 **37/37**, 1205 **25/25** (up from 22 — it now
+  asserts the hidden set by identity so "skip invisible" cannot empty it).
+- ⚠ **`gate_a11y` CANNOT be run in this container and was not run for 1211/1212.** It needs
+  `axe-core` and **npm is blocked** — `registry.npmjs.org` is in the proxy's no-proxy list and the
+  environment answers **403**, so `npm install` fails for any package. **CI runs neither
+  `gate_stack` nor `gate_a11y`**, so nothing else covers it. Not claimed green; recorded instead.
+  The same block stops any jsdom harness running locally (`harness_653` among them).
 
 ### Wiring — clean
 

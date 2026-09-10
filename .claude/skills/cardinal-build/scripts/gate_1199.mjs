@@ -207,55 +207,37 @@ console.log('D · api/pay-webhook.js, executed with a stub Stripe');
   ok(r.res.code === 200 && r.rows.length === 0, 'an UNSETTLED debit at checkout still records nothing (1151 preserved)');
 }
 
-/* ── E · the conversion route, executed ─────────────────────────────────── */
-console.log('E · api/estimate-to-contract.js, executed with a stub Supabase client');
-{
-  const e2c = src('estimate-to-contract.js');
-  const helper = extract(e2c, 'function assignedRepFromChecklist(');
-  ok(helper.length > 50, 'assignedRepFromChecklist present', `${helper.length} chars`);
-  if (helper) {
-    const f = new Function(helper + '\nreturn assignedRepFromChecklist;')();
-    ok(f('{"lead":{"assigned":["Joey@cardinalrenovations.net"]}}') === 'joey@cardinalrenovations.net', '  · parses a serialized checklist and lower-cases');
-    ok(f({ lead: { assigned: ['nick@cardinalrenovations.net'] } }) === 'nick@cardinalrenovations.net', '  · accepts an object too');
-    ok(f('not json') === null && f(null) === null && f('{"lead":{}}') === null, '  · junk, null and no assignment → null');
-  }
-  const iAuth = e2c.indexOf('const canConvert ='), iIdem = e2c.indexOf('if (proj.contract_id) {');
-  ok(iAuth > 0 && iIdem > 0 && iAuth < iIdem, 'the access check precedes the existing-contract return in source order', `canConvert@${iAuth} idempotency@${iIdem}`);
+/* ── E · the conversion route — RETIRED AT 1212 ─────────────────────
+   ⚠ THIS SECTION USED TO EXECUTE api/estimate-to-contract.js, AND IT CRASHED
+   THE MOMENT 1212 DELETED THAT FILE — ENOENT out of readFileSync, at 0s, before
+   a single check ran. gate_chromium reports that as "FAILED on the shipped
+   artifact" with a Node stack trace and no gate line, which reads as "this gate
+   went red" rather than "this gate proved nothing". BUG_CLASSES 37.
 
-  function clientFor(fx) {
-    const builder = (table) => {
-      const b = { table, ops: [], single: false };
-      for (const m of ['select', 'eq', 'or', 'insert', 'update']) b[m] = (...a) => { b.ops.push([m, a]); return b; };
-      b.single = () => { b.isSingle = true; return b; };
-      b.then = (res, rej) => Promise.resolve().then(() => fx(table, b)).then(res, rej);
-      return b;
-    };
-    return { auth: { getUser: async () => ({ data: { user: { email: fx.email } }, error: null }) }, from: builder };
-  }
-  const EST = { line_items: [{ desc: 'Roof', qty: 1, total: 100 }], total: 100, subtotal: 100, tax_rate: 0, tax: 0,
-                deposit: { percentage: 10, amount: 10, balance: 90 }, scope_summary: 'roof', template: 'roofing' };
-  const drive = async (email, project) => {
-    const fx = (table, b) => {
-      if (table === 'projects' && b.ops.some(o => o[0] === 'select')) return { data: project, error: null };
-      if (table === 'projects') return { data: null, error: null };
-      if (table === 'contracts' && b.ops.some(o => o[0] === 'insert')) return { data: { id: 'new1', created_at: 'now', contract_number: 'CRC-0000-A' }, error: null };
-      if (table === 'contracts' && b.ops.some(o => o[0] === 'or')) return { count: 0, error: null };
-      if (table === 'contracts') return { data: { id: 'c1', contract: { total: 100 }, contract_number: 'CRC-0000-A' }, error: null };
-      return { data: null, error: null };
-    };
-    fx.email = email;
-    const handler = await loadModule(e2c, ['createClient', 'process'])(() => clientFor(fx), { env: { SUPABASE_SERVICE_ROLE_KEY: 'srk' } });
-    const res = mkRes();
-    await handler({ method: 'POST', headers: { authorization: 'Bearer jwt' }, body: { project_id: 'p1' } }, res);
-    return res;
-  };
-  const CK = JSON.stringify({ lead: { assigned: ['joey@cardinalrenovations.net'] } });
-  let res = await drive('nick@cardinalrenovations.net', { id: 'p1', created_by: 'theo@cardinalrenovations.net', address: 'x', estimate: EST, contract_id: 'c1', checklist: CK });
-  ok(res.code === 403, 'a roster account that is neither creator nor assignee is REFUSED even when a contract already exists', `http ${res.code} ${res.body.slice(0, 60)}`);
-  res = await drive('joey@cardinalrenovations.net', { id: 'p1', created_by: 'theo@cardinalrenovations.net', address: 'x', estimate: EST, contract_id: null, checklist: CK });
-  ok(res.code === 200 && /"existed":false/.test(res.body), 'the ASSIGNED rep (assignment in the serialized checklist) is admitted and converts', `http ${res.code} ${res.body.slice(0, 60)}`);
-  res = await drive('theo@cardinalrenovations.net', { id: 'p1', created_by: 'theo@cardinalrenovations.net', address: 'x', estimate: EST, contract_id: 'c1', checklist: CK });
-  ok(res.code === 200 && /"existed":true/.test(res.body), 'the creator still gets the existing contract (preserved)');
+   1199 fixed two real defects in that route: the access check sat below the
+   idempotency return, and assignedRepFromChecklist() read a property off a
+   serialized JSON string. Both fixes went with the route, and that is correct —
+   1199's own note recorded the route was dead in production regardless, because
+   its select named `client_name` and `estimate`, columns `projects` has never
+   had, so every call 404'd before reaching the fixed line.
+
+   ⚠ EIGHT CHECKS WERE LOST HERE, AND IT IS SAID OUT LOUD RATHER THAN LEFT TO A
+   SHRINKING NUMBER NOBODY READS. What replaces them watches the same subject
+   from the other side: the route is gone, nothing calls it, and the path that
+   actually converts an estimate — cr-e2c, in the browser — is intact. */
+console.log('E · the conversion route is retired (1212), and cr-e2c still converts');
+{
+  ok(!existsSync(resolve(apiDir, 'estimate-to-contract.js')),
+     'api/estimate-to-contract.js is gone from the repo');
+  ok(!html.includes("api('/api/estimate-to-contract'") && !html.includes("api('/api/estimate_to_contract'"),
+     'nothing in index.html calls it, in either spelling');
+  ok(html.includes('was RETIRED at build 1212'),
+     'the install instructions say so, so it is not re-added');
+  ok(html.includes("btn.id = 'cr-e2c-btn';") && html.includes('var docId = await generate(est, project);'),
+     'the \u2192 Contract button still builds the contract in the browser');
+  ok((html.match(/from\('contracts'\)/g) || []).length >= 8,
+     'the contracts table is still read and written by the client — the FEATURE stays',
+     (html.match(/from\('contracts'\)/g) || []).length + ' sites');
 }
 
 /* ── F · the gmap block, in Chromium ────────────────────────────────────── */
