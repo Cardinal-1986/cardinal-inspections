@@ -5876,6 +5876,32 @@ it rules that LOSE to a later rule rather than anything broken-looking:
 | The Line | `.pu-tab` 13.5px · `.pu-srch input` 13px · `.pu-age` colour | 4+1+1 el, 390 |
 | all screens | `#brandTitle` has no click handler | reads as a heading; almost certainly by design |
 
-**Nothing overflows, nothing is truncated, and no control on the hub is dead.** These are tidy-up
-candidates — deletion at source beats out-specifying — not defects, and none of them is worth a
-build on its own.
+**Nothing overflows, nothing is truncated, and no control on the hub is dead.**
+
+⚠ **CORRECTION, same day — I called these "tidy-up candidates" and that was WRONG. There is
+nothing to fix, and deleting any of them would BREAK the hub.** `audit_hub_dead.mjs` measured all
+eight in a real engine, in BOTH themes, and printed the winning rule for each:
+
+| rule | computed | what actually beat it | verdict |
+|---|---|---|---|
+| `#cr-pb h1 {26px}` | 30px | `body.cr-lnav-on #cr-pb h1 {30px}` | deliberate left-nav override |
+| `.pbday {min-height:44px}` | 78px | `body.cr-lnav-on #cr-pb .pbday {78px}` | known + intended, 1206 |
+| `#cr-disp .job .t {12px}` | 13px | same selector in `@media (min-width:1100px)` | deliberate desktop bump |
+| `#cr-disp .job .a {11px}` | 11.5px | same selector in `@media (min-width:1100px)` | deliberate desktop bump |
+| `#cr-disp .dspwk button {26px}` | **26px** | itself, 1 contender | **it DOES win** |
+| `.pu-tab {13.5px}` | **13.5px** | itself, 1 contender | **it DOES win** |
+| `.pu-srch input {13px}` | **13px** | itself, 1 contender | **it DOES win** |
+| `.pu-age {amber}` | blue | `.pu-age.hot` — a state class | data-dependent, correct |
+
+**Why the sweep flagged them anyway, and it is not a sentinel bug:** "never wins on any of the N
+elements it matches" is scoped to **that render**. A rule that wins at 390 and loses at 1194 — or
+loses only when the left nav is on — is correctly reported for the render where it lost. Reading
+that as "dead CSS" is the reader's error, and it was mine.
+
+⚠ **Do not re-file these.** Three of the eight win outright; four are deliberate responsive
+overrides; one is a state class. `audit_hub_dead.mjs` re-runs the whole check in one command.
+
+⚠ **And the probe itself had the same class of bug on its first run**: it descended into
+`@media` blocks that do NOT match, so an inactive `max-width:430px` rule was reported as the
+"winner" of a property at 1194px. The COMPUTED value was right throughout; only the attribution
+was wrong. Fixed — it now descends only into matching media.
