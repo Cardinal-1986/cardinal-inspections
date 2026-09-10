@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1201<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1202<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11871,19 +11871,58 @@ function reviewMsg(pr, followup){
     'If you had a great experience, would you mind leaving us a quick Google review? ' +
     REVIEW_URL + ' \u2014 it really helps our small team. \u2013 ' + rep;
 }
+/* 1202: the stages at which there is a finished job to review. Reviews are
+   asked for after the work, and this list is the one place that says so —
+   sendReviewRequest() and the card both read it, so the button and the write
+   can never disagree about when a request is allowed. */
+var REVIEW_STAGES = ['Completed','Invoiced','Closed'];
+function reviewStageOk(pr){
+  var s = pr && pr.stage;
+  try{ if(typeof normStage === 'function') s = normStage(s); }catch(_e){}
+  return REVIEW_STAGES.indexOf(s) !== -1;
+}
 async function sendReviewRequest(pr, via){
+  /* The card does not draw these buttons before Completed. This is the same
+     refusal at the writer, so a stale screen or a hand-fired event cannot ask a
+     Lead for a review. */
+  if(!reviewStageOk(pr)){
+    crTell('A review request opens once the job is Completed.');
+    return;
+  }
   var alreadyAsked = !!parseCkAll(pr).review_requested_at;
   var msg = reviewMsg(pr, alreadyAsked);
+  var handedOff = false;
   if(via === 'sms' && pr.phone){
     location.href = 'sms:' + pr.phone.replace(/[^+\d]/g,'') + '?&body=' + encodeURIComponent(msg);
+    handedOff = true;
   }else if(via === 'email' && pr.email){
     location.href = 'mailto:' + encodeURIComponent(pr.email) +
       '?subject=' + encodeURIComponent('How did we do? \u2014 Cardinal Roofing & Renovations') +
       '&body=' + encodeURIComponent(msg);
+    handedOff = true;
   }else{
     try{ await navigator.clipboard.writeText(msg); crTell('Review message copied \u2014 paste it anywhere.', 'ok'); }
     catch(e){ prompt('Copy this message:', msg); }
   }
+  /* 1202: THIS is the fix. The three paths above hand the message to Messages,
+     to Mail, or to the clipboard — none of them sends anything, and the app
+     cannot see what happens next. Recording here on the tap meant backing out
+     of Messages still left "Review requested today via text" on the profile and
+     in the audit trail, and the NEXT tap then sent the friendly-follow-up
+     wording to someone who had never received a first message. Only the rep
+     knows, so only the rep can say. Record the send, never the tap — the same
+     rule 1201 applied to the estimate. */
+  if(handedOff){
+    try{ await new Promise(function(r){ setTimeout(r, 700); }); }catch(_e){}
+  }
+  var _who = (pr.name || 'the client');
+  var _went = await crAsk('Did the review request go out to ' + _who + '?', {
+    verb: 'Yes, it went',
+    cancel: 'Not yet',
+    tone: 'plain',
+    why: 'Only a yes records it. Nothing is written if you backed out, and you can tap the button again whenever you do send it.'
+  });
+  if(!_went) return;
   try{ await patchProjectCk(pr, { review_requested_at: new Date().toISOString(), review_via: via }); auditLog('review', 'Review requested via ' + via + ' \u2014 ' + (pr.name || ''), pr.id); }catch(e){}
   setTimeout(renderOverview, 400);
 }
@@ -12299,6 +12338,7 @@ function renderAcxOverview(){
   '</div></div></div>';
   /* ---- google review (dark card) ---- */
   var rvAt = ck.review_requested_at, rvVia = ck.review_via;
+  var _rvOpen = reviewStageOk(pr);
   var rvViaLabel = rvVia === 'sms' ? 'text' : (rvVia === 'email' ? 'email' : 'copy');
   html += '<div class="rvcard">' +
     '<div class="rvtop">' + GOOGLE_G + ' Google Reviews</div>' +
@@ -12307,15 +12347,24 @@ function renderAcxOverview(){
         (rvAt ? '<span class="rvchk">&#10003;</span> Review requested ' + acxDate(rvAt) + ' via ' + rvViaLabel + '.'
               : 'No review request sent yet.') +
       '</div>' +
-      '<div class="rvbtns">' +
-        (pr.phone ? '<button class="rvbtn text" data-rv="sms">&#128241; Text request</button>' : '') +
-        '<button class="rvbtn copy" data-rv="copy">Copy message</button>' +
-      '</div>' +
-      (rvAt ? '<div class="rvhint">Tapping again sends a friendly follow-up.</div>' : '') +
-      '<div class="rvflip' + (ck.review_left_at ? ' on' : '') + '" id="rvLeftSwitch" role="switch" aria-checked="' + (ck.review_left_at ? 'true' : 'false') + '">' +
-        '<span class="rvtog"></span> Flip when their review appears on Google' +
-        (ck.review_left_at ? ' \u00b7 ' + acxDate(ck.review_left_at) : '') +
-      '</div>' +
+      /* 1202: nothing to ask for until the work is done. On a Lead this card
+         used to put a saturated red "Text request" button on the profile of
+         somebody the rep had not met yet. It follows the Invoices card's own
+         convention rather than vanishing — the card stays, and a line says
+         when it opens, so nobody hunts for a control that moved. */
+      (_rvOpen
+        ? '<div class="rvbtns">' +
+            (pr.phone ? '<button class="rvbtn text" data-rv="sms">&#128241; Text request</button>' : '') +
+            '<button class="rvbtn copy" data-rv="copy">Copy message</button>' +
+          '</div>' +
+          (rvAt ? '<div class="rvhint">Tapping again sends a friendly follow-up.</div>' : '')
+        : '<div class="rvhint">A review request opens once the job is Completed.</div>') +
+      (_rvOpen
+        ? '<div class="rvflip' + (ck.review_left_at ? ' on' : '') + '" id="rvLeftSwitch" role="switch" aria-checked="' + (ck.review_left_at ? 'true' : 'false') + '">' +
+            '<span class="rvtog"></span> Flip when their review appears on Google' +
+            (ck.review_left_at ? ' \u00b7 ' + acxDate(ck.review_left_at) : '') +
+          '</div>'
+        : '') +
     '</div>' +
   '</div>';
   /* ---- assigned to ---- */
@@ -42721,6 +42770,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1202, d: '2026-09-10', t: 'A review request counts when you send it, and the card waits for a finished job', s: 'Two fixes to the Google Reviews card. <b>Tapping <i>Text request</i> used to record the request straight away</b> \u2014 before you had sent anything. Back out of Messages and the profile still said \u201cReview requested today via text\u201d, the job history said the same, and the next tap sent the <i>friendly follow-up</i> wording to somebody who never got a first message. The app cannot see what happens once the message is handed to Messages, Mail or your clipboard, so it now simply <b>asks you</b>: <i>Did the review request go out?</i> A yes records it, <b>Not yet</b> records nothing, and you can tap again whenever you do send it. <b>And the card no longer offers the buttons before the job is Completed</b> \u2014 on a brand-new lead the red Text request button was the loudest thing on the screen. The card stays where it is and tells you when it opens, the same way the Invoices card does.' },
   { b: 1201, d: '2026-09-10', t: 'Publishing an estimate now offers to send it, instead of asking you to call it sent', s: 'Publishing used to pop the question <b>\u201cMark it as Sent?\u201d before anything had been sent</b> \u2014 and saying yes moved the job forward and then dropped you on a document whose own toolbar still read <b>UNSENT</b>. Two different answers to \u201cdid the client get this?\u201d on one screen. Publishing now asks <b>\u201cSend it to &lt;client&gt;?\u201d</b> and gives you the three ways the app actually delivers a document: <b>Email to client</b>, <b>Text to sign</b>, or <b>Copy share link</b> \u2014 the same buttons the document itself has, so nothing behaves differently from what you already know. <b>Not now</b> leaves it a draft and says so. And the estimate is marked Sent, with the pipeline moving, <b>only once the document has really gone out</b> \u2014 back out of the email and nothing is claimed on your behalf. Marking a document sent by hand from the document itself now moves the estimate too, which it never did.' },
   { b: 1200, d: '2026-09-10', t: 'Your phone stops working overtime on a client profile, and Curtis stops being told twice', s: 'Two fixes, both invisible until you notice what they cost. <b>An open client profile was redrawing its Punch Outs count about sixty times a second</b>, forever, whether the job had four punch items or none \u2014 every other part of the page that watches for changes woke up each time. On a phone that is battery and heat for nothing. The count is now written only when it actually changes. <b>And moving a job backwards no longer re-sends the team email.</b> Tapping the \u2039 arrow from Scheduled back to Approved fired Curtis and the admins a fresh \u201cAPPROVED \u2014 schedule + order materials\u201d for a job that had already been scheduled; the same shape re-sent the rep\u2019s \u201cjob complete\u201d mail from Invoiced. Those two emails now go out only when a job reaches that stage moving <i>forward</i> \u2014 and a job that was On Hold, or Lost and revived, still counts as forward, so nothing real is missed.' },
   { b: 1199, d: '2026-09-09', t: 'Online payments fail safe, bank payments are labelled right, and Maps waits until it is needed', s: 'A pay link now refuses to open a checkout when the payment history cannot be read, instead of quietly treating a failed read as \u201cnothing paid yet\u201d and asking for the full amount \u2014 the shared document says the balance could not be verified and to try again shortly. A bank (ACH) payment that clears is recorded as ACH rather than as a card payment. Google Maps no longer downloads on every launch before anyone has signed in; it loads the first time an address field is touched. The sign-in screen\u2019s example email uses the company domain. The old estimate-to-contract route checks that you are on the job before it hands back a contract.' },

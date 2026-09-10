@@ -13,6 +13,8 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 ---
 
 > ### Progress
+> **B4 shipped in build 1202** (options 4a and 4b): a review request is recorded when the rep says
+> it went out, and the card's buttons wait until the job is Completed.
 > **B3 shipped in build 1201** (option 3a): publishing now asks to *send* and offers the three real
 > ways to deliver, and the estimate is marked Sent only once that document really goes out.
 > **B1 and B2 shipped in build 1200** (options 1 and 2), measured before and after: an open
@@ -358,8 +360,8 @@ plus its gate; every option ships with a negative control against 1199.
 | **2** | ✅ **SHIPPED, build 1200** as `crStageIsForward()`. Forward-only Approved and Completed team emails | B2 | trivial · rides with 1 · gate executes shipped `setStage` with a stub notifier | mirrors `api/clientsign.js` 1007 |
 | **3a** | ✅ **SHIPPED, build 1201.** Publish sheet became the send sheet; a real send is what marks it Sent | B3 (A12's toolbar half is still open) | small–medium · 1 build · Chromium render of the sheet, both themes | wants your wording pick |
 | **3b** | Keep the question, ask it *after* a send, verb "Mark sent", Cancel default | B3 | small | the cheaper half of 3a |
-| **4a** | Record `review_requested_at` only after the rep confirms it went | B4 | small | |
-| **4b** | Hide (or grey) the Google Reviews card before Completed | B4/A8 | small | can ride with 4a |
+| **4a** | ✅ **SHIPPED, build 1202.** Recorded only after the rep confirms it went | B4 | small | |
+| **4b** | ✅ **SHIPPED, build 1202.** The card stays, its buttons wait for Completed | B4/A8 | small | can ride with 4a |
 | **5** | Let `#ljPane` shrink under 1280 px | B5 | small · render at 1024 and 1194 | |
 | **6a** | `enterkeyhint="search"` + a "…then Return" placeholder | B6 | trivial | |
 | **6b** | Live top-five results under the search row, Return for the directory | B6/A5 | medium · 1–2 builds · jsdom harness on the matcher + render | |

@@ -8271,3 +8271,16 @@ document to sent**: the email send and the Mark sent button. It is deliberately 
 The publish sheet arms it **before** pressing a send button, so nothing is claimed on a tap.
 `crSendChoices()` offers only the delivery buttons that exist; `crSendDoc()` presses the shipped
 one. The send logic itself has exactly one home, in the document editor.
+
+
+## Build 1202 — when a review may be asked for
+
+**`REVIEW_STAGES`** = `Completed`, `Invoiced`, `Closed`, and **`reviewStageOk(pr)`** is the only
+reader. The Google Reviews card draws its request buttons and its Google switch only when that is
+true, and `sendReviewRequest()` refuses on the same test — the button and the write cannot
+disagree. Before then the card stays put and says *"A review request opens once the job is
+Completed."*, the same shape as the Invoices card's *"An invoice opens once a contract is signed."*
+
+**Nothing is recorded on the tap.** `sms:`, `mailto:` and the clipboard all hand the message
+somewhere the app cannot follow, so `sendReviewRequest()` asks *"Did the review request go out?"*
+and writes `review_requested_at` only on a yes.

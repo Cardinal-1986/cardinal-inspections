@@ -84,6 +84,13 @@ const GATES = [
   { name: 'gate_1201.mjs',
     protects: 'publishing offers the three real sends, and the estimate is marked Sent only once that document is',
     break: { find: 'if(!await _went) return;', repl: 'if(false) return;' } },
+  /* 1202: a review request is recorded only when the rep says it went out. The
+     break drops that answer on the floor, restoring the 1201 behaviour the gate
+     measures — "answering Not yet records NOTHING" fails, with writes 0 -> 1.
+     Anchor counted in 1201 first: 0 there, 1 here. */
+  { name: 'gate_1202.mjs',
+    protects: 'a review request is recorded on the send, not the tap, and the card waits for a Completed job',
+    break: { find: 'if(!_went) return;', repl: 'if(false) return;' } },
 ];
 
 function run(script, args) {
