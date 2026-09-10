@@ -910,6 +910,26 @@
         var v = document.getElementById('cr-lrs-view');
         if (!onScreen(v)) throw new Error('#cr-lrs-view did not come on screen'); } },
 
+    /* 1205 — the ESTIMATE BUILDER, `#cr-est-view`. ⚠ NOT the same surface as the
+       'estimates' state above: that one opens `#cr-estimates-mount`, which is
+       what the MENU's Estimates item opens (the 561 note in index.html). The
+       builder behind "+ New estimate" on a job is a different screen with its
+       own palette, and nothing was sweeping it — which is how A11 (26px tap
+       targets on the screen where money is typed) reached a hand-driven walk.
+       Its header is assembled by THREE modules, so the state waits for the two
+       that inject late rather than measuring a short row. */
+    { name:'estbuilder',   run: async function () {
+        leaveLanding(); closeAll();
+        var E = window.CardinalEstimates;
+        if (!E || !E.openEditor) throw new Error('CardinalEstimates.openEditor missing');
+        await E.openEditor('p1');
+        await pause(1200);
+        var v = document.getElementById('cr-est-view');
+        if (!v || !v.classList.contains('open'))
+          throw new Error('#cr-est-view did not open — it is shown by .open, never by display');
+        var head = v.querySelector('.cr-est-head');
+        if (!onScreen(head)) throw new Error('the builder opened but its header is not on screen'); } },
+
     /* 1204 — the DOCUMENT EDITOR after Publish, and it is deliberately LAST.
        Nothing had ever swept this screen: build 1204 moved three buttons, added
        an ink (.edbk) and reordered a row on it, and every one of those changes

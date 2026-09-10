@@ -108,6 +108,15 @@ const GATES = [
     protects: 'the published document offers Email / Text / Share on the bar itself, above "Mark sent", and the way out says Back',
     break: { find: '      <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>\n      <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>\n      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>\n      <button class="btn dark" id="edMoreBtn"',
              repl: '      <span id="edSendsBroken" style="display:none;"><button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button><button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button><button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button></span>\n      <button class="btn dark" id="edMoreBtn"' } },
+  /* 1205: the estimate builder's toolbar must clear the 44px floor. The break
+     puts the 26px padding back, which IS the measured 1204 state - Close 72x26,
+     Preview 88x26, and "-> Contract" 117x26 sitting at right=463 on a 390px
+     screen, with the row scrolling 695 wide inside 390.
+     Anchor counted in 1204 first: 0 there, 1 here (BUG_CLASSES 86). */
+  { name: 'gate_1205.mjs',
+    protects: 'every button on the estimate builder toolbar is at least 44px tall and none sits off the right edge at 390px',
+    break: { find: 'color:#f08a90;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;',
+             repl: 'color:#f08a90;padding:6px 12px;border-radius:6px;' } },
 ];
 
 function run(script, args) {

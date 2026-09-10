@@ -4350,6 +4350,35 @@ verdict.** A count that changes between environments means it is a different gat
    a negative control is indistinguishable from coverage** — one green control is not proof the
    browser half ran.
 
+## 88 — an edit that TRUNCATED a runner, whose only tell was a selftest printing nothing
+
+**Build 1205, caught in one command.** Registering a new gate in `gate_chromium.mjs` was done with
+a throwaway one-liner that computed the new file as
+
+```python
+s = s[:j+1] + entry[0:] if False else s[:j+1] + entry
+```
+
+`A if False else B` is `B`, so this is `s[:j+1] + entry` — and `j` was the index of the array's
+closing `];`. **Everything after the GATES array was discarded: `run()`, the `--selftest` block,
+the whole main loop.** 63 lines, silently.
+
+**And the file still passed `node --check`.** A truncated module is valid JavaScript. The only
+tell was that `--selftest` printed **nothing at all** and exited **0** — which reads exactly like
+a fast pass. The run before it had printed 11 lines and `SELFTEST PASS (11/11)`.
+
+**Three rules, and the first is the general one:**
+1. **A verdict is output, not an exit code.** A gate, runner or harness that produces no lines has
+   not passed; it has not run. Compare the line count and the check count with the previous run —
+   the same rule class 87 states for CI, applying here to the runner itself.
+2. **Never build a file's new contents by slicing to an index found with `find()`** unless you
+   assert the tail survived. The honest form is an exact-match replacement of a *unique
+   terminator* (`s.replace('\n];\n', ENTRY)` after asserting `count == 1`), which is
+   `patch_lib.sub()`'s whole discipline — applied to `index.html` every build here, and skipped
+   the moment the target was a script instead.
+3. **Print the size delta.** `bytes 11480 -> 12223 | lines 181 -> 190` takes one line and makes a
+   63-line deletion impossible to miss. The truncating edit printed only `ok`.
+
 ## Class 71 — a control with a live handler on an element that cannot receive events
 Build 1164 hung the Front Door on the header title via a delegated document click handler —
 and the title has carried `pointer-events:none` since it was a decorative label (`#cr-hd2-bar

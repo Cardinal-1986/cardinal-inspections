@@ -8332,3 +8332,37 @@ client name, and sets its own `title` to *"Back to <name>'s overview"*. It carri
 `max-width` — 210px, 46vw on a phone — because the shared `.edchip` cap of 30vw truncated it even
 before the label existed; `#edRepChip` stays on the shared cap. `gate_1204` measures the chip's flex
 gap so the label cannot run into the name.
+
+
+## Build 1205 — the estimate builder's toolbar, at the tap-target floor
+
+**`.cr-est-head button` and `.cr-est-items-head button` carry `min-height:44px`** and centre their
+own label with `display:inline-flex`. They were 26–28px, the smallest targets in the app, on the
+screen where money is typed.
+
+⚠ **The rule is on the ROW because three modules inject into it.** `.cr-est-head` is built by the
+base render (Close · Delete · Duplicate · Save), by `cr-epub`'s `injectButton()` (Preview ·
+Options · Publish) and by `cr-e2c`'s `injectButton()` (→ Contract). **Never fix this row by
+enumerating button ids** — the next module to inject one would miss the fix, and no static check on
+the stylesheet can tell you what the row contains. `gate_1205` opens the builder in Chromium and
+measures whatever is actually there.
+
+**On a phone the row wraps rather than scrolling:** `@media (max-width:760px){ .cr-est-head{flex-wrap:wrap} .cr-est-head h2{flex:1 1 100%;order:-1} }`.
+The title takes its own line, the buttons fall under it. `.cr-est-head` still carries
+`overflow-x:auto` from the 1073 layout sheet — left alone deliberately, because wrapped content
+never overflows, so it is inert rather than wrong.
+
+⚠ **The phone header is 150px tall as a result** (52px before), on top of `.cr-est-phonebar`'s 66px.
+`.cr-est-phonebar` (1029) still carries Save Draft and Publish under the thumb, so the header
+duplicates those two on a phone — dropping them there is the cheap next move if the height is a
+problem, and it is a decision for Theo, not a tidy-up.
+
+**Two sentinel states arrived with these builds, and both cover screens nothing had ever swept.**
+`doceditor` (1204) opens a real published document through `window.openEditor`; `estbuilder`
+(1205) opens `#cr-est-view` through `CardinalEstimates.openEditor(pid)`. ⚠ **`estbuilder` is not
+the same surface as the older `estimates` state** — that one opens `#cr-estimates-mount`, which is
+what the *menu's* Estimates item opens (the 561 note in `index.html`). Both new states run **last**
+and `doceditor` pushes its own seed row inside the state, so no earlier state's renders move. They
+took the sweep from 60 renders to 64 and the carried debt from 188 to 203; those 15 are pre-existing
+on both artifacts and **have not been read** — see `OPEN_ITEMS`.
+

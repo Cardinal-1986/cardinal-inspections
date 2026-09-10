@@ -5740,3 +5740,48 @@ its strip shows no count in the walked state.
 - The font-stack unification and the half-pixel type scale both want his pick and
   a preview deploy — **neither is verifiable in this container**, which has
   neither Segoe UI nor San Francisco installed.
+
+---
+
+## From the 9 Sep sales-workflow audit — open, and what is Theo's
+
+*Written 10 Sep 2026 at build 1205. Options 1, 2, 3a, 4a, 4b, 5, 6a, 8, 10, 11, 12 and 13 have
+shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks them by number.*
+
+- **Options 7a / 7b / 7c — the two intake doors (A1). A DECISION, not code.** The + button opens
+  two forms with two rulebooks: **Contact** saves a lead from a name alone; **Lead** is a 1,600px
+  form that refuses without six fields and has no Ohio default. 7a (Contact requires phone **or**
+  email) and 7b (State defaults to OH; address optional for a phone-in) are small validation
+  changes and are **his call, because they change what a rep is allowed to save**. 7c — one door
+  with an "add the address now or later" step — is the real fix and is 1–2 builds.
+- **Option 6b — live top-five search results** under the header row. 6a shipped the cheap half
+  (the keyboard says Search, the placeholder says what to press). Medium: a matcher harness plus a
+  render.
+- **Option 9 — the phone profile's client band above the money ring.** A layout call out of the
+  788–804 rebuild; a small `order:` change once he has picked.
+- **Option 14 — the tap-target sweep** across the five surfaces the walk measured under 44px:
+  drawer section "A" buttons 34px, Dispatch's "Move this job" **15×15**, album chips 30px,
+  Production day cells 34px, lead-source chips 38px (A3). Several modules; wants a `gate_1081`-style
+  CSSOM walk so the floor is held by a script rather than by this list.
+- ⚠ **New, out of 1205: the estimate builder's phone header is now 150px tall** (52px before),
+  because six 44px buttons wrap onto three rows. `.cr-est-phonebar` (1029) already carries **Save
+  Draft and Publish** under the thumb, so the header duplicates both on a phone. **Dropping those
+  two from the header at ≤760px would be the cheap fix** and is one rule — but it removes a control
+  from a screen, so it is a pick, not a tidy-up.
+- ⚠ **New, out of 1204 and 1205: two sentinel states brought 15 pre-existing findings into view.**
+  Nothing had ever swept the **document editor** (`doceditor`, 1204) or the **estimate builder**
+  (`estbuilder`, 1205 — `#cr-est-view`, not the menu's `#cr-estimates-mount`), so their debt had
+  never been counted. Carried findings went **188 → 200 → 203** as the two states landed, on
+  renders of BOTH artifacts, so all 15 are pre-existing rather than these builds'. **They have not
+  been read.** Reading them is a `--all` pass of its own and covering them is its own build — the
+  same call the setup file records for the supplement Outcome state.
+  ⚠ **And the first 1205 sweep reported CLEAN over a screen it had never opened.** That is worth
+  remembering before quoting a sentinel verdict on a surface: check there is a state for it.
+
+### Still held for Theo from the 9 Sep external assessment
+
+- **The billing-parity prevalence counts need his explicit go** — the query is a read of private
+  customer and payment data, and automatic approval declined it as not authorised for that purpose.
+- Retiring `api/estimate-to-contract.js` (dead route; the **client-side** `cr-e2c` → Contract
+  button is live and is what 1205 measured).
+- **WeatherLock vs RhinoRoof** naming, and the logo preview.
