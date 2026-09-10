@@ -5759,10 +5759,14 @@ shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks t
   render.
 - **Option 9 — the phone profile's client band above the money ring.** A layout call out of the
   788–804 rebuild; a small `order:` change once he has picked.
-- **Option 14 — the tap-target sweep** across the five surfaces the walk measured under 44px:
-  drawer section "A" buttons 34px, Dispatch's "Move this job" **15×15**, album chips 30px,
-  Production day cells 34px, lead-source chips 38px (A3). Several modules; wants a `gate_1081`-style
-  CSSOM walk so the floor is held by a script rather than by this list.
+- ✅ **Option 14 SHIPPED at 1206**, and it left a measured list behind. `gate_1206` baselines **24
+  under-floor targets** across 32 states — existing debt that blocks nothing and can never grow.
+  `node gate_1206.mjs --list` prints them. The biggest families, if Theo wants another pass:
+  **five "Back" buttons at 33–36px** (Production, Punch, Dispatch, Sales Floor, Storm — one concept,
+  five modules), **the photo editor's tool bar at 25–33px** (a screen used on a roof), **the Line
+  Item Library's tabs and head buttons at 26–30px**, and two native checkboxes at 17–18px
+  (`#pfTrades .cbx`, `.ckvent`). ⚠ **The Dispatch grip is NOT on that list and must not be "fixed"**
+  — 15×15 box, 45×45 target, build 1040's pad. See BUG_CLASSES 89.
 - ⚠ **New, out of 1205: the estimate builder's phone header is now 150px tall** (52px before),
   because six 44px buttons wrap onto three rows. `.cr-est-phonebar` (1029) already carries **Save
   Draft and Publish** under the thumb, so the header duplicates both on a phone. **Dropping those

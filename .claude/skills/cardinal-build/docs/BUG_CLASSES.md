@@ -4379,6 +4379,39 @@ a fast pass. The run before it had printed 11 lines and `SELFTEST PASS (11/11)`.
 3. **Print the size delta.** `bytes 11480 -> 12223 | lines 181 -> 190` takes one line and makes a
    63-line deletion impossible to miss. The truncating edit printed only `ok`.
 
+## 89 — a tap-target measured by its BOX, when the target is the hit area
+
+**Build 1206.** The 9 Sep walk recorded *"Dispatch's 'Move this job' control **15×15**"* as the
+worst tap target in the app, and it is the one finding of that audit that was **wrong**. The box
+is 15×15; the element also carries
+
+```css
+#cr-disp .job .mv::after{ content:""; position:absolute; inset:-15px; }
+```
+
+so the thumb target is **45×45**, which build **1040** did on purpose and wrote the arithmetic
+down beside it (*"-9px made 33px effective — under the 44 floor the rest of the app holds"*). A
+probe reading `getBoundingClientRect()` alone reports a deliberately-padded control as the app's
+worst defect, and "fixing" it would have undone 1040.
+
+**The measurement that is actually true:** step outward from the element's centre until
+`document.elementFromPoint` stops resolving to that element or something inside it. That is the
+effective target, pad included. On the same sweep it also cleared four other false positives
+(`.pu-box` 22×22 → 43×45, the two dispatch week arrows 21×26 → 45×43).
+
+⚠ **Its one hole, stated because it only fails in the flattering direction:** `elementFromPoint`
+answers for the viewport only, so a small control far outside it cannot be scored. `gate_1206`
+counts those and prints the number every run — a layout change that pushes a small control
+off-screen would otherwise read as an improvement.
+
+⚠ **And the gate's own first draft had class 15 in it, twice.** Section A asserted
+`!(key in underFloorMap)` for five keys typed from memory; **four did not exist in the sweep's own
+format** (`#navMenu div.cr-ts button`, not `#navMenu .cr-ts button`), so four of five checks
+passed by matching nothing. The selftest had the identical bug and reported *"the sweep cannot
+fail"* about a sweep that could. **Both are now positive measurements** — query the selector,
+assert the count is > 0, then assert the size — because "I did not find it" and "it is fine" are
+the same output otherwise.
+
 ## Class 71 — a control with a live handler on an element that cannot receive events
 Build 1164 hung the Front Door on the header title via a delegated document click handler —
 and the title has carried `pointer-events:none` since it was a decorative label (`#cr-hd2-bar

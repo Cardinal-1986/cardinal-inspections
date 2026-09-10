@@ -13,6 +13,11 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 ---
 
 > ### Progress
+> **A13 and A3 closed in build 1206** (option 14): four real sub-44px controls fixed, plus the
+> document editor's own buttons, which 1204 left two pixels short. ⚠ **The audit's headline
+> tap-target finding — the Dispatch grip at 15×15 — was WRONG**: its hit pad makes it 45×45, and
+> the correction is in §3 and in BUG_CLASSES 89. `gate_1206` now holds the floor as a ratcheted
+> standing gate over all 32 sentinel states.
 > **A11 closed in build 1205** (option 10): every button on the estimate builder's toolbar is
 > 44 px, and the row wraps instead of scrolling sideways. Measured on 1204: 26 px buttons, with
 > “→ Contract” at right=463, Publish at 558 and Save Draft at 679 on a 390 px screen.
@@ -30,7 +35,7 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 > profile went from 65 DOM records/sec with 360 on the punch count to 5/sec with zero, and the
 > backward-chevron email is gone.
 > **Still open:** the two intake doors (7a/7b/7c — a decision, not code), live search results (6b),
-> the phone profile's band order (9) and the tap-target sweep (14).
+> and the phone profile's band order (9).
 
 ## 0. Read this first
 
@@ -319,8 +324,15 @@ Theo's decision and I am not re-opening it.
 - *Settled:* no money anywhere on Production (766–772). The punch card, day agenda and five-week
   calendar were screenshot-walked only.
 - **A13 — Tap targets under 44 px, measured in walk 1** (phone): drawer section "A" buttons 34 px;
-  Dispatch's "Move this job" control **15×15**; album chips 30 px; Production day cells 34 px;
+  ~~Dispatch's "Move this job" control **15×15**~~; album chips 30 px; Production day cells 34 px;
   lead-source chips 38 px (A3). The 11 px type floor (1081) held everywhere the probe looked.
+  ⚠ **CORRECTION, build 1206 — the Dispatch grip was a FALSE POSITIVE and this walk was wrong
+  about it.** Its BOX is 15×15; its TARGET is 45×45, because
+  `#cr-disp .job .mv::after{position:absolute;inset:-15px}` — build 1040's deliberate hit pad, with
+  the arithmetic written down beside it. Walk 1 measured `getBoundingClientRect()`, which cannot
+  see a pad. Four more of its findings went the same way once the hit area was measured properly
+  (`.pu-box` 22×22 → 43×45, both dispatch week arrows 21×26 → 45×43). **Recorded as BUG_CLASSES 89;
+  do not "fix" the grip.**
 
 ### Invoiced → Closed
 
@@ -385,7 +397,7 @@ plus its gate; every option ships with a negative control against 1199.
 | **11** | ✅ **SHIPPED, build 1203** — the labels WRAP instead, so nothing is renamed | A10 | trivial | |
 | **12** | ✅ **SHIPPED, build 1203** | A9 | trivial | |
 | **13** | ✅ **SHIPPED, build 1204.** The three sends are primaries, "Mark sent" moved below them on the phone, and the client chip reads “‹ Back” | A12 | small · render | measured: sends 0×0 on 1203, 181×42 and one-tap on 1204 |
-| **14** | Tap-target sweep under 44 px (drawer A, dispatch move, album chips, day cells, source chips) | A13/A3 | medium · several modules · `gate_1081`-style CSSOM walk | |
+| **14** | ✅ **SHIPPED, build 1206** — four of the five fixed, plus one of my own from 1204; the rest baselined by `gate_1206` | A13/A3 | medium · several modules | ⚠ **the dispatch grip was a FALSE POSITIVE** — 15×15 box, 45×45 target |
 
 **My recommendation, if you want one:** 1 + 2 in one build today (both trivial, both gated, both
 real bugs); then 3a + 13 as one "send the estimate" build; then 7 as a decision before code. 5, 6a,

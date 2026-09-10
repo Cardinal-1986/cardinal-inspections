@@ -8366,3 +8366,26 @@ and `doceditor` pushes its own seed row inside the state, so no earlier state's 
 took the sweep from 60 renders to 64 and the carried debt from 188 to 203; those 15 are pre-existing
 on both artifacts and **have not been read** — see `OPEN_ITEMS`.
 
+
+## Build 1206 — the 44px tap-target floor, and the gate that holds it
+
+**`gate_1206.mjs` is a ratcheted standing gate** in the shape of `gate_types` / `gate_dupes` /
+`gate_a11y`: run it every build. It walks **all 32 sentinel states at 390px** and measures every
+interactive element. Five selectors are asserted outright; the remaining 24 under-floor targets are
+baselined in `gate_1206_baseline.json` — they may fall, they can never grow, and a new one is red
+the build it lands. `--list` prints the whole debt, `--selftest` proves the sweep can fail,
+`--rebaseline` takes a written reason. It is deliberately **not** in `gate_chromium`, which is the
+per-build negative-control runner.
+
+⚠ **THE BOX IS NOT THE TARGET.** `#cr-disp .job .mv` is 15×15 and carries
+`::after{position:absolute;inset:-15px}` — build 1040's deliberate hit pad, which makes it 45×45 to
+a thumb. The audit that produced this build recorded it as the worst target in the app; that is a
+**false positive** (BUG_CLASSES 89) and the gate asserts the pad is still there so nobody removes
+it on the strength of that line. Measure the effective area — step outward from the centre until
+`elementFromPoint` stops resolving to the element.
+
+**Fixed at 1206:** `#navMenu .cr-ts button` 34→44 (the drawer's A/A/A size control — the one you
+reach for *because* you are struggling to hit things), `#cr-pae-tabs button` 30→44,
+`#cr-pb .pbmonth .pbday` 34→44 (phone only; the desktop cell is 78px), `.pf-chip` 38→44, and
+`.toolbar .edbtns .btn` 42→44 (1204's own two-pixel residue).
+
