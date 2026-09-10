@@ -136,19 +136,26 @@ const GATES = [
              repl: 'var _needAddr = true;' } },
 ];
 
-/* ⚠ THE CHILD'S OUTPUT GOES TO A FILE, NOT A PIPE, AND THAT IS THE WHOLE POINT.
-   10 Sep 2026: this step ran for 85 minutes on a 14-gate suite that takes 5m31s
-   at 13, and the runner had to be cancelled by hand — twice. The shape is Node's,
-   not the gate's: with `stdio: 'pipe'`, execFileSync blocks reading stdout until
-   EVERY writer closes it. A gate's own watchdog exits the node process with
-   `process.exit(3)` WITHOUT closing Playwright, so the orphaned Chromium — a
-   grandchild that inherited the same pipe — holds it open, and the `timeout`
-   option cannot help: it kills the child it spawned, not the browser behind it.
-   The wait is unbounded.
+/* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
+   FOR WANT OF THEM. 10 Sep 2026: GitHub's jobs API reported this step
+   `in_progress` for the better part of an hour after it had finished, and its
+   log endpoint 404s while a job reads as running — so "still going" and
+   "finished ages ago" are the same two signals. I read that as an 85-minute
+   hang, invented a cause, and cancelled runs 2158 and 2159 by hand. THE
+   TIMESTAMPS SAID OTHERWISE and I did not look at them until afterwards: 2158's
+   gates step ran 08:37:00 → 08:41:06, four minutes, killed about one minute
+   short of finishing. There was no hang. Measured on the very next run, with 14
+   gates: 5m18s, worst gate 46s. **Read `started_at`/`completed_at`, never the
+   status field.** BUG_CLASSES 90.
 
-   Writing to a temp file removes the pipe, so the timeout is real again. The
-   per-gate elapsed seconds are printed for the same reason: a suite that gets
-   slower should say which gate did it, out loud, every run. */
+   The file-instead-of-pipe below is real hardening and is KEPT, but it is
+   precautionary, not a fix for anything observed: with `stdio: 'pipe'`,
+   execFileSync blocks reading stdout until every writer closes it, and a gate
+   whose watchdog calls `process.exit(3)` without closing Playwright leaves an
+   orphaned Chromium holding that inherited pipe — `timeout` kills the child it
+   spawned, not the browser behind it. Writing to a temp file removes the pipe,
+   so the timeout is real. The gates also close their browser in the watchdog
+   now, which is the same hazard closed from the other side. */
 function run(script, args) {
   const t0 = Date.now();
   const log = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gate-out-')), 'out.txt');

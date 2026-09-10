@@ -28,10 +28,12 @@ const artifact = resolve(process.argv[2] || resolve(root, 'index.html'));
 const html = readFileSync(artifact, 'utf8');
 /* ⚠ THE WATCHDOG MUST TAKE THE BROWSER WITH IT. A bare process.exit(3) here
    leaves Playwright's Chromium running as an orphan holding the stdout pipe it
-   inherited, and gate_chromium's execFileSync then blocks reading that pipe
-   FOREVER — 85 minutes of CI on 10 Sep, cancelled by hand, on a suite that
-   takes 5m31s. The runner now writes child output to a file so it can never
-   happen again from that side; this is the same fix from this side. */
+   inherited, and gate_chromium's execFileSync would then block reading that
+   pipe. Precautionary, not a fix for anything observed — the "85 minute hang"
+   this comment used to cite was me misreading GitHub's jobs API, and the run I
+   cancelled over it had been going four minutes (BUG_CLASSES 90). The hazard is
+   still real; gate_chromium closes it from the other side by writing child
+   output to a file. */
 let BROWSER = null;
 setTimeout(async () => {
   console.log('GATE TIMEOUT');

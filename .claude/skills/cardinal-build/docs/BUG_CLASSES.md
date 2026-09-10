@@ -4412,6 +4412,34 @@ fail"* about a sweep that could. **Both are now positive measurements** — quer
 assert the count is > 0, then assert the size — because "I did not find it" and "it is fine" are
 the same output otherwise.
 
+## 90 — trusting a CI STATUS FIELD over the timestamps, and cancelling healthy runs
+
+**10 Sep 2026, and it cost about an hour of wall clock and two CI runs.** After build 1208 the
+`chromium` job appeared to hang: GitHub's jobs API kept reporting the *"Chromium gates + negative
+controls"* step as `in_progress`, and `get_job_logs` returns **HTTP 404 while a job reads as
+running** — so "still going" and "finished, logs not fetched yet" present as **the same two
+signals**. I read that as an 85-minute hang, reasoned out a cause (an orphaned Chromium holding an
+inherited stdout pipe), and **cancelled runs 2158 and 2159 by hand.**
+
+**The timestamps were in the same API response the whole time and I did not read them.** Run
+2158's gates step ran **08:37:00 → 08:41:06** — four minutes, killed roughly one minute short of
+finishing. It was never hanging. The very next run, 14 gates, came in at **5m18s**, worst gate 46s.
+
+**Three rules:**
+1. **A job's duration is `completed_at − started_at`, never its `status`.** That field lagged by
+   tens of minutes here, on three separate reads, on two different runs.
+2. **A 404 from the logs endpoint is not evidence of anything.** It is the normal answer for a job
+   whose logs are not yet retrievable, which includes jobs that have just finished.
+3. **Cancelling someone's CI is a destructive act — establish the fault first.** The comparison
+   that would have settled it (this run's step timestamps against the previous run's) takes one
+   look and I did it only afterwards.
+
+⚠ **The hardening that came out of the wrong diagnosis is kept, and is labelled as precautionary
+rather than as a fix.** `gate_chromium` writes each child's output to a temp file instead of a pipe
+(the orphan-pipe hazard is real in principle), caps each gate at 300s with SIGKILL, and — the part
+that actually earns its place — **prints per-gate elapsed seconds**, so the next time a suite looks
+slow the log says which gate, out loud, instead of leaving it to inference.
+
 ## Class 71 — a control with a live handler on an element that cannot receive events
 Build 1164 hung the Front Door on the header title via a delegated document click handler —
 and the title has carried `pointer-events:none` since it was a decorative label (`#cr-hd2-bar
