@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-09 build 1199<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1200<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11898,6 +11898,23 @@ var ACX_STEPS = [
 function acxRank(stg){
   var order = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
   return order.indexOf(stg);
+}
+/* 1200: has this job just reached `to` for the FIRST time, moving forward?
+   The Approved and Completed team emails used to fire on `prev !== to`, which
+   means "arrived from anywhere" - so the back chevron from Scheduled to
+   Approved re-sent Curtis "APPROVED - schedule + order materials" for a job
+   that had already been scheduled, and the same shape re-sent the rep's
+   "job complete" mail from Invoiced. acxRank() above is the app's pipeline
+   order and the only one; do not add a second. The two stages it does NOT
+   list - OnHold and Lost - rank -1 and count as BEFORE every stage ON PURPOSE:
+   a held job that gets approved, and a lost job revived, are both real forward
+   moves and must still tell Curtis. gate_1200 pins the entire nine-stage truth
+   table for both targets, so a later edit to that order goes red rather than
+   silently inverting this. api/clientsign.js has carried the same rule since
+   1007 ("only alerts on the real move"). */
+function crStageIsForward(prev, to){
+  var r = acxRank(prev);
+  return r === -1 || r < acxRank(to);
 }
 function acxNext(stg){
   var order = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
@@ -19973,7 +19990,7 @@ async function setStage(prId, v){
   }
   renderHome();
   /* workflow notifications */
-  if(v === 'Approved' && prev !== 'Approved'){
+  if(v === 'Approved' && crStageIsForward(prev, 'Approved')){
     _notifyOrQueue(['curtis@cardinalrenovations.net'].concat(ADMIN_EMAILS),
       /* 772: no emoji in a subject line that leaves the building — this is what
          Curtis sees in his inbox, rendered in whatever font his mail client picks. */
@@ -19982,7 +19999,7 @@ async function setStage(prId, v){
       '<p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s \uD83D\uDCE6 Materials tab).</p>',
       clientLink(pr.id));
   }
-  if(v === 'Completed' && prev !== 'Completed'){
+  if(v === 'Completed' && crStageIsForward(prev, 'Completed')){
     var rep = assignedRepOf(pr);
     _notifyOrQueue((rep ? [rep] : []).concat(ADMIN_EMAILS),
       'Job complete \u2014 walk-around + invoice: ' + (pr.name || ''),
@@ -42689,6 +42706,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1200, d: '2026-09-10', t: 'Your phone stops working overtime on a client profile, and Curtis stops being told twice', s: 'Two fixes, both invisible until you notice what they cost. <b>An open client profile was redrawing its Punch Outs count about sixty times a second</b>, forever, whether the job had four punch items or none \u2014 every other part of the page that watches for changes woke up each time. On a phone that is battery and heat for nothing. The count is now written only when it actually changes. <b>And moving a job backwards no longer re-sends the team email.</b> Tapping the \u2039 arrow from Scheduled back to Approved fired Curtis and the admins a fresh \u201cAPPROVED \u2014 schedule + order materials\u201d for a job that had already been scheduled; the same shape re-sent the rep\u2019s \u201cjob complete\u201d mail from Invoiced. Those two emails now go out only when a job reaches that stage moving <i>forward</i> \u2014 and a job that was On Hold, or Lost and revived, still counts as forward, so nothing real is missed.' },
   { b: 1199, d: '2026-09-09', t: 'Online payments fail safe, bank payments are labelled right, and Maps waits until it is needed', s: 'A pay link now refuses to open a checkout when the payment history cannot be read, instead of quietly treating a failed read as \u201cnothing paid yet\u201d and asking for the full amount \u2014 the shared document says the balance could not be verified and to try again shortly. A bank (ACH) payment that clears is recorded as ACH rather than as a card payment. Google Maps no longer downloads on every launch before anyone has signed in; it loads the first time an address field is touched. The sign-in screen\u2019s example email uses the company domain. The old estimate-to-contract route checks that you are on the job before it hands back a contract.' },
   { b: 1198, d: '2026-09-03', t: 'The menu and search marks are visible again in light mode', s: 'The Retail header keeps its existing design. In light mode the hamburger and search buttons now receive the same light surface as the rest of the header chrome, so their navy icon strokes no longer disappear into a navy button. Dark mode and every button action are unchanged.' },
   { b: 1197, d: '2026-09-02', t: 'Leaving The Appointment takes its rail along, and System Health tells the truth', s: 'Leaving The Appointment by the Back button, a notification, or any door other than its own \u2715 used to leave the bottom rail painted over every screen you went to next; every exit now removes it, and the next visit still offers to pick up where you left off. System Health stopped reporting its own mistakes as database failures: the team-roster row no longer asks for a column that table never had, the daily-digest row reads the real audit columns and the morning digest now records each successful send, and a table that truly does not exist shows as missing instead of reachable. The book\u2019s own address, presentation.cardinalroster.com, now opens the Pop-Up Roof instead of the sign-in screen. Two light-theme labels (the guide row on a client profile and the category tabs in the line-item library) are darker so they read at the contrast floor.' },
@@ -56509,8 +56527,19 @@ function syncMenuCount(){
 var el = document.getElementById('dbPunchN');
 if(!el || loadedFor === null) return;
 var open = rows.filter(function(i){ return i.status !== 'done'; }).length;
-el.textContent = open;
-el.classList.toggle('zero', open === 0);
+/* 1200: this is reached from check(), which runs from a document.body
+   MutationObserver. Assigning textContent emits a childList record even when
+   the string is IDENTICAL - the old text node is removed and a new one added -
+   so this write woke every body observer in the app about sixty times a second
+   for as long as a client profile was open. Measured: 65 records/sec, 360 of
+   them on this element in six seconds, on a profile with four punch items and
+   on one with none. Same class as 567/569. Compare against the LIVE element
+   (paintChip's shape, 567) rather than a stored signature (wxPaint, 569), so
+   this still repairs the count if another module stomps it. */
+var txt = String(open);
+if(el.textContent !== txt) el.textContent = txt;
+var zero = (open === 0);
+if(el.classList.contains('zero') !== zero) el.classList.toggle('zero', zero);
 }
 function itemHtml(i){
 return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +

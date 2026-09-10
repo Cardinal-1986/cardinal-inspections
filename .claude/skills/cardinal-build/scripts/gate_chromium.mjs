@@ -68,6 +68,15 @@ const GATES = [
     protects: 'Google Maps loads on the first focus of an address field, never at boot; the money routes fail closed',
     break: { find: 'if(isAddressInput(input)) armAutocomplete(input);',
              repl: 'if(isAddressInput(input)) attachAutocomplete(input);' } },
+  /* 1200: an open client profile must stop redrawing its punch count from
+     inside a body-observer wake. The break removes the guard, restoring the
+     unconditional textContent write that measured 360 records in six seconds
+     on one element — an identical-string write still emits a childList
+     record, which is the 567/569 class. */
+  { name: 'gate_1200.mjs',
+    protects: 'an open client profile settles; the Approved/Completed team emails fire only on a forward move',
+    break: { find: 'var txt = String(open);\nif(el.textContent !== txt) el.textContent = txt;',
+             repl: 'var txt = String(open);\nel.textContent = txt;' } },
 ];
 
 function run(script, args) {

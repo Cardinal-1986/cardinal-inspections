@@ -8237,3 +8237,20 @@ Showroom tile, the Sales Floor, **The Appointment (six sites)**, and **`wireColo
 fills every shingle colour and line dropdown in Cardinal's estimates, contracts and reports from
 `CardinalColors.list()` / `.lines()`**. Deleting them would empty that paperwork silently and break
 `?open=appt`. `gate_1190.mjs` group B holds that, and drives both modules open in Chromium.
+
+
+## Build 1200 — two guards
+
+**`crStageIsForward(prev, to)`** (main block, beside `acxRank`) is now the single answer to
+"has this job just reached that stage moving forward?". Both workflow emails in `setStage`
+ask it: Curtis's **APPROVED — schedule + order materials** and the rep's **job complete —
+walk-around + invoice**. Moving a job *backwards* into either stage is silent. `OnHold` and
+`Lost` rank -1 in `acxRank` and count as **before** every stage on purpose, so a held job
+that gets approved and a lost job revived still notify. The truth table is pinned by
+`gate_1200.mjs`, not by prose.
+
+**`syncMenuCount()`** (`cr-pp-script`) writes the Punch Outs count and toggles its `zero`
+class **only when either actually changes**. It runs from a `document.body` observer's wake,
+where an identical-string `textContent` write still emits a mutation record — the 567/569
+class. `cr-portal-script`'s `refreshCounts()` has always done this; the punch module now
+does too.

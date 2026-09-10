@@ -4297,6 +4297,30 @@ this, and the fix was re-verified in the runner (1198: 13/13 on 1199, RED 6 on i
 **How to find the rest:** `grep -n "html.includes('v2026-" scripts/gate_*.mjs` — any hit that is
 not inside a floor comparison is this class waiting for the next build.
 
+## 86 — a negative-control break anchor that matches a PRE-EXISTING identical line
+
+**Build 1200, caught before it shipped.** `gate_1200`'s registered break was
+`if(el.textContent !== txt) el.textContent = txt;` — the guard the build had just added to
+`syncMenuCount()`. That exact line **already existed once in the previous build**, in
+`cr-portal-script`'s `refreshCounts()`, which has carried it since it was written. Three
+things followed, and every one of them looked green:
+
+- `gate_chromium --selftest` reported the anchor "occurs 1x in the artifact" — against the
+  **unrelated** site, on a tree that did not yet contain the fix at all.
+- The break would have removed the **portal counts'** guard, so the control would have
+  proved something about a module the gate never mentions.
+- `gate_1200`'s own section-A check used a file-wide `html.includes(...)` and therefore
+  **PASSED on the control tree**. A check that cannot fail.
+
+**This is the doc set's own "scope the assertion to the function, not the file" rule biting a
+GATE rather than a patch.** A per-build gate asserts on what the build *added*; a widely-used
+idiom is exactly the kind of line another module already has.
+
+**The rule: before registering a break anchor, count it in the PREVIOUS build.** It must be
+**0** there and **1** in the new artifact. Extend the anchor with a unique neighbouring line
+until that holds (1200 used `var txt = String(open);` plus the guard). And scope every static
+check to a brace-matched slice of the function the build touched.
+
 ## Class 71 — a control with a live handler on an element that cannot receive events
 Build 1164 hung the Front Door on the header title via a delegated document click handler —
 and the title has carried `pointer-events:none` since it was a decorative label (`#cr-hd2-bar

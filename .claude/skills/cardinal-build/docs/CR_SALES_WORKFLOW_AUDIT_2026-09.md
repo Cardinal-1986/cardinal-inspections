@@ -12,6 +12,11 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 
 ---
 
+> ### Progress
+> **B1 and B2 shipped in build 1200** (options 1 and 2), measured before and after: an open
+> profile went from 65 DOM records/sec with 360 on the punch count to 5/sec with zero, and the
+> backward-chevron email is gone. Everything else below is still open.
+
 ## 0. Read this first
 
 Six real bugs, one of them on every profile a rep opens. Everything else is friction, and most of
@@ -347,8 +352,8 @@ plus its gate; every option ships with a negative control against 1199.
 
 | # | Option | Fixes | Cost | Note |
 |---|---|---|---|---|
-| **1** | Guard `syncMenuCount()` — write the count only when it changed | B1 | trivial · 1 build · gate = mutation-rate probe, red on 1199 | **do first; it is on every profile** |
-| **2** | Forward-only Approved (and Completed) team emails: `rank(prev) < rank(v)` | B2 | trivial · rides with 1 · gate executes shipped `setStage` with a stub notifier | mirrors `api/clientsign.js` 1007 |
+| **1** | ✅ **SHIPPED, build 1200.** Guard `syncMenuCount()` — write the count only when it changed | B1 | trivial · 1 build · gate = mutation-rate probe, red on 1199 | **do first; it is on every profile** |
+| **2** | ✅ **SHIPPED, build 1200** as `crStageIsForward()`. Forward-only Approved and Completed team emails | B2 | trivial · rides with 1 · gate executes shipped `setStage` with a stub notifier | mirrors `api/clientsign.js` 1007 |
 | **3a** | Publish sheet becomes the send sheet: *Email · Text to sign · Share link · Not now*; a real send sets both statuses | B3, A12 | small–medium · 1 build · Chromium render of the sheet, both themes | wants your wording pick |
 | **3b** | Keep the question, ask it *after* a send, verb "Mark sent", Cancel default | B3 | small | the cheaper half of 3a |
 | **4a** | Record `review_requested_at` only after the rep confirms it went | B4 | small | |
