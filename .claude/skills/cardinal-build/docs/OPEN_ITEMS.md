@@ -2,6 +2,41 @@
 
 ---
 
+## 🟠 OPEN — from the 9 Sep 2026 external assessment, after build 1199
+
+> Build 1199 shipped the findings that needed no decision (fail-closed pay routes, ACH label,
+> the conversion route's authorization order, Maps on first focus, the sign-in placeholder).
+> Everything below needs Theo. The reconciled assessment is `CR_EXTERNAL_ASSESSMENT_2026-09-09.md`.
+
+1. **Billing parity — MEASURE FIRST, then a targeted fix.** `jobFinance()` adds `manual_value`
+   to a signed contract and, for a job with no collections rows, subtracts legacy worksheet /
+   payment amounts; `api/pay.js` / `api/share.js` compute signed contracts − collections only.
+   Two shapes can therefore disagree: contract + manual extras (CRM $9,500 vs checkout $8,000
+   on the reviewer's fixture) and legacy-paid with no collections row (CRM $8,000 vs checkout
+   $10,000). **Counts needed, aggregate only, Theo's explicit go:** jobs with a signed contract
+   AND `manual_value > 0`; jobs with worksheet/legacy paid > 0 AND zero collections rows; and of
+   each, how many carry an invoice/estimate document with a share token. Zero on both = preventive
+   work; the correction is two additive reads of the project checklist server-side, not a
+   shared-definition refactor. Rank by count and reachability.
+2. **The sign-in logo is 1.14 MB (`cardinal-transparent.png`) and loads before sign-in.**
+   Re-encode (WebP/AVIF or a trimmed PNG) or vectorize; **visual — labelled previews first**,
+   per the standing rule. The `onerror` fallback `cardinal-landing.PNG` (1.73 MB) is live and
+   must stay.
+3. **Retire `api/estimate-to-contract.js`.** No caller; its `select` names `client_name` and
+   `estimate`, which `projects` has never had, so it 404s on every call; the 1197 audit-row fix
+   targeted it in vain. 1199 fixed its authorization order anyway. Delete the file and the prose
+   line in `index.html`'s install instructions; check `vercel.json`'s functions block. A deletion,
+   so Theo's.
+4. **Defer Chart.js and PapaParse** (both load unconditionally) until the analytics and CSV
+   screens open. Regression risk on every chart consumer — its own build, gated per consumer.
+5. **WeatherLock vs RhinoRoof Granulated.** `WARRANTIES.roofing` in `api/estimate-to-contract.js`
+   and the Library name WeatherLock as the ice & water barrier; Cardinal's field truth (the roof
+   matrix) is RhinoRoof Granulated. Both are current OC products. His wording.
+6. **Production transfer size is 1.64 MB `br`** at Vercel's compression level (gzip parity); the
+   doc set's 1.1 MB belief was a local measurement. Only source size moves it.
+
+---
+
 ## 🟠 OPEN — the in-home presentation: 1159 did the wiring, not the arc (30 Aug 2026)
 
 > **UPDATE 1 Sep 2026 — this arc is now the GUIDED SALE workstream.** Theo's brief

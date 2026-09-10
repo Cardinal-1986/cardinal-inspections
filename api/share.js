@@ -96,28 +96,53 @@ function signUi(token) {
 // owedOn: what THIS document owes, computed server-side. KEEP IN SYNC with the
 // identical copy in api/pay.js, which does the authoritative charge — this copy
 // only renders the amount for display.
+/* 1199: FAIL CLOSED. Every lookup below used to be optional — `collected`
+   started at 0 and only grew when the collections request happened to succeed,
+   so one 503 on that request turned an $8,000 balance into a $10,000 checkout:
+   a failed read of the payment history was indistinguishable from an empty
+   payment history. Now any failed lookup throws LookupFailed, the caller says
+   the balance could not be verified, and nobody is offered a number the ledger
+   did not confirm. A failed read is never an empty ledger.
+   KEEP IN SYNC: this class, readRows and owedOn are byte-identical in
+   api/pay.js and api/share.js, and gate_1199 asserts it. */
+class LookupFailed extends Error {
+  constructor(what) { super('lookup failed: ' + what); this.code = 'LOOKUP_FAILED'; }
+}
+async function readRows(sbHeaders, what, url) {
+  let r;
+  try { r = await fetch(url, { headers: sbHeaders }); }
+  catch (e) { throw new LookupFailed(what + ' unreachable'); }
+  if (!r.ok) throw new LookupFailed(what + ' ' + r.status);
+  return r.json();
+}
 async function owedOn(sbHeaders, rep) {
   const isInvoice = /^invoice/i.test(String(rep.title || '').trim());
+
+  // money already collected on this job — a failed read throws, never reads as $0
   let collected = 0;
-  const cr = await fetch(
-    `${SUPABASE_URL}/rest/v1/collections?project_id=eq.${rep.project_id}&select=amount`,
-    { headers: sbHeaders });
-  if (cr.ok) for (const r of await cr.json()) collected += Number(r.amount) || 0;
+  for (const r of await readRows(sbHeaders, 'collections',
+      `${SUPABASE_URL}/rest/v1/collections?project_id=eq.${rep.project_id}&select=amount`)) {
+    collected += Number(r.amount) || 0;
+  }
+
   if (isInvoice) {
+    // balance due = signed-contract total for the job − collected (jobFinance's
+    // contracted-job case). Falls back to the invoice's own stored total.
     let contractTotal = 0;
-    const dr = await fetch(
-      `${SUPABASE_URL}/rest/v1/inspection_reports?project_id=eq.${rep.project_id}&select=title,total,signed_at`,
-      { headers: sbHeaders });
-    if (dr.ok) for (const r of await dr.json()) {
-      if (/^contract/i.test(String(r.title || '').trim()) && r.signed_at && Number(r.total) > 0) contractTotal += Number(r.total);
+    for (const r of await readRows(sbHeaders, 'inspection_reports',
+        `${SUPABASE_URL}/rest/v1/inspection_reports?project_id=eq.${rep.project_id}&select=title,total,signed_at`)) {
+      if (/^contract/i.test(String(r.title || '').trim()) && r.signed_at && Number(r.total) > 0) {
+        contractTotal += Number(r.total);
+      }
     }
     const jobTotal = contractTotal > 0 ? contractTotal : (Number(rep.total) || 0);
     return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due' };
   }
-  const er = await fetch(
-    `${SUPABASE_URL}/rest/v1/estimates?or=(doc_id.eq.${rep.id},contract_doc_id.eq.${rep.id})&select=deposit_amount&limit=1`,
-    { headers: sbHeaders });
-  const est = er.ok ? (await er.json())[0] : null;
+
+  // estimate / contract → the deposit (reachable via either the estimate doc or
+  // the contract doc — estimates carries both doc_id and contract_doc_id)
+  const est = (await readRows(sbHeaders, 'estimates',
+      `${SUPABASE_URL}/rest/v1/estimates?or=(doc_id.eq.${rep.id},contract_doc_id.eq.${rep.id})&select=deposit_amount&limit=1`))[0];
   const deposit = Number(est && est.deposit_amount) || 0;
   return { cents: Math.round((deposit - collected) * 100), label: 'Deposit' };
 }
@@ -149,6 +174,22 @@ function payUi(token, cents, label, name) {
       padding:15px 20px;border-radius:12px;box-shadow:0 6px 15px rgba(200,32,46,.30);">Pay ${dollars}</a>
     <div style="text-align:center;margin-top:11px;font-size:11.5px;font-weight:600;color:#6b645e;">
       ${lock}Secure checkout &middot; processed by Stripe</div>
+  </div>
+</div>`;
+}
+
+// 1199: the honest state when the balance cannot be verified — no amount, no
+// button, and the reason. Same shell as payUi so it reads as the same bar.
+function unavailableUi() {
+  return `
+<div id="crPayBar" data-cr-unavailable="1" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;
+  padding:0 12px calc(12px + env(safe-area-inset-bottom,0px));pointer-events:none;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+  <div style="pointer-events:auto;max-width:520px;margin:0 auto;background:#ffffff;
+    border:1px solid #ece7e3;border-radius:18px 18px 14px 14px;
+    box-shadow:0 -1px 8px rgba(20,10,8,.05),0 16px 44px rgba(20,10,8,.20);padding:15px 18px 13px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#6b5d52;">Balance check unavailable</div>
+    <div style="font-size:14px;color:#231b18;margin-top:6px;line-height:1.4;">The amount due on this document could not be verified just now. Please open this link again in a few minutes to pay online.</div>
   </div>
 </div>`;
 }
@@ -234,7 +275,15 @@ export default async function handler(req, res) {
           const ui = payUi(t, cents, label, rows[0].project || rows[0].title);
           html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
         }
-      } catch (e) { /* leave the document unblocked */ }
+      } catch (e) {
+        /* leave the document unblocked. 1199: but when the ledger could not be
+           READ, say so — a missing pay bar otherwise reads as "nothing due",
+           and a correct state with no explanation is its own defect. */
+        if (e && e.code === 'LOOKUP_FAILED') {
+          const ui = unavailableUi();
+          html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
+        }
+      }
     }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Robots-Tag', 'noindex');

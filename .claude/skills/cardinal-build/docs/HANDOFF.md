@@ -4,6 +4,56 @@
 
 ---
 
+# Session of 9 September 2026 — the external assessment, two rebuttal rounds, build 1199
+
+Theo brought an outside assessment of the CRM at 1198 (`CR_EXTERNAL_ASSESSMENT_2026-09-09.md`
+holds it, reconciled). It was checked against this clone, argued twice — the reviewer conceded
+the ratings and the CI framing, I conceded compression and the Maps boot load — and the four
+findings that needed no decision shipped as **build 1199** on branch
+`claude/cardinal-roof-readiness-matrix-hwoooz` (the same branch that carries the roof-system
+readiness matrix, which is docs-only and has **no PR by Theo's choice**).
+
+## What 1199 does (the build-log entry has the detail)
+1. **`api/pay.js` + `api/share.js` fail closed** — a failed ledger read is a 503 / an honest
+   "balance check unavailable" bar, never a full-amount checkout. Resolver byte-identical, gated.
+2. **`api/pay-webhook.js`** records a cleared bank debit as `ach`, not `card`.
+3. **`api/estimate-to-contract.js`** authorizes before the existing-contract return and parses the
+   serialized checklist — insurance only: the route is dead in production (selects columns that
+   do not exist) and retiring it is Theo's call.
+4. **Maps loads on the first focus of an address field**, not at boot behind the sign-in screen.
+5. Sign-in placeholder → the roster domain.
+
+## Decisions waiting on Theo (none of them code yet)
+- **Billing parity** (`jobFinance()` adds manual extras and honours legacy worksheet payments;
+  the server resolver does neither). Measure first: how many live jobs have a signed contract
+  plus manual extras, or worksheet payments and no collections rows, and how many of those carry
+  a reachable pay link. **Aggregate counts only, and the read needs his explicit go** — this
+  session's own classifier blocked even a schema read, and the reviewer's query was blocked for
+  the same reason. If both counts are zero it is preventive; the correction is two additive reads
+  either way, not a shared-definition refactor.
+- **The 1.14 MB sign-in logo** — visual, preview options first.
+- **Retire `api/estimate-to-contract.js`** — no caller (the only hit in `index.html` is
+  install-instruction prose), cannot run against the live schema, latent auth defects now fixed
+  anyway. Delete the file and the prose reference; check `vercel.json`'s functions block.
+- **Defer Chart.js and PapaParse** until their screens open (Maps is done).
+- **WeatherLock vs RhinoRoof Granulated** — the contract warranty text and the Library say
+  WeatherLock; field truth is RhinoRoof Granulated. Copy consistency, his wording.
+
+## Rig notes recorded so nobody re-chases them
+- **The npm registry answers 403 from this container**, direct and via the proxy, so jsdom,
+  axe-core and the Stripe SDK cannot be installed here. The global Playwright at
+  `/opt/node22/lib/node_modules/playwright` and its Chromium work (gate_1197's resolution).
+  gate_1199 therefore strips the SDK imports from the module text and passes stubs in — it
+  drives the shipped handlers without the SDK. `gate_a11y` and `gate_stack` did not run; CI does.
+- **The Supabase connector's `list_tables` was refused by the auto-mode classifier** here; the
+  column claim was corroborated from the migrations and CLAUDE.md instead.
+- **The 729 "1,103,773 bytes Brotli" figure measured local Brotli, not Vercel.** Production is
+  1,637,693 bytes `br` (the reviewer's live measurement) — gzip parity. Source size is the lever.
+- Manufacturer domains (owenscorning.com, lifetimetool.com, acm-metals.com) are egress-blocked;
+  the roof matrix's verification came from search summaries and distributor data sheets.
+
+---
+
 # Session of 3 September 2026 — Retail light header icons, build 1198
 
 Theo reported that the hamburger and search controls looked empty on the Retail home in light

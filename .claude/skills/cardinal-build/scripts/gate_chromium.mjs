@@ -61,6 +61,13 @@ const GATES = [
       find: '  color:var(--hin,#2B3D4F);\n  background:color-mix(in srgb,var(--hac,#376CA0) 10%,#ffffff);',
       repl: '  color:var(--hin,#2B3D4F);'
     } },
+  /* 1199: Maps must not download at boot. The break puts scan() back to
+     attaching autocomplete on sight, which fetches the Maps API behind the
+     sign-in screen — the assessment's warm-boot finding. */
+  { name: 'gate_1199.mjs',
+    protects: 'Google Maps loads on the first focus of an address field, never at boot; the money routes fail closed',
+    break: { find: 'if(isAddressInput(input)) armAutocomplete(input);',
+             repl: 'if(isAddressInput(input)) attachAutocomplete(input);' } },
 ];
 
 function run(script, args) {

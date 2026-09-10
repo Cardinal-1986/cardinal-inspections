@@ -26,6 +26,20 @@ async function rawBody(req) {
   return Buffer.concat(chunks);
 }
 
+/* 1199: the method is the EVENT's, not a constant. A card settles inside
+   checkout.session.completed; a bank debit only ever arrives as
+   checkout.session.async_payment_succeeded, days later (see 1151 below). The
+   row used to say 'card' with a card note for BOTH, so every cleared ACH
+   deposit was booked as a card payment. collections.method is free text with
+   'card' | 'ach' documented (collections_payment_provider.sql). */
+function paymentMethodFor(eventType) {
+  return eventType === 'checkout.session.async_payment_succeeded' ? 'ach' : 'card';
+}
+function paymentNoteFor(method) {
+  return method === 'ach' ? 'Online bank (ACH) payment via secure link'
+                         : 'Online card payment via secure link';
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).send('Method not allowed'); return; }
   const sk = process.env.STRIPE_SECRET_KEY;
@@ -76,6 +90,7 @@ export default async function handler(req, res) {
       const amount = (Number(s.amount_total) || 0) / 100;
       // a deposit records as 'deposit'; an invoice balance as 'final' (collections.type CHECK)
       const collType = meta.kind === 'balance' ? 'final' : 'deposit';
+      const method = paymentMethodFor(event.type);
       if (paid && (meta.kind === 'deposit' || meta.kind === 'balance') && meta.project_id && amount > 0) {
         const ins = await fetch(`${SUPABASE_URL}/rest/v1/collections`, {
           method: 'POST',
@@ -89,9 +104,9 @@ export default async function handler(req, res) {
             amount,
             type: collType,
             source: 'homeowner',
-            method: 'card',
+            method,
             external_ref: String(s.payment_intent || s.id),
-            notes: 'Online card payment via secure link',
+            notes: paymentNoteFor(method),
             created_by: 'stripe'
           }])
         });
