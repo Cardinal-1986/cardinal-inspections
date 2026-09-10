@@ -4609,3 +4609,45 @@ colour, and the next real failure lands in a file already known to be red.
   asserts the route is gone and that nothing calls it. Same section, same subject, other
   side. Deleting it would have thrown away five live sections in the same file.
 - **Give any test that can shrink a coverage FLOOR.**
+
+## 95 — a reference sweep whose `--include` list silently excluded a whole file type
+
+**Cost: three CI failures on the very next run, 10 Sep 2026 (build 1212).**
+
+Before deleting `api/estimate-to-contract.js` I swept the repo for every reference to
+it. The sweep was:
+
+```
+grep -rn "estimate-to-contract" --include=*.md --include=*.js --include=*.json \
+     --include=*.html .
+```
+
+It found `harness_653.js`, `brand/README.md`, `brand/letterhead.js`, `index.html` and
+the doc set — and I repaired every one of them. **`.mjs` was not in the list.** Every
+per-build Chromium gate in this repo is `.mjs`, so **the entire `gate_*` surface was
+invisible to a sweep I believed was repo-wide.** `gate_1197` and `gate_1199` both
+`readFileSync` that route, and both crashed with `ENOENT` on the next CI run.
+
+**The shape.** An `--include` list is a *deny*-by-default filter. Every extension you
+forget is a directory you did not search, and the output looks exactly like a complete
+search: hits, filenames, no warning. The more exhaustive the list looks, the more
+convincing the omission.
+
+**The rules:**
+- **Before deleting anything, grep with NO `--include` at all** and let the noise be
+  noise. `git grep -n <name>` over the whole tree costs nothing on this repo.
+- **When you must filter, filter by what you are excluding** (`--exclude-dir=node_modules`),
+  never by what you are including.
+- **Name the extensions in this repo before trusting a list**: `.js` **and `.mjs` and
+  `.cjs`** all carry live code here — `gate_*.mjs`, `harness_*.js`, `chromium_launch.cjs`.
+- ⚠ **A deletion's blast radius includes the gates.** They are the files most likely to
+  read a path by name, and the least likely to be in your head while you delete it.
+
+**How it presented, which is the other half of the lesson:** both gates died with
+`ENOENT` before printing a line, and `gate_chromium` reports that as
+`FAILED on the shipped artifact … Node.js v22.23.2`. That reads as *this gate went red*,
+not as *this gate proved nothing* — **BUG_CLASSES 37, arriving through a new door.** The
+third failure, `gate_1205`, was a genuine red: it applied a 44px tap-target floor to two
+buttons build 1211 had legitimately hidden, and a `0x0` element fails a size floor. All
+three were repaired by **inverting or scoping the check, never by deleting it** — the
+same call `harness_653`'s P1 got the same day.

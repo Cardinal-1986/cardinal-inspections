@@ -115,18 +115,32 @@ if (!(existsSync(setupPath) && existsSync(mockPath))) {
       const head = v && v.querySelector('.cr-est-head');
       if (!head) return { err: '#cr-est-view .cr-est-head not on the page' };
       const hb = head.getBoundingClientRect();
+      /* ⚠ 1211: two header controls are HIDDEN below 700px, because
+         .cr-est-phonebar carries them under the thumb instead. A hidden button
+         measures 0x0 and needs no tap target — so a 44px floor applied to it
+         reports a failure that is not one, which is exactly what happened when
+         1211 landed. Measure what a PERSON can press.
+         ⚠ And never simply "skip invisible": that turns a shrinking set into a
+         quietly passing check. The hidden set is asserted by identity below, so
+         a THIRD control going missing is red. */
       const btn = (el) => {
         const r = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
         return { label: (el.textContent || '').trim().slice(0, 18),
+                 key: el.id || el.getAttribute('data-act') || 'unnamed',
                  w: Math.round(r.width), h: Math.round(r.height),
-                 right: Math.round(r.right), top: Math.round(r.top) };
+                 right: Math.round(r.right), top: Math.round(r.top),
+                 shown: cs.display !== 'none' && cs.visibility !== 'hidden' &&
+                        r.width > 0 && r.height > 0 };
       };
-      const heads = [...head.querySelectorAll('button')].map(btn);
+      const headsAll = [...head.querySelectorAll('button')].map(btn);
+      const heads = headsAll.filter(b => b.shown);
+      const headsHidden = headsAll.filter(b => !b.shown).map(b => b.key).sort();
       const adds = [...v.querySelectorAll('.cr-est-items-head button')].map(btn);
       const h2 = head.querySelector('h2');
       const bar = v.querySelector('.cr-est-phonebar');
       return {
-        heads, adds,
+        heads, adds, headsHidden, headsTotal: headsAll.length,
         headScrollW: head.scrollWidth, headClientW: head.clientWidth,
         headH: Math.round(hb.height), wrap: getComputedStyle(head).flexWrap,
         h2Bottom: h2 ? Math.round(h2.getBoundingClientRect().bottom) : -1,
@@ -145,7 +159,18 @@ if (!(existsSync(setupPath) && existsSync(mockPath))) {
       ok(false, 'sections B-D RAN — the builder never opened, so nothing was measured');
     } else {
       console.log('\nB  phone 390 — the toolbar clears the floor and stays on screen');
-      ok(p.heads.length >= 4, 'the header rendered its buttons',
+      ok(p.headsTotal >= 6, 'the header rendered its buttons',
+         p.headsTotal + ' in the DOM: ' + p.heads.map(b => b.label).join(' · ') +
+         (p.headsHidden.length ? '  · hidden: ' + p.headsHidden.join(', ') : ''));
+      /* 1211's contract, asserted by IDENTITY so the skip below cannot empty
+         itself: on a phone exactly Save and cr-epub's Publish come out of the
+         header, because the thumb bar carries those two and only those two.
+         Both must still be IN the DOM — cr-epub's injectButton() bails without
+         the Save button, and cr-e2c anchors on it too. */
+      ok(p.headsHidden.join('|') === 'cr-epub-btn|save',
+         'exactly the two controls the thumb bar carries are hidden here (1211)',
+         p.headsHidden.length ? p.headsHidden.join(', ') : 'none hidden');
+      ok(p.heads.length >= 4, 'and everything else is still on screen',
          p.heads.length + ': ' + p.heads.map(b => b.label).join(' · '));
       const shortH = p.heads.filter(b => b.h < FLOOR);
       ok(shortH.length === 0, `every header button is at least ${FLOOR}px tall`,
@@ -185,6 +210,9 @@ if (!(existsSync(setupPath) && existsSync(mockPath))) {
       ok(shortW.length === 0, `every header button clears ${FLOOR}px at 1194`,
          shortW.length ? shortW.map(b => b.label + ' ' + b.h).join(', ')
                        : (w.heads || []).map(b => b.h).join('/') + 'px');
+      ok((w.headsHidden || []).length === 0,
+         'nothing is hidden from the header at 1194 — 1211 is phone-only',
+         (w.headsHidden || []).join(', ') || 'none hidden');
       ok(w.headScrollW <= w.headClientW + 1, 'the header does not scroll sideways at 1194',
          w.headScrollW + ' vs ' + w.headClientW);
       ok(w.barDisplay === 'none', 'the thumb bar is still desktop-hidden', String(w.barDisplay));

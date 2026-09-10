@@ -5927,6 +5927,14 @@ working and audit the design of the whole hub and wiring."*
   yields `{ default: … }` and the obvious destructure gets `undefined` — indistinguishable from
   "not installed". ✅ **Fixed 10 Sep**; it now runs (CLEAN on 1211) and its `--selftest` passes.
   **BUG_CLASSES 93.**
+- ⚠ **Deleting `api/estimate-to-contract.js` broke THREE gates, and my pre-delete reference sweep
+  could not see two of them.** The grep carried `--include=*.md --include=*.js --include=*.json
+  --include=*.html`; **`.mjs` was missing, and every per-build Chromium gate here is `.mjs`.**
+  `gate_1197` D4 and `gate_1199` section E both `readFileSync` the route and died with `ENOENT`
+  before printing a line. **Grep with NO `--include` before any deletion** — `git grep -n <name>`
+  over the whole tree is free on this repo. **BUG_CLASSES 95.** All three repaired by inverting or
+  scoping, never deleting: 1197 **48/48**, 1199 **37/37**, 1205 **25/25** (up from 22 — it now
+  asserts the hidden set by identity so "skip invisible" cannot empty it).
 - ⚠ **`gate_a11y` CANNOT be run in this container and was not run for 1211/1212.** It needs
   `axe-core` and **npm is blocked** — `registry.npmjs.org` is in the proxy's no-proxy list and the
   environment answers **403**, so `npm install` fails for any package. **CI runs neither

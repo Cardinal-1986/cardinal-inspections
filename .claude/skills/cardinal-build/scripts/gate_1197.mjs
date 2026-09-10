@@ -301,9 +301,17 @@ async function inks(light) {
   ok('D2 …and no rewrite for those hosts survives (the filesystem beat it)', rw.length === 0, rw);
   const dj = readFileSync(resolve(ROOT, 'api/digest.js'), 'utf8');
   ok('D3 api/digest.js writes a digest_sent audit event on an accepted send', /type: 'digest_sent'/.test(dj) && /rest\/v1\/audit_events/.test(dj) && /accepted\.length/.test(dj), 'digest.js');
-  const ec = readFileSync(resolve(ROOT, 'api/estimate-to-contract.js'), 'utf8');
-  const ins = ec.slice(ec.indexOf("from('audit_events').insert("), ec.indexOf("from('audit_events').insert(") + 700);
-  ok('D4 api/estimate-to-contract.js writes audit_events\' real columns', /type:\s*'estimate_converted_to_contract'/.test(ins) && /email:/.test(ins) && /detail:/.test(ins) && !/actor_email|kind:|payload:/.test(ins), ins.slice(0, 80));
+  /* ⚠ D4 USED TO READ api/estimate-to-contract.js AND CRASHED WHEN 1212
+     DELETED IT — ENOENT out of readFileSync, which gate_chromium reports as
+     "FAILED on the shipped artifact" with a Node stack trace and no gate line.
+     A crash reads as "not green" rather than as "proved nothing" (BUG_CLASSES
+     37), so it is inverted rather than removed: 1197 repaired that route's
+     audit insert, and 1197's own note recorded that nothing called the route.
+     1212 retired it for exactly that reason. The check now proves the repair
+     is moot because the subject is gone — and that the OTHER half of 1197's
+     audit fix, api/digest.js, is still doing its job (D3 above). */
+  ok('D4 api/estimate-to-contract.js is retired (1212) — its audit repair went with it',
+     !existsSync(resolve(ROOT, 'api/estimate-to-contract.js')), 'file present');
   const ahc = HTML.slice(HTML.indexOf('<script id="cr-ahc-script">'), HTML.indexOf('</script>', HTML.indexOf('<script id="cr-ahc-script">')));
   ok('D5 the health module no longer sends a HEAD for a column named id', !ahc.includes(".select('id', { count:'exact', head:true })"), 'cr-ahc-script');
   ok('D6 …nor asks for created_at / event_type', !/'created_at'|'event_type'/.test(ahc), 'cr-ahc-script');

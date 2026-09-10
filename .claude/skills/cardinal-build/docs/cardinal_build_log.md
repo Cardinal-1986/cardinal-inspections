@@ -32729,6 +32729,18 @@ this container** (`registry.npmjs.org` sits in the proxy's no-proxy list and the
 403). Not claimed green. The build only ever *hides* two elements, so an axe count can fall but not
 grow — but that is reasoning, not a measurement, and it is recorded as such.
 
+⚠ **`gate_1205` went RED on this build and the GATE was wrong, not the app.** It applied its 44px
+tap-target floor to **every** button in `.cr-est-head`, and a hidden button measures `0x0`, so the
+two this build hides failed a size floor they no longer need — along with a row-order check reading
+`top: 0` off the same hidden nodes. **Measure what a person can press.** Repaired to score only
+visible buttons — **and, because "skip anything invisible" is how a check quietly empties itself,
+it now asserts the hidden set BY IDENTITY**: exactly `cr-epub-btn` and `save` at 390px, nothing
+hidden at 1194px. A third control going missing is red. Coverage went **22 → 25 checks**, up rather
+than down. This is the "half of all reds are the test's fault" rule paying for itself.
+
+✅ **SENTINEL CLEAN.** 1211 is a layout build, so its result held the merge: swept against 1210 at
+390 and 1194, **64 renders, zero new findings**, 203 carried. Exit 0.
+
 ## Build 1212 — the dead estimate-to-contract route is retired
 
 Audit item 8, and a deletion, so it waited for Theo's word (10 Sep).
@@ -32769,6 +32781,26 @@ Theo's wording call, but there is one site to change, not two.
 
 Gates: `check_build` green (1211 → 1212, marker `was RETIRED at build 1212` + negative control) ·
 patch replays byte-for-byte · `brand/letterhead.js` parses. No SQL.
+
+⚠ **THE DELETION BROKE THREE GATES AND CI CAUGHT IT, NOT ME — because my reference sweep had a
+hole I could not see.** I grepped the repo for every mention of the route before deleting it, with
+`--include=*.md --include=*.js --include=*.json --include=*.html`. **`.mjs` was not on that list,
+and every per-build Chromium gate in this repo is `.mjs`** — so the entire `gate_*` surface was
+invisible to a sweep I believed was repo-wide. `gate_1197` (D4) and `gate_1199` (section E) both
+`readFileSync` the route and died with `ENOENT` before printing a line, which `gate_chromium`
+reports as *"FAILED on the shipped artifact … Node.js v22.23.2"* — reading as **this gate went
+red** rather than **this gate proved nothing**. BUG_CLASSES 37 through a new door, and
+**BUG_CLASSES 95** for the sweep itself. An `--include` list is a deny-by-default filter: every
+extension you forget is a directory you did not search, and the output looks like a complete
+search.
+
+**All three repaired by inverting or scoping the check, never by deleting it** — the same call
+`harness_653`'s P1 got the same day. `gate_1197` D4 now asserts the route is gone and leans on D3
+(`api/digest.js`) for the half of 1197's audit fix that is still live. `gate_1199`'s section E
+loses eight checks and **says so in the section header rather than leaving a shrinking number
+nobody reads**; its five replacements watch the same subject from the other side — the route is
+gone, nothing calls it in either spelling, and `cr-e2c` plus the `contracts` table are intact.
+**GREEN: 1197 48/48 · 1199 37/37.**
 
 ## Test repair (no build number) — `test_leadnotify901` was red on main for the wrong reason
 
