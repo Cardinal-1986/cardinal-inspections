@@ -136,14 +136,37 @@ const GATES = [
              repl: 'var _needAddr = true;' } },
 ];
 
+/* ⚠ THE CHILD'S OUTPUT GOES TO A FILE, NOT A PIPE, AND THAT IS THE WHOLE POINT.
+   10 Sep 2026: this step ran for 85 minutes on a 14-gate suite that takes 5m31s
+   at 13, and the runner had to be cancelled by hand — twice. The shape is Node's,
+   not the gate's: with `stdio: 'pipe'`, execFileSync blocks reading stdout until
+   EVERY writer closes it. A gate's own watchdog exits the node process with
+   `process.exit(3)` WITHOUT closing Playwright, so the orphaned Chromium — a
+   grandchild that inherited the same pipe — holds it open, and the `timeout`
+   option cannot help: it kills the child it spawned, not the browser behind it.
+   The wait is unbounded.
+
+   Writing to a temp file removes the pipe, so the timeout is real again. The
+   per-gate elapsed seconds are printed for the same reason: a suite that gets
+   slower should say which gate did it, out loud, every run. */
 function run(script, args) {
+  const t0 = Date.now();
+  const log = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gate-out-')), 'out.txt');
+  const fd = fs.openSync(log, 'w');
+  let code;
   try {
-    const out = execFileSync(process.execPath, [path.join(HERE, script), ...args],
-                             { encoding: 'utf8', stdio: 'pipe', timeout: 600000 });
-    return { code: 0, out };
+    execFileSync(process.execPath, [path.join(HERE, script), ...args],
+                 { stdio: ['ignore', fd, fd], timeout: 300000, killSignal: 'SIGKILL' });
+    code = 0;
   } catch (e) {
-    return { code: e.status == null ? 'CRASH' : e.status, out: (e.stdout || '') + (e.stderr || '') };
+    code = e.status == null ? 'CRASH' : e.status;
+  } finally {
+    try { fs.closeSync(fd); } catch (_) {}
   }
+  let out = '';
+  try { out = fs.readFileSync(log, 'utf8'); } catch (_) {}
+  try { fs.rmSync(path.dirname(log), { recursive: true, force: true }); } catch (_) {}
+  return { code, out, secs: Math.round((Date.now() - t0) / 1000) };
 }
 const lastLine = o => (o.trim().split('\n').filter(Boolean).pop() || '').slice(0, 88);
 
@@ -174,8 +197,8 @@ let bad = 0;
 for (const g of GATES) {
   /* POSITIVE — the gate must pass on the shipped artifact. */
   const pos = run(g.name, g.selftestFlag ? [APP] : [APP]);
-  if (pos.code === 0) console.log(`  ok   ${g.name.padEnd(20)} ${lastLine(pos.out)}`);
-  else { console.error(`::error::${g.name} FAILED on the shipped artifact (exit ${pos.code}): ${lastLine(pos.out)}`); bad++; }
+  if (pos.code === 0) console.log(`  ok   ${g.name.padEnd(20)} ${String(pos.secs + 's').padStart(5)}  ${lastLine(pos.out)}`);
+  else { console.error(`::error::${g.name} FAILED on the shipped artifact after ${pos.secs}s (exit ${pos.code}): ${lastLine(pos.out)}`); bad++; }
 
   /* NEGATIVE — break what it protects; it must notice. */
   let neg;
@@ -184,7 +207,7 @@ for (const g of GATES) {
        so its control is its --selftest: exit 0 means "the regression was seen". */
     neg = run(g.name, [APP, '--selftest']);
     const caught = neg.code === 0 && /SELFTEST PASS/.test(neg.out);
-    if (caught) console.log(`  ok     negative: ${lastLine(neg.out)}`);
+    if (caught) console.log(`  ok     negative (${neg.secs}s): ${lastLine(neg.out)}`);
     else { console.error(`::error::${g.name}: its own regression control did not fire — ${lastLine(neg.out)}`); bad++; }
     continue;
   }
@@ -195,7 +218,7 @@ for (const g of GATES) {
   fs.writeFileSync(poisoned, g.break.all ? src.split(g.break.find).join(g.break.repl)
                                          : src.replace(g.break.find, g.break.repl));
   neg = run(g.name, [poisoned]);
-  if (neg.code !== 0) console.log(`  ok     negative: broke ${hits} site(s) of ${JSON.stringify(g.break.find)} -> exit ${neg.code}`);
+  if (neg.code !== 0) console.log(`  ok     negative (${neg.secs}s): broke ${hits} site(s) of ${JSON.stringify(g.break.find).slice(0, 70)} -> exit ${neg.code}`);
   else { console.error(`::error::${g.name} stayed GREEN on an artifact where ${JSON.stringify(g.break.find)} was broken — it does not protect ${g.protects}`); bad++; }
   fs.rmSync(poisoned, { force: true });
 }

@@ -30,7 +30,18 @@ const here = dirname(new URL(import.meta.url).pathname);
 const root = resolve(here, '../../../..');
 const artifact = resolve(process.argv[2] || resolve(root, 'index.html'));
 const html = readFileSync(artifact, 'utf8');
-setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 240000).unref();
+/* ⚠ THE WATCHDOG MUST TAKE THE BROWSER WITH IT. A bare process.exit(3) here
+   leaves Playwright's Chromium running as an orphan holding the stdout pipe it
+   inherited, and gate_chromium's execFileSync then blocks reading that pipe
+   FOREVER — 85 minutes of CI on 10 Sep, cancelled by hand, on a suite that
+   takes 5m31s. The runner now writes child output to a file so it can never
+   happen again from that side; this is the same fix from this side. */
+let BROWSER = null;
+setTimeout(async () => {
+  console.log('GATE TIMEOUT');
+  try { if (BROWSER) await BROWSER.close(); } catch (_) {}
+  process.exit(3);
+}, 240000).unref();
 let pass = 0, fail = 0;
 const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (d ? '  → ' + d : '')); c ? pass++ : fail++; return !!c; };
 const FLOOR = 44;
@@ -60,6 +71,7 @@ if (!(existsSync(setupPath) && existsSync(mockPath))) {
   let browser = null;
   try {
     browser = await launchChromium(chromium);
+    BROWSER = browser;
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
     const page = await ctx.newPage();
     await page.addInitScript(SETUP);
