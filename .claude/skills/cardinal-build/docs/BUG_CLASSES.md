@@ -4321,6 +4321,35 @@ idiom is exactly the kind of line another module already has.
 until that holds (1200 used `var txt = String(open);` plus the guard). And scope every static
 check to a brace-matched slice of the function the build touched.
 
+## 87 — a gate that SKIPS its browser sections and still reports GREEN
+
+**Builds 1200-1202, caught by CI, invisible to every local run.** Four new gates opened with
+
+```js
+const PW = '/opt/node22/lib/node_modules/playwright/index.js';
+if (!(existsSync(PW) && existsSync(setupPath))) { console.log('  SKIP  ...'); }
+```
+
+That path is the build container's. On a GitHub runner Playwright is installed by npm into the
+repo instead, so `existsSync(PW)` is false, **every browser section skipped, and the gate printed
+GREEN having proved nothing about runtime behaviour at all.** `gate_chromium`'s negative control
+caught what the gate could not: *"gate_1201 stayed GREEN on an artifact where
+`if(!await _went) return;` was broken"*.
+
+**The tell sat in the log for two builds and nobody read it:** gate_1201 said *9 checks passed* in
+CI and *32* locally; gate_1202 said *12* against *21*. **A gate's check COUNT is part of its
+verdict.** A count that changes between environments means it is a different gate there.
+
+**Three rules:**
+1. Resolve Playwright as `existsSync(sandboxPath) ? sandboxPath : 'playwright'`, and the browser
+   through `chromium_launch.cjs`. Never hard-code either — that helper exists because three older
+   gates had already hard-coded two different browser paths.
+2. **A skipped browser section is a FAILURE.** "Proved nothing" is not "passed". Only a gate whose
+   sections all ran may report green.
+3. `gate_1200` passed its control anyway, by luck: its break also tripped a static check. **Luck in
+   a negative control is indistinguishable from coverage** — one green control is not proof the
+   browser half ran.
+
 ## Class 71 — a control with a live handler on an element that cannot receive events
 Build 1164 hung the Front Door on the header title via a delegated document click handler —
 and the title has carried `pointer-events:none` since it was a decorative label (`#cr-hd2-bar

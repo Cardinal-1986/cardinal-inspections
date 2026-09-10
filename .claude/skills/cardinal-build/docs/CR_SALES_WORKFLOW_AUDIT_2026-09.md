@@ -13,6 +13,7 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 ---
 
 > ### Progress
+> **B5, B6a, A2, A9 and A10 shipped in build 1203** (options 5, 6a, 8, 11, 12).
 > **B4 shipped in build 1202** (options 4a and 4b): a review request is recorded when the rep says
 > it went out, and the card's buttons wait until the job is Completed.
 > **B3 shipped in build 1201** (option 3a): publishing now asks to *send* and offers the three real
@@ -362,17 +363,17 @@ plus its gate; every option ships with a negative control against 1199.
 | **3b** | Keep the question, ask it *after* a send, verb "Mark sent", Cancel default | B3 | small | the cheaper half of 3a |
 | **4a** | ✅ **SHIPPED, build 1202.** Recorded only after the rep confirms it went | B4 | small | |
 | **4b** | ✅ **SHIPPED, build 1202.** The card stays, its buttons wait for Completed | B4/A8 | small | can ride with 4a |
-| **5** | Let `#ljPane` shrink under 1280 px | B5 | small · render at 1024 and 1194 | |
-| **6a** | `enterkeyhint="search"` + a "…then Return" placeholder | B6 | trivial | |
+| **5** | ✅ **SHIPPED, build 1203** — measured: the grid box is 789px, the tracks asked for 878 | B5 | small · render at 1024 and 1194 | |
+| **6a** | ✅ **SHIPPED, build 1203** | B6 (6b, live results, still open) | trivial | |
 | **6b** | Live top-five results under the search row, Return for the directory | B6/A5 | medium · 1–2 builds · jsdom harness on the matcher + render | |
 | **7a** | Contact door requires phone **or** email (a lead you cannot reach is not a lead) | A1 | small | validation change — your call |
 | **7b** | Lead door: State defaults to OH; Street/City/Zip optional for a phone-in, required when Job Category is set | A1 | small | validation change — your call |
 | **7c** | One door: the Contact form with an "Add address now / later" step; the Lead form's insurance and mailing blocks become the "+ More detail" expander | A1 | medium · 1–2 builds | the real fix; 7a+7b is the patch |
-| **8** | Hide "Job cost" on Add project for Sales-role users | A2 | trivial | |
+| **8** | ✅ **SHIPPED, build 1203** — hidden for non-admins, the value preserved | A2 | trivial | |
 | **9** | Phone profile: client band above the money ring | A6 | small CSS (`order`) | layout call from the 788–804 rebuild — yours |
 | **10** | Estimate toolbar: 44 px targets, wrap to two rows on the phone (or a fade that says it scrolls) | A11 | small · render 390 and 1194 | |
-| **11** | Short job-menu labels on the phone | A10 | trivial | |
-| **12** | Documents tile → **Files** | A9 | trivial | |
+| **11** | ✅ **SHIPPED, build 1203** — the labels WRAP instead, so nothing is renamed | A10 | trivial | |
+| **12** | ✅ **SHIPPED, build 1203** | A9 | trivial | |
 | **13** | Document editor phone toolbar: a labelled **Back to client**; *Email · Text to sign · Share link* ahead of "Mark sent" | A12 | small · render | pairs with 3a |
 | **14** | Tap-target sweep under 44 px (drawer A, dispatch move, album chips, day cells, source chips) | A13/A3 | medium · several modules · `gate_1081`-style CSSOM walk | |
 
