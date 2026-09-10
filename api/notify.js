@@ -267,13 +267,33 @@ export default async function handler(req, res){
     var resendKey = process.env.RESEND_API_KEY;
     if(resendKey && (html || text)){
       var from = process.env.DIGEST_FROM || 'Cardinal Client Resources <onboarding@resend.dev>';
+      /* 1210: THE EMAIL GETS THE LINK TOO. absUrl has been built here since
+         1125 and used at exactly one site — the SMS tail — so an alert read in
+         a mailbox had no way back into the app. Measured, not assumed: every
+         commit that ever touched this file reads absUrl in exactly one place
+         — the SMS — and never the email, 1145-1147 (which ADDED the links)
+         included.
+         One append here covers every caller that sends a url — the six
+         punch-out alerts (1125) and the twelve that name a client (1147) —
+         because this route is the one chokepoint. Doing it per-caller would be
+         six copies of one link, which is the drift 1125 exists to prevent.
+         ⚠ The href is ESCAPED. The caller already controls the whole html body,
+         so this adds no exposure — but the same-site test that gates absUrl
+         allows a quote inside the path, and an unescaped attribute would let
+         one break out. Cheap, so do it. */
+      var mailHtml = html || ('<p>' + text.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</p>');
+      if(absUrl){
+        var hrefAttr = absUrl.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                             .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        mailHtml += '<p style="margin:18px 0 0"><a href="' + hrefAttr + '">Open it in Cardinal</a></p>';
+      }
       try{
         var mr = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + resendKey },
           body: JSON.stringify({
             from: from, to: emails, subject: title,
-            html: html || ('<p>' + text.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</p>')
+            html: mailHtml
           })
         });
         if(mr.ok) mailed = emails.length;
