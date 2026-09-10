@@ -34,7 +34,8 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 > **A12 closed in build 1204** (option 13): after Publish, *Email to client · Text to sign · Share
 > link* are on the toolbar itself instead of two taps deep under ⋯ More, "Mark sent" sits below them
 > on the phone, and the client chip reads "‹ Back". Measured: on 1203 all three sends render 0×0
-> inside a `display:none` parent; on 1204 each is 181×42 and is the top element at its own centre.
+> inside a `display:none` parent; on 1204 each is 181×42 and is the top element at its own centre
+> (**44px since 1206** — 42 was two pixels under the floor, and 1206's sweep is what found it).
 > **B5, B6a, A2, A9 and A10 shipped in build 1203** (options 5, 6a, 8, 11, 12).
 > **B4 shipped in build 1202** (options 4a and 4b): a review request is recorded when the rep says
 > it went out, and the card's buttons wait until the job is Completed.
