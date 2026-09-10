@@ -5818,6 +5818,32 @@ shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks t
   ⚠ **And the first 1205 sweep reported CLEAN over a screen it had never opened.** That is worth
   remembering before quoting a sentinel verdict on a surface: check there is a state for it.
 
+  ✅ **READ, 10 Sep 2026 — and there is nothing to fix on either screen.** Swept at 390px in
+  **BOTH themes** (`--themes default,rb-light`, 64 renders, `--all`):
+
+  | check | dark | light |
+  |---|---|---|
+  | **INK** (contrast) | **0** | **0** |
+  | **COLLAPSE** | **0** | **0** |
+  | **OVERLAP** | **0** | **0** |
+  | **OVERFLOW** | **0** | **0** |
+
+  **Neither the document editor nor the estimate builder has a readability, collapse, overlap or
+  sideways-scroll failure in either theme.** Totals: 194 findings / 27 TRUNCATED · 24 DEAD · 132
+  OVERRIDDEN · 1 FLOOR · 10 UNWIRED. The single FLOOR is `#acxTrBtn` on the **client** page, not
+  these screens; all 10 UNWIRED are `#brandTitle`, which reads as a heading.
+
+  ⚠ **The remaining DEAD/OVERRIDDEN are NOT to be filed as debt without measuring each one.**
+  The `.cr-est-*` cluster is light values (cream grounds, `#2c2c2c` ink) and the earlier
+  dark-only sweep made them look dead when a light rule losing in dark is simply correct. The
+  hub audit made exactly that mistake on eight rules the same day and every one turned out to be
+  the cascade working — see the correction above and `audit_hub_dead.mjs`, which prints the
+  winning rule per property in both themes and is the tool for this if it is ever picked up.
+
+  ⚠ **TRUNCATED went 12 → 27 between the dark-only and both-theme sweeps.** That is not a
+  regression: light mode adds a second set of losing rules per render, and the display caps DEAD
+  at 20 per render. The cap is a display limit, not a finding.
+
 ### Still held for Theo from the 9 Sep external assessment
 
 - **The billing-parity prevalence counts need his explicit go** — the query is a read of private
