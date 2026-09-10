@@ -5754,9 +5754,11 @@ shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks t
   email) and 7b (State defaults to OH; address optional for a phone-in) are small validation
   changes and are **his call, because they change what a rep is allowed to save**. 7c — one door
   with an "add the address now or later" step — is the real fix and is 1–2 builds.
-- **Option 6b — live top-five search results** under the header row. 6a shipped the cheap half
-  (the keyboard says Search, the placeholder says what to press). Medium: a matcher harness plus a
-  render.
+- ✅ **Option 6b SHIPPED at 1207.** It left one thing recorded: **`renderHome()` still carries its
+  own client haystack**, the same seven fields *minus* `pr.created_by`. The directory, Insurance
+  Clients and the live search all use `crClientHay()` now; folding Home in would silently start
+  matching the board on a rep's email address, which is a behaviour change and therefore Theo's
+  call, not a tidy-up.
 - **Option 9 — the phone profile's client band above the money ring.** A layout call out of the
   788–804 rebuild; a small `order:` change once he has picked.
 - ✅ **Option 14 SHIPPED at 1206**, and it left a measured list behind. `gate_1206` baselines **24

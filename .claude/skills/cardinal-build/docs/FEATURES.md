@@ -8389,3 +8389,31 @@ reach for *because* you are struggling to hit things), `#cr-pae-tabs button` 30�
 `#cr-pb .pbmonth .pbday` 34→44 (phone only; the desktop cell is 78px), `.pf-chip` 38→44, and
 `.toolbar .edbtns .btn` 42→44 (1204's own two-pixel residue).
 
+
+## Build 1207 — the header search answers while you type
+
+`#headSearch` gained an `input` listener. Two characters or more renders the top five matching
+clients into **`#cr-hsres`** — name, then PO · stage · address — and tapping one calls
+`openProject()`. Above five hits a footer row says *"Return for all N matches"*. **Return still
+opens the Clients directory filtered, and that path is untouched.**
+
+⚠ **`crClientHay(pr)` is THE client haystack.** The directory (`cdMatch`), Insurance Clients and
+this live search all call it, so the five rows can never disagree with the list Return hands you.
+**One copy is deliberately left out of it** — `renderHome()`'s, which omits `pr.created_by`; folding
+it in would start matching the Home board on a rep's email address. If you find yourself writing a
+fourth, use this one.
+
+⚠ **The "all N matches" row dispatches a real `Enter` keydown into the shipped handler** rather than
+re-implementing `openClientsDirectory()` + `cliFilter` + `renderClientDirectory()`. One hand-off,
+one place.
+
+⚠ **The panel is positioned, not parented.** `ensureSearchRow()` re-parents `#headSearch` into
+`#cr-hd2-srch`, so a sibling panel would have to be moved with it. `#cr-hsres` is `position:fixed`
+on `<body>`, placed from the input's rect. Its tokens are `--rbe-*` with literal fallbacks, **not**
+the header's `--h*` — those are declared on `.site` and do not reach it.
+
+⚠ **The search is behind a lens at EVERY width.** `#cr-hd2-srch` is `display:none` until
+`#cr-hd2-lens` is tapped — it is not a phone-only affordance. `#cr-search-btn` and
+`.cr-ib.searchbtn` are older controls, both `display:none`, and a grep finds them first. Two drafts
+of `gate_1207` measured a 0×0 input before this was established.
+

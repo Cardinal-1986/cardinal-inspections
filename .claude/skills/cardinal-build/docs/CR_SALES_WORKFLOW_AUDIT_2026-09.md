@@ -13,6 +13,10 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 ---
 
 > ### Progress
+> **B6 closed in build 1207** (option 6b): the header search shows the top five matching clients
+> as you type, tap to open, and Return still opens the full directory. It matches with
+> `crClientHay()` — the same haystack the Clients directory uses, extracted so the two can never
+> disagree; the sweep for its siblings found four near-identical copies.
 > **A13 and A3 closed in build 1206** (option 14): four real sub-44px controls fixed, plus the
 > document editor's own buttons, which 1204 left two pixels short. ⚠ **The audit's headline
 > tap-target finding — the Dispatch grip at 15×15 — was WRONG**: its hit pad makes it 45×45, and
@@ -34,8 +38,8 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 > **B1 and B2 shipped in build 1200** (options 1 and 2), measured before and after: an open
 > profile went from 65 DOM records/sec with 360 on the punch count to 5/sec with zero, and the
 > backward-chevron email is gone.
-> **Still open:** the two intake doors (7a/7b/7c — a decision, not code), live search results (6b),
-> and the phone profile's band order (9).
+> **Still open:** the two intake doors (7a/7b/7c — a decision, not code) and the phone profile's
+> band order (9).
 
 ## 0. Read this first
 
@@ -387,7 +391,7 @@ plus its gate; every option ships with a negative control against 1199.
 | **4b** | ✅ **SHIPPED, build 1202.** The card stays, its buttons wait for Completed | B4/A8 | small | can ride with 4a |
 | **5** | ✅ **SHIPPED, build 1203** — measured: the grid box is 789px, the tracks asked for 878 | B5 | small · render at 1024 and 1194 | |
 | **6a** | ✅ **SHIPPED, build 1203** | B6 (6b, live results, still open) | trivial | |
-| **6b** | Live top-five results under the search row, Return for the directory | B6/A5 | medium · 1–2 builds · jsdom harness on the matcher + render | |
+| **6b** | ✅ **SHIPPED, build 1207.** Top five under the row, tap to open, Return unchanged — and one shared matcher | B6/A5 | medium · 1 build · Chromium render, both themes | `crClientHay()` now serves the directory, Insurance Clients and the live search |
 | **7a** | Contact door requires phone **or** email (a lead you cannot reach is not a lead) | A1 | small | validation change — your call |
 | **7b** | Lead door: State defaults to OH; Street/City/Zip optional for a phone-in, required when Job Category is set | A1 | small | validation change — your call |
 | **7c** | One door: the Contact form with an "Add address now / later" step; the Lead form's insurance and mailing blocks become the "+ More detail" expander | A1 | medium · 1–2 builds | the real fix; 7a+7b is the patch |

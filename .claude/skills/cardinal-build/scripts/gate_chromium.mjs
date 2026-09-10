@@ -117,6 +117,14 @@ const GATES = [
     protects: 'every button on the estimate builder toolbar is at least 44px tall and none sits off the right edge at 390px',
     break: { find: 'color:#f08a90;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;',
              repl: 'color:#f08a90;padding:6px 12px;border-radius:6px;' } },
+  /* 1207: the header search must answer while you type. The break removes the
+     one listener that makes it live, restoring the measured 1206 behaviour —
+     type "Diamond" and NOTHING happens until Return. Anchor counted in 1206
+     first: 0 there, 1 here (BUG_CLASSES 86). */
+  { name: 'gate_1207.mjs',
+    protects: 'the header search shows the top five matching clients as you type, from the same matcher the directory uses',
+    break: { find: "i.addEventListener('input', crHsRender);",
+             repl: 'void 0;' } },
 ];
 
 function run(script, args) {

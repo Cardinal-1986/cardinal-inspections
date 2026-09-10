@@ -1592,6 +1592,31 @@ html, body{overflow-x:hidden;max-width:100%;}
   font:600 13.5px 'Segoe UI',Arial,sans-serif;padding:0 14px;}
 #headSearch::placeholder{color:#c9b8b4;}
 #headSearch:focus{outline:2px solid var(--red);background:rgba(255,255,255,.16);}
+/* 1207 — the live results panel. Fixed to the viewport and appended to <body>,
+   because #headSearch MOVES: on desktop it is a flex child of #cr-hd2-bar and on
+   a phone ensureSearchRow() re-parents it into #cr-hd2-srch. A panel that is a
+   sibling would have to be moved with it; one positioned from the input's own
+   rect does not care where the input currently lives.
+   ⚠ Tokens are --rbe-*, not the header's --h*: those are declared on `.site`, and
+   this element is not inside it. Literal fallbacks per 448-449. */
+#cr-hsres{position:fixed;z-index:9400;display:none;box-sizing:border-box;
+  background:var(--rbe-panel,#16161B);border:1px solid var(--rbe-line,#232329);
+  border-radius:12px;box-shadow:0 18px 44px rgba(0,0,0,.45);overflow:hidden;
+  max-height:min(58vh,420px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#cr-hsres.open{display:block;}
+#cr-hsres .hsrow{display:block;width:100%;box-sizing:border-box;text-align:left;
+  border:0;border-bottom:1px solid var(--rbe-line,#232329);background:transparent;
+  cursor:pointer;padding:9px 14px;min-height:44px;font-family:'Segoe UI',Arial,sans-serif;}
+#cr-hsres .hsrow:last-child{border-bottom:0;}
+#cr-hsres .hsrow:hover,#cr-hsres .hsrow:focus{background:var(--rbe-card,rgba(255,255,255,.06));outline:none;}
+#cr-hsres .hsnm{display:block;font:700 14px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#cfd6df);}
+#cr-hsres .hsmeta{display:block;margin-top:2px;font:600 12px 'Segoe UI',Arial,sans-serif;
+  color:var(--rbe-mute,#b8bec6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#cr-hsres .hsfoot{display:block;width:100%;box-sizing:border-box;text-align:left;border:0;
+  border-top:1px solid var(--rbe-line,#232329);background:transparent;cursor:pointer;
+  padding:0 14px;min-height:44px;color:var(--rbe-mute,#b8bec6);
+  font:700 12px 'Segoe UI',Arial,sans-serif;}
+#cr-hsres .hsnone{padding:14px;color:var(--rbe-mute,#b8bec6);font:600 13px 'Segoe UI',Arial,sans-serif;}
 .dashcard{flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:10px;
   background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 18px;
   position:relative;}
@@ -4008,7 +4033,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1206<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1207<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -20252,12 +20277,21 @@ function cdMatch(pr){
   var ts = cdState.sets.trade || [];
   if(ts.length && !ljTrades(pr).some(function(t){ return ts.indexOf(t) !== -1; })) return false;
   var q = (document.getElementById('cliFilter').value || '').trim().toLowerCase();
-  if(q){
-    var hay = [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
-      poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
-    if(hay.indexOf(q) === -1) return false;
-  }
+  if(q && crClientHay(pr).indexOf(q) === -1) return false;
   return true;
+}
+/* 1207: the haystack, extracted so the header's live search and this directory
+   cannot drift apart. It was inline here and nowhere else; a second copy in the
+   header would mean a search that finds different clients than the directory it
+   hands you off to, which is the duplicate-pipeline bug this project pays for
+   most often. One definition, two callers.
+   ⚠ A THIRD, SLIGHTLY DIFFERENT haystack lives in renderHome() and is left
+   alone on purpose: it omits pr.created_by, so folding it in here would start
+   matching the Home board on a rep's email address — a behaviour change nobody
+   asked for. Known, not missed. */
+function crClientHay(pr){
+  return [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
+    poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
 }
 function cdSorted(list){
   var s = cdState.sort, d = cdState.dir;
@@ -23759,13 +23793,123 @@ setInterval(tickHomeClock, 1000);
 
 /* ---------- header search (desktop) ---------- */
 document.getElementById('headSearch').addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){ crHsClose(); return; }
   if(e.key !== 'Enter') return;
+  crHsClose();
   var v = this.value.trim();
   openClientsDirectory();
   var cf = document.getElementById('cliFilter');
   cf.value = v;
   renderClientDirectory();
 });
+
+/* 1207 (audit 6b / B6): the search answers while you type. Return still opens
+   the whole directory and that path is untouched — this is a shortcut past it,
+   not a replacement for it.
+   ⚠ It matches with crClientHay(), the SAME haystack cdMatch() uses, so the
+   five rows here are always a prefix of what Return would show. */
+var CR_HS_MAX = 5;
+function crHsPanel(){
+  var p = document.getElementById('cr-hsres');
+  if(!p){
+    p = document.createElement('div');
+    p.id = 'cr-hsres';
+    p.setAttribute('role', 'listbox');
+    p.setAttribute('aria-label', 'Client search results');
+    document.body.appendChild(p);
+  }
+  return p;
+}
+function crHsClose(){
+  var p = document.getElementById('cr-hsres');
+  if(p) p.classList.remove('open');
+}
+function crHsMatches(q){
+  q = String(q || '').trim().toLowerCase();
+  if(q.length < 2) return { hits: [], total: 0 };
+  var all = (typeof cacheProjects !== 'undefined' && cacheProjects) ? cacheProjects : [];
+  var hit = all.filter(function(pr){ return crClientHay(pr).indexOf(q) !== -1; });
+  /* a name that STARTS with what you typed is what you meant; everything else
+     matched on an address, a phone or a PO and sorts after it. */
+  hit.sort(function(a, b){
+    var an = String(a.name || '').toLowerCase(), bn = String(b.name || '').toLowerCase();
+    var ap = an.indexOf(q) === 0 ? 0 : (an.indexOf(q) !== -1 ? 1 : 2);
+    var bp = bn.indexOf(q) === 0 ? 0 : (bn.indexOf(q) !== -1 ? 1 : 2);
+    return ap - bp || an.localeCompare(bn);
+  });
+  return { hits: hit.slice(0, CR_HS_MAX), total: hit.length };
+}
+function crHsPlace(){
+  var i = document.getElementById('headSearch'), p = document.getElementById('cr-hsres');
+  if(!i || !p) return false;
+  var r = i.getBoundingClientRect();
+  if(r.width < 2 || r.height < 2) return false;
+  var w = Math.max(240, Math.min(r.width, innerWidth - 16));
+  var left = Math.max(8, Math.min(r.left, innerWidth - w - 8));
+  p.style.left = Math.round(left) + 'px';
+  p.style.top = Math.round(r.bottom + 6) + 'px';
+  p.style.width = Math.round(w) + 'px';
+  return true;
+}
+function crHsRender(){
+  var i = document.getElementById('headSearch');
+  /* the instanceof is a real narrowing, not decoration: gate_types runs tsc
+     --checkJs over these blocks, and `document.getElementById(...).value` is
+     TS2339 on an HTMLElement. The file already carries 1363 of those; this
+     build is not adding to a ratchet it has to live under. */
+  if(!(i instanceof HTMLInputElement)) return;
+  var q = i.value || '';
+  if(String(q).trim().length < 2){ crHsClose(); return; }
+  var m = crHsMatches(q), p = crHsPanel();
+  var rows = m.hits.map(function(pr){
+    var po = (typeof poOf === 'function' && poOf(pr)) ? '#' + poOf(pr) + ' \u00b7 ' : '';
+    var st = (typeof normStage === 'function') ? normStage(pr.stage) : (pr.stage || '');
+    var meta = po + st + (pr.address ? ' \u00b7 ' + pr.address : '');
+    return '<button type="button" class="hsrow" role="option" data-hspid="' + esc(String(pr.id)) + '">' +
+      '<span class="hsnm">' + esc(pr.name || 'Client') + '</span>' +
+      '<span class="hsmeta">' + esc(meta) + '</span></button>';
+  }).join('');
+  if(!rows) rows = '<div class="hsnone">No client matches \u201c' + esc(String(q).trim()) + '\u201d</div>';
+  else if(m.total > m.hits.length)
+    rows += '<button type="button" class="hsfoot" data-hsall="1">Return for all ' + m.total + ' matches</button>';
+  p.innerHTML = rows;
+  if(crHsPlace()) p.classList.add('open');
+}
+(function(){
+  var i = document.getElementById('headSearch');
+  if(!(i instanceof HTMLInputElement)) return;
+  i.addEventListener('input', crHsRender);
+  i.addEventListener('focus', crHsRender);
+  /* a tap on a row fires mousedown BEFORE blur, so the row must survive long
+     enough to be clicked — the same delay the app's other pop-overs use. */
+  i.addEventListener('blur', function(){ setTimeout(crHsClose, 180); });
+  document.addEventListener('click', function(e){
+    var t = (e.target instanceof Element) ? e.target : null;
+    var row = t ? t.closest('#cr-hsres .hsrow') : null;
+    if(row){
+      e.preventDefault();
+      crHsClose();
+      try{ i.blur(); }catch(_b){}
+      if(typeof openProject === 'function') openProject(row.getAttribute('data-hspid'));
+      return;
+    }
+    if(t && t.closest('#cr-hsres .hsfoot')){
+      /* ⚠ It PRESSES RETURN rather than re-implementing what Return does.
+         The keydown handler above is the one place that knows how to hand the
+         query to the directory; a second copy here would be the duplicate this
+         whole build exists to avoid, one line after crClientHay was extracted
+         for exactly that reason. */
+      e.preventDefault();
+      crHsClose();
+      try{ i.focus(); }catch(_f){}
+      i.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));
+      return;
+    }
+    if(e.target !== i) crHsClose();
+  });
+  addEventListener('resize', function(){ crHsPlace(); });
+  addEventListener('scroll', crHsClose, true);
+})();
 
 /* ---------- team calendar ---------- */
 function makeMiniCal(mountId, dayKinds, onDay){
@@ -27455,11 +27599,12 @@ function renderInsuranceClientsList(){
     if(!q) return true;
     var I = projInsurance(pr) || {};
     var adj = I.adjuster || {};
-    var hay = [
-      pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
-      poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : '',
-      I.carrier, I.claim_number, I.policy_number, adj.name, adj.phone
-    ].join(' ').toLowerCase();
+    /* 1207: the base seven fields come from crClientHay(), the same matcher the
+       Clients directory and the header search use; only the five insurance ones
+       are local. Byte-for-byte the same haystack as before, from one source. */
+    var hay = crClientHay(pr) + ' ' +
+      [I.carrier, I.claim_number, I.policy_number, adj.name, adj.phone]
+        .join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   });
 
@@ -42839,6 +42984,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1207, d: '2026-09-10', t: 'The search box answers while you type', s: 'Typing in the header search used to do <b>nothing at all</b> until you pressed Return \u2014 and nothing on the screen said Return was what it wanted. Now the <b>top five matching clients appear under the box as you type</b>, with the PO number, the stage and the address, and tapping one opens that client straight away. Return still opens the full Clients list filtered the way it always did, and if there are more than five matches the panel says so. It searches the same things the Clients list searches \u2014 name, address, phone, email and PO number \u2014 because it now uses the very same matcher, so the five you see can never disagree with the list Return gives you.' },
   { b: 1206, d: '2026-09-10', t: 'Five more controls big enough for a thumb', s: 'A sweep of every screen in the app, measured on a phone, looking for anything too small to hit reliably with a thumb. Five were: <b>the A / A / A text-size buttons in the menu</b> (the control you reach for precisely because you are struggling to hit things), <b>the photo album\u2019s section chips</b>, <b>the day squares on the Production mini-calendar</b>, <b>the lead-source chips on the new-lead form</b>, and <b>the document editor\u2019s own buttons</b>, which build 1204 left two pixels short. All five are now the full 44 pixels. Nothing was renamed and nothing moved. <b>The Dispatch grip was checked and is fine</b> \u2014 it looks tiny but carries an invisible pad that makes it 45 across, which is why it was left alone.' },
   { b: 1205, d: '2026-09-10', t: 'The estimate builder\u2019s buttons are big enough to hit', s: 'On the screen where you type money, the toolbar buttons were <b>26 pixels tall</b> \u2014 the smallest targets in the app, on a phone, often on a roof. Close, Preview, Options, \u2192 Contract and Save Draft are now a full <b>44 pixels</b>, and so are the three Add buttons above the line items. <b>And the row wraps instead of scrolling sideways.</b> At phone width \u201c\u2192 Contract\u201d used to sit off the right-hand edge of the screen with nothing to tell you it was there; the title now takes its own line and every button is visible under it. Save Draft and Publish are still under your thumb at the bottom, where they have been since build 1029.' },
   { b: 1204, d: '2026-09-10', t: 'The published document offers the send, and the way back says Back', s: 'After you publish an estimate you land in the document editor, and on a phone that screen had its priorities backwards. <b>The three ways to actually send it \u2014 Email to client, Text to sign and Share link \u2014 were hidden two taps deep under \u201c\u22ef More\u201d</b>, while the biggest button on the bar was <b>Mark sent</b>, which sends nothing to anybody. The three sends are now on the bar itself, and Mark sent has moved below them where an override belongs. <b>And the way out is labelled.</b> The only exits were the client chip and the logo, and neither said so anywhere a phone could show it \u2014 the chip now reads \u201c\u2039 Back\u201d beside the client name.' },
