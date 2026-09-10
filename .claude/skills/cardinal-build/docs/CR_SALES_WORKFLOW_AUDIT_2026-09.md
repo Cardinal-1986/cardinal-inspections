@@ -279,6 +279,24 @@ Theo's decision and I am not re-opening it.
   Source**, and when the Source is missing it opens "+ More detail", shakes the field and focuses
   it. Those are the Contact door's gaps, attributed to both. Option 7a is therefore already shipped
   *here*; what remains of it is the Contact door.
+  ⚠ **SECOND CORRECTION, 10 Sep 2026 — 7c's "medium · 1–2 builds" was MY estimate and it was wrong.**
+  Theo picked 7c; I read the code before starting and two facts killed the shape as written. Both are
+  recorded here so nobody re-derives them:
+  - **`openProjModal` is not "the Contact door" — it is ALSO "Edit client info"** (`pr ? 'Edit client
+    info' : 'Add project'`), reached from **five** call sites: `#acxEdit1`, `#acxEdit2`, `#projEditBtn`
+    (×2) and the name-band pen. Growing it into the single intake form drags that form onto the
+    edit-a-client path, so a merge needs create split from edit **first**.
+  - **Production is fenced OUT of the Lead door.** `isProductionUser()` refuses with *"Lead creation is
+    for sales and admins"*, and the menu option is `display:none` for `PRODUCTION_EMAILS`. **Contact is
+    Curtis and Scottie's only intake door**, so "one door" has to answer the permission question before
+    it answers the layout one.
+  - Size gap, measured: **Contact 13 fields, Lead 40+** — insurance, appointment, assignment, partner,
+    priority, mailing, billing, plus a scope-file attachment wired in by a *separate* module.
+
+  **If it is ever re-opened, the cheap shapes are (a) make the LEAD form the one door, opened small —
+  it already has "+ More detail" and all the wiring — or (b) keep two doors and just make their
+  rulebooks agree.** Growing the 13-field form to 40 is the expensive one, and it is the one the
+  original 7c wording described.
 - **A2 — "Job cost (materials + labor, $) for profit reports"** is on the Contact/Add-project door,
   shown to a Sales rep. At intake nobody knows the cost, and reps do not see profit reports.
 - **A3 — Lead-source chips are 38 px tall** — under the 44 px floor the rest of the app moved to.
@@ -403,9 +421,9 @@ plus its gate; every option ships with a negative control against 1199.
 | **5** | ✅ **SHIPPED, build 1203** — measured: the grid box is 789px, the tracks asked for 878 | B5 | small · render at 1024 and 1194 | |
 | **6a** | ✅ **SHIPPED, build 1203** | B6 (6b, live results, still open) | trivial | |
 | **6b** | ✅ **SHIPPED, build 1207.** Top five under the row, tap to open, Return unchanged — and one shared matcher | B6/A5 | medium · 1 build · Chromium render, both themes | `crClientHay()` now serves the directory, Insurance Clients and the live search |
-| **7a** | ⚠ **ALREADY SHIPPED on the LEAD door, at build 782** — the walk attributed the Contact door's rules to both. On the *Contact* door it is still open, and it would refuse a save that works today | A1 | small | **needs your yes — it takes something away** |
+| **7a** | ⚠ **ALREADY SHIPPED on the LEAD door, at build 782** — the walk attributed the Contact door's rules to both. On the *Contact* door it is still open, and it would refuse a save that works today | A1 | small | ⛔ **SKIPPED by Theo, 10 Sep 2026** — it would refuse a save that works today |
 | **7b** | ✅ **SHIPPED, build 1208.** State opens on OH; the address is required only when a Job Category is set | A1 | small | measured on 1207: *"Required: Street, City, State, Zip"*, then *"Required: State"* |
-| **7c** | One door: the Contact form with an "Add address now / later" step; the Lead form's insurance and mailing blocks become the "+ More detail" expander | A1 | medium · 1–2 builds | the real fix; 7a+7b is the patch |
+| **7c** | One door | A1 | ⚠ **NOT 1–2 builds — my estimate was wrong, see A1 below** | ⛔ **SKIPPED by Theo, 10 Sep 2026.** Read the two blockers before ever re-opening this |
 | **8** | ✅ **SHIPPED, build 1203** — hidden for non-admins, the value preserved | A2 | trivial | |
 | **9** | ✅ **SHIPPED, build 1209.** Name band first, money card directly under it, phone only | A6 | one line in `syncMoneyCard()` + its guard | ⚠ **This REVERSED build 797**, which Theo confirmed from preview_v3/v4 and again live. Held until he chose it on 10 Sep. `gate_797.mjs` section B was flipped in the same build, so 797's own gate can no longer argue for restoring 797's order |
 | **10** | ✅ **SHIPPED, build 1205.** 44 px on every toolbar and Add button; the row wraps instead of scrolling | A11 | small · render 390 and 1194 | measured: 26 px and three buttons off the right edge on 1204 |

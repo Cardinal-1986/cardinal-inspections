@@ -5761,6 +5761,22 @@ shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks t
   Clients and the live search all use `crClientHay()` now; folding Home in would silently start
   matching the board on a rep's email address, which is a behaviour change and therefore Theo's
   call, not a tidy-up.
+- ⛔ **Options 7a and 7c — SKIPPED by Theo, 10 Sep 2026. Do not re-open without asking him.**
+  He picked 7c, I read the code before starting, and reported back that my own audit had under-scoped
+  it; he then skipped both. **The finding behind A1 is not urgent any more** — 1208 already stopped the
+  Lead form refusing a phone call, which was the actual bleeding. What is left is two doors that
+  disagree, not a door that fights you.
+  **The two blockers, so nobody re-derives them** (full write-up in `CR_SALES_WORKFLOW_AUDIT_2026-09.md`
+  under A1):
+  - `openProjModal` is **both** the Contact intake door and **"Edit client info"** — five call sites
+    (`#acxEdit1`, `#acxEdit2`, `#projEditBtn` ×2, the name-band pen). Merging intake into it drags the
+    intake form onto the edit path; a merge needs create split from edit first.
+  - **Production is fenced out of the Lead door** (`isProductionUser()`, plus the menu option hidden
+    for `PRODUCTION_EMAILS`), so **Contact is Curtis and Scottie's only intake door.** "One door" is a
+    permissions question before it is a layout one.
+  - Measured: Contact **13** fields, Lead **40+**.
+  If it ever comes back, the cheap shapes are (a) the LEAD form as the one door opened small — it
+  already has "+ More detail" and all the wiring — or (b) two doors whose rulebooks simply agree.
 - ✅ **Option 9 SHIPPED at 1209 — and it REVERSED build 797, on Theo's word, asked for and given.**
   It was held for exactly one reason: **797 was a decision he made on a preview.** 797 shipped
   *"Job Value/circle/Balance Due merge with Payment Information into one full-bleed card … and that
