@@ -4484,3 +4484,38 @@ fixed: chasing debt a new instrument revealed is the scope creep the corollary a
 ⚠ **Do not read the whole 336 as this class.** 305 of them are `region` — one structural fact
 (almost nothing sits in a landmark) repeated per rendered row, and it scales with the SEED, not
 with defects. Per-control rules count defects; structural rules count content. See the header.
+
+## 91 — a new gate's failing check reports the SAME number on the control, and the check is what's wrong
+
+**Build 1209.** The build reversed 797's phone layout: `#dbMoneyCard` moved from before
+`#cr-namebar` to after it, and its idempotence guard flipped from `nextElementSibling` to
+`previousElementSibling`. `gate_1209.mjs` section C was written to prove the guard settles — count
+how many times the card is reparented across five forced `renderOverview()` calls, expect **0**.
+
+It reported **10**, and looked like a real repaint bug in the build I had just written.
+
+**It was not. The 1208 control reported the identical 10.** A real render destroys and rebuilds the
+wrapper on purpose — 797 removes the stale one and creates a new one every time — so the check was
+measuring 797's *architecture*, which this build did not touch, and not the guard, which it did.
+The assertion was wrong; the app was right.
+
+**The diagnostic is cheap and should be reflexive: when a new gate's check fails, run it against the
+control BEFORE changing a line of the app.**
+
+| control says | meaning |
+|---|---|
+| a **different** value | the check is measuring your change. Trust it |
+| the **same** value | the check is measuring something your build did not touch. Fix the check |
+
+This is the negative control earning its keep in the direction nobody plans for. It is normally
+there to prove a gate *can* go red; here it proved a red gate was asking the wrong question. The
+rewritten check drives the **resize listener** — `syncMoneyCard()` with no fresh `.dbmoney` under
+`#acxMount`, which is the only path the guard governs — and separates the two builds cleanly:
+0 moves on 1209, and **10 on a copy poisoned with the new insertion point and the old guard**,
+which is the bug the check exists to catch.
+
+**Related but distinct from class 15** (a check that cannot fail). This one fails loudly, on correct
+code, and its failure is indistinguishable from a genuine regression until the control is consulted.
+CLAUDE.md's *"when a gate goes red, first ask whether the test or the app is wrong — roughly half of
+all reds on this project were the test's fault"* is the general rule; this is the mechanical test
+for it.
