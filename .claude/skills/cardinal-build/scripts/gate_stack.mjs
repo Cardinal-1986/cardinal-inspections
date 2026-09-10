@@ -46,8 +46,26 @@
    Exit 0 clean · 1 stacks found · 2 could not run.
    ═══════════════════════════════════════════════════════════════════════════ */
 import { existsSync, readFileSync } from 'fs';
-let chromium; try { ({ chromium } = await import('playwright')); } catch (e) {}
-if (!chromium) { console.error('gate_stack: playwright not found'); process.exit(2); }
+/* ⚠ A bare `import('playwright')` resolves from THIS file's directory and
+   ignores NODE_PATH, so on a machine where playwright is installed globally
+   (the build container: /opt/node22/lib/node_modules) this standing gate
+   exited 2 — "could not run" — on every build, and 2 is not 0, so it read as
+   noise rather than as a gate that had stopped running. Same class as the
+   hard-coded Chromium path chromium_launch.cjs exists to kill: resolve it in
+   one place, with a fallback, and say which one answered. */
+let chromium;
+for (const spec of ['playwright', '/opt/node22/lib/node_modules/playwright/index.js']) {
+  try {
+    const m = await import(spec);
+    /* ⚠ playwright is CJS. Importing it from ESM yields { default: {...} },
+       so the obvious `({ chromium } = await import(spec))` destructures
+       undefined and looks exactly like "not installed". That is what the
+       absolute-path attempt reported before this line existed. */
+    chromium = m.chromium || (m.default && m.default.chromium);
+    if (chromium) break;
+  } catch (e) {}
+}
+if (!chromium) { console.error('gate_stack: playwright not found (tried the local resolution and /opt/node22)'); process.exit(2); }
 
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i === -1 ? d : (argv[i+1] || d); };

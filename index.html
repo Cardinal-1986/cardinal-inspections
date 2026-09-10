@@ -4033,7 +4033,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1210<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1212<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -29735,7 +29735,10 @@ body.claim-insurance #brandLogo{
       • supabase: ai_estimates_setup.sql (table dropped at build 1033)
       • supabase: run contracts_setup.sql
       • Add api/estimate.js to your repo
-      • Add api/estimate-to-contract.js to your repo
+      • (api/estimate-to-contract.js was RETIRED at build 1212 -- nothing
+        called it, and its select named columns `projects` has never had, so
+        every call 404'd. The → Contract button builds the contract in the
+        browser via cr-e2c and is unaffected. Do not re-add this route.)
       • Deploy → env vars unchanged, no new secrets needed
 
  2. Paste this entire block into index.html ONCE, just before </body>.
@@ -43006,6 +43009,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1212, d: '2026-09-10', t: 'A dead server route is gone \u2014 nothing you use changes', s: 'Housekeeping, and nothing on any screen moves. An old server route called <b>estimate-to-contract</b> has been removed. It has not worked in a long time: it asked the database for two columns that do not exist, so every call to it failed before it did anything \u2014 and nothing in the app had called it for a long time either. The <b>\u2192 Contract</b> button on an estimate does not use it and never did; it builds the contract in the app itself, and it is untouched. Your contracts, the contracts list and the signing flow are all unaffected. Removing it means the next person reading this code does not spend an afternoon fixing something that nothing calls \u2014 which has already happened twice.' },
+  { b: 1211, d: '2026-09-10', t: 'The estimate screen stops showing you Save and Publish twice on a phone', s: 'Opening an estimate on a phone put <b>Save Draft</b> and <b>Publish</b> in two places at once \u2014 in the dark bar under your thumb, where they have been since build 1029, and again up in the cramped header. The header copies are gone on a phone now; the thumb bar is the one place to press. Everything else in that header stays exactly where it was, and on a tablet or a desktop nothing changes at all. Publish also shows you it is working now: the button under your thumb reads <b>Publishing\u2026</b> while it runs, which the header copy used to do where you could not see it. Worth saying plainly \u2014 the header is still the same height. Two fewer buttons came out of a row that another button was holding open anyway, so this is a tidier row rather than a shorter one.' },
   { b: 1210, d: '2026-09-10', t: 'The alert emails carry the link now, not just the texts', s: 'Every alert that points somewhere \u2014 a punch-out assigned to you, a job approved, an estimate signed, someone tagging you \u2014 has carried a tappable link since build 1125, but only in the <b>text message</b> and the buzz on your phone. Read the same alert in your <b>email</b> and there was nothing to tap: you were told a punch-out was yours and left to go find it. The email now ends with <b>Open it in Cardinal</b>, and it lands on the same screen the text does. Nothing else changed \u2014 the text and the push notification are exactly as they were. Worth knowing: if a link stopped reaching you recently, this was not it. The email never had one. The text and the push have had one since 1125, so if those went quiet it is a server setting, and the app\u2019s own test alert will name which one.' },
   { b: 1209, d: '2026-09-10', t: 'On a phone, your client comes before the money', s: 'Opening a client on a phone put <b>Job Value $0.00</b>, the percentage circle, <b>Balance Due $0.00</b> and Payment Information above the name band \u2014 so on a brand-new lead you read <b>$0.00</b> twice before finding out whose lead it was, and the name itself was cut short next to the call and text buttons. The name band is first now and the money card sits directly under it. Nothing was removed and nothing was restyled \u2014 the card is the same full-bleed rectangle it has been since build 797, only lower. Tablet and desktop are untouched.' },
   { b: 1208, d: '2026-09-10', t: 'The Lead form stops refusing a phone call', s: 'Taking a lead over the phone meant fighting the long Lead form: it refused to save without a <b>street, city, state and zip</b>, and then refused a second time with \u201cRequired: State\u201d even after you had filled everything, because the state box opened blank. <b>It opens on OH now</b> \u2014 every other state is still one tap away \u2014 and <b>the address is only required once you set a Job Category</b>. A name and a way to reach someone is a lead; the address arrives when the job does. Nothing you could save before has stopped being savable, and the address boxes no longer carry a star that was not telling you the truth.' },
@@ -48510,7 +48515,22 @@ body.standalone #cr-est-picker .box-list{padding-bottom:calc(88px + env(safe-are
   padding:2px 7px;border-radius:9px;background:rgba(0,0,0,.07);color:#6b6b6b}
 #cr-est-picker .cat-header .chev{flex:none;display:flex;align-items:center;transition:transform .12s ease}
 #cr-est-picker .cat.closed .cat-header .chev{transform:rotate(-90deg)}
-#cr-est-picker .cat.closed .cat-body{display:none}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}/* 1028: the AI assist is the quiet button beside the red attach */#cr-est-view .add-lib.ai-assist{background:none;border:1px solid rgba(200,32,46,.5);color:inherit}#cr-est-view .add-lib.ai-assist[disabled]{opacity:.55;cursor:default}/* 1029: the phone action bar — Save and Publish under the thumb */.cr-est-phonebar{display:none}@media (max-width:700px){#cr-est-view .cr-est-phonebar{display:flex;gap:10px;position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(10,11,14,.93);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid #23262d;z-index:6}#cr-est-view .cr-est-phonebar button{flex:1;padding:13px 10px;border-radius:11px;border:1px solid rgba(200,32,46,.55);background:none;color:#e8e6e1;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer}#cr-est-view .cr-est-phonebar button.primary{background:#c8202e;border-color:#c8202e;color:#fff}#cr-est-view .cr-est-body{padding-bottom:88px}body:has(#cr-est-view.open) #cr-dark-toggle{bottom:96px}}</style>
+#cr-est-picker .cat.closed .cat-body{display:none}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}/* 1028: the AI assist is the quiet button beside the red attach */#cr-est-view .add-lib.ai-assist{background:none;border:1px solid rgba(200,32,46,.5);color:inherit}#cr-est-view .add-lib.ai-assist[disabled]{opacity:.55;cursor:default}/* 1029: the phone action bar — Save and Publish under the thumb */.cr-est-phonebar{display:none}@media (max-width:700px){#cr-est-view .cr-est-phonebar{display:flex;gap:10px;position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(10,11,14,.93);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid #23262d;z-index:6}#cr-est-view .cr-est-phonebar button{flex:1;padding:13px 10px;border-radius:11px;border:1px solid rgba(200,32,46,.55);background:none;color:#e8e6e1;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer}#cr-est-view .cr-est-phonebar button.primary{background:#c8202e;border-color:#c8202e;color:#fff}#cr-est-view .cr-est-body{padding-bottom:88px}body:has(#cr-est-view.open) #cr-dark-toggle{bottom:96px}/* 1211: the header stops carrying the two controls this bar already has.
+   Measured with audit_estheader.mjs before and after -- the header is 150px
+   at 390px EITHER WAY, because `→ Contract` still holds the third row on its
+   own. A less crowded row, not a shorter one; the row only comes back if a
+   third control goes, and none of the remaining three is duplicated anywhere.
+   ⚠ IN THIS BLOCK ON PURPOSE. OPEN_ITEMS proposed <=760px, which is 1205's
+   WRAP breakpoint -- a different rule solving a different problem. At
+   701–760px the bar has not appeared yet, so hiding these there would leave
+   no Save and no Publish anywhere on the screen. Living inside the bar's own
+   media query is what stops the two ever drifting apart again.
+   ⚠ HIDDEN, NEVER REMOVED. cr-epub's injectButton() bails unless
+   head.querySelector('[data-act="save"]') finds something, and cr-e2c anchors
+   on #cr-epub-btn or that same button. querySelector finds a display:none
+   node; it does not find a deleted one. Delete either and the header silently
+   loses Preview, Options, Publish AND → Contract. */
+#cr-est-view .cr-est-head [data-act="save"],#cr-est-view .cr-est-head #cr-epub-btn{display:none}}</style>
 <script id="cr-est-script">
 (function(){
 'use strict';
@@ -51204,16 +51224,34 @@ btn.title = 'Save, then generate a shareable / signable document';
 btn.onclick = handlePublishClick;
 saveBtn.parentNode.insertBefore(btn, saveBtn);
 }
+/* 1211: the header's Publish is hidden at <=700px, so ITS 'Publishing…'
+   label is invisible exactly where the thumb bar is the only way to press it.
+   save() already writes its own progress to the header button AND the bar's
+   copy of it; this is that same pattern, not a second mechanism, and it
+   deliberately drives the real button too so the two can never disagree.
+   ⚠ The selector names are deliberately NOT spelled out in this comment.
+   Build 732 lost a round to a patch whose own prose contained the literal its
+   self-check asserted on, and planting a string here would make every future
+   grep for that control report a hit that is not code. */
+function pubSet(busy){
+[document.getElementById('cr-epub-btn'),
+ document.querySelector('#cr-est-view [data-act="bar-publish"]')]
+.forEach(function(b){
+if(!b) return;
+b.disabled = busy;
+b.textContent = busy ? 'Publishing\u2026' : 'Publish';
+});
+}
 async function handlePublishClick(){
 var btn = document.getElementById('cr-epub-btn');
 if(!btn) return;
 if(!(window.CardinalEstimates && typeof window.CardinalEstimates.save === 'function')){
 crTell('Editor not ready.'); return;
 }
-btn.disabled = true; btn.textContent = 'Publishing\u2026';
+pubSet(true);
 var projectBefore = estProjectNow();   /* 970 */
 if(!projectBefore || !projectBefore.id){
-btn.disabled = false; btn.textContent = 'Publish';
+pubSet(false);
 crTell('Open an estimate first.');
 return;
 }
@@ -51224,7 +51262,7 @@ catch(_e){
 /* 1029: save() already told the user exactly why (validation or network) —
    776's rule holds, nothing is silent; the message just isn't doubled.
    The estimate is still on screen; they fix it and press Publish again. */
-btn.disabled = false; btn.textContent = 'Publish';
+pubSet(false);
 return;
 }
 /* 970's guard, sharpened: we publish the exact row save() returned — no
@@ -51247,8 +51285,7 @@ crTell('Estimate published as ' + (est.estimate_number || 'a document') +
 }catch(e){
 crTell('Publish failed: ' + (e.message || e));
 }finally{
-var b = document.getElementById('cr-epub-btn');
-if(b){ b.disabled = false; b.textContent = 'Publish'; }
+pubSet(false);
 }
 }
 /* 1029: waitForEditorClose retired — save-in-place means the editor no longer

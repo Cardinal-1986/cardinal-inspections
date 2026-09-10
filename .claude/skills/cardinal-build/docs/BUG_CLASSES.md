@@ -4519,3 +4519,93 @@ code, and its failure is indistinguishable from a genuine regression until the c
 CLAUDE.md's *"when a gate goes red, first ask whether the test or the app is wrong — roughly half of
 all reds on this project were the test's fault"* is the general rule; this is the mechanical test
 for it.
+
+## 92 — two rules that must TRADE PLACES, written in different media queries
+
+**Cost: caught by a gate before it shipped, 10 Sep 2026 (build 1211). It would have
+been invisible on a phone and on a desktop.**
+
+The estimate builder duplicates Save and Publish: the header carries them, and
+`.cr-est-phonebar` carries them again at `@media (max-width:700px)`. Removing the
+header pair on a phone is correct — but my own OPEN_ITEMS note said to hide them at
+**≤760px**, which is **1205's WRAP breakpoint**, a different rule solving a different
+problem that happened to be the last one I had read in that stylesheet.
+
+**At 701–760px that leaves no Save and no Publish anywhere on the screen.** The header's
+are hidden; the bar has not appeared yet. Nothing throws, nothing logs, and the two
+widths anyone actually checks — 390 and 1194 — both look perfect.
+
+**The shape.** Whenever a control is hidden in one place *because* another place shows
+it, the two rules are one mechanism and **must share a breakpoint**. Writing them in
+separate media queries makes the handover silent and puts a dead band between them.
+
+**The fixes, both applied:**
+- **Put the hide INSIDE the block that does the showing.** 1211's rule lives in the phone
+  bar's own `@media (max-width:700px)`, five characters from it. They cannot drift.
+- **Gate the INVARIANT, not the rule.** `gate_1211.mjs` sweeps 390/600/700/701/760/1194
+  and asserts *Save and Publish are reachable somewhere* at each. A gate on "the header
+  is hidden at 390px" passes on the broken version. The ≤760 control reds 6 of 31 and
+  names both stranded widths.
+
+⚠ **Grep for the breakpoint before reusing it.** `index.html` has **six** textual
+`@media (max-width:700px)` hits and only **five** are blocks — the sixth is prose in a
+comment quoting a rule that was deleted. A naive count is wrong in the flattering
+direction.
+
+## 93 — a standing gate that has been answering "could not run" for months
+
+**Cost: unknown, which is the point. Found 10 Sep 2026 while running the ladder.**
+
+`gate_stack.mjs` is one of the standing gates `CLAUDE.md` says to run every build. In
+this container it had been printing `gate_stack: playwright not found` and **exiting 2**.
+Two is not zero, so it never read as green — but it never read as *broken* either. It read
+as noise, and a gate that reads as noise has stopped existing.
+
+**Two separate faults, and the second only surfaced after the first was fixed:**
+1. `await import('playwright')` resolves from the importing file's own directory and
+   **ignores `NODE_PATH`**, so a globally-installed playwright is invisible to it.
+2. **Playwright is CJS.** Importing CJS from ESM yields `{ default: {...} }`, so
+   `({ chromium } = await import(spec))` destructures `undefined` — which looks exactly
+   like "not installed". My path-only fix still printed "not found", and that is what
+   exposed this half.
+
+**The rule: a gate that cannot run must say so louder than a gate that passes.** An exit
+code nobody reads is not a report. Same family as the hard-coded Chromium path that
+`chromium_launch.cjs` exists to kill — resolve it in one place, with a fallback.
+
+⚠ **Related, and NOT fixed:** `gate_a11y.mjs` needs `axe-core`, and **npm is blocked in
+this container** (`registry.npmjs.org` sits in the proxy's no-proxy list and the
+environment answers 403). CI runs neither `gate_stack` nor `gate_a11y`. Say a gate could
+not run; never let its silence pass for green.
+
+## 94 — a test that goes red because the APP grew a new argument
+
+**Cost: `test_leadnotify901` red on `main` from build 1147 to 10 Sep 2026 — and
+`harness_653`'s P1 red for a comparable span, found the same day.**
+
+Both are the same shape and neither is a bug in the app:
+
+- **`test_leadnotify901`** extracts two shipped `try{…}catch(_){}` notify blocks and runs
+  them in a `new Function(...)` sandbox. Build 1147 added `clientLink(pid)` to both. The
+  sandbox did not supply `clientLink`, the `ReferenceError` was **swallowed by the block's
+  own catch**, `notifyTeam` was never reached, and the spy honestly reported zero calls.
+  A red test, a healthy app, and nothing in the output pointing at the sandbox.
+- **`harness_653` P1** asserted `api('/api/estimate-to-contract'` appeared in `index.html`.
+  The client's call to that route was removed at some point and the assertion simply
+  stopped being true.
+
+**Why this class is expensive:** a permanently red check trains everyone to skip the
+colour, and the next real failure lands in a file already known to be red.
+
+**The rules:**
+- **A sandbox that executes shipped code must be re-read whenever that code gains an
+  argument.** If the extracted block calls something, the sandbox has to provide it —
+  and a `try/catch` in the shipped code means the omission is silent.
+- **Spy on the FULL signature.** `test_leadnotify901`'s spy took `(to, subject, body)`
+  and dropped the fourth argument, which is how 1147 landed without the test noticing the
+  signature had grown. It now captures the url **and asserts it** — the bug that broke the
+  test is the thing it checks.
+- **When a check's answer changes, INVERT it, do not delete it.** `harness_653` P1 now
+  asserts the route is gone and that nothing calls it. Same section, same subject, other
+  side. Deleting it would have thrown away five live sections in the same file.
+- **Give any test that can shrink a coverage FLOOR.**

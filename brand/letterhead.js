@@ -1,6 +1,12 @@
 // Cardinal Roofing and Renovations, LLC — company letterhead template.
-// Logo, address, phone and email are taken from the shipped app, not invented:
-//   index.html cover-logo data URI  ·  api/share.js footer  ·  api/estimate-to-contract.js
+// Logo, address, phone and email are taken from the shipped app, not invented.
+// Both of the sources below were repointed on 10 Sep 2026 because the originals
+// no longer exist -- a provenance note is only useful if you can still open it:
+//   cardinal-report-logo.png (CARDINAL_LOGO_SRC in index.html; it was an inline
+//     base64 cover-logo data URI until build 1182)
+//   api/share.js footer  ·  api/senddoc.js
+//     (was api/estimate-to-contract.js, RETIRED at build 1212 -- uncalled, and
+//      its select named columns `projects` has never had, so it always 404'd)
 const fs = require('fs');
 const {
   Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell,

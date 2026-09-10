@@ -32668,3 +32668,123 @@ check_build green (1189 → 1190, marker + negative control) · `gate_1187` 23/2
 - ⚠ **`test_leadnotify901.mjs` IS STALE AND HAS BEEN SINCE 1147. It is not a lead-notification bug.** It extracts the two shipped blocks and executes them in a sandbox supplying `assigned, window, esc, rptRepName, first, last, addr` — but **not `clientLink`**, which **1147 added to those exact call sites**. So the fragment throws `ReferenceError` on `clientLink(pid)`, the block's own `try{}catch(_){}` swallows it, and the spy never sees a call. Both extraction anchors still match, which is what makes it look like a real failure. **Fix is to give the sandbox `clientLink` and `pid`; not done here, because it is not this build.**
 - ⚠ **AND MY OWN COUNTING SLIP, recorded because I said it out loud first.** I reported *"absUrl appears at 4 sites"* from `grep -n`, which counts **LINES**; the SMS tail line carries it **twice**, so it is 5 occurrences on 4 lines. The conclusion (0 in the email) never moved, but the number was wrong in a commit message and a PR body before I caught it. `patch_1210.py` asserts the **code facts** instead of a hardcoded total, and says why.
 - **Sentinel not run for this build and that is the rule, not a skip:** 1210 changes `api/notify.js` plus the stamp and one CHANGELOG entry. No screen differs. A full sweep WAS run for the audit and its findings are in `OPEN_ITEMS.md`.
+
+## Build 1211 — the estimate builder stops showing Save and Publish twice on a phone
+
+Audit item 4. **Measuring it first changed the build twice, and both corrections matter more than
+the feature.**
+
+⚠ **1. THE BREAKPOINT IN MY OWN OPEN_ITEMS NOTE WAS WRONG AND WOULD HAVE SHIPPED A HOLE.** The note
+said "drop those two from the header at ≤760px — one CSS rule". `.cr-est-phonebar` appears at
+`@media (max-width:700px)`; **760px is 1205's WRAP breakpoint, a different rule solving a different
+problem.** Hiding the pair at ≤760 leaves **701–760px with no Save and no Publish anywhere** — the
+header's are hidden, the thumb bar has not appeared. Invisible at 390px and at 1194px, which are
+the two widths anyone would check. The rule therefore lives **inside the phone bar's own media
+block**, five characters from the bar it hands the work to, so the two cannot drift apart again.
+`gate_1211`'s control proves the cost: the ≤760 version reds **6 of 31**, naming both stranded
+widths.
+
+⚠ **2. IT DOES NOT MAKE THE HEADER SHORTER, AND I SAID IT WOULD.** `audit_estheader.mjs` (new)
+measures the real screen: at 390px the header is **150px in three rows** — the h2, then
+Close/Preview/Options, then `→ Contract`/Publish/Save Draft. Hiding Save and Publish leaves
+`→ Contract` alone on the third row, so the measured height is **150px before and 150px after**.
+Every candidate set was measured; only removing a **third** control (Options, 86px) recovers the
+row, and none of the remaining three is duplicated anywhere. So this build is a **declutter of a
+cramped row, not the height fix the note promised** — said plainly to Theo rather than quietly
+reframed.
+
+**HIDDEN, NEVER REMOVED**, and that is load-bearing. `cr-epub`'s `injectButton()` returns early
+unless `head.querySelector('[data-act="save"]')` finds something, and `cr-e2c` anchors on
+`#cr-epub-btn` or that same Save button. `querySelector` finds a `display:none` node; it does not
+find a deleted one. **Delete either and the header silently loses Preview, Options, Publish AND
+→ Contract.** The gate asserts all three injected controls are present while two of them are
+invisible.
+
+**The second edit is the cost of the first.** `handlePublishClick()` writes `Publishing…` onto
+`#cr-epub-btn` — the button this build hides on a phone — so without it the bar's Publish would tap
+and appear to do nothing on a money screen. `save()` already solved exactly this for Save, writing
+progress to the header button *and* the bar's copy; `pubSet()` is that pattern applied to Publish,
+not a second mechanism. ⚠ The five call sites live inside one function and two of them are
+byte-identical, so the patch **slices the function, patches the slice and re-joins** rather than
+substituting file-wide.
+
+Gates: `check_build` green (1210 → 1211) · **`gate_1211.mjs` 31/31 in real Chromium**, sweeping six
+widths (390/600/700/701/760/1194) and asserting the INVARIANT — Save and Publish reachable
+*somewhere* at every one — rather than the rule · **two negative controls, both red, neither
+crashing**: the 1210 artifact reds 4 (header pair visible at 390, no progress on the bar) and the
+≤760 variant reds 6 · registered in `gate_chromium` (selftest 16/16) · `check_build`, `gate_types`
+(0 codes grew, 2 improved), `gate_dupes`, `gate_stack` CLEAN · patch replays byte-for-byte.
+
+⚠ **`gate_stack` had been exiting 2 — "could not run" — on every build in this container, and 2 is
+not 0 so it read as noise rather than as a standing gate that had stopped running.** Its
+`await import('playwright')` resolves from the script's own directory and ignores `NODE_PATH`, and
+**playwright is CJS**, so importing it from ESM yields `{ default: … }` and the obvious
+destructure gets `undefined` — indistinguishable from "not installed". Fixed with a two-spec
+fallback that reads `m.chromium || m.default.chromium`. My first attempt fixed only the path and
+still reported "not found", which is what surfaced the CJS half. Same class as the hard-coded
+Chromium path `chromium_launch.cjs` exists to kill. CI runs neither `gate_stack` nor `gate_a11y`.
+
+⚠ **`gate_a11y` could not be run this build**: `axe-core` is not installed and **npm is blocked in
+this container** (`registry.npmjs.org` sits in the proxy's no-proxy list and the environment answers
+403). Not claimed green. The build only ever *hides* two elements, so an axe count can fall but not
+grow — but that is reasoning, not a measurement, and it is recorded as such.
+
+## Build 1212 — the dead estimate-to-contract route is retired
+
+Audit item 8, and a deletion, so it waited for Theo's word (10 Sep).
+
+**Three facts, each measured against the shipped tree rather than taken from the doc that
+proposed it.** (1) **Nothing calls it.** `estimate-to-contract` appears in `index.html` exactly
+twice and neither is a call — a bullet in the build-148 install instructions and the 1199
+CHANGELOG entry. A third hit, `auditLog('estimate_to_contract', …)`, is an **event type string**
+that merely shares the words; no `api/*.js` imports the route, `vercel.json`'s functions block
+never named it, `sw.js` does not mention it. (2) **The `→ Contract` button does not use it** —
+`cr-e2c`'s `handleClick()` calls a module-local `generate()` and writes the contract from the
+browser. That was the one fact worth getting wrong, so the whole handler was read rather than
+inferred from the route's name. (3) **It could not have run anyway**: its `select` names
+`client_name` and `estimate`, columns `projects` has never had, so every call 404'd — which is
+why 1197's audit-row repair and 1199's authorization fix both landed on a route nothing could
+reach.
+
+**Not touched:** the `contracts` table (nine client read/write sites), `contracts_setup.sql`, and
+the `→ Contract` button. Retiring a dead HTTP route is not retiring the feature. `api/*.js` is
+now **36**.
+
+**`harness_653`'s P1 was repaired, not deleted** — the file covers five other live things (P2–P6).
+⚠ **Its four route checks had ALREADY gone stale before this build touched them**: P1 asserted
+`api('/api/estimate-to-contract'` was in `index.html` and that string had not been there for some
+time. Same failure mode as `test_leadnotify901` below, found the same day. P1 now asserts the
+route is gone, that nothing calls it in either spelling, that the install note says so, and that
+`cr-e2c` and the `contracts` table are untouched — the same section watching the same subject
+from the other side.
+
+Also repointed two dangling provenance notes in `brand/` that cited the retired route for
+Cardinal's address and email (now `api/share.js` / `api/senddoc.js`) — and, while there, the
+**stale `cover-logo` data URI citation**, which build 1182 replaced with `cardinal-report-logo.png`.
+
+⚠ **One open item narrowed as a side effect.** OPEN_ITEMS' WeatherLock-vs-RhinoRoof question cited
+two sources: this route's `WARRANTIES.roofing` and the Library. The route's copy went with the
+route, so **`WeatherLock` now appears exactly once in the whole repo** (`index.html:6246`). Still
+Theo's wording call, but there is one site to change, not two.
+
+Gates: `check_build` green (1211 → 1212, marker `was RETIRED at build 1212` + negative control) ·
+patch replays byte-for-byte · `brand/letterhead.js` parses. No SQL.
+
+## Test repair (no build number) — `test_leadnotify901` was red on main for the wrong reason
+
+Audit item 3. **RED 6 of 11 on `main` since build 1147, with the app fine throughout.** 1147 added
+a deep link to both shipped notify blocks — `clientLink(pid)` / `clientLink(pr.id)` — and the
+test's `new Function(...)` sandboxes never supplied `clientLink`. The `ReferenceError` was thrown
+**inside the block's own `try{}catch(_){}`**, so it was swallowed, `notifyTeam` was never reached,
+and the spy honestly reported zero calls.
+
+The repair does two things and the second is the point: the sandbox now provides `clientLink` and
+`pid`, **and the spy captures `notifyTeam`'s fourth argument**, so the deep link 1147 added is
+asserted rather than merely tolerated. *The bug that broke this test is now the thing it checks.*
+A coverage floor was added so a future edit cannot shrink it quietly.
+
+**GREEN 14/14 on main, and RED on two independent controls** — strip `clientLink(...)` from both
+blocks and the two new url checks fail; strip the self-assignment guard and the two "NOT called"
+checks fail. ⚠ Building those controls tripped this file's own rule: **the reassign block sits
+ABOVE the create block in `index.html`**, and the first attempt asserted "blocks out of file order"
+rather than silently splicing one away.

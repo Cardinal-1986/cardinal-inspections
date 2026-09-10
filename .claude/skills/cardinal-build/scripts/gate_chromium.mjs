@@ -144,6 +144,18 @@ const GATES = [
     protects: 'on a phone the client name band renders above the money card, and the reparent guard settles',
     break: { find: 'wrapEl.insertBefore(moneyCard, namebar.nextSibling);',
              repl: 'wrapEl.insertBefore(moneyCard, namebar);' } },
+  /* 1211: the estimate header stops duplicating the thumb bar on a phone.
+     The break moves the hide rule from the phone bar's own 700px block up to
+     1205's 760px wrap block — the breakpoint OPEN_ITEMS actually proposed. It
+     is ONE character of difference and it strands 701–760px with no Save and
+     no Publish anywhere on the screen, which is invisible at 390px and at
+     1194px, the two widths anyone would check. That is precisely why the gate
+     sweeps six widths and asserts the INVARIANT (both controls reachable
+     somewhere) rather than the rule. Verified: the break reds 6 of 31. */
+  { name: 'gate_1211.mjs',
+    protects: 'Save and Publish are reachable at every width, and the phone bar shows publish progress',
+    break: { find: '#cr-est-view .cr-est-head #cr-epub-btn{display:none}}',
+             repl: '}@media (max-width:760px){#cr-est-view .cr-est-head [data-act="save"],#cr-est-view .cr-est-head #cr-epub-btn{display:none}}' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

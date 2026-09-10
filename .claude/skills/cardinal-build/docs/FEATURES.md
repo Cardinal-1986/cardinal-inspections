@@ -8484,3 +8484,44 @@ is the drift those helpers prevent.
 boundary — but the same-site test (`/^[/#][^/]/`) permits a quote inside the path.
 
 `gate_1210.mjs` holds all of it, driving the shipped handler and asserting on the real Resend POST.
+
+---
+
+## Build 1211 — the estimate builder's phone header stops duplicating the thumb bar
+
+**Where:** `<style id="cr-est-styles">` (inside the phone bar's own `@media (max-width:700px)`
+block) and `cr-epub-script`'s `handlePublishClick()`.
+
+On a phone the estimate editor showed **Save Draft** and **Publish** twice — once in
+`.cr-est-phonebar` under the thumb (since 1029) and again in the header, which wraps to three rows
+at 390px. The header copies are now hidden at **≤700px**, the phone bar's own breakpoint.
+
+- ⚠ **The rule lives INSIDE the phone bar's media block on purpose.** They are one mechanism: the
+  header hides *because* the bar shows. Written at ≤760px (1205's wrap breakpoint, which is what
+  `OPEN_ITEMS` proposed) it strands **701–760px with no Save and no Publish anywhere**. BUG_CLASSES 92.
+- ⚠ **Hidden, never removed.** `cr-epub`'s `injectButton()` bails unless it finds
+  `[data-act="save"]`, and `cr-e2c` anchors on `#cr-epub-btn` or that button. Delete either and the
+  header silently loses Preview, Options, Publish **and** → Contract.
+- ⚠ **It does not make the header shorter** — measured 150px at 390px both before and after,
+  because `→ Contract` still holds the third row alone. A declutter, not a height fix.
+- **`pubSet()`** now writes `Publishing…` to the header button **and** the bar's copy, the way
+  `save()` already does for Save. Without it the bar's Publish taps and appears to do nothing.
+
+**Instruments:** `audit_estheader.mjs` (measures the header and every candidate hide in a real
+engine) · `gate_1211.mjs` (31 checks, six widths, asserts the invariant *Save and Publish are
+reachable somewhere*).
+
+## Build 1212 — `api/estimate-to-contract.js` retired
+
+**Removed.** A serverless route with no caller that could not have run: its `select` named
+`client_name` and `estimate`, columns `projects` has never had, so every call 404'd. `api/*.js` is
+now **36**.
+
+**Unaffected, and this is the part worth knowing:** the **→ Contract** button on an estimate never
+used it. `cr-e2c`'s `handleClick()` calls a module-local `generate()` and writes the contract from
+the browser. The `contracts` table (nine client read/write sites), `contracts_setup.sql` and the
+signing flow are all untouched.
+
+The install-instructions bullet in `index.html` now says the route was retired and why, so it is
+not re-added; `harness_653`'s P1 was **inverted** to assert its absence rather than deleted (that
+file carries five other live sections).
