@@ -13,6 +13,10 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 ---
 
 > ### Progress
+> **A12 closed in build 1204** (option 13): after Publish, *Email to client · Text to sign · Share
+> link* are on the toolbar itself instead of two taps deep under ⋯ More, "Mark sent" sits below them
+> on the phone, and the client chip reads "‹ Back". Measured: on 1203 all three sends render 0×0
+> inside a `display:none` parent; on 1204 each is 181×42 and is the top element at its own centre.
 > **B5, B6a, A2, A9 and A10 shipped in build 1203** (options 5, 6a, 8, 11, 12).
 > **B4 shipped in build 1202** (options 4a and 4b): a review request is recorded when the rep says
 > it went out, and the card's buttons wait until the job is Completed.
@@ -20,7 +24,10 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 > ways to deliver, and the estimate is marked Sent only once that document really goes out.
 > **B1 and B2 shipped in build 1200** (options 1 and 2), measured before and after: an open
 > profile went from 65 DOM records/sec with 360 on the punch count to 5/sec with zero, and the
-> backward-chevron email is gone. Everything else below is still open.
+> backward-chevron email is gone.
+> **Still open:** the two intake doors (7a/7b/7c — a decision, not code), live search results (6b),
+> the phone profile's band order (9), the estimate toolbar's tap targets (10) and the tap-target
+> sweep (14).
 
 ## 0. Read this first
 
@@ -37,7 +44,7 @@ homeowner's hands.**
 | **B5** | iPad landscape Leads & Jobs: the Job Summary panel overflows the screen by 31 px and clips its own copy | Leads on the iPad | bug — layout |
 | **B6** | Header search shows nothing while you type and only acts on Return; on the phone the keyboard key reads "return", not "Search" | any screen | bug-grade friction |
 | **A1** | Two intake doors with two rulebooks: **Contact** saves a lead from a name alone; **Lead** is a 1,600 px form that refuses without six fields and has no Ohio default | the + button | the biggest annoyance |
-| **A12** | After Publish the way to *send* is two taps deep under "⋯ More", while the prominent button is "Mark sent" (which sends nothing), and there is no labelled Close | every estimate | the second biggest |
+| **A12** | ✅ **FIXED — 1201 (the publish sheet) + 1204 (the toolbar).** Sending was two taps deep under "⋯ More" while the prominent button was "Mark sent", which sends nothing, and there was no labelled Close | every estimate | the second biggest |
 
 **Verdict: the pipeline works end to end — Lead → Prospect → Approved → Scheduled, estimate → publish →
 document — with no console errors, no unhandled dialogs, and writes that match the screen.** The
@@ -374,7 +381,7 @@ plus its gate; every option ships with a negative control against 1199.
 | **10** | Estimate toolbar: 44 px targets, wrap to two rows on the phone (or a fade that says it scrolls) | A11 | small · render 390 and 1194 | |
 | **11** | ✅ **SHIPPED, build 1203** — the labels WRAP instead, so nothing is renamed | A10 | trivial | |
 | **12** | ✅ **SHIPPED, build 1203** | A9 | trivial | |
-| **13** | Document editor phone toolbar: a labelled **Back to client**; *Email · Text to sign · Share link* ahead of "Mark sent" | A12 | small · render | pairs with 3a |
+| **13** | ✅ **SHIPPED, build 1204.** The three sends are primaries, "Mark sent" moved below them on the phone, and the client chip reads “‹ Back” | A12 | small · render | measured: sends 0×0 on 1203, 181×42 and one-tap on 1204 |
 | **14** | Tap-target sweep under 44 px (drawer A, dispatch move, album chips, day cells, source chips) | A13/A3 | medium · several modules · `gate_1081`-style CSSOM walk | |
 
 **My recommendation, if you want one:** 1 + 2 in one build today (both trivial, both gated, both

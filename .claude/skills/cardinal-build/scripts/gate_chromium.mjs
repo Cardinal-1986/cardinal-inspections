@@ -98,6 +98,16 @@ const GATES = [
   { name: 'gate_1203.mjs',
     protects: 'the iPad Leads panel stays on screen, no job-menu label is truncated, Job cost is admin-only',
     break: { find: 'minmax(0,1.05fr) minmax(0,1fr)', repl: 'minmax(300px,1.05fr) minmax(320px,1fr)' } },
+  /* 1204: after Publish, the three real sends must be one tap on the phone,
+     not two taps deep under "More". The break puts them back behind a hidden
+     wrapper, which IS the measured 1203 state: emailDocBtn, textSignBtn and
+     shareBtn each rendering 0x0 inside a display:none parent, so the only way
+     to send was the drawer. Anchor counted in 1203 first: 0 there, 1 here
+     (BUG_CLASSES 86). */
+  { name: 'gate_1204.mjs',
+    protects: 'the published document offers Email / Text / Share on the bar itself, above "Mark sent", and the way out says Back',
+    break: { find: '      <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>\n      <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>\n      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>\n      <button class="btn dark" id="edMoreBtn"',
+             repl: '      <span id="edSendsBroken" style="display:none;"><button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button><button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button><button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button></span>\n      <button class="btn dark" id="edMoreBtn"' } },
 ];
 
 function run(script, args) {

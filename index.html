@@ -350,7 +350,11 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
   #editorLogo{order:-1;}
   .toolbar .grow{flex:1 1 100%;order:5;min-width:0;}
   .toolbar .btn{font-size:12px;padding:8px 10px;}
-  .toolbar .statuswrap{font-size:11px;}
+  /* 1204: a `.toolbar .statuswrap{font-size:11px}` sat here and had never
+     applied -- the unconditional `.toolbar .statuswrap` below is the same
+     specificity and comes later in source, so the phone has always drawn
+     this row at 13px. Deleted rather than out-specified; the phone's real
+     statuswrap rule now lives in the 760px block below that one. */
   .toolbar #savedFlash{display:none;}
   #editorLogo{height:34px !important;}
 }
@@ -396,11 +400,19 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 .toolbar .edbtns .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;}
 .toolbar .edbtns .btn .cri{flex:0 0 auto;opacity:.92;}
 @media (max-width:760px){
-  /* 1069: the phone shows three primaries plus More; the other eight are one
-     tap away in #edDrawer. Hiding the WRAPPER rather than each button means no
-     !important is needed to beat the per-button style.display that JS sets. */
+  /* 1069: the phone shows the primaries plus More; the rest are one tap away
+     in #edDrawer. Hiding the WRAPPER rather than each button means no
+     !important is needed to beat the per-button style.display that JS sets --
+     which is also why 1204 MOVED the three sends into the primary row rather
+     than trying to un-hide them from here. */
   .toolbar #edSecondary{display:none;}
   .toolbar #edMoreBtn{display:inline-block;}
+  /* 1204: the sends come first. .edbtns is order:2, so ordering the status
+     row after it makes the phone read Save / Print, then Email / Text /
+     Share, then "Mark sent" -- the manual override last instead of first.
+     This block is after the unconditional `.toolbar .statuswrap` rule, so
+     unlike the declaration it replaces, it wins. */
+  .toolbar .statuswrap{order:3;}
   .toolbar .edbtns{order:2;flex:1 1 100%;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0;}
   .toolbar .edbtns .btn{width:100%;justify-content:flex-start;padding:11px 14px;font-size:13px;}
 }
@@ -2372,6 +2384,14 @@ body.restoring #restoreVeil{display:flex;}
 .edchip small{color:#e8b7ba;font-weight:800;}
 .edchip.edlink{border-color:rgba(200,32,46,.65);cursor:pointer;}
 .edchip.edlink:active{transform:scale(.96);}
+/* 1204 -- the way OUT of the document editor was unlabelled. This chip and
+   the logo were the only two exits, and both carried the word Back or Home
+   in a title attribute, which a phone never shows; walk 6 hunted for a
+   Close/Back/Done for 30 s and found none. The chip now SAYS it, which
+   costs width -- so it takes its own cap instead of the shared .edchip one,
+   and #edRepChip beside it is deliberately left at 150px. */
+#edClientChip{max-width:210px;}
+.edchip .edbk{color:#ffd9dc;font-weight:900;margin-right:1px;}
 .toolbar .grow{order:10;flex:1 1 100%;}
 #reportTitle{height:34px;font-size:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
   color:#f3e9dc;border-radius:8px;width:100%;padding:0 12px;box-sizing:border-box;}
@@ -2379,6 +2399,9 @@ body.restoring #restoreVeil{display:flex;}
 #savedFlash{order:11;}
 @media (max-width:760px){
   .edchip{height:22px;font-size:11px;padding:0 8px;max-width:30vw;}
+  /* 1204: the client chip carries a word the rep tap-targets, so it gets the
+     room for it. 30vw truncated "\2039 Back" down to the arrow alone. */
+  #edClientChip{max-width:46vw;}
 }
 
 /* ---- button tap feedback ---- */
@@ -3975,7 +3998,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1203<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1204<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8527,14 +8550,20 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn" id="saveBtn">Save</button>
       <button class="btn dark" id="printBtn" data-cri="page"><span class="bl">Print / PDF</span></button>
       <button class="btn dark" id="fillChipBtn" style="display:none;"><span class="bl" id="fillChipTxt">&#8212;</span></button>
-      <button class="btn dark" id="edMoreBtn" aria-haspopup="true" aria-expanded="false"><span class="bl">&#8943; More</span></button>
-      <span id="edSecondary"><button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
+      <!-- 1204: the three real sends are PRIMARY. A12 of the Sep 2026 walk:
+           after Publish the prominent button was "Mark sent", which sends
+           nothing, while Email / Text / Share sat two taps deep in the
+           drawer. They are MOVED here out of #edSecondary, never copied --
+           the drawer builds its rows from that span's visible buttons, so a
+           second copy would have offered every send twice. -->
       <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
       <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>
+      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
+      <button class="btn dark" id="edMoreBtn" aria-haspopup="true" aria-expanded="false"><span class="bl">&#8943; More</span></button>
+      <span id="edSecondary"><button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
       <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
       <button class="btn dark" id="editEstBtn" style="display:none;" data-cri="pencil" title="Reopen this estimate in the builder — Publish there updates this document"><span class="bl">Edit estimate</span></button>
       <button class="btn dark" id="addFieldBtn" data-cri="plus"><span class="bl">&#65291; Field</span></button>
-      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
       <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
       <button class="btn dark" id="rccBtn" style="display:none;" data-cri="camera"><span class="bl">CompanyCam</span></button>
       <button class="btn dark" id="sortBtn" style="display:none;" data-cri="funnel"><span class="bl">Sort photos</span></button><button class="btn dark" id="draftBtn" style="display:none;" data-cri="sparkle"><span class="bl">Draft narrative</span></button></span>
@@ -25785,7 +25814,14 @@ async function openEditor(id){
     if(cc){
       if(pr){
         var po = poOf(pr);
-        cc.innerHTML = (po ? '<small>' + esc(String(po)) + ':</small> ' : '') + esc(pr.name || 'Client');
+        /* 1204: the chip says what it does. It was the only labelled-in-a
+           -title-attribute way back to the client, and a phone never shows
+           a title. The name stays beside it -- it is also how a rep knows
+           whose document is open. */
+        cc.innerHTML = '<b class="edbk">\u2039 Back</b>'
+          + (po ? '<small>' + esc(String(po)) + ':</small> ' : '')
+          + esc(pr.name || 'Client');
+        cc.title = 'Back to ' + (pr.name || 'the client') + '\u2019s overview';
         cc.style.display = 'inline-flex';
       }else{ cc.style.display = 'none'; }
     }
@@ -42793,6 +42829,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1204, d: '2026-09-10', t: 'The published document offers the send, and the way back says Back', s: 'After you publish an estimate you land in the document editor, and on a phone that screen had its priorities backwards. <b>The three ways to actually send it \u2014 Email to client, Text to sign and Share link \u2014 were hidden two taps deep under \u201c\u22ef More\u201d</b>, while the biggest button on the bar was <b>Mark sent</b>, which sends nothing to anybody. The three sends are now on the bar itself, and Mark sent has moved below them where an override belongs. <b>And the way out is labelled.</b> The only exits were the client chip and the logo, and neither said so anywhere a phone could show it \u2014 the chip now reads \u201c\u2039 Back\u201d beside the client name.' },
   { b: 1203, d: '2026-09-10', t: 'Five small things: the iPad panel fits, the search says what to press, and the job menu reads', s: 'Housekeeping a rep meets every day. <b>On the iPad, sideways, the Job Summary panel on Leads &amp; Jobs sat off the right-hand edge of the screen</b> and cut off its own last line \u2014 the three columns were asking for more room than the page had once the side menu took its share. They now give way and all three fit. <b>The search box says what to press</b> (\u201c\u2026 then Return\u201d) and your phone keyboard now shows a <b>Search</b> key instead of return. <b>Seven job-menu buttons were cutting their own labels in half</b> on a phone \u2014 \u201cCommu\u2026\u201d, \u201cNotificat\u2026\u201d, \u201cMeasure\u2026\u201d \u2014 and now wrap to a second line so you can read them. <b>Documents is called Files</b>, because it counts the files you upload; a published estimate lives under Estimates, and the old name made it look like the document had vanished. And <b>Job cost is no longer on the Add project form</b> for anyone but an admin \u2014 it feeds profit reports, nobody knows it at intake, and it is still there, and still safe, for the people who do use it.' },
   { b: 1202, d: '2026-09-10', t: 'A review request counts when you send it, and the card waits for a finished job', s: 'Two fixes to the Google Reviews card. <b>Tapping <i>Text request</i> used to record the request straight away</b> \u2014 before you had sent anything. Back out of Messages and the profile still said \u201cReview requested today via text\u201d, the job history said the same, and the next tap sent the <i>friendly follow-up</i> wording to somebody who never got a first message. The app cannot see what happens once the message is handed to Messages, Mail or your clipboard, so it now simply <b>asks you</b>: <i>Did the review request go out?</i> A yes records it, <b>Not yet</b> records nothing, and you can tap again whenever you do send it. <b>And the card no longer offers the buttons before the job is Completed</b> \u2014 on a brand-new lead the red Text request button was the loudest thing on the screen. The card stays where it is and tells you when it opens, the same way the Invoices card does.' },
   { b: 1201, d: '2026-09-10', t: 'Publishing an estimate now offers to send it, instead of asking you to call it sent', s: 'Publishing used to pop the question <b>\u201cMark it as Sent?\u201d before anything had been sent</b> \u2014 and saying yes moved the job forward and then dropped you on a document whose own toolbar still read <b>UNSENT</b>. Two different answers to \u201cdid the client get this?\u201d on one screen. Publishing now asks <b>\u201cSend it to &lt;client&gt;?\u201d</b> and gives you the three ways the app actually delivers a document: <b>Email to client</b>, <b>Text to sign</b>, or <b>Copy share link</b> \u2014 the same buttons the document itself has, so nothing behaves differently from what you already know. <b>Not now</b> leaves it a draft and says so. And the estimate is marked Sent, with the pipeline moving, <b>only once the document has really gone out</b> \u2014 back out of the email and nothing is claimed on your behalf. Marking a document sent by hand from the document itself now moves the estimate too, which it never did.' },

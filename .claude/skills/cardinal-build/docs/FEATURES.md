@@ -7059,10 +7059,17 @@ me to WANT to use these AI inspections?"*
 
 ### The More drawer (1069)
 
-`#edSecondary` wraps the eight secondary toolbar buttons; `#edMoreBtn` opens
+`#edSecondary` wraps the secondary toolbar buttons; `#edMoreBtn` opens
 `#edDrawer`. **`#edSecondary` is `display:contents`**, so above 760px the
 wrapper vanishes from layout and the desktop toolbar is byte-identical to what
 it was — the drawer is a phone affordance only.
+
+⚠ **1204 took three buttons OUT of this set** — *Email to client · Text to sign ·
+Share link* are primaries now, ahead of ⋯ More, so the count here is **8, not
+11**. They were **moved, not copied**: the drawer builds its rows from this
+span's visible buttons, so a duplicate in the primary row would offer every send
+twice from one pipeline. And they moved in the **markup**, not in CSS, for the
+reason the phone rule hides the wrapper rather than each button — see below.
 
 ⚠ **Deliberately modelled on `#navMenu`** — class toggle, document-level click
 closer, `stopPropagation` on the opener, and **zero writes to
@@ -8302,3 +8309,26 @@ under Estimates.
 
 **Job cost on the Add project form is admin-only** (`isAdminUser()`), hidden rather than removed so
 the stored value survives a rep's edit.
+
+
+## Build 1204 — the document editor's toolbar, after Publish
+
+**The three sends are primaries.** `#emailDocBtn`, `#textSignBtn` and `#shareBtn` sit ahead of
+`#edMoreBtn`, outside `#edSecondary`. Audit finding A12: they had been two taps deep in the drawer
+while the prominent control was **Mark sent**, which sends nothing. Each exists **exactly once** in
+the file — moving them out of the drawer set is what keeps that true, because `#edDrawer` renders a
+row per *visible* `#edSecondary` button.
+
+**On the phone the status row comes last.** `.toolbar .statuswrap{order:3;}` against `.edbtns`'
+`order:2`, so a phone reads *Save / Print → Email / Text / Share → Mark sent*. ⚠ **That rule has to
+live in the SECOND `@media (max-width:760px)` block**, the one after the unconditional
+`.toolbar .statuswrap{display:flex;…}` — an identical-specificity rule declared earlier loses, which
+is exactly why the `font-size:11px` that used to sit in the first block had never applied and was
+deleted at 1204. Desktop is unchanged: the status row is still first, the button set still wraps to
+its own line.
+
+**`#edClientChip` is the labelled way out.** It renders `&#8249; Back` ahead of the PO and the
+client name, and sets its own `title` to *"Back to <name>'s overview"*. It carries its **own**
+`max-width` — 210px, 46vw on a phone — because the shared `.edchip` cap of 30vw truncated it even
+before the label existed; `#edRepChip` stays on the shared cap. `gate_1204` measures the chip's flex
+gap so the label cannot run into the name.
