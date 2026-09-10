@@ -8458,3 +8458,29 @@ tick**, waking all ~46 body observers with the screen still looking correct. Mea
 5 ticks on a poisoned copy. `gate_1209.mjs` section C holds it, driving the real resize listener —
 counting reparents across `renderOverview()` calls measures 797's rebuild-per-render architecture
 instead, and reports the same number on both builds.
+
+### Notification deep links — which channel carries what (1125, 1147, 1210)
+
+`/api/notify` fans one alert to three independent channels. The caller passes a **same-site**
+`url` (`punchLink()` for the six punch-out alerts, `clientLink()` for the twelve that name a
+client); the route resolves it to an absolute `absUrl` against its own host — **never trusting an
+absolute URL from the caller**, because the string ends up in a text message.
+
+| channel | carries the link | since |
+|---|---|---|
+| Push | raw `url` in the JSON; `sw.js` navigates to it | 1125 |
+| SMS | `absUrl` appended **after** the trim, so a long title can never truncate the link | 1125 |
+| **Email** | `<a href>` appended as **"Open it in Cardinal"** | **1210** |
+
+⚠ **The email carried NOTHING until 1210** — `absUrl` was built and then read only in the SMS tail.
+Verified against every commit that has ever touched the file. If someone reports that a link
+"stopped working", the email is not the regression: it never had one.
+
+⚠ **Add the link at the ROUTE, never per caller.** That is the whole point of `punchLink()` /
+`clientLink()` — 1125 exists to stop six spellings of one link. A caller appending its own anchor
+is the drift those helpers prevent.
+
+⚠ **The href is escaped.** The caller controls the whole `html` body already, so this is not a new
+boundary — but the same-site test (`/^[/#][^/]/`) permits a quote inside the path.
+
+`gate_1210.mjs` holds all of it, driving the shipped handler and asserting on the real Resend POST.

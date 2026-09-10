@@ -5825,3 +5825,57 @@ shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks t
 - Retiring `api/estimate-to-contract.js` (dead route; the **client-side** `cr-e2c` → Contract
   button is live and is what 1205 measured).
 - **WeatherLock vs RhinoRoof** naming, and the logo preview.
+
+## Production hub audit — 10 Sep 2026 (build 1210)
+
+Theo: *"audit the productions hub … the assign hyperlink … make sure everything else is
+working and audit the design of the whole hub and wiring."*
+
+- ✅ **The hyperlink: FIXED at 1210** for email; it was already working in push and SMS. Full
+  diagnosis in the build log. **The email had never carried one** — verified against every commit
+  that has ever touched `api/notify.js`.
+- ⚠ **STILL OPEN AND NOT MINE TO SEE: which channel went quiet.** Push and SMS have carried the
+  link since 1125 and both have an audience (**11 `push_subs`**, **8 of 10 staff with a phone**).
+  If a link stopped arriving, a server env var did it. **The app's own test alert reports
+  `vapid_from_env` / `resend` / `sms` / `push`** — one tap names it. Cannot be read from the build
+  container.
+- ⚠ **`test_leadnotify901.mjs` is RED 6 of 11 on main and the app is FINE — a STALE TEST since
+  1147.** Its sandbox does not supply `clientLink`, which 1147 added to both blocks it extracts, so
+  the fragment throws inside the block's own `try{}catch(_){}` and the spy sees no call. **Fix:
+  pass `clientLink` and `pid` into the two `new Function(...)` sandboxes.** Left red deliberately
+  rather than folded into 1210 — but a permanently red test is noise that will mask a real failure,
+  so it wants doing.
+- ⚠ **`harness_notifyindep1126` is RED 5 of 19 in the build container ONLY** — `web-push` is not
+  installed, so the route answers `push_unavailable` rather than the VAPID-specific reasons.
+  **Identical on 1209 and 1210**; CI installs the module. Same class as `gate_1076` / `gate_1198`.
+  Do not "fix" the route on the strength of a local run.
+
+### Wiring — clean
+
+All **four** punch assign surfaces notify: The Line's sheet, the map pin, the punch card, and
+filing from the board. The gap build 945 closed has stayed closed. The Assign sheet itself is
+healthy (8 people, 5 day chips, notify toggle on by default).
+
+⚠ **A per-module `data-*` orphan sweep produced 5 candidates and ALL FIVE were false** — per-block
+scoping cannot see delegated handlers, and `data-act` / `data-f` / `data-go` are app-wide.
+`data-pustrip` is a container marker, not a control. **Do not re-run that method and re-report
+them**; the sentinel's UNWIRED check is the instrument that works.
+
+### Design — the sweep (64 renders, 390 and 1194, `--all`)
+
+**203 findings app-wide: 12 TRUNCATED · 36 DEAD · 144 OVERRIDDEN · 1 FLOOR · 10 UNWIRED.** None of
+the 12 TRUNCATED and none of the FLOOR failures are on the hub. What the hub itself carries, all of
+it rules that LOSE to a later rule rather than anything broken-looking:
+
+| screen | rule that never wins | matches |
+|---|---|---|
+| Production | `#cr-pb h1 { font-size:26px }` | 1 el, 1194 |
+| Production | `#cr-pb .pbmonth .pbday { min-height:44px }` | 30 el, 1194 — ⚠ **known and intended since 1206**: desktop keeps 78px. Do not "fix" it |
+| Dispatch | `.job .t` 12px · `.job .a` 11px · `.rep .t` · `.rep .a` | 3+3+1+1 el, 1194 |
+| Dispatch | `#cr-disp .dspwk button { width:26px }` | 2 el, 390 — the week arrows, whose **hit area is 45×43** (gate_1206), so cosmetic only |
+| The Line | `.pu-tab` 13.5px · `.pu-srch input` 13px · `.pu-age` colour | 4+1+1 el, 390 |
+| all screens | `#brandTitle` has no click handler | reads as a heading; almost certainly by design |
+
+**Nothing overflows, nothing is truncated, and no control on the hub is dead.** These are tidy-up
+candidates — deletion at source beats out-specifying — not defects, and none of them is worth a
+build on its own.
