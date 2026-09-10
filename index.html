@@ -71,7 +71,12 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
   border-top:1px solid rgba(255,255,255,.08);}
 #navMenu .cr-ts .lb{font:700 11px 'Segoe UI',Arial,sans-serif;color:#9aa2ae;
   letter-spacing:.02em;margin-right:auto;}
-#navMenu .cr-ts button{min-width:34px;min-height:34px;padding:0 9px;cursor:pointer;
+/* 1206: 44, not 34. cr-drawer-styles already says why -- 592 took every
+   drawer control to a 44px tap target and 1076 had to come back for
+   .lnav-out and the CRM switcher. The A/A/A size control was never
+   included, and it is the control someone reaches for BECAUSE they are
+   having trouble hitting things. */
+#navMenu .cr-ts button{min-width:44px;min-height:44px;padding:0 9px;cursor:pointer;
   border:1px solid rgba(255,255,255,.16);border-radius:8px;
   background:rgba(255,255,255,.05);color:#cfd6df;
   font-family:'Segoe UI',Arial,sans-serif;font-weight:700;line-height:1;}
@@ -350,7 +355,11 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
   #editorLogo{order:-1;}
   .toolbar .grow{flex:1 1 100%;order:5;min-width:0;}
   .toolbar .btn{font-size:12px;padding:8px 10px;}
-  .toolbar .statuswrap{font-size:11px;}
+  /* 1204: a `.toolbar .statuswrap{font-size:11px}` sat here and had never
+     applied -- the unconditional `.toolbar .statuswrap` below is the same
+     specificity and comes later in source, so the phone has always drawn
+     this row at 13px. Deleted rather than out-specified; the phone's real
+     statuswrap rule now lives in the 760px block below that one. */
   .toolbar #savedFlash{display:none;}
   #editorLogo{height:34px !important;}
 }
@@ -396,13 +405,26 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 .toolbar .edbtns .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;}
 .toolbar .edbtns .btn .cri{flex:0 0 auto;opacity:.92;}
 @media (max-width:760px){
-  /* 1069: the phone shows three primaries plus More; the other eight are one
-     tap away in #edDrawer. Hiding the WRAPPER rather than each button means no
-     !important is needed to beat the per-button style.display that JS sets. */
+  /* 1069: the phone shows the primaries plus More; the rest are one tap away
+     in #edDrawer. Hiding the WRAPPER rather than each button means no
+     !important is needed to beat the per-button style.display that JS sets --
+     which is also why 1204 MOVED the three sends into the primary row rather
+     than trying to un-hide them from here. */
   .toolbar #edSecondary{display:none;}
   .toolbar #edMoreBtn{display:inline-block;}
+  /* 1204: the sends come first. .edbtns is order:2, so ordering the status
+     row after it makes the phone read Save / Print, then Email / Text /
+     Share, then "Mark sent" -- the manual override last instead of first.
+     This block is after the unconditional `.toolbar .statuswrap` rule, so
+     unlike the declaration it replaces, it wins. */
+  .toolbar .statuswrap{order:3;}
   .toolbar .edbtns{order:2;flex:1 1 100%;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0;}
-  .toolbar .edbtns .btn{width:100%;justify-content:flex-start;padding:11px 14px;font-size:13px;}
+/* 1206: 44, not 42. These are MY buttons from 1204 -- the three sends made
+     primary on the phone -- and 11px of padding on 13px type lands two
+     pixels under the floor. I did not measure them until this build's probe
+     walked every state; a fix that stops one pixel short is the class this
+     sweep exists for. */
+  .toolbar .edbtns .btn{width:100%;justify-content:flex-start;padding:11px 14px;min-height:44px;font-size:13px;}
 }
 #reportFrameWrap{flex:1;min-width:0;min-height:0;position:relative;background:#3d3d3d;}#reportFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#3d3d3d;}
 
@@ -1570,6 +1592,31 @@ html, body{overflow-x:hidden;max-width:100%;}
   font:600 13.5px 'Segoe UI',Arial,sans-serif;padding:0 14px;}
 #headSearch::placeholder{color:#c9b8b4;}
 #headSearch:focus{outline:2px solid var(--red);background:rgba(255,255,255,.16);}
+/* 1207 — the live results panel. Fixed to the viewport and appended to <body>,
+   because #headSearch MOVES: on desktop it is a flex child of #cr-hd2-bar and on
+   a phone ensureSearchRow() re-parents it into #cr-hd2-srch. A panel that is a
+   sibling would have to be moved with it; one positioned from the input's own
+   rect does not care where the input currently lives.
+   ⚠ Tokens are --rbe-*, not the header's --h*: those are declared on `.site`, and
+   this element is not inside it. Literal fallbacks per 448-449. */
+#cr-hsres{position:fixed;z-index:9400;display:none;box-sizing:border-box;
+  background:var(--rbe-panel,#16161B);border:1px solid var(--rbe-line,#232329);
+  border-radius:12px;box-shadow:0 18px 44px rgba(0,0,0,.45);overflow:hidden;
+  max-height:min(58vh,420px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#cr-hsres.open{display:block;}
+#cr-hsres .hsrow{display:block;width:100%;box-sizing:border-box;text-align:left;
+  border:0;border-bottom:1px solid var(--rbe-line,#232329);background:transparent;
+  cursor:pointer;padding:9px 14px;min-height:44px;font-family:'Segoe UI',Arial,sans-serif;}
+#cr-hsres .hsrow:last-child{border-bottom:0;}
+#cr-hsres .hsrow:hover,#cr-hsres .hsrow:focus{background:var(--rbe-card,rgba(255,255,255,.06));outline:none;}
+#cr-hsres .hsnm{display:block;font:700 14px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#cfd6df);}
+#cr-hsres .hsmeta{display:block;margin-top:2px;font:600 12px 'Segoe UI',Arial,sans-serif;
+  color:var(--rbe-mute,#b8bec6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#cr-hsres .hsfoot{display:block;width:100%;box-sizing:border-box;text-align:left;border:0;
+  border-top:1px solid var(--rbe-line,#232329);background:transparent;cursor:pointer;
+  padding:0 14px;min-height:44px;color:var(--rbe-mute,#b8bec6);
+  font:700 12px 'Segoe UI',Arial,sans-serif;}
+#cr-hsres .hsnone{padding:14px;color:var(--rbe-mute,#b8bec6);font:600 13px 'Segoe UI',Arial,sans-serif;}
 .dashcard{flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:10px;
   background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 18px;
   position:relative;}
@@ -2089,7 +2136,7 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 .pf-chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 12px;}
 .pf-chip{flex:0 0 auto;padding:9px 13px;border-radius:18px;cursor:pointer;
   background:#f0e8d0;border:1px solid #d9cfb2;color:#5a5344;
-  font:700 12.5px 'Segoe UI',Arial,sans-serif;white-space:nowrap;min-height:38px;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;white-space:nowrap;min-height:44px;
   transition:background .12s,color .12s,border-color .12s;}
 .pf-chip:hover{border-color:#c9a227;}
 .pf-chip.on{background:#c8202e;border-color:#c8202e;color:#fff;}
@@ -2176,7 +2223,13 @@ body.restoring #restoreVeil{display:flex;}
 .jabox{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
   padding:14px 11px;cursor:pointer;font:700 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
   min-width:0;-webkit-user-select:none;user-select:none;}
-.jabox .jbl{flex:1;min-width:0;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+/* 1203: this was white-space:nowrap + ellipsis, and at 390px it cut SEVEN of
+   the fourteen labels: "Commu…", "Notificat…", "Measure…", "Docume…",
+   "Appoint…", "Punch …", "Inspecti…". Wrapping keeps every word and needs no
+   opinion about what to rename things to. The row is a grid whose items stretch,
+   so a two-line label leaves both tiles the same height, and the tracks are
+   already minmax(0,1fr). gate_1203 measures that no label is truncated. */
+.jabox .jbl{flex:1;min-width:0;line-height:1.15;overflow-wrap:break-word;
   font-size:clamp(12px,3.5vw,14px);}
 .jabox > b{flex:0 0 auto;margin-left:6px;align-self:center;}
 @media (max-width:380px){ .jabox{padding:13px 8px;gap:6px;} .jabox .jbl{font-size:12px;} }
@@ -2366,6 +2419,14 @@ body.restoring #restoreVeil{display:flex;}
 .edchip small{color:#e8b7ba;font-weight:800;}
 .edchip.edlink{border-color:rgba(200,32,46,.65);cursor:pointer;}
 .edchip.edlink:active{transform:scale(.96);}
+/* 1204 -- the way OUT of the document editor was unlabelled. This chip and
+   the logo were the only two exits, and both carried the word Back or Home
+   in a title attribute, which a phone never shows; walk 6 hunted for a
+   Close/Back/Done for 30 s and found none. The chip now SAYS it, which
+   costs width -- so it takes its own cap instead of the shared .edchip one,
+   and #edRepChip beside it is deliberately left at 150px. */
+#edClientChip{max-width:210px;}
+.edchip .edbk{color:#ffd9dc;font-weight:900;margin-right:1px;}
 .toolbar .grow{order:10;flex:1 1 100%;}
 #reportTitle{height:34px;font-size:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
   color:#f3e9dc;border-radius:8px;width:100%;padding:0 12px;box-sizing:border-box;}
@@ -2373,6 +2434,9 @@ body.restoring #restoreVeil{display:flex;}
 #savedFlash{order:11;}
 @media (max-width:760px){
   .edchip{height:22px;font-size:11px;padding:0 8px;max-width:30vw;}
+  /* 1204: the client chip carries a word the rep tap-targets, so it gets the
+     room for it. 30vw truncated "\2039 Back" down to the arrow alone. */
+  #edClientChip{max-width:46vw;}
 }
 
 /* ---- button tap feedback ---- */
@@ -2565,7 +2629,15 @@ body.restoring #restoreVeil{display:flex;}
 .ljclearall{display:block;background:none;border:0;color:var(--rbe-clr);font:700 12.5px 'Segoe UI',Arial,sans-serif;padding:10px 16px;cursor:pointer;text-align:left;width:100%;}
 @media (min-width:901px){
   .ljctl{display:none;}
-  .ljcols{grid-template-columns:230px minmax(300px,1.05fr) minmax(320px,1fr);}
+  .ljcols{grid-template-columns:230px minmax(0,1.05fr) minmax(0,1fr);}
+  /* 1203: the minimums were 300px and 320px, which CANNOT shrink. Measured on
+     a 1194px iPad: the left nav takes 288, .wrap's padding another 72, so the
+     grid box is 789 wide - and 230 + 300 + 320 + two 14px gaps is 878. The
+     third track therefore started at 905 and ended at 1225, 31px past the
+     screen, with the Job Summary clipping its own last line. minmax(0,fr)
+     lets the two flexible tracks give way; the 230px rail is unchanged.
+     gate_1203 measures every box against the viewport rather than trusting
+     this arithmetic. */
   .ljrail{display:block;background:var(--rbe-railbg);border:1px solid var(--rbe-hair);border-radius:12px;padding:13px;
     position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
   .ljdetail{display:block;}
@@ -3961,10 +4033,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-09 build 1199<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1208<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
-      <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
+      <input type="search" id="headSearch" enterkeyhint="search"
+             placeholder="Search clients, PO #, address &#8212; then Return">
     </div>
     <div id="repStrip" class="repstrip" style="display:none;">
       <span class="reppill" id="repPill"></span>
@@ -8302,18 +8375,18 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       </div>
 
       <div class="ldbox">
-        <div class="ldhead">Location Information <span class="ldreq">* Required</span></div>
-        <label style="position:relative;">Street *
+        <div class="ldhead">Location Information <span class="ldreq">Needed once you set a Job Category</span></div>
+        <label style="position:relative;">Street
           <input type="text" id="ldStreet" autocomplete="off" data-cr-gmap="skip" placeholder="Start typing &#8212; address auto-completes">
           <div id="ldSugg" class="ldsugg" style="display:none;"></div>
         </label>
         <label class="ldmore">Suite/Apt/Unit<input type="text" id="ldSuite" autocomplete="off"></label>
         <div class="ckrow">
-          <label>City *<input type="text" id="ldCity" autocomplete="address-level2"></label>
-          <label>State *<select id="ldState"><option value="">State*</option><option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>GU</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>PR</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>VI</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>DC</option><option>WV</option><option>WI</option><option>WY</option></select></label>
+          <label>City<input type="text" id="ldCity" autocomplete="address-level2"></label>
+          <label>State<select id="ldState"><option value="">State*</option><option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>GU</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>PR</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>VI</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>DC</option><option>WV</option><option>WI</option><option>WY</option></select></label>
         </div>
         <div class="ckrow">
-          <label>Zip *<input type="text" id="ldZip" inputmode="numeric" autocomplete="postal-code"></label>
+          <label>Zip<input type="text" id="ldZip" inputmode="numeric" autocomplete="postal-code"></label>
           <label>Country *<select id="ldCountry"><option>USA</option></select></label>
         </div>
       </div>
@@ -8512,14 +8585,20 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn" id="saveBtn">Save</button>
       <button class="btn dark" id="printBtn" data-cri="page"><span class="bl">Print / PDF</span></button>
       <button class="btn dark" id="fillChipBtn" style="display:none;"><span class="bl" id="fillChipTxt">&#8212;</span></button>
-      <button class="btn dark" id="edMoreBtn" aria-haspopup="true" aria-expanded="false"><span class="bl">&#8943; More</span></button>
-      <span id="edSecondary"><button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
+      <!-- 1204: the three real sends are PRIMARY. A12 of the Sep 2026 walk:
+           after Publish the prominent button was "Mark sent", which sends
+           nothing, while Email / Text / Share sat two taps deep in the
+           drawer. They are MOVED here out of #edSecondary, never copied --
+           the drawer builds its rows from that span's visible buttons, so a
+           second copy would have offered every send twice. -->
       <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
       <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>
+      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
+      <button class="btn dark" id="edMoreBtn" aria-haspopup="true" aria-expanded="false"><span class="bl">&#8943; More</span></button>
+      <span id="edSecondary"><button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
       <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
       <button class="btn dark" id="editEstBtn" style="display:none;" data-cri="pencil" title="Reopen this estimate in the builder — Publish there updates this document"><span class="bl">Edit estimate</span></button>
       <button class="btn dark" id="addFieldBtn" data-cri="plus"><span class="bl">&#65291; Field</span></button>
-      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
       <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
       <button class="btn dark" id="rccBtn" style="display:none;" data-cri="camera"><span class="bl">CompanyCam</span></button>
       <button class="btn dark" id="sortBtn" style="display:none;" data-cri="funnel"><span class="bl">Sort photos</span></button><button class="btn dark" id="draftBtn" style="display:none;" data-cri="sparkle"><span class="bl">Draft narrative</span></button></span>
@@ -11871,19 +11950,58 @@ function reviewMsg(pr, followup){
     'If you had a great experience, would you mind leaving us a quick Google review? ' +
     REVIEW_URL + ' \u2014 it really helps our small team. \u2013 ' + rep;
 }
+/* 1202: the stages at which there is a finished job to review. Reviews are
+   asked for after the work, and this list is the one place that says so —
+   sendReviewRequest() and the card both read it, so the button and the write
+   can never disagree about when a request is allowed. */
+var REVIEW_STAGES = ['Completed','Invoiced','Closed'];
+function reviewStageOk(pr){
+  var s = pr && pr.stage;
+  try{ if(typeof normStage === 'function') s = normStage(s); }catch(_e){}
+  return REVIEW_STAGES.indexOf(s) !== -1;
+}
 async function sendReviewRequest(pr, via){
+  /* The card does not draw these buttons before Completed. This is the same
+     refusal at the writer, so a stale screen or a hand-fired event cannot ask a
+     Lead for a review. */
+  if(!reviewStageOk(pr)){
+    crTell('A review request opens once the job is Completed.');
+    return;
+  }
   var alreadyAsked = !!parseCkAll(pr).review_requested_at;
   var msg = reviewMsg(pr, alreadyAsked);
+  var handedOff = false;
   if(via === 'sms' && pr.phone){
     location.href = 'sms:' + pr.phone.replace(/[^+\d]/g,'') + '?&body=' + encodeURIComponent(msg);
+    handedOff = true;
   }else if(via === 'email' && pr.email){
     location.href = 'mailto:' + encodeURIComponent(pr.email) +
       '?subject=' + encodeURIComponent('How did we do? \u2014 Cardinal Roofing & Renovations') +
       '&body=' + encodeURIComponent(msg);
+    handedOff = true;
   }else{
     try{ await navigator.clipboard.writeText(msg); crTell('Review message copied \u2014 paste it anywhere.', 'ok'); }
     catch(e){ prompt('Copy this message:', msg); }
   }
+  /* 1202: THIS is the fix. The three paths above hand the message to Messages,
+     to Mail, or to the clipboard — none of them sends anything, and the app
+     cannot see what happens next. Recording here on the tap meant backing out
+     of Messages still left "Review requested today via text" on the profile and
+     in the audit trail, and the NEXT tap then sent the friendly-follow-up
+     wording to someone who had never received a first message. Only the rep
+     knows, so only the rep can say. Record the send, never the tap — the same
+     rule 1201 applied to the estimate. */
+  if(handedOff){
+    try{ await new Promise(function(r){ setTimeout(r, 700); }); }catch(_e){}
+  }
+  var _who = (pr.name || 'the client');
+  var _went = await crAsk('Did the review request go out to ' + _who + '?', {
+    verb: 'Yes, it went',
+    cancel: 'Not yet',
+    tone: 'plain',
+    why: 'Only a yes records it. Nothing is written if you backed out, and you can tap the button again whenever you do send it.'
+  });
+  if(!_went) return;
   try{ await patchProjectCk(pr, { review_requested_at: new Date().toISOString(), review_via: via }); auditLog('review', 'Review requested via ' + via + ' \u2014 ' + (pr.name || ''), pr.id); }catch(e){}
   setTimeout(renderOverview, 400);
 }
@@ -11898,6 +12016,23 @@ var ACX_STEPS = [
 function acxRank(stg){
   var order = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
   return order.indexOf(stg);
+}
+/* 1200: has this job just reached `to` for the FIRST time, moving forward?
+   The Approved and Completed team emails used to fire on `prev !== to`, which
+   means "arrived from anywhere" - so the back chevron from Scheduled to
+   Approved re-sent Curtis "APPROVED - schedule + order materials" for a job
+   that had already been scheduled, and the same shape re-sent the rep's
+   "job complete" mail from Invoiced. acxRank() above is the app's pipeline
+   order and the only one; do not add a second. The two stages it does NOT
+   list - OnHold and Lost - rank -1 and count as BEFORE every stage ON PURPOSE:
+   a held job that gets approved, and a lost job revived, are both real forward
+   moves and must still tell Curtis. gate_1200 pins the entire nine-stage truth
+   table for both targets, so a later edit to that order goes red rather than
+   silently inverting this. api/clientsign.js has carried the same rule since
+   1007 ("only alerts on the real move"). */
+function crStageIsForward(prev, to){
+  var r = acxRank(prev);
+  return r === -1 || r < acxRank(to);
 }
 function acxNext(stg){
   var order = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
@@ -12186,7 +12321,7 @@ function renderAcxOverview(){
       jt(dbIc('ruler'), 'Measurements', '\u2026', 'measure', 'dbMeasN') +
       jt(dbIc('estimates'), 'Estimates', '\u2026', 'estimates', 'dbEstN') +
     '</div><div class="jaboxrow">' +
-      jt(dbIc('docs'), 'Documents', fileDocs.length, 'docs') +
+      jt(dbIc('docs'), 'Files', fileDocs.length, 'docs') +
       jt(dbIc('appts'), 'Appointments', appts, 'appts') +
     '</div><div class="jaboxrow">' +
       /* 609: THIS is the job menu that renders. 607 added Punch Outs to #jaGrid
@@ -12282,6 +12417,7 @@ function renderAcxOverview(){
   '</div></div></div>';
   /* ---- google review (dark card) ---- */
   var rvAt = ck.review_requested_at, rvVia = ck.review_via;
+  var _rvOpen = reviewStageOk(pr);
   var rvViaLabel = rvVia === 'sms' ? 'text' : (rvVia === 'email' ? 'email' : 'copy');
   html += '<div class="rvcard">' +
     '<div class="rvtop">' + GOOGLE_G + ' Google Reviews</div>' +
@@ -12290,15 +12426,24 @@ function renderAcxOverview(){
         (rvAt ? '<span class="rvchk">&#10003;</span> Review requested ' + acxDate(rvAt) + ' via ' + rvViaLabel + '.'
               : 'No review request sent yet.') +
       '</div>' +
-      '<div class="rvbtns">' +
-        (pr.phone ? '<button class="rvbtn text" data-rv="sms">&#128241; Text request</button>' : '') +
-        '<button class="rvbtn copy" data-rv="copy">Copy message</button>' +
-      '</div>' +
-      (rvAt ? '<div class="rvhint">Tapping again sends a friendly follow-up.</div>' : '') +
-      '<div class="rvflip' + (ck.review_left_at ? ' on' : '') + '" id="rvLeftSwitch" role="switch" aria-checked="' + (ck.review_left_at ? 'true' : 'false') + '">' +
-        '<span class="rvtog"></span> Flip when their review appears on Google' +
-        (ck.review_left_at ? ' \u00b7 ' + acxDate(ck.review_left_at) : '') +
-      '</div>' +
+      /* 1202: nothing to ask for until the work is done. On a Lead this card
+         used to put a saturated red "Text request" button on the profile of
+         somebody the rep had not met yet. It follows the Invoices card's own
+         convention rather than vanishing — the card stays, and a line says
+         when it opens, so nobody hunts for a control that moved. */
+      (_rvOpen
+        ? '<div class="rvbtns">' +
+            (pr.phone ? '<button class="rvbtn text" data-rv="sms">&#128241; Text request</button>' : '') +
+            '<button class="rvbtn copy" data-rv="copy">Copy message</button>' +
+          '</div>' +
+          (rvAt ? '<div class="rvhint">Tapping again sends a friendly follow-up.</div>' : '')
+        : '<div class="rvhint">A review request opens once the job is Completed.</div>') +
+      (_rvOpen
+        ? '<div class="rvflip' + (ck.review_left_at ? ' on' : '') + '" id="rvLeftSwitch" role="switch" aria-checked="' + (ck.review_left_at ? 'true' : 'false') + '">' +
+            '<span class="rvtog"></span> Flip when their review appears on Google' +
+            (ck.review_left_at ? ' \u00b7 ' + acxDate(ck.review_left_at) : '') +
+          '</div>'
+        : '') +
     '</div>' +
   '</div>';
   /* ---- assigned to ---- */
@@ -15837,6 +15982,14 @@ function openProjModal(pr){
   document.getElementById('pfSourceChips').classList.remove('pf-need');
   pfSyncSourceChips();
   document.getElementById('pfJobCost').value = (_ck.job_cost != null) ? _ck.job_cost : '';
+  /* 1203: job cost is a profit-report field, and a Sales rep neither knows it
+     at intake nor sees the reports it feeds. Hidden rather than removed, and
+     the VALUE is still loaded and saved above, so a rep editing a client
+     cannot wipe a figure an admin entered. */
+  try{
+    var _jcLbl = document.getElementById('pfJobCost').closest('label');
+    if(_jcLbl) _jcLbl.style.display = isAdminUser() ? '' : 'none';
+  }catch(_jc){}
   document.getElementById('pfCategory').value = _ck.job_category || '';
   document.getElementById('pfWorkType').value = _ck.work_type || '';
   var _trList = (_ck.trades && _ck.trades.length) ? _ck.trades : (_ck.trade ? [_ck.trade] : []);
@@ -15969,9 +16122,16 @@ function openLeadForm(){
    'ldInsAdjEmail','ldInsDeductible','ldInsNotes'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
-  ['ldState','ldCategory','ldWorkType','ldSource','ldPartner','ldInsCoverage'].forEach(function(id){
+  ['ldCategory','ldWorkType','ldSource','ldPartner','ldInsCoverage'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
+  /* 1208 (audit 7b): Ohio by default. Cardinal works Dayton; the walk filled
+     every field it was asked for and was still refused with "Required: State",
+     because this select opened empty. Every other state is one tap away, and
+     the address autocomplete still overwrites it (ldState is set from the
+     Google place when one is picked). */
+  var _ldSt = document.getElementById('ldState');
+  if(_ldSt instanceof HTMLSelectElement) _ldSt.value = 'OH';
   document.getElementById('ldPriority').value = 'Normal';
   document.getElementById('ldStatus').value = 'Not Contacted';
   document.getElementById('ldPartnerCk').checked = false;
@@ -16271,11 +16431,26 @@ document.getElementById('ldSave').addEventListener('click', async function(){
   var missing = [];
   if(!first) missing.push('First Name');
   if(!last) missing.push('Last Name');
-  if(!street) missing.push('Street');
-  if(!city) missing.push('City');
-  if(!state) missing.push('State');
-  if(!zip) missing.push('Zip');
-  if(missing.length){ err.textContent = 'Required: ' + missing.join(', '); return; }
+  /* 1208 (audit 7b): the address belongs to a JOB, not to a lead. A phone-in is
+     a name and a way to reach them; the address arrives when the job does. So it
+     is required exactly when a Job Category says there is a job — and Job
+     Category lives inside "+ More detail", so a rep taking a call at a door is
+     never asked for it. Nothing here refuses a save that used to work. */
+  var _cat = document.getElementById('ldCategory');
+  /* the instanceof is a real narrowing, not decoration: gate_types runs tsc
+     --checkJs over these blocks and .value on an HTMLElement is TS2339. */
+  var _needAddr = !!(_cat instanceof HTMLSelectElement && _cat.value);
+  if(_needAddr){
+    if(!street) missing.push('Street');
+    if(!city) missing.push('City');
+    if(!state) missing.push('State');
+    if(!zip) missing.push('Zip');
+  }
+  if(missing.length){
+    err.textContent = 'Required: ' + missing.join(', ') +
+      (_needAddr ? ' \u2014 a Job Category needs the address of the job' : '');
+    return;
+  }
 
   function rows(mountId){
     return Array.prototype.map.call(document.getElementById(mountId).querySelectorAll('.ldrow'), function(r){
@@ -19973,7 +20148,7 @@ async function setStage(prId, v){
   }
   renderHome();
   /* workflow notifications */
-  if(v === 'Approved' && prev !== 'Approved'){
+  if(v === 'Approved' && crStageIsForward(prev, 'Approved')){
     _notifyOrQueue(['curtis@cardinalrenovations.net'].concat(ADMIN_EMAILS),
       /* 772: no emoji in a subject line that leaves the building — this is what
          Curtis sees in his inbox, rendered in whatever font his mail client picks. */
@@ -19982,7 +20157,7 @@ async function setStage(prId, v){
       '<p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s \uD83D\uDCE6 Materials tab).</p>',
       clientLink(pr.id));
   }
-  if(v === 'Completed' && prev !== 'Completed'){
+  if(v === 'Completed' && crStageIsForward(prev, 'Completed')){
     var rep = assignedRepOf(pr);
     _notifyOrQueue((rep ? [rep] : []).concat(ADMIN_EMAILS),
       'Job complete \u2014 walk-around + invoice: ' + (pr.name || ''),
@@ -20124,12 +20299,21 @@ function cdMatch(pr){
   var ts = cdState.sets.trade || [];
   if(ts.length && !ljTrades(pr).some(function(t){ return ts.indexOf(t) !== -1; })) return false;
   var q = (document.getElementById('cliFilter').value || '').trim().toLowerCase();
-  if(q){
-    var hay = [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
-      poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
-    if(hay.indexOf(q) === -1) return false;
-  }
+  if(q && crClientHay(pr).indexOf(q) === -1) return false;
   return true;
+}
+/* 1207: the haystack, extracted so the header's live search and this directory
+   cannot drift apart. It was inline here and nowhere else; a second copy in the
+   header would mean a search that finds different clients than the directory it
+   hands you off to, which is the duplicate-pipeline bug this project pays for
+   most often. One definition, two callers.
+   ⚠ A THIRD, SLIGHTLY DIFFERENT haystack lives in renderHome() and is left
+   alone on purpose: it omits pr.created_by, so folding it in here would start
+   matching the Home board on a rep's email address — a behaviour change nobody
+   asked for. Known, not missed. */
+function crClientHay(pr){
+  return [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
+    poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
 }
 function cdSorted(list){
   var s = cdState.sort, d = cdState.dir;
@@ -23631,13 +23815,123 @@ setInterval(tickHomeClock, 1000);
 
 /* ---------- header search (desktop) ---------- */
 document.getElementById('headSearch').addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){ crHsClose(); return; }
   if(e.key !== 'Enter') return;
+  crHsClose();
   var v = this.value.trim();
   openClientsDirectory();
   var cf = document.getElementById('cliFilter');
   cf.value = v;
   renderClientDirectory();
 });
+
+/* 1207 (audit 6b / B6): the search answers while you type. Return still opens
+   the whole directory and that path is untouched — this is a shortcut past it,
+   not a replacement for it.
+   ⚠ It matches with crClientHay(), the SAME haystack cdMatch() uses, so the
+   five rows here are always a prefix of what Return would show. */
+var CR_HS_MAX = 5;
+function crHsPanel(){
+  var p = document.getElementById('cr-hsres');
+  if(!p){
+    p = document.createElement('div');
+    p.id = 'cr-hsres';
+    p.setAttribute('role', 'listbox');
+    p.setAttribute('aria-label', 'Client search results');
+    document.body.appendChild(p);
+  }
+  return p;
+}
+function crHsClose(){
+  var p = document.getElementById('cr-hsres');
+  if(p) p.classList.remove('open');
+}
+function crHsMatches(q){
+  q = String(q || '').trim().toLowerCase();
+  if(q.length < 2) return { hits: [], total: 0 };
+  var all = (typeof cacheProjects !== 'undefined' && cacheProjects) ? cacheProjects : [];
+  var hit = all.filter(function(pr){ return crClientHay(pr).indexOf(q) !== -1; });
+  /* a name that STARTS with what you typed is what you meant; everything else
+     matched on an address, a phone or a PO and sorts after it. */
+  hit.sort(function(a, b){
+    var an = String(a.name || '').toLowerCase(), bn = String(b.name || '').toLowerCase();
+    var ap = an.indexOf(q) === 0 ? 0 : (an.indexOf(q) !== -1 ? 1 : 2);
+    var bp = bn.indexOf(q) === 0 ? 0 : (bn.indexOf(q) !== -1 ? 1 : 2);
+    return ap - bp || an.localeCompare(bn);
+  });
+  return { hits: hit.slice(0, CR_HS_MAX), total: hit.length };
+}
+function crHsPlace(){
+  var i = document.getElementById('headSearch'), p = document.getElementById('cr-hsres');
+  if(!i || !p) return false;
+  var r = i.getBoundingClientRect();
+  if(r.width < 2 || r.height < 2) return false;
+  var w = Math.max(240, Math.min(r.width, innerWidth - 16));
+  var left = Math.max(8, Math.min(r.left, innerWidth - w - 8));
+  p.style.left = Math.round(left) + 'px';
+  p.style.top = Math.round(r.bottom + 6) + 'px';
+  p.style.width = Math.round(w) + 'px';
+  return true;
+}
+function crHsRender(){
+  var i = document.getElementById('headSearch');
+  /* the instanceof is a real narrowing, not decoration: gate_types runs tsc
+     --checkJs over these blocks, and `document.getElementById(...).value` is
+     TS2339 on an HTMLElement. The file already carries 1363 of those; this
+     build is not adding to a ratchet it has to live under. */
+  if(!(i instanceof HTMLInputElement)) return;
+  var q = i.value || '';
+  if(String(q).trim().length < 2){ crHsClose(); return; }
+  var m = crHsMatches(q), p = crHsPanel();
+  var rows = m.hits.map(function(pr){
+    var po = (typeof poOf === 'function' && poOf(pr)) ? '#' + poOf(pr) + ' \u00b7 ' : '';
+    var st = (typeof normStage === 'function') ? normStage(pr.stage) : (pr.stage || '');
+    var meta = po + st + (pr.address ? ' \u00b7 ' + pr.address : '');
+    return '<button type="button" class="hsrow" role="option" data-hspid="' + esc(String(pr.id)) + '">' +
+      '<span class="hsnm">' + esc(pr.name || 'Client') + '</span>' +
+      '<span class="hsmeta">' + esc(meta) + '</span></button>';
+  }).join('');
+  if(!rows) rows = '<div class="hsnone">No client matches \u201c' + esc(String(q).trim()) + '\u201d</div>';
+  else if(m.total > m.hits.length)
+    rows += '<button type="button" class="hsfoot" data-hsall="1">Return for all ' + m.total + ' matches</button>';
+  p.innerHTML = rows;
+  if(crHsPlace()) p.classList.add('open');
+}
+(function(){
+  var i = document.getElementById('headSearch');
+  if(!(i instanceof HTMLInputElement)) return;
+  i.addEventListener('input', crHsRender);
+  i.addEventListener('focus', crHsRender);
+  /* a tap on a row fires mousedown BEFORE blur, so the row must survive long
+     enough to be clicked — the same delay the app's other pop-overs use. */
+  i.addEventListener('blur', function(){ setTimeout(crHsClose, 180); });
+  document.addEventListener('click', function(e){
+    var t = (e.target instanceof Element) ? e.target : null;
+    var row = t ? t.closest('#cr-hsres .hsrow') : null;
+    if(row){
+      e.preventDefault();
+      crHsClose();
+      try{ i.blur(); }catch(_b){}
+      if(typeof openProject === 'function') openProject(row.getAttribute('data-hspid'));
+      return;
+    }
+    if(t && t.closest('#cr-hsres .hsfoot')){
+      /* ⚠ It PRESSES RETURN rather than re-implementing what Return does.
+         The keydown handler above is the one place that knows how to hand the
+         query to the directory; a second copy here would be the duplicate this
+         whole build exists to avoid, one line after crClientHay was extracted
+         for exactly that reason. */
+      e.preventDefault();
+      crHsClose();
+      try{ i.focus(); }catch(_f){}
+      i.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));
+      return;
+    }
+    if(e.target !== i) crHsClose();
+  });
+  addEventListener('resize', function(){ crHsPlace(); });
+  addEventListener('scroll', crHsClose, true);
+})();
 
 /* ---------- team calendar ---------- */
 function makeMiniCal(mountId, dayKinds, onDay){
@@ -24096,6 +24390,19 @@ var sentDateEl = document.getElementById('editorSentDate');
 var toggleBtn  = document.getElementById('toggleStatusBtn');
 var savedFlash = document.getElementById('savedFlash');
 var current = null; /* {id, status, sent_at} */
+
+/* 1201: the one announcement that a document really went out. Two callers —
+   the email send and the Mark sent button — and both are a WRITE, so this is a
+   transition by construction. setEditorStatus() below was the tempting hook and
+   is the wrong one: it also runs on every open, so opening an already-sent
+   document would read as a fresh send. cr-ess listens for this and only then
+   marks the estimate that published the document Sent, so the document's own
+   chip and the estimate's status can no longer disagree on one screen. */
+function crDocSent(docId){
+  try{
+    document.dispatchEvent(new CustomEvent('cr-doc-sent', { detail: { docId: docId } }));
+  }catch(_e){}
+}
 
 function setEditorStatus(status, sentAt, signedAt){
   /* 884: a signed document reads SIGNED (green), not the sent/unsent it never
@@ -25683,7 +25990,14 @@ async function openEditor(id){
     if(cc){
       if(pr){
         var po = poOf(pr);
-        cc.innerHTML = (po ? '<small>' + esc(String(po)) + ':</small> ' : '') + esc(pr.name || 'Client');
+        /* 1204: the chip says what it does. It was the only labelled-in-a
+           -title-attribute way back to the client, and a phone never shows
+           a title. The name stays beside it -- it is also how a rep knows
+           whose document is open. */
+        cc.innerHTML = '<b class="edbk">\u2039 Back</b>'
+          + (po ? '<small>' + esc(String(po)) + ':</small> ' : '')
+          + esc(pr.name || 'Client');
+        cc.title = 'Back to ' + (pr.name || 'the client') + '\u2019s overview';
         cc.style.display = 'inline-flex';
       }else{ cc.style.display = 'none'; }
     }
@@ -26183,6 +26497,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     /* 731: same object-as-id bug — the email went out and the document stayed
        UNSENT, because this write never landed on a row. */
     await db.update(current.id, { status: 'sent', sent_at: new Date().toISOString() });
+    crDocSent(current.id);
     try{ if(window.crToastOk) window.crToastOk('Sent \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
     if(pr && row && /^invoice/i.test((row.title || '').trim()) && normStage(pr.stage) !== 'Invoiced'){
       try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
@@ -26883,6 +27198,7 @@ toggleBtn.addEventListener('click', async function(){
     current.status = toSent ? 'sent' : 'unsent';
     current.sent_at = sentAt;
     if(toSent){
+      crDocSent(current.id);
       var trow = cacheRows.find(function(r){ return r.id === current.id; });
       if(trow && trow.project_id && /^invoice/i.test((trow.title || '').trim())){
         try{ await setStage(trow.project_id, 'Invoiced'); }catch(e){}
@@ -27305,11 +27621,12 @@ function renderInsuranceClientsList(){
     if(!q) return true;
     var I = projInsurance(pr) || {};
     var adj = I.adjuster || {};
-    var hay = [
-      pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
-      poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : '',
-      I.carrier, I.claim_number, I.policy_number, adj.name, adj.phone
-    ].join(' ').toLowerCase();
+    /* 1207: the base seven fields come from crClientHay(), the same matcher the
+       Clients directory and the header search use; only the five insurance ones
+       are local. Byte-for-byte the same haystack as before, from one source. */
+    var hay = crClientHay(pr) + ' ' +
+      [I.carrier, I.claim_number, I.policy_number, adj.name, adj.phone]
+        .join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   });
 
@@ -42689,6 +43006,15 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1208, d: '2026-09-10', t: 'The Lead form stops refusing a phone call', s: 'Taking a lead over the phone meant fighting the long Lead form: it refused to save without a <b>street, city, state and zip</b>, and then refused a second time with \u201cRequired: State\u201d even after you had filled everything, because the state box opened blank. <b>It opens on OH now</b> \u2014 every other state is still one tap away \u2014 and <b>the address is only required once you set a Job Category</b>. A name and a way to reach someone is a lead; the address arrives when the job does. Nothing you could save before has stopped being savable, and the address boxes no longer carry a star that was not telling you the truth.' },
+  { b: 1207, d: '2026-09-10', t: 'The search box answers while you type', s: 'Typing in the header search used to do <b>nothing at all</b> until you pressed Return \u2014 and nothing on the screen said Return was what it wanted. Now the <b>top five matching clients appear under the box as you type</b>, with the PO number, the stage and the address, and tapping one opens that client straight away. Return still opens the full Clients list filtered the way it always did, and if there are more than five matches the panel says so. It searches the same things the Clients list searches \u2014 name, address, phone, email and PO number \u2014 because it now uses the very same matcher, so the five you see can never disagree with the list Return gives you.' },
+  { b: 1206, d: '2026-09-10', t: 'Five more controls big enough for a thumb', s: 'A sweep of every screen in the app, measured on a phone, looking for anything too small to hit reliably with a thumb. Five were: <b>the A / A / A text-size buttons in the menu</b> (the control you reach for precisely because you are struggling to hit things), <b>the photo album\u2019s section chips</b>, <b>the day squares on the Production mini-calendar</b>, <b>the lead-source chips on the new-lead form</b>, and <b>the document editor\u2019s own buttons</b>, which build 1204 left two pixels short. All five are now the full 44 pixels. Nothing was renamed and nothing moved. <b>The Dispatch grip was checked and is fine</b> \u2014 it looks tiny but carries an invisible pad that makes it 45 across, which is why it was left alone.' },
+  { b: 1205, d: '2026-09-10', t: 'The estimate builder\u2019s buttons are big enough to hit', s: 'On the screen where you type money, the toolbar buttons were <b>26 pixels tall</b> \u2014 the smallest targets in the app, on a phone, often on a roof. Close, Preview, Options, \u2192 Contract and Save Draft are now a full <b>44 pixels</b>, and so are the three Add buttons above the line items. <b>And the row wraps instead of scrolling sideways.</b> At phone width \u201c\u2192 Contract\u201d used to sit off the right-hand edge of the screen with nothing to tell you it was there; the title now takes its own line and every button is visible under it. Save Draft and Publish are still under your thumb at the bottom, where they have been since build 1029.' },
+  { b: 1204, d: '2026-09-10', t: 'The published document offers the send, and the way back says Back', s: 'After you publish an estimate you land in the document editor, and on a phone that screen had its priorities backwards. <b>The three ways to actually send it \u2014 Email to client, Text to sign and Share link \u2014 were hidden two taps deep under \u201c\u22ef More\u201d</b>, while the biggest button on the bar was <b>Mark sent</b>, which sends nothing to anybody. The three sends are now on the bar itself, and Mark sent has moved below them where an override belongs. <b>And the way out is labelled.</b> The only exits were the client chip and the logo, and neither said so anywhere a phone could show it \u2014 the chip now reads \u201c\u2039 Back\u201d beside the client name.' },
+  { b: 1203, d: '2026-09-10', t: 'Five small things: the iPad panel fits, the search says what to press, and the job menu reads', s: 'Housekeeping a rep meets every day. <b>On the iPad, sideways, the Job Summary panel on Leads &amp; Jobs sat off the right-hand edge of the screen</b> and cut off its own last line \u2014 the three columns were asking for more room than the page had once the side menu took its share. They now give way and all three fit. <b>The search box says what to press</b> (\u201c\u2026 then Return\u201d) and your phone keyboard now shows a <b>Search</b> key instead of return. <b>Seven job-menu buttons were cutting their own labels in half</b> on a phone \u2014 \u201cCommu\u2026\u201d, \u201cNotificat\u2026\u201d, \u201cMeasure\u2026\u201d \u2014 and now wrap to a second line so you can read them. <b>Documents is called Files</b>, because it counts the files you upload; a published estimate lives under Estimates, and the old name made it look like the document had vanished. And <b>Job cost is no longer on the Add project form</b> for anyone but an admin \u2014 it feeds profit reports, nobody knows it at intake, and it is still there, and still safe, for the people who do use it.' },
+  { b: 1202, d: '2026-09-10', t: 'A review request counts when you send it, and the card waits for a finished job', s: 'Two fixes to the Google Reviews card. <b>Tapping <i>Text request</i> used to record the request straight away</b> \u2014 before you had sent anything. Back out of Messages and the profile still said \u201cReview requested today via text\u201d, the job history said the same, and the next tap sent the <i>friendly follow-up</i> wording to somebody who never got a first message. The app cannot see what happens once the message is handed to Messages, Mail or your clipboard, so it now simply <b>asks you</b>: <i>Did the review request go out?</i> A yes records it, <b>Not yet</b> records nothing, and you can tap again whenever you do send it. <b>And the card no longer offers the buttons before the job is Completed</b> \u2014 on a brand-new lead the red Text request button was the loudest thing on the screen. The card stays where it is and tells you when it opens, the same way the Invoices card does.' },
+  { b: 1201, d: '2026-09-10', t: 'Publishing an estimate now offers to send it, instead of asking you to call it sent', s: 'Publishing used to pop the question <b>\u201cMark it as Sent?\u201d before anything had been sent</b> \u2014 and saying yes moved the job forward and then dropped you on a document whose own toolbar still read <b>UNSENT</b>. Two different answers to \u201cdid the client get this?\u201d on one screen. Publishing now asks <b>\u201cSend it to &lt;client&gt;?\u201d</b> and gives you the three ways the app actually delivers a document: <b>Email to client</b>, <b>Text to sign</b>, or <b>Copy share link</b> \u2014 the same buttons the document itself has, so nothing behaves differently from what you already know. <b>Not now</b> leaves it a draft and says so. And the estimate is marked Sent, with the pipeline moving, <b>only once the document has really gone out</b> \u2014 back out of the email and nothing is claimed on your behalf. Marking a document sent by hand from the document itself now moves the estimate too, which it never did.' },
+  { b: 1200, d: '2026-09-10', t: 'Your phone stops working overtime on a client profile, and Curtis stops being told twice', s: 'Two fixes, both invisible until you notice what they cost. <b>An open client profile was redrawing its Punch Outs count about sixty times a second</b>, forever, whether the job had four punch items or none \u2014 every other part of the page that watches for changes woke up each time. On a phone that is battery and heat for nothing. The count is now written only when it actually changes. <b>And moving a job backwards no longer re-sends the team email.</b> Tapping the \u2039 arrow from Scheduled back to Approved fired Curtis and the admins a fresh \u201cAPPROVED \u2014 schedule + order materials\u201d for a job that had already been scheduled; the same shape re-sent the rep\u2019s \u201cjob complete\u201d mail from Invoiced. Those two emails now go out only when a job reaches that stage moving <i>forward</i> \u2014 and a job that was On Hold, or Lost and revived, still counts as forward, so nothing real is missed.' },
   { b: 1199, d: '2026-09-09', t: 'Online payments fail safe, bank payments are labelled right, and Maps waits until it is needed', s: 'A pay link now refuses to open a checkout when the payment history cannot be read, instead of quietly treating a failed read as \u201cnothing paid yet\u201d and asking for the full amount \u2014 the shared document says the balance could not be verified and to try again shortly. A bank (ACH) payment that clears is recorded as ACH rather than as a card payment. Google Maps no longer downloads on every launch before anyone has signed in; it loads the first time an address field is touched. The sign-in screen\u2019s example email uses the company domain. The old estimate-to-contract route checks that you are on the job before it hands back a contract.' },
   { b: 1198, d: '2026-09-03', t: 'The menu and search marks are visible again in light mode', s: 'The Retail header keeps its existing design. In light mode the hamburger and search buttons now receive the same light surface as the rest of the header chrome, so their navy icon strokes no longer disappear into a navy button. Dark mode and every button action are unchanged.' },
   { b: 1197, d: '2026-09-02', t: 'Leaving The Appointment takes its rail along, and System Health tells the truth', s: 'Leaving The Appointment by the Back button, a notification, or any door other than its own \u2715 used to leave the bottom rail painted over every screen you went to next; every exit now removes it, and the next visit still offers to pick up where you left off. System Health stopped reporting its own mistakes as database failures: the team-roster row no longer asks for a column that table never had, the daily-digest row reads the real audit columns and the morning digest now records each successful send, and a table that truly does not exist shows as missing instead of reachable. The book\u2019s own address, presentation.cardinalroster.com, now opens the Pop-Up Roof instead of the sign-in screen. Two light-theme labels (the guide row on a client profile and the category tabs in the line-item library) are darker so they read at the contrast floor.' },
@@ -46974,7 +47300,7 @@ units       : function(){ return UNITS.slice(); },
 })();
 </script>
 
-<style id="cr-pae-styles">#cr-pae-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 12px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #e8dfc8;margin:0 0 12px}#cr-pae-tabs::-webkit-scrollbar{display:none}#cr-pae-tabs button{background:#f0e8d0;color:#5c5c5c;border:0;padding:8px 14px;border-radius:8px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}#cr-pae-tabs button.active{background:#c8202e;color:#fff}#cr-pae-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:11px}#cr-pae-tabs button.active .count{background:rgba(0,0,0,.22);color:#ffffff}#galGrid.galgrid{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:10px !important;align-content:start !important}#galGrid .cr-pae-datehead{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:14px 0 2px;padding:0 2px}#galGrid .cr-pae-datehead:first-child{margin-top:0}#galGrid .gph{position:relative;aspect-ratio:1/1;background:#f0e8d0;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border .1s}#galGrid .gph:hover{border-color:#c8202e}#galGrid .gph.checked{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.3)}#galGrid .gph img{width:100%;height:100%;object-fit:cover;display:block}#galGrid .cr-pae-initials{position:absolute;bottom:6px;left:6px;width:24px;height:24px;border-radius:50%;background:#fdfcf7;color:#1a1a1a;font:800 11px 'Segoe UI',Arial,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4);letter-spacing:.02em}#galGrid .cr-pae-secbadge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);color:#e35c63;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px}#galGrid .cr-pae-cap{position:absolute;bottom:0;left:0;right:0;padding:24px 8px 6px 38px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fdfcf7;font:600 11px 'Segoe UI',Arial,sans-serif;line-height:1.3;max-height:60%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;pointer-events:none}#galGrid .cr-pae-ai{position:absolute;top:6px;right:38px;width:26px;height:26px;border-radius:50%;background:#c8202e;color:#fff;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}#galGrid .cr-pae-ai:hover{background:#B01F21}#galGrid .cr-pae-ai:disabled{opacity:.55;cursor:wait}#galGrid .gph .gchk{top:6px !important;left:6px !important;width:22px !important;height:22px !important;border-radius:50% !important;background:rgba(255,255,255,.9) !important;color:transparent !important;border:2px solid #6b6b6b !important;font-size:14px !important;display:none !important;align-items:center !important;justify-content:center !important;box-shadow:0 1px 4px rgba(0,0,0,.25) !important}#galleryView.cr-pae-selectmode #galGrid .gph .gchk,#galleryView.cr-pae-pickermode #galGrid .gph .gchk{display:flex !important}#galGrid .gph.checked .gchk{background:#c8202e !important;border-color:#8f1620 !important;color:#1a1a1a !important}#galleryView[data-cr-tab="Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Post-Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Before"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="After"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="General"] #galGrid .cr-pae-secbadge{display:none}#cr-pae-actionbar{display:none;position:fixed;left:0;right:0;bottom:calc(104px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#1a1a1a,#0a0a0a);color:#f5efe0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid #333;z-index:9995;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -6px 20px rgba(0,0,0,.35)}#cr-pae-actionbar.show{display:flex}#cr-pae-actionbar .count{flex:1;font:800 12px 'Segoe UI',Arial,sans-serif;color:#e35c63}#cr-pae-actionbar select,#cr-pae-actionbar button{padding:8px 14px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;cursor:pointer;font-family:inherit;border:0}#cr-pae-actionbar .move-to{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl:hover{background:#3c3c3c}#cr-pae-actionbar .dl:disabled{opacity:.55;cursor:wait}#cr-pae-actionbar .wf{background:#c8202e;color:#fff;border:1px solid #c8202e}#cr-pae-actionbar .wf:hover{background:#B01F21}#cr-pae-actionbar .confirm{background:#c8202e;color:#fff}#cr-pae-actionbar .confirm:hover{background:#B01F21}#cr-pae-actionbar .clear{background:transparent;color:#a89e88;border:1px solid #333}#cr-pae-actionbar .status{color:#e35c63;font-size:12px;font-weight:600;margin-left:8px}#galleryView.cr-pae-pickermode #galInspBtn,#galleryView.cr-pae-pickermode #galInspRmBtn,#galleryView.cr-pae-pickermode #galXferWrap{display:none !important}.cr-pae-pickerbanner{display:none;background:#f4f2f1;border:1px solid #c8202e;border-left:4px solid #c8202e;border-radius:6px;padding:9px 13px;margin:0 0 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#5a4a1a}#galleryView.cr-pae-pickermode .cr-pae-pickerbanner{display:block}#cr-pae-cap-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9520;justify-content:center;align-items:center;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}#cr-pae-cap-modal.open{display:flex}#cr-pae-cap-modal .box{background:#fdfcf7;border-radius:12px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}#cr-pae-cap-modal .imgwrap{background:#1a1a1a;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}#cr-pae-cap-modal .imgwrap img{max-width:100%;max-height:100%;object-fit:contain}#cr-pae-cap-modal .form{padding:14px 16px}#cr-pae-cap-modal label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:10px 0 4px}#cr-pae-cap-modal label:first-child{margin-top:0}#cr-pae-cap-modal textarea,#cr-pae-cap-modal select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}#cr-pae-cap-modal textarea{min-height:70px;resize:vertical;line-height:1.5}#cr-pae-cap-modal textarea:focus,#cr-pae-cap-modal select:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}#cr-pae-cap-modal .actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #e8dfc8}#cr-pae-cap-modal .actions button{padding:8px 14px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;font-family:inherit;border:0}#cr-pae-cap-modal .ai{background:#c8202e;color:#fff}#cr-pae-cap-modal .save{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e;margin-left:auto}#cr-pae-cap-modal .close{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}#cr-pae-cap-modal .ai-status{font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f1620;margin:8px 0 0;min-height:14px}</style>
+<style id="cr-pae-styles">#cr-pae-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 12px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #e8dfc8;margin:0 0 12px}#cr-pae-tabs::-webkit-scrollbar{display:none}#cr-pae-tabs button{background:#f0e8d0;color:#5c5c5c;border:0;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:8px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}#cr-pae-tabs button.active{background:#c8202e;color:#fff}#cr-pae-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:11px}#cr-pae-tabs button.active .count{background:rgba(0,0,0,.22);color:#ffffff}#galGrid.galgrid{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:10px !important;align-content:start !important}#galGrid .cr-pae-datehead{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:14px 0 2px;padding:0 2px}#galGrid .cr-pae-datehead:first-child{margin-top:0}#galGrid .gph{position:relative;aspect-ratio:1/1;background:#f0e8d0;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border .1s}#galGrid .gph:hover{border-color:#c8202e}#galGrid .gph.checked{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.3)}#galGrid .gph img{width:100%;height:100%;object-fit:cover;display:block}#galGrid .cr-pae-initials{position:absolute;bottom:6px;left:6px;width:24px;height:24px;border-radius:50%;background:#fdfcf7;color:#1a1a1a;font:800 11px 'Segoe UI',Arial,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4);letter-spacing:.02em}#galGrid .cr-pae-secbadge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);color:#e35c63;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px}#galGrid .cr-pae-cap{position:absolute;bottom:0;left:0;right:0;padding:24px 8px 6px 38px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fdfcf7;font:600 11px 'Segoe UI',Arial,sans-serif;line-height:1.3;max-height:60%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;pointer-events:none}#galGrid .cr-pae-ai{position:absolute;top:6px;right:38px;width:26px;height:26px;border-radius:50%;background:#c8202e;color:#fff;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}#galGrid .cr-pae-ai:hover{background:#B01F21}#galGrid .cr-pae-ai:disabled{opacity:.55;cursor:wait}#galGrid .gph .gchk{top:6px !important;left:6px !important;width:22px !important;height:22px !important;border-radius:50% !important;background:rgba(255,255,255,.9) !important;color:transparent !important;border:2px solid #6b6b6b !important;font-size:14px !important;display:none !important;align-items:center !important;justify-content:center !important;box-shadow:0 1px 4px rgba(0,0,0,.25) !important}#galleryView.cr-pae-selectmode #galGrid .gph .gchk,#galleryView.cr-pae-pickermode #galGrid .gph .gchk{display:flex !important}#galGrid .gph.checked .gchk{background:#c8202e !important;border-color:#8f1620 !important;color:#1a1a1a !important}#galleryView[data-cr-tab="Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Post-Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Before"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="After"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="General"] #galGrid .cr-pae-secbadge{display:none}#cr-pae-actionbar{display:none;position:fixed;left:0;right:0;bottom:calc(104px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#1a1a1a,#0a0a0a);color:#f5efe0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid #333;z-index:9995;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -6px 20px rgba(0,0,0,.35)}#cr-pae-actionbar.show{display:flex}#cr-pae-actionbar .count{flex:1;font:800 12px 'Segoe UI',Arial,sans-serif;color:#e35c63}#cr-pae-actionbar select,#cr-pae-actionbar button{padding:8px 14px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;cursor:pointer;font-family:inherit;border:0}#cr-pae-actionbar .move-to{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl:hover{background:#3c3c3c}#cr-pae-actionbar .dl:disabled{opacity:.55;cursor:wait}#cr-pae-actionbar .wf{background:#c8202e;color:#fff;border:1px solid #c8202e}#cr-pae-actionbar .wf:hover{background:#B01F21}#cr-pae-actionbar .confirm{background:#c8202e;color:#fff}#cr-pae-actionbar .confirm:hover{background:#B01F21}#cr-pae-actionbar .clear{background:transparent;color:#a89e88;border:1px solid #333}#cr-pae-actionbar .status{color:#e35c63;font-size:12px;font-weight:600;margin-left:8px}#galleryView.cr-pae-pickermode #galInspBtn,#galleryView.cr-pae-pickermode #galInspRmBtn,#galleryView.cr-pae-pickermode #galXferWrap{display:none !important}.cr-pae-pickerbanner{display:none;background:#f4f2f1;border:1px solid #c8202e;border-left:4px solid #c8202e;border-radius:6px;padding:9px 13px;margin:0 0 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#5a4a1a}#galleryView.cr-pae-pickermode .cr-pae-pickerbanner{display:block}#cr-pae-cap-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9520;justify-content:center;align-items:center;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}#cr-pae-cap-modal.open{display:flex}#cr-pae-cap-modal .box{background:#fdfcf7;border-radius:12px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}#cr-pae-cap-modal .imgwrap{background:#1a1a1a;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}#cr-pae-cap-modal .imgwrap img{max-width:100%;max-height:100%;object-fit:contain}#cr-pae-cap-modal .form{padding:14px 16px}#cr-pae-cap-modal label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:10px 0 4px}#cr-pae-cap-modal label:first-child{margin-top:0}#cr-pae-cap-modal textarea,#cr-pae-cap-modal select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}#cr-pae-cap-modal textarea{min-height:70px;resize:vertical;line-height:1.5}#cr-pae-cap-modal textarea:focus,#cr-pae-cap-modal select:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}#cr-pae-cap-modal .actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #e8dfc8}#cr-pae-cap-modal .actions button{padding:8px 14px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;font-family:inherit;border:0}#cr-pae-cap-modal .ai{background:#c8202e;color:#fff}#cr-pae-cap-modal .save{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e;margin-left:auto}#cr-pae-cap-modal .close{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}#cr-pae-cap-modal .ai-status{font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f1620;margin:8px 0 0;min-height:14px}</style>
 <script id="cr-pae-script">
 (function(){
 'use strict';
@@ -48115,7 +48441,7 @@ window.CardinalPhotoEditor = { open: open, close: close };
 #rccPanel .rcc-foot select{flex:1;min-width:0;padding:8px 10px;border:1px solid #d9cfaf;border-radius:8px;font:600 13px 'Segoe UI',Arial,sans-serif;background:#fff;color:#2c2c2c}
 @media(max-width:900px){#rccPanel{width:100%;height:52%;border-left:0;border-top:4px solid var(--red)}}
 </style>
-<style id="cr-est-styles">#cr-est-new-btn{display:inline-block;background:#c8202e;color:#fff;border:0;padding:9px 14px;border-radius:6px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;margin-left:6px;margin-bottom:4px;font-family:inherit}#cr-est-new-btn:hover{background:#B01F21}.cr-est-saved-list{margin:12px 0 4px}.cr-est-saved-list .head{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);margin:0 0 6px}.cr-est-saved-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f4f2f1;border:1px solid #e8d9a8;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .12s}.cr-est-saved-row:hover{background:#f5efd8}.cr-est-saved-row .num{flex:0 0 auto;font:800 11px 'SF Mono',Menlo,Consolas,monospace;color:#8f1620}.cr-est-saved-row .title{flex:1;font:700 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-saved-row .status{flex:0 0 auto;padding:2px 8px;border-radius:10px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-est-saved-row .status.draft{background:#e8e0c8;color:#7a6a4a}.cr-est-saved-row .status.sent{background:#cfe0f5;color:#3d5d8c}.cr-est-saved-row .status.accepted{background:#c8e6cc;color:#2a6b3c}.cr-est-saved-row .status.declined{background:#f5cfd0;color:#8c3d3f}.cr-est-saved-row .amount{flex:0 0 auto;font:800 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9500;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-est-view.open{display:flex}.cr-est-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:10px;flex:0 0 auto}.cr-est-head h2{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-head .estnum{font:800 11px 'SF Mono',Menlo,monospace;color:#f08a90;margin-right:8px}.cr-est-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#f08a90;padding:6px 12px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}.cr-est-head button:hover{background:rgba(200,32,46,.14)}.cr-est-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}
+<style id="cr-est-styles">#cr-est-new-btn{display:inline-block;background:#c8202e;color:#fff;border:0;padding:9px 14px;border-radius:6px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;margin-left:6px;margin-bottom:4px;font-family:inherit}#cr-est-new-btn:hover{background:#B01F21}.cr-est-saved-list{margin:12px 0 4px}.cr-est-saved-list .head{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);margin:0 0 6px}.cr-est-saved-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f4f2f1;border:1px solid #e8d9a8;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .12s}.cr-est-saved-row:hover{background:#f5efd8}.cr-est-saved-row .num{flex:0 0 auto;font:800 11px 'SF Mono',Menlo,Consolas,monospace;color:#8f1620}.cr-est-saved-row .title{flex:1;font:700 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-saved-row .status{flex:0 0 auto;padding:2px 8px;border-radius:10px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-est-saved-row .status.draft{background:#e8e0c8;color:#7a6a4a}.cr-est-saved-row .status.sent{background:#cfe0f5;color:#3d5d8c}.cr-est-saved-row .status.accepted{background:#c8e6cc;color:#2a6b3c}.cr-est-saved-row .status.declined{background:#f5cfd0;color:#8c3d3f}.cr-est-saved-row .amount{flex:0 0 auto;font:800 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9500;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-est-view.open{display:flex}.cr-est-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:10px;flex:0 0 auto}.cr-est-head h2{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-head .estnum{font:800 11px 'SF Mono',Menlo,monospace;color:#f08a90;margin-right:8px}.cr-est-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#f08a90;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}.cr-est-head button:hover{background:rgba(200,32,46,.14)}.cr-est-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}
 /* 1025: the template menus were the last white popovers on the dark profile.
    Pinned dark in both themes, like the saved-list panel above them. */
 #pEstMenu .estopt,#pContractMenu .estopt{display:block;width:100%;box-sizing:border-box;text-align:left;background:transparent;color:#e8e6e1;border:0;border-top:1px solid #2a2e36;padding:11px 14px;font:700 12.5px 'Segoe UI',Arial,sans-serif;font-family:inherit;cursor:pointer}
@@ -48127,7 +48453,23 @@ window.CardinalPhotoEditor = { open: open, close: close };
 .cr-est-head button.danger{color:#d8cfc4;border-color:rgba(216,207,196,.4)}
 .cr-est-head button.danger:hover{background:#c8202e;color:#fff;border-color:#c8202e}
 .cr-est-saved-row .rowdel{flex:0 0 auto;background:transparent;border:0;cursor:pointer;color:#8f1620;font-size:15px;line-height:1;padding:3px 5px;border-radius:5px;font-family:inherit}
-.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#B01F21}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .cr-est-rowmode{display:inline-flex;margin-top:10px;border:1px solid var(--est-line,#e2e8f0);border-radius:8px;overflow:hidden;background:var(--est-well,#f8fafc)}.cr-est-lineitem .cr-est-rowmode button{-webkit-appearance:none;appearance:none;border:0;background:transparent;padding:7px 15px;min-height:38px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--est-dim,#475569);cursor:pointer;font-family:inherit}.cr-est-lineitem .cr-est-rowmode button+button{border-left:1px solid var(--est-line,#e2e8f0)}.cr-est-lineitem .cr-est-rowmode button.on{background:var(--est-red,#c8202e);color:#fff}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-section{margin-bottom:6px}.cr-est-sechead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 8px;padding:8px 10px;background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-left:3px solid var(--est-red,#c8202e);border-radius:8px}.cr-est-sechead .sec-chev{-webkit-appearance:none;appearance:none;border:0;background:transparent;color:var(--est-dim,#475569);font-size:13px;line-height:1;cursor:pointer;padding:0 4px;min-height:32px}.cr-est-sechead .sec-title{flex:1 1 120px;min-width:80px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-ink,#0f172a);background:#fff;border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:7px 9px}.cr-est-sechead .sec-title-static{flex:1 1 120px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-dim,#475569)}.cr-est-sechead .sec-subtotal{font:800 13px 'Segoe UI',Arial,sans-serif;color:var(--est-ink,#0f172a);font-variant-numeric:tabular-nums;white-space:nowrap}.cr-est-sechead .sec-move{display:flex;gap:2px}.cr-est-sechead .sec-move button{width:30px;height:30px;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-red,#c8202e);border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-sechead .sec-move button:disabled{opacity:.3;cursor:default}.cr-est-sechead .sec-addline{-webkit-appearance:none;appearance:none;border:1px solid var(--est-red,#c8202e);background:transparent;color:var(--est-red,#c8202e);border-radius:6px;padding:7px 11px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-secmove{margin-left:8px;font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--est-dim,#475569);background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:6px 8px;min-height:34px;vertical-align:middle}.cr-est-items-head .add-section{background:transparent;color:var(--est-dim,#475569);border:1px solid var(--est-line,#e2e8f0)}.cr-est-items-head .add-section:hover{background:var(--est-well,#f8fafc)}.cr-est-items-head .add-assembly{background:var(--est-red,#c8202e);color:#fff;border:1px solid var(--est-red,#c8202e)}.cr-est-items-head .add-assembly:hover{background:#B01F21}.cr-est-sechead .sec-saveasm{-webkit-appearance:none;appearance:none;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-dim,#475569);border-radius:6px;padding:7px 10px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-sechead .sec-saveasm:hover{background:var(--est-well,#f8fafc);border-color:var(--est-red,#c8202e);color:var(--est-red,#c8202e)}#cr-est-picker .asm-group{border-bottom:1px solid #eee2c8}#cr-est-picker .asm-grouphd{padding:12px 16px 4px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8f1620}#cr-est-picker .asm-grouphd .asm-groupn{color:#a07f2f}#cr-est-picker .asm-card{padding:10px 16px 14px;border-top:1px solid #f0e8d0}#cr-est-picker .asm-card .top{display:flex;align-items:center;gap:8px}#cr-est-picker .asm-card .name{flex:1;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .asm-card .asm-pin{flex:0 0 auto;background:transparent;border:0;color:#c9a227;font-size:17px;line-height:1;cursor:pointer;padding:2px 6px;min-height:34px}.asm-pin.on{color:#c8202e}#cr-est-picker .asm-card .asm-pin:hover{color:#c8202e}.asm-del{flex:0 0 auto;background:transparent;border:0;color:#5a5a5a;font-size:16px;line-height:1;cursor:pointer;padding:2px 6px}#cr-est-picker .asm-card .asm-del:hover{color:#c8202e}#cr-est-picker .asm-card .asm-meta{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#5a5a5a;margin-top:2px}#cr-est-picker .asm-card .asm-act{display:flex;gap:8px;align-items:center;margin-top:9px}#cr-est-picker .asm-card .asm-sq{flex:1;min-width:0;box-sizing:border-box;padding:9px 11px;border:1px solid #d9cfaf;border-radius:8px;font-size:13px;background:#fff;color:#2c2c2c;font-family:inherit}#cr-est-picker .asm-card .asm-insert{flex:0 0 auto;background:#c8202e;color:#fff;border:0;border-radius:8px;padding:0 18px;min-height:40px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:inherit}#cr-est-picker .asm-card .asm-insert:hover{background:#B01F21}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
+.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#B01F21}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}
+/* 1205 -- on a phone the toolbar WRAPS; it does not scroll. `.cr-est-head`
+   carries overflow-x:auto (added later, in the 1073 layout sheet), so at
+   390px `-> Contract` sat off the right edge with nothing on screen to say
+   it was there. Wrapping needs no scroll hint, which was the other option
+   put to Theo. The h2 takes its own line so the buttons fall under it in
+   reading order; the overflow-x rule is left alone because wrapped content
+   never overflows, so it is inert rather than wrong.
+   ⚠ The three modules that inject into this row -- the base render,
+   cr-epub (Preview/Options/Publish) and cr-e2c (-> Contract) -- all get
+   this for free, which is why the rule is on the ROW and not on a list of
+   button ids that would go stale the next time one is added. */
+@media (max-width:760px){
+  .cr-est-head{flex-wrap:wrap;}
+  .cr-est-head h2{flex:1 1 100%;order:-1;}
+}
+.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:0 13px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;border:0;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .cr-est-rowmode{display:inline-flex;margin-top:10px;border:1px solid var(--est-line,#e2e8f0);border-radius:8px;overflow:hidden;background:var(--est-well,#f8fafc)}.cr-est-lineitem .cr-est-rowmode button{-webkit-appearance:none;appearance:none;border:0;background:transparent;padding:7px 15px;min-height:38px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--est-dim,#475569);cursor:pointer;font-family:inherit}.cr-est-lineitem .cr-est-rowmode button+button{border-left:1px solid var(--est-line,#e2e8f0)}.cr-est-lineitem .cr-est-rowmode button.on{background:var(--est-red,#c8202e);color:#fff}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-section{margin-bottom:6px}.cr-est-sechead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 8px;padding:8px 10px;background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-left:3px solid var(--est-red,#c8202e);border-radius:8px}.cr-est-sechead .sec-chev{-webkit-appearance:none;appearance:none;border:0;background:transparent;color:var(--est-dim,#475569);font-size:13px;line-height:1;cursor:pointer;padding:0 4px;min-height:32px}.cr-est-sechead .sec-title{flex:1 1 120px;min-width:80px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-ink,#0f172a);background:#fff;border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:7px 9px}.cr-est-sechead .sec-title-static{flex:1 1 120px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-dim,#475569)}.cr-est-sechead .sec-subtotal{font:800 13px 'Segoe UI',Arial,sans-serif;color:var(--est-ink,#0f172a);font-variant-numeric:tabular-nums;white-space:nowrap}.cr-est-sechead .sec-move{display:flex;gap:2px}.cr-est-sechead .sec-move button{width:30px;height:30px;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-red,#c8202e);border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-sechead .sec-move button:disabled{opacity:.3;cursor:default}.cr-est-sechead .sec-addline{-webkit-appearance:none;appearance:none;border:1px solid var(--est-red,#c8202e);background:transparent;color:var(--est-red,#c8202e);border-radius:6px;padding:7px 11px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-secmove{margin-left:8px;font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--est-dim,#475569);background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:6px 8px;min-height:34px;vertical-align:middle}.cr-est-items-head .add-section{background:transparent;color:var(--est-dim,#475569);border:1px solid var(--est-line,#e2e8f0)}.cr-est-items-head .add-section:hover{background:var(--est-well,#f8fafc)}.cr-est-items-head .add-assembly{background:var(--est-red,#c8202e);color:#fff;border:1px solid var(--est-red,#c8202e)}.cr-est-items-head .add-assembly:hover{background:#B01F21}.cr-est-sechead .sec-saveasm{-webkit-appearance:none;appearance:none;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-dim,#475569);border-radius:6px;padding:7px 10px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-sechead .sec-saveasm:hover{background:var(--est-well,#f8fafc);border-color:var(--est-red,#c8202e);color:var(--est-red,#c8202e)}#cr-est-picker .asm-group{border-bottom:1px solid #eee2c8}#cr-est-picker .asm-grouphd{padding:12px 16px 4px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8f1620}#cr-est-picker .asm-grouphd .asm-groupn{color:#a07f2f}#cr-est-picker .asm-card{padding:10px 16px 14px;border-top:1px solid #f0e8d0}#cr-est-picker .asm-card .top{display:flex;align-items:center;gap:8px}#cr-est-picker .asm-card .name{flex:1;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .asm-card .asm-pin{flex:0 0 auto;background:transparent;border:0;color:#c9a227;font-size:17px;line-height:1;cursor:pointer;padding:2px 6px;min-height:34px}.asm-pin.on{color:#c8202e}#cr-est-picker .asm-card .asm-pin:hover{color:#c8202e}.asm-del{flex:0 0 auto;background:transparent;border:0;color:#5a5a5a;font-size:16px;line-height:1;cursor:pointer;padding:2px 6px}#cr-est-picker .asm-card .asm-del:hover{color:#c8202e}#cr-est-picker .asm-card .asm-meta{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#5a5a5a;margin-top:2px}#cr-est-picker .asm-card .asm-act{display:flex;gap:8px;align-items:center;margin-top:9px}#cr-est-picker .asm-card .asm-sq{flex:1;min-width:0;box-sizing:border-box;padding:9px 11px;border:1px solid #d9cfaf;border-radius:8px;font-size:13px;background:#fff;color:#2c2c2c;font-family:inherit}#cr-est-picker .asm-card .asm-insert{flex:0 0 auto;background:#c8202e;color:#fff;border:0;border-radius:8px;padding:0 18px;min-height:40px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:inherit}#cr-est-picker .asm-card .asm-insert:hover{background:#B01F21}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
 /* 962 \u2014 THE APP ALREADY HAD AN ANSWER FOR THIS AND I MISSED IT.
    Build 595 (#projModal), then 935 (#cr-pb-modal .sheet), both solved the
    installed bottom bar the same way and 935 wrote down why: \u201cClearance, NOT a
@@ -51265,6 +51607,47 @@ if(!d.project || !d.project.id || !d.id) return;
 if(d.prevStatus !== 'draft') return;
 setTimeout(function(){ markSentAfterPublish(d); }, 900);
 });
+/* 1201: only the delivery buttons that exist are offered, so the sheet can
+   never show a dead choice. They are looked up rather than duplicated — the
+   document editor owns the send logic and there is exactly one copy of it. */
+function crSendChoices(){
+  var out = [];
+  if(document.getElementById('emailDocBtn'))
+    out.push({ id:'email', label:'Email to client', hint:'Opens the send-for-signature email' });
+  if(document.getElementById('textSignBtn'))
+    out.push({ id:'text',  label:'Text to sign',    hint:'Opens Messages with the signing link' });
+  if(document.getElementById('shareBtn'))
+    out.push({ id:'share', label:'Copy share link', hint:'A link the client can review and sign' });
+  return out;
+}
+function crSendDoc(pick){
+  var map = { email:'emailDocBtn', text:'textSignBtn', share:'shareBtn' };
+  var b = document.getElementById(map[pick]);
+  if(!b) return false;
+  try{ b.click(); }catch(_e){ return false; }
+  return true;
+}
+/* Resolves TRUE only when the document this estimate published is really
+   marked sent. A rep who backs out of the email prompt, or whose send fails,
+   resolves false on the timeout and the estimate stays the draft it is. */
+function crAwaitDocSent(docId, ms){
+  return new Promise(function(resolve){
+    var done = false, t = null;
+    function off(v){
+      if(done) return;
+      done = true;
+      document.removeEventListener('cr-doc-sent', onSent);
+      if(t) clearTimeout(t);
+      resolve(v);
+    }
+    function onSent(ev){
+      var id = ev && ev.detail && ev.detail.docId;
+      if(id != null && String(id) === String(docId)) off(true);
+    }
+    document.addEventListener('cr-doc-sent', onSent);
+    t = setTimeout(function(){ off(false); }, ms || 600000);
+  });
+}
 async function markSentAfterPublish(d){
 var project = d.project;
 /* 941-era honesty: say what will actually happen to THIS job before asking. */
@@ -51272,10 +51655,34 @@ var _cur = project.stage;
 try{ if(typeof window.normStage === 'function') _cur = window.normStage(_cur); }catch(_){}
 var _willMove = !!(STATUS_STAGE.sent && _cur !== 'Lost' && _cur !== STATUS_STAGE.sent &&
                    rank(_cur) < rank(STATUS_STAGE.sent));
-if(!await crAsk('Estimate published.\n\nMark it as Sent?' +
-    (_willMove ? '\n\n' + (project.name || 'This client') + ' moves to ' +
-                 displayStage(STATUS_STAGE.sent) + '.'
-               : '\n\nThe pipeline stays at ' + displayStage(_cur) + '.'))) return;
+/* 1201: this used to ask "Mark it as Sent?" BEFORE anything had been sent.
+   Answering yes marked the estimate Sent, moved the pipeline, and left the rep
+   on a document whose own toolbar read UNSENT — with nothing emailed, texted or
+   shared. It now offers the three ways the app actually delivers a document,
+   and they are the SHIPPED buttons in #editorView, which the publish flow has
+   already loaded with THIS document. Nothing is called Sent until that document
+   really is: crAwaitDocSent() waits for the editor's own cr-doc-sent. Record
+   the send, never the tap. */
+var _who = (project.name || 'the client');
+var _picks = crSendChoices();
+if(!_picks.length) return;
+/* ONE line, no blank-line split: crAsk treats the text after a blank line as
+   the explanation, and an `opts.why` then replaces it - so a two-paragraph
+   message here silently lost the actual question. gate_1201 asserts the
+   headline still ASKS. */
+var _pick = await crAsk('Estimate published \u2014 send it to ' + _who + '?', {
+  choices: _picks,
+  cancel: 'Not now',
+  why: 'Sending marks the estimate Sent' +
+       (_willMove ? ' and moves ' + _who + ' to ' + displayStage(STATUS_STAGE.sent) + '.'
+                  : ' \u2014 the pipeline stays at ' + displayStage(_cur) + '.') +
+       ' Not now leaves it a draft, and you can send it from the document at any time.'
+});
+if(typeof _pick !== 'string') return;
+/* armed BEFORE the click, so a fast send cannot land between the two */
+var _went = crAwaitDocSent(d.docId);
+if(!crSendDoc(_pick)) return;
+if(!await _went) return;
 var _wrote = false;
 try{
 if(window.supa){
@@ -53229,7 +53636,11 @@ objections : OBJECTIONS,
 #cr-pb .pbmonth .pbmhd .lbl{ font:700 11.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.14em; text-transform:uppercase; color:var(--pb-ink,#eceef0); }
 #cr-pb .pbmonth .pbmhd button{ background:transparent; border:0; cursor:pointer; color:var(--pb-dim,#848c94); font:700 16px var(--pb-mono,ui-monospace,Menlo,monospace); padding:2px 10px; min-width:34px; min-height:34px; border-radius:8px; }
 #cr-pb .pbmonth .pbmhd button:hover{ color:var(--pb-acc,#e35c63); background:var(--pb-c2,#1b1e22); }
-#cr-pb .pbmonth .pbday{ min-height:34px; padding:5px 2px 4px; display:flex; flex-direction:column; align-items:center; gap:0; }
+/* 1206: 44px, measured at 47x33 on a phone. The desktop cell is 78px and is
+   untouched -- this is the mini month on the Production landing, which is a
+   grid of buttons a thumb picks a day from. Six rows, so the landing grows
+   ~60px; that is the cost of the day being hittable. */
+#cr-pb .pbmonth .pbday{ min-height:44px; padding:5px 2px 4px; display:flex; flex-direction:column; align-items:center; gap:0; }
 #cr-pb .pbmonth .pbday .dn{ display:block; font-size:11px; text-align:center; }
 #cr-pb .pbmonth .pbday .pbpips{ margin-top:3px; }
 
@@ -56509,8 +56920,19 @@ function syncMenuCount(){
 var el = document.getElementById('dbPunchN');
 if(!el || loadedFor === null) return;
 var open = rows.filter(function(i){ return i.status !== 'done'; }).length;
-el.textContent = open;
-el.classList.toggle('zero', open === 0);
+/* 1200: this is reached from check(), which runs from a document.body
+   MutationObserver. Assigning textContent emits a childList record even when
+   the string is IDENTICAL - the old text node is removed and a new one added -
+   so this write woke every body observer in the app about sixty times a second
+   for as long as a client profile was open. Measured: 65 records/sec, 360 of
+   them on this element in six seconds, on a profile with four punch items and
+   on one with none. Same class as 567/569. Compare against the LIVE element
+   (paintChip's shape, 567) rather than a stored signature (wxPaint, 569), so
+   this still repairs the count if another module stomps it. */
+var txt = String(open);
+if(el.textContent !== txt) el.textContent = txt;
+var zero = (open === 0);
+if(el.classList.contains('zero') !== zero) el.classList.toggle('zero', zero);
 }
 function itemHtml(i){
 return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
@@ -84259,6 +84681,14 @@ body.cr-landing-on footer.site{display:none !important;}
 #crAsk .askgo{background:#c8202e;color:#fff;}
 #crAsk .askgo.plain{background:#2d5578;color:#fff;}
 #crAsk .askno{background:#22262b;color:#cfd6df;border:1px solid #343a41;}
+/* 1201: a choice. Left-aligned with its own hint line, because these are three
+   different journeys and not three shades of yes. Computed, not eyeballed:
+   #f2f4f7 on #22262b is 13.81:1 and the hint #9aa1ac is 5.85:1; the light twin
+   is 16.90:1 and 5.42:1. Floor is 4.5:1 for both — the hint is 11.5px body. */
+#crAsk .askpick{background:#22262b;color:#f2f4f7;border:1px solid #3a4049;text-align:left;}
+#crAsk .askpick small{display:block;margin-top:3px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9aa1ac;}
+:root[data-theme="rb-light"] #crAsk .askpick{background:#f7f7f8;color:#161616;border-color:#d8d8d8;}
+:root[data-theme="rb-light"] #crAsk .askpick small{color:#5f6670;}
 :root[data-theme="rb-light"] #crAsk .askcard{background:#ffffff;border-top-color:#e2e2e2;}
 :root[data-theme="rb-light"] #crAsk .askq{color:#161616;}
 :root[data-theme="rb-light"] #crAsk .askwhy{color:#5f6670;}
@@ -84347,6 +84777,37 @@ body.cr-landing-on footer.site{display:none !important;}
       go.className = 'askgo' + (danger ? '' : ' plain');
       no.textContent = o.cancel || 'Cancel';
 
+      /* 1201: OPTIONAL choices, and STRICTLY ADDITIVE. With no `choices` this
+         sheet is the same two-button question it has always been and still
+         resolves a boolean — gate_1201 asserts exactly that against every
+         existing caller shape. With choices, each one is a real button in the
+         column .askbtns already lays out (44px minimum, both themes), the
+         single go verb is not shown at all because the choices ARE the
+         actions, and the promise resolves the chosen id instead.
+         Built HERE rather than as an eleventh module-local sheet: this is the
+         app's one shared question sheet, and a second one would drift from it
+         the first time either is restyled. */
+      var picks = Array.isArray(o.choices) ? o.choices.slice() : null;
+      var btns = n.querySelector('.askbtns');
+      Array.prototype.slice.call(btns.querySelectorAll('.askpick'))
+           .forEach(function(b){ b.parentNode.removeChild(b); });
+      go.style.display = picks ? 'none' : '';
+      if(picks){
+        picks.forEach(function(c){
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'askpick';
+          b.setAttribute('data-pick', String(c.id));
+          b.appendChild(document.createTextNode(String(c.label || c.id)));
+          if(c.hint){
+            var sm = document.createElement('small');
+            sm.textContent = String(c.hint);
+            b.appendChild(sm);
+          }
+          btns.insertBefore(b, no);
+        });
+      }
+
       busy = true;
       n.classList.add('open');
       try{ no.focus(); }catch(_f){}
@@ -84359,20 +84820,31 @@ body.cr-landing-on footer.site{display:none !important;}
           n.classList.remove('open');
           go.onclick = no.onclick = n.onclick = null;
           document.removeEventListener('keydown', onKey, true);
-          resolve(!!v);
+          /* 1201: a string id resolves as itself. Every caller that has ever
+             existed passes true/false and still receives a boolean. */
+          resolve(typeof v === 'string' ? v : !!v);
         }
         function onKey(e){
           if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
         }
         go.onclick = function(){ finish(true); };
         no.onclick = function(){ finish(false); };
+        if(picks){
+          Array.prototype.slice.call(btns.querySelectorAll('.askpick'))
+               .forEach(function(b){
+                 b.onclick = function(){ finish(b.getAttribute('data-pick')); };
+               });
+        }
         /* tapping the scrim is the same as saying no — never the same as yes */
         n.onclick = function(e){ if(e.target === n) finish(false); };
         document.addEventListener('keydown', onKey, true);
       });
     }catch(_e){
       busy = false;
-      /* the sheet could not be shown — ask the old way rather than not at all */
+      /* the sheet could not be shown — ask the old way rather than not at all.
+         1201: with choices there is no honest one-question equivalent, so
+         nothing is chosen and the caller takes its own "not now" path. */
+      if(o && Array.isArray(o.choices)) return Promise.resolve(false);
       var ok = false;
       try{ ok = window.confirm(text); }catch(_c){}
       return Promise.resolve(ok);

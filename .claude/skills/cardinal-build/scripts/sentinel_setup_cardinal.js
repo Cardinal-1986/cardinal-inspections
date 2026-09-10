@@ -909,6 +909,63 @@
         await pause(900);
         var v = document.getElementById('cr-lrs-view');
         if (!onScreen(v)) throw new Error('#cr-lrs-view did not come on screen'); } },
+
+    /* 1205 — the ESTIMATE BUILDER, `#cr-est-view`. ⚠ NOT the same surface as the
+       'estimates' state above: that one opens `#cr-estimates-mount`, which is
+       what the MENU's Estimates item opens (the 561 note in index.html). The
+       builder behind "+ New estimate" on a job is a different screen with its
+       own palette, and nothing was sweeping it — which is how A11 (26px tap
+       targets on the screen where money is typed) reached a hand-driven walk.
+       Its header is assembled by THREE modules, so the state waits for the two
+       that inject late rather than measuring a short row. */
+    { name:'estbuilder',   run: async function () {
+        leaveLanding(); closeAll();
+        var E = window.CardinalEstimates;
+        if (!E || !E.openEditor) throw new Error('CardinalEstimates.openEditor missing');
+        await E.openEditor('p1');
+        await pause(1200);
+        var v = document.getElementById('cr-est-view');
+        if (!v || !v.classList.contains('open'))
+          throw new Error('#cr-est-view did not open — it is shown by .open, never by display');
+        var head = v.querySelector('.cr-est-head');
+        if (!onScreen(head)) throw new Error('the builder opened but its header is not on screen'); } },
+
+    /* 1204 — the DOCUMENT EDITOR after Publish, and it is deliberately LAST.
+       Nothing had ever swept this screen: build 1204 moved three buttons, added
+       an ink (.edbk) and reordered a row on it, and every one of those changes
+       would have been invisible to the sentinel. A12 of the Sep 2026 audit was
+       found by a hand-driven walk for exactly that reason.
+
+       ⚠ THE SEED ROW IS PUSHED HERE, NOT INTO THE SEED BLOCK, and that is the
+       whole reason this state sits at the end. `inspection_reports` is honestly
+       empty above; seeding a document there would move the client profile's
+       tiles, the Documents view and the home counts, and the next sweep would
+       report a wave of "new" findings that are really a seed change — the same
+       call, and the same reasoning, as the supplement Outcome state above.
+       Running last, with the row pushed at the last moment, no earlier state
+       sees it. */
+    { name:'doceditor',    run: async function () {
+        leaveLanding(); closeAll();
+        if (typeof window.openEditor !== 'function')
+          throw new Error('window.openEditor missing — the document editor cannot be opened');
+        var rows = (window.__SEED__ && window.__SEED__.inspection_reports) || null;
+        if (!rows) throw new Error('__SEED__.inspection_reports missing');
+        if (!rows.some(function (r) { return r.id === 'sentinel-doc-1'; })) {
+          rows.push({ id:'sentinel-doc-1',
+            title:'Estimate EST-2026-0001 \u2014 7990 Germantown Pike',
+            project:'Mark Diamond', project_id:'p1', status:'unsent',
+            sent_at:null, signed_at:null, share_token:'sentineltok', total:12500,
+            html:'<html><body><h1>Estimate</h1><p>Tear-off and re-roof.</p></body></html>',
+            created_at:new Date().toISOString(), updated_at:new Date().toISOString(),
+            created_by:'nick@cardinalrenovations.net' });
+        }
+        await window.openEditor('sentinel-doc-1');
+        await pause(900);
+        var ed = document.getElementById('editorView');
+        if (!ed || !ed.classList.contains('open'))
+          throw new Error('#editorView did not open — it is shown by .open, never by display');
+        if (!onScreen(document.getElementById('edClientChip')))
+          throw new Error('the editor opened but its client chip is not on screen'); } },
   ];
   if ((globalThis.__SENTINEL_MODE__ || 'normal') === 'empty') {
     /* states that open a SPECIFIC project cannot run against an empty book;

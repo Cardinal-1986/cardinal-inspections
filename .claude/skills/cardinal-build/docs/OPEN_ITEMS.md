@@ -5740,3 +5740,64 @@ its strip shows no count in the walked state.
 - The font-stack unification and the half-pixel type scale both want his pick and
   a preview deploy — **neither is verifiable in this container**, which has
   neither Segoe UI nor San Francisco installed.
+
+---
+
+## From the 9 Sep sales-workflow audit — open, and what is Theo's
+
+*Written 10 Sep 2026 at build 1205. Options 1, 2, 3a, 4a, 4b, 5, 6a, 8, 10, 11, 12 and 13 have
+shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks them by number.*
+
+- **Options 7a / 7c — the intake doors. THEO'S CALL, and here is what each one costs.**
+  ✅ **7b shipped at 1208** (OH by default; the address follows the Job Category).
+  ⚠ **7a turned out to be already shipped on the LEAD door** — build 782 requires a phone or an
+  email there, with a tick box for the genuine exception. What remains is the **Contact** door,
+  which saves from a name alone. Adding the same rule there would **refuse a save that works
+  today**, which is why it is not done: taking something away from a rep needs his yes, not my
+  judgement. 7c — one door with an "add the address now or later" step — is the real fix and is
+  1–2 builds.
+- ✅ **Option 6b SHIPPED at 1207.** It left one thing recorded: **`renderHome()` still carries its
+  own client haystack**, the same seven fields *minus* `pr.created_by`. The directory, Insurance
+  Clients and the live search all use `crClientHay()` now; folding Home in would silently start
+  matching the board on a rep's email address, which is a behaviour change and therefore Theo's
+  call, not a tidy-up.
+- ⚠ **Option 9 — the phone profile's client band above the money ring. HELD, because it REVERSES A
+  DECISION THEO MADE ON A PREVIEW.** The audit marked it "yours" without saying why; the reason is
+  in the build log. **Build 797** shipped *"Job Value/circle/Balance Due merge with Payment
+  Information into one full-bleed card … and that card moves **above the client name band**"* —
+  from preview_v3/v4, which he reviewed and confirmed, then reviewed again live on his phone.
+  `syncMoneyCard()` does it deliberately, on `matchMedia('(max-width:560px)')`, with a resize
+  listener so a rotation cannot undo it. Reversing that is a one-line change and is **not mine to
+  make**. The finding behind it is still real — a rep opening a Lead reads *$0.00* twice before the
+  homeowner's name, and the name truncates to "Mark Diamo…" — so it is worth putting to him as a
+  question, with the 797 history attached.
+- ✅ **Option 14 SHIPPED at 1206**, and it left a measured list behind. `gate_1206` baselines **24
+  under-floor targets** across 32 states — existing debt that blocks nothing and can never grow.
+  `node gate_1206.mjs --list` prints them. The biggest families, if Theo wants another pass:
+  **five "Back" buttons at 33–36px** (Production, Punch, Dispatch, Sales Floor, Storm — one concept,
+  five modules), **the photo editor's tool bar at 25–33px** (a screen used on a roof), **the Line
+  Item Library's tabs and head buttons at 26–30px**, and two native checkboxes at 17–18px
+  (`#pfTrades .cbx`, `.ckvent`). ⚠ **The Dispatch grip is NOT on that list and must not be "fixed"**
+  — 15×15 box, 45×45 target, build 1040's pad. See BUG_CLASSES 89.
+- ⚠ **New, out of 1205: the estimate builder's phone header is now 150px tall** (52px before),
+  because six 44px buttons wrap onto three rows. `.cr-est-phonebar` (1029) already carries **Save
+  Draft and Publish** under the thumb, so the header duplicates both on a phone. **Dropping those
+  two from the header at ≤760px would be the cheap fix** and is one rule — but it removes a control
+  from a screen, so it is a pick, not a tidy-up.
+- ⚠ **New, out of 1204 and 1205: two sentinel states brought 15 pre-existing findings into view.**
+  Nothing had ever swept the **document editor** (`doceditor`, 1204) or the **estimate builder**
+  (`estbuilder`, 1205 — `#cr-est-view`, not the menu's `#cr-estimates-mount`), so their debt had
+  never been counted. Carried findings went **188 → 200 → 203** as the two states landed, on
+  renders of BOTH artifacts, so all 15 are pre-existing rather than these builds'. **They have not
+  been read.** Reading them is a `--all` pass of its own and covering them is its own build — the
+  same call the setup file records for the supplement Outcome state.
+  ⚠ **And the first 1205 sweep reported CLEAN over a screen it had never opened.** That is worth
+  remembering before quoting a sentinel verdict on a surface: check there is a state for it.
+
+### Still held for Theo from the 9 Sep external assessment
+
+- **The billing-parity prevalence counts need his explicit go** — the query is a read of private
+  customer and payment data, and automatic approval declined it as not authorised for that purpose.
+- Retiring `api/estimate-to-contract.js` (dead route; the **client-side** `cr-e2c` → Contract
+  button is live and is what 1205 measured).
+- **WeatherLock vs RhinoRoof** naming, and the logo preview.

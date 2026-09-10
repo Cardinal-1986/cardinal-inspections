@@ -4297,6 +4297,149 @@ this, and the fix was re-verified in the runner (1198: 13/13 on 1199, RED 6 on i
 **How to find the rest:** `grep -n "html.includes('v2026-" scripts/gate_*.mjs` — any hit that is
 not inside a floor comparison is this class waiting for the next build.
 
+## 86 — a negative-control break anchor that matches a PRE-EXISTING identical line
+
+**Build 1200, caught before it shipped.** `gate_1200`'s registered break was
+`if(el.textContent !== txt) el.textContent = txt;` — the guard the build had just added to
+`syncMenuCount()`. That exact line **already existed once in the previous build**, in
+`cr-portal-script`'s `refreshCounts()`, which has carried it since it was written. Three
+things followed, and every one of them looked green:
+
+- `gate_chromium --selftest` reported the anchor "occurs 1x in the artifact" — against the
+  **unrelated** site, on a tree that did not yet contain the fix at all.
+- The break would have removed the **portal counts'** guard, so the control would have
+  proved something about a module the gate never mentions.
+- `gate_1200`'s own section-A check used a file-wide `html.includes(...)` and therefore
+  **PASSED on the control tree**. A check that cannot fail.
+
+**This is the doc set's own "scope the assertion to the function, not the file" rule biting a
+GATE rather than a patch.** A per-build gate asserts on what the build *added*; a widely-used
+idiom is exactly the kind of line another module already has.
+
+**The rule: before registering a break anchor, count it in the PREVIOUS build.** It must be
+**0** there and **1** in the new artifact. Extend the anchor with a unique neighbouring line
+until that holds (1200 used `var txt = String(open);` plus the guard). And scope every static
+check to a brace-matched slice of the function the build touched.
+
+## 87 — a gate that SKIPS its browser sections and still reports GREEN
+
+**Builds 1200-1202, caught by CI, invisible to every local run.** Four new gates opened with
+
+```js
+const PW = '/opt/node22/lib/node_modules/playwright/index.js';
+if (!(existsSync(PW) && existsSync(setupPath))) { console.log('  SKIP  ...'); }
+```
+
+That path is the build container's. On a GitHub runner Playwright is installed by npm into the
+repo instead, so `existsSync(PW)` is false, **every browser section skipped, and the gate printed
+GREEN having proved nothing about runtime behaviour at all.** `gate_chromium`'s negative control
+caught what the gate could not: *"gate_1201 stayed GREEN on an artifact where
+`if(!await _went) return;` was broken"*.
+
+**The tell sat in the log for two builds and nobody read it:** gate_1201 said *9 checks passed* in
+CI and *32* locally; gate_1202 said *12* against *21*. **A gate's check COUNT is part of its
+verdict.** A count that changes between environments means it is a different gate there.
+
+**Three rules:**
+1. Resolve Playwright as `existsSync(sandboxPath) ? sandboxPath : 'playwright'`, and the browser
+   through `chromium_launch.cjs`. Never hard-code either — that helper exists because three older
+   gates had already hard-coded two different browser paths.
+2. **A skipped browser section is a FAILURE.** "Proved nothing" is not "passed". Only a gate whose
+   sections all ran may report green.
+3. `gate_1200` passed its control anyway, by luck: its break also tripped a static check. **Luck in
+   a negative control is indistinguishable from coverage** — one green control is not proof the
+   browser half ran.
+
+## 88 — an edit that TRUNCATED a runner, whose only tell was a selftest printing nothing
+
+**Build 1205, caught in one command.** Registering a new gate in `gate_chromium.mjs` was done with
+a throwaway one-liner that computed the new file as
+
+```python
+s = s[:j+1] + entry[0:] if False else s[:j+1] + entry
+```
+
+`A if False else B` is `B`, so this is `s[:j+1] + entry` — and `j` was the index of the array's
+closing `];`. **Everything after the GATES array was discarded: `run()`, the `--selftest` block,
+the whole main loop.** 63 lines, silently.
+
+**And the file still passed `node --check`.** A truncated module is valid JavaScript. The only
+tell was that `--selftest` printed **nothing at all** and exited **0** — which reads exactly like
+a fast pass. The run before it had printed 11 lines and `SELFTEST PASS (11/11)`.
+
+**Three rules, and the first is the general one:**
+1. **A verdict is output, not an exit code.** A gate, runner or harness that produces no lines has
+   not passed; it has not run. Compare the line count and the check count with the previous run —
+   the same rule class 87 states for CI, applying here to the runner itself.
+2. **Never build a file's new contents by slicing to an index found with `find()`** unless you
+   assert the tail survived. The honest form is an exact-match replacement of a *unique
+   terminator* (`s.replace('\n];\n', ENTRY)` after asserting `count == 1`), which is
+   `patch_lib.sub()`'s whole discipline — applied to `index.html` every build here, and skipped
+   the moment the target was a script instead.
+3. **Print the size delta.** `bytes 11480 -> 12223 | lines 181 -> 190` takes one line and makes a
+   63-line deletion impossible to miss. The truncating edit printed only `ok`.
+
+## 89 — a tap-target measured by its BOX, when the target is the hit area
+
+**Build 1206.** The 9 Sep walk recorded *"Dispatch's 'Move this job' control **15×15**"* as the
+worst tap target in the app, and it is the one finding of that audit that was **wrong**. The box
+is 15×15; the element also carries
+
+```css
+#cr-disp .job .mv::after{ content:""; position:absolute; inset:-15px; }
+```
+
+so the thumb target is **45×45**, which build **1040** did on purpose and wrote the arithmetic
+down beside it (*"-9px made 33px effective — under the 44 floor the rest of the app holds"*). A
+probe reading `getBoundingClientRect()` alone reports a deliberately-padded control as the app's
+worst defect, and "fixing" it would have undone 1040.
+
+**The measurement that is actually true:** step outward from the element's centre until
+`document.elementFromPoint` stops resolving to that element or something inside it. That is the
+effective target, pad included. On the same sweep it also cleared four other false positives
+(`.pu-box` 22×22 → 43×45, the two dispatch week arrows 21×26 → 45×43).
+
+⚠ **Its one hole, stated because it only fails in the flattering direction:** `elementFromPoint`
+answers for the viewport only, so a small control far outside it cannot be scored. `gate_1206`
+counts those and prints the number every run — a layout change that pushes a small control
+off-screen would otherwise read as an improvement.
+
+⚠ **And the gate's own first draft had class 15 in it, twice.** Section A asserted
+`!(key in underFloorMap)` for five keys typed from memory; **four did not exist in the sweep's own
+format** (`#navMenu div.cr-ts button`, not `#navMenu .cr-ts button`), so four of five checks
+passed by matching nothing. The selftest had the identical bug and reported *"the sweep cannot
+fail"* about a sweep that could. **Both are now positive measurements** — query the selector,
+assert the count is > 0, then assert the size — because "I did not find it" and "it is fine" are
+the same output otherwise.
+
+## 90 — trusting a CI STATUS FIELD over the timestamps, and cancelling healthy runs
+
+**10 Sep 2026, and it cost about an hour of wall clock and two CI runs.** After build 1208 the
+`chromium` job appeared to hang: GitHub's jobs API kept reporting the *"Chromium gates + negative
+controls"* step as `in_progress`, and `get_job_logs` returns **HTTP 404 while a job reads as
+running** — so "still going" and "finished, logs not fetched yet" present as **the same two
+signals**. I read that as an 85-minute hang, reasoned out a cause (an orphaned Chromium holding an
+inherited stdout pipe), and **cancelled runs 2158 and 2159 by hand.**
+
+**The timestamps were in the same API response the whole time and I did not read them.** Run
+2158's gates step ran **08:37:00 → 08:41:06** — four minutes, killed roughly one minute short of
+finishing. It was never hanging. The very next run, 14 gates, came in at **5m18s**, worst gate 46s.
+
+**Three rules:**
+1. **A job's duration is `completed_at − started_at`, never its `status`.** That field lagged by
+   tens of minutes here, on three separate reads, on two different runs.
+2. **A 404 from the logs endpoint is not evidence of anything.** It is the normal answer for a job
+   whose logs are not yet retrievable, which includes jobs that have just finished.
+3. **Cancelling someone's CI is a destructive act — establish the fault first.** The comparison
+   that would have settled it (this run's step timestamps against the previous run's) takes one
+   look and I did it only afterwards.
+
+⚠ **The hardening that came out of the wrong diagnosis is kept, and is labelled as precautionary
+rather than as a fix.** `gate_chromium` writes each child's output to a temp file instead of a pipe
+(the orphan-pipe hazard is real in principle), caps each gate at 300s with SIGKILL, and — the part
+that actually earns its place — **prints per-gate elapsed seconds**, so the next time a suite looks
+slow the log says which gate, out loud, instead of leaving it to inference.
+
 ## Class 71 — a control with a live handler on an element that cannot receive events
 Build 1164 hung the Front Door on the header title via a delegated document click handler —
 and the title has carried `pointer-events:none` since it was a decorative label (`#cr-hd2-bar

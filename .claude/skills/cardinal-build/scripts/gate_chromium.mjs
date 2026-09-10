@@ -68,16 +68,112 @@ const GATES = [
     protects: 'Google Maps loads on the first focus of an address field, never at boot; the money routes fail closed',
     break: { find: 'if(isAddressInput(input)) armAutocomplete(input);',
              repl: 'if(isAddressInput(input)) attachAutocomplete(input);' } },
+  /* 1200: an open client profile must stop redrawing its punch count from
+     inside a body-observer wake. The break removes the guard, restoring the
+     unconditional textContent write that measured 360 records in six seconds
+     on one element — an identical-string write still emits a childList
+     record, which is the 567/569 class. */
+  { name: 'gate_1200.mjs',
+    protects: 'an open client profile settles; the Approved/Completed team emails fire only on a forward move',
+    break: { find: 'var txt = String(open);\nif(el.textContent !== txt) el.textContent = txt;',
+             repl: 'var txt = String(open);\nel.textContent = txt;' } },
+  /* 1201: nothing may be called Sent until the document really goes out. The
+     break drops the wait, restoring the 1200 behaviour the gate measures
+     directly — "marked Sent on the tap" with nothing emailed. Anchor counted
+     in 1200 first: 0 there, 1 here (BUG_CLASSES 86). */
+  { name: 'gate_1201.mjs',
+    protects: 'publishing offers the three real sends, and the estimate is marked Sent only once that document is',
+    break: { find: 'if(!await _went) return;', repl: 'if(false) return;' } },
+  /* 1202: a review request is recorded only when the rep says it went out. The
+     break drops that answer on the floor, restoring the 1201 behaviour the gate
+     measures — "answering Not yet records NOTHING" fails, with writes 0 -> 1.
+     Anchor counted in 1201 first: 0 there, 1 here. */
+  { name: 'gate_1202.mjs',
+    protects: 'a review request is recorded on the send, not the tap, and the card waits for a Completed job',
+    break: { find: 'if(!_went) return;', repl: 'if(false) return;' } },
+  /* 1203: the Leads grid must be able to give way on an iPad. The break puts
+     the un-shrinkable minimums back, which is exactly the measured 1202 state:
+     the Job Summary at right=1225 on a 1194 screen. Anchor counted in 1202
+     first: 0 there, 1 here. */
+  { name: 'gate_1203.mjs',
+    protects: 'the iPad Leads panel stays on screen, no job-menu label is truncated, Job cost is admin-only',
+    break: { find: 'minmax(0,1.05fr) minmax(0,1fr)', repl: 'minmax(300px,1.05fr) minmax(320px,1fr)' } },
+  /* 1204: after Publish, the three real sends must be one tap on the phone,
+     not two taps deep under "More". The break puts them back behind a hidden
+     wrapper, which IS the measured 1203 state: emailDocBtn, textSignBtn and
+     shareBtn each rendering 0x0 inside a display:none parent, so the only way
+     to send was the drawer. Anchor counted in 1203 first: 0 there, 1 here
+     (BUG_CLASSES 86). */
+  { name: 'gate_1204.mjs',
+    protects: 'the published document offers Email / Text / Share on the bar itself, above "Mark sent", and the way out says Back',
+    break: { find: '      <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>\n      <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>\n      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>\n      <button class="btn dark" id="edMoreBtn"',
+             repl: '      <span id="edSendsBroken" style="display:none;"><button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button><button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button><button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button></span>\n      <button class="btn dark" id="edMoreBtn"' } },
+  /* 1205: the estimate builder's toolbar must clear the 44px floor. The break
+     puts the 26px padding back, which IS the measured 1204 state - Close 72x26,
+     Preview 88x26, and "-> Contract" 117x26 sitting at right=463 on a 390px
+     screen, with the row scrolling 695 wide inside 390.
+     Anchor counted in 1204 first: 0 there, 1 here (BUG_CLASSES 86). */
+  { name: 'gate_1205.mjs',
+    protects: 'every button on the estimate builder toolbar is at least 44px tall and none sits off the right edge at 390px',
+    break: { find: 'color:#f08a90;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;',
+             repl: 'color:#f08a90;padding:6px 12px;border-radius:6px;' } },
+  /* 1207: the header search must answer while you type. The break removes the
+     one listener that makes it live, restoring the measured 1206 behaviour —
+     type "Diamond" and NOTHING happens until Return. Anchor counted in 1206
+     first: 0 there, 1 here (BUG_CLASSES 86). */
+  { name: 'gate_1207.mjs',
+    protects: 'the header search shows the top five matching clients as you type, from the same matcher the directory uses',
+    break: { find: "i.addEventListener('input', crHsRender);",
+             repl: 'void 0;' } },
+  /* 1208: the Lead form must take a phone-in. The break pins the address
+     guard back on, restoring the measured 1207 behaviour the gate reports in
+     the audit's own words — "Required: Street, City, State, Zip", and then
+     "Required: State" on the second try. Anchor counted in 1207 first: 0
+     there, 1 here (BUG_CLASSES 86). */
+  { name: 'gate_1208.mjs',
+    protects: 'a lead taken over the phone saves from a name and a number, and an address is required only when a Job Category says there is a job',
+    break: { find: 'var _needAddr = !!(_cat instanceof HTMLSelectElement && _cat.value);',
+             repl: 'var _needAddr = true;' } },
 ];
 
+/* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
+   FOR WANT OF THEM. 10 Sep 2026: GitHub's jobs API reported this step
+   `in_progress` for the better part of an hour after it had finished, and its
+   log endpoint 404s while a job reads as running — so "still going" and
+   "finished ages ago" are the same two signals. I read that as an 85-minute
+   hang, invented a cause, and cancelled runs 2158 and 2159 by hand. THE
+   TIMESTAMPS SAID OTHERWISE and I did not look at them until afterwards: 2158's
+   gates step ran 08:37:00 → 08:41:06, four minutes, killed about one minute
+   short of finishing. There was no hang. Measured on the very next run, with 14
+   gates: 5m18s, worst gate 46s. **Read `started_at`/`completed_at`, never the
+   status field.** BUG_CLASSES 90.
+
+   The file-instead-of-pipe below is real hardening and is KEPT, but it is
+   precautionary, not a fix for anything observed: with `stdio: 'pipe'`,
+   execFileSync blocks reading stdout until every writer closes it, and a gate
+   whose watchdog calls `process.exit(3)` without closing Playwright leaves an
+   orphaned Chromium holding that inherited pipe — `timeout` kills the child it
+   spawned, not the browser behind it. Writing to a temp file removes the pipe,
+   so the timeout is real. The gates also close their browser in the watchdog
+   now, which is the same hazard closed from the other side. */
 function run(script, args) {
+  const t0 = Date.now();
+  const log = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gate-out-')), 'out.txt');
+  const fd = fs.openSync(log, 'w');
+  let code;
   try {
-    const out = execFileSync(process.execPath, [path.join(HERE, script), ...args],
-                             { encoding: 'utf8', stdio: 'pipe', timeout: 600000 });
-    return { code: 0, out };
+    execFileSync(process.execPath, [path.join(HERE, script), ...args],
+                 { stdio: ['ignore', fd, fd], timeout: 300000, killSignal: 'SIGKILL' });
+    code = 0;
   } catch (e) {
-    return { code: e.status == null ? 'CRASH' : e.status, out: (e.stdout || '') + (e.stderr || '') };
+    code = e.status == null ? 'CRASH' : e.status;
+  } finally {
+    try { fs.closeSync(fd); } catch (_) {}
   }
+  let out = '';
+  try { out = fs.readFileSync(log, 'utf8'); } catch (_) {}
+  try { fs.rmSync(path.dirname(log), { recursive: true, force: true }); } catch (_) {}
+  return { code, out, secs: Math.round((Date.now() - t0) / 1000) };
 }
 const lastLine = o => (o.trim().split('\n').filter(Boolean).pop() || '').slice(0, 88);
 
@@ -108,8 +204,8 @@ let bad = 0;
 for (const g of GATES) {
   /* POSITIVE — the gate must pass on the shipped artifact. */
   const pos = run(g.name, g.selftestFlag ? [APP] : [APP]);
-  if (pos.code === 0) console.log(`  ok   ${g.name.padEnd(20)} ${lastLine(pos.out)}`);
-  else { console.error(`::error::${g.name} FAILED on the shipped artifact (exit ${pos.code}): ${lastLine(pos.out)}`); bad++; }
+  if (pos.code === 0) console.log(`  ok   ${g.name.padEnd(20)} ${String(pos.secs + 's').padStart(5)}  ${lastLine(pos.out)}`);
+  else { console.error(`::error::${g.name} FAILED on the shipped artifact after ${pos.secs}s (exit ${pos.code}): ${lastLine(pos.out)}`); bad++; }
 
   /* NEGATIVE — break what it protects; it must notice. */
   let neg;
@@ -118,7 +214,7 @@ for (const g of GATES) {
        so its control is its --selftest: exit 0 means "the regression was seen". */
     neg = run(g.name, [APP, '--selftest']);
     const caught = neg.code === 0 && /SELFTEST PASS/.test(neg.out);
-    if (caught) console.log(`  ok     negative: ${lastLine(neg.out)}`);
+    if (caught) console.log(`  ok     negative (${neg.secs}s): ${lastLine(neg.out)}`);
     else { console.error(`::error::${g.name}: its own regression control did not fire — ${lastLine(neg.out)}`); bad++; }
     continue;
   }
@@ -129,7 +225,7 @@ for (const g of GATES) {
   fs.writeFileSync(poisoned, g.break.all ? src.split(g.break.find).join(g.break.repl)
                                          : src.replace(g.break.find, g.break.repl));
   neg = run(g.name, [poisoned]);
-  if (neg.code !== 0) console.log(`  ok     negative: broke ${hits} site(s) of ${JSON.stringify(g.break.find)} -> exit ${neg.code}`);
+  if (neg.code !== 0) console.log(`  ok     negative (${neg.secs}s): broke ${hits} site(s) of ${JSON.stringify(g.break.find).slice(0, 70)} -> exit ${neg.code}`);
   else { console.error(`::error::${g.name} stayed GREEN on an artifact where ${JSON.stringify(g.break.find)} was broken — it does not protect ${g.protects}`); bad++; }
   fs.rmSync(poisoned, { force: true });
 }

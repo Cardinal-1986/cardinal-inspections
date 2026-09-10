@@ -7059,10 +7059,17 @@ me to WANT to use these AI inspections?"*
 
 ### The More drawer (1069)
 
-`#edSecondary` wraps the eight secondary toolbar buttons; `#edMoreBtn` opens
+`#edSecondary` wraps the secondary toolbar buttons; `#edMoreBtn` opens
 `#edDrawer`. **`#edSecondary` is `display:contents`**, so above 760px the
 wrapper vanishes from layout and the desktop toolbar is byte-identical to what
 it was — the drawer is a phone affordance only.
+
+⚠ **1204 took three buttons OUT of this set** — *Email to client · Text to sign ·
+Share link* are primaries now, ahead of ⋯ More, so the count here is **8, not
+11**. They were **moved, not copied**: the drawer builds its rows from this
+span's visible buttons, so a duplicate in the primary row would offer every send
+twice from one pipeline. And they moved in the **markup**, not in CSS, for the
+reason the phone rule hides the wrapper rather than each button — see below.
 
 ⚠ **Deliberately modelled on `#navMenu`** — class toggle, document-level click
 closer, `stopPropagation` on the opener, and **zero writes to
@@ -8237,3 +8244,196 @@ Showroom tile, the Sales Floor, **The Appointment (six sites)**, and **`wireColo
 fills every shingle colour and line dropdown in Cardinal's estimates, contracts and reports from
 `CardinalColors.list()` / `.lines()`**. Deleting them would empty that paperwork silently and break
 `?open=appt`. `gate_1190.mjs` group B holds that, and drives both modules open in Chromium.
+
+
+## Build 1200 — two guards
+
+**`crStageIsForward(prev, to)`** (main block, beside `acxRank`) is now the single answer to
+"has this job just reached that stage moving forward?". Both workflow emails in `setStage`
+ask it: Curtis's **APPROVED — schedule + order materials** and the rep's **job complete —
+walk-around + invoice**. Moving a job *backwards* into either stage is silent. `OnHold` and
+`Lost` rank -1 in `acxRank` and count as **before** every stage on purpose, so a held job
+that gets approved and a lost job revived still notify. The truth table is pinned by
+`gate_1200.mjs`, not by prose.
+
+**`syncMenuCount()`** (`cr-pp-script`) writes the Punch Outs count and toggles its `zero`
+class **only when either actually changes**. It runs from a `document.body` observer's wake,
+where an identical-string `textContent` write still emits a mutation record — the 567/569
+class. `cr-portal-script`'s `refreshCounts()` has always done this; the punch module now
+does too.
+
+
+## Build 1201 — the publish sheet, and one truth about "sent"
+
+**`crAsk(message, { choices, cancel, why })`** — the app's one shared question sheet now takes an
+optional list of choices. Omit it and nothing changes: same two buttons, same boolean. Provide it
+and each choice is a button (44px floor, both themes, `.askpick`), the go verb is hidden, and the
+promise resolves the chosen `id`. Use this rather than adding another module-local sheet.
+
+**`crDocSent(docId)`** (document editor) fires `cr-doc-sent` from the **two places that write a
+document to sent**: the email send and the Mark sent button. It is deliberately *not* hooked to
+`setEditorStatus()`, which also runs on every open and cannot tell a load from a send.
+
+**`crAwaitDocSent(docId, ms)`** (`cr-ess`) resolves true only when that document is really sent.
+The publish sheet arms it **before** pressing a send button, so nothing is claimed on a tap.
+`crSendChoices()` offers only the delivery buttons that exist; `crSendDoc()` presses the shipped
+one. The send logic itself has exactly one home, in the document editor.
+
+
+## Build 1202 — when a review may be asked for
+
+**`REVIEW_STAGES`** = `Completed`, `Invoiced`, `Closed`, and **`reviewStageOk(pr)`** is the only
+reader. The Google Reviews card draws its request buttons and its Google switch only when that is
+true, and `sendReviewRequest()` refuses on the same test — the button and the write cannot
+disagree. Before then the card stays put and says *"A review request opens once the job is
+Completed."*, the same shape as the Invoices card's *"An invoice opens once a contract is signed."*
+
+**Nothing is recorded on the tap.** `sms:`, `mailto:` and the clipboard all hand the message
+somewhere the app cannot follow, so `sendReviewRequest()` asks *"Did the review request go out?"*
+and writes `review_requested_at` only on a yes.
+
+
+## Build 1203 — small corrections
+
+**Leads & Jobs on a tablet:** `.ljcols` is `230px minmax(0,1.05fr) minmax(0,1fr)`. The two flexible
+tracks must keep a `0` floor — the grid box is only ~789px on a 1194px iPad once the left nav and
+`.wrap`'s padding are taken, so any `minmax(300px…)`-style minimum pushes the third column off the
+screen. `gate_1203` measures every box against the viewport.
+
+**Job-menu labels wrap; they do not ellipsise.** `.jabox .jbl` uses `overflow-wrap:break-word` with
+no `white-space:nowrap`. The tiles sit in a stretching grid row, so a two-line label keeps both
+tiles the same height.
+
+**The Documents tile is called Files** — it counts uploaded files only; a published estimate lives
+under Estimates.
+
+**Job cost on the Add project form is admin-only** (`isAdminUser()`), hidden rather than removed so
+the stored value survives a rep's edit.
+
+
+## Build 1204 — the document editor's toolbar, after Publish
+
+**The three sends are primaries.** `#emailDocBtn`, `#textSignBtn` and `#shareBtn` sit ahead of
+`#edMoreBtn`, outside `#edSecondary`. Audit finding A12: they had been two taps deep in the drawer
+while the prominent control was **Mark sent**, which sends nothing. Each exists **exactly once** in
+the file — moving them out of the drawer set is what keeps that true, because `#edDrawer` renders a
+row per *visible* `#edSecondary` button.
+
+**On the phone the status row comes last.** `.toolbar .statuswrap{order:3;}` against `.edbtns`'
+`order:2`, so a phone reads *Save / Print → Email / Text / Share → Mark sent*. ⚠ **That rule has to
+live in the SECOND `@media (max-width:760px)` block**, the one after the unconditional
+`.toolbar .statuswrap{display:flex;…}` — an identical-specificity rule declared earlier loses, which
+is exactly why the `font-size:11px` that used to sit in the first block had never applied and was
+deleted at 1204. Desktop is unchanged: the status row is still first, the button set still wraps to
+its own line.
+
+**`#edClientChip` is the labelled way out.** It renders `&#8249; Back` ahead of the PO and the
+client name, and sets its own `title` to *"Back to <name>'s overview"*. It carries its **own**
+`max-width` — 210px, 46vw on a phone — because the shared `.edchip` cap of 30vw truncated it even
+before the label existed; `#edRepChip` stays on the shared cap. `gate_1204` measures the chip's flex
+gap so the label cannot run into the name.
+
+
+## Build 1205 — the estimate builder's toolbar, at the tap-target floor
+
+**`.cr-est-head button` and `.cr-est-items-head button` carry `min-height:44px`** and centre their
+own label with `display:inline-flex`. They were 26–28px, the smallest targets in the app, on the
+screen where money is typed.
+
+⚠ **The rule is on the ROW because three modules inject into it.** `.cr-est-head` is built by the
+base render (Close · Delete · Duplicate · Save), by `cr-epub`'s `injectButton()` (Preview ·
+Options · Publish) and by `cr-e2c`'s `injectButton()` (→ Contract). **Never fix this row by
+enumerating button ids** — the next module to inject one would miss the fix, and no static check on
+the stylesheet can tell you what the row contains. `gate_1205` opens the builder in Chromium and
+measures whatever is actually there.
+
+**On a phone the row wraps rather than scrolling:** `@media (max-width:760px){ .cr-est-head{flex-wrap:wrap} .cr-est-head h2{flex:1 1 100%;order:-1} }`.
+The title takes its own line, the buttons fall under it. `.cr-est-head` still carries
+`overflow-x:auto` from the 1073 layout sheet — left alone deliberately, because wrapped content
+never overflows, so it is inert rather than wrong.
+
+⚠ **The phone header is 150px tall as a result** (52px before), on top of `.cr-est-phonebar`'s 66px.
+`.cr-est-phonebar` (1029) still carries Save Draft and Publish under the thumb, so the header
+duplicates those two on a phone — dropping them there is the cheap next move if the height is a
+problem, and it is a decision for Theo, not a tidy-up.
+
+**Two sentinel states arrived with these builds, and both cover screens nothing had ever swept.**
+`doceditor` (1204) opens a real published document through `window.openEditor`; `estbuilder`
+(1205) opens `#cr-est-view` through `CardinalEstimates.openEditor(pid)`. ⚠ **`estbuilder` is not
+the same surface as the older `estimates` state** — that one opens `#cr-estimates-mount`, which is
+what the *menu's* Estimates item opens (the 561 note in `index.html`). Both new states run **last**
+and `doceditor` pushes its own seed row inside the state, so no earlier state's renders move. They
+took the sweep from 60 renders to 64 and the carried debt from 188 to 203; those 15 are pre-existing
+on both artifacts and **have not been read** — see `OPEN_ITEMS`.
+
+
+## Build 1206 — the 44px tap-target floor, and the gate that holds it
+
+**`gate_1206.mjs` is a ratcheted standing gate** in the shape of `gate_types` / `gate_dupes` /
+`gate_a11y`: run it every build. It walks **all 32 sentinel states at 390px** and measures every
+interactive element. Five selectors are asserted outright; the remaining 24 under-floor targets are
+baselined in `gate_1206_baseline.json` — they may fall, they can never grow, and a new one is red
+the build it lands. `--list` prints the whole debt, `--selftest` proves the sweep can fail,
+`--rebaseline` takes a written reason. It is deliberately **not** in `gate_chromium`, which is the
+per-build negative-control runner.
+
+⚠ **THE BOX IS NOT THE TARGET.** `#cr-disp .job .mv` is 15×15 and carries
+`::after{position:absolute;inset:-15px}` — build 1040's deliberate hit pad, which makes it 45×45 to
+a thumb. The audit that produced this build recorded it as the worst target in the app; that is a
+**false positive** (BUG_CLASSES 89) and the gate asserts the pad is still there so nobody removes
+it on the strength of that line. Measure the effective area — step outward from the centre until
+`elementFromPoint` stops resolving to the element.
+
+**Fixed at 1206:** `#navMenu .cr-ts button` 34→44 (the drawer's A/A/A size control — the one you
+reach for *because* you are struggling to hit things), `#cr-pae-tabs button` 30→44,
+`#cr-pb .pbmonth .pbday` 34→44 (phone only; the desktop cell is 78px), `.pf-chip` 38→44, and
+`.toolbar .edbtns .btn` 42→44 (1204's own two-pixel residue).
+
+
+## Build 1207 — the header search answers while you type
+
+`#headSearch` gained an `input` listener. Two characters or more renders the top five matching
+clients into **`#cr-hsres`** — name, then PO · stage · address — and tapping one calls
+`openProject()`. Above five hits a footer row says *"Return for all N matches"*. **Return still
+opens the Clients directory filtered, and that path is untouched.**
+
+⚠ **`crClientHay(pr)` is THE client haystack.** The directory (`cdMatch`), Insurance Clients and
+this live search all call it, so the five rows can never disagree with the list Return hands you.
+**One copy is deliberately left out of it** — `renderHome()`'s, which omits `pr.created_by`; folding
+it in would start matching the Home board on a rep's email address. If you find yourself writing a
+fourth, use this one.
+
+⚠ **The "all N matches" row dispatches a real `Enter` keydown into the shipped handler** rather than
+re-implementing `openClientsDirectory()` + `cliFilter` + `renderClientDirectory()`. One hand-off,
+one place.
+
+⚠ **The panel is positioned, not parented.** `ensureSearchRow()` re-parents `#headSearch` into
+`#cr-hd2-srch`, so a sibling panel would have to be moved with it. `#cr-hsres` is `position:fixed`
+on `<body>`, placed from the input's rect. Its tokens are `--rbe-*` with literal fallbacks, **not**
+the header's `--h*` — those are declared on `.site` and do not reach it.
+
+⚠ **The search is behind a lens at EVERY width.** `#cr-hd2-srch` is `display:none` until
+`#cr-hd2-lens` is tapped — it is not a phone-only affordance. `#cr-search-btn` and
+`.cr-ib.searchbtn` are older controls, both `display:none`, and a grep finds them first. Two drafts
+of `gate_1207` measured a 0×0 input before this was established.
+
+
+## Build 1208 — the Lead form's rules, as they actually are
+
+The Lead door (`#leadFormModal` → `#ldSave`) requires, in this order:
+
+1. **First and Last name** — unconditional.
+2. **A phone or an email** (build **782**), with a tick box for the genuine exception. ⚠ This *is*
+   audit option 7a, already shipped on this door; the Contact door is the one without it.
+3. **A claim type** radio.
+4. **A Lead Source** (build 940-era) — and when it is missing the form **opens "+ More detail",
+   shakes the field and focuses it**, because it lives inside that expander.
+5. **Street / City / State / Zip — only when a Job Category is set** (1208). No category means a
+   phone-in: a name and a way to reach them is a lead, and the address arrives with the job.
+
+`openLeadForm()` sets **`ldState` to `OH`**; it is no longer blanked with the other selects. The
+address autocomplete still overwrites it from a picked Google place.
+
+⚠ **Do not "fix" the address requirement back to unconditional**, and do not add a `*` to those four
+labels — the block head says what makes them required.
+

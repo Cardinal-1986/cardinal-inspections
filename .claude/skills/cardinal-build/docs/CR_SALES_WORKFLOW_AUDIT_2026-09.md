@@ -12,6 +12,41 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 
 ---
 
+> ### Progress
+> **A1's cheap half closed in build 1208** (option 7b): the Lead form opens on **OH** and asks for
+> an address only once a **Job Category** says there is a job. ⚠ **Option 7a turned out to be
+> already shipped on the Lead door** — build **782** requires a phone or an email there, with a
+> tick box for the exception, and a **Lead Source** whose expander the form opens for you. §3's A1
+> read the Contact door's rules and attributed them to both doors; the correction is below.
+> **B6 closed in build 1207** (option 6b): the header search shows the top five matching clients
+> as you type, tap to open, and Return still opens the full directory. It matches with
+> `crClientHay()` — the same haystack the Clients directory uses, extracted so the two can never
+> disagree; the sweep for its siblings found four near-identical copies.
+> **A13 and A3 closed in build 1206** (option 14): four real sub-44px controls fixed, plus the
+> document editor's own buttons, which 1204 left two pixels short. ⚠ **The audit's headline
+> tap-target finding — the Dispatch grip at 15×15 — was WRONG**: its hit pad makes it 45×45, and
+> the correction is in §3 and in BUG_CLASSES 89. `gate_1206` now holds the floor as a ratcheted
+> standing gate over all 32 sentinel states.
+> **A11 closed in build 1205** (option 10): every button on the estimate builder's toolbar is
+> 44 px, and the row wraps instead of scrolling sideways. Measured on 1204: 26 px buttons, with
+> “→ Contract” at right=463, Publish at 558 and Save Draft at 679 on a 390 px screen.
+> ⚠ The phone header is 150 px tall as a result (52 px before) — see the note in `OPEN_ITEMS`.
+> **A12 closed in build 1204** (option 13): after Publish, *Email to client · Text to sign · Share
+> link* are on the toolbar itself instead of two taps deep under ⋯ More, "Mark sent" sits below them
+> on the phone, and the client chip reads "‹ Back". Measured: on 1203 all three sends render 0×0
+> inside a `display:none` parent; on 1204 each is 181×42 and is the top element at its own centre
+> (**44px since 1206** — 42 was two pixels under the floor, and 1206's sweep is what found it).
+> **B5, B6a, A2, A9 and A10 shipped in build 1203** (options 5, 6a, 8, 11, 12).
+> **B4 shipped in build 1202** (options 4a and 4b): a review request is recorded when the rep says
+> it went out, and the card's buttons wait until the job is Completed.
+> **B3 shipped in build 1201** (option 3a): publishing now asks to *send* and offers the three real
+> ways to deliver, and the estimate is marked Sent only once that document really goes out.
+> **B1 and B2 shipped in build 1200** (options 1 and 2), measured before and after: an open
+> profile went from 65 DOM records/sec with 360 on the punch count to 5/sec with zero, and the
+> backward-chevron email is gone.
+> **Still open:** the two intake doors (7a/7b/7c — a decision, not code) and the phone profile's
+> band order (9).
+
 ## 0. Read this first
 
 Six real bugs, one of them on every profile a rep opens. Everything else is friction, and most of
@@ -27,7 +62,7 @@ homeowner's hands.**
 | **B5** | iPad landscape Leads & Jobs: the Job Summary panel overflows the screen by 31 px and clips its own copy | Leads on the iPad | bug — layout |
 | **B6** | Header search shows nothing while you type and only acts on Return; on the phone the keyboard key reads "return", not "Search" | any screen | bug-grade friction |
 | **A1** | Two intake doors with two rulebooks: **Contact** saves a lead from a name alone; **Lead** is a 1,600 px form that refuses without six fields and has no Ohio default | the + button | the biggest annoyance |
-| **A12** | After Publish the way to *send* is two taps deep under "⋯ More", while the prominent button is "Mark sent" (which sends nothing), and there is no labelled Close | every estimate | the second biggest |
+| **A12** | ✅ **FIXED — 1201 (the publish sheet) + 1204 (the toolbar).** Sending was two taps deep under "⋯ More" while the prominent button was "Mark sent", which sends nothing, and there was no labelled Close | every estimate | the second biggest |
 
 **Verdict: the pipeline works end to end — Lead → Prospect → Approved → Scheduled, estimate → publish →
 document — with no console errors, no unhandled dialogs, and writes that match the screen.** The
@@ -239,6 +274,11 @@ Theo's decision and I am not re-opening it.
   Name, Last Name, Street, City, State, Zip"*; fill the minimum and it still says *"Required:
   State"*, because State has no Ohio default. A rep at the door will learn to use Contact and never
   enter an address; a rep at the desk will fight the Lead form. **Pick one rulebook** (option 7).
+  ⚠ **CORRECTION, build 1208 — this walk was wrong about the LEAD door's rules.** It requires a
+  phone **or** an email since build **782** (with a tick box for the genuine exception) and a **Lead
+  Source**, and when the Source is missing it opens "+ More detail", shakes the field and focuses
+  it. Those are the Contact door's gaps, attributed to both. Option 7a is therefore already shipped
+  *here*; what remains of it is the Contact door.
 - **A2 — "Job cost (materials + labor, $) for profit reports"** is on the Contact/Add-project door,
   shown to a Sales rep. At intake nobody knows the cost, and reps do not see profit reports.
 - **A3 — Lead-source chips are 38 px tall** — under the 44 px floor the rest of the app moved to.
@@ -299,8 +339,15 @@ Theo's decision and I am not re-opening it.
 - *Settled:* no money anywhere on Production (766–772). The punch card, day agenda and five-week
   calendar were screenshot-walked only.
 - **A13 — Tap targets under 44 px, measured in walk 1** (phone): drawer section "A" buttons 34 px;
-  Dispatch's "Move this job" control **15×15**; album chips 30 px; Production day cells 34 px;
+  ~~Dispatch's "Move this job" control **15×15**~~; album chips 30 px; Production day cells 34 px;
   lead-source chips 38 px (A3). The 11 px type floor (1081) held everywhere the probe looked.
+  ⚠ **CORRECTION, build 1206 — the Dispatch grip was a FALSE POSITIVE and this walk was wrong
+  about it.** Its BOX is 15×15; its TARGET is 45×45, because
+  `#cr-disp .job .mv::after{position:absolute;inset:-15px}` — build 1040's deliberate hit pad, with
+  the arithmetic written down beside it. Walk 1 measured `getBoundingClientRect()`, which cannot
+  see a pad. Four more of its findings went the same way once the hit area was measured properly
+  (`.pu-box` 22×22 → 43×45, both dispatch week arrows 21×26 → 45×43). **Recorded as BUG_CLASSES 89;
+  do not "fix" the grip.**
 
 ### Invoiced → Closed
 
@@ -347,25 +394,25 @@ plus its gate; every option ships with a negative control against 1199.
 
 | # | Option | Fixes | Cost | Note |
 |---|---|---|---|---|
-| **1** | Guard `syncMenuCount()` — write the count only when it changed | B1 | trivial · 1 build · gate = mutation-rate probe, red on 1199 | **do first; it is on every profile** |
-| **2** | Forward-only Approved (and Completed) team emails: `rank(prev) < rank(v)` | B2 | trivial · rides with 1 · gate executes shipped `setStage` with a stub notifier | mirrors `api/clientsign.js` 1007 |
-| **3a** | Publish sheet becomes the send sheet: *Email · Text to sign · Share link · Not now*; a real send sets both statuses | B3, A12 | small–medium · 1 build · Chromium render of the sheet, both themes | wants your wording pick |
+| **1** | ✅ **SHIPPED, build 1200.** Guard `syncMenuCount()` — write the count only when it changed | B1 | trivial · 1 build · gate = mutation-rate probe, red on 1199 | **do first; it is on every profile** |
+| **2** | ✅ **SHIPPED, build 1200** as `crStageIsForward()`. Forward-only Approved and Completed team emails | B2 | trivial · rides with 1 · gate executes shipped `setStage` with a stub notifier | mirrors `api/clientsign.js` 1007 |
+| **3a** | ✅ **SHIPPED, build 1201.** Publish sheet became the send sheet; a real send is what marks it Sent | B3 (A12's toolbar half is still open) | small–medium · 1 build · Chromium render of the sheet, both themes | wants your wording pick |
 | **3b** | Keep the question, ask it *after* a send, verb "Mark sent", Cancel default | B3 | small | the cheaper half of 3a |
-| **4a** | Record `review_requested_at` only after the rep confirms it went | B4 | small | |
-| **4b** | Hide (or grey) the Google Reviews card before Completed | B4/A8 | small | can ride with 4a |
-| **5** | Let `#ljPane` shrink under 1280 px | B5 | small · render at 1024 and 1194 | |
-| **6a** | `enterkeyhint="search"` + a "…then Return" placeholder | B6 | trivial | |
-| **6b** | Live top-five results under the search row, Return for the directory | B6/A5 | medium · 1–2 builds · jsdom harness on the matcher + render | |
-| **7a** | Contact door requires phone **or** email (a lead you cannot reach is not a lead) | A1 | small | validation change — your call |
-| **7b** | Lead door: State defaults to OH; Street/City/Zip optional for a phone-in, required when Job Category is set | A1 | small | validation change — your call |
+| **4a** | ✅ **SHIPPED, build 1202.** Recorded only after the rep confirms it went | B4 | small | |
+| **4b** | ✅ **SHIPPED, build 1202.** The card stays, its buttons wait for Completed | B4/A8 | small | can ride with 4a |
+| **5** | ✅ **SHIPPED, build 1203** — measured: the grid box is 789px, the tracks asked for 878 | B5 | small · render at 1024 and 1194 | |
+| **6a** | ✅ **SHIPPED, build 1203** | B6 (6b, live results, still open) | trivial | |
+| **6b** | ✅ **SHIPPED, build 1207.** Top five under the row, tap to open, Return unchanged — and one shared matcher | B6/A5 | medium · 1 build · Chromium render, both themes | `crClientHay()` now serves the directory, Insurance Clients and the live search |
+| **7a** | ⚠ **ALREADY SHIPPED on the LEAD door, at build 782** — the walk attributed the Contact door's rules to both. On the *Contact* door it is still open, and it would refuse a save that works today | A1 | small | **needs your yes — it takes something away** |
+| **7b** | ✅ **SHIPPED, build 1208.** State opens on OH; the address is required only when a Job Category is set | A1 | small | measured on 1207: *"Required: Street, City, State, Zip"*, then *"Required: State"* |
 | **7c** | One door: the Contact form with an "Add address now / later" step; the Lead form's insurance and mailing blocks become the "+ More detail" expander | A1 | medium · 1–2 builds | the real fix; 7a+7b is the patch |
-| **8** | Hide "Job cost" on Add project for Sales-role users | A2 | trivial | |
-| **9** | Phone profile: client band above the money ring | A6 | small CSS (`order`) | layout call from the 788–804 rebuild — yours |
-| **10** | Estimate toolbar: 44 px targets, wrap to two rows on the phone (or a fade that says it scrolls) | A11 | small · render 390 and 1194 | |
-| **11** | Short job-menu labels on the phone | A10 | trivial | |
-| **12** | Documents tile → **Files** | A9 | trivial | |
-| **13** | Document editor phone toolbar: a labelled **Back to client**; *Email · Text to sign · Share link* ahead of "Mark sent" | A12 | small · render | pairs with 3a |
-| **14** | Tap-target sweep under 44 px (drawer A, dispatch move, album chips, day cells, source chips) | A13/A3 | medium · several modules · `gate_1081`-style CSSOM walk | |
+| **8** | ✅ **SHIPPED, build 1203** — hidden for non-admins, the value preserved | A2 | trivial | |
+| **9** | Phone profile: client band above the money ring | A6 | one line in `syncMoneyCard()` | ⚠ **HELD — it REVERSES build 797**, which you confirmed from preview_v3/v4 and again live. Needs your yes |
+| **10** | ✅ **SHIPPED, build 1205.** 44 px on every toolbar and Add button; the row wraps instead of scrolling | A11 | small · render 390 and 1194 | measured: 26 px and three buttons off the right edge on 1204 |
+| **11** | ✅ **SHIPPED, build 1203** — the labels WRAP instead, so nothing is renamed | A10 | trivial | |
+| **12** | ✅ **SHIPPED, build 1203** | A9 | trivial | |
+| **13** | ✅ **SHIPPED, build 1204.** The three sends are primaries, "Mark sent" moved below them on the phone, and the client chip reads “‹ Back” | A12 | small · render | measured: sends 0×0 on 1203, 181×42 and one-tap on 1204 |
+| **14** | ✅ **SHIPPED, build 1206** — four of the five fixed, plus one of my own from 1204; the rest baselined by `gate_1206` | A13/A3 | medium · several modules | ⚠ **the dispatch grip was a FALSE POSITIVE** — 15×15 box, 45×45 target |
 
 **My recommendation, if you want one:** 1 + 2 in one build today (both trivial, both gated, both
 real bugs); then 3a + 13 as one "send the estimate" build; then 7 as a decision before code. 5, 6a,
