@@ -2176,7 +2176,13 @@ body.restoring #restoreVeil{display:flex;}
 .jabox{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
   padding:14px 11px;cursor:pointer;font:700 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
   min-width:0;-webkit-user-select:none;user-select:none;}
-.jabox .jbl{flex:1;min-width:0;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+/* 1203: this was white-space:nowrap + ellipsis, and at 390px it cut SEVEN of
+   the fourteen labels: "Commu…", "Notificat…", "Measure…", "Docume…",
+   "Appoint…", "Punch …", "Inspecti…". Wrapping keeps every word and needs no
+   opinion about what to rename things to. The row is a grid whose items stretch,
+   so a two-line label leaves both tiles the same height, and the tracks are
+   already minmax(0,1fr). gate_1203 measures that no label is truncated. */
+.jabox .jbl{flex:1;min-width:0;line-height:1.15;overflow-wrap:break-word;
   font-size:clamp(12px,3.5vw,14px);}
 .jabox > b{flex:0 0 auto;margin-left:6px;align-self:center;}
 @media (max-width:380px){ .jabox{padding:13px 8px;gap:6px;} .jabox .jbl{font-size:12px;} }
@@ -2565,7 +2571,15 @@ body.restoring #restoreVeil{display:flex;}
 .ljclearall{display:block;background:none;border:0;color:var(--rbe-clr);font:700 12.5px 'Segoe UI',Arial,sans-serif;padding:10px 16px;cursor:pointer;text-align:left;width:100%;}
 @media (min-width:901px){
   .ljctl{display:none;}
-  .ljcols{grid-template-columns:230px minmax(300px,1.05fr) minmax(320px,1fr);}
+  .ljcols{grid-template-columns:230px minmax(0,1.05fr) minmax(0,1fr);}
+  /* 1203: the minimums were 300px and 320px, which CANNOT shrink. Measured on
+     a 1194px iPad: the left nav takes 288, .wrap's padding another 72, so the
+     grid box is 789 wide - and 230 + 300 + 320 + two 14px gaps is 878. The
+     third track therefore started at 905 and ended at 1225, 31px past the
+     screen, with the Job Summary clipping its own last line. minmax(0,fr)
+     lets the two flexible tracks give way; the 230px rail is unchanged.
+     gate_1203 measures every box against the viewport rather than trusting
+     this arithmetic. */
   .ljrail{display:block;background:var(--rbe-railbg);border:1px solid var(--rbe-hair);border-radius:12px;padding:13px;
     position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
   .ljdetail{display:block;}
@@ -3961,10 +3975,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1202<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1203<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
-      <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
+      <input type="search" id="headSearch" enterkeyhint="search"
+             placeholder="Search clients, PO #, address &#8212; then Return">
     </div>
     <div id="repStrip" class="repstrip" style="display:none;">
       <span class="reppill" id="repPill"></span>
@@ -12242,7 +12257,7 @@ function renderAcxOverview(){
       jt(dbIc('ruler'), 'Measurements', '\u2026', 'measure', 'dbMeasN') +
       jt(dbIc('estimates'), 'Estimates', '\u2026', 'estimates', 'dbEstN') +
     '</div><div class="jaboxrow">' +
-      jt(dbIc('docs'), 'Documents', fileDocs.length, 'docs') +
+      jt(dbIc('docs'), 'Files', fileDocs.length, 'docs') +
       jt(dbIc('appts'), 'Appointments', appts, 'appts') +
     '</div><div class="jaboxrow">' +
       /* 609: THIS is the job menu that renders. 607 added Punch Outs to #jaGrid
@@ -15903,6 +15918,14 @@ function openProjModal(pr){
   document.getElementById('pfSourceChips').classList.remove('pf-need');
   pfSyncSourceChips();
   document.getElementById('pfJobCost').value = (_ck.job_cost != null) ? _ck.job_cost : '';
+  /* 1203: job cost is a profit-report field, and a Sales rep neither knows it
+     at intake nor sees the reports it feeds. Hidden rather than removed, and
+     the VALUE is still loaded and saved above, so a rep editing a client
+     cannot wipe a figure an admin entered. */
+  try{
+    var _jcLbl = document.getElementById('pfJobCost').closest('label');
+    if(_jcLbl) _jcLbl.style.display = isAdminUser() ? '' : 'none';
+  }catch(_jc){}
   document.getElementById('pfCategory').value = _ck.job_category || '';
   document.getElementById('pfWorkType').value = _ck.work_type || '';
   var _trList = (_ck.trades && _ck.trades.length) ? _ck.trades : (_ck.trade ? [_ck.trade] : []);
@@ -42770,6 +42793,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1203, d: '2026-09-10', t: 'Five small things: the iPad panel fits, the search says what to press, and the job menu reads', s: 'Housekeeping a rep meets every day. <b>On the iPad, sideways, the Job Summary panel on Leads &amp; Jobs sat off the right-hand edge of the screen</b> and cut off its own last line \u2014 the three columns were asking for more room than the page had once the side menu took its share. They now give way and all three fit. <b>The search box says what to press</b> (\u201c\u2026 then Return\u201d) and your phone keyboard now shows a <b>Search</b> key instead of return. <b>Seven job-menu buttons were cutting their own labels in half</b> on a phone \u2014 \u201cCommu\u2026\u201d, \u201cNotificat\u2026\u201d, \u201cMeasure\u2026\u201d \u2014 and now wrap to a second line so you can read them. <b>Documents is called Files</b>, because it counts the files you upload; a published estimate lives under Estimates, and the old name made it look like the document had vanished. And <b>Job cost is no longer on the Add project form</b> for anyone but an admin \u2014 it feeds profit reports, nobody knows it at intake, and it is still there, and still safe, for the people who do use it.' },
   { b: 1202, d: '2026-09-10', t: 'A review request counts when you send it, and the card waits for a finished job', s: 'Two fixes to the Google Reviews card. <b>Tapping <i>Text request</i> used to record the request straight away</b> \u2014 before you had sent anything. Back out of Messages and the profile still said \u201cReview requested today via text\u201d, the job history said the same, and the next tap sent the <i>friendly follow-up</i> wording to somebody who never got a first message. The app cannot see what happens once the message is handed to Messages, Mail or your clipboard, so it now simply <b>asks you</b>: <i>Did the review request go out?</i> A yes records it, <b>Not yet</b> records nothing, and you can tap again whenever you do send it. <b>And the card no longer offers the buttons before the job is Completed</b> \u2014 on a brand-new lead the red Text request button was the loudest thing on the screen. The card stays where it is and tells you when it opens, the same way the Invoices card does.' },
   { b: 1201, d: '2026-09-10', t: 'Publishing an estimate now offers to send it, instead of asking you to call it sent', s: 'Publishing used to pop the question <b>\u201cMark it as Sent?\u201d before anything had been sent</b> \u2014 and saying yes moved the job forward and then dropped you on a document whose own toolbar still read <b>UNSENT</b>. Two different answers to \u201cdid the client get this?\u201d on one screen. Publishing now asks <b>\u201cSend it to &lt;client&gt;?\u201d</b> and gives you the three ways the app actually delivers a document: <b>Email to client</b>, <b>Text to sign</b>, or <b>Copy share link</b> \u2014 the same buttons the document itself has, so nothing behaves differently from what you already know. <b>Not now</b> leaves it a draft and says so. And the estimate is marked Sent, with the pipeline moving, <b>only once the document has really gone out</b> \u2014 back out of the email and nothing is claimed on your behalf. Marking a document sent by hand from the document itself now moves the estimate too, which it never did.' },
   { b: 1200, d: '2026-09-10', t: 'Your phone stops working overtime on a client profile, and Curtis stops being told twice', s: 'Two fixes, both invisible until you notice what they cost. <b>An open client profile was redrawing its Punch Outs count about sixty times a second</b>, forever, whether the job had four punch items or none \u2014 every other part of the page that watches for changes woke up each time. On a phone that is battery and heat for nothing. The count is now written only when it actually changes. <b>And moving a job backwards no longer re-sends the team email.</b> Tapping the \u2039 arrow from Scheduled back to Approved fired Curtis and the admins a fresh \u201cAPPROVED \u2014 schedule + order materials\u201d for a job that had already been scheduled; the same shape re-sent the rep\u2019s \u201cjob complete\u201d mail from Invoiced. Those two emails now go out only when a job reaches that stage moving <i>forward</i> \u2014 and a job that was On Hold, or Lost and revived, still counts as forward, so nothing real is missed.' },

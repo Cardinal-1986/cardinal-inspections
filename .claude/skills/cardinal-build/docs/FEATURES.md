@@ -8284,3 +8284,21 @@ Completed."*, the same shape as the Invoices card's *"An invoice opens once a co
 **Nothing is recorded on the tap.** `sms:`, `mailto:` and the clipboard all hand the message
 somewhere the app cannot follow, so `sendReviewRequest()` asks *"Did the review request go out?"*
 and writes `review_requested_at` only on a yes.
+
+
+## Build 1203 — small corrections
+
+**Leads & Jobs on a tablet:** `.ljcols` is `230px minmax(0,1.05fr) minmax(0,1fr)`. The two flexible
+tracks must keep a `0` floor — the grid box is only ~789px on a 1194px iPad once the left nav and
+`.wrap`'s padding are taken, so any `minmax(300px…)`-style minimum pushes the third column off the
+screen. `gate_1203` measures every box against the viewport.
+
+**Job-menu labels wrap; they do not ellipsise.** `.jabox .jbl` uses `overflow-wrap:break-word` with
+no `white-space:nowrap`. The tiles sit in a stretching grid row, so a two-line label keeps both
+tiles the same height.
+
+**The Documents tile is called Files** — it counts uploaded files only; a published estimate lives
+under Estimates.
+
+**Job cost on the Add project form is admin-only** (`isAdminUser()`), hidden rather than removed so
+the stored value survives a rep's edit.

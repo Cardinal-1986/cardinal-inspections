@@ -91,6 +91,13 @@ const GATES = [
   { name: 'gate_1202.mjs',
     protects: 'a review request is recorded on the send, not the tap, and the card waits for a Completed job',
     break: { find: 'if(!_went) return;', repl: 'if(false) return;' } },
+  /* 1203: the Leads grid must be able to give way on an iPad. The break puts
+     the un-shrinkable minimums back, which is exactly the measured 1202 state:
+     the Job Summary at right=1225 on a 1194 screen. Anchor counted in 1202
+     first: 0 there, 1 here. */
+  { name: 'gate_1203.mjs',
+    protects: 'the iPad Leads panel stays on screen, no job-menu label is truncated, Job cost is admin-only',
+    break: { find: 'minmax(0,1.05fr) minmax(0,1fr)', repl: 'minmax(300px,1.05fr) minmax(320px,1fr)' } },
 ];
 
 function run(script, args) {

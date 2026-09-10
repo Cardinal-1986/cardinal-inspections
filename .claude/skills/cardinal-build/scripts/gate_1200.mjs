@@ -131,25 +131,35 @@ ok(!html.includes("if(v === 'Completed' && prev !== 'Completed'){"),
 
 /* ------------------------------------------- D the loop, in a real browser */
 console.log('\nD  the profile settles (Chromium)');
-const PW = '/opt/node22/lib/node_modules/playwright/index.js';
-const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+/* 1203: this used to hard-code ONE container's Playwright path, so on a CI
+   runner - where npm installs playwright locally - the rig looked "unavailable"
+   and every browser section SKIPPED while the gate still reported GREEN. That
+   is how gate_1201 and gate_1202 passed in CI with their own break applied:
+   the sections that would have caught it never ran. Same resolution as
+   gate_1197/1199, and the browser comes from chromium_launch.cjs, which exists
+   because three gates had already hard-coded two different browser paths. */
+const PW_SANDBOX = '/opt/node22/lib/node_modules/playwright/index.js';
+const PW = existsSync(PW_SANDBOX) ? PW_SANDBOX : 'playwright';
+const { launchChromium } = require_(resolve(here, 'chromium_launch.cjs'));
 const setupPath = resolve(here, 'sentinel_setup_cardinal.js');
 const mockPath = resolve(here, 'e2e_mock_supa.js');
-const haveRig = existsSync(PW) && existsSync(setupPath) && existsSync(mockPath);
+const haveRig = existsSync(setupPath) && existsSync(mockPath);
 
 if (!haveRig) {
-  console.log('  SKIP  the Chromium probe — rig unavailable ' +
-              `(playwright:${existsSync(PW)} setup:${existsSync(setupPath)} mock:${existsSync(mockPath)})`);
-  console.log('        Sections A-C carry the verdict; CI runs D.');
+/* 1203: a gate whose whole point is runtime behaviour must NOT be able to
+   report GREEN when the browser sections did not run. In CI they silently did
+   not (a hard-coded Playwright path), and gate_1201 and gate_1202 therefore
+   passed with their own negative-control break applied. Skipping is now a
+   FAILURE, which is the honest verdict: proved nothing. */
+  ok(false, 'the Chromium probe RAN — a skipped browser section is not a pass',
+     `setup:${existsSync(setupPath)} mock:${existsSync(mockPath)}`);
 } else {
   const { chromium } = require_(PW);
   const SETUP = readFileSync(setupPath, 'utf8');
   const MOCK = readFileSync(mockPath, 'utf8');
-  const launch = existsSync(CHROME) ? { executablePath: CHROME, args: ['--no-sandbox'] }
-                                    : { args: ['--no-sandbox'] };
   let browser = null;
   try {
-    browser = await chromium.launch(launch);
+    browser = await launchChromium(chromium);
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
     const page = await ctx.newPage();
     await page.addInitScript(SETUP);
