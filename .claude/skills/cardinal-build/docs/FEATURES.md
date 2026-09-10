@@ -8254,3 +8254,20 @@ class **only when either actually changes**. It runs from a `document.body` obse
 where an identical-string `textContent` write still emits a mutation record — the 567/569
 class. `cr-portal-script`'s `refreshCounts()` has always done this; the punch module now
 does too.
+
+
+## Build 1201 — the publish sheet, and one truth about "sent"
+
+**`crAsk(message, { choices, cancel, why })`** — the app's one shared question sheet now takes an
+optional list of choices. Omit it and nothing changes: same two buttons, same boolean. Provide it
+and each choice is a button (44px floor, both themes, `.askpick`), the go verb is hidden, and the
+promise resolves the chosen `id`. Use this rather than adding another module-local sheet.
+
+**`crDocSent(docId)`** (document editor) fires `cr-doc-sent` from the **two places that write a
+document to sent**: the email send and the Mark sent button. It is deliberately *not* hooked to
+`setEditorStatus()`, which also runs on every open and cannot tell a load from a send.
+
+**`crAwaitDocSent(docId, ms)`** (`cr-ess`) resolves true only when that document is really sent.
+The publish sheet arms it **before** pressing a send button, so nothing is claimed on a tap.
+`crSendChoices()` offers only the delivery buttons that exist; `crSendDoc()` presses the shipped
+one. The send logic itself has exactly one home, in the document editor.

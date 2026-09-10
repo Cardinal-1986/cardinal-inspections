@@ -3961,7 +3961,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1200<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1201<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24114,6 +24114,19 @@ var toggleBtn  = document.getElementById('toggleStatusBtn');
 var savedFlash = document.getElementById('savedFlash');
 var current = null; /* {id, status, sent_at} */
 
+/* 1201: the one announcement that a document really went out. Two callers —
+   the email send and the Mark sent button — and both are a WRITE, so this is a
+   transition by construction. setEditorStatus() below was the tempting hook and
+   is the wrong one: it also runs on every open, so opening an already-sent
+   document would read as a fresh send. cr-ess listens for this and only then
+   marks the estimate that published the document Sent, so the document's own
+   chip and the estimate's status can no longer disagree on one screen. */
+function crDocSent(docId){
+  try{
+    document.dispatchEvent(new CustomEvent('cr-doc-sent', { detail: { docId: docId } }));
+  }catch(_e){}
+}
+
 function setEditorStatus(status, sentAt, signedAt){
   /* 884: a signed document reads SIGNED (green), not the sent/unsent it never
      leaves — signing writes signed_at, not status. */
@@ -26200,6 +26213,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     /* 731: same object-as-id bug — the email went out and the document stayed
        UNSENT, because this write never landed on a row. */
     await db.update(current.id, { status: 'sent', sent_at: new Date().toISOString() });
+    crDocSent(current.id);
     try{ if(window.crToastOk) window.crToastOk('Sent \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
     if(pr && row && /^invoice/i.test((row.title || '').trim()) && normStage(pr.stage) !== 'Invoiced'){
       try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
@@ -26900,6 +26914,7 @@ toggleBtn.addEventListener('click', async function(){
     current.status = toSent ? 'sent' : 'unsent';
     current.sent_at = sentAt;
     if(toSent){
+      crDocSent(current.id);
       var trow = cacheRows.find(function(r){ return r.id === current.id; });
       if(trow && trow.project_id && /^invoice/i.test((trow.title || '').trim())){
         try{ await setStage(trow.project_id, 'Invoiced'); }catch(e){}
@@ -42706,6 +42721,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1201, d: '2026-09-10', t: 'Publishing an estimate now offers to send it, instead of asking you to call it sent', s: 'Publishing used to pop the question <b>\u201cMark it as Sent?\u201d before anything had been sent</b> \u2014 and saying yes moved the job forward and then dropped you on a document whose own toolbar still read <b>UNSENT</b>. Two different answers to \u201cdid the client get this?\u201d on one screen. Publishing now asks <b>\u201cSend it to &lt;client&gt;?\u201d</b> and gives you the three ways the app actually delivers a document: <b>Email to client</b>, <b>Text to sign</b>, or <b>Copy share link</b> \u2014 the same buttons the document itself has, so nothing behaves differently from what you already know. <b>Not now</b> leaves it a draft and says so. And the estimate is marked Sent, with the pipeline moving, <b>only once the document has really gone out</b> \u2014 back out of the email and nothing is claimed on your behalf. Marking a document sent by hand from the document itself now moves the estimate too, which it never did.' },
   { b: 1200, d: '2026-09-10', t: 'Your phone stops working overtime on a client profile, and Curtis stops being told twice', s: 'Two fixes, both invisible until you notice what they cost. <b>An open client profile was redrawing its Punch Outs count about sixty times a second</b>, forever, whether the job had four punch items or none \u2014 every other part of the page that watches for changes woke up each time. On a phone that is battery and heat for nothing. The count is now written only when it actually changes. <b>And moving a job backwards no longer re-sends the team email.</b> Tapping the \u2039 arrow from Scheduled back to Approved fired Curtis and the admins a fresh \u201cAPPROVED \u2014 schedule + order materials\u201d for a job that had already been scheduled; the same shape re-sent the rep\u2019s \u201cjob complete\u201d mail from Invoiced. Those two emails now go out only when a job reaches that stage moving <i>forward</i> \u2014 and a job that was On Hold, or Lost and revived, still counts as forward, so nothing real is missed.' },
   { b: 1199, d: '2026-09-09', t: 'Online payments fail safe, bank payments are labelled right, and Maps waits until it is needed', s: 'A pay link now refuses to open a checkout when the payment history cannot be read, instead of quietly treating a failed read as \u201cnothing paid yet\u201d and asking for the full amount \u2014 the shared document says the balance could not be verified and to try again shortly. A bank (ACH) payment that clears is recorded as ACH rather than as a card payment. Google Maps no longer downloads on every launch before anyone has signed in; it loads the first time an address field is touched. The sign-in screen\u2019s example email uses the company domain. The old estimate-to-contract route checks that you are on the job before it hands back a contract.' },
   { b: 1198, d: '2026-09-03', t: 'The menu and search marks are visible again in light mode', s: 'The Retail header keeps its existing design. In light mode the hamburger and search buttons now receive the same light surface as the rest of the header chrome, so their navy icon strokes no longer disappear into a navy button. Dark mode and every button action are unchanged.' },
@@ -51283,6 +51299,47 @@ if(!d.project || !d.project.id || !d.id) return;
 if(d.prevStatus !== 'draft') return;
 setTimeout(function(){ markSentAfterPublish(d); }, 900);
 });
+/* 1201: only the delivery buttons that exist are offered, so the sheet can
+   never show a dead choice. They are looked up rather than duplicated — the
+   document editor owns the send logic and there is exactly one copy of it. */
+function crSendChoices(){
+  var out = [];
+  if(document.getElementById('emailDocBtn'))
+    out.push({ id:'email', label:'Email to client', hint:'Opens the send-for-signature email' });
+  if(document.getElementById('textSignBtn'))
+    out.push({ id:'text',  label:'Text to sign',    hint:'Opens Messages with the signing link' });
+  if(document.getElementById('shareBtn'))
+    out.push({ id:'share', label:'Copy share link', hint:'A link the client can review and sign' });
+  return out;
+}
+function crSendDoc(pick){
+  var map = { email:'emailDocBtn', text:'textSignBtn', share:'shareBtn' };
+  var b = document.getElementById(map[pick]);
+  if(!b) return false;
+  try{ b.click(); }catch(_e){ return false; }
+  return true;
+}
+/* Resolves TRUE only when the document this estimate published is really
+   marked sent. A rep who backs out of the email prompt, or whose send fails,
+   resolves false on the timeout and the estimate stays the draft it is. */
+function crAwaitDocSent(docId, ms){
+  return new Promise(function(resolve){
+    var done = false, t = null;
+    function off(v){
+      if(done) return;
+      done = true;
+      document.removeEventListener('cr-doc-sent', onSent);
+      if(t) clearTimeout(t);
+      resolve(v);
+    }
+    function onSent(ev){
+      var id = ev && ev.detail && ev.detail.docId;
+      if(id != null && String(id) === String(docId)) off(true);
+    }
+    document.addEventListener('cr-doc-sent', onSent);
+    t = setTimeout(function(){ off(false); }, ms || 600000);
+  });
+}
 async function markSentAfterPublish(d){
 var project = d.project;
 /* 941-era honesty: say what will actually happen to THIS job before asking. */
@@ -51290,10 +51347,34 @@ var _cur = project.stage;
 try{ if(typeof window.normStage === 'function') _cur = window.normStage(_cur); }catch(_){}
 var _willMove = !!(STATUS_STAGE.sent && _cur !== 'Lost' && _cur !== STATUS_STAGE.sent &&
                    rank(_cur) < rank(STATUS_STAGE.sent));
-if(!await crAsk('Estimate published.\n\nMark it as Sent?' +
-    (_willMove ? '\n\n' + (project.name || 'This client') + ' moves to ' +
-                 displayStage(STATUS_STAGE.sent) + '.'
-               : '\n\nThe pipeline stays at ' + displayStage(_cur) + '.'))) return;
+/* 1201: this used to ask "Mark it as Sent?" BEFORE anything had been sent.
+   Answering yes marked the estimate Sent, moved the pipeline, and left the rep
+   on a document whose own toolbar read UNSENT — with nothing emailed, texted or
+   shared. It now offers the three ways the app actually delivers a document,
+   and they are the SHIPPED buttons in #editorView, which the publish flow has
+   already loaded with THIS document. Nothing is called Sent until that document
+   really is: crAwaitDocSent() waits for the editor's own cr-doc-sent. Record
+   the send, never the tap. */
+var _who = (project.name || 'the client');
+var _picks = crSendChoices();
+if(!_picks.length) return;
+/* ONE line, no blank-line split: crAsk treats the text after a blank line as
+   the explanation, and an `opts.why` then replaces it - so a two-paragraph
+   message here silently lost the actual question. gate_1201 asserts the
+   headline still ASKS. */
+var _pick = await crAsk('Estimate published \u2014 send it to ' + _who + '?', {
+  choices: _picks,
+  cancel: 'Not now',
+  why: 'Sending marks the estimate Sent' +
+       (_willMove ? ' and moves ' + _who + ' to ' + displayStage(STATUS_STAGE.sent) + '.'
+                  : ' \u2014 the pipeline stays at ' + displayStage(_cur) + '.') +
+       ' Not now leaves it a draft, and you can send it from the document at any time.'
+});
+if(typeof _pick !== 'string') return;
+/* armed BEFORE the click, so a fast send cannot land between the two */
+var _went = crAwaitDocSent(d.docId);
+if(!crSendDoc(_pick)) return;
+if(!await _went) return;
 var _wrote = false;
 try{
 if(window.supa){
@@ -84288,6 +84369,14 @@ body.cr-landing-on footer.site{display:none !important;}
 #crAsk .askgo{background:#c8202e;color:#fff;}
 #crAsk .askgo.plain{background:#2d5578;color:#fff;}
 #crAsk .askno{background:#22262b;color:#cfd6df;border:1px solid #343a41;}
+/* 1201: a choice. Left-aligned with its own hint line, because these are three
+   different journeys and not three shades of yes. Computed, not eyeballed:
+   #f2f4f7 on #22262b is 13.81:1 and the hint #9aa1ac is 5.85:1; the light twin
+   is 16.90:1 and 5.42:1. Floor is 4.5:1 for both — the hint is 11.5px body. */
+#crAsk .askpick{background:#22262b;color:#f2f4f7;border:1px solid #3a4049;text-align:left;}
+#crAsk .askpick small{display:block;margin-top:3px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9aa1ac;}
+:root[data-theme="rb-light"] #crAsk .askpick{background:#f7f7f8;color:#161616;border-color:#d8d8d8;}
+:root[data-theme="rb-light"] #crAsk .askpick small{color:#5f6670;}
 :root[data-theme="rb-light"] #crAsk .askcard{background:#ffffff;border-top-color:#e2e2e2;}
 :root[data-theme="rb-light"] #crAsk .askq{color:#161616;}
 :root[data-theme="rb-light"] #crAsk .askwhy{color:#5f6670;}
@@ -84376,6 +84465,37 @@ body.cr-landing-on footer.site{display:none !important;}
       go.className = 'askgo' + (danger ? '' : ' plain');
       no.textContent = o.cancel || 'Cancel';
 
+      /* 1201: OPTIONAL choices, and STRICTLY ADDITIVE. With no `choices` this
+         sheet is the same two-button question it has always been and still
+         resolves a boolean — gate_1201 asserts exactly that against every
+         existing caller shape. With choices, each one is a real button in the
+         column .askbtns already lays out (44px minimum, both themes), the
+         single go verb is not shown at all because the choices ARE the
+         actions, and the promise resolves the chosen id instead.
+         Built HERE rather than as an eleventh module-local sheet: this is the
+         app's one shared question sheet, and a second one would drift from it
+         the first time either is restyled. */
+      var picks = Array.isArray(o.choices) ? o.choices.slice() : null;
+      var btns = n.querySelector('.askbtns');
+      Array.prototype.slice.call(btns.querySelectorAll('.askpick'))
+           .forEach(function(b){ b.parentNode.removeChild(b); });
+      go.style.display = picks ? 'none' : '';
+      if(picks){
+        picks.forEach(function(c){
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'askpick';
+          b.setAttribute('data-pick', String(c.id));
+          b.appendChild(document.createTextNode(String(c.label || c.id)));
+          if(c.hint){
+            var sm = document.createElement('small');
+            sm.textContent = String(c.hint);
+            b.appendChild(sm);
+          }
+          btns.insertBefore(b, no);
+        });
+      }
+
       busy = true;
       n.classList.add('open');
       try{ no.focus(); }catch(_f){}
@@ -84388,20 +84508,31 @@ body.cr-landing-on footer.site{display:none !important;}
           n.classList.remove('open');
           go.onclick = no.onclick = n.onclick = null;
           document.removeEventListener('keydown', onKey, true);
-          resolve(!!v);
+          /* 1201: a string id resolves as itself. Every caller that has ever
+             existed passes true/false and still receives a boolean. */
+          resolve(typeof v === 'string' ? v : !!v);
         }
         function onKey(e){
           if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
         }
         go.onclick = function(){ finish(true); };
         no.onclick = function(){ finish(false); };
+        if(picks){
+          Array.prototype.slice.call(btns.querySelectorAll('.askpick'))
+               .forEach(function(b){
+                 b.onclick = function(){ finish(b.getAttribute('data-pick')); };
+               });
+        }
         /* tapping the scrim is the same as saying no — never the same as yes */
         n.onclick = function(e){ if(e.target === n) finish(false); };
         document.addEventListener('keydown', onKey, true);
       });
     }catch(_e){
       busy = false;
-      /* the sheet could not be shown — ask the old way rather than not at all */
+      /* the sheet could not be shown — ask the old way rather than not at all.
+         1201: with choices there is no honest one-question equivalent, so
+         nothing is chosen and the caller takes its own "not now" path. */
+      if(o && Array.isArray(o.choices)) return Promise.resolve(false);
       var ok = false;
       try{ ok = window.confirm(text); }catch(_c){}
       return Promise.resolve(ok);

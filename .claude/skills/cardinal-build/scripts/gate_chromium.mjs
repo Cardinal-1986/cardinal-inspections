@@ -77,6 +77,13 @@ const GATES = [
     protects: 'an open client profile settles; the Approved/Completed team emails fire only on a forward move',
     break: { find: 'var txt = String(open);\nif(el.textContent !== txt) el.textContent = txt;',
              repl: 'var txt = String(open);\nel.textContent = txt;' } },
+  /* 1201: nothing may be called Sent until the document really goes out. The
+     break drops the wait, restoring the 1200 behaviour the gate measures
+     directly — "marked Sent on the tap" with nothing emailed. Anchor counted
+     in 1200 first: 0 there, 1 here (BUG_CLASSES 86). */
+  { name: 'gate_1201.mjs',
+    protects: 'publishing offers the three real sends, and the estimate is marked Sent only once that document is',
+    break: { find: 'if(!await _went) return;', repl: 'if(false) return;' } },
 ];
 
 function run(script, args) {

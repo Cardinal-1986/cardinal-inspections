@@ -13,6 +13,8 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 ---
 
 > ### Progress
+> **B3 shipped in build 1201** (option 3a): publishing now asks to *send* and offers the three real
+> ways to deliver, and the estimate is marked Sent only once that document really goes out.
 > **B1 and B2 shipped in build 1200** (options 1 and 2), measured before and after: an open
 > profile went from 65 DOM records/sec with 360 on the punch count to 5/sec with zero, and the
 > backward-chevron email is gone. Everything else below is still open.
@@ -354,7 +356,7 @@ plus its gate; every option ships with a negative control against 1199.
 |---|---|---|---|---|
 | **1** | ✅ **SHIPPED, build 1200.** Guard `syncMenuCount()` — write the count only when it changed | B1 | trivial · 1 build · gate = mutation-rate probe, red on 1199 | **do first; it is on every profile** |
 | **2** | ✅ **SHIPPED, build 1200** as `crStageIsForward()`. Forward-only Approved and Completed team emails | B2 | trivial · rides with 1 · gate executes shipped `setStage` with a stub notifier | mirrors `api/clientsign.js` 1007 |
-| **3a** | Publish sheet becomes the send sheet: *Email · Text to sign · Share link · Not now*; a real send sets both statuses | B3, A12 | small–medium · 1 build · Chromium render of the sheet, both themes | wants your wording pick |
+| **3a** | ✅ **SHIPPED, build 1201.** Publish sheet became the send sheet; a real send is what marks it Sent | B3 (A12's toolbar half is still open) | small–medium · 1 build · Chromium render of the sheet, both themes | wants your wording pick |
 | **3b** | Keep the question, ask it *after* a send, verb "Mark sent", Cancel default | B3 | small | the cheaper half of 3a |
 | **4a** | Record `review_requested_at` only after the rep confirms it went | B4 | small | |
 | **4b** | Hide (or grey) the Google Reviews card before Completed | B4/A8 | small | can ride with 4a |
