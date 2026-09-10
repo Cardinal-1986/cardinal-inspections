@@ -13,6 +13,11 @@ Section 6 is the part that wants Theo: **numbered options with costs — answer 
 ---
 
 > ### Progress
+> **A1's cheap half closed in build 1208** (option 7b): the Lead form opens on **OH** and asks for
+> an address only once a **Job Category** says there is a job. ⚠ **Option 7a turned out to be
+> already shipped on the Lead door** — build **782** requires a phone or an email there, with a
+> tick box for the exception, and a **Lead Source** whose expander the form opens for you. §3's A1
+> read the Contact door's rules and attributed them to both doors; the correction is below.
 > **B6 closed in build 1207** (option 6b): the header search shows the top five matching clients
 > as you type, tap to open, and Return still opens the full directory. It matches with
 > `crClientHay()` — the same haystack the Clients directory uses, extracted so the two can never
@@ -268,6 +273,11 @@ Theo's decision and I am not re-opening it.
   Name, Last Name, Street, City, State, Zip"*; fill the minimum and it still says *"Required:
   State"*, because State has no Ohio default. A rep at the door will learn to use Contact and never
   enter an address; a rep at the desk will fight the Lead form. **Pick one rulebook** (option 7).
+  ⚠ **CORRECTION, build 1208 — this walk was wrong about the LEAD door's rules.** It requires a
+  phone **or** an email since build **782** (with a tick box for the genuine exception) and a **Lead
+  Source**, and when the Source is missing it opens "+ More detail", shakes the field and focuses
+  it. Those are the Contact door's gaps, attributed to both. Option 7a is therefore already shipped
+  *here*; what remains of it is the Contact door.
 - **A2 — "Job cost (materials + labor, $) for profit reports"** is on the Contact/Add-project door,
   shown to a Sales rep. At intake nobody knows the cost, and reps do not see profit reports.
 - **A3 — Lead-source chips are 38 px tall** — under the 44 px floor the rest of the app moved to.
@@ -392,11 +402,11 @@ plus its gate; every option ships with a negative control against 1199.
 | **5** | ✅ **SHIPPED, build 1203** — measured: the grid box is 789px, the tracks asked for 878 | B5 | small · render at 1024 and 1194 | |
 | **6a** | ✅ **SHIPPED, build 1203** | B6 (6b, live results, still open) | trivial | |
 | **6b** | ✅ **SHIPPED, build 1207.** Top five under the row, tap to open, Return unchanged — and one shared matcher | B6/A5 | medium · 1 build · Chromium render, both themes | `crClientHay()` now serves the directory, Insurance Clients and the live search |
-| **7a** | Contact door requires phone **or** email (a lead you cannot reach is not a lead) | A1 | small | validation change — your call |
-| **7b** | Lead door: State defaults to OH; Street/City/Zip optional for a phone-in, required when Job Category is set | A1 | small | validation change — your call |
+| **7a** | ⚠ **ALREADY SHIPPED on the LEAD door, at build 782** — the walk attributed the Contact door's rules to both. On the *Contact* door it is still open, and it would refuse a save that works today | A1 | small | **needs your yes — it takes something away** |
+| **7b** | ✅ **SHIPPED, build 1208.** State opens on OH; the address is required only when a Job Category is set | A1 | small | measured on 1207: *"Required: Street, City, State, Zip"*, then *"Required: State"* |
 | **7c** | One door: the Contact form with an "Add address now / later" step; the Lead form's insurance and mailing blocks become the "+ More detail" expander | A1 | medium · 1–2 builds | the real fix; 7a+7b is the patch |
 | **8** | ✅ **SHIPPED, build 1203** — hidden for non-admins, the value preserved | A2 | trivial | |
-| **9** | Phone profile: client band above the money ring | A6 | small CSS (`order`) | layout call from the 788–804 rebuild — yours |
+| **9** | Phone profile: client band above the money ring | A6 | one line in `syncMoneyCard()` | ⚠ **HELD — it REVERSES build 797**, which you confirmed from preview_v3/v4 and again live. Needs your yes |
 | **10** | ✅ **SHIPPED, build 1205.** 44 px on every toolbar and Add button; the row wraps instead of scrolling | A11 | small · render 390 and 1194 | measured: 26 px and three buttons off the right edge on 1204 |
 | **11** | ✅ **SHIPPED, build 1203** — the labels WRAP instead, so nothing is renamed | A10 | trivial | |
 | **12** | ✅ **SHIPPED, build 1203** | A9 | trivial | |

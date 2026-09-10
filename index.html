@@ -4033,7 +4033,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1207<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1208<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8375,18 +8375,18 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       </div>
 
       <div class="ldbox">
-        <div class="ldhead">Location Information <span class="ldreq">* Required</span></div>
-        <label style="position:relative;">Street *
+        <div class="ldhead">Location Information <span class="ldreq">Needed once you set a Job Category</span></div>
+        <label style="position:relative;">Street
           <input type="text" id="ldStreet" autocomplete="off" data-cr-gmap="skip" placeholder="Start typing &#8212; address auto-completes">
           <div id="ldSugg" class="ldsugg" style="display:none;"></div>
         </label>
         <label class="ldmore">Suite/Apt/Unit<input type="text" id="ldSuite" autocomplete="off"></label>
         <div class="ckrow">
-          <label>City *<input type="text" id="ldCity" autocomplete="address-level2"></label>
-          <label>State *<select id="ldState"><option value="">State*</option><option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>GU</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>PR</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>VI</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>DC</option><option>WV</option><option>WI</option><option>WY</option></select></label>
+          <label>City<input type="text" id="ldCity" autocomplete="address-level2"></label>
+          <label>State<select id="ldState"><option value="">State*</option><option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>GU</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>PR</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>VI</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>DC</option><option>WV</option><option>WI</option><option>WY</option></select></label>
         </div>
         <div class="ckrow">
-          <label>Zip *<input type="text" id="ldZip" inputmode="numeric" autocomplete="postal-code"></label>
+          <label>Zip<input type="text" id="ldZip" inputmode="numeric" autocomplete="postal-code"></label>
           <label>Country *<select id="ldCountry"><option>USA</option></select></label>
         </div>
       </div>
@@ -16122,9 +16122,16 @@ function openLeadForm(){
    'ldInsAdjEmail','ldInsDeductible','ldInsNotes'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
-  ['ldState','ldCategory','ldWorkType','ldSource','ldPartner','ldInsCoverage'].forEach(function(id){
+  ['ldCategory','ldWorkType','ldSource','ldPartner','ldInsCoverage'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
+  /* 1208 (audit 7b): Ohio by default. Cardinal works Dayton; the walk filled
+     every field it was asked for and was still refused with "Required: State",
+     because this select opened empty. Every other state is one tap away, and
+     the address autocomplete still overwrites it (ldState is set from the
+     Google place when one is picked). */
+  var _ldSt = document.getElementById('ldState');
+  if(_ldSt instanceof HTMLSelectElement) _ldSt.value = 'OH';
   document.getElementById('ldPriority').value = 'Normal';
   document.getElementById('ldStatus').value = 'Not Contacted';
   document.getElementById('ldPartnerCk').checked = false;
@@ -16424,11 +16431,26 @@ document.getElementById('ldSave').addEventListener('click', async function(){
   var missing = [];
   if(!first) missing.push('First Name');
   if(!last) missing.push('Last Name');
-  if(!street) missing.push('Street');
-  if(!city) missing.push('City');
-  if(!state) missing.push('State');
-  if(!zip) missing.push('Zip');
-  if(missing.length){ err.textContent = 'Required: ' + missing.join(', '); return; }
+  /* 1208 (audit 7b): the address belongs to a JOB, not to a lead. A phone-in is
+     a name and a way to reach them; the address arrives when the job does. So it
+     is required exactly when a Job Category says there is a job — and Job
+     Category lives inside "+ More detail", so a rep taking a call at a door is
+     never asked for it. Nothing here refuses a save that used to work. */
+  var _cat = document.getElementById('ldCategory');
+  /* the instanceof is a real narrowing, not decoration: gate_types runs tsc
+     --checkJs over these blocks and .value on an HTMLElement is TS2339. */
+  var _needAddr = !!(_cat instanceof HTMLSelectElement && _cat.value);
+  if(_needAddr){
+    if(!street) missing.push('Street');
+    if(!city) missing.push('City');
+    if(!state) missing.push('State');
+    if(!zip) missing.push('Zip');
+  }
+  if(missing.length){
+    err.textContent = 'Required: ' + missing.join(', ') +
+      (_needAddr ? ' \u2014 a Job Category needs the address of the job' : '');
+    return;
+  }
 
   function rows(mountId){
     return Array.prototype.map.call(document.getElementById(mountId).querySelectorAll('.ldrow'), function(r){
@@ -42984,6 +43006,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1208, d: '2026-09-10', t: 'The Lead form stops refusing a phone call', s: 'Taking a lead over the phone meant fighting the long Lead form: it refused to save without a <b>street, city, state and zip</b>, and then refused a second time with \u201cRequired: State\u201d even after you had filled everything, because the state box opened blank. <b>It opens on OH now</b> \u2014 every other state is still one tap away \u2014 and <b>the address is only required once you set a Job Category</b>. A name and a way to reach someone is a lead; the address arrives when the job does. Nothing you could save before has stopped being savable, and the address boxes no longer carry a star that was not telling you the truth.' },
   { b: 1207, d: '2026-09-10', t: 'The search box answers while you type', s: 'Typing in the header search used to do <b>nothing at all</b> until you pressed Return \u2014 and nothing on the screen said Return was what it wanted. Now the <b>top five matching clients appear under the box as you type</b>, with the PO number, the stage and the address, and tapping one opens that client straight away. Return still opens the full Clients list filtered the way it always did, and if there are more than five matches the panel says so. It searches the same things the Clients list searches \u2014 name, address, phone, email and PO number \u2014 because it now uses the very same matcher, so the five you see can never disagree with the list Return gives you.' },
   { b: 1206, d: '2026-09-10', t: 'Five more controls big enough for a thumb', s: 'A sweep of every screen in the app, measured on a phone, looking for anything too small to hit reliably with a thumb. Five were: <b>the A / A / A text-size buttons in the menu</b> (the control you reach for precisely because you are struggling to hit things), <b>the photo album\u2019s section chips</b>, <b>the day squares on the Production mini-calendar</b>, <b>the lead-source chips on the new-lead form</b>, and <b>the document editor\u2019s own buttons</b>, which build 1204 left two pixels short. All five are now the full 44 pixels. Nothing was renamed and nothing moved. <b>The Dispatch grip was checked and is fine</b> \u2014 it looks tiny but carries an invisible pad that makes it 45 across, which is why it was left alone.' },
   { b: 1205, d: '2026-09-10', t: 'The estimate builder\u2019s buttons are big enough to hit', s: 'On the screen where you type money, the toolbar buttons were <b>26 pixels tall</b> \u2014 the smallest targets in the app, on a phone, often on a roof. Close, Preview, Options, \u2192 Contract and Save Draft are now a full <b>44 pixels</b>, and so are the three Add buttons above the line items. <b>And the row wraps instead of scrolling sideways.</b> At phone width \u201c\u2192 Contract\u201d used to sit off the right-hand edge of the screen with nothing to tell you it was there; the title now takes its own line and every button is visible under it. Save Draft and Publish are still under your thumb at the bottom, where they have been since build 1029.' },

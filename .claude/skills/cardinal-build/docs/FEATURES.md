@@ -8417,3 +8417,23 @@ the header's `--h*` — those are declared on `.site` and do not reach it.
 `.cr-ib.searchbtn` are older controls, both `display:none`, and a grep finds them first. Two drafts
 of `gate_1207` measured a 0×0 input before this was established.
 
+
+## Build 1208 — the Lead form's rules, as they actually are
+
+The Lead door (`#leadFormModal` → `#ldSave`) requires, in this order:
+
+1. **First and Last name** — unconditional.
+2. **A phone or an email** (build **782**), with a tick box for the genuine exception. ⚠ This *is*
+   audit option 7a, already shipped on this door; the Contact door is the one without it.
+3. **A claim type** radio.
+4. **A Lead Source** (build 940-era) — and when it is missing the form **opens "+ More detail",
+   shakes the field and focuses it**, because it lives inside that expander.
+5. **Street / City / State / Zip — only when a Job Category is set** (1208). No category means a
+   phone-in: a name and a way to reach them is a lead, and the address arrives with the job.
+
+`openLeadForm()` sets **`ldState` to `OH`**; it is no longer blanked with the other selects. The
+address autocomplete still overwrites it from a picked Google place.
+
+⚠ **Do not "fix" the address requirement back to unconditional**, and do not add a `*` to those four
+labels — the block head says what makes them required.
+

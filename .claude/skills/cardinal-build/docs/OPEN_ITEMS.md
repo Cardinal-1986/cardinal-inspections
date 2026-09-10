@@ -5748,19 +5748,29 @@ its strip shows no count in the walked state.
 *Written 10 Sep 2026 at build 1205. Options 1, 2, 3a, 4a, 4b, 5, 6a, 8, 10, 11, 12 and 13 have
 shipped in builds 1200–1205; `CR_SALES_WORKFLOW_AUDIT_2026-09.md` §6 tracks them by number.*
 
-- **Options 7a / 7b / 7c — the two intake doors (A1). A DECISION, not code.** The + button opens
-  two forms with two rulebooks: **Contact** saves a lead from a name alone; **Lead** is a 1,600px
-  form that refuses without six fields and has no Ohio default. 7a (Contact requires phone **or**
-  email) and 7b (State defaults to OH; address optional for a phone-in) are small validation
-  changes and are **his call, because they change what a rep is allowed to save**. 7c — one door
-  with an "add the address now or later" step — is the real fix and is 1–2 builds.
+- **Options 7a / 7c — the intake doors. THEO'S CALL, and here is what each one costs.**
+  ✅ **7b shipped at 1208** (OH by default; the address follows the Job Category).
+  ⚠ **7a turned out to be already shipped on the LEAD door** — build 782 requires a phone or an
+  email there, with a tick box for the genuine exception. What remains is the **Contact** door,
+  which saves from a name alone. Adding the same rule there would **refuse a save that works
+  today**, which is why it is not done: taking something away from a rep needs his yes, not my
+  judgement. 7c — one door with an "add the address now or later" step — is the real fix and is
+  1–2 builds.
 - ✅ **Option 6b SHIPPED at 1207.** It left one thing recorded: **`renderHome()` still carries its
   own client haystack**, the same seven fields *minus* `pr.created_by`. The directory, Insurance
   Clients and the live search all use `crClientHay()` now; folding Home in would silently start
   matching the board on a rep's email address, which is a behaviour change and therefore Theo's
   call, not a tidy-up.
-- **Option 9 — the phone profile's client band above the money ring.** A layout call out of the
-  788–804 rebuild; a small `order:` change once he has picked.
+- ⚠ **Option 9 — the phone profile's client band above the money ring. HELD, because it REVERSES A
+  DECISION THEO MADE ON A PREVIEW.** The audit marked it "yours" without saying why; the reason is
+  in the build log. **Build 797** shipped *"Job Value/circle/Balance Due merge with Payment
+  Information into one full-bleed card … and that card moves **above the client name band**"* —
+  from preview_v3/v4, which he reviewed and confirmed, then reviewed again live on his phone.
+  `syncMoneyCard()` does it deliberately, on `matchMedia('(max-width:560px)')`, with a resize
+  listener so a rotation cannot undo it. Reversing that is a one-line change and is **not mine to
+  make**. The finding behind it is still real — a rep opening a Lead reads *$0.00* twice before the
+  homeowner's name, and the name truncates to "Mark Diamo…" — so it is worth putting to him as a
+  question, with the 797 history attached.
 - ✅ **Option 14 SHIPPED at 1206**, and it left a measured list behind. `gate_1206` baselines **24
   under-floor targets** across 32 states — existing debt that blocks nothing and can never grow.
   `node gate_1206.mjs --list` prints them. The biggest families, if Theo wants another pass:

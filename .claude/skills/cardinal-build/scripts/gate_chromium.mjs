@@ -125,6 +125,15 @@ const GATES = [
     protects: 'the header search shows the top five matching clients as you type, from the same matcher the directory uses',
     break: { find: "i.addEventListener('input', crHsRender);",
              repl: 'void 0;' } },
+  /* 1208: the Lead form must take a phone-in. The break pins the address
+     guard back on, restoring the measured 1207 behaviour the gate reports in
+     the audit's own words — "Required: Street, City, State, Zip", and then
+     "Required: State" on the second try. Anchor counted in 1207 first: 0
+     there, 1 here (BUG_CLASSES 86). */
+  { name: 'gate_1208.mjs',
+    protects: 'a lead taken over the phone saves from a name and a number, and an address is required only when a Job Category says there is a job',
+    break: { find: 'var _needAddr = !!(_cat instanceof HTMLSelectElement && _cat.value);',
+             repl: 'var _needAddr = true;' } },
 ];
 
 function run(script, args) {
