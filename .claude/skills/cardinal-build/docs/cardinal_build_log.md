@@ -33172,6 +33172,35 @@ byte-identical by token — **RED 12 on the 1216 artifact**, where it also catch
 **21/21** · `gate_types` GREEN (0 grew, 2 improved) · `gate_dupes` GREEN ·
 `gate_stack` CLEAN · patch replays **byte-for-byte**. No SQL.
 
+### ⚠ The sentinel was NOT clean, and the disposition is measured rather than argued
+
+**4 NEW findings, all `OVERRIDDEN`**, all of the same shape:
+
+```
+OVERRIDDEN .cr-est-totals .lbl       { color: rgb(107,107,107) } never wins
+OVERRIDDEN .cr-est-totals .val       { color: rgb(44,44,44)    } never wins
+OVERRIDDEN .cr-est-totals .grand-lbl { color: rgb(44,44,44)    } never wins
+OVERRIDDEN .cr-est-totals .grand-val { color: rgb(143,22,32)   } never wins
+```
+
+**They are pre-existing dead rules, and that is established, not assumed.** A
+`diff` of every `.cr-est-totals` ink rule between the 1216 and 1217 artifacts is
+**identical** — this build changed none of them. `selector_audit.py` puts the
+winner for all four in `cr-nvl-styles`, where it already was. They lost before
+this build and they lose after it.
+
+**Why the sweep called them NEW:** 1217 rewrote the *winning* rule beside them —
+the `--est-dim` split — so the rule set the sentinel diffs against moved even
+though the computed outcome did not. Nothing on screen differs: `gate_1217`
+measures **0 of 49** text nodes below floor, the totals block included.
+
+**Not fixed here, and deliberately not.** Deleting four dead declarations is the
+right end state — *deletion at source beats out-specificity* — but it is not what
+"make the builder (b)" means, and widening a build on my own initiative is the
+thing this file keeps recording as a cost. **Queued into 1218**, which touches the
+same module.
+
 **Still to come on the programme:** 1218 the button system (19 fills, 10 radii, 4
-fonts), 1219 the client profile in Sales Floor's language. Item 4 is a fence:
-Production, Crew Dispatch, Sales Floor and OC Colors are finished.
+fonts) **plus these four dead rules**, 1219 the client profile in Sales Floor's
+language. Item 4 is a fence: Production, Crew Dispatch, Sales Floor and OC Colors
+are finished.

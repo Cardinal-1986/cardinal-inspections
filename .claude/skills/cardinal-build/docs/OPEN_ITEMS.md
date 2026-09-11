@@ -6064,7 +6064,7 @@ CSS. Four items came out of it and he took all four.
 | # | Item | State |
 |---|---|---|
 | 1 | the two white surfaces go dark | ✅ **DONE.** 1216 took `crji-card`; **1217 took the estimate builder, Theo's pick (b)** |
-| 2 | one button system | ⬜ **1218** — three treatments (solid / outline / ghost), one radius, one font |
+| 2 | one button system | ⬜ **1218** — three treatments (solid / outline / ghost), one radius, one font. **Also carries the four dead `.cr-est-totals` ink rules** 1217's sentinel surfaced |
 | 3 | the client profile in Sales Floor's language | ⬜ **1219** — the screen everyone lives in is the least designed one |
 | 4 | leave Production, Crew Dispatch, Sales Floor and OC Colors alone | ✅ **A FENCE, NOT A BUILD.** They are finished. Do not sweep them |
 
