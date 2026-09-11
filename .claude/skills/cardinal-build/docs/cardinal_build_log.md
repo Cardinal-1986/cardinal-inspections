@@ -32892,7 +32892,9 @@ never requested) — **control on 1212 reds 9** · **`gate_1214` 20/20**, and it
 not the source: signed out at 1440 and 390 neither library is requested; a chart request fetches
 Chart.js and **actually constructs a chart**; a second chart **reuses the one fetch** — **control on
 1213 reds 11** · both registered in `gate_chromium` (selftest **18/18**) · `gate_types` GREEN (0
-codes grew, 2 improved) · `gate_dupes` GREEN · `gate_stack` CLEAN · both patches replay
+codes grew, 2 improved) · `gate_dupes` GREEN · `gate_stack` CLEAN · **sentinel CLEAN — 64 renders, nothing new,
+203 carried from 1212** (1213 is a layout build, so its result held the merge; swept at 390 and
+1194 with the seed + mock setup, `--since` on the 1212 artifact) · both patches replay
 **byte-for-byte**. No SQL.
 
 ⚠ **THE COMMENT-POLLUTION TRAP COST FIVE ROUNDS IN ONE BUILD, AND THE FIX IS NOW A SCRIPT.** Five
