@@ -18,7 +18,17 @@
    each, how many carry an invoice/estimate document with a share token. Zero on both = preventive
    work; the correction is two additive reads of the project checklist server-side, not a
    shared-definition refactor. Rank by count and reachability.
-2. ~~**The sign-in logo is 1.14 MB and loads before sign-in.**~~ **PREVIEW BUILT 10 Sep 2026 —
+2. ⚠ **STILL OPEN, AND BUILD 1213 IS NOT THIS.** Theo said on 11 Sep *"no logo at all on the left
+   of the sign in"* — **the thing on the left of the sign-in was `wm-home.jpeg` (51 KB), a different
+   image**, and 1213 removed it. **`cardinal-transparent.png` (1.12 MB) is still fetched before
+   sign-in**, measured in the same render: it lives on the post-login landing and two insurance
+   headers, not on the sign-in screen. Do not mark this done on the strength of 1213.
+   ⚠ The same render shows FOUR more images fetched before anyone signs in —
+   `cardinal-report-logo.png`, `cardinal-prod.png`, `cardinal-board.png` and `wm-login.jpeg`
+   (55 KB, the sign-in card's own watermark, which only loads when that screen is shown because it
+   is a CSS background rather than an `<img>`).
+
+   ~~**The sign-in logo is 1.14 MB and loads before sign-in.**~~ **PREVIEW BUILT 10 Sep 2026 —
    waiting on Theo to say A, B, C or D.** `scripts/preview_logo.mjs` re-encodes the real file and
    writes the candidates; the labelled comparison page is at
    **https://claude.ai/code/artifact/a68093a9-0cd2-4c2f-b207-3c3729ad1769** (each candidate at the
@@ -47,8 +57,15 @@
    it. The `contracts` table and `contracts_setup.sql` are untouched — a dead HTTP route is not
    the feature. `api/*.js` is now **36**. `harness_653`'s P1 was **inverted, not deleted** (it
    carries five other live sections, and its route checks had already gone stale).
-4. **Defer Chart.js and PapaParse** (both load unconditionally) until the analytics and CSV
-   screens open. Regression risk on every chart consumer — its own build, gated per consumer.
+4. ✅ ~~**Defer Chart.js and PapaParse**~~ **DONE at build 1214.** ⚠ **"Regression risk on every
+   chart consumer — gated per consumer" overstated it, measured**: the app funnels each through ONE
+   place — `new Chart(` is a single site inside `rptChart()` (7 renderers call it) and `Papa.parse`
+   a single site inside `parseCSV()`, reached only via `openImportModal()`. Both now use the
+   `ensureXLSX()` pattern the importer already had. ⚠ **The build would have shipped broken but for
+   one line**: `openImportModal()` opened with a bare "is the library loaded" early return, which
+   with a lazy script refuses the importer on EVERY use and blames the user's internet. It is an
+   `await` on the loader now (safe: the function is already async and the await is above every side
+   effect). `gate_1214` watches the **network**, not the source, and its control on 1213 reds 11.
 5. **WeatherLock vs RhinoRoof Granulated.** Still Theo's wording call — but **narrowed to ONE
    site by build 1212**: the route's `WARRANTIES.roofing` copy went with the route, so
    `WeatherLock` now appears **exactly once in the whole repo**, at `index.html:6246` (the

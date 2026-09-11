@@ -8525,3 +8525,43 @@ signing flow are all untouched.
 The install-instructions bullet in `index.html` now says the route was retired and why, so it is
 not re-added; `harness_653`'s P1 was **inverted** to assert its absence rather than deleted (that
 file carries five other live sections).
+
+---
+
+## Build 1213 — the sign-in screen is the sign-in box
+
+**Where:** `#loginView` markup and the "desktop login stage" block in the head stylesheet.
+
+The desktop-only left panel (`.loginhero` — hero photograph, CARDINAL wordmark, ROOFING &
+RENOVATIONS, motto, daily quote, clock) is **removed**. The box centres itself; `#loginView` was
+already flex with `justify-content:center`.
+
+- ⚠ **The desktop rule that hid the card's own quote went with it.** It existed *because* the panel
+  carried the quote; leaving it would have deleted the daily quote from the desktop sign-in
+  silently. The card now shows its quote and rule at every width, as the phone always did.
+- ⚠ **Phones are unchanged** — the panel was gated to `min-width:901px` and never appeared there.
+- The hero photograph is no longer downloaded **on any device**; it was being fetched on phones too,
+  inside a `display:none` subtree, where nothing showed it. The file itself stays in the repo.
+
+**Instrument:** `gate_1213.mjs` (19 checks, both widths, signed out — box centred to the pixel,
+every control alive, **the quote asserted visible with real text**, the photograph never requested).
+
+## Build 1214 — Chart.js and Papa Parse load on first use
+
+**Where:** the two eager CDN tags; `ensureChart()` beside `rptChart()`; `ensurePapa()` beside
+`ensureXLSX()` in `cr-pricing-import`.
+
+Both libraries (~205 KB and ~45 KB) were `<script src>` in the document and downloaded on every
+launch, before sign-in. They now load the first time a chart is drawn or the import modal is opened.
+
+- **The pattern is `ensureXLSX()`'s**, which the importer already had — one memoised promise, one
+  injected tag. Not a new mechanism.
+- ⚠ **`openImportModal()`'s bare "is it loaded" early return had to go** — with a lazy script it
+  would have refused the importer on every use and blamed the user's connection.
+- ⚠ **The canvas is re-queried inside the load callback**, never held across it.
+- Offline: a report still renders its cards and numbers without the drawings; the importer says
+  plainly that it could not load.
+
+**Instrument:** `gate_1214.mjs` (20 checks) — it watches the **network**, not the source: signed out
+at 1440 and 390 neither is requested; asking for a chart fetches Chart.js and constructs one; a
+second chart reuses the single fetch.

@@ -32820,3 +32820,95 @@ blocks and the two new url checks fail; strip the self-assignment guard and the 
 checks fail. ⚠ Building those controls tripped this file's own rule: **the reassign block sits
 ABOVE the create block in `index.html`**, and the first attempt asserted "blocks out of file order"
 rather than silently splicing one away.
+
+## Build 1213 — the sign-in screen is the sign-in box
+
+Theo, 11 Sep: *"How about no logo at all on the left of the sign in. Just the sign in box."*
+
+**⚠ THE FIRST PROBE MEASURED THE WRONG SCREEN AND REPORTED NOTHING USEFUL.** `e2e_mock_supa`
+signs you straight in, so a render that just boots finds `#loginView` at `display:none` and returns
+`loginShown:false` — no evidence at all about the screen being changed. The rig needs a **no-session
+client** and the view's own `.open` class before it is looking at the sign-in screen. Recorded
+because it cost a round and it will cost the next one too.
+
+Measured properly, signed out, at 1440 and 390:
+
+| | x | w | |
+|---|---:|---:|---|
+| `.loginhero` | 197 | 560 | **the left panel** — desktop only (`min-width:901px`) |
+| `.logincard` | 843 | 400 | the sign-in box |
+| `#loginQuote` | — | — | **hidden on desktop** |
+
+The panel carried a hero photograph, the CARDINAL wordmark, ROOFING & RENOVATIONS, the motto, the
+daily quote and a clock. It is gone; the box centres itself, because `#loginView` was already
+`display:flex` with `justify-content:center` and one child needs no new rule. Measured after:
+card at **x=520 w=400 in 1440** — centre 720 of 720.
+
+⚠ **THE CATCH, AND IT WOULD HAVE COST THE DAILY QUOTE.** The desktop block carried
+`#loginView.open .loginsep, #loginView.open #loginQuote{display:none;}` with the comment *"card
+sheds its quote block on desktop — the hero carries the art"*. Delete the panel and leave that rule
+and **the quote disappears from the desktop sign-in, silently**, by hiding an element whose
+replacement no longer exists. The rule went with the panel that justified it, so the card keeps its
+own quote at every width — which is how the phone has always worked. `gate_1213`'s control proves
+the trap was real: on 1212 the quote checks at 1440 are **red**. 1182 lost that quote once already.
+
+⚠ **The hero photograph was fetched ON PHONES TOO, where it was never shown** — an `<img src>`
+inside a `display:none` subtree still downloads. 51 KB off every device, not just the desktop it
+appeared on. Measured, not assumed. **The file is NOT deleted**: it becomes unreferenced, and this
+doc set's own rule is that an asset is not unreferenced just because nothing names it.
+
+The two JS writers (`heroClock` in the tick, the `heroQuote` mirror) were both guarded, so nothing
+threw either way; they were removed rather than left pointing at elements that no longer exist —
+807's five-site retire checklist is exactly about that.
+
+## Build 1214 — Chart.js and Papa Parse stop downloading before sign-in
+
+Audit item 4 from the 9 Sep assessment. **Both were confirmed loading on the sign-in screen** by a
+signed-out render at 1440 and 390 before anything was changed.
+
+**OPEN_ITEMS called this "regression risk on every chart consumer — its own build, gated per
+consumer". Measured, it is far smaller**, because the app already funnels each through one place:
+`new Chart(` is **one site** inside `rptChart()` (7 renderers call it), and `Papa.parse` is **one
+site** inside `parseCSV()`, reached only through `openImportModal()`.
+
+**The pattern is the app's own.** `cr-pricing-import` already carries `ensureXLSX()` — a memoised
+promise that injects the tag on first use — and already preloads it from the import modal. The two
+new loaders are that function with one URL changed. One mechanism per concept.
+
+⚠ **THE GUARD THAT WOULD HAVE SHIPPED THIS BROKEN.** `openImportModal()` opened with a bare
+"is the library there yet" early return. Make the script lazy and leave that line and **the importer
+refuses itself on every first use**, with a message blaming the user's internet for a change we
+made. It is an `await` on the loader now. The await is safe for the reason the invariant actually
+turns on: the function is already `async` and the await sits **above every side effect**, so there
+is no precondition to revalidate.
+
+⚠ **And the stale-node trap the lazy load introduces:** the canvas is looked up **inside** the
+callback, never held across the load. The reports view re-renders; a node captured before an await
+can be one that is no longer in the document.
+
+Gates: `check_build` green on both · **`gate_1213` 19/19** (hero gone at both widths, box centred to
+the pixel, every control alive, **the quote and its rule visible at 1440 and 390**, the photograph
+never requested) — **control on 1212 reds 9** · **`gate_1214` 20/20**, and it watches the **network**,
+not the source: signed out at 1440 and 390 neither library is requested; a chart request fetches
+Chart.js and **actually constructs a chart**; a second chart **reuses the one fetch** — **control on
+1213 reds 11** · both registered in `gate_chromium` (selftest **18/18**) · `gate_types` GREEN (0
+codes grew, 2 improved) · `gate_dupes` GREEN · `gate_stack` CLEAN · both patches replay
+**byte-for-byte**. No SQL.
+
+⚠ **THE COMMENT-POLLUTION TRAP COST FIVE ROUNDS IN ONE BUILD, AND THE FIX IS NOW A SCRIPT.** Five
+times an explanatory comment I wrote contained an identifier the patch counts — `wm-home.jpeg`,
+`rptChart(`, `ensureXLSX()`, `typeof Papa === 'undefined'`, and finally the literal `<script src>`,
+which made **check_build** itself go red at **136 open / 134 close**. Every time the correct fix was
+to reword the prose, never weaken the check (732's precedent). Doing it one failure at a time cost
+five runs, so `patch_1214.py` now opens with `no_planted_identifiers()`, which scans **the comment
+lines of every replacement string** for the identifiers the patch asserts on and names all of them
+at once. ⚠ Its first version flagged the real `function rptChart(...)` definition and the real
+`new Chart(...)` call — a check that fails correct code, which is the very thing it exists to stop —
+so it reads comment lines only. **BUG_CLASSES 96.**
+
+⚠ **What this build did NOT fix, stated plainly so it is not assumed:** `cardinal-transparent.png`
+(**1.12 MB**) is **still fetched before sign-in**, along with `cardinal-report-logo.png`,
+`cardinal-prod.png`, `cardinal-board.png` and `wm-login.jpeg` (55 KB, the card's own watermark).
+That logo is a **different image** from the one removed here — it lives on the post-login landing
+and two insurance headers, not on the left of the sign-in. Assessment item 2 is still open.
+

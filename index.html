@@ -131,7 +131,13 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Cardinal Client Resources</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<!-- 1214: Chart.js is NOT loaded here any more. It was ~205 KB fetched on every
+     launch, before sign-in, for a library only the Reports screen uses. It now
+     loads on the first chart, through a memoised loader that sits beside the
+     one function in this file that builds a chart. (Neither name is written
+     here: the patch counts that function's call sites, and prose naming it
+     breaks the count and makes every future grep report a caller that is not
+     one. It has cost this build two rounds already.) -->
 <style>
 :root{
   --red:#c8202e;
@@ -2874,21 +2880,14 @@ body:has(#loginView[style*="block"]){background:#fff;}
 .logincard{overflow:hidden;}
 
 /* ---- desktop login stage ---- */
-.loginhero{display:none;}
 @media (min-width:901px){
   #loginView{display:none;align-items:center;justify-content:center;gap:clamp(48px,6vw,120px);padding:40px 48px;}
   #loginView.open{display:flex;}
-  .loginhero{display:flex;flex-direction:column;align-items:center;text-align:center;max-width:660px;}
-  .heroart{width:min(560px,42vw);height:auto;opacity:.9;}
-  .heroname{font:800 clamp(44px,4.2vw,68px)/1 Georgia,'Times New Roman',serif;letter-spacing:.14em;margin-top:6px;color:#7a4f00;/* 685: was gradient-clipped text */}
-  .herosub{font:800 clamp(14px,1.2vw,19px) 'Segoe UI',Arial,sans-serif;letter-spacing:.42em;color:#1c1416;margin-top:10px;text-indent:.42em;}
-  .heromotto{font:italic 700 16px Georgia,serif;color:#8a6f66;margin-top:14px;}
-  #heroQuote{margin:26px 0 0;max-width:520px;
-    font:italic 700 17px/1.6 Georgia,'Times New Roman',serif;letter-spacing:.015em;color:#7a4f00;/* 685: was gradient-clipped text */}
-  #heroQuote span{color:#9c8a72 !important;-webkit-text-fill-color:#9c8a72;letter-spacing:.12em;text-transform:uppercase;}
-  #heroClock{margin-top:22px;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8a6f66;font-variant-numeric:tabular-nums;}
-  /* card sheds its quote block on desktop — the hero carries the art */
-  #loginView.open .loginsep, #loginView.open #loginQuote{display:none;}
+  /* 1213: the card KEEPS its quote and rule on desktop now. This used to hide
+     both, because the hero beside it carried the quote - and with the hero gone
+     that rule would have deleted the daily quote from the desktop sign-in
+     silently, by hiding an element whose replacement no longer exists. The
+     phone has always shown them here; desktop now matches. */
   #loginView.open .logincard{width:400px;flex:0 0 auto;}
 }
 
@@ -4033,7 +4032,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-10 build 1212<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-11 build 1214<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4085,14 +4084,19 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
 <!-- ============ LOGIN (team mode only) ============ -->
 <div id="loginView">
-  <div class="loginhero">
-    <img class="heroart" src="/wm-home.jpeg" alt="">
-    <div class="heroname">CARDINAL</div>
-    <div class="herosub">ROOFING &amp; RENOVATIONS</div>
-    <div class="heromotto">&#8220;The Single Source Of Truth&#8221;</div>
-    <p id="heroQuote"></p>
-    <div id="heroClock"></div>
-  </div>
+  <!-- 1213: the left-hand hero panel is GONE on Theo's word - "no logo at all
+       on the left of the sign in. Just the sign in box." It was desktop-only
+       (min-width:901px) and carried a hero photograph, the CARDINAL wordmark,
+       the motto, the daily quote and a clock. The box centres itself:
+       #loginView is already flex with justify-content:center, so one child
+       needs no new rule.
+       ⚠ That photograph was downloaded on PHONES TOO, where it was never shown
+       - an <img src> inside a display:none subtree still fetches. The file is
+       left in the repo; retiring a root asset is its own call.
+       ⚠ Its FILENAME is deliberately not written here. The patch asserts the
+       name appears nowhere in the file, which is what proves the tag is gone -
+       and naming it in prose would both break that check and make every future
+       grep report a reference that is not one. It is in the build log. -->
   <div class="logincard">
     <img class="loginlogo" id="loginLogo" alt="Cardinal Roofing &amp; Renovations" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI1LjQuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA2ODAgNDAwIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA2ODAgNDAwOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6I0NDMEMxNjt9Cgkuc3Qxe2ZpbGw6I0ZGRkZGRjt9Cgkuc3Qye2ZpbGw6I0M4MUQxOTt9Cjwvc3R5bGU+CjxnIGZpbGw9IiNGRkZGRkYiPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTEwOC45NSwyOTMuNzh2Mi42OWMwLDEzLjY5LTEuNDEsMTguNDMtNi42NSwyMy4wNGMtMi45NCwyLjU2LTcuNTUsNC43My0xMS45LDUuNQoJCQljLTIuODIsMC41MS05Ljg1LDAuNzctMTguNTYsMC43N2MtMTYuMjUsMC0yMC44Ni0xLjAyLTI3LjEzLTYuMDFjLTQuMjItMy4zMy03LjQyLTkuMzQtOC4xOS0xNS42MQoJCQljLTAuNjQtNS41LTEuMTUtMTYuNzYtMS4xNS0yOC42N2MwLTE1Ljg3LDEuOTItMjIuOTEsNy42OC0yOC40MWM2LjY1LTYuNCwxMy4xOC03Ljk0LDMzLjUzLTcuOTRjMTEuOSwwLDE1Ljg3LDAuNTEsMjAuNiwyLjY5CgkJCWM1Ljg5LDIuNjksOS4wOSw3LjE3LDEwLjM3LDE0LjU5YzAuNTEsMi44MiwwLjY0LDQuOTksMC45LDEyLjkzSDg4Ljg2Yy0wLjEzLTYuMTQtMC4zOC03LjQyLTEuNDEtOS4zNAoJCQljLTEuNjYtMi45NC00Ljk5LTMuODQtMTMuOTUtMy44NGMtOC40NSwwLTEyLjQxLDAuOS0xNC43MiwzLjJjLTIuNjksMi44Mi0zLjA3LDUuNjMtMy4wNywyMy44YzAsMTQuNzIsMC4zOCwxNy43OSwyLjMsMjEuMTIKCQkJYzEuOTIsMy40Niw1Ljc2LDQuNjEsMTQuODUsNC42MWM5LjYsMCwxMy44Mi0xLjI4LDE1LjQ4LTQuNzRjMS4wMi0yLjA1LDEuMTUtMy4zMywxLjE1LTguN3YtMS42NkgxMDguOTV6Ii8+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTEzNi44NSwzMDkuNjVsLTQuNzQsMTUuNDhoLTIwLjQ4bDI3LTg1LjM2aDI5LjU2bDI3LjM5LDg1LjM2aC0yMC4yMmwtNC44Ni0xNS40OEgxMzYuODV6IE0xNTMuNzQsMjU0LjYyCgkJCWwtMTIuNTQsNDAuNTdoMjUuMjFMMTUzLjc0LDI1NC42MnoiLz4KCQk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMjAyLjI0LDIzOS43OGg0Mi40OWM4LjgzLDAsMTQuNTksMC45LDE4LjU2LDIuOTRjNy41NSwzLjcxLDEwLjQ5LDEwLjI0LDEwLjQ5LDIyLjkxCgkJCWMwLDE3Ljc5LTIuNjksMjIuMTQtMTUuNzQsMjUuMDh2MC42NGMxMC4xMSwwLjY0LDE1LjEsNi4yNywxNC45NywxNi43N3YxNy4wMmgtMTkuOTZ2LTEzLjMxYzAuMjYtOC41Ny0zLjMzLTEyLjQxLTExLjEzLTEyLjE2CgkJCWgtMTkuOTZ2MjUuNDdoLTE5LjcxVjIzOS43OHogTTI0Mi40MiwyODIuOWM5LjIxLDAsMTEuMjYtMi41NiwxMS4yNi0xMy45NWMwLTEwLjI0LTEuNzktMTIuMjktMTEuMjYtMTIuMjloLTIwLjQ4djI2LjI0SDI0Mi40MnoiCgkJCS8+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTI4NS4xNywyMzkuNzhoNDMuMzhjMjMuMDMsMCwzMi42Myw5Ljg1LDMyLjYzLDMzLjY2YzAsMjQuNDQtMC42NCwzMS42MS0zLjMzLDM3LjUKCQkJYy00LjczLDkuOTgtMTMuNDQsMTQuMi0yOS42OSwxNC4yaC00M1YyMzkuNzh6IE0zMjUuNjEsMzA4LjI0YzYuNzgsMCwxMC4yNC0xLjQxLDEyLjU0LTQuOTljMi4zLTMuNTgsMi45NC04LjMyLDIuOTQtMjEuNQoJCQljMC0xMi4yOC0wLjY0LTE3LjE1LTIuODItMjAuMzVjLTIuMDUtMy4yLTUuNS00LjQ4LTEyLjE2LTQuNDhoLTIxLjI0djUxLjMySDMyNS42MXoiLz4KCQk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMzkyLjQsMzI1LjEzSDM3Mi43di04NS4zNmgxOS43MVYzMjUuMTN6Ii8+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTQ4OS4xNSwzMjUuMTNoLTMzLjI3bC0xOC44MS00MS4zNGMtMi4zLTUuMTItMy40Ni03Ljk0LTguMTktMjAuMzVsLTIuNjktNi43OGgtMC43NwoJCQljMC41MSwxMS43NywwLjc3LDIwLjczLDAuNzcsMjcuMTN2NDEuMzRoLTE5LjMydi04NS4zNmgzMy4wMmwxNy43OSwzOS41NGMzLjk3LDguODMsNC4yMiw5LjQ3LDguOTYsMjEuMzdsMi45NCw3LjA0aDAuNzcKCQkJbC0wLjI2LTYuNjVjLTAuNTEtOS42LTAuNTEtMTAuNzUtMC41MS0xOS44NHYtNDEuNDZoMTkuNThWMzI1LjEzeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik01MjEuNzgsMzA5LjY1bC00Ljc0LDE1LjQ4aC0yMC40OGwyNy04NS4zNmgyOS41NmwyNy4zOSw4NS4zNkg1NjAuM2wtNC44Ni0xNS40OEg1MjEuNzh6IE01MzguNjcsMjU0LjYyCgkJCWwtMTIuNTQsNDAuNTdoMjUuMjFMNTM4LjY3LDI1NC42MnoiLz4KCQk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNNjA2Ljg4LDMwOC4xMWgzNy43NXYxNy4wMmgtNTcuNDZ2LTg1LjM2aDE5LjcxVjMwOC4xMXoiLz4KCTwvZz4KCTxnPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0zNS41MiwzMzguMDNoMTUuNzVjNy40NiwwLDEwLjA0LDIuNDksMTAuMDQsOS41MWMwLDYuMjQtMS4yMiw4LjA5LTUuNzUsOC45MnYwLjE1CgkJCWMzLjU2LDAuMTksNS40MSwyLjM5LDUuMzYsNi4yOXY3LjY2SDU1Ljl2LTYuNThjMC4xLTMuODUtMS42MS01LjQ2LTUuNTEtNS4zMWgtOS45djExLjloLTQuOTdWMzM4LjAzeiBNNTAuMTQsMzU0LjM2CgkJCWMyLjE5LDAsMy42MS0wLjI5LDQuNTQtMC45N2MxLjI3LTAuODgsMS42MS0xLjk1LDEuNjEtNC43OGMwLTMuOC0wLjM0LTQuOTItMS43Ni01LjcxYy0wLjczLTAuMzktMS45NS0wLjU4LTMuNTYtMC41OEg0MC40OQoJCQl2MTIuMDRINTAuMTR6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTkwLjgyLDMzOC44MWMyLjgzLDEuMjIsNC4zOSwzLjYxLDQuOTcsNy41NmMwLjI0LDEuNDYsMC4yOSwyLjk3LDAuMjksNy4zMWMwLDYuNTMtMC4xLDcuODUtMC41OSwxMC4yNAoJCQljLTAuNjMsMi44My0yLjE5LDQuNzgtNC41OCw1LjhjLTIuMSwwLjg4LTQuMSwxLjEyLTguNzgsMS4xMmMtNS4zNiwwLTcuMjItMC4yNC05LjM2LTEuMTdjLTIuMzQtMS4wMi0zLjgtMi45My00LjQ0LTUuNzEKCQkJYy0wLjU0LTIuMjktMC42My0zLjU2LTAuNjMtOS42NWMwLTcuODUsMC4yOS05Ljk1LDEuNzYtMTIuMzljMS4xNy0xLjk1LDMuMTctMy4yNyw1LjktMy44YzEuMTctMC4yNCwzLjg1LTAuMzksNi43My0wLjM5CgkJCUM4Ni44NywzMzcuNzMsODguOTEsMzM3Ljk4LDkwLjgyLDMzOC44MXogTTkxLjA2LDM1NC4yMnYtNC41M2MwLTMuNTYtMC43OC01LjktMi4yNC02Ljc4Yy0xLjIyLTAuNzMtMi41OC0wLjg4LTcuNDYtMC44OAoJCQljLTUuNywwLTcuMTIsMC41NC04LjA1LDMuMTdjLTAuNTQsMS42MS0wLjU5LDIuMi0wLjU5LDkuMTJjMCw2LjA1LDAsNi4wNSwwLjI0LDcuN2MwLjM0LDIuMSwxLjEyLDMuMzYsMi41NCwzLjkKCQkJYzEuMjIsMC40OSwyLjU0LDAuNjMsNi40NCwwLjYzYzQuNDQsMCw1LjktMC4yLDcuMDItMS4wMmMxLjMyLTAuOTMsMi4xLTMuNDEsMi4xLTYuNzhWMzU0LjIyeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xMjUuNTQsMzM4LjgxYzIuODMsMS4yMiw0LjM5LDMuNjEsNC45Nyw3LjU2YzAuMjQsMS40NiwwLjI5LDIuOTcsMC4yOSw3LjMxYzAsNi41My0wLjEsNy44NS0wLjU5LDEwLjI0CgkJCWMtMC42MywyLjgzLTIuMTksNC43OC00LjU4LDUuOGMtMi4xLDAuODgtNC4xLDEuMTItOC43OCwxLjEyYy01LjM2LDAtNy4yMi0wLjI0LTkuMzYtMS4xN2MtMi4zNC0xLjAyLTMuOC0yLjkzLTQuNDQtNS43MQoJCQljLTAuNTQtMi4yOS0wLjYzLTMuNTYtMC42My05LjY1YzAtNy44NSwwLjI5LTkuOTUsMS43Ni0xMi4zOWMxLjE3LTEuOTUsMy4xNy0zLjI3LDUuOS0zLjhjMS4xNy0wLjI0LDMuODUtMC4zOSw2LjczLTAuMzkKCQkJQzEyMS41OSwzMzcuNzMsMTIzLjY0LDMzNy45OCwxMjUuNTQsMzM4LjgxeiBNMTI1Ljc4LDM1NC4yMnYtNC41M2MwLTMuNTYtMC43OC01LjktMi4yNC02Ljc4Yy0xLjIyLTAuNzMtMi41OC0wLjg4LTcuNDYtMC44OAoJCQljLTUuNywwLTcuMTIsMC41NC04LjA1LDMuMTdjLTAuNTQsMS42MS0wLjU5LDIuMi0wLjU5LDkuMTJjMCw2LjA1LDAsNi4wNSwwLjI0LDcuN2MwLjM0LDIuMSwxLjEyLDMuMzYsMi41NCwzLjkKCQkJYzEuMjIsMC40OSwyLjU0LDAuNjMsNi40NCwwLjYzYzQuNDQsMCw1LjktMC4yLDcuMDItMS4wMmMxLjMyLTAuOTMsMi4xLTMuNDEsMi4xLTYuNzhWMzU0LjIyeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xNDMuMTUsMzUyLjI3aDE1LjE2djQuMTVoLTE1LjE2djE0LjE0aC00Ljk3di0zMi41MmgyMC43N3Y0LjE5aC0xNS44VjM1Mi4yN3oiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMTcwLjE3LDM3MC41NWgtNC45N3YtMzIuNTJoNC45N1YzNzAuNTV6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTIwNy41NywzNzAuNTVoLTguMzRsLTExLjQxLTE5Ljg5Yy0wLjU5LTEuMDctMS4xNy0yLjI0LTMuMjctNi4yOWwtMS4wMi0yLjA1aC0wLjE5bDAuMDUsMS42NmwwLjA1LDEuNzEKCQkJYzAuMDUsMC4xLDAuMDUsMS44LDAuMDUsMy40MXYyMS40NmgtNC45MnYtMzIuNTJoOC4yOWwxMC4wOSwxNy45YzEuMTIsMiwxLjcxLDMuMDcsNC4yNCw3LjhsMS4zNywyLjU4aDAuMTV2LTEuNjZsLTAuMDUtMS42NgoJCQljLTAuMDUtMC4yNC0wLjA1LTEuODUtMC4wNS0zLjM2di0yMS42aDQuOTdWMzcwLjU1eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0yNDIuMzksMzUzLjgzYzAuMSwxLjU2LDAuMSwyLDAuMSwzLjk1YzAsNS45LTAuMiw3LjQ2LTEuMjIsOS4yNmMtMC44OCwxLjU2LTIuMjQsMi42My00LjE5LDMuMTcKCQkJYy0xLjQxLDAuNDQtNC4xNSwwLjYzLTguNDgsMC42M2MtNC41OCwwLTYuNDgtMC4yNC04LjQ0LTEuMDJjLTIuNTQtMS4wMi0zLjktMi41OC00LjczLTUuNDFjLTAuNDktMS41Ni0wLjYzLTMuMzItMC42My03LjAyCgkJCWMwLTkuMTIsMC4wNS05Ljk1LDAuNTktMTIuNDhjMC43OC0zLjU2LDIuNzMtNS43MSw1Ljk1LTYuNThjMS40Ni0wLjQ0LDMuNDYtMC41OSw3LjU2LTAuNTljNi45NywwLDguMzksMC4xOSwxMC42MywxLjU2CgkJCWMxLjIyLDAuNzgsMi4xOSwyLjI0LDIuNTQsMy44NWMwLjI0LDEuMjcsMC4zNCwyLjE5LDAuMzQsNC40OWgtNC45N2MtMC4xNS01LjI3LTAuNzgtNS42Ni04Ljk3LTUuNjZjLTUuMTIsMC02LjkyLDAuNTQtNy44LDIuNDQKCQkJYy0wLjY4LDEuNTEtMC44MywzLjMyLTAuODMsOS43NWMwLDYuOTIsMC4xNSw4LjUzLDAuODMsMTBjMC44OCwxLjksMi43OCwyLjQ0LDguNjMsMi40NGMzLjksMCw1LjY2LTAuMjQsNi43My0xLjAyCgkJCWMxLjAyLTAuNjgsMS41MS0yLjc4LDEuNTEtNi4yOWMwLTAuMjQsMC0wLjg4LTAuMDUtMS41NmgtOS4yMnYtMy45SDI0Mi4zOXoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjkwLjI4LDM1NS41M3YwLjk3YzAsMy40Ni0wLjEsNC44OC0wLjQ5LDYuNjhsNS4xNyw0LjM0bC0yLjQ0LDMuMDdsLTQuMzktMy42NgoJCQljLTAuNzMsMS4zNy0xLjQ2LDIuMTUtMi41OCwyLjY4Yy0xLjksMC45OC0zLjU2LDEuMjItOC4yOSwxLjIyYy02LjI5LDAtOC44My0wLjQ0LTEwLjczLTEuOTVjLTEuOC0xLjQxLTIuNjgtNC4xNC0yLjY4LTguNDQKCQkJYzAtMy44NSwwLjc4LTYsMi41OC03LjI3YzAuNzgtMC41NCwxLjM3LTAuNzMsMy44NS0xLjE3Yy0yLjM5LTIuMDUtMi44My0yLjkzLTIuODMtNS43NWMwLTYuMTQsMi4yOS03Ljk1LDEwLjA5LTcuOTUKCQkJYzcuNTEsMCw5LjgsMS45LDkuOCw4LjA1YzAsMC4yOSwwLDEuMTItMC4wNSwxLjg1aC00LjU0di0xLjA3Yy0wLjA1LTQuMzQtMC41OS00Ljg4LTUuMjItNC44OGMtNC4zOSwwLTUuMzYsMC42OC01LjM2LDMuNjYKCQkJYzAsMi4xOSwwLjI5LDIuNzgsMi41OCw0LjYzbDExLjA3LDkuMzZ2LTIuMXYtMi4yOUgyOTAuMjh6IE0yNzMuMDcsMzU0LjQxYy0zLjc1LDAuNzMtNC40NCwxLjY2LTQuNDQsNS45CgkJCWMwLDIuNjgsMC4zNCw0LjM0LDEuMTIsNS4zMWMwLjgzLDAuOTcsMi4xOSwxLjIyLDYuODgsMS4yMmM1Ljc1LDAsNi44My0wLjM0LDguMDktMi43M0wyNzMuMDcsMzU0LjQxeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0zMTUuMjEsMzM4LjAzaDE1Ljc1YzcuNDYsMCwxMC4wNCwyLjQ5LDEwLjA0LDkuNTFjMCw2LjI0LTEuMjIsOC4wOS01Ljc1LDguOTJ2MC4xNQoJCQljMy41NiwwLjE5LDUuNDEsMi4zOSw1LjM2LDYuMjl2Ny42NmgtNS4wMnYtNi41OGMwLjEtMy44NS0xLjYxLTUuNDYtNS41MS01LjMxaC05Ljl2MTEuOWgtNC45N1YzMzguMDN6IE0zMjkuODMsMzU0LjM2CgkJCWMyLjE5LDAsMy42MS0wLjI5LDQuNTQtMC45N2MxLjI3LTAuODgsMS42MS0xLjk1LDEuNjEtNC43OGMwLTMuOC0wLjM0LTQuOTItMS43Ni01LjcxYy0wLjczLTAuMzktMS45NS0wLjU4LTMuNTYtMC41OGgtMTAuNDgKCQkJdjEyLjA0SDMyOS44M3oiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMzUzLjI0LDM1MS45MmgxNS44NXYzLjg1aC0xNS44NXYxMC41OGgxNi42OHY0LjE5aC0yMS42NXYtMzIuNTJoMjEuNTV2NC4xOWgtMTYuNThWMzUxLjkyeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik00MDYuMDEsMzcwLjU1aC04LjM0bC0xMS40MS0xOS44OWMtMC41OS0xLjA3LTEuMTctMi4yNC0zLjI3LTYuMjlsLTEuMDItMi4wNWgtMC4xOWwwLjA1LDEuNjZsMC4wNSwxLjcxCgkJCWMwLjA1LDAuMSwwLjA1LDEuOCwwLjA1LDMuNDF2MjEuNDZIMzc3di0zMi41Mmg4LjI5bDEwLjA5LDE3LjljMS4xMiwyLDEuNzEsMy4wNyw0LjI0LDcuOGwxLjM3LDIuNThoMC4xNXYtMS42NmwtMC4wNS0xLjY2CgkJCWMtMC4wNS0wLjI0LTAuMDUtMS44NS0wLjA1LTMuMzZ2LTIxLjZoNC45N1YzNzAuNTV6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTQzNi4zNCwzMzguODFjMi44MywxLjIyLDQuMzksMy42MSw0Ljk3LDcuNTZjMC4yNCwxLjQ2LDAuMjksMi45NywwLjI5LDcuMzFjMCw2LjUzLTAuMSw3Ljg1LTAuNTksMTAuMjQKCQkJYy0wLjYzLDIuODMtMi4xOSw0Ljc4LTQuNTgsNS44Yy0yLjEsMC44OC00LjEsMS4xMi04Ljc4LDEuMTJjLTUuMzYsMC03LjIyLTAuMjQtOS4zNi0xLjE3Yy0yLjM0LTEuMDItMy44LTIuOTMtNC40NC01LjcxCgkJCWMtMC41NC0yLjI5LTAuNjMtMy41Ni0wLjYzLTkuNjVjMC03Ljg1LDAuMjktOS45NSwxLjc2LTEyLjM5YzEuMTctMS45NSwzLjE3LTMuMjcsNS45LTMuOGMxLjE3LTAuMjQsMy44NS0wLjM5LDYuNzMtMC4zOQoJCQlDNDMyLjM5LDMzNy43Myw0MzQuNDQsMzM3Ljk4LDQzNi4zNCwzMzguODF6IE00MzYuNTksMzU0LjIydi00LjUzYzAtMy41Ni0wLjc4LTUuOS0yLjI0LTYuNzhjLTEuMjItMC43My0yLjU4LTAuODgtNy40Ni0wLjg4CgkJCWMtNS43LDAtNy4xMiwwLjU0LTguMDUsMy4xN2MtMC41NCwxLjYxLTAuNTksMi4yLTAuNTksOS4xMmMwLDYuMDUsMCw2LjA1LDAuMjQsNy43YzAuMzQsMi4xLDEuMTIsMy4zNiwyLjU0LDMuOQoJCQljMS4yMiwwLjQ5LDIuNTQsMC42Myw2LjQ0LDAuNjNjNC40NCwwLDUuOS0wLjIsNy4wMi0xLjAyYzEuMzItMC45MywyLjEtMy40MSwyLjEtNi43OFYzNTQuMjJ6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTQ3NC45MiwzMzguMDNMNDY0LDM3MC41NWgtNy40NmwtMTAuOTctMzIuNTJoNS4yMmw3LjMxLDIxLjM2YzAuNTgsMS44LDEuNTEsNC45MiwyLjE0LDcuMDJoMC4xCgkJCWMwLjgzLTIuOTgsMS41MS01LjE3LDIuMS02Ljk3bDcuMjItMjEuNDFINDc0LjkyeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik00ODIuMDQsMzY0LjAybC0yLjI0LDYuNTNoLTUuMjdsMTEuMzYtMzIuNTJoNy4yN2wxMS41MSwzMi41MmgtNS4xN2wtMi4yOS02LjUzSDQ4Mi4wNHogTTQ4OS42LDM0MS45MwoJCQlsLTYuMjksMTguMjloMTIuNjhMNDg5LjYsMzQxLjkzeiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik01MTkuMiwzNzAuNTVoLTQuOTd2LTI4LjA0aC05Ljk1di00LjQ5aDI1LjAxdjQuNTRsLTEwLjA5LTAuMDVWMzcwLjU1eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik01NDAuMjIsMzcwLjU1aC00Ljk3di0zMi41Mmg0Ljk3VjM3MC41NXoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNTcwLjcsMzM4LjgxYzIuODMsMS4yMiw0LjM5LDMuNjEsNC45Nyw3LjU2YzAuMjQsMS40NiwwLjI5LDIuOTcsMC4yOSw3LjMxYzAsNi41My0wLjEsNy44NS0wLjU5LDEwLjI0CgkJCWMtMC42MywyLjgzLTIuMTksNC43OC00LjU4LDUuOGMtMi4xLDAuODgtNC4xLDEuMTItOC43OCwxLjEyYy01LjM2LDAtNy4yMi0wLjI0LTkuMzYtMS4xN2MtMi4zNC0xLjAyLTMuOC0yLjkzLTQuNDQtNS43MQoJCQljLTAuNTQtMi4yOS0wLjYzLTMuNTYtMC42My05LjY1YzAtNy44NSwwLjI5LTkuOTUsMS43Ni0xMi4zOWMxLjE3LTEuOTUsMy4xNy0zLjI3LDUuOS0zLjhjMS4xNy0wLjI0LDMuODUtMC4zOSw2LjczLTAuMzkKCQkJQzU2Ni43NSwzMzcuNzMsNTY4LjgsMzM3Ljk4LDU3MC43LDMzOC44MXogTTU3MC45NSwzNTQuMjJ2LTQuNTNjMC0zLjU2LTAuNzgtNS45LTIuMjQtNi43OGMtMS4yMi0wLjczLTIuNTgtMC44OC03LjQ2LTAuODgKCQkJYy01LjcsMC03LjEyLDAuNTQtOC4wNSwzLjE3Yy0wLjU0LDEuNjEtMC41OSwyLjItMC41OSw5LjEyYzAsNi4wNSwwLDYuMDUsMC4yNCw3LjdjMC4zNCwyLjEsMS4xMiwzLjM2LDIuNTQsMy45CgkJCWMxLjIyLDAuNDksMi41NCwwLjYzLDYuNDQsMC42M2M0LjQ0LDAsNS45LTAuMiw3LjAyLTEuMDJjMS4zMi0wLjkzLDIuMS0zLjQxLDIuMS02Ljc4VjM1NC4yMnoiLz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNjEyLjM1LDM3MC41NWgtOC4zNGwtMTEuNDEtMTkuODljLTAuNTktMS4wNy0xLjE3LTIuMjQtMy4yNy02LjI5bC0xLjAyLTIuMDVoLTAuMTlsMC4wNSwxLjY2bDAuMDUsMS43MQoJCQljMC4wNSwwLjEsMC4wNSwxLjgsMC4wNSwzLjQxdjIxLjQ2aC00Ljkydi0zMi41Mmg4LjI5bDEwLjA5LDE3LjljMS4xMiwyLDEuNzEsMy4wNyw0LjI0LDcuOGwxLjM3LDIuNThoMC4xNXYtMS42NmwtMC4wNS0xLjY2CgkJCWMtMC4wNS0wLjI0LTAuMDUtMS44NS0wLjA1LTMuMzZ2LTIxLjZoNC45N1YzNzAuNTV6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTYzOS4wOCwzNDcuMTljMC0yLjE5LTAuMTUtMi45Ny0wLjYzLTMuNzVjLTAuNzgtMS4yMi0yLjE5LTEuNjEtNi4wOS0xLjYxYy02LjczLDAtOCwwLjc4LTgsNS4wNwoJCQljMCwyLjU4LDAuNjMsMy44NSwyLjI0LDQuMzljMC45MywwLjM0LDEuMzcsMC4zOSw2LjQ0LDAuNjNjNS43NSwwLjI5LDcuNTYsMC42Myw5LjEyLDEuNzZjMS44LDEuMzcsMi40OSwzLjM2LDIuNDksNy4yNwoJCQljMCw0LjczLTAuODMsNy4wMi0yLjk3LDguMzljLTEuOSwxLjE3LTQuMjQsMS41MS0xMC40OCwxLjUxYy01LjEyLDAtNi45Mi0wLjI5LTguOTItMS40NmMtMS4yMi0wLjczLTIuMjktMi4yOS0yLjYzLTMuOTUKCQkJYy0wLjI5LTEuNDYtMC4zNC0yLjM5LTAuMzktNS4wN2g0Ljg4YzAsMi45MywwLjE1LDMuNjYsMC43Myw0LjY4YzAuODMsMS40NiwxLjcxLDEuNjYsNy4xNywxLjY2YzYuODgsMCw3LjctMC42Myw3LjctNS44CgkJCWMwLTIuNDQtMC41NC0zLjU2LTEuOS00LjFjLTAuODgtMC4zNC0wLjg4LTAuMzQtNi41My0wLjY4Yy01LjktMC4yOS02LjU4LTAuNDQtOC4yNC0xLjIyYy0yLjU4LTEuMjctMy42Ni0zLjU2LTMuNjYtNy44NQoJCQljMC0zLjc1LDAuNzgtNi4xNCwyLjQ5LTcuNDFjMS45NS0xLjQ2LDQuMzktMS45LDEwLjE5LTEuOWM2LjQ0LDAsOC45NywwLjY4LDEwLjUzLDIuODhjMC45MywxLjM3LDEuMzcsMy4xMiwxLjM3LDUuNjF2MC45NwoJCQlINjM5LjA4eiIvPgoJPC9nPgoJPGc+CgkJPGc+CgkJCTxnPgoJCQkJPHBvbHlnb24gY2xhc3M9InN0MiIgcG9pbnRzPSIzOTYuNjEsMjI2LjIzIDM5My4wMywxOTcuNDIgMzgzLjAxLDIwMC41MiAzODkuMjYsMjI1LjcxIAkJCQkiLz4KCQkJCTxwb2x5Z29uIGNsYXNzPSJzdDIiIHBvaW50cz0iNDE2LjEyLDIyNy42MyA0MTIuNiwxOTkuMzMgNDAyLjU4LDIwMi40MyA0MDguNjgsMjI3LjEgCQkJCSIvPgoJCQk8L2c+CgkJCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik00NDUuOTYsMTQwLjQ2YzAsMC0yLjctNS41LTEwLjM1LTYuMjRjMCwwLDIuNDItNS4yNS0xLjc4LTkuMjJjLTIuODctMi43Mi0zMC43Mi0yNi43Mi0zMC43Mi0yNi43MgoJCQkJbC0wLjYzLDExLjUzbDExLjU2LDE0LjA2bC0xMC42My01LjM0YzAsMC01LjI2LDEyLjYyLTE0Ljc5LDI0LjcyYzMuNzIsNC42OSwzLjIzLDExLjIsMy4yMywxMS4ycy0yLjUxLTQuOS02Ljc1LTYuOTcKCQkJCWMwLDAtOS4zNS01LjA2LTIwLjQyLDIuODNjLTExLjA3LDcuODktNTYuMDQsNDkuMDctNTYuMDQsNDkuMDdsNzMuNTQtMTcuM2wtNTAuNzIsMTkuNzJsLTM5LjAxLDI2LjE5bDQuMjMsMC4zCgkJCQljNS4yNCwwLjM4LDEwLjQ2LTAuOTEsMTQuOTItMy42OWwyOS4xOS0xOC4xNWwtMjUuNzEsMjMuMTZoMGM2LjIxLDAuNDUsMTIuMzUtMS40NCwxNy4yMi01LjMxYzcuNTctNiwxOC43My0xNC44MiwyMy4zNy0xOC4yNgoJCQkJYzYuMjctNC42NSwxMi4zMS01LjExLDE3LjE0LTIuNDVjNy4wOCwzLjkxLDExLjIyLDYuOTQsMjEuOTYsNy44N2MwLjAxLTAuMDEtMC4wMSwwLjAxLDAsMGwtMS4wOS05LjFsNi4wNyw5LjE2CgkJCQljMTQuMDUtMC42OSwyOS43Ny05LjA3LDMzLjUyLTMyLjg1YzIuNzgtMTcuNjctMi4wNi0yOS42NS0yLjA2LTI5LjY1UzQzNy45MywxNDIuNzUsNDQ1Ljk2LDE0MC40NnogTTQyMy43OCwxMzguNzkKCQkJCWMtMi4yMy0wLjIyLTMuODUtMi4yLTMuNjQtNC40MmMwLjIyLTIuMjMsMi4yLTMuODYsNC40Mi0zLjY0YzIuMjMsMC4yMiwzLjg2LDIuMiwzLjY0LDQuNDMKCQkJCUM0MjcuOTksMTM3LjM4LDQyNi4wMSwxMzkuMDEsNDIzLjc4LDEzOC43OXoiLz4KCQk8L2c+CgkJPHBvbHlnb24gcG9pbnRzPSI0MDIuMywyOS4xNiAyOTYuOTMsMTM0LjUzIDMxNS40NCwxNTMuMTYgNDAyLjMsNjYuMyA1NjMuOTgsMjI3Ljk5IDYwMS4xMywyMjcuOTkgCQkiLz4KCQk8Zz4KCQkJPHBvbHlnb24gY2xhc3M9InN0MiIgcG9pbnRzPSI0MDIuMyw4NC4xNSA1NDAuNTEsMjIyLjM2IDM0NS4yNywyMjMuMjIgMzM5LjE3LDIyNy45OSA1NTQuNiwyMjcuOTkgNDAyLjMsNzUuNjggMzIwLjEyLDE1Ny44NiAKCQkJCTMyNC4zNCwxNjIuMTEgCQkJIi8+CgkJPC9nPgoJCTxyZWN0IHg9IjIwMy4xNyIgeT0iMTk2LjY3IiB3aWR0aD0iMjMuMTMiIGhlaWdodD0iMjMuMTMiLz4KCQk8cmVjdCB4PSIyMzIuNSIgeT0iMTk2LjY3IiB3aWR0aD0iMjMuMTMiIGhlaWdodD0iMjMuMTMiLz4KCQk8cG9seWdvbiBwb2ludHM9IjE0OS40OCwxNzUuNTQgMTIyLjI1LDE5Mi4zMyAxMjIuMjUsMTM4LjgxIDE0OS40OCwxMzguODEgCQkiLz4KCQk8cmVjdCB4PSIxMTYuOTQiIHk9IjEyNC44MSIgd2lkdGg9IjM3Ljg2IiBoZWlnaHQ9IjcuOTgiLz4KCQk8cGF0aCBkPSJNMjI5LjQsMTYwLjczTDIyOS40LDE2MC43M2MtMTQuMzgsMC0yNi4wMywxMS42NS0yNi4wMywyNi4wM3YzLjcxaDUyLjA2di0zLjcxQzI1NS40MywxNzIuMzgsMjQzLjc3LDE2MC43MywyMjkuNCwxNjAuNzMKCQkJeiIvPgoJCTxwb2x5Z29uIHBvaW50cz0iNTg3Ljk3LDIxNC44MyA2MzEuOTMsMjI3Ljk5IDYwMS4xMywyMjcuOTkgCQkiLz4KCQk8Zz4KCQkJPHBhdGggZD0iTTMxMS4zOSwxODYuMjVjNC45NS00LjQzLDEwLjEtOS4wMSwxNS4xMy0xMy40NUwyMjkuNCw3NS42OEw4OS41NiwyMTUuNTJsMCwwbC0xMi40NiwxMi40NmgyOC41OEwyMjkuNCwxMDQuMjYKCQkJCUwzMTEuMzksMTg2LjI1eiIvPgoJCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMjI5LjQsMTE4bDc0Ljc1LDc0Ljc1YzEuMTItMS4wMSwyLjI3LTIuMDQsMy40My0zLjA5bC03OC4xOS03OC4xOUwxMTIuODksMjI3Ljk5aDYuNTJMMjI5LjQsMTE4eiIvPgoJCQk8cG9seWdvbiBwb2ludHM9Ijg5LjU2LDIxNS41MiA0OC4yMiwyMjcuOTkgNzcuMDksMjI3Ljk5IAkJCSIvPgoJCTwvZz4KCQk8cG9seWdvbiBjbGFzcz0ic3QyIiBwb2ludHM9IjIyOS40LDExOCAxMTkuNDEsMjI3Ljk5IDEyMi4yNSwyMjguMTQgMjI5LjQsMTIwLjk5IDMwMi42NSwxOTQuMjUgMzA0LjE1LDE5Mi43NSAJCSIvPgoJPC9nPgo8L2c+Cjwvc3ZnPgo=">
     <h2>Team sign in</h2>
@@ -13786,19 +13790,51 @@ function rptSeries(items, dateOf, valueOf, from, to){
   });
   return { labels: b.labels, values: vals };
 }
+/* 1214: Chart.js loads on the FIRST CHART, not on every launch. Same shape as
+   cr-pricing-import's SheetJS loader: one memoised promise, one injected tag,
+   so
+   the seven calls a report makes share a single fetch. (The identifier is left
+   out of this sentence on purpose - the patch counts its call sites, and prose
+   naming it both breaks that count and makes every future grep report a caller
+   that is not one.) */
+var _chartPromise = null;
+function ensureChart(){
+  if(typeof Chart !== 'undefined') return Promise.resolve();
+  if(_chartPromise) return _chartPromise;
+  _chartPromise = new Promise(function(resolve, reject){
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js';
+    s.onload = function(){ resolve(); };
+    s.onerror = function(){ _chartPromise = null; reject(new Error('Chart.js failed to load')); };
+    document.head.appendChild(s);
+  });
+  return _chartPromise;
+}
 function rptChart(id, cfg){
-  if(rptCharts[id]){ rptCharts[id].destroy(); }
-  var el = document.getElementById(id);
-  if(!el || typeof Chart === 'undefined') return;
+  if(rptCharts[id]){ rptCharts[id].destroy(); delete rptCharts[id]; }
+  if(!document.getElementById(id)) return;
+  /* ⚠ The canvas is looked up again INSIDE the callback, never held across the
+     load. The reports view re-renders, so a node captured before an await can be
+     one that is no longer in the document - a gate law on this project, and the
+     only thing the lazy load actually changes about this function. */
+  ensureChart().then(function(){
+    var el = document.getElementById(id);
+    if(!el) return;
+    if(rptCharts[id]){ rptCharts[id].destroy(); }
   /* 546: the reports cards are obsidian now. Chart.js defaults its tick and
      legend ink to #666, which is 2.5:1 on that ground - and was already failing
      on 535's navy card before this build. NOT themed, deliberately: the card is
      black in both modes, so the ink has to be too. Set here rather than per
      chart because `new Chart(` appears exactly once in this file, which makes
      this reach the reports charts and nothing else. */
-  Chart.defaults.color = '#b9bec7';
-  Chart.defaults.borderColor = 'rgba(255,255,255,.10)';
-  rptCharts[id] = new Chart(el.getContext('2d'), cfg);
+    Chart.defaults.color = '#b9bec7';
+    Chart.defaults.borderColor = 'rgba(255,255,255,.10)';
+    rptCharts[id] = new Chart(el.getContext('2d'), cfg);
+  }).catch(function(){
+    /* offline or the CDN is down: the report's cards and numbers still render,
+       the drawings do not. Silent on purpose - this used to be a `typeof Chart
+       === 'undefined'` early return that said nothing either. */
+  });
 }
 function rptRepName(email){
   if(!email) return 'Unknown';
@@ -23805,8 +23841,6 @@ function tickHomeClock(){
   if(qc) qc.textContent = txt;
   var lc = document.getElementById('loginClock');
   if(lc) lc.textContent = txt;
-  var hc = document.getElementById('heroClock');
-  if(hc) hc.textContent = txt;
   var ctc = document.getElementById('ctClock');
   if(ctc) ctc.textContent = txt;
 }
@@ -27259,8 +27293,6 @@ document.getElementById('editorLogo').addEventListener('click', async function()
     var q = LOGIN_QUOTES[dy % LOGIN_QUOTES.length];
     lq.innerHTML = '\u201C' + q[0] + '\u201D<br>' +
       '<span style="font:600 11px \'Segoe UI\',Arial,sans-serif;font-style:normal;">\u2014 ' + q[1] + '</span>';
-    var hq = document.getElementById('heroQuote');
-    if(hq) hq.innerHTML = lq.innerHTML;
   }
   ['brandLogo','editorLogo'].forEach(function(id){
     var el = document.getElementById(id);
@@ -31673,14 +31705,17 @@ function showList() {
    Replace pricing_import.html with this file.
    Paste after pricing_module_v2.html in index.html.
 
- REQUIRES: internet at import time (Papa Parse + SheetJS from CDN).
+ REQUIRES: internet at import time (Papa Parse + SheetJS from CDN, both
+ fetched on first use since 1214 rather than on every app launch).
    For offline import, download both to your repo and swap the
    script URLs below.
 ════════════════════════════════════════════════════════════════════
 -->
 
-<!-- Papa Parse (CSV) — eager load, ~40KB -->
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<!-- 1214: Papa Parse is NOT loaded here any more — it was ~45 KB on every
+     launch for a library only the pricing importer uses. ensurePapa() loads it
+     when the import modal opens, next to the SheetJS preload that has always
+     been there. -->
 
 <style id="cr-pricing-import-styles">
   /* All previous styles */
@@ -31801,6 +31836,24 @@ function showList() {
   const CSV_EXTS   = ['csv','tsv','txt'];
   const XLSX_EXTS  = ['xlsx','xls','xlsm','xlsb'];
 
+  // ── Lazy loader for Papa Parse (1214) ──
+  // Was a plain script tag in the document, so it downloaded on every launch
+  // whole app for a library only this importer uses. Deliberately the same shape
+  // as the SheetJS loader directly below - the module already had the pattern.
+  let papaPromise = null;
+  function ensurePapa() {
+    if (window.Papa) return Promise.resolve();
+    if (papaPromise) return papaPromise;
+    papaPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js';
+      s.onload = () => resolve();
+      s.onerror = () => { papaPromise = null; reject(new Error('Failed to load Papa Parse from CDN')); };
+      document.head.appendChild(s);
+    });
+    return papaPromise;
+  }
+
   // ── Lazy loader for SheetJS ──
   let xlsxPromise = null;
   function ensureXLSX() {
@@ -31867,7 +31920,15 @@ function showList() {
   // ═══ Modal orchestration ══════════════════════════════════
   async function openImportModal() {
     if (!isAdmin()) return saveStatus('Admins only', 'error');
-    if (typeof Papa === 'undefined') return saveStatus('Papa Parse not loaded — check internet', 'error');
+    /* 1214: this used to be a bare "is the library there yet" early return, which
+       was correct while it was a plain script tag in the document and would
+       have refused the importer on EVERY use once it went lazy - blaming the
+       user's internet for a change we made. Load it here instead.
+       The await is safe where the invariant actually bites: this function is
+       already async and nothing has been created, shown or written yet, so there
+       is no precondition to revalidate on the other side. */
+    try { await ensurePapa(); }
+    catch (e) { return saveStatus('CSV support failed to load \u2014 check internet', 'error'); }
 
     // Kick off SheetJS load in background so it's ready when needed
     ensureXLSX().catch(e => console.warn('[pricing-import] XLSX preload failed:', e.message));
@@ -43009,6 +43070,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1214, d: '2026-09-11', t: 'The app stops downloading two chart and spreadsheet libraries you may never open', s: 'Every single launch of Cardinal was downloading two outside libraries before you had even signed in: the one that draws the graphs on <b>Reports</b>, and the one that reads <b>CSV files</b> in the pricing importer. Together they are about a quarter of a megabyte, and most days nobody opens either screen. They now download the moment you actually open a report or an import \u2014 so every launch is lighter, and the two screens that need them are no different than before. If you are somewhere with no signal, a report will show its numbers and cards without the drawings rather than failing, and the importer will say plainly that it could not load instead of blaming your connection.' },
+  { b: 1213, d: '2026-09-11', t: 'The sign-in screen is just the sign-in box now', s: 'On a computer the sign-in screen used to put a big picture and the Cardinal name down the left, with the box off to the right. That whole left side is gone \u2014 it is just the sign-in box, in the middle of the screen. <b>On a phone nothing changes</b>, because the left side never appeared there anyway. The daily quote stays: it now sits under the box on a computer, exactly where it already sat on a phone. One small bonus \u2014 the picture that used to sit on the left was being downloaded on phones too, where nobody could see it, so every sign-in is now a little quicker on every device.' },
   { b: 1212, d: '2026-09-10', t: 'A dead server route is gone \u2014 nothing you use changes', s: 'Housekeeping, and nothing on any screen moves. An old server route called <b>estimate-to-contract</b> has been removed. It has not worked in a long time: it asked the database for two columns that do not exist, so every call to it failed before it did anything \u2014 and nothing in the app had called it for a long time either. The <b>\u2192 Contract</b> button on an estimate does not use it and never did; it builds the contract in the app itself, and it is untouched. Your contracts, the contracts list and the signing flow are all unaffected. Removing it means the next person reading this code does not spend an afternoon fixing something that nothing calls \u2014 which has already happened twice.' },
   { b: 1211, d: '2026-09-10', t: 'The estimate screen stops showing you Save and Publish twice on a phone', s: 'Opening an estimate on a phone put <b>Save Draft</b> and <b>Publish</b> in two places at once \u2014 in the dark bar under your thumb, where they have been since build 1029, and again up in the cramped header. The header copies are gone on a phone now; the thumb bar is the one place to press. Everything else in that header stays exactly where it was, and on a tablet or a desktop nothing changes at all. Publish also shows you it is working now: the button under your thumb reads <b>Publishing\u2026</b> while it runs, which the header copy used to do where you could not see it. Worth saying plainly \u2014 the header is still the same height. Two fewer buttons came out of a row that another button was holding open anyway, so this is a tidier row rather than a shorter one.' },
   { b: 1210, d: '2026-09-10', t: 'The alert emails carry the link now, not just the texts', s: 'Every alert that points somewhere \u2014 a punch-out assigned to you, a job approved, an estimate signed, someone tagging you \u2014 has carried a tappable link since build 1125, but only in the <b>text message</b> and the buzz on your phone. Read the same alert in your <b>email</b> and there was nothing to tap: you were told a punch-out was yours and left to go find it. The email now ends with <b>Open it in Cardinal</b>, and it lands on the same screen the text does. Nothing else changed \u2014 the text and the push notification are exactly as they were. Worth knowing: if a link stopped reaching you recently, this was not it. The email never had one. The text and the push have had one since 1125, so if those went quiet it is a server setting, and the app\u2019s own test alert will name which one.' },

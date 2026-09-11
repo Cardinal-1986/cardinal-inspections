@@ -4651,3 +4651,48 @@ third failure, `gate_1205`, was a genuine red: it applied a 44px tap-target floo
 buttons build 1211 had legitimately hidden, and a `0x0` element fails a size floor. All
 three were repaired by **inverting or scoping the check, never by deleting it** — the
 same call `harness_653`'s P1 got the same day.
+
+## 96 — the patch script's own COMMENT contains the identifier the patch counts
+
+**Cost: five failed runs in one build, 11 Sep 2026 (1213/1214) — and the fifth one
+took a STANDING GATE red, not just a self-check.**
+
+This project's patch scripts assert on counts: *this identifier appears exactly
+once*, *this caller did not move*, *this guard is gone*. They also carry long
+explanatory comments, because the next reader needs to know why. **When the
+comment names the thing the assertion counts, a correct edit fails its own
+check** — and the failure reads as "the patch is wrong" rather than "the prose
+is".
+
+Build 732 paid for this once (`status:'voided'` in a comment) and recorded the
+right response: **reword the prose, never weaken the check** — planting the
+string would make every future grep lie about where the code is.
+
+**The five, in order, all in one build:**
+
+| what was planted | where | how it surfaced |
+|---|---|---|
+| `wm-home.jpeg` | the replacement comment for the markup it removed | the "it is gone" assertion |
+| `rptChart(` | a comment saying "the seven calls" | the caller count |
+| `ensureXLSX()` | two comments saying "same shape as" | the untouched-loader count |
+| `typeof Papa === 'undefined'` | a comment quoting the guard being replaced | the "guard is gone" assertion |
+| **`<script src>`** | two comments saying "was a plain script tag" | ⚠ **`check_build` itself: 136 open / 134 close** |
+
+**The fifth is the important one.** It was not my assertion that went red — it
+was the standing tag-balance gate, because the gate counts `<script` and a
+comment *saying* `<script src>` is indistinguishable from an opening tag. **The
+class does not stop at your own script.**
+
+**The fix, and it is mechanical.** `patch_1214.py` opens with
+`no_planted_identifiers()`: it walks every `*_NEW` replacement constant, extracts
+**only the comment lines**, and fails with all offenders named at once rather
+than one per run. Copy it into any patch that asserts on counts.
+
+⚠ **Its first version was itself the bug it guards against.** Scanning the whole
+replacement string flagged the real `function rptChart(id, cfg){` definition and
+the real `new Chart(...)` call — the code the build exists to write. A check that
+fails correct code is exactly what this class is. It scans prose only.
+
+**The rule: an identifier is fine in code and only ever wrong in a comment.**
+Describe the thing ("the SheetJS loader below", "a bare is-it-loaded-yet early
+return", "a plain script tag") rather than spelling it.
