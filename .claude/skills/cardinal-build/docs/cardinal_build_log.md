@@ -33005,7 +33005,9 @@ on the runner's own break, which puts a mark back in the card at the spot the
 removed one occupied — the real previous behaviour, not a contrived control ·
 **`gate_1213` still GREEN 19/19** and still **RED 9** on 1212 · `gate_chromium
 --selftest` **19/19** · `gate_types` GREEN (0 codes grew, 2 improved) ·
-`gate_dupes` GREEN · `gate_stack` CLEAN · patch replays **byte-for-byte**. No SQL.
+`gate_dupes` GREEN · `gate_stack` CLEAN · **sentinel CLEAN — 64 renders at 390 and 1194,
+nothing new, 203 carried from 1214** (1215 is a layout build, so its result held the merge) ·
+patch replays **byte-for-byte**. No SQL.
 
 ⚠ **Still not fixed, and not by this build:** `cardinal-transparent.png`
 (**1.12 MB**) is fetched before sign-in, and so are `cardinal-report-logo.png`,
