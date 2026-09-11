@@ -33326,3 +33326,55 @@ The four dead `.cr-est-totals` ink rules from 1217's sentinel are **still queued
 1218 turned out to be the AR screen, not the estimate module, so removing them here
 would have been widening a build for no reason. They lose to `cr-nvl-styles` and
 have done since before 1217.
+
+### 1218 post-merge — the sentinel result STANDS, and it was proved by diff, not by argument
+
+The 1218 sweep ran against the artifact **as it stood before the last two edits** — the
+pair of `--cr-stack:"…"` declarations added to satisfy `gate_stack`. I said at the time
+that those are inert and the result transfers. **That was an argument, not a
+measurement**, so a second sweep was started against the exact merged bytes.
+
+**It timed out**, and reported itself honestly:
+
+```
+SENTINEL TIMEOUT after 3644s (budgeted for 256 render(s)) — treat as UNKNOWN, not as clean
+```
+
+So the confirmation never arrived. The question was settled a different and better way —
+**by diffing the two artifacts**, which is a measurement:
+
+```
+85085,85086c85085,85086
+< #cr-ar-view .crar-v.pos{color:var(--crar-pos,#34d399);}
+< #cr-ar-view .crar-kpi.alert .crar-v{color:var(--crar-alert,#f08a90);}
+---
+> #cr-ar-view .crar-v.pos{color:var(--crar-pos,#34d399); --cr-stack:"…";}
+> #cr-ar-view .crar-kpi.alert .crar-v{color:var(--crar-alert,#f08a90); --cr-stack:"…";}
+```
+
+**Two lines, two added declarations, nothing else** — every colour, selector and byte
+otherwise identical, and the swept file was regenerated from the 1217 base by the same
+deterministic patch. `SENTINEL CLEAN — 128 renders, nothing new` therefore applies to
+what shipped. *A one-second diff answered what a one-hour sweep could not.*
+
+### ⚠ OPERATIONAL: a full CRM sweep now sits ON the sentinel's own deadline
+
+`DEADLINE_MS = max(240000, 60000 + RENDERS * 14000)`, and
+`RENDERS = states × viewports × themes × (--since ? 2 : 1)`. At **32 states × 2 viewports
+× 2 themes × 2 (--since) = 256 renders** the budget is **3644s** — and 14s/render is no
+longer generous on this machine when anything else is running. The same sweep finished
+comfortably an hour earlier with the box quiet; the retry overlapped CI polling, git
+operations and leftover Chromium processes from the gate ladder, and went over.
+
+**So on a colour build, do one of these rather than reading a TIMEOUT as a failure:**
+
+- run the sweep with **nothing else in flight** — it is the long pole, so start it first
+  and do the docs while it runs (this is what worked);
+- pass **`--deadline <seconds>`**, which exists for exactly this;
+- or drop `--since` to halve the renders, accepting that you then read 272 carried
+  findings instead of a subtracted list.
+
+⚠ **The dangerous reading is not "TIMEOUT = failure" — it is a tired re-run that happens
+to finish and gets treated as the answer to a question nobody re-asked.** UNKNOWN means
+the sweep did not complete; it does not mean the build is bad, and it does not mean the
+build is fine. Say which, and say how you established it.
