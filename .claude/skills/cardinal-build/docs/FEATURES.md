@@ -8549,6 +8549,30 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1217 — the estimate builder: dark chrome, paper document
+
+**Where:** an `--estc-*` chrome layer scoped to `#cr-est-view`, plus 16 repointed
+references across `cr-est-styles` and `cr-nvl-styles`.
+
+Theo's pick (b) off two rendered options. The frame — view ground, body ground,
+the jump-list rail, field labels, section heads and the three outline buttons —
+joins the app. **The estimate itself stays paper**: client block, line items,
+totals and notes are untouched and now lift off the dark ground.
+
+- ⚠ **Measured, not swept.** The stylesheet counts 87 light values; the *render*
+  breaks in **13 nodes from 3 inks** (`#475569` 2.57:1, `#C8202E` 3.43:1,
+  `#2F7D4A` 3.85:1). After: **0 of 49**.
+- ⚠ **One rule had to be split** — a single selector list painted `--est-dim` onto
+  eight things, two on the chrome ground and six inside paper cards.
+- ⚠ **`cr-nvl-styles` out-specifies `cr-est-styles`.** Three edits were silent
+  no-ops until the winners were patched. **Run `selector_audit.py` on any selector
+  in this module before touching it.**
+
+**Instrument:** `gate_1217.mjs` (21 checks, both themes — every text node against
+its **composited** ground with gradient stops included, the document blocks still
+paper, the three inks asserted by **computed colour**, light byte-identical by
+token). RED 12 on the 1216 artifact.
+
 ## Build 1216 — the Invoices card goes dark
 
 **Where:** the `.crji-*` rules inside `cr-ar-styles`, plus a `--crji-*` token pair.

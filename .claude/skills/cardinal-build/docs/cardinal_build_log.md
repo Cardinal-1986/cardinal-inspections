@@ -33086,3 +33086,92 @@ which restores the white as the dark default and reproduces the defect's exact
 signature — `"Invoices & Payme"` at **1.1:1** · `gate_chromium --selftest` **20/20**
 · `gate_types` GREEN (0 codes grew, 2 improved) · `gate_dupes` GREEN · `gate_stack`
 CLEAN · patch replays **byte-for-byte**. No SQL.
+
+---
+
+## Build 1217 — the estimate builder: dark chrome, paper document
+
+**Theo's pick (b)**, off two rendered options. The other half of item 1, and the
+largest light surface in the CRM: `cr-est-view` was **1152×873 of white** inside a
+dark app. The frame now joins the app; **the estimate itself stays the colour it
+prints on**, because it is a document and it is edited on a desk.
+
+### ⚠ IT IS NOT AN 87-SITE CONVERSION, AND FINDING THAT OUT IS THE BUILD
+
+A sweep of the stylesheet counts **87 light values across 17 names** and reads
+like a rewrite. Rendering it and **measuring what actually breaks when the ground
+flips** gives thirteen failing text nodes from exactly **three inks**:
+
+| ink | where | on the new ground |
+|---|---|---:|
+| `#475569` | field labels, section heads (×8) | **2.57:1** |
+| `#C8202E` | the `+ Custom` outline | **3.43:1** |
+| `#2F7D4A` | the `+ ABC Supply` outline | **3.85:1** |
+
+Everything else in that 87 is inside a document block and never sees the dark
+ground at all. **Measure the render, not the stylesheet.** After the build: **0
+failing of 49 measured.**
+
+**The mechanism is the module's own.** It already carries an `--est-*` family (12
+names, 148 references) which *is* the paper palette, so a second family beside it
+would be the bug-with-a-delay this file keeps recording. Instead there is an
+`--estc-*` **chrome layer** scoped to the view and themed by the app theme; only
+the 16 references that sit ON the ground were repointed. `--est-*` is untouched,
+so every document block is unchanged **by construction**, and light is
+byte-identical.
+
+⚠ **ONE RULE HAD TO BE SPLIT.** A single selector list painted `--est-dim` onto
+**eight** things — two of them (the field labels and the *Line Items* heading) sit
+on the chrome ground, the other six sit inside paper cards. They need opposite
+inks. Left whole, either the labels stay at 2.57:1 on black or the card text goes
+pale on cream.
+
+### ⚠ THREE OF MY EDITS WERE A SILENT NO-OP, AND ONLY THE RENDER SAID SO
+
+`cr-nvl-styles` — a later "porcelain" restyle — out-specifies `cr-est-styles` with
+id-prefixed selectors. Three edits parsed, balanced, and **never applied**:
+
+| edited | the winner | what the render measured |
+|---|---|---|
+| `.add-custom` | `#cr-est-view .cr-est-items-head .add-custom` | still `rgb(200,32,46)` |
+| `.add-abc` | `#cr-est-view .cr-est-items-head .add-abc` | still `rgb(47,125,74)` |
+| `#cr-est-view` ground | `#cr-est-view{background:var(--est-bg)}` | still `rgb(244,244,245)` |
+
+**That is build 481's class, three times in one build**, and `selector_audit.py`
+names it in one line: *"patching those alone is a silent no-op."* Run it on every
+selector before patching it — it is in the skill for exactly this.
+
+⚠ **The third one produced SEVEN downstream failures that looked like seven
+separate bugs.** With the view ground still light, every ink in the dark top bar
+scored against a near-white page — the cream heading at **1.04:1** — because the
+bar paints a **gradient** and an ancestor walk reading `backgroundColor` cannot
+see through it. One missed winner, seven red lines, one cause.
+
+### ⚠ And two faults in the gate itself, both of which failed CORRECT work
+
+1. **The ancestor walk could not see a gradient** — the trap this file already
+   records under the contrast rig, reproduced. It now collects every ground an
+   ancestor actually paints, **gradient stops included**, and scores the ink
+   against the **worst** of them.
+2. **Section C demanded one hex.** It asserted the paper blocks were still
+   `#f4f2f1` — the value `cr-est-styles` sets and a later block overrides with
+   plain white. A correct build failed three checks for painting paper a slightly
+   different paper. The claim is that those blocks did **not go dark**, so that is
+   what it measures now.
+
+⚠ **A hardcoded count went stale mid-build too**: `assert 0 < moved <= 12` failed
+the moment two more rules legitimately moved. The expectation is now **computed
+from the edits themselves** (16 repointed, 16 accounted for).
+
+Gates: `check_build` green (1216 → 1217, marker, negative control) · **`gate_1217`
+21/21** — the view ground, the jump list, **every text node in the view against its
+composited ground**, the document blocks still paper, the three inks asserted by
+**computed colour** (the only thing a losing rule cannot fake), and light
+byte-identical by token — **RED 12 on the 1216 artifact**, where it also catches the
+`span.ix` at 2.56:1 that this build fixed in passing · `gate_chromium --selftest`
+**21/21** · `gate_types` GREEN (0 grew, 2 improved) · `gate_dupes` GREEN ·
+`gate_stack` CLEAN · patch replays **byte-for-byte**. No SQL.
+
+**Still to come on the programme:** 1218 the button system (19 fills, 10 radii, 4
+fonts), 1219 the client profile in Sales Floor's language. Item 4 is a fence:
+Production, Crew Dispatch, Sales Floor and OC Colors are finished.

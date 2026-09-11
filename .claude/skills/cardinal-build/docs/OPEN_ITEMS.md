@@ -6063,12 +6063,12 @@ CSS. Four items came out of it and he took all four.
 
 | # | Item | State |
 |---|---|---|
-| 1 | the two white surfaces go dark | 🔸 **half done — 1216 took `crji-card`.** The estimate builder is the other half and is **held for a pick**, below |
-| 2 | one button system | ⬜ **1217** — three treatments (solid / outline / ghost), one radius, one font |
-| 3 | the client profile in Sales Floor's language | ⬜ **1218** — the screen everyone lives in is the least designed one |
+| 1 | the two white surfaces go dark | ✅ **DONE.** 1216 took `crji-card`; **1217 took the estimate builder, Theo's pick (b)** |
+| 2 | one button system | ⬜ **1218** — three treatments (solid / outline / ghost), one radius, one font |
+| 3 | the client profile in Sales Floor's language | ⬜ **1219** — the screen everyone lives in is the least designed one |
 | 4 | leave Production, Crew Dispatch, Sales Floor and OC Colors alone | ✅ **A FENCE, NOT A BUILD.** They are finished. Do not sweep them |
 
-### ⚠ The estimate builder is HELD, and the reason is a real fork
+### ✅ The estimate builder fork — SETTLED, Theo picked (b) at 1217
 
 `cr-est-styles` is **87 light-colour sites across 17 distinct values in 26 KB** —
 a conversion, not a flip. And unlike the Invoices card it has **two defensible
@@ -6080,9 +6080,12 @@ answers**, so guessing costs a build:
   states go dark; the estimate body stays paper-white because it *is* a document.
   Closer to how every real document editor behaves.
 
-**Do not pick this one alone.** Render both and put them in front of him — the
-project's own rule, and the 15 Aug "audit this instead of doing experiments" note
-is what it costs to skip it.
+**He picked (b).** Shipped at 1217 — and the 87-site figure was wrong in the way
+that matters: measuring the render rather than the stylesheet gave **thirteen
+failing nodes from three inks**, and the fix was a 16-reference chrome layer, not
+a rewrite. ⚠ **Three of those edits were a silent no-op** because `cr-nvl-styles`
+out-specifies `cr-est-styles`; `selector_audit.py` names that in one line and
+should be run on every selector in this module before touching it.
 
 ### What the read found that is NOT on the list
 
