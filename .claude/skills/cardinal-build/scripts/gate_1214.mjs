@@ -89,8 +89,18 @@ try {
     await wire(page, hits, true);
     await page.goto('https://app.cardinalroster.com/', { waitUntil:'domcontentloaded' });
     await page.waitForTimeout(3500);
-    ok(!hits.includes('chart'), w + 'px signed out: Chart.js is NOT requested', hits.join(',') || 'no hits');
-    ok(!hits.includes('papa'),  w + 'px signed out: Papa Parse is NOT requested', hits.join(',') || 'no hits');
+    /* 1215: if this ever goes red, the useful question is WHO asked. Read the
+       document back so a tag the app injected is told apart from one the markup
+       still carries, and say which screen was up when it happened. */
+    const seen = await page.evaluate(() => ({
+      tags: [].slice.call(document.querySelectorAll('script[src]'))
+              .map(s => s.src).filter(u => /chart|papaparse/i.test(u)),
+      login: !!(document.getElementById('loginView') || {}).offsetParent,
+      sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
+    })).catch(() => ({ tags: ['<evaluate failed>'], login: null, sw: null }));
+    const where = ' | ' + JSON.stringify(seen);
+    ok(!hits.includes('chart'), w + 'px signed out: Chart.js is NOT requested', (hits.join(',') || 'no hits') + where);
+    ok(!hits.includes('papa'),  w + 'px signed out: Papa Parse is NOT requested', (hits.join(',') || 'no hits') + where);
     await ctx.close();
   }
 
@@ -117,17 +127,28 @@ try {
 
     const drove = await page.evaluate(async () => {
       if (typeof window.rptChart !== 'function') return 'rptChart is not reachable';
+      /* 1215: record WHY, not just whether. A CI-only red on this section gave
+         one summary line and no way to tell a blocked script from a canvas that
+         refuses a 2d context — so the probe carries its own post-mortem. */
+      const why = [];
+      window.addEventListener('error', e => why.push('err:' + String(e && e.message).slice(0, 60)), true);
       const c = document.createElement('canvas'); c.id = 'gate1214canvas';
       document.body.appendChild(c);
+      try { why.push('ctx:' + (c.getContext('2d') ? 'yes' : 'null')); }
+      catch (e) { why.push('ctx-threw:' + String(e && e.message).slice(0, 60)); }
+      why.push('sw:' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'controlled' : 'none'));
       window.rptChart('gate1214canvas', { type:'bar', data:{ labels:['a'], datasets:[{ data:[1] }] } });
       for (let i = 0; i < 60 && !window.__charts; i++) await new Promise(r => setTimeout(r, 100));
-      return { charts: window.__charts || 0, hasChart: typeof window.Chart !== 'undefined' };
+      const tags = [].slice.call(document.querySelectorAll('script[src]'))
+        .filter(s => s.src.indexOf('chart') !== -1).length;
+      return { charts: window.__charts || 0, hasChart: typeof window.Chart !== 'undefined',
+               tags: tags, why: why.join(' ') };
     });
     if (typeof drove === 'string') { ok(false, 'the reports chart builder is reachable', drove); }
     else {
       ok(hits.includes('chart'), 'ASKING FOR A CHART FETCHES Chart.js', hits.join(',') || 'never fetched');
-      ok(drove.hasChart === true, '  · and the library is in the page afterwards');
-      ok(drove.charts >= 1, '  · and a chart was actually constructed', 'charts=' + drove.charts);
+      ok(drove.hasChart === true, '  · and the library is in the page afterwards', JSON.stringify(drove));
+      ok(drove.charts >= 1, '  · and a chart was actually constructed', JSON.stringify(drove));
     }
     /* the memoised promise means a second chart does NOT refetch */
     const before = hits.filter(h => h === 'chart').length;

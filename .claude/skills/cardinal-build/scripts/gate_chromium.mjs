@@ -215,6 +215,20 @@ function run(script, args) {
   return { code, out, secs: Math.round((Date.now() - t0) / 1000) };
 }
 const lastLine = o => (o.trim().split('\n').filter(Boolean).pop() || '').slice(0, 88);
+/* 1215: a gate that goes red ONLY in CI used to print one summary line and
+   nothing else, so the run said "2 of 20 failed" and never which 2. That is a
+   diagnosis you cannot get without pushing another commit to look at. Print the
+   gate's own failing lines — bounded, so a gate having a very bad day cannot
+   bury the log. GATE ERROR / TIMEOUT lines come too, because those are the
+   shapes a control that crashes instead of reporting red takes. */
+const CAP = 24;
+function failLines(o) {
+  const hits = (o || '').split('\n')
+    .filter(l => /^\s*FAIL /.test(l) || /^GATE (ERROR|\w+ )?TIMEOUT/.test(l) || /^GATE ERROR/.test(l));
+  if (!hits.length) return '';
+  const shown = hits.slice(0, CAP).map(l => '         ' + l.trim().slice(0, 200)).join('\n');
+  return '\n' + shown + (hits.length > CAP ? `\n         ... and ${hits.length - CAP} more` : '');
+}
 
 if (process.argv[2] === '--selftest') {
   /* The runner's own logic: a break that matches nothing must be refused, because
@@ -244,7 +258,7 @@ for (const g of GATES) {
   /* POSITIVE — the gate must pass on the shipped artifact. */
   const pos = run(g.name, g.selftestFlag ? [APP] : [APP]);
   if (pos.code === 0) console.log(`  ok   ${g.name.padEnd(20)} ${String(pos.secs + 's').padStart(5)}  ${lastLine(pos.out)}`);
-  else { console.error(`::error::${g.name} FAILED on the shipped artifact after ${pos.secs}s (exit ${pos.code}): ${lastLine(pos.out)}`); bad++; }
+  else { console.error(`::error::${g.name} FAILED on the shipped artifact after ${pos.secs}s (exit ${pos.code}): ${lastLine(pos.out)}` + failLines(pos.out)); bad++; }
 
   /* NEGATIVE — break what it protects; it must notice. */
   let neg;
