@@ -4029,7 +4029,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-11 build 1215<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-11 build 1216<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43075,6 +43075,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1216, d: '2026-09-11', t: 'The Invoices card stops being a white box on a black screen',
+    s: 'On a client&#8217;s page, <b>Invoices &amp; Payments</b> was the one card still built for a white app &#8212; a bright white panel in the middle of an otherwise black screen, and the first thing your eye landed on whether you wanted it or not. It is now the same dark card as everything around it. The numbers did not just get darker: the green for money collected and the red for money due were both too dark to read on a dark card, so each was replaced with a lighter shade of the same colour that clears the readability floor. <b>Light mode is unchanged</b> &#8212; every original colour is still there and comes back the moment you switch.' },
   { b: 1215, d: '2026-09-11', t: 'The sign in box stands on its own',
     s: 'The Cardinal mark above <b>Team sign in</b> is gone, so the box now opens straight on the heading. This finishes the change from the last build, which cleared the photograph and wordmark off the left-hand side of the sign in screen &#8212; the card itself was still carrying a mark of its own. Nothing else on the screen moved: the email and password fields, <b>Remember me</b>, <b>Forgot password?</b>, the clock and the daily quote are all exactly where they were.' },
   { b: 1214, d: '2026-09-11', t: 'The app stops downloading two chart and spreadsheet libraries you may never open', s: 'Every single launch of Cardinal was downloading two outside libraries before you had even signed in: the one that draws the graphs on <b>Reports</b>, and the one that reads <b>CSV files</b> in the pricing importer. Together they are about a quarter of a megabyte, and most days nobody opens either screen. They now download the moment you actually open a report or an import \u2014 so every launch is lighter, and the two screens that need them are no different than before. If you are somewhere with no signal, a report will show its numbers and cards without the drawings rather than failing, and the importer will say plainly that it could not load instead of blaming your connection.' },
@@ -85106,26 +85108,48 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 /* ═══ 1108: the in-profile Invoices & Payments card + the offline payment modal.
    The porcelain "money" language, self-contained (own light bg + dark ink), so it
    reads on the dark profile without the light-on-dark trap. Light-only by design. */
+/* 1216: this card was the only large light surface left on the client
+   profile - 1022x163 of white on a near-black screen, measured in a render.
+   Tokens now, dark in the base rule and the ORIGINAL light values restored
+   under the light theme below, so light mode is unchanged. The two accents
+   had to be recomputed rather than carried: on the dark tile the old green
+   scored 3.02:1 and the old red 2.92:1, both under the 4.5:1 floor. */
+:root{
+  --crji-card:#141619; --crji-line:#262a30; --crji-ink:#f2f4f7; --crji-sub:#a8b0ba;
+  --crji-tile:#1b1f24; --crji-tile-lo:#0d0f12; --crji-tile-hi:#23282e;
+  --crji-pos:#34d399; --crji-due:#f08a90;
+  --crji-btn:#1b1f24; --crji-btn-ink:#e6e9ee;
+  --crji-ghost:#1b1f24; --crji-ghost-ink:#a8b0ba;
+  --crji-sh1:rgba(0,0,0,.45); --crji-sh2:rgba(0,0,0,.55);
+}
+:root[data-theme="rb-light"]{
+  --crji-card:#FFFFFF; --crji-line:#E2E8F0; --crji-ink:#0F172A; --crji-sub:#475569;
+  --crji-tile:#EAEEF3; --crji-tile-lo:#D1D9E6; --crji-tile-hi:#FFFFFF;
+  --crji-pos:#047857; --crji-due:#C8202E;
+  --crji-btn:#FFFFFF; --crji-btn-ink:#0F172A;
+  --crji-ghost:#F8FAFC; --crji-ghost-ink:#475569;
+  --crji-sh1:rgba(15,23,42,.06); --crji-sh2:rgba(15,23,42,.16);
+}
 .crji-card{
-  background:#FFFFFF; border:1px solid #E2E8F0; border-radius:16px;
-  box-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 22px rgba(15,23,42,.16);
-  padding:15px 16px; margin:12px 0 4px; color:#0F172A;
+  background:var(--crji-card,#141619); border:1px solid var(--crji-line,#262a30); border-radius:16px;
+  box-shadow:0 1px 2px var(--crji-sh1,rgba(0,0,0,.45)),0 8px 22px var(--crji-sh2,rgba(0,0,0,.55));
+  padding:15px 16px; margin:12px 0 4px; color:var(--crji-ink,#f2f4f7);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
 }
 .crji-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;}
-.crji-ttl{font-weight:800;font-size:15px;letter-spacing:-.01em;color:#0F172A;}
+.crji-ttl{font-weight:800;font-size:15px;letter-spacing:-.01em;color:var(--crji-ink,#f2f4f7);}
 .crji-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px;}
-.crji-nums>span{display:flex;flex-direction:column;gap:2px;background:#EAEEF3;border-radius:11px;padding:9px 11px;box-shadow:inset 3px 3px 7px #D1D9E6, inset -3px -3px 7px #FFFFFF;}
-.crji-nums small{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#475569;}
-.crji-nums b{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:#0F172A;}
-.crji-nums b.pos{color:#047857;}
-.crji-nums b.due{color:#C8202E;}
+.crji-nums>span{display:flex;flex-direction:column;gap:2px;background:var(--crji-tile,#1b1f24);border-radius:11px;padding:9px 11px;box-shadow:inset 3px 3px 7px var(--crji-tile-lo,#0d0f12), inset -3px -3px 7px var(--crji-tile-hi,#23282e);}
+.crji-nums small{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--crji-sub,#a8b0ba);}
+.crji-nums b{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--crji-ink,#f2f4f7);}
+.crji-nums b.pos{color:var(--crji-pos,#34d399);}
+.crji-nums b.due{color:var(--crji-due,#f08a90);}
 .crji-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-.crji-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid #E2E8F0;background:#FFFFFF;color:#0F172A;font-size:13px;font-weight:600;padding:9px 12px;border-radius:10px;box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 10px rgba(15,23,42,.08);}
+.crji-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--crji-line,#262a30);background:var(--crji-btn,#1b1f24);color:var(--crji-btn-ink,#e6e9ee);font-size:13px;font-weight:600;padding:9px 12px;border-radius:10px;box-shadow:0 1px 2px var(--crji-sh1,rgba(0,0,0,.45)),0 4px 10px var(--crji-sh1,rgba(0,0,0,.45));}
 .crji-btn svg{width:15px;height:15px;}
 .crji-btn.primary{background:#C8202E;border-color:#C8202E;color:#fff;box-shadow:0 2px 8px rgba(200,32,46,.28);}
-.crji-btn.ghost{background:#F8FAFC;color:#475569;box-shadow:none;}
-.crji-hint{font-size:13px;color:#475569;}
+.crji-btn.ghost{background:var(--crji-ghost,#1b1f24);color:var(--crji-ghost-ink,#a8b0ba);box-shadow:none;}
+.crji-hint{font-size:13px;color:var(--crji-sub,#a8b0ba);}
 
 /* status pills, UNSCOPED so they render in the job block too (same values as the
    AR view's #cr-ar-view .crar-pill rules; those stay and win inside the dashboard). */

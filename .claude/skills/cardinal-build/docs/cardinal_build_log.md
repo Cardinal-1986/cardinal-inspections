@@ -33013,3 +33013,76 @@ patch replays **byte-for-byte**. No SQL.
 (**1.12 MB**) is fetched before sign-in, and so are `cardinal-report-logo.png`,
 `cardinal-prod.png`, `cardinal-board.png` and `wm-login.jpeg` (55 KB). None of
 them is the mark removed here. Assessment item 2 is still open.
+
+---
+
+## Build 1216 — the Invoices card stops being a white slab
+
+**Item 1 of four Theo picked off the 11 Sep design read** ("all"). The others are
+their own builds: **1217** the button system, **1218** the client profile in Sales
+Floor's language, and **item 4 is a fence, not a build** — Production, Crew
+Dispatch, Sales Floor and OC Colors are finished and are not to be swept.
+
+**What the read actually measured, so the priority is not taste.** Rendering
+seven screens at 1440 with the real assets and probing the CSSOM:
+
+| | |
+|---|---:|
+| distinct button fills | **19** |
+| distinct button corner radii | **10** |
+| font families on buttons | **4** |
+| large light surfaces in the dark app | `cr-est-view` **1152×873**, `crji-card` **1022×163** |
+
+This build takes the second of those two surfaces. It was the only large light
+object on the client profile and the brightest thing on the page.
+
+### The conversion is 573's pattern, not a flip
+
+Tokens (`--crji-*`, 21 references, **every one with a literal fallback** — 448/449
+is why), **dark in the base rule** because the app's default theme is dark, and
+the **original light values restored under `:root[data-theme="rb-light"]`**. The
+patch asserts every original literal survives in the light block and `gate_1216`
+proves it in a render: light still computes to `rgb(255,255,255)` on the card,
+`rgb(15,23,42)` ink, `#047857`, `#C8202E`. Byte-identical.
+
+⚠ **THE TWO ACCENTS COULD NOT CARRY OVER — 557's lesson again, measured:**
+
+| | on the dark tile `#1b1f24` | |
+|---|---:|---|
+| `#047857` positive green | **3.02:1** | FAIL |
+| `#C8202E` cardinal red | **2.92:1** | FAIL |
+| `#34d399` (the twin) | **8.61:1** | ok |
+| `#f08a90` (the twin, already the app's own light red) | **6.89:1** | ok |
+
+Both originals are chosen for a white card. White on cardinal red **stays**
+(5.67:1) — a semantic ink on a coloured ground is correct in both themes, and
+tokenising it turns every red button's label grey.
+
+⚠ **The neumorphic emboss INVERTS rather than dims.** A light card is lit from
+the top-left with a white inner highlight; a dark one needs the highlight darker
+than the tile and the shadow blacker. Carrying the light pair over draws a grey
+smear. Both inset colours are tokens for that reason.
+
+### ⚠ Two faults in my own gate, each of which reported a FALSE RED first
+
+1. **The app clears `data-theme` on `:root` within half a second.** Set it, wait,
+   read, and you measure the *dark* theme believing you measured light — the
+   attribute is already gone. Probed directly: set-and-read in one turn gives
+   `rgb(255,255,255)`; the same read 500ms later gives `rgb(20,22,25)`. The gate
+   now writes the attribute and measures **inside one `evaluate`**, which is not
+   a weakened check — computed style resolves synchronously, so nothing can race.
+   *The first run reported eight light failures against a conversion that was
+   exactly right.*
+2. **A check on an element that does not exist cannot fail.** The seeded client
+   has no balance due, so `.crji-nums b.due` is absent and asserting on its
+   colour passed by measuring `null` — **on the build and on the control alike**.
+   The accents are now read off the resolved **custom property**, which exists
+   whether or not the figure is on screen; the elements that do exist are still
+   measured beside it.
+
+Gates: `check_build` green (1215 → 1216, marker, negative control) · **`gate_1216`
+22/22**, and **RED 12 on the 1215 artifact** *and* **RED 2 on the runner's break**,
+which restores the white as the dark default and reproduces the defect's exact
+signature — `"Invoices & Payme"` at **1.1:1** · `gate_chromium --selftest` **20/20**
+· `gate_types` GREEN (0 codes grew, 2 improved) · `gate_dupes` GREEN · `gate_stack`
+CLEAN · patch replays **byte-for-byte**. No SQL.

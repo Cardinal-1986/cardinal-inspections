@@ -6043,3 +6043,60 @@ fetched before anyone has signed in:
 
 **The 1.12 MB one is the whole of the problem and it is a DIFFERENT image from
 anything 1213 or 1215 touched.** The A/B/C/D pick put to Theo still stands.
+
+---
+
+## 11 Sep 2026 — the design programme Theo approved ("all")
+
+He asked what I thought of the app's visual design; I rendered 8 screens at 1440
+and 4 at 390 with the **real assets** and probed the CSSOM rather than reading
+CSS. Four items came out of it and he took all four.
+
+**The measurements the programme rests on** (7 screens, computed, not eyeballed):
+
+| | |
+|---|---:|
+| distinct button fills | **19** |
+| distinct button corner radii | **10** (6, 7, 8, 9, 11, 12, 13px, 0, 50%, 12/12/0/0) |
+| font families on buttons | **4** (Arial, ui-monospace, -apple-system, Segoe UI) |
+| large light surfaces | `cr-est-view` **1152×873**, `crji-card` **1022×163** |
+
+| # | Item | State |
+|---|---|---|
+| 1 | the two white surfaces go dark | 🔸 **half done — 1216 took `crji-card`.** The estimate builder is the other half and is **held for a pick**, below |
+| 2 | one button system | ⬜ **1217** — three treatments (solid / outline / ghost), one radius, one font |
+| 3 | the client profile in Sales Floor's language | ⬜ **1218** — the screen everyone lives in is the least designed one |
+| 4 | leave Production, Crew Dispatch, Sales Floor and OC Colors alone | ✅ **A FENCE, NOT A BUILD.** They are finished. Do not sweep them |
+
+### ⚠ The estimate builder is HELD, and the reason is a real fork
+
+`cr-est-styles` is **87 light-colour sites across 17 distinct values in 26 KB** —
+a conversion, not a flip. And unlike the Invoices card it has **two defensible
+answers**, so guessing costs a build:
+
+- **(a) all dark** — consistent with the app, at the cost of editing a document on
+  a surface that looks nothing like the paper it prints on.
+- **(b) dark chrome, paper document** — the nav rail, header, buttons and empty
+  states go dark; the estimate body stays paper-white because it *is* a document.
+  Closer to how every real document editor behaves.
+
+**Do not pick this one alone.** Render both and put them in front of him — the
+project's own rule, and the 15 Aug "audit this instead of doing experiments" note
+is what it costs to skip it.
+
+### What the read found that is NOT on the list
+
+Recorded so they are not lost, and none of them is scheduled:
+
+- **The client's name truncates at 390** — `"Mark Diamo…"`. The most important
+  string on the screen is the one that clips.
+- **The APPROVED stage banner is the loudest object on the client profile** and it
+  is a *status*, not an action. Saturated full-bleed green, related to nothing else.
+- **The dark-mode moon button sits on top of content** — it covers the address line
+  on the phone client profile.
+- The `#1048` chip is lavender; the card glyphs are a blue `$` and a green `%`.
+- ⚠ **The app clears `data-theme` on `:root` within ~500ms** of it being set
+  externally. Established with a probe while building `gate_1216`, and it is why
+  that gate sets and reads the theme in one turn. **Not investigated** — it may be
+  correct (recomputing from a stored preference the mock does not have), and it is
+  not this programme's business. Recorded so the next rig does not lose an hour.

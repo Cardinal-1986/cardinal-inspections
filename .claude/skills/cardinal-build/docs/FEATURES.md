@@ -8549,6 +8549,26 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1216 — the Invoices card goes dark
+
+**Where:** the `.crji-*` rules inside `cr-ar-styles`, plus a `--crji-*` token pair.
+
+`Invoices & Payments` on the client profile was the only large light surface left
+there — 1022×163 of white on a near-black screen. Dark values in the base rule, the
+**original light values restored under `:root[data-theme="rb-light"]`**; 21 token
+references, every one with a literal fallback.
+
+- ⚠ **The two accents were recomputed, not carried.** On the dark tile the light
+  green scored **3.02:1** and cardinal red **2.92:1**. The twins are `#34d399`
+  (8.61:1) and `#f08a90` (6.89:1). White on red stays — a semantic ink on a
+  coloured ground is right in both themes.
+- ⚠ **The emboss inverts:** a light card's inner highlight is white, a dark card's
+  must be darker than the tile. Both inset colours are tokens.
+
+**Instrument:** `gate_1216.mjs` (22 checks, both themes, real render — dark ground,
+every text node against its **composited** ground, and light asserted
+**byte-identical** by computed value *and* by token). RED 12 on the 1215 artifact.
+
 ## Build 1215 — and the box loses its own mark too
 
 **Where:** the `.logincard` markup, and the two rules that styled the mark.

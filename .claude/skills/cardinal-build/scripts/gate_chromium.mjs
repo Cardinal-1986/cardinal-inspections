@@ -184,6 +184,13 @@ const GATES = [
     protects: 'the sign-in card paints no image at all and opens on its heading',
     break: { find: '<div class="logincard">',
              repl: '<div class="logincard"><img class="loginlogo" id="loginLogo" alt="" style="display:block;width:120px;height:40px;background:#333" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">' } },
+  /* 1216: the Invoices card went dark. The break RESTORES THE WHITE, by putting
+     the shipped light value back as the dark default — which is exactly the
+     mistake a future edit would make, and it reds both halves at once: the card
+     ground stops being dark AND the light theme stops being byte-identical. */
+  { name: 'gate_1216.mjs',
+    protects: 'the Invoices card is dark and readable in dark, and unchanged in light',
+    break: { find: '--crji-card:#141619;', repl: '--crji-card:#FFFFFF;' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
