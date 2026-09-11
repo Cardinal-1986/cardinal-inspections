@@ -8525,3 +8525,65 @@ signing flow are all untouched.
 The install-instructions bullet in `index.html` now says the route was retired and why, so it is
 not re-added; `harness_653`'s P1 was **inverted** to assert its absence rather than deleted (that
 file carries five other live sections).
+
+---
+
+## Build 1213 — the sign-in screen is the sign-in box
+
+**Where:** `#loginView` markup and the "desktop login stage" block in the head stylesheet.
+
+The desktop-only left panel (`.loginhero` — hero photograph, CARDINAL wordmark, ROOFING &
+RENOVATIONS, motto, daily quote, clock) is **removed**. The box centres itself; `#loginView` was
+already flex with `justify-content:center`.
+
+- ⚠ **The desktop rule that hid the card's own quote went with it.** It existed *because* the panel
+  carried the quote; leaving it would have deleted the daily quote from the desktop sign-in
+  silently. The card now shows its quote and rule at every width, as the phone always did.
+- ⚠ **Phones are unchanged** — the panel was gated to `min-width:901px` and never appeared there.
+- The hero photograph is no longer downloaded **on any device**; it was being fetched on phones too,
+  inside a `display:none` subtree, where nothing showed it. The file itself stays in the repo.
+
+**Instrument:** `gate_1213.mjs` (19 checks, both widths, signed out — box centred to the pixel,
+every control alive, **the quote asserted visible with real text**, the photograph never requested).
+⚠ Its section C originally asserted the card's own wordmark was still drawn; **1215 removed that
+mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
+control, and its absence is `gate_1215`'s claim with its own negative control.
+
+## Build 1215 — and the box loses its own mark too
+
+**Where:** the `.logincard` markup, and the two rules that styled the mark.
+
+Theo, on 1213: *"on pick 1 please remove logo."* The wordmark above **Team sign in** is gone, so
+the card opens on the heading. It was an **inline base64 SVG, one tag 16,428 characters long** —
+not a file, nothing fetched it. Card height **984px → 821px** at 1440; everything else on the card
+is byte-identical and still centred.
+
+- ⚠ **The card's engraved watermark (`wm-login.jpeg`) is NOT the logo and STAYS.** It is a gold
+  cardinal-and-axe illustration painted as a background across the foot of the card. `gate_1215`
+  section B2 asserts it is still there, so a later build cannot lose it quietly.
+- ⚠ **Nothing in script read the removed mark** — the boot block writes `brandLogo` and
+  `editorLogo`, which are different elements. Established, not assumed: 1182 is why.
+
+**Instrument:** `gate_1215.mjs` (24 checks, both widths, signed out — the element absent rather
+than hidden, **no child painting a picture by any route**, the heading first in the box, the daily
+quote still rendering, the watermark still painted). RED 8 on the 1214 artifact.
+
+## Build 1214 — Chart.js and Papa Parse load on first use
+
+**Where:** the two eager CDN tags; `ensureChart()` beside `rptChart()`; `ensurePapa()` beside
+`ensureXLSX()` in `cr-pricing-import`.
+
+Both libraries (~205 KB and ~45 KB) were `<script src>` in the document and downloaded on every
+launch, before sign-in. They now load the first time a chart is drawn or the import modal is opened.
+
+- **The pattern is `ensureXLSX()`'s**, which the importer already had — one memoised promise, one
+  injected tag. Not a new mechanism.
+- ⚠ **`openImportModal()`'s bare "is it loaded" early return had to go** — with a lazy script it
+  would have refused the importer on every use and blamed the user's connection.
+- ⚠ **The canvas is re-queried inside the load callback**, never held across it.
+- Offline: a report still renders its cards and numbers without the drawings; the importer says
+  plainly that it could not load.
+
+**Instrument:** `gate_1214.mjs` (20 checks) — it watches the **network**, not the source: signed out
+at 1440 and 390 neither is requested; asking for a chart fetches Chart.js and constructs one; a
+second chart reuses the single fetch.

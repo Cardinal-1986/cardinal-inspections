@@ -32820,3 +32820,196 @@ blocks and the two new url checks fail; strip the self-assignment guard and the 
 checks fail. ⚠ Building those controls tripped this file's own rule: **the reassign block sits
 ABOVE the create block in `index.html`**, and the first attempt asserted "blocks out of file order"
 rather than silently splicing one away.
+
+## Build 1213 — the sign-in screen is the sign-in box
+
+Theo, 11 Sep: *"How about no logo at all on the left of the sign in. Just the sign in box."*
+
+**⚠ THE FIRST PROBE MEASURED THE WRONG SCREEN AND REPORTED NOTHING USEFUL.** `e2e_mock_supa`
+signs you straight in, so a render that just boots finds `#loginView` at `display:none` and returns
+`loginShown:false` — no evidence at all about the screen being changed. The rig needs a **no-session
+client** and the view's own `.open` class before it is looking at the sign-in screen. Recorded
+because it cost a round and it will cost the next one too.
+
+Measured properly, signed out, at 1440 and 390:
+
+| | x | w | |
+|---|---:|---:|---|
+| `.loginhero` | 197 | 560 | **the left panel** — desktop only (`min-width:901px`) |
+| `.logincard` | 843 | 400 | the sign-in box |
+| `#loginQuote` | — | — | **hidden on desktop** |
+
+The panel carried a hero photograph, the CARDINAL wordmark, ROOFING & RENOVATIONS, the motto, the
+daily quote and a clock. It is gone; the box centres itself, because `#loginView` was already
+`display:flex` with `justify-content:center` and one child needs no new rule. Measured after:
+card at **x=520 w=400 in 1440** — centre 720 of 720.
+
+⚠ **THE CATCH, AND IT WOULD HAVE COST THE DAILY QUOTE.** The desktop block carried
+`#loginView.open .loginsep, #loginView.open #loginQuote{display:none;}` with the comment *"card
+sheds its quote block on desktop — the hero carries the art"*. Delete the panel and leave that rule
+and **the quote disappears from the desktop sign-in, silently**, by hiding an element whose
+replacement no longer exists. The rule went with the panel that justified it, so the card keeps its
+own quote at every width — which is how the phone has always worked. `gate_1213`'s control proves
+the trap was real: on 1212 the quote checks at 1440 are **red**. 1182 lost that quote once already.
+
+⚠ **The hero photograph was fetched ON PHONES TOO, where it was never shown** — an `<img src>`
+inside a `display:none` subtree still downloads. 51 KB off every device, not just the desktop it
+appeared on. Measured, not assumed. **The file is NOT deleted**: it becomes unreferenced, and this
+doc set's own rule is that an asset is not unreferenced just because nothing names it.
+
+The two JS writers (`heroClock` in the tick, the `heroQuote` mirror) were both guarded, so nothing
+threw either way; they were removed rather than left pointing at elements that no longer exist —
+807's five-site retire checklist is exactly about that.
+
+## Build 1214 — Chart.js and Papa Parse stop downloading before sign-in
+
+Audit item 4 from the 9 Sep assessment. **Both were confirmed loading on the sign-in screen** by a
+signed-out render at 1440 and 390 before anything was changed.
+
+**OPEN_ITEMS called this "regression risk on every chart consumer — its own build, gated per
+consumer". Measured, it is far smaller**, because the app already funnels each through one place:
+`new Chart(` is **one site** inside `rptChart()` (7 renderers call it), and `Papa.parse` is **one
+site** inside `parseCSV()`, reached only through `openImportModal()`.
+
+**The pattern is the app's own.** `cr-pricing-import` already carries `ensureXLSX()` — a memoised
+promise that injects the tag on first use — and already preloads it from the import modal. The two
+new loaders are that function with one URL changed. One mechanism per concept.
+
+⚠ **THE GUARD THAT WOULD HAVE SHIPPED THIS BROKEN.** `openImportModal()` opened with a bare
+"is the library there yet" early return. Make the script lazy and leave that line and **the importer
+refuses itself on every first use**, with a message blaming the user's internet for a change we
+made. It is an `await` on the loader now. The await is safe for the reason the invariant actually
+turns on: the function is already `async` and the await sits **above every side effect**, so there
+is no precondition to revalidate.
+
+⚠ **And the stale-node trap the lazy load introduces:** the canvas is looked up **inside** the
+callback, never held across the load. The reports view re-renders; a node captured before an await
+can be one that is no longer in the document.
+
+Gates: `check_build` green on both · **`gate_1213` 19/19** (hero gone at both widths, box centred to
+the pixel, every control alive, **the quote and its rule visible at 1440 and 390**, the photograph
+never requested) — **control on 1212 reds 9** · **`gate_1214` 20/20**, and it watches the **network**,
+not the source: signed out at 1440 and 390 neither library is requested; a chart request fetches
+Chart.js and **actually constructs a chart**; a second chart **reuses the one fetch** — **control on
+1213 reds 11** · both registered in `gate_chromium` (selftest **18/18**) · `gate_types` GREEN (0
+codes grew, 2 improved) · `gate_dupes` GREEN · `gate_stack` CLEAN · **sentinel CLEAN — 64 renders, nothing new,
+203 carried from 1212** (1213 is a layout build, so its result held the merge; swept at 390 and
+1194 with the seed + mock setup, `--since` on the 1212 artifact) · both patches replay
+**byte-for-byte**. No SQL.
+
+⚠ **AND CI SAID NO — `gate_1214` went RED on the runner while it was 20/20 here, twice.**
+`page.route()` does not see a request a **service worker** makes, and this app registers one. On
+a runner with real internet the worker fetched the **real** Chart.js off the CDN, so the gate's
+stub never ran and the reading was the contradiction `never fetched` **with `window.Chart`
+defined**. Locally the worker never took control, on the full Chromium *and* on the headless
+shell Playwright picks by default — same build v1194, same Playwright 1.56.1, same Node, same
+4-CPU box. Every obvious difference was ruled out and none of them was it.
+
+⚠ **The passing direction was the worse one.** A regression that loaded a library eagerly
+**through the worker** would never have reached the counter, and section A — the section this
+build exists for — would have called it clean. Fixed by creating every context with
+`serviceWorkers:'block'` **and asserting no worker controls the page**, so the gate says so if
+that ever stops working rather than going quietly back to measuring the wrong network. 20 checks
+→ **23**, floor raised 16 → 19. Control on 1213 still reds, **11 of 23**.
+
+⚠ **It was undiagnosable, and that is the part worth keeping.** `gate_chromium` printed only the
+failing gate's LAST line — `2 of 20 failed`, with no way to learn which 2 except to push a commit
+that prints more and wait nine minutes. It now prints the gate's own `FAIL` lines (capped at 24)
+plus any `GATE ERROR`/`TIMEOUT` line. **It paid for itself on the first run, and twice over:** the
+same change turned a local red that had been carried for weeks as "a container artifact" into
+`FAIL Chromium cascade check can start → playwright is missing` (`gate_1198`). **BUG_CLASSES 97.**
+
+⚠ **THE COMMENT-POLLUTION TRAP COST FIVE ROUNDS IN ONE BUILD, AND THE FIX IS NOW A SCRIPT.** Five
+times an explanatory comment I wrote contained an identifier the patch counts — `wm-home.jpeg`,
+`rptChart(`, `ensureXLSX()`, `typeof Papa === 'undefined'`, and finally the literal `<script src>`,
+which made **check_build** itself go red at **136 open / 134 close**. Every time the correct fix was
+to reword the prose, never weaken the check (732's precedent). Doing it one failure at a time cost
+five runs, so `patch_1214.py` now opens with `no_planted_identifiers()`, which scans **the comment
+lines of every replacement string** for the identifiers the patch asserts on and names all of them
+at once. ⚠ Its first version flagged the real `function rptChart(...)` definition and the real
+`new Chart(...)` call — a check that fails correct code, which is the very thing it exists to stop —
+so it reads comment lines only. **BUG_CLASSES 96.**
+
+⚠ **What this build did NOT fix, stated plainly so it is not assumed:** `cardinal-transparent.png`
+(**1.12 MB**) is **still fetched before sign-in**, along with `cardinal-report-logo.png`,
+`cardinal-prod.png`, `cardinal-board.png` and `wm-login.jpeg` (55 KB, the card's own watermark).
+That logo is a **different image** from the one removed here — it lives on the post-login landing
+and two insurance headers, not on the left of the sign-in. Assessment item 2 is still open.
+
+
+---
+
+## Build 1215 — the sign-in box loses its own mark too
+
+Theo, on the 1213 change: **"on pick 1 please remove logo."** 1213 cleared the
+LEFT of the sign-in screen on his earlier word *"just the sign in box"*; the box
+itself still opened with a Cardinal wordmark above the heading. That is gone, so
+the card now starts on **Team sign in**.
+
+**What actually came out, because the markup does not look like much:** the mark
+was an **inline base64 SVG — one tag 16,428 characters long**. Not a file,
+nothing fetched it, and no other surface shared it. Three references in the whole
+document, all in this section: the tag and the two rules that styled it. All
+three went together, so no orphan rule is left for a later reader to "fix" back
+into use. `index.html` is **15,410 characters smaller**, and the patch asserts
+that number rather than carrying it: it is computed as what was removed minus
+what was added, so a reworded comment fails the assertion instead of drifting it.
+
+**Measured effect on the card:** height **984px → 821px** at 1440, the 147px mark
+plus its 16px margin. Every other child sits at the same offset relative to the
+heading; the box is still centred (720/720).
+
+⚠ **NOTHING IN SCRIPT READ IT, AND THAT WAS ESTABLISHED RATHER THAN ASSUMED.**
+This file has already lost a build to a removed image whose only readers found it
+by regex out of a host constant (1182). Checked: the boot block writes
+`brandLogo` and `editorLogo` and never this element, it is not pulled out of any
+template, and it is in no fallback chain. **The daily quote lives in that same
+boot block, above the logo loop** — the exact pairing that broke at 1182 — so
+`gate_1215` re-proves the quote renders with real text at both widths.
+
+### ⚠ The second mark on that card is NOT the logo, and it stays
+
+The card paints `wm-login.jpeg` as a **background watermark** — a gold engraved
+cardinal-and-axe illustration across its foot. It is decorative art, not the
+wordmark, and removing it was never what was asked. **`gate_1215` section B2
+asserts it is still there**, so a later build cannot quietly lose it.
+
+⚠ **It was invisible to the first version of my own gate, and the reason is a new
+trap: `background-image` IS A LAYER LIST, so testing the whole string is a check
+that cannot fail.** The card's background is
+`linear-gradient(...), url(wm-login.jpeg)` in **one** string; the probe asked
+`!/gradient/.test(bi)` and therefore skipped the entire layer list, watermark
+included. A mark reinstated as a background beside a gradient would have sailed
+straight through a gate written to catch exactly that. It now splits the layers
+at top level — commas inside `url()` and `gradient()` are not separators — and
+judges each one. **BUG_CLASSES 98.**
+
+⚠ **And the rig hid it from me twice over:** the screenshot harness stubs every
+same-origin image with a 1×1 JPEG, so the watermark rendered as a black band and
+read as empty space at the foot of the card. Serving the real bytes is what
+showed what was actually there. *A rig that blanks images cannot tell you whether
+a picture is on the screen.*
+
+### gate_1213 was retargeted, not weakened
+
+Its section C asserted the card's wordmark was still drawn — true at 1213, and
+deliberately false from here. **A mark is not a control.** The six things a
+person actually uses (email, password, Sign in, Remember me, Forgot, the clock)
+are still asserted there, the reading is still printed so nothing is hidden, and
+the mark's *absence* is `gate_1215`'s claim with the 1214 artifact as its
+negative control. Nothing was dropped to get green.
+
+Gates: `check_build` green (1214 → 1215, marker, negative control) ·
+**`gate_1215.mjs` 24/24**, and it goes **RED 8** on the 1214 artifact *and* RED 8
+on the runner's own break, which puts a mark back in the card at the spot the
+removed one occupied — the real previous behaviour, not a contrived control ·
+**`gate_1213` still GREEN 19/19** and still **RED 9** on 1212 · `gate_chromium
+--selftest` **19/19** · `gate_types` GREEN (0 codes grew, 2 improved) ·
+`gate_dupes` GREEN · `gate_stack` CLEAN · **sentinel CLEAN — 64 renders at 390 and 1194,
+nothing new, 203 carried from 1214** (1215 is a layout build, so its result held the merge) ·
+patch replays **byte-for-byte**. No SQL.
+
+⚠ **Still not fixed, and not by this build:** `cardinal-transparent.png`
+(**1.12 MB**) is fetched before sign-in, and so are `cardinal-report-logo.png`,
+`cardinal-prod.png`, `cardinal-board.png` and `wm-login.jpeg` (55 KB). None of
+them is the mark removed here. Assessment item 2 is still open.

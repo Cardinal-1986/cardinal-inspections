@@ -464,7 +464,7 @@ styles and palettes. Point the script at those files separately; do not add thei
 | Thing | Value | Measured | How it was measured |
 |---|---:|---|---|
 | Inline `<script>` blocks | **113** | **@808** | `<script>` tags without `src=` — was 106 @627 |
-| `<script>` tags total / external CDN | **116** / 3 | **@808** | supabase-js@2, chart.js@4.4.3, papaparse@5.4.1 — unchanged since 482 |
+| `<script>` tags total / external CDN | **134 / 1** @1214 (was 116 / 3 @808) | **@1214** | ⚠ **Only `supabase-js@2` is eager now.** Build 1214 made **chart.js@4.4.3** and **papaparse@5.4.1** load on first use — both were downloading on every launch *before sign-in*, measured signed-out in Chromium. They are still in the file, inside `ensureChart()` and `ensurePapa()`, so a URL grep still finds them; **count `<script src=` tags, not the URLs.** The "unchanged since 482" note is retired |
 | `<style>` blocks | **135** | **@808** | was 118 @627. Seventeen added across 628–808 — most of them the drawn-icon sweep and the client-profile rebuild |
 | `<style>` blocks with an `id` | **127** | **@808** | was 111 @627 |
 | `window.Cardinal*` exports | **94** | **@808** | distinct names — was 90 @627 |
