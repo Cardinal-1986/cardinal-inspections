@@ -173,6 +173,17 @@ const GATES = [
     protects: 'neither charting nor CSV downloads before sign-in, and both still load on demand',
     break: { find: '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>',
              repl: '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>' } },
+  /* 1215: the sign-in card lost its own mark too. The break PUTS A MARK BACK in
+     the card, at the spot the removed one occupied — so the control is the real
+     previous behaviour rather than a contrived one, and it reds the three claims
+     that matter together: the element is absent, nothing paints an image inside
+     the box, and the heading is the first thing in it. A 1x1 data URI is used
+     rather than the original 16 KB blob because what is being proved is that an
+     image in that position is SEEN, not which image it was. */
+  { name: 'gate_1215.mjs',
+    protects: 'the sign-in card paints no image at all and opens on its heading',
+    break: { find: '<div class="logincard">',
+             repl: '<div class="logincard"><img class="loginlogo" id="loginLogo" alt="" style="display:block;width:120px;height:40px;background:#333" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

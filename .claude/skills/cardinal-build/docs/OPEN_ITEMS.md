@@ -6013,3 +6013,33 @@ overrides; one is a state class. `audit_hub_dead.mjs` re-runs the whole check in
 `@media` blocks that do NOT match, so an inactive `max-width:430px` rule was reported as the
 "winner" of a property at 1194px. The COMPUTED value was right throughout; only the attribution
 was wrong. Fixed — it now descends only into matching media.
+
+---
+
+## 11 Sep 2026 — the sign-in screen, after 1213 and 1215
+
+**Settled by Theo across two messages and not to be re-litigated:** *"no logo at
+all on the left of the sign in. Just the sign in box"* (1213, the hero panel) and
+*"on pick 1 please remove logo"* (1215, the wordmark inside the card). The card
+opens on **Team sign in**.
+
+⚠ **`wm-login.jpeg` STAYS and is not a loose end.** The card paints it as a
+background watermark — the gold engraved cardinal-and-axe across its foot. It is
+decorative art and was never what "logo" meant in either message. `gate_1215`
+section B2 asserts it is still painted, so it cannot be lost silently. **Do not
+remove it on the strength of the two messages above; that would need him to say
+so.**
+
+**Still open, unchanged by either build — assessment item 2.** Five images are
+fetched before anyone has signed in:
+
+| file | size | where it is actually used |
+|---|---:|---|
+| `cardinal-transparent.png` | **1.12 MB** | post-login landing + two insurance headers |
+| `cardinal-report-logo.png` | 105 KB | report/estimate/contract letterheads |
+| `wm-login.jpeg` | 55 KB | the sign-in card watermark — the only one of the five on this screen |
+| `cardinal-prod.png` | — | Production |
+| `cardinal-board.png` | — | the board |
+
+**The 1.12 MB one is the whole of the problem and it is a DIFFERENT image from
+anything 1213 or 1215 touched.** The A/B/C/D pick put to Theo still stands.

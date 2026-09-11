@@ -133,13 +133,20 @@ try {
     }
   }
 
+  /* 1215 RETARGETED THIS SECTION, and the distinction is the point: a mark is
+     not a control. This asserted the card's own wordmark was still drawn, which
+     was true at 1213 and is deliberately false from 1215 — Theo asked for it
+     gone too. The six things a person actually USES are unchanged and still
+     asserted here; the mark's absence is gate_1215's claim, with the 1214
+     artifact as its negative control, so nothing was dropped to get green. The
+     reading is still printed below, so it is reported and not hidden. */
   console.log('\nC  every control on the box survived');
   for (const w of [1440, 390]) {
     const r = seenAt[w];
-    ok(r.logoSeen && r.email && r.pass && r.btn && r.remember && r.forgot && r.clock,
-       w + 'px: logo, email, password, Sign in, Remember me, Forgot, clock',
-       JSON.stringify({ logo:r.logoSeen, email:r.email, pass:r.pass, btn:r.btn,
-                        remember:r.remember, forgot:r.forgot, clock:r.clock }));
+    ok(r.email && r.pass && r.btn && r.remember && r.forgot && r.clock,
+       w + 'px: email, password, Sign in, Remember me, Forgot, clock',
+       JSON.stringify({ email:r.email, pass:r.pass, btn:r.btn, remember:r.remember,
+                        forgot:r.forgot, clock:r.clock, mark_no_longer_asserted:r.logoSeen }));
   }
 
   console.log('\nD  THE DAILY QUOTE SURVIVED — the trap this build had to avoid');

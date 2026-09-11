@@ -32936,3 +32936,78 @@ so it reads comment lines only. **BUG_CLASSES 96.**
 That logo is a **different image** from the one removed here — it lives on the post-login landing
 and two insurance headers, not on the left of the sign-in. Assessment item 2 is still open.
 
+
+---
+
+## Build 1215 — the sign-in box loses its own mark too
+
+Theo, on the 1213 change: **"on pick 1 please remove logo."** 1213 cleared the
+LEFT of the sign-in screen on his earlier word *"just the sign in box"*; the box
+itself still opened with a Cardinal wordmark above the heading. That is gone, so
+the card now starts on **Team sign in**.
+
+**What actually came out, because the markup does not look like much:** the mark
+was an **inline base64 SVG — one tag 16,428 characters long**. Not a file,
+nothing fetched it, and no other surface shared it. Three references in the whole
+document, all in this section: the tag and the two rules that styled it. All
+three went together, so no orphan rule is left for a later reader to "fix" back
+into use. `index.html` is **15,410 characters smaller**, and the patch asserts
+that number rather than carrying it: it is computed as what was removed minus
+what was added, so a reworded comment fails the assertion instead of drifting it.
+
+**Measured effect on the card:** height **984px → 821px** at 1440, the 147px mark
+plus its 16px margin. Every other child sits at the same offset relative to the
+heading; the box is still centred (720/720).
+
+⚠ **NOTHING IN SCRIPT READ IT, AND THAT WAS ESTABLISHED RATHER THAN ASSUMED.**
+This file has already lost a build to a removed image whose only readers found it
+by regex out of a host constant (1182). Checked: the boot block writes
+`brandLogo` and `editorLogo` and never this element, it is not pulled out of any
+template, and it is in no fallback chain. **The daily quote lives in that same
+boot block, above the logo loop** — the exact pairing that broke at 1182 — so
+`gate_1215` re-proves the quote renders with real text at both widths.
+
+### ⚠ The second mark on that card is NOT the logo, and it stays
+
+The card paints `wm-login.jpeg` as a **background watermark** — a gold engraved
+cardinal-and-axe illustration across its foot. It is decorative art, not the
+wordmark, and removing it was never what was asked. **`gate_1215` section B2
+asserts it is still there**, so a later build cannot quietly lose it.
+
+⚠ **It was invisible to the first version of my own gate, and the reason is a new
+trap: `background-image` IS A LAYER LIST, so testing the whole string is a check
+that cannot fail.** The card's background is
+`linear-gradient(...), url(wm-login.jpeg)` in **one** string; the probe asked
+`!/gradient/.test(bi)` and therefore skipped the entire layer list, watermark
+included. A mark reinstated as a background beside a gradient would have sailed
+straight through a gate written to catch exactly that. It now splits the layers
+at top level — commas inside `url()` and `gradient()` are not separators — and
+judges each one. **BUG_CLASSES 98.**
+
+⚠ **And the rig hid it from me twice over:** the screenshot harness stubs every
+same-origin image with a 1×1 JPEG, so the watermark rendered as a black band and
+read as empty space at the foot of the card. Serving the real bytes is what
+showed what was actually there. *A rig that blanks images cannot tell you whether
+a picture is on the screen.*
+
+### gate_1213 was retargeted, not weakened
+
+Its section C asserted the card's wordmark was still drawn — true at 1213, and
+deliberately false from here. **A mark is not a control.** The six things a
+person actually uses (email, password, Sign in, Remember me, Forgot, the clock)
+are still asserted there, the reading is still printed so nothing is hidden, and
+the mark's *absence* is `gate_1215`'s claim with the 1214 artifact as its
+negative control. Nothing was dropped to get green.
+
+Gates: `check_build` green (1214 → 1215, marker, negative control) ·
+**`gate_1215.mjs` 24/24**, and it goes **RED 8** on the 1214 artifact *and* RED 8
+on the runner's own break, which puts a mark back in the card at the spot the
+removed one occupied — the real previous behaviour, not a contrived control ·
+**`gate_1213` still GREEN 19/19** and still **RED 9** on 1212 · `gate_chromium
+--selftest` **19/19** · `gate_types` GREEN (0 codes grew, 2 improved) ·
+`gate_dupes` GREEN · `gate_stack` CLEAN · patch replays **byte-for-byte**. No SQL.
+
+⚠ **Still not fixed, and not by this build:** `cardinal-transparent.png`
+(**1.12 MB**) is fetched before sign-in, and so are `cardinal-report-logo.png`,
+`cardinal-prod.png`, `cardinal-board.png` and `wm-login.jpeg` (55 KB). None of
+them is the mark removed here. Assessment item 2 is still open.

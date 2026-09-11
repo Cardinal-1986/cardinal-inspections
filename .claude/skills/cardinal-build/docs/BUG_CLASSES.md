@@ -4776,3 +4776,62 @@ playwright is missing` instead of `GATE 1198 RED — 1 failure(s)`.
 whether a matching tag reached the DOM, whether a worker is controlling the page,
 whether the canvas gave a 2d context, and any window error — because
 `charts: 0` alone cannot tell a blocked script from a refused canvas.
+
+---
+
+## 98 — `background-image` is a LAYER LIST, so testing the whole string is a check that cannot fail
+
+**Caught in the same build that would have shipped past it** — `gate_1215`, whose
+entire job was "no picture is painted inside the sign-in card".
+
+The probe walked the card and asked:
+
+```js
+const bi = getComputedStyle(el).backgroundImage;
+if (bi && bi !== 'none' && !/gradient/i.test(bi)) painted.push(bi);   // ⚠ WRONG
+```
+
+The card's own background is **one string with two layers**:
+
+```
+linear-gradient(168deg, …), url("…/wm-login.jpeg")
+```
+
+`/gradient/` matches, so the test **skipped the entire layer list** — gradient
+and photograph together. The gate reported `nothing painted` over a card with a
+large engraved illustration across its foot, and would have reported the same
+over a logo reinstated as a background beside any gradient. **A gate written to
+catch a mark on that card was blind to the one mark actually on it.**
+
+**The fix is to split the layers at top level and judge each one.** Commas inside
+`url()` and inside `gradient()` are not separators, so a naive `.split(',')` is
+wrong in the other direction — walk the string tracking paren depth:
+
+```js
+const layers = (bi) => { const out=[]; let d=0, cur='';
+  for (const ch of (bi||'')) {
+    if (ch==='(') d++; if (ch===')') d--;
+    if (ch===',' && d===0) { out.push(cur.trim()); cur=''; continue; }
+    cur += ch; }
+  if (cur.trim()) out.push(cur.trim()); return out; };
+const pictures = el => layers(getComputedStyle(el).backgroundImage)
+  .filter(l => l !== 'none' && !/^(linear|radial|conic|repeating)-gradient/i.test(l));
+```
+
+**This is the sibling of the trap already recorded under the contrast rig —
+"`background-color` is not the background".** Same root: a CSS background is a
+*stack*, and any check that reduces it to one string gets a confident wrong
+answer. That one read past a card and scored the page behind it; this one read a
+picture as absent. **Both directions are silent.**
+
+### The rig made it worse, and that half is its own rule
+
+The screenshot harness fulfils every same-origin image with a 1×1 JPEG so the
+test is hermetic. The watermark therefore rendered as a **black band**, which
+read as empty space at the foot of the card — so the picture was invisible in the
+render *and* in the probe, from two unrelated causes at once. Serving the real
+bytes from disk is what showed what was actually on the screen.
+
+**When a render is used to decide what is on a screen, serve the real assets.**
+A stub-everything rig is right for proving a request was or was not made, and
+wrong for judging a picture. Know which question you are asking.

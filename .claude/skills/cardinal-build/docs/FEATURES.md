@@ -8545,6 +8545,28 @@ already flex with `justify-content:center`.
 
 **Instrument:** `gate_1213.mjs` (19 checks, both widths, signed out — box centred to the pixel,
 every control alive, **the quote asserted visible with real text**, the photograph never requested).
+⚠ Its section C originally asserted the card's own wordmark was still drawn; **1215 removed that
+mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
+control, and its absence is `gate_1215`'s claim with its own negative control.
+
+## Build 1215 — and the box loses its own mark too
+
+**Where:** the `.logincard` markup, and the two rules that styled the mark.
+
+Theo, on 1213: *"on pick 1 please remove logo."* The wordmark above **Team sign in** is gone, so
+the card opens on the heading. It was an **inline base64 SVG, one tag 16,428 characters long** —
+not a file, nothing fetched it. Card height **984px → 821px** at 1440; everything else on the card
+is byte-identical and still centred.
+
+- ⚠ **The card's engraved watermark (`wm-login.jpeg`) is NOT the logo and STAYS.** It is a gold
+  cardinal-and-axe illustration painted as a background across the foot of the card. `gate_1215`
+  section B2 asserts it is still there, so a later build cannot lose it quietly.
+- ⚠ **Nothing in script read the removed mark** — the boot block writes `brandLogo` and
+  `editorLogo`, which are different elements. Established, not assumed: 1182 is why.
+
+**Instrument:** `gate_1215.mjs` (24 checks, both widths, signed out — the element absent rather
+than hidden, **no child painting a picture by any route**, the heading first in the box, the daily
+quote still rendering, the watermark still painted). RED 8 on the 1214 artifact.
 
 ## Build 1214 — Chart.js and Papa Parse load on first use
 
