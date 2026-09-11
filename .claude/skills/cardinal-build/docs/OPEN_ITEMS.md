@@ -6106,6 +6106,25 @@ a rewrite. ⚠ **Three of those edits were a silent no-op** because `cr-nvl-styl
 out-specifies `cr-est-styles`; `selector_audit.py` names that in one line and
 should be run on every selector in this module before touching it.
 
+### ⚠ NEW, 1218 — a full CRM sentinel sweep now sits ON its own deadline
+
+`RENDERS = states × viewports × themes × (--since ? 2 : 1)` and the budget is
+`60000 + RENDERS * 14000` ms. At **32 states × 2 × 2 × 2 = 256 renders** that is
+**3644s**, and 14s/render is no longer generous when anything else is running on
+the box. The 1218 sweep finished fine with the machine quiet; the confirming
+re-run overlapped CI polling and the gate ladder's leftover Chromium processes
+and reported `SENTINEL TIMEOUT … treat as UNKNOWN, not as clean`.
+
+**Remedies, in order of preference:** start the sweep FIRST and do the docs while
+it runs; or pass `--deadline <seconds>`, which exists for this; or drop `--since`
+to halve the renders and read 272 carried findings instead of a subtracted list.
+
+**Worth fixing properly at some point:** 14s/render was set when the walk was
+smaller. Either raise the per-render allowance or make the budget adaptive. Not
+urgent — the flag covers it — but a standing gate that always answers UNKNOWN is
+a gate nobody runs, which is the exact failure the deadline's own comment warns
+about at build 993.
+
 ### ⚠ NEW, 1218 — the sentinel fixture carries no invoices, so the AR screen has never been swept
 
 The sentinel setup states this itself, in its own `ar` state: *"The seed carries
