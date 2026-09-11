@@ -8549,6 +8549,42 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1218 — Accounts Receivable and the payment sheet go dark
+
+**Where:** the `#cr-ar-view` token rule and a new `:root[data-theme="rb-light"] #cr-ar-view`
+twin in `cr-ar-styles`; ten literal/role fixes in the same block; a `--crpay-*` pair on
+`#cr-pay-modal` and 13 repointed rules.
+
+**The AR dashboard was the THIRD paper-white surface**, found by sweeping all 32 sentinel
+states rather than the eight the design read had covered: `#cr-ar-view` grounds at
+`rgb(244,244,245)` with the app in dark mode. It is now `#0c0d0f` page / `#141619` card /
+`#1b1f24` KPI tile — **1216's `--crji-*` values on purpose**, because this dashboard and the
+profile's Invoices & Payments card are the same money language seen minutes apart.
+
+The **offline payment sheet** goes with it. It is hardcoded porcelain, and since 1216 its two
+footer buttons have been `.crji-btn` — dark. A white card carrying dark grey controls, reached
+from both surfaces this build darkens.
+
+- ⚠ **`--est-red` is a fill, a spine AND an ink**, so it is deliberately NOT re-valued. The ink
+  role moved to a new `--crar-alert` (`#f08a90` dark / `#C8202E` light); the brand button and the
+  overdue row's 3px `border-left` keep `#C8202E` in both themes. *A glowing 3px rule is not text.*
+- **Five literals were recomputed, not carried** — `#166534` 2.54:1, `#C8202E` as ink 3.20:1,
+  `#047857` 3.31:1, `#8a6420` 3.39:1, `#64748B` 3.81:1, all on the dark card against a 4.5 floor.
+  Their replacements clear it on all three dark grounds.
+- **The five status pills are untouched on purpose** — chips with their own light ground, already
+  rendering on the dark client profile.
+- **Light mode is byte-for-byte what shipped**, asserted twice: declaration-by-declaration in the
+  patch, and by reading all 12 resolved values back out of a real light render.
+
+**Instrument:** `gate_1218.mjs` (23 checks, dark + light) — both grounds by measured luminance,
+the invoice card and KPI tile, all five recomputed inks read off the **resolved custom property**
+(so the check does not depend on a fixture happening to be overdue), the brand red still
+`#C8202E`, every ink in the view and on the open sheet scored against its composited ground, and
+the 12 light values compared to what shipped. RED 11/23 on the 1217 artifact.
+⚠ **It seeds its own invoiced job**, because the shared fixture carries none — the sentinel's `ar`
+state says so itself, which means every sweep of this screen to date measured the **empty state**
+and never an invoice row, its money columns, its pill or the overdue spine.
+
 ## Build 1217 — the estimate builder: dark chrome, paper document
 
 **Where:** an `--estc-*` chrome layer scoped to `#cr-est-view`, plus 16 repointed

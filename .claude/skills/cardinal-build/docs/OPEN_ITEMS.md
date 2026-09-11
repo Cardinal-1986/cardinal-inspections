@@ -6052,21 +6052,40 @@ He asked what I thought of the app's visual design; I rendered 8 screens at 1440
 and 4 at 390 with the **real assets** and probed the CSSOM rather than reading
 CSS. Four items came out of it and he took all four.
 
-**The measurements the programme rests on** (7 screens, computed, not eyeballed):
+**The measurements the programme rests on.** ⚠ **The first column is an
+EIGHT-SCREEN read and it understated every row.** Before starting item 2 the same
+probe was pointed at **all 32 sentinel states**, and the honest numbers are
+roughly three times larger. Both are kept so nobody "corrects" the right one:
 
-| | |
-|---|---:|
-| distinct button fills | **19** |
-| distinct button corner radii | **10** (6, 7, 8, 9, 11, 12, 13px, 0, 50%, 12/12/0/0) |
-| font families on buttons | **4** (Arial, ui-monospace, -apple-system, Segoe UI) |
-| large light surfaces | `cr-est-view` **1152×873**, `crji-card` **1022×163** |
+| | 8 screens | **all 32 states** |
+|---|---:|---:|
+| control renderings swept | — | **1,156** |
+| distinct control selectors | — | **125** |
+| **distinct design signatures** (fill+radius+font+size+weight+border) | — | **102** |
+| distinct button fills | 19 | **67** |
+| distinct button corner radii | 10 | **16** |
+| font families on buttons | 4 | **6** (+ `sans-serif`, `system-ui`) |
+| large light surfaces | 2 | **3** — the third was `#cr-ar-view` |
+
+**102 design signatures across 125 controls means almost every button in this app
+is its own design.** The single biggest treatment is `button.lnav-sec` — the left
+nav's section headers, 224 renderings, `ui-monospace` at `12px 12px 0 0`.
 
 | # | Item | State |
 |---|---|---|
-| 1 | the two white surfaces go dark | ✅ **DONE.** 1216 took `crji-card`; **1217 took the estimate builder, Theo's pick (b)** |
-| 2 | one button system | ⬜ **1218** — three treatments (solid / outline / ghost), one radius, one font. **Also carries the four dead `.cr-est-totals` ink rules** 1217's sentinel surfaced |
-| 3 | the client profile in Sales Floor's language | ⬜ **1219** — the screen everyone lives in is the least designed one |
+| 1 | the white surfaces go dark | ✅ **DONE at 1218** — 1216 `crji-card`, 1217 the estimate builder (Theo's pick (b)), **1218 the AR dashboard + the payment sheet**. ⚠ It was reported done at 1217 and was not: the 32-state sweep found a third |
+| 2 | one button system | ⬜ **next** — three treatments (solid / outline / ghost), one radius, one font. **Scope is 3× what the 8-screen read said** (see above) and the fenced modules come out of it, so it wants a written target list before any edit. **Also carries the four dead `.cr-est-totals` ink rules** 1217's sentinel surfaced |
+| 3 | the client profile in Sales Floor's language | ⬜ — the screen everyone lives in is the least designed one |
 | 4 | leave Production, Crew Dispatch, Sales Floor and OC Colors alone | ✅ **A FENCE, NOT A BUILD.** They are finished. Do not sweep them |
+
+⚠ **Item 2's target list is smaller than 125.** Out of scope by existing settled
+decisions, and each for its own reason: `pb*` / `dsp*` (Production, Crew Dispatch)
+and `cr-sf-*` (Sales Floor) and `occ-*` (OC Colors) are **item 4's fence**;
+`cr-sh-*` (the Showcase) is **Blackout by design**, deliberately outside both app
+themes; `--lb-*` (the Resource Library) is the best-behaved palette in the file and
+the one to copy, not sweep; `.cr-ped-swatch`'s `50%` radius is a **colour swatch**,
+where the circle and the fill *are* the content. Write the list, then measure it,
+then edit.
 
 ### ✅ The estimate builder fork — SETTLED, Theo picked (b) at 1217
 
@@ -6086,6 +6105,26 @@ failing nodes from three inks**, and the fix was a 16-reference chrome layer, no
 a rewrite. ⚠ **Three of those edits were a silent no-op** because `cr-nvl-styles`
 out-specifies `cr-est-styles`; `selector_audit.py` names that in one line and
 should be run on every selector in this module before touching it.
+
+### ⚠ NEW, 1218 — the sentinel fixture carries no invoices, so the AR screen has never been swept
+
+The sentinel setup states this itself, in its own `ar` state: *"The seed carries
+no invoices on purpose … the per-row reminder line (`.crar-rem`) needs a seeded
+invoice with a balance and is NOT covered yet."* So every sweep of Invoices & AR
+since 1158 has measured the **empty state** — chrome, KPI tray, the 1157 master
+row — and **never an invoice row**, its money columns, its status pill, the
+overdue spine or the reminder line.
+
+`gate_1218` seeds its own (`p4`, a signed contract at $18,400, sent 47 days ago so
+it lands in the overdue bucket) and the sweep goes **15 text nodes → 28**. It was
+seeded in the GATE rather than in the shared setup so a colour build would not move
+the fixture counts every other gate is written against.
+
+**To close it properly:** add that job to `sentinel_setup_cardinal.js` and then
+re-run every gate that asserts a count, because a fourth project appears in the
+client directory, the leads grid, the dashboard tallies and the Production board.
+That re-run is the whole cost of the item and it is why it was not done inside a
+colour build.
 
 ### What the read found that is NOT on the list
 
