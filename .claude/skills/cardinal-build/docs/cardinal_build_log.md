@@ -33204,3 +33204,125 @@ same module.
 fonts) **plus these four dead rules**, 1219 the client profile in Sales Floor's
 language. Item 4 is a fence: Production, Crew Dispatch, Sales Floor and OC Colors
 are finished.
+
+## Build 1218 — the AR dashboard and the payment sheet go dark (design programme, item 1 **finished**)
+
+**This build is a correction as much as a feature.** 1216–1217 were reported as
+closing item 1 of the design programme — *kill the white surfaces* — and that claim
+was true of what had been measured and false of the app. The design read that
+drove the programme rendered **eight** screens. Before starting the button system I
+swept **all 32 sentinel states** for button-like controls, and the sweep walked
+into a screen the eight-screen read never opened:
+
+```
+#cr-ar-view  →  background rgb(244,244,245)   with the app in DARK mode
+```
+
+**Accounts Receivable — who owes what and how late — was a third paper-white
+page.** So item 1 caught two of three, and this build makes the claim honest.
+
+**It also carries a seam 1216 opened that nothing could see.** The offline payment
+sheet (`#cr-pay-modal`) is hardcoded porcelain, and its two footer buttons are
+`.crji-btn` — which **1216 turned dark**. Since 1216 the sheet has been a white
+card carrying dark grey controls. Not a contrast failure (each button is readable
+against its own fill) but exactly the "two apps in one window" inconsistency this
+programme exists to remove, and it is reached from *both* surfaces this build
+darkens.
+
+### How — the 573 pattern, and why it could not be a find-and-replace
+
+`--est-*` is declared at **exactly two sites in the file**, measured, not assumed:
+`#cr-est-view` (71409) and `#cr-ar-view` (85020). They are independent rules, so
+re-valuing the AR copy cannot reach the estimate builder. Dark values in the base
+rule; the **original porcelain restored byte-for-byte** under
+`:root[data-theme="rb-light"] #cr-ar-view`, asserted declaration-by-declaration in
+the patch script (6 declarations) and again by `gate_1218` reading all 12 resolved
+values back out of a real light render.
+
+The values are **1216's `--crji-*` palette on purpose, not a second dark one**:
+this dashboard and the profile's Invoices & Payments card are the same money
+language, seen minutes apart. A second dark palette for one job is the defect the
+programme is removing.
+
+**Five literals could not be carried.** Measured with `contrast.py` on the dark
+card `#141619`, against a 4.5:1 floor:
+
+| literal | role | on `#141619` | replaced with | new ratio |
+|---|---|---:|---|---:|
+| `#166534` | reminders **ON** | **2.54:1** | `#34d399` | 9.43:1 |
+| `#C8202E` | overdue **ink** | **3.20:1** | `#f08a90` | 7.55:1 |
+| `#047857` | paid green | **3.31:1** | `#34d399` | 9.43:1 |
+| `#8a6420` | `--est-warn` | **3.39:1** | `#e0a94f` | 8.59:1 |
+| `#64748B` | `--crar-mist` column labels | **3.81:1** | `#a8b0ba` | 8.27:1 |
+
+All five clear the floor on **every** dark ground in the view — page `#0c0d0f`,
+card `#141619`, KPI tile `#1b1f24`.
+
+### ⚠ `--est-red` is TWO ROLES IN ONE TOKEN, and that is why it was not re-valued
+
+It is a **fill** (`.crar-btn.primary`), a **spine** (`.crar-row.od`'s 3px
+`border-left`) and an **ink** (four rules). Re-valuing it to the readable pink
+turns the brand button and the overdue stripe pink; leaving it red leaves four
+inks at 3.20:1. So the **ink role moved to a new `--crar-alert`** and the
+fill/spine role keeps `--est-red` at `#C8202E` in both themes. CLAUDE.md's rule —
+*bars, spines and dots keep the bright originals; a glowing 3px rule is not text* —
+is what says the spine stays. `gate_1218` asserts both directions.
+
+The five status pills (`.crar-pill.*`) are **deliberately untouched**: they are
+chips carrying their own light ground, they clear the floor on it, and they
+already render on the dark client profile today.
+
+### Gates
+
+`check_build` GREEN (133 inline scripts, 158 style blocks, stamp 1217 → 1218) ·
+**`gate_1218` GREEN 23/23** — both grounds, the invoice card, the KPI tile, all
+five recomputed inks read off the *resolved custom property*, the brand red
+unchanged, every ink in the view and on the sheet scored against its composited
+ground, and all **12** light values byte-for-byte — **RED 11/23 on the 1217
+artifact** · `gate_chromium --selftest` **22/22** · `gate_types` GREEN (0 grew, 2
+improved) · `gate_dupes` GREEN · patch replays **byte-for-byte**; the diff touches
+only `cr-ar-styles`, the app stamp and the CHANGELOG. No SQL.
+
+### ⚠ TWO FAULTS IN MY OWN INSTRUMENTS, BOTH OF WHICH FAILED CORRECT CODE
+
+**1. An assertion pinned to a SUBSTRING.** `nb.count('color:var(--est-red)') == 0`
+matched inside **`border-color:var(--est-red)`** — a declaration that is supposed
+to survive — and reported *"an --est-red ink use survived"* on a patch that had
+moved all four. This is CLAUDE.md's own rule biting: *when a count contradicts
+you, suspect the regex.* Anchored on `\{\s*color:var\(--est-red\)`, with the
+before-count (4) asserted too so the check cannot pass by matching nothing.
+
+**2. A ground walk that scored every ink against a page that is not there.** The
+first `gate_1218` pushed an opaque **white** layer unconditionally as the
+composite base **and left it in the candidate list** — so white was always among
+the candidates, "worst" was always white, and it reported **15 ink failures on a
+view whose measured ground luminance is 0.004**. White belongs there only when the
+walk reaches the document without finding anything opaque.
+
+⚠ **`sentinel_probe.js`'s `grounds()` does NOT have this fault** — checked, not
+assumed: it takes the first opaque paint as the base, removes it from the
+candidate list, and composites the rest over it. **So the lesson is: do not
+hand-roll the ground walk in a per-build gate. Copy `grounds()`.** (BUG_CLASSES 99.)
+
+### ⚠ The shared fixture carries no invoices, so this screen has never been swept
+
+The sentinel setup says so itself, in the `ar` state: *"The seed carries no
+invoices on purpose … the per-row reminder line (`.crar-rem`) needs a seeded
+invoice with a balance and is NOT covered yet."* So every sweep of this screen to
+date has measured the **empty state** — the chrome, the KPI tray and the 1157
+master row — and **never once an invoice row**, its money columns, its status pill
+or the overdue spine. Those are exactly the surfaces this build re-coloured.
+
+`gate_1218` therefore seeds its own invoiced job (`p4`, a signed contract at
+$18,400, sent 47 days ago so it lands in the overdue bucket) **in the gate rather
+than in the shared setup**, so a colour build does not move the fixture counts
+every other gate is written against. With it the sweep goes from 15 text nodes to
+**28**, and `A3` exists specifically so `A4` cannot pass by measuring an empty
+screen. Closing the gap in the setup itself is queued in `OPEN_ITEMS`.
+
+### Still open, carried forward
+
+The four dead `.cr-est-totals` ink rules from 1217's sentinel are **still queued** —
+1218 turned out to be the AR screen, not the estimate module, so removing them here
+would have been widening a build for no reason. They lose to `cr-nvl-styles` and
+have done since before 1217.

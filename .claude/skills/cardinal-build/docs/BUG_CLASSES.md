@@ -4835,3 +4835,66 @@ bytes from disk is what showed what was actually on the screen.
 **When a render is used to decide what is on a screen, serve the real assets.**
 A stub-everything rig is right for proving a request was or was not made, and
 wrong for judging a picture. Know which question you are asking.
+
+---
+
+## 99 — a per-build gate hand-rolls the ground walk and scores every ink against a page that is not there
+
+*Build 1218, 11 Sep 2026. Cost: one full red run of a correct build, reporting
+**15 contrast failures on a screen whose measured ground luminance is 0.004**.*
+
+`gate_1218` had to score text against its **composited** ground — class 98's
+lesson, and the contrast rig's oldest trap. So it walked the ancestors collecting
+every paint, gradient stops included, and scored the ink against the worst of
+them. The walk ended:
+
+```js
+    layers.push([255,255,255,1]);            //  ← the fallback for "nothing opaque"
+    const base = layers[layers.length - 1];  //  ← composite everything over it
+    return layers.map(c => over(c, base));   //  ← ⚠ and RETURN it as a candidate
+```
+
+**White was pushed unconditionally and then left in the candidate list.** On a
+black screen the worst candidate is therefore always white, and every ink scores
+about 1.1:1 against a page that does not exist. The run named twelve elements,
+gave a plausible ratio for each, and identified the ground as `#ffffff` on a view
+the very same probe had just measured at luminance 0.004 — two of its own numbers
+contradicting each other in one report.
+
+**The failure mode is what makes it expensive: it fails CORRECT code, loudly and
+specifically.** A dozen named elements with ratios reads exactly like a real
+finding, and the obvious next move is to go change the app.
+
+### The fix, and the rule that actually matters
+
+White belongs in the walk **only when the walk reaches the document without
+finding anything opaque**, and then as the base, not as a candidate:
+
+```js
+let opaque = null;
+for (let n = el; n; n = n.parentElement) {
+  stops(cs.backgroundImage).forEach(c => layers.push(c));
+  const c = px(cs.backgroundColor);
+  if (c && c[3] > 0) { layers.push(c); if (c[3] >= 0.999) { opaque = c; break; } }
+}
+const base = opaque || [255,255,255,1];
+if (!opaque) layers.push(base);
+```
+
+⚠ **`sentinel_probe.js`'s `grounds()` does NOT have this fault, and that was
+checked rather than assumed.** It takes the first opaque paint as the base,
+**removes it from the candidate list** (`own.filter(c => c !== solid)`), falls
+back to `document.body`'s colour before white, and composites the remaining
+translucent layers over the base.
+
+**So the rule is: do not hand-roll the ground walk in a per-build gate. Copy
+`grounds()` from `sentinel_probe.js`.** Three separate gates have now written
+their own version of this walk and two of the three got it wrong in a different
+direction — 1217's read only `backgroundColor` and missed a gradient, 1218's
+invented a white page. The standing instrument has been right both times because
+it has been corrected both times. A per-build gate is written once and never
+revisited, which is precisely the wrong place for a subtle algorithm.
+
+**The tell, worth memorising:** an ink report whose *ground* column disagrees with
+a ground measurement taken by the same probe in the same run. When two of your own
+numbers cannot both be true, fix the instrument before you touch the app.

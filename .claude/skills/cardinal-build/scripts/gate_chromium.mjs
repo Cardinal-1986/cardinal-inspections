@@ -199,6 +199,19 @@ const GATES = [
   { name: 'gate_1217.mjs',
     protects: 'the estimate builder frame is dark, the estimate is still paper, and light is unchanged',
     break: { find: '--estc-viewbg:#0c0d0f;', repl: '--estc-viewbg:#F4F4F5;' } },
+
+  /* 1218: the AR dashboard and the payment sheet. The break restores the
+     porcelain page ground as the dark default, which reds the view ground,
+     the invoice card and the KPI tile together. It is deliberately the
+     --est-bg line INSIDE the dark #cr-ar-view rule and not the token name,
+     because the same declaration text appears in the light restoration rule
+     directly below it — the anchor carries the dark card value with it so it
+     can only match once. (`--est-bg:#F4F4F5` on its own matches the light
+     rule and would break nothing while reading as a valid break.) */
+  { name: 'gate_1218.mjs',
+    protects: 'the AR dashboard and the offline payment sheet are dark, and light is byte-for-byte what shipped',
+    break: { find: '--est-bg:#0c0d0f; --est-panel:#141619;',
+             repl: '--est-bg:#F4F4F5; --est-panel:#FFFFFF;' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
