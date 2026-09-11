@@ -32897,6 +32897,28 @@ codes grew, 2 improved) · `gate_dupes` GREEN · `gate_stack` CLEAN · **sentine
 1194 with the seed + mock setup, `--since` on the 1212 artifact) · both patches replay
 **byte-for-byte**. No SQL.
 
+⚠ **AND CI SAID NO — `gate_1214` went RED on the runner while it was 20/20 here, twice.**
+`page.route()` does not see a request a **service worker** makes, and this app registers one. On
+a runner with real internet the worker fetched the **real** Chart.js off the CDN, so the gate's
+stub never ran and the reading was the contradiction `never fetched` **with `window.Chart`
+defined**. Locally the worker never took control, on the full Chromium *and* on the headless
+shell Playwright picks by default — same build v1194, same Playwright 1.56.1, same Node, same
+4-CPU box. Every obvious difference was ruled out and none of them was it.
+
+⚠ **The passing direction was the worse one.** A regression that loaded a library eagerly
+**through the worker** would never have reached the counter, and section A — the section this
+build exists for — would have called it clean. Fixed by creating every context with
+`serviceWorkers:'block'` **and asserting no worker controls the page**, so the gate says so if
+that ever stops working rather than going quietly back to measuring the wrong network. 20 checks
+→ **23**, floor raised 16 → 19. Control on 1213 still reds, **11 of 23**.
+
+⚠ **It was undiagnosable, and that is the part worth keeping.** `gate_chromium` printed only the
+failing gate's LAST line — `2 of 20 failed`, with no way to learn which 2 except to push a commit
+that prints more and wait nine minutes. It now prints the gate's own `FAIL` lines (capped at 24)
+plus any `GATE ERROR`/`TIMEOUT` line. **It paid for itself on the first run, and twice over:** the
+same change turned a local red that had been carried for weeks as "a container artifact" into
+`FAIL Chromium cascade check can start → playwright is missing` (`gate_1198`). **BUG_CLASSES 97.**
+
 ⚠ **THE COMMENT-POLLUTION TRAP COST FIVE ROUNDS IN ONE BUILD, AND THE FIX IS NOW A SCRIPT.** Five
 times an explanatory comment I wrote contained an identifier the patch counts — `wm-home.jpeg`,
 `rptChart(`, `ensureXLSX()`, `typeof Papa === 'undefined'`, and finally the literal `<script src>`,

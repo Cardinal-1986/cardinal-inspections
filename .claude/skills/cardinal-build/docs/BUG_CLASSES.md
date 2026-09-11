@@ -4696,3 +4696,83 @@ fails correct code is exactly what this class is. It scans prose only.
 **The rule: an identifier is fine in code and only ever wrong in a comment.**
 Describe the thing ("the SheetJS loader below", "a bare is-it-loaded-yet early
 return", "a plain script tag") rather than spelling it.
+
+---
+
+## 97 — `page.route()` does not see a SERVICE WORKER's requests, so a network gate measures the wrong network
+
+**Cost: two red CI runs, both reading `GATE 1214 RED — 2 of 20 failed` and nothing
+else, on a gate that was 20/20 locally on two different Chromium binaries.**
+
+`gate_1214` proves a claim about the network — *Chart.js and Papa Parse are not
+fetched before sign-in, and are fetched on first use*. So it watches the network:
+`page.route('**/*')` counts what is asked for and serves a stub back.
+
+**This app registers a service worker.** A request a service worker makes does
+**not** pass through `page.route` — Playwright routes the page's requests, and
+the worker is not the page. On a runner with real internet the worker fetched the
+**real** Chart.js off the CDN. The gate's stub never ran, and the reading was:
+
+```
+FAIL ASKING FOR A CHART FETCHES Chart.js  — never fetched
+FAIL  · and a chart was actually constructed
+      — {"charts":0,"hasChart":true,"tags":1,"why":"ctx:yes sw:controlled"}
+```
+
+**Read that middle pair.** `never fetched` and `hasChart: true` at the same time.
+The library is in the page and the instrument watching the wire never saw it
+arrive. That contradiction is the whole signature of this class, and it is the
+only thing that distinguishes it from "the feature is broken".
+
+⚠️ **AND IT CUTS THE OTHER WAY, WHICH IS WORSE.** The failing direction is loud.
+The passing direction is silent: a regression that loaded a library **eagerly,
+through the worker**, would never have reached the counter, and the
+nothing-downloads-before-sign-in section would have called it clean. **A network
+gate with a live service worker in the page can only report good news it has not
+earned.**
+
+**Why it was CI-only, which is the trap inside the trap.** Locally the worker
+never took control (`sw:false`) and every request went through the route, so the
+gate was green — on the full Chromium *and* on the headless shell Playwright
+picks by default, same build v1194, same Playwright 1.56.1, same Node, same
+4-CPU/16 GB machine. Every obvious difference was ruled out and none of them was
+it. **A gate that is green on your machine and red only on the runner is not
+flake until you have read which checks failed.** Here it was deterministic: the
+same two, on two consecutive commits, green on `main`.
+
+**The fix — and it makes the gate STRONGER, not more permissive.**
+
+```js
+await browser.newContext({ viewport: {...}, serviceWorkers: 'block' })
+```
+
+Every request is then the page's own and the route sees all of them, on any
+machine. Then **assert it**, once per section, so the gate says so if the option
+ever stops working instead of quietly going back to measuring the wrong network:
+
+```js
+ok(seen.sw === false, w + 'px: NO service worker is in the way of the reading');
+```
+
+**The rule: any gate that counts requests must block service workers and assert
+that none is controlling the page.** Swept the folder — `gate_1214` is the only
+gate that both routes and counts. Routing alone is fine; routing and *counting*
+is where this bites.
+
+### The second half: a CI-only red used to be undiagnosable, and that is now fixed
+
+`gate_chromium` printed only the failing gate's **last line**. `2 of 20 failed`
+with no way to learn which 2 — so the only route to a diagnosis was to push a
+commit that prints more, and wait nine minutes to read it. It now prints the
+gate's own `FAIL` lines (capped at 24) plus any `GATE ERROR` / `TIMEOUT` line,
+which are the shapes class 37 takes.
+
+**It paid for itself on the first run**, and twice over: the same change made a
+*local* red self-explanatory that had been carried for weeks as "a container
+artifact" — `gate_1198.mjs` now says `FAIL Chromium cascade check can start →
+playwright is missing` instead of `GATE 1198 RED — 1 failure(s)`.
+
+**Build a gate's post-mortem into the gate.** `gate_1214`'s probe now reports
+whether a matching tag reached the DOM, whether a worker is controlling the page,
+whether the canvas gave a 2d context, and any window error — because
+`charts: 0` alone cannot tell a blocked script from a refused canvas.

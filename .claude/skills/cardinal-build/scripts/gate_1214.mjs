@@ -11,6 +11,18 @@
  * asserts the two libraries are NOT fetched while the sign-in screen is up. A
  * check that only proves "they load when you open Reports" would pass on the
  * old eager build too, because they were already loaded.
+ *
+ * ⚠️ AND THE SERVICE WORKER HAD TO BE SHUT OUT, OR THE WHOLE GATE IS A LIE.
+ * page.route() does NOT see a request a service worker makes. This app registers
+ * one. On a runner with real internet the worker fetched the REAL Chart.js off
+ * the CDN, the gate's stub never ran, and the reading was `never fetched` with
+ * `window.Chart` nonetheless defined - green locally, red in CI, twice, with one
+ * summary line and no way to tell which two checks. Worse, it cuts the other
+ * way too: a regression that loaded a library eagerly THROUGH the worker would
+ * never have reached `hits`, and section A would have called it clean. So every
+ * context is created with `serviceWorkers: 'block'`, and section C ASSERTS no
+ * worker is controlling the page - if that option ever stops working, the gate
+ * says so instead of quietly measuring the wrong network.
  */
 import { createRequire } from 'module';
 import { readFileSync, existsSync } from 'fs';
@@ -84,7 +96,7 @@ try {
   console.log('A  nothing downloads before sign-in');
   for (const w of [1440, 390]) {
     const hits = [];
-    const ctx = await browser.newContext({ viewport:{ width:w, height:880 } });
+    const ctx = await browser.newContext({ viewport:{ width:w, height:880 }, serviceWorkers:'block' });
     const page = await ctx.newPage();
     await wire(page, hits, true);
     await page.goto('https://app.cardinalroster.com/', { waitUntil:'domcontentloaded' });
@@ -99,6 +111,7 @@ try {
       sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
     })).catch(() => ({ tags: ['<evaluate failed>'], login: null, sw: null }));
     const where = ' | ' + JSON.stringify(seen);
+    ok(seen.sw === false, w + 'px: NO service worker is in the way of the reading', where);
     ok(!hits.includes('chart'), w + 'px signed out: Chart.js is NOT requested', (hits.join(',') || 'no hits') + where);
     ok(!hits.includes('papa'),  w + 'px signed out: Papa Parse is NOT requested', (hits.join(',') || 'no hits') + where);
     await ctx.close();
@@ -115,7 +128,7 @@ try {
   console.log('\nC  a report loads it, and the charts actually draw');
   {
     const hits = [];
-    const ctx = await browser.newContext({ viewport:{ width:1194, height:900 } });
+    const ctx = await browser.newContext({ viewport:{ width:1194, height:900 }, serviceWorkers:'block' });
     const page = await ctx.newPage();
     page.on('dialog', d => d.accept());
     await wire(page, hits, false);
@@ -146,6 +159,7 @@ try {
     });
     if (typeof drove === 'string') { ok(false, 'the reports chart builder is reachable', drove); }
     else {
+      ok(/\bsw:none\b/.test(drove.why), 'no service worker is intercepting — the route sees every request', drove.why);
       ok(hits.includes('chart'), 'ASKING FOR A CHART FETCHES Chart.js', hits.join(',') || 'never fetched');
       ok(drove.hasChart === true, '  · and the library is in the page afterwards', JSON.stringify(drove));
       ok(drove.charts >= 1, '  · and a chart was actually constructed', JSON.stringify(drove));
@@ -194,7 +208,7 @@ try {
 } finally { if (browser) { try { await browser.close(); } catch (_) {} } }
 
 console.log('');
-ok(checks >= 16, 'coverage floor: ' + checks + ' checks ran (>= 16)');
+ok(checks >= 19, 'coverage floor: ' + checks + ' checks ran (>= 19)');
 console.log('\n' + (fails === 0 ? `GATE 1214 GREEN — ${checks} checks passed`
                                 : `GATE 1214 RED — ${fails} of ${checks} failed`));
 process.exit(fails === 0 ? 0 : 1);
