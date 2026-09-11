@@ -33013,3 +33013,194 @@ patch replays **byte-for-byte**. No SQL.
 (**1.12 MB**) is fetched before sign-in, and so are `cardinal-report-logo.png`,
 `cardinal-prod.png`, `cardinal-board.png` and `wm-login.jpeg` (55 KB). None of
 them is the mark removed here. Assessment item 2 is still open.
+
+---
+
+## Build 1216 — the Invoices card stops being a white slab
+
+**Item 1 of four Theo picked off the 11 Sep design read** ("all"). The others are
+their own builds: **1217** the button system, **1218** the client profile in Sales
+Floor's language, and **item 4 is a fence, not a build** — Production, Crew
+Dispatch, Sales Floor and OC Colors are finished and are not to be swept.
+
+**What the read actually measured, so the priority is not taste.** Rendering
+seven screens at 1440 with the real assets and probing the CSSOM:
+
+| | |
+|---|---:|
+| distinct button fills | **19** |
+| distinct button corner radii | **10** |
+| font families on buttons | **4** |
+| large light surfaces in the dark app | `cr-est-view` **1152×873**, `crji-card` **1022×163** |
+
+This build takes the second of those two surfaces. It was the only large light
+object on the client profile and the brightest thing on the page.
+
+### The conversion is 573's pattern, not a flip
+
+Tokens (`--crji-*`, 21 references, **every one with a literal fallback** — 448/449
+is why), **dark in the base rule** because the app's default theme is dark, and
+the **original light values restored under `:root[data-theme="rb-light"]`**. The
+patch asserts every original literal survives in the light block and `gate_1216`
+proves it in a render: light still computes to `rgb(255,255,255)` on the card,
+`rgb(15,23,42)` ink, `#047857`, `#C8202E`. Byte-identical.
+
+⚠ **THE TWO ACCENTS COULD NOT CARRY OVER — 557's lesson again, measured:**
+
+| | on the dark tile `#1b1f24` | |
+|---|---:|---|
+| `#047857` positive green | **3.02:1** | FAIL |
+| `#C8202E` cardinal red | **2.92:1** | FAIL |
+| `#34d399` (the twin) | **8.61:1** | ok |
+| `#f08a90` (the twin, already the app's own light red) | **6.89:1** | ok |
+
+Both originals are chosen for a white card. White on cardinal red **stays**
+(5.67:1) — a semantic ink on a coloured ground is correct in both themes, and
+tokenising it turns every red button's label grey.
+
+⚠ **The neumorphic emboss INVERTS rather than dims.** A light card is lit from
+the top-left with a white inner highlight; a dark one needs the highlight darker
+than the tile and the shadow blacker. Carrying the light pair over draws a grey
+smear. Both inset colours are tokens for that reason.
+
+### ⚠ Two faults in my own gate, each of which reported a FALSE RED first
+
+1. **The app clears `data-theme` on `:root` within half a second.** Set it, wait,
+   read, and you measure the *dark* theme believing you measured light — the
+   attribute is already gone. Probed directly: set-and-read in one turn gives
+   `rgb(255,255,255)`; the same read 500ms later gives `rgb(20,22,25)`. The gate
+   now writes the attribute and measures **inside one `evaluate`**, which is not
+   a weakened check — computed style resolves synchronously, so nothing can race.
+   *The first run reported eight light failures against a conversion that was
+   exactly right.*
+2. **A check on an element that does not exist cannot fail.** The seeded client
+   has no balance due, so `.crji-nums b.due` is absent and asserting on its
+   colour passed by measuring `null` — **on the build and on the control alike**.
+   The accents are now read off the resolved **custom property**, which exists
+   whether or not the figure is on screen; the elements that do exist are still
+   measured beside it.
+
+Gates: `check_build` green (1215 → 1216, marker, negative control) · **`gate_1216`
+22/22**, and **RED 12 on the 1215 artifact** *and* **RED 2 on the runner's break**,
+which restores the white as the dark default and reproduces the defect's exact
+signature — `"Invoices & Payme"` at **1.1:1** · `gate_chromium --selftest` **20/20**
+· `gate_types` GREEN (0 codes grew, 2 improved) · `gate_dupes` GREEN · `gate_stack`
+CLEAN · patch replays **byte-for-byte**. No SQL.
+
+---
+
+## Build 1217 — the estimate builder: dark chrome, paper document
+
+**Theo's pick (b)**, off two rendered options. The other half of item 1, and the
+largest light surface in the CRM: `cr-est-view` was **1152×873 of white** inside a
+dark app. The frame now joins the app; **the estimate itself stays the colour it
+prints on**, because it is a document and it is edited on a desk.
+
+### ⚠ IT IS NOT AN 87-SITE CONVERSION, AND FINDING THAT OUT IS THE BUILD
+
+A sweep of the stylesheet counts **87 light values across 17 names** and reads
+like a rewrite. Rendering it and **measuring what actually breaks when the ground
+flips** gives thirteen failing text nodes from exactly **three inks**:
+
+| ink | where | on the new ground |
+|---|---|---:|
+| `#475569` | field labels, section heads (×8) | **2.57:1** |
+| `#C8202E` | the `+ Custom` outline | **3.43:1** |
+| `#2F7D4A` | the `+ ABC Supply` outline | **3.85:1** |
+
+Everything else in that 87 is inside a document block and never sees the dark
+ground at all. **Measure the render, not the stylesheet.** After the build: **0
+failing of 49 measured.**
+
+**The mechanism is the module's own.** It already carries an `--est-*` family (12
+names, 148 references) which *is* the paper palette, so a second family beside it
+would be the bug-with-a-delay this file keeps recording. Instead there is an
+`--estc-*` **chrome layer** scoped to the view and themed by the app theme; only
+the 16 references that sit ON the ground were repointed. `--est-*` is untouched,
+so every document block is unchanged **by construction**, and light is
+byte-identical.
+
+⚠ **ONE RULE HAD TO BE SPLIT.** A single selector list painted `--est-dim` onto
+**eight** things — two of them (the field labels and the *Line Items* heading) sit
+on the chrome ground, the other six sit inside paper cards. They need opposite
+inks. Left whole, either the labels stay at 2.57:1 on black or the card text goes
+pale on cream.
+
+### ⚠ THREE OF MY EDITS WERE A SILENT NO-OP, AND ONLY THE RENDER SAID SO
+
+`cr-nvl-styles` — a later "porcelain" restyle — out-specifies `cr-est-styles` with
+id-prefixed selectors. Three edits parsed, balanced, and **never applied**:
+
+| edited | the winner | what the render measured |
+|---|---|---|
+| `.add-custom` | `#cr-est-view .cr-est-items-head .add-custom` | still `rgb(200,32,46)` |
+| `.add-abc` | `#cr-est-view .cr-est-items-head .add-abc` | still `rgb(47,125,74)` |
+| `#cr-est-view` ground | `#cr-est-view{background:var(--est-bg)}` | still `rgb(244,244,245)` |
+
+**That is build 481's class, three times in one build**, and `selector_audit.py`
+names it in one line: *"patching those alone is a silent no-op."* Run it on every
+selector before patching it — it is in the skill for exactly this.
+
+⚠ **The third one produced SEVEN downstream failures that looked like seven
+separate bugs.** With the view ground still light, every ink in the dark top bar
+scored against a near-white page — the cream heading at **1.04:1** — because the
+bar paints a **gradient** and an ancestor walk reading `backgroundColor` cannot
+see through it. One missed winner, seven red lines, one cause.
+
+### ⚠ And two faults in the gate itself, both of which failed CORRECT work
+
+1. **The ancestor walk could not see a gradient** — the trap this file already
+   records under the contrast rig, reproduced. It now collects every ground an
+   ancestor actually paints, **gradient stops included**, and scores the ink
+   against the **worst** of them.
+2. **Section C demanded one hex.** It asserted the paper blocks were still
+   `#f4f2f1` — the value `cr-est-styles` sets and a later block overrides with
+   plain white. A correct build failed three checks for painting paper a slightly
+   different paper. The claim is that those blocks did **not go dark**, so that is
+   what it measures now.
+
+⚠ **A hardcoded count went stale mid-build too**: `assert 0 < moved <= 12` failed
+the moment two more rules legitimately moved. The expectation is now **computed
+from the edits themselves** (16 repointed, 16 accounted for).
+
+Gates: `check_build` green (1216 → 1217, marker, negative control) · **`gate_1217`
+21/21** — the view ground, the jump list, **every text node in the view against its
+composited ground**, the document blocks still paper, the three inks asserted by
+**computed colour** (the only thing a losing rule cannot fake), and light
+byte-identical by token — **RED 12 on the 1216 artifact**, where it also catches the
+`span.ix` at 2.56:1 that this build fixed in passing · `gate_chromium --selftest`
+**21/21** · `gate_types` GREEN (0 grew, 2 improved) · `gate_dupes` GREEN ·
+`gate_stack` CLEAN · patch replays **byte-for-byte**. No SQL.
+
+### ⚠ The sentinel was NOT clean, and the disposition is measured rather than argued
+
+**4 NEW findings, all `OVERRIDDEN`**, all of the same shape:
+
+```
+OVERRIDDEN .cr-est-totals .lbl       { color: rgb(107,107,107) } never wins
+OVERRIDDEN .cr-est-totals .val       { color: rgb(44,44,44)    } never wins
+OVERRIDDEN .cr-est-totals .grand-lbl { color: rgb(44,44,44)    } never wins
+OVERRIDDEN .cr-est-totals .grand-val { color: rgb(143,22,32)   } never wins
+```
+
+**They are pre-existing dead rules, and that is established, not assumed.** A
+`diff` of every `.cr-est-totals` ink rule between the 1216 and 1217 artifacts is
+**identical** — this build changed none of them. `selector_audit.py` puts the
+winner for all four in `cr-nvl-styles`, where it already was. They lost before
+this build and they lose after it.
+
+**Why the sweep called them NEW:** 1217 rewrote the *winning* rule beside them —
+the `--est-dim` split — so the rule set the sentinel diffs against moved even
+though the computed outcome did not. Nothing on screen differs: `gate_1217`
+measures **0 of 49** text nodes below floor, the totals block included.
+
+**Not fixed here, and deliberately not.** Deleting four dead declarations is the
+right end state — *deletion at source beats out-specificity* — but it is not what
+"make the builder (b)" means, and widening a build on my own initiative is the
+thing this file keeps recording as a cost. **Queued into 1218**, which touches the
+same module.
+
+**Still to come on the programme:** 1218 the button system (19 fills, 10 radii, 4
+fonts) **plus these four dead rules**, 1219 the client profile in Sales Floor's
+language. Item 4 is a fence: Production, Crew Dispatch, Sales Floor and OC Colors
+are finished.

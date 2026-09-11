@@ -8549,6 +8549,50 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1217 — the estimate builder: dark chrome, paper document
+
+**Where:** an `--estc-*` chrome layer scoped to `#cr-est-view`, plus 16 repointed
+references across `cr-est-styles` and `cr-nvl-styles`.
+
+Theo's pick (b) off two rendered options. The frame — view ground, body ground,
+the jump-list rail, field labels, section heads and the three outline buttons —
+joins the app. **The estimate itself stays paper**: client block, line items,
+totals and notes are untouched and now lift off the dark ground.
+
+- ⚠ **Measured, not swept.** The stylesheet counts 87 light values; the *render*
+  breaks in **13 nodes from 3 inks** (`#475569` 2.57:1, `#C8202E` 3.43:1,
+  `#2F7D4A` 3.85:1). After: **0 of 49**.
+- ⚠ **One rule had to be split** — a single selector list painted `--est-dim` onto
+  eight things, two on the chrome ground and six inside paper cards.
+- ⚠ **`cr-nvl-styles` out-specifies `cr-est-styles`.** Three edits were silent
+  no-ops until the winners were patched. **Run `selector_audit.py` on any selector
+  in this module before touching it.**
+
+**Instrument:** `gate_1217.mjs` (21 checks, both themes — every text node against
+its **composited** ground with gradient stops included, the document blocks still
+paper, the three inks asserted by **computed colour**, light byte-identical by
+token). RED 12 on the 1216 artifact.
+
+## Build 1216 — the Invoices card goes dark
+
+**Where:** the `.crji-*` rules inside `cr-ar-styles`, plus a `--crji-*` token pair.
+
+`Invoices & Payments` on the client profile was the only large light surface left
+there — 1022×163 of white on a near-black screen. Dark values in the base rule, the
+**original light values restored under `:root[data-theme="rb-light"]`**; 21 token
+references, every one with a literal fallback.
+
+- ⚠ **The two accents were recomputed, not carried.** On the dark tile the light
+  green scored **3.02:1** and cardinal red **2.92:1**. The twins are `#34d399`
+  (8.61:1) and `#f08a90` (6.89:1). White on red stays — a semantic ink on a
+  coloured ground is right in both themes.
+- ⚠ **The emboss inverts:** a light card's inner highlight is white, a dark card's
+  must be darker than the tile. Both inset colours are tokens.
+
+**Instrument:** `gate_1216.mjs` (22 checks, both themes, real render — dark ground,
+every text node against its **composited** ground, and light asserted
+**byte-identical** by computed value *and* by token). RED 12 on the 1215 artifact.
+
 ## Build 1215 — and the box loses its own mark too
 
 **Where:** the `.logincard` markup, and the two rules that styled the mark.

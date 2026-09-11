@@ -184,6 +184,21 @@ const GATES = [
     protects: 'the sign-in card paints no image at all and opens on its heading',
     break: { find: '<div class="logincard">',
              repl: '<div class="logincard"><img class="loginlogo" id="loginLogo" alt="" style="display:block;width:120px;height:40px;background:#333" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">' } },
+  /* 1216: the Invoices card went dark. The break RESTORES THE WHITE, by putting
+     the shipped light value back as the dark default — which is exactly the
+     mistake a future edit would make, and it reds both halves at once: the card
+     ground stops being dark AND the light theme stops being byte-identical. */
+  { name: 'gate_1216.mjs',
+    protects: 'the Invoices card is dark and readable in dark, and unchanged in light',
+    break: { find: '--crji-card:#141619;', repl: '--crji-card:#FFFFFF;' } },
+  /* 1217: the estimate builder got dark chrome around a paper document. The
+     break restores the LIGHT ground as the dark default — which is precisely
+     the no-op this build spent three rounds finding, and it reds the whole
+     chain at once: the view ground, the jump list, and every ink in the top
+     bar, which then scores against a near-white page. */
+  { name: 'gate_1217.mjs',
+    protects: 'the estimate builder frame is dark, the estimate is still paper, and light is unchanged',
+    break: { find: '--estc-viewbg:#0c0d0f;', repl: '--estc-viewbg:#F4F4F5;' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
