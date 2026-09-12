@@ -33406,3 +33406,27 @@ main is `e90c067` and the stamp is still 1218.
 change X"*, compute it from the diff against the merge base — a snapshot
 comparison silently folds in everything the base branch did in the meantime, and
 it cries wolf loudest on the PRs that are most obviously safe.
+
+### 12 Sep 2026 — and the Playwright MCP server it was merged alongside is inert here (no build number)
+
+PR #586 (merged the same evening) registered `npx @playwright/mcp@latest` at
+project scope. This session reports `playwright (CONNECTION_CLOSED)`, and the
+cause is the environment, not the config:
+
+```
+npm error code E403
+npm error 403 Forbidden - GET https://registry.npmjs.org/@playwright%2fmcp
+```
+
+`npx` cannot reach the npm registry through the cloud session's proxy, so the
+stdio process dies before it handshakes. **Same 403 that blocks
+`npm install axe-core`, which is why `gate_a11y` could not run on 1218** — one
+environment fact, two symptoms, and worth connecting so neither is chased twice.
+
+**Nothing is lost and the file stays.** Playwright and Chromium are installed
+directly (`/opt/pw-browsers`, `/opt/node22/lib/node_modules/playwright`) and that
+is the path every gate already takes via `chromium_launch.cjs` — verified by
+launching a browser and reading text back out of a page, not assumed. On a
+machine with ordinary npm access it works as written. Recorded in `OPEN_ITEMS` as
+settled: **a `CONNECTION_CLOSED` from it in a cloud session means the registry is
+blocked, not that the config is wrong.**
