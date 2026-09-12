@@ -47,6 +47,28 @@ def already_upstream(cherry_output):
     return dupes
 
 
+def touches_app(changed_paths):
+    """True when the PR's OWN DIFF changes index.html.
+
+    ⚠ THE FIRST VERSION OF THIS COMPARED FILE SNAPSHOTS — `origin/main:index.html`
+    against `<head>:index.html` — and that is wrong for any branch cut from an
+    older main. PR #586 added `.mcp.json` and one `.vercelignore` paragraph and
+    did not touch index.html at all; but it was opened eleven days and twenty-eight
+    builds earlier, so its untouched index.html snapshot read 1190 while main read
+    1218. The snapshot comparison called that a change, demanded a build number,
+    and went RED on a PR that CANNOT move the stamp. Verified by simulating the
+    squash onto main: it applies two files and leaves index.html at 1218.
+
+    A merge applies the DIFF, not the snapshot. So ask the diff.
+
+    ⚠ And match the path EXACTLY. `visualizer/index.html` is a different
+    application with its own stamp (CLAUDE.md: check_build.py sees ONE artifact
+    and there are six), so a substring test would demand an app build number for
+    a Visualizer-only PR.
+    """
+    return any(p.strip() == 'index.html' for p in (changed_paths or []))
+
+
 def ci_run_for_sha(check_runs, sha, job_name=WORKFLOW_JOB):
     """The run must name the job AND belong to THIS sha. Returns
     (found, conclusion). A run for another sha is not evidence about this one."""
@@ -162,16 +184,28 @@ def main(pr_number):
         '%s — %s' % (st, MEANING.get(st, 'see GitHub')) if st != 'clean' else '')
 
     # ── STAMP ──────────────────────────────────────────────────────────────
-    # ⚠ ONLY when index.html actually changed. A docs- or scripts-only PR does
-    # not take a build number, and failing it here would be crying wolf — the
-    # thing build 808 exists to warn against. Found by running this gate on its
-    # own first PR, which is docs-only.
-    main_html = sh('git', 'show', 'origin/%s:index.html' % base)
-    head_html = sh('git', 'show', '%s:index.html' % head)
-    if main_html == head_html:
-        print('  n/a   app stamp — index.html is untouched, so this PR takes no build number')
+    # ⚠ ONLY when index.html is in THIS PR'S DIFF. A docs- or scripts-only PR
+    # does not take a build number, and failing it here would be crying wolf —
+    # the thing build 808 exists to warn against.
+    #
+    # ⚠ ASK THE DIFF, NOT THE SNAPSHOT. This compared `origin/main:index.html`
+    # against `<head>:index.html` until 12 Sep, which is only equivalent while
+    # the branch is cut from the current main. PR #586 (.mcp.json + one
+    # .vercelignore paragraph, opened 11 days and 28 builds earlier) carried an
+    # untouched index.html stamped 1190 against main's 1218, so the gate went
+    # RED on a PR that cannot move the stamp at all. See touches_app().
+    mb = sh('git', 'merge-base', 'origin/%s' % base, head)
+    changed = sh('git', 'diff', '--name-only', mb, head).splitlines() if mb else None
+    if changed is None:
+        # no common ancestor — fall back rather than pass silently
+        print('  ??    app stamp — no merge base with %s; cannot read the PR diff' % base)
+        say('app stamp is checkable', False, 'unrelated histories')
+    elif not touches_app(changed):
+        print('  n/a   app stamp — index.html is not in this PR\'s diff '
+              '(%d file(s) changed), so it takes no build number' % len(changed))
     else:
-        ms, hs = stamp_of(main_html), stamp_of(head_html)
+        ms = stamp_of(sh('git', 'show', 'origin/%s:index.html' % base))
+        hs = stamp_of(sh('git', 'show', '%s:index.html' % head))
         say('app stamp is above %s' % base, ms is not None and hs is not None and hs > ms,
             '%s says %s, branch says %s' % (base, ms, hs))
 
@@ -209,6 +243,20 @@ def selftest():
     check('only-Vercel (no check job) is not a pass',
           ci_run_for_sha([{'name': 'Vercel Preview Comments', 'head_sha': 'NEW',
                            'conclusion': 'success'}], 'NEW') == (False, None))
+
+    # STAMP — is index.html even in the PR? (the #586 false RED)
+    check('a docs/config PR does not demand a build number',
+          touches_app(['.mcp.json', '.vercelignore']) is False)
+    check('an index.html PR does demand one',
+          touches_app(['index.html', 'foo.sql']) is True)
+    check('an empty diff demands nothing',
+          touches_app([]) is False)
+    # ⚠ a substring test would call this the app. It is a separate application
+    #   with its own stamp, and asking it for an app build number is wrong.
+    check('visualizer/index.html is NOT the app',
+          touches_app(['visualizer/index.html']) is False)
+    check('a nested index.html is NOT the app',
+          touches_app(['.claude/skills/cardinal-build/scratch/index.html']) is False)
 
     # STAMP — the app stamp, not a module banner
     check('stamp_of reads the app stamp',

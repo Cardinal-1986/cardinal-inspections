@@ -4898,3 +4898,72 @@ revisited, which is precisely the wrong place for a subtle algorithm.
 **The tell, worth memorising:** an ink report whose *ground* column disagrees with
 a ground measurement taken by the same probe in the same run. When two of your own
 numbers cannot both be true, fix the instrument before you touch the app.
+
+---
+
+## 100 — a gate compares file SNAPSHOTS when it means the PR's DIFF, and cries wolf on every stale branch
+
+*12 Sep 2026, found by running `gate_ship.py` on PR #586. Cost: a RED verdict on
+a PR that could not possibly have caused it.*
+
+`gate_ship`'s STAMP check already knew that a docs- or scripts-only PR takes no
+build number — its own comment says failing one would be "crying wolf". It
+decided whether index.html had changed like this:
+
+```python
+main_html = sh('git', 'show', 'origin/%s:index.html' % base)
+head_html = sh('git', 'show', '%s:index.html' % head)
+if main_html == head_html:
+    print('  n/a   app stamp — index.html is untouched')
+```
+
+**That is only equivalent while the branch is cut from the CURRENT main.** PR
+#586 added `.mcp.json` and one `.vercelignore` paragraph — index.html is not in
+its diff at all — but it was opened **eleven days and twenty-eight builds
+earlier**. Its untouched index.html snapshot therefore read **1190** against
+main's **1218**, the snapshots differed, and the gate demanded a build number
+the PR had no business carrying:
+
+```
+FAIL  app stamp is above main — main says 1218, branch says 1190
+RED — do NOT merge
+```
+
+**A merge applies the DIFF, not the snapshot.** Simulating the squash onto main
+settled it in one command — two files applied, index.html untouched, stamp still
+1218 — and the same two computations run on the real shas disagree outright:
+
+```
+OLD (snapshots): FAIL — main says 1218, branch says 1190
+PR diff (2 file(s)): .mcp.json, .vercelignore
+NEW (diff):      n/a — index.html is not in this PR's diff
+```
+
+### The fix, and the second trap inside it
+
+Ask `git diff --name-only $(git merge-base origin/<base> <head>) <head>`, and
+match the path **exactly**:
+
+```python
+def touches_app(changed_paths):
+    return any(p.strip() == 'index.html' for p in (changed_paths or []))
+```
+
+⚠ **A substring test would call `visualizer/index.html` the app.** That is a
+separate application with its own stamp — CLAUDE.md's "check_build.py sees ONE
+artifact and there are six" — so a Visualizer-only PR would be asked for an app
+build number it must not take. Both that and a nested scratch `index.html` are
+selftest cases now.
+
+### Why this one is worse than an ordinary false positive
+
+**It fires on exactly the PRs that are most obviously safe** — docs, config,
+tooling — and it gets louder the longer a branch sits. The failure mode is not
+that somebody merges something bad; it is that `RED — do NOT merge` on a
+two-file config change teaches you the gate is wrong, and then you stop reading
+it on the build where it is right. *A gate that cries wolf is on its way to
+being switched off.*
+
+**The general rule: when a check means "did this PR change X", compute it from
+the PR's diff against its merge base. A snapshot comparison silently folds in
+everything the base branch did in the meantime.**
