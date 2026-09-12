@@ -6106,6 +6106,36 @@ a rewrite. ⚠ **Three of those edits were a silent no-op** because `cr-nvl-styl
 out-specifies `cr-est-styles`; `selector_audit.py` names that in one line and
 should be run on every selector in this module before touching it.
 
+### ✅ SETTLED 12 Sep 2026 — the Playwright MCP server (`.mcp.json`) is INERT in a cloud session, and that is not a bug to fix
+
+PR #586 added `.mcp.json` registering `npx @playwright/mcp@latest` at project
+scope. **In a Claude Code cloud session it reports `playwright
+(CONNECTION_CLOSED)` and always will.** Diagnosed rather than guessed:
+
+```
+$ npx --yes @playwright/mcp@latest --help
+npm error code E403
+npm error 403 Forbidden - GET https://registry.npmjs.org/@playwright%2fmcp
+```
+
+**`npx` cannot reach the npm registry through this environment's proxy**, so the
+stdio process dies the moment it starts and the server never handshakes. It is
+the same 403 that blocks `npm install axe-core`, which is why `gate_a11y` cannot
+run here either — one environment fact, two symptoms.
+
+**Nothing is lost, and the file should STAY.** Playwright and Chromium are
+installed directly in the container (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`,
+`/opt/node22/lib/node_modules/playwright`), and that is the path **every** gate
+in `scripts/` already takes through `chromium_launch.cjs`. Verified by launching
+a real browser and reading text back out of a page. The MCP server would have
+been a second way to do what the gates already do.
+
+⚠ **So do not "fix" it, and do not delete it.** On a machine with ordinary npm
+access — Theo's own — it works as written, and it is excluded from the deploy at
+`.vercelignore:42`, carries no credentials, and nothing in any shipped artifact
+reads it. **The one thing worth knowing is that a `CONNECTION_CLOSED` from it in
+a cloud session means the registry is blocked, not that the config is wrong.**
+
 ### ⚠ NEW, 1218 — a full CRM sentinel sweep now sits ON its own deadline
 
 `RENDERS = states × viewports × themes × (--since ? 2 : 1)` and the budget is

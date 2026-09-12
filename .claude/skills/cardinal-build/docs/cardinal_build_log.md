@@ -33378,3 +33378,55 @@ operations and leftover Chromium processes from the gate ladder, and went over.
 to finish and gets treated as the answer to a question nobody re-asked.** UNKNOWN means
 the sweep did not complete; it does not mean the build is bad, and it does not mean the
 build is fine. Say which, and say how you established it.
+
+### 12 Sep 2026 — `gate_ship`'s stamp check asked the wrong question (no build number; tooling only)
+
+Running the gate on **PR #586** (`.mcp.json` + one `.vercelignore` paragraph,
+Playwright MCP at project scope) produced `RED — do NOT merge` on the one check
+that cannot apply to it:
+
+```
+FAIL  app stamp is above main — main says 1218, branch says 1190
+```
+
+**index.html is not in that PR's diff.** The branch was cut eleven days and
+twenty-eight builds earlier, and the check compared **file snapshots** rather
+than the PR's **diff**, so an untouched index.html carrying an old stamp read as
+a change. Established rather than argued: simulating the squash onto main
+applies two files and leaves the stamp at **1218**, and the two computations run
+on the real shas disagree (`FAIL` vs `n/a`).
+
+Fixed by asking `git diff --name-only <merge-base> <head>` through a new pure
+`touches_app()` helper, with five selftest cases — including
+`visualizer/index.html`, which a substring test would wrongly call the app.
+`--selftest` is **15/15**. #586 merged after the simulation confirmed it safe;
+main is `e90c067` and the stamp is still 1218.
+
+**BUG_CLASSES 100.** The lesson generalises: when a check means *"did this PR
+change X"*, compute it from the diff against the merge base — a snapshot
+comparison silently folds in everything the base branch did in the meantime, and
+it cries wolf loudest on the PRs that are most obviously safe.
+
+### 12 Sep 2026 — and the Playwright MCP server it was merged alongside is inert here (no build number)
+
+PR #586 (merged the same evening) registered `npx @playwright/mcp@latest` at
+project scope. This session reports `playwright (CONNECTION_CLOSED)`, and the
+cause is the environment, not the config:
+
+```
+npm error code E403
+npm error 403 Forbidden - GET https://registry.npmjs.org/@playwright%2fmcp
+```
+
+`npx` cannot reach the npm registry through the cloud session's proxy, so the
+stdio process dies before it handshakes. **Same 403 that blocks
+`npm install axe-core`, which is why `gate_a11y` could not run on 1218** — one
+environment fact, two symptoms, and worth connecting so neither is chased twice.
+
+**Nothing is lost and the file stays.** Playwright and Chromium are installed
+directly (`/opt/pw-browsers`, `/opt/node22/lib/node_modules/playwright`) and that
+is the path every gate already takes via `chromium_launch.cjs` — verified by
+launching a browser and reading text back out of a page, not assumed. On a
+machine with ordinary npm access it works as written. Recorded in `OPEN_ITEMS` as
+settled: **a `CONNECTION_CLOSED` from it in a cloud session means the registry is
+blocked, not that the config is wrong.**
