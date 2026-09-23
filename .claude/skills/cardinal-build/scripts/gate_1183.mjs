@@ -50,12 +50,13 @@ ok(APP_HTML.indexOf('cr-cmark') === -1 && APP_HTML.indexOf('community-action-ico
 for (const [f, why] of [
   ['cardinal-prod.png', 'the hammer this build just wired'],
   ['cardinal-board.png', 'the pencil on the Team Calendar'],
-  ['cardinal-transparent.png', 'the sign-in mark'],
   ['cardinal-report-logo.png', 'the report letterhead (1182)'],
   ['community-action-dayton.png', 'the DELIBERATE portal-picker fallback — reachable only if CardinalFrontDoor is missing, which is not a reason to delete it'],
 ]) ok(fs.existsSync(ROOT + f), `${f} still exists — ${why}`);
 
-for (const f of ['cardinal-hammer.png', 'community-action-icon.png'])
+/* 1219: the lightning-bolt bird used to sit in the list above as "the sign-in mark", and that
+   line is why every later cleanup stopped short of it. Theo retired it; it must stay deleted. */
+for (const f of ['cardinal-hammer.png', 'community-action-icon.png', 'cardinal-transparent.png', 'cardinal-landing.PNG'])
   ok(!fs.existsSync(ROOT + f), `${f} is deleted — nothing could reach it`);
 
 /* -------------------------------------------------------------- RUNTIME */

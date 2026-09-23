@@ -126,6 +126,7 @@ spark/
 #     404 the letterhead on documents CLIENTS open: both share paths are
 #     location.origin (shareUrlFor -> /api/share?t=, shareUrl -> /?share=),
 #     so the root-relative path resolves only because this file serves. There
-#     is an onerror fallback to /cardinal-transparent.png, which is a smaller
+#     is an onerror fallback to /icon-512.png (the lightning-bolt bird until
+#     build 1219 retired it), which is a smaller
 #     mark and not a substitute. gate_1182.mjs serves the real bytes over HTTP
 #     and asserts the rendered report actually paints it. ---

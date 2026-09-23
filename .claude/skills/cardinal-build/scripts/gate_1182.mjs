@@ -55,8 +55,8 @@ const imgs = APP_HTML.split(IMG).length - 1;
 ok(imgs === 2, `both report templates carry the file-backed cover logo (found ${imgs})`);
 ok(APP_HTML.indexOf('iVBORw0KGgoAAAANSUhEUgAABEwAAAKHCAYAAA') === -1,
    'no copy of the base64 blob survives in the artifact');
-ok((APP_HTML.match(/onerror="this\.onerror=null;this\.src='\/cardinal-transparent\.png'"/g) || []).length === 2,
-   'both carry an onerror fallback to the main Cardinal logo');
+ok((APP_HTML.match(/onerror="this\.onerror=null;this\.src='\/icon-512\.png'"/g) || []).length === 2,
+   'both carry an onerror fallback to the house logo tile (1219: was the retired lightning-bolt bird)');
 
 /* THE REGRESSION CHECK. Any surviving `.match(/class="…-logo" src="(data:image`
    is a consumer still hunting for a blob that no longer exists — i.e. a silently

@@ -1249,7 +1249,17 @@ Earlier revisions of this file listed three things shipping publicly that should
 ```
 
 Deleting the wrong one of the pair breaks the first thing anyone sees. **Only the orphan
-went.** Every other root image is referenced and earns its place — checked one by one against
+went.**
+
+> **⚠ SUPERSEDED AT BUILD 1219 (23 Sep 2026).** Theo retired the bird on the lightning bolt.
+> `cardinal-transparent.png` AND `cardinal-landing.PNG` are both **deleted** with every reference
+> (landing shows `icon-512.png`; the insurance headers load `cardinal-logo-insurance.svg` directly;
+> report covers fall back to `icon-512.png`). Earlier notes and `gate_1183` called it "the sign-in
+> mark" and told cleanups to stop at it — that is why it kept coming back. **Do not restore it or
+> re-add it as a fallback.** `gate_1183` now asserts both files are absent. The hammer and pencil
+> birds are different images and stay.
+
+Every other root image is referenced and earns its place — checked one by one against
 `index.html`, `sw.js` and `manifest.json`, not eyeballed.
 
 **✅ `/api/config` EXISTS — do not re-report it as missing.** An earlier revision of this file said `loadConfig()` fetched a route with no `api/config.js` behind it, and that Google Maps autocomplete was therefore silently off. `api/config.js` is present in the repo. Verified 1 Aug 2026 at build 557 and re-counted 16 Aug — there are **29** functions in `api/` @808, not 20 and not 26.

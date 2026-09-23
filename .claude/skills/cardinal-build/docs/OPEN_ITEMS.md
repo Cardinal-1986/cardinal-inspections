@@ -1,5 +1,12 @@
 # Cardinal Resource App — Open Items
 
+> **✅ BUILD 1219 (23 Sep 2026): the bird on the lightning bolt is RETIRED, on Theo's word.**
+> `cardinal-transparent.png` and `cardinal-landing.PNG` are deleted with every reference. Anything
+> below that calls either one live, "the sign-in mark", or a fallback that "must stay" is stale —
+> including the sign-in logo A/B/C/D preview, which was re-encodes of that bird and is moot.
+> The hammer (`cardinal-prod.png`, `wm-home.jpeg`, `wm-login.jpeg`) and pencil (`cardinal-board.png`)
+> birds are different images and stay. Theo's focus is the CRM, not the showroom.
+
 ---
 
 ## 🟠 OPEN — from the 9 Sep 2026 external assessment, after build 1199

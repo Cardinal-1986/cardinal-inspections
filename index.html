@@ -4029,7 +4029,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-11 build 1218<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-23 build 1219<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4884,8 +4884,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <div id="landingView" style="display:none;position:relative;z-index:150;min-height:100vh;
   background:radial-gradient(1200px 600px at 50% -10%, #2a1b16 0%, #17100e 55%, #0d0908 100%);">
   <div style="max-width:520px;margin:0 auto;padding:6vh 22px 40px;text-align:center;">
-    <img src="/cardinal-transparent.png" alt="" style="width:min(78vw,340px);height:auto;
-      filter:drop-shadow(0 8px 24px rgba(0,0,0,.55));margin-bottom:10px;" onerror="this.src='/cardinal-landing.PNG'">
+    <img src="/icon-512.png" alt="Cardinal Roofing &amp; Renovations" style="width:min(56vw,220px);height:auto;border-radius:22%;
+      filter:drop-shadow(0 8px 24px rgba(0,0,0,.55));margin-bottom:10px;">
     <div style="font:800 26px Georgia,'Times New Roman',serif;letter-spacing:.03em;color:#e35c63;">
       Welcome back<span id="landName"></span></div>
     <div id="landDate" style="font:600 13px 'Segoe UI',Arial,sans-serif;color:#b7a99e;margin:4px 0 26px;"></div>
@@ -4952,7 +4952,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="ins-header">
     <div class="ins-headleft">
       <button class="ins-hbtn ins-logo-mini" id="ctLogoBtn" aria-label="Home" title="Home">
-        <img src="/cardinal-transparent.png" alt="Cardinal">
+        <img src="/cardinal-logo-insurance.svg" alt="Cardinal">
       </button>
       <select class="ins-navsel" id="ctSectionSel" aria-label="Cardinal Truth sections">
         <option value="" selected>&#9776; Menu</option>
@@ -5022,7 +5022,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="ins-header">
     <button class="ins-hbtn" id="icBackBtn" aria-label="Back to Cardinal Truth" title="Back to Cardinal Truth">&larr;</button>
     <button class="ins-hbtn ins-logo-mini" id="icLogoBtn" aria-label="Go to retail Client Directory" title="Go to retail Client Directory">
-      <img src="/cardinal-transparent.png" alt="Cardinal">
+      <img src="/cardinal-logo-insurance.svg" alt="Cardinal">
     </button>
     <div class="ins-title">Insurance Clients</div>
     <button class="ins-hbtn ins-plus" id="icAddBtn" aria-label="Add insurance client">+</button>
@@ -8896,7 +8896,7 @@ small.hint{color:#b06a00;font-size:8.5pt;}
      COVER PAGE
      ======================================================================= -->
 <div class="cover">
-  <img class="cover-logo" src="/cardinal-report-logo.png" onerror="this.onerror=null;this.src='/cardinal-transparent.png'" alt="Cardinal Roofing &amp; Renovations">
+  <img class="cover-logo" src="/cardinal-report-logo.png" onerror="this.onerror=null;this.src='/icon-512.png'" alt="Cardinal Roofing &amp; Renovations">
   <div class="cover-band"></div>
 
   <div class="cover-photo">
@@ -9334,7 +9334,7 @@ small.hint{color:#b06a00;font-size:8.5pt;}
      COVER PAGE
      ======================================================================= -->
 <div class="cover">
-  <img class="cover-logo" src="/cardinal-report-logo.png" onerror="this.onerror=null;this.src='/cardinal-transparent.png'" alt="Cardinal Roofing &amp; Renovations">
+  <img class="cover-logo" src="/cardinal-report-logo.png" onerror="this.onerror=null;this.src='/icon-512.png'" alt="Cardinal Roofing &amp; Renovations">
   <div class="cover-band"></div>
 
   <div class="cover-photo">
@@ -29612,7 +29612,7 @@ body.claim-insurance #brandLogo{
 }
 
 /* ── Insurance headers use a different logo element ──────────
-   #ctLogoBtn / #icLogoBtn render /cardinal-transparent.png through
+   #ctLogoBtn / #icLogoBtn render /cardinal-logo-insurance.svg through
    .ins-hbtn.ins-logo-mini img, which carries the same muddy
    grayscale+sepia+hue-rotate filter the main header had. Swap in the
    same recoloured Cardinal mark used for #brandLogo so the whole
@@ -43075,6 +43075,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1219, d: '2026-09-23', t: 'The bird on the lightning bolt is gone for good',
+    s: 'The fiery cardinal on a lightning bolt was supposed to be retired long ago but kept coming back on the Welcome back screen. It is deleted from the app now &#8212; the welcome screen shows the Cardinal Roofing &amp; Renovations house logo instead, and the insurance headers and report covers no longer download it either.' },
   { b: 1218, d: '2026-09-11', t: 'Invoices, aging and the payment sheet stop being a white page',
     s: 'The Accounts Receivable screen &#8212; who owes what, and how late &#8212; was still a white page on a black app, and so was the sheet that opens when you record a payment. Both are dark now, in the same colours as the Invoices &amp; Payments card on a client profile, so the whole money side of Cardinal looks like one thing instead of three. Nothing moved and nothing was renamed: the KPIs, the aging groups, the invoice rows and the status pills are exactly where they were. <b>Five colours had to be re-chosen rather than carried over</b> &#8212; the paid green, the overdue red, the reminders ON green, the warning amber and the small grey column labels were all picked for white paper and were between 2.5 and 3.8 to 1 on the dark card, under the 4.5 floor for text. Their replacements were computed, not eyeballed, and every one of them clears it. The red Record-payment button and the red stripe down an overdue row are deliberately unchanged &#8212; those are the brand, not text. Light mode is exactly what it was.' },
   { b: 1217, d: '2026-09-11', t: 'The estimate builder: a dark desk, and the estimate still looks like paper',
