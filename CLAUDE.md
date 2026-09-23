@@ -112,7 +112,7 @@ The repo now ships **five HTML artifacts plus a second application**, not one:
 
 | Artifact | What | Read before touching |
 |---|---|---|
-| `index.html` | the app — and the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` | this whole file |
+| `index.html` | the app. ⚠ **The Vision hub front door (`showroom.*` / `?vision=1`) was RETIRED at build 1190** — `showroom.cardinalroster.com` is the standalone Showroom since the 31 Aug cutover. `cr-show-*` and `cr-occ-*` stay: eight live consumers need them (see "Builds 574–594") | this whole file |
 | `popup.html` | **The Pop-Up Roof**, the client-facing book behind the `presentation.*` redirects in `vercel.json` (rewrites until 1197 — they never fired) | `ROOF_JOURNEY_BRIEF.md` |
 | `studio.html` | **Cardinal Studio**, the standalone admin curation browser | "Cardinal Studio" below |
 | `supplement.html` | **The Supplement Desk** (668, **now at build 1055**) — the Studio pattern again: public file, own Supabase sign-in, `is_cardinal_admin()`, and `api/supplement.js` enforcing admin server-side. **It carries its own stamp now** — a header chip and `window.SD_BUILD`; before 1055 it had none, so "which Desk code ran" was unanswerable | build log 667–673 and **1055**; `CR_SUPPLEMENT_DESK_AUDIT_2026-08.md` |
@@ -861,7 +861,7 @@ One new module (~108 KB, `window.CardinalShowcase`, full-screen `#cr-show` view 
 - **The Walk (579–580)** — AI circles damage, **a person confirms, then** the client sees it; that order is Theo's and is the whole design. `walks_schema.sql` + `api/detect.js`, which returns located findings (box, severity, label) for ONE photo. **The circles are an overlay, never burned into the image** — the altered-evidence rule holding in code.
 - **584–588, all in Blackout**: Spotlight (present mode), Chalk (draw live marks), The Lens (pinch into full resolution), The Release (share cards), Curtain Call (the tablet sells by itself).
 - **Showroom mode (590)** — a read-only door you can hand across the table; 592 pushed every control to ≥44px.
-- **The Vision hub (593)** — a dedicated front door in the SAME `index.html`: a hostname starting with `showroom.` (or `?vision=1` for testing) swaps the landing for a focused launcher — Presentations, plus Studio for admins, none of the ordinary ten-destination menu. Same sign-in underneath.
+- **The Vision hub (593) — ⚠ RETIRED AT BUILD 1190.** It was a front door in the SAME `index.html`: a hostname starting with `showroom.` (or `?vision=1`) swapped the landing for a focused launcher. Since the 31 Aug cutover `showroom.cardinalroster.com` is the standalone Showroom, so 1190 deleted `?vision=1`, `isVisionHost()`, `visionHtml()` and `showMain()`'s CRM-suppression branch as unreachable (lexer, re-checked 23 Sep: **zero CODE hits** for either; the remaining mentions are comments and one string). ⚠ **`cr-show-*` and `cr-occ-*` are NOT dead and must not be deleted with it** — the Walk tab, `hideAllViews()`, `navRestore()`, two Front Door doors, the Showroom tile, the Sales Floor, The Appointment and `wireColorSelects()` (every shingle colour dropdown in estimates, contracts and reports) all reach them. `gate_1190.mjs` group B holds that. `FEATURES.md` "Build 1190" is the record.
 
 Palette is `--sh-*` — **all 180 references carry literal fallbacks** (the Crews pattern). SQL: `showcase_pairs.sql`, `walks_schema.sql`, `workmanship_pairs.sql` — **all applied** (the build log records walks "applied and verified before the HTML change"); idempotent; do not treat as pending.
 
@@ -945,7 +945,7 @@ A sixteen-spread interactive pop-up book of how a roof gets built, client-facing
 
 ### OC Colors (615–623) — `cr-occ-styles` + `cr-occ-script`, `window.CardinalColors`
 
-The Owens Corning shingle-line hub on the Vision hub: lines first, then colours, with OC-sourced specs, three presentation styles for the iPad, and the conditional 130/160 MPH wind warranty. Palette `--occ-*` — **12 names, each declared once, single-theme Blackout**; do not wire it to `rb-light`.
+The Owens Corning shingle-line hub (it launched on the Vision hub, retired at 1190; the module itself is live): lines first, then colours, with OC-sourced specs, three presentation styles for the iPad, and the conditional 130/160 MPH wind warranty. Palette `--occ-*` — **12 names, each declared once, single-theme Blackout**; do not wire it to `rb-light`.
 
 **Read `OC_BRAND_RULES.md` before putting any OC or Pink Panther mark on a screen.** Two things this file itself got wrong and had to correct: **the Pink Panther IS available to contractors** (615–623 shipped a claim to the contrary), and **"reverse out the logo" is explicitly incorrect use**. Cardinal is an OC **Preferred** contractor — that is the status the page may state.
 
@@ -1201,7 +1201,7 @@ Everything in this repo is served publicly at `app.cardinalroster.com` **unless 
 
 | Path | What |
 |---|---|
-| `index.html` | the app — and the host-gated Vision hub front door (`showroom.*`) |
+| `index.html` | the app. (The host-gated Vision hub front door was retired at build 1190.) |
 | `popup.html` | The Pop-Up Roof — public by design; the two `presentation.*` domains redirect to it (1197) |
 | `studio.html` | Cardinal Studio — served publicly, gated by its own Supabase sign-in plus admin-only RLS and storage policies |
 | **`supplement.html`** | **The Supplement Desk (668, at build 1055) — deliberately ships.** Studio's pattern: public file, own Supabase sign-in, `is_cardinal_admin()`, and `api/supplement.js` enforcing admin **server-side**. ⚠ **Its theme key is `cr-desk-theme`, not the CRM's** — and its pre-paint head script overwrites whatever an init script set, so a rig using the wrong key silently drives ONE theme twice |
