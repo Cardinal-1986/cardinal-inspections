@@ -1,11 +1,12 @@
 {
   "note": "axe-core violation NODES per rule id. A rule may not grow. See gate_a11y.mjs.",
+  "rebaseline_reason": "23 Sep 2026 @1218: the walk grew 30 -> 32 states (builds 1200-1208 extended sentinel_setup_cardinal.js), not the app. Negative control on the same 32-state walk, axe 4.10.2: the build-1197 file (this baseline's own tree) reads region 307; 1218 reads 305. The app improved by 2; the old baseline undercounted the walk.",
   "axe": "4.10.2",
-  "states": 30,
+  "states": 32,
   "counts": {
     "landmark-one-main": 7,
     "heading-order": 5,
-    "region": 287,
+    "region": 305,
     "empty-table-header": 1,
     "scrollable-region-focusable": 2
   }
