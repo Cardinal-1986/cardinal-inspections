@@ -553,7 +553,7 @@ footer.site{
 .pcbadge .pcad{font-size:12px;color:var(--rbe-mute); /* 683: mute2 read 2.69:1 on the dark card — measured */overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 .pcbadge .pcchips{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;}
 .pcbadge .pcdot{width:3px;height:3px;border-radius:50%;background:var(--rbe-mute2);flex:0 0 auto;}
-.pcbadge .pcrep{font:800 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-rep);}
+.pcbadge .pcrep{font:800 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-rep,#dce3ec);}
 .pcbadge .pcmeta{font-size:11px;color:var(--rbe-mute);} /* 683: same as .pcad */
 .pcbadge .pcacts{display:flex;gap:7px;margin-top:9px;}
 .pcbadge .pcacts a{flex:1;border:1px solid var(--rbe-monobd);border-radius:9px;background:var(--rbe-monobg);
@@ -1087,11 +1087,11 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .pipebtn .plabel{display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
 .pipebtn .pcount{display:block;font:800 20px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);line-height:1.2;}
 .pipebtn .pmoney{display:block;font:700 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
-.pipe-lead{background:#E8B10F;} .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
+.pipe-lead{background:#FFE600;}/* 1220: lemon, was mustard #E8B10F */ .pipe-prospect{background:#F08A24;} .pipe-approved{background:#7CB342;}
 .pipe-completed{background:#29A3DC;} .pipe-invoiced{background:#8E6BC1;}
 .pipe-onhold{background:#047857;} .pipe-closed{background:#607D8B;}
 .pipe-lead{background-image:linear-gradient(160deg,
-  #fdf3d6 0%, #f7e0a0 12%, #E8B10F 38%, #E8B10F 55%, #a67e08 80%, #6f5405 100%);
+  #FFFBD9 0%, #FFF599 12%, #FFE600 38%, #FFE600 55%, #B7A500 80%, #7A6E00 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.22), 0 1px 3px rgba(0,0,0,.25);}
 .pipe-prospect{background-image:linear-gradient(160deg,
   #fcead8 0%, #f8ca9c 12%, #F08A24 38%, #F08A24 55%, #ad631a 80%, #784512 100%);
@@ -2456,7 +2456,7 @@ body.restoring #restoreVeil{display:flex;}
 
 :root{
   --rbe-mpill-fg:#15171b;--rbe-mpill-bg:#8a93a1;
-  --rbe-po3:#d8a94f;--rbe-fact-fg:#e9e6df;
+  --rbe-po3:#dce3ec;--rbe-fact-fg:#e9e6df;
   --rbe-del-bd:#6e3129;--rbe-del-bg:rgba(226,87,74,.08);--rbe-del-fg:#f2a08a;
   --rbe-adm-bg:#3a2f22;--rbe-adm-fg:#d8c9a8;
   --rbe-sep:#8bec7;--rbe-ctamiss:#4a4030;--rbe-ctabg:rgba(200,32,46,.08);
@@ -2540,10 +2540,10 @@ body.restoring #restoreVeil{display:flex;}
 .ljmain{flex:1;min-width:0;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;}
 .ljnm{font-weight:800;font-size:14.5px;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}
 .ljpo{font-weight:800;
-  opacity:.9;color:var(--rbe-po2,#d8a94f);/* 685: was gradient-clipped text */}
+  opacity:.9;color:var(--rbe-po2,#dce3ec);/* 685: was gradient-clipped text */}
 .ljad{font-size:11.5px;color:var(--rbe-mute);}
 .ljct{font-size:11px;color:var(--rbe-mute);margin-top:3px;}
-.ljrep{font-size:11px;font-weight:800;color:var(--rbe-rep);}
+.ljrep{font-size:11px;font-weight:800;color:var(--rbe-rep,#dce3ec);}
 .ljcta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;align-self:center;margin-right:11px;}
 .ljbtn{width:36px;height:36px;border:1px solid var(--rbe-ctamiss);border-radius:10px;background:var(--rbe-ctabg);
   display:flex;align-items:center;justify-content:center;text-decoration:none;}
@@ -2583,7 +2583,7 @@ body.restoring #restoreVeil{display:flex;}
 .ljmpill{display:inline-block;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;
   text-transform:uppercase;border-radius:999px;padding:4px 14px;}
 .ljpsub{padding:2px 16px 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
-.ljpsub .po{color:var(--rbe-po3);font-weight:800;}
+.ljpsub .po{color:var(--rbe-po3,#dce3ec);font-weight:800;}
 .ljpact{display:flex;gap:8px;padding:0 16px 13px;}
 .ljab{border:1px solid var(--rbe-ctamiss);background:var(--rbe-ctabg);color:var(--rbe-acclt);border-radius:10px;
   padding:8px 10px;display:flex;gap:7px;align-items:center;justify-content:center;
@@ -2652,7 +2652,11 @@ body.restoring #restoreVeil{display:flex;}
 
 /* ---- work schedule + AR row ---- */
 .rowfil{height:1px;margin:14px 8px;background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
-.opsrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;}
+.opsrow{display:grid;grid-template-columns:1fr;gap:14px;align-items:stretch;}
+/* 1220: one column on a phone. Two 180px columns could not hold "Accounts
+   Receivable" at Normal, and at Larger the zoom squeezed the calendar out of its
+   own card. Side by side from 600px, which every tablet and desktop clears. */
+@media (min-width:600px){.opsrow{grid-template-columns:1fr 1fr;}}
 .opscard{margin:0 !important;}
 .cal30{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:10px;}
 .cal30 .ch{font:700 11px/1 ui-monospace,'SF Mono',Menlo,Consolas,monospace;color:var(--rbe-mute,#9aa3ad);text-align:center;padding:2px 0 4px;}
@@ -4029,7 +4033,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-09-11 build 1218<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-01 build 1220<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12015,7 +12019,7 @@ async function sendReviewRequest(pr, via){
   setTimeout(renderOverview, 400);
 }
 var ACX_STEPS = [
-  { s:'Lead',      l:'L', c:'#E8B10F' },
+  { s:'Lead',      l:'L', c:'#FFE600' },
   { s:'Prospect',  l:'P', c:'#F08A24' },
   { s:'Approved',  l:'A', c:'#7CB342' },
   { s:'Completed', l:'C', c:'#29A3DC' },
@@ -16746,7 +16750,7 @@ function jobFinance(pr){
            balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0,
            source: source };
 }
-var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', OnHold:'#0F9B8E', Approved:'#7CB342', Scheduled:'#7CB342',
+var STAGE_COLORS = { Lead:'#FFE600', Prospect:'#F08A24', OnHold:'#0F9B8E', Approved:'#7CB342', Scheduled:'#7CB342',
   Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d8d8d' };
 /* STAGE_INK — the same stages, darkened for a light ground.
    Stage colours are chosen to sit on iron (#202329) or matte black (#141517) and
@@ -16755,7 +16759,7 @@ var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', OnHold:'#0F9B8E', Appro
    4.5:1 floor for body text. Anything drawing a stage colour as text in rb-light
    reads from here; bars, spines and dots keep the bright originals, because a
    3px glowing rule is not text and the glow is the point. */
-var STAGE_INK = { Lead:'#8A6608', Prospect:'#9A4E06', OnHold:'#0B5F57', Approved:'#3F6B23', Scheduled:'#3F6B23',
+var STAGE_INK = { Lead:'#756A00', Prospect:'#9A4E06', OnHold:'#0B5F57', Approved:'#3F6B23', Scheduled:'#3F6B23',
   Completed:'#15607F', Invoiced:'#5B4080', Closed:'#455A64', Lost:'#5E5E5E' };
 function stageInk(stg){ return STAGE_INK[stg] || '#5E5E5E'; }
 /* 649: THE THREAD AS IT IS ACTUALLY RENDERED — checklist.comments, plus the
@@ -30092,7 +30096,7 @@ body.claim-insurance #brandLogo{
   --rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);
   --rbe-ridge-sh:0 14px 30px rgba(0,0,0,.8);
   --rbe-bg1:#2e333b;--rbe-bg2:#262a31;
-  --rbe-name1:#e2574a;--rbe-po2:#d8a94f;--rbe-rep:#e8c23a;--rbe-ai:#8ac4f2;
+  --rbe-name1:#e2574a;--rbe-po2:#dce3ec;--rbe-rep:#dce3ec;/* 1220: soft white, were gold - beside a lemon Lead they read as a status */--rbe-ai:#8ac4f2;
   --rbe-money:#8fe0ae;--rbe-flag:#f2a08a;--rbe-clr:#e08a7a;
   --rbe-empty-bd:#4a4f58;--rbe-empty-fg:#9aa0a8;
   --rbe-hair:#2c3038;
@@ -30161,8 +30165,8 @@ body.claim-insurance #brandLogo{
 .cre-card .dt{font-weight:800;font-size:13.5px;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}
 
 .cre-card .cl{font-size:11.5px;color:var(--rbe-mute);}
-.cre-card .cl .po{font-weight:800;opacity:.9;color:var(--rbe-po2,#d8a94f);/* 685: was gradient-clipped text */}
-.cre-card .cl .rp{font-weight:800;color:var(--rbe-rep);}
+.cre-card .cl .po{font-weight:800;opacity:.9;color:var(--rbe-po2,#dce3ec);/* 685: was gradient-clipped text */}
+.cre-card .cl .rp{font-weight:800;color:var(--rbe-rep,#dce3ec);}
 .cre-card .end{text-align:right;flex:0 0 auto;}
 .cre-card .money{display:block;font:800 14px ui-monospace,Menlo,monospace;color:var(--rbe-money);}
 .cre-card .when{display:block;font-size:11px;color:var(--rbe-mute);margin-top:3px;}
@@ -43075,6 +43079,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1220, d: '2026-10-01', t: 'Leads go lemon, rep names go quiet, and the dashboard fits a phone',
+    s: 'Three things you will see on a phone. <b>Leads are bright lemon now</b> instead of mustard &#8212; mustard and the orange of Prospects measured almost the same colour side by side, so L and P read as one stage. The pipeline, the stage chips and the client directory all use the new yellow, and where a Lead colour has to be text on a light page it uses a darker lemon that reads better than the old one did. <b>Rep names and job numbers are soft white in dark mode</b> instead of gold, so a rep name under a lemon Lead no longer looks like a second status. Light mode keeps its reds. <b>The calendar and Accounts Receivable stack on a phone</b> instead of squeezing side by side, so \'Receivable\' stops dropping a line at Normal size and the calendar stops spilling out of its card at Larger. Tablets and desktop keep them side by side.' },
   { b: 1218, d: '2026-09-11', t: 'Invoices, aging and the payment sheet stop being a white page',
     s: 'The Accounts Receivable screen &#8212; who owes what, and how late &#8212; was still a white page on a black app, and so was the sheet that opens when you record a payment. Both are dark now, in the same colours as the Invoices &amp; Payments card on a client profile, so the whole money side of Cardinal looks like one thing instead of three. Nothing moved and nothing was renamed: the KPIs, the aging groups, the invoice rows and the status pills are exactly where they were. <b>Five colours had to be re-chosen rather than carried over</b> &#8212; the paid green, the overdue red, the reminders ON green, the warning amber and the small grey column labels were all picked for white paper and were between 2.5 and 3.8 to 1 on the dark card, under the 4.5 floor for text. Their replacements were computed, not eyeballed, and every one of them clears it. The red Record-payment button and the red stripe down an overdue row are deliberately unchanged &#8212; those are the brand, not text. Light mode is exactly what it was.' },
   { b: 1217, d: '2026-09-11', t: 'The estimate builder: a dark desk, and the estimate still looks like paper',
@@ -64908,7 +64914,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .jabox .jbl{color:
 body:not(.claim-insurance):not(.claim-community) #projectView .jan{font:700 11px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:1px 8px;}
 body:not(.claim-insurance):not(.claim-community) #projectView .jan.zero{opacity:.55;}
 .heroNm{font:800 19px Georgia,'Times New Roman',serif;min-width:0;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}
-#projectView .poPfx{font-weight:800;opacity:.9;color:var(--rbe-po2,#d8a94f);/* 685: was gradient-clipped text */}
+#projectView .poPfx{font-weight:800;opacity:.9;color:var(--rbe-po2,#dce3ec);/* 685: was gradient-clipped text */}
 .hcontact{margin-left:auto;text-align:right;flex:0 0 auto;line-height:1.35;display:flex;flex-direction:column;align-items:flex-end;}
 .hcontact .hph{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-acclt);text-decoration:none;}
 .hcontact .hem{font:600 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);text-decoration:none;margin-top:1px;}
@@ -65546,13 +65552,13 @@ document.addEventListener('click', function(e){
   
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}
 .kplrow .po{font-weight:800;font-size:11px;
-  opacity:.9;color:var(--rbe-po2,#d8a94f);/* 685: was gradient-clipped text */}
+  opacity:.9;color:var(--rbe-po2,#dce3ec);/* 685: was gradient-clipped text */}
 .kplrow .stc{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.04em;text-transform:uppercase;
   padding:2.5px 8px;border-radius:999px;border:1px solid var(--sc,#4a4d52);color:var(--sc,#9aa0a8);white-space:nowrap;}
 /* The spine neons are unreadable as text on paper (1.17-2.36:1). The left rail
    keeps its glow; only the chip's text and border move to the ink twin. */
 :root[data-theme="rb-light"] .kplrow .stc{border-color:var(--scl,var(--sc,#8f8f8f));color:var(--scl,var(--sc,#5E5E5E));}
-.kplrow .rp{font-size:11px;font-weight:800;color:var(--rbe-rep);}
+.kplrow .rp{font-size:11px;font-weight:800;color:var(--rbe-rep,#dce3ec);}
 .kptrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--rbe-hair);font-size:12px;cursor:pointer;}
 .kptrow:last-child{border-bottom:0;}
 .kptrow .tm2{font:800 11px ui-monospace,Menlo,monospace;color:var(--rbe-acclt);width:66px;flex:0 0 auto;}
@@ -65847,7 +65853,7 @@ body.cr-prod #punchView{ position:fixed; inset:0; z-index:9400; overflow-y:auto;
 .pu-tag.crm-retail{border-color:#c8202e;color:#ec7076;}/* 1039: #e35c63 was 4.10:1 on the dark row */
 .pu-tag.crm-insurance{border-color:#c4180f;color:#ff8a7a;}
 .pu-tag.crm-community{border-color:#047857;color:#34D399;}
-.pu-who{margin-left:auto;font-size:11px;font-weight:800;color:var(--rbe-rep);}
+.pu-who{margin-left:auto;font-size:11px;font-weight:800;color:var(--rbe-rep,#dce3ec);}
 .pu-empty{border:1px dashed var(--rbe-empty-bd);border-radius:11px;padding:16px;text-align:center;color:var(--rbe-empty-fg);
   font:600 12.5px 'Segoe UI',Arial,sans-serif;}
 .pu-grp{font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--rbe-acc);
@@ -71263,7 +71269,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #leadsView .ljpo{opacity:1;}
 :root:not([data-theme="rb-light"]) #leadsView .ljnm,
 :root:not([data-theme="rb-light"]) #leadsView .ljpname{color:#ffffff;}
-:root:not([data-theme="rb-light"]) #leadsView .ljpo{color:#d8a94f;}
+:root:not([data-theme="rb-light"]) #leadsView .ljpo{color:var(--rbe-po2,#dce3ec);}
 :root[data-theme="rb-light"] #leadsView .ljnm,
 :root[data-theme="rb-light"] #leadsView .ljpname{color:#161616;}
 :root[data-theme="rb-light"] #leadsView .ljpo{color:#8f1620;}
@@ -79753,7 +79759,7 @@ select{min-height:44px;}
     font:800 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.05em;
     background:var(--rbe-panel2,#101015);
     border:1px solid var(--rbe-line2,#2b2b33);
-    color:var(--rbe-po2,#d8a94f);
+    color:var(--rbe-po2,#dce3ec);
   }
   #cr-namebar .nb-pen{
     width:32px; height:28px; border-radius:8px; cursor:pointer;

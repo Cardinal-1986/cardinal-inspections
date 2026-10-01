@@ -33430,3 +33430,55 @@ launching a browser and reading text back out of a page, not assumed. On a
 machine with ordinary npm access it works as written. Recorded in `OPEN_ITEMS` as
 settled: **a `CONNECTION_CLOSED` from it in a cloud session means the registry is
 blocked, not that the config is wrong.**
+
+## Build 1220 — Lead goes lemon, rep names and job numbers go soft white, the dashboard row stacks on a phone
+
+Theo, 30 Sep – 1 Oct 2026: *"the three font sizes, even the small one throws off a word. The
+colors in the pipeline look muted"*, then *"change the color of the L Lead pipeline status to
+something other than mustard"*. Every option was rendered on the real app at 390px, dark and
+light, before anything was built. His picks: **bright lemon · rep names soft white · pipeline card
+style left as it is · layout A · job number matches the rep names.**
+
+**What the recon found, measured rather than eyeballed:**
+- **"Throws off a word" at Normal** is `.opsrow` — two fixed 180px columns, so "Accounts
+  Receivable" drops "Receivable" to a second line. At Larger, the 939 `zoom:1.30` squeezes the same
+  row until the calendar spills **4px** out of its own card. A text-node sweep for words split
+  mid-word found **zero** on the dashboard at all three sizes — the complaint is wrapping, not
+  breaking.
+- **"Muted"** is not the stage colours. In dark retail every pipeline card paints the same
+  `#0d1220` with the same grey letter `#8d97a6`, and the stage colour survives only as the 3px
+  strip `cr-nvl-styles` flattens the sphere into. Theo chose to leave the card style.
+- **Mustard and Prospect's orange are 1.28:1 apart**, so L and P read as one stage. That made the
+  lemon change a correction, not a preference: lemon is 1.98:1 from the orange.
+
+**Shipped:** see `FEATURES.md` "Build 1220" for the full site table. Lemon on every STAGE marker,
+with the light-mode sphere rebuilt from lemon in the same six-stop shape; `STAGE_INK.Lead`
+recomputed to `#756A00` (5.50:1 — `.dbstage` paints white on it and the old twin held 5.27, so
+the new one may not fall below that); `--rbe-rep`, `--rbe-po2` and `--rbe-po3` to `#dce3ec` in
+dark, every bare `var(--rbe-rep)` given its literal, and the pinned `#leadsView .ljpo{color:#d8a94f}`
+turned back into the token; `.opsrow` made mobile-first **at source** (`1fr`, `1fr 1fr` from 600px).
+
+**Two corrections to my own previews, both caught before building:**
+1. **Preview A made `#crBanner` scroll sideways at Large/Larger. It is not in the build.** Build
+   424's note: an overflow value on that bar clips the absolutely-positioned Production and Tools
+   dropdowns — *"Nothing here may reintroduce an overflow value."* The preview would have shipped
+   a dead menu that looked fine in a screenshot. "Tools" still wraps at Larger, by design.
+2. **`patch_1220`'s first run aborted on its own count assertion** — I had counted four
+   `var(--rbe-po2,#d8a94f)` fallbacks and there are five (the namebar `.nb-po` pill). A sixth
+   job-number token, `--rbe-po3` on `.ljpsub .po`, only surfaced when the `#d8a94f` survivor count
+   came back 1 instead of 0. **Count the survivors of an edited value, not just the edits.**
+
+**Deliberately unchanged:** the receivables 31–60 bucket and `AV_COLORS` (same hex, not Leads);
+the "New leads" report line (a series colour; lemon on a light chart fails the 3:1 graphics floor);
+light theme's reds; the lavender `.ljpo` rule in `cr-hd2-styles`. ⚠ **`#stageBanner` is a dormant
+hazard** — white text on `STAGE_COLORS[stg]`, ~1.2:1 on lemon (1.96:1 on mustard), but
+`display:none` at 390 and 1440 in both themes, so nothing renders it. If it returns it needs a
+dark ink for Lead.
+
+**Gates.** `check_build` GREEN (negative control clean) · `gate_1220` **22/22 GREEN, RED 11/22 on
+1218 without crashing** · `gate_types`, `gate_dupes`, `gate_a11y` (axe 4.10.2, 0 rules grew),
+`gate_1206`, `gate_1081`, `gate_textsize939`, `audit_scrolllock` (roster 17), `gate_stack` (CLEAN —
+the `.opsrow` change is an edit, not a stack) all GREEN. ⚠ **`gate_1114` is RED on two desktop
+checks — "seven cards fit at 1194 with no scroll" — and is identically RED on 1218.** Pre-existing,
+not this build's; the dashboard rework after 1114 is the likely cause. Recorded, not widened into
+this PR.
