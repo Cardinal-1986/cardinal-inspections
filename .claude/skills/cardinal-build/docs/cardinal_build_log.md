@@ -33482,3 +33482,12 @@ the `.opsrow` change is an edit, not a stack) all GREEN. ⚠ **`gate_1114` is RE
 checks — "seven cards fit at 1194 with no scroll" — and is identically RED on 1218.** Pre-existing,
 not this build's; the dashboard rework after 1114 is the likely cause. Recorded, not widened into
 this PR.
+
+**Sentinel (this build holds on it — colour + layout).** **CLEAN in both themes**: the five screens
+the build touches (`home`, `leads`, `clientdir`, `client`, `nav`) at 390 / 1194 / 1440, `--since`
+1218 — 15 renders dark, 15 light, nothing new (87 / 102 carried). ⚠ **Two runs before that proved
+nothing and are recorded so the next session does not repeat them:** the first passed `--setup`
+ONE file and every state threw *"the supabase mock did not run"* — the sentinel refused to sweep
+the signed-out screen, which is exactly right; the second, the full 32-state × 3-width walk, hit
+the cloud session's background time limit and was killed before it reported. Narrowing with a
+third init script that filters `window.__sentinelStates` ran in ~4 minutes per theme.
