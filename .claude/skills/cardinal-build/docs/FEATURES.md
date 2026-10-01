@@ -8549,6 +8549,38 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1220 — Lead goes lemon, rep names and job numbers go soft white, the dashboard row stacks on a phone
+
+Theo's three picks from rendered previews (1 Oct 2026): *"bright lemon"* for Lead, rep names
+**soft white**, job number **matches the rep names**, pipeline card style **left as it is**,
+layout **A** (stack on phones).
+
+| What | Before | After | Where |
+|---|---|---|---|
+| Lead, every STAGE marker | mustard `#E8B10F` | **lemon `#FFE600`** | `.pipe-lead` (dark strip), `.pipe-lead` sphere shading (light — same six-stop shape, rebuilt from lemon), `STAGE_COLORS.Lead`, `ACX_STEPS` |
+| Lead as TEXT on a light ground | `STAGE_INK.Lead` `#8A6608` (5.27:1) | **`#756A00` (5.50:1)** | `.dbstage` paints white on it, so it had to keep ≥ the old 5.27 |
+| Rep names, dark | gold `--rbe-rep:#e8c23a` | **`#dce3ec`** (12.1:1) | `.pcrep`, `.ljrep`, `.cre-card .rp`, `.kplrow .rp`, `.pu-who` — all now `var(--rbe-rep,#dce3ec)` |
+| Job numbers, dark | gold `--rbe-po2` / `--rbe-po3:#d8a94f` | **`#dce3ec`** | `.ljpo` (+ its pinned `#leadsView` literal, now the token), `.cre-card .po`, `.poPfx`, `.kplrow .po`, `.nb-po`, `.ljpsub .po` |
+| `.opsrow` (Next 30 Days + Accounts Receivable) | `1fr 1fr` always | **`1fr`, `1fr 1fr` from 600px** | edited at source, mobile-first — not an override |
+
+**Why lemon, measured:** mustard and Prospect's orange were **1.28:1** apart, so on a phone L and P
+read as one stage. Lemon is 1.98:1 from the orange.
+
+**Deliberately NOT changed:**
+- **The receivables 31–60 day bucket and `AV_COLORS`** carry the same `#E8B10F` and are not Leads.
+- **The "New leads" report line** is a series colour, not a stage marker, and lemon on a light chart would fail the 3:1 graphics floor.
+- **Light theme's reds** for rep names (`#c8202e`) and job numbers (`#8f1620`), asserted unchanged.
+- **`.ljpo{color:#B57EDC}`** in `cr-hd2-styles` (the lavender PO) loses in every place Theo looked and was left alone.
+- **The section bar's sideways scroll at Large/Larger,** shown in the A preview, was **dropped**. Build 424 records that any overflow on `#crBanner` clips the Production and Tools dropdowns ("Nothing here may reintroduce an overflow value"), so "Tools" still wraps to a second row at Larger. That wrap is the designed behaviour.
+
+⚠ **A dormant hazard, recorded:** `#stageBanner` paints `STAGE_COLORS[stg]` as a background under
+**white** text (`.stagebanner{color:#fff}`). White on lemon is ~1.2:1, and it was already 1.96:1 on
+mustard. It is `display:none` on the current client profile at 390 and 1440, both themes, so
+nothing renders it today. **If that banner is ever brought back, it needs a dark ink for Lead.**
+
+Gate: `scripts/gate_1220.mjs` — real Chromium, both themes, 390 at all three text sizes + 1194.
+**22 checks, GREEN on 1220, RED on 1218 (11 failures, no crash).**
+
 ## Build 1218 — Accounts Receivable and the payment sheet go dark
 
 **Where:** the `#cr-ar-view` token rule and a new `:root[data-theme="rb-light"] #cr-ar-view`
