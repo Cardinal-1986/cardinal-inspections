@@ -33491,3 +33491,35 @@ ONE file and every state threw *"the supabase mock did not run"* — the sentine
 the signed-out screen, which is exactly right; the second, the full 32-state × 3-width walk, hit
 the cloud session's background time limit and was killed before it reported. Narrowing with a
 third init script that filters `window.__sentinelStates` ran in ~4 minutes per theme.
+
+## Build 1221 — job photos get a tile-sized twin; one preparation for every camera photo
+
+**The audit, measured on production (1 Oct 2026, read-only):** ~12.3 GB stored. `photos/studio/`
+(the CompanyCam archive mirror) is **9.8 GB, 80%**, and deliberate. `cardinal-visual-workspace`
+is 1.7 GB written by something **outside this repo** (no code here references the bucket), 1.3 GB
+of it three old `experience-v0xx` versions — **left alone**: deleting saves nothing on a 100 GB
+quota and cannot be undone; Theo's call. Job photos are 234 files / 120 MB. **September: the app's
+own camera saved 19 photos (12 MB) while `companycam_photos` holds 61,790** — the crew takes
+pictures in CompanyCam, which is the real finding and a product conversation, not a fix.
+
+**Shipped:** see `FEATURES.md` "Build 1221". Twin (`-t.jpg`, 512px) on write, signed beside the
+photo, painted by three grids with an `onerror` fall-back, backfilled 8-at-a-time on job open;
+`photoPrepFile()` for punch-outs and NACHI images. Arithmetic, not a measurement: a twin is ~10% of
+the pixels of a 1600px photo, so a 20-photo job's grid drops from **~10.5 MB to roughly 1 MB**.
+
+**Two things I nearly got wrong, both caught by reading before writing:**
+1. **Punch-out photos are NOT broken.** They store `getPublicUrl` links on a private bucket, which
+   reads like 12 dead images — but `cr-pk-script`'s `paintPhotos()` calls
+   `paintSignedPhotoImgs()`, which re-signs them after render. A false positive, not reported.
+2. **"Raw upload" was three document vaults, not three camera paths.** Work orders, the owner vault
+   and crew docs hold contracts and PDFs; they are excluded on purpose.
+
+**And one I did get wrong:** the first patch's `photoPrepFile` fallback assigned `b.name` onto a
+Blob. `gate_types` stayed GREEN (no code over baseline) but **TS2339 rose 1360 → 1361** — read the
+counts, not the colour. Removed; back to 1360.
+
+**Gates.** `check_build` GREEN (negative control clean) · `gate_1221` **26/26, RED 22/26 on 1220**
+· `gate_types` (TS2339 back to 1360), `gate_dupes`, `audit_scrolllock`, `gate_1206`, `gate_1220`,
+`gate_a11y` (0 rules grew) GREEN · sentinel CLEAN on client/album/photoactivity/punch/home at 390 +
+1194, `--since` 1220 (not a colour build, so it does not hold the merge — run and reported anyway).
+
