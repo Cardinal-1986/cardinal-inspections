@@ -4061,7 +4061,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1226<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1227<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43209,6 +43209,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1227, d: '2026-10-02', t: 'Desktop client page: Job Menu first too',
+    s: 'The client page on a computer now follows the same idea as the phone. The money band stays across the top exactly as before &#8212; stage, Job Value, Invoices &amp; Payments, Money In &#8212; and right under it comes the <b>Job Menu</b>. On a wide screen the Job Menu holds the left column, with Location, Job Details, Assigned To, History and Reviews on the right. <b>Convert to Insurance, Update from Scope of Loss and Delete Client</b> fold behind one <b>Admin</b> row at the bottom. On a computer the map stays open, because there is room for it.' },
   { b: 1226, d: '2026-10-02', t: 'Lead is lemon in Leads & Jobs too',
     s: 'The bright lemon Lead colour reached the pipeline but not the <b>Leads &amp; Jobs</b> list, which keeps its own colours &#8212; Lead cards there still had a grey badge and a pale stripe. They are lemon now, with dark lettering so the badge stays easy to read, and so are the Lead rows in Recent Leads on the home screen.' },
   { b: 1225, d: '2026-10-02', t: 'The client page puts the Job Menu first',
@@ -80154,14 +80156,51 @@ select{min-height:44px;}
      Retail only, past 1600px; phones, tablets and the claim CRMs are untouched. */
   @media (min-width:1600px){
     body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView .wrap:not(.masthead){ max-width:1600px; }
-    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount{ column-count:2; column-gap:34px; }
+    /* 1227: a GRID, not CSS columns. Columns cannot be ordered (the browser
+       balances them by height), so the Job Menu could not be put first; a grid
+       honours the order block below. Band across the top as before; the Job
+       Menu holds the left column; Location, Job Details, Assigned To, History,
+       Reviews and the Admin row stack on the right. */
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:34px; align-items:start; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > *{ grid-column:2; min-width:0; }
     body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstage,
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbMoneyRow{ grid-column:1 / -1; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbMoneyCard,
     body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbmoney,
-    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbPayRow,
-    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbMoneyRow{ column-span:all; }
-    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > *{ break-inside:avoid; }
-    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .projsec{ break-after:avoid; }
-    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .ja-menu{ break-inside:avoid; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbPayRow{ grid-column:1; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .ja-menu{ grid-column:1; grid-row:span 12; }
+  }
+  /* 1227: the desktop order (Theo's pick from a rendered before/after, 2 Oct).
+     The money band stays on top; then the Job Menu; then the rest. Above 560px
+     only - the phone has its own order in the max-width:560px block. 561-1599
+     is a single column (flex); 1600+ is the grid above. Admin folds here too;
+     the map stays open (there is room for it). */
+  @media (min-width:561px){
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount{ display:flex; flex-direction:column; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > *{ order:16; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstage{ order:1; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbMoneyCard, body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbmoney{ order:2; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-card{ order:3; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbPayRow{ order:4; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .db-guiderow{ order:5; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbMoneyRow{ order:6; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .ja-menu{ order:7; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loch"]{ order:8; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]{ order:9; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="jdh"]{ order:10; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="jd"]{ order:11; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > h3.projsec:has(+ .acxassignsec){ order:12; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .acxassignsec{ order:13; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #kpHis{ order:14; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .rvcard{ order:15; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .cr-admin-tog{ order:20; display:flex; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbConvertIns{ order:21; }
+    body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #acxMount > #dbConvertIns,
+    body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #solCard,
+    body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #dangerZone{ display:none !important; }
+  }
+  @media (min-width:1600px){
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount{ display:grid; }
   }
 </style>
 <script id="cr-namebar-script">

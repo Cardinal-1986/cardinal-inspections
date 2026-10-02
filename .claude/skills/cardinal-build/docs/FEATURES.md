@@ -8549,6 +8549,35 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1227 — the desktop client profile, Job Menu first
+
+Theo, 2 Oct 2026, from a rendered before/after at 1440 and 1920: **"Do the desktop fix"**. Retail only.
+
+**The money band is kept exactly:** stage, Job Value + Payment Information beside Invoices & Payments,
+the Pre-Install Guide row, and Money In across the full width. **Then the Job Menu, then everything
+else.** The order block is `@media (min-width:561px)`, separate from the phone's (max-width:560px),
+because the two orders differ: the phone moves the money card up beside the name band (797/1209).
+
+**923's CSS columns are replaced by a GRID at 1600px+.** Columns cannot be ordered, because the browser
+balances them by height. That is why the preview had to move DOM nodes, and why the build does not:
+moving nodes other modules own is the 567/569 class. The grid has the band full width (`.dbstage`,
+`#dbMoneyRow` span `1 / -1`), the money card and pay row in column 1, Invoices and Guide in column 2, then
+`.ja-menu` in column 1 with `grid-row:span 12`, and everything else auto-placed in column 2. Between
+561 and 1599px it is a single flex column.
+
+**The Admin fold applies on desktop too.** The map does **not** fold on desktop.
+
+⚠ **Flex and grid do not collapse margins**, so the page runs ~100px longer than the block-flow preview
+did (1440: 2,911 vs 2,817). The gaps between cards are slightly roomier. That is not a defect, and it is
+noted so nobody chases it.
+
+⚠ **This supersedes 794's "desktop is untouched"** and 923's columns. `gate_794`'s "plain block"
+assertion now expects the 1227 flex column, and `gate_1225`'s desktop section now only owns "the map
+is not folded on desktop".
+
+Gate: `scripts/gate_1227.mjs` — **40 checks**: 1440 and 1920 × both themes, order, left/right columns
+at 1920, **no two cards overlap** (closed and open), and the Admin fold. GREEN on 1227, RED on 1226.
+
 ## Build 1226 — Lead is lemon in Leads & Jobs too
 
 Theo, 2 Oct 2026, after 1225: **"The lead color didn't change?"** It hadn't, on one screen. 1220

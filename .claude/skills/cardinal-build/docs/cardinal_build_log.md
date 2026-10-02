@@ -33653,3 +33653,25 @@ before calling `renderKpHomeRow()`. That was the gate's fault, not the app's.
 **Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN · `gate_1226` 10/10,
 RED 6 on 1225 · `gate_1220`, `gate_1225`, `gate_1206` GREEN · `gate_stack` CLEAN.
 
+**Sentinel on 1226 (both themes, `--since` 1225): CLEAN.** Merged as #611 on Theo's "merge".
+
+## Build 1227 — the desktop client profile, Job Menu first
+
+Theo: **"Do the desktop fix then B"**, from a rendered before/after. See `FEATURES.md` "Build 1227".
+
+**The preview had a mistake of mine, caught before he saw it:** the first render dropped Job Value and
+Payment Information to the bottom of the page, because on desktop they live inside `#acxMount`. A second
+render put them above the stage bar at half width. The third kept 923's band exactly. Lesson: on desktop,
+the band IS the top of the reorder. Read the "before" picture first.
+
+**Why a grid and not a DOM move:** CSS columns ignore `order`. The preview moved nodes, which is fine
+in a throwaway render and not fine in the app, where several modules insert those nodes late or
+re-place them.
+
+**Gates changed, with reasons:** `gate_794`'s desktop "plain block" assertion and `gate_1225`'s
+"desktop untouched" section both encoded the decision Theo has just reversed.
+
+**Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN · `gate_1227` 40/40,
+RED on 1226 · `gate_1225` (updated), `gate_794` (updated), `gate_797`, `gate_1209`, `gate_1053`,
+`gate_1206`, `gate_1224`, `gate_1081`, `gate_a11y` GREEN · `gate_stack` CLEAN.
+
