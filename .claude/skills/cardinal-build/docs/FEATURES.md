@@ -8549,6 +8549,23 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1226 — Lead is lemon in Leads & Jobs too
+
+Theo, 2 Oct 2026, after 1225: **"The lead color didn't change?"** It hadn't, on one screen. 1220
+changed `STAGE_COLORS`, `.pipe-lead`, `ACX_STEPS` and `STAGE_INK`. The **Leads & Jobs list keeps
+its own stage maps** (`LJ_SPINE` / `LJ_SOLID` / `LJ_INK`, main block), and they still painted Lead as
+a grey badge (`#8a93a1`) with a near-white spine (`#dbe7f7`). Both are now **`#FFE600`**. `LJ_INK.Lead`
+was already `#15171b`, which is **14.16:1** on lemon (was 5.78 on the grey), and is the same in both
+themes because the badge's ground is the stage colour. The **Recent Leads** rows on the home screen
+read `LJ_SPINE` too, so their Lead stripe is lemon; their label keeps `stageInk()` in light (1220's
+`#756A00`).
+
+⚠ **Lesson, recorded so the next stage-colour change does not repeat it: the app has more than one
+stage palette.** `STAGE_COLORS` (pipeline / chips), `LJ_*` (Leads & Jobs and Recent Leads),
+`ACX_STEPS`, and `.pipe-*` CSS. Grep the stage NAME across every map, not the hex of one.
+
+Gate: `scripts/gate_1226.mjs` — 10 checks, both themes; GREEN on 1226, RED (6) on 1225.
+
 ## Build 1225 — the client profile, regrouped for the phone
 
 Theo, 2 Oct 2026, from rendered previews of the real components: **option 3, "as shown" (1)**.

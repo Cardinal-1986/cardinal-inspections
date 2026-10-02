@@ -33635,3 +33635,21 @@ RED 16 on 1224 · `gate_794`, `gate_797` (updated), `gate_1209`, `gate_1203`, `g
 `gate_1206`, `gate_1081`, `gate_a11y`, `gate_986`, `gate_1032`, `gate_1052`, `gate_1053`,
 `render_inscards`, `render_solcard`, `harness_657` GREEN · `gate_stack` CLEAN.
 
+**Sentinel on 1225 (both themes, `--since` 1224): no ink findings.** It flagged two OVERRIDDEN notes:
+`.msmenu .dots` (an inline style; it was there at 1222), and `.ackv` (Job Details' old base font rule,
+which was already overridden and only came into the walk's sampled region because Job Details moved).
+Merged as #610 on Theo's "merge".
+
+## Build 1226 — Lead is lemon in Leads & Jobs too
+
+Theo: **"The lead color didn't change?"** The screenshot he sent was my own 1225 render, a job at
+APPROVED with no Lead on it. I checked production before answering: it was serving 1225, with
+`.pipe-lead` lemon. The real gap was a **second palette 1220 never touched**: `LJ_SPINE` / `LJ_SOLID`
+in Leads & Jobs. **My miss at 1220.** I changed one stage map and called Lead done.
+
+`gate_1226` first reported "no Recent Leads row". The list renders on demand, and the gate probed
+before calling `renderKpHomeRow()`. That was the gate's fault, not the app's.
+
+**Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN · `gate_1226` 10/10,
+RED 6 on 1225 · `gate_1220`, `gate_1225`, `gate_1206` GREEN · `gate_stack` CLEAN.
+

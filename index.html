@@ -4061,7 +4061,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1225<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1226<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -13312,9 +13312,12 @@ var LJ_GROUPS = [
   { key:'trade',    label:'Trade',        multi:true, get:function(p){ return ljTrades(p); } },
   { key:'source',   label:'Lead Source',  get:function(p){ return parseCkAll(p).lead_source || ''; } }
 ];
-var LJ_SPINE = { Lead:'#dbe7f7', Prospect:'#ffd84d', OnHold:'#ff9f43', Approved:'#3dff9a', Scheduled:'#3dff9a',
+/* 1226: Lead is lemon here too. 1220 changed STAGE_COLORS and the pipeline
+   strip and missed this list's own maps, so Leads & Jobs kept a grey pill and
+   a near-white spine - Theo: "The lead color didn't change?" */
+var LJ_SPINE = { Lead:'#FFE600', Prospect:'#ffd84d', OnHold:'#ff9f43', Approved:'#3dff9a', Scheduled:'#3dff9a',
   Completed:'#6fc3ff', Invoiced:'#c9a2ff', Closed:'#9aa4af', Lost:'#ff8a7a' };
-var LJ_SOLID = { Lead:'#8a93a1', Prospect:'#c8202e', OnHold:'#c8862b', Approved:'#3fae6a', Scheduled:'#3fae6a',
+var LJ_SOLID = { Lead:'#FFE600', Prospect:'#c8202e', OnHold:'#c8862b', Approved:'#3fae6a', Scheduled:'#3fae6a',
   Completed:'#29A3DC', Invoiced:'#9170c3', Closed:'#5e7b88', Lost:'#8d6e63' };
 /* 475: Invoiced 3.5% lighter and Closed 1.6% darker. Those two sit mid-luminance
    and fail against BOTH inks; every other stage is fixed by ink alone. The same
@@ -13322,7 +13325,7 @@ var LJ_SOLID = { Lead:'#8a93a1', Prospect:'#c8202e', OnHold:'#c8862b', Approved:
    NOT changed there - different surface, different decision. */
 /* Per-stage label ink: whichever of the two wins on that colour, same in both
    themes because the pill's ground is the stage colour, not the page. Ratios
-   against the colour above: 5.78 / 5.67 / 6.39 / 6.39 / 6.29 / 4.54 / 4.50 / 4.62. */
+   against the colour above: 14.16 (1226, lemon; was 5.78 on grey) / 5.67 / 6.39 / 6.39 / 6.29 / 4.54 / 4.50 / 4.62. */
 var LJ_INK = { Lead:'#15171b', Prospect:'#ffffff', OnHold:'#15171b', Approved:'#15171b', Scheduled:'#15171b',
   Completed:'#15171b', Invoiced:'#15171b', Closed:'#ffffff', Lost:'#ffffff' };
 function ljTrades(p){
@@ -43206,6 +43209,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1226, d: '2026-10-02', t: 'Lead is lemon in Leads & Jobs too',
+    s: 'The bright lemon Lead colour reached the pipeline but not the <b>Leads &amp; Jobs</b> list, which keeps its own colours &#8212; Lead cards there still had a grey badge and a pale stripe. They are lemon now, with dark lettering so the badge stays easy to read, and so are the Lead rows in Recent Leads on the home screen.' },
   { b: 1225, d: '2026-10-02', t: 'The client page puts the Job Menu first',
     s: 'On a phone, a client\'s page now leads with what you use most. Right under the stage bar comes the <b>Job Menu</b> &#8212; Communication, Photos, Estimates and the rest &#8212; then the money (Invoices &amp; Payments, Money In &amp; Commissions), then Location, Job Details and Assigned To, then History and Google Reviews. <b>Location</b> shows the address and its Map, Satellite and Directions buttons; tap Map or Satellite to open the map, tap it again to close it. <b>Convert to Insurance, Update from Scope of Loss and Delete Client</b> now sit behind one <b>Admin</b> row at the bottom, so Delete is never under your thumb by accident. Nothing was removed, and the desktop layout is unchanged.' },
   { b: 1224, d: '2026-10-02', t: 'Job Menu words stop breaking in half',
