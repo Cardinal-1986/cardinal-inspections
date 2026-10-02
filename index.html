@@ -2239,7 +2239,13 @@ body.restoring #restoreVeil{display:flex;}
 .acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
 /* AccuLynx-style activity tiles (photo album / inspections) */
 .jaboxrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
-.jabox{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
+/* 1224: icon and count on the top row, the label alone on the row below.
+   Side by side, the label got 69px of a 153px tile and 1203's wrapping split
+   single words in half ("Communi/cation", "Notificatio/ns", five tiles in all).
+   Measured: the longest label, Communication, is 103px; the full row is 129px
+   at 390 and still fits at 1.3x text zoom with the 12px clamp floor. */
+.jabox{display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+  grid-template-areas:"ic . n" "l l l";align-items:center;gap:8px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
   padding:14px 11px;cursor:pointer;font:700 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
   min-width:0;-webkit-user-select:none;user-select:none;}
 /* 1203: this was white-space:nowrap + ellipsis, and at 390px it cut SEVEN of
@@ -2248,12 +2254,20 @@ body.restoring #restoreVeil{display:flex;}
    opinion about what to rename things to. The row is a grid whose items stretch,
    so a two-line label leaves both tiles the same height, and the tracks are
    already minmax(0,1fr). gate_1203 measures that no label is truncated. */
-.jabox .jbl{flex:1;min-width:0;line-height:1.15;overflow-wrap:break-word;
+.jabox .jbl{grid-area:l;min-width:0;line-height:1.15;overflow-wrap:break-word;
   font-size:clamp(12px,3.5vw,14px);}
-.jabox > b{flex:0 0 auto;margin-left:6px;align-self:center;}
+.jabox > b{grid-area:n;justify-self:end;align-self:center;}
+.jabox > svg{grid-area:ic;}
 @media (max-width:380px){ .jabox{padding:13px 8px;gap:6px;} .jabox .jbl{font-size:12px;} }
+/* 1224: at the Largest text size (zoom 1.3) the clamp's 14px still split three
+   labels; 12px x 1.3 = 15.6px on screen, still above Normal's 13.65. */
+:root[data-cr-text="xl"] .jabox{padding-left:8px;padding-right:8px;gap:6px;}
+:root[data-cr-text="xl"] .jabox .jbl{font-size:12px;}
+/* ...and below 400px a 2-up row at zoom 1.3 is a 277-300px layout: the label
+   gets 79px and Communication needs 90 at 12px. One tile per row there. */
+@media (max-width:400px){ :root[data-cr-text="xl"] .jaboxrow{grid-template-columns:minmax(0,1fr);} }
 .jabox:active{background:#f6f3f0;}
-.jabox .jan{margin-left:auto;font:800 17px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
+.jabox .jan{font:800 17px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
 .jabox .jan.zero{color:#c9c9c9;}
 /* client dashboard */
 .dbstage{display:flex;align-items:center;gap:4px;color:#fff;border-radius:8px;padding:12px 6px;margin:0 0 12px;}
@@ -4047,7 +4061,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1223<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1224<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43192,6 +43206,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1224, d: '2026-10-02', t: 'Job Menu words stop breaking in half',
+    s: 'On a phone the client page\'s Job Menu split long words across two lines &#8212; <b>Communi / cation</b>, <b>Notificatio / ns</b>, <b>Measurem / ents</b>, <b>Appointm / ents</b>, <b>Inspection / s</b> &#8212; because the label had to share its row with the icon and the count. Each tile now carries its icon and count along the top and its name on a full line underneath, so every word stays whole, including at the Larger text size.' },
   { b: 1223, d: '2026-10-02', t: 'One red, and the rest of the buttons line up',
     s: 'The second pass of the button system. <b>Insurance now uses the same red as the rest of the app</b> &#8212; its selected filter chips, the + in its header and its accents were a slightly darker, browner red, and now match. And the red buttons that still had their own corners &#8212; the estimate builder\'s Publish, + From Library and + Assembly, Line Items\' + Add, the photo editor\'s Save, Crews\' + New crew and Punch Outs\' + New &#8212; now share the same rounded corner as every other button, along with the outline buttons beside them. Line Items\' and the photo editor\'s header buttons were also too small to hit reliably with a thumb and are now full size.' },
   { b: 1222, d: '2026-10-02', t: 'Buttons start speaking one language',

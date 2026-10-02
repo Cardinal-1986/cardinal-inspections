@@ -8549,6 +8549,27 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1224 — Job Menu labels stop splitting words
+
+Theo, 2 Oct 2026: **"3"**, meaning fix the broken words first and preview the client-profile regroup
+second.
+
+**The defect.** On the client profile's Job Menu (`.jaboxrow` / `.jabox`), the label shared its row
+with the icon (21px), the gaps and the count pill (23px). That left it **69px of a 153px tile**. Build 1203
+replaced the ellipsis with `overflow-wrap:break-word`, and a 69px box can only wrap a 103px word
+("Communication") by splitting it. Five tiles split at 390px Normal; at Largest text (zoom 1.3) on a
+360px phone, all fourteen did, even "Photos".
+
+**The fix.** `.jabox` is now a grid: `"ic . n" / "l l l"`. The icon and count sit on the top row, and
+the label gets the full width below. At **Largest** the label is 12px (15.6px on screen, still above
+Normal's 13.65) with 8px side padding. **Below 400px at Largest, the row is one tile wide**, because a
+2-up row there is a 277–300px layout and the label would get 79px against Communication's 90. 1203's
+rule that no label truncates still holds (`gate_1203` GREEN).
+
+Gate: `scripts/gate_1224.mjs` measures every word with a DOM Range: a word whose rects sit on two lines
+was split. It sweeps 360/390/430 × Normal/Larger/Largest × both themes, with a coverage floor of 14
+labels. **54/54 GREEN on 1224, RED (18) on 1223.**
+
 ## Build 1223 — one button system, pass 2, and Insurance speaks the one red
 
 Theo, 2 Oct 2026: **"2 and go"** — Insurance's red becomes the app's one red, and pass 2 proceeds.

@@ -33579,3 +33579,29 @@ and Line Items / photo editor header buttons at 26px tall. Both are fixed at sou
 **Gates.** `check_build` GREEN · `gate_1223` 38/38, RED 24 on 1222 · `gate_types`, `gate_dupes`,
 `audit_scrolllock`, `gate_1081`, `gate_a11y`, `gate_1220`, `gate_1221`, `gate_1222` GREEN ·
 `gate_1206` GREEN, 4 targets retired from its baseline · `gate_stack` CLEAN.
+
+**Sentinel on 1223 (both themes, 32 states, `--since` 1222): CLEAN — nothing new.**
+
+## Build 1224 — Job Menu labels stop splitting words
+
+Theo: **"3"** (word fix first, then regroup previews). See `FEATURES.md` "Build 1224".
+
+**How it was found.** A full-page render of the client profile at 390 showed "Communi / cation" and
+four more. A width probe put the label at 69px against a 103px word. Moving the count to a corner
+would have bought 31px and still split at 360 / Largest, so the label got its own row instead.
+
+**Mistakes, mine:**
+1. **The first version passed at Normal and Larger but split three words at Largest.** `gate_1224`
+   sweeps zoom on purpose and caught it. The 12px rule then left 360 still short, which is
+   arithmetic, not taste: 79px against 90. Hence one column there.
+2. **An unquoted heredoc ate the `\\n` escapes** in a patch edit and produced a Python syntax error.
+   Nothing was written. Use quoted heredocs for patch edits.
+3. **`gate_stack` crashed** when I pointed the scripts' `node_modules` at the scratch install, whose
+   Playwright wants a browser build that isn't on this box. The other gates take `chromium_launch.cjs`;
+   `gate_stack` calls `chromium.launch()` bare. It is GREEN with the symlink removed. **Link
+   `node_modules` only for `gate_a11y` / `gate_1081`.**
+
+**Gates.** `check_build` GREEN · `gate_1224` 54/54, RED 18 on 1223 · `gate_1203`, `gate_1223`,
+`gate_1220`, `gate_1206`, `gate_1081`, `gate_a11y`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN ·
+`gate_stack` CLEAN.
+
