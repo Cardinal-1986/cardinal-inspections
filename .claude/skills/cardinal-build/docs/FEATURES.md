@@ -8549,6 +8549,47 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1222 — one button system, pass 1 (design programme item 2)
+
+Theo, 2 Oct 2026, from rendered previews: **B** (12px corners, pill chips) and **"Outline back"**.
+
+**The system, as tokens on the base `:root` (dark default) with an `rb-light` twin:**
+`--btn-rad:12px` · `--chip-rad:999px` · `--btn-ink` (`#e8edf3` / `#1c1f24`) · `--btn-line`
+(`rgba(232,237,243,.28)` / `rgba(28,31,36,.26)`).
+
+| kind | means | how |
+|---|---|---|
+| **primary** | the ONE main action on a screen | the base `.btn` — it already was app-wide red; its corner is now `--btn-rad` |
+| **outline** | everything else | `.btn.ghost` **and `.btn.dark`** — transparent, `--btn-line` border, `--btn-ink` text |
+| **chip** | a filter or tab; selected = red | `--chip-rad`, outline when off |
+
+**Pass 1, edited at source** (`gate_stack` CLEAN): the base `.btn` corner; the base `.btn.ghost` —
+**which was a white button from the light era**, patched locally on every screen that looked right —
+now the outline, joined by `.btn.dark`, which had no rule outside the editor toolbar so every
+**"Back to client profile"** (gallery, payments, tasks, job details, appointments) fell through to
+red; `.toolbar .btn.dark{background:#555}` **deleted**; the album's cream `#cr-pae-tabs` chips;
+`#galCamBtn`'s inline red style replaced by `class="btn"` (and `#galAddBtn` → `btn ghost`);
+Estimates' second red `--cr-red:#D9282A` → `#C8202E` and its 4px corner; the Pre-Install Guide's
+**bare browser button** ("Email to client" carried `estopt`, a menu-item class with no rule outside
+its menu — 21px tall, Arial) → `btn ghost`.
+
+⚠ **The document editor's `.toolbar` is dark in BOTH themes** (1217's "dark chrome, paper document"),
+so it re-scopes `--btn-ink` / `--btn-line` to their dark values on itself. Without that, light mode's
+dark ink landed on the dark bar at **1.04:1** — caught by `gate_1222` on its first run. **Any other
+permanently-dark surface that hosts system buttons needs the same two lines.**
+
+**Measured honestly: pass 1 moves the app-wide count very little** — red-button looks 11 → 10, distinct
+reds 3 → 2 — because most red buttons are styled by module rules. **Pass 2's target list**, from the
+census: the estimate builder (`.primary` 11px, `.add-lib` / `.add-assembly` 6px), line items
+(`.primary` 6px), the photo editor (`.primary` 6px, `.cr-ped-tool.active` 8px), Crews
+(`.crw-btn.primary` 7px), Punch (`.pu-new` 10px), and **Insurance's selected chip at `#c4180f`** —
+possibly deliberate per-CRM branding, which is Theo's call, not a sweep.
+
+Instruments: `scratchpad`-built button census (all 32 states, 1,155 renders at 1440 — reproduces the
+11 Sep read of 1,156) and a CDP `CSS.getMatchedStylesForNode` probe that names the winning rule and
+its line for any control. Gate: `scripts/gate_1222.mjs` — **44 checks, both themes, GREEN on 1222,
+RED (25) on 1221**, including ink-vs-composited-ground for every outline and chip.
+
 ## Build 1221 — job photos get a tile-sized twin; one preparation for every camera photo
 
 Theo, 1 Oct 2026: *"an audit on picture taking within the app, how we could make it better as far

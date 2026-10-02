@@ -33523,3 +33523,29 @@ counts, not the colour. Removed; back to 1360.
 `gate_a11y` (0 rules grew) GREEN · sentinel CLEAN on client/album/photoactivity/punch/home at 390 +
 1194, `--since` 1220 (not a colour build, so it does not hold the merge — run and reported anyway).
 
+## Build 1222 — one button system, pass 1 (design programme item 2)
+
+Theo's picks from rendered previews on three real screens: **B** and **"Outline back"**. See
+`FEATURES.md` "Build 1222" for the system and the site list.
+
+**How the targets were found — the instrument, not the stylesheet.** `.chipbtn` alone has 31 rules,
+and 1217 lost three edits to rules that never won. A CDP `CSS.getMatchedStylesForNode` probe named
+the winning rule and line for each target. It found that the base `.btn` (line 187) **is** the red
+primary app-wide, that `.btn.dark` has no rule outside the editor toolbar (so five Back buttons fell
+through to red), and that "Email to client" matched **no rule at all**.
+
+**Mistakes, all mine, all caught before shipping:**
+1. **My first preview turned the header's blue "+" red** (`.cr-ib.primary` shares `.primary`) and
+   **dropped Take photo's red** (it was an inline style). Fixed in the preview before Theo picked.
+2. **Light-mode editor buttons at 1.04:1** — the toolbar is dark in both themes. `gate_1222` caught it
+   on its first run; fixed by re-scoping the two tokens on `.toolbar`.
+3. **A patch anchor with the wrong whitespace** (the rule spans lines). `pl.sub`'s count==1 assert
+   stopped it before any write — the rule this file states, working as written.
+4. **`pkill -f` killed my own shell twice** this session: the pattern matched the command running
+   it. Kill by PID from `pgrep`, never by a pattern your own command line contains.
+5. **I started the sentinel, then re-patched the file it was reading** — a sweep mixing two builds.
+   Stopped, discarded, re-run on a frozen copy (`final_1222.html`). Freeze the artifact first.
+
+**Gates.** `check_build` GREEN · `gate_1222` 44/44, RED 25 on 1221 · `gate_types`, `gate_dupes`,
+`audit_scrolllock`, `gate_1206`, `gate_1220`, `gate_1221` GREEN · `gate_stack` CLEAN.
+
