@@ -184,6 +184,10 @@ ok('and it sits directly under the map', !C.none && C.underMap, JSON.stringify(C
 ok('with its four rows intact', !C.none && C.hasRows === 4, JSON.stringify(C.hasRows));
 
 console.log('\n--- C2. everything under Job Menu goes full-bleed too ---');
+/* 1225: Convert to Insurance now sits behind the Admin row on a phone; open
+   it so the card can be measured where a user would see it */
+await P.page.evaluate(() => { const t = document.querySelector('#acxMount > .cr-admin-tog'); if (t && t.getAttribute('aria-expanded') !== 'true') t.click(); });
+await P.page.waitForTimeout(300);
 const C2 = await P.page.evaluate(() => {
   const g = (sel) => { const e = document.querySelector(sel); if (!e) return null;
     const r = e.getBoundingClientRect(), s = getComputedStyle(e);

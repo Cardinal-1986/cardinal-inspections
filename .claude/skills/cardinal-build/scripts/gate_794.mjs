@@ -145,7 +145,11 @@ ok('...and neither renders off-profile on a phone (799 chip retirement + namebar
 ok('the pipeline bar is ordered first and bleeds edge to edge',
   m.stageOrder === '1' && m.stageBox && m.stageBox.left === 0 && m.stageBox.right === m.screen,
   JSON.stringify({ order: m.stageOrder, box: m.stageBox }));
-ok('the map card comes next', m.locOrder === '3' && m.locTop > m.stageBox.top, JSON.stringify({ locOrder: m.locOrder }));
+/* 1225: Theo moved the Job Menu and the money above Location (phone order
+   stage 1, menu 2, money 3, Location 4). What 794 cared about still holds:
+   Location comes AFTER the pipeline bar. Asserting the exact number '3'
+   would freeze a layout he has since changed. */
+ok('the map card comes after the pipeline bar', Number(m.locOrder) > Number(m.stageOrder) && m.locTop > m.stageBox.top, JSON.stringify({ locOrder: m.locOrder, stageOrder: m.stageOrder }));
 
 console.log('\n--- 792. the icons reveal the value before acting ---');
 const pop = await P.page.evaluate(async () => {
@@ -196,6 +200,9 @@ console.log('\n--- 794. Location and the map span the screen, contents still ali
           panel ground, contents padded back onto the page gutter.
    So "spans the screen" and "keeps its red rule" are BOTH required here; they
    are not in tension, they are the two halves of what was asked for. */
+/* 1225: on a phone the map starts closed; open it so its edge can be measured */
+await P.page.evaluate(() => { const b = document.querySelector('#acxMount [data-cr-ord="loc"] .dbmtabs button[data-dbm="map"]'); if (b) b.click(); });
+await P.page.waitForTimeout(300);
 const loc = await P.page.evaluate(() => {
   const mount = document.getElementById('acxMount');
   const nil = { screen: window.innerWidth, head:null, card:null, stage:null, body:null, map:null,

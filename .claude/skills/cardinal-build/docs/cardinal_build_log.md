@@ -33605,3 +33605,33 @@ would have bought 31px and still split at 360 / Largest, so the label got its ow
 `gate_1220`, `gate_1206`, `gate_1081`, `gate_a11y`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN ·
 `gate_stack` CLEAN.
 
+**Sentinel on 1224 (both themes, 32 states, `--since` 1223): CLEAN.** 1223 + 1224 merged as #609 on
+Theo's "merge".
+
+## Build 1225 — the client profile, regrouped for the phone
+
+Theo picked **"1"** (option 3 as shown) from previews rendered from the real components in both
+themes and on desktop. A first preview had a rough stand-in drawn for the map controls, and I said so;
+the second used the real buttons. His first reply, "3", meant a different option on a different list.
+I asked which, rather than guess. See `FEATURES.md` "Build 1225".
+
+**Gates that went red, and why the TEST was changed:**
+- `gate_794` asserted Location at order `'3'` and measured the map's edge while the map was closed.
+  Both encode the layout Theo has just replaced. It now asserts "after the stage bar" and opens the
+  map before measuring. GREEN on 1224 and 1225.
+- `gate_797` measured Convert to Insurance while it was folded away. It now opens Admin first. GREEN
+  on both.
+- ⚠ **`gate_797` G2 (Google Reviews light ground) is FLAKY, and it was not caused by this build.** It
+  read `#171717` once on 1225, so I treated it as mine and ran it 14× on 1225 and 11× on 1224. It then
+  failed on **1224** too. The gate flips `data-theme` mid-page and samples after 150ms. Recorded, not
+  fixed: setting the theme before load, the way the sentinel does, is the fix, and it belongs in its
+  own build.
+
+**Mistake, mine:** a private property on a button element (`tog.__crLabel`) took TS2339 from
+1363 to 1365. Swapped for a `data-cr-label` attribute.
+
+**Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN · `gate_1225` 29/29,
+RED 16 on 1224 · `gate_794`, `gate_797` (updated), `gate_1209`, `gate_1203`, `gate_1224`, `gate_1223`,
+`gate_1206`, `gate_1081`, `gate_a11y`, `gate_986`, `gate_1032`, `gate_1052`, `gate_1053`,
+`render_inscards`, `render_solcard`, `harness_657` GREEN · `gate_stack` CLEAN.
+

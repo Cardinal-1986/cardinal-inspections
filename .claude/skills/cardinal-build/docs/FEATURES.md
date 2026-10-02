@@ -8549,6 +8549,37 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1225 — the client profile, regrouped for the phone
+
+Theo, 2 Oct 2026, from rendered previews of the real components: **option 3, "as shown" (1)**.
+Phone only (`@media (max-width:560px)`, retail). Desktop is plain flow above 560px and is untouched,
+asserted.
+
+**The order** (CSS `order` in the block 794/797 started; JS only tags): stage 1 · **Job Menu** and
+the Pre-Install Guide row 2 · Invoices & Payments and Money In 3 · Location 4 · Job Details and
+Assigned To 5 · History, Reviews and anything untagged 6 · **Admin row 9** · Convert to Insurance 10.
+Measured at 390: the Job Menu moves from **1,463px to 531px** (four tiles on the first screen, was
+zero), and the page goes from **3,082px to 2,558px**.
+
+⚠ **This reverses part of 794/797, by Theo's pick.** Location and Job Details used to come straight
+after the stage bar. `gate_794`'s exact-`'3'` assertion is now "after the stage bar" and documents why.
+
+**Location:** the address comes first, then Map / Satellite / Directions. **The map is closed until Map
+or Satellite is tapped; tapping the lit one again closes it.** This lives in the existing
+`cr-keeper2-script` tab handler, gated on `matchMedia('(max-width:560px)')`. The map is a `lazy` image,
+so a closed map is never fetched, which means fewer Static Maps loads.
+
+**Admin fold:** `.cr-admin-tog`, a 48px row that `tagOrder()` adds to `#acxMount` (idempotent; it
+writes only on a label change). It opens and closes `#projectView.cr-admin-open`, and the open state
+is **per job**. Convert to Insurance, Update from Scope of Loss and Delete Client are **hidden in place,
+not moved**: three modules own them, and moving a node another module re-places is the 567/569 loop.
+Hiding never reveals anything, because Delete keeps its own admin-only inline display. The row lives
+inside `#acxMount`, not directly in `#tab-overview`, because of that container's hide rule.
+
+Gate: `scripts/gate_1225.mjs` — **29 checks**: phone order (both themes), map open/close, the
+fold, desktop untouched, and idle DOM writes against the previous build (36 vs 36). **GREEN on 1225,
+RED (16) on 1224.**
+
 ## Build 1224 — Job Menu labels stop splitting words
 
 Theo, 2 Oct 2026: **"3"**, meaning fix the broken words first and preview the client-profile regroup

@@ -4061,7 +4061,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1224<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1225<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43206,6 +43206,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1225, d: '2026-10-02', t: 'The client page puts the Job Menu first',
+    s: 'On a phone, a client\'s page now leads with what you use most. Right under the stage bar comes the <b>Job Menu</b> &#8212; Communication, Photos, Estimates and the rest &#8212; then the money (Invoices &amp; Payments, Money In &amp; Commissions), then Location, Job Details and Assigned To, then History and Google Reviews. <b>Location</b> shows the address and its Map, Satellite and Directions buttons; tap Map or Satellite to open the map, tap it again to close it. <b>Convert to Insurance, Update from Scope of Loss and Delete Client</b> now sit behind one <b>Admin</b> row at the bottom, so Delete is never under your thumb by accident. Nothing was removed, and the desktop layout is unchanged.' },
   { b: 1224, d: '2026-10-02', t: 'Job Menu words stop breaking in half',
     s: 'On a phone the client page\'s Job Menu split long words across two lines &#8212; <b>Communi / cation</b>, <b>Notificatio / ns</b>, <b>Measurem / ents</b>, <b>Appointm / ents</b>, <b>Inspection / s</b> &#8212; because the label had to share its row with the icon and the count. Each tile now carries its icon and count along the top and its name on a full line underneath, so every word stays whole, including at the Larger text size.' },
   { b: 1223, d: '2026-10-02', t: 'One red, and the rest of the buttons line up',
@@ -65586,6 +65588,16 @@ body.claim-insurance .hmanage a{color:var(--ct-ink-2);}
 document.addEventListener('click', function(e){
   var b = e.target.closest('.dbmtabs button[data-dbm]');
   if(!b) return;
+  /* 1225: on a phone the map starts closed; a tap opens it, and a tap on the
+     tab that is already lit closes it again. Desktop never sets the class. */
+  var card = b.closest('[data-cr-ord="loc"]');
+  if(card && window.matchMedia && window.matchMedia('(max-width:560px)').matches){
+    if(card.classList.contains('cr-map-open') && b.classList.contains('on')){
+      card.classList.remove('cr-map-open');
+      return;
+    }
+    card.classList.add('cr-map-open');
+  }
   var wrap = b.closest('.dbmtabs');
   Array.prototype.forEach.call(wrap.querySelectorAll('button'), function(x){
     x.classList.toggle('on', x === b);
@@ -79836,6 +79848,18 @@ select{min-height:44px;}
 }
 </style>
 
+<style id="cr-admin-fold-styles">
+/* 1225: the Admin row on the client profile (phone, retail). */
+.cr-admin-tog{ display:none; width:100%; min-height:48px; margin:18px 0 8px; padding:0 16px;
+  align-items:center; gap:10px; cursor:pointer; text-align:left;
+  background:var(--rbe-panel2,#101015); border:1px solid var(--rbe-line2,#2b2b33);
+  border-radius:var(--btn-rad,12px); color:var(--rbe-head,#ffffff);
+  font:700 14px 'Segoe UI',Arial,sans-serif; }
+.cr-admin-tog small{ margin-left:auto; font-weight:600; font-size:12px; color:var(--rbe-ink2,#9aa3ae); }
+.cr-admin-tog::after{ content:"\203A"; font-size:20px; line-height:1; color:var(--rbe-ink2,#9aa3ae); transition:transform .15s; }
+.cr-admin-tog[aria-expanded="true"]::after{ transform:rotate(90deg); }
+:root[data-theme="rb-light"] .cr-admin-tog{ background:var(--rbe-panel2,#ffffff); border-color:var(--rbe-line2,#dcdee2); }
+</style>
 <style id="cr-namebar-styles">
 /* ==========================================================================
    THE CLIENT BAND — build 791.  PHONE ONLY.
@@ -79926,10 +79950,23 @@ select{min-height:44px;}
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount{
     display:flex; flex-direction:column;
   }
-  #projectView #acxMount > *{ order:5; }
+  /* 1225 (Theo's pick from a rendered preview, 2 Oct): what a rep presses
+     fifty times a day comes first. Stage, then the Job Menu, then the money,
+     then Location, Job Details and Assigned To, then History and Reviews, and
+     the admin tools last behind one tap. Was: stage, Location, Job Details,
+     then everything else in DOM order, which put the Job Menu at 1,463px. */
+  #projectView #acxMount > *{ order:6; }
   #projectView #acxMount > [data-cr-ord="stage"]{ order:1; }
-  #projectView #acxMount > [data-cr-ord="loch"]{ order:2; }
-  #projectView #acxMount > [data-cr-ord="loc"]{ order:3; }
+  #projectView #acxMount > .ja-menu,
+  #projectView #acxMount > .db-guiderow{ order:2; }
+  #projectView #acxMount > .crji-card,
+  #projectView #acxMount > #dbMoneyRow{ order:3; }
+  #projectView #acxMount > [data-cr-ord="loch"],
+  #projectView #acxMount > [data-cr-ord="loc"]{ order:4; }
+  #projectView #acxMount > h3.projsec:has(+ .acxassignsec),
+  #projectView #acxMount > .acxassignsec{ order:5; }
+  #projectView #acxMount > .cr-admin-tog{ order:9; }
+  #projectView #acxMount > #dbConvertIns{ order:10; }
 
   /* the pipeline bar, flush under the band and edge to edge */
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="stage"]{
@@ -79970,8 +80007,24 @@ select{min-height:44px;}
      as Location above it: negative margin, no radius, no border, no shadow,
      contents padded back onto the page gutter so the heading and the four
      rows still line up with everything else. */
-  #projectView #acxMount > [data-cr-ord="jdh"]{ order:4; }
-  #projectView #acxMount > [data-cr-ord="jd"]{ order:4; }
+  #projectView #acxMount > [data-cr-ord="jdh"]{ order:5; }
+  #projectView #acxMount > [data-cr-ord="jd"]{ order:5; }
+  /* 1225: Location is the address and its three buttons; the map opens when
+     Map or Satellite is tapped (tap the lit one again to close it). A closed
+     map is never fetched - its img is loading="lazy". */
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"] .acxbody{ display:flex; flex-direction:column; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"] .acxbody > div:last-child{ order:-1; margin:0 0 10px !important; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]:not(.cr-map-open) #dbMap{ display:none; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]:not(.cr-map-open) .dbmtabs button.on{ background:none; color:inherit; }
+  /* 1225: the admin tools - Convert to Insurance, Update from Scope of Loss,
+     Delete Client - fold behind one row. They are NOT moved (three modules own
+     them, and a module re-placing its node against a mover is the 567/569
+     repaint class); they are hidden in place until the row is opened. Hiding
+     never REVEALS: Delete keeps its own admin-only inline display. */
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .cr-admin-tog{ display:flex; }
+  body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #acxMount > #dbConvertIns,
+  body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #solCard,
+  body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #dangerZone{ display:none !important; }
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="jdh"]{
     margin:20px calc(-1 * var(--cr-wrap-pad, 18px)) 10px !important;
     padding-left:var(--cr-wrap-pad, 18px); padding-right:var(--cr-wrap-pad, 18px);
@@ -80291,7 +80344,35 @@ select{min-height:44px;}
       var jdPrev = jd.previousElementSibling;
       if(jdPrev && jdPrev.classList.contains('projsec')) jdPrev.setAttribute('data-cr-ord', 'jdh');
     }
+    /* 1225: the Admin row. Open state is per job: a different job opens closed. */
+    var pv = document.getElementById('projectView');
+    var pid = window.currentProject && window.currentProject.id;
+    if(pv && adminOpenFor !== pid){ pv.classList.remove('cr-admin-open'); adminOpenFor = null; }
+    var tog = mount.querySelector(':scope > .cr-admin-tog');
+    if(!tog){
+      tog = document.createElement('button');
+      tog.type = 'button';
+      tog.className = 'cr-admin-tog';
+      mount.appendChild(tog);
+    }
+    var parts = ['Insurance', 'Scope of Loss'];
+    try{ if(typeof isAdminUser === 'function' && isAdminUser()) parts.push('Delete'); }catch(_){}
+    var label = 'Admin<small>' + parts.join(' \u00b7 ') + '</small>';
+    if(tog.getAttribute('data-cr-label') !== label){ tog.innerHTML = label; tog.setAttribute('data-cr-label', label); }
+    var open = !!(pv && pv.classList.contains('cr-admin-open'));
+    if(tog.getAttribute('aria-expanded') !== String(open)) tog.setAttribute('aria-expanded', String(open));
   }
+  var adminOpenFor = null;
+  document.addEventListener('click', function(e){
+    var tog = e.target.closest && e.target.closest('#acxMount > .cr-admin-tog');
+    if(!tog) return;
+    var pv = document.getElementById('projectView');
+    if(!pv) return;
+    var open = !pv.classList.contains('cr-admin-open');
+    pv.classList.toggle('cr-admin-open', open);
+    adminOpenFor = open ? (window.currentProject && window.currentProject.id) : null;
+    tog.setAttribute('aria-expanded', String(open));
+  });
   /* 797: the Job Value/circle card + Payment Information, merged into one
      full-bleed card and (phone only) reparented beside the name band — ABOVE
      it at 797, and UNDER it since 1209, which is a decision Theo reversed and
