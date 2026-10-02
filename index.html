@@ -4033,7 +4033,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-01 build 1220<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-01 build 1221<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -11258,6 +11258,13 @@ var photoDb = {
                  { contentType: 'image/jpeg', cacheControl: '31536000' });
         if(up.error) throw up.error;
         store = sb.storage.from('photos').getPublicUrl(spath).data.publicUrl;
+        /* 1221: the tile-sized twin. Best effort - a failure leaves the grid
+           on the full photo, which is what it showed before this build. */
+        try{
+          var tb = await scaleImageSrc(dataUrl, PHOTO_TILE.max, PHOTO_TILE.q);
+          await sb.storage.from('photos').upload(photoThumbPathOf(spath), tb,
+                 { contentType: 'image/jpeg', cacheControl: '31536000', upsert: true });
+        }catch(tErr){}
       }catch(stErr){ spath = null; store = dataUrl; }
       var r = await sb.from('project_photos').insert(Object.assign({
         project_id: projectId, data: store, storage_path: spath,
@@ -11284,7 +11291,8 @@ var photoDb = {
       try{
         var row = await sb.from('project_photos').select('storage_path').eq('id', id).single();
         if(row.data && row.data.storage_path){
-          await sb.storage.from('photos').remove([row.data.storage_path]);
+          /* 1221: the twin goes with it; removing a twin that was never made is a no-op */
+          await sb.storage.from('photos').remove([row.data.storage_path, photoThumbPathOf(row.data.storage_path)].filter(Boolean));
         }
       }catch(e4){}
       var r = await sb.from('project_photos').delete().eq('id', id);
@@ -14456,6 +14464,8 @@ async function loadGallery(){
   }
   galChecked = {};
   renderGallery();
+  /* 1221: old photos earn their tile-sized twin as the job is opened */
+  try{ healPhotoThumbs(currentPhotos); }catch(_){}
 }
 function renderGallery(){
   var grid = document.getElementById('galGrid');
@@ -14472,7 +14482,8 @@ function renderGallery(){
   grid.innerHTML = currentPhotos.map(function(ph){
     var ck = galChecked[ph.id];
     return '<div class="gph' + (ck ? ' checked' : '') + '" data-gid="' + ph.id + '">' +
-      '<img src="' + (ph._src || ph.data) + '" alt="" loading="lazy">' +
+      '<img src="' + (ph._thumb || ph._src || ph.data) + '" data-full="' + (ph._src || ph.data || '') + '"' +
+      ' onerror="if(this.dataset.full&&this.src!==this.dataset.full){this.src=this.dataset.full;}" alt="" loading="lazy">' +
       '<div class="gchk">' + (ck ? '\u2713' : '') + '</div>' +
       '<button class="gdel" title="Delete photo">\u2715</button>' +
     '</div>';
@@ -17218,10 +17229,24 @@ async function attachSignedPhotoUrls(rows, ttl){
       if(r && r.storage_path){ paths.push(r.storage_path); idx.push(i); }
     });
     if(!paths.length) return rows;
-    var res = await cl.storage.from('photos').createSignedUrls(paths, ttl || PHOTO_URL_TTL);
+    /* 1221: ask for each photo's -t twin too. A twin that does not exist yet
+       comes back as an error entry, not a URL - OC Colors has relied on that
+       since 633 - so it is simply left out and the tile falls back to _src.
+       Keyed by the path the API answered for, never by position (633's
+       signMany lesson), because the list is now two-per-row. */
+    var tps = [];
+    paths.forEach(function(p){ var t = photoThumbPathOf(p); if(t) tps.push(t); });
+    var res = await cl.storage.from('photos').createSignedUrls(paths.concat(tps), ttl || PHOTO_URL_TTL);
     if(!res || res.error || !Array.isArray(res.data)) return rows;
+    var signed = {}, all = paths.concat(tps);
     res.data.forEach(function(d, k){
-      if(d && d.signedUrl && !d.error) rows[idx[k]]._src = d.signedUrl;
+      if(d && d.signedUrl && !d.error) signed[d.path || all[k]] = d.signedUrl;
+    });
+    idx.forEach(function(ri, k){
+      var p = paths[k];
+      if(signed[p]) rows[ri]._src = signed[p];
+      var t = photoThumbPathOf(p);
+      if(t && signed[t]) rows[ri]._thumb = signed[t];
     });
   }catch(e){
     try{ if(window.report) window.report(e, 'Photos', 'sign urls'); }catch(e2){}
@@ -24487,6 +24512,80 @@ function resizeImageFile(file, maxDim, quality){
     };
     reader.readAsDataURL(file);
   });
+}
+/* 1221: ONE preparation for a camera photo, and the tile-sized twin of a job
+   photo. Theo: "an audit on picture taking ... how we could make it better as
+   far as storage". Measured 1 Oct: a job photo is stored ONCE at 1600px
+   (~525 KB) and every grid tile downloaded that whole file to paint a ~120px
+   square; punch-out photos were only shrunk when over 3.1 MB, so most went up
+   as the raw camera file with its EXIF - GPS included.
+     - photoPrepFile(file): re-encode any decodable image to JPEG at PHOTO_FULL.
+       A canvas re-encode carries NO metadata, so this is also what strips the
+       location. Anything that is not an image, or that this browser cannot
+       decode (HEIC on a desktop), goes up untouched - never blocked.
+     - the `-t.jpg` twin: a PHOTO_TILE copy stored beside each job photo, the
+       same convention OC Colors has used since 633. Stored, not transformed
+       on the fly: Supabase bills image transforms per origin image per month,
+       a stored 30-50 KB copy costs nothing.
+   ⚠ Documents are deliberately NOT routed through this: the work-order files,
+   the owner vault and crew docs hold contracts, licences and PDFs, where
+   shrinking a scan could cost the fine print. */
+var PHOTO_FULL = { max: 1600, q: 0.82 };   // what every job photo has been since resizeImageFile
+var PHOTO_TILE = { max: 512,  q: 0.72 };   // a grid tile is ~120px; 512 covers it at 3x
+function photoThumbPathOf(path){
+  var p = String(path || '');
+  if(!p || /-t\.jpg$/i.test(p)) return '';
+  return p.replace(/\.(jpe?g|png|webp)$/i, '') + '-t.jpg';
+}
+function scaleImageSrc(src, maxDim, quality){
+  return new Promise(function(resolve, reject){
+    var img = new Image();
+    img.onerror = function(){ reject(new Error('Could not decode the image')); };
+    img.onload = function(){
+      var w = img.naturalWidth, h = img.naturalHeight;
+      var k = Math.min(1, maxDim / Math.max(w, h));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(function(b){ b ? resolve(b) : reject(new Error('Could not encode the image')); }, 'image/jpeg', quality);
+    };
+    img.src = src;
+  });
+}
+async function photoPrepFile(file){
+  if(!file || !/^image\//.test(file.type || '')) return file;
+  try{
+    var d = await resizeImageFile(file, PHOTO_FULL.max, PHOTO_FULL.q);
+    var b = await (await fetch(d)).blob();
+    var nm = String(file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+    try{ return new File([b], nm, { type: 'image/jpeg' }); }catch(_){ return b; }
+  }catch(e){ return file; }
+}
+/* Old photos get their twin the first time someone opens the job: fetch the
+   signed full copy (the grid was about to download it anyway), shrink it,
+   store it. A few per opening, one at a time, never blocking the screen; every
+   failure is silent and simply leaves the full-size tile, exactly as before.
+   upsert:false, so two people opening the same job cannot fight. */
+var _thumbHealing = {};
+async function healPhotoThumbs(rows){
+  if(!Array.isArray(rows) || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+  var cl = (typeof sb !== 'undefined' && sb) ? sb : (window.supa || null);
+  if(!cl || !cl.storage) return;
+  var todo = rows.filter(function(r){
+    return r && r.storage_path && r._src && !r._thumb && !_thumbHealing[r.storage_path] && photoThumbPathOf(r.storage_path);
+  }).slice(0, 8);
+  for(var i = 0; i < todo.length; i++){
+    var r = todo[i], tp = photoThumbPathOf(r.storage_path);
+    _thumbHealing[r.storage_path] = 1;
+    try{
+      var blob = await (await fetch(r._src)).blob();
+      var url = URL.createObjectURL(blob);
+      try{
+        var t = await scaleImageSrc(url, PHOTO_TILE.max, PHOTO_TILE.q);
+        await cl.storage.from('photos').upload(tp, t, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+      }finally{ URL.revokeObjectURL(url); }
+    }catch(e){}
+  }
 }
 
 function wirePhotoFrames(doc){
@@ -43079,6 +43178,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1221, d: '2026-10-01', t: 'Photo grids load small copies, and every camera photo is prepared the same way',
+    s: 'Two things you will not see but will feel on a roof with one bar of signal. <b>Photo grids now load small copies.</b> Every job photo used to be stored once, at full size, so the photo grid, the Photo Album and Photo Activity downloaded about half a megabyte per tile just to paint a small square. New photos now save a small copy alongside the full one, and the tiles load that instead &#8212; tap a photo and you still get the full one. Photos taken before today get their small copy the first time anyone opens that job, quietly, a few at a time. <b>Every camera photo is prepared the same way.</b> Punch-out photos were only shrunk when they were over 3 MB, so most went up as the raw camera file, location and all. They now get the same treatment as job photos: a sensible size, and the location stripped out. Contracts, licences and work-order paperwork are deliberately left exactly as uploaded, so the fine print stays readable.' },
   { b: 1220, d: '2026-10-01', t: 'Leads go lemon, rep names go quiet, and the dashboard fits a phone',
     s: 'Three things you will see on a phone. <b>Leads are bright lemon now</b> instead of mustard &#8212; mustard and the orange of Prospects measured almost the same colour side by side, so L and P read as one stage. The pipeline, the stage chips and the client directory all use the new yellow, and where a Lead colour has to be text on a light page it uses a darker lemon that reads better than the old one did. <b>Rep names and job numbers are soft white in dark mode</b> instead of gold, so a rep name under a lemon Lead no longer looks like a second status. Light mode keeps its reds. <b>The calendar and Accounts Receivable stack on a phone</b> instead of squeezing side by side, so \'Receivable\' stops dropping a line at Normal size and the calendar stops spilling out of its card at Larger. Tablets and desktop keep them side by side.' },
   { b: 1218, d: '2026-09-11', t: 'Invoices, aging and the payment sheet stop being a white page',
@@ -45982,8 +46083,10 @@ input.onchange = async function(){
 var file = input.files && input.files[0];
 if(!file) return;
 if(!window.supa){ crTell('No connection.'); return; }
+/* 1221: one preparation for every camera upload - 1600px JPEG, no EXIF */
+if(typeof photoPrepFile === 'function'){ try{ file = await photoPrepFile(file); }catch(_){} }
 var ts = Date.now();
-var safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 60);
+var safe = String(file.name || 'image.jpg').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 60);
 var path = 'nachi/' + ts + '_' + safe;
 try{
 var up = await window.supa.storage.from('photos').upload(path, file, {
@@ -47561,7 +47664,8 @@ html +=
 /* 708: `data` is the RETIRED public URL for storage-backed photos (the
    bucket is private now); `_src` is the signed URL listByProject attaches.
    Reading `data` alone is what broke every album tile in Theo's screenshot. */
-'<img src="' + esc(String(ph._src || ph.data || '')) + '" alt="" loading="lazy">' +
+'<img src="' + esc(String(ph._thumb || ph._src || ph.data || '')) + '" data-full="' + esc(String(ph._src || ph.data || '')) + '"' +
+' onerror="if(this.dataset.full&&this.src!==this.dataset.full){this.src=this.dataset.full;}" alt="" loading="lazy">' +
 '<span class="cr-pae-secbadge">' + esc(sec) + '</span>' +
 /* 789: the AI caption badge is gone. Theo: "the orange ball is a generate
    caption, which won't work here." 708 had already found why — api/caption
@@ -56698,6 +56802,10 @@ function pickPhoto(i){
            cap / non-image) keep the camera File rather than upload a broken wrapper. */
         try{ var _pp = await window.CardinalSolUpload.prepare(f); if(_pp && _pp.file) f = _pp.file; }catch(_){}
       }
+      /* 1221: prepare() only shrinks a file over 3.1 MB, so most punch photos
+         went up as the raw camera file - full resolution, EXIF and GPS. Every
+         one now takes the same 1600px re-encode as a job photo. */
+      if(typeof photoPrepFile === 'function'){ try{ f = await photoPrepFile(f); }catch(_){} }
       if(typeof navigator !== 'undefined' && navigator.onLine === false){
         await queuePhoto(it.id, f); flushPhotos(); return;
       }
@@ -65344,7 +65452,8 @@ function renderPhotosView(){
       g.items.map(function(r){
         var p = byId[r.project_id];
         return '<div class="phc" data-pid="' + esc(String(r.project_id || '')) + '">' +
-          '<img loading="lazy" src="' + esc(String(r._src || r.data || '')) + '" alt="">' +
+          '<img loading="lazy" src="' + esc(String(r._thumb || r._src || r.data || '')) + '" data-full="' + esc(String(r._src || r.data || '')) + '"' +
+          ' onerror="if(this.dataset.full&&this.src!==this.dataset.full){this.src=this.dataset.full;}" alt="">' +
           '<span class="phn">' + esc(p ? (p.name || '') : 'Unknown client') + '</span></div>';
       }).join('') + '</div>';
   }).join('');

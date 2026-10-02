@@ -8549,6 +8549,45 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1221 — job photos get a tile-sized twin; one preparation for every camera photo
+
+Theo, 1 Oct 2026: *"an audit on picture taking within the app, how we could make it better as far
+as storage"*, then picks **1** (thumbnails for grids) and **2** (one upload preparation), and **1b**
+(store the twin, don't transform on the fly).
+
+**The twin.** Every job photo (`project_photos`, `projects/<pid>/<ts>-<rand>.jpg`, 1600px) now has a
+`…-t.jpg` sibling at **512px / q0.72** — the OC Colors `-t` convention from 633, applied to job
+photos. `photoThumbPathOf(path)` is the one place the name is derived. **No schema change**: a twin
+is found by name, and one that does not exist yet comes back from `createSignedUrls` as an error
+entry, so it is simply absent.
+- `photoDb.add` writes both (the twin best-effort); `photoDb.remove` deletes both.
+- `attachSignedPhotoUrls` signs photo + twin in **one** request and keys by the path the API answered
+  for (633's `signMany` lesson), setting `row._thumb` beside `row._src`.
+- The three grids — job photos (`renderGallery`), the Photo Album (`cr-pae-script`) and Photo
+  Activity (`cr-photos-script`) — paint `_thumb || _src || data`, keep the full photo in
+  `data-full`, and an `onerror` falls back to it. Viewers, the editor and downloads still read `_src`.
+- **Old photos fill themselves in:** `healPhotoThumbs()` runs when a job's photos are opened —
+  at most 8 per opening, one at a time, `upsert:false`, silent on any failure. No button. Allowed
+  because `photos_upload` / `photos_write` let any signed-in staff member write under `projects/`.
+
+**Why stored, not transformed:** image transforms are enabled on this project (verified at 907),
+but Pro bills **$5 per 1,000 origin images per month** after 100. A stored twin costs nothing
+monthly; Pro includes 100 GB storage and the project uses ~12.3 GB.
+
+**One preparation.** `photoPrepFile(file)` re-encodes any decodable image to JPEG at
+`PHOTO_FULL` (1600px / q0.82) — a canvas re-encode carries **no EXIF, so no GPS**. Non-images and
+images this browser cannot decode (HEIC on a desktop) pass through untouched, never blocked.
+Applied to **punch-out photos** (which `CardinalSolUpload.prepare` only shrank over 3.1 MB, so most
+went up raw with GPS) and **NACHI resource images**.
+
+⚠ **Deliberately NOT routed through it:** work-order files (`cr-wo-script`), the Owner Console vault
+(`owner-vault/`, up to 25 MB) and crew docs (`crew-docs` bucket). Those hold contracts, licences,
+COIs and PDFs — shrinking a scan can cost the fine print.
+
+Gate: `scripts/gate_1221.mjs` — real Chromium + a storage spy. **26 checks, GREEN on 1221, RED
+(22) on 1220 without crashing.** It searches the output bytes for `Exif`/`GPS` against a control
+file that really carries them.
+
 ## Build 1220 — Lead goes lemon, rep names and job numbers go soft white, the dashboard row stacks on a phone
 
 Theo's three picks from rendered previews (1 Oct 2026): *"bright lemon"* for Lead, rep names
