@@ -8549,6 +8549,39 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1223 — one button system, pass 2, and Insurance speaks the one red
+
+Theo, 2 Oct 2026: **"2 and go"** — Insurance's red becomes the app's one red, and pass 2 proceeds.
+
+**Insurance's red is a palette token, not a chip rule.** The selected filter chip on Insurance
+Clients reads `--ct-red`, the Cardinal Truth palette that Insurance and the Resource Library share,
+in two themes: `docket` (`#C4180F`) and `siren` (`#CE0E18`). Both are now **`#C8202E`**, along with
+docket's `--ct-act-edge`, `--ct-mark`, `--ct-dont-edge`, `--ct-head-kick` and `--ct-focus` (they
+were the same red, so they move together), the siren `--ct-head-bg/-bd` and `--ct-act-bg`, and the
+eight `var(--ct-red|--ct-mark,#C4180F)` fallbacks. **The Insurance header's "+" moves with it**,
+because its `--hac` is `var(--ct-crmhead-kick, var(--ct-head-kick))`. Measured: `#C8202E` is 5.67:1
+on white (was 6.03), 4.97:1 on the docket ground, and the same 3.18:1 as the old siren red on the dark
+card. That one stays SURFACE ONLY, as its comment always said.
+
+⚠ **Deliberately NOT changed:** the `.insurance` CRM-badge literals (`#c4180f` on portal chips, the
+Production dots, the Punch tag, the bulk dock and the pay switch). Badge colours are semantic
+(CLAUDE.md, theming). Also unchanged: the Library's own `--lb-accent:#C4180F`, which is a separate
+palette.
+
+**Pass 2: corners at source.** `.cr-est-items-head button` (6px), `#cr-est-view .cr-est-phonebar
+button` (11px), `.cr-lil-head button` (6px), `.cr-ped-head button` (6px), `#crewsView .crw-btn`
+(7px) and `.pu-new` (10px) all became `var(--btn-rad,12px)`. These are the base rules, so the outline
+siblings beside each red button move too. **The light Crews twin re-declared `border-radius:9px`; it
+is deleted, not out-specified.**
+
+**Tap floor:** Line Items' and the photo editor's header buttons were **26px tall** (`gate_1206`
+debt). They now carry `min-height:44px`. Four baseline entries were retired, and only those four.
+
+Left for pass 3: `.cr-ped-tool.active` (8px, a tool toggle rather than an action) and the
+Showcase's `.cr-sh-btn` (7px, the Blackout surface by design).
+
+Gate: `scripts/gate_1223.mjs` — **38 checks, both themes, GREEN on 1223, RED (24) on 1222**.
+
 ## Build 1222 — one button system, pass 1 (design programme item 2)
 
 Theo, 2 Oct 2026, from rendered previews: **B** (12px corners, pill chips) and **"Outline back"**.

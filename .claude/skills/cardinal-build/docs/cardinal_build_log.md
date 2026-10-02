@@ -33549,3 +33549,33 @@ through to red), and that "Email to client" matched **no rule at all**.
 **Gates.** `check_build` GREEN · `gate_1222` 44/44, RED 25 on 1221 · `gate_types`, `gate_dupes`,
 `audit_scrolllock`, `gate_1206`, `gate_1220`, `gate_1221` GREEN · `gate_stack` CLEAN.
 
+**Sentinel (both themes, 32 states, `--since` 1221): no ink findings.** It flagged 7 OVERRIDDEN items.
+In the Client Directory, the brass `#clientsView .btn.ghost` (sanctioned, 391) beats the new generic
+outline. Rendered against 1221 it is identical apart from the corner, 6 → 12px as intended. The
+`.convertins` / `.msmenu .dots` items are rules this diff does not touch. Merged on Theo's "merge when
+green".
+
+## Build 1223 — one button system, pass 2; Insurance takes the one red
+
+Theo: **"2 and go"**. See `FEATURES.md` "Build 1223" for the site list.
+
+The probe showed that the Insurance chip's red is `--ct-red` (Cardinal Truth palette, two themes).
+Changing that token is what "make it the one red" means, and it also carries the Insurance header
+"+" through `--hac`. CRM badge literals are deliberately left alone.
+
+**Mistakes, mine, caught before shipping:**
+1. **The replacement comment named the old hex**, so the siren count assert read 5, not 4. The
+   assert caught it. Lesson: a comment written by the patch counts against the patch's own asserts.
+2. **A CHANGELOG apostrophe escaped one level too few** (`'` instead of `\'` in the JS string).
+   `check_build`'s per-block `node --check` and `gate_types` (TS1005 0 → 6) both went red, and
+   nothing was committed.
+3. **The scratch `node_modules` symlink pointed at the folder above the real one**, so
+   `gate_1081` and `gate_a11y` reported a missing package rather than a result. That is BUG_CLASSES 37
+   again, a crash that reads as "not green". Re-pointed, then both ran GREEN.
+
+**`gate_1223` found two things beyond what I set out to change:** a light-only Crews rule at 9px,
+and Line Items / photo editor header buttons at 26px tall. Both are fixed at source.
+
+**Gates.** `check_build` GREEN · `gate_1223` 38/38, RED 24 on 1222 · `gate_types`, `gate_dupes`,
+`audit_scrolllock`, `gate_1081`, `gate_a11y`, `gate_1220`, `gate_1221`, `gate_1222` GREEN ·
+`gate_1206` GREEN, 4 targets retired from its baseline · `gate_stack` CLEAN.
