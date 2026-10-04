@@ -136,7 +136,10 @@ const C = await page.evaluate(async () => {
 ok('#headSearch is the same element, inside the row', !C.none && C.inRow && C.typed === 'zulema', JSON.stringify(C));
 ok('and survives the row closing (hidden, not removed)', !C.none && C.stillThere, JSON.stringify(C));
 
-console.log('\n--- D. the moon floats to the corner, still clickable ---');
+/* 1230: the moon no longer floats - the audit found the corner button on top of
+   content on almost every screen. Where the row cannot hold it, it is hidden,
+   and the menu drawer's Appearance row is the switch (gate_1230 A/B). */
+console.log('\n--- D. the moon steps out of the row and does NOT float over the page ---');
 const D = await page.evaluate(async () => {
   // refreshVisibility runs on a 1s interval; give it two ticks
   await new Promise(r => setTimeout(r, 2400));
@@ -149,7 +152,9 @@ const D = await page.evaluate(async () => {
     pos: cs.position, clickable: !!(hit && (hit === m || m.contains(hit))) };
 });
 ok('the moon stepped out to the corner (.afloat on body)', !D.none && D.parent === 'body' && D.afloat, JSON.stringify(D));
-ok('it is visible, fixed, and nothing covers it', !D.none && D.shown && D.pos === 'fixed' && D.clickable, JSON.stringify(D));
+ok('it is not drawn over the page', !D.none && !D.shown, JSON.stringify(D));
+const D2 = await page.evaluate(() => document.querySelectorAll('#navMenu [data-cr-appear]').length);
+ok('and the drawer carries the switch instead (Dark / Light)', D2 === 2, String(D2));
 
 console.log('\n--- E. insurance keeps its theme switch ---');
 const E = await page.evaluate(async () => {

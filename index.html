@@ -83,6 +83,8 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
 #navMenu .cr-ts button[data-cr-text-set="md"]{font-size:12px;}
 #navMenu .cr-ts button[data-cr-text-set="lg"]{font-size:15px;}
 #navMenu .cr-ts button[data-cr-text-set="xl"]{font-size:18px;}
+/* 1230: the light/dark switch lives here now, beside Text size */
+#navMenu .cr-ts button[data-cr-appear]{font-size:13px;padding:0 14px;--cr-stack:"the A/A/A buttons hold one glyph; these hold a word, so they need their own size and side padding";}
 #navMenu .cr-ts button[aria-pressed="true"]{background:var(--lnav-crmc,#c8202e);
   border-color:var(--lnav-crmc,#c8202e);color:#fff;}
 /* ⚠ There was a light twin here scoped on html[data-mode="light"] and it was
@@ -4032,6 +4034,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="notify" data-cri="bell lg">Enable Notifications</button>
 
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
+          <div class="cr-ts" role="group" aria-label="Appearance"><span class="lb">Appearance</span><button type="button" data-cr-appear="dark" aria-pressed="true">Dark</button><button type="button" data-cr-appear="light" aria-pressed="false">Light</button></div>
           <!-- 1041 (audit O2): ONE build line only. REPLACE this text each build —
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
@@ -4061,7 +4064,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1229<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1230<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4770,8 +4773,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 .galtools #galStatus{flex:1 1 100%;}
 #galGrid .galempty{grid-column:1 / -1;}
 .gjc .btn{min-height:44px;}
-.gjc-sub{font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink2,#9aa3ae);margin-top:2px;}
-.gjc-note{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink2,#9aa3ae);margin:8px 0 0;line-height:1.45;}
+.gjc-sub{font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#b8bec6);margin-top:2px;}
+.gjc-note{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#b8bec6);margin:8px 0 0;line-height:1.45;}
 .gjc-note.bad{color:#e35c63;}
 .gjc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin-top:12px;}
 .gjc-grid a{display:block;position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:var(--rbe-line,#1e2026);}
@@ -4781,7 +4784,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 .gjc-sug{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rbe-line2,#2b2b33);border-radius:10px;}
 .gjc-sug > div{flex:1;min-width:0;}
 .gjc-sug b{display:block;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-head,#ffffff);}
-.gjc-sug span{display:block;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink2,#9aa3ae);}
+.gjc-sug span{display:block;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#b8bec6);}
 .gjc-sug .btn{margin-left:auto;flex:none;}
 .gjc-q{display:flex;gap:8px;margin-top:10px;}
 .gjc-q .btn{flex:none;}
@@ -31158,7 +31161,7 @@ function showList() {
   /* 1033: the AI Create and Output views lived here (~24 KB) — deleted
      whole with the AI arm. The estimates walls and the editor remain. */
   // ── Small helpers ─────────────────────────────────────────
-  function fmt(n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  function fmt(n) { var v = Number(n || 0); var c = Math.round(Math.abs(v) * 100) % 100 !== 0; return v.toLocaleString('en-US', { minimumFractionDigits: c ? 2 : 0, maximumFractionDigits: 2 }); }
   function fmtDate(iso) { var d = window.crDate ? window.crDate(iso) : new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
   function fmtDateLong(iso) { return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
   function fmtRel(iso) {
@@ -31432,7 +31435,7 @@ function showList() {
     if (cls !== 'saving') setTimeout(() => el.classList.remove('show'), 1800);
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c])); }
-  function fmt(n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  function fmt(n) { var v = Number(n || 0); var c = Math.round(Math.abs(v) * 100) % 100 !== 0; return v.toLocaleString('en-US', { minimumFractionDigits: c ? 2 : 0, maximumFractionDigits: 2 }); }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
   function checkAdmin() { try { state.isAdmin = !!window.is_admin?.(); } catch { state.isAdmin = false; } return state.isAdmin; }
 
@@ -32237,7 +32240,7 @@ function showList() {
     if (cls !== 'saving') setTimeout(() => el.classList.remove('show'), 2000);
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c])); }
-  function fmt(n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  function fmt(n) { var v = Number(n || 0); var c = Math.round(Math.abs(v) * 100) % 100 !== 0; return v.toLocaleString('en-US', { minimumFractionDigits: c ? 2 : 0, maximumFractionDigits: 2 }); }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
   // ═══ Modal orchestration ══════════════════════════════════
@@ -33021,7 +33024,7 @@ function showList() {
 
   // ── Helpers ──
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c])); }
-  function fmt(n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  function fmt(n) { var v = Number(n || 0); var c = Math.round(Math.abs(v) * 100) % 100 !== 0; return v.toLocaleString('en-US', { minimumFractionDigits: c ? 2 : 0, maximumFractionDigits: 2 }); }
   /* 657: fmt() coerces null to 0, so a claim nobody has entered figures for
      rendered "$0" — indistinguishable from a carrier approving zero. That is
      how a scope filed but never read looked like data for a day. Absence now
@@ -43261,7 +43264,25 @@ var btn = document.getElementById('cr-dark-toggle');
    note below refuses to ship. */
 var lit = inInsurancePortal() ? insLight() : isLight();
 if(btn) btn.textContent = lit ? '\u2600' : '\uD83C\uDF19';
+paintAppear(lit);
 }
+/* 1230: the drawer's Appearance row. Same dispatch as the button: retail and
+   community flip the app theme, insurance flips its own palette. */
+function paintAppear(lit){
+var bs = document.querySelectorAll('[data-cr-appear]');
+for(var i = 0; i < bs.length; i++){
+bs[i].setAttribute('aria-pressed', String((bs[i].getAttribute('data-cr-appear') === 'light') === lit));
+}
+}
+document.addEventListener('click', function(e){
+var t = /** @type {Element} */ (e.target);
+var b = t && t.closest && t.closest('[data-cr-appear]');
+if(!b) return;
+e.preventDefault();
+var want = b.getAttribute('data-cr-appear') === 'light';
+var lit = inInsurancePortal() ? insLight() : isLight();
+if(want !== lit) toggle(); else apply();
+});
 /* 1181 — Theo: "Just make it just like retail and community, [insurance]
    doesn't have to be the unique one, that's no good." He is right, and the
    measurement said so: at 1180 retail and community both used THIS button,
@@ -43358,8 +43379,16 @@ if(!btn) return;
 var crm = document.body.dataset.crm;
 var row = document.getElementById('cr-hd2-srch');
 if(needsFloat()){
+/* 1230: it no longer floats. The audit found the corner button sitting on
+   content on almost every screen (a tile, a price, a table, a badge). Where
+   the header row cannot hold it, it simply is not shown; the menu drawer's
+   Appearance row is the switch everywhere, insurance included. .afloat still
+   marks "stepped out" so the row does not re-adopt it within the frame. */
+if(!btn.classList.contains('afloat')){
+btn.classList.add('afloat');
 if(btn.parentNode !== document.body) document.body.appendChild(btn);
-btn.classList.add('show', 'afloat');
+}
+btn.classList.remove('show');
 return;
 }
 if(btn.classList.contains('afloat')){
@@ -43393,6 +43422,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1230, d: '2026-10-04', t: 'Polish, round one: the moon button, the cream band, money and small grey text',
+    s: 'The light/dark button no longer floats in the corner on top of tiles, prices and tables. The switch is now in the menu, under Text size: <b>Appearance &#8212; Dark / Light</b>. It works the same on Retail, Insurance and Community. Short pages in dark mode no longer show a cream band at the bottom (it happened when the phone itself was set to light). Claim, estimate and pricing amounts keep their cents: <b>$18,922.10</b>, not $18,922.1. And a handful of small grey labels that were hard to read are darker or lighter, so they can be read.' },
   { b: 1229, d: '2026-10-04', t: 'Take several photos, then upload once \u2014 and a tidier Photo Album',
     s: '<b>Take photos</b> in a client\'s Photo Album now opens a camera that <b>stays open</b>: tap the shutter as many times as you need, pick the section at the top, and send them all with one <b>Upload</b>. Tap the little stack to look back and drop a bad one. Closing asks before throwing away photos you have not uploaded. If a phone will not let the app use the camera, it offers the phone\'s own camera instead. The album itself is tidier: the six section buttons are one <b>All photos</b> dropdown that shows how many are in each; the photos carry their section tag only; tapping a photo opens it; and <b>Select</b> picks several to <b>Move</b>, send <b>To report</b>, send <b>To Inspection</b>, <b>Save</b> or <b>Delete</b>, all the same size in one bar. <b>+ Add from phone</b> now opens the phone\'s photos for everyone; an admin copies CompanyCam photos in from the CompanyCam card.' },
   { b: 1228, d: '2026-10-02', t: 'CompanyCam photos in the client\'s album',
@@ -52812,7 +52843,7 @@ apply : apply,
    <b>/<small> and stack correctly, which is the shape these were meant to
    have. Pre-existing - reproduced on 684. Scoped, because .tt/.sb/.n are
    about as generic as a class name gets. */
-.cr-lr-course .tt,.cr-lr-course .sb,.cr-lr-course .n{display:block}.cr-lr-course .n{margin-top:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7d6f63}.cr-lr-course .go{flex:0 0 auto;font-size:15px;color:#5f5248;transition:color .16s,transform .16s}.cr-lr-course:hover .go{color:var(--acc,#c8202e);transform:translateX(2px)}.cr-lr-course.lead{padding:22px 18px;background:linear-gradient(180deg,#2e2119 0%,#241a14 88%)}.cr-lr-course.lead .tt{font-size:19px}.cr-lr-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.cr-lr-pair button{display:flex;flex-direction:column;gap:5px;padding:15px 14px;background:#1d1613;border:1px solid rgba(255,255,255,.07);border-top:2px solid var(--racc,#c8202e);border-radius:10px;cursor:pointer;font-family:inherit;color:#e8ded4;text-align:left;transition:background .16s,border-color .16s}.cr-lr-pair button:hover{background:#251c17}.cr-lr-pair .ic{font-size:19px}.cr-lr-pair b{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15px;color:var(--racc,#c8202e);line-height:1.15}.cr-lr-pair small{font-size:11.5px;line-height:1.4;color:#a89a8d}.cr-lr-minor{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}.cr-lr-minor button{flex:1 1 auto;min-width:96px;padding:13px 12px;background:transparent;border:1px solid rgba(200,32,46,.24);border-radius:9px;color:#9c8b7e;font:600 11.5px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;cursor:pointer;transition:border-color .16s,color .16s,background .16s}.cr-lr-minor button:hover{border-color:rgba(200,32,46,.55);color:#e8ded4;background:rgba(200,32,46,.05)}.cr-lr-foot{margin-top:34px;padding-top:18px;border-top:1px solid rgba(200,32,46,.16);display:flex;align-items:baseline;justify-content:space-between;gap:12px}.cr-lr-foot .pp{font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.55;color:#8d7f73}.cr-lr-foot .pp b{color:#c8202e;font-weight:700}.cr-lr-foot .sk{flex:0 0 auto;background:none;border:0;cursor:pointer;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#6b5d52;padding:4px}.cr-lr-foot .sk:hover{color:#e8ded4}@media (prefers-reduced-motion:no-preference){.cr-lr-course,.cr-lr-quote,.cr-lr-minor,.cr-lr-foot{opacity:0;animation:crLrLay .42s cubic-bezier(.22,.9,.3,1) forwards}.cr-lr-quote{animation-delay:.06s}.cr-lr-course:nth-child(1){animation-delay:.30s}.cr-lr-course:nth-child(2){animation-delay:.24s}.cr-lr-course:nth-child(3){animation-delay:.18s}.cr-lr-course:nth-child(4){animation-delay:.12s}.cr-lr-minor{animation-delay:.36s}.cr-lr-foot{animation-delay:.42s}@keyframes crLrLay{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}}#landingView:not([data-cr-portal-built])>*{display:none}/* ---- theme icon ---- */.cr-lr-theme{appearance:none;background:transparent;border:1px solid #3a322c;border-radius:50%;width:30px;height:30px;padding:0;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#9c8b7e;transition:border-color .18s,color .18s,background .18s}.cr-lr-theme:hover{border-color:#c8202e;color:#e8ded4;background:rgba(200,32,46,.10)}.cr-lr-theme svg{width:15px;height:15px;display:block;transition:transform .34s cubic-bezier(.4,0,.2,1)}html[data-mode="light"] .cr-lr-theme svg{transform:rotate(180deg)}html[data-mode="light"] .cr-lr-theme{border-color:#c8bfb5;color:#6b6058}html[data-mode="light"] .cr-lr-theme:hover{border-color:#c8202e;color:#12100e;background:rgba(200,32,46,.07)}/* ---- landing light mode: only the neutrals invert, reds hold ---- */html[data-mode="light"] #landingView{background:#f7f5f2 !important}/* ---- and the canvas, not only the pane: #landingView is position:fixed, so its box is one screen, and a full-page capture photographs the taller document behind it. Scoped to the landing actually being up -- data-mode outlives the landing, and an unscoped ground would rubber-band light over a dark app screen, which is 429 in reverse ---- */html[data-mode="light"]:not(:has(#landingView[style*="display: none"])){background:#f7f5f2}html[data-mode="light"] .cr-lr{color:#1a1614}html[data-mode="light"] .cr-lr-mark,html[data-mode="light"] .cr-lr-greet{color:#12100e}html[data-mode="light"] .cr-lr-sub{color:#3a332e}html[data-mode="light"] .cr-lr-eyebrow{color:#6b6058}html[data-mode="light"] .cr-lr-stamp,html[data-mode="light"] .cr-lr-quote,html[data-mode="light"] .cr-lr-minor,html[data-mode="light"] .cr-lr-foot{color:#5f564f}html[data-mode="light"] .cr-lr-course{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-course .tt{color:#12100e}html[data-mode="light"] .cr-lr-course .sb,html[data-mode="light"] .cr-lr-course .n{color:#6b6058}html[data-mode="light"] .cr-lr-course .go{color:#b8ada2}html[data-mode="light"] .cr-lr-pair button{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-pair button small{color:#6b6058}html[data-mode="light"] .cr-lr-roof{box-shadow:0 14px 34px rgba(40,30,22,.14)}html[data-mode="light"] .cr-lr-course .wm-t{color:#6b6b6b}
+.cr-lr-course .tt,.cr-lr-course .sb,.cr-lr-course .n{display:block}.cr-lr-course .n{margin-top:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7d6f63}.cr-lr-course .go{flex:0 0 auto;font-size:15px;color:#5f5248;transition:color .16s,transform .16s}.cr-lr-course:hover .go{color:var(--acc,#c8202e);transform:translateX(2px)}.cr-lr-course.lead{padding:22px 18px;background:linear-gradient(180deg,#2e2119 0%,#241a14 88%)}.cr-lr-course.lead .tt{font-size:19px}.cr-lr-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.cr-lr-pair button{display:flex;flex-direction:column;gap:5px;padding:15px 14px;background:#1d1613;border:1px solid rgba(255,255,255,.07);border-top:2px solid var(--racc,#c8202e);border-radius:10px;cursor:pointer;font-family:inherit;color:#e8ded4;text-align:left;transition:background .16s,border-color .16s}.cr-lr-pair button:hover{background:#251c17}.cr-lr-pair .ic{font-size:19px}.cr-lr-pair b{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15px;color:var(--racc,#c8202e);line-height:1.15}.cr-lr-pair small{font-size:11.5px;line-height:1.4;color:#a89a8d}.cr-lr-minor{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}.cr-lr-minor button{flex:1 1 auto;min-width:96px;padding:13px 12px;background:transparent;border:1px solid rgba(200,32,46,.24);border-radius:9px;color:#9c8b7e;font:600 11.5px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;cursor:pointer;transition:border-color .16s,color .16s,background .16s}.cr-lr-minor button:hover{border-color:rgba(200,32,46,.55);color:#e8ded4;background:rgba(200,32,46,.05)}.cr-lr-foot{margin-top:34px;padding-top:18px;border-top:1px solid rgba(200,32,46,.16);display:flex;align-items:baseline;justify-content:space-between;gap:12px}.cr-lr-foot .pp{font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.55;color:#8d7f73}.cr-lr-foot .pp b{color:#c8202e;font-weight:700}.cr-lr-foot .sk{flex:0 0 auto;background:none;border:0;cursor:pointer;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#6b5d52;padding:4px}.cr-lr-foot .sk:hover{color:#e8ded4}@media (prefers-reduced-motion:no-preference){.cr-lr-course,.cr-lr-quote,.cr-lr-minor,.cr-lr-foot{opacity:0;animation:crLrLay .42s cubic-bezier(.22,.9,.3,1) forwards}.cr-lr-quote{animation-delay:.06s}.cr-lr-course:nth-child(1){animation-delay:.30s}.cr-lr-course:nth-child(2){animation-delay:.24s}.cr-lr-course:nth-child(3){animation-delay:.18s}.cr-lr-course:nth-child(4){animation-delay:.12s}.cr-lr-minor{animation-delay:.36s}.cr-lr-foot{animation-delay:.42s}@keyframes crLrLay{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}}#landingView:not([data-cr-portal-built])>*{display:none}/* ---- theme icon ---- */.cr-lr-theme{appearance:none;background:transparent;border:1px solid #3a322c;border-radius:50%;width:30px;height:30px;padding:0;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#9c8b7e;transition:border-color .18s,color .18s,background .18s}.cr-lr-theme:hover{border-color:#c8202e;color:#e8ded4;background:rgba(200,32,46,.10)}.cr-lr-theme svg{width:15px;height:15px;display:block;transition:transform .34s cubic-bezier(.4,0,.2,1)}html[data-mode="light"] .cr-lr-theme svg{transform:rotate(180deg)}html[data-mode="light"] .cr-lr-theme{border-color:#c8bfb5;color:#6b6058}html[data-mode="light"] .cr-lr-theme:hover{border-color:#c8202e;color:#12100e;background:rgba(200,32,46,.07)}/* ---- landing light mode: only the neutrals invert, reds hold ---- */html[data-mode="light"] #landingView{background:#f7f5f2 !important}/* ---- and the canvas, not only the pane: #landingView is position:fixed, so its box is one screen, and a full-page capture photographs the taller document behind it. Scoped to the landing actually being up -- data-mode outlives the landing, and an unscoped ground would rubber-band light over a dark app screen, which is 429 in reverse ---- */html[data-mode="light"]:not(:has(#landingView[style*="display: none"])):not(:has(#landingView[style*="display:none"])){background:#f7f5f2}/* 1230: the markup ships display:none with NO space, and a signed-in open never rewrites it - so the old selector matched behind every app screen and painted a cream band under short pages */html[data-mode="light"] .cr-lr{color:#1a1614}html[data-mode="light"] .cr-lr-mark,html[data-mode="light"] .cr-lr-greet{color:#12100e}html[data-mode="light"] .cr-lr-sub{color:#3a332e}html[data-mode="light"] .cr-lr-eyebrow{color:#6b6058}html[data-mode="light"] .cr-lr-stamp,html[data-mode="light"] .cr-lr-quote,html[data-mode="light"] .cr-lr-minor,html[data-mode="light"] .cr-lr-foot{color:#5f564f}html[data-mode="light"] .cr-lr-course{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-course .tt{color:#12100e}html[data-mode="light"] .cr-lr-course .sb,html[data-mode="light"] .cr-lr-course .n{color:#6b6058}html[data-mode="light"] .cr-lr-course .go{color:#b8ada2}html[data-mode="light"] .cr-lr-pair button{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-pair button small{color:#6b6058}html[data-mode="light"] .cr-lr-roof{box-shadow:0 14px 34px rgba(40,30,22,.14)}html[data-mode="light"] .cr-lr-course .wm-t{color:#6b6b6b}
 /* ── 525 ──────────────────────────────────────────────────────────────────
    (a) RAISED, the 522 recipe: the bevel follows the card, the drop shadow
        follows the page. .cr-lr-minor stays flat on purpose - those are ghost
@@ -80408,8 +80439,8 @@ select{min-height:44px;}
   background:var(--rbe-panel2,#101015); border:1px solid var(--rbe-line2,#2b2b33);
   border-radius:var(--btn-rad,12px); color:var(--rbe-head,#ffffff);
   font:700 14px 'Segoe UI',Arial,sans-serif; }
-.cr-admin-tog small{ margin-left:auto; font-weight:600; font-size:12px; color:var(--rbe-ink2,#9aa3ae); }
-.cr-admin-tog::after{ content:"\203A"; font-size:20px; line-height:1; color:var(--rbe-ink2,#9aa3ae); transition:transform .15s; }
+.cr-admin-tog small{ margin-left:auto; font-weight:600; font-size:12px; color:var(--rbe-mute,#b8bec6); }
+.cr-admin-tog::after{ content:"\203A"; font-size:20px; line-height:1; color:var(--rbe-mute,#b8bec6); transition:transform .15s; }
 .cr-admin-tog[aria-expanded="true"]::after{ transform:rotate(90deg); }
 :root[data-theme="rb-light"] .cr-admin-tog{ background:var(--rbe-panel2,#ffffff); border-color:var(--rbe-line2,#dcdee2); }
 </style>
@@ -80568,7 +80599,9 @@ select{min-height:44px;}
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"] .acxbody{ display:flex; flex-direction:column; }
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"] .acxbody > div:last-child{ order:-1; margin:0 0 10px !important; }
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]:not(.cr-map-open) #dbMap{ display:none; }
-  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]:not(.cr-map-open) .dbmtabs button.on{ background:none; color:inherit; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]:not(.cr-map-open) .dbmtabs button.on{ background:none; color:rgb(170,177,186); }
+  /* 1230: was color:inherit, which in LIGHT inherited near-black ink onto the tabs' dark pill (1.42:1).
+     A closed map's lit tab now reads exactly like its unlit siblings (.dbmtabs button). */
   /* 1225: the admin tools - Convert to Insurance, Update from Scope of Loss,
      Delete Client - fold behind one row. They are NOT moved (three modules own
      them, and a module re-placing its node against a mover is the 567/569

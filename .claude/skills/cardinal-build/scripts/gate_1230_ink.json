@@ -1,0 +1,7 @@
+[
+ {"state":"client","theme":"rb-light","sel":"#acxMount [data-cr-ord=\"loc\"]:not(.cr-map-open) .dbmtabs button.on","what":"the closed map's Map tab (was 1.42:1)"},
+ {"state":"client","theme":"rb-light","sel":".cr-admin-tog small","what":"the Admin fold's caption (was 2.55:1)"},
+ {"state":"album","theme":"rb-light","sel":"#galJobCc .gjc-sub","what":"CompanyCam's \"Not linked yet\" (was 2.55:1)"},
+ {"state":"client","theme":"dark","sel":".cr-admin-tog small","what":"the Admin fold's caption, dark"},
+ {"state":"album","theme":"dark","sel":"#galJobCc .gjc-sub","what":"CompanyCam's \"Not linked yet\", dark"}
+]

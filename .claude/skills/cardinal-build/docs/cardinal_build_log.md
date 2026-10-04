@@ -33745,3 +33745,24 @@ description, so both buttons stay. `gate_1229` A asserts the descriptions are go
 (updated) · `gate_1227`, `gate_1228`, `gate_1206`, `gate_1081`, `gate_a11y`, `harness_708` GREEN ·
 `gate_stack` CLEAN (one deliberate `--cr-stack` on the toolbar's padding). `gate_993`'s
 `#navMenu/#cr-lnav` reach and `gate_1068`'s `rvflip/convertins` coverage fail on 1228 too.
+
+## Build 1230 — polish round one: the moon button, the cream band, money, small grey text
+
+The audit's "fix first" group, on Theo's **"Follow the settings. Let's fix this stuff."** Full write-up
+in FEATURES "Build 1230".
+
+**The audit overstated contrast, and the sentinel corrected it.** My audit rig scored the drawer's
+labels (Admin, Quick jump, ⌘K, the build stamp) as failing. It took a gradient's first stop as the
+ground. The sentinel's INK check, run on all 32 screens in both themes, found **three** real
+failures, and **all three were mine**: two from an undeclared token (`--rbe-ink2`, 1225 and 1228) and
+one from a `color:inherit` I wrote at 1225. The audit page is corrected.
+
+**The cream band was real, and not where I first thought.** The rule was scoped correctly in intent
+(only while the landing is up) but matched one serialization of `display:none`. A selector that reads a
+`style` attribute is a string match, and the markup and a script write different strings.
+
+**Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17) GREEN · `gate_1230`
+19/19, RED 16 on 1229 · `gate_1181` 18/18, `gate_1176` 11/11 (re-aimed) · `gate_804` 12/17, its 5 failures
+also on 1229 · `gate_1229`, `gate_1228`, `gate_1206`, `gate_1081`, `gate_a11y`, `gate_1213`, `gate_1215`,
+`gate_1178`, `gate_745` GREEN · `harness_657`/`665` fail identically on 1229 · `gate_stack` CLEAN (one
+declared `--cr-stack`).
