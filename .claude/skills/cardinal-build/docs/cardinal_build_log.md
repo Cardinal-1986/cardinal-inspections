@@ -33786,3 +33786,19 @@ These give identical results on 1230 and on 1231: `gate_1188` (37/5), `gate_1068
 coverage floor), and `gate_1116`/`1187`/`harness_lrs1110` (environment: no playwright module, no showroom
 checkout, no jsdom). `gate_1123`, `1160`, `1161`, `1162`, `1191`, `1192`, `1194` and `1196` also match on
 both builds.
+
+## Build 1232 — dark pieces gone from light pages
+
+Theo: **"Merge then next."** The audit's dark-on-light leftovers. Full write-up in FEATURES "Build 1232":
+the claim Financials block is now a white card in light, and Crew Dispatch's heavy shadows are tokens with
+a soft light value. Dark mode is byte-identical on both screens.
+
+**Two audit items were dropped as false alarms.** The Leads call buttons are grey because Theo asked for
+"A Grey raised box … in White" (quoted in `cr-nvl-styles`). The header + colour is `--hac`, the header
+chrome's per-section accent, which CLAUDE.md already lists. *An audit that reads only pixels cannot see a
+decision. Grep the comment before "fixing" a look.*
+
+**The WAIVED tag was an inline colour in TWO renderers.** `cr-claims-script` and `cr-insstage-script` each
+wrote `<small style="…color:#7cd18d">`. An inline colour beats every theme rule, so both are classes now.
+`gate_1232` B asserts that no inline WAIVED colour is left anywhere in the file.
+
