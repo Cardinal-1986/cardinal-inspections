@@ -33731,6 +33731,9 @@ card instead.
    the count that is now on screen. This was pre-existing on every inactive chip; it is fixed at
    the rule.
 6. **The Move control drew two arrows**, mine and the phone's. Seen in the render.
+7. **The sentinel: 2 OVERRIDDEN.** The old chip rule's `min-height:44px` and `font:800 11px` caps never
+   won on either of the two buttons left in the strip. Moved into the base rule itself; the dropdown's
+   own rules stopped restating them.
 
 **Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17, unchanged) GREEN ·
 `gate_1229` 98/98, RED 76 on 1228 · `gate_777`, `gate_789`, `gate_1222`, `gate_1068`, `gate_993`
