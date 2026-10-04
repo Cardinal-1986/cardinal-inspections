@@ -54,7 +54,8 @@ const VPS = [{ w: 390, h: 844 }, { w: 430, h: 932 }, { w: 1194, h: 834 }];
    its row here AND say so in the build log, the way .cr-sf-tabs was at 993. */
 const MUST_REACH = [
   '#cr-claims-mount .cr-c-tabs.detail',
-  '#cr-pae-tabs',
+  /* '#cr-pae-tabs' retired at 1229: the chip strip became one dropdown and is
+     no longer a scroller (Theo, 4 Oct). Its scroll rules went with it. */
   '.cd-crmbar',
   '.cr-cth-tabs',
   '.cr-ic-chips',
@@ -189,7 +190,7 @@ for (const [sel, o] of [...painted].sort((a, b) => b[1].over - a[1].over))
 
 /* 5 — the floor must not be vacuous. If MUST_REACH were emptied, checks 2 and
    4 would both pass on a page that renders nothing at all. */
-need('the reach floor is non-trivial', MUST_REACH.length >= 10,
+need('the reach floor is non-trivial', MUST_REACH.length >= 9,   /* 10 -> 9 at 1229: #cr-pae-tabs retired as a scroller, by decision */
      `MUST_REACH holds ${MUST_REACH.length} names`);
 
 console.log(`\n  painted ${painted.size}/${derived.length}:`);

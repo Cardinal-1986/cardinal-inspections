@@ -37,10 +37,11 @@ const TARGETS = [
   { state: 'doceditor', kind: 'primary', label: "the editor's Save", text: 'Save' },
   { state: 'doceditor', kind: 'outline', label: "the editor's Print / PDF", text: 'Print' },
   { state: 'album', kind: 'outline', label: "the album's Back to client profile", css: '#galBackBtn' },
-  { state: 'album', kind: 'outline', label: "the album's + Add photos", css: '#galAddBtn' },
-  { state: 'album', kind: 'primary', label: "the album's Take photo", css: '#galCamBtn' },
-  { state: 'album', kind: 'chip', label: "the album's section tab", css: '#cr-pae-tabs button:not(.active)' },
-  { state: 'album', kind: 'chipon', label: "the album's selected tab", css: '#cr-pae-tabs button.active' },
+  { state: 'album', kind: 'outline', label: "the album's + Add from phone", css: '#galAddBtn' },
+  { state: 'album', kind: 'primary', label: "the album's Take photos", css: '#galCamBtn' },
+  /* 1229: the six section chips became one dropdown + Select (Theo, 4 Oct) */
+  { state: 'album', kind: 'outline', label: "the album's All photos dropdown", css: '#cr-pae-tabs .pae-dd' },
+  { state: 'album', kind: 'outline', label: "the album's Select", css: '#cr-pae-tabs .pae-sel' },
   { state: 'estimates', kind: 'primary', label: "Estimates' + New estimate", css: '.cr-btn.primary' },
   { state: 'client', kind: 'outline', label: "the Pre-Install Guide's Email to client", text: 'Email to client' },
 ];

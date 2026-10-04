@@ -33701,3 +33701,47 @@ as untracked, and it was moved out rather than committed.
 on 1227 · `test_companycam_job` 10/10 · `gate_1227`, `gate_1225`, `gate_1222`, `gate_1221`,
 `gate_1206`, `gate_1053`, `gate_1081`, `gate_a11y` GREEN · `gate_stack` CLEAN · api parses, no CommonJS.
 
+## Build 1229 — take several photos, then upload once; the Photo Album tidied
+
+Theo: **"Need to take several then upload"**, **"maybe make a drop down reorganize"**, **"Look at the
+scattered bottom buttons too"**, then **"Build all"** from a four-picture preview. In the same message
+he asked why "Diamond in Germantown" had Mark Brown's Browning Ave photos. **That was my preview**: a
+test client with real photos borrowed from another job. The live app only offers same-street jobs.
+The camera mock repeated the same label, and I caught that before sending.
+
+**What shipped.** `cr-mcam-*` (an in-app camera that stays open, uploads through `addGalleryFiles`),
+the album's dropdown + Select, tidy tiles, a uniform Select bar with a new bulk Delete, Add from
+phone for everyone, and the admin CompanyCam copy moved onto the CompanyCam card. Full write-up in
+FEATURES "Build 1229".
+
+**⚠ A settled decision reversed, on Theo's pick:** 789 made the + open CompanyCam for an admin. The
+preview he approved says "Add from phone". The copy panel is kept and is reached from the CompanyCam
+card instead.
+
+**My mistakes, caught before commit:**
+1. **"+ Add from phone" wrapped to two lines** at 390 (69px tall). `gate_1229` A caught it.
+2. **Seven `font:… inherit` shorthands** in the camera CSS. `inherit` is not a family inside the
+   shorthand, so the whole declaration is dropped. Rewritten as longhands.
+3. **Eleven duplicate names** (`open`, `close`, `start`, `upload`…) from writing the camera module
+   with generic function names. `gate_dupes` caught them; the module is all `mc*` now.
+4. **Nine new type warnings** (`e.target.closest`, `.onclick` on `Element`, and a
+   `window.currentPhotos =` that the globals generator read as a second declaration). Fixed at
+   source: casts, and an in-place splice.
+5. **The dropdown's count was 2.35:1 on dark.** `gate_1068` caught it once its selector pointed at
+   the count that is now on screen. This was pre-existing on every inactive chip; it is fixed at
+   the rule.
+6. **The Move control drew two arrows**, mine and the phone's. Seen in the render.
+7. **The sentinel: 2 OVERRIDDEN.** The old chip rule's `min-height:44px` and `font:800 11px` caps never
+   won on either of the two buttons left in the strip. Moved into the base rule itself; the dropdown's
+   own rules stopped restating them.
+
+**Then, from a marked-up screenshot: "Get rid of the description."** The album's hint line is hidden in
+album mode (Inspection Photos keeps its line), and the CompanyCam card's "Link this client…" paragraph
+is gone. He also struck through + Add from phone and the Copy button; asked, he named only the
+description, so both buttons stay. `gate_1229` A asserts the descriptions are gone (101/101).
+
+**Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17, unchanged) GREEN ·
+`gate_1229` 98/98, RED 76 on 1228 · `gate_777`, `gate_789`, `gate_1222`, `gate_1068`, `gate_993`
+(updated) · `gate_1227`, `gate_1228`, `gate_1206`, `gate_1081`, `gate_a11y`, `harness_708` GREEN ·
+`gate_stack` CLEAN (one deliberate `--cr-stack` on the toolbar's padding). `gate_993`'s
+`#navMenu/#cr-lnav` reach and `gate_1068`'s `rvflip/convertins` coverage fail on 1228 too.

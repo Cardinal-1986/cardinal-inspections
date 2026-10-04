@@ -4061,7 +4061,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1228<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1229<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4760,8 +4760,15 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 .gjc{margin:4px 0 16px;padding:14px;border:1px solid var(--rbe-line2,#2b2b33);border-radius:var(--btn-rad,12px);
   background:var(--rbe-panel2,#101015);color:var(--rbe-ink,#d7dde5);}
 .gjc-h{display:flex;align-items:center;gap:10px;font:800 14px 'Segoe UI',Arial,sans-serif;color:var(--rbe-head,#ffffff);}
-.gjc-h .gjc-t{flex:1;min-width:0;}
+.gjc-h{flex-wrap:wrap;}
+/* 1229: a 160px floor on the title - when the title and its button cannot
+   both fit, the button drops to its own line instead of touching the title. */
+.gjc-h .gjc-t{flex:1 1 160px;min-width:0;}
 .gjc-h .gjc-act{flex:none;}
+.galtools #galCamBtn,.galtools #galAddBtn{flex:1 1 auto;min-height:48px;white-space:nowrap;padding-left:12px;padding-right:12px;
+  --cr-stack:"two buttons share one phone row here; the app-wide .btn padding stays right everywhere else";}
+.galtools #galStatus{flex:1 1 100%;}
+#galGrid .galempty{grid-column:1 / -1;}
 .gjc .btn{min-height:44px;}
 .gjc-sub{font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink2,#9aa3ae);margin-top:2px;}
 .gjc-note{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink2,#9aa3ae);margin:8px 0 0;line-height:1.45;}
@@ -4806,14 +4813,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <span id="galClient" style="color:var(--rbe-head,#fff);font-size:17px;"></span>
       <span id="galCount" class="projcount" style="vertical-align:middle;">0</span></h2>
       <p class="subnote" id="galHint">Every photo for this client.</p>
-      <div style="margin:6px 0 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <button class="btn ghost" id="galAddBtn">&#43; Add photos</button>
-        <button class="btn" id="galCamBtn">&#128247; Take photo</button>
+      <div class="galtools" style="margin:6px 0 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="btn" id="galCamBtn">&#128247; Take photos</button>
+        <button class="btn ghost" id="galAddBtn">&#43; Add from phone</button>
         <button class="chipbtn" id="galCcBtn" style="display:none;">From CompanyCam</button>
         <button class="btn" id="galInspBtn">&#10145;&#65039; Add checked to Inspection Photos</button>
         <button class="btn" id="galInspRmBtn" style="display:none;">&#10060; Remove checked from Inspection</button>
         <span id="galXferWrap" style="position:relative;">
-          <button class="btn" id="galXferBtn">Transfer checked to report &#9662;</button>
+          <button class="btn" id="galXferBtn">To report &#9662;</button>
           <div id="galXferMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
                background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:260px;max-height:280px;overflow:auto;
                box-shadow:0 6px 18px rgba(0,0,0,.18);"></div>
@@ -14560,6 +14567,13 @@ function gjcDate(iso){
   var d = new Date(iso); if(isNaN(d.getTime())) return '';
   return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
 }
+/* 1229: copying CompanyCam photos INTO the album (the 777 panel) used to hang
+   off the album's + button for an admin; it lives on this card now. Same
+   admin gate as before - api/companycam refuses everyone else. */
+function gjcCopy(){
+  var adm = (typeof isAdminUser === 'function') && isAdminUser();
+  return adm ? '<p class="gjc-note"><button class="btn ghost" type="button" data-gjc="copy">Copy CompanyCam photos into this album</button></p>' : '';
+}
 function gjcHead(title, sub, act){
   return '<div class="gjc-h"><span class="gjc-t">' + esc(title) + '</span>' +
     (act ? '<span class="gjc-act">' + act + '</span>' : '') + '</div>' +
@@ -14578,13 +14592,13 @@ async function galJobLoad(){
   catch(e){
     if(!currentProject || currentProject.id !== pid) return;
     el.innerHTML = gjcHead('CompanyCam', '', e.status === 403 ? '<button class="btn ghost" type="button" data-gjc="link">Change job</button>' : '') +
-      '<p class="gjc-note bad">' + esc(e.status === 403 ? e.message : 'Could not load CompanyCam photos (' + (e.message || e) + ').') + '</p>';
+      '<p class="gjc-note bad">' + esc(e.status === 403 ? e.message : 'Could not load CompanyCam photos (' + (e.message || e) + ').') + '</p>' + gjcCopy();
     return;
   }
   if(!currentProject || currentProject.id !== pid) return;
   if(!d.linked){
     el.innerHTML = gjcHead('CompanyCam', 'Not linked yet', '<button class="btn ghost" type="button" data-gjc="link">Link CompanyCam job</button>') +
-      '<p class="gjc-note">Link this client to its job in CompanyCam once, and the crew\u2019s photos show here by themselves \u2014 new ones by the next morning.</p>';
+      gjcCopy();
     return;
   }
   if(d.missing){
@@ -14604,7 +14618,7 @@ async function galJobLoad(){
         '<img src="' + esc(gjcUrl(p.thumb)) + '" alt="' + esc(p.caption || 'CompanyCam photo') + '" loading="lazy" decoding="async">' +
         '<span class="gjc-d">' + esc(gjcDate(p.at)) + '</span></a>';
     }).join('') + '</div>' : '<p class="gjc-note">No photos in this CompanyCam job yet.</p>') +
-    (ph.length > show.length ? '<p class="gjc-note"><button class="btn ghost" type="button" data-gjc="all">Show all ' + ph.length + '</button></p>' : '');
+    (ph.length > show.length ? '<p class="gjc-note"><button class="btn ghost" type="button" data-gjc="all">Show all ' + ph.length + '</button></p>' : '') + gjcCopy();
 }
 async function galJobPick(q){
   var el = gjcEl();
@@ -14648,6 +14662,12 @@ document.addEventListener('click', async function(e){
   if(k === 'link') return galJobPick('');
   if(k === 'cancel') return galJobLoad();
   if(k === 'all'){ gjcState.all = true; return galJobLoad(); }
+  if(k === 'copy'){
+    if(typeof galCcOpen === 'function') galCcOpen();
+    var pan = document.getElementById('galCcPanel');
+    if(pan && pan.scrollIntoView) pan.scrollIntoView({ block:'start', behavior:'smooth' });
+    return;
+  }
   if(k === 'search'){ var box = gjcEl(), q = box && box.querySelector('input'); return galJobPick(q ? q.value.trim() : ''); }
   if(k === 'pick' || k === 'unlink'){
     b.setAttribute('disabled', '');
@@ -14668,7 +14688,7 @@ function renderGallery(){
   if(!currentPhotos.length){
     grid.innerHTML = galMode === 'insp'
       ? '<div class="galempty">No inspection photos yet \u2014 open the \uD83D\uDCF7 Photo Album, check photos, and tap \u27A1\uFE0F Add checked to Inspection Photos.</div>'
-      : '<div class="galempty">No photos yet \u2014 use <b>+ Add photos</b> or <b>\uD83D\uDCF7 Take photo</b>.</div>';
+      : '<div class="galempty">No photos yet \u2014 tap <b>\uD83D\uDCF7 Take photos</b> or <b>+ Add from phone</b>.</div>';
     return;
   }
   grid.innerHTML = currentPhotos.map(function(ph){
@@ -14769,7 +14789,10 @@ function openGalleryMode(mode){
     galMode === 'insp' ? 'Inspection Photos' : 'Photo Album';
   document.getElementById('galHint').textContent = galMode === 'insp'
     ? 'The curated set for this client\u2019s inspections (max ' + INSP_MAX + '). Check photos to transfer into a report, or remove them from the set \u2014 removing never deletes from the album.'
-    : 'Every photo for this client. Check photos, then send them to Inspection Photos or straight into a report \u2014 the album always keeps the originals.';
+    : '';
+  /* 1229: Theo - "Get rid of the description". The album needs no instructions;
+     Inspection Photos keeps its line, which explains the 30-photo set. */
+  document.getElementById('galHint').style.display = galMode === 'insp' ? '' : 'none';
   document.getElementById('galAddBtn').style.display = galMode === 'insp' ? 'none' : '';
   document.getElementById('galCamBtn').style.display = galMode === 'insp' ? 'none' : '';
   /* 777: api/companycam refuses non-admins server-side with a 403; a button
@@ -14807,21 +14830,21 @@ document.getElementById('galBackBtn').addEventListener('click', function(){
   window.scrollTo(0,0);
 });
 document.getElementById('galAddBtn').addEventListener('click', function(){
-  /* 789: Theo — "have just the plus photos pop up the company cam". For an
-     admin the plus opens CompanyCam, which is where the photographs actually
-     are, and the separate From CompanyCam button is retired into it.
-     It CANNOT do that for everyone: api/companycam answers a non-admin with
-     403, so a rep whose plus opened CompanyCam would have no way to add a
-     photograph at all. Same gate as the button it replaces (777). */
-  var canCc = (typeof isAdminUser === 'function') && isAdminUser() && galMode !== 'insp';
-  if(canCc){
-    var p = document.getElementById('galCcPanel');
-    if(p && p.style.display !== 'none') galCcClose(); else galCcOpen();
-    return;
-  }
+  /* 1229: the button now says "Add from phone" and does that for everyone.
+     789 had it open CompanyCam for an admin; since 1228 the client's linked
+     CompanyCam job shows in the album by itself, and an admin who still wants
+     to COPY CompanyCam photos in (for a report) has a button for it on that
+     card (data-gjc="copy"). The panel and its admin gate are unchanged. */
   document.getElementById('galFileInput').click();
 });
 document.getElementById('galCamBtn').addEventListener('click', function(){
+  /* 1229: Theo - "Need to take several then upload." The phone's own camera
+     (capture="environment") hands back ONE photo and closes. CardinalMultiCam
+     keeps a camera open in the app: shoot as many as needed, then one Upload.
+     No camera API (or an old browser) -> the phone camera, as before. The
+     check runs here, synchronously, so the fallback click is still a tap. */
+  var mc = window.CardinalMultiCam;
+  if(mc && mc.supported && mc.supported()){ mc.open(); return; }
   document.getElementById('galCamInput').click();
 });
 document.getElementById('galFileInput').addEventListener('change', function(){
@@ -43370,6 +43393,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1229, d: '2026-10-04', t: 'Take several photos, then upload once \u2014 and a tidier Photo Album',
+    s: '<b>Take photos</b> in a client\'s Photo Album now opens a camera that <b>stays open</b>: tap the shutter as many times as you need, pick the section at the top, and send them all with one <b>Upload</b>. Tap the little stack to look back and drop a bad one. Closing asks before throwing away photos you have not uploaded. If a phone will not let the app use the camera, it offers the phone\'s own camera instead. The album itself is tidier: the six section buttons are one <b>All photos</b> dropdown that shows how many are in each; the photos carry their section tag only; tapping a photo opens it; and <b>Select</b> picks several to <b>Move</b>, send <b>To report</b>, send <b>To Inspection</b>, <b>Save</b> or <b>Delete</b>, all the same size in one bar. <b>+ Add from phone</b> now opens the phone\'s photos for everyone; an admin copies CompanyCam photos in from the CompanyCam card.' },
   { b: 1228, d: '2026-10-02', t: 'CompanyCam photos in the client\'s album',
     s: 'A client can now be linked to its job in <b>CompanyCam</b>, once, from the Photo Album: tap <b>Link CompanyCam job</b> and pick the job at that address. After that the album shows that job\'s photos by itself, newest first, and the crew\'s new photos appear by the next morning. Tap a photo to see it full size. Anyone who works the client \u2014 whoever created the lead or is assigned to it, plus admins and Production \u2014 can link it and see the photos; for everyone but admins the job has to be at the client\'s address, so no one can pull up another customer\'s roof. Photos CompanyCam marks internal never appear. Nothing is copied and CompanyCam is never changed.' },
   { b: 1227, d: '2026-10-02', t: 'Desktop client page: Job Menu first too',
@@ -47698,7 +47723,33 @@ units       : function(){ return UNITS.slice(); },
 })();
 </script>
 
-<style id="cr-pae-styles">#cr-pae-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 12px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid var(--btn-line,rgba(232,237,243,.28));margin:0 0 12px}#cr-pae-tabs::-webkit-scrollbar{display:none}#cr-pae-tabs button{background:transparent;color:var(--btn-ink,#e8edf3);border:1px solid var(--btn-line,rgba(232,237,243,.28));padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:var(--chip-rad,999px);font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}#cr-pae-tabs button.active{background:#c8202e;border-color:#c8202e;color:#fff}#cr-pae-tabs .count{display:inline-block;margin-left:5px;background:rgba(127,127,127,.22);padding:1px 6px;border-radius:8px;font-size:11px}#cr-pae-tabs button.active .count{background:rgba(0,0,0,.22);color:#ffffff}#galGrid.galgrid{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:10px !important;align-content:start !important}#galGrid .cr-pae-datehead{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:14px 0 2px;padding:0 2px}#galGrid .cr-pae-datehead:first-child{margin-top:0}#galGrid .gph{position:relative;aspect-ratio:1/1;background:#f0e8d0;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border .1s}#galGrid .gph:hover{border-color:#c8202e}#galGrid .gph.checked{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.3)}#galGrid .gph img{width:100%;height:100%;object-fit:cover;display:block}#galGrid .cr-pae-initials{position:absolute;bottom:6px;left:6px;width:24px;height:24px;border-radius:50%;background:#fdfcf7;color:#1a1a1a;font:800 11px 'Segoe UI',Arial,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4);letter-spacing:.02em}#galGrid .cr-pae-secbadge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);color:#e35c63;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px}#galGrid .cr-pae-cap{position:absolute;bottom:0;left:0;right:0;padding:24px 8px 6px 38px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fdfcf7;font:600 11px 'Segoe UI',Arial,sans-serif;line-height:1.3;max-height:60%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;pointer-events:none}#galGrid .cr-pae-ai{position:absolute;top:6px;right:38px;width:26px;height:26px;border-radius:50%;background:#c8202e;color:#fff;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}#galGrid .cr-pae-ai:hover{background:#B01F21}#galGrid .cr-pae-ai:disabled{opacity:.55;cursor:wait}#galGrid .gph .gchk{top:6px !important;left:6px !important;width:22px !important;height:22px !important;border-radius:50% !important;background:rgba(255,255,255,.9) !important;color:transparent !important;border:2px solid #6b6b6b !important;font-size:14px !important;display:none !important;align-items:center !important;justify-content:center !important;box-shadow:0 1px 4px rgba(0,0,0,.25) !important}#galleryView.cr-pae-selectmode #galGrid .gph .gchk,#galleryView.cr-pae-pickermode #galGrid .gph .gchk{display:flex !important}#galGrid .gph.checked .gchk{background:#c8202e !important;border-color:#8f1620 !important;color:#1a1a1a !important}#galleryView[data-cr-tab="Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Post-Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Before"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="After"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="General"] #galGrid .cr-pae-secbadge{display:none}#cr-pae-actionbar{display:none;position:fixed;left:0;right:0;bottom:calc(104px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#1a1a1a,#0a0a0a);color:#f5efe0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid #333;z-index:9995;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -6px 20px rgba(0,0,0,.35)}#cr-pae-actionbar.show{display:flex}#cr-pae-actionbar .count{flex:1;font:800 12px 'Segoe UI',Arial,sans-serif;color:#e35c63}#cr-pae-actionbar select,#cr-pae-actionbar button{padding:8px 14px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;cursor:pointer;font-family:inherit;border:0}#cr-pae-actionbar .move-to{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl:hover{background:#3c3c3c}#cr-pae-actionbar .dl:disabled{opacity:.55;cursor:wait}#cr-pae-actionbar .wf{background:#c8202e;color:#fff;border:1px solid #c8202e}#cr-pae-actionbar .wf:hover{background:#B01F21}#cr-pae-actionbar .confirm{background:#c8202e;color:#fff}#cr-pae-actionbar .confirm:hover{background:#B01F21}#cr-pae-actionbar .clear{background:transparent;color:#a89e88;border:1px solid #333}#cr-pae-actionbar .status{color:#e35c63;font-size:12px;font-weight:600;margin-left:8px}#galleryView.cr-pae-pickermode #galInspBtn,#galleryView.cr-pae-pickermode #galInspRmBtn,#galleryView.cr-pae-pickermode #galXferWrap{display:none !important}.cr-pae-pickerbanner{display:none;background:#f4f2f1;border:1px solid #c8202e;border-left:4px solid #c8202e;border-radius:6px;padding:9px 13px;margin:0 0 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#5a4a1a}#galleryView.cr-pae-pickermode .cr-pae-pickerbanner{display:block}#cr-pae-cap-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9520;justify-content:center;align-items:center;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}#cr-pae-cap-modal.open{display:flex}#cr-pae-cap-modal .box{background:#fdfcf7;border-radius:12px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}#cr-pae-cap-modal .imgwrap{background:#1a1a1a;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}#cr-pae-cap-modal .imgwrap img{max-width:100%;max-height:100%;object-fit:contain}#cr-pae-cap-modal .form{padding:14px 16px}#cr-pae-cap-modal label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:10px 0 4px}#cr-pae-cap-modal label:first-child{margin-top:0}#cr-pae-cap-modal textarea,#cr-pae-cap-modal select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}#cr-pae-cap-modal textarea{min-height:70px;resize:vertical;line-height:1.5}#cr-pae-cap-modal textarea:focus,#cr-pae-cap-modal select:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}#cr-pae-cap-modal .actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #e8dfc8}#cr-pae-cap-modal .actions button{padding:8px 14px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;font-family:inherit;border:0}#cr-pae-cap-modal .ai{background:#c8202e;color:#fff}#cr-pae-cap-modal .save{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e;margin-left:auto}#cr-pae-cap-modal .close{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}#cr-pae-cap-modal .ai-status{font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f1620;margin:8px 0 0;min-height:14px}</style>
+<style id="cr-pae-styles">#cr-pae-tabs{display:flex;gap:10px;flex-wrap:wrap;padding:4px 0 12px;border-bottom:1px solid var(--btn-line,rgba(232,237,243,.28));margin:0 0 12px}#cr-pae-tabs button{background:transparent;color:var(--btn-ink,#e8edf3);border:1px solid var(--btn-line,rgba(232,237,243,.28));padding:0 14px;min-height:48px;display:inline-flex;align-items:center;border-radius:12px;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}#cr-pae-tabs button.active{background:#c8202e;border-color:#c8202e;color:#fff}#cr-pae-tabs .count{display:inline-block;margin-left:5px;background:rgba(127,127,127,.22);padding:1px 6px;border-radius:8px;font-size:11px;color:inherit}#cr-pae-tabs button.active .count{background:rgba(0,0,0,.22);color:#ffffff}#galGrid.galgrid{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:10px !important;align-content:start !important}#galGrid .cr-pae-datehead{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:14px 0 2px;padding:0 2px}#galGrid .cr-pae-datehead:first-child{margin-top:0}#galGrid .gph{position:relative;aspect-ratio:1/1;background:#f0e8d0;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border .1s}#galGrid .gph:hover{border-color:#c8202e}#galGrid .gph.checked{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.3)}#galGrid .gph img{width:100%;height:100%;object-fit:cover;display:block}#galGrid .cr-pae-initials{position:absolute;bottom:6px;left:6px;width:24px;height:24px;border-radius:50%;background:#fdfcf7;color:#1a1a1a;font:800 11px 'Segoe UI',Arial,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4);letter-spacing:.02em}#galGrid .cr-pae-secbadge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);color:#e35c63;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px}#galGrid .cr-pae-cap{position:absolute;bottom:0;left:0;right:0;padding:24px 8px 6px 38px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fdfcf7;font:600 11px 'Segoe UI',Arial,sans-serif;line-height:1.3;max-height:60%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;pointer-events:none}#galGrid .cr-pae-ai{position:absolute;top:6px;right:38px;width:26px;height:26px;border-radius:50%;background:#c8202e;color:#fff;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}#galGrid .cr-pae-ai:hover{background:#B01F21}#galGrid .cr-pae-ai:disabled{opacity:.55;cursor:wait}#galGrid .gph .gchk{top:6px !important;left:6px !important;width:22px !important;height:22px !important;border-radius:50% !important;background:rgba(255,255,255,.9) !important;color:transparent !important;border:2px solid #6b6b6b !important;font-size:14px !important;display:none !important;align-items:center !important;justify-content:center !important;box-shadow:0 1px 4px rgba(0,0,0,.25) !important}#galleryView.cr-pae-selectmode #galGrid .gph .gchk,#galleryView.cr-pae-pickermode #galGrid .gph .gchk{display:flex !important}#galGrid .gph.checked .gchk{background:#c8202e !important;border-color:#8f1620 !important;color:#1a1a1a !important}#galleryView[data-cr-tab="Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Post-Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Before"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="After"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="General"] #galGrid .cr-pae-secbadge{display:none}#cr-pae-actionbar{display:none;position:fixed;left:0;right:0;bottom:calc(104px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#1a1a1a,#0a0a0a);color:#f5efe0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid #333;z-index:9995;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -6px 20px rgba(0,0,0,.35)}#cr-pae-actionbar.show{display:flex}#cr-pae-actionbar .count{flex:1;font:800 12px 'Segoe UI',Arial,sans-serif;color:#e35c63}#cr-pae-actionbar select,#cr-pae-actionbar button{padding:8px 14px;border-radius:6px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;cursor:pointer;font-family:inherit;border:0}#cr-pae-actionbar .move-to{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl:hover{background:#3c3c3c}#cr-pae-actionbar .dl:disabled{opacity:.55;cursor:wait}#cr-pae-actionbar .wf{background:#c8202e;color:#fff;border:1px solid #c8202e}#cr-pae-actionbar .wf:hover{background:#B01F21}#cr-pae-actionbar .confirm{background:#c8202e;color:#fff}#cr-pae-actionbar .confirm:hover{background:#B01F21}#cr-pae-actionbar .clear{background:transparent;color:#a89e88;border:1px solid #333}#cr-pae-actionbar .status{color:#e35c63;font-size:12px;font-weight:600;margin-left:8px}#galleryView.cr-pae-pickermode #galInspBtn,#galleryView.cr-pae-pickermode #galInspRmBtn,#galleryView.cr-pae-pickermode #galXferWrap{display:none !important}.cr-pae-pickerbanner{display:none;background:#f4f2f1;border:1px solid #c8202e;border-left:4px solid #c8202e;border-radius:6px;padding:9px 13px;margin:0 0 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#5a4a1a}#galleryView.cr-pae-pickermode .cr-pae-pickerbanner{display:block}#cr-pae-cap-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9520;justify-content:center;align-items:center;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}#cr-pae-cap-modal.open{display:flex}#cr-pae-cap-modal .box{background:#fdfcf7;border-radius:12px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}#cr-pae-cap-modal .imgwrap{background:#1a1a1a;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}#cr-pae-cap-modal .imgwrap img{max-width:100%;max-height:100%;object-fit:contain}#cr-pae-cap-modal .form{padding:14px 16px}#cr-pae-cap-modal label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:10px 0 4px}#cr-pae-cap-modal label:first-child{margin-top:0}#cr-pae-cap-modal textarea,#cr-pae-cap-modal select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}#cr-pae-cap-modal textarea{min-height:70px;resize:vertical;line-height:1.5}#cr-pae-cap-modal textarea:focus,#cr-pae-cap-modal select:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}#cr-pae-cap-modal .actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #e8dfc8}#cr-pae-cap-modal .actions button{padding:8px 14px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;font-family:inherit;border:0}#cr-pae-cap-modal .ai{background:#c8202e;color:#fff}#cr-pae-cap-modal .save{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e;margin-left:auto}#cr-pae-cap-modal .close{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}#cr-pae-cap-modal .ai-status{font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f1620;margin:8px 0 0;min-height:14px}
+/* 1229: the six section chips (three rows on a phone) are one dropdown with a
+   Select button beside it; the tile carries its section tag only. */
+#cr-pae-tabs .pae-dd{flex:1 1 0;min-width:0;justify-content:space-between}
+#cr-pae-tabs .pae-dd .pae-car{margin-left:auto;padding-left:10px}
+#cr-pae-tabs .pae-sel{flex:none;padding:0 18px}
+#cr-pae-tabs .pae-sel.on{background:#c8202e;border-color:#c8202e;color:#fff}
+#cr-pae-tabs .pae-menu{flex:1 1 100%;display:flex;flex-direction:column;border:1px solid var(--btn-line,rgba(232,237,243,.28));border-radius:12px;overflow:hidden;background:var(--rbe-panel2,#101015)}
+#cr-pae-tabs .pae-menu[hidden]{display:none}
+#cr-pae-tabs .pae-menu button{border:0;border-top:1px solid var(--rbe-line2,#23262d);border-radius:0;justify-content:space-between;min-height:46px}
+#cr-pae-tabs .pae-menu button:first-child{border-top:0}
+#cr-pae-tabs .pae-menu button.active{background:rgba(200,32,46,.18);border-color:transparent;color:var(--btn-ink,#e8edf3)}
+#galGrid .gph .gchk{top:auto !important;left:auto !important;right:8px !important;bottom:8px !important;width:28px !important;height:28px !important}
+#cr-pae-actionbar{flex-direction:column;align-items:stretch;gap:8px}
+#cr-pae-actionbar .pae-bar-top{display:flex;align-items:center;gap:10px}
+#cr-pae-actionbar .pae-bar-acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#cr-pae-actionbar .pae-bar-acts > *{min-width:0}
+#cr-pae-actionbar .pae-bar-acts select,#cr-pae-actionbar .pae-bar-acts button,#cr-pae-actionbar .clear{min-height:44px;width:100%;padding:0 8px;border-radius:10px;background:#1d1e23;color:#e8edf3;border:1px solid #3a3d45;font:700 13px 'Segoe UI',Arial,sans-serif;letter-spacing:0}
+#cr-pae-actionbar .clear{width:auto;padding:0 16px}
+#cr-pae-actionbar .pae-bar-acts #galXferWrap{display:block !important}
+#cr-pae-actionbar .pae-bar-acts #galXferMenu{top:auto !important;bottom:calc(100% + 6px)}
+#cr-pae-actionbar .pae-bar-acts .del{color:#ff8a91;border-color:#6b2a30}
+#cr-pae-actionbar .pae-bar-acts :disabled{opacity:.45;cursor:default}
+#cr-pae-actionbar .count{color:#e8edf3;font:700 14px 'Segoe UI',Arial,sans-serif}
+/* the floating moon sat on the album's own controls on a phone */
+@media (max-width:560px){ body:has(#galleryView:not([style*="none"])) #cr-dark-toggle.show:not(#cr-hd2-srch #cr-dark-toggle){display:none} }
+</style>
 <script id="cr-pae-script">
 (function(){
 'use strict';
@@ -47714,6 +47765,10 @@ var ROSTER = {
 'jerry@cardinalrenovations.net':   { name:'Jerry',        initials:'JV' },
 };
 var activeTab = 'all';
+/* 1229: Select is an explicit mode now. Off, a tap opens the photo; on, a tap
+   picks it. menuOpen keeps the dropdown open across a re-render. */
+var selectOn = false;
+var menuOpen = false;
 var pickerMode = false;
 var pickerCallback = null;
 var pickerPreselect = new Set();
@@ -47763,22 +47818,50 @@ allPhotos.forEach(function(p){
 var sec = p.section || 'Inspection';
 counts[sec] = (counts[sec] || 0) + 1;
 });
-var mk = function(id, label){
-return '<button data-tab="' + esc(id) + '"' + (activeTab === id ? ' class="active"' : '') + ' type="button">' +
-esc(label) + ' <span class="count">' + (counts[id] || 0) + '</span>' +
+var paeLabel = function(id){ return id === 'all' ? 'All photos' : id; };
+var mk = function(id){
+return '<button data-tab="' + esc(id) + '" role="option" aria-selected="' + (activeTab === id) + '"' +
+(activeTab === id ? ' class="active"' : '') + ' type="button">' +
+'<span>' + esc(paeLabel(id)) + '</span><span class="count">' + (counts[id] || 0) + '</span>' +
 '</button>';
 };
 tabs.innerHTML =
-mk('all', 'All') +
-SECTIONS.map(function(s){ return mk(s, s); }).join('');
-tabs.querySelectorAll('button').forEach(function(btn){
-btn.onclick = function(){
+'<button class="pae-dd" type="button" aria-haspopup="listbox" aria-expanded="' + menuOpen + '">' +
+'<span>' + esc(paeLabel(activeTab)) + ' <span class="count">' + (counts[activeTab] || 0) + '</span></span>' +
+'<span class="pae-car" aria-hidden="true">\u25BE</span></button>' +
+(pickerMode ? '' : '<button class="pae-sel' + (selectOn ? ' on' : '') + '" type="button" aria-pressed="' + selectOn + '">' +
+(selectOn ? 'Done' : 'Select') + '</button>') +
+'<div class="pae-menu" role="listbox" aria-label="Show photos from"' + (menuOpen ? '' : ' hidden') + '>' +
+mk('all') + SECTIONS.map(function(s){ return mk(s); }).join('') + '</div>';
+/** @type {HTMLElement} */ (tabs.querySelector('.pae-dd')).onclick = function(e){
+e.stopPropagation();
+menuOpen = !menuOpen;
+renderTabs();
+};
+var sel = /** @type {HTMLElement} */ (tabs.querySelector('.pae-sel'));
+if(sel) sel.onclick = function(){
+selectOn = !selectOn;
+if(!selectOn) window.galChecked = {};
+if(typeof window.renderGallery === 'function') window.renderGallery();
+updateActionBar();
+};
+tabs.querySelectorAll('.pae-menu button').forEach(function(/** @type {HTMLElement} */ btn){
+btn.onclick = function(e){
+e.stopPropagation();
 activeTab = btn.dataset.tab;
+menuOpen = false;
 document.getElementById('galleryView').setAttribute('data-cr-tab', activeTab);
 if(typeof window.renderGallery === 'function') window.renderGallery();
 };
 });
 }
+document.addEventListener('click', function(e){
+if(!menuOpen) return;
+var t = /** @type {Element} */ (e.target);
+if(t && t.closest && t.closest('#cr-pae-tabs .pae-menu')) return;
+menuOpen = false;
+renderTabs();
+});
 function enforceAlbumButtons(){
 ['galAddBtn', 'galCamBtn'].forEach(function(id){
 var el = document.getElementById(id);
@@ -47843,7 +47926,7 @@ return String(b.created_at || '').localeCompare(String(a.created_at || ''));
 if(!shown.length){
 grid.innerHTML = '<div class="galempty">' +
 (activeTab === 'all'
-? 'No photos yet \u2014 use <b>+ Add photos</b> or <b>\uD83D\uDCF7 Take photo</b>.'
+? 'No photos yet \u2014 tap <b>\uD83D\uDCF7 Take photos</b> or <b>+ Add from phone</b>.'
 : 'No photos in <b>' + esc(activeTab) + '</b> yet.') +
 '</div>';
 updateActionBar();
@@ -47862,11 +47945,11 @@ groups.forEach(function(g){
 html += '<div class="cr-pae-datehead">' + esc(g.date) + '</div>';
 g.photos.forEach(function(ph){
 var isChecked = !!galChecked[ph.id];
-var initials = initialsFor(ph.created_by);
 var sec = ph.section || 'Inspection';
 var cap = ph.caption || '';
 html +=
-'<div class="gph' + (isChecked ? ' checked' : '') + '" data-gid="' + esc(ph.id) + '">' +
+'<div class="gph' + (isChecked ? ' checked' : '') + '" data-gid="' + esc(ph.id) + '" title="' +
+esc(sec + ' \u00b7 ' + ((ROSTER[String(ph.created_by || '').toLowerCase()] || {}).name || ph.created_by || 'unknown')) + '">' +
 /* 708: `data` is the RETIRED public URL for storage-backed photos (the
    bucket is private now); `_src` is the signed URL listByProject attaches.
    Reading `data` alone is what broke every album tile in Theo's screenshot. */
@@ -47881,8 +47964,9 @@ html +=
    his hands, and a control that fails is worse than no control. Double-tap
    to type a caption still works; that path never involved the API. */
 '<div class="gchk">' + (isChecked ? '\u2713' : '') + '</div>' +
-'<button class="gdel" title="Delete photo">\u2715</button>' +
-'<span class="cr-pae-initials" title="' + esc((ROSTER[String(ph.created_by || '').toLowerCase()] || {}).name || ph.created_by || 'Unknown') + '">' + esc(initials) + '</span>' +
+/* 1229: the delete X and the initials ball are off the tile - three controls
+   on a 140px photo was the clutter. Delete is in the Select bar; who took it
+   is the tile's title. */
 (cap ? '<div class="cr-pae-cap">' + esc(cap) + '</div>' : '') +
 '</div>';
 });
@@ -47942,11 +48026,12 @@ var view = document.getElementById('galleryView');
 var isGalleryOpen = view && view.style.display !== 'none' && view.offsetParent !== null;
 if(!isGalleryOpen){
 actionBar.classList.remove('show');
+selectOn = false; menuOpen = false;
 if(view) view.classList.remove('cr-pae-selectmode');
 if(pickerMode && !pickerCallback) clearPickerMode();
 return;
 }
-if(!pickerMode && !checkedIds.length){
+if(!pickerMode && !checkedIds.length && !selectOn){
 actionBar.classList.remove('show');
 view.classList.remove('cr-pae-selectmode');
 return;
@@ -47958,34 +48043,42 @@ else           renderBulkActionBar(checkedIds);
    bar's children. paeXferNode is a REFERENCE, so it stays alive (and keeps its
    listeners) while detached — getElementById would return null here. */
 if(!paeXferNode) paeXferNode = document.getElementById('galXferWrap');
-if(paeXferNode && !pickerMode){
+var paeActs = actionBar.querySelector('.pae-bar-acts');
+if(paeXferNode && !pickerMode && paeActs){
 paeXferNode.style.display = '';
-if(paeXferNode.parentElement !== actionBar) actionBar.appendChild(paeXferNode);
+if(paeXferNode.parentElement !== paeActs) paeActs.insertBefore(paeXferNode, paeActs.children[1] || null);
 }
 actionBar.classList.add('show');
 }
 function renderBulkActionBar(checkedIds){
 var hasInsp  = !!document.getElementById('galInspBtn');
+var none = checkedIds.length ? '' : ' disabled';
+/* 1229: one count line, then every action the same size, three across.
+   789's rule stands: the REAL #galXferWrap is moved in (second slot) by
+   updateActionBar, because #galXferMenu is position:absolute inside it. */
 actionBar.innerHTML =
-'<span class="count">' + checkedIds.length + ' selected</span>' +
-(hasInsp
-? '<button class="wf" data-act="to-insp" type="button">\u27A1\uFE0F To Inspection</button>'
-: '') +
-/* 789: no proxy for Report any more \u2014 the REAL #galXferWrap is appended
-   below, because #galXferMenu is position:absolute INSIDE it and a proxy
-   click on a wrap sitting in a hidden toolbar opens a menu nobody can see. */
-'<select class="move-to" data-act="bulk-move">' +
-'<option value="">Move to section\u2026</option>' +
+'<div class="pae-bar-top"><span class="count">' +
+(checkedIds.length ? checkedIds.length + ' selected' : 'Tap photos to select them') + '</span>' +
+'<span class="status" data-slot="status"></span>' +
+(checkedIds.length ? '<button class="clear" data-act="clear" type="button">Clear</button>' : '') + '</div>' +
+'<div class="pae-bar-acts">' +
+'<select class="move-to" data-act="bulk-move" aria-label="Move to section"' + none + '>' +
+'<option value="">Move to\u2026</option>' +
 SECTIONS.map(function(s){
 return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
 }).join('') +
 '</select>' +
-'<button class="dl" data-act="bulk-download" type="button">\u2B07 Save</button>' +
-'<span class="status" data-slot="status"></span>' +
-'<button class="clear" data-act="clear" type="button">Clear</button>';
+(hasInsp
+? '<button class="wf" data-act="to-insp" type="button"' + none + '>To Inspection</button>'
+: '') +
+'<button class="dl" data-act="bulk-download" type="button"' + none + '>Save</button>' +
+'<button class="del" data-act="bulk-delete" type="button"' + none + '>Delete</button>' +
+'</div>';
 actionBar.querySelector('[data-act="bulk-move"]').onchange = onBulkMove;
 actionBar.querySelector('[data-act="bulk-download"]').onclick = onBulkDownload;
-actionBar.querySelector('[data-act="clear"]').onclick = function(){
+actionBar.querySelector('[data-act="bulk-delete"]').onclick = onBulkDelete;
+var clr = actionBar.querySelector('[data-act="clear"]');
+if(clr) clr.onclick = function(){
 window.galChecked = {};
 if(typeof window.renderGallery === 'function') window.renderGallery();
 };
@@ -48086,8 +48179,37 @@ setStat('');
 crTell('Save failed: ' + (e.message || e));
 }finally{
 var b = actionBar.querySelector('[data-act="bulk-download"]');
-if(b){ b.disabled = false; b.innerHTML = '\u2B07 Save'; }
+if(b){ b.disabled = false; b.textContent = 'Save'; }
 }
+}
+/* 1229: delete moved off the tiles into the Select bar - several at once,
+   behind one confirm. Same calls the tile's X made: photoDb.remove, then
+   drop the ids from the Inspection Photos set. */
+async function onBulkDelete(){
+var galChecked = window.galChecked || {};
+var ids = Object.keys(galChecked).filter(function(id){ return galChecked[id]; });
+if(!ids.length) return;
+var ask = typeof window.crAsk === 'function' ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+if(!await ask('Delete ' + ids.length + ' photo' + (ids.length === 1 ? '' : 's') + ' from this album? This cannot be undone.')) return;
+var statusEl = actionBar.querySelector('[data-slot="status"]');
+var gone = [];
+for(var i = 0; i < ids.length; i++){
+if(statusEl) statusEl.textContent = 'Deleting ' + (i + 1) + ' of ' + ids.length + '\u2026';
+try{ await window.photoDb.remove(ids[i]); gone.push(String(ids[i])); }catch(e){ console.warn('[pae] delete failed', ids[i], e); }
+}
+var cur = Array.isArray(window.currentPhotos) ? window.currentPhotos : [];
+for(var j = cur.length - 1; j >= 0; j--){ if(gone.indexOf(String(cur[j].id)) !== -1) cur.splice(j, 1); }
+try{
+var pr = window.currentProject;
+if(pr && typeof window.getInspPhotoIds === 'function' && typeof window.patchProjectCk === 'function'){
+var had = window.getInspPhotoIds(pr);
+var left = had.filter(function(x){ return gone.indexOf(String(x)) === -1; });
+if(left.length !== had.length) await window.patchProjectCk(pr, { insp_photos: left });
+}
+}catch(_){}
+window.galChecked = {};
+if(typeof window.renderGallery === 'function') window.renderGallery();
+if(gone.length < ids.length) crTell('Deleted ' + gone.length + ' of ' + ids.length + ' \u2014 the rest could not be deleted. Try again.');
 }
 async function onBulkMove(e){
 var to = e.target.value;
@@ -48274,6 +48396,19 @@ if(card) inlineAiCaption(card.dataset.gid, ai);
 return;
 }
 }, true);
+/* 1229: with Select off, a tap OPENS the photo (the caption/section/edit
+   card) rather than ticking it. Capture phase, so the album's own toggle
+   never sees it. Select mode, the estimate picker and Inspection Photos
+   keep the tap-to-tick they always had. */
+document.addEventListener('click', function(e){
+var t = /** @type {Element} */ (e.target);
+var card = t && t.closest && t.closest('#galGrid .gph');
+if(!card || selectOn || pickerMode || (window.galMode || 'all') !== 'all') return;
+var g = window.galChecked || {};
+if(Object.keys(g).some(function(k){ return g[k]; })) return;
+e.preventDefault(); e.stopPropagation();
+openCapModal(card.getAttribute('data-gid'));
+}, true);
 document.addEventListener('dblclick', function(e){
 var card = e.target.closest('#galGrid .gph');
 if(card){
@@ -48368,6 +48503,7 @@ try{ cb(null); }catch(_){}
 clearPickerMode();
 window.galChecked = {};
 }
+selectOn = false; menuOpen = false;
 });
 return true;
 }
@@ -48404,6 +48540,253 @@ window.CardinalPhotoAlbum = {
 openAsPicker : openAsPicker,
 photosFor    : function(){ return (window.currentPhotos || []).slice(); },
 };
+})();
+</script>
+
+<style id="cr-mcam-styles">
+/* 1229: the multi-shot camera. Its own black screen, on top of everything,
+   in both themes - a viewfinder is not a themed surface. It never touches
+   document.body.style.overflow (the scroll-lock roster): it is a fixed sheet
+   that swallows its own touches instead. */
+#cr-mcam{position:fixed;inset:0;z-index:10050;background:#000;color:#fff;display:none;flex-direction:column;touch-action:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
+#cr-mcam.open{display:flex}
+#cr-mcam .mc-top{display:flex;align-items:center;gap:10px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+#cr-mcam .mc-x{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;font-size:20px;cursor:pointer;flex:none}
+#cr-mcam .mc-sec{flex:1;min-width:0;min-height:44px;border-radius:999px;border:0;padding:0 16px;background:rgba(255,255,255,.16);color:#fff;font-weight:700;font-size:14px;font-family:inherit;-webkit-appearance:none;appearance:none}
+#cr-mcam .mc-sec option{color:#111;background:#fff}
+#cr-mcam .mc-room{flex:none;font-weight:700;font-size:12px;font-family:inherit;color:#c9ced6;min-width:44px;text-align:right}
+#cr-mcam .mc-stage{flex:1;position:relative;overflow:hidden;background:#000}
+#cr-mcam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#cr-mcam .mc-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}
+#cr-mcam .mc-flash.on{opacity:.7;transition:none}
+#cr-mcam .mc-msg{position:absolute;left:16px;right:16px;top:40%;transform:translateY(-50%);text-align:center;font-weight:600;font-size:15px;font-family:inherit;line-height:1.45;color:#fff}
+#cr-mcam .mc-msg[hidden]{display:none}
+#cr-mcam .mc-msg button{margin-top:14px;min-height:48px;padding:0 20px;border-radius:12px;border:0;background:#c8202e;color:#fff;font-weight:800;font-size:15px;font-family:inherit}
+#cr-mcam .mc-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 14px 0;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+#cr-mcam .mc-strip[hidden]{display:none}
+#cr-mcam .mc-strip button{position:relative;flex:none;width:56px;height:56px;border-radius:8px;border:2px solid rgba(255,255,255,.7);padding:0;overflow:hidden;background:#222;cursor:pointer}
+#cr-mcam .mc-strip img{width:100%;height:100%;object-fit:cover;display:block}
+#cr-mcam .mc-strip b{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);font-weight:800;font-size:12px;line-height:20px;font-family:inherit;color:#fff}
+#cr-mcam .mc-bot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 22px;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+#cr-mcam .mc-stack{position:relative;width:60px;height:60px;border-radius:10px;border:2px solid #fff;padding:0;background:#222;overflow:visible;cursor:pointer;flex:none}
+#cr-mcam .mc-stack img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block}
+#cr-mcam .mc-stack img[hidden]{display:none}
+#cr-mcam .mc-stack b{position:absolute;right:-9px;top:-9px;min-width:26px;height:26px;padding:0 6px;box-sizing:border-box;border-radius:13px;background:#c8202e;color:#fff;font-weight:800;font-size:13px;line-height:26px;font-family:inherit;text-align:center}
+#cr-mcam .mc-shut{width:80px;height:80px;border-radius:50%;border:5px solid #fff;background:transparent;padding:0;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center}
+#cr-mcam .mc-shut span{display:block;width:62px;height:62px;border-radius:50%;background:#fff;transition:transform .08s}
+#cr-mcam .mc-shut:active span{transform:scale(.9)}
+#cr-mcam .mc-shut:disabled{opacity:.35}
+#cr-mcam .mc-up{min-width:104px;min-height:52px;padding:0 16px;border-radius:12px;border:0;background:#c8202e;color:#fff;font-weight:800;font-size:15px;font-family:inherit;cursor:pointer;flex:none}
+#cr-mcam .mc-up:disabled{background:#3a3a3a;color:#9a9a9a}
+</style>
+<script id="cr-mcam-script">
+/* =========================================================================
+   1229 - CardinalMultiCam: take several photos, then upload them once.
+   Theo, 4 Oct: "when taking photos within job profile and the camera is out,
+   you can take multiples instead of one then upload ... Need to take several
+   then upload." A file input with capture="environment" returns ONE photo
+   and closes the camera, so this opens the camera inside the app with
+   getUserMedia and keeps it open.
+   - Shots are held in memory as JPEG blobs until Upload. Nothing is sent
+     until then; closing asks before throwing photos away.
+   - Upload goes through the album's own pipeline, addGalleryFiles(), with
+     the chosen section on every photo - same resize, same EXIF drop, same
+     50-photo cap, same storage path.
+   - It belongs to the client it was opened on. If currentProject has changed
+     underneath it (a back gesture), Upload refuses and keeps the photos.
+   - The camera is stopped on close and whenever the app is backgrounded,
+     and restarted when it comes back.
+   ========================================================================= */
+(function(){
+'use strict';
+var SECTIONS = ['Inspection', 'Post-Inspection', 'Before', 'After', 'General'];
+var root = null, video = null, stream = null, shots = [], forPid = null, isOpen = false, stripOn = false;
+function mcQ(sel){ return root ? root.querySelector(sel) : null; }
+function mcSupported(){
+  return !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function' &&
+            window.isSecureContext !== false && typeof HTMLCanvasElement !== 'undefined');
+}
+function mcRoom(){
+  var max = window.GAL_MAX || 50;
+  var have = Array.isArray(window.currentPhotos) ? window.currentPhotos.length : 0;
+  return Math.max(0, max - have - shots.length);
+}
+function mcBuild(){
+  if(root) return root;
+  root = document.createElement('div');
+  root.id = 'cr-mcam';
+  root.setAttribute('role', 'dialog');
+  root.setAttribute('aria-modal', 'true');
+  root.setAttribute('aria-label', 'Camera');
+  root.innerHTML =
+    '<div class="mc-top">' +
+      '<button class="mc-x" type="button" data-mc="close" aria-label="Close camera">\u2715</button>' +
+      '<select class="mc-sec" aria-label="Section for these photos">' +
+        SECTIONS.map(function(s){ return '<option value="' + s + '">Section: ' + s + ' \u25BE</option>'; }).join('') +
+      '</select>' +
+      '<span class="mc-room" aria-live="polite"></span>' +
+    '</div>' +
+    '<div class="mc-stage"><video playsinline muted autoplay></video>' +
+      '<div class="mc-flash"></div><div class="mc-msg" hidden></div></div>' +
+    '<div class="mc-strip" hidden></div>' +
+    '<div class="mc-bot">' +
+      '<button class="mc-stack" type="button" data-mc="strip" aria-label="Photos taken - tap to review"><img alt="" hidden><b>0</b></button>' +
+      '<button class="mc-shut" type="button" data-mc="shoot" aria-label="Take photo"><span></span></button>' +
+      '<button class="mc-up" type="button" data-mc="upload" disabled>Upload</button>' +
+    '</div>';
+  document.body.appendChild(root);
+  video = mcQ('video');
+  root.addEventListener('click', mcOnClick);
+  return root;
+}
+function mcMsg(text, withNative){
+  var m = mcQ('.mc-msg');
+  if(!m) return;
+  if(!text){ m.hidden = true; m.innerHTML = ''; return; }
+  m.hidden = false;
+  m.textContent = text;
+  if(withNative){
+    var b = document.createElement('button');
+    b.type = 'button'; b.setAttribute('data-mc', 'native');
+    b.textContent = 'Use the phone camera instead';
+    m.appendChild(document.createElement('br'));
+    m.appendChild(b);
+  }
+}
+function mcPaint(){
+  var n = shots.length, r = mcRoom();
+  var st = mcQ('.mc-stack b'); if(st) st.textContent = String(n);
+  var im = /** @type {HTMLImageElement} */ (mcQ('.mc-stack img'));
+  if(im){ if(n){ im.src = shots[n - 1].url; im.hidden = false; } else { im.removeAttribute('src'); im.hidden = true; } }
+  var up = /** @type {HTMLButtonElement} */ (mcQ('.mc-up'));
+  if(up){ up.disabled = !n; up.textContent = n ? 'Upload ' + n : 'Upload'; }
+  var sh = /** @type {HTMLButtonElement} */ (mcQ('.mc-shut'));
+  if(sh) sh.disabled = !stream || r <= 0;
+  var rm = mcQ('.mc-room'); if(rm) rm.textContent = r <= 5 ? (r ? r + ' left' : 'Album full') : '';
+  var strip = mcQ('.mc-strip');
+  if(strip){
+    strip.hidden = !(stripOn && n);
+    strip.innerHTML = stripOn ? shots.map(function(s, i){
+      return '<button type="button" data-mc="drop" data-i="' + i + '" aria-label="Remove photo ' + (i + 1) + '"><img alt="" src="' + s.url + '"><b>\u2715</b></button>';
+    }).join('') : '';
+  }
+}
+function mcStop(){
+  if(stream){ try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(_){} }
+  stream = null;
+  if(video) try{ video.srcObject = null; }catch(_){}
+}
+async function mcStart(){
+  mcStop();
+  mcMsg('Starting the camera\u2026');
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ audio:false,
+      video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1920 }, height:{ ideal:1440 } } });
+  }catch(e){
+    stream = null;
+    var denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+    mcMsg(denied ? 'The app is not allowed to use the camera. Allow it in the phone\u2019s settings, or use the phone camera (one photo at a time).'
+               : 'The camera would not mcStart (' + ((e && (e.name || e.message)) || 'unknown') + ').', true);
+    mcPaint();
+    return;
+  }
+  if(!isOpen){ mcStop(); return; }
+  video.srcObject = stream;
+  try{ await video.play(); }catch(_){}
+  mcMsg('');
+  mcPaint();
+}
+function mcShoot(){
+  if(!stream || !video || mcRoom() <= 0) return;
+  var w = video.videoWidth, h = video.videoHeight;
+  if(!w || !h) return;
+  var c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(video, 0, 0, w, h);
+  var fl = mcQ('.mc-flash');
+  if(fl){ fl.classList.add('on'); setTimeout(function(){ fl.classList.remove('on'); }, 60); }
+  c.toBlob(function(blob){
+    if(!blob || !isOpen) return;
+    shots.push({ blob: blob, url: URL.createObjectURL(blob) });
+    mcPaint();
+  }, 'image/jpeg', 0.9);
+}
+function mcDiscard(){
+  shots.forEach(function(s){ try{ URL.revokeObjectURL(s.url); }catch(_){} });
+  shots = [];
+}
+function mcHide(){
+  isOpen = false; stripOn = false;
+  mcStop();
+  if(root) root.classList.remove('open');
+}
+async function mcClose(){
+  if(shots.length){
+    var ask = typeof window.crAsk === 'function' ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+    if(!await ask('Throw away the ' + shots.length + ' photo' + (shots.length === 1 ? '' : 's') + ' you took? They have not been uploaded.')) return;
+  }
+  mcDiscard();
+  mcHide();
+}
+async function mcUpload(){
+  if(!shots.length) return;
+  var cp = window.currentProject;
+  if(!cp || String(cp.id) !== String(forPid)){
+    mcMsg('This camera was opened on a different client. Go back to that client\u2019s album to upload \u2014 your photos are kept.');
+    return;
+  }
+  if(typeof window.addGalleryFiles !== 'function'){ mcMsg('The album is not ready \u2014 reload the app. Your photos are kept.'); return; }
+  var sec = /** @type {HTMLSelectElement} */ (mcQ('.mc-sec')).value || 'Inspection';
+  var stamp = Date.now();
+  var files = shots.map(function(s, i){ return new File([s.blob], 'camera-' + stamp + '-' + (i + 1) + '.jpg', { type:'image/jpeg' }); });
+  var metas = files.map(function(){ return { section: sec }; });
+  var held = shots;
+  shots = [];
+  mcHide();
+  try{ await window.addGalleryFiles(files, metas); }
+  finally{ held.forEach(function(s){ try{ URL.revokeObjectURL(s.url); }catch(_){} }); }
+}
+function mcOnClick(e){
+  var t = e.target;
+  var b = t && t.closest && t.closest('[data-mc]');
+  if(!b) return;
+  var k = b.getAttribute('data-mc');
+  if(k === 'close') return mcClose();
+  if(k === 'shoot') return mcShoot();
+  if(k === 'upload') return mcUpload();
+  if(k === 'strip'){ stripOn = !stripOn; return mcPaint(); }
+  if(k === 'drop'){
+    var i = parseInt(b.getAttribute('data-i'), 10);
+    if(shots[i]){ try{ URL.revokeObjectURL(shots[i].url); }catch(_){} shots.splice(i, 1); }
+    return mcPaint();
+  }
+  if(k === 'native'){
+    mcDiscard(); mcHide();
+    var inp = document.getElementById('galCamInput');
+    if(inp) inp.click();
+  }
+}
+function mcOpen(){
+  if(!window.currentProject) return;
+  mcBuild();
+  if(!isOpen || String(forPid) !== String(window.currentProject.id)){
+    if(String(forPid) !== String(window.currentProject.id)) mcDiscard();
+    forPid = window.currentProject.id;
+  }
+  isOpen = true;
+  root.classList.add('open');
+  mcPaint();
+  mcStart();
+}
+document.addEventListener('visibilitychange', function(){
+  if(!isOpen) return;
+  if(document.hidden) mcStop(); else mcStart();
+});
+window.addEventListener('pagehide', function(){ mcStop(); });
+window.CardinalMultiCam = Object.assign(window.CardinalMultiCam || {}, {
+  open: mcOpen, supported: mcSupported,
+  _state: function(){ return { open: isOpen, shots: shots.length, pid: forPid, live: !!stream }; }
+});
 })();
 </script>
 

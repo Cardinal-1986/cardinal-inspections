@@ -44,7 +44,8 @@ const TARGETS = [
      the thing under test. It is the same wrong-element fault the header warns
      about, committed inside the gate written to prevent it. */
   { key: 'paetabs',   sel: '#cr-pae-tabs button:not(.active)',           what: "the photo editor's tab strip" },
-  { key: 'paecount',  sel: '#cr-pae-tabs button.active .count',          what: "the photo editor's count badge" },
+  /* 1229: the chips became one dropdown; the count that is on screen is its own */
+  { key: 'paecount',  sel: '#cr-pae-tabs .pae-dd .count',                what: "the album dropdown's count badge" },
   { key: 'lilcount',  sel: '.cr-lil-tabs button.active .count',        what: "the open tab's count badge" },
   { key: 'nodesc',    text: 'no description',                          what: 'the no-description placeholder' },
   { key: 'convertins',sel: '.convertins .cvtxt small',                 what: 'the Convert to Insurance caption' },

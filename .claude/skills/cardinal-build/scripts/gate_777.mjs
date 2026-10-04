@@ -116,10 +116,15 @@ ok('the From CompanyCam button exists on the album', !!s1.btnExists);
 /* 789 folded the CompanyCam entry into the + Add photos button: #galCcBtn is
    deliberately never shown (the panel wiring still hangs off it), and the
    plus opens the picker for an admin, the device picker for everyone else. */
-ok('an admin’s + button opens the CompanyCam picker (789)', await page.evaluate(() => {
+/* 1229: the + became "Add from phone" for everyone; an admin's way in to
+   this picker is the CompanyCam card's copy button. #galCcBtn stays retired. */
+ok('an admin opens the CompanyCam picker from the CompanyCam card (1229)', await page.evaluate(async () => {
   const g = id => document.getElementById(id);
   if (g('galCcBtn').style.display !== 'none') return false;   /* the old button must stay retired */
-  g('galAddBtn').click();
+  if (typeof galJobLoad === 'function') { await galJobLoad(); }
+  const b = document.querySelector('#galJobCc [data-gjc="copy"]');
+  if (!b) return false;
+  b.click();
   const opened = g('galCcPanel') && g('galCcPanel').style.display !== 'none';
   if (typeof galCcClose === 'function') galCcClose();
   return !!opened;
@@ -129,21 +134,20 @@ ok('the panel sits above the photo grid', !!s1.panelBeforeGrid);
 
 /* Every probe below must REPORT on an artifact that lacks the feature —
    the negative control run has to go red, never crash. */
-const s2 = await page.evaluate(() => {
+const s2 = await page.evaluate(async () => {
   const g = id => document.getElementById(id);
   const real = window.currentUser;
   window.currentUser = { email: 'nick@cardinalrenovations.net' };
   openGalleryMode('all');
-  g('galAddBtn').click();
-  const hiddenForRep = !!(g('galCcPanel') && g('galCcPanel').style.display === 'none');
+  if (typeof galJobLoad === 'function') await galJobLoad();
+  const hiddenForRep = !document.querySelector('#galJobCc [data-gjc="copy"]');
   window.currentUser = real;
   openGalleryMode('all');
-  g('galAddBtn').click();
-  const backForAdmin = !!(g('galCcPanel') && g('galCcPanel').style.display !== 'none');
-  if (typeof galCcClose === 'function') galCcClose();
+  if (typeof galJobLoad === 'function') await galJobLoad();
+  const backForAdmin = !!document.querySelector('#galJobCc [data-gjc="copy"]');
   return { hiddenForRep, backForAdmin };
 });
-ok('a rep’s + does NOT open the picker (server 403s them anyway)', !!s2.hiddenForRep);
+ok('a rep gets no CompanyCam copy button (server 403s them anyway)', !!s2.hiddenForRep);
 ok('the admin gets it back on the next open', !!s2.backForAdmin);
 
 console.log('\n--- 2. open seeds the address and searches ---');

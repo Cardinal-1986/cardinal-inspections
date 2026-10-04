@@ -107,8 +107,10 @@ const admClick = await A.page.evaluate(async () => {
   const p = document.getElementById('galCcPanel');
   return { ccOpen: !!(p && p.style.display !== 'none'), filePickerOpened };
 });
-ok('the plus opens the CompanyCam panel', admClick.ccOpen, JSON.stringify(admClick));
-ok('and does NOT open the device picker', admClick.filePickerOpened === false);
+/* 1229: the plus is "Add from phone" for everyone now; an admin copies
+   CompanyCam photos in from the CompanyCam card (gate_1229 E). */
+ok('the plus opens the device picker (1229)', admClick.filePickerOpened === true, JSON.stringify(admClick));
+ok('and does NOT open the CompanyCam panel', admClick.ccOpen === false);
 
 console.log('\n--- D/E. the selection bar carries the actions ---');
 const bar = await A.page.evaluate(async () => {
@@ -121,7 +123,7 @@ const bar = await A.page.evaluate(async () => {
   return {
     shown: !!(b && b.classList.contains('show')),
     hasToInsp: !!(b && b.querySelector('[data-act="to-insp"]')),
-    xferInBar: !!(xw && b && xw.parentElement === b),
+    xferInBar: !!(xw && b && b.contains(xw)),
     xferVisible: !!(xw && getComputedStyle(xw).display !== 'none'),
     text: (b ? b.textContent : '').replace(/\s+/g, ' ').trim().slice(0, 90)
   };
@@ -147,7 +149,8 @@ const tile = await A.page.evaluate(() => ({
 }));
 ok('no AI caption badge on any tile', tile.ai === 0, JSON.stringify(tile));
 ok('the tiles themselves still render', tile.tiles >= 1, JSON.stringify(tile));
-ok('delete is still on the tile', tile.del >= 1);
+/* 1229: delete moved off the tile into the Select bar (gate_1229 D) */
+ok('delete is off the tile', tile.del === 0);
 await A.browser.close();
 
 console.log('\n--- C. as a REP (not an admin) ---');
@@ -167,8 +170,8 @@ ok('a rep\'s plus opens THEIR DEVICE, not CompanyCam', repClick.filePickerOpened
 await R.browser.close();
 
 console.log('\n--- source ---');
-ok('CompanyCam stays admin-gated', /isAdminUser\(\) && galMode !== 'insp'/.test(APP_HTML));
-ok('the transfer wrap is moved, not hidden', /actionBar\.appendChild\(paeXferNode\)/.test(APP_HTML));
+ok('CompanyCam copy stays admin-gated', /function gjcCopy\(\)\{\s*var adm = \(typeof isAdminUser === 'function'\) && isAdminUser\(\);/.test(APP_HTML));
+ok('the transfer wrap is moved, not hidden', /paeActs\.insertBefore\(paeXferNode/.test(APP_HTML));
 ok('the buttons still exist for the bar to drive',
   /id="galInspBtn"/.test(APP_HTML) && /id="galXferBtn"/.test(APP_HTML));
 
