@@ -92,15 +92,14 @@ for (const theme of ['dark', 'rb-light']) {
   await p.close();
 }
 
-/* D: desktop untouched */
+/* D: desktop — 1225 left it untouched; 1227 (Theo's pick) gave it its own
+   order and the Admin fold, asserted in gate_1227. What 1225 still owns on
+   desktop: the map is never folded there. */
 console.log('\n── dark @1440 ' + '─'.repeat(38));
 {
   const p = await open(artifact, 'dark', 1440);
   const r = await p.evaluate(PROBE);
-  ok(r.tog === null, 'desktop — no Admin row', String(r.tog));
-  ok(r.conv && r.sol, 'desktop — Convert to Insurance and Scope of Loss are visible as before', `convert ${r.conv} · sol ${r.sol}`);
-  ok(r.map, 'desktop — the map is open as before');
-  ok(r.loc !== null && r.jm !== null && r.loc < r.jm, 'desktop — Location still sits above the Job Menu (plain flow)', r.loc + ' < ' + r.jm);
+  ok(r.map, 'desktop — the map is open (the phone fold never applies above 560px)');
   await p.close();
 }
 

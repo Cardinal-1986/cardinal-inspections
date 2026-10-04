@@ -312,7 +312,10 @@ ok('no band on the desktop', dm.band === false);
 /* 799 hides #crPortalChip everywhere — the chip is no longer part of this check. */
 ok('the old card and Overview dropdown are still there (chip retired at 799)',
   dm.oldCard && dm.overview, JSON.stringify(dm));
-ok('#acxMount is still a plain block (no reorder)', dm.mountDisplay === 'block', dm.mountDisplay);
+/* 1227: Theo gave the desktop its own order (Job Menu after the money band),
+   so #acxMount is a flex column there now — gate_1227 owns that layout. What
+   794 still owns on desktop: no phone band, the old card stays. */
+ok('#acxMount is the 1227 desktop order (flex), not the phone stack', dm.mountDisplay === 'flex', dm.mountDisplay);
 if (PREV) {
   const P2 = await boot(readFileSync(PREV, 'utf8'), 1280, 'retail');
   await open(P2.page, 'p-1');

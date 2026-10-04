@@ -33653,3 +33653,51 @@ before calling `renderKpHomeRow()`. That was the gate's fault, not the app's.
 **Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN · `gate_1226` 10/10,
 RED 6 on 1225 · `gate_1220`, `gate_1225`, `gate_1206` GREEN · `gate_stack` CLEAN.
 
+**Sentinel on 1226 (both themes, `--since` 1225): CLEAN.** Merged as #611 on Theo's "merge".
+
+## Build 1227 — the desktop client profile, Job Menu first
+
+Theo: **"Do the desktop fix then B"**, from a rendered before/after. See `FEATURES.md` "Build 1227".
+
+**The preview had a mistake of mine, caught before he saw it:** the first render dropped Job Value and
+Payment Information to the bottom of the page, because on desktop they live inside `#acxMount`. A second
+render put them above the stage bar at half width. The third kept 923's band exactly. Lesson: on desktop,
+the band IS the top of the reorder. Read the "before" picture first.
+
+**Why a grid and not a DOM move:** CSS columns ignore `order`. The preview moved nodes, which is fine
+in a throwaway render and not fine in the app, where several modules insert those nodes late or
+re-place them.
+
+**Gates changed, with reasons:** `gate_794`'s desktop "plain block" assertion and `gate_1225`'s
+"desktop untouched" section both encoded the decision Theo has just reversed.
+
+**Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN · `gate_1227` 40/40,
+RED on 1226 · `gate_1225` (updated), `gate_794` (updated), `gate_797`, `gate_1209`, `gate_1053`,
+`gate_1206`, `gate_1224`, `gate_1081`, `gate_a11y` GREEN · `gate_stack` CLEAN.
+
+**Sentinel on 1227 (phone + desktop dark, desktop light, `--since` 1226): CLEAN.**
+
+## Build 1228 — a client's CompanyCam job, in its Photo Album
+
+Theo: **"1c, 2a"**, scoped by him to "assigned or created the lead", then "1" from a preview. He sent a
+screenshot of the picker: **the Search button ran past the card**, the header and Cancel shared one
+line, and the job rows wrapped to four lines and repeated the address. All fixed before commit, and
+`gate_1228` B now asserts "nothing past the card edge".
+
+**Held off the branch until approved:** the route was written while PR #612 (1227) was open. It stayed
+in the scratchpad, so an unapproved feature never rode along in an approved PR. The stop hook flagged it
+as untracked, and it was moved out rather than committed.
+
+**My mistakes, caught by the gates:**
+1. **The Link and Change buttons were 40px** (the app's `.btn`). `gate_1228` A caught it; `.gjc .btn{min-height:44px}`.
+2. **Six new type warnings**: an `Error` with a made-up `status`, `.disabled` / `.value` on generic
+   elements, and `isNaN(Date)`. Then two more from the app's own `e.target.closest` idiom, which I
+   **cast** rather than rebaseline. `gate_types` is back to baseline.
+3. **The preview browser could not load CompanyCam images** (Chromium here does not use the agent
+   proxy). The thumbnails were fetched with curl and served to it locally. That is a preview limitation,
+   not an app one.
+
+**Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` GREEN · `gate_1228` 40/40, RED
+on 1227 · `test_companycam_job` 10/10 · `gate_1227`, `gate_1225`, `gate_1222`, `gate_1221`,
+`gate_1206`, `gate_1053`, `gate_1081`, `gate_a11y` GREEN · `gate_stack` CLEAN · api parses, no CommonJS.
+
