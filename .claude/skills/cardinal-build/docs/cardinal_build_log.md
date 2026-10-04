@@ -33766,3 +33766,23 @@ one from a `color:inherit` I wrote at 1225. The audit page is corrected.
 also on 1229 · `gate_1229`, `gate_1228`, `gate_1206`, `gate_1081`, `gate_a11y`, `gate_1213`, `gate_1215`,
 `gate_1178`, `gate_745` GREEN · `harness_657`/`665` fail identically on 1229 · `gate_stack` CLEAN (one
 declared `--cr-stack`).
+
+## Build 1231 — light mode reaches every screen
+
+Theo: **"Follow the settings,"** then **"Merge then 1."** Storm Data, Labor Rate Schedule, Why Cardinal,
+The Appointment, the estimate builder's bars and the Line Item Library now follow Appearance → Light.
+Full write-up in FEATURES "Build 1231". **The Labor Rate Schedule's 28 Aug "dark mode only" is retired
+on that "1"**: the setting governs it now.
+
+**The sentinel's `--since` diff is flaky, so verify what it flags.** On 1230 it reported "new" failures.
+Compared by computed value on both builds, all of them were identical. Treat a `--since` hit as a
+lead. Compare against the previous build before calling it a regression.
+
+**Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17) GREEN.
+`gate_1231` passes 20/20 and fails 8 on 1230. Dark mode is pixel-identical on all six screens.
+GREEN: `gate_1230`, `gate_1229`, `gate_1206`, `gate_1081`, `gate_a11y`, `gate_1138`, `gate_1190`,
+`gate_1197`, `gate_1205`, `gate_1211`, `harness_lrs1123`. `gate_stack` is CLEAN.
+These give identical results on 1230 and on 1231: `gate_1188` (37/5), `gate_1068` (its rvflip/convertins
+coverage floor), and `gate_1116`/`1187`/`harness_lrs1110` (environment: no playwright module, no showroom
+checkout, no jsdom). `gate_1123`, `1160`, `1161`, `1162`, `1191`, `1192`, `1194` and `1196` also match on
+both builds.

@@ -4064,7 +4064,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1230<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1231<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43422,6 +43422,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1231, d: '2026-10-04', t: 'Light mode reaches every screen',
+    s: 'When the app is set to <b>Light</b>, six screens that stayed dark now follow it: <b>Storm Data</b>, the <b>Labor Rate Schedule</b>, <b>Why Cardinal</b>, <b>The Appointment</b>, the estimate builder\'s top bar and Save / Publish bar, and the <b>Line Item Library</b>. The two you show a homeowner, Why Cardinal and The Appointment, use the same warm paper look as The Appointment\'s lit step. Labor Rates in light matches the printed sheet a crew gets. Photographs still open on a dark background. Dark mode is unchanged.' },
   { b: 1230, d: '2026-10-04', t: 'Polish, round one: the moon button, the cream band, money and small grey text',
     s: 'The light/dark button no longer floats in the corner on top of tiles, prices and tables. The switch is now in the menu, under Text size: <b>Appearance &#8212; Dark / Light</b>. It works the same on Retail, Insurance and Community. Short pages in dark mode no longer show a cream band at the bottom (it happened when the phone itself was set to light). Claim, estimate and pricing amounts keep their cents: <b>$18,922.10</b>, not $18,922.1. And a handful of small grey labels that were hard to read are darker or lighter, so they can be read.' },
   { b: 1229, d: '2026-10-04', t: 'Take several photos, then upload once \u2014 and a tidier Photo Album',
@@ -47355,11 +47357,17 @@ window.CardinalPO = { from: from, next: nextNumber, ensure: ensure };
 })();
 </script>
 
-<style id="cr-lil-styles">#cr-lil-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9400;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-lil-view.open{display:flex}.cr-lil-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-head h2{margin:0;flex:1;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.02em}.cr-lil-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;min-height:44px;padding:6px 12px;border-radius:var(--btn-rad,12px);font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-lil-head button:hover{background:rgba(200,32,46,.14)}.cr-lil-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-lil-head button.primary:hover{background:#B01F21}.cr-lil-search{padding:10px 16px;background:#fdfcf7;border-bottom:1px solid #e8dfc8;flex:0 0 auto}.cr-lil-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;font-family:inherit}.cr-lil-search input:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-tabs{padding:0 12px 12px;background:#fdfcf7;display:flex;gap:6px;flex-wrap:wrap;flex:0 0 auto;border-bottom:1px solid #e8dfc8;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-lil-tabs::-webkit-scrollbar{display:none}.cr-lil-tabs button{background:#f0e8d0;color:#575757;/* 1197: the old ink read 4.35:1 on this wash; this one is 5.90:1 */border:0;padding:8px 14px;border-radius:8px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}.cr-lil-tabs button.active{background:#c8202e;color:#fff}.cr-lil-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:11px}/* 1068: near-black on a darkened wash over #c8202e (light) or #3b3b41
+<style id="cr-lil-styles">#cr-lil-view{display:none;position:fixed;inset:0;background:#ffffff;color:#2c2c2c;z-index:9400;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-lil-view.open{display:flex}.cr-lil-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-head h2{margin:0;flex:1;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.02em}.cr-lil-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;min-height:44px;padding:6px 12px;border-radius:var(--btn-rad,12px);font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-lil-head button:hover{background:rgba(200,32,46,.14)}.cr-lil-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-lil-head button.primary:hover{background:#B01F21}.cr-lil-search{padding:10px 16px;background:#ffffff;border-bottom:1px solid #E2E8F0;flex:0 0 auto}.cr-lil-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #CBD5E1;border-radius:22px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;font-family:inherit}.cr-lil-search input:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-tabs{padding:0 12px 12px;background:#ffffff;display:flex;gap:6px;flex-wrap:wrap;flex:0 0 auto;border-bottom:1px solid #E2E8F0;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-lil-tabs::-webkit-scrollbar{display:none}.cr-lil-tabs button{background:#F1F5F9;color:#334155;/* 1197: the old ink read 4.35:1 on this wash; this one is 5.90:1 */border:0;padding:8px 14px;border-radius:8px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}.cr-lil-tabs button.active{background:#c8202e;color:#fff}.cr-lil-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:11px}/* 1068: near-black on a darkened wash over #c8202e (light) or #3b3b41
    (dark) — 2.14:1 and 1.56:1. Its own parent .cr-lil-tabs button.active is
    already color:#fff; the badge simply never followed. */
 .cr-lil-tabs button.active .count{background:rgba(0,0,0,.22);color:#ffffff}.cr-lil-list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;background:#fff}
-body.standalone .cr-lil-list{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* the Line Item Library list */.cr-lil-row{padding:14px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}.cr-lil-row:hover{background:#f4f2f1}.cr-lil-row .top{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}.cr-lil-row .name{flex:1;font:800 14.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis}.cr-lil-row .price{flex:0 0 auto;font:800 14px 'Segoe UI',Arial,sans-serif;color:#8f1620;white-space:nowrap}.cr-lil-row .desc{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.cr-lil-row .meta{margin-top:6px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;letter-spacing:.06em}.cr-lil-row .meta .cat{display:inline-block;padding:2px 8px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:10px;margin-right:6px;color:#8f1620;text-transform:uppercase}.cr-lil-row .meta .unit{color:#6b6b6b}.cr-lil-empty{padding:40px 20px;text-align:center;color:#6b6b6b;font:600 13.5px 'Segoe UI',Arial,sans-serif}.cr-lil-empty small{display:block;margin-top:8px;font-weight:400;color:#a89e88}.cr-lil-editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9410;justify-content:center;align-items:center;padding:20px;padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}.cr-lil-editor.open{display:flex}.cr-lil-editor .box{background:#fdfcf7;border-radius:12px;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}.cr-lil-editor .box-head{padding:14px 18px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-editor .box-head h3{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;color:#2c2c2c}.cr-lil-editor .box-head button{background:transparent;border:0;cursor:pointer;font-size:22px;line-height:1;color:#6b6b6b;padding:2px 6px}.cr-lil-editor .box-body{padding:16px 18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}.cr-lil-editor label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-lil-editor label:first-child{margin-top:0}.cr-lil-editor input[type=text],.cr-lil-editor input[type=number],.cr-lil-editor select,.cr-lil-editor textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}.cr-lil-editor input:focus,.cr-lil-editor select:focus,.cr-lil-editor textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-editor textarea{min-height:120px;resize:vertical;line-height:1.5;font-size:13.5px}.cr-lil-editor .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.cr-lil-editor .box-foot{padding:12px 18px;background:#f4f2f1;border-top:1px solid #e8d9a8;display:flex;gap:8px;justify-content:space-between;flex:0 0 auto}.cr-lil-editor .box-foot .right{display:flex;gap:8px}.cr-lil-editor .box-foot button{padding:9px 16px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;font-family:inherit;border:0}.cr-lil-editor .box-foot .cancel{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}.cr-lil-editor .box-foot .save{background:#c8202e;color:#fff}.cr-lil-editor .box-foot .save:hover{background:#B01F21}.cr-lil-editor .box-foot .save:disabled{opacity:.5;cursor:wait}.cr-lil-editor .box-foot .delete{background:transparent;color:var(--red-dk);border:1px solid #e8b8ba}.cr-lil-editor .box-foot .delete:hover{background:#fdecec}.cr-lil-locked{padding:40px 24px;text-align:center}.cr-lil-locked h3{font:800 15px Georgia,serif;color:#2c2c2c;margin:0 0 8px}.cr-lil-locked p{font:400 13px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin:0}</style>
+body.standalone .cr-lil-list{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* the Line Item Library list */.cr-lil-row{padding:14px 16px;border-bottom:1px solid #E2E8F0;cursor:pointer;transition:background .1s}.cr-lil-row:hover{background:#f4f2f1}.cr-lil-row .top{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}.cr-lil-row .name{flex:1;font:800 14.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis}.cr-lil-row .price{flex:0 0 auto;font:800 14px 'Segoe UI',Arial,sans-serif;color:#8f1620;white-space:nowrap}.cr-lil-row .desc{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.cr-lil-row .meta{margin-top:6px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;letter-spacing:.06em}.cr-lil-row .meta .cat{display:inline-block;padding:2px 8px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:10px;margin-right:6px;color:#8f1620;text-transform:uppercase}.cr-lil-row .meta .unit{color:#6b6b6b}.cr-lil-empty{padding:40px 20px;text-align:center;color:#6b6b6b;font:600 13.5px 'Segoe UI',Arial,sans-serif}.cr-lil-empty small{display:block;margin-top:8px;font-weight:400;color:#a89e88}.cr-lil-editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9410;justify-content:center;align-items:center;padding:20px;padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}.cr-lil-editor.open{display:flex}.cr-lil-editor .box{background:#fdfcf7;border-radius:12px;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}.cr-lil-editor .box-head{padding:14px 18px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-editor .box-head h3{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;color:#2c2c2c}.cr-lil-editor .box-head button{background:transparent;border:0;cursor:pointer;font-size:22px;line-height:1;color:#6b6b6b;padding:2px 6px}.cr-lil-editor .box-body{padding:16px 18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}.cr-lil-editor label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-lil-editor label:first-child{margin-top:0}.cr-lil-editor input[type=text],.cr-lil-editor input[type=number],.cr-lil-editor select,.cr-lil-editor textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}.cr-lil-editor input:focus,.cr-lil-editor select:focus,.cr-lil-editor textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-editor textarea{min-height:120px;resize:vertical;line-height:1.5;font-size:13.5px}.cr-lil-editor .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.cr-lil-editor .box-foot{padding:12px 18px;background:#f4f2f1;border-top:1px solid #e8d9a8;display:flex;gap:8px;justify-content:space-between;flex:0 0 auto}.cr-lil-editor .box-foot .right{display:flex;gap:8px}.cr-lil-editor .box-foot button{padding:9px 16px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;font-family:inherit;border:0}.cr-lil-editor .box-foot .cancel{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}.cr-lil-editor .box-foot .save{background:#c8202e;color:#fff}.cr-lil-editor .box-foot .save:hover{background:#B01F21}.cr-lil-editor .box-foot .save:disabled{opacity:.5;cursor:wait}.cr-lil-editor .box-foot .delete{background:transparent;color:var(--red-dk);border:1px solid #e8b8ba}.cr-lil-editor .box-foot .delete:hover{background:#fdecec}.cr-lil-locked{padding:40px 24px;text-align:center}.cr-lil-locked h3{font:800 15px Georgia,serif;color:#2c2c2c;margin:0 0 8px}.cr-lil-locked p{font:400 13px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin:0}
+/* 1231: light mode follows the setting here too (Theo, 4 Oct: "Follow the settings"). */
+:root[data-theme="rb-light"] .cr-lil-head{background:#ffffff;color:#161616;border-bottom:1px solid #E2E8F0;}
+:root[data-theme="rb-light"] .cr-lil-head button{border-color:rgba(200,32,46,.45);color:#8f1620;}
+:root[data-theme="rb-light"] .cr-lil-head button:hover{background:rgba(200,32,46,.08);}
+:root[data-theme="rb-light"] .cr-lil-head button.primary{color:#ffffff;}
+</style>
 <style id="cr-lil-dark">
 /* 881: the Line Item Library shipped light-only — a cream full-screen page in an
    otherwise dark app (Theo: "only has a light mode"). Its header was already dark;
@@ -49355,7 +49363,19 @@ body.standalone #cr-est-picker .box-list{padding-bottom:calc(88px + env(safe-are
    on #cr-epub-btn or that same button. querySelector finds a display:none
    node; it does not find a deleted one. Delete either and the header silently
    loses Preview, Options, Publish AND → Contract. */
-#cr-est-view .cr-est-head [data-act="save"],#cr-est-view .cr-est-head #cr-epub-btn{display:none}}</style>
+#cr-est-view .cr-est-head [data-act="save"],#cr-est-view .cr-est-head #cr-epub-btn{display:none}}
+/* 1231: light mode follows the setting here too (Theo, 4 Oct: "Follow the settings"). */
+:root[data-theme="rb-light"] .cr-est-head{background:var(--estc-panel,#ffffff);color:var(--estc-ink,#2c2c2c);border-bottom:1px solid var(--estc-line,#E2E8F0);}
+:root[data-theme="rb-light"] .cr-est-head .estnum{color:#8f1620;}
+:root[data-theme="rb-light"] .cr-est-head button{border-color:rgba(200,32,46,.45);color:#8f1620;}
+:root[data-theme="rb-light"] .cr-est-head button:hover{background:rgba(200,32,46,.08);}
+:root[data-theme="rb-light"] .cr-est-head button.primary{color:#ffffff;}
+:root[data-theme="rb-light"] .cr-est-head button.danger{color:#475569;border-color:rgba(71,85,105,.4);}
+:root[data-theme="rb-light"] #cr-est-view .cr-est-phonebar{background:rgba(255,255,255,.95);border-top-color:var(--estc-line,#E2E8F0);}
+:root[data-theme="rb-light"] #cr-est-view .cr-est-phonebar button{color:#2c2c2c;}
+:root[data-theme="rb-light"] #cr-est-view .cr-est-phonebar button.primary{color:#ffffff;}
+:root[data-theme="rb-light"] #cr-epub-preview-btn,:root[data-theme="rb-light"] #cr-gbb-btn,:root[data-theme="rb-light"] #cr-e2c-btn{color:#8f1620;border-color:rgba(200,32,46,.45);}
+</style>
 <script id="cr-est-script">
 (function(){
 'use strict';
@@ -85035,6 +85055,15 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
 #cr-storm .stfoot{margin-top:26px;padding-top:14px;border-top:1px solid var(--st-line2,rgba(255,255,255,.06));
   color:var(--st-mute,#98a0aa);font-size:11.5px;line-height:1.55}
 @media (min-width:1100px){ body.cr-lnav-on #cr-storm{left:var(--lnav-w,0px)} }
+
+/* 1231: light mode follows the setting here too (Theo, 4 Oct: "Follow the settings"). */
+:root[data-theme="rb-light"] #cr-storm{
+  --st-bg:#f5f6f8; --st-card:#ffffff; --st-card2:#eef1f5; --st-ink:#161a20;
+  --st-mute:#5a6472; --st-mute2:#3d4652; --st-line:rgba(0,0,0,.12);
+  --st-line2:rgba(0,0,0,.07); --st-hail:#b3261e; --st-dmg:#8a5a00; --st-gust:#2f5f8f;
+}
+:root[data-theme="rb-light"] #cr-storm .stseg button.on{color:#ffffff}
+:root[data-theme="rb-light"] #cr-storm .stseg button:hover:not(.on){background:rgba(0,0,0,.05)}
 </style>
 <script id="cr-storm-script">
 /* 927: Storm Data — hail and wind reports near the yard, from api/storm.js.
@@ -86830,6 +86859,26 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   #cr-lrs-view .lrs-add, #cr-lrs-view .lrs-del{display:none !important;}
   @page{size:Letter; margin:.6in;}
 }
+
+/* 1231: light mode follows the setting here too (Theo, 4 Oct: "Follow the settings"). */
+/* Theo, 4 Oct, asked directly: "1" - Labor Rates follows the setting too, replacing
+   the 28 Aug "dark mode only". The light screen takes the print block's palette
+   (navy ink, gold rule, navy band), so the screen and the paper a crew gets match. */
+:root[data-theme="rb-light"] #cr-lrs-view{
+  --lrs-bg:#f5f6f8; --lrs-card:#ffffff; --lrs-edge:#dfe3e8; --lrs-top:#ffffff;
+  --lrs-navy:#1e2b4a; --lrs-gold:#8f6b00; --lrs-ink:#23303f; --lrs-dim:#5b6470; --lrs-blue:#2f5f8f;
+}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-tb{background:#ffffff; color:#23303f;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-tb:hover{border-color:#b8c0ca; color:#161616;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-tb.save{color:#ffffff;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-crew:hover{border-color:#b8c0ca; background:#f0f3f6;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-rule{background:#c9a227;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-band{color:#e8c14a;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-rate{color:#1e2b4a;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-ename input, :root[data-theme="rb-light"] #cr-lrs-view .lrs-erate input, :root[data-theme="rb-light"] #cr-lrs-view select{background:#ffffff;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-ename input::placeholder{color:#6b7380;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-del{background:rgba(200,32,46,.10); color:#a5121f;}
+:root[data-theme="rb-light"] #cr-lrs-view .lrs-mini{border-color:#b8c0ca;}
 </style>
 
 <div id="cr-lrs-view" style="display:none;" aria-hidden="true">
@@ -87926,6 +87975,31 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   #cr-why .why-wrap{padding:0 16px 56px;}
   #cr-why .why-l li,#cr-why .why-p{font-size:16px;}
 }
+
+/* 1231: light mode follows the setting here too (Theo, 4 Oct: "Follow the settings"). */
+/* Shown to the homeowner at the table. The light version uses the palette The
+   Appointment already had for its lit step (gs-lit): paper #F7F4EF, ink #211D19,
+   rules #E5DFD6 - so the two client pages read as one. */
+:root[data-theme="rb-light"] #cr-why{background:#F7F4EF;}
+:root[data-theme="rb-light"] #cr-why .why-top{background:#F7F4EF;}
+:root[data-theme="rb-light"] #cr-why .why-x{background:#ffffff;border-color:#D8D0C4;color:#211D19;}
+:root[data-theme="rb-light"] #cr-why .why-x:hover{background:#EFEAE3;}
+:root[data-theme="rb-light"] #cr-why .why-eyebrow{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-why .why-h{color:#211D19;}
+:root[data-theme="rb-light"] #cr-why .why-lede{color:#4A443D;}
+:root[data-theme="rb-light"] #cr-why .why-sec{border-top-color:rgba(33,29,25,.12);}
+:root[data-theme="rb-light"] #cr-why .why-k{color:#9E2B33;}
+:root[data-theme="rb-light"] #cr-why .why-l li{color:#3A352F;}
+:root[data-theme="rb-light"] #cr-why .why-l li b{color:#211D19;}
+:root[data-theme="rb-light"] #cr-why .why-p{color:#3A352F;}
+:root[data-theme="rb-light"] #cr-why .why-p b{color:#211D19;}
+:root[data-theme="rb-light"] #cr-why .why-note{background:#ffffff;border-color:#E5DFD6;color:#4A443D;}
+:root[data-theme="rb-light"] #cr-why .why-note b{color:#211D19;}
+:root[data-theme="rb-light"] #cr-why .why-wtab th,:root[data-theme="rb-light"] #cr-why .why-wtab td{border-bottom-color:rgba(33,29,25,.10);}
+:root[data-theme="rb-light"] #cr-why .why-wtab th{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-why .why-wtab td{color:#3A352F;}
+:root[data-theme="rb-light"] #cr-why .why-wtab td.tier{color:#211D19;}
+:root[data-theme="rb-light"] #cr-why .why-foot{border-top-color:rgba(33,29,25,.12);color:#6B6259;}
 </style>
 <script id="cr-why-script">
 (function(){
@@ -88306,6 +88380,63 @@ window.CardinalWhy = Object.assign(window.CardinalWhy || {}, {
   border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);box-sizing:border-box;
   font:600 12px/1.3 'Segoe UI',Arial,sans-serif;color:#8f9296;letter-spacing:.06em;text-transform:uppercase;}
 #cr-appt .wf-num b{font:700 22px/1 Georgia,'Times New Roman',serif;color:#f2f4f2;letter-spacing:0;}
+
+/* 1231: light mode follows the setting here too (Theo, 4 Oct: "Follow the settings"). */
+/* Every surface below takes the gs-lit palette the module already uses for its lit
+   step. The photo lightbox (.ap-light) and the finding marks on photographs stay
+   as they are: photographs are judged on dark. */
+:root[data-theme="rb-light"] #cr-appt{background:#F7F4EF;}
+:root[data-theme="rb-light"] #cr-appt .ap-eyebrow{color:#9E2B33;}
+:root[data-theme="rb-light"] #cr-appt .ap-h{color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .ap-sub{color:#4A443D;}
+:root[data-theme="rb-light"] #cr-appt .ap-search{border-color:#D8D0C4;background:#ffffff;color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .ap-search::placeholder{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .ap-job{background:#ffffff;border-color:#E5DFD6;}
+:root[data-theme="rb-light"] #cr-appt .ap-job:hover{border-color:#C9BFB2;}
+:root[data-theme="rb-light"] #cr-appt .ap-job .nm{color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .ap-job .st,:root[data-theme="rb-light"] #cr-appt .ap-job .go{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .ap-empty{background:#ffffff;border-color:#E5DFD6;color:#4A443D;}
+:root[data-theme="rb-light"] #cr-appt .ap-empty b{color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .ap-card{border-color:#E5DFD6;background:#ffffff;}
+:root[data-theme="rb-light"] #cr-appt .ap-card img{background:#EDE8E1;}
+:root[data-theme="rb-light"] #cr-appt .ap-card .tt{color:#4A443D;}
+:root[data-theme="rb-light"] #cr-appt .ap-btn{background:#ffffff;border-color:#D8D0C4;color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .ap-btn:hover{border-color:#A99E8F;}
+:root[data-theme="rb-light"] #cr-appt .ap-doc{border-color:#E5DFD6;}
+:root[data-theme="rb-light"] #cr-appt .ap-signed{color:#2F6B3A;}
+:root[data-theme="rb-light"] #cr-appt .gs-addr{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .gs-card{background:#ffffff;border-color:#E5DFD6;}
+:root[data-theme="rb-light"] #cr-appt .gs-card:hover{border-color:#C9BFB2;}
+:root[data-theme="rb-light"] #cr-appt .gs-card .gs-t{color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .gs-card .gs-d{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .gs-note{background:#ffffff;border-color:#E5DFD6;color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .gs-note::placeholder{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .wf-prov{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .wf-sec{border-top-color:rgba(33,29,25,.12);color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .wf-ph{border-color:#E5DFD6;background:#EDE8E1;}
+:root[data-theme="rb-light"] #cr-appt .wf-ph img{background:#EDE8E1;}
+:root[data-theme="rb-light"] #cr-appt .wf-noimg{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .wf-shot figcaption{color:#4A443D;}
+:root[data-theme="rb-light"] #cr-appt .wf-story{background:#ffffff;border-color:#E5DFD6;border-left-color:#D8D0C4;}
+:root[data-theme="rb-light"] #cr-appt .wf-story:hover{border-color:#C9BFB2;}
+:root[data-theme="rb-light"] #cr-appt .wf-story .wf-area{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .wf-story .wf-saw{color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt .wf-story .wf-means{color:#4A443D;}
+:root[data-theme="rb-light"] #cr-appt .wf-story.on{background:#ffffff;border-left-color:#c8202e;}
+:root[data-theme="rb-light"] #cr-appt .wf-good{background:#ffffff;border-color:#E5DFD6;}
+:root[data-theme="rb-light"] #cr-appt .wf-good span{color:#4A443D;}
+:root[data-theme="rb-light"] #cr-appt .wf-good span::after{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .wf-unread{color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .wf-num{background:#ffffff;border-color:#E5DFD6;color:#6B6259;}
+:root[data-theme="rb-light"] #cr-appt .wf-num b{color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt-rail{background:rgba(255,255,255,.96);border-color:#D8D0C4;box-shadow:0 10px 30px rgba(33,29,25,.16);}
+:root[data-theme="rb-light"] #cr-appt-rail .ar-nav{border-color:#D8D0C4;background:#ffffff;color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt-rail .ar-step{border-color:#E5DFD6;color:#4A443D;}
+:root[data-theme="rb-light"] #cr-appt-rail .ar-step.on{background:#c8202e;border-color:#c8202e;color:#ffffff;}
+:root[data-theme="rb-light"] #cr-appt-rail .ar-x{border-color:#D8D0C4;background:#ffffff;color:#4A443D;}
+:root[data-theme="rb-light"] #cr-appt-rail .ar-who,:root[data-theme="rb-light"] #cr-appt-rail .ar-count{color:#211D19;}
+:root[data-theme="rb-light"] #cr-appt-rail .ar-strip{scrollbar-color:rgba(33,29,25,.25) transparent;}
+:root[data-theme="rb-light"] #cr-appt-rail .ar-strip::-webkit-scrollbar-thumb{background:rgba(33,29,25,.25);}
 </style>
 <script id="cr-appt-script">
 (function(){
