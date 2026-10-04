@@ -8549,6 +8549,35 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1232 — dark pieces gone from light pages
+
+The 4 Oct audit's "dark-era pieces left on light pages" item, worked down. **Dark mode is
+byte-identical** on both screens, measured by comparing screenshots of 1231 and 1232.
+
+- **Claim Financials** (`cr-claims-styles`): in light mode the block is a white card with a hairline border, not
+  a black slab. Its money inks are this module's own light values, computed on white: approved green `#2A732E`,
+  depreciation amber `#8a5500`, deductible red `#B01F21`. Its labels are `#6b6b6b`. The **WAIVED** tag was an
+  inline `color:#7cd18d`, which no theme rule can reach; it is now `.cr-c-waived`, with the same values in dark.
+- **The client profile's claim strip** (`cr-insstage-script`) had the same inline WAIVED colour. It is now `.wv`,
+  using `var(--ct-do-ink,#7cd18d)`, so it follows the insurance palette like the rest of the strip.
+- **Crew Dispatch** (`#cr-disp`): its five heavy drop shadows became tokens, and the dog-tag edge did too.
+  The tokens are `--disp-sh-tray`, `--disp-sh-strip`, `--disp-tsh`, `--disp-sh-tag`, `--disp-sh-mag` and `--disp-tagline`.
+  Each fallback is the exact value that shipped, so dark mode cannot move. The light token block sets a soft lift
+  and a `#cdd2d9` tag edge.
+
+**Checked and left alone, on purpose:**
+- **The Leads call, text and email buttons** are grey raised boxes with white glyphs because Theo asked for
+  exactly that. His words are quoted in `cr-nvl-styles`: "A Grey raised box with a better phone symbol in White".
+- **The header + changing colour by section** is the header chrome's own per-section accent (`--hac`). It is a
+  standing false alarm in CLAUDE.md.
+
+Gate: **`gate_1232.mjs`** (Chromium):
+- A: Financials ground and every text in it, in both themes.
+- B: no inline WAIVED colour.
+- C: Dispatch shadows are soft in light and still heavy in dark.
+
+It fails 3 checks on 1231.
+
 ## Build 1231 — light mode reaches every screen
 
 Theo, on the audit's "are you taking both modes into consideration?": **"Follow the settings."** Six

@@ -4064,7 +4064,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1231<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1232<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -32887,6 +32887,8 @@ function showList() {
   #cr-claims-mount .cr-c-fin-progress-fill { height: 100%; background: #7cd18d; transition: width .2s; }
   #cr-claims-mount .cr-c-fin-progress-lbl { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.5px; margin-top: 6px; color: #ccc; }
   #cr-claims-mount .cr-c-fin-progress-lbl strong { color: white; font-weight: 700; }
+  /* 1232: was an inline style, which no theme rule can reach. Same values. */
+  #cr-claims-mount .cr-c-waived { font-size: 11px; color: #7cd18d; letter-spacing: 1px; }
 
   /* Detail info grid */
   #cr-claims-mount .cr-c-info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
@@ -32981,6 +32983,22 @@ function showList() {
   #cr-claims-mount .cr-c-toast.success { background: var(--cr-green); }
 
   #cr-claims-mount .cr-c-footer { text-align: center; font-size: 11px; color: var(--cr-muted-2); margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--cr-border-2); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+
+/* 1232: the Financials block was a black slab on the white claim page in light mode
+   (design audit, 4 Oct). In light it is a white card like the rest of the page; the
+   money inks are this module's own light values (--cr-green/amber/red-dark), computed
+   against white. Dark is untouched. */
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin{background:#ffffff;color:#1a1a1a;border:1px solid #e5e5e5;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-h{color:#6b6b6b;opacity:1;}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-cell .lbl{color:#6b6b6b;}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-cell .val.pos{color:#2A732E;}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-cell .val.warn{color:#8a5500;}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-cell .val.neg{color:#B01F21;}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-progress-bar{background:rgba(0,0,0,.08);}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-progress-fill{background:#2E7D32;}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-progress-lbl{color:#6b6b6b;}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-fin-progress-lbl strong{color:#1a1a1a;}
+:root[data-theme="rb-light"] #cr-claims-mount .cr-c-waived{color:#2A732E;}
 </style>
 
 <div id="cr-claims-mount" style="display:none;"></div>
@@ -33363,7 +33381,7 @@ function showList() {
             <div class="cr-c-fin-cell"><div class="lbl">Approved RCV</div><div class="val">${money(rcv)}</div></div>
             <div class="cr-c-fin-cell"><div class="lbl">ACV Portion</div><div class="val">${money(acv)}</div></div>
             <div class="cr-c-fin-cell"><div class="lbl">Depreciation</div><div class="val warn">${money(depr)}</div></div>
-            <div class="cr-c-fin-cell"><div class="lbl">Deductible</div><div class="val neg">${money(c.deductible)}${c.deductible_waived ? ' <small style="font-size:11px; color:#7cd18d; letter-spacing:1px;">WAIVED</small>' : ''}</div></div>
+            <div class="cr-c-fin-cell"><div class="lbl">Deductible</div><div class="val neg">${money(c.deductible)}${c.deductible_waived ? ' <small class="cr-c-waived">WAIVED</small>' : ''}</div></div>
           </div>
           <div class="cr-c-fin-progress">
             <div class="cr-c-fin-progress-bar">
@@ -36736,6 +36754,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
   .cr-claimstrip .cell .v.warn{ color:var(--ct-warn); }
   .cr-claimstrip .cell .v.neg { color:var(--ct-red-deep); }
   .cr-claimstrip .cell .v.pos { color:var(--ct-do-ink); }
+  .cr-claimstrip .cell .wv{ font-size:11px; color:var(--ct-do-ink,#7cd18d); }/* 1232: was an inline #7cd18d */
   .cr-claimstrip .bar{ height:5px; background:var(--ct-surface-3); border-radius:3px; overflow:hidden; margin-top:12px; }
   .cr-claimstrip .bar i{ display:block; height:100%; background:var(--ct-do-head-bg); }
   .cr-claimstrip .foot{
@@ -36929,7 +36948,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
         '<div class="cell"><div class="k">ACV Paid</div><div class="v">' + money(acv) + '</div></div>' +
         '<div class="cell"><div class="k">Depreciation</div><div class="v warn">' + money(dep) + '</div></div>' +
         '<div class="cell"><div class="k">Deductible</div><div class="v neg">' + money(ded) +
-          (claim.deductible_waived ? ' <small style="font-size:11px;color:#7cd18d;">WAIVED</small>' : '') + '</div></div>' +
+          (claim.deductible_waived ? ' <small class="wv">WAIVED</small>' : '') + '</div></div>' +
       '</div>' +
       '<div class="bar"><i style="width:' + pct + '%;"></i></div>' +
       '<div class="foot">' +
@@ -43422,6 +43441,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1232, d: '2026-10-04', t: 'Dark pieces gone from light pages',
+    s: 'In <b>Light</b> mode, a claim\'s <b>Financials</b> block is now a white card like the rest of the page instead of a black slab, with the money in readable green, amber and red. <b>Crew Dispatch</b> drops the heavy black shadows and dark grey outlines around crews, trade strips and jobs for a soft lift. Dark mode is unchanged.' },
   { b: 1231, d: '2026-10-04', t: 'Light mode reaches every screen',
     s: 'When the app is set to <b>Light</b>, six screens that stayed dark now follow it: <b>Storm Data</b>, the <b>Labor Rate Schedule</b>, <b>Why Cardinal</b>, <b>The Appointment</b>, the estimate builder\'s top bar and Save / Publish bar, and the <b>Line Item Library</b>. The two you show a homeowner, Why Cardinal and The Appointment, use the same warm paper look as The Appointment\'s lit step. Labor Rates in light matches the printed sheet a crew gets. Photographs still open on a dark background. Dark mode is unchanged.' },
   { b: 1230, d: '2026-10-04', t: 'Polish, round one: the moon button, the cream band, money and small grey text',
@@ -81694,6 +81715,11 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-wkend:#656c77;
   --disp-today:#eef0f3; --disp-tline:#14171c; --disp-need:#9a6410; --disp-band:#5f6b7d;
   --disp-repair:#d81b28; --disp-curtis:#0f7c8b; --disp-scottie:#6a4db0; --disp-wx:#155f9e;
+  /* 1232: the dark board's heavy drop shadows and grey tag edges read as black
+     outlines on white (design audit, 4 Oct). Light gets a soft lift instead. */
+  --disp-sh-tray:inset 0 1px 2px rgba(20,23,28,.06); --disp-sh-strip:0 1px 2px rgba(20,23,28,.08);
+  --disp-tsh:none; --disp-sh-tag:0 1px 3px rgba(20,23,28,.10); --disp-sh-mag:0 1px 3px rgba(20,23,28,.12);
+  --disp-tagline:#cdd2d9;
 }
 #cr-disp .dspwrap{ max-width:1180px; margin:0 auto;
   padding:16px 14px calc(60px + env(safe-area-inset-bottom,0px)); }
@@ -81738,7 +81764,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 /* the Needs-a-crew TRAY */
 #cr-disp .drail{ display:block; background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
   border:1px solid var(--disp-line,#282c34); border-radius:10px; margin:2px 2px 10px; padding:9px 12px;
-  box-shadow:inset 0 2px 6px rgba(0,0,0,.35); }
+  box-shadow:var(--disp-sh-tray,inset 0 2px 6px rgba(0,0,0,.35)); }
 #cr-disp .drail .rl{ position:static; background:none; border:0; padding:0; }
 #cr-disp .drail .rl .t{ font:750 13px 'Segoe UI',Arial,sans-serif; color:var(--disp-need,#f5c045);
   display:flex; align-items:center; gap:6px; }
@@ -81773,8 +81799,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
   border:1px solid var(--disp-line,#282c34); border-radius:5px;
   font:800 11.5px var(--disp-mono,monospace); letter-spacing:.18em; text-transform:uppercase;
-  color:var(--disp-ink,#e5eaf1); text-shadow:0 1px 1px rgba(0,0,0,.6);
-  box-shadow:0 2px 4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1); }
+  color:var(--disp-ink,#e5eaf1); text-shadow:var(--disp-tsh,0 1px 1px rgba(0,0,0,.6));
+  box-shadow:var(--disp-sh-strip,0 2px 4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1)); }
 #cr-disp .dband .bl::before{ content:none; }
 #cr-disp .dband .chev{ flex:none; width:12px; font-size:11px; color:var(--disp-band,#8b97a8); }
 #cr-disp .dband .cnt{ margin-left:auto; font:700 11px var(--disp-mono,monospace); letter-spacing:.05em;
@@ -81790,9 +81816,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   position:sticky; left:0; z-index:4; cursor:default; }
 #cr-disp .crewc > div, #cr-disp .crewc .tagbox{ width:100%; }
 #cr-disp .crewc .tag, #cr-disp .crewc > div{ background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
-  border:1px solid var(--disp-accent,#6b7280); border-radius:9px; padding:7px 8px 7px 20px; position:relative;
+  border:1px solid var(--disp-tagline,var(--disp-accent,#6b7280)); border-radius:9px; padding:7px 8px 7px 20px; position:relative;
   min-height:44px; display:flex; flex-direction:column; justify-content:center;
-  box-shadow:0 2px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09); }
+  box-shadow:var(--disp-sh-tag,0 2px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09)); }
 #cr-disp .crewc > div::before{ content:""; position:absolute; left:7px; top:50%; transform:translateY(-50%);
   width:6px; height:6px; border-radius:50%; background:var(--disp-bg,#08090b);
   box-shadow:inset 0 1px 2px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.12); }
@@ -81825,7 +81851,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .job{ border-radius:8px; padding:6px 8px; cursor:pointer; position:relative;
   background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
   border:1px solid var(--disp-line,#282c34); border-top:2.5px solid var(--disp-accent,#6b7280); border-left:1px solid var(--disp-line,#282c34);
-  box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08); }
+  box-shadow:var(--disp-sh-mag,0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08)); }
 #cr-disp .job .t .nm{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; min-width:0;/* 991: the clamp lives on .nm, NOT on .t. .t is display:flex so the pip and grip can sit right via margin-left:auto; -webkit-box on .t would throw that away. min-width:0 because a flex item will not shrink below its content without it, which would let a long title widen the track rather than wrap. Same 2-line rule as .rep .t — the two cards measured within 2px of each other at every title length, so clamping only one would have been the partial pass this repo keeps paying for. */}#cr-disp .job .t{ font:700 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-ink,#fff);
   display:flex; align-items:center; gap:4px; line-height:1.25; }
 #cr-disp .job .t .pip{ margin-left:auto; width:7px; height:7px; border-radius:50%; flex:none; background:var(--disp-mute,#5c636e); }
@@ -81847,7 +81873,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .rep{ border-radius:8px; padding:6px 8px; cursor:pointer;
   background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
   border:1px solid var(--disp-repair,#ff3b46); border-top:2.5px solid var(--disp-repair,#ff3b46);
-  box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08); }
+  box-shadow:var(--disp-sh-mag,0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08)); }
 #cr-disp .rep .t{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere;/* 991: measured in the real grid track (minmax(96px,1fr), .dcell padding 4px, so ~104px of text): a one-word title is 1 line and 43px, but Theo's real punch title "needs new aluminum gable vent installed" ran to 4 lines and 88px against a 52px row minimum — nearly double — and a slightly longer one hit 6 lines and 118px. One long title inflated its whole row. Two lines is the floor that still fits an ordinary title: "Replace fascia board" already needed 2. overflow-wrap:anywhere so a single long word cannot push the track wider instead of wrapping. */ font:700 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46); line-height:1.25; }
 #cr-disp .rep .a{ font-size:11px; color:var(--disp-dim,#9aa1ac); margin-top:2px; }
 @media (min-width:1100px){
