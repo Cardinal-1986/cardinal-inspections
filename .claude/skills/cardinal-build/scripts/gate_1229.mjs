@@ -107,6 +107,9 @@ for (const [theme, vw] of [['dark', 390], ['rb-light', 390], ['dark', 1440]]) {
     at + ' — A: Take photos then Add from phone, one row, ≥44px', JSON.stringify([r.cam && Math.round(r.cam.h), r.add && Math.round(r.add.h)]));
   const lab = await p.evaluate(() => [document.getElementById('galCamBtn').innerText, document.getElementById('galAddBtn').innerText].join(' | '));
   ok(/Take photos/.test(lab) && /Add from phone/.test(lab), at + ' — A: the labels say what they do', lab);
+  /* Theo, 4 Oct: "Get rid of the description" - the album hint and the CompanyCam paragraph */
+  const desc = await p.evaluate(() => { const h = document.getElementById('galHint'); return { hint: !!(h && h.getClientRects().length && h.textContent.trim()), cc: /Link this client to its job/.test((document.getElementById('galJobCc') || {}).innerText || '') }; });
+  ok(!desc.hint && !desc.cc, at + ' — A: no description above the buttons or in the CompanyCam card', JSON.stringify(desc));
   /* B */
   ok(!!(r.dd && r.sel) && r.chips === 0 && !r.menu, at + ' — B: one dropdown + Select, no chip heap, menu closed', 'chips ' + r.chips + ' · dd ' + !!r.dd + ' · sel ' + !!r.sel);
   ok(!!(r.dd && r.sel && r.dd.h >= 44 && r.sel.h >= 44 && Math.abs(r.dd.y - r.sel.y) < 4), at + ' — B: both ≥44px on one row');
@@ -242,9 +245,10 @@ for (const [theme, vw] of [['dark', 390], ['rb-light', 390], ['dark', 1440]]) {
     try { openGalleryMode('insp'); } catch (e) { return 'err'; }
     await new Promise(z => setTimeout(z, 1800));   /* loadGallery reloads from the mock first */
     currentPhotos = keep; renderGallery();
-    return { x: [...document.querySelectorAll('#galGrid .gdel')].filter(e => e.getClientRects().length).length, cam: getComputedStyle(document.getElementById('galCamBtn')).display };
+    const hint = getComputedStyle(document.getElementById('galHint')).display !== 'none';
+    return { hint, x: [...document.querySelectorAll('#galGrid .gdel')].filter(e => e.getClientRects().length).length, cam: getComputedStyle(document.getElementById('galCamBtn')).display };
   });
-  ok(insp && insp.x === 2 && insp.cam === 'none', at + ' — H: Inspection Photos keeps its remove X and hides the camera', JSON.stringify(insp));
+  ok(insp && insp.x === 2 && insp.cam === 'none' && insp.hint, at + ' — H: Inspection Photos keeps its remove X and hides the camera', JSON.stringify(insp));
   await p.close();
 }
 /* E (rep) */

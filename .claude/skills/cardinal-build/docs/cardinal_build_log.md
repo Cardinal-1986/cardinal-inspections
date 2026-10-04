@@ -33735,6 +33735,11 @@ card instead.
    won on either of the two buttons left in the strip. Moved into the base rule itself; the dropdown's
    own rules stopped restating them.
 
+**Then, from a marked-up screenshot: "Get rid of the description."** The album's hint line is hidden in
+album mode (Inspection Photos keeps its line), and the CompanyCam card's "Link this client…" paragraph
+is gone. He also struck through + Add from phone and the Copy button; asked, he named only the
+description, so both buttons stay. `gate_1229` A asserts the descriptions are gone (101/101).
+
 **Gates.** `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17, unchanged) GREEN ·
 `gate_1229` 98/98, RED 76 on 1228 · `gate_777`, `gate_789`, `gate_1222`, `gate_1068`, `gate_993`
 (updated) · `gate_1227`, `gate_1228`, `gate_1206`, `gate_1081`, `gate_a11y`, `harness_708` GREEN ·

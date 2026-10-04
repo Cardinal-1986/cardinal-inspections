@@ -8577,6 +8577,8 @@ bottom left (tap it to see the shots and drop a bad one), and **Upload N** on th
 
 **The album (`cr-pae-script`):**
 - **Toolbar:** **📷 Take photos** (primary) then **+ Add from phone**.
+- **No description** (Theo: "Get rid of the description"): `#galHint` is hidden in album mode (Inspection
+  Photos keeps its line), and the CompanyCam card's not-linked paragraph is gone.
 - **⚠ This reverses 789's "+ opens CompanyCam for an admin".** The + now opens the phone for
   everyone. An admin who wants to **copy** CompanyCam photos into the album (for a report) uses
   **Copy CompanyCam photos into this album** on the CompanyCam card (`gjcCopy()`,

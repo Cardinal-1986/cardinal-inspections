@@ -14598,7 +14598,7 @@ async function galJobLoad(){
   if(!currentProject || currentProject.id !== pid) return;
   if(!d.linked){
     el.innerHTML = gjcHead('CompanyCam', 'Not linked yet', '<button class="btn ghost" type="button" data-gjc="link">Link CompanyCam job</button>') +
-      '<p class="gjc-note">Link this client to its job in CompanyCam once, and the crew\u2019s photos show here by themselves \u2014 new ones by the next morning.</p>' + gjcCopy();
+      gjcCopy();
     return;
   }
   if(d.missing){
@@ -14789,7 +14789,10 @@ function openGalleryMode(mode){
     galMode === 'insp' ? 'Inspection Photos' : 'Photo Album';
   document.getElementById('galHint').textContent = galMode === 'insp'
     ? 'The curated set for this client\u2019s inspections (max ' + INSP_MAX + '). Check photos to transfer into a report, or remove them from the set \u2014 removing never deletes from the album.'
-    : 'Tap a photo to open it. Select picks several to move, send or delete.';
+    : '';
+  /* 1229: Theo - "Get rid of the description". The album needs no instructions;
+     Inspection Photos keeps its line, which explains the 30-photo set. */
+  document.getElementById('galHint').style.display = galMode === 'insp' ? '' : 'none';
   document.getElementById('galAddBtn').style.display = galMode === 'insp' ? 'none' : '';
   document.getElementById('galCamBtn').style.display = galMode === 'insp' ? 'none' : '';
   /* 777: api/companycam refuses non-admins server-side with a 403; a button
