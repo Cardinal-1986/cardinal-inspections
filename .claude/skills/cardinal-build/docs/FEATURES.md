@@ -8549,6 +8549,67 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1229 — take several photos, then upload once; the Photo Album tidied
+
+Theo, 4 Oct 2026: **"make sure when taking photos within job profile and the camera is out, you can
+take multiples ... Need to take several then upload"**, **"maybe make a drop down reorganize"**,
+**"Look at the scattered bottom buttons too"**. Then **"Build all"** from a four-picture preview.
+
+**The multi-shot camera — `cr-mcam-styles` + `cr-mcam-script`, `window.CardinalMultiCam`
+(`open`, `supported`).** `capture="environment"` gives back ONE photo and closes, so **📷 Take
+photos** now opens a camera inside the app with `getUserMedia`, and it stays open. Every tap of the
+shutter is held in memory as a JPEG. A section picker sits at the top, a stack with a count at the
+bottom left (tap it to see the shots and drop a bad one), and **Upload N** on the right.
+- Upload goes through **`addGalleryFiles(files, metas)`**, the album's own pipeline, with
+  `{section}` on every photo: the same 1600px re-encode, the same 50-photo cap, the same storage
+  path. **No second upload path.**
+- **It belongs to the client it was opened on.** If `currentProject` changed underneath it (a back
+  gesture), Upload refuses and **keeps the photos**.
+- Closing with unsent photos asks first. The camera tracks are stopped on close, and whenever the
+  app is backgrounded (`visibilitychange`); they restart when it comes back.
+- **No camera API → the phone camera, as before.** The check is synchronous in the button's own
+  click, so the fallback is still a real tap. If the camera is refused, the screen says so and offers
+  "Use the phone camera instead".
+- **It does not write `document.body.style.overflow`.** It is a fixed sheet that swallows its own
+  touches; the scroll-lock roster stays at 17 (asserted by `gate_1229` and `audit_scrolllock`).
+- **Not registered in `hideAllViews()`, on purpose:** it is a modal over the album, not a view, and
+  the client-mismatch guard covers the one way a navigation can reach under it.
+
+**The album (`cr-pae-script`):**
+- **Toolbar:** **📷 Take photos** (primary) then **+ Add from phone**.
+- **⚠ This reverses 789's "+ opens CompanyCam for an admin".** The + now opens the phone for
+  everyone. An admin who wants to **copy** CompanyCam photos into the album (for a report) uses
+  **Copy CompanyCam photos into this album** on the CompanyCam card (`gjcCopy()`,
+  `data-gjc="copy"`). The panel and its admin gate are unchanged; a rep never sees the button.
+- **The six section chips → one "All photos ▾" dropdown** (`#cr-pae-tabs .pae-dd` + `.pae-menu`,
+  with counts) **and a Select button** (`.pae-sel`, "Done" while on). `#cr-pae-tabs` keeps its id
+  and stops being a scroller; its scroll rules were deleted at source and `gate_993`'s reach floor
+  went 10 → 9, by decision.
+- **Tiles carry their section tag only.** The ✕ and the initials ball are gone. Who took the photo
+  is the tile's `title`. **Inspection Photos mode is untouched**: it still uses the original
+  renderer and keeps its "remove from set" ✕.
+- **A tap opens the photo** (the caption/section/edit card) when Select is off. In Select, the
+  estimate picker and Inspection Photos, a tap still ticks.
+- **The Select bar:** a count line ("Tap photos to select them" / "N selected" + Clear), then
+  **Move to · To report ▾ · To Inspection · Save · Delete**, all 44px, three across. **Delete** is
+  new: several at once, behind one confirm, then the ids are dropped from the Inspection Photos set.
+  The real `#galXferWrap` is still moved in (789's rule) and its menu opens upward.
+- **The section count's ink** inherits its button's. The app-wide `.count` is `--muted`, 2.35:1 on
+  the dark ground, which is what the inactive chips had carried since they shipped. `gate_1068`
+  caught it once the count was the one on screen.
+- **The floating moon** is hidden on the album at phone width; it sat on the album's controls.
+- **The CompanyCam card's header wraps** (a 160px floor on the title) instead of letting its button
+  touch the title.
+
+Gates: **`gate_1229.mjs`** (98, Chromium, 390 dark + light and 1440: A toolbar, B dropdown, C tiles
+and tap, D Select bar and Delete, E Add-from-phone and the admin copy button, F the camera against a
+canvas stream, G the two guards, H Inspection Photos). RED 76 on 1228. Updated with reasons:
+`gate_777`, `gate_789`, `gate_1222`, `gate_1068`, `gate_993`.
+
+⚠ **Not verifiable from the build machine:** a real phone camera. The gate drives `getUserMedia`
+with a canvas stream, so iOS's permission prompt and its rear-camera choice need watching on Theo's
+phone the first time.
+
 ## Build 1228 — a client's CompanyCam job, in its Photo Album
 
 Theo, 2 Oct 2026: **"1c, 2a, As long as they are assigned or create that companycam/crm lead they
