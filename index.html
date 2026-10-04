@@ -4061,7 +4061,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1227<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-02 build 1228<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4755,6 +4755,30 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 #galCcPanel .gcc-head{display:flex;justify-content:space-between;align-items:center;font:800 13px 'Segoe UI',Arial,sans-serif;color:#1a1a1a;margin-bottom:9px}
 #galCcPanel .gcc-head button{background:transparent;border:0;color:#5a5a5a;font-size:16px;line-height:1;cursor:pointer;padding:2px 6px}
 #galCcPanel .gcc-row{display:flex;gap:7px}
+/* 1228: the client's linked CompanyCam job, shown in the album. Theme-flipping
+   --rbe-* tokens, every one with a literal fallback. */
+.gjc{margin:4px 0 16px;padding:14px;border:1px solid var(--rbe-line2,#2b2b33);border-radius:var(--btn-rad,12px);
+  background:var(--rbe-panel2,#101015);color:var(--rbe-ink,#d7dde5);}
+.gjc-h{display:flex;align-items:center;gap:10px;font:800 14px 'Segoe UI',Arial,sans-serif;color:var(--rbe-head,#ffffff);}
+.gjc-h .gjc-t{flex:1;min-width:0;}
+.gjc-h .gjc-act{flex:none;}
+.gjc .btn{min-height:44px;}
+.gjc-sub{font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink2,#9aa3ae);margin-top:2px;}
+.gjc-note{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink2,#9aa3ae);margin:8px 0 0;line-height:1.45;}
+.gjc-note.bad{color:#e35c63;}
+.gjc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin-top:12px;}
+.gjc-grid a{display:block;position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:var(--rbe-line,#1e2026);}
+.gjc-grid img{width:100%;height:100%;object-fit:cover;display:block;}
+.gjc-grid .gjc-d{position:absolute;left:0;right:0;bottom:0;padding:3px 6px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#fff;background:rgba(0,0,0,.55);}
+.gjc-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.gjc-sug{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rbe-line2,#2b2b33);border-radius:10px;}
+.gjc-sug > div{flex:1;min-width:0;}
+.gjc-sug b{display:block;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-head,#ffffff);}
+.gjc-sug span{display:block;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink2,#9aa3ae);}
+.gjc-sug .btn{margin-left:auto;flex:none;}
+.gjc-q{display:flex;gap:8px;margin-top:10px;}
+.gjc-q .btn{flex:none;}
+.gjc-q input{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--rbe-line2,#2b2b33);background:transparent;color:inherit;font:600 14px 'Segoe UI',Arial,sans-serif;}
 #galCcPanel .gcc-row input{flex:1;min-width:0;padding:9px 11px;border:1px solid #c9c2bf;border-radius:8px;font:600 14px 'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a1a;outline:none}
 #galCcPanel .gcc-row input:focus{border-color:#c8202e}
 #galCcPanel button.gcc-go{background:#c8202e;color:#fff;border:0;border-radius:8px;padding:9px 14px;cursor:pointer;font:800 11.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;flex:0 0 auto}
@@ -4813,6 +4837,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <span class="gcc-note">Copies into this album &#183; CompanyCam is never changed</span>
         </div>
       </div>
+      <div id="galJobCc" class="gjc" style="display:none;" aria-live="polite"></div>
       <div id="galGrid" class="galgrid"></div>
   </div>
 </div>
@@ -14497,7 +14522,143 @@ async function loadGallery(){
   renderGallery();
   /* 1221: old photos earn their tile-sized twin as the job is opened */
   try{ healPhotoThumbs(currentPhotos); }catch(_){}
+  /* 1228: and the client's CompanyCam job, if it is linked */
+  try{ galJobLoad(); }catch(_){}
 }
+
+/* =========================================================================
+   1228: THE CLIENT'S COMPANYCAM JOB, IN THE ALBUM
+   Theo, 2 Oct: link a client to its CompanyCam job once, then its photos show
+   here by themselves. Anyone who can open the client can link it and see it
+   (his rule); the server checks that against the database AS the caller, and
+   for non-admins it also refuses a job at a different street address.
+   View only: tapping a photo opens CompanyCam's own full-size copy. Nothing
+   here writes to CompanyCam or copies a photo.
+   ========================================================================= */
+var GJC_SHOW = 12;   /* 3 across x 4 on a phone; the album's own photos stay close */
+var gjcState = { pid: null, all: false };
+function gjcEl(){ return document.getElementById('galJobCc'); }
+function gjcApi(body){
+  return window.aiHeaders().then(function(h){
+    return fetch('/api/companycam-job', { method:'POST', headers:h, body:JSON.stringify(body) });
+  }).then(function(res){
+    return res.json().catch(function(){ return null; }).then(function(data){
+      if(!res.ok) throw { message: (data && (data.error || data.detail)) || ('HTTP ' + res.status), status: res.status };
+      return data || {};
+    });
+  });
+}
+/* does an address just repeat the job name? ("807 Browning Ave" vs
+   "807 Browning Ave, Dayton, OH") - then the name already says it */
+function streetSame(a, b){
+  var k = function(s){ return String(s || '').split(',')[0].toLowerCase().replace(/[^a-z0-9]/g, ''); };
+  return k(a) !== '' && k(a) === k(b);
+}
+function gjcUrl(u){ u = String(u || ''); return /^https:\/\//i.test(u) ? u : ''; }
+function gjcDate(iso){
+  if(!iso) return '';
+  var d = new Date(iso); if(isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+}
+function gjcHead(title, sub, act){
+  return '<div class="gjc-h"><span class="gjc-t">' + esc(title) + '</span>' +
+    (act ? '<span class="gjc-act">' + act + '</span>' : '') + '</div>' +
+    (sub ? '<div class="gjc-sub">' + esc(sub) + '</div>' : '');
+}
+async function galJobLoad(){
+  var el = gjcEl();
+  if(!el) return;
+  if(galMode !== 'all' || !currentProject){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  var pid = currentProject.id;
+  if(gjcState.pid !== pid){ gjcState.pid = pid; gjcState.all = false; }
+  el.style.display = 'block';
+  el.innerHTML = gjcHead('CompanyCam', 'Loading\u2026');
+  var d;
+  try{ d = await gjcApi({ action:'photos', client_id: pid }); }
+  catch(e){
+    if(!currentProject || currentProject.id !== pid) return;
+    el.innerHTML = gjcHead('CompanyCam', '', e.status === 403 ? '<button class="btn ghost" type="button" data-gjc="link">Change job</button>' : '') +
+      '<p class="gjc-note bad">' + esc(e.status === 403 ? e.message : 'Could not load CompanyCam photos (' + (e.message || e) + ').') + '</p>';
+    return;
+  }
+  if(!currentProject || currentProject.id !== pid) return;
+  if(!d.linked){
+    el.innerHTML = gjcHead('CompanyCam', 'Not linked yet', '<button class="btn ghost" type="button" data-gjc="link">Link CompanyCam job</button>') +
+      '<p class="gjc-note">Link this client to its job in CompanyCam once, and the crew\u2019s photos show here by themselves \u2014 new ones by the next morning.</p>';
+    return;
+  }
+  if(d.missing){
+    el.innerHTML = gjcHead('CompanyCam', '', '<button class="btn ghost" type="button" data-gjc="link">Change job</button>') +
+      '<p class="gjc-note bad">The linked CompanyCam job is not in CompanyCam any more.</p>';
+    return;
+  }
+  var ph = (d.photos || []).filter(function(p){ return gjcUrl(p.thumb); });
+  var show = gjcState.all ? ph : ph.slice(0, GJC_SHOW);
+  var job = d.job || {};
+  var sub = (d.total || ph.length) + ' photo' + ((d.total || ph.length) === 1 ? '' : 's') + ' \u00b7 updates nightly';
+  el.innerHTML = gjcHead('CompanyCam \u00b7 ' + (job.name || job.address || 'linked job'), sub,
+      '<button class="btn ghost" type="button" data-gjc="link">Change</button>') +
+    (ph.length ? '<div class="gjc-grid">' + show.map(function(p){
+      var full = gjcUrl(p.full) || gjcUrl(p.thumb);
+      return '<a href="' + esc(full) + '" target="_blank" rel="noopener" title="' + esc((p.caption || '') + (p.by ? ' \u2014 ' + p.by : '')) + '">' +
+        '<img src="' + esc(gjcUrl(p.thumb)) + '" alt="' + esc(p.caption || 'CompanyCam photo') + '" loading="lazy" decoding="async">' +
+        '<span class="gjc-d">' + esc(gjcDate(p.at)) + '</span></a>';
+    }).join('') + '</div>' : '<p class="gjc-note">No photos in this CompanyCam job yet.</p>') +
+    (ph.length > show.length ? '<p class="gjc-note"><button class="btn ghost" type="button" data-gjc="all">Show all ' + ph.length + '</button></p>' : '');
+}
+async function galJobPick(q){
+  var el = gjcEl();
+  if(!el || !currentProject) return;
+  var pid = currentProject.id;
+  el.innerHTML = gjcHead('Link a CompanyCam job', 'Finding jobs at this address\u2026', '<button class="btn ghost" type="button" data-gjc="cancel">Cancel</button>');
+  var d;
+  try{ d = await gjcApi(Object.assign({ action:'suggest', client_id: pid }, q ? { q: q } : {})); }
+  catch(e){
+    if(!currentProject || currentProject.id !== pid) return;
+    el.innerHTML = gjcHead('Link a CompanyCam job', '', '<button class="btn ghost" type="button" data-gjc="cancel">Cancel</button>') +
+      '<p class="gjc-note bad">' + esc('Could not search CompanyCam (' + (e.message || e) + ').') + '</p>';
+    return;
+  }
+  if(!currentProject || currentProject.id !== pid) return;
+  var linked = String(parseCkAll(currentProject).cc_project_id || '');
+  var sug = d.suggestions || [];
+  el.innerHTML = gjcHead('Link a CompanyCam job', q ? 'Search: ' + q : 'Jobs at ' + (currentProject.address || 'this address'),
+      '<button class="btn ghost" type="button" data-gjc="cancel">Cancel</button>') +
+    (d.admin ? '<div class="gjc-q"><input type="search" id="gjcQ" placeholder="Search jobs" aria-label="Search CompanyCam jobs" value="' + esc(q || '') + '"><button class="btn ghost" type="button" data-gjc="search">Search</button></div>' : '') +
+    (sug.length ? '<div class="gjc-list">' + sug.map(function(j){
+      var on = String(j.id) === linked;
+      var nm = j.name || j.address || 'CompanyCam job';
+      var meta = [];
+      if(j.address && streetSame(j.address, nm) === false) meta.push(j.address);
+      meta.push(j.count + ' photo' + (j.count === 1 ? '' : 's'));
+      if(j.latest) meta.push(gjcDate(j.latest));
+      if(!j.match) meta.push('different address');
+      return '<div class="gjc-sug"><div><b>' + esc(nm) + '</b><span>' + esc(meta.join(' \u00b7 ')) + '</span></div>' +
+        (on ? '<button class="btn ghost" type="button" data-gjc="unlink">Unlink</button>'
+            : '<button class="btn" type="button" data-gjc="pick" data-id="' + esc(String(j.id)) + '" data-nm="' + esc(j.name || '') + '">Link</button>') + '</div>';
+    }).join('') + '</div>'
+      : '<p class="gjc-note">No CompanyCam job has this street address' + (d.admin ? ' \u2014 search above.' : '. Check the address on the client, or ask an admin to link it.') + '</p>') +
+    (linked && !sug.some(function(j){ return String(j.id) === linked; }) ? '<p class="gjc-note"><button class="btn ghost" type="button" data-gjc="unlink">Unlink the current job</button></p>' : '');
+}
+document.addEventListener('click', async function(e){
+  var tg = /** @type {Element} */ (e.target);
+  var b = tg && tg.closest && tg.closest('#galJobCc [data-gjc]');
+  if(!b) return;
+  var k = b.getAttribute('data-gjc');
+  if(k === 'link') return galJobPick('');
+  if(k === 'cancel') return galJobLoad();
+  if(k === 'all'){ gjcState.all = true; return galJobLoad(); }
+  if(k === 'search'){ var box = gjcEl(), q = box && box.querySelector('input'); return galJobPick(q ? q.value.trim() : ''); }
+  if(k === 'pick' || k === 'unlink'){
+    b.setAttribute('disabled', '');
+    try{
+      await saveCkPatch(k === 'pick'
+        ? { cc_project_id: b.getAttribute('data-id'), cc_project_name: b.getAttribute('data-nm') || '' }
+        : { cc_project_id: '', cc_project_name: '' });
+    }catch(err){ b.removeAttribute('disabled'); alert('Could not save the link: ' + (err.message || err)); return; }
+    return galJobLoad();
+  }
+});
 function renderGallery(){
   var grid = document.getElementById('galGrid');
   document.getElementById('galCount').textContent =
@@ -43209,6 +43370,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1228, d: '2026-10-02', t: 'CompanyCam photos in the client\'s album',
+    s: 'A client can now be linked to its job in <b>CompanyCam</b>, once, from the Photo Album: tap <b>Link CompanyCam job</b> and pick the job at that address. After that the album shows that job\'s photos by itself, newest first, and the crew\'s new photos appear by the next morning. Tap a photo to see it full size. Anyone who works the client \u2014 whoever created the lead or is assigned to it, plus admins and Production \u2014 can link it and see the photos; for everyone but admins the job has to be at the client\'s address, so no one can pull up another customer\'s roof. Photos CompanyCam marks internal never appear. Nothing is copied and CompanyCam is never changed.' },
   { b: 1227, d: '2026-10-02', t: 'Desktop client page: Job Menu first too',
     s: 'The client page on a computer now follows the same idea as the phone. The money band stays across the top exactly as before &#8212; stage, Job Value, Invoices &amp; Payments, Money In &#8212; and right under it comes the <b>Job Menu</b>. On a wide screen the Job Menu holds the left column, with Location, Job Details, Assigned To, History and Reviews on the right. <b>Convert to Insurance, Update from Scope of Loss and Delete Client</b> fold behind one <b>Admin</b> row at the bottom. On a computer the map stays open, because there is room for it.' },
   { b: 1226, d: '2026-10-02', t: 'Lead is lemon in Leads & Jobs too',

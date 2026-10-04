@@ -8549,6 +8549,36 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1228 — a client's CompanyCam job, in its Photo Album
+
+Theo, 2 Oct 2026: **"1c, 2a, As long as they are assigned or create that companycam/crm lead they
+can link and have access"**, then **"1"** from a rendered preview with real photos from 807 Browning Ave.
+
+| Piece | Where | Notes |
+|---|---|---|
+| The link | `checklist.cc_project_id` (+ `cc_project_name`) via the existing `saveCkPatch()` | **No migration.** Written through `pdb.update`, so the `projects_update` RLS decides who may link: the same people who may open the client |
+| `/api/companycam-job` | `api/companycam-job.js` | `suggest` and `photos`. **Reads the client row with the CALLER's token**, so `projects_select` RLS decides access and the route never re-implements it. Then reads the admin-only mirror with the service key and returns ONE job's photos |
+| The anti-snoop rail | `sameStreet()` in the route | For **non-admins**, the linked job's street must equal the client's street (letters and digits of the first comma-segment, more than 5 characters). Without it, anyone who can open one client could write any job id into it and read any customer's roof. Admins may link any job (typo'd addresses) and search all jobs; a rep's free-text `q` is ignored |
+| The album section | `#galJobCc` above `#galGrid`, `galJobLoad()` from `loadGallery()`, `galJobPick()` | Not linked → "Link CompanyCam job" → same-street suggestions → Link. Linked → 12 tiles, 3 across on a phone, "Show all", Change/Unlink. Hidden in Inspection Photos mode. Stale-response guard on `currentProject.id` |
+| Images | CompanyCam's own `static.companycam.com` thumbs (`?d=250x250`) and previews (`?d=400x400`) | Unsigned public URLs, measured on all 61,796 rows. `gjcUrl()` admits only `https://`. No bytes pass through our route, so it is not a proxy |
+
+**Privacy held:** the nightly sync never mirrors a CompanyCam `internal` photo (1,164 skipped) and stores
+no coordinates. Nothing is copied and nothing is written to CompanyCam.
+
+**Measured before building:** of 71 clients, 24 match a CompanyCam job by street and **10 of those match
+more than one**. That is why linking is a person's choice from suggestions, not an automatic address
+join.
+
+Tests: `scripts/test_companycam_job.mjs` (10, the route's permission rules against a stubbed Supabase:
+401 / RLS-hidden 404 / same-street / different-street 403 / admin override / rep search ignored /
+malformed id) and `scripts/gate_1228.mjs` (40, Chromium, 390+1440 × both themes: states, **nothing past
+the card edge** (Theo's screenshot bug), 44px buttons, markup-in-caption stays text, `javascript:` URLs
+dropped, saved link, hidden in Inspection mode). GREEN; the gate is RED on 1227.
+
+⚠ **Not verifiable from the build machine:** a signed-in call against production. The route was run
+end to end against a stubbed Supabase, and on the Vercel preview it answers unauthenticated calls with
+401. The first real link should be watched.
+
 ## Build 1227 — the desktop client profile, Job Menu first
 
 Theo, 2 Oct 2026, from a rendered before/after at 1440 and 1920: **"Do the desktop fix"**. Retail only.
