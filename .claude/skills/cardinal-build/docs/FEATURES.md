@@ -8549,6 +8549,31 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1231 — light mode reaches every screen
+
+Theo, on the audit's "are you taking both modes into consideration?": **"Follow the settings."** Six
+screens ignored the Appearance setting and stayed dark in light mode. Each now has a light twin
+**inside its own `<style>` block**, under `:root[data-theme="rb-light"]`. These are tokens, not an
+override layer. **Dark is pixel-identical on all six**, compared by rendering 1230 and 1231 side by side.
+
+- **Storm Data** (`cr-storm-styles`): a light `--st-*` token set. The selected segment keeps white ink on red.
+- **Labor Rate Schedule** (`cr-lrs-styles`): the light tokens come from its own print palette (`--lrs-ink:#23303f`,
+  `--lrs-gold:#8f6b00`). **⚠ This replaces the 28 Aug "dark mode only" note** (build log, LRS crews
+  list), on Theo's pick "1" (4 Oct): it follows the setting like every other screen.
+- **Why Cardinal** (`cr-why-styles`) and **The Appointment** (`cr-appt-styles`, including `#cr-appt-rail`)
+  use the paper palette the Showroom's lit mode already uses: `#F7F4EF` ground, `#211D19` ink,
+  `#E5DFD6` rules, `#6B6259` muted, `#9E2B33` eyebrow. The warranty table still scrolls sideways on a
+  phone by design; it is not cut off.
+- **The estimate builder's bars** (`cr-est-styles`): the head and phone bar go light. `#cr-epub-preview-btn`,
+  `#cr-gbb-btn` and `#cr-e2c-btn` are id rules that beat the class twin, so they carry their own
+  `:root[data-theme] #id` lines (dark red `#8f1620` ink).
+- **The Line Item Library** (`cr-lil-styles`): head light twins. Its cream base was **replaced at source**:
+  the view, search and tabs are now white, with slate tabs (`#F1F5F9`/`#334155`) and borders (`#E2E8F0`/`#CBD5E1`).
+
+Gate: **`gate_1231.mjs`** (20 checks, Chromium, six screens). In light mode the ground has luminance above
+.75 and every text node clears its floor. In dark mode the ground has luminance below .08. The builder's ids
+are dark red, and the line items have no cream. It fails 8 checks on 1230.
+
 ## Build 1230 — polish round one: the moon button, the cream band, money, small grey text
 
 From the 4 Oct design audit (the Cardinal Polish Audit artifact, 32 screens × phone/desktop × dark/light).
