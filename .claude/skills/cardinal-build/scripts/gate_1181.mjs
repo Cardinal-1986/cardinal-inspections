@@ -63,18 +63,24 @@ await page.waitForTimeout(800);
 let pass = 0, fail = 0; const bad = [];
 const ok = (c, m) => { c ? pass++ : (fail++, bad.push(m)); };
 
+/* 1230: the ONE control moved. Theo's 1181 rule - one light/dark control, in one
+   place, for all three portals - still holds; the place is now the menu drawer's
+   Appearance row, because the floating corner button sat on content on almost
+   every screen (the 4 Oct audit). The checks below are 1181's, re-aimed: same
+   row in all three, the right palette flipped in each, the state shown truly. */
 const look = () => page.evaluate(() => {
+  const row = [...document.querySelectorAll('#navMenu [data-cr-appear]')];
   const d = document.getElementById('cr-dark-toggle');
-  const bx = e => { if (!e) return null; const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
-    return { shown: cs.display !== 'none' && r.width > 0, pos: cs.position,
-             x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height),
-             cx: Math.round(r.x + r.width/2), cy: Math.round(r.y + r.height/2), txt: (e.textContent||'').trim() }; };
+  const floating = !!(d && getComputedStyle(d).display !== 'none' && d.getBoundingClientRect().width > 0 && getComputedStyle(d).position === 'fixed');
   const insBtns = [...document.querySelectorAll('.cr-ins-theme')]
     .filter(e => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 0);
-  return { crm: document.body.dataset.crm || '', dark: bx(d), insBtnCount: insBtns.length,
+  const pressed = row.find(b => b.getAttribute('aria-pressed') === 'true');
+  return { crm: document.body.dataset.crm || '', n: row.length, floating, insBtnCount: insBtns.length,
+           pressed: pressed ? pressed.getAttribute('data-cr-appear') : '',
            appTheme: document.documentElement.getAttribute('data-theme') || '',
            insTheme: document.body.getAttribute('data-rltheme') || '' };
 });
+const flip = () => page.evaluate(() => { const b = [...document.querySelectorAll('#navMenu [data-cr-appear]')].find(x => x.getAttribute('aria-pressed') !== 'true'); if (b) b.click(); return !!b; });
 async function go(p){
   await page.evaluate(() => window.CardinalFrontDoor.open());
   await page.waitForTimeout(400);
@@ -83,44 +89,35 @@ async function go(p){
 }
 
 await page.setViewportSize({ width: 440, height: 900 });
-const seen = {};
 for (const p of ['retail', 'community', 'insurance']) {
   await go(p);
   const s = await look();
   ok(s.crm === p, `on ${p} (crm=${s.crm})`);
-  ok(!!s.dark && s.dark.shown, `${p}: the shared #cr-dark-toggle is on screen`);
+  ok(s.n === 2, `${p}: the drawer's Appearance row is there (Dark / Light)`);
+  ok(!s.floating, `${p}: no light/dark button floats over the page`);
   ok(s.insBtnCount === 0, `${p}: no separate insurance button is rendered (found ${s.insBtnCount})`);
-  if (s.dark) seen[p] = `${s.dark.x},${s.dark.y},${s.dark.w},${s.dark.h},${s.dark.pos}`;
 }
-/* "just like retail and community" is a MEASUREMENT, not a feeling */
-ok(seen.retail && seen.retail === seen.community && seen.community === seen.insurance,
-   `the button is in the identical place in all three (retail ${seen.retail} | community ${seen.community} | insurance ${seen.insurance})`);
 
-/* it must flip the RIGHT palette in each — a shared button over two real systems */
 await go('insurance');
 let s = await look();
 const insBefore = s.insTheme, appBefore = s.appTheme;
-await page.touchscreen.tap(s.dark.cx, s.dark.cy);
-await page.waitForTimeout(700);
+await flip(); await page.waitForTimeout(700);
 let after = await look();
-ok(after.insTheme !== insBefore, `on insurance the tap flips the INSURANCE theme (${insBefore} -> ${after.insTheme})`);
+ok(after.insTheme !== insBefore, `on insurance the row flips the INSURANCE theme (${insBefore} -> ${after.insTheme})`);
 ok(after.appTheme === appBefore, 'and it does NOT touch the app theme there');
-ok(after.dark && after.dark.txt !== s.dark.txt, `the glyph reports insurance's own state (${s.dark.txt} -> ${after.dark.txt})`);
-await page.touchscreen.tap(after.dark.cx, after.dark.cy);
-await page.waitForTimeout(700);
+ok(after.pressed !== s.pressed, `the row shows insurance's own state (${s.pressed} -> ${after.pressed})`);
+await flip(); await page.waitForTimeout(700);
 after = await look();
 ok(after.insTheme === insBefore, `and back again (${after.insTheme})`);
 
 await go('retail');
 s = await look();
 const rAppBefore = s.appTheme, rInsBefore = s.insTheme;
-await page.touchscreen.tap(s.dark.cx, s.dark.cy);
-await page.waitForTimeout(700);
+await flip(); await page.waitForTimeout(700);
 after = await look();
-ok(after.appTheme !== rAppBefore, `on retail the same tap flips the APP theme ("${rAppBefore}" -> "${after.appTheme}")`);
+ok(after.appTheme !== rAppBefore, `on retail the same row flips the APP theme ("${rAppBefore}" -> "${after.appTheme}")`);
 ok(after.insTheme === rInsBefore, 'and it does NOT touch the insurance theme there');
-await page.touchscreen.tap(after.dark.cx, after.dark.cy);
-await page.waitForTimeout(700);
+await flip(); await page.waitForTimeout(700);
 
 await browser.close();
 console.log((fail ? 'RED  ' : 'GREEN  ') + pass + '/' + (pass + fail) + (fail ? '\n  - ' + bad.join('\n  - ') : ''));

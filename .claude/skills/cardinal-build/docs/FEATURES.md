@@ -8549,6 +8549,35 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1230 — polish round one: the moon button, the cream band, money, small grey text
+
+From the 4 Oct design audit (the Cardinal Polish Audit artifact, 32 screens × phone/desktop × dark/light).
+Theo: **"Follow the settings. Let's fix this stuff."** One build per fix group; this is the "fix first" group.
+
+- **The light/dark switch moved into the menu drawer**: an **Appearance — Dark / Light** row under
+  Text size (`[data-cr-appear]`, wired in `cr-rbtheme-toggle-script` → `paintAppear()`). It dispatches
+  like the old button did: retail and community flip the app theme, insurance flips its own palette
+  (1181's one-control rule holds; the place changed). **`#cr-dark-toggle` no longer floats**: where the
+  header row cannot hold it, it is hidden (`.afloat` still marks "stepped out" so the row does not
+  re-adopt it). The audit found the corner button over a tile, a price, a table or a badge on almost
+  every screen.
+- **The cream band**: `html[data-mode="light"]:not(:has(#landingView[style*="display: none"]))` matched
+  only the spelling a script writes. The markup ships `display:none` with no space and a signed-in open
+  never rewrites it, so with the PHONE in light mode the page root was cream behind every app screen.
+  Both spellings now count; the landing keeps its light ground while it is up.
+- **Money keeps its cents**: the identical `fmt()` in `cr-claims-script`, `cr-estimates-script`,
+  `cr-pricing-script` and `cr-pricing-import-script` used `minimumFractionDigits: 0`, so ten cents
+  printed `$18,922.1`. Two decimals whenever there are cents; whole dollars stay `$1,000`. Every call site
+  was read first: all money.
+- **Contrast, from the sentinel's INK sweep (64 renders)**: three failures, all light mode, all mine.
+  `--rbe-ink2` was never declared (1225, 1228), so five rules painted a fixed `#9aa3ae` in both themes;
+  they use `--rbe-mute` now (7.1:1 light, 10.1:1 dark). The closed map's lit Map tab inherited
+  near-black ink onto the tabs' dark pill (1.42:1 → 5.62:1).
+
+Gates: **`gate_1230.mjs`** (19, Chromium: A moon on six screens, B the drawer row and its insurance
+dispatch, C the cream band both ways, D money, E ink from `gate_1230_ink.json`). RED 16 on 1229.
+Re-aimed at the drawer, with reasons: `gate_1181`, `gate_1176`, `gate_804` D.
+
 ## Build 1229 — take several photos, then upload once; the Photo Album tidied
 
 Theo, 4 Oct 2026: **"make sure when taking photos within job profile and the camera is out, you can
