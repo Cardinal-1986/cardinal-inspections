@@ -156,12 +156,17 @@ async function judge(file) {
       f.push(`${k} paints ${d.color} in BOTH insurance themes — it is not reading a --ct-* token`);
   }
 
-  /* 3 — the stage banner grounds on the darkened twin */
+  /* 3 — the stage banner grounds on a SHIPPED stage colour and its title reads.
+     1235 (Theo: "Fix mustard") superseded "always the darkened twin": the band now keeps
+     the real STAGE_COLORS ground when an ink clears 4.5:1 on it, and falls back to this
+     twin only where neither ink does. What 1052 guarded — readable title, no invented
+     colour — is what stays asserted. */
+  const STAGE_COLORS = ['#FFE600','#F08A24','#0F9B8E','#7CB342','#29A3DC','#8E6BC1','#607D8B','#8D8D8D'];
   const b = docket._banner;
   if (!b) f.push('the stage banner did not render (rig fault)');
   else {
-    const hit = STAGE_INK.some(v => b.inline.toUpperCase().includes(v.toUpperCase()));
-    if (!hit) f.push(`the stage banner grounds on ${b.inline.slice(0,40)} — not a STAGE_INK value`);
+    const hit = STAGE_INK.concat(STAGE_COLORS).some(v => b.inline.toUpperCase().includes(v.toUpperCase()));
+    if (!hit) f.push(`the stage banner grounds on ${b.inline.slice(0,40)} — not a shipped stage colour`);
     if (b.ink && b.ink.ratio < b.ink.floor)
       f.push(`the stage banner title is ${b.ink.ratio}:1 (floor ${b.ink.floor})`);
   }
@@ -180,7 +185,7 @@ if (fails.length) {
   console.log(`GATE 1052 RED — ${fails.length} failure(s)`);
   fails.forEach(x => console.log('    ' + x));
 } else {
-  console.log('GATE 1052 GREEN — insurance identity reads in both themes, banner on STAGE_INK, retail untouched');
+  console.log('GATE 1052 GREEN — insurance identity reads in both themes, banner on a shipped stage colour and readable, retail untouched');
 }
 if (CONTROL && existsSync(CONTROL)) {
   const c = await judge(CONTROL);

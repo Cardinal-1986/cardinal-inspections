@@ -2271,7 +2271,7 @@ body.restoring #restoreVeil{display:flex;}
 .dbstgmid{flex:1;text-align:center;min-width:0;}
 .dbstgmid b{display:block;font:800 19px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;}
 .dbstgmid small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;opacity:.9;margin-top:1px;}
-.dbstgarr{flex:0 0 auto;width:34px;height:44px;background:none;border:none;color:#fff;
+.dbstgarr{flex:0 0 auto;width:34px;height:44px;background:none;border:none;color:inherit;
   font:800 30px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;opacity:.92;padding:0;}
 .dbstgarr:active{opacity:.6;}
 .dbstgarr.ghost{visibility:hidden;}
@@ -12343,11 +12343,12 @@ function renderAcxOverview(){
      twin this file already ships for exactly this ("the same stages, darkened
      for a light ground"), so the banner grounds on it: worst case 5.27:1, and
      no colour is invented. The chips, dots and spines keep STAGE_COLORS. */
-  html += '<div class="dbstage" style="background:' + (stageInk(stg) || '#455A64') + ';">' +
+  var _band = stageBand(stg);
+  html += '<div class="dbstage" style="background:' + _band.bg + ';color:' + _band.ink + ';">' +
     (pvStage ? '<button class="dbstgarr" id="dbStgBack" title="Back to ' + esc(pvStage) + '">&#8249;</button>' : '<span class="dbstgarr ghost"></span>') +
     '<span class="dbstgmid"><b>' + esc(stg.toUpperCase()) + '</b><small>' + esc(stageAgo(ck.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
     (nx ? '<button class="dbstgarr" id="dbStgFwd" title="Advance to ' + esc(nx) + '">&#8250;</button>' : '<span class="dbstgarr ghost"></span>') +
-    '<span class="msmenu" style="position:relative;"><span class="dots" id="msDots" style="cursor:pointer;font-size:22px;color:#fff;padding:0 6px;">&#8942;</span>' +
+    '<span class="msmenu" style="position:relative;"><span class="dots" id="msDots" style="cursor:pointer;font-size:22px;color:inherit;padding:0 6px;">&#8942;</span>' +
     '<div id="msDrop" style="display:none;position:absolute;right:0;top:130%;z-index:70;background:#fff;border:1px solid #c9c2bf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);min-width:180px;overflow:hidden;">' +
       (nx ? '<button class="estopt" data-act="adv">Advance to ' + esc(nx) + '</button>' : '') +
       (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
@@ -16992,6 +16993,21 @@ var STAGE_COLORS = { Lead:'#FFE600', Prospect:'#F08A24', OnHold:'#0F9B8E', Appro
 var STAGE_INK = { Lead:'#756A00', Prospect:'#9A4E06', OnHold:'#0B5F57', Approved:'#3F6B23', Scheduled:'#3F6B23',
   Completed:'#15607F', Invoiced:'#5B4080', Closed:'#455A64', Lost:'#5E5E5E' };
 function stageInk(stg){ return STAGE_INK[stg] || '#5E5E5E'; }
+/* 1235 (Theo: "Fix mustard"): the stage band's ground and ink. 1052 grounded EVERY band on
+   STAGE_INK so white text would clear its floor - which turned Lead into a muddy mustard
+   (#756A00). Now the band keeps the real STAGE_COLORS ground and picks near-black or white,
+   whichever measures higher - IF that clears 4.5:1 for the 11.5px sub-line. Two stages
+   (Invoiced, Closed) clear it with neither ink; they keep the 1052 twin with white.
+   No colour is invented: both grounds already ship. */
+function stageBand(stg){
+  var bg = STAGE_COLORS[stg] || '#607D8B', m = /^#?([0-9a-f]{6})$/i.exec(bg);
+  if(m){
+    var n = parseInt(m[1], 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(function(v){ v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); });
+    var L = .2126 * c[0] + .7152 * c[1] + .0722 * c[2], w = 1.05 / (L + .05), d = (L + .05) / .0601;
+    if(Math.max(w, d) >= 4.5) return { bg: bg, ink: w >= d ? '#ffffff' : '#161616' };
+  }
+  return { bg: stageInk(stg) || '#455A64', ink: '#ffffff' };
+}
 /* 649: THE THREAD AS IT IS ACTUALLY RENDERED — checklist.comments, plus the
    legacy `projects.notes` COLUMN promoted to a pinned first message.
    renderChat() has always done that promotion; commsCount() never knew about
@@ -43442,8 +43458,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b: 1235, d: '2026-10-05', t: 'Leads, Photo Activity and Insurance Clients get the one header',
-    s: '<b>Leads &amp; Jobs</b>, <b>Photo Activity</b> and <b>Settings</b> now use the Production header: the title on the left in the serif face with the count line underneath, instead of a centred title. These are the pages you reach from the bar along the top, so there is nothing to go back to and no back button. <b>Insurance Clients</b> keeps its back button, now the same square one as everywhere else.' },
+  { b: 1235, d: '2026-10-05', t: 'One header on Leads, Photos and Insurance Clients; the Lead banner is yellow again',
+    s: '<b>Leads &amp; Jobs</b>, <b>Photo Activity</b> and <b>Settings</b> now use the Production header: the title on the left in the serif face with the count line underneath, instead of a centred title. These are the pages you reach from the bar along the top, so there is nothing to go back to and no back button. <b>Insurance Clients</b> keeps its back button, now the same square one as everywhere else. And the stage banner on a client is its real stage colour again: <b>Lead</b> is bright yellow with dark lettering instead of mustard, and every other stage picks white or dark lettering, whichever reads better.' },
   { b: 1234, d: '2026-10-05', t: 'The estimate builder and Line Items get the one header',
     s: 'The <b>estimate builder</b> now opens with the same header as Production: a square back button, the title, and the estimate number underneath. <b>Preview</b>, <b>Options</b> and <b>\u2192 Contract</b> sit on their own row below in plain words instead of four red capital buttons wrapping across two rows. The <b>Line Item Library</b> gets the same header with <b>+ Add</b> as its one button. Nothing moved or went away; Save and Publish are still in the bar under your thumb on a phone.' },
   { b: 1233, d: '2026-10-04', t: 'One page header, starting with Invoices and Labor Rates',

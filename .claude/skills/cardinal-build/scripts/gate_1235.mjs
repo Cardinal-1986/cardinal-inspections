@@ -8,6 +8,9 @@
         and eyebrow clear their floors.
      B. Insurance Clients: a 44x44 icon back labelled Back; Georgia title on one line; red half.
      C. the older, fully-overridden .ljtitle rule was deleted.
+     D. Theo, "Fix mustard": a Lead client's stage band is the real lemon #FFE600 with dark
+        lettering, not the #756A00 twin; title and sub-line clear their floors; Approved is its
+        real green; Invoiced and Closed (where neither ink clears 4.5:1) keep the 1052 twin.
    RED on 1234 rather than crash (BUG_CLASSES 37).
    usage:  node gate_1235.mjs [file.html]
 */
@@ -75,6 +78,23 @@ for (const th of ['dark', 'rb-light']) {
   await p.close();
   ok(r.nw === 44 && r.nh === 44 && r.svg && r.aria === 'Back', 'B  ' + th + ' Insurance Clients: back is a 44x44 icon labelled Back', JSON.stringify(r).slice(0, 120));
   ok(/Georgia/.test(r.font || '') && r.hh < 40 && r.span && r.rT >= 3 && r.rB >= 3, 'B  ' + th + ' Insurance Clients: Georgia title on one line with its red half, readable', JSON.stringify([r.hh, r.span, r.rT, r.rB]));
+}
+const BAND = () => { const b = document.querySelector('.dbstage'); if (!b) return { none: true };
+  const t = b.querySelector('.dbstgmid b'), sm = b.querySelector('.dbstgmid small');
+  return { bg: getComputedStyle(b).backgroundColor, ink: getComputedStyle(b).color,
+    rT: t ? +window.__ratio(t).toFixed(2) : 0, rS: sm ? +window.__ratio(sm).toFixed(2) : 0,
+    inv: typeof stageBand === 'function' ? stageBand('Invoiced').bg : 'missing', clo: typeof stageBand === 'function' ? stageBand('Closed').bg : 'missing',
+    invTwin: typeof STAGE_INK !== 'undefined' ? STAGE_INK.Invoiced : '', cloTwin: typeof STAGE_INK !== 'undefined' ? STAGE_INK.Closed : '' }; };
+for (const th of ['dark', 'rb-light']) {
+  const p = await at('client', th); await p.evaluate(CON);
+  const ap = await p.evaluate(BAND).catch(e => ({ err: String(e) }));
+  await p.evaluate(async () => { try { await openProject('p3'); } catch (e) {} }); await p.waitForTimeout(1300);
+  const ld = await p.evaluate(BAND).catch(e => ({ err: String(e) }));
+  await p.close();
+  ok(ld.bg === 'rgb(255, 230, 0)' && ld.ink === 'rgb(22, 22, 22)', 'D  ' + th + ' Lead band is lemon with dark lettering, not mustard', ld.bg + ' / ' + ld.ink);
+  ok(ld.rT >= 3 && ld.rS >= 4.5 && ap.rT >= 3 && ap.rS >= 4.5, 'D  ' + th + ' Lead and Approved band title and sub-line clear their floors', [ld.rT, ld.rS, ap.rT, ap.rS].join(' / '));
+  ok(ap.bg === 'rgb(124, 179, 66)', 'D  ' + th + ' Approved band is its real green', ap.bg);
+  ok(ld.inv === ld.invTwin && ld.clo === ld.cloTwin && ld.inv !== 'missing', 'D  ' + th + ' Invoiced and Closed keep the 1052 twin', ld.inv + ' ' + ld.clo);
 }
 await browser.close();
 console.log((fail ? 'GATE 1235 RED' : 'GATE 1235 GREEN') + ' — ' + pass + ' passed, ' + fail + ' failed');

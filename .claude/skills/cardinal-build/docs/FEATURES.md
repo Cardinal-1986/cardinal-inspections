@@ -8570,13 +8570,30 @@ Done at source in the shared classes `.ljhead`, `.ljtitle` and `.ljsub`. The old
 moved to the second half in `--ct-red-deep`. It follows the insurance palette, not `rb-light`, as
 everything on that screen does.
 
-Gate: **`gate_1235.mjs`** (21 checks, both themes):
+**The stage band is its real colour again** (Theo, with a screenshot: **"Fix mustard"**).
+- **Before:** build 1052 grounded every client's stage band on `STAGE_INK`, the twins darkened so white
+  text could clear its floor. That turned Lead's lemon `#FFE600` into a muddy `#756A00`.
+- **Now:** `stageBand(stg)` keeps the real `STAGE_COLORS` ground and picks near-black `#161616` or white,
+  whichever measures higher, as long as that clears 4.5:1 for the 11.5px "N weeks ago" line.
+  - Lead is lemon with dark lettering (14.3:1).
+  - Prospect, OnHold, Approved, Completed and Lost also go to their real colours, all with dark
+    lettering.
+  - **Invoiced and Closed** clear 4.5:1 with neither ink, so they keep the 1052 twin with white.
+- The arrows and ⋮ inherit the band's ink: `.dbstgarr` and the inline dots changed from `#fff` to
+  `inherit`.
+- `STAGE_INK` itself is unchanged and still used for stage text elsewhere.
+- **`gate_1052` check 3 was updated by decision:** "a shipped stage colour, title readable" instead of
+  "always the twin".
+
+Gate: **`gate_1235.mjs`** (29 checks, both themes):
 - A: Leads and Photo Activity have a Georgia title on one line, left with the search box, no button,
   the eyebrow underneath, and every floor cleared.
 - B: Insurance Clients has the 44px Back and the title.
 - C: the dead rule is gone.
+- D: Lead is lemon with dark lettering, Approved is its real green, both clear their floors, and
+  Invoiced and Closed keep the twin.
 
-It fails 17 checks on 1234.
+It fails 23 checks on 1234.
 
 ## Build 1234 — the estimate builder and the Line Item Library get the one header
 

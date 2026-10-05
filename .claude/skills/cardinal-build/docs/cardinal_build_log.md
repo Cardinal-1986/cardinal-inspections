@@ -33871,3 +33871,10 @@ and keeps it.
 **Deleted, not overridden:** an older `.ljtitle` rule that a later one fully replaced. It had sat there
 dead since the later rule arrived.
 
+**Then, from a screenshot: "Fix mustard."** The Lead stage band was `#756A00`. Build 1052 had grounded
+every band on the darkened `STAGE_INK` so that WHITE text would pass. Darkening lemon yellow produces
+mustard, because yellow has nowhere to go but olive. The fix flips which side moves: keep the real
+stage colour and pick the ink. Two stages (Invoiced, Closed) are mid-tones where neither black nor
+white reaches 4.5:1 for the small line, so they keep the 1052 twin. A rule that falls back where it
+must is more honest than one that bends every stage for the sake of two.
+
