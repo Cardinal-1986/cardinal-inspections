@@ -33905,5 +33905,5 @@ other svg still turns it red. The `<img>` ban is untouched.
 `audit_scrolllock` (17), `gate_stack` (nothing stacked), `gate_chromium --selftest` (22/22), `gate_1236`
 (20/20; RED 19 on 1235), `harness_occhead` (42/42), `gate_1231`, `gate_1192`, `gate_1206`, `gate_1081`,
 `gate_a11y`, and `render_gradtext` (82/82). `gate_1160` fails 3 checks, the same 3 on 1235:
-`visionHtml()` (retired at 1190), and the ink and single-theme checks (light twins added at 1231). The
-sentinel runs in both themes and its result goes in the PR.
+`visionHtml()` (retired at 1190), and the ink and single-theme checks (light twins added at 1231). 
+**Sentinel, both themes: CLEAN.** 32 renders each, nothing new against 1235.
