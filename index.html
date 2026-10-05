@@ -3633,7 +3633,12 @@ body.rl-at-book #rlAskBtn{display:none !important;}
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 #cr-hd2-srch #headSearch{display:block !important;flex:1 1 auto;min-width:0;width:auto;
   height:38px;margin:0;padding:0 13px;border:0;border-radius:0;background:transparent;
-  color:var(--hin,#fff);font:400 13px 'Segoe UI',Arial,sans-serif;box-shadow:none}
+  color:#fff;font:400 13px 'Segoe UI',Arial,sans-serif;box-shadow:none;
+  --cr-stack:"the search box inside the dark row; it has overridden the base #headSearch look since the row arrived, and 1237 only changed its ink"}
+/* 1237: the ink is pinned, not --hin. This row is painted --bnbg, the nav-strip colour,
+   which is dark in BOTH themes (all three CRMs); --hin is the HEADER's ink and goes dark
+   in rb-light, so typed text was #2B3D4F on #101620 = 1.63:1 (Theo's screenshot). White
+   is 16.9-18.9:1 on every strip. The placeholder already cleared 4.76:1 on all of them. */
 #cr-hd2-srch #headSearch::placeholder{color:#8d8781}
 #cr-hd2-srch #headSearch:focus{outline:none;box-shadow:inset 0 -2px 0 var(--hac,#c8202e)}
 #cr-hd2-srch .cr-ins-theme{flex:0 0 auto;width:30px;height:30px;margin:0 10px 0 4px;
@@ -4065,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-05 build 1236<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-05 build 1237<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43458,6 +43463,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1237, d: '2026-10-05', t: 'What you type in the search box can be read in light mode',
+    s: 'The search row under the header stays dark in light mode, but the letters you typed into it were turning dark too, so a search was nearly invisible. They are white again on every portal, in both themes.' },
   { b: 1236, d: '2026-10-05', t: 'Why Cardinal and Colors finish the one header, and say we are OC Preferred',
     s: '<b>Why Cardinal</b> and <b>Colors</b>, the two screens you show a homeowner, now open like every other screen: a square back button, the title in the serif face, a short line under it. Both now say <b>Owens Corning\u2122 Roofing Preferred Contractor</b> right under the title. On Colors it shows on the list of shingle lines and steps aside once you open a line or a colour. Long product names still wrap rather than get cut off.' },
   { b: 1235, d: '2026-10-05', t: 'One header on Leads, Photos and Insurance Clients; the Lead banner is yellow again',

@@ -33907,3 +33907,21 @@ other svg still turns it red. The `<img>` ban is untouched.
 `gate_a11y`, and `render_gradtext` (82/82). `gate_1160` fails 3 checks, the same 3 on 1235:
 `visionHtml()` (retired at 1190), and the ink and single-theme checks (light twins added at 1231). 
 **Sentinel, both themes: CLEAN.** 32 renders each, nothing new against 1235.
+
+## Build 1237 — what you type in the header search can be read in light mode
+
+Theo sent a screenshot and no words. Full write-up in FEATURES "Build 1237".
+
+**The shape is the recurring one: light ink on a dark ground.** This time it came from one rule
+mixing two token families. The row is painted `--bnbg`, which is dark in both themes. Its text
+used `--hin`, which follows the header into light. Insurance was **1.06:1**. One declaration
+fixes it: `color:#fff`.
+
+**My own error on the way: the marker.** The comment says "the ink is pinned" in lowercase, and I
+first searched for "The". `check_build` said red, correctly.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_stack`
+(with `--cr-stack` declared on the edited rule), `gate_chromium --selftest` (22/22), `gate_1237`
+(8/8; RED 5 on 1236), `gate_1236`, `gate_1207` (35/35, the live search), `gate_1206`, `gate_1081`,
+`gate_a11y`, and `render_gradtext` (82/82). The sentinel runs in both themes, and its result is
+in the PR.

@@ -8549,6 +8549,31 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1237 — what you type in the header search can be read in light mode
+
+Theo sent a screenshot with no words: the desktop app in light mode, with the search row open
+and "fdsfsdffgdf" typed into it, barely visible.
+
+**The cause was two token families meeting in one rule.** `#cr-hd2-srch`, the search row under
+the header, is painted `--bnbg`, the nav-strip colour, which is **dark in both themes** for all
+three CRMs. The text in its `#headSearch` used `--hin`, the **header's** ink. That ink goes dark
+in `rb-light`, because the header itself goes light. Measured in light mode:
+
+| strip | before | after |
+|---|---:|---:|
+| retail `#101620` | 1.63:1 | 18.14:1 |
+| insurance `#1a0e0d` | **1.06:1** | 18.88:1 |
+| community `#08211a` | 1.55:1 | 16.90:1 |
+
+**Fix:** the ink is pinned to `#fff`. The ground never changes, so the ink must not change either.
+- The placeholder (`#8d8781`) already cleared 4.76:1 or better on every strip, and is unchanged.
+- The × at the row's end is Chromium's native search-cancel control, not a rule in this file.
+- The rule carries `--cr-stack` with its reason. It has always overridden the base
+  `#headSearch` look, and editing it made `gate_stack` read it as new.
+
+Gate: **`gate_1237.mjs`** (8 checks): both themes × three strips, typed text ≥4.5:1 on the row's
+own ground, plus the source check. It fails 5 checks on 1236.
+
 ## Build 1236 — Why Cardinal and Colors get the one header, and say Cardinal is OC Preferred
 
 Theo: **"We are oc preferred, we are allowed to advertise that"**, then **"Yes"** to the preview. This is
