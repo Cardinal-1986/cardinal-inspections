@@ -33817,3 +33817,11 @@ fitted beside the title and Print wrapped alone to row two, which read as two un
 The fix sets the title's flex-basis so that back + title own row one and every sheet button wraps
 together. `gate_1233` C asserts it.
 
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_1233`
+(18/18, and it fails all 18 on 1232), `gate_1123` (25/25), `harness_lrs1123` (45/45), `gate_1232`,
+`1231`, `1230`, `1229`, `1206`, `1081` and `gate_a11y`. `gate_stack` is CLEAN after one declared
+`--cr-stack`: the shared button restates `box-sizing` because it lands on screens that have no
+`*` rule. ⚠ `gate_1123` imports bare `playwright` and calls `launch()` with no executable, so in this
+container it only runs from a copy pointed at `/opt/pw-browsers/chromium`. The symlinked
+`node_modules` brings a Playwright whose headless shell is not installed.
