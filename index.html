@@ -4064,7 +4064,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1232<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-04 build 1233<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43441,6 +43441,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1233, d: '2026-10-04', t: 'One page header, starting with Invoices and Labor Rates',
+    s: 'Screens are moving to one header, the one Production already has: a square back button on the left, the title in the serif face, a short line under it, and one button on the right. <b>Invoices &amp; AR</b> no longer wraps its title onto three lines, and the <b>Labor Rate Schedule</b>\'s Back sits beside the title instead of under it. More screens follow one at a time.' },
   { b: 1232, d: '2026-10-04', t: 'Dark pieces gone from light pages',
     s: 'In <b>Light</b> mode, a claim\'s <b>Financials</b> block is now a white card like the rest of the page instead of a black slab, with the money in readable green, amber and red. <b>Crew Dispatch</b> drops the heavy black shadows and dark grey outlines around crews, trade strips and jobs for a soft lift. Dark mode is unchanged.' },
   { b: 1231, d: '2026-10-04', t: 'Light mode reaches every screen',
@@ -85923,6 +85925,45 @@ body.cr-landing-on footer.site{display:none !important;}
      --est-* system (build 1095), declared on #cr-ar-view like #cr-est-picker does.
      Light-only, by Theo's call — no dark twin, deliberately (a single-theme surface,
      same call as OC Colors / the Showcase). Admin-only (a money overview). -->
+<style id="cr-mhd-styles">
+/* 1233: ONE module header for the app (design audit, 4 Oct: five different page
+   headers, Back in six shapes and five sizes). Theo picked "1" from rendered
+   previews: the Production header. A 44px square back, the title in Georgia with
+   an optional red second half, an optional monospace eyebrow under it, and at
+   most one action on the right. Rolled out screen by screen: a screen adopts it
+   by taking these classes and DELETING its own header rules, so nothing here has
+   to out-specify anything. Its own tokens, light twin below. */
+.cr-mhd, .cr-mhd-eb{
+  --mhd-ink:#eceef0; --mhd-acc:#e35c63; --mhd-mut:#9aa3ab; --mhd-line:rgba(230,235,240,.16);
+  --mhd-hover:rgba(230,235,240,.06);
+}
+:root[data-theme="rb-light"] :is(.cr-mhd, .cr-mhd-eb){
+  --mhd-ink:#161616; --mhd-acc:#8f1620; --mhd-mut:#5b6470; --mhd-line:#d5dae1;
+  --mhd-hover:rgba(15,23,42,.05);
+}
+.cr-mhd{ display:flex; align-items:center; gap:12px; min-height:44px; }
+.cr-mhd-back, .cr-mhd-act{
+  flex:none; min-width:44px; height:44px; box-sizing:border-box; border-radius:11px; cursor:pointer;
+  --cr-stack:"box-sizing restates a module's * rule on purpose: the shared header lands on screens that have no * rule, and must be 44px on all of them";
+  border:1px solid var(--mhd-line); background:transparent; color:var(--mhd-mut);
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:0;
+  font:600 13px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+}
+.cr-mhd-act{ padding:0 12px; }
+.cr-mhd-back svg{ width:18px; height:18px; }
+.cr-mhd-act svg{ width:16px; height:16px; }
+.cr-mhd-back:hover, .cr-mhd-act:hover{ background:var(--mhd-hover); color:var(--mhd-ink); }
+.cr-mhd-back:focus-visible, .cr-mhd-act:focus-visible{ outline:2px solid var(--mhd-acc); outline-offset:2px; }
+.cr-mhd-t{
+  flex:1 1 auto; min-width:0; margin:0; font:700 26px/1.15 Georgia,'Times New Roman',serif;
+  letter-spacing:.2px; color:var(--mhd-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cr-mhd-t span{ color:var(--mhd-acc); }
+.cr-mhd-eb{
+  margin:4px 0 14px 56px; font:600 11px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--mhd-mut);
+}
+</style>
 <style id="cr-ar-styles">
 #cr-ar-view{
   /* 1218: the AR dashboard was the THIRD paper-white surface — measured at
@@ -85966,21 +86007,9 @@ body.cr-landing-on footer.site{display:none !important;}
   --crar-mastersh:0 1px 2px rgba(15,23,42,.05);
 }
 #cr-ar-view .crar-shell{max-width:1080px; margin:0 auto; padding:14px 16px 96px;}
-#cr-ar-view .crar-top{display:flex; align-items:center; gap:12px; padding:6px 2px 16px;}
-#cr-ar-view .crar-close{
-  border:1px solid var(--est-line); background:var(--est-panel); color:var(--est-ink);
-  font-size:14px; font-weight:600; padding:9px 14px; border-radius:11px; cursor:pointer;
-  box-shadow:var(--est-lift);
-}
-#cr-ar-view .crar-close:hover{box-shadow:var(--est-hover);}
-#cr-ar-view .crar-ttl{flex:1; font-size:19px; font-weight:800; letter-spacing:-.01em;}
-#cr-ar-view .crar-refresh{
-  border:1px solid var(--est-line); background:var(--est-well); color:var(--est-dim);
-  font-size:13px; font-weight:600; padding:9px 12px; border-radius:11px; cursor:pointer;
-  display:inline-flex; align-items:center; gap:6px;
-}
-#cr-ar-view .crar-refresh svg{width:15px; height:15px;}
-#cr-ar-view .crar-refresh:hover{color:var(--est-ink);}
+/* 1233: the header is the shared .cr-mhd (cr-mhd-styles); this module's own
+   back / title / refresh rules were deleted rather than overridden. */
+#cr-ar-view .crar-top{padding:6px 2px 0;}
 
 /* KPI tray — neumorphic inset porcelain tiles */
 #cr-ar-view .crar-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin-bottom:8px;}
@@ -86179,13 +86208,14 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 
 <div id="cr-ar-view" style="display:none;" aria-hidden="true">
   <div class="crar-shell">
-    <div class="crar-top">
-      <button id="crarClose" class="crar-close" type="button" aria-label="Back">&#8249;&nbsp;Back</button>
-      <div class="crar-ttl">Invoices &amp; Accounts Receivable</div>
-      <button id="crarRefresh" class="crar-refresh" type="button" aria-label="Refresh">
+    <div class="crar-top cr-mhd">
+      <button id="crarClose" class="cr-mhd-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h1 class="cr-mhd-t">Invoices <span>&amp; AR</span></h1>
+      <button id="crarRefresh" class="cr-mhd-act" type="button" aria-label="Refresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Refresh
       </button>
     </div>
+    <div class="cr-mhd-eb">Accounts receivable</div>
     <div class="crar-master">
       <div class="crar-mtxt"><span class="crar-mlab">Automatic payment reminders</span><span class="crar-mstate" id="crarMasterState">Checking&hellip;</span></div>
       <button id="crarMaster" class="crar-btn" type="button" disabled>&hellip;</button>
@@ -86740,14 +86770,14 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
+/* 1233: the back and the title are the shared .cr-mhd (cr-mhd-styles); the bar
+   keeps its sticky ground. Edit / Save / Print show only on a crew's sheet, and
+   on a phone they wrap to their own row under the title rather than squeezing it. */
 #cr-lrs-view .lrs-topbar{
-  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px;
+  position:sticky; top:0; z-index:5; flex-wrap:wrap; row-gap:8px;
   padding:10px 14px; background:var(--lrs-top); border-bottom:1px solid var(--lrs-edge);
 }
-#cr-lrs-view .lrs-topbar .lrs-ttl{
-  flex:1; font-weight:800; font-size:16px; color:var(--lrs-ink); letter-spacing:-.01em;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-}
+#cr-lrs-view .lrs-topbar .lrs-ttl{ flex-basis:180px; }
 #cr-lrs-view .lrs-tb{
   border:1px solid var(--lrs-edge); background:#1c222b; color:#cfd6df;
   font-size:13px; font-weight:600; padding:10px 13px; border-radius:9px; cursor:pointer;
@@ -86848,8 +86878,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 @media(max-width:560px){
   #cr-lrs-view .lrs-doc{padding:20px 15px 32px; margin:12px 10px 80px;}
   #cr-lrs-view .lrs-erate input{width:70px;}
-  #cr-lrs-view .lrs-topbar{flex-wrap:wrap;}
-  #cr-lrs-view .lrs-topbar .lrs-ttl{order:-1; flex-basis:100%;}
+  #cr-lrs-view .lrs-topbar .lrs-ttl{flex-basis:calc(100% - 56px);}/* 1233: back + title fill row one, so a sheet's buttons all drop to row two together */
 }
 
 /* ── the paper ─────────────────────────────────────────────────────────
@@ -86908,13 +86937,13 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 </style>
 
 <div id="cr-lrs-view" style="display:none;" aria-hidden="true">
-  <div class="lrs-topbar">
+  <div class="lrs-topbar cr-mhd">
     <!-- 1123: ONE Back button with two meanings — out of a crew's sheet, then
          out of the screen. syncBar() shows Edit and Print only on a sheet: the
          crew list is not a document, and printing it would be a page of
          buttons. Both start hidden here so the first paint is already right. -->
-    <button id="lrs-back" class="lrs-tb" type="button">&#8249;&nbsp;Back</button>
-    <div class="lrs-ttl">Labor Rate Schedule</div>
+    <button id="lrs-back" class="cr-mhd-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h1 class="lrs-ttl cr-mhd-t">Labor Rate Schedule</h1>
     <button id="lrs-cancel" class="lrs-tb" type="button" style="display:none;">Cancel</button>
     <button id="lrs-edit" class="lrs-tb" type="button" style="display:none;">Edit</button>
     <button id="lrs-save" class="lrs-tb save" type="button" style="display:none;">Save</button>

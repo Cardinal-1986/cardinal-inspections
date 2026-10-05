@@ -8549,6 +8549,50 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1233 — one page header, starting with Invoices & AR and Labor Rates
+
+The 4 Oct audit found **five different page headers**, with Back appearing in six shapes and five
+sizes. Theo picked option **"1"** from a rendered preview: **the Production header**, used for every
+screen.
+
+**`<style id="cr-mhd-styles">`, the shared module header.** It has its own `--mhd-*` tokens with a
+`rb-light` twin.
+- **`.cr-mhd`**: the row.
+- **`.cr-mhd-back`**: a 44px square chevron.
+- **`.cr-mhd-t`**: the title, in Georgia 26px on one line with an ellipsis. An optional `<span>` paints
+  the red second half.
+- **`.cr-mhd-eb`**: an optional monospace eyebrow under the title.
+- **`.cr-mhd-act`**: **at most one** action on the right.
+
+**How a screen adopts it:** the screen's header markup takes these classes, and the screen's own
+back/title rules are **deleted at source**. Nothing in `cr-mhd-styles` has to out-specify anything,
+which is why `gate_stack` stays clean.
+
+- **Invoices & AR** (`#cr-ar-view`) now reads "Invoices **& AR**" with the eyebrow "Accounts
+  receivable" and one Refresh button. Before, the title wrapped to three lines between a Back pill and
+  Refresh. The rules `.crar-close`, `.crar-ttl` and `.crar-refresh` are deleted.
+- **Labor Rate Schedule** (`#cr-lrs-view`): the square back and the Georgia title sit inside the
+  existing sticky bar. `#lrs-back` and `.lrs-ttl` keep their hooks, so `setTitle()`, `gate_1123` and
+  `harness_lrs1123` are untouched.
+  - The rule of one action on the right bends here: a crew's sheet needs Cancel, Edit, Save and Print.
+  - So on a phone the title row is back + title (`flex-basis:calc(100% - 56px)`), and **every** sheet
+    button drops to row two together.
+  - Before, Edit sat beside the title and Print sat alone below it.
+
+**Next, one screen at a time:**
+- the dark bar with red CAPITAL buttons: Estimate builder, Line Item Library, Photo editor;
+- the centred serif titles with no back: Leads & Jobs, Photo Activity, Insurance Clients;
+- the Back pills on Why Cardinal and Colors. These two are client-facing surfaces; check
+  `OC_BRAND_RULES.md` before touching Colors.
+
+Gate: **`gate_1233.mjs`** (18 checks, Chromium, both themes):
+- A: back is 44x44, the title is Georgia on one line, and both clear their contrast floors.
+- B: AR has at most one action.
+- C: on the Labor Rates sheet, every button is on row two.
+- D: AR's old rules are deleted.
+
+It fails all 18 checks on 1232.
+
 ## Build 1232 — dark pieces gone from light pages
 
 The 4 Oct audit's "dark-era pieces left on light pages" item, worked down. **Dark mode is

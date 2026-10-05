@@ -33802,3 +33802,26 @@ decision. Grep the comment before "fixing" a look.*
 wrote `<small style="…color:#7cd18d">`. An inline colour beats every theme rule, so both are classes now.
 `gate_1232` B asserts that no inline WAIVED colour is left anywhere in the file.
 
+## Build 1233 — one page header, starting with Invoices & AR and Labor Rates
+
+Theo picked **"1"** from three rendered header options: the Production header, everywhere. The shared
+`cr-mhd-styles` arrived, and the first two screens adopted it. Full write-up in FEATURES "Build 1233".
+
+**Adopt by deleting, not overriding.** Each screen swaps its header markup onto the shared classes
+and deletes its own header rules in the same edit. If the shared rule had to beat a module rule that
+is still in the file, that is exactly the stacking `gate_stack` exists to stop. It would also leave
+two places to edit the next time someone touches the header.
+
+**The first render caught a layout bug that no gate would have.** On the Labor Rates crew sheet, Edit
+fitted beside the title and Print wrapped alone to row two, which read as two unrelated controls.
+The fix sets the title's flex-basis so that back + title own row one and every sheet button wraps
+together. `gate_1233` C asserts it.
+
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_1233`
+(18/18, and it fails all 18 on 1232), `gate_1123` (25/25), `harness_lrs1123` (45/45), `gate_1232`,
+`1231`, `1230`, `1229`, `1206`, `1081` and `gate_a11y`. `gate_stack` is CLEAN after one declared
+`--cr-stack`: the shared button restates `box-sizing` because it lands on screens that have no
+`*` rule. ⚠ `gate_1123` imports bare `playwright` and calls `launch()` with no executable, so in this
+container it only runs from a copy pointed at `/opt/pw-browsers/chromium`. The symlinked
+`node_modules` brings a Playwright whose headless shell is not installed.
