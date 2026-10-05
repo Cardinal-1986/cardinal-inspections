@@ -115,8 +115,11 @@ const GATES = [
      Anchor counted in 1204 first: 0 there, 1 here (BUG_CLASSES 86). */
   { name: 'gate_1205.mjs',
     protects: 'every button on the estimate builder toolbar is at least 44px tall and none sits off the right edge at 390px',
-    break: { find: 'color:#f08a90;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;',
-             repl: 'color:#f08a90;padding:6px 12px;border-radius:6px;' } },
+    /* 1234 re-anchored: the toolbar rule was rewritten for the Production header
+       (sentence case, neutral ink, 11px radius). Same break, same meaning: drop
+       the 44px floor from the one rule every toolbar button takes. */
+    break: { find: 'color:#eceef0;padding:0 12px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;',
+             repl: 'color:#eceef0;padding:6px 12px;border-radius:11px;' } },
   /* 1207: the header search must answer while you type. The break removes the
      one listener that makes it live, restoring the measured 1206 behaviour —
      type "Diamond" and NOTHING happens until Return. Anchor counted in 1206
