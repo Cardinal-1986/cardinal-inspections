@@ -8549,6 +8549,51 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1238 — a photo fits the screen when the phone is on its side
+
+Theo: **"When I put my phone in landscape mode it shortens the photo view."**
+
+**Which view.** Tapping a photo in the client's Photo Album opens `#cr-pae-cap-modal`
+(`openCapModal()` in `cr-pae-script`): the photo with its Caption, Section and the
+AI Caption / Edit / Save / Close / Save row.
+- **Stacked layout:** a 4:3 photo above the form, max 480px wide. That makes the sheet **630px
+  tall**.
+- **The bug:** at 844×390 it centred off both ends.
+  - The top **120px of the photo** sat above the screen. A centred flex child that overflows
+    upward can't be scrolled to, so that part was unreachable.
+  - The buttons sat below the screen.
+  - The module had no phone rule and no landscape rule at all.
+
+**Fix:** one media block, `(orientation:landscape) and (max-height:540px)`, so a short sideways
+screen and nothing else.
+- The sheet fills the screen less a 10px margin, with safe-area insets for the notch side.
+- The photo takes the left at full height and shows the whole picture.
+- The form takes the right, `clamp(260px,38%,330px)` wide, and scrolls on its own. The action row
+  wraps.
+
+**Upright is untouched:** same 544px sheet, same 263px photo, asserted.
+
+**Measured photo size sideways:**
+
+| Screen | Photo |
+|---|---:|
+| 844×390 | 493×370 |
+| 932×430 | 547×410 |
+| 667×375 | 387×290 |
+
+Every one of these shows the whole photo, with Save and Close on screen.
+
+Each new declaration carries `--cr-stack` with its reason. They are scoped overrides of the
+portrait layout, which stays.
+
+Gate: **`gate_1238.mjs`** (14 checks):
+- A: three landscape sizes. The sheet, the whole photo and the action row are inside the screen,
+  and the photo is the bigger half.
+- B: portrait is unchanged.
+
+It fails 12 on 1237. ⚠ **The sentinel sweeps portrait only (390×844), so it cannot see this bug or
+this fix. `gate_1238` is the landscape instrument.**
+
 ## Build 1237 — what you type in the header search can be read in light mode
 
 Theo sent a screenshot with no words: the desktop app in light mode, with the search row open

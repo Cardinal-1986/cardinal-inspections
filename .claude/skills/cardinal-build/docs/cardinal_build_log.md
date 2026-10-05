@@ -33925,3 +33925,21 @@ first searched for "The". `check_build` said red, correctly.
 (8/8; RED 5 on 1236), `gate_1236`, `gate_1207` (35/35, the live search), `gate_1206`, `gate_1081`,
 `gate_a11y`, and `render_gradtext` (82/82). The sentinel runs in both themes, and its result is
 in the PR.
+
+## Build 1238 — a photo fits the screen when the phone is on its side
+
+Theo: **"When I put my phone in landscape mode it shortens the photo view."** Full write-up in
+FEATURES "Build 1238".
+
+**"The photo view" names five things in this app.** The one a tap opens from the album is
+`#cr-pae-cap-modal`. I measured it instead of guessing. Sideways it is a 630px sheet on a 390px
+screen, centred, so the photo's top 120px is above the screen and cannot be scrolled to. Sideways
+it is now side by side, and upright is unchanged.
+
+**My own error on the way:** an unbounded `[^{}]*…[^}]*` regex over the 5.6 MB file hung until the
+timeout, which is exactly the trap CLAUDE.md names. I killed it and used a bounded `grep -o`.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_stack`,
+`gate_chromium --selftest` (22/22), `gate_1238` (14/14; RED 12 on 1237), `gate_1237`, `gate_1229`
+(101/101, the album), `gate_1206`, `gate_1081`, `gate_a11y`, and `render_gradtext` (82/82). The
+sentinel runs portrait-only in both themes, so it is blind to landscape by construction.
