@@ -33825,3 +33825,19 @@ together. `gate_1233` C asserts it.
 `*` rule. ⚠ `gate_1123` imports bare `playwright` and calls `launch()` with no executable, so in this
 container it only runs from a copy pointed at `/opt/pw-browsers/chromium`. The symlinked
 `node_modules` brings a Playwright whose headless shell is not installed.
+
+## Build 1234 — the estimate builder and the Line Item Library get the one header
+
+Theo picked **"A"**: on the estimate builder, the tools sit on their own row under the Production header.
+Full write-up in FEATURES "Build 1234".
+
+**Three renders, two fixes no gate would have asked for.**
+- **On a saved estimate, Delete came out the same size as Duplicate.** A destructive control was drawn
+  as a big friendly box. Both are quiet text buttons now, and Delete is in red text.
+- **The light theme's Duplicate kept a border.** `:root[data-theme] .cr-est-head button` outranks
+  `.cr-est-head [data-act=dup]`, so the quiet rule needed its light twin.
+
+**Re-layout by `order`, not by moving nodes.** Three modules inject into this header, anchored on
+`[data-act=save]` and `#cr-epub-btn`. Reordering the DOM would have broken an anchor nobody can see from
+the stylesheet.
+

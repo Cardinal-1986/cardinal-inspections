@@ -8549,6 +8549,47 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1234 — the estimate builder and the Line Item Library get the one header
+
+Round two of the 1233 header. The estimate builder is laid out as Theo's pick **"A"** (tools on their own
+row), chosen over "B" (one More menu) from a rendered preview.
+
+**The estimate builder (`.cr-est-head`):**
+- **Row one:** a 44px icon back (`aria-label="Close"`) and the title in Georgia 26px.
+- **Under the title:** the estimate number as the eyebrow.
+- **The tools row:** Preview, Options and → Contract, in sentence case outline buttons. Before, they were
+  red CAPITAL buttons wrapping to two rows.
+- **On a saved estimate,** Delete and Duplicate follow the tools as **quiet** text buttons, with Delete in
+  red text. A destructive control stopped being the same size as Duplicate.
+- **On a phone,** Save and Publish stay in the thumb bar (1029/1211). On a tablet or desktop they join the
+  tools row, and Save is the one red button.
+- **Done with CSS `order`, never by moving nodes.** `cr-epub` (Preview, Options, Publish) and `cr-e2c`
+  (→ Contract) insert their buttons relative to `[data-act=save]` and `#cr-epub-btn`. The DOM order is
+  theirs, and 1211's comment explains why those anchors must never be removed.
+- **The injected buttons' own look was deleted.** These id rules were removed in `cr-epub-styles` and
+  `cr-e2c-styles`: `#cr-gbb-btn`, `#cr-epub-preview-btn`, `#cr-epub-btn` and `#cr-e2c-btn` (each with
+  its `:hover`). The row's one rule styles them now. 1231's light-mode id fix for the three became
+  unnecessary and is gone too.
+- The 1205 phone rule `.cr-est-head{flex-wrap:wrap;}` stays, because `gate_1205` holds it. Its
+  `h2{flex:1 1 100%;order:-1}` line is replaced by the base layout.
+
+**The Line Item Library (`.cr-lil-head`):**
+- The back button moved first in the markup.
+- The title is Georgia 26px.
+- **+ Add** is its one action.
+
+**`gate_1231` C changed by decision.** It asserted that the three builder tools read dark red in light,
+and Theo's pick A puts them in the header's ink. The check now asserts what 1231 actually guarded: that
+they are not left in the dark-mode pink.
+
+Gate: **`gate_1234.mjs`** (19 checks, Chromium, both themes):
+- A: new estimate header geometry and contrast.
+- B: saved estimate, Delete and Duplicate are quiet.
+- C: the Line Item Library.
+- D: the id rules are gone.
+
+It fails 11 checks on 1233.
+
 ## Build 1233 — one page header, starting with Invoices & AR and Labor Rates
 
 The 4 Oct audit found **five different page headers**, with Back appearing in six shapes and five

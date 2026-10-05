@@ -86,7 +86,9 @@ for (const sc of SCREENS) {
 {
   const p = await at('estbuilder', 'rb-light');
   const r = await p.evaluate(() => ['cr-epub-preview-btn', 'cr-gbb-btn', 'cr-e2c-btn'].map(id => { const e = document.getElementById(id); return e ? getComputedStyle(e).color : 'none'; }));
-  ok(r.every(c => c === 'rgb(143, 22, 32)'), 'C: Preview / Options / Contract read dark red in light', r.join(' | '));
+  /* 1234 superseded "dark red": Theo's pick A put these three in the header's own ink, as plain
+     outline buttons. What 1231 guarded still holds: in light they are NOT the dark-mode pink. */
+  ok(r.every(c => c !== 'none' && c !== 'rgb(240, 138, 144)'), 'C: Preview / Options / Contract are not left in the dark-mode pink in light', r.join(' | '));
   await p.close();
 }
 {
