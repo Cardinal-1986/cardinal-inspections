@@ -1988,11 +1988,6 @@ html, body{overflow-x:hidden;max-width:100%;}
   background:linear-gradient(90deg,var(--red),#c8202e);
 }
 .viewhead + .subnote{text-align:center;max-width:560px;margin-left:auto;margin-right:auto;}
-.ljtitle{
-  text-align:center;
-  font:800 23px Georgia,'Times New Roman',serif;
-  letter-spacing:.02em;color:#1c1416;
-}
 .projsec{font-weight:800;color:#1c1416;}
 /* 1067: a PAIR, because no single value clears both grounds — #e35c63 is
    5.48 dark / 3.51 light, #c8202e is 5.67 light / 3.40 dark. Build 527 is the
@@ -2272,11 +2267,11 @@ body.restoring #restoreVeil{display:flex;}
 .jabox .jan{font:800 17px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
 .jabox .jan.zero{color:#c9c9c9;}
 /* client dashboard */
-.dbstage{display:flex;align-items:center;gap:4px;color:#fff;border-radius:8px;padding:12px 6px;margin:0 0 12px;}
+.dbstage{display:flex;align-items:center;gap:4px;border-radius:8px;padding:12px 6px;margin:0 0 12px;}
 .dbstgmid{flex:1;text-align:center;min-width:0;}
 .dbstgmid b{display:block;font:800 19px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;}
 .dbstgmid small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;opacity:.9;margin-top:1px;}
-.dbstgarr{flex:0 0 auto;width:34px;height:44px;background:none;border:none;color:#fff;
+.dbstgarr{flex:0 0 auto;width:34px;height:44px;background:none;border:none;color:inherit;
   font:800 30px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;opacity:.92;padding:0;}
 .dbstgarr:active{opacity:.6;}
 .dbstgarr.ghost{visibility:hidden;}
@@ -2501,9 +2496,15 @@ body.restoring #restoreVeil{display:flex;}
   --rbe-msg-who:#c8202e;--rbe-msg-when:#8a8a8a;
 }
 /* ---- assigned leads & jobs ---- */
-.ljhead{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:2px;}
-.ljtitle{margin:0;text-align:center;font:800 23px Georgia,'Times New Roman',serif;letter-spacing:.02em;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
-.ljsub{text-align:center;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin:2px 0 10px;}
+/* 1235: the Production header (1233) on the TOP-LEVEL pages - reached from the nav
+   strip under the app header, so there is nothing to go back to and no back button.
+   Title left in Georgia with an optional red second half, the count line as the
+   monospace eyebrow. Leads & Jobs, Photo Activity and Settings share these classes. */
+.ljhead{display:flex;align-items:center;gap:12px;min-height:44px;margin-bottom:0;}
+.ljtitle{margin:0;flex:1;min-width:0;font:700 26px/1.15 Georgia,'Times New Roman',serif;letter-spacing:.2px;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
+.ljsub{font:600 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--rbe-mute,#b8bec6);margin:4px 0 12px;}
+.ljtitle span{color:#e35c63;}
+:root[data-theme="rb-light"] .ljtitle span{color:#8f1620;}
 .ljtop{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
 .ljtop input[type=search]{flex:1;min-width:180px;border:1px solid var(--rbe-line);border-radius:8px;padding:9px 12px;
   font:600 13.5px 'Segoe UI',Arial,sans-serif;background:var(--rbe-panel);color:var(--rbe-fact-fg);}
@@ -4064,7 +4065,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-05 build 1234<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-05 build 1235<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4308,7 +4309,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <div id="leadsView" style="display:none;">
   <div class="wrap" style="padding-top:16px;">
     <div class="ljhead">
-      <h2 class="ljtitle">All Leads &amp; Jobs</h2>
+      <h2 class="ljtitle">Leads <span>&amp; Jobs</span></h2>
     </div>
     <div class="ljsub">All CRMs &middot; <span id="ljShown">&mdash;</span></div>
     <div class="ljtop">
@@ -4427,7 +4428,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <!-- ============ GLOBAL PHOTO ACTIVITY (build 345) ============ -->
 <div id="photosView" style="display:none;">
   <div class="wrap" style="padding-top:16px;">
-    <div class="ljhead"><h2 class="ljtitle">Photo Activity</h2></div>
+    <div class="ljhead"><h2 class="ljtitle">Photo <span>Activity</span></h2></div>
     <div class="ljsub"><span id="phScope">Every photo &middot; every job</span> &middot; <span id="phShown">&mdash;</span></div>
     <div class="ljtop"><input type="search" id="phSearch" placeholder="Search by client"></div>
     <div class="ljchips" id="phCrmChips"></div>
@@ -12342,11 +12343,12 @@ function renderAcxOverview(){
      twin this file already ships for exactly this ("the same stages, darkened
      for a light ground"), so the banner grounds on it: worst case 5.27:1, and
      no colour is invented. The chips, dots and spines keep STAGE_COLORS. */
-  html += '<div class="dbstage" style="background:' + (stageInk(stg) || '#455A64') + ';">' +
+  var _band = stageBand(stg);
+  html += '<div class="dbstage" style="background:' + _band.bg + ';color:' + _band.ink + ';">' +
     (pvStage ? '<button class="dbstgarr" id="dbStgBack" title="Back to ' + esc(pvStage) + '">&#8249;</button>' : '<span class="dbstgarr ghost"></span>') +
     '<span class="dbstgmid"><b>' + esc(stg.toUpperCase()) + '</b><small>' + esc(stageAgo(ck.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
     (nx ? '<button class="dbstgarr" id="dbStgFwd" title="Advance to ' + esc(nx) + '">&#8250;</button>' : '<span class="dbstgarr ghost"></span>') +
-    '<span class="msmenu" style="position:relative;"><span class="dots" id="msDots" style="cursor:pointer;font-size:22px;color:#fff;padding:0 6px;">&#8942;</span>' +
+    '<span class="msmenu" style="position:relative;"><span class="dots" id="msDots" style="cursor:pointer;font-size:22px;color:inherit;padding:0 6px;">&#8942;</span>' +
     '<div id="msDrop" style="display:none;position:absolute;right:0;top:130%;z-index:70;background:#fff;border:1px solid #c9c2bf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);min-width:180px;overflow:hidden;">' +
       (nx ? '<button class="estopt" data-act="adv">Advance to ' + esc(nx) + '</button>' : '') +
       (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
@@ -16991,6 +16993,21 @@ var STAGE_COLORS = { Lead:'#FFE600', Prospect:'#F08A24', OnHold:'#0F9B8E', Appro
 var STAGE_INK = { Lead:'#756A00', Prospect:'#9A4E06', OnHold:'#0B5F57', Approved:'#3F6B23', Scheduled:'#3F6B23',
   Completed:'#15607F', Invoiced:'#5B4080', Closed:'#455A64', Lost:'#5E5E5E' };
 function stageInk(stg){ return STAGE_INK[stg] || '#5E5E5E'; }
+/* 1235 (Theo: "Fix mustard"): the stage band's ground and ink. 1052 grounded EVERY band on
+   STAGE_INK so white text would clear its floor - which turned Lead into a muddy mustard
+   (#756A00). Now the band keeps the real STAGE_COLORS ground and picks near-black or white,
+   whichever measures higher - IF that clears 4.5:1 for the 11.5px sub-line. Two stages
+   (Invoiced, Closed) clear it with neither ink; they keep the 1052 twin with white.
+   No colour is invented: both grounds already ship. */
+function stageBand(stg){
+  var bg = STAGE_COLORS[stg] || '#607D8B', m = /^#?([0-9a-f]{6})$/i.exec(bg);
+  if(m){
+    var n = parseInt(m[1], 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(function(v){ v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); });
+    var L = .2126 * c[0] + .7152 * c[1] + .0722 * c[2], w = 1.05 / (L + .05), d = (L + .05) / .0601;
+    if(Math.max(w, d) >= 4.5) return { bg: bg, ink: w >= d ? '#ffffff' : '#161616' };
+  }
+  return { bg: stageInk(stg) || '#455A64', ink: '#ffffff' };
+}
 /* 649: THE THREAD AS IT IS ACTUALLY RENDERED — checklist.comments, plus the
    legacy `projects.notes` COLUMN promoted to a pinned first message.
    renderChat() has always done that promotion; commsCount() never knew about
@@ -43441,6 +43458,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1235, d: '2026-10-05', t: 'One header on Leads, Photos and Insurance Clients; the Lead banner is yellow again',
+    s: '<b>Leads &amp; Jobs</b>, <b>Photo Activity</b> and <b>Settings</b> now use the Production header: the title on the left in the serif face with the count line underneath, instead of a centred title. These are the pages you reach from the bar along the top, so there is nothing to go back to and no back button. <b>Insurance Clients</b> keeps its back button, now the same square one as everywhere else. And the stage banner on a client is its real stage colour again: <b>Lead</b> is bright yellow with dark lettering instead of mustard, and every other stage picks white or dark lettering, whichever reads better.' },
   { b: 1234, d: '2026-10-05', t: 'The estimate builder and Line Items get the one header',
     s: 'The <b>estimate builder</b> now opens with the same header as Production: a square back button, the title, and the estimate number underneath. <b>Preview</b>, <b>Options</b> and <b>\u2192 Contract</b> sit on their own row below in plain words instead of four red capital buttons wrapping across two rows. The <b>Line Item Library</b> gets the same header with <b>+ Add</b> as its one button. Nothing moved or went away; Save and Publish are still in the bar under your thumb on a phone.' },
   { b: 1233, d: '2026-10-04', t: 'One page header, starting with Invoices and Labor Rates',
@@ -60026,7 +60045,7 @@ chase   : chaseList,
 (function(){'use strict';/* retired in build 301 - the unified header owns insurance chrome */window.CardinalInsHeader=window.CardinalInsHeader||{show:function(){},hide:function(){},build:function(){}};})();
 </script>
 
-<style id="cr-ic-styles">#insClientsView>.ins-header{display:none !important}#insClientsView .ins-body{display:none !important}#insClientsView.cr-ic-live{background:var(--ct-bg) !important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#cr-ic-bar{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:8px;padding:12px 16px;background:linear-gradient(180deg,var(--ct-surface-2),var(--ct-bg));border-bottom:1px solid transparent;border-image:linear-gradient(90deg,var(--ct-red),var(--ct-red-deep)) 1;box-shadow:0 2px 16px var(--ct-focus)}#cr-ic-bar button.nav{flex:0 0 auto;width:38px;height:38px;border-radius:9px;background:transparent;border:1px solid var(--ct-line-strong);color:var(--ct-ink-2);cursor:pointer;font-size:17px;line-height:1}#cr-ic-bar button.nav:hover{border-color:var(--ct-red);color:var(--ct-ink)}#cr-ic-bar h2{flex:1;min-width:0;margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,20px);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ct-red-deep,#FF3B30);/* 685: was gradient-clipped text */}#cr-ic-bar .count{flex:0 0 auto;font:700 12px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);min-width:34px;text-align:right}.cr-ic-wrap{max-width:1180px;margin:0 auto;padding:14px 16px calc(72px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}#cr-ic-search{width:100%;box-sizing:border-box;padding:11px 14px;background:var(--ct-surface);color:var(--ct-ink);border:1px solid var(--ct-line);border-radius:10px;font-weight:400;font-size:14.5px;font-family:inherit;outline:none}#cr-ic-search:focus{border-color:var(--ct-red);box-shadow:0 0 0 3px var(--ct-focus)}#cr-ic-search::placeholder{color:var(--ct-ink-2)}/* 1086: the strip clamps to ONE row with a +N expander. Ten chips wrapped to four rows (194px) between the search box and the client list. ⚠ It could not be DELETED the way 1085 deleted the Leads strips: this screen has no funnel and no rail, so these chips are its only filter. */.cr-ic-chipwrap{display:flex;align-items:flex-start;gap:6px;margin-top:10px;}/* ⚠ margin-top MOVED off .cr-ic-chips onto the wrapper above rather than being overridden here — .cr-ic-chips has exactly one consumer, so the base rule is the right place to edit. An override would be one more layer for gate_stack to flag. */.cr-ic-chipwrap .cr-ic-chips{flex:1 1 auto;min-width:0;}/* 44px is ONE row: #cr-ic-wrap .cr-ic-chips button{min-height:44px} from build 752, and #cr-ic-wrap really is on the host (host.id is set in render). Checked, not assumed. *//* ⚠ Scoped to the phone/tablet, the exact complement of the breakpoint this module already uses for its two-column list (@media min-width:900px) — grep for the convention before inventing one. Measured at 1194px the strip needs TWO rows, and folding one of them away there hides a filter that fits, on a width Theo works at. At 1440px all ten fit on one line and the expander correctly never appears. Written as a max-width rule rather than a min-width override, so there is no second layer for gate_stack to flag. */@media (max-width:899px){.cr-ic-chipwrap.clamped .cr-ic-chips{max-height:44px;overflow:hidden;}}.cr-ic-more{flex:0 0 auto;min-height:44px;padding:8px 12px;border-radius:18px;cursor:pointer;background:transparent;border:1px dashed var(--ct-line-strong);color:var(--ct-ink-2);font-weight:700;font-size:11.5px;font-family:inherit;white-space:nowrap;}.cr-ic-more:hover{border-color:var(--ct-red);color:var(--ct-ink)}.cr-ic-chips{display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ic-chips::-webkit-scrollbar{display:none}.cr-ic-chips button{flex:0 0 auto;padding:8px 13px;border-radius:18px;cursor:pointer;background:var(--ct-surface);border:1px solid var(--ct-line);color:var(--ct-ink-2);font-weight:700;font-size:11.5px;font-family:inherit;white-space:nowrap}.cr-ic-chips button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink-2)}.cr-ic-chips button.on{background:var(--ct-red);border-color:var(--ct-red);color:var(--ct-red-ink)}.cr-ic-chips button b{margin-left:5px;opacity:.75}.cr-ic-sort{display:flex;align-items:center;gap:8px;margin-top:10px;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-ic-sort button{background:transparent;border:0;cursor:pointer;padding:2px 0;font:inherit;font-family:inherit;color:var(--ct-ink-2);border-bottom:1px solid transparent}.cr-ic-sort button.on{color:var(--ct-red-deep);border-bottom-color:var(--ct-red)}.cr-ic-list{margin-top:14px;display:grid;/* 758: minmax(0,1fr), NOT 1fr. A grid item is min-width:auto, so with a nowrap address inside, a 1fr track cannot shrink below the longest address and every card in the column overflows the phone. Measured: 405.5px track in a 358px container. */grid-template-columns:minmax(0,1fr);gap:8px}@media (min-width:900px){.cr-ic-list{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}.cr-ic-row{display:block;width:100%;min-width:0;text-align:left;cursor:pointer;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:12px;padding:14px 15px;font-family:inherit;color:var(--ct-ink);transition:background .15s}.cr-ic-row:hover{background:linear-gradient(var(--ct-surface-2),var(--ct-surface-2)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box}.cr-ic-row .top{display:flex;align-items:baseline;gap:10px}.cr-ic-row .nm{flex:1;min-width:0;font-weight:700;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .owed{flex:0 0 auto;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-ic-row .owed.none{color:var(--ct-ink-2)}.cr-ic-row .ad{/* 758: display:block, same fix and same reason as .cr-pb-job .ad. This is a <span> from the renderer, and text-overflow:ellipsis is INERT on an inline box - so a long address overflowed the card by 32px and was cut off by the page's overflow-x:hidden with no ellipsis to show for it. An inline box also reports scrollWidth/clientWidth as 0, which made the first version of gate_759's truncation check pass VACUOUSLY (0 <= 0+1) on a broken build - the gate now asserts display and the element's own right edge. */display:block;font-size:12px;color:var(--ct-ink-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.cr-ic-row .carrier{font-size:11.5px;color:var(--ct-ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .stg{flex:0 0 auto;padding:3px 8px;border-radius:5px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.11em;text-transform:uppercase;background:var(--ct-surface-3);color:var(--ct-red-deep)}.cr-ic-row .stg.warn{background:var(--ct-warn-bg);color:var(--ct-warn)}.cr-ic-row .stg.bad{background:var(--ct-red-wash);color:var(--ct-red-deep)}.cr-ic-row .age{flex:0 0 auto;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2)}.cr-ic-row .age.stale{color:var(--ct-red-deep)}.cr-ic-empty{padding:44px 20px;text-align:center;font-size:13.5px;line-height:1.6;color:var(--ct-ink-2)}</style>
+<style id="cr-ic-styles">#insClientsView>.ins-header{display:none !important}#insClientsView .ins-body{display:none !important}#insClientsView.cr-ic-live{background:var(--ct-bg) !important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#cr-ic-bar{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:8px;padding:12px 16px;background:linear-gradient(180deg,var(--ct-surface-2),var(--ct-bg));border-bottom:1px solid transparent;border-image:linear-gradient(90deg,var(--ct-red),var(--ct-red-deep)) 1;box-shadow:0 2px 16px var(--ct-focus)}#cr-ic-bar button.nav{flex:0 0 auto;width:44px;height:44px;border-radius:11px;background:transparent;border:1px solid var(--ct-line-strong);color:var(--ct-ink-2);cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center}#cr-ic-bar button.nav svg{width:18px;height:18px}#cr-ic-bar button.nav:hover{border-color:var(--ct-red);color:var(--ct-ink)}#cr-ic-bar h2{flex:1;min-width:0;margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:26px;line-height:1.15;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ct-ink);/* 1235: the Production header (1233); the red moved to the second half */}#cr-ic-bar h2 span{color:var(--ct-red-deep,#FF3B30)}#cr-ic-bar .count{flex:0 0 auto;font:700 12px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);min-width:34px;text-align:right}.cr-ic-wrap{max-width:1180px;margin:0 auto;padding:14px 16px calc(72px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}#cr-ic-search{width:100%;box-sizing:border-box;padding:11px 14px;background:var(--ct-surface);color:var(--ct-ink);border:1px solid var(--ct-line);border-radius:10px;font-weight:400;font-size:14.5px;font-family:inherit;outline:none}#cr-ic-search:focus{border-color:var(--ct-red);box-shadow:0 0 0 3px var(--ct-focus)}#cr-ic-search::placeholder{color:var(--ct-ink-2)}/* 1086: the strip clamps to ONE row with a +N expander. Ten chips wrapped to four rows (194px) between the search box and the client list. ⚠ It could not be DELETED the way 1085 deleted the Leads strips: this screen has no funnel and no rail, so these chips are its only filter. */.cr-ic-chipwrap{display:flex;align-items:flex-start;gap:6px;margin-top:10px;}/* ⚠ margin-top MOVED off .cr-ic-chips onto the wrapper above rather than being overridden here — .cr-ic-chips has exactly one consumer, so the base rule is the right place to edit. An override would be one more layer for gate_stack to flag. */.cr-ic-chipwrap .cr-ic-chips{flex:1 1 auto;min-width:0;}/* 44px is ONE row: #cr-ic-wrap .cr-ic-chips button{min-height:44px} from build 752, and #cr-ic-wrap really is on the host (host.id is set in render). Checked, not assumed. *//* ⚠ Scoped to the phone/tablet, the exact complement of the breakpoint this module already uses for its two-column list (@media min-width:900px) — grep for the convention before inventing one. Measured at 1194px the strip needs TWO rows, and folding one of them away there hides a filter that fits, on a width Theo works at. At 1440px all ten fit on one line and the expander correctly never appears. Written as a max-width rule rather than a min-width override, so there is no second layer for gate_stack to flag. */@media (max-width:899px){.cr-ic-chipwrap.clamped .cr-ic-chips{max-height:44px;overflow:hidden;}}.cr-ic-more{flex:0 0 auto;min-height:44px;padding:8px 12px;border-radius:18px;cursor:pointer;background:transparent;border:1px dashed var(--ct-line-strong);color:var(--ct-ink-2);font-weight:700;font-size:11.5px;font-family:inherit;white-space:nowrap;}.cr-ic-more:hover{border-color:var(--ct-red);color:var(--ct-ink)}.cr-ic-chips{display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ic-chips::-webkit-scrollbar{display:none}.cr-ic-chips button{flex:0 0 auto;padding:8px 13px;border-radius:18px;cursor:pointer;background:var(--ct-surface);border:1px solid var(--ct-line);color:var(--ct-ink-2);font-weight:700;font-size:11.5px;font-family:inherit;white-space:nowrap}.cr-ic-chips button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink-2)}.cr-ic-chips button.on{background:var(--ct-red);border-color:var(--ct-red);color:var(--ct-red-ink)}.cr-ic-chips button b{margin-left:5px;opacity:.75}.cr-ic-sort{display:flex;align-items:center;gap:8px;margin-top:10px;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-ic-sort button{background:transparent;border:0;cursor:pointer;padding:2px 0;font:inherit;font-family:inherit;color:var(--ct-ink-2);border-bottom:1px solid transparent}.cr-ic-sort button.on{color:var(--ct-red-deep);border-bottom-color:var(--ct-red)}.cr-ic-list{margin-top:14px;display:grid;/* 758: minmax(0,1fr), NOT 1fr. A grid item is min-width:auto, so with a nowrap address inside, a 1fr track cannot shrink below the longest address and every card in the column overflows the phone. Measured: 405.5px track in a 358px container. */grid-template-columns:minmax(0,1fr);gap:8px}@media (min-width:900px){.cr-ic-list{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}.cr-ic-row{display:block;width:100%;min-width:0;text-align:left;cursor:pointer;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:12px;padding:14px 15px;font-family:inherit;color:var(--ct-ink);transition:background .15s}.cr-ic-row:hover{background:linear-gradient(var(--ct-surface-2),var(--ct-surface-2)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box}.cr-ic-row .top{display:flex;align-items:baseline;gap:10px}.cr-ic-row .nm{flex:1;min-width:0;font-weight:700;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .owed{flex:0 0 auto;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-ic-row .owed.none{color:var(--ct-ink-2)}.cr-ic-row .ad{/* 758: display:block, same fix and same reason as .cr-pb-job .ad. This is a <span> from the renderer, and text-overflow:ellipsis is INERT on an inline box - so a long address overflowed the card by 32px and was cut off by the page's overflow-x:hidden with no ellipsis to show for it. An inline box also reports scrollWidth/clientWidth as 0, which made the first version of gate_759's truncation check pass VACUOUSLY (0 <= 0+1) on a broken build - the gate now asserts display and the element's own right edge. */display:block;font-size:12px;color:var(--ct-ink-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.cr-ic-row .carrier{font-size:11.5px;color:var(--ct-ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .stg{flex:0 0 auto;padding:3px 8px;border-radius:5px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.11em;text-transform:uppercase;background:var(--ct-surface-3);color:var(--ct-red-deep)}.cr-ic-row .stg.warn{background:var(--ct-warn-bg);color:var(--ct-warn)}.cr-ic-row .stg.bad{background:var(--ct-red-wash);color:var(--ct-red-deep)}.cr-ic-row .age{flex:0 0 auto;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2)}.cr-ic-row .age.stale{color:var(--ct-red-deep)}.cr-ic-empty{padding:44px 20px;text-align:center;font-size:13.5px;line-height:1.6;color:var(--ct-ink-2)}</style>
 <script id="cr-ic-script">
 (function(){
 'use strict';
@@ -60153,8 +60172,8 @@ v.classList.add('cr-ic-live');
 var bar = document.createElement('div');
 bar.id = 'cr-ic-bar';
 bar.innerHTML =
-'<button class="nav" data-act="back" type="button">\u2190</button>' +
-'<h2>Insurance Clients</h2>' +
+'<button class="nav" data-act="back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>' +
+'<h2>Insurance <span>Clients</span></h2>' +
 '<span class="count" data-slot="count"></span>';
 v.insertBefore(bar, v.firstChild);
 host = document.createElement('div');

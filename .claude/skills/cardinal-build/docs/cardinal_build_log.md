@@ -33858,3 +33858,36 @@ INK: 0 in both themes.
 
 The local `gate_chromium` shows 2 problems: `gate_1076` and `gate_1198` import bare `playwright`,
 which this container does not have. They are identical on 1233 and green in CI.
+
+## Build 1235 — Leads & Jobs, Photo Activity and Insurance Clients get the one header
+
+Theo: **"Start the next."** Header round three. Full write-up in FEATURES "Build 1235".
+
+**The audit said "no back control" as if it were a defect. On a top-level page it is correct.** These
+pages are reached from the nav strip, so a back button there would have nowhere to go. They take the
+title and the eyebrow of the 1233 header and leave the back out. Insurance Clients already had a back
+and keeps it.
+
+**Deleted, not overridden:** an older `.ljtitle` rule that a later one fully replaced. It had sat there
+dead since the later rule arrived.
+
+**Then, from a screenshot: "Fix mustard."** The Lead stage band was `#756A00`. Build 1052 had grounded
+every band on the darkened `STAGE_INK` so that WHITE text would pass. Darkening lemon yellow produces
+mustard, because yellow has nowhere to go but olive. The fix flips which side moves: keep the real
+stage colour and pick the ink. Two stages (Invoiced, Closed) are mid-tones where neither black nor
+white reaches 4.5:1 for the small line, so they keep the 1052 twin. A rule that falls back where it
+must is more honest than one that bends every stage for the sake of two.
+
+
+**Sentinel, both themes.** INK: 0 in both. It caught one dead declaration of mine: `.dbstage{color:#fff}`,
+which never wins now that `stageBand()` always sets the band's ink. Deleted, and the band renders
+byte-identically before and after in both themes. Its other findings are the dark title red losing to
+its light twin (by design) and `.cr-lil-row .name`, whose rules are byte-identical on 1234 and 1235.
+That one is the `--since` diff misfiring again; it is not a change.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_stack`,
+`gate_chromium --selftest` (22/22), `gate_1235` (29/29; RED 23 on 1234), `gate_1052` (check 3 updated
+by decision), `gate_1220`, `gate_1225`, `gate_1227`, `gate_1229`–`1234`, `gate_1206`, `gate_1081`,
+`gate_a11y`, and `render_gradtext` (82/82). `gate_755` fails the same 2 of 17 on 1234 and on 1235:
+"…on the Partners tab" and "Bids lands on the Bids tab". Both are Community tabs this build does not
+touch, so they are pre-existing.
