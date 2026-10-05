@@ -33878,3 +33878,16 @@ stage colour and pick the ink. Two stages (Invoiced, Closed) are mid-tones where
 white reaches 4.5:1 for the small line, so they keep the 1052 twin. A rule that falls back where it
 must is more honest than one that bends every stage for the sake of two.
 
+
+**Sentinel, both themes.** INK: 0 in both. It caught one dead declaration of mine: `.dbstage{color:#fff}`,
+which never wins now that `stageBand()` always sets the band's ink. Deleted, and the band renders
+byte-identically before and after in both themes. Its other findings are the dark title red losing to
+its light twin (by design) and `.cr-lil-row .name`, whose rules are byte-identical on 1234 and 1235.
+That one is the `--since` diff misfiring again; it is not a change.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_stack`,
+`gate_chromium --selftest` (22/22), `gate_1235` (29/29; RED 23 on 1234), `gate_1052` (check 3 updated
+by decision), `gate_1220`, `gate_1225`, `gate_1227`, `gate_1229`–`1234`, `gate_1206`, `gate_1081`,
+`gate_a11y`, and `render_gradtext` (82/82). `gate_755` fails the same 2 of 17 on 1234 and on 1235:
+"…on the Partners tab" and "Bids lands on the Bids tab". Both are Community tabs this build does not
+touch, so they are pre-existing.
