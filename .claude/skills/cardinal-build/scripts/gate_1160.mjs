@@ -170,7 +170,10 @@ let doc = null;
     /* ── 4 · no OC mark ── */
     ok('no <img> on the screen (an OC lockup needs artwork + approval)',
        !!v && v.querySelectorAll('img').length === 0);
-    ok('no <svg> on the screen', !!v && v.querySelectorAll('svg').length === 0);
+    /* 1236: the back button became the shared 44px drawn chevron (the one header, 1233).
+       That svg is navigation, not a mark — so the check now excludes exactly .why-x and still
+       goes red on any other <svg>, which is the OC-lockup case this check exists for. */
+    ok('no <svg> on the screen outside the back chevron', !!v && v.querySelectorAll('svg').length === v.querySelectorAll('.why-x svg').length);
     ok('no background-image anywhere in the stylesheet',
        !/background-image/i.test(css) && !/url\(/i.test(css));
     ok('OC status is stated as text', txt.includes('Owens Corning'));
