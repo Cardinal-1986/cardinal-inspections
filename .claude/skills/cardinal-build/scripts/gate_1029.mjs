@@ -70,7 +70,9 @@ async function sweep(html) {
   const out = { dialogs };
   out.closeLabel = await page.evaluate(`(function(){
     var b = document.querySelector('#cr-est-view [data-act="close"]');
-    return b ? b.textContent.trim() : 'MISSING';
+    /* 1234: the exit is an icon now (the Production header); its NAME is the
+       aria-label. What 1029 guarded is the name, not the pixels. */
+    return b ? ((b.getAttribute('aria-label') || '').trim() || b.textContent.trim()) : 'MISSING';
   })()`);
   out.saveExported = await page.evaluate(
     `typeof (window.CardinalEstimates && window.CardinalEstimates.save) === 'function'`);
