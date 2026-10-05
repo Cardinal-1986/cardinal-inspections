@@ -33825,3 +33825,36 @@ together. `gate_1233` C asserts it.
 `*` rule. ⚠ `gate_1123` imports bare `playwright` and calls `launch()` with no executable, so in this
 container it only runs from a copy pointed at `/opt/pw-browsers/chromium`. The symlinked
 `node_modules` brings a Playwright whose headless shell is not installed.
+
+## Build 1234 — the estimate builder and the Line Item Library get the one header
+
+Theo picked **"A"**: on the estimate builder, the tools sit on their own row under the Production header.
+Full write-up in FEATURES "Build 1234".
+
+**Three renders, two fixes no gate would have asked for.**
+- **On a saved estimate, Delete came out the same size as Duplicate.** A destructive control was drawn
+  as a big friendly box. Both are quiet text buttons now, and Delete is in red text.
+- **The light theme's Duplicate kept a border.** `:root[data-theme] .cr-est-head button` outranks
+  `.cr-est-head [data-act=dup]`, so the quiet rule needed its light twin.
+
+**Re-layout by `order`, not by moving nodes.** Three modules inject into this header, anchored on
+`[data-act=save]` and `#cr-epub-btn`. Reordering the DOM would have broken an anchor nobody can see from
+the stylesheet.
+
+
+**The sentinel caught one dead declaration, and it was mine.** `.cr-lil-head button{color}` (and its
+light twin) never won on either button: the back button and + Add each set their own ink. Both colours
+were removed, and the Line Items screenshots are byte-identical before and after the change in both
+themes. Every other OVERRIDDEN finding is a dark rule losing to its own light twin, which is by design.
+INK: 0 in both themes.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_stack`,
+`gate_1234` (19/19; RED 11 on 1233), `gate_1211`, `gate_1138`, `gate_1229`–`1233`, `gate_1206`,
+`gate_1081` and `gate_a11y`. Updated by decision, with reasons in each file:
+- `gate_1205`: the title sits above the TOOLS, and the back button sits beside it.
+- `gate_1029`: it reads the exit button's accessible name.
+- `gate_1231` C: not the dark-mode pink, rather than dark red.
+- `gate_chromium`: 1205's break was re-anchored to the new toolbar rule (selftest 22/22).
+
+The local `gate_chromium` shows 2 problems: `gate_1076` and `gate_1198` import bare `playwright`,
+which this container does not have. They are identical on 1233 and green in CI.

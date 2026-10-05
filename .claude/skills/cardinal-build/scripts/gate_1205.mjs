@@ -145,7 +145,10 @@ if (!(existsSync(setupPath) && existsSync(mockPath))) {
         headH: Math.round(hb.height), wrap: getComputedStyle(head).flexWrap,
         h2Bottom: h2 ? Math.round(h2.getBoundingClientRect().bottom) : -1,
         h2Width: h2 ? Math.round(h2.getBoundingClientRect().width) : -1,
-        firstBtnTop: heads.length ? Math.min(...heads.map(b => b.top)) : -1,
+        /* 1234 (Theo's pick A): the back button sits BESIDE the title on row one,
+           by design, so "every button below the title" no longer holds. What 1205
+           guarded is that the TOOLS fall under the title, not squeezed beside it. */
+        firstBtnTop: (function(){ const t = heads.filter(b => b.key !== 'close'); return t.length ? Math.min(...t.map(b => b.top)) : -1; })(),
         barDisplay: bar ? getComputedStyle(bar).display : 'none',
         barH: bar ? Math.round(bar.getBoundingClientRect().height) : 0,
         innerW: innerWidth, docScrollW: document.documentElement.scrollWidth
@@ -183,7 +186,7 @@ if (!(existsSync(setupPath) && existsSync(mockPath))) {
          p.headScrollW + ' vs ' + p.headClientW);
       ok(p.wrap === 'wrap', 'the row is allowed to wrap on a phone', String(p.wrap));
       ok(p.h2Bottom > 0 && p.firstBtnTop >= 0 && p.h2Bottom <= p.firstBtnTop + 1,
-         'the title takes its own line, above the buttons',
+         'the title sits above the tools (the back button beside it, 1234)',
          'h2 bottom ' + p.h2Bottom + ' · first button top ' + p.firstBtnTop);
       ok(p.docScrollW <= p.innerW, 'and the page does not scroll sideways',
          p.docScrollW + ' vs ' + p.innerW);
