@@ -8549,6 +8549,35 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1235 — Leads & Jobs, Photo Activity and Insurance Clients get the one header
+
+Round three of the 1233 header, on the pages the audit filed as "centred serif title with no back".
+
+**Top-level pages get no back button, on purpose.** Leads & Jobs, Photo Activity and Settings are reached
+from the nav strip under the app header. There is nothing to go back to, so a back button would be a
+dead control. They take the rest of the Production header:
+- the title on the left in Georgia 26px, with an optional red second half;
+- the count line (`.ljsub`) as a monospace uppercase eyebrow underneath.
+
+Done at source in the shared classes `.ljhead`, `.ljtitle` and `.ljsub`. The older `.ljtitle` rule
+(text-align:center, `#1c1416`) was fully overridden by the later one and is **deleted**.
+- **Titles:** "Leads **& Jobs**" (was "All Leads & Jobs"; "All CRMs" stays in the eyebrow, which
+  `gate_755` reads) and "Photo **Activity**".
+- **Red half:** `#e35c63` in dark and `#8f1620` in light. Both clear 3:1 at 26px (5.66 and 8.51).
+
+**Insurance Clients (`#cr-ic-bar`)** keeps its back button, which is now the 44px square chevron with
+`aria-label="Back"`. The title is "Insurance **Clients**" in Georgia 26px: `--ct-ink`, with the red
+moved to the second half in `--ct-red-deep`. It follows the insurance palette, not `rb-light`, as
+everything on that screen does.
+
+Gate: **`gate_1235.mjs`** (21 checks, both themes):
+- A: Leads and Photo Activity have a Georgia title on one line, left with the search box, no button,
+  the eyebrow underneath, and every floor cleared.
+- B: Insurance Clients has the 44px Back and the title.
+- C: the dead rule is gone.
+
+It fails 17 checks on 1234.
+
 ## Build 1234 — the estimate builder and the Line Item Library get the one header
 
 Round two of the 1233 header. The estimate builder is laid out as Theo's pick **"A"** (tools on their own

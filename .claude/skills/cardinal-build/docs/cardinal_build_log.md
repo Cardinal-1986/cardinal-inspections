@@ -33858,3 +33858,16 @@ INK: 0 in both themes.
 
 The local `gate_chromium` shows 2 problems: `gate_1076` and `gate_1198` import bare `playwright`,
 which this container does not have. They are identical on 1233 and green in CI.
+
+## Build 1235 — Leads & Jobs, Photo Activity and Insurance Clients get the one header
+
+Theo: **"Start the next."** Header round three. Full write-up in FEATURES "Build 1235".
+
+**The audit said "no back control" as if it were a defect. On a top-level page it is correct.** These
+pages are reached from the nav strip, so a back button there would have nowhere to go. They take the
+title and the eyebrow of the 1233 header and leave the back out. Insurance Clients already had a back
+and keeps it.
+
+**Deleted, not overridden:** an older `.ljtitle` rule that a later one fully replaced. It had sat there
+dead since the later rule arrived.
+
