@@ -33891,3 +33891,19 @@ by decision), `gate_1220`, `gate_1225`, `gate_1227`, `gate_1229`–`1234`, `gate
 `gate_a11y`, and `render_gradtext` (82/82). `gate_755` fails the same 2 of 17 on 1234 and on 1235:
 "…on the Partners tab" and "Bids lands on the Bids tab". Both are Community tabs this build does not
 touch, so they are pre-existing.
+
+## Build 1236 — Why Cardinal and Colors get the one header, and say Cardinal is OC Preferred
+
+Theo: **"We are oc preferred, we are allowed to advertise that"**, then **"Yes"** to the preview. This is the
+last round of the 1233 header. Full write-up in FEATURES "Build 1236".
+
+**The badge is words, not a mark.** The Preferred logo needs official artwork and OC approval, which no
+session can give. `gate_1160`'s "no `<svg>`" check now excludes exactly the `.why-x` back chevron, so any
+other svg still turns it red. The `<img>` ban is untouched.
+
+**Gates.** GREEN: `check_build` (marker `class="occ-pref"`, absent on 1235), `gate_types`, `gate_dupes`,
+`audit_scrolllock` (17), `gate_stack` (nothing stacked), `gate_chromium --selftest` (22/22), `gate_1236`
+(20/20; RED 19 on 1235), `harness_occhead` (42/42), `gate_1231`, `gate_1192`, `gate_1206`, `gate_1081`,
+`gate_a11y`, and `render_gradtext` (82/82). `gate_1160` fails 3 checks, the same 3 on 1235:
+`visionHtml()` (retired at 1190), and the ink and single-theme checks (light twins added at 1231). 
+**Sentinel, both themes: CLEAN.** 32 renders each, nothing new against 1235.

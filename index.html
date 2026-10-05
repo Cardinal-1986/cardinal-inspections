@@ -4065,7 +4065,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-05 build 1235<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-05 build 1236<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43458,6 +43458,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1236, d: '2026-10-05', t: 'Why Cardinal and Colors finish the one header, and say we are OC Preferred',
+    s: '<b>Why Cardinal</b> and <b>Colors</b>, the two screens you show a homeowner, now open like every other screen: a square back button, the title in the serif face, a short line under it. Both now say <b>Owens Corning\u2122 Roofing Preferred Contractor</b> right under the title. On Colors it shows on the list of shingle lines and steps aside once you open a line or a colour. Long product names still wrap rather than get cut off.' },
   { b: 1235, d: '2026-10-05', t: 'One header on Leads, Photos and Insurance Clients; the Lead banner is yellow again',
     s: '<b>Leads &amp; Jobs</b>, <b>Photo Activity</b> and <b>Settings</b> now use the Production header: the title on the left in the serif face with the count line underneath, instead of a centred title. These are the pages you reach from the bar along the top, so there is nothing to go back to and no back button. <b>Insurance Clients</b> keeps its back button, now the same square one as everywhere else. And the stage banner on a client is its real stage colour again: <b>Lead</b> is bright yellow with dark lettering instead of mustard, and every other stage picks white or dark lettering, whichever reads better.' },
   { b: 1234, d: '2026-10-05', t: 'The estimate builder and Line Items get the one header',
@@ -77284,16 +77286,17 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   border-bottom:1px solid var(--occ-line,#1D2126);
 }
 #cr-occ .occ-back{
-  flex:0 0 auto; min-width:44px; min-height:44px; display:inline-flex;
-  align-items:center; justify-content:center; gap:6px; padding:0 12px;
+  flex:0 0 auto; width:44px; min-width:44px; min-height:44px; display:inline-flex;
+  align-items:center; justify-content:center; gap:6px; padding:0;
   background:transparent; color:var(--occ-ink,#EDEFF2);
-  border:1px solid var(--occ-line,#1D2126); border-radius:9px;
+  border:1px solid var(--occ-line,#1D2126); border-radius:11px;
   font:600 15px var(--occ-sans,sans-serif); cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
 #cr-occ .occ-back:active{background:var(--occ-raise,#12151A)}
+#cr-occ .occ-back svg{width:18px;height:18px}
 #cr-occ .occ-title{flex:1 1 auto; min-width:0}
-#cr-occ .occ-title b{display:block; font:700 19px var(--occ-sans,sans-serif); letter-spacing:-.02em;
+#cr-occ .occ-title b{display:block; font:700 26px/1.15 Georgia,'Times New Roman',serif; letter-spacing:.2px;/* 1236: the Production header's title face */
   /* 626: forbid a break INSIDE a word. The line name is stored
      'TruDefinition\00ae Duration\00ae FLEX\00ae' with no space before the mark,
      so an ordinary wrap cannot strand it — yet Theo's iPad put every \00ae on
@@ -77301,7 +77304,10 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
      points at a Safari line-breaking difference around U+00AE that cannot be
      observed from here. keep-all closes it regardless of the cause. */
   word-break:keep-all}
-#cr-occ .occ-title span{display:block; font-size:13px; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-title span{display:block; margin-top:3px; font:600 11px/1.4 ui-monospace,'SF Mono',Menlo,monospace; letter-spacing:.18em; text-transform:uppercase; color:var(--occ-dim,#9AA3AE)}
+#cr-occ .occ-pref{display:inline-flex; align-items:center; gap:7px; margin-top:9px; padding:5px 11px; border:1px solid var(--occ-red,#EC008C); border-radius:10px; font:700 12px/1.35 var(--occ-sans,sans-serif); font-style:normal; color:var(--occ-ink,#EDEFF2)}
+#cr-occ .occ-pref i{font-style:normal; color:var(--occ-pink-on-dark,#F55CB2)}
+#cr-occ.line .occ-pref, #cr-occ.detail .occ-pref{display:none}
 
 #cr-occ .occ-filters{
   display:flex; flex-wrap:wrap; gap:8px; padding:12px 16px 4px;
@@ -77596,7 +77602,7 @@ body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 @media (min-width:820px){
   #cr-occ .occ-head{padding:16px 40px}
   #cr-occ .occ-title b{font-size:clamp(19px, 2.1vw, 26px)}   /* 626: fits rather than wraps */
-  #cr-occ .occ-title span{font-size:15px}
+  #cr-occ .occ-title span{font-size:12px}
 
   #cr-occ .occ-styles{
     display:flex; flex:0 0 auto; gap:2px; padding:3px; border-radius:12px;
@@ -78206,8 +78212,10 @@ function ensureView(){
   VIEW.id = 'cr-occ';
   VIEW.innerHTML =
     '<div class="occ-head">' +
-      '<button type="button" class="occ-back" id="occBack">← Back</button>' +
-      '<div class="occ-title"><b id="occTitle">Colors</b><span id="occSub">Owens Corning shingle colours</span></div>' +
+      '<button type="button" class="occ-back" id="occBack" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>' +
+      '<div class="occ-title"><b id="occTitle">Colors</b><span id="occSub">Owens Corning shingle colours</span>' +
+        /* 1236: Preferred status in words, on the lines list only (hidden a level down). */
+        '<em class="occ-pref"><i aria-hidden="true">\u2605</i>Owens Corning™ Roofing Preferred Contractor</em></div>' +
       '<div class="occ-styles" id="occStyles" role="group" aria-label="Presentation style"></div>' +
     '</div>' +
     '<div class="occ-hub" id="occHub"></div>' +
@@ -88019,15 +88027,24 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 #cr-why .why-wrap{max-width:760px;margin:0 auto;padding:0 22px 64px;box-sizing:border-box;}
 #cr-why .why-top{position:sticky;top:0;z-index:2;background:#050607;
   display:flex;align-items:center;gap:12px;padding:14px 0 12px;}
-#cr-why .why-x{flex:0 0 auto;width:44px;height:44px;border-radius:12px;
+#cr-why .why-x{flex:0 0 auto;width:44px;height:44px;border-radius:11px;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
-  color:#f2f4f2;font-size:19px;line-height:1;cursor:pointer;font-family:inherit;}
+  color:#f2f4f2;line-height:1;cursor:pointer;font-family:inherit;}
+#cr-why .why-x svg{width:18px;height:18px;}
 #cr-why .why-x:hover{background:rgba(255,255,255,.13);}
-#cr-why .why-eyebrow{font:700 11px/1 'Segoe UI',Arial,sans-serif;
-  letter-spacing:.18em;text-transform:uppercase;color:#8f9296;}
-#cr-why .why-h{margin:18px 0 6px;font:700 clamp(30px,5.4vw,44px)/1.06 Georgia,'Times New Roman',serif;
-  color:#f2f4f2;letter-spacing:-.01em;}
-#cr-why .why-lede{margin:0 0 6px;font-size:16.5px;line-height:1.5;color:#b9b3ad;}
+/* 1236: the Production header (1233) - back and title share the sticky row, the
+   company line is the monospace eyebrow under it, then the Preferred line. */
+#cr-why .why-eyebrow{display:block;margin:2px 0 0 56px;font:600 11px/1.4 ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.2em;text-transform:uppercase;color:#8f9296;}
+#cr-why .why-h{flex:1;min-width:0;margin:0;font:700 clamp(26px,4.2vw,36px)/1.15 Georgia,'Times New Roman',serif;
+  color:#f2f4f2;letter-spacing:.2px;}
+#cr-why .why-h span{color:#e35c63;}
+#cr-why .why-pref{display:inline-flex;align-items:center;gap:7px;margin:12px 0 0;padding:6px 12px;
+  border:1px solid #c8202e;border-radius:10px;font:700 12px/1.35 'Segoe UI',Arial,sans-serif;color:#f2f4f2;}
+#cr-why .why-pref i{font-style:normal;color:#e35c63;}
+@media (min-width:600px){#cr-why .why-pref{margin-left:56px;}}
+#cr-why .why-lede{margin:16px 0 6px;font-size:16.5px;line-height:1.5;color:#b9b3ad;}
 #cr-why .why-rule{height:2px;background:#c8202e;width:64px;margin:20px 0 4px;border-radius:2px;}
 #cr-why .why-sec{margin:34px 0 0;padding:22px 0 0;border-top:1px solid rgba(255,255,255,.10);}
 #cr-why .why-sec:first-of-type{border-top:0;}
@@ -88071,6 +88088,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 :root[data-theme="rb-light"] #cr-why .why-x:hover{background:#EFEAE3;}
 :root[data-theme="rb-light"] #cr-why .why-eyebrow{color:#6B6259;}
 :root[data-theme="rb-light"] #cr-why .why-h{color:#211D19;}
+:root[data-theme="rb-light"] #cr-why .why-h span{color:#9E2B33;}
+:root[data-theme="rb-light"] #cr-why .why-pref{border-color:#9E2B33;color:#211D19;}
+:root[data-theme="rb-light"] #cr-why .why-pref i{color:#9E2B33;}
 :root[data-theme="rb-light"] #cr-why .why-lede{color:#4A443D;}
 :root[data-theme="rb-light"] #cr-why .why-sec{border-top-color:rgba(33,29,25,.12);}
 :root[data-theme="rb-light"] #cr-why .why-k{color:#9E2B33;}
@@ -88186,10 +88206,14 @@ function ensureView(){
   VIEW.innerHTML =
     '<div class="why-wrap">' +
       '<div class="why-top">' +
-        '<button type="button" class="why-x" data-why="close" aria-label="Close">✕</button>' +
-        '<span class="why-eyebrow">Cardinal Roofing &amp; Renovations</span>' +
+        '<button type="button" class="why-x" data-why="close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>' +
+        '<h1 class="why-h">Why <span>Cardinal</span></h1>' +
       '</div>' +
-      '<h1 class="why-h">Why Cardinal</h1>' +
+      '<span class="why-eyebrow">Cardinal Roofing &amp; Renovations</span>' +
+      /* 1236 (Theo: "We are OC preferred, we are allowed to advertise that"): the status
+         in words. OC's Preferred Contractor LOGO is separate artwork that may not be
+         redrawn (OC_BRAND_RULES.md); it replaces this line when the file is supplied. */
+      '<div class="why-pref"><i aria-hidden="true">\u2605</i>Owens Corning™ Roofing Preferred Contractor</div>' +
       '<p class="why-lede">What backs up the roof, and what you are entitled to.</p>' +
       '<div class="why-rule"></div>' +
       bodyHtml() +

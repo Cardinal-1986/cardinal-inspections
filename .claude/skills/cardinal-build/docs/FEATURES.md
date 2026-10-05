@@ -8549,6 +8549,45 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1236 — Why Cardinal and Colors get the one header, and say Cardinal is OC Preferred
+
+Theo: **"We are oc preferred, we are allowed to advertise that"**, then **"Yes"** to the preview. This is
+the last round of the 1233 header.
+
+**Why Cardinal (`#cr-why`)**
+- The top row holds the 44px drawn back (`.why-x`, `aria-label="Close"`) and the title
+  "Why **Cardinal**": Georgia `clamp(26px,4.2vw,36px)`, with the second half in `#e35c63`
+  (`#9E2B33` in light).
+- "Cardinal Roofing & Renovations" moves below the row as the mono eyebrow, indented 56px to sit
+  under the title.
+- **New `.why-pref` badge:** "★ Owens Corning™ Roofing Preferred Contractor". It is a pill with a
+  `#c8202e` border (`#9E2B33` in light), and the ink stays the screen's own. The red is used only
+  as a line, never as text: on this ground it measures 3.57:1, so as text it would fail the floor
+  (`gate_1160`).
+
+**Colors (`#cr-occ`)**
+- `#occBack` is the 44px drawn chevron, labelled "Back".
+- `#occTitle` is Georgia 26px. `word-break:keep-all` stays (626, `harness_occhead` 42/42).
+- The subtitle is the mono eyebrow, 11px on a phone and 12px at ≥820px.
+- **New `.occ-pref` badge:** it uses OC's own pink, `--occ-red` as the border and `--occ-pink-on-dark`
+  for the star. It shows on the **lines list only**. `#cr-occ.line` and `#cr-occ.detail` hide it,
+  because one level down the page is about a shingle, not about Cardinal.
+
+**Words only, never a mark.** The Preferred **logo** is official artwork that needs OC Local Marketing
+approval (`OC_BRAND_RULES.md`), and `gate_1160` still forbids any `<img>` on Why. Its "no `<svg>`"
+check was narrowed by decision to exclude exactly `.why-x svg`, the back chevron, so any other svg
+still turns it red. The badge says Preferred and never Platinum.
+
+Gate: **`gate_1236.mjs`** (20 checks, both themes):
+- A: Why has the 44px Close, a Georgia title on one line with a readable red half, the eyebrow under
+  the row, and a badge that clears 4.5:1.
+- B: Colors has the 44px Back and a Georgia title. The badge shows on the hub and is hidden in a line
+  and on a colour. The mock has no colour cards, so the detail state is set by class, and the check
+  says so.
+- C: both badges say Preferred, never Platinum, in words with no image.
+
+It fails 19 checks on 1235.
+
 ## Build 1235 — Leads & Jobs, Photo Activity and Insurance Clients get the one header
 
 Round three of the 1233 header, on the pages the audit filed as "centred serif title with no back".
