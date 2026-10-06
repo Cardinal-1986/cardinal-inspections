@@ -8549,6 +8549,76 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1238 — a photo fits the screen when the phone is on its side
+
+Theo: **"When I put my phone in landscape mode it shortens the photo view."**
+
+**Which view.** Tapping a photo in the client's Photo Album opens `#cr-pae-cap-modal`
+(`openCapModal()` in `cr-pae-script`): the photo with its Caption, Section and the
+AI Caption / Edit / Save / Close / Save row.
+- **Stacked layout:** a 4:3 photo above the form, max 480px wide. That makes the sheet **630px
+  tall**.
+- **The bug:** at 844×390 it centred off both ends.
+  - The top **120px of the photo** sat above the screen. A centred flex child that overflows
+    upward can't be scrolled to, so that part was unreachable.
+  - The buttons sat below the screen.
+  - The module had no phone rule and no landscape rule at all.
+
+**Fix:** one media block, `(orientation:landscape) and (max-height:540px)`, so a short sideways
+screen and nothing else.
+- The sheet fills the screen less a 10px margin, with safe-area insets for the notch side.
+- The photo takes the left at full height and shows the whole picture.
+- The form takes the right, `clamp(260px,38%,330px)` wide, and scrolls on its own. The action row
+  wraps.
+
+**Upright is untouched:** same 544px sheet, same 263px photo, asserted.
+
+**Measured photo size sideways:**
+
+| Screen | Photo |
+|---|---:|
+| 844×390 | 493×370 |
+| 932×430 | 547×410 |
+| 667×375 | 387×290 |
+
+Every one of these shows the whole photo, with Save and Close on screen.
+
+Each new declaration carries `--cr-stack` with its reason. They are scoped overrides of the
+portrait layout, which stays.
+
+Gate: **`gate_1238.mjs`** (14 checks):
+- A: three landscape sizes. The sheet, the whole photo and the action row are inside the screen,
+  and the photo is the bigger half.
+- B: portrait is unchanged.
+
+It fails 12 on 1237. ⚠ **The sentinel sweeps portrait only (390×844), so it cannot see this bug or
+this fix. `gate_1238` is the landscape instrument.**
+
+## Build 1237 — what you type in the header search can be read in light mode
+
+Theo sent a screenshot with no words: the desktop app in light mode, with the search row open
+and "fdsfsdffgdf" typed into it, barely visible.
+
+**The cause was two token families meeting in one rule.** `#cr-hd2-srch`, the search row under
+the header, is painted `--bnbg`, the nav-strip colour, which is **dark in both themes** for all
+three CRMs. The text in its `#headSearch` used `--hin`, the **header's** ink. That ink goes dark
+in `rb-light`, because the header itself goes light. Measured in light mode:
+
+| strip | before | after |
+|---|---:|---:|
+| retail `#101620` | 1.63:1 | 18.14:1 |
+| insurance `#1a0e0d` | **1.06:1** | 18.88:1 |
+| community `#08211a` | 1.55:1 | 16.90:1 |
+
+**Fix:** the ink is pinned to `#fff`. The ground never changes, so the ink must not change either.
+- The placeholder (`#8d8781`) already cleared 4.76:1 or better on every strip, and is unchanged.
+- The × at the row's end is Chromium's native search-cancel control, not a rule in this file.
+- The rule carries `--cr-stack` with its reason. It has always overridden the base
+  `#headSearch` look, and editing it made `gate_stack` read it as new.
+
+Gate: **`gate_1237.mjs`** (8 checks): both themes × three strips, typed text ≥4.5:1 on the row's
+own ground, plus the source check. It fails 5 checks on 1236.
+
 ## Build 1236 — Why Cardinal and Colors get the one header, and say Cardinal is OC Preferred
 
 Theo: **"We are oc preferred, we are allowed to advertise that"**, then **"Yes"** to the preview. This is
