@@ -20680,7 +20680,7 @@ function renderClientDirectory(){
   /* one-line stats with CRM dots */
   var stats = CD_CRMS.map(function(c){
     var cnt = cacheProjects.filter(function(pr){ return cdCrmOf(pr) === c.key; }).length;
-    return '<span class="cd-dot" style="background:' + c.color + '"></span>' + c.label + ' ' + cnt;
+    return '<span style="white-space:nowrap"><span class="cd-dot" style="background:' + c.color + '"></span>' + c.label + ' ' + cnt + '</span>';
   }).join('');
   document.getElementById('cdSub').innerHTML = list.length + ' of ' + cacheProjects.length + ' clients' + stats +
     (n ? ' \u00b7 ' + n + ' filter' + (n > 1 ? 's' : '') : '');
@@ -65603,7 +65603,7 @@ OPEN: OPEN, WON: WON };
 .cd-empty{border:1px dashed #3a3d42;border-radius:11px;padding:14px;text-align:center;color:#8f8a80;font:600 13px 'Segoe UI',Arial,sans-serif;margin-bottom:12px;}
 .cd-crmbar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:center;padding:8px 10px;background:rgba(16,17,19,.95);border-top:1px solid #26282c;backdrop-filter:blur(4px);z-index:9995;}
 .cd-crmbar::-webkit-scrollbar{display:none;}
-.cd-crmchip{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;white-space:nowrap;background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;border-radius:999px;padding:5px 11px;font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.cd-crmchip{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;white-space:nowrap;background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;border-radius:999px;padding:5px 9px;font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 .cd-crmchip .cd-dot{margin:0 3px 0 0;}
 .cd-crmchip b{font:800 11px ui-monospace,Menlo,monospace;opacity:.7;}
 .cd-crmchip.on{border-color:#c9a227;color:#c9a227;background:transparent;}
