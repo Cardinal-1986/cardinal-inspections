@@ -34040,3 +34040,18 @@ Gates and the sentinel are running. Not yet merged.
 - **The real debt is that the app has no main landmark in those views.** It is recorded here and
   not hidden.
 - `region` improved 305 → 302 and is locked in.
+
+## Build 1243 — the type scale, phase 2: sizes built inside JavaScript
+
+Full write-up in FEATURES "Builds 1242–1243".
+- **Changed:** 59 sizes; the other 60 in-script UI sizes were already on scale.
+- **Kept, by template name, never by guess:** 31 document sizes.
+
+**My own error, caught by the gate I wrote to hold the scale.** 1242's fold table had no 18.5. The
+patch skipped values it did not know, so `.hero-hi`'s 18.5px stayed off-scale with nothing said.
+`gate_1243` went red on its first run. The patch now **asserts** every in-range value is in the
+table, so an unknown size stops the build instead of being skipped.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock`, `gate_chromium
+--selftest`, `gate_1243` (0 off-scale), `gate_1081`, `gate_1206`, `gate_a11y`, `gate_1229`,
+`gate_1235`–`1241`, and `render_gradtext`. The sentinel is running in both themes.
