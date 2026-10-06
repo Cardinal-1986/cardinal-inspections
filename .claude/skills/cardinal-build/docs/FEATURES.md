@@ -8549,6 +8549,35 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Builds 1242–1243 — the type scale, six sizes instead of thirty-six (Theo's "Type 1")
+
+**Settled 6 Oct ("A11"):** screen text uses **11 / 13 / 15 / 18 / 22 / 26px** and nothing in between.
+
+**The fold:** 11.5→11; 12 and 12.5→13; 13.5 to 15.5→15; 16 to 19 (and 18.5)→18; 20 to 23→22;
+24 to 26→26.
+
+**Where it was applied:**
+- **1242:** 1,164 sizes in the app stylesheets and markup inline styles.
+- **1243:** 59 sizes built inside JavaScript (pop-ups, sheets, toasts, chips, labels), plus the
+  one 18.5px that 1242's table had no entry for.
+
+**Out of scope, on purpose:**
+- the client documents: `INVOICE_BODY`, `INV_LIVE_CSS`, `REPORT_TEMPLATE` and the Pre-Install
+  Guide (`cr-guide-script`), 31 sizes;
+- `@media print`;
+- every `pt` size;
+- display numbers above 26px.
+
+**Knock-on fixed at 1242:** the Client Directory CRM chip bar overflowed 390px by 2px at 13px. Chip
+padding went 11 → 9px, and the counts line now wraps by whole segment.
+
+**Gate: `gate_1243.py`** — every screen size from 11 to 26px is on the scale. It asserts each excluded
+document still exists, so the exclusion cannot widen silently.
+- Current: 2,497 sizes, 0 off-scale.
+- Negative controls: RED with 59 off on 1242, and 1,223 off on 1241.
+- It caught the 18.5px gap on its first run.
+- Sizes below 11 remain `gate_1081`'s floor.
+
 ## Build 1241 — three faint labels on the shared forms; the eight forms gated
 
 **"Cream sheets in dark mode", measured rather than assumed.** A dark-mode scan of all 32 sentinel

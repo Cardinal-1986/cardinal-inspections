@@ -959,7 +959,7 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 /* ---- hero ---- */
 .hero{display:flex;gap:20px;align-items:stretch;flex-wrap:wrap;margin:18px 0 4px;}
 .hero-left{flex:1;min-width:250px;display:flex;flex-direction:column;justify-content:center;gap:6px;}
-.hero-hi{font:italic 600 18.5px/1.45 Georgia,'Times New Roman',serif;color:#3a2c28;max-width:520px;}
+.hero-hi{font:italic 600 18px/1.45 Georgia,'Times New Roman',serif;color:#3a2c28;max-width:520px;}
 .hero-hi .qmark{color:var(--red);font-size:26px;font-weight:800;}
 .qauthor{font:700 13px 'Segoe UI',Arial,sans-serif;color:#8a6f66;margin-top:4px;font-style:normal;}
 .hero-clock{font:600 15px 'Segoe UI',Arial,sans-serif;color:#8a6f66;}
@@ -4070,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1242<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1243<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12877,7 +12877,7 @@ function openMeasModal(pr){
   var body = document.getElementById('tskModalBody');
   document.getElementById('tskModalTitle').textContent = 'Measurements';
   var ms = parseCkAll(pr).meas || {};
-  var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 14px \'Segoe UI\',Arial,sans-serif;"';
+  var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 15px \'Segoe UI\',Arial,sans-serif;"';
   function fld(lbl, id, val, ph){
     return '<div><label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-bottom:3px;">' + lbl + '</label>' +
       '<input type="text" id="' + id + '" value="' + esc(val || '') + '" placeholder="' + (ph || '') + '" ' + inp + '></div>';
@@ -13014,7 +13014,7 @@ function openTaskModal(pr, idx){
   var title = document.getElementById('tskModalTitle');
   var myEmail = (currentUser && currentUser.email) || '';
   var tasks = (parseCkAll(pr).tasks || []);
-  function kv(k, v){ return '<div style="margin:0 0 13px;font:600 14px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;"><b>' + k + ':</b> ' + v + '</div>'; }
+  function kv(k, v){ return '<div style="margin:0 0 13px;font:600 15px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;"><b>' + k + ':</b> ' + v + '</div>'; }
   if(idx != null && tasks[idx]){
     var t = tasks[idx];
     title.textContent = 'View Task';
@@ -13026,9 +13026,9 @@ function openTaskModal(pr, idx){
     var notes = (t.notes || []);
     var noteRows = notes.length ? notes.map(function(n){
       return '<div style="border-left:3px solid #e0d3c2;padding:4px 10px;margin-bottom:8px;">' +
-        '<div style="font:600 13.5px \'Segoe UI\',Arial,sans-serif;color:#3b2f2a;white-space:pre-wrap;">' + esc(n.n) + '</div>' +
+        '<div style="font:600 15px \'Segoe UI\',Arial,sans-serif;color:#3b2f2a;white-space:pre-wrap;">' + esc(n.n) + '</div>' +
         '<div style="font:600 11px \'Segoe UI\',Arial,sans-serif;color:#9a8c85;margin-top:2px;">' + esc(rptRepName(n.by || '')) + ' &#183; ' + acxDate(n.at) + '</div></div>';
-    }).join('') : '<div style="font:600 12.5px \'Segoe UI\',Arial,sans-serif;color:#b3a69d;margin-bottom:8px;">No notes yet.</div>';
+    }).join('') : '<div style="font:600 13px \'Segoe UI\',Arial,sans-serif;color:#b3a69d;margin-bottom:8px;">No notes yet.</div>';
     body.innerHTML =
       '<div style="margin:0 0 14px;">' + chip + '</div>' +
       kv('Due Date', t.due ? acxDate(t.due) : '\u2014') +
@@ -13039,16 +13039,16 @@ function openTaskModal(pr, idx){
       (t.done ? kv('Completed By', esc(rptRepName(t.doneBy || ''))) + kv('Completed Date', acxDate(t.doneAt)) : '') +
       kv('Job', '<a href="#" id="tskJobLink" style="color:var(--red);font-weight:700;text-decoration:none;">' +
         esc((parseCkAll(pr).po ? parseCkAll(pr).po + ': ' : '') + (pr.name || '')) + ' &#10142;</a>') +
-      '<div style="margin:18px 0 6px;font:700 14px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;">Description:</div>' +
-      '<div style="font:600 14px \'Segoe UI\',Arial,sans-serif;color:#3b2f2a;white-space:pre-wrap;">' + esc(t.t) + '</div>' +
-      '<div style="margin:18px 0 6px;font:700 14px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;">Notes &amp; Updates:</div>' +
+      '<div style="margin:18px 0 6px;font:700 15px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;">Description:</div>' +
+      '<div style="font:600 15px \'Segoe UI\',Arial,sans-serif;color:#3b2f2a;white-space:pre-wrap;">' + esc(t.t) + '</div>' +
+      '<div style="margin:18px 0 6px;font:700 15px \'Segoe UI\',Arial,sans-serif;color:#2b2b2b;">Notes &amp; Updates:</div>' +
       noteRows +
       '<div style="display:flex;gap:8px;margin-top:8px;">' +
-        '<input id="tskNoteInp" placeholder="Add a note or update\u2026" style="flex:1;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;">' +
+        '<input id="tskNoteInp" placeholder="Add a note or update\u2026" style="flex:1;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 15px \'Segoe UI\',Arial,sans-serif;">' +
         '<button class="chipbtn" id="tskNoteBtn">Add note</button></div>' +
       '<div id="tskExtRow" style="display:none;gap:8px;margin-top:14px;align-items:center;">' +
-        '<label style="font:700 12px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;">New due date</label>' +
-        '<input type="date" id="tskExtDate" style="border:1px solid #ddd6cf;border-radius:7px;padding:8px 10px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;">' +
+        '<label style="font:700 13px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;">New due date</label>' +
+        '<input type="date" id="tskExtDate" style="border:1px solid #ddd6cf;border-radius:7px;padding:8px 10px;font:600 15px \'Segoe UI\',Arial,sans-serif;">' +
         '<button class="axbtn" id="tskExtSave">Save date</button></div>' +
       '<div style="text-align:right;margin-top:22px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">' +
       (t.done
@@ -13121,8 +13121,8 @@ function openTaskModal(pr, idx){
     var opts = teamEmails().map(function(em){
       return '<option value="' + esc(em) + '"' + (em === myEmail ? ' selected' : '') + '>' + esc(rptRepName(em)) + '</option>';
     }).join('');
-    function fld(lbl, inner){ return '<div style="margin-bottom:14px;"><label style="display:block;font:700 12px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-bottom:4px;">' + lbl + '</label>' + inner + '</div>'; }
-    var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 14px \'Segoe UI\',Arial,sans-serif;"';
+    function fld(lbl, inner){ return '<div style="margin-bottom:14px;"><label style="display:block;font:700 13px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-bottom:4px;">' + lbl + '</label>' + inner + '</div>'; }
+    var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 15px \'Segoe UI\',Arial,sans-serif;"';
     body.innerHTML =
       fld('Description', '<textarea id="tskDesc" rows="3" ' + inp + '></textarea>') +
       fld('Due Date', '<input type="date" id="tskDue" ' + inp + '>') +
@@ -15859,7 +15859,7 @@ function renderDocsPage(){
   mount.innerHTML = files.map(function(r){
     var nm = fileDocName(r.title);   /* 644: was a bare ^file: strip */
     return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
-      '<span style="font-size:21px;">' + jdIcon(nm) + '</span>' +
+      '<span style="font-size:22px;">' + jdIcon(nm) + '</span>' +
       '<span style="flex:1;cursor:pointer;font-weight:700;" data-jdopen="' + r.id + '">' + esc(nm) +
       '<small style="display:block;font-weight:400;">' + acxDate(r.created_at) +
       (r.created_by ? ' \u00b7 ' + esc(rptRepName(r.created_by) || r.created_by) : '') + '</small></span>' +
@@ -16030,7 +16030,7 @@ function renderApptsPage(){
   mount.innerHTML = aps.map(function(a){
     var ic = a.kind === 'drop' ? '\uD83D\uDE9A' : (a.kind === 'job' ? '\uD83D\uDD28' : '\uD83D\uDCC5');
     return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
-      '<span style="font-size:19px;">' + ic + '</span>' +
+      '<span style="font-size:18px;">' + ic + '</span>' +
       '<span style="flex:1;"><b>' + esc(a.title || 'Appointment') + '</b>' +
       '<small style="display:block;">' + esc(a.appt_date || '') +
       (a.appt_time ? ' \u00b7 ' + esc(a.appt_time) : '') +
@@ -17224,7 +17224,7 @@ function openCommunications(){
   var me = TEAM && currentUser ? currentUser.email : '';
   tr.innerHTML = TEAM_ROSTER.filter(function(mbr){ return mbr.email !== me; }).map(function(mbr){
     var first = (mbr.name || '').trim().split(/\s+/)[0];
-    return '<button class="chipbtn" data-tag="' + esc(first.toLowerCase()) + '" style="padding:4px 11px;font-size:11.5px;">@' + esc(first) + '</button>';
+    return '<button class="chipbtn" data-tag="' + esc(first.toLowerCase()) + '" style="padding:4px 11px;font-size:11px;">@' + esc(first) + '</button>';
   }).join('');
   renderChat();
   window.scrollTo(0, 0);
@@ -18275,10 +18275,10 @@ function renderSolCard(){
       ? '<div style="margin-top:9px;">' +
           '<button id="solReadBtn" style="min-height:44px;padding:12px 16px;border-radius:10px;' +
             'background:#1c2126;color:#cfd6dd;border:1px solid #39424a;cursor:pointer;' +
-            'font:600 13.5px -apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;">' +
+            'font:600 15px -apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;">' +
             '\uD83D\uDCD6 Read the scope already on file' +
           '</button>' +
-          '<div style="margin-top:5px;font-size:11.5px;color:#8d8378;">' +
+          '<div style="margin-top:5px;font-size:11px;color:#8d8378;">' +
             esc(String(filed.title || '').replace(/^Insurance Doc \[\w+\]:\s*/, '')) +
           '</div>' +
         '</div>'
@@ -18906,7 +18906,7 @@ async function paintSolLift(pid){
         'padding:7px 13px;border-radius:999px;background:' + bg + ';color:' + fg + ';' +
         'font:700 13px ui-monospace,\'SF Mono\',Menlo,monospace;letter-spacing:-.01em;">' +
         '<b>' + lead + '</b>' +
-        '<small style="font-weight:600;font-size:11.5px;opacity:.85;">' + sub + '</small>' +
+        '<small style="font-weight:600;font-size:11px;opacity:.85;">' + sub + '</small>' +
       '</span>';
   }catch(e){
     /* a missing lift is not worth interrupting anyone over */
@@ -19836,7 +19836,7 @@ function renderMatOrderState(){
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
       'background:var(--rbe-card,#161918);border:1px solid rgba(108,185,143,.35);' +
       'border-radius:12px;padding:11px 14px;">' +
-      '<b style="color:#2f7d55;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;">MATERIALS ORDERED</b>' +
+      '<b style="color:#2f7d55;font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.08em;">MATERIALS ORDERED</b>' +
       '<span style="color:var(--rbe-mut,#8d959d);font-size:13px;">' +
       esc(isNaN(d) ? at : fmtLongDate(d)) + (by ? ' \u00b7 ' + esc(shortNameOf(by)) : '') + '</span>' +
       '<button class="chipbtn" data-matord="clear" style="margin-left:auto;">Not ordered after all</button>' +
@@ -19846,7 +19846,7 @@ function renderMatOrderState(){
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
       'background:var(--rbe-card,#161918);border:1px solid rgba(245,166,35,.35);' +
       'border-radius:12px;padding:11px 14px;">' +
-      '<b style="color:#8a5a08;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;">NOT ORDERED YET</b>' +
+      '<b style="color:#8a5a08;font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.08em;">NOT ORDERED YET</b>' +
       '<span style="color:var(--rbe-mut,#8d959d);font-size:13px;">This job reads &ldquo;Materials?&rdquo; on the Production board.</span>' +
       '<button class="chipbtn" data-matord="set" style="margin-left:auto;">Mark ordered</button>' +
       '</div>';
@@ -21108,7 +21108,7 @@ function openList(kind){
   document.getElementById('listTitle').innerHTML = def.title +
     '<button id="backfillBtn" class="chipbtn" style="display:' +
     ((kind === 'estimates' && isAdminUser()) ? 'inline-block' : 'none') +
-    ';float:right;font-size:12.5px;">&#128202; Backfill totals</button>';
+    ';float:right;font-size:13px;">&#128202; Backfill totals</button>';
   document.getElementById('listNote').textContent = def.note;
   /* salesman filter */
   (function(){
@@ -22318,9 +22318,9 @@ async function renderCommissions(){
   var locked = colls.length > 0;
   commUi.hasColls = locked;
   var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
-            'padding:8px 10px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;"';
+            'padding:8px 10px;font:600 15px \'Segoe UI\',Arial,sans-serif;"';
   var selS = 'style="box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
-            'padding:8px 10px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;"';
+            'padding:8px 10px;font:600 15px \'Segoe UI\',Arial,sans-serif;"';
 
   /* ---- the sales rep on this job ---- */
   var html = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;">' +
@@ -23130,7 +23130,7 @@ async function openWorkOrderPicker(project, preset){
       '</optgroup>';
   });
   var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
-            'padding:9px 11px;font:600 14px \'Segoe UI\',Arial,sans-serif;"';
+            'padding:9px 11px;font:600 15px \'Segoe UI\',Arial,sans-serif;"';
   body.innerHTML =
     '<p class="subnote">One work order per trade. Pick the crew this one is for.</p>' +
     '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin-bottom:3px;">Crew</label>' +
@@ -23148,7 +23148,7 @@ async function openWorkOrderPicker(project, preset){
     '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">' +
       '<button class="chipbtn" id="woCancel">Cancel</button>' +
       '<button class="axbtn" id="woGo">Create</button></div>' +
-    '<div id="woErr" style="color:#c8202e;font-size:12.5px;margin-top:8px;"></div>';
+    '<div id="woErr" style="color:#c8202e;font-size:13px;margin-top:8px;"></div>';
   document.getElementById('woCancel').addEventListener('click', function(){ m.style.display = 'none'; });
   /* 949: the Magnet Board's arm-and-place passes the crew and day it landed
      on; this picker stays the ONE write path (build 555). A preset naming a
@@ -24867,7 +24867,7 @@ function wirePhotoFrames(doc){
     rmv.className = 'no-print';
     rmv.setAttribute('data-cr-rmv', '1');
     rmv.textContent = '\u2715 Remove';
-    rmv.style.cssText = 'position:absolute;bottom:8px;left:8px;z-index:5;font:12px "Segoe UI",Arial,sans-serif;'+
+    rmv.style.cssText = 'position:absolute;bottom:8px;left:8px;z-index:5;font:13px "Segoe UI",Arial,sans-serif;'+
       'padding:6px 10px;border-radius:5px;border:1px solid #d8b4b4;background:rgba(255,255,255,.94);'+
       'color:#8f1620;cursor:pointer;';
     if (doc.defaultView && doc.defaultView.innerWidth < 640) {
@@ -25864,10 +25864,10 @@ function wireRoofrUpload(doc){
   bar.id = 'roofrBar';
   bar.className = 'no-print';
   bar.style.cssText = 'margin:8px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;';
-  bar.innerHTML = '<button type="button" id="roofrBtn" style="font:600 13.5px \'Segoe UI\',Arial,sans-serif;'+
+  bar.innerHTML = '<button type="button" id="roofrBtn" style="font:600 15px \'Segoe UI\',Arial,sans-serif;'+
     'padding:9px 16px;border:0;border-radius:6px;background:#C8202E;color:#fff;cursor:pointer;">'+
     '\uD83D\uDCC4 Upload Roofr PDF</button>'+
-    '<span id="roofrStatus" style="font:12.5px \'Segoe UI\',Arial,sans-serif;color:#666;"></span>';
+    '<span id="roofrStatus" style="font:13px \'Segoe UI\',Arial,sans-serif;color:#666;"></span>';
   table.parentNode.insertBefore(bar, table);
 
   var input = doc.createElement('input');
@@ -27191,10 +27191,10 @@ function openFieldMenu(){
       '<p style="margin:0 0 16px;font:600 13px \'Segoe UI\',Arial,sans-serif;color:#6b5a54;">' + sub + '</p>' +
       items.map(function(k){
         return '<button type="button" data-pick="' + k.id + '" style="display:block;width:100%;margin:0 0 10px;padding:14px 16px;min-height:48px;border-radius:11px;border:1px solid #c8202e;background:#fff;color:#8f1620;font:800 15px \'Segoe UI\',Arial,sans-serif;cursor:pointer;text-align:left;">' +
-          esc(k.label) + (k.hint ? '<span style="display:block;font:600 12px \'Segoe UI\',Arial,sans-serif;color:#6b5a54;margin-top:2px;">' + esc(k.hint) + '</span>' : '') +
+          esc(k.label) + (k.hint ? '<span style="display:block;font:600 13px \'Segoe UI\',Arial,sans-serif;color:#6b5a54;margin-top:2px;">' + esc(k.hint) + '</span>' : '') +
           '</button>';
       }).join('') +
-      '<button type="button" data-pick="" style="display:block;width:100%;margin:6px 0 0;padding:13px 16px;min-height:44px;border-radius:11px;border:1px solid #c9c2bf;background:none;color:#6b5a54;font:700 14px \'Segoe UI\',Arial,sans-serif;cursor:pointer;">Cancel</button></div>';
+      '<button type="button" data-pick="" style="display:block;width:100%;margin:6px 0 0;padding:13px 16px;min-height:44px;border-radius:11px;border:1px solid #c9c2bf;background:none;color:#6b5a54;font:700 15px \'Segoe UI\',Arial,sans-serif;cursor:pointer;">Cancel</button></div>';
   }
   ov.innerHTML = sheet('Add a field', 'It lands where you last tapped in the contract.', FIELD_KINDS);
   document.body.appendChild(ov);
@@ -27238,8 +27238,8 @@ function pickSigner(doc, cb){
     '<div style="background:#fff;border-radius:16px;padding:22px 20px;max-width:360px;width:100%;box-shadow:0 18px 60px rgba(0,0,0,.4);">' +
     '<h3 style="margin:0 0 4px;font:800 18px \'Segoe UI\',Arial,sans-serif;color:#1b1b1b;">Who is signing?</h3>' +
     '<p style="margin:0 0 16px;font:600 13px \'Segoe UI\',Arial,sans-serif;color:#6b5a54;">Tap a name to place their signature.</p>' +
-    avail.map(function(k){ return '<button type="button" data-who="' + k + '" style="display:block;width:100%;margin:0 0 10px;padding:15px 16px;min-height:48px;border-radius:11px;border:1px solid #c8202e;background:#fff;color:#8f1620;font:800 16px \'Segoe UI\',Arial,sans-serif;cursor:pointer;text-align:left;">' + esc(names[k]) + '</button>'; }).join('') +
-    '<button type="button" data-who="" style="display:block;width:100%;margin:6px 0 0;padding:13px 16px;min-height:44px;border-radius:11px;border:1px solid #c9c2bf;background:none;color:#6b5a54;font:700 14px \'Segoe UI\',Arial,sans-serif;cursor:pointer;">Cancel</button>' +
+    avail.map(function(k){ return '<button type="button" data-who="' + k + '" style="display:block;width:100%;margin:0 0 10px;padding:15px 16px;min-height:48px;border-radius:11px;border:1px solid #c8202e;background:#fff;color:#8f1620;font:800 18px \'Segoe UI\',Arial,sans-serif;cursor:pointer;text-align:left;">' + esc(names[k]) + '</button>'; }).join('') +
+    '<button type="button" data-who="" style="display:block;width:100%;margin:6px 0 0;padding:13px 16px;min-height:44px;border-radius:11px;border:1px solid #c9c2bf;background:none;color:#6b5a54;font:700 15px \'Segoe UI\',Arial,sans-serif;cursor:pointer;">Cancel</button>' +
     '</div>';
   document.body.appendChild(ov);
   function done(who){ ov.remove(); cb(who || null); }
@@ -27805,7 +27805,7 @@ async function renderAuditLog(){
     var cks = Object.keys(AUDIT_TYPES).map(function(k){
       var n = counts[k] || 0;
       return '<label style="display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:18px;' +
-        'padding:6px 12px;font:600 12.5px \'Segoe UI\',Arial,sans-serif;color:' + (n ? '#5a5049' : '#b6a89f') + ';background:#fff;cursor:pointer;">' +
+        'padding:6px 12px;font:600 13px \'Segoe UI\',Arial,sans-serif;color:' + (n ? '#5a5049' : '#b6a89f') + ';background:#fff;cursor:pointer;">' +
         '<input type="checkbox" data-audt="' + k + '"' + (auditTypes[k] ? ' checked' : '') + ' style="accent-color:var(--red);">' +
         AUDIT_TYPES[k].l + ' <b>' + n + '</b></label>';
     }).join('');
@@ -29497,7 +29497,7 @@ if('serviceWorker' in navigator){
         'display:flex;align-items:center;gap:10px;padding:12px 12px 12px 15px;' +
         'border-radius:14px;background:#15171b;border:1px solid #c8202e;' +
         'box-shadow:0 8px 28px rgba(0,0,0,.45);' +
-        "font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#e9edf2;" +
+        "font:600 15px 'Segoe UI',Arial,sans-serif;color:#e9edf2;" +
         'max-width:520px;margin:0 auto;';
 
       var txt = document.createElement('span');
@@ -29509,7 +29509,7 @@ if('serviceWorker' in navigator){
       go.textContent = 'Reload';
       go.style.cssText = 'flex:0 0 auto;min-height:44px;padding:0 16px;border:0;' +
         'border-radius:10px;background:#c8202e;color:#fff;cursor:pointer;' +
-        "font:700 13.5px 'Segoe UI',Arial,sans-serif;";
+        "font:700 15px 'Segoe UI',Arial,sans-serif;";
       /* never automatic — Theo may be mid-estimate */
       go.onclick = function(){ location.reload(); };
 
@@ -29591,7 +29591,7 @@ async function enableNotifications(){
         'display:flex;align-items:center;gap:10px;padding:12px 12px 12px 15px;' +
         'border-radius:14px;background:#15171b;border:1px solid #c8202e;' +
         'box-shadow:0 8px 28px rgba(0,0,0,.45);' +
-        "font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#e9edf2;" +
+        "font:600 15px 'Segoe UI',Arial,sans-serif;color:#e9edf2;" +
         'max-width:520px;margin:0 auto;';
       var txt = document.createElement('span');
       txt.style.cssText = 'flex:1;min-width:0;line-height:1.35';
@@ -29601,7 +29601,7 @@ async function enableNotifications(){
       go.textContent = 'Turn on';
       go.style.cssText = 'flex:0 0 auto;min-height:44px;padding:0 16px;border:0;' +
         'border-radius:10px;background:#c8202e;color:#fff;cursor:pointer;' +
-        "font:700 13.5px 'Segoe UI',Arial,sans-serif;";
+        "font:700 15px 'Segoe UI',Arial,sans-serif;";
       go.onclick = function(){
         try{ localStorage.setItem(KEY, '1'); }catch(_){ }
         bar.remove();
@@ -30734,7 +30734,7 @@ MOUNT.innerHTML = '<div style="padding:18px;max-width:640px;margin:0 auto;">' +
 '<h3 style="font:800 18px Georgia,serif;margin:14px 0 6px;">Manual estimate</h3>' +
 '<p style="opacity:.75;font-size:13px;margin:0 0 12px;">Pick the client \u2014 the estimate editor opens on their job.</p>' +
 '<input data-mq placeholder="Search clients\u2026" style="width:100%;box-sizing:border-box;padding:11px 13px;border-radius:9px;border:1px solid rgba(200,32,46,.35);background:rgba(255,255,255,.04);color:inherit;font:inherit;margin-bottom:10px;">' +
-'<button data-mnew style="width:100%;box-sizing:border-box;padding:12px 13px;margin-bottom:10px;border:1px dashed rgba(200,32,46,.55);border-radius:10px;background:rgba(200,32,46,.07);color:inherit;cursor:pointer;font-weight:700;font-size:14px;text-align:left;">\u002B  New client\u2026<small style="display:block;font-weight:600;opacity:.65;margin-top:2px;">Pick the CRM, add name, address and phone \u2014 it creates the profile</small></button>' +
+'<button data-mnew style="width:100%;box-sizing:border-box;padding:12px 13px;margin-bottom:10px;border:1px dashed rgba(200,32,46,.55);border-radius:10px;background:rgba(200,32,46,.07);color:inherit;cursor:pointer;font-weight:700;font-size:15px;text-align:left;">\u002B  New client\u2026<small style="display:block;font-weight:600;opacity:.65;margin-top:2px;">Pick the CRM, add name, address and phone \u2014 it creates the profile</small></button>' +
 '<div data-mform></div>' +
 '<div data-mrows></div></div>';
 MOUNT.querySelector('[data-act="back"]').onclick = showList;
@@ -30781,7 +30781,7 @@ function newClientForm(){
   var fieldCss = 'width:100%;box-sizing:border-box;padding:11px 13px;border-radius:9px;' +
     'border:1px solid rgba(200,32,46,.35);background:rgba(255,255,255,.04);color:inherit;' +
     'font:inherit;margin-bottom:9px;';
-  var segCss = 'flex:1;padding:10px 6px;border-radius:9px;cursor:pointer;font-weight:800;font-size:12px;' +
+  var segCss = 'flex:1;padding:10px 6px;border-radius:9px;cursor:pointer;font-weight:800;font-size:13px;' +
     'border:1px solid rgba(200,32,46,.35);background:rgba(255,255,255,.03);color:inherit;';
   wrap.innerHTML =
     '<div style="border:1px solid rgba(200,32,46,.4);border-radius:12px;padding:13px;margin-bottom:12px;">' +
@@ -30794,10 +30794,10 @@ function newClientForm(){
       '<input data-f="name" placeholder="Client name (required)" style="' + fieldCss + '">' +
       '<input data-f="address" placeholder="Address" style="' + fieldCss + '">' +
       '<input data-f="phone" type="tel" placeholder="Phone" style="' + fieldCss + '">' +
-      '<div data-msg style="min-height:18px;font-weight:600;font-size:12px;opacity:.8;margin-bottom:8px;"></div>' +
+      '<div data-msg style="min-height:18px;font-weight:600;font-size:13px;opacity:.8;margin-bottom:8px;"></div>' +
       '<div style="display:flex;gap:8px;">' +
         '<button data-cancel style="flex:0 0 auto;padding:11px 14px;border-radius:9px;border:1px solid rgba(200,32,46,.35);background:none;color:inherit;cursor:pointer;font:inherit;">Cancel</button>' +
-        '<button data-create style="flex:1;padding:11px 14px;border-radius:9px;border:0;background:#c8202e;color:#fff;cursor:pointer;font-weight:800;font-size:14px;">Create &amp; open estimate</button>' +
+        '<button data-create style="flex:1;padding:11px 14px;border-radius:9px;border:0;background:#c8202e;color:#fff;cursor:pointer;font-weight:800;font-size:15px;">Create &amp; open estimate</button>' +
       '</div>' +
     '</div>';
   function paintSeg(){
@@ -32663,7 +32663,7 @@ function showList() {
         <div class="cr-imp-result-icon ${errors.length ? 'err' : 'ok'}">${errors.length ? '✕' : '✓'}</div>
         <h4>${errors.length ? 'Completed with errors' : 'Import complete'}</h4>
         <p>${upsertCount} item${upsertCount===1?'':'s'} inserted/updated${newCatCount ? ` · ${newCatCount} new categor${newCatCount===1?'y':'ies'}` : ''}${disableCount ? ` · ${disableCount} disabled` : ''}</p>
-        ${errors.length ? `<p style="color: var(--cr-red); margin-top: 12px; font-size: 12px;">${errors.map(esc).join('<br>')}</p>` : ''}
+        ${errors.length ? `<p style="color: var(--cr-red); margin-top: 12px; font-size: 13px;">${errors.map(esc).join('<br>')}</p>` : ''}
       </div>
       <div class="cr-p-modal-actions">
         <button class="cr-p-modal-btn primary" data-act="done">Done</button>
@@ -33576,7 +33576,7 @@ function showList() {
   function paneRecord() {
     const c = state.claim;
     const body = c.notes
-      ? `<div style="font-size:13.5px; line-height:1.6; color: var(--cr-text); white-space: pre-wrap;">${esc(c.notes)}</div>`
+      ? `<div style="font-size:15px; line-height:1.6; color: var(--cr-text); white-space: pre-wrap;">${esc(c.notes)}</div>`
       : '<div class="cr-c-empty">No notes on this claim yet.</div>';
     return sect(1, 'Notes', '', body) +
       sect(2, 'Record', '',
@@ -36910,7 +36910,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
     host.className = 'cr-claimstrip';
     host.dataset.pid = pid;
     host.innerHTML = '<div class="hd"><span class="lbl">\uD83D\uDEE1\uFE0F Claim</span></div>' +
-                     '<div class="msg" style="color:#8b95a5;font:600 12px \'Segoe UI\';">Loading\u2026</div>';
+                     '<div class="msg" style="color:#8b95a5;font:600 13px \'Segoe UI\';">Loading\u2026</div>';
     bar.insertAdjacentElement('afterend', host);
 
     var claim = null;
@@ -37522,7 +37522,7 @@ var html =
 '</select>' +
 '</label>' +
 (canFlagConfidential
-? '<label class="cr-cp-conf" style="display:flex;align-items:center;gap:8px;font:600 12.5px \'Segoe UI\',Arial,sans-serif;margin-top:4px;">' +
+? '<label class="cr-cp-conf" style="display:flex;align-items:center;gap:8px;font:600 13px \'Segoe UI\',Arial,sans-serif;margin-top:4px;">' +
 '<input type="checkbox" name="confidential" ' +
 (p.confidential ? 'checked ' : '') +
 'style="width:auto;margin:0;transform:scale(1.2);cursor:pointer;" />' +
@@ -43463,6 +43463,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1243, d: '2026-10-06', t: 'The last in-between text sizes, on pop-ups and chips',
+    s: 'Pop-ups, sheets, toasts and small labels built on the fly now use the same six text sizes as the rest of the app. Invoices, reports and the Pre-Install Guide keep their print sizes.' },
   { b: 1242, d: '2026-10-06', t: 'Six text sizes instead of thirty-six',
     s: 'Text across the app now uses six sizes: 11, 13, 15, 18, 22 and 26. In-between sizes like 12.5 and 13.5 are gone, so screens line up better. Printed documents are unchanged.' },
   { b: 1241, d: '2026-10-06', t: 'Three faint labels on the forms are readable',
@@ -65198,7 +65200,7 @@ var uom = (it.unitsOfMeasure && it.unitsOfMeasure.stocking) || it.stockingUom ||
 (Array.isArray(it.uoms) && it.uoms.length ? (it.uoms[0].code || it.uoms[0].name || '') : '') || '';
 return '<div class="item" data-i="' + i + '"><span class="pr" data-pr></span><b>' + esc(nm) + '</b>' +
 '<small>#' + esc(num) + (uom ? ' \u00b7 ' + esc(uom) : '') + '</small><br>' +
-'<button class="btn2 ghost" data-price="' + esc(String(num)) + '" type="button" style="padding:7px 12px;font-size:12px;margin-top:8px;">Price at my branch</button>' +
+'<button class="btn2 ghost" data-price="' + esc(String(num)) + '" type="button" style="padding:7px 12px;font-size:13px;margin-top:8px;">Price at my branch</button>' +
 '<div class="prmsg" data-prmsg></div></div>';
 }).join('');
 box.querySelectorAll('[data-price]').forEach(function(b){
@@ -65240,7 +65242,7 @@ return '<div class="item"><b>' + esc(a.name || ('Ship-To ' + (a.number || ''))) 
 '<small>#' + esc(String(a.number || '')) + (where ? ' \u00b7 ' + esc(where) : '') +
 (a.status && a.status !== 'active' ? ' \u00b7 ' + esc(a.status) : '') + '</small><br>' +
 '<button class="btn2 ghost" data-useship="' + esc(String(a.number || '')) + '" type="button" ' +
-'style="padding:7px 12px;font-size:12px;margin-top:8px;">Use this ship-to</button></div>';
+'style="padding:7px 12px;font-size:13px;margin-top:8px;">Use this ship-to</button></div>';
 }).join('');
 box.querySelectorAll('[data-useship]').forEach(function(b){
 b.onclick = function(){
@@ -73185,7 +73187,7 @@ function complianceHtml(c){
       '<div><label>File</label><input type="file" data-u="file" accept=".pdf,.png,.jpg,.jpeg,.heic" aria-label="File"></div>' +
     '</div>' +
     '<button class="crw-btn primary" style="margin-top:12px" data-act="upload">Upload</button>' +
-    '<span class="crw-mut" data-upmsg style="margin-left:10px;font-size:12px"></span>' +
+    '<span class="crw-mut" data-upmsg style="margin-left:10px;font-size:13px"></span>' +
     '</div>';
 }
 
@@ -73328,7 +73330,7 @@ function paymentsHtml(c){
       '<tbody>' + (rows || '<tr><td colspan="6" class="crw-mut">Nothing paid to this crew yet.</td></tr>') +
       '</tbody></table></div>' +
     '<div style="display:flex;justify-content:flex-end;gap:10px;align-items:baseline;margin:8px 2px 14px">' +
-      '<span class="crw-mut">Paid to date</span><b style="font-size:16px">' + money(total, true) + '</b></div>' +
+      '<span class="crw-mut">Paid to date</span><b style="font-size:18px">' + money(total, true) + '</b></div>' +
     '<div class="crw-grid2">' +
       '<div><label>Amount</label><input type="text" data-p="amount" placeholder="1,250.00"></div>' +
       '<div><label>Paid on</label><input type="date" data-p="paid_on"></div>' +
@@ -73339,7 +73341,7 @@ function paymentsHtml(c){
     '</div>' +
     '<div style="margin-top:10px"><label>Memo</label><input type="text" data-p="memo" placeholder="Which job, or what it covered"></div>' +
     '<button class="crw-btn primary" style="margin-top:12px" data-act="addpay">Record payment</button>' +
-    '<span class="crw-mut" data-paymsg style="margin-left:10px;font-size:12px"></span>';
+    '<span class="crw-mut" data-paymsg style="margin-left:10px;font-size:13px"></span>';
 }
 function pval(k){
   var el = view().querySelector('[data-p="' + k + '"]');
@@ -73446,7 +73448,7 @@ function ratesHtml(c){
   return out +
     '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
     (mine.length ? '<button class="crw-btn primary" data-act="saverates">Save rates</button>' +
-      '<span class="crw-mut" data-ratemsg style="margin-left:10px;font-size:12px"></span>' : '') +
+      '<span class="crw-mut" data-ratemsg style="margin-left:10px;font-size:13px"></span>' : '') +
     '<div class="crw-grid2" style="margin-top:12px">' +
       '<div><label>Add a catalog item</label>' +
         (free.length
@@ -73455,7 +73457,7 @@ function ratesHtml(c){
               return '<option value="' + esc(i.id) + '">' + esc(i.category) + ' \u2014 ' +
                 esc(i.name) + ' (' + esc(i.unit) + ', ours ' + money(i.rate) + ')</option>';
             }).join('') + '</select>'
-          : '<div class="crw-mut" style="font-size:12.5px;padding:8px 0">Every catalog item is already priced for this crew.</div>') +
+          : '<div class="crw-mut" style="font-size:13px;padding:8px 0">Every catalog item is already priced for this crew.</div>') +
       '</div>' +
       '<div><label>Their rate</label><input type="text" inputmode="decimal" data-r="pickrate" placeholder="0.00"></div>' +
     '</div>' +
@@ -73477,7 +73479,7 @@ function notesHtml(c){
       return '<div class="crw-note"><div class="crw-mut" style="font-size:11px">' +
         esc(String(n.at || '').slice(0, 10)) + (n.by ? ' \u00b7 ' + esc(n.by) : '') + '</div>' +
         esc(n.body) + '</div>';
-    }).join('') : '<div class="crw-mut" style="font-size:12.5px">No notes yet.</div>') +
+    }).join('') : '<div class="crw-mut" style="font-size:13px">No notes yet.</div>') +
     '</div>';
 }
 
@@ -73514,7 +73516,7 @@ function render(){
   v.innerHTML =
     '<div class="crw-top"><div>' +
       '<div class="crw-h">Crews</div>' +
-      '<div class="crw-mut" style="font-size:12px">Subcontractors, grouped by trade.</div>' +
+      '<div class="crw-mut" style="font-size:13px">Subcontractors, grouped by trade.</div>' +
     '</div><div style="display:flex;gap:8px;align-items:center">' +
       '<button class="crw-btn primary" data-act="new">+ New crew</button>' +
       '<button class="crw-x" data-act="close" aria-label="Close">&times;</button>' +
@@ -82928,7 +82930,7 @@ function openPanel(){
     _panel.style.cssText = 'position:fixed;left:12px;right:12px;max-width:520px;margin:0 auto;' +
       'bottom:calc(env(safe-area-inset-bottom,0px) + 110px);max-height:min(60vh,460px);overflow:auto;' +
       'background:#161a22;color:#e9eef6;border:1px solid #3a0f12;border-radius:12px;z-index:10001;' +
-      "font:600 12.5px/1.45 'Segoe UI',Arial,sans-serif;box-shadow:0 10px 34px rgba(0,0,0,.55);padding:12px 13px;";
+      "font:600 13px/1.45 'Segoe UI',Arial,sans-serif;box-shadow:0 10px 34px rgba(0,0,0,.55);padding:12px 13px;";
   }
   if(!_panel.parentNode) document.body.appendChild(_panel);
   drawPanel();
@@ -82945,7 +82947,7 @@ function stuckBtn(label, ink){
   var btn = document.createElement('button');
   btn.type = 'button';
   btn.style.cssText = 'background:transparent;border:1px solid ' + ink + ';color:' + ink +
-    ';border-radius:8px;min-height:44px;padding:0 14px;font-weight:700;font-size:12px;cursor:pointer;';
+    ';border-radius:8px;min-height:44px;padding:0 14px;font-weight:700;font-size:13px;cursor:pointer;';
   btn.textContent = label;
   return btn;
 }
@@ -83022,7 +83024,7 @@ function drawPanel(){
     var x = document.createElement('button');
     x.type = 'button';
     x.setAttribute('aria-label', 'Close');
-    x.style.cssText = 'background:transparent;border:0;color:#a8b3c4;font-size:20px;line-height:1;cursor:pointer;font-family:inherit;min-width:44px;min-height:44px;';
+    x.style.cssText = 'background:transparent;border:0;color:#a8b3c4;font-size:22px;line-height:1;cursor:pointer;font-family:inherit;min-width:44px;min-height:44px;';
     x.textContent = '\u00d7';
     x.addEventListener('click', closePanel);
     h.appendChild(t); h.appendChild(x); _panel.appendChild(h);
@@ -85605,7 +85607,7 @@ function render(){
       '</div>';
   }).join('');
   sheet.querySelector('.cr-snips-list').innerHTML =
-    (rows || '<div class="cr-snips-row"><span style="padding:12px;color:var(--rbe-mute,#9aa0a8);font:600 12.5px \'Segoe UI\',Arial,sans-serif;">No snippets yet \u2014 add one below.</span></div>') +
+    (rows || '<div class="cr-snips-row"><span style="padding:12px;color:var(--rbe-mute,#9aa0a8);font:600 13px \'Segoe UI\',Arial,sans-serif;">No snippets yet \u2014 add one below.</span></div>') +
     '<button class="cr-snips-add" type="button">+ Add a snippet</button>';
 }
 function open(btn){
