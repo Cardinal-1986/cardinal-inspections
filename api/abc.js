@@ -1,5 +1,8 @@
 // api/abc.js — ABC Supply API proxy (ESM, per api/package.json "type":"module")
 // Env vars (Vercel): ABC_CLIENT_ID, ABC_CLIENT_SECRET, ABC_ENV ("sandbox" | "production"),
+// ABC_SB_CLIENT_ID / ABC_SB_CLIENT_SECRET (build 1244: the SANDBOX app's own pair, so test
+// orders never borrow the live credential), ABC_ORDERS_LIVE ("1" only after ABC API Support
+// has reviewed a sandbox order — until then a production placeOrder is refused),
 // optional ABC_API_BASE to override the API host, kept as an escape hatch only —
 // API_DEFAULT below is no longer a guess (see the note on it).
 // Auth per https://apidocs.abcsupply.com/authorization-methods/ (Client Credentials, Individuals & Businesses).
@@ -81,10 +84,35 @@ async function requireAccess(req, res, action) {
   return true;
 }
 
-let tokenCache = { token: null, exp: 0, env: '' };
+/* 1244: one cached token PER TARGET. A single cache keyed by env meant a sandbox call and
+   a production call in the same warm lambda would hand each other's token over. */
+const tokenCache = {};
 
 function env() { return (process.env.ABC_ENV || 'sandbox').toLowerCase() === 'production' ? 'production' : 'sandbox'; }
-function apiBase() { return process.env.ABC_API_BASE || API_DEFAULT[env()]; }
+
+/* 1244 — which ABC an action talks to. Everything defaults to the configured env (the live
+   account Theo already uses for search and pricing). A request asks for the sandbox with
+   `sandbox: true`, and then uses the SANDBOX app's own credential pair. ABC API Support,
+   25 Aug 2026: sandbox credentials come from the Developer Portal, test accounts are found
+   with the Account API, and a sandbox order's confirmation number is what they review. */
+function target(b) { return b && b.sandbox === true ? 'sandbox' : env(); }
+function creds(t) {
+  if (t === 'sandbox' && process.env.ABC_SB_CLIENT_ID && process.env.ABC_SB_CLIENT_SECRET)
+    return { id: process.env.ABC_SB_CLIENT_ID, secret: process.env.ABC_SB_CLIENT_SECRET };
+  // the main pair serves whichever env ABC_ENV names — never the other one
+  if (t === env() && process.env.ABC_CLIENT_ID && process.env.ABC_CLIENT_SECRET)
+    return { id: process.env.ABC_CLIENT_ID, secret: process.env.ABC_CLIENT_SECRET };
+  return null;
+}
+function apiBase(t) {
+  t = t || env();
+  // the override is for the configured env only; it must never redirect sandbox traffic
+  if (process.env.ABC_API_BASE && t === env()) return process.env.ABC_API_BASE;
+  return API_DEFAULT[t];
+}
+/* The money switch. A production order is refused until Theo sets ABC_ORDERS_LIVE=1 in
+   Vercel — which he does after ABC has reviewed a sandbox order, not before. */
+function liveOrdersOn() { return String(process.env.ABC_ORDERS_LIVE || '').trim() === '1'; }
 
 /* Node's own fetch throws a bare "TypeError: fetch failed" on any network-level
    failure (bad host, connection refused, timeout, TLS) and puts the ACTUAL
@@ -107,11 +135,18 @@ async function netFetch(url, opts) {
   }
 }
 
-async function getToken() {
-  const e = env();
-  if (tokenCache.token && tokenCache.env === e && Date.now() < tokenCache.exp) return tokenCache.token;
-  const id = process.env.ABC_CLIENT_ID, secret = process.env.ABC_CLIENT_SECRET;
-  if (!id || !secret) { const err = new Error('ABC credentials not configured'); err.code = 'NOT_CONFIGURED'; throw err; }
+async function getToken(t) {
+  const e = t || env();
+  const c0 = tokenCache[e];
+  if (c0 && c0.token && Date.now() < c0.exp) return c0.token;
+  const c = creds(e);
+  if (!c) {
+    const err = new Error(e === 'sandbox'
+      ? 'ABC sandbox credentials not configured — add ABC_SB_CLIENT_ID and ABC_SB_CLIENT_SECRET in Vercel (Developer Portal, Source System 649, sandbox app)'
+      : 'ABC credentials not configured');
+    err.code = 'NOT_CONFIGURED'; err.target = e; throw err;
+  }
+  const id = c.id, secret = c.secret;
   const r = await netFetch(AUTH[e], {
     method: 'POST',
     headers: {
@@ -127,7 +162,7 @@ async function getToken() {
     throw err;
   }
   // tokens live 30 min; cache 25
-  tokenCache = { token: j.access_token, exp: Date.now() + 25 * 60 * 1000, env: e };
+  tokenCache[e] = { token: j.access_token, exp: Date.now() + 25 * 60 * 1000 };
   return j.access_token;
 }
 
@@ -176,9 +211,9 @@ function pageQs(b) {
   return '?' + p.toString();
 }
 
-async function abc(method, path, payload) {
-  const token = await getToken();
-  const r = await netFetch(apiBase() + path, {
+async function abc(method, path, payload, t) {
+  const token = await getToken(t);
+  const r = await netFetch(apiBase(t) + path, {
     method,
     headers: {
       'Authorization': 'Bearer ' + token,
@@ -317,11 +352,19 @@ export default async function handler(req, res) {
   try {
     switch (a) {
       case 'status': {
+        /* 1244: also says whether the sandbox pair exists and whether live ordering is on,
+           so the order screen can say exactly why Send is or is not available. */
+        const sandbox = !!creds('sandbox'), liveOrders = liveOrdersOn();
+        if (b.sandbox === true) {
+          if (!sandbox) return res.status(200).json({ configured: false, env: 'sandbox', sandbox, liveOrders });
+          await getToken('sandbox');
+          return res.status(200).json({ configured: true, connected: true, env: 'sandbox', apiBase: apiBase('sandbox'), sandbox, liveOrders });
+        }
         if (!process.env.ABC_CLIENT_ID || !process.env.ABC_CLIENT_SECRET) {
-          return res.status(200).json({ configured: false, env: env() });
+          return res.status(200).json({ configured: false, env: env(), sandbox, liveOrders });
         }
         await getToken();
-        return res.status(200).json({ configured: true, connected: true, env: env(), apiBase: apiBase() });
+        return res.status(200).json({ configured: true, connected: true, env: env(), apiBase: apiBase(), sandbox, liveOrders });
       }
       case 'searchItems': {
         /* https://apidocs.abcsupply.com/search-items/ — the real request shape.
@@ -342,7 +385,7 @@ export default async function handler(req, res) {
           embed: ['branches'],
           pagination: page,
         };
-        let out = await abc('POST', '/api/product/v1/search/items', b.payload || byDesc);
+        let out = await abc('POST', '/api/product/v1/search/items', b.payload || byDesc, target(b));
         /* Theo works from invoices full of item codes (02OCTDDML, 14ANADE15W).
            A code will not match a description search, so when a single-token
            query finds nothing, try it as an exact item number before giving up.
@@ -354,7 +397,7 @@ export default async function handler(req, res) {
               filters: [{ key: 'itemNumber', condition: 'equals', values: [q] }],
               embed: ['branches'],
               pagination: page,
-            });
+            }, target(b));
           } catch (_) { /* keep the description-search result */ }
         }
         return res.status(200).json(out);
@@ -378,7 +421,7 @@ export default async function handler(req, res) {
             return line;
           }),
         };
-        return res.status(200).json(await abc('POST', '/api/pricing/v2/prices', body));
+        return res.status(200).json(await abc('POST', '/api/pricing/v2/prices', body, target(b)));
       }
       /* ⚠ pageNumber is REQUIRED here, and ABC's own docs say it is optional.
          Measured, not assumed: production answered
@@ -387,8 +430,8 @@ export default async function handler(req, res) {
          appears in every one of ABC's own examples; branchNumber is genuinely
          optional (it enriches each row with availability at that branch) and is
          sent only when the caller has one. Trust the error, not the doc. */
-      case 'frequents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/frequents' + pageQs(b)));
-      case 'recents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/recents' + pageQs(b)));
+      case 'frequents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/frequents' + pageQs(b), undefined, target(b)));
+      case 'recents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/recents' + pageQs(b), undefined, target(b)));
       /* https://apidocs.abcsupply.com/search-accounts/ — ask ABC which ship-to
          accounts this key may actually price against, instead of guessing.
          Earned the hard way: the ship-to shown on an invoice ("Ship To: 0003")
@@ -405,11 +448,11 @@ export default async function handler(req, res) {
           ],
           pagination: { itemsPerPage: b.itemsPerPage || 100, pageNumber: b.pageNumber || 1 },
         };
-        return res.status(200).json(await abc('POST', '/api/account/v1/search/accounts', body));
+        return res.status(200).json(await abc('POST', '/api/account/v1/search/accounts', body, target(b)));
       }
-      case 'templates': return res.status(200).json(await abc('GET', '/api/order/v2/orders/templates' + (b.query ? '?' + String(b.query) : '')));
-      case 'branches': return res.status(200).json(await abc('GET', '/api/location/v1/branches' + (b.query ? '?' + String(b.query) : '')));
-      case 'itemAvailability': return res.status(200).json(await abc('GET', '/api/product/v1/availability/items/' + encodeURIComponent(String(b.itemNumber || '')) + '/branches'));
+      case 'templates': return res.status(200).json(await abc('GET', '/api/order/v2/orders/templates' + (b.query ? '?' + String(b.query) : ''), undefined, target(b)));
+      case 'branches': return res.status(200).json(await abc('GET', '/api/location/v1/branches' + (b.query ? '?' + String(b.query) : ''), undefined, target(b)));
+      case 'itemAvailability': return res.status(200).json(await abc('GET', '/api/product/v1/availability/items/' + encodeURIComponent(String(b.itemNumber || '')) + '/branches', undefined, target(b)));
       case 'placeOrder': {
         // POST /api/order/v2/orders — https://apidocs.abcsupply.com/place-orders/
         //
@@ -425,13 +468,22 @@ export default async function handler(req, res) {
         // documents exactly one value) and currency.
         const orders = orderPayload(b);
         if (orders.error) return res.status(400).json({ error: orders.error });
-        return res.status(200).json(await abc('POST', '/api/order/v2/orders', orders.body));
+        const t = target(b);
+        // 1244: the live-order switch. Checked AFTER the body is validated (so a test can
+        // prove the order is well-formed) and BEFORE any network call to ABC's order host.
+        if (t === 'production' && !liveOrdersOn()) {
+          return res.status(403).json({
+            error: 'Live ABC orders are switched off. Send this as a TEST order to the ABC sandbox first; ' +
+                   'once ABC API Support has reviewed its confirmation number, set ABC_ORDERS_LIVE=1 in Vercel.',
+            code: 'LIVE_ORDERS_OFF' });
+        }
+        return res.status(200).json(await abc('POST', '/api/order/v2/orders', orders.body, t));
       }
-      case 'getOrder': return res.status(200).json(await abc('GET', '/api/order/v2/orders' + (b.query ? '?' + String(b.query) : '')));
+      case 'getOrder': return res.status(200).json(await abc('GET', '/api/order/v2/orders' + (b.query ? '?' + String(b.query) : ''), undefined, target(b)));
       default: return res.status(400).json({ error: 'Unknown action: ' + a });
     }
   } catch (e) {
-    if (e && e.code === 'NOT_CONFIGURED') return res.status(200).json({ configured: false, env: env() });
+    if (e && e.code === 'NOT_CONFIGURED') return res.status(200).json({ configured: false, env: e.target || env(), error: String(e.message || e) });
     return res.status(e.status || 500).json({ error: String(e.message || e), detail: e.detail || null });
   }
 }

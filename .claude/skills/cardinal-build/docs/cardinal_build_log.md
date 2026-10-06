@@ -34055,3 +34055,20 @@ table, so an unknown size stops the build instead of being skipped.
 **Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock`, `gate_chromium
 --selftest`, `gate_1243` (0 off-scale), `gate_1081`, `gate_1206`, `gate_a11y`, `gate_1229`,
 `gate_1235`–`1241`, and `render_gradtext`. The sentinel is running in both themes.
+
+## Build 1244 — ABC ordering, the server half: a sandbox pair and a live-orders switch
+
+`api/abc.js` only. `index.html` stays at 1243.
+- **ABC's answer, read from Theo's mail (Penny, 25 Aug):** no keys were ever emailed. Sandbox
+  credentials come from the Developer Portal (Source System 649); ABC reviews a sandbox order's
+  confirmation number. So ordering waited on us, not on them.
+- **`sandbox:true` on any request** routes it to `partners-sb` with `ABC_SB_CLIENT_ID`/`SECRET`,
+  with its own token cache. Missing pair → `NOT_CONFIGURED` naming the sandbox vars, **never a
+  fallback to the live key.** All 10 `abc()` calls take the target.
+- **`ABC_ORDERS_LIVE=1`** is the only thing that lets `placeOrder` reach production. Off → 403
+  `LIVE_ORDERS_OFF`, zero ABC traffic. Validation still runs first, so a malformed order is still
+  told what is wrong.
+- `status` now reports `sandbox` and `liveOrders`, which the 1245 screen reads to enable its buttons.
+
+**Gates.** `gate_1244.mjs` imports the shipped handler with a recording `fetch`: **GREEN 13/13**,
+**RED 8/13 on the 1243 file**. `gate_abcorder.mjs` still 13/13. `node --check`, no `module.exports`.

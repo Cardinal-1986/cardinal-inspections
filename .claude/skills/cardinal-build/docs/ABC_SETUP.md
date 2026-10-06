@@ -104,3 +104,19 @@ search and price lookup were both using field names ABC has never accepted.
 3. Order placement, tested in their sandbox with ABC's API support reviewing the test orders (their prescribed process), then webhooks feeding delivery status to the production board.
 
 Their support: apisupport@abcsupply.com — they review sandbox orders and help certify.
+
+## Ordering — sandbox first (build 1244)
+ABC does **not** email keys (Penny, 25 Aug 2026). In the Developer Portal, open the sandbox
+application (Source System ID **649**) and copy its Client ID and Secret into Vercel:
+
+| Env var | Value |
+|---|---|
+| `ABC_SB_CLIENT_ID` | sandbox Client ID |
+| `ABC_SB_CLIENT_SECRET` | sandbox Client Secret |
+| `ABC_ORDERS_LIVE` | **leave unset.** Set to `1` only after ABC has reviewed a sandbox order's confirmation number |
+
+The production `ABC_CLIENT_ID`/`SECRET` keep working exactly as before. Any request carrying
+`sandbox:true` uses the sandbox pair and `partners-sb.abcsupply.com`; without that pair it says
+so rather than falling back to the live key. A live `placeOrder` with the switch off returns
+403 `LIVE_ORDERS_OFF` and sends nothing to ABC. Sandbox account numbers: use `accounts` with
+`sandbox:true` (ABC's Account API) — they are not ours.
