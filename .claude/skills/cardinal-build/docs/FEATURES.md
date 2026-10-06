@@ -8549,6 +8549,82 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1241 — three faint labels on the shared forms; the eight forms gated
+
+**"Cream sheets in dark mode", measured rather than assumed.** A dark-mode scan of all 32 sentinel
+states (light grounds, luminance ≥ .55, outermost only, topmost at the centre) found 25 patches.
+
+**Left alone, each for a recorded reason:**
+- **OC Colors' white line cards:** OC's own brand palette (`OC_BRAND_RULES.md`).
+- **The insurance screens:** they have their own Docket/Siren theme switch.
+- **The document editor:** a print page.
+- **The estimate builder and its Add-from-Library picker:** **settled at 1095. Theo: "keep the
+  estimate builder LIGHT ONLY — no dark option".**
+- **Semantic fills:** the stage chip, the Assign button, the colour swatches.
+
+**The eight `.projform` forms** are white cards in both themes: profile, Add project, the Roofing
+checklist, GC, Lead, New Lead, Appointment and Signature.
+- A full contrast walk (215 texts × 2 themes) found **4 failures**. They are fixed here:
+  - the profile e-mail field, `#777` → `#5f5f5f` (3.95 → ~5.6:1);
+  - `.ldreq` "* Required" and "* phone or email", `#9a8c85` → `#6b5f59` (3.12 → 6.17:1);
+  - the New Lead address toggle's chevron, `#a89e88` → `#6b5f59` (2.38 → over 5:1).
+- **Whether those forms should go DARK in dark mode** is a nine-screen look change. It goes to
+  Theo as a preview, not a build.
+
+Gate: **`gate_1241.mjs`** (32 checks): every text on all eight forms in both themes clears its
+floor. It fails 4 on 1240.
+
+## Build 1240 — the 44px tap-target debt, paid: 19 of 21 controls cleared
+
+`gate_1206`'s baseline was 18 under-floor controls. A fix to the instrument (below) revealed one
+more, for 19. This build clears all of them except the two native checkboxes. Each fix is at
+source, in the control's own rule:
+
+| Control | Before | After |
+|---|---:|---:|
+| Punch Back · Sales Floor ← · Storm ← | 34–36px square | 44px square, the 1233 header back |
+| Production month ‹ › · Estimate-picker ✕ | 34px / 27px | `min-width`/`min-height` 44px |
+| Dispatch Map · Line Item tabs · photo-editor tools · AR "Turn on" · Sales Floor modes · Quick jump · Work Orders · Production "Closed repairs" | 28–40px tall | `min-height:44px` |
+| Insurance Clients "+7" | 39px wide | `min-width:44px` |
+| Punch "Sort by" chip | 21px | 44px; its dashed rule moved from `border-bottom` onto the text, because at 44px it hung 13px below the word |
+| Photo-editor colour dots | 30px | **44px circles** (see below) |
+
+- ⚠ **The colour dots could not use 1040's hit-pad ring.** `.cr-ped-row` scrolls (`overflow-x:auto`),
+  which clips every descendant to the row's box, so a ring drawn outside the dot is cut back to the
+  dot. The dots are honestly 44px.
+- **The two native checkboxes stay on the baseline.** They are the vent types on the checklist and
+  the trades on New Project. A native checkbox cannot carry a pseudo-element hit pad, and the gate
+  scores the box, not its label. Each box grows 18 → 22px, and its whole label row, which is what a
+  finger actually hits, is `min-height:44px`.
+
+**`gate_1206` was measuring a fraction of some targets, and that is fixed here.**
+- **The fault:** `elementFromPoint` answers only inside the viewport, and the sweep scores controls
+  up to 400px below it. A control whose 44px probe window straddled the screen edge had its reach
+  cut by the glass, not by the page.
+- **How it showed:** a 10px layout shift elsewhere moved a punch box (44 → 39) and a vent checkbox
+  (18 → 15) across the bottom edge, and both read as having shrunk.
+- **The fix:** the probe now scrolls such a control into view before it measures.
+- **What it revealed:** one previously hidden target, the New Project trade checkbox.
+
+Baseline after: **2**. Run against the 1239 artifact, the gate is RED on all 17 regressions.
+
+## Build 1239 — the album's photo sheet goes dark in dark mode; every control is 44px
+
+The same sheet as 1238 (`#cr-pae-cap-modal`).
+- **It was a cream card (`#fdfcf7`) in both themes,** so in dark mode, the default, a tap on a photo
+  flashed a near-white panel.
+- **Dark is now the base,** in the 573 shape: box `#16161B` with a `#2c3038` hairline, labels
+  `#9aa0a8`, fields `#101015`/`#e9e6df`, and ghost buttons `#cfd6df`.
+- **Light is restored byte for byte** under `rb-light`.
+- **Save** was `#e35c63` on `#2c2c2c`, which is **3.97:1 in both themes**. It is now `#f0777e`, the
+  same red lifted, at 5.08:1.
+- **Height:** every action button and the Section menu gets `min-height:44px` (they measured
+  41px), and the row wraps. The upright sheet grows 544 → 600px. `gate_1238`'s exact-544 check was
+  retargeted by decision to "the whole sheet is on screen".
+
+Gate: **`gate_1239.mjs`** (6 checks, both themes): the ground, every ink ≥4.5:1, and every control
+≥44px. It fails 5 on 1238.
+
 ## Build 1238 — a photo fits the screen when the phone is on its side
 
 Theo: **"When I put my phone in landscape mode it shortens the photo view."**

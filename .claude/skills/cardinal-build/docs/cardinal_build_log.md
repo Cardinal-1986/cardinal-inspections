@@ -33943,3 +33943,69 @@ timeout, which is exactly the trap CLAUDE.md names. I killed it and used a bound
 `gate_chromium --selftest` (22/22), `gate_1238` (14/14; RED 12 on 1237), `gate_1237`, `gate_1229`
 (101/101, the album), `gate_1206`, `gate_1081`, `gate_a11y`, and `render_gradtext` (82/82). The
 sentinel runs portrait-only in both themes, so it is blind to landscape by construction.
+
+## Build 1239 — the album's photo sheet goes dark in dark mode; every control is 44px
+
+Theo: **"Merge and fix all."** This is the first of the list. Full write-up in FEATURES "Build 1239".
+
+**My own error, corrected before it shipped.** I told Theo the sheet's buttons were "about 30px".
+`gate_1239`'s negative control measured **41px**. That is still under the floor, but the number I
+said was a guess, and it was wrong.
+
+The Save button's 3.97:1 failed in **both** themes. It was a pre-existing failure, found while
+measuring.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_stack`,
+`gate_chromium --selftest`, `gate_1239` (6/6; RED 5 on 1238), `gate_1238` (14/14, with one check
+retargeted by decision), `gate_1229` (101/101), `gate_1206`, `gate_1081`, `gate_a11y`, and
+`render_gradtext`.
+
+## Build 1240 — the 44px tap-target debt, paid: 19 of 21 controls cleared
+
+Full write-up in FEATURES "Build 1240". Baseline 18 → **2**: the two native checkboxes, honestly.
+
+**Three of my own errors on the way, each caught before it shipped:**
+1. **I quoted "24" for the debt from memory.** The baseline said 18.
+2. **I used a hit-pad ring on the colour dots inside a scrolling row.** A scrolling row clips the
+   ring, so the gate measured it at 38. The dots are now honestly 44px.
+3. **My first pass made the Sort chip's dashed underline hang 13px under its word.** A render
+   caught it. No gate could have.
+
+**The instrument was wrong too.** `gate_1206` scored targets that straddled the viewport edge, where
+`elementFromPoint` returns nothing. The probe now scrolls a control into view before measuring it.
+That surfaced one hidden target, the trade checkbox, and turned two false "shrank" reads back to the
+truth.
+
+`gate_stack` flagged 87 stacks, all of them pre-existing scoped overrides that my edits made look
+new. They are resolved by deleting a redundant declaration (`box-sizing` already set by `*`, and
+`flex:none`) or by declaring `--cr-stack` with the reason.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `gate_stack`, `gate_1206` (rebaselined
+to 2, and RED on 1239), `gate_1081`, `gate_a11y`, `gate_1233`–`1239`, `render_gradtext`, and
+`gate_chromium --selftest`.
+
+## Build 1241 — three faint labels on the shared forms; the eight forms gated
+
+Full write-up in FEATURES "Build 1241".
+
+**"Cream sheets in dark mode across the app" turned out smaller than it sounded.** Half the light
+patches in dark mode are deliberate, and one of them is a settled decision: **1095, estimate builder
+light only**. Darkening it would have undone Theo's own pick. I checked the log before touching it.
+The eight shared forms are readable as they are, with 4 real failures, and those are fixed here.
+Darkening them is a look change, so it goes to Theo as a preview.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `gate_stack`, and `gate_1241` (32/32;
+RED 4 on 1240).
+
+**1241, second commit: the sentinel's residue of 1240, removed at source.** The sentinel, in both
+themes against main, found **no INK and no layout findings**. Its 8 new findings were all DEAD or
+OVERRIDDEN declarations that my 1240 edits left behind:
+- the shared `.projform` checkbox rule still said 18px, beneath my two per-form 22px rules;
+- `.headactions .btn{height:40px}` could no longer win against `#woQuick`'s 44px floor.
+
+Both were fixed in the shared rule instead of out-specifying it:
+- every `.projform` checkbox is now 22px, and the two per-form rules are deleted;
+- the header row has a 44px floor, and `#woQuick`'s own copy is deleted.
+
+The two edited rules carry `--cr-stack` with the overrides they have always made. `gate_stack`
+against main is CLEAN. The sentinel was re-run on this final file.
