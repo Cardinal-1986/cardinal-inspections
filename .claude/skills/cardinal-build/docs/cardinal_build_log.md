@@ -34030,3 +34030,13 @@ the documents by `<html … </html>` produced "documents" 1.7M characters long, 
 the closing tag in pieces. **There are 149 in-script sizes; they are phase 2, done by hand.**
 
 Gates and the sentinel are running. Not yet merged.
+
+**`gate_a11y` rebaselined at 1242, with this reason.**
+- **`scrollable-region-focusable` +1 was real and is fixed.** The Client Directory CRM bar overflowed
+  at 13px. Its chip padding went 11 → 9px, and the count is back to 2.
+- **`landmark-one-main` 7 → 9 is not a regression.** The two new states, Crews and Estimates, have no
+  `<main>`/`[role=main]` in **both** 1241 and 1242, measured in Chromium. axe's page-level rule reports
+  that state by state, and the text size changed which states it reported on.
+- **The real debt is that the app has no main landmark in those views.** It is recorded here and
+  not hidden.
+- `region` improved 305 → 302 and is locked in.
