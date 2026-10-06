@@ -9442,3 +9442,18 @@ second chart reuses the single fetch.
 | `status` | now returns `sandbox` (pair configured) and `liveOrders` (switch on) |
 
 No UI yet — the Order-from-ABC screen on the client profile is build 1245. Gate: `gate_1244.mjs`.
+
+
+## Build 1245 — Order from ABC (client profile → Materials)
+
+| Piece | Where | What |
+|---|---|---|
+| **Order from ABC** button | `#matAbcOrder`, Materials tab | admins + production only (`is_full_access()`); shown by `renderMatOrderState()` |
+| The sheet | `cr-abco-styles` / `cr-abco-script`, `#cr-abco`, `window.CardinalABCOrder.open/close` | single-theme dark, display-shown, in `hideAllViews()` |
+| Sources | Materials list · Estimate (`abc_item` lines) · ABC template | re-adding a source replaces its lines rather than duplicating them |
+| Item matching | per line, searches ABC (sandbox in TEST) | kept on `checklist.materials[trade][i].abc` and in `abc_item_map` (`abc_item_map.sql`) |
+| Delivery | Deliver to the job (`COM`) / Pickup at the branch (`CPU`) | no default — chosen per order |
+| Send | review screen only; TEST → sandbox, LIVE once `ABC_ORDERS_LIVE=1` | saved to `checklist.abc_orders[]`; LIVE also sets materials ordered |
+
+Account numbers: LIVE uses the Suppliers screen's Ship-To/Branch; TEST keeps its own
+(`sbShipTo`/`sbBranch` in the same `cardinal.abc` store). Gate: `gate_1245.mjs`.

@@ -1237,6 +1237,11 @@ Each is a real finding whose every fix is an aesthetic or layout decision:
   the sandbox Client ID/Secret from the portal into Vercel. **Next: build 1245, the
   Order-from-ABC screen on the client profile** (Materials list + estimate ABC lines + ABC
   templates; delivery or pickup per order; full review and confirm).
+- ✅ **Build 1245 SHIPPED the Order-from-ABC screen.** Two things are Theo's: **run
+  `abc_item_map.sql`** (matches are kept per job until then), and once the sandbox keys are in
+  Vercel, **send one TEST order and email its confirmation number to apisupport@abcsupply.com**.
+  Not built yet: an order-level note to the yard (ABC's field for it is not doc-verified), and
+  delivery status back from ABC (webhooks — after live orders are on).
 
 - ✅ **The landing screenshot's black slab is FIXED at 1060.** PR **#317** diagnosed it
   correctly on 14 Aug, never landed, and is now **closed as superseded** — it was
