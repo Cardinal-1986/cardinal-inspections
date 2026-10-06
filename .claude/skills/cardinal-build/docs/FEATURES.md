@@ -8549,6 +8549,40 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1240 — the 44px tap-target debt, paid: 19 of 21 controls cleared
+
+`gate_1206`'s baseline was 18 under-floor controls. A fix to the instrument (below) revealed one
+more, for 19. This build clears all of them except the two native checkboxes. Each fix is at
+source, in the control's own rule:
+
+| Control | Before | After |
+|---|---:|---:|
+| Punch Back · Sales Floor ← · Storm ← | 34–36px square | 44px square, the 1233 header back |
+| Production month ‹ › · Estimate-picker ✕ | 34px / 27px | `min-width`/`min-height` 44px |
+| Dispatch Map · Line Item tabs · photo-editor tools · AR "Turn on" · Sales Floor modes · Quick jump · Work Orders · Production "Closed repairs" | 28–40px tall | `min-height:44px` |
+| Insurance Clients "+7" | 39px wide | `min-width:44px` |
+| Punch "Sort by" chip | 21px | 44px; its dashed rule moved from `border-bottom` onto the text, because at 44px it hung 13px below the word |
+| Photo-editor colour dots | 30px | **44px circles** (see below) |
+
+- ⚠ **The colour dots could not use 1040's hit-pad ring.** `.cr-ped-row` scrolls (`overflow-x:auto`),
+  which clips every descendant to the row's box, so a ring drawn outside the dot is cut back to the
+  dot. The dots are honestly 44px.
+- **The two native checkboxes stay on the baseline.** They are the vent types on the checklist and
+  the trades on New Project. A native checkbox cannot carry a pseudo-element hit pad, and the gate
+  scores the box, not its label. Each box grows 18 → 22px, and its whole label row, which is what a
+  finger actually hits, is `min-height:44px`.
+
+**`gate_1206` was measuring a fraction of some targets, and that is fixed here.**
+- **The fault:** `elementFromPoint` answers only inside the viewport, and the sweep scores controls
+  up to 400px below it. A control whose 44px probe window straddled the screen edge had its reach
+  cut by the glass, not by the page.
+- **How it showed:** a 10px layout shift elsewhere moved a punch box (44 → 39) and a vent checkbox
+  (18 → 15) across the bottom edge, and both read as having shrunk.
+- **The fix:** the probe now scrolls such a control into view before it measures.
+- **What it revealed:** one previously hidden target, the New Project trade checkbox.
+
+Baseline after: **2**. Run against the 1239 artifact, the gate is RED on all 17 regressions.
+
 ## Build 1239 — the album's photo sheet goes dark in dark mode; every control is 44px
 
 The same sheet as 1238 (`#cr-pae-cap-modal`).

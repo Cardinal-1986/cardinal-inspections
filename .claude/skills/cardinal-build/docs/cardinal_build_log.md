@@ -33959,3 +33959,27 @@ measuring.
 `gate_chromium --selftest`, `gate_1239` (6/6; RED 5 on 1238), `gate_1238` (14/14, with one check
 retargeted by decision), `gate_1229` (101/101), `gate_1206`, `gate_1081`, `gate_a11y`, and
 `render_gradtext`.
+
+## Build 1240 — the 44px tap-target debt, paid: 19 of 21 controls cleared
+
+Full write-up in FEATURES "Build 1240". Baseline 18 → **2**: the two native checkboxes, honestly.
+
+**Three of my own errors on the way, each caught before it shipped:**
+1. **I quoted "24" for the debt from memory.** The baseline said 18.
+2. **I used a hit-pad ring on the colour dots inside a scrolling row.** A scrolling row clips the
+   ring, so the gate measured it at 38. The dots are now honestly 44px.
+3. **My first pass made the Sort chip's dashed underline hang 13px under its word.** A render
+   caught it. No gate could have.
+
+**The instrument was wrong too.** `gate_1206` scored targets that straddled the viewport edge, where
+`elementFromPoint` returns nothing. The probe now scrolls a control into view before measuring it.
+That surfaced one hidden target, the trade checkbox, and turned two false "shrank" reads back to the
+truth.
+
+`gate_stack` flagged 87 stacks, all of them pre-existing scoped overrides that my edits made look
+new. They are resolved by deleting a redundant declaration (`box-sizing` already set by `*`, and
+`flex:none`) or by declaring `--cr-stack` with the reason.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `gate_stack`, `gate_1206` (rebaselined
+to 2, and RED on 1239), `gate_1081`, `gate_a11y`, `gate_1233`–`1239`, `render_gradtext`, and
+`gate_chromium --selftest`.

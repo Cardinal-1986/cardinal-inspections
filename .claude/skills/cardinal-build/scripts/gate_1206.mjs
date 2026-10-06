@@ -96,6 +96,14 @@ const PROBE = `(function(FLOOR){
        that shows up as a number instead of as silence. */
     if (b.top > innerHeight + 400 || b.bottom < -400) { skipped++; return; }
     var cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+    /* 1240: elementFromPoint answers only INSIDE the viewport, so a control whose 44px probe
+       window straddles the screen edge had its reach cut by the glass, not by the page — a
+       layout change of 10px elsewhere moved a punch box (39) and a vent checkbox (15) across
+       the bottom edge and they read as having SHRUNK. Bring it fully on screen first. */
+    if (cy - FLOOR / 2 < 0 || cy + FLOOR / 2 > innerHeight || cx - FLOOR / 2 < 0 || cx + FLOOR / 2 > innerWidth) {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      b = el.getBoundingClientRect(); cx = b.left + b.width / 2; cy = b.top + b.height / 2;
+    }
     function owns(x, y){
       var h = document.elementFromPoint(Math.round(x), Math.round(y));
       return !!h && (h === el || el.contains(h));
