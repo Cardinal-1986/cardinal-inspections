@@ -4070,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1243<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1245<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4699,6 +4699,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
            materials; nothing ever recorded that he had, so the Production
            board's "Materials?" chip could never clear. This is that answer. -->
       <div id="matOrderState" style="margin:0 0 14px;"></div>
+      <!-- 1245: ordering from ABC. Admins + production only; renderMatOrderState() shows it. -->
+      <button class="btn" id="matAbcOrder" type="button" hidden style="margin:0 0 16px;">Order from ABC</button>
 
       <div class="matcard" data-trade="roofing">
         <div class="mathead collhead matcoll"><b>&#127968; Roofing</b><span class="projcount" id="matSrcroofing">No measurements yet</span><span class="collchev">&#9656;</span></div>
@@ -19611,7 +19613,7 @@ function hideAllViews(){
      again. The gate caught it before it shipped: hideAllViews() still
      reported display:flex. */
   ['payView','crewsView','cr-estimates-mount','cr-pricing-mount','cr-claims-mount',
-   'cr-coach-mount','cr-adjusters-mount','cr-abc']
+   'cr-coach-mount','cr-adjusters-mount','cr-abc','cr-abco']
     .forEach(function(id){
       var el = document.getElementById(id);
       if(el) el.style.display = 'none';
@@ -19830,6 +19832,9 @@ function renderMatOrderState(){
   var all = parseCkAll(currentProject);
   var at = all.materials_ordered_at || '';
   var by = all.materials_ordered_by || '';
+  /* 1245: the ABC order button follows the FULL_ONLY fence in api/abc.js. */
+  var abcBtn = document.getElementById('matAbcOrder');
+  if(abcBtn) abcBtn.hidden = !(window.is_full_access && window.is_full_access() && window.CardinalABCOrder);
   if(at){
     var d = crDate(at);
     mount.innerHTML =
@@ -43463,6 +43468,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1245, d: '2026-10-06', t: 'Order materials from ABC Supply, right from the client',
+    s: 'The Materials tab has an Order from ABC button for admins and production. Pull lines from the material list, the estimate\'s ABC items, or one of your ABC order templates; match each material to an ABC item once and it is remembered for every job; choose delivery to the job or pickup at the branch; then review the whole order before it goes. Orders go to ABC\'s test system until ABC signs off.' },
   { b: 1243, d: '2026-10-06', t: 'The last in-between text sizes, on pop-ups and chips',
     s: 'Pop-ups, sheets, toasts and small labels built on the fly now use the same six text sizes as the rest of the app. Invoices, reports and the Pre-Install Guide keep their print sizes.' },
   { b: 1242, d: '2026-10-06', t: 'Six text sizes instead of thirty-six',
@@ -65116,6 +65123,12 @@ function usd(n){
   var v = Number(n);
   return isNaN(v) ? '' : '$' + v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
 }
+/* 1245: ABC's unit of measure on a catalog item, wherever ABC put it. The same
+   reading rows() does inline; exported for the order screen. */
+function itemUom(it){
+return (it.unitsOfMeasure && it.unitsOfMeasure.stocking) || it.stockingUom || it.uom ||
+(Array.isArray(it.uoms) && it.uoms.length ? (it.uoms[0].code || it.uoms[0].name || '') : '') || '';
+}
 async function api(body){
 /* 1009: /api/abc was an unauthenticated open proxy (it spends Cardinal's ABC
    credential and can place real orders). It now requires a signed-in session,
@@ -65307,7 +65320,564 @@ return await api({ action:'priceItems', shipTo:c.shipTo, branchNumber:c.branch,
 items:[{ itemNumber:itemNumber, quantity:qty || 1 }] });
 }
 window.CardinalABC = Object.assign(window.CardinalABC || {}, {
-open: open, close: close, search: searchApi, price: priceApi, cfg: cfg
+open: open, close: close, search: searchApi, price: priceApi, cfg: cfg,
+/* 1245: the order screen (cr-abco-script) calls ABC through this same api(),
+   keeps its sandbox account in this same store, and reads units the same way. */
+call: api, setCfg: save, uom: itemUom
+});
+})();
+</script>
+<style id="cr-abco-styles">
+/* ===== 1245 — Order from ABC, from the client profile's Materials tab =====
+   A single-theme dark sheet in the Suppliers sheet's palette (#cr-abc). Every
+   colour is a literal on a ground this block paints itself, so no theme can
+   strip it. Display-shown, and registered in hideAllViews()'s display list.
+   It writes NO scroll lock: the sheet scrolls itself (overscroll-behavior:
+   contain), so the global lock keeps its 17 writers. */
+#cr-abco{display:none;position:fixed;inset:0;z-index:9600;background:rgba(18,14,12,.85);align-items:flex-end;justify-content:center}
+#cr-abco .sheet{background:#202329;color:#e8ebef;width:100%;max-width:720px;max-height:94vh;border-radius:18px 18px 0 0;border:1px solid #c8202e;border-bottom:0;display:flex;flex-direction:column;overflow:hidden;font:15px 'Segoe UI',Arial,sans-serif}
+#cr-abco .hd{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 16px;background:#262a31;border-bottom:1px solid #3a3f47}
+#cr-abco .hd h3{margin:0;flex:1;min-width:0;font:800 18px Georgia,'Times New Roman',serif;color:#f08a90}
+#cr-abco .env{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px;border-radius:10px;white-space:nowrap}
+#cr-abco .env.test{color:#f5c26b;background:rgba(245,166,35,.14)}
+#cr-abco .env.live{color:#fff;background:#c8202e}
+#cr-abco .x{background:none;border:0;color:#d8dde3;font-size:22px;cursor:pointer;min-width:44px;min-height:44px}
+#cr-abco .bd{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+#cr-abco .sect{margin:20px 0 8px;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#f08a90}
+#cr-abco .note{background:#1b1e23;border:1px solid #3a3f47;border-left:3px solid #c8202e;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.5;color:#d8dde3;margin:8px 0;overflow-wrap:anywhere}
+#cr-abco .note b{color:#fff}
+#cr-abco .note.ok{border-left-color:#3fa36b}
+#cr-abco .note.warn{border-left-color:#f5a623}
+#cr-abco .quiet{color:#a9b2bd;font-size:13px;line-height:1.5;margin:6px 0}
+#cr-abco .seg{display:flex;gap:8px;flex-wrap:wrap}
+#cr-abco .seg button{flex:1 1 140px;min-height:44px;border:1px solid #4a505a;background:transparent;color:#e8ebef;border-radius:11px;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:8px 12px}
+#cr-abco .seg button[aria-pressed="true"]{background:#c8202e;border-color:#c8202e;color:#fff}
+#cr-abco .seg button:disabled{opacity:.45;cursor:not-allowed}
+#cr-abco label{display:block;margin:10px 0 4px;font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#c9d0d8}
+#cr-abco input{width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid #4a505a;border-radius:9px;background:#fff;color:#1f1f1f;font:15px 'Segoe UI',Arial,sans-serif}
+#cr-abco .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#cr-abco .grid2>div,#cr-abco .grid3>div{min-width:0}
+#cr-abco .grid3{display:grid;grid-template-columns:1fr .6fr .8fr;gap:10px}
+#cr-abco .b{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 16px;border-radius:11px;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;border:1px solid #c8202e;background:#c8202e;color:#fff;margin:8px 8px 0 0}
+#cr-abco .b.o{background:transparent;color:#f08a90}
+#cr-abco .b.t{background:transparent;border-color:transparent;color:#f08a90;padding:9px 8px}
+#cr-abco .b:disabled{opacity:.45;cursor:not-allowed}
+#cr-abco .ln{background:#1b1e23;border:1px solid #3a3f47;border-radius:11px;padding:10px 12px;margin-bottom:8px}
+#cr-abco .ln.need{border-color:#f5a623}
+#cr-abco .ln .top{display:flex;gap:8px;align-items:flex-start}
+#cr-abco .ln .nm{flex:1;min-width:0;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+#cr-abco .ln .sub{color:#a9b2bd;font-size:13px;margin-top:2px;overflow-wrap:anywhere}
+#cr-abco .ln .sub.need{color:#f5c26b}
+#cr-abco .ln .qty{display:flex;gap:8px;margin-top:8px}
+#cr-abco .ln .qty>div{flex:1 1 0;min-width:0}
+#cr-abco .ln .qty label{margin-top:0}
+#cr-abco .hit{display:block;width:100%;text-align:left;background:#fff;color:#1f1f1f;border:1px solid #c8c8c8;border-radius:9px;padding:9px 11px;margin-top:6px;cursor:pointer;min-height:44px;font:15px 'Segoe UI',Arial,sans-serif}
+#cr-abco .hit small{display:block;color:#555;font-size:13px}
+#cr-abco .tbl{overflow-x:auto}
+#cr-abco table{width:100%;border-collapse:collapse;font-size:13px}
+#cr-abco th,#cr-abco td{text-align:left;padding:7px 6px;border-bottom:1px solid #3a3f47;vertical-align:top}
+#cr-abco th{color:#c9d0d8;font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase}
+#cr-abco dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0;font-size:15px}
+#cr-abco dt{color:#a9b2bd;font-size:13px;padding-top:2px}
+#cr-abco dd{margin:0;overflow-wrap:anywhere}
+#cr-abco pre{white-space:pre-wrap;word-break:break-word;background:#15171b;color:#d8dde3;border-radius:9px;padding:10px;font:11px ui-monospace,Menlo,monospace;max-height:240px;overflow:auto}
+#cr-abco .conf{font:800 22px ui-monospace,Menlo,monospace;color:#fff;letter-spacing:.04em;overflow-wrap:anywhere}
+#cr-abco .hist{font-size:13px;color:#d8dde3;padding:8px 0;border-bottom:1px solid #3a3f47}
+#cr-abco .hist:last-child{border-bottom:0}
+</style>
+<script id="cr-abco-script">
+/* 1245 — ORDER FROM ABC, on the client profile's Materials tab.
+   Theo: "I need to get ABC wired up so we can create orders from the client
+   profiles like acculynx does." His picks: lines from ALL THREE sources (the
+   Materials list, the estimate's ABC lines, ABC's own templates), and delivery
+   vs pickup chosen PER ORDER.
+   Deliberate behaviours:
+   - Every ABC call goes through CardinalABC.call — the Suppliers screen's own
+     api(), so the session token and error text are one code path.
+   - A material is matched to an ABC item ONCE: the match is kept on the job's
+     own material line and remembered app-wide in abc_item_map (abc_item_map.sql).
+     Without that table the match still holds for the job; it says so.
+   - Nothing is sent from the build screen. Review shows the whole order back
+     and the send button lives only there. Live sends also ask a second time.
+   - TEST orders go to ABC's sandbox (ABC_SB_* pair, build 1244). LIVE is
+     disabled until the server reports ABC_ORDERS_LIVE=1, and the server
+     refuses on its own regardless (LIVE_ORDERS_OFF).
+   - A TEST order never marks the job's materials ordered; a LIVE one does,
+     through setMaterialsOrdered() — the same flag Production reads.
+   - Admins and production only, the FULL_ONLY fence in api/abc.js. */
+(function(){
+'use strict';
+var TRADE_ORDER = ['roofing', 'siding', 'gutters', 'windows'];
+var el = null, st = null, srv = null, map = {}, mapMissing = false, sending = false;
+
+/* The account store and the unit reader are the Suppliers module's own (CardinalABC). */
+function acctStore(){ try{ return window.CardinalABC.cfg(); }catch(_){ return {}; } }
+function esc(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function db(){ return window.supa || (typeof sb !== 'undefined' ? sb : null); }
+function full(){ try{ return !!(window.is_full_access && window.is_full_access()); }catch(_){ return false; } }
+function proj(){ return window.currentProject || null; }
+function me(){ var u = Object(window).currentUser; return (u && u.email) || ''; }
+function matKey(m){ return String(m || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+function isTest(){ return st && st.mode === 'test'; }
+function call(body){
+  if(!window.CardinalABC || !window.CardinalABC.call) return Promise.reject(new Error('ABC Supply is not available in this build.'));
+  return window.CardinalABC.call(body);
+}
+function acct(){
+  var c = acctStore();
+  return isTest() ? { shipTo: c.sbShipTo || '', branch: c.sbBranch || '' }
+                  : { shipTo: c.shipTo || '', branch: c.branch || '' };
+}
+function setAcct(f, v){
+  var c = acctStore();
+  c[(isTest() ? (f === 'shipTo' ? 'sbShipTo' : 'sbBranch') : (f === 'shipTo' ? 'shipTo' : 'branch'))] = String(v || '').trim();
+  try{ window.CardinalABC.setCfg(c); }catch(_){}
+}
+
+function freshOrder(p){
+  return {
+    mode: '', step: 'build', lines: [], seq: 0,
+    delivery: '', date: '', po: p.name || '',
+    addr: { line1: p.street || '', city: p.city || '', state: p.state || '', postal: p.zip || '' },
+    panel: '', panelHtml: '', problems: [], result: null, error: ''
+  };
+}
+
+async function loadMap(){
+  map = {}; mapMissing = false;
+  var c = db(); if(!c){ mapMissing = true; return; }
+  try{
+    var r = await c.from('abc_item_map').select('material,item_number,description,uom');
+    if(r.error) throw r.error;
+    (r.data || []).forEach(function(row){ map[row.material] = row; });
+  }catch(_){ mapMissing = true; }
+}
+async function remember(name, hit){
+  var c = db(); if(!c || mapMissing) return;
+  var row = { material: matKey(name), item_number: hit.itemNumber, description: hit.desc || null,
+              uom: hit.uom || null, updated_at: new Date().toISOString(), updated_by: me() };
+  try{
+    var r = await c.from('abc_item_map').upsert(row, { onConflict: 'material' });
+    if(r.error) throw r.error;
+    map[row.material] = row;
+  }catch(_){ mapMissing = true; }
+}
+
+function ensure(){
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'cr-abco';
+  el.innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-label="Order from ABC">' +
+    '<div class="hd"><h3>Order from ABC</h3><span class="env" data-env></span>' +
+    '<button class="x" data-act="close" type="button" aria-label="Close">&times;</button></div>' +
+    '<div class="bd" data-bd></div></div>';
+  document.body.appendChild(el);
+  el.addEventListener('click', onSheetClick);
+  el.addEventListener('input', onInput);
+  return el;
+}
+
+async function open(){
+  var p = proj();
+  if(!p){ return; }
+  if(!full()){ window.crTell('Only admins and production place ABC orders.'); return; }
+  st = freshOrder(p); srv = null; sending = false;
+  ensure().style.display = 'flex';
+  render();
+  try{ srv = await call({ action: 'status' }); }catch(e){ srv = { error: String(e.message || e) }; }
+  if(srv && srv.sandbox) st.mode = 'test';
+  else if(srv && srv.liveOrders) st.mode = 'live';
+  await loadMap();
+  render();
+}
+function close(){ if(el) el.style.display = 'none'; }
+
+/* ---------- sources ---------- */
+function newLine(o){ st.seq++; o.id = st.seq; o.hits = null; o.matching = false; return o; }
+function dropSource(src){ st.lines = st.lines.filter(function(l){ return l.srcKey !== src; }); }
+
+function addMaterials(){
+  var p = proj(); if(!p) return;
+  var all = parseCkAll(p), mats = all.materials || {}, n = 0;
+  dropSource('materials');
+  TRADE_ORDER.forEach(function(tr){
+    (mats[tr] || []).forEach(function(it, i){
+      var q = Number(it.q);
+      if(!(q > 0)) return;
+      var m = it.abc || map[matKey(it.m)] || null;
+      st.lines.push(newLine({
+        srcKey: 'materials', src: 'Materials · ' + tr.charAt(0).toUpperCase() + tr.slice(1),
+        trade: tr, idx: i, name: it.m, listUnit: it.u || '', listQty: q,
+        itemNumber: m ? String(m.itemNumber || m.item_number || '') : '',
+        desc: m ? (m.desc || m.description || '') : '',
+        qty: q, uom: m ? (m.uom || '') : ''
+      }));
+      n++;
+    });
+  });
+  st.panel = ''; st.panelHtml = '';
+  if(!n) st.panelHtml = '<div class="note warn">This job has no material list yet. Close this, generate a list on the Materials tab, then come back.</div>';
+  render();
+}
+
+async function addEstimate(pickId){
+  var p = proj(), c = db(); if(!p || !c) return;
+  st.panelHtml = '<div class="quiet">Reading this job’s estimates…</div>'; render();
+  var rows = [];
+  try{
+    var r = await c.from('estimates').select('id,title,estimate_number,line_items,archived,updated_at').eq('project_id', p.id);
+    if(r.error) throw r.error;
+    rows = (r.data || []).filter(function(e){
+      return !e.archived && (e.line_items || []).some(function(l){ return l && l.abc_item; });
+    });
+  }catch(e){ st.panelHtml = '<div class="note">Could not read estimates: ' + esc(e.message || e) + '</div>'; render(); return; }
+  if(!rows.length){
+    st.panelHtml = '<div class="note warn">No estimate on this job has ABC items. In the estimate editor, add lines with <b>+ ABC Supply</b> and they will show up here.</div>';
+    render(); return;
+  }
+  var est = pickId ? rows.filter(function(e){ return e.id === pickId; })[0] : (rows.length === 1 ? rows[0] : null);
+  if(!est){
+    st.panelHtml = '<div class="quiet">Which estimate?</div>' + rows.map(function(e){
+      var n = (e.line_items || []).filter(function(l){ return l && l.abc_item; }).length;
+      return '<button class="hit" type="button" data-act="est" data-id="' + esc(e.id) + '">' +
+        esc(e.title || ('Estimate ' + (e.estimate_number || ''))) + '<small>' + n + ' ABC line' + (n === 1 ? '' : 's') + '</small></button>';
+    }).join('');
+    render(); return;
+  }
+  dropSource('estimate');
+  (est.line_items || []).forEach(function(l){
+    if(!l || !l.abc_item) return;
+    st.lines.push(newLine({
+      srcKey: 'estimate', src: 'Estimate ' + (est.estimate_number || est.title || ''),
+      name: l.name || ('Item ' + l.abc_item), listUnit: '',
+      itemNumber: String(l.abc_item), desc: l.name || '', qty: Number(l.qty) || 0, uom: l.unit || ''
+    }));
+  });
+  st.panelHtml = '';
+  render();
+}
+
+var templates = [];
+function tplName(t, i){ return t.name || t.templateName || t.description || t.title || ('Template ' + (i + 1)); }
+function tplLines(t){ return t.lines || t.items || t.templateLines || []; }
+async function addTemplate(pick){
+  if(pick == null){
+    st.panelHtml = '<div class="quiet">Asking ABC for your order templates…</div>'; render();
+    try{
+      var j = await call({ action: 'templates', sandbox: isTest() });
+      templates = j.templates || j.orderTemplates || j.items || (Array.isArray(j) ? j : []);
+    }catch(e){ st.panelHtml = '<div class="note">ABC said: ' + esc(e.message || e) + '</div>'; render(); return; }
+    if(!templates.length){ st.panelHtml = '<div class="note warn">ABC returned no order templates for this account.</div>'; render(); return; }
+    st.panelHtml = '<div class="quiet">Pick a template — its lines are added below.</div>' + templates.map(function(t, i){
+      return '<button class="hit" type="button" data-act="tpl" data-i="' + i + '">' + esc(tplName(t, i)) +
+        '<small>' + tplLines(t).length + ' lines</small></button>';
+    }).join('');
+    render(); return;
+  }
+  var t = templates[pick]; if(!t) return;
+  var ls = tplLines(t);
+  if(!ls.length){
+    /* ABC's template shape is not doc-verified yet; show what came back rather than guess. */
+    st.panelHtml = '<div class="note warn">ABC sent this template with no lines this screen can read. What it sent:</div><pre>' +
+      esc(JSON.stringify(t, null, 2).slice(0, 3000)) + '</pre>';
+    render(); return;
+  }
+  var src = 'template:' + pick;
+  dropSource(src);
+  ls.forEach(function(l){
+    var q = l.orderedQty || {};
+    st.lines.push(newLine({
+      srcKey: src, src: 'ABC template · ' + tplName(t, pick),
+      name: l.itemDescription || l.description || ('Item ' + (l.itemNumber || '')), listUnit: '',
+      itemNumber: String(l.itemNumber || ''), desc: l.itemDescription || l.description || '',
+      qty: Number(q.value != null ? q.value : (l.quantity != null ? l.quantity : l.qty)) || 0,
+      uom: String(q.uom || l.uom || '')
+    }));
+  });
+  st.panelHtml = '';
+  render();
+}
+
+/* ---------- matching ---------- */
+function lineById(id){ return st.lines.filter(function(l){ return l.id === Number(id); })[0]; }
+async function searchAbc(l, q){
+  l.matching = true; l.hits = 'loading'; render();
+  try{
+    var j = await call({ action: 'searchItems', query: q, branchNumber: acct().branch || undefined, sandbox: isTest() });
+    l.hits = (j.items || j.results || (Array.isArray(j) ? j : [])).slice(0, 8);
+  }catch(e){ l.hits = String(e.message || e); }
+  render();
+}
+async function pickHit(l, i){
+  var it = Array.isArray(l.hits) ? l.hits[i] : null; if(!it) return;
+  var hit = { itemNumber: String(it.itemNumber || it.number || it.id || ''),
+              desc: it.itemDescription || it.description || it.name || '', uom: window.CardinalABC.uom(it) };
+  l.itemNumber = hit.itemNumber; l.desc = hit.desc; if(hit.uom) l.uom = hit.uom;
+  l.matching = false; l.hits = null;
+  render();
+  if(l.srcKey === 'materials'){
+    /* Keep the match on the job's own line, so it holds without abc_item_map. */
+    try{
+      var p = proj(), all = parseCkAll(p), mats = all.materials || {}, row = (mats[l.trade] || [])[l.idx];
+      if(row && row.m === l.name){ row.abc = hit; await saveCkPatch({ materials: mats }); }
+    }catch(_){}
+    await remember(l.name, hit);
+    render();
+  }
+}
+
+/* ---------- review + send ---------- */
+function problems(){
+  var a = acct(), out = [];
+  if(!st.mode) out.push('Choose TEST or LIVE.');
+  if(!a.shipTo) out.push('Enter the Ship-To number' + (isTest() ? ' (a sandbox one — tap Find test ship-to)' : '') + '.');
+  if(!a.branch) out.push('Enter the Branch number.');
+  if(!st.lines.length) out.push('Add at least one line.');
+  if(st.lines.length > 99) out.push(st.lines.length + ' lines — ABC takes at most 99 per order. Remove some or send two orders.');
+  st.lines.forEach(function(l, i){
+    var n = (i + 1) + ' (' + l.name + ')';
+    if(!l.itemNumber) out.push('Line ' + n + ' is not matched to an ABC item.');
+    if(!(Number(l.qty) > 0)) out.push('Line ' + n + ' needs a quantity above zero.');
+    if(!l.uom) out.push('Line ' + n + ' needs ABC’s unit.');
+  });
+  if(st.delivery !== 'COM' && st.delivery !== 'CPU') out.push('Choose delivery to the job or pickup at the branch.');
+  ['line1', 'city', 'state', 'postal'].forEach(function(f){
+    if(!st.addr[f]) out.push('The job address needs its ' + ({ line1: 'street', city: 'city', state: 'state', postal: 'zip' })[f] + '.');
+  });
+  return out;
+}
+function body(){
+  var a = acct(), p = proj();
+  var b = {
+    action: 'placeOrder', sandbox: isTest(),
+    requestId: 'cr-' + String(p.id).slice(0, 8) + '-' + Date.now().toString(36),
+    branchNumber: a.branch, deliveryService: st.delivery, typeCode: 'SO', currency: 'USD',
+    shipTo: { number: a.shipTo, address: { line1: st.addr.line1, city: st.addr.city, state: st.addr.state, postal: st.addr.postal } },
+    items: st.lines.map(function(l, i){
+      return { id: i + 1, itemNumber: l.itemNumber, quantity: Number(l.qty), uom: l.uom, description: l.desc || l.name };
+    })
+  };
+  if(st.po) b.purchaseOrder = st.po;
+  if(st.date) b.deliveryRequestedFor = st.date;
+  return b;
+}
+function findConf(j, d){
+  d = d || 0;
+  if(!j || typeof j !== 'object' || d > 4) return '';
+  var keys = Object.keys(j);
+  for(var i = 0; i < keys.length; i++){
+    var v = j[keys[i]];
+    if(/confirmation|ordernumber|orderid/i.test(keys[i]) && (typeof v === 'string' || typeof v === 'number') && String(v)) return String(v);
+  }
+  for(var k = 0; k < keys.length; k++){ var f = findConf(j[keys[k]], d + 1); if(f) return f; }
+  return '';
+}
+async function sendOrder(){
+  if(sending) return;
+  var probs = problems();
+  if(probs.length){ st.step = 'build'; st.problems = probs; render(); return; }
+  if(!isTest() && !window.confirm('Place a LIVE order with ABC Supply?\n\nThis puts real materials on a truck and bills Cardinal.')) return;
+  sending = true; st.error = ''; render();
+  var b = body();
+  try{
+    var j = await call(b);
+    var conf = findConf(j);
+    var rec = { at: new Date().toISOString(), by: me(), env: st.mode, requestId: b.requestId, confirmation: conf,
+                deliveryService: b.deliveryService, requestedFor: b.deliveryRequestedFor || '', po: b.purchaseOrder || '',
+                shipTo: b.shipTo.number, branch: b.branchNumber,
+                lines: b.items.map(function(x){ return { itemNumber: x.itemNumber, qty: x.quantity, uom: x.uom, name: x.description }; }) };
+    st.result = { conf: conf, raw: j, rec: rec };
+    st.step = 'done';
+    try{
+      var p = proj(), all = parseCkAll(p), list = Array.isArray(all.abc_orders) ? all.abc_orders : [];
+      list.unshift(rec);
+      await saveCkPatch({ abc_orders: list });
+    }catch(e2){ st.result.saveError = String(e2.message || e2); }
+    if(!isTest()){ try{ await setMaterialsOrdered(true); }catch(_){} }
+    try{ auditLog('materials', (isTest() ? 'ABC TEST order' : 'ABC order') + (conf ? ' #' + conf : '') + ' · ' + rec.lines.length + ' lines', proj().id); }catch(_){}
+  }catch(e){
+    st.error = String(e.message || e);
+  }
+  sending = false;
+  render();
+}
+
+/* ---------- render ---------- */
+function history(){
+  var p = proj(); if(!p) return '';
+  var list = (parseCkAll(p).abc_orders || []);
+  if(!list.length) return '';
+  return '<div class="sect">Sent from this job</div>' + list.slice(0, 10).map(function(o){
+    var d = new Date(o.at);
+    return '<div class="hist"><b>' + (o.env === 'test' ? 'TEST' : 'LIVE') + '</b> · ' +
+      esc(isNaN(d.getTime()) ? o.at : d.toLocaleDateString()) + ' · ' + esc(String((o.lines || []).length)) + ' lines · ' +
+      (o.deliveryService === 'CPU' ? 'pickup' : 'delivery') +
+      (o.confirmation ? ' · #' + esc(o.confirmation) : '') + '</div>';
+  }).join('');
+}
+function lineHtml(l, i){
+  var need = !l.itemNumber;
+  var h = '<div class="ln' + (need ? ' need' : '') + '"><div class="top"><div class="nm">' + (i + 1) + '. ' + esc(l.name) +
+    '<div class="sub">' + esc(l.src) + (l.listUnit ? ' · list says ' + esc(String(l.listQty)) + ' ' + esc(l.listUnit) : '') + '</div>' +
+    (need ? '<div class="sub need">Not matched to an ABC item yet</div>'
+          : '<div class="sub">ABC #' + esc(l.itemNumber) + (l.desc && l.desc !== l.name ? ' · ' + esc(l.desc) : '') + '</div>') +
+    '</div><button class="b t" type="button" data-act="rm" data-id="' + l.id + '" style="margin:0">Remove</button></div>';
+  h += '<div class="qty"><div><label>Qty</label><input data-lf="qty" data-id="' + l.id + '" type="number" min="0" step="any" inputmode="decimal" value="' + esc(String(l.qty)) + '"></div>' +
+       '<div><label>ABC unit</label><input data-lf="uom" data-id="' + l.id + '" value="' + esc(l.uom) + '" placeholder="e.g. BD"></div></div>';
+  if(l.matching){
+    h += '<div style="display:flex;gap:8px;margin-top:8px"><input data-lf="q" data-id="' + l.id + '" value="' + esc(l.q != null ? l.q : l.name) + '">' +
+         '<button class="b" type="button" data-act="find" data-id="' + l.id + '" style="margin:0">Search</button></div>';
+    if(l.hits === 'loading') h += '<div class="quiet">Searching ABC…</div>';
+    else if(typeof l.hits === 'string') h += '<div class="note">' + esc(l.hits) + '</div>';
+    else if(Array.isArray(l.hits)){
+      h += l.hits.length ? l.hits.map(function(it, k){
+        var num = it.itemNumber || it.number || it.id || '', u = window.CardinalABC.uom(it);
+        return '<button class="hit" type="button" data-act="pick" data-id="' + l.id + '" data-k="' + k + '">' +
+          esc(it.itemDescription || it.description || it.name || ('Item ' + num)) + '<small>#' + esc(String(num)) + (u ? ' · ' + esc(u) : '') + '</small></button>';
+      }).join('') : '<div class="quiet">No ABC items matched. Try fewer words, or an item code off an invoice.</div>';
+    }
+  }else{
+    h += '<button class="b o" type="button" data-act="match" data-id="' + l.id + '">' + (need ? 'Match to an ABC item' : 'Change item') + '</button>';
+  }
+  return h + '</div>';
+}
+function render(){
+  if(!el || !st) return;
+  var envChip = el.querySelector('[data-env]');
+  envChip.className = 'env' + (st.mode ? ' ' + st.mode : '');
+  envChip.textContent = st.mode === 'test' ? 'TEST · sandbox' : st.mode === 'live' ? 'LIVE' : '';
+  var bd = el.querySelector('[data-bd]'), p = proj(), a = acct(), h = '';
+  if(!srv){ bd.innerHTML = '<div class="quiet" style="margin-top:14px">Checking ABC…</div>'; return; }
+
+  if(st.step === 'done' && st.result){
+    var r = st.result;
+    h += '<div class="note ok" style="margin-top:14px"><b>' + (isTest() ? 'TEST order accepted by ABC’s sandbox.' : 'Order placed with ABC Supply.') + '</b></div>';
+    h += '<div class="sect">Confirmation</div><div class="conf">' + (r.conf ? esc(r.conf) : 'ABC returned no confirmation number') + '</div>';
+    if(isTest()) h += '<div class="note warn">Email this confirmation number to <b>apisupport@abcsupply.com</b> so ABC can review the order. Live orders stay off until they have.</div>';
+    else h += '<div class="quiet">This job is now marked <b>materials ordered</b>.</div>';
+    if(r.saveError) h += '<div class="note">The order went through, but saving it on this job failed: ' + esc(r.saveError) + '. Write the confirmation number down.</div>';
+    h += '<div class="sect">What ABC sent back</div><pre>' + esc(JSON.stringify(r.raw, null, 2).slice(0, 6000)) + '</pre>';
+    h += '<button class="b o" type="button" data-act="copy">Copy confirmation</button><button class="b" type="button" data-act="close">Done</button>';
+    bd.innerHTML = h; return;
+  }
+
+  if(st.step === 'review'){
+    h += '<div class="sect">Check every line before it goes</div><dl>' +
+      '<dt>Sending to</dt><dd>' + (isTest() ? 'ABC <b>sandbox</b> — a test, nothing ships' : '<b>ABC Supply — LIVE</b>') + '</dd>' +
+      '<dt>Ship-To</dt><dd>' + esc(a.shipTo) + '</dd><dt>Branch</dt><dd>' + esc(a.branch) + '</dd>' +
+      '<dt>How</dt><dd>' + (st.delivery === 'COM' ? 'Deliver to the job' : 'Pickup at the branch') + (st.date ? ' · ' + esc(st.date) : '') + '</dd>' +
+      '<dt>Address</dt><dd>' + esc(st.addr.line1) + ', ' + esc(st.addr.city) + ', ' + esc(st.addr.state) + ' ' + esc(st.addr.postal) + '</dd>' +
+      '<dt>PO</dt><dd>' + esc(st.po || '—') + '</dd></dl>';
+    h += '<div class="sect">' + st.lines.length + ' line' + (st.lines.length === 1 ? '' : 's') + '</div><div class="tbl"><table><tr><th>#</th><th>ABC item</th><th>Description</th><th>Qty</th></tr>' +
+      st.lines.map(function(l, i){
+        return '<tr><td>' + (i + 1) + '</td><td>' + esc(l.itemNumber) + '</td><td>' + esc(l.desc || l.name) + '</td><td>' + esc(String(l.qty)) + ' ' + esc(l.uom) + '</td></tr>';
+      }).join('') + '</table></div>';
+    if(st.error) h += '<div class="note"><b>ABC did not take it.</b> ' + esc(st.error) + '</div>';
+    h += '<button class="b o" type="button" data-act="edit"' + (sending ? ' disabled' : '') + '>Back to edit</button>' +
+      '<button class="b" type="button" data-act="send"' + (sending ? ' disabled' : '') + '>' +
+      (sending ? 'Sending…' : isTest() ? 'Send TEST order to ABC sandbox' : 'Place LIVE order') + '</button>';
+    bd.innerHTML = h; return;
+  }
+
+  /* build */
+  if(srv.error) h += '<div class="note">Could not reach the ABC route: ' + esc(srv.error) + '</div>';
+  h += '<div class="sect">Send as</div><div class="seg">' +
+    '<button type="button" data-act="mode" data-v="test" aria-pressed="' + (st.mode === 'test') + '"' + (srv.sandbox ? '' : ' disabled') + '>TEST · sandbox</button>' +
+    '<button type="button" data-act="mode" data-v="live" aria-pressed="' + (st.mode === 'live') + '"' + (srv.liveOrders ? '' : ' disabled') + '>LIVE</button></div>';
+  if(!srv.sandbox) h += '<div class="note warn"><b>Test orders need ABC’s sandbox keys.</b> In ABC’s Developer Portal, copy the sandbox app’s Client ID and Secret into Vercel as ABC_SB_CLIENT_ID and ABC_SB_CLIENT_SECRET.</div>';
+  if(!srv.liveOrders) h += '<div class="quiet">LIVE stays off until ABC has reviewed a test order (ABC_ORDERS_LIVE in Vercel).</div>';
+  if(st.problems.length) h += '<div class="note"><b>Before this can go:</b><br>' + st.problems.map(esc).join('<br>') + '</div>';
+
+  if(st.mode){
+    h += '<div class="sect">' + (isTest() ? 'Sandbox account' : 'Account') + '</div><div class="grid2">' +
+      '<div><label>Ship-To #</label><input data-af="shipTo" inputmode="numeric" value="' + esc(a.shipTo) + '"></div>' +
+      '<div><label>Branch #</label><input data-af="branch" inputmode="numeric" value="' + esc(a.branch) + '"></div></div>';
+    if(isTest()) h += '<button class="b o" type="button" data-act="sbacct">Find test ship-to</button><div data-sbacct>' + (st.sbHtml || '') + '</div>';
+    else h += '<div class="quiet">The same numbers the Suppliers screen prices with.</div>';
+  }
+
+  h += '<div class="sect">Add lines from</div>' +
+    '<button class="b o" type="button" data-act="src-mat">Materials list</button>' +
+    '<button class="b o" type="button" data-act="src-est">Estimate</button>' +
+    '<button class="b o" type="button" data-act="src-tpl"' + (st.mode ? '' : ' disabled') + '>ABC template</button>' +
+    (st.panelHtml || '');
+  if(mapMissing) h += '<div class="quiet">Matches are kept on this job. To remember them for every job, abc_item_map.sql needs running.</div>';
+
+  h += '<div class="sect">Order lines</div>';
+  h += st.lines.length ? st.lines.map(lineHtml).join('') : '<div class="quiet">No lines yet.</div>';
+
+  h += '<div class="sect">Delivery or pickup</div><div class="seg">' +
+    '<button type="button" data-act="dlv" data-v="COM" aria-pressed="' + (st.delivery === 'COM') + '">Deliver to the job</button>' +
+    '<button type="button" data-act="dlv" data-v="CPU" aria-pressed="' + (st.delivery === 'CPU') + '">Pickup at the branch</button></div>' +
+    '<div class="grid2"><div><label>' + (st.delivery === 'CPU' ? 'Pickup date' : 'Deliver on') + '</label><input type="date" data-sf="date" value="' + esc(st.date) + '"></div>' +
+    '<div><label>PO / job name</label><input data-sf="po" value="' + esc(st.po) + '"></div></div>' +
+    '<label>Job street</label><input data-adf="line1" value="' + esc(st.addr.line1) + '">' +
+    '<div class="grid3"><div><label>City</label><input data-adf="city" value="' + esc(st.addr.city) + '"></div>' +
+    '<div><label>State</label><input data-adf="state" value="' + esc(st.addr.state) + '"></div>' +
+    '<div><label>Zip</label><input data-adf="postal" inputmode="numeric" value="' + esc(st.addr.postal) + '"></div></div>';
+
+  h += '<button class="b" type="button" data-act="review" style="margin-top:18px">Review order</button>';
+  h += history();
+  bd.innerHTML = h;
+}
+
+/* ---------- events ---------- */
+function onInput(e){
+  var t = e.target; if(!st) return;
+  if(t.hasAttribute('data-af')){ setAcct(t.getAttribute('data-af'), t.value); return; }
+  if(t.hasAttribute('data-sf')){ st[t.getAttribute('data-sf')] = t.value; return; }
+  if(t.hasAttribute('data-adf')){ st.addr[t.getAttribute('data-adf')] = t.value.trim(); return; }
+  if(t.hasAttribute('data-lf')){
+    var l = lineById(t.getAttribute('data-id')); if(!l) return;
+    var f = t.getAttribute('data-lf');
+    l[f] = f === 'qty' ? t.value : t.value.trim();
+  }
+}
+async function onSheetClick(e){
+  if(e.target === el){ close(); return; }
+  var b = e.target.closest('[data-act]'); if(!b || !st) return;
+  var act = b.getAttribute('data-act'), l = b.hasAttribute('data-id') ? lineById(b.getAttribute('data-id')) : null;
+  switch(act){
+    case 'close': close(); return;
+    case 'mode': st.mode = b.getAttribute('data-v'); st.problems = []; st.sbHtml = ''; render(); return;
+    case 'dlv': st.delivery = b.getAttribute('data-v'); render(); return;
+    case 'src-mat': addMaterials(); return;
+    case 'src-est': addEstimate(); return;
+    case 'est': addEstimate(b.getAttribute('data-id')); return;
+    case 'src-tpl': addTemplate(); return;
+    case 'tpl': addTemplate(Number(b.getAttribute('data-i'))); return;
+    case 'rm': if(l){ st.lines = st.lines.filter(function(x){ return x !== l; }); render(); } return;
+    case 'match': if(l){ l.matching = true; l.hits = null; render(); } return;
+    case 'find': if(l){ var q = (el.querySelector('[data-lf="q"][data-id="' + l.id + '"]') || {}).value || l.name; l.q = q; searchAbc(l, q); } return;
+    case 'pick': if(l) pickHit(l, Number(b.getAttribute('data-k'))); return;
+    case 'review': st.problems = problems(); st.error = ''; if(!st.problems.length) st.step = 'review'; render(); el.querySelector('[data-bd]').scrollTop = 0; return;
+    case 'edit': st.step = 'build'; render(); return;
+    case 'send': sendOrder(); return;
+    case 'copy': try{ await navigator.clipboard.writeText(st.result && st.result.conf || ''); b.textContent = 'Copied'; }catch(_){ window.prompt('Confirmation number:', st.result && st.result.conf || ''); } return;
+    case 'sbacct':
+      st.sbHtml = '<div class="quiet">Asking ABC’s sandbox for its test accounts…</div>'; render();
+      try{
+        var j = await call({ action: 'accounts', sandbox: true });
+        var list = j.shipTos || j.accounts || j.items || (Array.isArray(j) ? j : []);
+        st.sbList = list;
+        st.sbHtml = list.length ? list.slice(0, 20).map(function(x, k){
+          var ad = x.address || {};
+          return '<button class="hit" type="button" data-act="usesb" data-k="' + k + '">' + esc(x.name || ('Ship-To ' + (x.number || ''))) +
+            '<small>#' + esc(String(x.number || '')) + ' · ' + esc([ad.line1, ad.city, ad.state].filter(Boolean).join(', ')) + '</small></button>';
+        }).join('') : '<div class="quiet">The sandbox returned no ship-to accounts.</div>';
+      }catch(err){ st.sbHtml = '<div class="note">' + esc(err.message || err) + '</div>'; }
+      render(); return;
+    case 'usesb':
+      var x = (st.sbList || [])[Number(b.getAttribute('data-k'))];
+      if(x){ setAcct('shipTo', x.number); st.sbHtml = '<div class="quiet">Test Ship-To set to ' + esc(String(x.number)) + '.</div>'; }
+      render(); return;
+  }
+}
+
+window.CardinalABCOrder = Object.assign(window.CardinalABCOrder || {}, { open: open, close: close });
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if(t instanceof Element && t.closest('#matAbcOrder')) open();
 });
 })();
 </script>

@@ -34055,3 +34055,56 @@ table, so an unknown size stops the build instead of being skipped.
 **Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock`, `gate_chromium
 --selftest`, `gate_1243` (0 off-scale), `gate_1081`, `gate_1206`, `gate_a11y`, `gate_1229`,
 `gate_1235`–`1241`, and `render_gradtext`. The sentinel is running in both themes.
+
+## Build 1244 — ABC ordering, the server half: a sandbox pair and a live-orders switch
+
+`api/abc.js` only. `index.html` stays at 1243.
+- **ABC's answer, read from Theo's mail (Penny, 25 Aug):** no keys were ever emailed. Sandbox
+  credentials come from the Developer Portal (Source System 649); ABC reviews a sandbox order's
+  confirmation number. So ordering waited on us, not on them.
+- **`sandbox:true` on any request** routes it to `partners-sb` with `ABC_SB_CLIENT_ID`/`SECRET`,
+  with its own token cache. Missing pair → `NOT_CONFIGURED` naming the sandbox vars, **never a
+  fallback to the live key.** All 10 `abc()` calls take the target.
+- **`ABC_ORDERS_LIVE=1`** is the only thing that lets `placeOrder` reach production. Off → 403
+  `LIVE_ORDERS_OFF`, zero ABC traffic. Validation still runs first, so a malformed order is still
+  told what is wrong.
+- `status` now reports `sandbox` and `liveOrders`, which the 1245 screen reads to enable its buttons.
+
+**Gates.** `gate_1244.mjs` imports the shipped handler with a recording `fetch`: **GREEN 13/13**,
+**RED 8/13 on the 1243 file**. `gate_abcorder.mjs` still 13/13. `node --check`, no `module.exports`.
+
+## Build 1245 — Order from ABC, on the client profile
+
+Theo: *"I need to get ABC wired up so we can create orders from the client profiles like acculynx
+does."* His picks: lines from **all three** sources, delivery or pickup **chosen per order**.
+- **Materials tab → Order from ABC** (admins + production; the FULL_ONLY fence in `api/abc.js`).
+  New module `cr-abco-styles` + `cr-abco-script`, `window.CardinalABCOrder`. It calls ABC through
+  `CardinalABC.call` — the Suppliers screen's own `api()`, now exported with `setCfg` and `uom` —
+  so there is one transport and one account store.
+- **Three sources:** the job's material list (`checklist.materials`, zero-quantity lines skipped),
+  the estimate's `abc_item` lines (774's forward wiring, finally read), and ABC order templates
+  (shape not doc-verified; a template this screen cannot read is shown raw, never guessed).
+- **Match once, remembered:** a material matched to an ABC item is kept on the job's own line
+  (`materials[trade][i].abc`) and in the new **`abc_item_map`** table for every future job.
+  ⚠ **`abc_item_map.sql` is NOT applied** — run it before (or after; the screen says so and
+  keeps the match on the job without it). Read: all staff. Write: `is_full_access()`.
+- **TEST / LIVE:** TEST uses the sandbox pair (1244) and its own Ship-To/Branch
+  (`sbShipTo`/`sbBranch`, with *Find test ship-to*). LIVE is disabled until the server reports
+  `liveOrders`, and asks a second time.
+- **Review is the only place Send exists.** Problems are listed all at once (unmatched line,
+  quantity, unit, delivery choice, address parts, >99 lines).
+- **After send:** confirmation shown big; the order saved as `checklist.abc_orders[]`; a TEST order
+  says to email the number to apisupport@; **only a LIVE order** sets `materials_ordered_at`
+  through `setMaterialsOrdered()`.
+- Registered in `hideAllViews()`'s display list. Writes no scroll lock (17 writers, unchanged).
+
+**Gates.** `gate_1245.mjs` (26 checks, Chromium, recording fake `/api/abc`): admin/production see
+the button and sales does not; the remembered match applies; Review refuses naming the unmatched
+line with nothing sent; the match search hits the sandbox and is saved on the job and in the map;
+one `placeOrder` with sandbox, pickup, the job address and all three lines; a test order does not
+mark materials ordered; `hideAllViews()` closes it. **RED on 1243** (3 failures, no crash).
+`check_build`, `gate_types`, `gate_dupes` (rebaselined: `esc`/`open`/`close`/`render`/`ensure`/
+`me`/`db` are the module-local IIFE idiom; the real duplicates — the account store and the unit
+reader — were pointed at `CardinalABC` instead), `audit_scrolllock` (17), `gate_stack` clean,
+`gate_1081`, `gate_1206`, `gate_a11y`, `gate_1243`, `render_gradtext`, `gate_1244`,
+`gate_abcorder`, `gate_chromium --selftest`.

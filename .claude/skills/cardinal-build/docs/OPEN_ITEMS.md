@@ -1225,6 +1225,24 @@ Each is a real finding whose every fix is an aesthetic or layout decision:
   sent 25 Aug), a separate `ABC_SB_*` env pair, then a screen that shows the whole
   order back to a human and takes an explicit confirm. `gate_abcorder.mjs`, 13 checks.
 
+- ✅ **ABC ANSWERED (Penny, apisupport@abcsupply.com, 25 Aug) — and ordering was never
+  blocked on them.** No keys were emailed and none will be: **sandbox credentials come from
+  the Developer Portal** (our Source System ID is **649**), sandbox accounts come from the
+  Account API, and ABC wants a sandbox order placed and its **confirmation number emailed
+  back** so they can review the data mapping. ✅ **Build 1244 shipped the server half**: a
+  separate `ABC_SB_CLIENT_ID` / `ABC_SB_CLIENT_SECRET` pair (a request with `sandbox:true`
+  goes to `partners-sb` with it; the working production pair is untouched) and a
+  **live-orders switch, `ABC_ORDERS_LIVE=1`, OFF by default** — a production `placeOrder`
+  is refused with `LIVE_ORDERS_OFF` until ABC has reviewed a sandbox order. **Theo:** copy
+  the sandbox Client ID/Secret from the portal into Vercel. **Next: build 1245, the
+  Order-from-ABC screen on the client profile** (Materials list + estimate ABC lines + ABC
+  templates; delivery or pickup per order; full review and confirm).
+- ✅ **Build 1245 SHIPPED the Order-from-ABC screen.** Two things are Theo's: **run
+  `abc_item_map.sql`** (matches are kept per job until then), and once the sandbox keys are in
+  Vercel, **send one TEST order and email its confirmation number to apisupport@abcsupply.com**.
+  Not built yet: an order-level note to the yard (ABC's field for it is not doc-verified), and
+  delivery status back from ABC (webhooks — after live orders are on).
+
 - ✅ **The landing screenshot's black slab is FIXED at 1060.** PR **#317** diagnosed it
   correctly on 14 Aug, never landed, and is now **closed as superseded** — it was
   stamped build 809 against a main at 1056, so it could not merge. Do not reopen it.
