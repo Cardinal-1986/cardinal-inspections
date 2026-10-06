@@ -33996,3 +33996,16 @@ Darkening them is a look change, so it goes to Theo as a preview.
 
 **Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `gate_stack`, and `gate_1241` (32/32;
 RED 4 on 1240).
+
+**1241, second commit: the sentinel's residue of 1240, removed at source.** The sentinel, in both
+themes against main, found **no INK and no layout findings**. Its 8 new findings were all DEAD or
+OVERRIDDEN declarations that my 1240 edits left behind:
+- the shared `.projform` checkbox rule still said 18px, beneath my two per-form 22px rules;
+- `.headactions .btn{height:40px}` could no longer win against `#woQuick`'s 44px floor.
+
+Both were fixed in the shared rule instead of out-specifying it:
+- every `.projform` checkbox is now 22px, and the two per-form rules are deleted;
+- the header row has a 44px floor, and `#woQuick`'s own copy is deleted.
+
+The two edited rules carry `--cr-stack` with the overrides they have always made. `gate_stack`
+against main is CLEAN. The sentinel was re-run on this final file.

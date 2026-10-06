@@ -665,7 +665,7 @@ footer.site{
   border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;}
 /* checkboxes/radios must never inherit the full-width text-field look */
 .projform input[type="checkbox"], .projform input[type="radio"]{
-  width:18px;height:18px;min-width:18px;flex:0 0 auto;
+  width:22px;height:22px;min-width:22px;--cr-stack:"the form checkbox rule has always overridden .projform input and .cbx; 1241 only raised 18px to 22px";flex:0 0 auto;
   margin:0;padding:0;box-shadow:none;accent-color:var(--red);
 }
 .projform .ckinline label{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;}
@@ -905,7 +905,7 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 .jobmenu-head{padding:9px 30px 9px 11px;min-width:0;max-width:150px;font-size:13px;border-radius:9px;
   background-position:right 10px center;vertical-align:middle;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#woQuick{padding:9px 13px;min-height:44px;--cr-stack:"#woQuick has always overridden .btn; 1240 only added the 44px floor";font:700 13px 'Segoe UI',Arial,sans-serif;border-radius:9px;
+#woQuick{padding:9px 13px;font:700 13px 'Segoe UI',Arial,sans-serif;border-radius:9px;
   vertical-align:middle;white-space:nowrap;margin-left:6px;}
 #brandTitle{min-width:0;overflow:hidden;}
 #brandTitle h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -934,7 +934,6 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 .ckrow > label{flex:1;min-width:150px;}
 .ckinline{display:flex;gap:14px;flex-wrap:wrap;font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#444;margin-top:6px;}
 .ckinline label{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font:inherit;margin:0;min-height:44px;--cr-stack:"the vent row has always overridden .projform label; 1240 only raised it to 44px";}
-.ckinline input.ckvent{width:22px;height:22px;margin:0;--cr-stack:"a 22px box in a 44px row (1240); a native checkbox cannot carry a hit pad";}
 .ckclient{font:13.5px/1.6 'Segoe UI',Arial,sans-serif;color:#444;background:#f8f5f4;border:1px solid var(--line);
   border-radius:8px;padding:9px 12px;margin:6px 0 2px;}
 
@@ -1575,7 +1574,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 .titlecard h1{font-size:17px !important;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   letter-spacing:.04em;}
 .headactions{padding:0 2px;width:100%;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
-.headactions .btn{padding:0 13px;height:40px;font-size:13.5px;display:inline-flex;align-items:center;}
+.headactions .btn{padding:0 13px;min-height:44px;font-size:13.5px;display:inline-flex;align-items:center;--cr-stack:"the header button row has always laid out its .btn; 1241 only swapped height:40px for a 44px floor";}
 .masthead{padding:9px 0;}
 
 @media (max-width:640px){
@@ -2146,7 +2145,6 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 /* ---- trades checkboxes: aligned everywhere ---- */
 .projform label.tradeopt{display:flex;align-items:center;gap:8px;margin:0;
   font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;min-height:44px;--cr-stack:"the trade row has always overridden .projform label; 1240 only raised it to 44px";}
-.projform label.tradeopt input.cbx{width:22px;height:22px;margin:0;--cr-stack:"a 22px box in a 44px row (1240); a native checkbox cannot carry a hit pad";}
 .tradegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:6px 0 12px;}
 /* 999: lead-source chips. One is required at creation; the row is the same
    eight values the client-profile editor (acxSrc) offers, kept identical so
