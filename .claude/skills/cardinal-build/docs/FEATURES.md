@@ -8549,6 +8549,31 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1241 — three faint labels on the shared forms; the eight forms gated
+
+**"Cream sheets in dark mode", measured rather than assumed.** A dark-mode scan of all 32 sentinel
+states (light grounds, luminance ≥ .55, outermost only, topmost at the centre) found 25 patches.
+
+**Left alone, each for a recorded reason:**
+- **OC Colors' white line cards:** OC's own brand palette (`OC_BRAND_RULES.md`).
+- **The insurance screens:** they have their own Docket/Siren theme switch.
+- **The document editor:** a print page.
+- **The estimate builder and its Add-from-Library picker:** **settled at 1095. Theo: "keep the
+  estimate builder LIGHT ONLY — no dark option".**
+- **Semantic fills:** the stage chip, the Assign button, the colour swatches.
+
+**The eight `.projform` forms** are white cards in both themes: profile, Add project, the Roofing
+checklist, GC, Lead, New Lead, Appointment and Signature.
+- A full contrast walk (215 texts × 2 themes) found **4 failures**. They are fixed here:
+  - the profile e-mail field, `#777` → `#5f5f5f` (3.95 → ~5.6:1);
+  - `.ldreq` "* Required" and "* phone or email", `#9a8c85` → `#6b5f59` (3.12 → 6.17:1);
+  - the New Lead address toggle's chevron, `#a89e88` → `#6b5f59` (2.38 → over 5:1).
+- **Whether those forms should go DARK in dark mode** is a nine-screen look change. It goes to
+  Theo as a preview, not a build.
+
+Gate: **`gate_1241.mjs`** (32 checks): every text on all eight forms in both themes clears its
+floor. It fails 4 on 1240.
+
 ## Build 1240 — the 44px tap-target debt, paid: 19 of 21 controls cleared
 
 `gate_1206`'s baseline was 18 under-floor controls. A fix to the instrument (below) revealed one

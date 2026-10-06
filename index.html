@@ -1217,7 +1217,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .ldnote{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;line-height:1.55;
   color:#5c4a42;}
 .ldnote b{color:#7d5200;}
-.ldreq{float:right;font:600 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;}
+.ldreq{float:right;font:600 11px 'Segoe UI',Arial,sans-serif;color:#6b5f59;}
 /* 782: progressive disclosure on the New Lead form. Mailing/Billing are NOT in
    this set on purpose — cr-lac-script already discloses that pair with its own
    toggle, and tagging them here made ITS control dead: display:none !important
@@ -4072,7 +4072,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1240<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1241<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8067,7 +8067,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <label>First name<input type="text" id="upFirst" autocomplete="given-name"></label>
       <label>Last name<input type="text" id="upLast" autocomplete="family-name"></label>
       <label>Phone number<input type="tel" id="upPhone" autocomplete="tel"></label>
-      <label>Email<input type="email" id="upEmail" disabled style="background:#f3f0ee;color:#777;"></label>
+      <label>Email<input type="email" id="upEmail" disabled style="background:#f3f0ee;color:#5f5f5f;"></label>
       <div style="margin-top:14px;">
         <button class="btn" id="upSave">Save profile</button>
         <span id="upFlash" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#2e7d32;"></span>
@@ -43465,6 +43465,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1241, d: '2026-10-06', t: 'Three faint labels on the forms are readable',
+    s: 'Your email on the profile card, the "* Required" notes on the New Lead form and the arrow that opens the extra address fields were too pale to read. All three are darker now.' },
   { b: 1240, d: '2026-10-06', t: 'Seventeen small buttons are now thumb-sized',
     s: 'Back arrows on Punch, Sales Floor and Storm, the Production month arrows, the Dispatch Map button, the Line Item tabs, the photo editor tools and colour dots, the Sort chip, Quick jump, Work Orders and more were all smaller than a thumb. Every one is now at least the size a finger can hit on a roof.' },
   { b: 1239, d: '2026-10-06', t: 'The photo sheet goes dark in dark mode, and its buttons are thumb-sized',
@@ -52741,7 +52743,7 @@ window.CardinalWorkTypeDedupe = { run: scan, redundant: REDUNDANT };
 })();
 </script>
 
-<style id="cr-lac-styles">#cr-lac-toggle{display:block;width:100%;margin:10px 0 2px;padding:9px 12px;background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:8px;color:#8f1620;font:700 12.5px 'Segoe UI',Arial,sans-serif;text-align:left;cursor:pointer;font-family:inherit}#cr-lac-toggle:hover{background:#f5efd8;border-color:#c8202e}#cr-lac-toggle .chev{float:right;color:#a89e88;font-weight:800}#cr-lac-wrap[hidden]{display:none !important}#cr-lac-wrap{border-left:3px solid #e8d9a8;padding-left:10px;margin-top:6px}#cr-lac-note{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin:2px 0 8px}</style>
+<style id="cr-lac-styles">#cr-lac-toggle{display:block;width:100%;margin:10px 0 2px;padding:9px 12px;background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:8px;color:#8f1620;font:700 12.5px 'Segoe UI',Arial,sans-serif;text-align:left;cursor:pointer;font-family:inherit}#cr-lac-toggle:hover{background:#f5efd8;border-color:#c8202e}#cr-lac-toggle .chev{float:right;color:#6b5f59;font-weight:800}#cr-lac-wrap[hidden]{display:none !important}#cr-lac-wrap{border-left:3px solid #e8d9a8;padding-left:10px;margin-top:6px}#cr-lac-note{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin:2px 0 8px}</style>
 <script id="cr-lac-script">
 (function(){
 'use strict';

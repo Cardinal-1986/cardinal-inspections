@@ -33983,3 +33983,16 @@ new. They are resolved by deleting a redundant declaration (`box-sizing` already
 **Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `gate_stack`, `gate_1206` (rebaselined
 to 2, and RED on 1239), `gate_1081`, `gate_a11y`, `gate_1233`–`1239`, `render_gradtext`, and
 `gate_chromium --selftest`.
+
+## Build 1241 — three faint labels on the shared forms; the eight forms gated
+
+Full write-up in FEATURES "Build 1241".
+
+**"Cream sheets in dark mode across the app" turned out smaller than it sounded.** Half the light
+patches in dark mode are deliberate, and one of them is a settled decision: **1095, estimate builder
+light only**. Darkening it would have undone Theo's own pick. I checked the log before touching it.
+The eight shared forms are readable as they are, with 4 real failures, and those are fixed here.
+Darkening them is a look change, so it goes to Theo as a preview.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `gate_stack`, and `gate_1241` (32/32;
+RED 4 on 1240).
