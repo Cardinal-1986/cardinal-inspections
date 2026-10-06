@@ -6191,3 +6191,21 @@ Recorded so they are not lost, and none of them is scheduled:
   that gate sets and reads the theme in one turn. **Not investigated** — it may be
   correct (recomputing from a stored preference the mock does not have), and it is
   not this programme's business. Recorded so the next rig does not lose an hour.
+
+## ✅ SETTLED 6 Oct 2026 (Theo, "A11") — buttons, type scale, the shared forms
+
+Picked from the preview page (`Cardinal Picks`, three labelled options each, dark and light, at phone
+size). "A11" is read as **Buttons A · Type 1 · Forms 1**.
+
+- **Buttons A: red · outline · red text.** The main action is solid Cardinal red with white text.
+  Every other action is an outline: no fill, a hairline, ink text. Delete is red words with no fill,
+  so it never looks like Save. All are 44px tall. *Being built.*
+- **Type 1: six sizes, 11 / 13 / 15 / 18 / 22 / 26px.** These replace 36. The fold is the table the
+  preview showed: 11.5→11; 12 and 12.5→13; 13.5 to 15.5→15; 16 to 19→18; 20 to 23→22; 24 to 26→26.
+  Sizes above 26 are display numbers and stay. `pt` sizes are print documents and stay. The app
+  stylesheets were done at build 1242; the JS-built sizes are done by hand, because they share
+  strings with the document templates.
+- **Forms 1: keep the white sheet.** The eight `.projform` forms stay a white "paper" card in
+  **both** themes: profile, Add project, Roofing checklist, GC, Lead, New Lead, Appointment and
+  Signature. **Do not "finish the dark theme" on them.** It was offered as option 2 and declined.
+  `gate_1241` holds their readability.

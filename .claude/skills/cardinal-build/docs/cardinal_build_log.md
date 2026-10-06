@@ -34009,3 +34009,24 @@ Both were fixed in the shared rule instead of out-specifying it:
 
 The two edited rules carry `--cr-stack` with the overrides they have always made. `gate_stack`
 against main is CLEAN. The sentinel was re-run on this final file.
+
+## Build 1242 — six text sizes instead of thirty-six (Type 1)
+
+Theo: **"A11"**, read as Buttons A · Type 1 · Forms 1. Recorded in OPEN_ITEMS as settled.
+
+**Scope.** 1,164 `px` text sizes changed, all in the app's own stylesheets and markup inline styles.
+They follow the fold the preview showed Theo: 11.5→11; 12 and 12.5→13; 13.5 to 15.5→15; 16 to 19→18;
+20 to 23→22; 24 to 26→26.
+
+**Left alone:**
+- `@media print` sections;
+- every `pt` size;
+- everything above 26px (display numbers);
+- every size written inside JavaScript.
+
+⚠ **Why JavaScript is excluded.** In-script sizes share strings with the document templates
+(`REPORT_TEMPLATE`, `INVOICE_BODY`, `INV_LIVE_CSS`, the Pre-Install Guide). A first attempt to fence
+the documents by `<html … </html>` produced "documents" 1.7M characters long, because templates write
+the closing tag in pieces. **There are 149 in-script sizes; they are phase 2, done by hand.**
+
+Gates and the sentinel are running. Not yet merged.
