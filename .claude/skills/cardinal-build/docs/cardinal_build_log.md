@@ -33943,3 +33943,19 @@ timeout, which is exactly the trap CLAUDE.md names. I killed it and used a bound
 `gate_chromium --selftest` (22/22), `gate_1238` (14/14; RED 12 on 1237), `gate_1237`, `gate_1229`
 (101/101, the album), `gate_1206`, `gate_1081`, `gate_a11y`, and `render_gradtext` (82/82). The
 sentinel runs portrait-only in both themes, so it is blind to landscape by construction.
+
+## Build 1239 — the album's photo sheet goes dark in dark mode; every control is 44px
+
+Theo: **"Merge and fix all."** This is the first of the list. Full write-up in FEATURES "Build 1239".
+
+**My own error, corrected before it shipped.** I told Theo the sheet's buttons were "about 30px".
+`gate_1239`'s negative control measured **41px**. That is still under the floor, but the number I
+said was a guess, and it was wrong.
+
+The Save button's 3.97:1 failed in **both** themes. It was a pre-existing failure, found while
+measuring.
+
+**Gates.** GREEN: `check_build`, `gate_types`, `gate_dupes`, `audit_scrolllock` (17), `gate_stack`,
+`gate_chromium --selftest`, `gate_1239` (6/6; RED 5 on 1238), `gate_1238` (14/14, with one check
+retargeted by decision), `gate_1229` (101/101), `gate_1206`, `gate_1081`, `gate_a11y`, and
+`render_gradtext`.

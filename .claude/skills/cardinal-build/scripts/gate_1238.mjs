@@ -63,7 +63,9 @@ const r = await sheet(390, 844);
 if (r.none) ok(false, 'B  390x844: the photo sheet opens', r.none);
 else {
   ok(r.wrap.b <= r.form.t + 1 && Math.abs(r.wrap.h / r.wrap.w - 0.75) < 0.02, 'B  upright: the 4:3 photo sits above the form, as before', JSON.stringify([r.wrap, r.form.t]));
-  ok(r.box.h === 544 && inside(r.box, r), 'B  upright: the sheet is the same 544px it was at 1237', r.box.h);
+  /* 1239 made every control 44px, so the upright sheet grew 544 -> 600px on purpose. This check
+     asked for the exact 544; it now asks what it was for — the upright sheet still fits on screen. */
+  ok(inside(r.box, r), 'B  upright: the whole sheet is on screen', JSON.stringify(r.box));
 }
 await browser.close();
 console.log((fail ? 'GATE 1238 RED' : 'GATE 1238 GREEN') + ' — ' + pass + ' passed, ' + fail + ' failed');

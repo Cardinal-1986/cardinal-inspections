@@ -8549,6 +8549,23 @@ every control alive, **the quote asserted visible with real text**, the photogra
 mark deliberately**, so the section was retargeted to the six real controls. A mark is not a
 control, and its absence is `gate_1215`'s claim with its own negative control.
 
+## Build 1239 — the album's photo sheet goes dark in dark mode; every control is 44px
+
+The same sheet as 1238 (`#cr-pae-cap-modal`).
+- **It was a cream card (`#fdfcf7`) in both themes,** so in dark mode, the default, a tap on a photo
+  flashed a near-white panel.
+- **Dark is now the base,** in the 573 shape: box `#16161B` with a `#2c3038` hairline, labels
+  `#9aa0a8`, fields `#101015`/`#e9e6df`, and ghost buttons `#cfd6df`.
+- **Light is restored byte for byte** under `rb-light`.
+- **Save** was `#e35c63` on `#2c2c2c`, which is **3.97:1 in both themes**. It is now `#f0777e`, the
+  same red lifted, at 5.08:1.
+- **Height:** every action button and the Section menu gets `min-height:44px` (they measured
+  41px), and the row wraps. The upright sheet grows 544 → 600px. `gate_1238`'s exact-544 check was
+  retargeted by decision to "the whole sheet is on screen".
+
+Gate: **`gate_1239.mjs`** (6 checks, both themes): the ground, every ink ≥4.5:1, and every control
+≥44px. It fails 5 on 1238.
+
 ## Build 1238 — a photo fits the screen when the phone is on its side
 
 Theo: **"When I put my phone in landscape mode it shortens the photo view."**
