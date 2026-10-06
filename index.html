@@ -4070,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1245<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1246<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43468,6 +43468,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1246, d: '2026-10-06', t: 'The camera zooms',
+    s: 'In the multi-photo camera, pinch the picture or tap 1\u00D7, 2\u00D7 or 3\u00D7 to zoom in. Where the phone lets the app drive the lens it zooms the lens; otherwise it zooms digitally and the photo keeps exactly what you saw, up to 4\u00D7.' },
   { b: 1245, d: '2026-10-06', t: 'Order materials from ABC Supply, right from the client',
     s: 'The Materials tab has an Order from ABC button for admins and production. Pull lines from the material list, the estimate\'s ABC items, or one of your ABC order templates; match each material to an ABC item once and it is remembered for every job; choose delivery to the job or pickup at the branch; then review the whole order before it goes. Orders go to ABC\'s test system until ABC signs off.' },
   { b: 1243, d: '2026-10-06', t: 'The last in-between text sizes, on pop-ups and chips',
@@ -48697,6 +48699,12 @@ photosFor    : function(){ return (window.currentPhotos || []).slice(); },
 #cr-mcam .mc-flash.on{opacity:.7;transition:none}
 #cr-mcam .mc-msg{position:absolute;left:16px;right:16px;top:40%;transform:translateY(-50%);text-align:center;font-weight:600;font-size:15px;font-family:inherit;line-height:1.45;color:#fff}
 #cr-mcam .mc-msg[hidden]{display:none}
+/* 1246: zoom. The video is scaled from its centre for digital zoom; the lens zooms itself where the phone allows it. */
+#cr-mcam video{transform-origin:50% 50%}
+#cr-mcam .mc-zoom{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:4px;border-radius:999px;background:rgba(0,0,0,.5)}
+#cr-mcam .mc-zoom[hidden]{display:none}
+#cr-mcam .mc-zoom button{width:44px;height:44px;border-radius:50%;border:0;background:transparent;color:#fff;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;padding:0}
+#cr-mcam .mc-zoom button[aria-pressed="true"]{background:#fff;color:#111}
 #cr-mcam .mc-msg button{margin-top:14px;min-height:48px;padding:0 20px;border-radius:12px;border:0;background:#c8202e;color:#fff;font-weight:800;font-size:15px;font-family:inherit}
 #cr-mcam .mc-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 14px 0;-webkit-overflow-scrolling:touch;touch-action:pan-x}
 #cr-mcam .mc-strip[hidden]{display:none}
@@ -48737,6 +48745,11 @@ photosFor    : function(){ return (window.currentPhotos || []).slice(); },
 'use strict';
 var SECTIONS = ['Inspection', 'Post-Inspection', 'Before', 'After', 'General'];
 var root = null, video = null, stream = null, shots = [], forPid = null, isOpen = false, stripOn = false;
+/* 1246: zoom. hw is the camera's own zoom range when the browser exposes it (Android
+   Chrome); otherwise zoom is DIGITAL - the preview is scaled from its centre and the
+   shot is cropped to the same centre, never upscaled, so what you saw is what you get.
+   Digital stops at 4x: past that a 1920px frame leaves under 480px of photograph. */
+var zoom = 1, zMin = 1, zMax = 4, hw = null, pinch = {}, pinchD0 = 0, pinchZ0 = 1, zRaf = 0;
 function mcQ(sel){ return root ? root.querySelector(sel) : null; }
 function mcSupported(){
   return !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function' &&
@@ -48763,7 +48776,8 @@ function mcBuild(){
       '<span class="mc-room" aria-live="polite"></span>' +
     '</div>' +
     '<div class="mc-stage"><video playsinline muted autoplay></video>' +
-      '<div class="mc-flash"></div><div class="mc-msg" hidden></div></div>' +
+      '<div class="mc-flash"></div><div class="mc-msg" hidden></div>' +
+      '<div class="mc-zoom" role="group" aria-label="Zoom" hidden></div></div>' +
     '<div class="mc-strip" hidden></div>' +
     '<div class="mc-bot">' +
       '<button class="mc-stack" type="button" data-mc="strip" aria-label="Photos taken - tap to review"><img alt="" hidden><b>0</b></button>' +
@@ -48773,6 +48787,7 @@ function mcBuild(){
   document.body.appendChild(root);
   video = mcQ('video');
   root.addEventListener('click', mcOnClick);
+  ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(function(ev){ root.addEventListener(ev, mcPinch); });
   return root;
 }
 function mcMsg(text, withNative){
@@ -48811,6 +48826,7 @@ function mcStop(){
   if(stream){ try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(_){} }
   stream = null;
   if(video) try{ video.srcObject = null; }catch(_){}
+  mcZoomPaint();
 }
 async function mcStart(){
   mcStop();
@@ -48822,7 +48838,7 @@ async function mcStart(){
     stream = null;
     var denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
     mcMsg(denied ? 'The app is not allowed to use the camera. Allow it in the phone\u2019s settings, or use the phone camera (one photo at a time).'
-               : 'The camera would not mcStart (' + ((e && (e.name || e.message)) || 'unknown') + ').', true);
+               : 'The camera would not start (' + ((e && (e.name || e.message)) || 'unknown') + ').', true);
     mcPaint();
     return;
   }
@@ -48830,15 +48846,80 @@ async function mcStart(){
   video.srcObject = stream;
   try{ await video.play(); }catch(_){}
   mcMsg('');
+  mcZoomCaps();
+  mcSetZoom(zoom);
   mcPaint();
+}
+function mcTrack(){ try{ return stream ? stream.getVideoTracks()[0] : null; }catch(_){ return null; } }
+function mcZoomCaps(){
+  hw = null;
+  var t = mcTrack();
+  try{
+    var c = t && t.getCapabilities ? t.getCapabilities() : null;
+    if(c && c.zoom && c.zoom.max > c.zoom.min) hw = { min: c.zoom.min, max: c.zoom.max };
+  }catch(_){}
+  zMin = hw ? Math.max(0.5, hw.min) : 1;
+  zMax = hw ? Math.min(hw.max, 10) : 4;
+}
+function mcZoomPaint(){
+  var box = mcQ('.mc-zoom');
+  if(!box) return;
+  box.hidden = !stream;
+  var stops = [1, 2, 3];
+  if(zMin <= 0.5) stops.unshift(0.5);
+  stops = stops.filter(function(v){ return v >= zMin - 0.01 && v <= zMax + 0.01; });
+  var near = stops.reduce(function(a, v){ return Math.abs(v - zoom) < Math.abs(a - zoom) ? v : a; }, stops[0]);
+  box.innerHTML = stops.map(function(v){
+    var on = v === near;
+    var label = on && Math.abs(zoom - v) > 0.05 ? zoom.toFixed(1) : String(v);
+    return '<button type="button" data-mc="zoom" data-z="' + v + '" aria-pressed="' + on + '" aria-label="Zoom ' + v + ' times">' + label + '\u00D7</button>';
+  }).join('');
+}
+function mcSetZoom(z){
+  z = Math.min(zMax, Math.max(zMin, Number(z) || 1));
+  zoom = Math.round(z * 10) / 10;
+  if(hw){
+    var t = mcTrack();
+    if(video) video.style.transform = '';
+    if(t && !zRaf){
+      zRaf = requestAnimationFrame(function(){
+        zRaf = 0;
+        try{
+          t.applyConstraints({ advanced: [ /** @type {any} */ ({ zoom: zoom }) ] }).catch(function(){
+            /* the lens refused - fall back to digital so the button still works */
+            hw = null; zMin = 1; zMax = 4; mcSetZoom(zoom);
+          });
+        }catch(_){ hw = null; zMin = 1; zMax = 4; mcSetZoom(zoom); }
+      });
+    }
+  }else if(video){
+    video.style.transform = zoom > 1 ? 'scale(' + zoom + ')' : '';
+  }
+  mcZoomPaint();
+}
+function mcPinch(e){
+  var tg = Object(e.target);
+  if(!tg.closest || !tg.closest('.mc-stage') || tg.closest('.mc-zoom')) return;
+  if(e.type === 'pointerdown'){ pinch[e.pointerId] = [e.clientX, e.clientY]; }
+  else if(e.type === 'pointermove'){ if(!pinch[e.pointerId]) return; pinch[e.pointerId] = [e.clientX, e.clientY]; }
+  else { delete pinch[e.pointerId]; pinchD0 = 0; return; }
+  var ids = Object.keys(pinch);
+  if(ids.length !== 2){ pinchD0 = 0; return; }
+  var a = pinch[ids[0]], b = pinch[ids[1]];
+  var d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+  if(!pinchD0){ pinchD0 = d; pinchZ0 = zoom; return; }
+  if(d > 0) mcSetZoom(pinchZ0 * d / pinchD0);
 }
 function mcShoot(){
   if(!stream || !video || mcRoom() <= 0) return;
   var w = video.videoWidth, h = video.videoHeight;
   if(!w || !h) return;
   var c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  c.getContext('2d').drawImage(video, 0, 0, w, h);
+  /* 1246: digital zoom keeps the centre the preview showed, at the camera's own pixels. */
+  var z = hw ? 1 : zoom;
+  var cw = Math.round(w / z), ch = Math.round(h / z);
+  c.width = cw; c.height = ch;
+  c.getContext('2d').drawImage(video, Math.round((w - cw) / 2), Math.round((h - ch) / 2), cw, ch, 0, 0, cw, ch);
   var fl = mcQ('.mc-flash');
   if(fl){ fl.classList.add('on'); setTimeout(function(){ fl.classList.remove('on'); }, 60); }
   c.toBlob(function(blob){
@@ -48889,6 +48970,7 @@ function mcOnClick(e){
   var k = b.getAttribute('data-mc');
   if(k === 'close') return mcClose();
   if(k === 'shoot') return mcShoot();
+  if(k === 'zoom') return mcSetZoom(b.getAttribute('data-z'));
   if(k === 'upload') return mcUpload();
   if(k === 'strip'){ stripOn = !stripOn; return mcPaint(); }
   if(k === 'drop'){
@@ -48910,6 +48992,7 @@ function mcOpen(){
     forPid = window.currentProject.id;
   }
   isOpen = true;
+  zoom = 1; pinch = {}; pinchD0 = 0;
   root.classList.add('open');
   mcPaint();
   mcStart();
@@ -48921,7 +49004,7 @@ document.addEventListener('visibilitychange', function(){
 window.addEventListener('pagehide', function(){ mcStop(); });
 window.CardinalMultiCam = Object.assign(window.CardinalMultiCam || {}, {
   open: mcOpen, supported: mcSupported,
-  _state: function(){ return { open: isOpen, shots: shots.length, pid: forPid, live: !!stream }; }
+  _state: function(){ return { open: isOpen, shots: shots.length, pid: forPid, live: !!stream, zoom: zoom, lens: !!hw }; }
 });
 })();
 </script>

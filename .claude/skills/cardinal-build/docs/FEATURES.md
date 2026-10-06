@@ -9457,3 +9457,14 @@ No UI yet — the Order-from-ABC screen on the client profile is build 1245. Gat
 
 Account numbers: LIVE uses the Suppliers screen's Ship-To/Branch; TEST keeps its own
 (`sbShipTo`/`sbBranch` in the same `cardinal.abc` store). Gate: `gate_1245.mjs`.
+
+## Build 1246 — camera zoom (`cr-mcam-script`)
+
+| Piece | What |
+|---|---|
+| `.mc-zoom` row | 1× / 2× / 3× (+0.5× if the lens offers it) over the viewfinder; pinch on the picture too |
+| Lens path | track `getCapabilities().zoom` → `applyConstraints({advanced:[{zoom}]})`; up to 10× or the lens max |
+| Digital path | preview `scale(z)` from centre; shot = centre crop at camera pixels, no upscaling; max 4× |
+| Reset | every open starts at 1×; `CardinalMultiCam._state()` reports `zoom` and `lens` |
+
+Gate: `gate_1246.mjs`.
