@@ -34108,3 +34108,25 @@ mark materials ordered; `hideAllViews()` closes it. **RED on 1243** (3 failures,
 reader — were pointed at `CardinalABC` instead), `audit_scrolllock` (17), `gate_stack` clean,
 `gate_1081`, `gate_1206`, `gate_a11y`, `gate_1243`, `render_gradtext`, `gate_1244`,
 `gate_abcorder`, `gate_chromium --selftest`.
+
+## Build 1246 — the camera zooms
+
+A sales rep asked for zoom in the multi-shot camera (`cr-mcam-script`, build 1229). It had none.
+- **Pinch the picture, or tap 1× / 2× / 3×** (a 0.5× stop appears when the lens offers it). The
+  row sits over the bottom of the viewfinder; every stop is 44px.
+- **Lens zoom where the browser allows it.** If the camera track reports a `zoom` capability
+  (Android Chrome), the stops drive the lens through `applyConstraints`, the preview is not scaled,
+  and the photo is full size. If the lens refuses, it drops to digital rather than doing nothing.
+- **Digital zoom everywhere else — which is every iPhone today.** Safari does not hand a web app
+  the lens, so the preview is scaled from its centre and the shot is cropped to that same centre
+  at the camera's own pixels, never upscaled: what you saw is what you get. **Capped at 4×** —
+  past that a 1920px frame leaves under 480px of photograph. ⚠ It does not switch to the
+  iPhone's telephoto camera; that needs a separate device pick and was not asked for.
+- Every open starts at 1×. No new body observer, no scroll-lock writer.
+- **Fixed a shipped typo on the way:** the camera's own failure sentence read *"The camera would
+  not mcStart"* — the 1229 rename of `start()` to `mcStart()` reached inside a string.
+
+**Gates.** `gate_1246.mjs` (11 checks, Chromium, canvas camera + a stubbed lens): the row, 2× scales
+the preview, a 2× shot is 320×240 of 640×480, pinch takes 2× to 3× and stops at 4×, reopening is
+1×, a lens camera gets `zoom:2` with no preview scale and a full-size photo, and the sentence reads
+"start". **RED on 1245** (9 failures, no crash). `gate_1229` still green, plus the standing ladder.
