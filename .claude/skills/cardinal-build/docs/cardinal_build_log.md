@@ -34333,6 +34333,59 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1257 — Company Documents stops trapping you
+
+Theo, 7 Oct: *"when you go to resources company documents then roof pre install guide, there is no
+way out. Also it says Nick. Also, all company documents traps you in the page"*
+
+### Found (measured, not guessed)
+- **The trap on every document.** Each View and Download is a same-site PDF link
+  (`target=_blank`). In the **installed** iPhone app, a same-site link opens *inside* the app, with
+  no browser chrome and so no Back.
+- **The guide's Preview** did `window.open('')` + `document.write`: the same trap, a chromeless
+  blank window.
+- **"It says Nick":** the preview's `sampleCtx()` filled the guide with a hard-coded **"Nick Hey"**
+  as the rep, for everyone.
+- **Found on the way:** **Preview** and **Download** were white on the white row cards. Rendered in
+  Chromium at 390px, they were invisible.
+
+### Fixed
+- **New in-app viewer, `window.CardinalDocView`** (`cr-docview-*`, built from `docview_1257.html`).
+  - It opens under a 44px **← Back** bar.
+  - PDFs are drawn page by page with the app's own `loadPdfJs()` (the Roofr reader).
+  - If the reader fails, or never answers within **12 s**, the viewer falls back to the browser's
+    own PDF view, still under Back.
+  - HTML (the guide preview) shows in an iframe, with **Print**.
+  - A PDF gets **Share** in the installed app (Save to Files, Print, Mail) and **Download** in a
+    browser.
+  - It is registered in `hideAllViews`; the phone's back closes it through `popstate`.
+- **Company Documents:**
+  - **View** opens the viewer.
+  - **Download** in the installed app opens the share sheet. A browser keeps the plain download.
+- **The guide preview** opens in the viewer and names the person looking, with their Team
+  Directory name and phone (falling back to "your Cardinal sales rep"). No more Nick. The client
+  and address stay an obvious sample.
+- **The two invisible buttons** get a dark ink on their white rows. `--cr-stack` is declared.
+
+### Gates
+**`gate_1257.mjs` — 12 checks:**
+- **View:** opens in-app with the right title, without navigating or opening a window.
+- **The PDF:** with pdf.js served from `PDFJS_DIR`, all 5 pages draw. Without it, the 12 s fallback
+  shows the PDF.
+- **Closing:** Back closes it, and so does `hideAllViews`.
+- **The guide preview:** opens in the viewer and names the viewer, never "Nick Hey".
+- **Download:** shares in the installed app and is left alone in a browser.
+- **Ink:** the bar and the two buttons are 44px+ / 4.5:1+.
+- **RED on 1256 (4/12).**
+- ⚠ **My own first version of the gate was wrong.** The rig's `?as=` knows only
+  theo/curtis/scottie/nick, so `?as=joan` ran as Theo, and the preview rightly said Theo.
+
+**Also green:** check_build, types, dupes, scroll-lock (17), 1243, 746, 944.
+
+**Not caused by this build** (red identically on 1256):
+- `gate_1116` wants a different Playwright Chromium;
+- `harness_guide1111` / `harness_guide1112` crash on a missing `window.crAsk` stub.
+
 ## Build 1256 — "Uncontacted" on the Leads cards (Jacob, via Theo — pick A3)
 
 Theo, 7 Oct: *"once you attempt to make contact whether they answer or not, it should still go into

@@ -9550,3 +9550,11 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Call, Text or Email on a Lead then asks "Did you reach out?". **Mark contacted** sets the stage to
   Prospect through `setStage`.
 - **Gate:** `gate_1256.mjs`.
+
+## Build 1257 — in-app document viewer (`window.CardinalDocView`)
+- `open({title,url})` draws a PDF with pdf.js, falling back to an iframe after 12 s.
+  `open({title,html})` shows an HTML preview.
+- **Bar:** Back, plus Share (installed app) or Download (browser), or Print for a preview.
+- **Used by:** Company Documents' View (and Download in the installed app) and the Pre-Install Guide
+  preview.
+- **Gate:** `gate_1257.mjs` (set `PDFJS_DIR` to check the pages draw).

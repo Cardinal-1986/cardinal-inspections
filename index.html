@@ -4087,7 +4087,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1256<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1257<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -19705,6 +19705,8 @@ function hideAllViews(){
    { id:'cr-pk', api:window.CardinalPunchCard },
    /* 1254: the day route — class-shown, closes through its own close(false) */
    { id:'cr-route', api:window.CardinalRoute },
+   /* 1257: the in-app document viewer — class-shown, closes through its own close(false) */
+   { id:'cr-docview', api:window.CardinalDocView },
    { id:'cr-show', api:window.CardinalShowcase },
    /* 927: Storm Data. Same shape again — created at runtime, shown by a
       class, closed through its own close(false) so it does not send the
@@ -21785,6 +21787,26 @@ function cdCheckFiles(){
     }).catch(function(){ /* offline or blocked — leave the row alone */ });
   });
 }
+/* 1257: a document opens INSIDE the app, under a Back bar. In the installed
+   app a same-site PDF link opened in place with no browser chrome — no way out. */
+document.getElementById('cdDocList').addEventListener('click', function(e){
+  var a = /** @type {HTMLElement} */ (e.target).closest('.cdocrow a.btn');
+  if(!a || !window.CardinalDocView) return;
+  var row = a.closest('.cdocrow'), nm = row && row.querySelector('.cdname');
+  var title = nm && nm.firstChild ? String(nm.firstChild.textContent || '').trim() : 'Document';
+  var href = a.getAttribute('href') || '';
+  if(!a.hasAttribute('data-cddl')){                 /* View */
+    e.preventDefault();
+    window.CardinalDocView.open({ title: title, url: href });
+    return;
+  }
+  /* Download: a browser keeps the plain download; the installed app gets the share sheet */
+  var standalone = false; try{ standalone = isStandalone(); }catch(_){}
+  if(standalone && navigator.share){
+    e.preventDefault();
+    navigator.share({ title: title, url: new URL(href, location.href).href }).catch(function(){});
+  }
+});
 document.getElementById('cdCats').addEventListener('click', function(e){
   var b = e.target.closest('.cdoccat');
   if(!b) return;
@@ -43545,6 +43567,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1257, d: '2026-10-07', t: 'Company Documents no longer trap you',
+    s: 'Opening a document from Company Documents \u2014 a contract master, or a Pre-Install Guide preview \u2014 used to take over the installed app with no way back. Every document now opens inside the app under a <b>\u2190 Back</b> bar, with <b>Share</b> (save to Files, print, mail) or <b>Download</b> beside it. The guide preview now shows <b>your</b> name and number as the rep, not Nick\u2019s. And the Preview and Download buttons, which were white on white, can be seen.' },
   { b: 1256, d: '2026-10-07', t: 'Uncontacted leads say so',
     s: 'On the Leads screen, every lead nobody has reached out to yet wears an amber <b>Uncontacted</b> tag with how long it has been waiting. Tap Call, Text or Email on one and your phone does that as usual \u2014 then the app asks <b>Did you reach out?</b> Tap <b>Mark contacted</b> and it moves to Prospect, whether they answered or not. Tap <b>Not yet</b> and nothing changes.' },
   { b: 1255, d: '2026-10-07', t: 'The punch buzzes: the morning report, the 3pm plan, the 6pm list',
@@ -89407,11 +89431,21 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     });
   }
   function sampleCtx(){
+    /* 1257: the rep in a PREVIEW is whoever is looking at it (their Team
+       Directory name and phone) — it was a hard-coded 'Nick Hey' for everyone.
+       The client and address stay an obvious sample. */
+    var me = '', nm = '', ph = '';
+    try{ var cu = /** @type {any} */ (window.currentUser); me = String((cu && cu.email) || ''); }catch(_){}
+    try{ if(me && typeof rptRepName === 'function') nm = rptRepName(me) || ''; }catch(_){}
+    try{ var t = (window.cacheTeam || {})[me]; if(t && t.phone) ph = t.phone; }catch(_){}
     return { client_name:'Daniel Whitfield', property_address:'128 Maple Ave, Dayton, OH',
       install_date:fmtInstall(new Date(Date.now()+6*86400000).toISOString().slice(0,10)),
-      rep_name:'Nick Hey', rep_phone:'(937) 576-6753' };
+      rep_name: (nm && nm !== me) ? nm : FALLBACK.rep_name, rep_phone: ph || FALLBACK.rep_phone };
   }
-  function openPreviewWindow(html){
+  function openPreviewWindow(html, title){
+    /* 1257: inside the app, under a Back bar — a window.open('') from the
+       installed app is a blank screen with no way back */
+    if(window.CardinalDocView){ window.CardinalDocView.open({ title: (title || 'Preview') + ' — preview', html: html }); return; }
     try{
       var w = window.open('', '_blank');
       if(w){ w.document.open(); w.document.write(html); w.document.close(); }
@@ -89420,11 +89454,11 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   }
   function preview(){
     var s = sampleCtx();
-    openPreviewWindow(doc(fill(harvestBody() || G(_slug).content, s), s, false, _slug));
+    openPreviewWindow(doc(fill(harvestBody() || G(_slug).content, s), s, false, _slug), G(_slug).label);
   }
   function previewSaved(slug){
     var s = sampleCtx(); slug = GUIDES[slug] ? slug : 'preinstall_roof';
-    loadTemplate(slug).then(function(tpl){ openPreviewWindow(doc(fill(tpl.html, s), s, false, slug)); });
+    loadTemplate(slug).then(function(tpl){ openPreviewWindow(doc(fill(tpl.html, s), s, false, slug), G(slug).label); });
   }
 
   document.addEventListener('click', function(e){
@@ -89450,6 +89484,152 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     /* back-compat: 1111's isNonRoofOnly is now "no guide for this trade" */
     isNonRoofOnly: function(pr){ return slugForJob(pr) === null; }
   });
+})();
+</script>
+
+<style id="cr-docview-styles">
+/* v2026-10-07 build 1257 — the in-app document viewer. A same-site PDF or a
+   window.open('') preview opened from an INSTALLED app (iPhone standalone) has
+   no browser chrome, so there was no way back. Every document now opens here,
+   under a Back bar. Single-theme dark chrome around white pages (the documents
+   are print masters); every colour pinned. Class-shown, z 9700. No scroll lock:
+   the body scrolls itself with overscroll-behavior:contain. */
+#cr-docview{display:none;position:fixed;inset:0;z-index:9700;background:#1b1d21;flex-direction:column;}
+#cr-docview.open{display:flex;}
+#cr-docview .dvbar{flex:none;display:flex;align-items:center;gap:10px;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:#0c0d0f;border-bottom:1px solid #2a2d33;}
+#cr-docview .dvback{flex:none;min-height:44px;padding:0 14px;border-radius:10px;cursor:pointer;
+  border:1px solid #3a3e46;background:transparent;color:#eceef0;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#cr-docview .dvttl{flex:1;min-width:0;font:700 15px 'Segoe UI',Arial,sans-serif;color:#eceef0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-docview .dvact{flex:none;min-height:44px;padding:0 14px;border-radius:10px;cursor:pointer;
+  border:1px solid #c8202e;background:#c8202e;color:#ffffff;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#cr-docview .dvact[hidden]{display:none;}
+#cr-docview .dvbody{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+#cr-docview iframe{display:block;width:100%;height:100%;border:0;background:#ffffff;}
+#cr-docview .dvpages{padding:12px 12px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:12px;}
+#cr-docview canvas{display:block;max-width:100%;height:auto;background:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,.4);}
+#cr-docview .dvmsg{padding:40px 16px;text-align:center;color:#b8bec6;font:400 15px 'Segoe UI',Arial,sans-serif;}
+/* the two Company Documents buttons that were white on a white card (Preview,
+   Download): the rows are white in both themes, so a fixed dark ink */
+#cdDocList .cdocrow .btn.ghost, #cdDocList .cd-guiderow .btn.ghost{background:#ffffff;color:#1e2b4a;border:1px solid #9aa4b2;
+  --cr-stack:"the Company Documents rows are white in both themes; the app-wide ghost ink is white";}
+</style>
+<script id="cr-docview-script">
+/* v2026-10-07 build 1257 — the in-app document viewer (window.CardinalDocView).
+   open({ title, url })  — a PDF, drawn page by page with pdf.js (the app's own
+                           loadPdfJs, the Roofr reader); an iframe if that fails
+   open({ title, html }) — an HTML document (the Pre-Install Guide preview)
+   Back closes it and walks history back; hideAllViews closes it too. */
+(function(){
+'use strict';
+var el = null, ttl = null, bodyEl = null, act = null, cur = null, seq = 0;
+function dvEnsure(){
+  if(el) return;
+  el = document.createElement('div');
+  el.id = 'cr-docview';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Document');
+  el.innerHTML = '<div class="dvbar"><button type="button" class="dvback" data-dv="back">← Back</button>' +
+    '<span class="dvttl" id="dvTtl"></span><button type="button" class="dvact" data-dv="act" hidden></button></div>' +
+    '<div class="dvbody" id="dvBody"></div>';
+  document.body.appendChild(el);
+  ttl = document.getElementById('dvTtl'); bodyEl = document.getElementById('dvBody');
+  act = /** @type {HTMLElement} */ (el.querySelector('[data-dv="act"]'));
+  el.addEventListener('click', function(e){
+    var b = /** @type {HTMLElement} */ (e.target).closest('[data-dv]');
+    if(!b) return;
+    if(b.getAttribute('data-dv') === 'back') dvClose(true);
+    else dvAct();
+  });
+}
+function dvStandalone(){ try{ return typeof isStandalone === 'function' && isStandalone(); }catch(e){ return false; } }
+function dvPdf(url, my){
+  bodyEl.innerHTML = '<div class="dvmsg">Opening…</div>';
+  var load = (typeof loadPdfJs === 'function') ? loadPdfJs() : Promise.reject(new Error('no reader'));
+  /* a reader that loads but never answers (a broken CDN reply leaves loadPdfJs
+     pending forever) must not leave "Opening…" on screen: 12 s, then the
+     browser's own PDF view */
+  var slow = new Promise(function(_r, rej){ setTimeout(function(){ rej(new Error('slow')); }, 12000); });
+  Promise.race([load, slow]).then(function(lib){ return lib.getDocument(url).promise; }).then(function(pdf){
+    if(my !== seq) return;
+    var wrap = document.createElement('div'); wrap.className = 'dvpages';
+    bodyEl.innerHTML = ''; bodyEl.appendChild(wrap);
+    var width = Math.max(280, Math.min(900, bodyEl.clientWidth - 24));
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var n = 0;
+    (function next(){
+      if(my !== seq || ++n > pdf.numPages) return;
+      pdf.getPage(n).then(function(page){
+        if(my !== seq) return;
+        var v1 = page.getViewport({ scale:1 }), vp = page.getViewport({ scale: width / v1.width * dpr });
+        var c = document.createElement('canvas');
+        c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+        c.style.width = Math.floor(vp.width / dpr) + 'px';
+        wrap.appendChild(c);
+        return page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      }).then(next, next);
+    })();
+  }).catch(function(){
+    if(my !== seq) return;
+    /* no reader (offline, blocked CDN): the browser's own PDF view, still under Back */
+    bodyEl.innerHTML = '';
+    var f = document.createElement('iframe'); f.src = url; f.title = cur && cur.title || 'Document';
+    bodyEl.appendChild(f);
+  });
+}
+function dvOpen(opts){
+  if(!opts || !(opts.url || opts.html)) return;
+  dvEnsure();
+  cur = opts; seq++;
+  ttl.textContent = opts.title || 'Document';
+  bodyEl.innerHTML = '';
+  if(opts.html){
+    var f = document.createElement('iframe');
+    f.title = opts.title || 'Preview';
+    f.srcdoc = opts.html;
+    bodyEl.appendChild(f);
+    act.textContent = 'Print'; act.hidden = false;
+  } else {
+    act.textContent = (dvStandalone() && navigator.share) ? 'Share' : 'Download'; act.hidden = false;
+    dvPdf(opts.url, seq);
+  }
+  el.classList.add('open');
+  bodyEl.scrollTop = 0;
+  if(typeof window.navSetView === 'function'){ try{ window.navSetView('docview'); }catch(_){} }
+}
+function dvAct(){
+  if(!cur) return;
+  if(cur.html){
+    var f = /** @type {HTMLIFrameElement} */ (bodyEl.querySelector('iframe'));
+    try{ if(f && f.contentWindow) f.contentWindow.print(); }catch(_){}
+    return;
+  }
+  var abs = new URL(cur.url, location.href).href;
+  if(dvStandalone() && navigator.share){
+    /* the installed app: the share sheet (Save to Files, Print, Mail) — a download
+       link here would open the PDF in-app with no way back, the bug this fixes */
+    navigator.share({ title: cur.title || 'Document', url: abs }).catch(function(){});
+    return;
+  }
+  var a = document.createElement('a');
+  a.href = abs; a.download = ''; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function dvIsOpen(){ return !!(el && el.classList.contains('open')); }
+/* hideAllViews calls close() with no argument: hide only. Back passes true. */
+function dvClose(navigate){
+  if(!dvIsOpen()) return;
+  el.classList.remove('open');
+  seq++; cur = null;
+  bodyEl.innerHTML = '';
+  if(navigate === true && history.state && history.state.view === 'docview'){ try{ history.back(); }catch(_){} }
+}
+window.addEventListener('popstate', function(ev){
+  var v = ev.state && ev.state.view;
+  if(v !== 'docview' && dvIsOpen()){ el.classList.remove('open'); seq++; cur = null; bodyEl.innerHTML = ''; }
+});
+window.CardinalDocView = Object.assign(window.CardinalDocView || {}, { open: dvOpen, close: dvClose, isOpen: dvIsOpen });
 })();
 </script>
 
