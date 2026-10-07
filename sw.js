@@ -297,6 +297,10 @@ self.addEventListener('push', function(e){
 self.addEventListener('notificationclick', function(e){
   e.notification.close();
   var url = (e.notification.data && e.notification.data.url) || '/';
+  /* 1259: resolve against the APP's root. navigate() and openWindow() parse a
+     relative URL against this worker's own address, so '#p/123/punch' (1125) and
+     '#route/scottie' (1255) opened /sw.js#… — the raw script, not the app. */
+  try{ url = new URL(url, self.registration.scope).href; }catch(_u){ url = self.registration.scope; }
   e.waitUntil(clients.matchAll({ type:'window', includeUncontrolled:true }).then(function(list){
     for(var i=0;i<list.length;i++){
       if('focus' in list[i]){ list[i].navigate(url); return list[i].focus(); }

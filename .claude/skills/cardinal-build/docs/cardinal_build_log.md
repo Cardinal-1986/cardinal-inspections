@@ -34333,6 +34333,40 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1259 — tapping an alert opens the job (`sw.js` + a hashchange restore)
+
+Found at 1255. Theo said "Yes" on 7 Oct.
+
+**Two faults, one symptom.**
+
+1. **`sw.js` resolved the alert's link against itself.** The links are relative:
+   `#p/<id>/punch` (1125), `#p/<id>` (1147), and `#punch` / `#route/<name>` (1255).
+   - `WindowClient.navigate()` and `clients.openWindow()` parse a relative URL against the *worker's*
+     URL.
+   - **Proven in a real Chromium service worker:** `navigate('#p/123/punch')` landed on
+     `http://localhost:8765/sw.js#p/123/punch`.
+   - So **every punch-out and client push since 1125 opened the raw service-worker script**, not
+     the app. 1255's evening lists would have done the same.
+   - The fix resolves the link against `self.registration.scope`.
+   - ⚠ **Email and SMS links were never affected**: notify.js builds them absolute (`absUrl`).
+2. **With the app already open,** that navigation only changes the fragment, with no reload.
+   `__tryRestoreFromHash` runs once, at sign-in.
+   - A `hashchange` listener beside `__restorableHash()` now re-runs the **same** restore, for a
+     signed-in user only.
+   - The app's own navigation never fires it: it moves with `pushState` / `replaceState`, which raise
+     no `hashchange`.
+   - `#punch` / `#route/<name>` were already handled by `cr-route-script` (1255).
+
+**Gates:**
+- **`gate_1259.mjs` (9 checks):**
+  - **A:** `sw.js`'s `notificationclick` run in Node with a fake worker scope. `#p/123/punch`,
+    `#route/scottie` and an absolute link all reach the app root, whether a window is open or not.
+  - **B (Chromium):** signed in on Home, `#p/p1/punch` opens Mark Diamond on the Punch tab, then
+    `#p/p2` opens Kathy May.
+  - **C:** signed out, nothing happens.
+  - **RED on 1258 (3/9).** A shows `/sw.js#…`, matching the real-browser probe.
+- **Also green:** check_build, types, dupes, and `node --check sw.js`.
+
 ## Build 1258 — "Add to calendar" on appointments (Jacob, via Theo — pick B1)
 
 Jacob asked about syncing appointments to Gmail and iCloud. Theo picked **B1** from three priced

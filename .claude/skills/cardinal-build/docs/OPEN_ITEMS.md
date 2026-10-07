@@ -6252,8 +6252,8 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
    - ✅ **Company Documents traps you**: fixed at 1257 (in-app viewer; the preview names whoever is
      looking).
 
-   ⚠ Found at 1255, not fixed: the 1125 punch-out links (`#p/<id>/punch`) have no `hashchange`
-   handler, so a tap while the app is already open changes the hash and nothing else.
+   ✅ Fixed at 1259: the 1125 punch-out links had no `hashchange` handler. Worse, `sw.js` resolved
+   every relative push link against itself, so every punch-out and client push opened `/sw.js#…`.
    ⚠ Pre-existing reds:
    - `harness_notifyindep1126` needs `web-push` installed;
    - `harness_deeplink1125`'s call count is stale.
