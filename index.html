@@ -4070,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-06 build 1246<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1247<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43468,6 +43468,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1247, d: '2026-10-07', t: 'Punch & Repairs tabs fit a phone again',
+    s: 'Once a tab count reached two digits, the four Punch & Repairs tabs ran off the edge of a phone. They fit again, at the same text size.' },
   { b: 1246, d: '2026-10-06', t: 'The camera zooms',
     s: 'In the multi-photo camera, pinch the picture or tap 1\u00D7, 2\u00D7 or 3\u00D7 to zoom in. Where the phone lets the app drive the lens it zooms the lens; otherwise it zooms digitally and the photo keeps exactly what you saw, up to 4\u00D7.' },
   { b: 1245, d: '2026-10-06', t: 'Order materials from ABC Supply, right from the client',
@@ -67226,7 +67228,10 @@ if(typeof _origOLF === 'function'){
 @media (max-width:430px){
   /* .pu-tabs .pu-tab: the base rule sits LATER in this block and would win a
      same-specificity fight by source order */
-  .pu-tabs .pu-tab{padding:10px 6px;font-size:13px;}
+  /* 1247: the type scale (1242) took these tabs 12 -> 13px and they overflowed the
+     phone by 8px once the counts reached two digits. The text stays on the scale;
+     the side padding gives the room back. */
+  .pu-tabs .pu-tab{padding:10px 4px;font-size:13px;--cr-stack:"the phone fit has always overridden the base .pu-tab rule (945); 1247 only changed its padding";}
   .pu-tabs .pu-tab .n{margin-left:3px;padding:2px 4px;font-size:11px;}
 }
 #puQueue .pu-hero{border:1.5px solid #f5c045;background:rgba(245,192,69,.06);border-radius:13px;padding:11px 12px;margin:0 0 12px;}

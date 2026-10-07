@@ -9468,3 +9468,6 @@ Account numbers: LIVE uses the Suppliers screen's Ship-To/Branch; TEST keeps its
 | Reset | every open starts at 1×; `CardinalMultiCam._state()` reports `zoom` and `lens` |
 
 Gate: `gate_1246.mjs`.
+
+## Build 1247 — Punch & Repairs tabs fit at 390px with two-digit counts
+`.pu-tabs .pu-tab` phone padding 6 → 4px (text stays 13px, the type scale). Gate: `gate_950`.

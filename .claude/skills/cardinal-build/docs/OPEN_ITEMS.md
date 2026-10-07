@@ -6226,3 +6226,23 @@ size). "A11" is read as **Buttons A · Type 1 · Forms 1**.
   **both** themes: profile, Add project, Roofing checklist, GC, Lead, New Lead, Appointment and
   Signature. **Do not "finish the dark theme" on them.** It was offered as option 2 and declined.
   `gate_1241` holds their readability.
+
+
+## 🟠 Pre-rollout readiness (7 Oct 2026) — punch-outs first, then the extras
+
+Theo, 7 Oct: *"We haven't rolled the app out yet ... I want to make sure that before we do, everything
+is working."* Then: *"Let's do it all."* Order, settled that night:
+1. **Prove the flow** (Curtis creates/assigns → Scottie checks in, steps, photos, closes → a rep sees
+   only theirs) — sweep started; findings in the build log under 1247.
+2. **Buzzes reach phones** — ⚠ Scottie, Nick, Jacob have **zero** push subscriptions. Rollout-day
+   checklist item: install the app, allow notifications, confirm a test buzz lands.
+3. **AccuLynx transfer** — runbook `spark/ACCULYNX_MIGRATION.md`; still blocked on the stale
+   `CARDINAL_PASSWORD` on the Spark and Theo's two decisions (Karrie Johnson / Dan Thompson attach;
+   skip the two AccuLynx test records). The 13 Aug fetch is 7 weeks old — re-fetch before the run.
+4. **Build, previewed first, one per build:** Punch List page with **Tarps · Repairs · Callbacks ·
+   Punch-outs** tabs (all four `kind`s already exist — `ticket` is shown as "Repair"); a per-person
+   **My page** (Today · Overdue · In progress · Up next · **On hold** · Completed) — On hold is the
+   only new state and must carry a **reason + a revisit date**; Curtis's 3pm plan buzz + 6pm crew
+   list; Theo's 7am report; escalation (2 days → Curtis, 5 → Theo); callback cause + original crew;
+   time on job; "repair done" homeowner report; homeowner sign-off; load-the-truck list; voice
+   notes; rain flag. **"On my way" texts need a paid SMS service — Theo's call.**

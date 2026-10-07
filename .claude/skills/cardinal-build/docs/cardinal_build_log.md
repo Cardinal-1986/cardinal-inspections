@@ -34133,3 +34133,27 @@ A sales rep asked for zoom in the multi-shot camera (`cr-mcam-script`, build 122
 the preview, a 2× shot is 320×240 of 640×480, pinch takes 2× to 3× and stops at 4×, reopening is
 1×, a lens camera gets `zoom:2` with no preview scale and a full-size photo, and the sentence reads
 "start". **RED on 1245** (9 failures, no crash). `gate_1229` still green, plus the standing ladder.
+
+## Build 1247 — the Punch & Repairs tabs fit a phone again (my 1242 regression)
+
+Found by the pre-rollout readiness sweep (every punch-related gate re-run on main, 7 Oct).
+`gate_950` passes on 1241 and fails on 1243: the type scale took the four tabs 12 → 13px, and with
+two-digit counts they measured **366px in a 358px row** — the "a tab hidden behind a pan reads as
+missing" failure 945 was built to prevent. **Mine; shipped at 1242.** Text stays 13px (on the scale);
+the phone-width side padding goes 6 → 4px. `--cr-stack` declared — that phone rule has overridden
+the base `.pu-tab` since 945; only its value moved. `gate_950` 8/8 (7/8 on 1246).
+
+### The readiness sweep that found it — what else it said
+- **Green on main:** `gate_945` (The Line, 26), `gate_947` (punch card, 23), 1039–1049 (assign
+  notifications, offline replay, counts), `gate_1082`, `gate_1210` (the assignee's email deep link).
+- **`gate_1206` red today, green yesterday — the probe, not the app.** Dispatch opens scrolled to
+  today; on 7 Oct a job's grip sits beside the frozen crew column, which covers part of its hit pad
+  (28×46 measured). Centred, every grip measures 46×46. Date-dependent; left as a recorded note.
+- **Older, not mine:** `gate_979` (the gold home button on Punch/Team, red since ≤1235) and
+  `gate_1223` (Line Items' + Add 11px vs 12px asserted, red since ≤1235) — both want a look.
+- **Rotted harnesses, not app faults:** `drive_lifecycle.mjs` dies on its own seed shape
+  (`__SEED__.projects[0]` undefined); 1116/1125/1127/1128 need a Chromium build this container
+  lacks (same as 1076/1198).
+- ⚠️ **Rollout blocker, not code: Scottie, Nick and Jacob have NO push subscription.** Nothing the
+  app buzzes can reach their phones until each installs the app and allows notifications. Curtis's
+  one device dates from 1 Sep. Email still reaches them (all have addresses; Jerry has no phone).
