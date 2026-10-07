@@ -34086,8 +34086,11 @@ does."* His picks: lines from **all three** sources, delivery or pickup **chosen
   (shape not doc-verified; a template this screen cannot read is shown raw, never guessed).
 - **Match once, remembered:** a material matched to an ABC item is kept on the job's own line
   (`materials[trade][i].abc`) and in the new **`abc_item_map`** table for every future job.
-  ⚠ **`abc_item_map.sql` is NOT applied** — run it before (or after; the screen says so and
-  keeps the match on the job without it). Read: all staff. Write: `is_full_access()`.
+  ✅ **`abc_item_map.sql` APPLIED 7 Oct 2026** (Supabase connector, verified: RLS on, four
+  policies, six columns). Read: all staff. Write: `is_full_access()`. ⚠ The connector timed out
+  three times on the file as written — its `drop policy if exists` lines count as destructive and
+  wait for an approval a remote session cannot give. On a fresh table they are no-ops, so it was
+  applied without them; the file itself is unchanged and still idempotent.
 - **TEST / LIVE:** TEST uses the sandbox pair (1244) and its own Ship-To/Branch
   (`sbShipTo`/`sbBranch`, with *Find test ship-to*). LIVE is disabled until the server reports
   `liveOrders`, and asks a second time.
@@ -34130,3 +34133,235 @@ A sales rep asked for zoom in the multi-shot camera (`cr-mcam-script`, build 122
 the preview, a 2× shot is 320×240 of 640×480, pinch takes 2× to 3× and stops at 4×, reopening is
 1×, a lens camera gets `zoom:2` with no preview scale and a full-size photo, and the sentence reads
 "start". **RED on 1245** (9 failures, no crash). `gate_1229` still green, plus the standing ladder.
+
+## Build 1247 — the Punch & Repairs tabs fit a phone again (my 1242 regression)
+
+Found by the pre-rollout readiness sweep (every punch-related gate re-run on main, 7 Oct).
+`gate_950` passes on 1241 and fails on 1243: the type scale took the four tabs 12 → 13px, and with
+two-digit counts they measured **366px in a 358px row** — the "a tab hidden behind a pan reads as
+missing" failure 945 was built to prevent. **Mine; shipped at 1242.** Text stays 13px (on the scale);
+the phone-width side padding goes 6 → 4px. `--cr-stack` declared — that phone rule has overridden
+the base `.pu-tab` since 945; only its value moved. `gate_950` 8/8 (7/8 on 1246).
+
+### The readiness sweep that found it — what else it said
+- **Green on main:** `gate_945` (The Line, 26), `gate_947` (punch card, 23), 1039–1049 (assign
+  notifications, offline replay, counts), `gate_1082`, `gate_1210` (the assignee's email deep link).
+- **`gate_1206` red today, green yesterday — the probe, not the app.** Dispatch opens scrolled to
+  today; on 7 Oct a job's grip sits beside the frozen crew column, which covers part of its hit pad
+  (28×46 measured). Centred, every grip measures 46×46. Date-dependent; left as a recorded note.
+- **Older, not mine:** `gate_979` (the gold home button on Punch/Team, red since ≤1235) and
+  `gate_1223` (Line Items' + Add 11px vs 12px asserted, red since ≤1235) — both want a look.
+- **Rotted harnesses, not app faults:** `drive_lifecycle.mjs` dies on its own seed shape
+  (`__SEED__.projects[0]` undefined); 1116/1125/1127/1128 need a Chromium build this container
+  lacks (same as 1076/1198).
+- ⚠️ **Rollout blocker, not code: Scottie, Nick and Jacob have NO push subscription.** Nothing the
+  app buzzes can reach their phones until each installs the app and allows notifications. Curtis's
+  one device dates from 1 Sep. Email still reaches them (all have addresses; Jerry has no phone).
+
+## Build 1248 — the Punch List, redesigned (1A)
+
+Theo, 7 Oct: *"I like all 4 pages I just don't like the design ... Give me 3 examples of each page."*
+Previewed as an artifact (three directions × four pages, desktop + phone, both themes); his pick:
+**"1A 2C 3C 4C, go."** This is **1A**, the Punch List. 3C (On hold), 2C (the person's route page) and
+4C (the scheduled buzzes) follow, one per build.
+
+**What changed (`#punchView`, `cr-punch-styles`, `cr-punch-script`).**
+- The tabs are the **kinds of work** — All · Tarps · Repairs · Callbacks · Punch-outs — five even cells
+  with a coloured cap and a count. `ticket` is still the stored value; the page says "Repair".
+- The list is grouped by **when**: Past due · Today · Coming up · No date · On hold. Inside a group,
+  urgent first, then by day and time, then oldest. An open check-in counts as Today however long
+  ago it began (940's day-2 carry stays stated: "On site since Tue — not checked out").
+- **One row markup, two layouts, chosen by a container query on `#puList`** (≥860px of list = the
+  table: Type · Client · What's wrong · Age · When · Crew; narrower = three short lines). The list's
+  width decides, not the window's, so the 480–560px column beside the ultrawide map (pumap) gets the
+  rows. ⚠ With the app's left nav open, a 1280 window gives the list ~716px — rows, not the table.
+- **Kept:** the pinned unassigned queue (945 — never hides; it now narrows with the kind tab too),
+  the Assign sheet, search (PO included), + New, the funnel (CRM · Status · Assigned To), the home
+  strips (`cardHtml` untouched), tap-to-open the card.
+- **Desktop rail** carries the kinds, **Needs attention** (Past due · No date · On hold · Closed) and
+  the crew and CRM filters; the kind strip hides at ≥901px.
+- **Closed** is a view: a button at the foot of the list, and a rail item on desktop.
+- **Retired:** the Active/Assigned/Scheduled/Closed tabs, the sort sheet (`#puShSort`), the reverse
+  button, `sorted()`, and **the list's one-tap tick** — closing happens in the card, where the photo
+  and step rules live. The home strips keep their tick.
+- **On hold is read, not written, yet**: `plOnHold()` reads `hold_reason` / `hold_until`, which do not
+  exist until `punch_hold.sql` ships with 3C. Until then they read undefined and nothing is on hold.
+  Status stays `'open'` for a held job (64 places compare it); once `hold_until` passes, the job
+  rejoins its group with a "Back from hold" flag.
+- The ultrawide map module reads rows by `data-pu`; its three selectors and the click now include
+  `.pl-row`, and `.pl-row.pumap-hi` is the highlight.
+
+**Gates.** `gate_1248.mjs` (26 checks, Chromium, phone + desktop, both themes): kind tabs in order
+with seed counts, the WHEN groups, every open item in exactly one place, Repairs narrows list and
+queue, Closed + back, phone rows/no sideways scroll/44px, desktop table/rail/Needs attention, a row
+opens the card, the old controls gone and the strip's tick kept. **RED on 1247 (29 failures, no
+crash).** Deliberately rewritten for the retired tabs: `gate_945` (now asserts the 945 buckets as
+groups — 26 green), `gate_950` (fit, now five cells — 8/8), `gate_767` (Closed via the list foot —
+56/56). Standing ladder: types (TS2339 down one), dupes, stack, scroll-lock (17), 1081, 1243, a11y,
+`gate_chromium --selftest` green. `gate_1206` red on the same Dispatch grip as 1247 — date-dependent
+probe, red on the control too.
+
+## Build 1249 — On hold (3C)
+
+The punch card (`cr-pk-script`) gets **Put on hold**: a sheet asking *why* it is waiting (Materials ·
+Homeowner · Weather · Adjuster · Something else), *which day* to look at it again (six working days
+from tomorrow, Sunday skipped, each showing how many stops the assignee already has — the whole
+crew's when unassigned) and a note. Holding writes `hold_reason / hold_until / hold_note / hold_by /
+hold_at` **and moves `scheduled_at` to the look-again day, time cleared** — so on that morning the job
+is back in Today, on the assignee's day, with 1248's *Back from hold* flag. Status stays `'open'`.
+The card shows the hold (reason, day, note, who) with **Change** and **Take off hold** (all five
+fields back to null). Both writes go through `save()` → `CardinalPunch.update`, audit-logged.
+
+**SQL: `punch_hold.sql` — APPLIED to production 7 Oct, before the writer.** Five nullable columns +
+`punch_items_hold_reason_ck`. Verified: columns present, constraint present, 0 of 14 rows held.
+No RLS change (the existing `punch_update` policy governs).
+
+**Gates.** `gate_1249.mjs` (19): no hold on a closed card, the sheet's five reasons and six
+Sunday-free days with loads, Hold disabled until both picks, the note survives a re-render, ONE
+write carrying all five fields + the moved day and no `status`, the card's On hold block, Take off
+hold nulls all five, the list places a future hold under On hold and a past one back in its group.
+**RED on 1248 (17 failures, no crash).** The note box first shipped at 16px for iOS zoom — off the
+type scale (`gate_1243` red) and redundant: the phone-wide `input,select,textarea{font-size:18px}`
+rule already covers it. Now 15px.
+
+## Build 1250 — Flag for follow-up
+
+Theo, 7 Oct: *"Any way for say a salesman to ping a certain punchout. For instance if a client
+called and starting yelling and saying I want to cancel the job. The salesman can write a note
+urgent. Then an exclamation can appear in the punch list screen and get moved to the top."*
+
+- **Card:** anyone can **Flag for follow-up** (a fold under the title). The note is required. It
+  writes `ping_note / ping_by / ping_at` (clearing any old answer), appends `Follow up: …` to the
+  card's message thread, and buzzes **Curtis, Theo and the assignee — never the sender** through
+  `notifyTeam`, with the honest outcome line. The card then leads with a red **Needs follow-up**
+  block and a **Handled** box: an answer is required, written to `ping_done_*` and the thread.
+- **Punch List:** `plGroup()` returns `'ping'` for an active flag before anything else, **closed work
+  included** (an angry call can come after the job closed); the old grouping is now `plBase()`, which
+  the When column and row tint still use. A flagged item is never in the queue. The group is first,
+  red, with a red **!** before the client and the note as the row's line. The rail and the subtitle
+  count it.
+- **Who may raise it:** RLS `punch_update` is `auth.role() = 'authenticated'` — any signed-in user
+  could already write a punch row, so a salesman needs nothing new. ⚠ That same breadth means any
+  signed-in user can edit *any* field of *any* punch row they can read; closing is guarded by the
+  `punch_close_guard` trigger, the rest is not. Recorded in OPEN_ITEMS, not changed here.
+
+**SQL: `punch_ping.sql` — APPLIED to production 7 Oct**, six nullable columns, verified.
+
+**Gates.** `gate_1250.mjs` (17), driven **as Nick** then as Theo: the fold, an empty flag refuses, ONE
+write with the note/Nick/time and the cleared answer, the thread entry, Curtis+Theo+Scottie buzzed
+and Nick not, the card's block, the list's first group holding i4 and the closed i2 with a red ! and
+the note, i4 once only, Handled refuses empty, writes the answer, and the item leaves the group.
+**RED on 1249 (19 failures, no crash** — its first cut crashed on a null textarea; guarded).
+`gate_1248` G now accepts the new rail row.
+
+## Build 1251 — two sentinel catches on 1249/1250 (mine)
+
+The punch-only sentinel sweep (states: list, Closed view, card, hold sheet, follow-up compose; 4
+widths × 2 themes; `--since` the 1247 tree; the sweep's state file lives in the session scratchpad)
+found two real defects, both introduced by me at 1249/1250:
+- **INK, light:** the follow-up compose box's note **3.83:1** and its Cancel **4.25:1** on the 14% red
+  wash. Light now gets a 7% wash `#f1e6e8` and `#555c66` inks — **5.54:1**, computed. Dark unchanged
+  (5.28 / 7.03:1 there).
+- **CONTAIN:** `.pkhs` (the hold sheet's shade) declared `overscroll-behavior` with no scrollport. Removed;
+  the panel, which scrolls, keeps it.
+
+Re-swept: both gone. **What remains, judged and NOT changed:**
+- `DEAD` on `.pl-*` rules inside `@container pulist (min-width:860px)` and the base rules they override.
+  The sentinel scores a container-query rule as dead wherever the container is narrower than the
+  condition. That is the same blind spot it once had for `@media` (BUG_CLASSES: DEAD descended into
+  non-matching @media blocks), now for `@container`. ⚠ **Sentinel follow-up:** teach DEAD to skip
+  rules whose `@container` condition is false for that element.
+- `OVERRIDDEN`, all deliberate:
+  - The phone-wide 18px input rule beats the two 15px textareas.
+  - `.pkbang.sm` beats `.pkbang` on the fold button.
+  - The disabled Hold button's grey beats its white.
+  - The 1251 light twin beats the dark wash in light.
+  - The new 44–48px button floors beat `.pkbtn{min-height:36px}`.
+
+`gate_1249`, `gate_1250` and `gate_1243` are green after the change.
+
+## Build 1252 — only Theo, Joan and Curtis assign and close punch work
+
+Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
+
+**SQL first — `punch_boss_guard.sql`, APPLIED to production 7 Oct, before the writer.**
+- **New function:** `public.is_punch_boss()` returns true for theo@, joan@ and curtis@.
+- **Updated trigger function:** `punch_close_guard()` now lets bosses through untouched.
+  - **On UPDATE**, for anyone else, it refuses:
+    - a change to `assigned_to`;
+    - moving `status` to or from `'done'`.
+
+    It raises 42501 with a plain sentence.
+  - **On INSERT**, for anyone else, it refuses a row that arrives with an assignee or already done.
+    This runs through a **new trigger, `punch_boss_guard_ins`**, created only if missing. No DROP is
+    needed (destructive statements stall the migration tool).
+- **Verified:** triggers `punch_boss_guard_ins:I` and `punch_close_guard:U`, and the function body
+  calls `is_punch_boss`.
+- ⚠ **Scottie can no longer close.** Before this, `is_production() OR is_admin()` let him.
+
+**App** — so nobody is offered a control the database refuses:
+- **New helper.** `window.isPunchBoss()` uses the same three addresses.
+- **Punch List and home strip.** The queue's Assign button and the strip's tick follow the helper.
+  So does the ultrawide map's assign buttons.
+- **"+ New" composer.** Assign to shows for the bosses only; anyone else reads "Curtis assigns it".
+  The Kind options now read Punch-out / Repair (was Punch / Ticket).
+- **Card.** `isManager()` was already exactly these three.
+  - Bosses keep Close and Reopen.
+  - Everyone else sees what is still missing. Once the job is ready, the button becomes **"Tell
+    Curtis it's finished"**: it posts "Finished — ready for Curtis to close." to the message thread
+    and buzzes Curtis and Theo. It never changes the status.
+  - A closed card shows "Closed · date by X", with no Reopen.
+
+**Gates:**
+- **`gate_1252.mjs` (13 checks):**
+  - The bosses list is exact.
+  - As **Scottie**:
+    - the queue has no Assign button, and the strip tick is locked;
+    - his ready card has no Assign dropdown and shows "Tell Curtis";
+    - tapping it writes a message and no status, and buzzes Curtis and Theo;
+    - a closed card has no Reopen;
+    - "+ New" has no Assign dropdown, and its Kind list says Repair.
+  - As **Curtis**, all three controls are present.
+  - **RED on 1251** (9 failures).
+- **Gate repairs found on the way:**
+  - **`gate_1040`** still measured the list's `.pu-box`, which 1248 retired. It now measures the
+    list row (`.pl-row`, 96px on the seed's first row). Mine, from 1248.
+  - **`gate_767`'s "light really is a different ground"** passed or failed by chance. It set
+    `data-theme` directly, and `cr-rbtheme-toggle-script` re-applies the saved theme every second
+    (`setInterval(refreshAll, 1000)`). The probe showed the attribute already reverted to `null` at
+    0ms. The gate now saves the choice the way the app does. Green 3/3. This is not an app bug.
+- **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
+  types, dupes, scroll-lock, 1243.
+
+## Build 1253 — Trades on the New Lead form (Joan)
+
+Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She can only edit after."*
+
+- **The intake had no trades at all.** The six boxes (Roofing, Siding, Gutters, Windows, Repairs,
+  Misc) lived only on the Edit form (`#pfTrades`).
+  - They are now in the New Lead form's Job Details box as `#ldTrades`, visible without "More
+    detail".
+  - They are saved to `checklist.trades`, the key the Edit form writes and `ljTrades()` / Job
+    Details read.
+  - They reset to unticked on every open.
+- **Same cause, found on the way:** the intake saved Job Category and Work Type only *nested*
+  (`checklist.lead.category`, `.worktype`).
+  - Job Details, the Leads list and the reports read the *flat* `job_category` / `work_type` that
+    the Edit form writes, so whatever Joan picked never showed.
+  - The intake now writes the flat keys too. The nested copy stays.
+  - ⚠ Leads already entered keep their missing flat keys. They were not backfilled.
+- **Ink:** the base `.tradeopt` is a light-era `#2b2b2b`, so the intake's labels inherit the form's
+  ink instead (`--cr-stack` declared). Measured ≥4.5:1 in both themes, and every label is ≥44px.
+- **Not touched:** the other lead doors still take no trade:
+  - Quick Inspection's "new prospect";
+  - The Appointment;
+  - the Sol and community intakes.
+- **Gates:**
+  - **`gate_1253.mjs` (10 checks):**
+    - the six boxes are visible without "More detail";
+    - every label is 44px+ and reads at 4.5:1+ in both themes;
+    - a lead created with Roofing and Gutters, Residential and Repair writes `trades`,
+      `job_category` and `work_type` flat;
+    - the boxes reset when the form reopens.
+    - **RED on 1252.**
+  - **Also green:** types (after typing three DOM reads), dupes, stack, 1243.

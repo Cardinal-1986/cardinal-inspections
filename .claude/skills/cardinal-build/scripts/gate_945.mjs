@@ -2,16 +2,20 @@
    Drives the REAL page against the seeded mock (i3 queue / i4 assigned /
    i5 active-on-site / i1 scheduled / i2 closed) and asserts:
      1. the pinned queue renders the unassigned item with an Assign button
-     2. the four tabs exist and their counts match the buckets
-     3. the ACTIVE tab carries the check-in truth (ON SITE chip from i5's
+     2. (1248) the tabs are the kinds of work, and the WHEN groups hold the
+        buckets 945 introduced: Today = active, Coming up = scheduled,
+        No date = assigned. Was four state tabs (Active/Assigned/Scheduled/
+        Closed); build 1248 retired them on Theo's pick (1A).
+     3. the TODAY group carries the check-in truth (On site since, from i5's
         open visit, stamped with today's LOCAL day key)
-     4. the ASSIGNED tab shows No-day-set
+     4. the NO DATE group shows i4 as Not scheduled
      5. the Assign flow END TO END: sheet opens, person picked (load shown),
         day picked, Go writes assigned_to + scheduled_at through the mock
         (window.__WRITES__) and notifies EXACTLY ONCE through notifyTeam
      6. the queue shrinks after the assign (render happened)
-     7. the map contract holds (#puList .pu-card[data-pu]) and the one-tap
-        tick (data-putoggle) is untouched
+     7. the map contract holds (a #puList row carries data-pu). 1248 moved
+        closing into the card, so the LIST no longer carries the one-tap
+        tick — the home strip still does (gate_1248 I)
      8. every new control meets the build-944 44px floor
    Usage: node gate_945.mjs [path]   — point at the previous build for the
    negative control; failures are NAMED, never crashes (BUG_CLASSES 37). */
@@ -81,39 +85,39 @@ need('queue is oldest-first (i3 Downspout leads)', /Downspout/.test(q.first), 'f
 need('queue card carries an Assign button', q.btn);
 need('queue card states its age', /waiting \d+ day/.test(q.age), '"'+q.age+'"');
 
-/* 2 — four tabs with bucket counts */
+/* 2 — 1248: kind tabs, and the 945 buckets as WHEN groups */
 const tabs=await page.evaluate(()=>{
-  const t=[...document.querySelectorAll('#puTabs [data-putab]')].map(b=>b.getAttribute('data-putab'));
-  const n=id=>parseInt((document.getElementById(id)||{}).textContent||'-1',10);
-  return { t, act:n('puNActive'), asg:n('puNAssigned'), sch:n('puNSched'), dn:n('puNDone') };
+  const t=[...document.querySelectorAll('#puTabs [data-putype]')].map(b=>b.getAttribute('data-putype'));
+  const grp={}; let cur=null;
+  for(const el of document.querySelectorAll('#puList > *')){
+    if(el.classList.contains('pl-grp')){ cur=el.textContent.split('·')[0].trim(); grp[cur]=[]; }
+    else if(el.classList.contains('pl-row')&&cur) grp[cur].push(el.getAttribute('data-pu'));
+  }
+  const closedN=parseInt(((document.querySelector('#puList .pl-more')||{}).textContent||'').replace(/\D+/g,' ').trim().split(' ').pop()||'-1',10);
+  return { t, grp, closedN };
 });
-need('four tabs incl. assigned', tabs.t.join(',')==='active,assigned,scheduled,completed', tabs.t.join(','));
-need('active count = 1 (i5)', tabs.act===1, 'got '+tabs.act);
-need('assigned count = 1 (i4)', tabs.asg===1, 'got '+tabs.asg);
-need('scheduled count = 1 (i1 future)', tabs.sch===1, 'got '+tabs.sch);
-need('closed count = 1 (i2)', tabs.dn===1, 'got '+tabs.dn);
+need('the tabs are All + the four kinds', tabs.t.join(',')==='all,tarp,ticket,callback,punch', tabs.t.join(','));
+need('Today holds i5 (was the Active tab)', (tabs.grp['Today']||[]).join(',')==='i5', JSON.stringify(tabs.grp));
+need('No date holds i4 (was the Assigned tab)', (tabs.grp['No date']||[]).join(',')==='i4', JSON.stringify(tabs.grp));
+need('Coming up holds i1 (was the Scheduled tab)', (tabs.grp['Coming up']||[]).join(',')==='i1', JSON.stringify(tabs.grp));
+need('Closed is one tap away with i2 counted', tabs.closedN===1, 'got '+tabs.closedN);
 
-/* 3 — check-in truth on ACTIVE */
+/* 3 — check-in truth in TODAY */
 const act=await page.evaluate(()=>({
-  onsite:(document.querySelector('#puList .pu-st.on')||{}).textContent||'',
+  onsite:(document.querySelector('#puList .pl-row[data-pu="i5"] .pl-wh.live')||{}).textContent||'',
   tick:!!document.querySelector('#puList [data-putoggle]'),
-  mapcard:!!document.querySelector('#puList .pu-card[data-pu]') }));
-need('ACTIVE shows ON SITE since (i5 open visit, local day)', /On site since/.test(act.onsite), '"'+act.onsite+'"');
-need('one-tap tick untouched (data-putoggle)', act.tick);
-need('map contract holds (#puList .pu-card[data-pu])', act.mapcard);
+  mapcard:!!document.querySelector('#puList .pl-row[data-pu]') }));
+need('TODAY shows On site since (i5 open visit, local day)', /On site since/.test(act.onsite), '"'+act.onsite+'"');
+need('the list carries no tick (1248: closing lives in the card)', !act.tick);
+need('map contract holds (#puList row with data-pu)', act.mapcard);
 
-/* 4 — ASSIGNED tab */
-await tap('#puTabs [data-putab="assigned"]','switch to assigned');
-await page.waitForTimeout(300);
-const asg=await page.evaluate(()=>({
-  noday:(document.querySelector('#puList .pu-st.idle')||{}).textContent||'',
-  card:(document.querySelector('#puList .pu-t')||{}).textContent||'' }));
-need('ASSIGNED shows i4 (Soffit vent swap)', /Soffit/.test(asg.card), '"'+asg.card+'"');
-need('ASSIGNED card says No day set', /No day set/.test(asg.noday), '"'+asg.noday+'"');
+/* 4 — NO DATE group */
+const asg=await page.evaluate(()=>{ const r=document.querySelector('#puList .pl-row[data-pu="i4"]');
+  return { card:r?(r.querySelector('.pl-pb')||{}).textContent||'':'', noday:r?(r.querySelector('.pl-wh')||{}).textContent||'':'' }; });
+need('NO DATE shows i4 (Soffit vent swap)', /Soffit/.test(asg.card), '"'+asg.card+'"');
+need('NO DATE row says Not scheduled', /Not scheduled/.test(asg.noday), '"'+asg.noday+'"');
 
 /* 5 — the Assign flow end to end */
-await tap('#puTabs [data-putab="active"]','back to active');
-await page.waitForTimeout(200);
 await tap('#puQueue [data-puassign-open]','open the assign sheet');
 await page.waitForTimeout(300);
 const sheet=await page.evaluate(()=>({

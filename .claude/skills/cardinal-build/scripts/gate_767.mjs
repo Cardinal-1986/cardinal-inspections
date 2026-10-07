@@ -189,8 +189,9 @@ ok('the Punch-outs box opens the full Punch & Repairs page (856)', await page.ev
    both open items are visible through the shipped buckets. */
 ok('the punch page shows the open items', await page.evaluate(() =>
   /drip edge/i.test(document.getElementById('puList').textContent) &&
-  document.getElementById('puNAssigned').textContent === '1' &&
-  / 2 open/.test(document.getElementById('puSub').textContent)),
+  /* 1248: the old Assigned tab is the No date group now */
+  !!document.querySelector('#puList .pl-row') &&
+  /\b2 open/.test(document.getElementById('puSub').textContent)),
   await page.evaluate(() => document.getElementById('puSub').textContent));
 ok('the hub closed WITHOUT bouncing to retail home (857)', await page.evaluate(() => {
   const mv = document.getElementById('mainView');
@@ -206,7 +207,7 @@ await page.click('#cr-pb .pbclosed');
 await page.waitForTimeout(700);
 ok('Closed repairs routes to the full punch page too (856)', await page.evaluate(() =>
   document.getElementById('punchView').style.display === 'block'));
-await page.click('#punchView [data-putab="completed"]');
+await page.click('#punchView #puList [data-pufocus="closed"]');   /* 1248: Closed is a view at the foot of the list */
 await page.waitForTimeout(500);
 await shot('04-closed');
 const closed = await page.evaluate(() => document.getElementById('puList').textContent);
@@ -318,7 +319,11 @@ const darkBad = dark.filter(r => r.ratio < r.floor);
 ok('dark: every measured ink clears its floor', darkBad.length === 0, JSON.stringify(darkBad.slice(0, 6)));
 ok('dark: something was actually measured', dark.length >= 12, 'n=' + dark.length);
 
-await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'rb-light'));
+/* RIG REPAIR (1252): cr-rbtheme-toggle-script re-applies the SAVED theme every
+   second (refreshAll, setInterval 1000), so setting the attribute alone was
+   undone within a second and this check passed or failed on which side of that
+   tick it read. Switch the way the app does: save the choice, then apply. */
+await page.evaluate(() => { try{ localStorage.setItem('cardinal.theme.rb', '1'); }catch(_){} document.documentElement.setAttribute('data-theme', 'rb-light'); });
 await page.waitForTimeout(400);
 await shot('07-light');
 const light = await contrast();
@@ -329,7 +334,7 @@ ok('light really is a different ground (the twin applies)', await page.evaluate(
   const bg = getComputedStyle(document.getElementById('cr-pb')).backgroundColor;
   return /244|245|246/.test(bg);
 }), await page.evaluate(() => getComputedStyle(document.getElementById('cr-pb')).backgroundColor));
-await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
+await page.evaluate(() => { try{ localStorage.setItem('cardinal.theme.rb', '0'); }catch(_){} document.documentElement.removeAttribute('data-theme'); });
 
 console.log('\n--- close, and the invariants ---');
 await page.evaluate(() => window.CardinalProduction.close(false));

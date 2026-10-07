@@ -50,7 +50,8 @@ const tabs=await page.evaluate(()=>{
 });
 need('punch tabs found', !!tabs);
 if(tabs){
-  need('four tabs FIT at 390 (seed counts)', tabs.seedFit.sw<=tabs.seedFit.cw,
+  /* 1248: five kind tabs now (All + four kinds) — the fit contract is unchanged */
+  need('kind tabs FIT at 390 (seed counts)', tabs.seedFit.sw<=tabs.seedFit.cw,
     tabs.seedFit.sw+' > '+tabs.seedFit.cw);
   need('still fit with every badge at "88"', tabs.wideFit.sw<=tabs.wideFit.cw,
     tabs.wideFit.sw+' > '+tabs.wideFit.cw);

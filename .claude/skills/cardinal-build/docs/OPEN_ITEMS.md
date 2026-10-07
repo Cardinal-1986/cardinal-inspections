@@ -1237,8 +1237,7 @@ Each is a real finding whose every fix is an aesthetic or layout decision:
   the sandbox Client ID/Secret from the portal into Vercel. **Next: build 1245, the
   Order-from-ABC screen on the client profile** (Materials list + estimate ABC lines + ABC
   templates; delivery or pickup per order; full review and confirm).
-- ✅ **Build 1245 SHIPPED the Order-from-ABC screen.** Two things are Theo's: **run
-  `abc_item_map.sql`** (matches are kept per job until then), and once the sandbox keys are in
+- ✅ **Build 1245 SHIPPED the Order-from-ABC screen.** ✅ `abc_item_map.sql` was **applied 7 Oct 2026**. What is Theo's: once the sandbox keys are in
   Vercel, **send one TEST order and email its confirmation number to apisupport@abcsupply.com**.
   Not built yet: an order-level note to the yard (ABC's field for it is not doc-verified), and
   delivery status back from ABC (webhooks — after live orders are on).
@@ -6227,3 +6226,29 @@ size). "A11" is read as **Buttons A · Type 1 · Forms 1**.
   **both** themes: profile, Add project, Roofing checklist, GC, Lead, New Lead, Appointment and
   Signature. **Do not "finish the dark theme" on them.** It was offered as option 2 and declined.
   `gate_1241` holds their readability.
+
+
+## 🟠 Pre-rollout readiness (7 Oct 2026) — punch-outs first, then the extras
+
+Theo, 7 Oct: *"We haven't rolled the app out yet ... I want to make sure that before we do, everything
+is working."* Then: *"Let's do it all."* Order, settled that night:
+1. **Prove the flow** (Curtis creates/assigns → Scottie checks in, steps, photos, closes → a rep sees
+   only theirs) — sweep started; findings in the build log under 1247.
+2. **Buzzes reach phones** — ⚠ Scottie, Nick, Jacob have **zero** push subscriptions. Rollout-day
+   checklist item: install the app, allow notifications, confirm a test buzz lands.
+3. **AccuLynx transfer** — runbook `spark/ACCULYNX_MIGRATION.md`; still blocked on the stale
+   `CARDINAL_PASSWORD` on the Spark and Theo's two decisions (Karrie Johnson / Dan Thompson attach;
+   skip the two AccuLynx test records). The 13 Aug fetch is 7 weeks old — re-fetch before the run.
+4. **Build, previewed first, one per build** — Theo picked **1A 2C 3C 4C** (7 Oct). ✅ **1A, the
+   Punch List, shipped at 1248.** ✅ **3C On hold at 1249** (`punch_hold.sql` applied). ✅ **Flag for
+   follow-up at 1250** (Theo's add — a salesman flags an angry-client call; `punch_ping.sql` applied).
+   Next: 2C the person's route page, then 4C the buzzes.
+   ✅ **Theo's call, 7 Oct: only Theo, Joan and Curtis assign and close (1252, `punch_boss_guard.sql`).**
+   Still open by design: anyone signed in may edit the other fields (title, detail, schedule, photos,
+   steps). Say if scheduling should be bosses-only too. Original list: Punch List page with **Tarps · Repairs · Callbacks ·
+   Punch-outs** tabs (all four `kind`s already exist — `ticket` is shown as "Repair"); a per-person
+   **My page** (Today · Overdue · In progress · Up next · **On hold** · Completed) — On hold is the
+   only new state and must carry a **reason + a revisit date**; Curtis's 3pm plan buzz + 6pm crew
+   list; Theo's 7am report; escalation (2 days → Curtis, 5 → Theo); callback cause + original crew;
+   time on job; "repair done" homeowner report; homeowner sign-off; load-the-truck list; voice
+   notes; rain flag. **"On my way" texts need a paid SMS service — Theo's call.**

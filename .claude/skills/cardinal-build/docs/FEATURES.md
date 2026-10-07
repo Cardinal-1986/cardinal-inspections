@@ -9468,3 +9468,53 @@ Account numbers: LIVE uses the Suppliers screen's Ship-To/Branch; TEST keeps its
 | Reset | every open starts at 1×; `CardinalMultiCam._state()` reports `zoom` and `lens` |
 
 Gate: `gate_1246.mjs`.
+
+## Build 1247 — Punch & Repairs tabs fit at 390px with two-digit counts
+`.pu-tabs .pu-tab` phone padding 6 → 4px (text stays 13px, the type scale). Gate: `gate_950`.
+
+## Build 1248 — the Punch List (1A) (`#punchView`, `cr-punch-script`)
+
+| Piece | What |
+|---|---|
+| Kind tabs `#puTabs [data-putype]` | All · Tarps (`tarp`) · Repairs (`ticket`) · Callbacks (`callback`) · Punch-outs (`punch`), with counts |
+| Groups | `plGroup()`: late · today · next · nodate · hold (+ closed). Order `plOrder()`: urgent, day, time, oldest |
+| Rows `.pl-row[data-pu]` | one markup; `@container pulist (min-width:860px)` = table, else three lines |
+| Queue `#puQueue` | unchanged (945): unassigned, oldest first, Assign › — narrows with the kind tab |
+| Rail (≥901px) | kinds · Needs attention (`data-pufocus` late/nodate/hold/closed) · Crew · CRM |
+| On hold | reads `hold_reason`/`hold_until` (3C's `punch_hold.sql`); status stays `open` |
+| Closing | in the card only — the list's tick is gone; home strips keep theirs |
+
+Gate: `gate_1248.mjs`.
+
+## Build 1249 — On hold (`cr-pk-script`)
+
+| Piece | What |
+|---|---|
+| Put on hold | card fold → sheet: reason (`materials/homeowner/weather/adjuster/other`), look-again day (6 working days, Sunday skipped, assignee load per day), note |
+| Write | `hold_reason, hold_until, hold_note, hold_by, hold_at` + `scheduled_at = hold_until`, `scheduled_time = null`; status untouched |
+| On the card | On hold block (reason, day, note, who) · Change · Take off hold (nulls all five) |
+| On the list | 1248's On hold group / Back from hold flag |
+
+SQL `punch_hold.sql` (applied). Gate: `gate_1249.mjs`.
+
+## Build 1250 — Flag for follow-up (`cr-pk-script`, `cr-punch-script`)
+
+| Piece | What |
+|---|---|
+| Raise | anyone · note required · `ping_note, ping_by, ping_at` (+ clears `ping_done_*`) · thread entry · buzz Curtis, Theo, assignee (not sender) |
+| Card | red Needs follow-up block at the top · Handled requires an answer → `ping_done_note, ping_done_by, ping_done_at` + thread entry |
+| List | `plPing()` → group `ping`, first, red, `!` before the client, the note as the line; closed items too; rail + subtitle count |
+
+SQL `punch_ping.sql` (applied). Gate: `gate_1250.mjs`.
+
+## Build 1252 — punch bosses (`punch_boss_guard.sql`, `window.isPunchBoss`)
+
+| Who | Assign / reassign | Close / reopen | Everything else on a punch item |
+|---|---|---|---|
+| Theo, Joan, Curtis | ✅ | ✅ | ✅ |
+| Everyone else (incl. Scottie) | ❌ (files unassigned) | ❌ — "Tell Curtis it's finished" | ✅ file, message, photos, steps, check in, flag, hold |
+
+Enforced by the trigger (UPDATE and INSERT). Gate: `gate_1252.mjs`.
+
+## Build 1253 — New Lead form trades (`#ldTrades`)
+The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the keys Job Details reads). Gate: `gate_1253.mjs`.
