@@ -9471,3 +9471,17 @@ Gate: `gate_1246.mjs`.
 
 ## Build 1247 — Punch & Repairs tabs fit at 390px with two-digit counts
 `.pu-tabs .pu-tab` phone padding 6 → 4px (text stays 13px, the type scale). Gate: `gate_950`.
+
+## Build 1248 — the Punch List (1A) (`#punchView`, `cr-punch-script`)
+
+| Piece | What |
+|---|---|
+| Kind tabs `#puTabs [data-putype]` | All · Tarps (`tarp`) · Repairs (`ticket`) · Callbacks (`callback`) · Punch-outs (`punch`), with counts |
+| Groups | `plGroup()`: late · today · next · nodate · hold (+ closed). Order `plOrder()`: urgent, day, time, oldest |
+| Rows `.pl-row[data-pu]` | one markup; `@container pulist (min-width:860px)` = table, else three lines |
+| Queue `#puQueue` | unchanged (945): unassigned, oldest first, Assign › — narrows with the kind tab |
+| Rail (≥901px) | kinds · Needs attention (`data-pufocus` late/nodate/hold/closed) · Crew · CRM |
+| On hold | reads `hold_reason`/`hold_until` (3C's `punch_hold.sql`); status stays `open` |
+| Closing | in the card only — the list's tick is gone; home strips keep theirs |
+
+Gate: `gate_1248.mjs`.

@@ -189,8 +189,9 @@ ok('the Punch-outs box opens the full Punch & Repairs page (856)', await page.ev
    both open items are visible through the shipped buckets. */
 ok('the punch page shows the open items', await page.evaluate(() =>
   /drip edge/i.test(document.getElementById('puList').textContent) &&
-  document.getElementById('puNAssigned').textContent === '1' &&
-  / 2 open/.test(document.getElementById('puSub').textContent)),
+  /* 1248: the old Assigned tab is the No date group now */
+  !!document.querySelector('#puList .pl-row') &&
+  /\b2 open/.test(document.getElementById('puSub').textContent)),
   await page.evaluate(() => document.getElementById('puSub').textContent));
 ok('the hub closed WITHOUT bouncing to retail home (857)', await page.evaluate(() => {
   const mv = document.getElementById('mainView');
@@ -206,7 +207,7 @@ await page.click('#cr-pb .pbclosed');
 await page.waitForTimeout(700);
 ok('Closed repairs routes to the full punch page too (856)', await page.evaluate(() =>
   document.getElementById('punchView').style.display === 'block'));
-await page.click('#punchView [data-putab="completed"]');
+await page.click('#punchView #puList [data-pufocus="closed"]');   /* 1248: Closed is a view at the foot of the list */
 await page.waitForTimeout(500);
 await shot('04-closed');
 const closed = await page.evaluate(() => document.getElementById('puList').textContent);

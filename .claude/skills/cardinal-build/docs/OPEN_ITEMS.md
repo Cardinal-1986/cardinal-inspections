@@ -6239,7 +6239,9 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 3. **AccuLynx transfer** — runbook `spark/ACCULYNX_MIGRATION.md`; still blocked on the stale
    `CARDINAL_PASSWORD` on the Spark and Theo's two decisions (Karrie Johnson / Dan Thompson attach;
    skip the two AccuLynx test records). The 13 Aug fetch is 7 weeks old — re-fetch before the run.
-4. **Build, previewed first, one per build:** Punch List page with **Tarps · Repairs · Callbacks ·
+4. **Build, previewed first, one per build** — Theo picked **1A 2C 3C 4C** (7 Oct). ✅ **1A, the
+   Punch List, shipped at 1248.** Next: 3C On hold (`punch_hold.sql` first), 2C the person's route
+   page, 4C the buzzes. Original list: Punch List page with **Tarps · Repairs · Callbacks ·
    Punch-outs** tabs (all four `kind`s already exist — `ticket` is shown as "Repair"); a per-person
    **My page** (Today · Overdue · In progress · Up next · **On hold** · Completed) — On hold is the
    only new state and must carry a **reason + a revisit date**; Curtis's 3pm plan buzz + 6pm crew

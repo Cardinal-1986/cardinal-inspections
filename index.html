@@ -4070,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1247<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1248<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4383,31 +4383,21 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2><button class="pu-new" id="puNewBtn" type="button">&#65291; New</button></div>
     <p class="pu-sub" id="puSub">&mdash;</p>
     <div id="puQueue"></div>
-    <div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Search name, address, PO # or item&#8230;" aria-label="Search punch items"></div>
-    <div class="pu-ctl"><span class="sl">Sort by</span>
-      <button class="pu-chip" id="puSortChip">Urgency</button>
-      <div class="right">
-        <div class="pu-ico" id="puDirBtn" title="Reverse order">&#8645;</div>
-        <div class="pu-ico" id="puFunnel" title="Filters">&#9923;<span class="bdg" id="puBadge">0</span></div>
-      </div>
+    <div class="pu-ctl"><div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Client, address, PO # or item" aria-label="Search punch items"></div>
+      <button class="pu-ico" id="puFunnel" type="button" title="Filters" aria-label="Filters">&#9923;<span class="bdg" id="puBadge">0</span></button>
     </div>
-    <div class="pu-tabs" id="puTabs">
-      <button class="pu-tab on" data-putab="active">Active <span class="n" id="puNActive">0</span></button>
-      <button class="pu-tab" data-putab="assigned">Assigned <span class="n" id="puNAssigned">0</span></button>
-      <button class="pu-tab" data-putab="scheduled">Scheduled <span class="n" id="puNSched">0</span></button>
-      <button class="pu-tab" data-putab="completed">Closed <span class="n" id="puNDone">0</span></button>
+    <div class="pu-tabs" id="puTabs" role="group" aria-label="Kind of work">
+      <button class="pu-tab on" type="button" data-putype="all" aria-pressed="true"><b class="n" id="puNAll">0</b><span>All</span></button>
+      <button class="pu-tab k-tarp" type="button" data-putype="tarp" aria-pressed="false"><b class="n" id="puNTarp">0</b><span>Tarps</span></button>
+      <button class="pu-tab k-ticket" type="button" data-putype="ticket" aria-pressed="false"><b class="n" id="puNTicket">0</b><span>Repairs</span></button>
+      <button class="pu-tab k-callback" type="button" data-putype="callback" aria-pressed="false"><b class="n" id="puNCallback">0</b><span>Callbacks</span></button>
+      <button class="pu-tab k-punch" type="button" data-putype="punch" aria-pressed="false"><b class="n" id="puNPunch">0</b><span>Punch-outs</span></button>
     </div>
     <div class="pu-lay">
-      <aside class="pu-rail-wrap"><div class="pu-rail" id="puRail"></div>
-        <select class="pu-sel" id="puSortSel" style="display:none;"></select>
-      </aside>
+      <aside class="pu-rail-wrap"><div class="pu-rail" id="puRail"></div></aside>
       <div><div id="puList"></div></div>
     </div>
   </div>
-  <div class="pu-sheet" id="puShSort"><div class="panel">
-    <div class="ph"><span class="t">Sort by</span><button id="puSortClose">Close</button></div>
-    <div id="puSortList"></div>
-  </div></div>
   <div class="pu-sheet" id="puShFilter"><div class="panel">
     <div class="ph"><button id="puFDone">Done</button><span class="t" id="puFTitle">Filters (0)</span><span style="width:44px"></span></div>
     <button class="pu-clr" id="puClearAll">Clear all</button>
@@ -43468,6 +43458,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1248, d: '2026-10-07', t: 'The Punch List, redesigned',
+    s: 'Punch & Repairs is one clean list now, grouped by when: Past due, Today, Coming up, No date and On hold. The tabs across the top are the four kinds of work — Tarps, Repairs, Callbacks and Punch-outs — each with its count. On a computer it reads as a table with the client, what’s wrong, how old it is, when it’s due and who has it; on a phone each job is three short lines. Jobs nobody has yet still sit at the top until someone is assigned. Closed work is one tap away at the bottom. Close a job from its card now, where the photos and steps are — the old tick box on the list is gone.' },
   { b: 1247, d: '2026-10-07', t: 'Punch & Repairs tabs fit a phone again',
     s: 'Once a tab count reached two digits, the four Punch & Repairs tabs ran off the edge of a phone. They fit again, at the same text size.' },
   { b: 1246, d: '2026-10-06', t: 'The camera zooms',
@@ -67225,15 +67217,6 @@ if(typeof _origOLF === 'function'){
       explicit rb-light twins below (the 942 discipline: computed, both
       themes). Day-N amber is build 940's #f0a24a mark, not a new colour. ── */
 /* four tabs must FIT at 390px — a tab hidden behind a pan reads as missing */
-@media (max-width:430px){
-  /* .pu-tabs .pu-tab: the base rule sits LATER in this block and would win a
-     same-specificity fight by source order */
-  /* 1247: the type scale (1242) took these tabs 12 -> 13px and they overflowed the
-     phone by 8px once the counts reached two digits. The text stays on the scale;
-     the side padding gives the room back. */
-  .pu-tabs .pu-tab{padding:10px 4px;font-size:13px;--cr-stack:"the phone fit has always overridden the base .pu-tab rule (945); 1247 only changed its padding";}
-  .pu-tabs .pu-tab .n{margin-left:3px;padding:2px 4px;font-size:11px;}
-}
 #puQueue .pu-hero{border:1.5px solid #f5c045;background:rgba(245,192,69,.06);border-radius:13px;padding:11px 12px;margin:0 0 12px;}
 #puQueue .ph2{display:flex;align-items:baseline;gap:9px;margin:0 0 9px;}
 #puQueue .ph2 b{font:800 18px 'Segoe UI',Arial,sans-serif;color:#f5c045;}
@@ -67329,21 +67312,16 @@ body.cr-prod #punchView{ position:fixed; inset:0; z-index:9400; overflow-y:auto;
 .pu-new:focus-visible{outline:2px solid #fff;outline-offset:2px;}
 .pu-title{margin:0;flex:1;font:800 22px Georgia,'Times New Roman',serif;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
 .pu-sub{margin:1px 0 11px;font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
-.pu-srch{display:flex;align-items:center;gap:8px;background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:6px;
-  padding:8px 12px;margin-bottom:10px;color:var(--rbe-mute);font-size:13px;}
+.pu-srch{display:flex;align-items:center;gap:8px;background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:10px;
+  padding:0 12px;min-height:44px;flex:1;min-width:0;color:var(--rbe-mute);font-size:13px;}
 .pu-srch input{flex:1;background:none;border:0;outline:0;color:var(--rbe-ink);font:600 13px 'Segoe UI',Arial,sans-serif;min-width:0;}
-.pu-ctl{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
-.pu-ctl .sl{font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
-.pu-chip{color:var(--rbe-acc);font:700 13px 'Segoe UI',Arial,sans-serif;background:none;border:0;padding:2px 4px;min-height:44px;cursor:pointer;
-  text-decoration:underline dashed var(--rbe-gradline);text-decoration-thickness:1px;text-underline-offset:5px;
-}
-.pu-ico{width:34px;height:34px;border:1px solid var(--rbe-line);background:var(--rbe-panel);color:var(--rbe-ink);border-radius:9px;
+.pu-ctl{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.pu-ico{width:44px;height:44px;flex:0 0 auto;padding:0;border:1px solid var(--rbe-line);background:var(--rbe-panel);color:var(--rbe-ink);border-radius:9px;
   display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;position:relative;}
 .pu-ico.on{border-color:var(--rbe-acc);color:var(--rbe-acclt);}
 .pu-ico .bdg{position:absolute;top:-6px;right:-6px;background:var(--rbe-acc);color:var(--rbe-checkfg);
   font:800 11px ui-monospace,Menlo,monospace;border-radius:999px;padding:1px 5px;display:none;}
 .pu-ico .bdg.show{display:block;}
-.pu-ctl .right{margin-left:auto;display:flex;gap:8px;}
 .pu-lay{display:block;}
 .pu-rail{display:none;}
 .pu-card{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);
@@ -67412,19 +67390,10 @@ body.viewing-community-hub .pu-strip .pu-t{color:#2d3338;}
 body.viewing-community-hub .pu-strip .pu-cl{background:none;-webkit-text-fill-color:#8d5231;color:#8d5231;}
 body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 @media (min-width:901px){
-  .pu-ctl .pu-chip,.pu-ctl .sl,#puFunnel{display:none;}
+  #puFunnel,#puTabs{display:none;}
   .pu-lay{display:grid;grid-template-columns:230px 1fr;gap:14px;align-items:start;}
   .pu-rail{display:block;background:var(--rbe-railbg);border:1px solid var(--rbe-hair);border-radius:12px;padding:13px;
     position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
-  .pu-sel{width:100%;background:var(--rbe-panel);border:1px solid var(--rbe-line);color:var(--rbe-ink);border-radius:9px;padding:8px 10px;
-    font:600 13px 'Segoe UI',Arial,sans-serif;margin-bottom:10px;}
-  .pu-fg{margin-top:10px;border-top:1px solid var(--rbe-hair);padding-top:8px;}
-  .pu-fg .ft{font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--rbe-acc);margin-bottom:7px;}
-  .pu-fr{display:flex;align-items:center;gap:8px;padding:5px 2px;color:var(--rbe-ink);font-size:13px;cursor:pointer;}
-  .pu-fr .bx{width:15px;height:15px;border:1.4px solid var(--rbe-checkbd);border-radius:4px;display:flex;align-items:center;
-    justify-content:center;font-size:11px;color:var(--rbe-checkfg);flex:0 0 auto;}
-  .pu-fr.on .bx{background:var(--rbe-ok);border-color:var(--rbe-ok);font-weight:800;}
-  .pu-fr .c{margin-left:auto;font:700 11px ui-monospace,Menlo,monospace;color:var(--rbe-mute2);}
 }
 /* priority colours: urgent red · normal orange · low yellow — semantic, fixed in both themes */
 .pu-tag.prio-high{border-color:#e2574a;color:#f2a08a;}
@@ -67433,15 +67402,103 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pu-card.prio-high::before{background:#e2574a;box-shadow:0 0 7px rgba(226,87,74,.6);}
 .pu-card.prio-normal::before{background:#d98324;}
 .pu-card.prio-low::before{background:#c8202e;}
-/* active / scheduled / completed tabs (912) */
-.pu-tabs{display:flex;align-items:center;gap:0;border-bottom:1px solid var(--rbe-line);margin:0 0 13px;
-  overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+/* 1248: the four kinds of work (1A). Was Active / Assigned / Scheduled / Closed
+   (912, 945). Five even cells on a phone, a coloured cap per kind; the desktop
+   rail carries the same choice, so the strip hides at 901px and up. The kind
+   marks are the validated categorical set (both themes, 3:1 on their ground);
+   the inks beside them are text twins that clear 4.5:1. */
+#punchView{--pl-tarp:#4f86e8;--pl-ticket:#c4801a;--pl-callback:#9670e0;--pl-punch:#2fa86a;
+  --pl-late:#f08a90;--pl-latebg:#1c1013;--pl-live:#6fd39b;--pl-chip:#22262c;}
+:root[data-theme="rb-light"] #punchView{--pl-tarp:#2f6fdf;--pl-ticket:#b97606;--pl-callback:#8a5cd6;--pl-punch:#2f9e64;
+  --pl-late:#a3151f;--pl-latebg:#fbefef;--pl-live:#1b7d49;--pl-chip:#ebe8e2;}
+.pu-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0 0 12px;
+  overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;}
 .pu-tabs::-webkit-scrollbar{display:none;}
-.pu-tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 15px;cursor:pointer;white-space:nowrap;flex:0 0 auto;
-  font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-bottom:-1px;}
-.pu-tab.on{color:var(--rbe-acclt);border-bottom-color:var(--rbe-acc);}
-.pu-tab .n{font:700 11px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;
-  padding:2px 7px;margin-left:7px;}
+.pu-tab{position:relative;overflow:hidden;min-width:0;min-height:58px;padding:6px 2px 4px;border:0;border-radius:12px;cursor:pointer;
+  background:var(--pl-chip,#22262c);color:var(--rbe-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;}
+.pu-tab::before{content:'';position:absolute;top:0;left:14px;right:14px;height:3px;border-radius:0 0 3px 3px;background:transparent;}
+.pu-tab.k-tarp::before{background:var(--pl-tarp,#4f86e8);}
+.pu-tab.k-ticket::before{background:var(--pl-ticket,#c4801a);}
+.pu-tab.k-callback::before{background:var(--pl-callback,#9670e0);}
+.pu-tab.k-punch::before{background:var(--pl-punch,#2fa86a);}
+.pu-tab .n{font:700 18px 'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums;color:inherit;}
+.pu-tab span{font:600 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.pu-tab.on{background:var(--rbe-ink);color:var(--rbe-panel2,#101015);}
+.pu-tab.on span{color:var(--rbe-panel2,#101015);}
+/* 1248: the list. ONE row markup, two layouts, chosen by the width of #puList
+   itself — not the window — so the 480–560px column beside the ultrawide map
+   (pumap) gets the phone rows and a desktop list gets the table. */
+#puList{container-type:inline-size;container-name:pulist;}
+.pl-cols{display:none;}
+.pl-grp{display:flex;align-items:center;gap:10px;min-height:34px;margin-top:6px;font:700 11px ui-monospace,Menlo,monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute);}
+.pl-grp::after{content:'';flex:1;height:1px;background:var(--rbe-line);}
+.pl-grp.late{color:var(--pl-late,#f08a90);}
+.pl-row{display:grid;grid-template-columns:4px auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px;
+  grid-template-areas:"stp cl cl age" "stp kd pb pb" "stp wh wh cr";
+  padding:10px 12px 10px 0;border-bottom:1px solid var(--rbe-line);cursor:pointer;color:var(--rbe-ink);font-size:15px;}
+.pl-row:focus-visible{outline:2px solid var(--rbe-acc);outline-offset:-2px;}
+.pl-row.late{background:var(--pl-latebg,#1c1013);}
+.pl-row.done{opacity:.7;}
+.pl-stp{grid-area:stp;align-self:stretch;width:4px;border-radius:2px;}
+.pl-row.u .pl-stp{background:#c8202e;}
+.pl-kd{grid-area:kd;display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;}
+.pl-k1{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--rbe-ink);}
+.pl-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--rbe-mute);}
+.pl-row.k-tarp .pl-dot{background:var(--pl-tarp,#4f86e8);}
+.pl-row.k-ticket .pl-dot{background:var(--pl-ticket,#c4801a);}
+.pl-row.k-callback .pl-dot{background:var(--pl-callback,#9670e0);}
+.pl-row.k-punch .pl-dot{background:var(--pl-punch,#2fa86a);}
+.pl-flag{font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--pl-late,#f08a90);white-space:nowrap;}
+.pl-cl{grid-area:cl;display:flex;align-items:baseline;gap:8px;min-width:0;}
+.pl-cl b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;color:var(--rbe-head,#ffffff);}
+.pl-cl small{font-size:13px;color:var(--rbe-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 0;min-width:0;}
+.pl-pb{grid-area:pb;font-size:13px;color:var(--rbe-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;align-self:center;}
+.pl-age{grid-area:age;font:600 13px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--rbe-mute);text-align:right;}
+.pl-wh{grid-area:wh;display:flex;align-items:baseline;gap:6px;min-width:0;font-size:13px;white-space:nowrap;}
+.pl-wh b{font-weight:600;}
+.pl-wh small{font-size:13px;color:var(--rbe-mute);overflow:hidden;text-overflow:ellipsis;}
+.pl-wh.late small{color:var(--pl-late,#f08a90);font-weight:600;}
+.pl-wh.live small{color:var(--pl-live,#6fd39b);font-weight:600;}
+.pl-wh.warn small{color:var(--pl-late,#f08a90);}
+.pl-cr{grid-area:cr;display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;}
+.pl-av{width:26px;height:26px;border-radius:50%;background:var(--pl-chip,#22262c);color:var(--rbe-ink);display:grid;place-items:center;
+  font:700 11px ui-monospace,Menlo,monospace;flex:0 0 auto;}
+.pl-cr .pl-nm{display:none;}
+.pl-more,.pl-back{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;margin-top:14px;padding:0 14px;
+  border:1px solid var(--rbe-line);border-radius:12px;background:none;color:var(--rbe-ink);font:600 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.pl-back{justify-content:flex-start;gap:8px;margin:0 0 6px;}
+/* 860px of LIST, not window: the table's fixed columns take ~540px, so below
+   this the client and the problem would ellipsize to nothing. With the app's
+   left nav open a 1280 window gives the list ~716px and the rows; collapse the
+   nav or widen the window and the table arrives. */
+@container pulist (min-width:860px){
+  .pl-cols,.pl-row{grid-template-columns:4px 112px minmax(0,1fr) minmax(0,1.2fr) 48px 168px 120px;column-gap:14px;
+    grid-template-areas:"stp kd cl pb age wh cr";align-items:center;}
+  .pl-cols{display:grid;min-height:34px;border-bottom:1px solid var(--rbe-line);font:700 11px ui-monospace,Menlo,monospace;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--rbe-mute);}
+  .pl-row{min-height:56px;padding:6px 0;row-gap:0;}
+  .pl-kd{flex-direction:column;align-items:flex-start;gap:2px;}
+  .pl-cl{flex-direction:column;align-items:stretch;gap:0;}
+  .pl-cl b,.pl-cl small{display:block;}
+  .pl-pb{font-size:15px;color:var(--rbe-ink);}
+  .pl-age{text-align:left;}
+  .pl-wh{flex-direction:column;align-items:flex-start;gap:0;}
+  .pl-cr .pl-nm{display:inline;}
+}
+@media (min-width:901px){
+  .pl-ri{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 10px;border:0;border-radius:9px;background:none;
+    color:var(--rbe-ink);font:500 15px 'Segoe UI',Arial,sans-serif;text-align:left;cursor:pointer;}
+  .pl-ri.on{background:var(--pl-chip,#22262c);font-weight:700;}
+  .pl-ri .n{margin-left:auto;font:600 13px ui-monospace,Menlo,monospace;color:var(--rbe-mute);}
+  .pl-ri .n.hot{color:var(--pl-late,#f08a90);}
+  .pl-sq{width:11px;height:11px;border-radius:3px;flex:0 0 auto;}
+  .pl-ri.k-tarp .pl-sq{background:var(--pl-tarp,#4f86e8);}
+  .pl-ri.k-ticket .pl-sq{background:var(--pl-ticket,#c4801a);}
+  .pl-ri.k-callback .pl-sq{background:var(--pl-callback,#9670e0);}
+  .pl-ri.k-punch .pl-sq{background:var(--pl-punch,#2fa86a);}
+  .pl-rh{margin:16px 10px 6px;font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute);}
+}
 .pu-sched{font:700 11px ui-monospace,Menlo,monospace;color:var(--rbe-money);margin-top:3px;}
 @media print{#punchView{background:#fff;color:#000;}}
 </style>
@@ -67569,15 +67626,11 @@ window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
   update : update,
   openCount : function(){ return _rows.filter(function(i){ return i.status !== 'done'; }).length; }
 });
-var PU = { sort:'urgent', dir:1, sets:{}, q:'', tab:'active' };
+/* 1248: type = the kind tab, view = a "needs attention" focus from the rail
+   ('' = every open group, or late / nodate / hold / closed). */
+var PU = { sets:{}, q:'', type:'all', view:'' };
 var PHOTO_MIN = 5;
 var puSheet = { cat:null, pend:[] };
-var PU_SORTS = [
-  { k:'urgent',  l:'Urgency' },
-  { k:'newest',  l:'Newest first' },
-  { k:'oldest',  l:'Oldest first' },
-  { k:'client',  l:'Client name' }
-];
 var CRM_LABEL = { retail:'Retail', insurance:'Insurance', community:'Community' };
 
 function rows(){ return (window.CardinalPunch && window.CardinalPunch.rows) ? window.CardinalPunch.rows() : []; }
@@ -67731,23 +67784,124 @@ function match(it){
   }
   return true;
 }
-function sorted(list){
-  var d = PU.dir;
-  return list.slice().sort(function(a, b){
-    var r = 0;
-    if(PU.sort === 'urgent'){
-      var av = (a.status === 'done' ? 2 : 0) + (isUrgent(a) ? -1 : 0);
-      var bv = (b.status === 'done' ? 2 : 0) + (isUrgent(b) ? -1 : 0);
-      r = av - bv || String(b.created_at || '').localeCompare(String(a.created_at || ''));
-    } else if(PU.sort === 'newest'){ r = String(b.created_at || '').localeCompare(String(a.created_at || '')); }
-    else if(PU.sort === 'oldest'){ r = String(a.created_at || '').localeCompare(String(b.created_at || '')); }
-    else {
-      var an = (projOf(a.project_id) || {}).name || '';
-      var bn = (projOf(b.project_id) || {}).name || '';
-      r = an.localeCompare(bn);
-    }
-    return d * r;
-  });
+/* ── 1248: the Punch List (1A) ── */
+/* the four kinds, in the order the page shows them. 'ticket' is the stored
+   value for a repair — it predates the word, and 64 places read it. */
+var PL_KINDS = [
+  { k:'tarp',     one:'Tarp',      many:'Tarps' },
+  { k:'ticket',   one:'Repair',    many:'Repairs' },
+  { k:'callback', one:'Callback',  many:'Callbacks' },
+  { k:'punch',    one:'Punch-out', many:'Punch-outs' }
+];
+var PL_GROUPS = [
+  { g:'late',   l:'Past due' },
+  { g:'today',  l:'Today' },
+  { g:'next',   l:'Coming up' },
+  { g:'nodate', l:'No date' },
+  { g:'hold',   l:'On hold' }
+];
+var PL_DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var PL_MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function plKind(it){
+  var k = kindOf(it);
+  return PL_KINDS.filter(function(x){ return x.k === k; })[0] || PL_KINDS[3];
+}
+function plTypeOk(it){ return PU.type === 'all' || kindOf(it) === PU.type; }
+function plDay(it){ return it && it.scheduled_at ? String(it.scheduled_at).slice(0, 10) : ''; }
+function plLocalKey(iso){
+  var d = new Date(iso); if(isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function plKeyDate(key){
+  var p = String(key || '').split('-');
+  var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return isNaN(d.getTime()) ? null : d;
+}
+function plDayLabel(key){
+  var d = plKeyDate(key);
+  return d ? PL_DOW[d.getDay()] + ' ' + d.getDate() + ' ' + PL_MON[d.getMonth()] : '—';
+}
+function plDaysLate(key){
+  var a = plKeyDate(key), b = plKeyDate(puTodayKey());
+  return (a && b) ? Math.round((b.getTime() - a.getTime()) / 86400000) : 0;
+}
+/* On hold is FIELDS, not a status: status stays 'open' (64 places compare it),
+   and hold_reason / hold_until arrive with punch_hold.sql (3C). Until then
+   these read undefined and nothing is on hold. Once hold_until has passed the
+   job rejoins its group and says it is back. */
+function plOnHold(it){
+  if(!it || it.status === 'done' || !it.hold_reason) return false;
+  return !it.hold_until || String(it.hold_until).slice(0, 10) > puTodayKey();
+}
+function plBackFromHold(it){
+  return !!(it && it.status !== 'done' && it.hold_reason && it.hold_until &&
+    String(it.hold_until).slice(0, 10) <= puTodayKey());
+}
+function plGroup(it){
+  if(it.status === 'done') return 'closed';
+  if(plOnHold(it)) return 'hold';
+  if(puOpenVisit(it)) return 'today';          /* on site, however long ago they checked in (940) */
+  var d = plDay(it), t = puTodayKey();
+  if(!d) return 'nodate';
+  if(d < t) return 'late';
+  if(d === t) return 'today';
+  return 'next';
+}
+function plName(e){
+  if(!e) return '';
+  var n = String(e).split('@')[0];
+  return n.charAt(0).toUpperCase() + n.slice(1);
+}
+function plWhen(it){
+  var g = plGroup(it), d = plDay(it), o = puOpenVisit(it), n = puDaysOn(it);
+  var clock = fmtSchedClock(it.scheduled_time).replace(/^ · /, '');
+  if(g === 'closed'){
+    return { main: it.done_at ? 'Done ' + plDayLabel(plLocalKey(it.done_at)) : 'Done',
+             sub: it.done_by ? 'by ' + plName(it.done_by) : '' };
+  }
+  if(g === 'hold'){
+    return { main: it.hold_until ? 'Back ' + plDayLabel(String(it.hold_until).slice(0, 10)) : 'On hold',
+             sub: 'On hold · ' + String(it.hold_reason) };
+  }
+  if(o){
+    return o.day === puTodayKey()
+      ? { main:'Today', sub:'On site since ' + puClock(o.in) + (n > 1 ? ' · day ' + n : ''), cls:'live' }
+      : { main:'Today', sub:'On site since ' + plDayLabel(o.day) + ' — not checked out', cls:'warn' };
+  }
+  if(g === 'late'){
+    var late = plDaysLate(d);
+    return { main: plDayLabel(d), sub: late + ' day' + (late === 1 ? '' : 's') + ' late', cls:'late' };
+  }
+  if(g === 'today') return { main:'Today', sub: clock || 'Not checked in', cls: clock ? '' : 'warn' };
+  if(g === 'next')  return { main: plDayLabel(d), sub: clock };
+  return { main:'No date', sub:'Not scheduled' };
+}
+function plOrder(a, b){
+  return (isUrgent(b) ? 1 : 0) - (isUrgent(a) ? 1 : 0) ||
+    plDay(a).localeCompare(plDay(b)) ||
+    String(a.scheduled_time || '').localeCompare(String(b.scheduled_time || '')) ||
+    String(a.created_at || '').localeCompare(String(b.created_at || ''));
+}
+function plRow(it){
+  var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plGroup(it);
+  var urg = isUrgent(it), age = ageDays(it.created_at);
+  var supp = String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0;
+  var who = it.assigned_to;
+  return '<div class="pl-row k-' + K.k + (urg ? ' u' : '') + (g === 'late' ? ' late' : '') + (g === 'closed' ? ' done' : '') +
+      '" data-pu="' + esc(String(it.id)) + '" data-proj="' + esc(String(it.project_id || '')) + '" role="button" tabindex="0">' +
+    '<span class="pl-stp"></span>' +
+    '<span class="pl-kd"><span class="pl-k1"><i class="pl-dot"></i>' + K.one + '</span>' +
+      (urg ? '<span class="pl-flag">Urgent</span>' : '') +
+      (supp ? '<span class="pl-flag">Supplement</span>' : '') +
+      (plBackFromHold(it) ? '<span class="pl-flag">Back from hold</span>' : '') + '</span>' +
+    '<span class="pl-cl"><b>' + esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</b>' +
+      '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
+    '<span class="pl-pb">' + esc(it.title || 'Untitled item') + '</span>' +
+    '<span class="pl-age">' + (age != null ? age + 'd' : '') + '</span>' +
+    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + esc(w.sub || '') + '</small></span>' +
+    '<span class="pl-cr">' + (who ? '<span class="pl-av">' + esc(plName(who).slice(0, 2).toUpperCase()) + '</span><span class="pl-nm">' + esc(plName(who)) + '</span>'
+                              : '<span class="pl-nm">No one</span>') + '</span>' +
+  '</div>';
 }
 function cardHtml(it, showCrm){
   var pr = projOf(it.project_id);
@@ -67791,21 +67945,22 @@ function whoList(){
 var CATS = function(){ return {
   crm:    { label:'CRM',     vals:['retail','insurance','community'], lab:function(v){ return CRM_LABEL[v]; } },
   status: { label:'Status',  vals:['Urgent','Open','Closed'],         lab:function(v){ return v; } },
-  kind:   { label:'Type',    vals:['punch','ticket','callback','tarp'], lab:function(v){ return v; } },
   who:    { label:'Assigned To', vals:whoList(),                      lab:function(v){ return v; } }
 }; };
 function count(){ var n = 0; for(var k in PU.sets) n += PU.sets[k].length; return n; }
 
 function render(){
   var all = rows();
-  /* 945: The Line — one pass, every item in exactly one bucket */
-  var B = { queue:[], active:[], assigned:[], scheduled:[], completed:[] };
-  all.forEach(function(it){ B[bucketOf(it)].push(it); });
+  /* 1248: every open item is in exactly one place — the pinned queue (no one
+     on it yet) or one WHEN group below. Closed work has its own view. */
+  var open = all.filter(function(it){ return it.status !== 'done'; });
+  var inQueue = function(it){ return !it.assigned_to && !plOnHold(it); };
+  var plShown = function(it){ return match(it) && plTypeOk(it); };
 
-  /* the pinned queue — oldest first, above the tabs on every tab */
+  /* the pinned queue — oldest first, above the list in every view (945) */
   var qEl = document.getElementById('puQueue');
   if(qEl){
-    var queue = B.queue.filter(match).sort(function(a, b){
+    var queue = open.filter(function(it){ return inQueue(it) && plShown(it); }).sort(function(a, b){
       return String(a.created_at || '').localeCompare(String(b.created_at || ''));
     });
     var mayAsg = false;
@@ -67827,77 +67982,85 @@ function render(){
         }).join('') + '</div>' : '');
   }
 
-  var na = document.getElementById('puNActive'), nas = document.getElementById('puNAssigned'),
-      ns = document.getElementById('puNSched'), ndn = document.getElementById('puNDone');
-  if(na)  na.textContent  = B.active.length;
-  if(nas) nas.textContent = B.assigned.length;
-  if(ns)  ns.textContent  = B.scheduled.length;
-  if(ndn) ndn.textContent = B.completed.length;
-  document.querySelectorAll('#puTabs .pu-tab').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-putab') === PU.tab);
+  /* the kind counts: open work that passes the funnel and search, queue included */
+  var base = open.filter(match);
+  var nOf = function(k){ return base.filter(function(it){ return k === 'all' || kindOf(it) === k; }).length; };
+  [['all','puNAll'],['tarp','puNTarp'],['ticket','puNTicket'],['callback','puNCallback'],['punch','puNPunch']].forEach(function(p){
+    var el = document.getElementById(p[1]); if(el) el.textContent = nOf(p[0]);
   });
-  var tabRows = B[PU.tab === 'completed' ? 'completed' : PU.tab] || B.active;
-  var vis = sorted(tabRows.filter(match));
-  var urgent = vis.filter(isUrgent);
-  var normal = vis.filter(function(i){ return !isUrgent(i); });
+  document.querySelectorAll('#puTabs [data-putype]').forEach(function(b){
+    var on = b.getAttribute('data-putype') === PU.type;
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+
+  var board = open.filter(function(it){ return !inQueue(it) && plShown(it); });
+  var G = { late:[], today:[], next:[], nodate:[], hold:[] };
+  board.forEach(function(it){ G[plGroup(it)].push(it); });
+  var closed = all.filter(function(it){ return it.status === 'done' && plShown(it); })
+    .sort(function(a, b){ return String(b.done_at || '').localeCompare(String(a.done_at || '')); });
+  var nQueue = open.filter(function(it){ return inQueue(it) && plShown(it); }).length;
 
   document.getElementById('puSub').textContent =
-    vis.length + ' of ' + all.length + ' items \u00b7 ' + B.queue.length + ' need assigned \u00b7 ' +
-    (B.active.length + B.assigned.length + B.scheduled.length) + ' open';
+    (board.length + nQueue) + ' open · ' + nQueue + ' need assigned · ' + G.late.length + ' past due';
+
+  var cols = '<div class="pl-cols" aria-hidden="true"><span></span><span>Type</span><span>Client</span>' +
+    '<span>What’s wrong</span><span>Age</span><span>When</span><span>Crew</span></div>';
   var html = '';
-  if(PU.tab === 'scheduled'){
-    var byDate = vis.slice().sort(function(a, b){ return String(a.scheduled_at).localeCompare(String(b.scheduled_at)); });
-    html += byDate.length ? '<div class="pu-grp">On the schedule <span class="n">' + byDate.length + '</span></div>' +
-      byDate.map(function(i){ return cardHtml(i, true); }).join('') : '';
-    document.getElementById('puList').innerHTML = html ||
-      '<div class="pu-empty">Nothing scheduled ahead \u2014 give an assigned item a day and it lands here.</div>';
-  } else if(PU.tab === 'completed'){
-    var byDone = vis.slice().sort(function(a, b){ return String(b.done_at || '').localeCompare(String(a.done_at || '')); });
-    html += byDone.length ? '<div class="pu-grp">Closed <span class="n">' + byDone.length + '</span></div>' + byDone.map(function(i){ return cardHtml(i, true); }).join('') : '';
-    document.getElementById('puList').innerHTML = html ||
-      '<div class="pu-empty">Nothing closed yet \u2014 check an item off and it lands here.</div>';
-  } else if(PU.tab === 'assigned'){
-    html += vis.length ? '<div class="pu-grp">Waiting for a day <span class="n">' + vis.length + '</span></div>' + vis.map(function(i){ return cardHtml(i, true); }).join('') : '';
-    document.getElementById('puList').innerHTML = html ||
-      '<div class="pu-empty">Nothing waiting \u2014 everything assigned has a day.</div>';
+  var listEl = document.getElementById('puList');
+  if(PU.view === 'closed'){
+    html = '<button type="button" class="pl-back" data-pufocus="">‹ Open work</button>' +
+      (closed.length ? '<div class="pl-grp">Closed · ' + closed.length + '</div>' + cols + closed.map(plRow).join('')
+                     : '<div class="pu-empty">Nothing closed yet — close an item from its card and it lands here.</div>');
   } else {
-    if(urgent.length) html += '<div class="pu-grp">Urgent <span class="n">' + urgent.length + '</span></div>' + urgent.map(function(i){ return cardHtml(i, true); }).join('');
-    if(normal.length) html += '<div class="pu-grp">On the board <span class="n">' + normal.length + '</span></div>' + normal.map(function(i){ return cardHtml(i, true); }).join('');
-    document.getElementById('puList').innerHTML = html ||
-      '<div class="pu-empty">' + (all.length ? 'Nothing matches these filters.' : 'Nothing active today.') + '</div>';
+    var groups = PL_GROUPS.filter(function(g){ return !PU.view || PU.view === g.g; });
+    groups.forEach(function(g){
+      var list = G[g.g].slice().sort(plOrder);
+      if(list.length) html += '<div class="pl-grp' + (g.g === 'late' ? ' late' : '') + '">' + g.l + ' · ' + list.length + '</div>' + list.map(plRow).join('');
+    });
+    html = html ? cols + html : '<div class="pu-empty">' +
+      (all.length ? (PU.view ? 'Nothing here right now.' : 'Nothing matches — try All, or clear the filters.')
+                  : 'No punch work yet. + New adds the first one.') + '</div>';
+    if(PU.view) html = '<button type="button" class="pl-back" data-pufocus="">‹ All open work</button>' + html;
+    html += '<button type="button" class="pl-more" data-pufocus="closed"><span>Closed</span><span>' + closed.length + ' ›</span></button>';
   }
+  listEl.innerHTML = html;
 
   var n = count();
   var bdg = document.getElementById('puBadge');
   bdg.textContent = n; bdg.classList.toggle('show', n > 0);
   document.getElementById('puFTitle').textContent = 'Filters (' + n + ')';
-  document.getElementById('puSortChip').textContent =
-    (PU_SORTS.filter(function(s){ return s.k === PU.sort; })[0] || PU_SORTS[0]).l;
-  document.getElementById('puSortSel').innerHTML = PU_SORTS.map(function(s){
-    return '<option value="' + s.k + '"' + (s.k === PU.sort ? ' selected' : '') + '>' + s.l + '</option>';
-  }).join('');
 
+  /* the desktop rail: the kinds, what needs attention, the crew, the CRM */
   var C = CATS();
-  document.getElementById('puRail').innerHTML = Object.keys(C).map(function(k){
-    var g = C[k], on = PU.sets[k] || [];
-    if(!g.vals.length) return '';
-    return '<div class="pu-fg"><div class="ft">' + g.label + '</div>' + g.vals.map(function(v){
-      var c = rows().filter(function(it){
-        if(k === 'crm') return crmOf(projOf(it.project_id)) === v;
-        if(k === 'kind') return kindOf(it) === v;
-        if(k === 'who') return (it.assigned_to || 'Unassigned') === v;
-        return (it.status === 'done' ? 'Closed' : (isUrgent(it) ? 'Urgent' : 'Open')) === v;
-      }).length;
-      return '<label class="pu-fr' + (on.indexOf(v) !== -1 ? ' on' : '') + '" data-g="' + k + '" data-v="' + esc(v) + '">' +
-        '<span class="bx">' + (on.indexOf(v) !== -1 ? '\u2713' : '') + '</span>' + esc(g.lab(v)) +
-        '<span class="c">' + c + '</span></label>';
-    }).join('') + '</div>';
+  var ri = function(attrs, on, label, num, hot){
+    return '<button type="button" class="pl-ri' + (on ? ' on' : '') + '" ' + attrs + ' aria-pressed="' + (on ? 'true' : 'false') + '">' +
+      label + '<span class="n' + (hot ? ' hot' : '') + '">' + num + '</span></button>';
+  };
+  var lateOf = function(k){ return base.some(function(it){ return kindOf(it) === k && plGroup(it) === 'late'; }); };
+  var rail = ri('data-putype="all"', PU.type === 'all', 'All punch work', nOf('all')) +
+    PL_KINDS.map(function(K){
+      return ri('data-putype="' + K.k + '"', PU.type === K.k, '<i class="pl-sq"></i>' + K.many, nOf(K.k), lateOf(K.k))
+        .replace('class="pl-ri', 'class="pl-ri k-' + K.k);
+    }).join('') +
+    '<div class="pl-rh">Needs attention</div>' +
+    ri('data-pufocus="late"', PU.view === 'late', 'Past due', G.late.length, G.late.length > 0) +
+    ri('data-pufocus="nodate"', PU.view === 'nodate', 'No date', G.nodate.length) +
+    ri('data-pufocus="hold"', PU.view === 'hold', 'On hold', G.hold.length) +
+    ri('data-pufocus="closed"', PU.view === 'closed', 'Closed', closed.length);
+  var crewOn = PU.sets.who || [];
+  var crew = whoList().filter(function(w){ return w !== 'Unassigned'; });
+  if(crew.length) rail += '<div class="pl-rh">Crew</div>' + crew.map(function(w){
+    var c = open.filter(function(it){ return it.assigned_to === w; }).length;
+    return ri('data-g="who" data-v="' + esc(w) + '"', crewOn.indexOf(w) !== -1,
+      '<span class="pl-av">' + esc(plName(w).slice(0, 2).toUpperCase()) + '</span>' + esc(plName(w)), c);
   }).join('');
+  var crmOn = PU.sets.crm || [];
+  rail += '<div class="pl-rh">CRM</div>' + C.crm.vals.map(function(v){
+    var c = open.filter(function(it){ return crmOf(projOf(it.project_id)) === v; }).length;
+    return ri('data-g="crm" data-v="' + v + '"', crmOn.indexOf(v) !== -1, esc(C.crm.lab(v)), c);
+  }).join('');
+  document.getElementById('puRail').innerHTML = rail;
 
-  document.getElementById('puSortList').innerHTML = PU_SORTS.map(function(s){
-    return '<div class="pu-srow' + (s.k === PU.sort ? ' on' : '') + '" data-sort="' + s.k + '">' +
-      '<span class="ck">\u2713</span><span>' + s.l + '</span></div>';
-  }).join('');
   document.getElementById('puCatList').innerHTML = Object.keys(C).map(function(k){
     var m = (PU.sets[k] || []).length;
     return '<div class="pu-srow" data-cat="' + k + '"><span>' + C[k].label + '</span>' +
@@ -68034,6 +68197,7 @@ async function openPunchView(preset){
   document.getElementById('punchView').style.display = 'block';
   window.scrollTo(0, 0);
   PU.q = ''; document.getElementById('puSearch').value = '';
+  PU.type = 'all'; PU.view = '';
   if(preset && preset.crm){ PU.sets = { crm:[preset.crm] }; }
   else if(preset === 'urgent'){ PU.sets = { status:['Urgent'] }; }
   document.getElementById('puList').innerHTML = '<div class="pu-empty">Loading\u2026</div>';
@@ -68109,7 +68273,18 @@ document.addEventListener('click', function(e){
     }
     return;
   }
-  var card = e.target.closest('#puList .pu-card, #puQueue .pu-card, .pu-strip .pu-card');
+  var fo = e.target.closest('#punchView [data-pufocus]');
+  if(fo){
+    var v = fo.getAttribute('data-pufocus');
+    PU.view = (PU.view === v) ? '' : v;
+    render();
+    var pv = document.getElementById('punchView');
+    if(pv && pv.scrollTop > 0) pv.scrollTop = 0; else window.scrollTo(0, 0);
+    return;
+  }
+  var ty = e.target.closest('#punchView [data-putype]');
+  if(ty){ PU.type = ty.getAttribute('data-putype'); render(); return; }
+  var card = e.target.closest('#puList .pl-row, #puList .pu-card, #puQueue .pu-card, .pu-strip .pu-card');
   if(card && window.CardinalPunchCard && window.CardinalPunchCard.open){
     /* 837: one detail screen — the card, same as Production and the client
        profile. back:'none' closes back to whatever page the strip is on. */
@@ -68118,11 +68293,13 @@ document.addEventListener('click', function(e){
 }, false);
 
 
-document.getElementById('puTabs').addEventListener('click', function(e){
-  var b = e.target.closest('[data-putab]');
-  if(!b) return;
-  PU.tab = b.getAttribute('data-putab');
-  render();
+/* 1248: a list row is a button to the keyboard too */
+document.getElementById('puList').addEventListener('keydown', function(e){
+  if(e.key !== 'Enter' && e.key !== ' ') return;
+  var t = /** @type {Element} */ (e.target);
+  var r = t && t.closest ? t.closest('.pl-row[data-pu]') : null;
+  if(!r) return;
+  e.preventDefault(); r.dispatchEvent(new MouseEvent('click', { bubbles:true }));
 });
 document.getElementById('puBackBtn').addEventListener('click', function(){ history.back(); });
 /* 978: + New. Routes to cr-pb-script's composer through CardinalProduction —
@@ -68136,17 +68313,11 @@ document.getElementById('puSearch').addEventListener('input', function(){
   PU.q = this.value.trim().toLowerCase();
   clearTimeout(this.__t); this.__t = setTimeout(render, 200);
 });
-document.getElementById('puSortSel').addEventListener('change', function(){ PU.sort = this.value; render(); });
-document.getElementById('puDirBtn').addEventListener('click', function(){
-  PU.dir = -PU.dir; this.classList.toggle('on', PU.dir === -1); render();
-});
-document.getElementById('puSortChip').addEventListener('click', function(){ document.getElementById('puShSort').classList.add('open'); });
 document.getElementById('puFunnel').addEventListener('click', function(){ document.getElementById('puShFilter').classList.add('open'); });
-document.getElementById('puSortClose').addEventListener('click', function(){ document.getElementById('puShSort').classList.remove('open'); });
 document.getElementById('puFDone').addEventListener('click', function(){ document.getElementById('puShFilter').classList.remove('open'); });
 document.getElementById('puClearAll').addEventListener('click', function(){ PU.sets = {}; render(); });
 document.getElementById('puRail').addEventListener('click', function(e){
-  var r = e.target.closest('[data-g]'); if(!r) return;
+  var r = e.target.closest('[data-g]'); if(!r) return;   /* kinds and focus ride the document handler */
   e.preventDefault();
   var g = r.getAttribute('data-g'), v = r.getAttribute('data-v');
   var set = PU.sets[g] = PU.sets[g] || [];
@@ -68154,11 +68325,6 @@ document.getElementById('puRail').addEventListener('click', function(e){
   if(i === -1) set.push(v); else set.splice(i, 1);
   if(!set.length) delete PU.sets[g];
   render();
-});
-document.getElementById('puSortList').addEventListener('click', function(e){
-  var r = e.target.closest('[data-sort]'); if(!r) return;
-  PU.sort = r.getAttribute('data-sort'); render();
-  document.getElementById('puShSort').classList.remove('open');
 });
 document.getElementById('puCatList').addEventListener('click', function(e){
   var r = e.target.closest('[data-cat]'); if(!r) return;
@@ -80949,7 +81115,7 @@ select{min-height:44px;}
 /* was ~38px tall — the Punch & Repairs tab strip (.pu-tab) and its 945
    siblings. The board opens via data-go, not [data-nav], so the 944 walk
    never reached this screen — gate_945 probes its floor instead. */
-.pu-tab{min-height:44px;}
+.pu-tab{min-height:58px;}
 /* was 36px (Directions / Call / Open job / Edit / step-remove ×s /
    templates), 40 (+ Add step), ~41 (gallery), 34 (back, desktop), 30 (tag
    chips, desktop) — the punch-out card never had the 752 pass; its own
@@ -84774,6 +84940,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   .pumap-run .go{ background:#c8202e; color:#fff; text-decoration:none; border-radius:8px; padding:7px 13px; font:800 13px 'Segoe UI',Arial; }
   .pumap-run .clr{ background:#1c242c; color:#cfd6de; border:1px solid #2b333c; border-radius:8px; padding:7px 12px; font:700 13px 'Segoe UI',Arial; cursor:pointer; font-family:inherit; }
   .pu-card.pumap-hi{ outline:2px solid #e2574a; outline-offset:1px; border-radius:13px; }
+  .pl-row.pumap-hi{ outline:2px solid #e2574a; outline-offset:-2px; }
   .leaflet-popup-content-wrapper{ background:#161b21; color:#dfe4ea; border:1px solid #2b333c; border-radius:12px; }
   .leaflet-popup-tip{ background:#161b21; border:1px solid #2b333c; }
   .leaflet-popup-content{ margin:12px 14px; }
@@ -84830,7 +84997,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 
   /* which items are currently visible in the list (mirrors filters/tabs/search) */
   function visibleItems(){
-    var ids={}; var cards=document.querySelectorAll('#puList .pu-card');
+    var ids={}; var cards=document.querySelectorAll('#puList .pl-row, #puList .pu-card');
     for(var i=0;i<cards.length;i++){ if(cards[i].dataset.pu) ids[cards[i].dataset.pu]=true; }
     var out=[], all=rows();
     for(var j=0;j<all.length;j++){ if(ids[String(all[j].id)]) out.push(all[j]); }
@@ -84950,9 +85117,9 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 
   function selectFromMap(id){
     selId=id;
-    var cards=document.querySelectorAll('#puList .pu-card');
+    var cards=document.querySelectorAll('#puList .pl-row, #puList .pu-card');
     for(var i=0;i<cards.length;i++){ cards[i].classList.toggle('pumap-hi', cards[i].dataset.pu===String(id)); }
-    var card=document.querySelector('#puList .pu-card[data-pu="'+CSS_escape(id)+'"]');
+    var card=document.querySelector('#puList [data-pu="'+CSS_escape(id)+'"]');
     if(card) card.scrollIntoView({ block:'center', behavior:'smooth' });
     for(var k in markers){ if(markers[k]._icon){ var d=markers[k]._icon.querySelector('.pumk'); if(d) d.classList.toggle('sel', k===String(id)); } }
   }
@@ -85091,7 +85258,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     if(pl){ var t=null; new MutationObserver(function(){ if(!built) return; clearTimeout(t); t=setTimeout(sync, 60); }).observe(pl, { childList:true, subtree:false }); }
     var rt=window.innerWidth>=UW; window.addEventListener('resize', function(){ var u=window.innerWidth>=UW; if(u!==rt){ rt=u; evaluate(); } });
     /* list card click -> focus its pin (in addition to the existing open handler) */
-    if(pl){ pl.addEventListener('click', function(e){ if(!built || planMode) return; var c=e.target.closest && e.target.closest('.pu-card'); if(c && c.dataset.pu) selectFromList(c.dataset.pu); }); }
+    if(pl){ pl.addEventListener('click', function(e){ if(!built || planMode) return; var c=e.target.closest && e.target.closest('.pl-row, .pu-card'); if(c && c.dataset.pu) selectFromList(c.dataset.pu); }); }
     /* pin popup Open button + segmented toggle (delegated on document) */
     document.addEventListener('click', function(e){
       var pb=e.target.closest && e.target.closest('[data-puplan]');

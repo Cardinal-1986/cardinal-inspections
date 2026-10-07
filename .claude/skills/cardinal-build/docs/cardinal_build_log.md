@@ -34157,3 +34157,46 @@ the base `.pu-tab` since 945; only its value moved. `gate_950` 8/8 (7/8 on 1246)
 - ⚠️ **Rollout blocker, not code: Scottie, Nick and Jacob have NO push subscription.** Nothing the
   app buzzes can reach their phones until each installs the app and allows notifications. Curtis's
   one device dates from 1 Sep. Email still reaches them (all have addresses; Jerry has no phone).
+
+## Build 1248 — the Punch List, redesigned (1A)
+
+Theo, 7 Oct: *"I like all 4 pages I just don't like the design ... Give me 3 examples of each page."*
+Previewed as an artifact (three directions × four pages, desktop + phone, both themes); his pick:
+**"1A 2C 3C 4C, go."** This is **1A**, the Punch List. 3C (On hold), 2C (the person's route page) and
+4C (the scheduled buzzes) follow, one per build.
+
+**What changed (`#punchView`, `cr-punch-styles`, `cr-punch-script`).**
+- The tabs are the **kinds of work** — All · Tarps · Repairs · Callbacks · Punch-outs — five even cells
+  with a coloured cap and a count. `ticket` is still the stored value; the page says "Repair".
+- The list is grouped by **when**: Past due · Today · Coming up · No date · On hold. Inside a group,
+  urgent first, then by day and time, then oldest. An open check-in counts as Today however long
+  ago it began (940's day-2 carry stays stated: "On site since Tue — not checked out").
+- **One row markup, two layouts, chosen by a container query on `#puList`** (≥860px of list = the
+  table: Type · Client · What's wrong · Age · When · Crew; narrower = three short lines). The list's
+  width decides, not the window's, so the 480–560px column beside the ultrawide map (pumap) gets the
+  rows. ⚠ With the app's left nav open, a 1280 window gives the list ~716px — rows, not the table.
+- **Kept:** the pinned unassigned queue (945 — never hides; it now narrows with the kind tab too),
+  the Assign sheet, search (PO included), + New, the funnel (CRM · Status · Assigned To), the home
+  strips (`cardHtml` untouched), tap-to-open the card.
+- **Desktop rail** carries the kinds, **Needs attention** (Past due · No date · On hold · Closed) and
+  the crew and CRM filters; the kind strip hides at ≥901px.
+- **Closed** is a view: a button at the foot of the list, and a rail item on desktop.
+- **Retired:** the Active/Assigned/Scheduled/Closed tabs, the sort sheet (`#puShSort`), the reverse
+  button, `sorted()`, and **the list's one-tap tick** — closing happens in the card, where the photo
+  and step rules live. The home strips keep their tick.
+- **On hold is read, not written, yet**: `plOnHold()` reads `hold_reason` / `hold_until`, which do not
+  exist until `punch_hold.sql` ships with 3C. Until then they read undefined and nothing is on hold.
+  Status stays `'open'` for a held job (64 places compare it); once `hold_until` passes, the job
+  rejoins its group with a "Back from hold" flag.
+- The ultrawide map module reads rows by `data-pu`; its three selectors and the click now include
+  `.pl-row`, and `.pl-row.pumap-hi` is the highlight.
+
+**Gates.** `gate_1248.mjs` (26 checks, Chromium, phone + desktop, both themes): kind tabs in order
+with seed counts, the WHEN groups, every open item in exactly one place, Repairs narrows list and
+queue, Closed + back, phone rows/no sideways scroll/44px, desktop table/rail/Needs attention, a row
+opens the card, the old controls gone and the strip's tick kept. **RED on 1247 (29 failures, no
+crash).** Deliberately rewritten for the retired tabs: `gate_945` (now asserts the 945 buckets as
+groups — 26 green), `gate_950` (fit, now five cells — 8/8), `gate_767` (Closed via the list foot —
+56/56). Standing ladder: types (TS2339 down one), dupes, stack, scroll-lock (17), 1081, 1243, a11y,
+`gate_chromium --selftest` green. `gate_1206` red on the same Dispatch grip as 1247 — date-dependent
+probe, red on the control too.
