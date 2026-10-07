@@ -4070,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1249<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1250<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43458,6 +43458,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1250, d: '2026-10-07', t: 'Flag a punch-out for follow-up',
+    s: 'Anyone can now flag a punch-out, repair, callback or tarp for follow-up from its card \u2014 say a client calls upset and wants to cancel. Write what happened and tap Flag it: Curtis, Theo and whoever has the job get a notification, and the job jumps to the top of the Punch List under Needs follow-up with a red ! and your note. It stays there until someone taps Handled and says what they did. Both notes are kept in the job\u2019s messages.' },
   { b: 1249, d: '2026-10-07', t: 'Punch work can go on hold',
     s: 'A punch-out, repair, callback or tarp that can\u2019t move can now be put on hold from its card. Pick why it\u2019s waiting \u2014 materials, the homeowner, weather, the adjuster, or something else \u2014 and the day to look at it again; each day shows how busy that person already is, and Sunday is skipped. Add a note if it helps. Held work sits under On hold on the Punch List instead of piling up in Past due, and on the day you picked it comes back to Today marked Back from hold.' },
   { b: 1248, d: '2026-10-07', t: 'The Punch List, redesigned',
@@ -56529,6 +56531,27 @@ window.CardinalProduction = {
    warning colour on this card already (--pk-hot); a held job is a warning,
    not an error. Inks computed for both themes. */
 #cr-pk .pkholdbtn{ margin:0 0 10px; }
+/* 1250: follow-up flag. Red is this card's urgent colour already; the !
+   is white on #c8202e (5.9:1). Inks computed for both themes. */
+#cr-pk .pkpingbtn{ margin:0 0 12px; }
+#cr-pk .pkbang{ flex:none; width:24px; height:24px; border-radius:50%; background:#c8202e; color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; font:800 15px -apple-system,'Segoe UI',Roboto,sans-serif; }
+#cr-pk .pkbang.sm{ width:20px; height:20px; font-size:13px; }
+#cr-pk .pkping{ margin:0 0 12px; padding:12px 13px; border-radius:12px; border:1.5px solid #c8202e;
+  background:rgba(200,32,46,.14); }
+#cr-pk .pkping-h{ display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+#cr-pk .pkping-h b{ font:700 15px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-accl,#e8676e); }
+#cr-pk .pkping-h .rt{ margin-left:auto; font-size:11px; color:var(--pk-mut,#9aa3ab); text-align:right; }
+#cr-pk .pkping-n{ font:600 15px/1.4 -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-ink,#eceef0); margin-bottom:10px; white-space:pre-wrap; }
+#cr-pk .pkping-ta{ width:100%; box-sizing:border-box; min-height:56px; padding:10px 12px; border-radius:10px; resize:vertical;
+  background:var(--pk-c,#15171a); border:1px solid var(--pk-line,rgba(230,235,240,.11)); color:var(--pk-ink,#eceef0);
+  font:400 15px -apple-system,'Segoe UI',Roboto,sans-serif; }
+#cr-pk .pkping-f{ display:flex; gap:8px; margin-top:10px; }
+#cr-pk .pkping-f .pkbtn{ min-height:48px; padding:0 16px; }
+#cr-pk .pkping-go{ display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; margin-top:8px; border:0;
+  border-radius:12px; cursor:pointer; background:#c8202e; color:#fff; font:700 15px -apple-system,'Segoe UI',Roboto,sans-serif; }
+#cr-pk .pkping-f .pkping-go{ flex:1; margin-top:0; }
+#cr-pk .pkping-go.ok{ background:#1b7d49; }
 #cr-pk .pkhold{ border-color:var(--pk-hot,#e07a5f); }
 #cr-pk .pkhold .pkh .rt b{ color:var(--pk-hot,#e07a5f); }
 #cr-pk .pkhold-d{ font:700 15px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-ink,#eceef0); margin-bottom:6px; }
@@ -56729,6 +56752,8 @@ var galleryOpen = false;
 var dispOpen = false, menuOpen = false;
 /* 1249: the On hold sheet — open flag and the pick in progress */
 var holdOpen = false, holdPick = { r:'', d:'', n:'' };
+/* 1250: the follow-up flag's compose box */
+var pingOpen = false;
 var HOLD_REASONS = [
   { k:'materials', l:'Materials',      s:'Waiting on an order' },
   { k:'homeowner', l:'Homeowner',      s:'Not home, or moving the day' },
@@ -57046,12 +57071,79 @@ function cardHtml(){
         '<div class="pknote">A finished repair should be CLOSED instead \u2014 closed work stays in the client\u2019s history.</div></div>' : '') +
     '</div>' +
     (urgent ? '<div class="pkurg">' + svg('flag') + 'Urgent — do first</div>' : '') +
+    pingHtml() +
     '<h1>' + esc(it.title || 'Punch-out') + '</h1>' +
+    (pingOn() || pingOpen ? '' : '<button class="pkfold dim pkpingbtn" data-act="ping" type="button"><span class="pkbang sm">!</span>' +
+      '<span class="tx">Flag for follow-up</span><span class="ch">\u203A</span></button>') +
     '<div class="pksplit"><div>' +
       left +
     '</div><div>' +
       msgsHtml() + holdHtml(done) + closeHtml(done) +
     '</div></div></div>' + (holdOpen && !done ? holdSheetHtml() : '');
+}
+/* ── 1250: Flag for follow-up ── */
+function pingOn(){ return !!(it && it.ping_at && !it.ping_done_at); }
+function pingHtml(){
+  if(pingOn()){
+    return '<div class="pkping" role="alert">' +
+      '<div class="pkping-h"><span class="pkbang">!</span><b>Needs follow-up</b>' +
+        '<span class="rt">' + esc(nameOf(it.ping_by)) + (it.ping_at ? ' \u00b7 ' + esc(fmtWhen(it.ping_at)) : '') + '</span></div>' +
+      '<div class="pkping-n">' + esc(it.ping_note || '') + '</div>' +
+      '<textarea class="pkping-ta" data-f="pingdone" rows="2" placeholder="What did you do? (called her back, kept the job\u2026)"></textarea>' +
+      '<button class="pkping-go ok" data-act="pingdone" type="button">Handled</button>' +
+    '</div>';
+  }
+  if(!pingOpen) return '';
+  return '<div class="pkping compose">' +
+    '<div class="pkping-h"><span class="pkbang">!</span><b>Flag for follow-up</b></div>' +
+    '<textarea class="pkping-ta" data-f="pingnote" rows="3" placeholder="What happened? e.g. Client called upset, wants to cancel \u2014 call her back today."></textarea>' +
+    '<div class="pknote">Curtis, Theo and whoever has this job are buzzed. It stays at the top of the Punch List until someone marks it handled.</div>' +
+    '<div class="pkping-f"><button class="pkbtn" data-act="pingx" type="button">Cancel</button>' +
+      '<button class="pkping-go" data-act="pinggo" type="button">Flag it</button></div>' +
+  '</div>';
+}
+function pingTo(){
+  var me = myEmail(), out = officeEmails().slice();
+  if(it.assigned_to) out.push(String(it.assigned_to).toLowerCase());
+  return out.filter(function(e, i){ return e && e !== me && out.indexOf(e) === i; });
+}
+async function pingRaise(){
+  var ta = el.querySelector('[data-f="pingnote"]');
+  var note = ta ? ta.value.trim() : '';
+  if(!note){ crTell('Say what happened first \u2014 that note is what Curtis reads.'); return; }
+  var me = myEmail(), now = new Date().toISOString();
+  var list = comments().slice();
+  list.push({ by:me, name:nameOf(me), at:now, text:'Follow up: ' + note, flag:'ping' });
+  pingOpen = false;
+  await save({ ping_note:note, ping_by:me || null, ping_at:now,
+               ping_done_note:null, ping_done_by:null, ping_done_at:null, comments:list });
+  if(typeof window.auditLog === 'function'){
+    try{ window.auditLog('punch', 'Flagged for follow-up: ' + (it.title || ''), it.project_id); }catch(_){}
+  }
+  var to = pingTo();
+  if(to.length && typeof window.notifyTeam === 'function'){
+    var pr = projectFor(it.project_id);
+    try{
+      var res = await window.notifyTeam(to,
+        'Follow up: ' + ((pr && pr.name) || 'a job') + ' \u2014 ' + (it.title || 'punch-out'),
+        '<p><b>' + esc(nameOf(me)) + '</b> flagged <b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b> for follow-up:</p>' +
+        '<p>' + esc(note) + '</p>', punchLink(it.project_id));
+      outMsg = outcomeText(res, to);
+    }catch(_){ outMsg = 'Flagged \u2014 could not tell whether anyone was buzzed.'; }
+    lastSig = ''; render();
+  }
+}
+async function pingHandled(){
+  var ta = el.querySelector('[data-f="pingdone"]');
+  var note = ta ? ta.value.trim() : '';
+  if(!note){ crTell('Say what you did first \u2014 the next person reads it.'); return; }
+  var me = myEmail(), now = new Date().toISOString();
+  var list = comments().slice();
+  list.push({ by:me, name:nameOf(me), at:now, text:'Handled: ' + note, flag:'ping-done' });
+  await save({ ping_done_note:note, ping_done_by:me || null, ping_done_at:now, comments:list });
+  if(typeof window.auditLog === 'function'){
+    try{ window.auditLog('punch', 'Follow-up handled: ' + (it.title || ''), it.project_id); }catch(_){}
+  }
 }
 /* ── 1249: On hold ── */
 function holdToday(){ return dayKey(new Date()); }
@@ -57832,6 +57924,14 @@ function wire(){
   q('[data-hd]', function(b){ b.onclick = function(){ holdNote(); holdPick.d = b.getAttribute('data-hd'); lastSig = ''; render(); }; });
   q('[data-act="holdgo"]', function(b){ b.onclick = function(){ holdNote(); holdSave(); }; });
   q('[data-act="unhold"]', function(b){ b.onclick = holdClear; });
+  /* 1250: follow-up flag */
+  q('[data-act="ping"]', function(b){ b.onclick = function(){
+    pingOpen = true; lastSig = ''; render();
+    var ta = el.querySelector('[data-f="pingnote"]'); if(ta) ta.focus();
+  }; });
+  q('[data-act="pingx"]', function(b){ b.onclick = function(){ pingOpen = false; lastSig = ''; render(); }; });
+  q('[data-act="pinggo"]', function(b){ b.onclick = pingRaise; });
+  q('[data-act="pingdone"]', function(b){ b.onclick = pingHandled; });
   q('[data-act="menu"]', function(b){ b.onclick = function(){ menuOpen = !menuOpen; lastSig = ''; render(); }; });
   /* 947: the shortfall pieces on the Close button scroll to their section
      instead of letting the tap fall through to the not-ready alert */
@@ -57926,7 +58026,7 @@ function wire(){
 
 /* ------------------------------------------------------------ open / close */
 async function open(itemId, opts){
-  holdOpen = false; holdPick = { r:'', d:'', n:'' };
+  holdOpen = false; holdPick = { r:'', d:'', n:'' }; pingOpen = false;
   ensure();
   /* 947: after a navRestore reopen there are no opts, so the card used to
      forget where it came from and back always landed on Production. The
@@ -67609,7 +67709,12 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-row.late{background:var(--pl-latebg,#1c1013);}
 .pl-row.done{opacity:.7;}
 .pl-stp{grid-area:stp;align-self:stretch;width:4px;border-radius:2px;}
-.pl-row.u .pl-stp{background:#c8202e;}
+.pl-row.u .pl-stp,.pl-row.ping .pl-stp{background:#c8202e;}
+/* 1250: the follow-up ! — white on cardinal red, 5.9:1 */
+.pl-bang{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-right:7px;border-radius:50%;
+  background:#c8202e;color:#fff;font:800 13px 'Segoe UI',Arial,sans-serif;font-style:normal;vertical-align:1px;}
+.pl-row.ping{background:var(--pl-latebg,#1c1013);}
+.pl-row.ping .pl-pb{color:var(--rbe-ink);}
 .pl-kd{grid-area:kd;display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;}
 .pl-k1{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--rbe-ink);}
 .pl-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--rbe-mute);}
@@ -67962,6 +68067,7 @@ var PL_KINDS = [
   { k:'punch',    one:'Punch-out', many:'Punch-outs' }
 ];
 var PL_GROUPS = [
+  { g:'ping',   l:'Needs follow-up' },
   { g:'late',   l:'Past due' },
   { g:'today',  l:'Today' },
   { g:'next',   l:'Coming up' },
@@ -68005,7 +68111,10 @@ function plBackFromHold(it){
   return !!(it && it.status !== 'done' && it.hold_reason && it.hold_until &&
     String(it.hold_until).slice(0, 10) <= puTodayKey());
 }
-function plGroup(it){
+/* 1250: an active follow-up flag beats every other group, closed work included */
+function plPing(it){ return !!(it && it.ping_at && !it.ping_done_at); }
+function plGroup(it){ return plPing(it) ? 'ping' : plBase(it); }
+function plBase(it){
   if(it.status === 'done') return 'closed';
   if(plOnHold(it)) return 'hold';
   if(puOpenVisit(it)) return 'today';          /* on site, however long ago they checked in (940) */
@@ -68021,7 +68130,7 @@ function plName(e){
   return n.charAt(0).toUpperCase() + n.slice(1);
 }
 function plWhen(it){
-  var g = plGroup(it), d = plDay(it), o = puOpenVisit(it), n = puDaysOn(it);
+  var g = plBase(it), d = plDay(it), o = puOpenVisit(it), n = puDaysOn(it);
   var clock = fmtSchedClock(it.scheduled_time).replace(/^ · /, '');
   if(g === 'closed'){
     return { main: it.done_at ? 'Done ' + plDayLabel(plLocalKey(it.done_at)) : 'Done',
@@ -68051,20 +68160,22 @@ function plOrder(a, b){
     String(a.created_at || '').localeCompare(String(b.created_at || ''));
 }
 function plRow(it){
-  var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plGroup(it);
+  var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it);
   var urg = isUrgent(it), age = ageDays(it.created_at);
   var supp = String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0;
   var who = it.assigned_to;
-  return '<div class="pl-row k-' + K.k + (urg ? ' u' : '') + (g === 'late' ? ' late' : '') + (g === 'closed' ? ' done' : '') +
+  return '<div class="pl-row k-' + K.k + (urg ? ' u' : '') + (ping ? ' ping' : '') + (g === 'late' ? ' late' : '') + (g === 'closed' && !ping ? ' done' : '') +
       '" data-pu="' + esc(String(it.id)) + '" data-proj="' + esc(String(it.project_id || '')) + '" role="button" tabindex="0">' +
     '<span class="pl-stp"></span>' +
     '<span class="pl-kd"><span class="pl-k1"><i class="pl-dot"></i>' + K.one + '</span>' +
+      (ping ? '<span class="pl-flag">Follow up</span>' : '') +
       (urg ? '<span class="pl-flag">Urgent</span>' : '') +
       (supp ? '<span class="pl-flag">Supplement</span>' : '') +
       (plBackFromHold(it) ? '<span class="pl-flag">Back from hold</span>' : '') + '</span>' +
-    '<span class="pl-cl"><b>' + esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</b>' +
+    '<span class="pl-cl"><b>' + (ping ? '<i class="pl-bang" aria-label="Needs follow-up">!</i>' : '') +
+      esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</b>' +
       '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
-    '<span class="pl-pb">' + esc(it.title || 'Untitled item') + '</span>' +
+    '<span class="pl-pb">' + (ping ? esc('\u201C' + (it.ping_note || '') + '\u201D \u2014 ' + plName(it.ping_by)) : esc(it.title || 'Untitled item')) + '</span>' +
     '<span class="pl-age">' + (age != null ? age + 'd' : '') + '</span>' +
     '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + esc(w.sub || '') + '</small></span>' +
     '<span class="pl-cr">' + (who ? '<span class="pl-av">' + esc(plName(who).slice(0, 2).toUpperCase()) + '</span><span class="pl-nm">' + esc(plName(who)) + '</span>'
@@ -68122,7 +68233,7 @@ function render(){
   /* 1248: every open item is in exactly one place — the pinned queue (no one
      on it yet) or one WHEN group below. Closed work has its own view. */
   var open = all.filter(function(it){ return it.status !== 'done'; });
-  var inQueue = function(it){ return !it.assigned_to && !plOnHold(it); };
+  var inQueue = function(it){ return !it.assigned_to && !plOnHold(it) && !plPing(it); };
   var plShown = function(it){ return match(it) && plTypeOk(it); };
 
   /* the pinned queue — oldest first, above the list in every view (945) */
@@ -68161,15 +68272,16 @@ function render(){
     b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
 
-  var board = open.filter(function(it){ return !inQueue(it) && plShown(it); });
-  var G = { late:[], today:[], next:[], nodate:[], hold:[] };
+  var board = all.filter(function(it){ return (it.status !== 'done' ? !inQueue(it) : plPing(it)) && plShown(it); });
+  var G = { ping:[], late:[], today:[], next:[], nodate:[], hold:[] };
   board.forEach(function(it){ G[plGroup(it)].push(it); });
   var closed = all.filter(function(it){ return it.status === 'done' && plShown(it); })
     .sort(function(a, b){ return String(b.done_at || '').localeCompare(String(a.done_at || '')); });
   var nQueue = open.filter(function(it){ return inQueue(it) && plShown(it); }).length;
 
   document.getElementById('puSub').textContent =
-    (board.length + nQueue) + ' open · ' + nQueue + ' need assigned · ' + G.late.length + ' past due';
+    (G.ping.length ? G.ping.length + ' need follow-up \u00b7 ' : '') +
+    (open.length) + ' open \u00b7 ' + nQueue + ' need assigned \u00b7 ' + G.late.length + ' past due';
 
   var cols = '<div class="pl-cols" aria-hidden="true"><span></span><span>Type</span><span>Client</span>' +
     '<span>What’s wrong</span><span>Age</span><span>When</span><span>Crew</span></div>';
@@ -68183,7 +68295,7 @@ function render(){
     var groups = PL_GROUPS.filter(function(g){ return !PU.view || PU.view === g.g; });
     groups.forEach(function(g){
       var list = G[g.g].slice().sort(plOrder);
-      if(list.length) html += '<div class="pl-grp' + (g.g === 'late' ? ' late' : '') + '">' + g.l + ' · ' + list.length + '</div>' + list.map(plRow).join('');
+      if(list.length) html += '<div class="pl-grp' + (g.g === 'late' || g.g === 'ping' ? ' late' : '') + '">' + g.l + ' · ' + list.length + '</div>' + list.map(plRow).join('');
     });
     html = html ? cols + html : '<div class="pu-empty">' +
       (all.length ? (PU.view ? 'Nothing here right now.' : 'Nothing matches — try All, or clear the filters.')
@@ -68211,6 +68323,7 @@ function render(){
         .replace('class="pl-ri', 'class="pl-ri k-' + K.k);
     }).join('') +
     '<div class="pl-rh">Needs attention</div>' +
+    ri('data-pufocus="ping"', PU.view === 'ping', 'Needs follow-up', G.ping.length, G.ping.length > 0) +
     ri('data-pufocus="late"', PU.view === 'late', 'Past due', G.late.length, G.late.length > 0) +
     ri('data-pufocus="nodate"', PU.view === 'nodate', 'No date', G.nodate.length) +
     ri('data-pufocus="hold"', PU.view === 'hold', 'On hold', G.hold.length) +
