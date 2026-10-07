@@ -2680,6 +2680,9 @@ body.restoring #restoreVeil{display:flex;}
 }
 
 .tradeopt{display:flex;align-items:center;gap:7px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+/* 1253: the intake's trades read in the lead form's own ink, both themes */
+#leadFormModal .ldtradehead{margin:12px 0 2px;font-weight:700;}
+#leadFormModal .ldtrades .tradeopt{color:inherit;min-height:44px;--cr-stack:"the intake's trade labels inherit the form's ink; the base .tradeopt is a light-era #2b2b2b";}
 
 /* ---- work schedule + AR row ---- */
 .rowfil{height:1px;margin:14px 8px;background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
@@ -4070,7 +4073,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1252<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1253<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8475,6 +8478,16 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <select id="ldWorkType"><option value="">&#8212; select &#8212;</option>
               <option>Inspection</option><option>Insurance</option><option>New</option><option>Repair</option>
               <option>Retail</option><option>Service</option><option>Warranty</option></select></label>
+        </div>
+        <!-- 1253: trades at intake — the same six, saved to checklist.trades like the Edit form -->
+        <div class="ldtradehead">Trades</div>
+        <div class="tradegrid ldtrades" id="ldTrades">
+          <label class="tradeopt"><input type="checkbox" class="cbx" value="Roofing"> Roofing</label>
+          <label class="tradeopt"><input type="checkbox" class="cbx" value="Siding"> Siding</label>
+          <label class="tradeopt"><input type="checkbox" class="cbx" value="Gutters"> Gutters</label>
+          <label class="tradeopt"><input type="checkbox" class="cbx" value="Windows"> Windows</label>
+          <label class="tradeopt"><input type="checkbox" class="cbx" value="Repairs"> Repairs</label>
+          <label class="tradeopt"><input type="checkbox" class="cbx" value="Misc"> Misc</label>
         </div>
         <label class="ldmore">Lead Source <span class="ldreq">*</span>
           <select id="ldSource"><option value="">&#8212; select &#8212;</option>
@@ -16398,6 +16411,7 @@ function openLeadForm(){
   ['ldCategory','ldWorkType','ldSource','ldPartner','ldInsCoverage'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
+  document.querySelectorAll('#ldTrades input').forEach(function(cb){ (/** @type {HTMLInputElement} */ (cb)).checked = false; });   /* 1253 */
   /* 1208 (audit 7b): Ohio by default. Cardinal works Dayton; the walk filled
      every field it was asked for and was still refused with "Required: State",
      because this select opened empty. Every other state is one tap away, and
@@ -16845,7 +16859,14 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       /* 1008: the source chart/filter/sort/profile all read checklist.lead_source (flat); the
          intake had only ever written it nested as lead.source, so the source 1005 made mandatory
          reached no report. Write the flat key the readers actually use. */
-      checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString(), lead_source: document.getElementById('ldSource').value || null })
+      /* 1253: trades from the intake, and Category / Work Type under the FLAT keys
+         Job Details, the Leads list and the reports read (job_category /
+         work_type — what the Edit form writes). They were only ever nested in
+         lead.category / lead.worktype, so the intake's picks never showed. */
+      checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString(), lead_source: document.getElementById('ldSource').value || null,
+        job_category: ((/** @type {HTMLSelectElement} */ (document.getElementById('ldCategory'))) || {}).value || null,
+        work_type: ((/** @type {HTMLSelectElement} */ (document.getElementById('ldWorkType'))) || {}).value || null,
+        trades: (function(){ var t = []; document.querySelectorAll('#ldTrades input:checked').forEach(function(cb){ t.push((/** @type {HTMLInputElement} */ (cb)).value); }); return t.length ? t : null; })() })
     });
     /* 901: a new lead assigned to a rep pings them (push/email/text via notifyTeam).
        Self-assignment is skipped — a rep creating their own lead needs no alert. */
@@ -43464,6 +43485,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1253, d: '2026-10-07', t: 'Pick the trades when you enter a lead',
+    s: 'The New Lead form now has the six trade boxes \u2014 Roofing, Siding, Gutters, Windows, Repairs, Misc \u2014 so the trade goes in with the lead instead of being added afterwards. And the Job Category and Work Type you pick on that form now show on the client\u2019s Job Details; before, they were saved somewhere Job Details never looked.' },
   { b: 1252, d: '2026-10-07', t: 'Only Theo, Joan and Curtis assign and close punch work',
     s: 'Assigning a punch-out, repair, callback or tarp, and closing or reopening one, is now for Theo, Joan and Curtis only. Everyone else can still file new work (it goes to the top of the Punch List for Curtis to assign), message on it, add photos, flag it for follow-up or put it on hold. When the crew finishes a job, the card shows \u201cTell Curtis it\u2019s finished\u201d \u2014 it posts to the job\u2019s messages and lets Curtis and Theo know it\u2019s ready to close.' },
   { b: 1251, d: '2026-10-07', t: 'Follow-up box easier to read in light mode',

@@ -34332,3 +34332,36 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
     0ms. The gate now saves the choice the way the app does. Green 3/3. This is not an app bug.
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
+
+## Build 1253 — Trades on the New Lead form (Joan)
+
+Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She can only edit after."*
+
+- **The intake had no trades at all.** The six boxes (Roofing, Siding, Gutters, Windows, Repairs,
+  Misc) lived only on the Edit form (`#pfTrades`).
+  - They are now in the New Lead form's Job Details box as `#ldTrades`, visible without "More
+    detail".
+  - They are saved to `checklist.trades`, the key the Edit form writes and `ljTrades()` / Job
+    Details read.
+  - They reset to unticked on every open.
+- **Same cause, found on the way:** the intake saved Job Category and Work Type only *nested*
+  (`checklist.lead.category`, `.worktype`).
+  - Job Details, the Leads list and the reports read the *flat* `job_category` / `work_type` that
+    the Edit form writes, so whatever Joan picked never showed.
+  - The intake now writes the flat keys too. The nested copy stays.
+  - ⚠ Leads already entered keep their missing flat keys. They were not backfilled.
+- **Ink:** the base `.tradeopt` is a light-era `#2b2b2b`, so the intake's labels inherit the form's
+  ink instead (`--cr-stack` declared). Measured ≥4.5:1 in both themes, and every label is ≥44px.
+- **Not touched:** the other lead doors still take no trade:
+  - Quick Inspection's "new prospect";
+  - The Appointment;
+  - the Sol and community intakes.
+- **Gates:**
+  - **`gate_1253.mjs` (10 checks):**
+    - the six boxes are visible without "More detail";
+    - every label is 44px+ and reads at 4.5:1+ in both themes;
+    - a lead created with Roofing and Gutters, Residential and Repair writes `trades`,
+      `job_category` and `work_type` flat;
+    - the boxes reset when the form reopens.
+    - **RED on 1252.**
+  - **Also green:** types (after typing three DOM reads), dupes, stack, 1243.

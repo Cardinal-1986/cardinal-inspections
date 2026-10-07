@@ -9515,3 +9515,6 @@ SQL `punch_ping.sql` (applied). Gate: `gate_1250.mjs`.
 | Everyone else (incl. Scottie) | ❌ (files unassigned) | ❌ — "Tell Curtis it's finished" | ✅ file, message, photos, steps, check in, flag, hold |
 
 Enforced by the trigger (UPDATE and INSERT). Gate: `gate_1252.mjs`.
+
+## Build 1253 — New Lead form trades (`#ldTrades`)
+The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the keys Job Details reads). Gate: `gate_1253.mjs`.
