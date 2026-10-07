@@ -4070,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1251<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1252<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -27665,6 +27665,12 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
+/* 1252: who may assign and close punch work — Theo's rule, the same three
+   addresses as public.is_punch_boss() (punch_boss_guard.sql), which is the
+   authority. This only keeps the app from offering what it would refuse. */
+var PUNCH_BOSS_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net', 'curtis@cardinalrenovations.net'];
+function isPunchBoss(){ return !!(currentUser && PUNCH_BOSS_EMAILS.indexOf(String(currentUser.email || '').toLowerCase()) !== -1); }
+window.isPunchBoss = isPunchBoss;
 var BUILD_TAG = '2026-07-19 build 55 \u2014 header flex-fit';
 try{ console.info('Cardinal ' + BUILD_TAG); }catch(e){}
 var cacheTeam = {}; /* email -> {name,title,phone,photo} */
@@ -43458,6 +43464,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1252, d: '2026-10-07', t: 'Only Theo, Joan and Curtis assign and close punch work',
+    s: 'Assigning a punch-out, repair, callback or tarp, and closing or reopening one, is now for Theo, Joan and Curtis only. Everyone else can still file new work (it goes to the top of the Punch List for Curtis to assign), message on it, add photos, flag it for follow-up or put it on hold. When the crew finishes a job, the card shows \u201cTell Curtis it\u2019s finished\u201d \u2014 it posts to the job\u2019s messages and lets Curtis and Theo know it\u2019s ready to close.' },
   { b: 1251, d: '2026-10-07', t: 'Follow-up box easier to read in light mode',
     s: 'In light mode the small print and the Cancel button in the follow-up box were too faint on the pink. They are darker now. The On hold sheet also no longer risks swallowing a swipe on iPhone.' },
   { b: 1250, d: '2026-10-07', t: 'Flag a punch-out for follow-up',
@@ -55896,7 +55904,7 @@ function openAdd(presetProjectId){
     '<select data-f="project">' + (opts || '<option value="">No jobs yet</option>') + '</select>' +
     '<div class="row">' +
     '<div><label>Kind</label><select data-f="kind">' +
-    '<option value="punch">Punch</option><option value="ticket">Ticket</option>' +
+    '<option value="punch">Punch-out</option><option value="ticket">Repair</option>' +
     '<option value="callback">Callback</option>' +
     /* 976: a tarp is not a repair, a ticket or a warranty callback. It is the
        thing we go and do now so the house stops taking water — and on a
@@ -55907,7 +55915,10 @@ function openAdd(presetProjectId){
     '<option value="low">Low</option></select></div>' +
     '</div>' +
     '<div class="row">' +
-    '<div><label>Assign to</label><select data-f="assigned">' + who + '</select></div>' +
+    /* 1252: only Theo, Joan and Curtis assign; everyone else files it unassigned */
+    ((typeof window.isPunchBoss === 'function' && !window.isPunchBoss())
+      ? '<div><label>Assign to</label><div class="pbnote" style="padding:10px 0;">Curtis assigns it</div></div>'
+      : '<div><label>Assign to</label><select data-f="assigned">' + who + '</select></div>') +
     '<div><label>Schedule for</label><div class="cr-when2">' +
       '<input type="date" data-f="when">' +
       '<input type="time" data-f="whentime" aria-label="Time (optional)">' +
@@ -56528,6 +56539,7 @@ window.CardinalProduction = {
   background:#1b7d49; border-color:#1b7d49; color:#fff;
 }
 #cr-pk .pkclose.ready b{ color:#e4f6ec; }
+#cr-pk .pkclose.closed-ro{ cursor:default; }   /* 1252: closed, and this person may not reopen it */
 #cr-pk .pkclose .jump{ text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
 /* 1249: On hold — the block on the card, and the sheet. Amber is the
    warning colour on this card already (--pk-hot); a held job is a warning,
@@ -57433,7 +57445,9 @@ function mayDelete(){
    the last thing seen on every open, and its own prose admitted it is almost
    never the right choice. */
 function closeHtml(done){
+  var boss = isManager();   /* 1252: Theo, Joan, Curtis — punch_boss_guard */
   if(done){
+    if(!boss) return '<div class="pkclose closed-ro">Closed<b>' + esc((it.done_at ? fmtWhen(it.done_at) + ' ' : '') + 'by ' + nameOf(it.done_by)) + '</b></div>';
     return '<button class="pkclose reopen" data-act="reopen" type="button">Reopen punch-out' +
       '<b>' + esc('closed ' + (it.done_at ? fmtWhen(it.done_at) : '') + ' by ' + nameOf(it.done_by)) + '</b></button>';
   }
@@ -57442,6 +57456,12 @@ function closeHtml(done){
   if(ph < PHOTO_MIN) want.push('<span class="jump" data-jump="pkSecPh">' + (PHOTO_MIN - ph) + ' photo' + (PHOTO_MIN - ph === 1 ? '' : 's') + '</span>');
   if(left > 0) want.push('<span class="jump" data-jump="pkSecCk">' + left + ' step' + (left === 1 ? '' : 's') + '</span>');
   var ready = readyToClose();
+  if(!boss){
+    /* 1252: the crew finishes, Curtis closes. Ready = tell him; not ready = what is left. */
+    return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="' + (ready ? 'askclose' : 'close') + '" type="button">' +
+      (ready ? 'Tell Curtis it\u2019s finished' : 'Finish the punch-out') +
+      '<b>' + (ready ? 'Curtis closes it' : want.join(' \u00b7 ') + ' left') + '</b></button>';
+  }
   return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="close" type="button">' +
     'Close punch-out' +
     '<b>' + (ready ? 'everything is done' : want.join(' \u00b7 ') + ' left') + '</b></button>';
@@ -57664,8 +57684,28 @@ async function send(){
     }
   }
 }
+/* 1252: the crew's "it's finished" — a message on the job and a buzz to the
+   office (Curtis and Theo), never a status change, which is the bosses'. */
+async function askClose(){
+  if(it.status === 'done' || !readyToClose()) return;
+  var me = myEmail(), list = comments().slice();
+  list.push({ by:me, name:nameOf(me), at:new Date().toISOString(), text:'Finished \u2014 ready for Curtis to close.', flag:'askclose' });
+  await save({ comments:list });
+  var to = officeEmails();
+  if(to.length && typeof window.notifyTeam === 'function'){
+    var pr = projectFor(it.project_id);
+    try{
+      var res = await window.notifyTeam(to, 'Ready to close: ' + ((pr && pr.name) || 'a job') + ' \u2014 ' + (it.title || 'punch-out'),
+        '<p><b>' + esc(nameOf(me)) + '</b> finished <b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b>. Photos and steps are in. It is ready for you to close.</p>',
+        punchLink(it.project_id));
+      outMsg = outcomeText(res, to);
+    }catch(_){ outMsg = 'Saved \u2014 could not tell whether Curtis was buzzed.'; }
+    lastSig = ''; render();
+  }
+}
 async function doClose(){
   if(it.status === 'done') return;
+  if(!isManager() && readyToClose()){ return askClose(); }   /* 1252 */
   if(!readyToClose()){
     var ph = photos().length, left = steps().length - stepsDone();
     crTell('Not ready to close.\n\n' +
@@ -58008,6 +58048,7 @@ function wire(){
   var msg = el.querySelector('[data-f="msg"]');
   if(msg) msg.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); send(); } };
   q('[data-act="close"]', function(b){ b.onclick = doClose; });
+  q('[data-act="askclose"]', function(b){ b.onclick = askClose; });
   q('[data-act="reopen"]', function(b){ b.onclick = doToggle; });
   q('[data-act="urg"]', function(b){ b.onclick = function(){
     save({ priority: it.priority === 'high' ? 'normal' : 'high' });
@@ -67930,11 +67971,12 @@ function isUrgent(it){ return it.priority === 'high' && it.status !== 'done'; }
    helpers are missing so a partial boot cannot lock out the production crew;
    the database refuses the write in that case anyway. */
 function mayClose(){
+  /* 1252: Theo, Joan and Curtis only (punch_boss_guard). Falls OPEN when the
+     helper is missing so a partial boot hides nothing — the database refuses
+     the write regardless. */
   try{
-    var prod  = (typeof window.isProductionUser === 'function') ? window.isProductionUser() : null;
-    var admin = (typeof window.isAdminUser === 'function') ? window.isAdminUser() : null;
-    if(prod === null && admin === null) return true;
-    return !!prod || !!admin;
+    if(typeof window.isPunchBoss !== 'function') return true;
+    return !!window.isPunchBoss();
   }catch(e){ return true; }
 }
 function mayDelete(){
@@ -68201,7 +68243,7 @@ function cardHtml(it, showCrm){
     ' data-proj="' + esc(String(it.project_id || '')) + '"' + (done ? ' style="--pc:#3fae6a"' : '') + '>' +
     '<span class="pu-box' + (mayClose() ? '' : ' locked') + '" data-putoggle="' + esc(String(it.id)) + '"' +
       (mayClose() ? ' role="button" tabindex="0" aria-label="' + (done ? 'Reopen' : 'Close') + ' this item"'
-                  : ' aria-disabled="true" title="Only the production team can close punch items"') +
+                  : ' aria-disabled="true" title="Only Theo, Joan and Curtis close punch items"') +
       '>' + (done ? '\u2713' : (mayClose() ? '' : '\uD83D\uDD12')) + '</span>' +
     '<div class="pu-bd">' +
       '<div class="pu-t">' + esc(it.title || 'Untitled item') + '</div>' +
@@ -68250,8 +68292,7 @@ function render(){
       return String(a.created_at || '').localeCompare(String(b.created_at || ''));
     });
     var mayAsg = false;
-    try{ mayAsg = (typeof isAdminUser === 'function' && isAdminUser()) ||
-                  (typeof isProductionUser === 'function' && isProductionUser()); }catch(_){}
+    try{ mayAsg = (typeof window.isPunchBoss === 'function') && window.isPunchBoss(); }catch(_){}   /* 1252 */
     qEl.innerHTML = (puMsg ? '<div class="pu-note">' + esc(puMsg) + '</div>' : '') +
       (queue.length ? '<div class="pu-hero"><div class="ph2"><b>' + queue.length +
         ' need' + (queue.length === 1 ? 's' : '') + ' assigned</b><span>oldest first</span></div>' +
@@ -68549,7 +68590,7 @@ document.addEventListener('click', function(e){
     /* 418: the database refuses this write for anyone outside the production
        crew (punch_close_guard). Say so here rather than let it fail silently. */
     if(!mayClose()){
-      crTell('Only the production team can close or reopen a punch item.\\n\\n' +
+      crTell('Only Theo, Joan and Curtis can close or reopen a punch item.\\n\\n' +
             'You can still edit it, add photos, or change who it is assigned to \\u2014 ' +
             'tap the item itself.');
       return;
@@ -85293,7 +85334,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   }
 
   /* 910: managers (admin/production) can reassign a repair straight from the pin */
-  function canAssign(){ try{ return (typeof isAdminUser==='function' && isAdminUser()) || (typeof isProductionUser==='function' && isProductionUser()); }catch(e){ return false; } }
+  function canAssign(){ try{ return typeof window.isPunchBoss==='function' && window.isPunchBoss(); }catch(e){ return false; } }   /* 1252 */
   function asgBtn(it, email, label){ var on=String(it.assigned_to||'')===email;
     return '<button class="asgb'+(on?' on':'')+'" data-puassign="'+esc(email)+'" data-puassignid="'+esc(String(it.id))+'">'+esc(label)+'</button>'; }
   function popupHTML(it, pr){

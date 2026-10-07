@@ -9506,3 +9506,12 @@ SQL `punch_hold.sql` (applied). Gate: `gate_1249.mjs`.
 | List | `plPing()` → group `ping`, first, red, `!` before the client, the note as the line; closed items too; rail + subtitle count |
 
 SQL `punch_ping.sql` (applied). Gate: `gate_1250.mjs`.
+
+## Build 1252 — punch bosses (`punch_boss_guard.sql`, `window.isPunchBoss`)
+
+| Who | Assign / reassign | Close / reopen | Everything else on a punch item |
+|---|---|---|---|
+| Theo, Joan, Curtis | ✅ | ✅ | ✅ |
+| Everyone else (incl. Scottie) | ❌ (files unassigned) | ❌ — "Tell Curtis it's finished" | ✅ file, message, photos, steps, check in, flag, hold |
+
+Enforced by the trigger (UPDATE and INSERT). Gate: `gate_1252.mjs`.

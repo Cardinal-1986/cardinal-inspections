@@ -12,7 +12,8 @@
  *           had a 9px pad — its probe sits at 11px out).
  * Also asserts the VISUAL box is unchanged (the pass promises no visual change),
  * and verifies the audit's two false-positive rows really were already correct:
- * .pu-box (44px pad since 418) and .pkback (44 min since 947).
+ * .pl-row (the Punch List row since 1248; the old .pu-box tick lives only on
+ * the home strips now) and .pkback (44 min since 947).
  * Run:  node gate_1040.mjs <artifact> [--control <index_1039>]
  */
 import { readFileSync, existsSync } from 'fs';
@@ -45,7 +46,9 @@ const TARGETS = [
   ['dispatch', '#cr-disp .dspback',     34, true,  'up',   4],
   ['dispatch', '#cr-disp .dspwk button',26, true,  'down', 4],
   ['dispatch', '#cr-disp .job .mv',     15, true,  'left', 11],
-  ['punchlist','#punchView .pu-box',    22, false, 'left', 4],   /* 418's pad — already 44 */
+  /* 1248 moved closing into the card: the list has no tick box any more, its
+     tap target is the whole row (three lines, 60px+ on a phone) */
+  ['punchlist','#punchView .pl-row',    96, false, 'up',   0],   /* the seed's first row (i1) at 390, measured at 1252 */
   ['punchcard','#cr-pk .pkback',        44, false, 'up',   0],   /* 947's min — already 44, no pseudo */
 ];
 

@@ -34279,3 +34279,56 @@ Re-swept: both gone. **What remains, judged and NOT changed:**
   - The new 44–48px button floors beat `.pkbtn{min-height:36px}`.
 
 `gate_1249`, `gate_1250` and `gate_1243` are green after the change.
+
+## Build 1252 — only Theo, Joan and Curtis assign and close punch work
+
+Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
+
+**SQL first — `punch_boss_guard.sql`, APPLIED to production 7 Oct, before the writer.**
+- **New function:** `public.is_punch_boss()` returns true for theo@, joan@ and curtis@.
+- **Updated trigger function:** `punch_close_guard()` now lets bosses through untouched.
+  - **On UPDATE**, for anyone else, it refuses:
+    - a change to `assigned_to`;
+    - moving `status` to or from `'done'`.
+
+    It raises 42501 with a plain sentence.
+  - **On INSERT**, for anyone else, it refuses a row that arrives with an assignee or already done.
+    This runs through a **new trigger, `punch_boss_guard_ins`**, created only if missing. No DROP is
+    needed (destructive statements stall the migration tool).
+- **Verified:** triggers `punch_boss_guard_ins:I` and `punch_close_guard:U`, and the function body
+  calls `is_punch_boss`.
+- ⚠ **Scottie can no longer close.** Before this, `is_production() OR is_admin()` let him.
+
+**App** — so nobody is offered a control the database refuses:
+- **New helper.** `window.isPunchBoss()` uses the same three addresses.
+- **Punch List and home strip.** The queue's Assign button and the strip's tick follow the helper.
+  So does the ultrawide map's assign buttons.
+- **"+ New" composer.** Assign to shows for the bosses only; anyone else reads "Curtis assigns it".
+  The Kind options now read Punch-out / Repair (was Punch / Ticket).
+- **Card.** `isManager()` was already exactly these three.
+  - Bosses keep Close and Reopen.
+  - Everyone else sees what is still missing. Once the job is ready, the button becomes **"Tell
+    Curtis it's finished"**: it posts "Finished — ready for Curtis to close." to the message thread
+    and buzzes Curtis and Theo. It never changes the status.
+  - A closed card shows "Closed · date by X", with no Reopen.
+
+**Gates:**
+- **`gate_1252.mjs` (13 checks):**
+  - The bosses list is exact.
+  - As **Scottie**:
+    - the queue has no Assign button, and the strip tick is locked;
+    - his ready card has no Assign dropdown and shows "Tell Curtis";
+    - tapping it writes a message and no status, and buzzes Curtis and Theo;
+    - a closed card has no Reopen;
+    - "+ New" has no Assign dropdown, and its Kind list says Repair.
+  - As **Curtis**, all three controls are present.
+  - **RED on 1251** (9 failures).
+- **Gate repairs found on the way:**
+  - **`gate_1040`** still measured the list's `.pu-box`, which 1248 retired. It now measures the
+    list row (`.pl-row`, 96px on the seed's first row). Mine, from 1248.
+  - **`gate_767`'s "light really is a different ground"** passed or failed by chance. It set
+    `data-theme` directly, and `cr-rbtheme-toggle-script` re-applies the saved theme every second
+    (`setInterval(refreshAll, 1000)`). The probe showed the attribute already reverted to `null` at
+    0ms. The gate now saves the choice the way the app does. Green 3/3. This is not an app bug.
+- **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
+  types, dupes, scroll-lock, 1243.
