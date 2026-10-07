@@ -6245,8 +6245,11 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
    ✅ **2C the person's route page at 1254** (free version: straight-line ≈ minutes; real drive
    times would need a paid Google Directions key — Theo's call). ✅ **4C the buzzes at 1255** (`punch_buzz_log.sql` applied; Scottie gets
    them by email until he enables notifications). Next, from Jacob via Theo:
-   - an **"Uncontacted" marker** on the Leads cards;
-   - **calendar sync** (Gmail / iCloud) for appointments.
+   - ✅ the **"Uncontacted" marker** shipped at 1256 (A3);
+   - **calendar sync** (Gmail / iCloud): Theo picked **B1**, an "Add to calendar" `.ics` button per
+     appointment.
+   - **Company Documents traps you** (Theo, 7 Oct): the Roof Pre-Install Guide has no way out and
+     says "Nick".
 
    ⚠ Found at 1255, not fixed: the 1125 punch-out links (`#p/<id>/punch`) have no `hashchange`
    handler, so a tap while the app is already open changes the hash and nothing else.

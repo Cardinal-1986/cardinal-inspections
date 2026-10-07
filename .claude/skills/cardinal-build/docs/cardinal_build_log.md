@@ -34333,6 +34333,37 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1256 — "Uncontacted" on the Leads cards (Jacob, via Theo — pick A3)
+
+Theo, 7 Oct: *"once you attempt to make contact whether they answer or not, it should still go into
+prospect. Jacob is asking if within the client cards we can have something saying uncontacted?"*
+
+- **No new state.** The rule already existed: Lead means not yet contacted, and the profile's
+  Contacted button (`#contactedBtn`) moves the job to Prospect. The cards just never said so.
+- **The chip.** Every Lead card shows an amber **"Uncontacted · N days"** chip (age since created).
+  - It has a fixed ground (`#f5a623`), so it takes a fixed ink (`#1a1306`) in both themes.
+- **The ask (`ljAskContacted`).** Tapping Call, Text or Email on a Lead card, or Call/Text in the
+  desktop side pane, works as before (it is not prevented) and then raises a bottom sheet:
+  - **Did you reach out to <name>?**
+  - **Mark contacted** goes through `setStage(id,'Prospect')`, the one stage writer, so
+    `stage_since` and `t_Prospect` are stamped exactly as the profile button stamps them.
+  - **Not yet** closes the sheet and writes nothing.
+  - A mis-tap costs one tap, never a wrong stage. That is why A3 was picked over A2.
+
+**Gates:**
+- **`gate_1256.mjs` (12 checks):**
+  - the chip appears on the Lead card only;
+  - Call raises the sheet, and the tap is not cancelled;
+  - Not yet writes nothing;
+  - Mark contacted writes `stage: Prospect` and the chip disappears;
+  - a non-Lead card raises nothing;
+  - ink is 4.5:1+ and buttons are 44px+ in both themes.
+  - **RED on 1255 (5/12).**
+- ⚠ **The first version of the gate was wrong.** It listened for the call on `document`, but the
+  Leads list stops propagation, so it reported that the call had been cancelled when it had not. It
+  now reads `dispatchEvent`'s own answer.
+- **Also green:** check_build, types, dupes, scroll-lock (17), 1243.
+
 ## Build 1255 — the scheduled punch buzzes (Theo's pick 4C)
 
 **`punch_buzz_log.sql` is APPLIED** (7 Oct). It must run before the route ships.

@@ -9544,3 +9544,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **At most once:** keys are claimed in `punch_buzz_log`.
 - **App links:** `#punch` and `#route/<name>` open at load and on hashchange.
 - **Gate:** `gate_1255.mjs`.
+
+## Build 1256 — "Uncontacted" on Leads cards (`.ljunc`, `ljAskContacted`)
+- Every Lead card shows "Uncontacted · N days".
+- Call, Text or Email on a Lead then asks "Did you reach out?". **Mark contacted** sets the stage to
+  Prospect through `setStage`.
+- **Gate:** `gate_1256.mjs`.

@@ -2574,6 +2574,20 @@ body.restoring #restoreVeil{display:flex;}
   opacity:.9;color:var(--rbe-po2,#dce3ec);/* 685: was gradient-clipped text */}
 .ljad{font-size:11px;color:var(--rbe-mute);}
 .ljct{font-size:11px;color:var(--rbe-mute);margin-top:3px;}
+/* 1256: the Uncontacted chip — a fixed amber ground, so a fixed ink (both themes) */
+.ljunc{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:999px;background:#f5a623;color:#1a1306;
+  font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;}
+#ljAsk{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
+  background:var(--rbe-panel,#16161B);color:var(--rbe-ink,#eceef0);border-top:1px solid var(--rbe-panelbd,#24242c);
+  box-shadow:0 -8px 30px rgba(0,0,0,.35);}
+#ljAsk.open{display:block;}
+#ljAsk .q{max-width:560px;margin:0 auto;}
+#ljAsk b{display:block;font:700 18px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#eceef0);}
+#ljAsk p{margin:4px 0 12px;font:400 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#b8bec6);}
+#ljAsk .row{display:flex;gap:10px;}
+#ljAsk button{flex:1;min-height:48px;border-radius:10px;cursor:pointer;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#ljAsk .yes{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
+#ljAsk .no{background:transparent;border:1px solid var(--rbe-panelbd,#24242c);color:var(--rbe-ink,#eceef0);}
 .ljrep{font-size:11px;font-weight:800;color:var(--rbe-rep,#dce3ec);}
 .ljcta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;align-self:center;margin-right:11px;}
 .ljbtn{width:36px;height:36px;border:1px solid var(--rbe-ctamiss);border-radius:10px;background:var(--rbe-ctabg);
@@ -4073,7 +4087,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1255<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1256<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -13507,6 +13521,8 @@ function ljCardHtml(p){
       '<div>' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + ':</span> ' : '') + '<span class="ljnm">' + esc(p.name || 'Unnamed') + '</span></div>' +
       (p.address ? '<div class="ljad">' + esc(p.address) + '</div>' : '') +
       (cat ? '<div class="ljct">' + esc(cat) + '</div>' : '') +
+      /* 1256: a Lead is, by the app's own rule, not yet contacted — say so */
+      (stg === 'Lead' ? '<div><span class="ljunc">Uncontacted · ' + esc(ljAge(p.created_at)) + '</span></div>' : '') +
       /* 931: the same resolver as the chip, or a card sitting in the
          Unassigned bucket would print the name of whoever typed it in. */
       '<div class="ljrep">' + esc(ljRepLabel(p)) + '</div>' +
@@ -13764,8 +13780,43 @@ document.getElementById('ljActive').addEventListener('click', function(e){
   if(!set.length) delete ljState.sets[gkey];
   renderLeadsView();
 });
+/* 1256: after a Call / Text / Email on a Lead, ask whether to mark it contacted.
+   The link is NOT stopped — the phone dials first; the sheet waits underneath. */
+function ljAskContacted(id){
+  var p = cacheProjects.find(function(x){ return String(x.id) === String(id); });
+  if(!p || normStage(p.stage) !== 'Lead') return;
+  var el = document.getElementById('ljAsk');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'ljAsk';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Mark as contacted');
+    document.body.appendChild(el);
+    el.addEventListener('click', async function(ev){
+      var b = /** @type {HTMLElement} */ (ev.target).closest('button');
+      if(!b) return;
+      el.classList.remove('open');
+      if(b.getAttribute('data-ask') !== 'yes') return;
+      try{
+        await setStage(el.getAttribute('data-id'), 'Prospect');
+        if(typeof renderLeadsView === 'function') renderLeadsView();
+      }catch(err){ showError('Could not update stage: ' + ((err && err.message) || err)); }
+    });
+  }
+  el.setAttribute('data-id', String(p.id));
+  el.innerHTML = '<div class="q"><b>Did you reach out to ' + esc(p.name || 'this lead') + '?</b>' +
+    '<p>Answered or not, it counts — it moves to Prospect.</p>' +
+    '<div class="row"><button type="button" class="yes" data-ask="yes">Mark contacted</button>' +
+    '<button type="button" class="no" data-ask="no">Not yet</button></div></div>';
+  el.classList.add('open');
+}
 document.getElementById('ljList').addEventListener('click', function(e){
-  if(e.target.closest('.ljcta')){ e.stopPropagation(); return; }
+  if(e.target.closest('.ljcta')){
+    e.stopPropagation();
+    var tg = /** @type {HTMLElement} */ (e.target), cc = tg.closest('.ljcard');
+    if(tg.closest('a.ljbtn') && cc) ljAskContacted(cc.getAttribute('data-lj'));   /* 1256 */
+    return;
+  }
   var card = e.target.closest('.ljcard');
   if(!card) return;
   var id = card.getAttribute('data-lj');
@@ -13777,6 +13828,7 @@ document.getElementById('ljList').addEventListener('click', function(e){
   }
 });
 document.getElementById('ljPane').addEventListener('click', function(e){
+  if((/** @type {HTMLElement} */ (e.target)).closest('a.ljab') && ljState.sel) ljAskContacted(ljState.sel);   /* 1256: Call / Text in the side pane */
   var t = e.target.closest('[data-lt]');
   if(t){ ljState.tab = t.getAttribute('data-lt'); renderLjPane(); return; }
   if(e.target.closest('#ljOpenBtn')){
@@ -43493,6 +43545,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1256, d: '2026-10-07', t: 'Uncontacted leads say so',
+    s: 'On the Leads screen, every lead nobody has reached out to yet wears an amber <b>Uncontacted</b> tag with how long it has been waiting. Tap Call, Text or Email on one and your phone does that as usual \u2014 then the app asks <b>Did you reach out?</b> Tap <b>Mark contacted</b> and it moves to Prospect, whether they answered or not. Tap <b>Not yet</b> and nothing changes.' },
   { b: 1255, d: '2026-10-07', t: 'The punch buzzes: the morning report, the 3pm plan, the 6pm list',
     s: 'The app now buzzes on its own, Monday to Saturday, Dayton time. <b>7am</b>: Theo gets the punch report \u2014 today\u2019s stops per person, what is past due, what needs follow-up, what is unassigned and what closed yesterday. Also at 7am, any job <b>2 days</b> past due buzzes Curtis and any job <b>5 days</b> past due buzzes Theo \u2014 once per job, not every morning. <b>3pm</b>: Curtis gets \u201cPlan Thursday\u201d (or whatever the next working day is) with each person\u2019s count and what is still unassigned or undated. <b>6pm</b>: everyone with stops tomorrow gets their list, and tapping it opens their day route. If someone has never turned on notifications, the buzz comes by email instead.' },
   { b: 1254, d: '2026-10-07', t: 'A day route for each person',
