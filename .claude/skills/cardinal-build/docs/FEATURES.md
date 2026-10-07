@@ -9558,3 +9558,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Used by:** Company Documents' View (and Download in the installed app) and the Pre-Install Guide
   preview.
 - **Gate:** `gate_1257.mjs` (set `PDFJS_DIR` to check the pages draw).
+
+## Build 1258 — Add to calendar (`apptIcs`, `apptGoogleUrl`, `#apptCalSheet`)
+- Each appointment row in the calendar's day sheet has **Add to calendar**. It offers an Apple
+  Calendar `.ics` or a Google Calendar link.
+- One-way.
+- **Gate:** `gate_1258.mjs`.

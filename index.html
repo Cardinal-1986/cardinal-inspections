@@ -1012,6 +1012,22 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 .apptrow .tm{font-weight:800;color:var(--red-dk);white-space:nowrap;min-width:64px;}
 .apptrow .bd{flex:1;}
 .apptrow .bd small{display:block;color:#8a8a8a;}
+/* 1258: Add to calendar — the row button and its sheet (fixed colours: the sheet
+   sits over the appointment modal's own dark wash in both themes) */
+.apptrow .apptcal{flex:none;min-height:44px;padding:0 12px;border-radius:8px;cursor:pointer;
+  border:1px solid #9aa4b2;background:#ffffff;color:#1e2b4a;font:700 13px 'Segoe UI',Arial,sans-serif;}
+#apptCalSheet{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#16161b;color:#eceef0;
+  border-top:1px solid #2a2d33;box-shadow:0 -8px 30px rgba(0,0,0,.4);}
+#apptCalSheet.open{display:block;}
+#apptCalSheet .q{max-width:560px;margin:0 auto;}
+#apptCalSheet b{display:block;font:700 18px 'Segoe UI',Arial,sans-serif;color:#eceef0;}
+#apptCalSheet p{margin:4px 0 12px;font:400 15px 'Segoe UI',Arial,sans-serif;color:#b8bec6;}
+#apptCalSheet .row{display:flex;flex-wrap:wrap;gap:10px;}
+#apptCalSheet .pri, #apptCalSheet .no{flex:1 1 140px;display:flex;align-items:center;justify-content:center;min-height:48px;
+  border-radius:10px;cursor:pointer;text-decoration:none;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#apptCalSheet .pri{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
+#apptCalSheet .no{background:transparent;border:1px solid #3a3e46;color:#eceef0;}
 .apptrow .del{border:0;background:none;color:#b3a49d;font-size:15px;cursor:pointer;}
 .apptrow .del:hover{color:var(--red);}
 .apptempty{font:13px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;padding:6px 0;}
@@ -4087,7 +4103,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1257<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1258<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -24092,9 +24108,88 @@ function renderApptList(){
         ? '<button class="chipbtn" data-apptattach="' + a.id + '" ' +
             'style="margin-left:8px;">Attach to a job</button>'
         : '') +
+      '<button type="button" class="apptcal" data-apptcal="' + esc(String(a.id)) + '">Add to calendar</button>' +   /* 1258 */
       (apptCanEdit(a) ? '<button class="del" title="Delete">\u2715</button>' : '') +
       '</div>';
   }).join('');
+}
+/* 1258 (B1): "Add to calendar" — an .ics for Apple Calendar, Google's add-event
+   link for Google. One-way and one appointment at a time, by Theo's pick. */
+function apptCalFields(a){
+  var pr = a.project_id ? cacheProjects.find(function(x){ return String(x.id) === String(a.project_id); }) : null;
+  var addr = pr ? [pr.address, pr.city, pr.state, pr.zip].filter(Boolean).join(', ') : '';
+  var d = String(a.appt_date || '').replace(/-/g, '');
+  var t = a.appt_time ? String(a.appt_time).replace(/:/g, '').slice(0, 4) + '00' : '';
+  var start = '', end = '';
+  if(t){
+    var p = String(a.appt_date).split('-'), q = String(a.appt_time).split(':');
+    var e = new Date(+p[0], +p[1] - 1, +p[2], +q[0] + 1, +q[1] || 0);
+    var pad = function(n){ return ('0' + n).slice(-2); };
+    start = d + 'T' + t;
+    end = e.getFullYear() + pad(e.getMonth() + 1) + pad(e.getDate()) + 'T' + pad(e.getHours()) + pad(e.getMinutes()) + '00';
+  } else {
+    var p2 = String(a.appt_date).split('-'), n = new Date(+p2[0], +p2[1] - 1, +p2[2] + 1);
+    start = d;
+    end = n.getFullYear() + ('0' + (n.getMonth() + 1)).slice(-2) + ('0' + n.getDate()).slice(-2);
+  }
+  var notes = [a.notes, pr && pr.name ? 'Client: ' + pr.name : '', pr && pr.phone ? 'Phone: ' + pr.phone : ''].filter(Boolean).join('\n');
+  return { id: a.id, title: String(a.title || 'Appointment') + (pr && pr.name ? ' \u2014 ' + pr.name : ''),
+           timed: !!t, start: start, end: end, where: addr, notes: notes };
+}
+function apptIcs(a){
+  var f = apptCalFields(a);
+  var x = function(s){ return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); };
+  var now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  var lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cardinal Roofing//Resource App//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VEVENT', 'UID:appt-' + f.id + '@cardinalroster.com', 'DTSTAMP:' + now,
+    f.timed ? 'DTSTART:' + f.start : 'DTSTART;VALUE=DATE:' + f.start,
+    f.timed ? 'DTEND:' + f.end : 'DTEND;VALUE=DATE:' + f.end,
+    'SUMMARY:' + x(f.title)];
+  if(f.where) lines.push('LOCATION:' + x(f.where));
+  if(f.notes) lines.push('DESCRIPTION:' + x(f.notes));
+  lines.push('END:VEVENT', 'END:VCALENDAR');
+  /* fold at 75 octets (RFC 5545 \u00a73.1) */
+  return lines.map(function(l){ var o = ''; while(l.length > 74){ o += l.slice(0, 74) + '\r\n '; l = l.slice(74); } return o + l; }).join('\r\n') + '\r\n';
+}
+function apptGoogleUrl(a){
+  var f = apptCalFields(a);
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    '&text=' + encodeURIComponent(f.title) + '&dates=' + f.start + '/' + f.end +
+    (f.where ? '&location=' + encodeURIComponent(f.where) : '') + (f.notes ? '&details=' + encodeURIComponent(f.notes) : '');
+}
+function apptCalOpen(id){
+  var a = cacheAppts.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!a) return;
+  var el = document.getElementById('apptCalSheet');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'apptCalSheet';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Add to calendar');
+    document.body.appendChild(el);
+    el.addEventListener('click', function(ev){
+      var b = /** @type {HTMLElement} */ (ev.target).closest('[data-cal]');
+      if(!b) return;
+      var which = b.getAttribute('data-cal'), cur = cacheAppts.filter(function(x){ return String(x.id) === el.getAttribute('data-id'); })[0];
+      if(which === 'apple' && cur){
+        var blob = new Blob([apptIcs(cur)], { type: 'text/calendar;charset=utf-8' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'cardinal-appointment.ics';
+        document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(function(){ try{ URL.revokeObjectURL(link.href); }catch(_){} }, 60000);
+      }
+      /* google: the <a> navigates itself (target=_blank, off-site) */
+      el.classList.remove('open');
+    });
+  }
+  el.setAttribute('data-id', String(a.id));
+  el.innerHTML = '<div class="q"><b>Add \u201c' + esc(a.title || 'Appointment') + '\u201d to your calendar</b>' +
+    '<p>' + esc(a.appt_date || '') + (a.appt_time ? ' \u00b7 ' + fmtApptTime(a.appt_time) : ' \u00b7 all day') + '. One-way: if it moves, add it again.</p>' +
+    '<div class="row"><button type="button" class="pri" data-cal="apple">iPhone / Apple Calendar</button>' +
+    '<a class="pri" data-cal="google" target="_blank" rel="noopener" href="' + esc(apptGoogleUrl(a)) + '">Google Calendar</a>' +
+    '<button type="button" class="no" data-cal="cancel">Cancel</button></div></div>';
+  el.classList.add('open');
 }
 /* 998: the two job days already in the calendar carry no job, and deleting
    them would lose a real booking. This attaches one instead, reusing the same
@@ -24120,6 +24215,8 @@ async function apptAttachJob(id){
   }catch(e){ crTell('Could not attach it: ' + ((e && e.message) || e)); }
 }
 document.getElementById('apptList').addEventListener('click', async function(e){
+  var cal = (/** @type {HTMLElement} */ (e.target)).closest('[data-apptcal]');
+  if(cal){ apptCalOpen(cal.getAttribute('data-apptcal')); return; }   /* 1258 */
   var att = e.target.closest('[data-apptattach]');
   if(att){ apptAttachJob(att.getAttribute('data-apptattach')); return; }
   var del = e.target.closest('.del');
@@ -43567,6 +43664,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1258, d: '2026-10-07', t: 'Add an appointment to your own calendar',
+    s: 'Open a day on the calendar and every appointment has an <b>Add to calendar</b> button. Pick <b>iPhone / Apple Calendar</b> (it hands your phone a calendar file to add) or <b>Google Calendar</b> (it opens Google with the appointment filled in). It carries the time, the client, the job address and the notes; a build day with no time goes in as all day. It is a copy, not a link \u2014 if the appointment moves, add it again.' },
   { b: 1257, d: '2026-10-07', t: 'Company Documents no longer trap you',
     s: 'Opening a document from Company Documents \u2014 a contract master, or a Pre-Install Guide preview \u2014 used to take over the installed app with no way back. Every document now opens inside the app under a <b>\u2190 Back</b> bar, with <b>Share</b> (save to Files, print, mail) or <b>Download</b> beside it. The guide preview now shows <b>your</b> name and number as the rep, not Nick\u2019s. And the Preview and Download buttons, which were white on white, can be seen.' },
   { b: 1256, d: '2026-10-07', t: 'Uncontacted leads say so',

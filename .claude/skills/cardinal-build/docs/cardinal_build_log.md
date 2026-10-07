@@ -34333,6 +34333,49 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1258 — "Add to calendar" on appointments (Jacob, via Theo — pick B1)
+
+Jacob asked about syncing appointments to Gmail and iCloud. Theo picked **B1** from three priced
+options: one tap per appointment, no sign-in, no server, one-way.
+
+- **Where:** every row in the calendar's day sheet (`#apptList`) gets an **Add to calendar**
+  button. That includes rows the viewer can't edit, because adding one to *your* calendar edits
+  nothing.
+- **The sheet (`#apptCalSheet`):**
+  - **iPhone / Apple Calendar:** an RFC 5545 `.ics` (`apptIcs`), downloaded from a blob as
+    `cardinal-appointment.ics`.
+  - **Google Calendar:** Google's own `calendar/render?action=TEMPLATE` link (`apptGoogleUrl`),
+    opened off-site.
+  - **Cancel.**
+- **The fields:**
+  - A timed appointment runs one hour, in **floating local time** (no TZID: the phone's own zone,
+    which is Dayton for Cardinal).
+  - A build day or delivery with no time is **all-day**.
+  - The summary is the title plus the client. The location is the job address. The description is
+    the notes, client and phone.
+- ⚠ **One-way.** A moved appointment has to be added again. B2 (a subscribed feed) is the build
+  that would fix that.
+- ⚠ **The iPhone path is not verified on a phone.** Chromium proves the file and the download.
+  Whether iOS offers "Add to Calendar" from a blob download inside the installed app is **Theo's
+  phone's call**. If it does not, the fallback is a small `/api` route that serves the same `.ics`
+  as `text/calendar`.
+
+**Gates:**
+- **`gate_1258.mjs` (19 checks):**
+  - **The button:** on every row, including ones Nick can't edit, 44px+ and 4.5:1+ in both themes.
+  - **The sheet:** names the appointment and time, its controls are 44px+ and 4.5:1+, and Cancel
+    closes it.
+  - **The `.ics`:**
+    - CRLF line endings, folded at 75 octets, one VEVENT;
+    - timed is +1h, all-day ends the next day, month end rolls over, and an 11:30 PM start ends
+      after midnight;
+    - commas, semicolons and newlines are escaped;
+    - LOCATION is the address.
+  - **Apple:** the download is byte-identical to `apptIcs()`.
+  - **Google:** the URL carries the same dates, title and place.
+  - **RED on 1257 (0/19), no crash.**
+- **Also green:** check_build, types, dupes, scroll-lock (17), 1243, 1003, 972, 998, sheets937.
+
 ## Build 1257 — Company Documents stops trapping you
 
 Theo, 7 Oct: *"when you go to resources company documents then roof pre install guide, there is no

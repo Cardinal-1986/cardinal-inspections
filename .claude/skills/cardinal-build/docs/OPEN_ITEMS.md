@@ -6246,8 +6246,9 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
    times would need a paid Google Directions key — Theo's call). ✅ **4C the buzzes at 1255** (`punch_buzz_log.sql` applied; Scottie gets
    them by email until he enables notifications). Next, from Jacob via Theo:
    - ✅ the **"Uncontacted" marker** shipped at 1256 (A3);
-   - **calendar sync** (Gmail / iCloud): Theo picked **B1**, an "Add to calendar" `.ics` button per
-     appointment.
+   - ✅ **calendar sync, B1** at 1258 ("Add to calendar": an Apple `.ics` or a Google link).
+     ⚠ The iPhone path is unverified on a phone; if iOS won't take the blob, serve the `.ics` from a
+     small `/api` route.
    - ✅ **Company Documents traps you**: fixed at 1257 (in-app viewer; the preview names whoever is
      looking).
 
