@@ -6243,7 +6243,20 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
    Punch List, shipped at 1248.** ✅ **3C On hold at 1249** (`punch_hold.sql` applied). ✅ **Flag for
    follow-up at 1250** (Theo's add — a salesman flags an angry-client call; `punch_ping.sql` applied).
    ✅ **2C the person's route page at 1254** (free version: straight-line ≈ minutes; real drive
-   times would need a paid Google Directions key — Theo's call). Next: 4C the buzzes.
+   times would need a paid Google Directions key — Theo's call). ✅ **4C the buzzes at 1255** (`punch_buzz_log.sql` applied; Scottie gets
+   them by email until he enables notifications). Next, from Jacob via Theo:
+   - ✅ the **"Uncontacted" marker** shipped at 1256 (A3);
+   - ✅ **calendar sync, B1** at 1258 ("Add to calendar": an Apple `.ics` or a Google link).
+     ⚠ The iPhone path is unverified on a phone; if iOS won't take the blob, serve the `.ics` from a
+     small `/api` route.
+   - ✅ **Company Documents traps you**: fixed at 1257 (in-app viewer; the preview names whoever is
+     looking).
+
+   ⚠ Found at 1255, not fixed: the 1125 punch-out links (`#p/<id>/punch`) have no `hashchange`
+   handler, so a tap while the app is already open changes the hash and nothing else.
+   ⚠ Pre-existing reds:
+   - `harness_notifyindep1126` needs `web-push` installed;
+   - `harness_deeplink1125`'s call count is stale.
    ✅ **Theo's call, 7 Oct: only Theo, Joan and Curtis assign and close (1252, `punch_boss_guard.sql`).**
    Still open by design: anyone signed in may edit the other fields (title, detail, schedule, photos,
    steps). Say if scheduling should be bosses-only too. Original list: Punch List page with **Tarps · Repairs · Callbacks ·

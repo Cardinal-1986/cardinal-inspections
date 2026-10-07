@@ -34333,6 +34333,211 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1258 — "Add to calendar" on appointments (Jacob, via Theo — pick B1)
+
+Jacob asked about syncing appointments to Gmail and iCloud. Theo picked **B1** from three priced
+options: one tap per appointment, no sign-in, no server, one-way.
+
+- **Where:** every row in the calendar's day sheet (`#apptList`) gets an **Add to calendar**
+  button. That includes rows the viewer can't edit, because adding one to *your* calendar edits
+  nothing.
+- **The sheet (`#apptCalSheet`):**
+  - **iPhone / Apple Calendar:** an RFC 5545 `.ics` (`apptIcs`), downloaded from a blob as
+    `cardinal-appointment.ics`.
+  - **Google Calendar:** Google's own `calendar/render?action=TEMPLATE` link (`apptGoogleUrl`),
+    opened off-site.
+  - **Cancel.**
+- **The fields:**
+  - A timed appointment runs one hour, in **floating local time** (no TZID: the phone's own zone,
+    which is Dayton for Cardinal).
+  - A build day or delivery with no time is **all-day**.
+  - The summary is the title plus the client. The location is the job address. The description is
+    the notes, client and phone.
+- ⚠ **One-way.** A moved appointment has to be added again. B2 (a subscribed feed) is the build
+  that would fix that.
+- ⚠ **The iPhone path is not verified on a phone.** Chromium proves the file and the download.
+  Whether iOS offers "Add to Calendar" from a blob download inside the installed app is **Theo's
+  phone's call**. If it does not, the fallback is a small `/api` route that serves the same `.ics`
+  as `text/calendar`.
+
+**Gates:**
+- **`gate_1258.mjs` (19 checks):**
+  - **The button:** on every row, including ones Nick can't edit, 44px+ and 4.5:1+ in both themes.
+  - **The sheet:** names the appointment and time, its controls are 44px+ and 4.5:1+, and Cancel
+    closes it.
+  - **The `.ics`:**
+    - CRLF line endings, folded at 75 octets, one VEVENT;
+    - timed is +1h, all-day ends the next day, month end rolls over, and an 11:30 PM start ends
+      after midnight;
+    - commas, semicolons and newlines are escaped;
+    - LOCATION is the address.
+  - **Apple:** the download is byte-identical to `apptIcs()`.
+  - **Google:** the URL carries the same dates, title and place.
+  - **RED on 1257 (0/19), no crash.**
+- **Also green:** check_build, types, dupes, scroll-lock (17), 1243, 1003, 972, 998, sheets937.
+
+## Build 1257 — Company Documents stops trapping you
+
+Theo, 7 Oct: *"when you go to resources company documents then roof pre install guide, there is no
+way out. Also it says Nick. Also, all company documents traps you in the page"*
+
+### Found (measured, not guessed)
+- **The trap on every document.** Each View and Download is a same-site PDF link
+  (`target=_blank`). In the **installed** iPhone app, a same-site link opens *inside* the app, with
+  no browser chrome and so no Back.
+- **The guide's Preview** did `window.open('')` + `document.write`: the same trap, a chromeless
+  blank window.
+- **"It says Nick":** the preview's `sampleCtx()` filled the guide with a hard-coded **"Nick Hey"**
+  as the rep, for everyone.
+- **Found on the way:** **Preview** and **Download** were white on the white row cards. Rendered in
+  Chromium at 390px, they were invisible.
+
+### Fixed
+- **New in-app viewer, `window.CardinalDocView`** (`cr-docview-*`, built from `docview_1257.html`).
+  - It opens under a 44px **← Back** bar.
+  - PDFs are drawn page by page with the app's own `loadPdfJs()` (the Roofr reader).
+  - If the reader fails, or never answers within **12 s**, the viewer falls back to the browser's
+    own PDF view, still under Back.
+  - HTML (the guide preview) shows in an iframe, with **Print**.
+  - A PDF gets **Share** in the installed app (Save to Files, Print, Mail) and **Download** in a
+    browser.
+  - It is registered in `hideAllViews`; the phone's back closes it through `popstate`.
+- **Company Documents:**
+  - **View** opens the viewer.
+  - **Download** in the installed app opens the share sheet. A browser keeps the plain download.
+- **The guide preview** opens in the viewer and names the person looking, with their Team
+  Directory name and phone (falling back to "your Cardinal sales rep"). No more Nick. The client
+  and address stay an obvious sample.
+- **The two invisible buttons** get a dark ink on their white rows. `--cr-stack` is declared.
+
+### Gates
+**`gate_1257.mjs` — 12 checks:**
+- **View:** opens in-app with the right title, without navigating or opening a window.
+- **The PDF:** with pdf.js served from `PDFJS_DIR`, all 5 pages draw. Without it, the 12 s fallback
+  shows the PDF.
+- **Closing:** Back closes it, and so does `hideAllViews`.
+- **The guide preview:** opens in the viewer and names the viewer, never "Nick Hey".
+- **Download:** shares in the installed app and is left alone in a browser.
+- **Ink:** the bar and the two buttons are 44px+ / 4.5:1+.
+- **RED on 1256 (4/12).**
+- ⚠ **My own first version of the gate was wrong.** The rig's `?as=` knows only
+  theo/curtis/scottie/nick, so `?as=joan` ran as Theo, and the preview rightly said Theo.
+
+**Also green:** check_build, types, dupes, scroll-lock (17), 1243, 746, 944.
+
+**Not caused by this build** (red identically on 1256):
+- `gate_1116` wants a different Playwright Chromium;
+- `harness_guide1111` / `harness_guide1112` crash on a missing `window.crAsk` stub.
+
+## Build 1256 — "Uncontacted" on the Leads cards (Jacob, via Theo — pick A3)
+
+Theo, 7 Oct: *"once you attempt to make contact whether they answer or not, it should still go into
+prospect. Jacob is asking if within the client cards we can have something saying uncontacted?"*
+
+- **No new state.** The rule already existed: Lead means not yet contacted, and the profile's
+  Contacted button (`#contactedBtn`) moves the job to Prospect. The cards just never said so.
+- **The chip.** Every Lead card shows an amber **"Uncontacted · N days"** chip (age since created).
+  - It has a fixed ground (`#f5a623`), so it takes a fixed ink (`#1a1306`) in both themes.
+- **The ask (`ljAskContacted`).** Tapping Call, Text or Email on a Lead card, or Call/Text in the
+  desktop side pane, works as before (it is not prevented) and then raises a bottom sheet:
+  - **Did you reach out to <name>?**
+  - **Mark contacted** goes through `setStage(id,'Prospect')`, the one stage writer, so
+    `stage_since` and `t_Prospect` are stamped exactly as the profile button stamps them.
+  - **Not yet** closes the sheet and writes nothing.
+  - A mis-tap costs one tap, never a wrong stage. That is why A3 was picked over A2.
+
+**Gates:**
+- **`gate_1256.mjs` (12 checks):**
+  - the chip appears on the Lead card only;
+  - Call raises the sheet, and the tap is not cancelled;
+  - Not yet writes nothing;
+  - Mark contacted writes `stage: Prospect` and the chip disappears;
+  - a non-Lead card raises nothing;
+  - ink is 4.5:1+ and buttons are 44px+ in both themes.
+  - **RED on 1255 (5/12).**
+- ⚠ **The first version of the gate was wrong.** It listened for the call on `document`, but the
+  Leads list stops propagation, so it reported that the call had been cancelled when it had not. It
+  now reads `dispatchEvent`'s own answer.
+- **Also green:** check_build, types, dupes, scroll-lock (17), 1243.
+
+## Build 1255 — the scheduled punch buzzes (Theo's pick 4C)
+
+**`punch_buzz_log.sql` is APPLIED** (7 Oct). It must run before the route ships.
+
+### New route `api/punch-buzz.js`
+- **Vercel cron `5 * * * *`.** The route works out Dayton time (`America/New_York`, so DST is
+  handled) and sends whatever is due in that hour. It runs **Mon–Sat only**.
+
+**What goes out, and when:**
+
+| Dayton time | To | What |
+|---|---|---|
+| 7am | Theo | **Report:** today's stops per person, past due, needs follow-up, unassigned, closed yesterday |
+| 7am | Curtis | Jobs **2+ days** past due |
+| 7am | Theo | Jobs **5+ days** past due |
+| 3pm | Curtis | **"Plan <next working day>":** per-person counts, unassigned, no date, past due |
+| 6pm | each person with stops on the next working day | **"Your Thursday: N stops"**, linked to `#route/<name>` |
+
+- **Escalation fires once per job per due date.** Rescheduling a job re-arms it.
+- **Held jobs never buzz.**
+
+### At most once
+- Every buzz claims a key in `punch_buzz_log` **before** sending.
+- A doubled or retried cron finds the key taken and sends nothing.
+- A claim whose send then fails is lost, not repeated. That is the trade we took.
+
+### Delivery
+- Push goes through `push_subs` and `VAPID_PUBLIC`, which `api/notify.js` now exports, so there is
+  still one key in `/api`.
+- A recipient with no working subscription gets an **email** instead (Resend). Nobody gets both.
+- ⚠ **Scottie has no push subscription today.** He gets email until he enables notifications.
+- ⚠ The send loop is a second, smaller copy of `notify.js`'s push fan-out. `notify.js` is the
+  staff-session door, and a cron has no session.
+
+### The job rules mirror index.html
+- open, on hold, on site and past due all follow the Punch List and the route page.
+- `gate_1255` C compares the server's stop rule against the route page's day-strip counts on the same
+  seed.
+
+### Auth
+- Fail-closed on `CRON_SECRET`, like `digest.js`.
+- `?slot=am|plan|crew` forces a slot; `?dry=1` sends and claims nothing.
+
+### App side (`patch_1255.py`)
+- The buzzes link to **`#punch`** and **`#route/<name>`**. `cr-route-script` opens them, both at load
+  and on `hashchange` (a tap while the app is open is a same-document navigation).
+- ⚠ **Found on the way, my own first attempt:** `showHome()` pushes `#h` before the route script has
+  even parsed, so reading `location.hash` there saw `#h`.
+  - The boot scrub (613) now **stashes** the link in `window.__crBootLink`.
+  - It also no longer rewrites these two hashes.
+- The route page re-reads the punch rows on open.
+- ⚠ **Pre-existing gap, not fixed:** the 1125 punch-out links (`#p/<id>/punch`) have no
+  `hashchange` handler. Tapping one while the app is already open changes the hash and nothing else.
+  Recorded in OPEN_ITEMS.
+
+### Gates
+**`gate_1255.mjs` — 20 checks:**
+- **A, the planner:**
+  - each slot fires at the right Dayton hour;
+  - escalations reach the right person and never name held jobs;
+  - Saturday's 6pm list is Monday's;
+  - Sunday is silent;
+  - 7am is right on both sides of DST.
+- **B, the handler, with fetch stubbed:**
+  - refuses with no secret and with a wrong one;
+  - a dry run claims nothing;
+  - a real run claims, then emails Scottie;
+  - a second run in the same hour sends nothing.
+- **C:** the server stop rule equals the route page's counts.
+- **D, in Chromium:** both links work at load and on `hashchange`.
+- **RED on 1254:** 4 fail with the 1254 page; 15 fail without the route; it never crashes.
+
+**Also green:** check_build, types, dupes, scroll-lock (17), 1243, 1254, 1248, 1184, 1210, 1147, 874.
+
+**Red, and red identically on main:**
+- `harness_notifyindep1126` needs `web-push` installed locally;
+- `harness_deeplink1125` counts 10 `punchLink()` calls, and the count has grown since.
+
 ## Build 1254 — a person's day route (Theo's pick 2C, free version)
 
 Theo picked **2C** from the preview, then on 7 Oct chose the **free version first**: straight-line

@@ -9532,3 +9532,35 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Geocoder:** the punch map's resolver, shared as `window.CardinalPunchGeo`.
 - **Navigation:** registered in `hideAllViews` and in `navRestore` (`'route'`).
 - **Gate:** `gate_1254.mjs` (set `LEAFLET_JS` to check the pins).
+
+## Build 1255 — scheduled punch buzzes (`api/punch-buzz.js`, `punch_buzz_log`)
+- **Schedule:** hourly cron. Mon–Sat, Dayton time.
+- **What goes out:**
+  - **7am:** Theo's report, plus escalations (2+ days late → Curtis, 5+ → Theo; once per job per due
+    date).
+  - **3pm:** Curtis's "Plan <day>".
+  - **6pm:** each person's list for the next working day, linked to `#route/<name>`.
+- **Delivery:** push, or email when the recipient has no subscription.
+- **At most once:** keys are claimed in `punch_buzz_log`.
+- **App links:** `#punch` and `#route/<name>` open at load and on hashchange.
+- **Gate:** `gate_1255.mjs`.
+
+## Build 1256 — "Uncontacted" on Leads cards (`.ljunc`, `ljAskContacted`)
+- Every Lead card shows "Uncontacted · N days".
+- Call, Text or Email on a Lead then asks "Did you reach out?". **Mark contacted** sets the stage to
+  Prospect through `setStage`.
+- **Gate:** `gate_1256.mjs`.
+
+## Build 1257 — in-app document viewer (`window.CardinalDocView`)
+- `open({title,url})` draws a PDF with pdf.js, falling back to an iframe after 12 s.
+  `open({title,html})` shows an HTML preview.
+- **Bar:** Back, plus Share (installed app) or Download (browser), or Print for a preview.
+- **Used by:** Company Documents' View (and Download in the installed app) and the Pre-Install Guide
+  preview.
+- **Gate:** `gate_1257.mjs` (set `PDFJS_DIR` to check the pages draw).
+
+## Build 1258 — Add to calendar (`apptIcs`, `apptGoogleUrl`, `#apptCalSheet`)
+- Each appointment row in the calendar's day sheet has **Add to calendar**. It offers an Apple
+  Calendar `.ics` or a Google Calendar link.
+- One-way.
+- **Gate:** `gate_1258.mjs`.

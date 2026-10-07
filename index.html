@@ -1012,6 +1012,22 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 .apptrow .tm{font-weight:800;color:var(--red-dk);white-space:nowrap;min-width:64px;}
 .apptrow .bd{flex:1;}
 .apptrow .bd small{display:block;color:#8a8a8a;}
+/* 1258: Add to calendar — the row button and its sheet (fixed colours: the sheet
+   sits over the appointment modal's own dark wash in both themes) */
+.apptrow .apptcal{flex:none;min-height:44px;padding:0 12px;border-radius:8px;cursor:pointer;
+  border:1px solid #9aa4b2;background:#ffffff;color:#1e2b4a;font:700 13px 'Segoe UI',Arial,sans-serif;}
+#apptCalSheet{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#16161b;color:#eceef0;
+  border-top:1px solid #2a2d33;box-shadow:0 -8px 30px rgba(0,0,0,.4);}
+#apptCalSheet.open{display:block;}
+#apptCalSheet .q{max-width:560px;margin:0 auto;}
+#apptCalSheet b{display:block;font:700 18px 'Segoe UI',Arial,sans-serif;color:#eceef0;}
+#apptCalSheet p{margin:4px 0 12px;font:400 15px 'Segoe UI',Arial,sans-serif;color:#b8bec6;}
+#apptCalSheet .row{display:flex;flex-wrap:wrap;gap:10px;}
+#apptCalSheet .pri, #apptCalSheet .no{flex:1 1 140px;display:flex;align-items:center;justify-content:center;min-height:48px;
+  border-radius:10px;cursor:pointer;text-decoration:none;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#apptCalSheet .pri{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
+#apptCalSheet .no{background:transparent;border:1px solid #3a3e46;color:#eceef0;}
 .apptrow .del{border:0;background:none;color:#b3a49d;font-size:15px;cursor:pointer;}
 .apptrow .del:hover{color:var(--red);}
 .apptempty{font:13px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;padding:6px 0;}
@@ -2574,6 +2590,20 @@ body.restoring #restoreVeil{display:flex;}
   opacity:.9;color:var(--rbe-po2,#dce3ec);/* 685: was gradient-clipped text */}
 .ljad{font-size:11px;color:var(--rbe-mute);}
 .ljct{font-size:11px;color:var(--rbe-mute);margin-top:3px;}
+/* 1256: the Uncontacted chip — a fixed amber ground, so a fixed ink (both themes) */
+.ljunc{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:999px;background:#f5a623;color:#1a1306;
+  font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;}
+#ljAsk{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
+  background:var(--rbe-panel,#16161B);color:var(--rbe-ink,#eceef0);border-top:1px solid var(--rbe-panelbd,#24242c);
+  box-shadow:0 -8px 30px rgba(0,0,0,.35);}
+#ljAsk.open{display:block;}
+#ljAsk .q{max-width:560px;margin:0 auto;}
+#ljAsk b{display:block;font:700 18px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#eceef0);}
+#ljAsk p{margin:4px 0 12px;font:400 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#b8bec6);}
+#ljAsk .row{display:flex;gap:10px;}
+#ljAsk button{flex:1;min-height:48px;border-radius:10px;cursor:pointer;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#ljAsk .yes{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
+#ljAsk .no{background:transparent;border:1px solid var(--rbe-panelbd,#24242c);color:var(--rbe-ink,#eceef0);}
 .ljrep{font-size:11px;font-weight:800;color:var(--rbe-rep,#dce3ec);}
 .ljcta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;align-self:center;margin-right:11px;}
 .ljbtn{width:36px;height:36px;border:1px solid var(--rbe-ctamiss);border-radius:10px;background:var(--rbe-ctabg);
@@ -4073,7 +4103,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1254<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1258<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -13507,6 +13537,8 @@ function ljCardHtml(p){
       '<div>' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + ':</span> ' : '') + '<span class="ljnm">' + esc(p.name || 'Unnamed') + '</span></div>' +
       (p.address ? '<div class="ljad">' + esc(p.address) + '</div>' : '') +
       (cat ? '<div class="ljct">' + esc(cat) + '</div>' : '') +
+      /* 1256: a Lead is, by the app's own rule, not yet contacted — say so */
+      (stg === 'Lead' ? '<div><span class="ljunc">Uncontacted · ' + esc(ljAge(p.created_at)) + '</span></div>' : '') +
       /* 931: the same resolver as the chip, or a card sitting in the
          Unassigned bucket would print the name of whoever typed it in. */
       '<div class="ljrep">' + esc(ljRepLabel(p)) + '</div>' +
@@ -13764,8 +13796,43 @@ document.getElementById('ljActive').addEventListener('click', function(e){
   if(!set.length) delete ljState.sets[gkey];
   renderLeadsView();
 });
+/* 1256: after a Call / Text / Email on a Lead, ask whether to mark it contacted.
+   The link is NOT stopped — the phone dials first; the sheet waits underneath. */
+function ljAskContacted(id){
+  var p = cacheProjects.find(function(x){ return String(x.id) === String(id); });
+  if(!p || normStage(p.stage) !== 'Lead') return;
+  var el = document.getElementById('ljAsk');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'ljAsk';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Mark as contacted');
+    document.body.appendChild(el);
+    el.addEventListener('click', async function(ev){
+      var b = /** @type {HTMLElement} */ (ev.target).closest('button');
+      if(!b) return;
+      el.classList.remove('open');
+      if(b.getAttribute('data-ask') !== 'yes') return;
+      try{
+        await setStage(el.getAttribute('data-id'), 'Prospect');
+        if(typeof renderLeadsView === 'function') renderLeadsView();
+      }catch(err){ showError('Could not update stage: ' + ((err && err.message) || err)); }
+    });
+  }
+  el.setAttribute('data-id', String(p.id));
+  el.innerHTML = '<div class="q"><b>Did you reach out to ' + esc(p.name || 'this lead') + '?</b>' +
+    '<p>Answered or not, it counts — it moves to Prospect.</p>' +
+    '<div class="row"><button type="button" class="yes" data-ask="yes">Mark contacted</button>' +
+    '<button type="button" class="no" data-ask="no">Not yet</button></div></div>';
+  el.classList.add('open');
+}
 document.getElementById('ljList').addEventListener('click', function(e){
-  if(e.target.closest('.ljcta')){ e.stopPropagation(); return; }
+  if(e.target.closest('.ljcta')){
+    e.stopPropagation();
+    var tg = /** @type {HTMLElement} */ (e.target), cc = tg.closest('.ljcard');
+    if(tg.closest('a.ljbtn') && cc) ljAskContacted(cc.getAttribute('data-lj'));   /* 1256 */
+    return;
+  }
   var card = e.target.closest('.ljcard');
   if(!card) return;
   var id = card.getAttribute('data-lj');
@@ -13777,6 +13844,7 @@ document.getElementById('ljList').addEventListener('click', function(e){
   }
 });
 document.getElementById('ljPane').addEventListener('click', function(e){
+  if((/** @type {HTMLElement} */ (e.target)).closest('a.ljab') && ljState.sel) ljAskContacted(ljState.sel);   /* 1256: Call / Text in the side pane */
   var t = e.target.closest('[data-lt]');
   if(t){ ljState.tab = t.getAttribute('data-lt'); renderLjPane(); return; }
   if(e.target.closest('#ljOpenBtn')){
@@ -19653,6 +19721,8 @@ function hideAllViews(){
    { id:'cr-pk', api:window.CardinalPunchCard },
    /* 1254: the day route — class-shown, closes through its own close(false) */
    { id:'cr-route', api:window.CardinalRoute },
+   /* 1257: the in-app document viewer — class-shown, closes through its own close(false) */
+   { id:'cr-docview', api:window.CardinalDocView },
    { id:'cr-show', api:window.CardinalShowcase },
    /* 927: Storm Data. Same shape again — created at runtime, shown by a
       class, closed through its own close(false) so it does not send the
@@ -21733,6 +21803,26 @@ function cdCheckFiles(){
     }).catch(function(){ /* offline or blocked — leave the row alone */ });
   });
 }
+/* 1257: a document opens INSIDE the app, under a Back bar. In the installed
+   app a same-site PDF link opened in place with no browser chrome — no way out. */
+document.getElementById('cdDocList').addEventListener('click', function(e){
+  var a = /** @type {HTMLElement} */ (e.target).closest('.cdocrow a.btn');
+  if(!a || !window.CardinalDocView) return;
+  var row = a.closest('.cdocrow'), nm = row && row.querySelector('.cdname');
+  var title = nm && nm.firstChild ? String(nm.firstChild.textContent || '').trim() : 'Document';
+  var href = a.getAttribute('href') || '';
+  if(!a.hasAttribute('data-cddl')){                 /* View */
+    e.preventDefault();
+    window.CardinalDocView.open({ title: title, url: href });
+    return;
+  }
+  /* Download: a browser keeps the plain download; the installed app gets the share sheet */
+  var standalone = false; try{ standalone = isStandalone(); }catch(_){}
+  if(standalone && navigator.share){
+    e.preventDefault();
+    navigator.share({ title: title, url: new URL(href, location.href).href }).catch(function(){});
+  }
+});
 document.getElementById('cdCats').addEventListener('click', function(e){
   var b = e.target.closest('.cdoccat');
   if(!b) return;
@@ -24018,9 +24108,88 @@ function renderApptList(){
         ? '<button class="chipbtn" data-apptattach="' + a.id + '" ' +
             'style="margin-left:8px;">Attach to a job</button>'
         : '') +
+      '<button type="button" class="apptcal" data-apptcal="' + esc(String(a.id)) + '">Add to calendar</button>' +   /* 1258 */
       (apptCanEdit(a) ? '<button class="del" title="Delete">\u2715</button>' : '') +
       '</div>';
   }).join('');
+}
+/* 1258 (B1): "Add to calendar" — an .ics for Apple Calendar, Google's add-event
+   link for Google. One-way and one appointment at a time, by Theo's pick. */
+function apptCalFields(a){
+  var pr = a.project_id ? cacheProjects.find(function(x){ return String(x.id) === String(a.project_id); }) : null;
+  var addr = pr ? [pr.address, pr.city, pr.state, pr.zip].filter(Boolean).join(', ') : '';
+  var d = String(a.appt_date || '').replace(/-/g, '');
+  var t = a.appt_time ? String(a.appt_time).replace(/:/g, '').slice(0, 4) + '00' : '';
+  var start = '', end = '';
+  if(t){
+    var p = String(a.appt_date).split('-'), q = String(a.appt_time).split(':');
+    var e = new Date(+p[0], +p[1] - 1, +p[2], +q[0] + 1, +q[1] || 0);
+    var pad = function(n){ return ('0' + n).slice(-2); };
+    start = d + 'T' + t;
+    end = e.getFullYear() + pad(e.getMonth() + 1) + pad(e.getDate()) + 'T' + pad(e.getHours()) + pad(e.getMinutes()) + '00';
+  } else {
+    var p2 = String(a.appt_date).split('-'), n = new Date(+p2[0], +p2[1] - 1, +p2[2] + 1);
+    start = d;
+    end = n.getFullYear() + ('0' + (n.getMonth() + 1)).slice(-2) + ('0' + n.getDate()).slice(-2);
+  }
+  var notes = [a.notes, pr && pr.name ? 'Client: ' + pr.name : '', pr && pr.phone ? 'Phone: ' + pr.phone : ''].filter(Boolean).join('\n');
+  return { id: a.id, title: String(a.title || 'Appointment') + (pr && pr.name ? ' \u2014 ' + pr.name : ''),
+           timed: !!t, start: start, end: end, where: addr, notes: notes };
+}
+function apptIcs(a){
+  var f = apptCalFields(a);
+  var x = function(s){ return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); };
+  var now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  var lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cardinal Roofing//Resource App//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VEVENT', 'UID:appt-' + f.id + '@cardinalroster.com', 'DTSTAMP:' + now,
+    f.timed ? 'DTSTART:' + f.start : 'DTSTART;VALUE=DATE:' + f.start,
+    f.timed ? 'DTEND:' + f.end : 'DTEND;VALUE=DATE:' + f.end,
+    'SUMMARY:' + x(f.title)];
+  if(f.where) lines.push('LOCATION:' + x(f.where));
+  if(f.notes) lines.push('DESCRIPTION:' + x(f.notes));
+  lines.push('END:VEVENT', 'END:VCALENDAR');
+  /* fold at 75 octets (RFC 5545 \u00a73.1) */
+  return lines.map(function(l){ var o = ''; while(l.length > 74){ o += l.slice(0, 74) + '\r\n '; l = l.slice(74); } return o + l; }).join('\r\n') + '\r\n';
+}
+function apptGoogleUrl(a){
+  var f = apptCalFields(a);
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    '&text=' + encodeURIComponent(f.title) + '&dates=' + f.start + '/' + f.end +
+    (f.where ? '&location=' + encodeURIComponent(f.where) : '') + (f.notes ? '&details=' + encodeURIComponent(f.notes) : '');
+}
+function apptCalOpen(id){
+  var a = cacheAppts.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!a) return;
+  var el = document.getElementById('apptCalSheet');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'apptCalSheet';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Add to calendar');
+    document.body.appendChild(el);
+    el.addEventListener('click', function(ev){
+      var b = /** @type {HTMLElement} */ (ev.target).closest('[data-cal]');
+      if(!b) return;
+      var which = b.getAttribute('data-cal'), cur = cacheAppts.filter(function(x){ return String(x.id) === el.getAttribute('data-id'); })[0];
+      if(which === 'apple' && cur){
+        var blob = new Blob([apptIcs(cur)], { type: 'text/calendar;charset=utf-8' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'cardinal-appointment.ics';
+        document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(function(){ try{ URL.revokeObjectURL(link.href); }catch(_){} }, 60000);
+      }
+      /* google: the <a> navigates itself (target=_blank, off-site) */
+      el.classList.remove('open');
+    });
+  }
+  el.setAttribute('data-id', String(a.id));
+  el.innerHTML = '<div class="q"><b>Add \u201c' + esc(a.title || 'Appointment') + '\u201d to your calendar</b>' +
+    '<p>' + esc(a.appt_date || '') + (a.appt_time ? ' \u00b7 ' + fmtApptTime(a.appt_time) : ' \u00b7 all day') + '. One-way: if it moves, add it again.</p>' +
+    '<div class="row"><button type="button" class="pri" data-cal="apple">iPhone / Apple Calendar</button>' +
+    '<a class="pri" data-cal="google" target="_blank" rel="noopener" href="' + esc(apptGoogleUrl(a)) + '">Google Calendar</a>' +
+    '<button type="button" class="no" data-cal="cancel">Cancel</button></div></div>';
+  el.classList.add('open');
 }
 /* 998: the two job days already in the calendar carry no job, and deleting
    them would lose a real booking. This attaches one instead, reusing the same
@@ -24046,6 +24215,8 @@ async function apptAttachJob(id){
   }catch(e){ crTell('Could not attach it: ' + ((e && e.message) || e)); }
 }
 document.getElementById('apptList').addEventListener('click', async function(e){
+  var cal = (/** @type {HTMLElement} */ (e.target)).closest('[data-apptcal]');
+  if(cal){ apptCalOpen(cal.getAttribute('data-apptcal')); return; }   /* 1258 */
   var att = e.target.closest('[data-apptattach]');
   if(att){ apptAttachJob(att.getAttribute('data-apptattach')); return; }
   var del = e.target.closest('.del');
@@ -29713,7 +29884,10 @@ async function enableNotifications(){
   /* 613: a password-reset fragment must survive this. Nothing else consumes it
      — __tryRestoreFromHash matches a fixed pattern list and ignores it — and
      leaving it in place keeps the URL honest for the reset handler in boot(). */
-  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/type=recovery/.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
+  /* 1255: #punch and #route/<name> are the punch buzzes' links — cr-route-script opens them.
+     STASHED here, because showHome() pushes #h before that script has even parsed. */
+  try{ if(/^#(punch$|route\/)/.test(location.hash)) window.__crBootLink = location.hash; }catch(e){}
+  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/type=recovery/.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash) && !/^#(punch$|route\/)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
   window.__tryRestoreFromHash = function(){
     if(__restored) return;
@@ -43490,6 +43664,14 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1258, d: '2026-10-07', t: 'Add an appointment to your own calendar',
+    s: 'Open a day on the calendar and every appointment has an <b>Add to calendar</b> button. Pick <b>iPhone / Apple Calendar</b> (it hands your phone a calendar file to add) or <b>Google Calendar</b> (it opens Google with the appointment filled in). It carries the time, the client, the job address and the notes; a build day with no time goes in as all day. It is a copy, not a link \u2014 if the appointment moves, add it again.' },
+  { b: 1257, d: '2026-10-07', t: 'Company Documents no longer trap you',
+    s: 'Opening a document from Company Documents \u2014 a contract master, or a Pre-Install Guide preview \u2014 used to take over the installed app with no way back. Every document now opens inside the app under a <b>\u2190 Back</b> bar, with <b>Share</b> (save to Files, print, mail) or <b>Download</b> beside it. The guide preview now shows <b>your</b> name and number as the rep, not Nick\u2019s. And the Preview and Download buttons, which were white on white, can be seen.' },
+  { b: 1256, d: '2026-10-07', t: 'Uncontacted leads say so',
+    s: 'On the Leads screen, every lead nobody has reached out to yet wears an amber <b>Uncontacted</b> tag with how long it has been waiting. Tap Call, Text or Email on one and your phone does that as usual \u2014 then the app asks <b>Did you reach out?</b> Tap <b>Mark contacted</b> and it moves to Prospect, whether they answered or not. Tap <b>Not yet</b> and nothing changes.' },
+  { b: 1255, d: '2026-10-07', t: 'The punch buzzes: the morning report, the 3pm plan, the 6pm list',
+    s: 'The app now buzzes on its own, Monday to Saturday, Dayton time. <b>7am</b>: Theo gets the punch report \u2014 today\u2019s stops per person, what is past due, what needs follow-up, what is unassigned and what closed yesterday. Also at 7am, any job <b>2 days</b> past due buzzes Curtis and any job <b>5 days</b> past due buzzes Theo \u2014 once per job, not every morning. <b>3pm</b>: Curtis gets \u201cPlan Thursday\u201d (or whatever the next working day is) with each person\u2019s count and what is still unassigned or undated. <b>6pm</b>: everyone with stops tomorrow gets their list, and tapping it opens their day route. If someone has never turned on notifications, the buzz comes by email instead.' },
   { b: 1254, d: '2026-10-07', t: 'A day route for each person',
     s: 'The Punch List has a Routes row: tap Scottie (or anyone with open work) to see his day on a map \u2014 the shop, each stop numbered in order, and the line between them. Below the map: when he leaves, each stop with its time, the client and what needs doing, and roughly how many minutes and miles between stops. Pick tomorrow or any day this week from the strip at the top. Jobs he has that are past due and not on the route are listed first, and Theo, Joan and Curtis can add one to the day with a tap. Drive times are estimates for now (straight-line distance, marked \u2248); the Directions button opens the whole run in Google Maps.' },
   { b: 1253, d: '2026-10-07', t: 'Pick the trades when you enter a lead',
@@ -85966,6 +86148,9 @@ function rtOpen(email, dayKey){
   el.classList.add('open');
   el.scrollTop = 0;
   rtDraw();
+  /* 1255: re-read the rows — a route opened from a buzz must not be drawn from a stale list */
+  var P = window.CardinalPunch;
+  if(P && typeof P.reload === 'function'){ try{ P.reload().then(function(){ if(rtIsOpen()) rtDraw(); }, function(){}); }catch(_){} }
   if(map) setTimeout(function(){ try{ map.invalidateSize(); }catch(_){} }, 60);
   if(typeof window.navSetView === 'function'){ try{ window.navSetView('route'); }catch(_){} }
 }
@@ -85980,7 +86165,32 @@ window.addEventListener('popstate', function(ev){
   var v = ev.state && ev.state.view;
   if(v !== 'route' && v !== 'punchcard' && rtIsOpen()) el.classList.remove('open');
 });
-window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen, close: rtClose, isOpen: rtIsOpen, _days: rtDays });
+/* 1255: the punch buzzes' links. #punch opens the Punch List; #route/<name>
+   opens that person's route (names are the local part of a
+   @cardinalrenovations.net address). Waits for a signed-in user, then puts the
+   hash back to #h so a reload does not reopen it. */
+var rtLinkT = null;
+function rtLink(){
+  var h = location.hash || '';
+  if(window.__crBootLink){ h = window.__crBootLink; window.__crBootLink = ''; }   /* the link the app was opened with */
+  var m = /^#route\/([a-z0-9._-]+)$/i.exec(h);
+  if(h !== '#punch' && !m) return;
+  clearTimeout(rtLinkT);
+  var tries = 0;
+  (function rtLinkGo(){
+    if(!(window.currentUser && typeof window.openPunchView === 'function')){
+      if(++tries < 300) rtLinkT = setTimeout(rtLinkGo, 400);
+      return;
+    }
+    try{ if(location.hash === h) history.replaceState(history.state, '', '#h'); }catch(_){}
+    Promise.resolve(window.openPunchView()).then(function(){
+      if(m) rtOpen(decodeURIComponent(m[1]).toLowerCase() + '@cardinalrenovations.net');
+    }, function(){});
+  })();
+}
+window.addEventListener('hashchange', rtLink);
+rtLink();
+window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen, close: rtClose, isOpen: rtIsOpen, _days: rtDays, _link: rtLink });
 })();
 </script>
 
@@ -89320,11 +89530,21 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     });
   }
   function sampleCtx(){
+    /* 1257: the rep in a PREVIEW is whoever is looking at it (their Team
+       Directory name and phone) — it was a hard-coded 'Nick Hey' for everyone.
+       The client and address stay an obvious sample. */
+    var me = '', nm = '', ph = '';
+    try{ var cu = /** @type {any} */ (window.currentUser); me = String((cu && cu.email) || ''); }catch(_){}
+    try{ if(me && typeof rptRepName === 'function') nm = rptRepName(me) || ''; }catch(_){}
+    try{ var t = (window.cacheTeam || {})[me]; if(t && t.phone) ph = t.phone; }catch(_){}
     return { client_name:'Daniel Whitfield', property_address:'128 Maple Ave, Dayton, OH',
       install_date:fmtInstall(new Date(Date.now()+6*86400000).toISOString().slice(0,10)),
-      rep_name:'Nick Hey', rep_phone:'(937) 576-6753' };
+      rep_name: (nm && nm !== me) ? nm : FALLBACK.rep_name, rep_phone: ph || FALLBACK.rep_phone };
   }
-  function openPreviewWindow(html){
+  function openPreviewWindow(html, title){
+    /* 1257: inside the app, under a Back bar — a window.open('') from the
+       installed app is a blank screen with no way back */
+    if(window.CardinalDocView){ window.CardinalDocView.open({ title: (title || 'Preview') + ' — preview', html: html }); return; }
     try{
       var w = window.open('', '_blank');
       if(w){ w.document.open(); w.document.write(html); w.document.close(); }
@@ -89333,11 +89553,11 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   }
   function preview(){
     var s = sampleCtx();
-    openPreviewWindow(doc(fill(harvestBody() || G(_slug).content, s), s, false, _slug));
+    openPreviewWindow(doc(fill(harvestBody() || G(_slug).content, s), s, false, _slug), G(_slug).label);
   }
   function previewSaved(slug){
     var s = sampleCtx(); slug = GUIDES[slug] ? slug : 'preinstall_roof';
-    loadTemplate(slug).then(function(tpl){ openPreviewWindow(doc(fill(tpl.html, s), s, false, slug)); });
+    loadTemplate(slug).then(function(tpl){ openPreviewWindow(doc(fill(tpl.html, s), s, false, slug), G(slug).label); });
   }
 
   document.addEventListener('click', function(e){
@@ -89363,6 +89583,152 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     /* back-compat: 1111's isNonRoofOnly is now "no guide for this trade" */
     isNonRoofOnly: function(pr){ return slugForJob(pr) === null; }
   });
+})();
+</script>
+
+<style id="cr-docview-styles">
+/* v2026-10-07 build 1257 — the in-app document viewer. A same-site PDF or a
+   window.open('') preview opened from an INSTALLED app (iPhone standalone) has
+   no browser chrome, so there was no way back. Every document now opens here,
+   under a Back bar. Single-theme dark chrome around white pages (the documents
+   are print masters); every colour pinned. Class-shown, z 9700. No scroll lock:
+   the body scrolls itself with overscroll-behavior:contain. */
+#cr-docview{display:none;position:fixed;inset:0;z-index:9700;background:#1b1d21;flex-direction:column;}
+#cr-docview.open{display:flex;}
+#cr-docview .dvbar{flex:none;display:flex;align-items:center;gap:10px;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:#0c0d0f;border-bottom:1px solid #2a2d33;}
+#cr-docview .dvback{flex:none;min-height:44px;padding:0 14px;border-radius:10px;cursor:pointer;
+  border:1px solid #3a3e46;background:transparent;color:#eceef0;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#cr-docview .dvttl{flex:1;min-width:0;font:700 15px 'Segoe UI',Arial,sans-serif;color:#eceef0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-docview .dvact{flex:none;min-height:44px;padding:0 14px;border-radius:10px;cursor:pointer;
+  border:1px solid #c8202e;background:#c8202e;color:#ffffff;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#cr-docview .dvact[hidden]{display:none;}
+#cr-docview .dvbody{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+#cr-docview iframe{display:block;width:100%;height:100%;border:0;background:#ffffff;}
+#cr-docview .dvpages{padding:12px 12px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:12px;}
+#cr-docview canvas{display:block;max-width:100%;height:auto;background:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,.4);}
+#cr-docview .dvmsg{padding:40px 16px;text-align:center;color:#b8bec6;font:400 15px 'Segoe UI',Arial,sans-serif;}
+/* the two Company Documents buttons that were white on a white card (Preview,
+   Download): the rows are white in both themes, so a fixed dark ink */
+#cdDocList .cdocrow .btn.ghost, #cdDocList .cd-guiderow .btn.ghost{background:#ffffff;color:#1e2b4a;border:1px solid #9aa4b2;
+  --cr-stack:"the Company Documents rows are white in both themes; the app-wide ghost ink is white";}
+</style>
+<script id="cr-docview-script">
+/* v2026-10-07 build 1257 — the in-app document viewer (window.CardinalDocView).
+   open({ title, url })  — a PDF, drawn page by page with pdf.js (the app's own
+                           loadPdfJs, the Roofr reader); an iframe if that fails
+   open({ title, html }) — an HTML document (the Pre-Install Guide preview)
+   Back closes it and walks history back; hideAllViews closes it too. */
+(function(){
+'use strict';
+var el = null, ttl = null, bodyEl = null, act = null, cur = null, seq = 0;
+function dvEnsure(){
+  if(el) return;
+  el = document.createElement('div');
+  el.id = 'cr-docview';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Document');
+  el.innerHTML = '<div class="dvbar"><button type="button" class="dvback" data-dv="back">← Back</button>' +
+    '<span class="dvttl" id="dvTtl"></span><button type="button" class="dvact" data-dv="act" hidden></button></div>' +
+    '<div class="dvbody" id="dvBody"></div>';
+  document.body.appendChild(el);
+  ttl = document.getElementById('dvTtl'); bodyEl = document.getElementById('dvBody');
+  act = /** @type {HTMLElement} */ (el.querySelector('[data-dv="act"]'));
+  el.addEventListener('click', function(e){
+    var b = /** @type {HTMLElement} */ (e.target).closest('[data-dv]');
+    if(!b) return;
+    if(b.getAttribute('data-dv') === 'back') dvClose(true);
+    else dvAct();
+  });
+}
+function dvStandalone(){ try{ return typeof isStandalone === 'function' && isStandalone(); }catch(e){ return false; } }
+function dvPdf(url, my){
+  bodyEl.innerHTML = '<div class="dvmsg">Opening…</div>';
+  var load = (typeof loadPdfJs === 'function') ? loadPdfJs() : Promise.reject(new Error('no reader'));
+  /* a reader that loads but never answers (a broken CDN reply leaves loadPdfJs
+     pending forever) must not leave "Opening…" on screen: 12 s, then the
+     browser's own PDF view */
+  var slow = new Promise(function(_r, rej){ setTimeout(function(){ rej(new Error('slow')); }, 12000); });
+  Promise.race([load, slow]).then(function(lib){ return lib.getDocument(url).promise; }).then(function(pdf){
+    if(my !== seq) return;
+    var wrap = document.createElement('div'); wrap.className = 'dvpages';
+    bodyEl.innerHTML = ''; bodyEl.appendChild(wrap);
+    var width = Math.max(280, Math.min(900, bodyEl.clientWidth - 24));
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var n = 0;
+    (function next(){
+      if(my !== seq || ++n > pdf.numPages) return;
+      pdf.getPage(n).then(function(page){
+        if(my !== seq) return;
+        var v1 = page.getViewport({ scale:1 }), vp = page.getViewport({ scale: width / v1.width * dpr });
+        var c = document.createElement('canvas');
+        c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+        c.style.width = Math.floor(vp.width / dpr) + 'px';
+        wrap.appendChild(c);
+        return page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      }).then(next, next);
+    })();
+  }).catch(function(){
+    if(my !== seq) return;
+    /* no reader (offline, blocked CDN): the browser's own PDF view, still under Back */
+    bodyEl.innerHTML = '';
+    var f = document.createElement('iframe'); f.src = url; f.title = cur && cur.title || 'Document';
+    bodyEl.appendChild(f);
+  });
+}
+function dvOpen(opts){
+  if(!opts || !(opts.url || opts.html)) return;
+  dvEnsure();
+  cur = opts; seq++;
+  ttl.textContent = opts.title || 'Document';
+  bodyEl.innerHTML = '';
+  if(opts.html){
+    var f = document.createElement('iframe');
+    f.title = opts.title || 'Preview';
+    f.srcdoc = opts.html;
+    bodyEl.appendChild(f);
+    act.textContent = 'Print'; act.hidden = false;
+  } else {
+    act.textContent = (dvStandalone() && navigator.share) ? 'Share' : 'Download'; act.hidden = false;
+    dvPdf(opts.url, seq);
+  }
+  el.classList.add('open');
+  bodyEl.scrollTop = 0;
+  if(typeof window.navSetView === 'function'){ try{ window.navSetView('docview'); }catch(_){} }
+}
+function dvAct(){
+  if(!cur) return;
+  if(cur.html){
+    var f = /** @type {HTMLIFrameElement} */ (bodyEl.querySelector('iframe'));
+    try{ if(f && f.contentWindow) f.contentWindow.print(); }catch(_){}
+    return;
+  }
+  var abs = new URL(cur.url, location.href).href;
+  if(dvStandalone() && navigator.share){
+    /* the installed app: the share sheet (Save to Files, Print, Mail) — a download
+       link here would open the PDF in-app with no way back, the bug this fixes */
+    navigator.share({ title: cur.title || 'Document', url: abs }).catch(function(){});
+    return;
+  }
+  var a = document.createElement('a');
+  a.href = abs; a.download = ''; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function dvIsOpen(){ return !!(el && el.classList.contains('open')); }
+/* hideAllViews calls close() with no argument: hide only. Back passes true. */
+function dvClose(navigate){
+  if(!dvIsOpen()) return;
+  el.classList.remove('open');
+  seq++; cur = null;
+  bodyEl.innerHTML = '';
+  if(navigate === true && history.state && history.state.view === 'docview'){ try{ history.back(); }catch(_){} }
+}
+window.addEventListener('popstate', function(ev){
+  var v = ev.state && ev.state.view;
+  if(v !== 'docview' && dvIsOpen()){ el.classList.remove('open'); seq++; cur = null; bodyEl.innerHTML = ''; }
+});
+window.CardinalDocView = Object.assign(window.CardinalDocView || {}, { open: dvOpen, close: dvClose, isOpen: dvIsOpen });
 })();
 </script>
 
