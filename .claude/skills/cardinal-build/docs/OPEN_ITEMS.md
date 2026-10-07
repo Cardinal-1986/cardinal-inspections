@@ -6240,8 +6240,13 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
    `CARDINAL_PASSWORD` on the Spark and Theo's two decisions (Karrie Johnson / Dan Thompson attach;
    skip the two AccuLynx test records). The 13 Aug fetch is 7 weeks old — re-fetch before the run.
 4. **Build, previewed first, one per build** — Theo picked **1A 2C 3C 4C** (7 Oct). ✅ **1A, the
-   Punch List, shipped at 1248.** Next: 3C On hold (`punch_hold.sql` first), 2C the person's route
-   page, 4C the buzzes. Original list: Punch List page with **Tarps · Repairs · Callbacks ·
+   Punch List, shipped at 1248.** ✅ **3C On hold at 1249** (`punch_hold.sql` applied). ✅ **Flag for
+   follow-up at 1250** (Theo's add — a salesman flags an angry-client call; `punch_ping.sql` applied).
+   Next: 2C the person's route page, then 4C the buzzes.
+   ⚠ **Found while building 1250, not changed:** RLS `punch_update` lets ANY signed-in user edit ANY
+   field of any punch row they can read (only closing is guarded, by `punch_close_guard`). A sales rep
+   can reassign or reschedule Scottie's work. Tightening it is Theo's call — narrow it to
+   `is_full_access()` plus a column-limited path for the follow-up flag and messages. Original list: Punch List page with **Tarps · Repairs · Callbacks ·
    Punch-outs** tabs (all four `kind`s already exist — `ticket` is shown as "Repair"); a per-person
    **My page** (Today · Overdue · In progress · Up next · **On hold** · Completed) — On hold is the
    only new state and must carry a **reason + a revisit date**; Curtis's 3pm plan buzz + 6pm crew

@@ -34200,3 +34200,56 @@ groups — 26 green), `gate_950` (fit, now five cells — 8/8), `gate_767` (Clos
 56/56). Standing ladder: types (TS2339 down one), dupes, stack, scroll-lock (17), 1081, 1243, a11y,
 `gate_chromium --selftest` green. `gate_1206` red on the same Dispatch grip as 1247 — date-dependent
 probe, red on the control too.
+
+## Build 1249 — On hold (3C)
+
+The punch card (`cr-pk-script`) gets **Put on hold**: a sheet asking *why* it is waiting (Materials ·
+Homeowner · Weather · Adjuster · Something else), *which day* to look at it again (six working days
+from tomorrow, Sunday skipped, each showing how many stops the assignee already has — the whole
+crew's when unassigned) and a note. Holding writes `hold_reason / hold_until / hold_note / hold_by /
+hold_at` **and moves `scheduled_at` to the look-again day, time cleared** — so on that morning the job
+is back in Today, on the assignee's day, with 1248's *Back from hold* flag. Status stays `'open'`.
+The card shows the hold (reason, day, note, who) with **Change** and **Take off hold** (all five
+fields back to null). Both writes go through `save()` → `CardinalPunch.update`, audit-logged.
+
+**SQL: `punch_hold.sql` — APPLIED to production 7 Oct, before the writer.** Five nullable columns +
+`punch_items_hold_reason_ck`. Verified: columns present, constraint present, 0 of 14 rows held.
+No RLS change (the existing `punch_update` policy governs).
+
+**Gates.** `gate_1249.mjs` (19): no hold on a closed card, the sheet's five reasons and six
+Sunday-free days with loads, Hold disabled until both picks, the note survives a re-render, ONE
+write carrying all five fields + the moved day and no `status`, the card's On hold block, Take off
+hold nulls all five, the list places a future hold under On hold and a past one back in its group.
+**RED on 1248 (17 failures, no crash).** The note box first shipped at 16px for iOS zoom — off the
+type scale (`gate_1243` red) and redundant: the phone-wide `input,select,textarea{font-size:18px}`
+rule already covers it. Now 15px.
+
+## Build 1250 — Flag for follow-up
+
+Theo, 7 Oct: *"Any way for say a salesman to ping a certain punchout. For instance if a client
+called and starting yelling and saying I want to cancel the job. The salesman can write a note
+urgent. Then an exclamation can appear in the punch list screen and get moved to the top."*
+
+- **Card:** anyone can **Flag for follow-up** (a fold under the title). The note is required. It
+  writes `ping_note / ping_by / ping_at` (clearing any old answer), appends `Follow up: …` to the
+  card's message thread, and buzzes **Curtis, Theo and the assignee — never the sender** through
+  `notifyTeam`, with the honest outcome line. The card then leads with a red **Needs follow-up**
+  block and a **Handled** box: an answer is required, written to `ping_done_*` and the thread.
+- **Punch List:** `plGroup()` returns `'ping'` for an active flag before anything else, **closed work
+  included** (an angry call can come after the job closed); the old grouping is now `plBase()`, which
+  the When column and row tint still use. A flagged item is never in the queue. The group is first,
+  red, with a red **!** before the client and the note as the row's line. The rail and the subtitle
+  count it.
+- **Who may raise it:** RLS `punch_update` is `auth.role() = 'authenticated'` — any signed-in user
+  could already write a punch row, so a salesman needs nothing new. ⚠ That same breadth means any
+  signed-in user can edit *any* field of *any* punch row they can read; closing is guarded by the
+  `punch_close_guard` trigger, the rest is not. Recorded in OPEN_ITEMS, not changed here.
+
+**SQL: `punch_ping.sql` — APPLIED to production 7 Oct**, six nullable columns, verified.
+
+**Gates.** `gate_1250.mjs` (17), driven **as Nick** then as Theo: the fold, an empty flag refuses, ONE
+write with the note/Nick/time and the cleared answer, the thread entry, Curtis+Theo+Scottie buzzed
+and Nick not, the card's block, the list's first group holding i4 and the closed i2 with a red ! and
+the note, i4 once only, Handled refuses empty, writes the answer, and the item leaves the group.
+**RED on 1249 (19 failures, no crash** — its first cut crashed on a null textarea; guarded).
+`gate_1248` G now accepts the new rail row.

@@ -9485,3 +9485,24 @@ Gate: `gate_1246.mjs`.
 | Closing | in the card only — the list's tick is gone; home strips keep theirs |
 
 Gate: `gate_1248.mjs`.
+
+## Build 1249 — On hold (`cr-pk-script`)
+
+| Piece | What |
+|---|---|
+| Put on hold | card fold → sheet: reason (`materials/homeowner/weather/adjuster/other`), look-again day (6 working days, Sunday skipped, assignee load per day), note |
+| Write | `hold_reason, hold_until, hold_note, hold_by, hold_at` + `scheduled_at = hold_until`, `scheduled_time = null`; status untouched |
+| On the card | On hold block (reason, day, note, who) · Change · Take off hold (nulls all five) |
+| On the list | 1248's On hold group / Back from hold flag |
+
+SQL `punch_hold.sql` (applied). Gate: `gate_1249.mjs`.
+
+## Build 1250 — Flag for follow-up (`cr-pk-script`, `cr-punch-script`)
+
+| Piece | What |
+|---|---|
+| Raise | anyone · note required · `ping_note, ping_by, ping_at` (+ clears `ping_done_*`) · thread entry · buzz Curtis, Theo, assignee (not sender) |
+| Card | red Needs follow-up block at the top · Handled requires an answer → `ping_done_note, ping_done_by, ping_done_at` + thread entry |
+| List | `plPing()` → group `ping`, first, red, `!` before the client, the note as the line; closed items too; rail + subtitle count |
+
+SQL `punch_ping.sql` (applied). Gate: `gate_1250.mjs`.
