@@ -34333,6 +34333,64 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1254 — a person's day route (Theo's pick 2C, free version)
+
+Theo picked **2C** from the preview, then on 7 Oct chose the **free version first**: straight-line
+order and estimated minutes, no paid Google Directions.
+
+- **New module `cr-route`** (`#cr-route`, `window.CardinalRoute.open(email, dayKey)`), opened from a
+  new **Routes** row of crew chips on the Punch List (everyone with open work).
+  - **Day strip:** today plus the next five working days, Sunday skipped, each with the stop count.
+  - **Map:** the app's Leaflet + OSM tiles. Pins: the shop (5735 Webster St) as "C", numbered
+    stops, and a "!" for each past-due job. A dashed line joins them.
+  - **"N past due, not on this route":** that person's open jobs dated before today, not on hold
+    and not on site. Only the 1252 bosses get **Add to <day>**, which writes
+    `scheduled_at = day, scheduled_time = null` through `CardinalPunch.update`.
+  - **Timeline:** leave the shop, then each stop with its time, the client, the kind and what is
+    wrong, and "≈ N min · M mi" between stops. Tapping a stop opens THE card (z 9550, above the
+    route's 9500). **Directions in Google Maps** hands off the whole run.
+- **Which jobs make a stop:** open, not held, assigned to that person, and dated that day. On
+  today's route, a job with an open visit also counts.
+- **Order:** timed stops by time first, then untimed stops nearest-first from wherever the run
+  ends.
+- ⚠ **Minutes are an estimate:** straight-line miles × 1.3 for roads, at 30 mph, always printed
+  with "≈". Real drive times are a later build on a paid Directions key, if Theo wants one.
+- **One geocoder, not two.** The punch map's resolver (Google first, Nominatim on a miss, the
+  shared `geo:` cache) is now exported as `window.CardinalPunchGeo {resolve, cached, miles}`.
+  - An address that will not resolve is listed as "address not found", never dropped.
+- **Navigation:**
+  - registered in `hideAllViews` (class-shown, so it closes through its own `close(false)`);
+  - has a `navRestore` case `'route'` reading `window.__crRouteLast`.
+  - No scroll-lock writer (it uses `overscroll-behavior:contain`) and no body observer.
+- **Own `--rt-*` tokens.** Every reference carries a literal fallback, with an `rb-light` twin.
+- **Two of my own bugs, caught before shipping:**
+  - The "map could not load" note's `display:flex` outranked its own `hidden` attribute, so it
+    always painted over a working map. Only a screenshot showed it; every assertion was green.
+    It is now `[hidden]{display:none}`, and the gate checks both paths.
+  - The light alert wash left the grey sub-line at 4.25:1. It now has a light twin, `#f6ecee`.
+  - Also: a renamed `noMap` passed as a value (not called) escaped the rename. `gate_types`
+    caught it as TS2552.
+- **Gates:**
+  - **`gate_1254.mjs`:** 23 checks with `LEAFLET_JS` set, 21 without (the map pins are SKIPPED,
+    and it says so; the no-Leaflet note is checked instead). Its seed adds three Scottie jobs and
+    one past due, and pre-fills the `geo:` cache. It checks:
+    - the Routes row;
+    - stop order, the legs, the summary and the Maps URL;
+    - the day strip;
+    - the past-due list with no Add button for Scottie;
+    - Curtis's Add writing exactly two fields;
+    - the card opening above the route;
+    - `hideAllViews` and the back button;
+    - 44px controls and 4.5:1 ink in both themes;
+    - the pins and the line.
+    - **RED on 1253 (0/21), no crash.**
+  - **Also green:** check_build, types, dupes, the scroll-lock audit (17), 1243, stack, 1081, a11y,
+    and 1248 / 1249 / 1250 / 1252 / 1253 / 767 / 945 / 950 / 1040.
+  - **Red, and not caused by this build:** `gate_1206` has the date-dependent Dispatch grip
+    (28×46), the same as before.
+  - **Sentinel** (Punch List + route states, both themes): nothing on `#cr-route` / `.pl-rt*`
+    beyond the expected "`display:none` never wins" while the view is open.
+
 ## Build 1253 — Trades on the New Lead form (Joan)
 
 Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She can only edit after."*

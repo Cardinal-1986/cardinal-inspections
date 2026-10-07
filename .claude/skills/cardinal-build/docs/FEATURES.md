@@ -9518,3 +9518,17 @@ Enforced by the trigger (UPDATE and INSERT). Gate: `gate_1252.mjs`.
 
 ## Build 1253 — New Lead form trades (`#ldTrades`)
 The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the keys Job Details reads). Gate: `gate_1253.mjs`.
+
+## Build 1254 — a person's day route (`cr-route`, `window.CardinalRoute`)
+- **How to open it:** the Punch List's **Routes** row has a chip for each person with open work.
+  Tap one to open `#cr-route`.
+- **What it shows:**
+  - a day strip (today plus the next 5 working days, no Sunday);
+  - a Leaflet map (shop "C", numbered stops, past-due "!", dashed line);
+  - "N past due, not on this route" (**Add to <day>** for Theo, Joan and Curtis only);
+  - a timeline with "≈ N min · M mi" between stops;
+  - **Directions in Google Maps**.
+- **Free version:** minutes are straight-line × 1.3 at 30 mph, marked ≈.
+- **Geocoder:** the punch map's resolver, shared as `window.CardinalPunchGeo`.
+- **Navigation:** registered in `hideAllViews` and in `navRestore` (`'route'`).
+- **Gate:** `gate_1254.mjs` (set `LEAFLET_JS` to check the pins).
