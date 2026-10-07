@@ -34253,3 +34253,29 @@ and Nick not, the card's block, the list's first group holding i4 and the closed
 the note, i4 once only, Handled refuses empty, writes the answer, and the item leaves the group.
 **RED on 1249 (19 failures, no crash** — its first cut crashed on a null textarea; guarded).
 `gate_1248` G now accepts the new rail row.
+
+## Build 1251 — two sentinel catches on 1249/1250 (mine)
+
+The punch-only sentinel sweep (states: list, Closed view, card, hold sheet, follow-up compose; 4
+widths × 2 themes; `--since` the 1247 tree; the sweep's state file lives in the session scratchpad)
+found two real defects, both introduced by me at 1249/1250:
+- **INK, light:** the follow-up compose box's note **3.83:1** and its Cancel **4.25:1** on the 14% red
+  wash. Light now gets a 7% wash `#f1e6e8` and `#555c66` inks — **5.54:1**, computed. Dark unchanged
+  (5.28 / 7.03:1 there).
+- **CONTAIN:** `.pkhs` (the hold sheet's shade) declared `overscroll-behavior` with no scrollport. Removed;
+  the panel, which scrolls, keeps it.
+
+Re-swept: both gone. **What remains, judged and NOT changed:**
+- `DEAD` on `.pl-*` rules inside `@container pulist (min-width:860px)` and the base rules they override.
+  The sentinel scores a container-query rule as dead wherever the container is narrower than the
+  condition. That is the same blind spot it once had for `@media` (BUG_CLASSES: DEAD descended into
+  non-matching @media blocks), now for `@container`. ⚠ **Sentinel follow-up:** teach DEAD to skip
+  rules whose `@container` condition is false for that element.
+- `OVERRIDDEN`, all deliberate:
+  - The phone-wide 18px input rule beats the two 15px textareas.
+  - `.pkbang.sm` beats `.pkbang` on the fold button.
+  - The disabled Hold button's grey beats its white.
+  - The 1251 light twin beats the dark wash in light.
+  - The new 44–48px button floors beat `.pkbtn{min-height:36px}`.
+
+`gate_1249`, `gate_1250` and `gate_1243` are green after the change.

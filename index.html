@@ -4070,7 +4070,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1250<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1251<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43458,6 +43458,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1251, d: '2026-10-07', t: 'Follow-up box easier to read in light mode',
+    s: 'In light mode the small print and the Cancel button in the follow-up box were too faint on the pink. They are darker now. The On hold sheet also no longer risks swallowing a swipe on iPhone.' },
   { b: 1250, d: '2026-10-07', t: 'Flag a punch-out for follow-up',
     s: 'Anyone can now flag a punch-out, repair, callback or tarp for follow-up from its card \u2014 say a client calls upset and wants to cancel. Write what happened and tap Flag it: Curtis, Theo and whoever has the job get a notification, and the job jumps to the top of the Punch List under Needs follow-up with a red ! and your note. It stays there until someone taps Handled and says what they did. Both notes are kept in the job\u2019s messages.' },
   { b: 1249, d: '2026-10-07', t: 'Punch work can go on hold',
@@ -56552,12 +56554,17 @@ window.CardinalProduction = {
   border-radius:12px; cursor:pointer; background:#c8202e; color:#fff; font:700 15px -apple-system,'Segoe UI',Roboto,sans-serif; }
 #cr-pk .pkping-f .pkping-go{ flex:1; margin-top:0; }
 #cr-pk .pkping-go.ok{ background:#1b7d49; }
+/* 1251: light twin — the 14% wash left the box's grey inks at 3.83 / 4.25:1 */
+:root[data-theme="rb-light"] #cr-pk .pkping{ background:#f1e6e8; }
+:root[data-theme="rb-light"] #cr-pk .pkping .pknote,
+:root[data-theme="rb-light"] #cr-pk .pkping .pkbtn,
+:root[data-theme="rb-light"] #cr-pk .pkping-h .rt{ color:#555c66; }
 #cr-pk .pkhold{ border-color:var(--pk-hot,#e07a5f); }
 #cr-pk .pkhold .pkh .rt b{ color:var(--pk-hot,#e07a5f); }
 #cr-pk .pkhold-d{ font:700 15px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-ink,#eceef0); margin-bottom:6px; }
 #cr-pk .pkhold .pkbtn{ min-height:44px; }
 #cr-pk .pkhs{ position:fixed; inset:0; z-index:9560; display:flex; align-items:flex-end; justify-content:center;
-  background:rgba(0,0,0,.6); overscroll-behavior:contain; }
+  background:rgba(0,0,0,.6); }
 #cr-pk .pkhs-p{ width:100%; max-width:560px; max-height:92vh; overflow-y:auto; overscroll-behavior:contain;
   background:var(--pk-c,#15171a); color:var(--pk-ink,#eceef0); border-radius:16px 16px 0 0;
   padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px)); }
