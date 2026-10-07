@@ -9532,3 +9532,15 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Geocoder:** the punch map's resolver, shared as `window.CardinalPunchGeo`.
 - **Navigation:** registered in `hideAllViews` and in `navRestore` (`'route'`).
 - **Gate:** `gate_1254.mjs` (set `LEAFLET_JS` to check the pins).
+
+## Build 1255 — scheduled punch buzzes (`api/punch-buzz.js`, `punch_buzz_log`)
+- **Schedule:** hourly cron. Mon–Sat, Dayton time.
+- **What goes out:**
+  - **7am:** Theo's report, plus escalations (2+ days late → Curtis, 5+ → Theo; once per job per due
+    date).
+  - **3pm:** Curtis's "Plan <day>".
+  - **6pm:** each person's list for the next working day, linked to `#route/<name>`.
+- **Delivery:** push, or email when the recipient has no subscription.
+- **At most once:** keys are claimed in `punch_buzz_log`.
+- **App links:** `#punch` and `#route/<name>` open at load and on hashchange.
+- **Gate:** `gate_1255.mjs`.

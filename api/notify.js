@@ -26,7 +26,8 @@ const SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
    own-device-write, and the two server-side touches move here instead.
    service_role bypasses RLS; it is already what the crons and pay-webhook use. */
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const VAPID_PUBLIC = 'BMSHf0GA9pwE6xzqOYb4vlLE4pMs9sdP9ZuxXzgZXLR2UaXYVD-9-4o6zDjr5XHOa5runSWlKSNDaEWPfmo07uU';
+/* 1255: exported so api/punch-buzz.js signs with the SAME public key — one copy in /api. */
+export const VAPID_PUBLIC = 'BMSHf0GA9pwE6xzqOYb4vlLE4pMs9sdP9ZuxXzgZXLR2UaXYVD-9-4o6zDjr5XHOa5runSWlKSNDaEWPfmo07uU';
 /* 612: whether the private key came from the environment or from the literal
    below is the single most useful fact when push silently fails — a fallback
    that no longer pairs with VAPID_PUBLIC makes every send 401/403. Reported

@@ -4073,7 +4073,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1254<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1255<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -29713,7 +29713,10 @@ async function enableNotifications(){
   /* 613: a password-reset fragment must survive this. Nothing else consumes it
      — __tryRestoreFromHash matches a fixed pattern list and ignores it — and
      leaving it in place keeps the URL honest for the reset handler in boot(). */
-  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/type=recovery/.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
+  /* 1255: #punch and #route/<name> are the punch buzzes' links — cr-route-script opens them.
+     STASHED here, because showHome() pushes #h before that script has even parsed. */
+  try{ if(/^#(punch$|route\/)/.test(location.hash)) window.__crBootLink = location.hash; }catch(e){}
+  try{ if(!/^#(p|e|list)\//.test(location.hash) && !/type=recovery/.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash) && !/^#(punch$|route\/)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
   window.__tryRestoreFromHash = function(){
     if(__restored) return;
@@ -43490,6 +43493,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1255, d: '2026-10-07', t: 'The punch buzzes: the morning report, the 3pm plan, the 6pm list',
+    s: 'The app now buzzes on its own, Monday to Saturday, Dayton time. <b>7am</b>: Theo gets the punch report \u2014 today\u2019s stops per person, what is past due, what needs follow-up, what is unassigned and what closed yesterday. Also at 7am, any job <b>2 days</b> past due buzzes Curtis and any job <b>5 days</b> past due buzzes Theo \u2014 once per job, not every morning. <b>3pm</b>: Curtis gets \u201cPlan Thursday\u201d (or whatever the next working day is) with each person\u2019s count and what is still unassigned or undated. <b>6pm</b>: everyone with stops tomorrow gets their list, and tapping it opens their day route. If someone has never turned on notifications, the buzz comes by email instead.' },
   { b: 1254, d: '2026-10-07', t: 'A day route for each person',
     s: 'The Punch List has a Routes row: tap Scottie (or anyone with open work) to see his day on a map \u2014 the shop, each stop numbered in order, and the line between them. Below the map: when he leaves, each stop with its time, the client and what needs doing, and roughly how many minutes and miles between stops. Pick tomorrow or any day this week from the strip at the top. Jobs he has that are past due and not on the route are listed first, and Theo, Joan and Curtis can add one to the day with a tap. Drive times are estimates for now (straight-line distance, marked \u2248); the Directions button opens the whole run in Google Maps.' },
   { b: 1253, d: '2026-10-07', t: 'Pick the trades when you enter a lead',
@@ -85966,6 +85971,9 @@ function rtOpen(email, dayKey){
   el.classList.add('open');
   el.scrollTop = 0;
   rtDraw();
+  /* 1255: re-read the rows — a route opened from a buzz must not be drawn from a stale list */
+  var P = window.CardinalPunch;
+  if(P && typeof P.reload === 'function'){ try{ P.reload().then(function(){ if(rtIsOpen()) rtDraw(); }, function(){}); }catch(_){} }
   if(map) setTimeout(function(){ try{ map.invalidateSize(); }catch(_){} }, 60);
   if(typeof window.navSetView === 'function'){ try{ window.navSetView('route'); }catch(_){} }
 }
@@ -85980,7 +85988,32 @@ window.addEventListener('popstate', function(ev){
   var v = ev.state && ev.state.view;
   if(v !== 'route' && v !== 'punchcard' && rtIsOpen()) el.classList.remove('open');
 });
-window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen, close: rtClose, isOpen: rtIsOpen, _days: rtDays });
+/* 1255: the punch buzzes' links. #punch opens the Punch List; #route/<name>
+   opens that person's route (names are the local part of a
+   @cardinalrenovations.net address). Waits for a signed-in user, then puts the
+   hash back to #h so a reload does not reopen it. */
+var rtLinkT = null;
+function rtLink(){
+  var h = location.hash || '';
+  if(window.__crBootLink){ h = window.__crBootLink; window.__crBootLink = ''; }   /* the link the app was opened with */
+  var m = /^#route\/([a-z0-9._-]+)$/i.exec(h);
+  if(h !== '#punch' && !m) return;
+  clearTimeout(rtLinkT);
+  var tries = 0;
+  (function rtLinkGo(){
+    if(!(window.currentUser && typeof window.openPunchView === 'function')){
+      if(++tries < 300) rtLinkT = setTimeout(rtLinkGo, 400);
+      return;
+    }
+    try{ if(location.hash === h) history.replaceState(history.state, '', '#h'); }catch(_){}
+    Promise.resolve(window.openPunchView()).then(function(){
+      if(m) rtOpen(decodeURIComponent(m[1]).toLowerCase() + '@cardinalrenovations.net');
+    }, function(){});
+  })();
+}
+window.addEventListener('hashchange', rtLink);
+rtLink();
+window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen, close: rtClose, isOpen: rtIsOpen, _days: rtDays, _link: rtLink });
 })();
 </script>
 

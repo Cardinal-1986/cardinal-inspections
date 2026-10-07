@@ -34333,6 +34333,84 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1255 — the scheduled punch buzzes (Theo's pick 4C)
+
+**`punch_buzz_log.sql` is APPLIED** (7 Oct). It must run before the route ships.
+
+### New route `api/punch-buzz.js`
+- **Vercel cron `5 * * * *`.** The route works out Dayton time (`America/New_York`, so DST is
+  handled) and sends whatever is due in that hour. It runs **Mon–Sat only**.
+
+**What goes out, and when:**
+
+| Dayton time | To | What |
+|---|---|---|
+| 7am | Theo | **Report:** today's stops per person, past due, needs follow-up, unassigned, closed yesterday |
+| 7am | Curtis | Jobs **2+ days** past due |
+| 7am | Theo | Jobs **5+ days** past due |
+| 3pm | Curtis | **"Plan <next working day>":** per-person counts, unassigned, no date, past due |
+| 6pm | each person with stops on the next working day | **"Your Thursday: N stops"**, linked to `#route/<name>` |
+
+- **Escalation fires once per job per due date.** Rescheduling a job re-arms it.
+- **Held jobs never buzz.**
+
+### At most once
+- Every buzz claims a key in `punch_buzz_log` **before** sending.
+- A doubled or retried cron finds the key taken and sends nothing.
+- A claim whose send then fails is lost, not repeated. That is the trade we took.
+
+### Delivery
+- Push goes through `push_subs` and `VAPID_PUBLIC`, which `api/notify.js` now exports, so there is
+  still one key in `/api`.
+- A recipient with no working subscription gets an **email** instead (Resend). Nobody gets both.
+- ⚠ **Scottie has no push subscription today.** He gets email until he enables notifications.
+- ⚠ The send loop is a second, smaller copy of `notify.js`'s push fan-out. `notify.js` is the
+  staff-session door, and a cron has no session.
+
+### The job rules mirror index.html
+- open, on hold, on site and past due all follow the Punch List and the route page.
+- `gate_1255` C compares the server's stop rule against the route page's day-strip counts on the same
+  seed.
+
+### Auth
+- Fail-closed on `CRON_SECRET`, like `digest.js`.
+- `?slot=am|plan|crew` forces a slot; `?dry=1` sends and claims nothing.
+
+### App side (`patch_1255.py`)
+- The buzzes link to **`#punch`** and **`#route/<name>`**. `cr-route-script` opens them, both at load
+  and on `hashchange` (a tap while the app is open is a same-document navigation).
+- ⚠ **Found on the way, my own first attempt:** `showHome()` pushes `#h` before the route script has
+  even parsed, so reading `location.hash` there saw `#h`.
+  - The boot scrub (613) now **stashes** the link in `window.__crBootLink`.
+  - It also no longer rewrites these two hashes.
+- The route page re-reads the punch rows on open.
+- ⚠ **Pre-existing gap, not fixed:** the 1125 punch-out links (`#p/<id>/punch`) have no
+  `hashchange` handler. Tapping one while the app is already open changes the hash and nothing else.
+  Recorded in OPEN_ITEMS.
+
+### Gates
+**`gate_1255.mjs` — 20 checks:**
+- **A, the planner:**
+  - each slot fires at the right Dayton hour;
+  - escalations reach the right person and never name held jobs;
+  - Saturday's 6pm list is Monday's;
+  - Sunday is silent;
+  - 7am is right on both sides of DST.
+- **B, the handler, with fetch stubbed:**
+  - refuses with no secret and with a wrong one;
+  - a dry run claims nothing;
+  - a real run claims, then emails Scottie;
+  - a second run in the same hour sends nothing.
+- **C:** the server stop rule equals the route page's counts.
+- **D, in Chromium:** both links work at load and on `hashchange`.
+- **RED on 1254:** 4 fail with the 1254 page; 15 fail without the route; it never crashes.
+
+**Also green:** check_build, types, dupes, scroll-lock (17), 1243, 1254, 1248, 1184, 1210, 1147, 874.
+
+**Red, and red identically on main:**
+- `harness_notifyindep1126` needs `web-push` installed locally;
+- `harness_deeplink1125` counts 10 `punchLink()` calls, and the count has grown since.
+
 ## Build 1254 — a person's day route (Theo's pick 2C, free version)
 
 Theo picked **2C** from the preview, then on 7 Oct chose the **free version first**: straight-line
