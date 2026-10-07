@@ -4073,7 +4073,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1253<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1254<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4396,6 +4396,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="pu-tab k-callback" type="button" data-putype="callback" aria-pressed="false"><b class="n" id="puNCallback">0</b><span>Callbacks</span></button>
       <button class="pu-tab k-punch" type="button" data-putype="punch" aria-pressed="false"><b class="n" id="puNPunch">0</b><span>Punch-outs</span></button>
     </div>
+    <div class="pl-routes" id="puRoutes"></div>
     <div class="pu-lay">
       <aside class="pu-rail-wrap"><div class="pu-rail" id="puRail"></div></aside>
       <div><div id="puList"></div></div>
@@ -19650,6 +19651,8 @@ function hideAllViews(){
    /* 768: the punch-out card. Class-shown like its neighbours, so it closes
       through the module's own close() and hideAllViews confirms the class went. */
    { id:'cr-pk', api:window.CardinalPunchCard },
+   /* 1254: the day route — class-shown, closes through its own close(false) */
+   { id:'cr-route', api:window.CardinalRoute },
    { id:'cr-show', api:window.CardinalShowcase },
    /* 927: Storm Data. Same shape again — created at runtime, shown by a
       class, closed through its own close(false) so it does not send the
@@ -28853,6 +28856,8 @@ function __histPush(st){
            the half-convention this switch's own comment warns about. */
         case 'punchcard':       if(window.CardinalPunchCard && window.__crPunchCardLast)
                                   window.CardinalPunchCard.open(window.__crPunchCardLast); break;
+        case 'route':           if(window.CardinalRoute && window.__crRouteLast)
+                                  window.CardinalRoute.open(window.__crRouteLast.who, window.__crRouteLast.day); break;   /* 1254 */
         case 'showcase':        if(window.CardinalShowcase) window.CardinalShowcase.open(); break;
         case 'storm':           if(window.CardinalStorm) window.CardinalStorm.open(); break;
         case 'suppliers':       if(window.CardinalABC) window.CardinalABC.open(); break;
@@ -43485,6 +43490,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1254, d: '2026-10-07', t: 'A day route for each person',
+    s: 'The Punch List has a Routes row: tap Scottie (or anyone with open work) to see his day on a map \u2014 the shop, each stop numbered in order, and the line between them. Below the map: when he leaves, each stop with its time, the client and what needs doing, and roughly how many minutes and miles between stops. Pick tomorrow or any day this week from the strip at the top. Jobs he has that are past due and not on the route are listed first, and Theo, Joan and Curtis can add one to the day with a tap. Drive times are estimates for now (straight-line distance, marked \u2248); the Directions button opens the whole run in Google Maps.' },
   { b: 1253, d: '2026-10-07', t: 'Pick the trades when you enter a lead',
     s: 'The New Lead form now has the six trade boxes \u2014 Roofing, Siding, Gutters, Windows, Repairs, Misc \u2014 so the trade goes in with the lead instead of being added afterwards. And the Job Category and Work Type you pick on that form now show on the client\u2019s Job Details; before, they were saved somewhere Job Details never looked.' },
   { b: 1252, d: '2026-10-07', t: 'Only Theo, Joan and Curtis assign and close punch work',
@@ -67812,6 +67819,12 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-more,.pl-back{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;margin-top:14px;padding:0 14px;
   border:1px solid var(--rbe-line);border-radius:12px;background:none;color:var(--rbe-ink);font:600 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 .pl-back{justify-content:flex-start;gap:8px;margin:0 0 6px;}
+/* 1254: the Routes row */
+.pl-routes{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
+.pl-routes:empty{display:none;}
+.pl-rtl{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute);}
+.pl-rtc{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--rbe-line);background:var(--rbe-panel);color:var(--rbe-ink);font:600 13px 'Segoe UI',Arial,sans-serif;}
 /* 860px of LIST, not window: the table's fixed columns take ~540px, so below
    this the client and the problem would ellipsize to nothing. With the app's
    left nav open a 1280 window gives the list ~716px and the rows; collapse the
@@ -68413,6 +68426,16 @@ function render(){
   }).join('');
   document.getElementById('puRail').innerHTML = rail;
 
+  /* 1254: Routes — one chip per person with open work, to their day route */
+  var rtEl = document.getElementById('puRoutes');
+  if(rtEl){
+    var rtCrew = crew.filter(function(w){ return open.some(function(it){ return it.assigned_to === w; }); });
+    rtEl.innerHTML = rtCrew.length ? '<span class="pl-rtl">Routes</span>' + rtCrew.map(function(w){
+      return '<button type="button" class="pl-rtc" data-puroute="' + esc(w) + '"><span class="pl-av">' +
+        esc(plName(w).slice(0, 2).toUpperCase()) + '</span>' + esc(plName(w)) + '</button>';
+    }).join('') : '';
+  }
+
   document.getElementById('puCatList').innerHTML = Object.keys(C).map(function(k){
     var m = (PU.sets[k] || []).length;
     return '<div class="pu-srow" data-cat="' + k + '"><span>' + C[k].label + '</span>' +
@@ -68634,6 +68657,8 @@ document.addEventListener('click', function(e){
     if(pv && pv.scrollTop > 0) pv.scrollTop = 0; else window.scrollTo(0, 0);
     return;
   }
+  var rt = e.target.closest('#punchView [data-puroute]');
+  if(rt){ if(window.CardinalRoute && window.CardinalRoute.open) window.CardinalRoute.open(rt.getAttribute('data-puroute')); return; }
   var ty = e.target.closest('#punchView [data-putype]');
   if(ty){ PU.type = ty.getAttribute('data-putype'); render(); return; }
   var card = e.target.closest('#puList .pl-row, #puList .pu-card, #puQueue .pu-card, .pu-strip .pu-card');
@@ -85635,6 +85660,327 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     refresh: function(){ evaluate(); },
     _sync: sync, _mode: function(m){ if(m){ mode=m; recolor(); } return mode; }
   });
+  /* 1254: one geocoder for the app's punch maps — the route page asks this one
+     (Google first, Nominatim on a miss, the shared 'geo:' cache) rather than
+     growing a second. */
+  window.CardinalPunchGeo = Object.assign(window.CardinalPunchGeo || {}, {
+    resolve: function(addr, cb){ if(!addr){ cb(null); return; } resolve(addr, cb); },
+    cached: cachedGeo,
+    miles: havMi
+  });
+})();
+</script>
+<style id="cr-route-styles">
+/* v2026-10-07 build 1254 — a person's day route (Theo's pick 2C, free version).
+   Own --rt-* tokens, every reference with a literal fallback; a light twin
+   under rb-light. Class-shown (.open), z 9500 so THE card (9550) opens over it.
+   No scroll lock: the view scrolls itself with overscroll-behavior:contain. */
+#cr-route{
+  --rt-g:#0c0d0f; --rt-c:#15171a; --rt-c2:#1b1e22;
+  --rt-ink:#eceef0; --rt-mut:#9aa3ab; --rt-dim:#848c94;
+  --rt-acc:#e35c63; --rt-accd:#c8202e; --rt-ok:#6cb98f;
+  --rt-line:rgba(230,235,240,.11);
+  --rt-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  display:none; position:fixed; inset:0; z-index:9500;
+  overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
+  background:var(--rt-g,#0c0d0f); color:var(--rt-ink,#eceef0);
+  font:400 15px 'Segoe UI',Arial,sans-serif;
+}
+#cr-route.open{ display:block; }
+:root[data-theme="rb-light"] #cr-route{
+  --rt-g:#f4f5f6; --rt-c:#ffffff; --rt-c2:#eceef1;
+  --rt-ink:#17191c; --rt-mut:#5f6670; --rt-dim:#666d77;
+  --rt-acc:#8f1620; --rt-accd:#8f1620; --rt-ok:#2f7d55;
+  --rt-line:#e2e4e8;
+}
+#cr-route .rtwrap{ max-width:1180px; margin:0 auto; padding:16px 15px calc(40px + env(safe-area-inset-bottom,0px)); }
+#cr-route .rttop{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+#cr-route .rtback{ flex:none; width:44px; height:44px; border-radius:10px; cursor:pointer;
+  border:1px solid var(--rt-line,rgba(230,235,240,.11)); background:transparent; color:var(--rt-mut,#9aa3ab);
+  font:600 18px 'Segoe UI',Arial,sans-serif; }
+#cr-route .rtav{ flex:none; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:var(--rt-accd,#c8202e); color:#ffffff; font:700 15px 'Segoe UI',Arial,sans-serif; }
+#cr-route .rtwho{ min-width:0; }
+#cr-route .rtwho h1{ margin:0; font:700 22px 'Segoe UI',Arial,sans-serif; color:var(--rt-ink,#eceef0); }
+#cr-route .rtsum{ font:600 13px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); margin-top:2px; }
+#cr-route .rtdays{ display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; }
+#cr-route .rtday{ flex:none; min-width:78px; min-height:52px; border-radius:10px; cursor:pointer; padding:6px 10px;
+  border:1px solid var(--rt-line,rgba(230,235,240,.11)); background:var(--rt-c,#15171a); color:var(--rt-ink,#eceef0);
+  font:600 13px 'Segoe UI',Arial,sans-serif; text-align:left; }
+#cr-route .rtday small{ display:block; font:600 11px var(--rt-mono,ui-monospace,Menlo,monospace); color:var(--rt-mut,#9aa3ab); margin-top:2px; }
+#cr-route .rtday.on{ border-color:var(--rt-accd,#c8202e); background:var(--rt-accd,#c8202e); color:#ffffff; }
+#cr-route .rtday.on small{ color:#ffffff; }
+#cr-route .rtbody{ display:flex; flex-direction:column; gap:12px; }
+#cr-route .rtmapbox{ position:relative; height:42vh; min-height:240px; border-radius:12px; overflow:hidden;
+  border:1px solid var(--rt-line,rgba(230,235,240,.11)); background:var(--rt-c,#15171a); }
+#cr-route #rtMap{ position:absolute; inset:0; }
+#cr-route .rtnomap{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:20px; text-align:center;
+  font:600 13px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); }
+#cr-route .rtnomap[hidden]{ display:none; }   /* the author display:flex above outranks the hidden attribute */
+#cr-route .rtside{ min-width:0; }
+#cr-route .rtalert{ border:1px solid var(--rt-acc,#e35c63); background:rgba(200,32,46,.14); border-radius:12px; padding:10px 12px; margin-bottom:12px; }
+/* the wash over a light ground: rgba(200,32,46,.14) left the grey sub-line at 4.25:1 */
+:root[data-theme="rb-light"] #cr-route .rtalert{ background:#f6ecee; }
+#cr-route .rtalert h2{ margin:0 0 6px; font:700 15px 'Segoe UI',Arial,sans-serif; color:var(--rt-ink,#eceef0); }
+#cr-route .rtlate{ display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--rt-line,rgba(230,235,240,.11)); }
+#cr-route .rtlate:first-of-type{ border-top:0; }
+#cr-route .rtlate .tx{ flex:1; min-width:0; font:600 13px 'Segoe UI',Arial,sans-serif; color:var(--rt-ink,#eceef0); }
+#cr-route .rtlate .tx small{ display:block; font:400 13px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); }
+#cr-route .rtadd{ flex:none; min-height:44px; padding:0 12px; border-radius:9px; cursor:pointer;
+  border:1px solid var(--rt-accd,#c8202e); background:transparent; color:var(--rt-ink,#eceef0); font:700 13px 'Segoe UI',Arial,sans-serif; }
+#cr-route .rtline{ list-style:none; margin:0; padding:0; }
+#cr-route .rtleg{ padding:4px 0 4px 46px; font:600 11px var(--rt-mono,ui-monospace,Menlo,monospace); color:var(--rt-mut,#9aa3ab); }
+#cr-route .rtstop{ display:flex; gap:12px; align-items:flex-start; width:100%; text-align:left; cursor:pointer; padding:10px 12px; min-height:56px;
+  border-radius:12px; border:1px solid var(--rt-line,rgba(230,235,240,.11)); background:var(--rt-c,#15171a); color:var(--rt-ink,#eceef0); font:inherit; }
+#cr-route .rtstop.shop{ cursor:default; background:transparent; }
+#cr-route .rtn{ flex:none; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:var(--rt-accd,#c8202e); color:#ffffff; font:700 13px 'Segoe UI',Arial,sans-serif; }
+#cr-route .rtstop.shop .rtn{ background:var(--rt-c2,#1b1e22); color:var(--rt-ink,#eceef0); border:1px solid var(--rt-line,rgba(230,235,240,.11)); }
+#cr-route .rtst{ flex:1; min-width:0; }
+#cr-route .rtst b{ display:block; font:700 15px 'Segoe UI',Arial,sans-serif; color:var(--rt-ink,#eceef0); }
+#cr-route .rtst span{ display:block; font:400 13px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); margin-top:2px; }
+#cr-route .rtst .miss{ color:var(--rt-acc,#e35c63); font-weight:600; }
+#cr-route .rtt{ flex:none; font:700 13px var(--rt-mono,ui-monospace,Menlo,monospace); color:var(--rt-ink,#eceef0); }
+#cr-route .rtt.live{ color:var(--rt-ok,#6cb98f); }
+#cr-route .rtempty{ padding:18px 12px; border-radius:12px; border:1px dashed var(--rt-line,rgba(230,235,240,.11));
+  font:400 15px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); }
+#cr-route .rtgo{ display:flex; align-items:center; justify-content:center; margin-top:12px; min-height:48px; border-radius:10px;
+  background:var(--rt-accd,#c8202e); color:#ffffff; font:700 15px 'Segoe UI',Arial,sans-serif; text-decoration:none; }
+#cr-route .rtnote{ margin-top:8px; font:400 13px 'Segoe UI',Arial,sans-serif; color:var(--rt-dim,#848c94); }
+#cr-route .rtpin{ width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:#c8202e; color:#ffffff; border:2px solid #ffffff; font:700 13px 'Segoe UI',Arial,sans-serif; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+#cr-route .rtpin.shop{ background:#17191c; }
+#cr-route .rtpin.late{ background:#ffffff; color:#c8202e; border-color:#c8202e; }
+@media (min-width:900px){
+  #cr-route .rtbody{ flex-direction:row; align-items:flex-start; }
+  #cr-route .rtmapbox{ flex:1 1 58%; height:calc(100vh - 190px); position:sticky; top:16px; }
+  #cr-route .rtside{ flex:1 1 42%; }
+}
+</style>
+<script id="cr-route-script">
+/* v2026-10-07 build 1254 — a person's day route (Theo's pick 2C, free version).
+   READ-ONLY except "Add to <day>", which the 1252 bosses use to move a past-due
+   job onto the day through CardinalPunch.update — the one punch write path.
+   Drive minutes are an ESTIMATE: straight-line miles x 1.3 for roads, at 30 mph,
+   always printed with "≈". Geocoding is the punch map's own (CardinalPunchGeo). */
+(function(){
+'use strict';
+var SHOP = '5735 Webster Street, Dayton, OH 45414';
+var ROAD = 1.3, MPH = 30;
+var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var KIND = { tarp:'Tarp', ticket:'Repair', callback:'Callback', punch:'Punch-out' };
+var el = null, who = '', day = '', map = null, layer = null, mapTried = false;
+var asked = {}, failed = {}, redrawT = null;
+
+function rtEsc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function rtKeyOf(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function rtToday(){ return rtKeyOf(new Date()); }
+function rtDateOf(k){ var p = String(k || '').split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]); return isNaN(d.getTime()) ? null : d; }
+function rtLabel(k){ var d = rtDateOf(k); return d ? DOW[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] : ''; }
+function rtDayWord(k){ return k === rtToday() ? 'Today' : rtLabel(k); }
+function rtNameOf(e){ var n = String(e || '').split('@')[0]; return n.charAt(0).toUpperCase() + n.slice(1); }
+function rtRows(){ try{ return (window.CardinalPunch && window.CardinalPunch.rows) ? window.CardinalPunch.rows() : []; }catch(e){ return []; } }
+function rtProjOf(pid){ return (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(pid); })[0] || null; }
+function rtAddrOf(it){ var pr = rtProjOf(it.project_id); return (pr && pr.address) ? String(pr.address).trim() : ''; }
+function rtDayOfIt(it){ return it && it.scheduled_at ? String(it.scheduled_at).slice(0, 10) : ''; }
+function rtOnHold(it){ return !!(it.hold_reason && (!it.hold_until || String(it.hold_until).slice(0, 10) > rtToday())); }
+function rtOnSite(it){ var v = Array.isArray(it.visits) ? it.visits : []; for(var i = v.length - 1; i >= 0; i--){ if(v[i] && !v[i].out) return v[i]; } return null; }
+function rtClock(t){ if(!t) return ''; var p = String(t).split(':'); var h = parseInt(p[0], 10); if(isNaN(h) || p.length < 2) return '';
+  return ((h % 12) || 12) + ':' + p[1].slice(0, 2) + ' ' + (h >= 12 ? 'PM' : 'AM'); }
+function rtIsBoss(){ try{ return typeof window.isPunchBoss === 'function' && !!window.isPunchBoss(); }catch(e){ return false; } }
+
+/* today and the next five working days — Sunday is skipped */
+function rtDays(){
+  var out = [], d = new Date();
+  while(out.length < 6){ if(d.getDay() !== 0) out.push(rtKeyOf(d)); d.setDate(d.getDate() + 1); }
+  return out;
+}
+function rtMine(){ return rtRows().filter(function(it){ return it.status !== 'done' && String(it.assigned_to || '') === who && !rtOnHold(it); }); }
+function rtStopsFor(k){
+  return rtMine().filter(function(it){ return rtDayOfIt(it) === k || (k === rtToday() && !!rtOnSite(it)); });
+}
+function rtLateOnes(){
+  var t = rtToday();
+  return rtMine().filter(function(it){ var d = rtDayOfIt(it); return d && d < t && !rtOnSite(it); });
+}
+
+/* geocode through the punch map's resolver; re-render once an answer lands */
+function rtGeo(addr){
+  if(!addr) return null;
+  var G = window.CardinalPunchGeo;
+  var hit = G && G.cached ? G.cached(addr) : null;
+  if(hit) return hit;
+  if(!asked[addr] && G && G.resolve){
+    asked[addr] = 1;
+    try{ G.resolve(addr, function(pt){ if(!pt) failed[addr] = 1; clearTimeout(redrawT); redrawT = setTimeout(function(){ if(rtIsOpen()) rtDraw(); }, 250); }); }catch(e){ failed[addr] = 1; }
+  }
+  return null;
+}
+function rtMiles(a, b){
+  if(!a || !b) return 0;
+  var G = window.CardinalPunchGeo;
+  return (G && G.miles) ? G.miles(a, b) : 0;
+}
+function rtMins(mi){ return Math.max(1, Math.round(mi * ROAD / MPH * 60)); }
+
+/* order: timed stops by time, then the untimed nearest-first from wherever the run is */
+function rtOrder(list){
+  var timed = list.filter(function(it){ return !!it.scheduled_time; })
+    .sort(function(a, b){ return String(a.scheduled_time).localeCompare(String(b.scheduled_time)); });
+  var loose = list.filter(function(it){ return !it.scheduled_time; });
+  var out = timed.slice();
+  var here = out.length ? rtGeo(rtAddrOf(out[out.length - 1])) : rtGeo(SHOP);
+  var placed = loose.filter(function(it){ return !!rtGeo(rtAddrOf(it)); });
+  var unplaced = loose.filter(function(it){ return !rtGeo(rtAddrOf(it)); });
+  while(placed.length){
+    var bi = 0, bd = Infinity;
+    for(var i = 0; i < placed.length; i++){ var d = here ? rtMiles(here, rtGeo(rtAddrOf(placed[i]))) : i; if(d < bd){ bd = d; bi = i; } }
+    var nx = placed.splice(bi, 1)[0]; out.push(nx); here = rtGeo(rtAddrOf(nx));
+  }
+  return out.concat(unplaced);
+}
+
+function rtEnsure(){
+  if(el) return;
+  el = document.createElement('div');
+  el.id = 'cr-route';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Day route');
+  el.innerHTML = '<div class="rtwrap"><div class="rttop" id="rtTop"></div><div class="rtdays" id="rtDays"></div>' +
+    '<div class="rtbody"><div class="rtmapbox"><div id="rtMap"></div><div class="rtnomap" id="rtNoMap" hidden>The map could not load here. The stops and the Google Maps button still work.</div></div>' +
+    '<div class="rtside" id="rtSide"></div></div></div>';
+  document.body.appendChild(el);
+  el.addEventListener('click', rtOnClick);
+}
+function rtOnClick(e){
+  var t = /** @type {HTMLElement} */ (e.target);
+  var b = t && t.closest ? t.closest('[data-rt]') : null;
+  if(!b) return;
+  var act = b.getAttribute('data-rt'), v = b.getAttribute('data-v') || '';
+  if(act === 'back') rtClose(true);
+  else if(act === 'day'){ day = v; window.__crRouteLast = { who: who, day: day }; rtDraw(); }
+  else if(act === 'stop'){ if(window.CardinalPunchCard && window.CardinalPunchCard.open) window.CardinalPunchCard.open(v, { back: 'none' }); }
+  else if(act === 'add') rtAddToDay(v);
+}
+async function rtAddToDay(id){
+  if(!rtIsBoss()) return;
+  var P = window.CardinalPunch; if(!(P && P.update)) return;
+  var r = await P.update(id, { scheduled_at: day, scheduled_time: null });
+  if(!(r && r.ok)){ try{ window.crTell('Could not move it: ' + ((r && r.error) || 'write refused')); }catch(_){} }
+  if(typeof window.renderPunchView === 'function'){ try{ window.renderPunchView(); }catch(_){} }
+  rtDraw();
+}
+
+function rtDraw(){
+  if(!el) return;
+  var list = rtOrder(rtStopsFor(day)), late = rtLateOnes(), t = rtToday();
+  var shopLL = rtGeo(SHOP), prev = shopLL, total = 0, legs = [];
+  list.forEach(function(it){ var ll = rtGeo(rtAddrOf(it)); var mi = (prev && ll) ? rtMiles(prev, ll) : 0; legs.push(mi); total += mi; if(ll) prev = ll; });
+  var tmin = list.length ? legs.reduce(function(s, mi){ return s + (mi ? rtMins(mi) : 0); }, 0) : 0;
+
+  document.getElementById('rtTop').innerHTML =
+    '<button type="button" class="rtback" data-rt="back" aria-label="Back">←</button>' +
+    '<span class="rtav">' + rtEsc(rtNameOf(who).slice(0, 2).toUpperCase()) + '</span>' +
+    '<div class="rtwho"><h1>' + rtEsc(rtNameOf(who)) + '’s day · ' + rtEsc(rtDayWord(day)) + '</h1>' +
+    '<div class="rtsum" id="rtSum">' + list.length + ' stop' + (list.length === 1 ? '' : 's') +
+      (tmin ? ' · ≈' + tmin + ' min driving' : '') + '</div></div>';
+
+  document.getElementById('rtDays').innerHTML = rtDays().map(function(k){
+    var n = rtStopsFor(k).length;
+    return '<button type="button" class="rtday' + (k === day ? ' on' : '') + '" data-rt="day" data-v="' + k + '">' +
+      rtEsc(rtDayWord(k)) + '<small>' + n + ' stop' + (n === 1 ? '' : 's') + '</small></button>';
+  }).join('');
+
+  var h = '';
+  if(late.length){
+    h += '<div class="rtalert" id="rtLate"><h2>' + late.length + ' past due, not on this route</h2>' + late.map(function(it){
+      var pr = rtProjOf(it.project_id);
+      return '<div class="rtlate"><div class="tx">' + rtEsc(pr ? pr.name : 'No client') + '<small>' + rtEsc(it.title || '') + ' · was ' + rtEsc(rtLabel(rtDayOfIt(it))) + '</small></div>' +
+        (rtIsBoss() ? '<button type="button" class="rtadd" data-rt="add" data-v="' + rtEsc(String(it.id)) + '">Add to ' + rtEsc(rtDayWord(day)) + '</button>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  if(!list.length){
+    h += '<div class="rtempty">Nothing on ' + rtEsc(rtDayWord(day)) + ' for ' + rtEsc(rtNameOf(who)) + '.</div>';
+  } else {
+    h += '<ol class="rtline" id="rtLine"><li><div class="rtstop shop"><span class="rtn">C</span><span class="rtst"><b>Leave the shop</b><span>' + rtEsc(SHOP) + '</span></span></div></li>';
+    list.forEach(function(it, i){
+      var a = rtAddrOf(it), ll = rtGeo(a), pr = rtProjOf(it.project_id), mi = legs[i];
+      h += '<li class="rtleg">' + (mi ? '≈ ' + rtMins(mi) + ' min · ' + (Math.round(mi * ROAD * 10) / 10) + ' mi' : ' ') + '</li>';
+      var live = !!rtOnSite(it);
+      var tm = live ? 'On site' : rtClock(it.scheduled_time);
+      h += '<li><button type="button" class="rtstop" data-rt="stop" data-v="' + rtEsc(String(it.id)) + '"><span class="rtn">' + (i + 1) + '</span>' +
+        '<span class="rtst"><b>' + rtEsc(pr ? pr.name : 'No client') + '</b><span>' + rtEsc(KIND[it.kind || 'punch'] || 'Punch-out') + ' · ' + rtEsc(it.title || '') + '</span>' +
+        (a ? (ll || !failed[a] ? '<span>' + rtEsc(a) + '</span>' : '<span class="miss">' + rtEsc(a) + ' — address not found</span>') : '<span class="miss">No address</span>') + '</span>' +
+        (tm ? '<span class="rtt' + (live ? ' live' : '') + '">' + rtEsc(tm) + '</span>' : '') + '</button></li>';
+    });
+    h += '</ol>';
+    var addrs = list.map(rtAddrOf).filter(Boolean);
+    if(addrs.length){
+      h += '<a class="rtgo" id="rtGo" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/' +
+        [SHOP].concat(addrs).map(encodeURIComponent).join('/') + '">Directions in Google Maps</a>';
+    }
+    h += '<div class="rtnote">Minutes are estimates from straight-line distance (≈). Google Maps has the real drive.</div>';
+  }
+  document.getElementById('rtSide').innerHTML = h;
+  rtPins(list, late, shopLL);
+}
+
+function rtPins(list, late, shopLL){
+  if(!map && !mapTried){ mapTried = true; rtBuildMap(); return; }
+  if(!map || !window.L || !layer) return;
+  var L = window.L;
+  layer.clearLayers();
+  var pts = [];
+  function rtIcon(cls, txt){ return L.divIcon({ className:'', html:'<div class="rtpin ' + cls + '">' + txt + '</div>', iconSize:[28, 28], iconAnchor:[14, 14] }); }
+  if(shopLL){ var s = [shopLL.lat, shopLL.lon != null ? shopLL.lon : shopLL.lng]; L.marker(s, { icon: rtIcon('shop', 'C') }).addTo(layer); pts.push(s); }
+  var line = pts.slice();
+  list.forEach(function(it, i){ var ll = rtGeo(rtAddrOf(it)); if(!ll) return; var p = [ll.lat, ll.lon != null ? ll.lon : ll.lng];
+    L.marker(p, { icon: rtIcon('', String(i + 1)) }).addTo(layer); pts.push(p); line.push(p); });
+  late.forEach(function(it){ var ll = rtGeo(rtAddrOf(it)); if(!ll) return; var p = [ll.lat, ll.lon != null ? ll.lon : ll.lng];
+    L.marker(p, { icon: rtIcon('late', '!') }).addTo(layer); pts.push(p); });
+  if(line.length >= 2) L.polyline(line, { color:'#c8202e', weight:4, opacity:.9, dashArray:'4,8' }).addTo(layer);
+  try{ if(pts.length) map.fitBounds(pts, { padding:[30, 30], maxZoom:14 }); else map.setView([39.7589, -84.1916], 11); }catch(_){}
+}
+function rtBuildMap(){
+  var load = (typeof window.qiLoadLeaflet === 'function') ? window.qiLoadLeaflet() : Promise.reject();
+  load.then(function(){
+    if(!window.L || !el){ rtNoMap(); return; }
+    var L = window.L;
+    map = L.map('rtMap', { zoomControl:true }).setView([39.7589, -84.1916], 11);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap' }).addTo(map);
+    layer = L.layerGroup().addTo(map);
+    setTimeout(function(){ try{ map.invalidateSize(); }catch(_){} rtDraw(); }, 60);
+  }, rtNoMap);
+}
+function rtNoMap(){ var n = document.getElementById('rtNoMap'); if(n) n.hidden = false; }
+
+function rtIsOpen(){ return !!(el && el.classList.contains('open')); }
+function rtOpen(email, dayKey){
+  if(!email) return;
+  rtEnsure();
+  who = String(email);
+  var ds = rtDays();
+  day = (dayKey && ds.indexOf(dayKey) !== -1) ? dayKey : ds[0];
+  window.__crRouteLast = { who: who, day: day };
+  el.classList.add('open');
+  el.scrollTop = 0;
+  rtDraw();
+  if(map) setTimeout(function(){ try{ map.invalidateSize(); }catch(_){} }, 60);
+  if(typeof window.navSetView === 'function'){ try{ window.navSetView('route'); }catch(_){} }
+}
+/* hideAllViews calls rtClose() with no argument: hide only. The back button
+   passes true and walks history back to where the route was opened from. */
+function rtClose(navigate){
+  if(!el || !el.classList.contains('open')) return;
+  el.classList.remove('open');
+  if(navigate === true && history.state && history.state.view === 'route'){ try{ history.back(); }catch(_){} }
+}
+window.addEventListener('popstate', function(ev){
+  var v = ev.state && ev.state.view;
+  if(v !== 'route' && v !== 'punchcard' && rtIsOpen()) el.classList.remove('open');
+});
+window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen, close: rtClose, isOpen: rtIsOpen, _days: rtDays });
 })();
 </script>
 

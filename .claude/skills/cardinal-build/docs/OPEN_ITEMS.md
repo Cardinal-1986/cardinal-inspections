@@ -6242,7 +6242,8 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 4. **Build, previewed first, one per build** — Theo picked **1A 2C 3C 4C** (7 Oct). ✅ **1A, the
    Punch List, shipped at 1248.** ✅ **3C On hold at 1249** (`punch_hold.sql` applied). ✅ **Flag for
    follow-up at 1250** (Theo's add — a salesman flags an angry-client call; `punch_ping.sql` applied).
-   Next: 2C the person's route page, then 4C the buzzes.
+   ✅ **2C the person's route page at 1254** (free version: straight-line ≈ minutes; real drive
+   times would need a paid Google Directions key — Theo's call). Next: 4C the buzzes.
    ✅ **Theo's call, 7 Oct: only Theo, Joan and Curtis assign and close (1252, `punch_boss_guard.sql`).**
    Still open by design: anyone signed in may edit the other fields (title, detail, schedule, photos,
    steps). Say if scheduling should be bosses-only too. Original list: Punch List page with **Tarps · Repairs · Callbacks ·
