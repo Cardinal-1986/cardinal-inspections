@@ -34333,6 +34333,60 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1260 — edit an appointment instead of deleting it (Jacob, via Theo)
+
+Jacob, 7 Oct, forwarded by Theo: *"Need a way to edit calendar instead of deleting the appointment
+if something needs changed."*
+
+The calendar's day sheet (`#apptModal`) could add and delete, nothing else, so a moved call meant ✕
+and retype.
+
+### What changed
+- **Who gets Edit:** every row the person may change. That is the same `apptCanEdit()` rule as ✕
+  (creator or admin), and it matches RLS "appt own or admin update". **No SQL.**
+- **Edit mode** (`apptEditStart`):
+  - the form under the list becomes **Edit appointment**, filled from the row;
+  - a **Date** field appears (edit only; Add still books the open day);
+  - the button reads **Save changes**, a **Cancel edit** button appears, and the row is outlined.
+- **What Save sends:**
+  - `apptSaveEdit()` writes **only the fields that changed**, through `adb.update`.
+  - ⚠ **This is load-bearing.** `adb.update` reads a patch that carries `project_id` as "a job was
+    attached" (998/1047/1111): it buzzes production and offers the Pre-Install Guide. Re-sending an
+    unchanged client on every edit would re-fire both.
+- **A moved build day** (date or time) tells production through the same
+  `__apptNotifyProduction()` as a new one. A crew showing up on the old day is the real cost of a
+  silent move.
+- **After saving:** a moved appointment jumps the sheet to its new day. The toast reminds anyone who
+  put it on their phone's calendar (1258) to add it again.
+- **Checks and exits:** the same title and job-needs-a-client checks as Add. Cancel edit, Close and
+  opening another day all leave edit mode. A form that was editing is emptied so nothing leaks into
+  the next Add.
+- **Phone layout:** a row's actions (Attach / Edit / Add to calendar / ✕) are one group that wraps
+  under the text below 520px.
+
+### Gates
+**`gate_1260.mjs` — 19 checks:**
+- Nick sees Edit only on his own row.
+- Edit fills the form from the row.
+- A time-only change writes exactly `{appt_time}`, with no buzz and no guide.
+- Moving a build day writes `{appt_date}` only, buzzes production once by name, does not re-offer
+  the guide, and the sheet jumps to Saturday.
+- Saving an unchanged row writes nothing.
+- The empty-title and no-client refusals use Add's words.
+- Cancel edit, then Add, books the open day clean.
+- At 390px nothing scrolls sideways; Edit and Cancel edit are 44px+ and 4.5:1+ in both themes.
+- **RED on 1259 (6/19), no crash** after making the field setter null-safe (class 37: the control
+  build has no `#apptDate`).
+- ⚠ **My first version of the gate was wrong twice:** it expected the rows in seed order (the list
+  puts the untimed row first), and it expected 3 Edit buttons where Theo, an admin, rightly gets 3
+  plus Cancel edit.
+
+**`gate_stack` caught a redundant rule of mine:** `#apptEditCancel{min-height:44px}` duplicated
+`.chipbtn`'s existing 44px floor, so it was deleted rather than declared.
+
+**Also green:** check_build, types, dupes, stack, 1243, scroll-lock (17), 998, 1003, 972,
+sheets937, 1258.
+
 ## Build 1259 — tapping an alert opens the job (`sw.js` + a hashchange restore)
 
 Found at 1255. Theo said "Yes" on 7 Oct.

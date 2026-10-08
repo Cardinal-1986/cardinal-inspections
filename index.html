@@ -1030,6 +1030,16 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 #apptCalSheet .no{background:transparent;border:1px solid #3a3e46;color:#eceef0;}
 .apptrow .del{border:0;background:none;color:#b3a49d;font-size:15px;cursor:pointer;}
 .apptrow .del:hover{color:var(--red);}
+/* 1260: Edit, and the row it is editing. The day sheet is the white form sheet
+   in both themes (Forms 1), so a fixed ink like 1258's Add to calendar. */
+.apptrow .apptedit{flex:none;min-height:44px;padding:0 14px;border-radius:8px;cursor:pointer;
+  border:1px solid #9aa4b2;background:#ffffff;color:#1e2b4a;font:700 13px 'Segoe UI',Arial,sans-serif;}
+.apptrow .apptact{flex:none;display:flex;align-items:center;gap:8px;margin-left:auto;}
+.apptrow.editing{border-color:#c8202e;box-shadow:0 0 0 1px #c8202e inset;}
+@media (max-width:520px){
+  .apptrow{flex-wrap:wrap;}
+  .apptrow .apptact{flex-basis:100%;justify-content:flex-end;}
+}
 .apptempty{font:13px 'Segoe UI',Arial,sans-serif;color:#8a8a8a;padding:6px 0;}
 
 /* ---- watermark (sign-in only; dashboard art removed) ---- */
@@ -4103,7 +4113,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1259<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1260<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8639,8 +8649,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="projform" style="max-width:460px;margin:7vh auto 7vh;">
     <h3 id="apptDayTitle" style="margin:0 0 8px;"></h3>
     <div id="apptList" class="apptlist"></div>
-    <div class="ckhead" style="margin-top:14px;">&#43; Add appointment</div>
+    <div class="ckhead" id="apptFormHead" style="margin-top:14px;">&#43; Add appointment</div>
     <label>What *<input type="text" id="apptTitle" placeholder="e.g. Inspection @ 12 Oak St" autocomplete="off"></label>
+    <!-- 1260: editing can move an appointment to another day; adding still books the open day -->
+    <label id="apptDateLbl" style="display:none;">Date<input type="date" id="apptDate"></label>
     <div class="ckrow">
       <label>Type
         <select id="apptKind">
@@ -8655,6 +8667,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
     <label>Notes<input type="text" id="apptNotes" autocomplete="off"></label>
     <div style="margin-top:14px;text-align:right;">
+      <button class="chipbtn" id="apptEditCancel" type="button" style="display:none;">Cancel edit</button>
       <button class="chipbtn" id="apptClose">Close</button>
       <button class="btn" id="apptSave">Add</button>
     </div>
@@ -24059,6 +24072,7 @@ document.getElementById('calGrid').addEventListener('click', function(e){
   openApptDay(day.getAttribute('data-d'));
 });
 function openApptDay(ds){
+  apptEditReset();   /* 1260 */
   apptDay = ds;
   var parts = ds.split('-');
   document.getElementById('apptDayTitle').textContent = '\uD83D\uDCC5 ' +
@@ -24096,7 +24110,7 @@ function renderApptList(){
   }
   m.innerHTML = list.map(function(a){
     var pr = a.project_id ? cacheProjects.find(function(x){ return x.id === a.project_id; }) : null;
-    return '<div class="apptrow" data-aid="' + a.id + '">' +
+    return '<div class="apptrow' + (apptEditId === String(a.id) ? ' editing' : '') + '" data-aid="' + a.id + '">' +
       '<span class="tm">' + (a.appt_time ? fmtApptTime(a.appt_time) : '\u2014') + '</span>' +
       '<span class="bd"><b>' + esc(a.title) + '</b>' +
         ((pr || a.notes || a.created_by) ? '<small>' +
@@ -24104,15 +24118,108 @@ function renderApptList(){
           (a.notes ? (pr ? ' \u00b7 ' : '') + esc(a.notes) : '') +
           (a.created_by ? ' \u00b7 ' + esc(a.created_by.split('@')[0]) : '') + '</small>' : '') +
       '</span>' +
+      '<span class="apptact">' +   /* 1260: one group, so a phone wraps it under the text */
       ((apptCanEdit(a) && !pr && (a.kind === 'job' || a.kind === 'drop'))
         ? '<button class="chipbtn" data-apptattach="' + a.id + '" ' +
             'style="margin-left:8px;">Attach to a job</button>'
         : '') +
+      (apptCanEdit(a) ? '<button type="button" class="apptedit" data-apptedit="' + esc(String(a.id)) + '">Edit</button>' : '') +   /* 1260 */
       '<button type="button" class="apptcal" data-apptcal="' + esc(String(a.id)) + '">Add to calendar</button>' +   /* 1258 */
       (apptCanEdit(a) ? '<button class="del" title="Delete">\u2715</button>' : '') +
-      '</div>';
+      '</span></div>';
   }).join('');
 }
+/* 1260: edit an appointment in place (Jacob: "edit instead of deleting").
+   apptEditId is the row being edited; null means the form adds, as before. */
+var apptEditId = null;
+function apptEditUi(on){
+  var h = document.getElementById('apptFormHead'); if(h) h.textContent = on ? 'Edit appointment' : '\u002B Add appointment';
+  var dl = document.getElementById('apptDateLbl'); if(dl) dl.style.display = on ? '' : 'none';
+  var sv = /** @type {HTMLButtonElement} */ (document.getElementById('apptSave')); if(sv){ sv.textContent = on ? 'Save changes' : 'Add'; sv.disabled = false; }
+  var cx = document.getElementById('apptEditCancel'); if(cx) cx.style.display = on ? '' : 'none';
+  document.getElementById('apptError').textContent = '';
+}
+function apptEditStart(id){
+  var a = cacheAppts.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!a || !apptCanEdit(a)) return;
+  apptEditId = String(a.id);
+  /** @type {HTMLInputElement} */ (document.getElementById('apptTitle')).value = a.title || '';
+  /** @type {HTMLSelectElement} */ (document.getElementById('apptKind')).value = a.kind || 'appt';
+  /** @type {HTMLInputElement} */ (document.getElementById('apptTime')).value = a.appt_time ? String(a.appt_time).slice(0, 5) : '';
+  /** @type {HTMLSelectElement} */ (document.getElementById('apptClient')).value = a.project_id ? String(a.project_id) : '';
+  /** @type {HTMLInputElement} */ (document.getElementById('apptNotes')).value = a.notes || '';
+  /** @type {HTMLInputElement} */ (document.getElementById('apptDate')).value = a.appt_date || apptDay || '';
+  apptEditUi(true);
+  renderApptList();
+  try{ document.getElementById('apptFormHead').scrollIntoView({ block:'start', behavior:'smooth' }); }catch(_){}
+  try{ document.getElementById('apptTitle').focus({ preventScroll:true }); }catch(_){}
+}
+/* leave edit mode; a form that was editing is emptied so its values cannot
+   leak into the next Add (an Add that was never editing keeps its fields) */
+function apptEditReset(){
+  var was = !!apptEditId;
+  apptEditId = null;
+  apptEditUi(false);
+  if(was){
+    ['apptTitle','apptTime','apptNotes','apptDate'].forEach(function(id){ /** @type {HTMLInputElement} */ (document.getElementById(id)).value = ''; });
+    /** @type {HTMLSelectElement} */ (document.getElementById('apptClient')).value = '';
+    /** @type {HTMLSelectElement} */ (document.getElementById('apptKind')).value = 'appt';
+  }
+}
+async function apptSaveEdit(){
+  var a = cacheAppts.filter(function(x){ return String(x.id) === String(apptEditId); })[0];
+  var err = document.getElementById('apptError');
+  if(!a){ apptEditReset(); renderApptList(); return; }
+  var v = function(id){ return /** @type {HTMLInputElement} */ (document.getElementById(id)).value; };
+  var f = { title: v('apptTitle').trim(), appt_date: v('apptDate'), appt_time: v('apptTime') || null,
+            project_id: v('apptClient') || null, notes: v('apptNotes').trim() || null, kind: v('apptKind') || 'appt' };
+  if(!f.title){ err.textContent = 'Enter what the appointment is.'; return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f.appt_date)){ err.textContent = 'Pick the date.'; return; }
+  if((f.kind === 'job' || f.kind === 'drop') && !f.project_id){   /* 998: the same rule as Add */
+    err.textContent = 'Pick the job this ' + (f.kind === 'job' ? 'build day' : 'delivery') +
+      ' is for \u2014 without it the job never reaches Scheduled and no crew can be put on it.';
+    return;
+  }
+  /* ONLY what changed — a patch carrying project_id means "a job was attached"
+     to adb.update, which buzzes production and offers the Pre-Install Guide */
+  var patch = {};
+  if(f.title !== String(a.title || '')) patch.title = f.title;
+  if(f.appt_date !== String(a.appt_date || '')) patch.appt_date = f.appt_date;
+  if((f.appt_time || '') !== (a.appt_time ? String(a.appt_time).slice(0, 5) : '')) patch.appt_time = f.appt_time;
+  if(String(f.project_id || '') !== String(a.project_id || '')) patch.project_id = f.project_id;
+  if((f.notes || '') !== String(a.notes || '')) patch.notes = f.notes;
+  if(f.kind !== (a.kind || 'appt')) patch.kind = f.kind;
+  if(!Object.keys(patch).length){ apptEditReset(); renderApptList(); return; }
+  var btn = /** @type {HTMLButtonElement} */ (document.getElementById('apptSave'));
+  btn.disabled = true; btn.textContent = 'Saving\u2026';
+  try{
+    await adb.update(a.id, patch);
+  }catch(e){
+    btn.disabled = false; btn.textContent = 'Save changes';
+    err.textContent = 'Could not save \u2014 ' + ((e && e.message) || e);
+    return;
+  }
+  var merged = Object.assign({}, a, patch);
+  var whenMoved = ('appt_date' in patch) || ('appt_time' in patch);
+  /* a build day that MOVED is news for the crew; adb.update only says so when
+     a job is attached (project_id in the patch), so say it here otherwise */
+  if(whenMoved && !('project_id' in patch) && merged.kind === 'job' && merged.project_id) __apptNotifyProduction(merged);
+  cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+  try{ if(boardView.style.display !== 'none') openScheduleBoard(); }catch(_){}
+  apptEditReset();
+  var moved = ('appt_date' in patch) && patch.appt_date !== apptDay;
+  if(moved) openApptDay(patch.appt_date); else renderApptList();
+  renderCalendar();
+  try{
+    if(window.crToastOk){
+      var d = String(merged.appt_date).split('-');
+      var lbl = new Date(+d[0], +d[1] - 1, +d[2]).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+      window.crToastOk((moved ? 'Moved to ' + lbl : 'Saved') +
+        (whenMoved ? ' \u2014 if it is on your phone\u2019s calendar, add it again' : ''));
+    }
+  }catch(_t){}
+}
+document.getElementById('apptEditCancel').addEventListener('click', function(){ apptEditReset(); renderApptList(); });
 /* 1258 (B1): "Add to calendar" — an .ics for Apple Calendar, Google's add-event
    link for Google. One-way and one appointment at a time, by Theo's pick. */
 function apptCalFields(a){
@@ -24217,6 +24324,8 @@ async function apptAttachJob(id){
 document.getElementById('apptList').addEventListener('click', async function(e){
   var cal = (/** @type {HTMLElement} */ (e.target)).closest('[data-apptcal]');
   if(cal){ apptCalOpen(cal.getAttribute('data-apptcal')); return; }   /* 1258 */
+  var ed = (/** @type {HTMLElement} */ (e.target)).closest('[data-apptedit]');
+  if(ed){ apptEditStart(ed.getAttribute('data-apptedit')); return; }   /* 1260 */
   var att = e.target.closest('[data-apptattach]');
   if(att){ apptAttachJob(att.getAttribute('data-apptattach')); return; }
   var del = e.target.closest('.del');
@@ -24230,7 +24339,7 @@ document.getElementById('apptList').addEventListener('click', async function(e){
     renderApptList(); renderCalendar();
   }catch(err){ document.getElementById('apptError').textContent = 'Could not delete: ' + (err.message || err); }
 });
-document.getElementById('apptClose').addEventListener('click', function(){ apptModal.style.display = 'none'; });
+document.getElementById('apptClose').addEventListener('click', function(){ apptEditReset(); apptModal.style.display = 'none'; });   /* 1260 */
 apptModal.addEventListener('click', function(e){ if(e.target === apptModal) apptModal.style.display = 'none'; });
 /* 998: the label is the first thing that says a job day needs its job, so it
    changes with the kind rather than reading "(optional)" and then refusing. */
@@ -24249,6 +24358,7 @@ function apptSyncClientLabel(){
   if(k) k.addEventListener('change', apptSyncClientLabel);
 })();
 document.getElementById('apptSave').addEventListener('click', async function(){
+  if(apptEditId){ await apptSaveEdit(); return; }   /* 1260 */
   var title = document.getElementById('apptTitle').value.trim();
   if(!title){ document.getElementById('apptError').textContent = 'Enter what the appointment is.'; return; }
   /* 998: a job day has to name its job.
@@ -43673,6 +43783,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1260, d: '2026-10-07', t: 'Edit an appointment instead of deleting it',
+    s: 'Open a day on the calendar and every appointment you made has an <b>Edit</b> button. It fills the form with that appointment \u2014 what, type, time, client, notes and the <b>date</b> \u2014 so you can change one thing and tap <b>Save changes</b>. Move it to another day and the calendar jumps there. If a build day moves, the crew is told. If you had added it to your phone\u2019s calendar, add it again after a change.' },
   { b: 1259, d: '2026-10-07', t: 'Tapping an alert opens the job',
     s: 'Tapping a push alert about a punch-out or a client now opens that job. Before, it could open a page of code instead of the app, and if the app was already open it simply stayed where it was. Both are fixed, for the punch-out alerts and the new evening lists alike.' },
   { b: 1258, d: '2026-10-07', t: 'Add an appointment to your own calendar',
