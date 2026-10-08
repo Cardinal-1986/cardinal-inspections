@@ -9599,3 +9599,13 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 
 ## Build 1263 — Leads & Jobs: Newest first (default) / Oldest first sorts (`LJ_SORTS`)
 - **Gate:** `gate_1263.mjs`.
+
+## Build 1264 — Community client page in Retail's order (`cr-cc-script`: `cc2Page`, `cc2Sub`; `cr-cc2-styles`)
+- Name card → ring → Payment Information → stage band (‹ › ⋮) → Job Menu → Location → Job Details
+  (category, work type, trades) → Homeowner & Site (Estimate due) → Assigned To → Partner Work Orders
+  → Reviews.
+- Partnership Organization (`#cr-cc-pp`) replaces Lead Source.
+- The Thread and the Estimate are sub-views (`tab='thread'|'bid'`). The Communication tile opens the
+  Thread.
+- Not Awarded writes `lead.not_awarded_reason`.
+- **Gate:** `gate_1264.mjs`.

@@ -6272,3 +6272,11 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
    list; Theo's 7am report; escalation (2 days → Curtis, 5 → Theo); callback cause + original crew;
    time on job; "repair done" homeowner report; homeowner sign-off; load-the-truck list; voice
    notes; rain flag. **"On my way" texts need a paid SMS service — Theo's call.**
+
+## Community revamp — layer of 8 Oct 2026 (Theo: "match exactly the retail crm")
+- [x] 1264: the client page in Retail's order. Thread in Communication. Partnership Organization in
+  place of Lead Source.
+- [ ] Stage labels in one place. There are three `LABEL` maps today, two of them identical.
+- [ ] New Lead intake with the real partner list.
+- [ ] A Community home like Retail's: pipeline, calendar, A/R.
+- [ ] Retire the old Community screens once the above are in.

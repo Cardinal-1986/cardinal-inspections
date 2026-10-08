@@ -120,7 +120,7 @@ esc(held ? 'Check back ' + fmtDay(l.check_back_at) : (since === 'today' ? 'Since
 '<label class="kv"><span class="k">Work Type</span><select class="cc2-sel" data-cc2f="wt" aria-label="Work Type">' + cc2Opts(CC2_WT, wt) + '</select></label>' +
 '<div class="kv"><span class="k">Trade Type</span><div class="chips">' + CC2_TRADES.map(function(t){
 var on = trades.indexOf(t) !== -1;
-return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-cc2t="' + esc(t) + '" aria-pressed="' + on + '">' + esc(t) + '</button>';
+return '<button type="button" class="cc2-tr' + (on ? ' on' : '') + '" data-cc2t="' + esc(t) + '" aria-pressed="' + on + '">' + esc(t) + '</button>';
 }).join('') + '</div></div>' +
 '<div class="cc-pp" id="cr-cc-pp"></div></div>' +
 '<h3 class="cc-sect">Homeowner &amp; Site</h3><div class="cc2-card">' + contactsHtml(pr, true) +
@@ -307,9 +307,9 @@ CSS = '''<style id="cr-cc2-styles">
 #cr-cc .cc2-sel{flex:1;min-width:0;min-height:44px;padding:0 10px;border-radius:8px;border:1px solid var(--ccm-line,#2a2f2c);
   background:var(--ccm-raise,#1e2220);color:var(--ccm-ink,#f2f4f3);font:600 15px 'Segoe UI',Arial,sans-serif}
 #cr-cc .cc2-card .chips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
-#cr-cc .cc2-card .chip{min-height:44px;padding:0 12px;border-radius:22px;border:1px solid var(--ccm-line,#2a2f2c);background:transparent;
+#cr-cc .cc2-card .cc2-tr{min-height:44px;padding:0 12px;border-radius:22px;border:1px solid var(--ccm-line,#2a2f2c);background:transparent;
   color:var(--ccm-ink,#f2f4f3);font:600 15px 'Segoe UI',Arial,sans-serif;cursor:pointer}
-#cr-cc .cc2-card .chip.on{background:var(--ccm-ac,#34D399);border-color:var(--ccm-ac,#34D399);color:var(--ccm-onac,#08240f)}
+#cr-cc .cc2-card .cc2-tr.on{background:var(--ccm-ac,#34D399);border-color:var(--ccm-ac,#34D399);color:var(--ccm-onac,#08240f)}
 #cr-cc .cc2-card .cts{margin:6px 0 0}
 #cr-cc .cc2-card .cc-pp{margin:0;padding:0;border:0;background:transparent}
 </style>
