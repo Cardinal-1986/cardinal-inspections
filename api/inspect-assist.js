@@ -8,6 +8,8 @@
 //   POST { mode:'write', photos, facts, trades, general, history, life_by, sections }
 //     → { summary, sections:[{num,narrative}], photos:[{id,section,caption,severity}],
 //         recommendations:[str], life_estimate }
+//   POST { mode:'edit', instruction, blocks:[{id,kind,where,text}] }      (1267)
+//     → { reply, edits:[{id,text}] } — only ids that were sent come back
 //
 // Claude, not Gemini: Theo's call ("Claude"), and the same reason the librarian
 // moved (806) — one model that sees the photos and holds the conversation.
@@ -88,6 +90,29 @@ const WRITE_SHAPE = [
   '- recommendations: the scope items, most important first.',
   '- life_estimate: only when asked for one; a short range such as "About 3–5 years of service life left", or "" otherwise.',
 ].join('\n');
+
+const EDIT_SHAPE = [
+  'The report is already written. The rep wants it changed. You get the report\'s editable parts, each with an id.',
+  '- Change ONLY what the rep asks for. Return the full new text of each part you change; leave every other part out.',
+  '- A part with empty text is an unfilled blank; fill it only if the rep asks for something that belongs there.',
+  '- If the rep gives a new fact, put it in the part where it belongs.',
+  '- reply: one short sentence saying what you changed, or why you changed nothing.',
+].join('\n');
+const EDIT_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['reply', 'edits'],
+  properties: { reply: { type: 'string' }, edits: { type: 'array', items: { type: 'object', additionalProperties: false,
+    required: ['id', 'text'], properties: { id: { type: 'string' }, text: { type: 'string' } } } } }
+};
+/* The edit turn: the instruction and the report's parts. No photos, no facts —
+   the parts already carry them. */
+export function buildEditContent(body){
+  const blocks = (Array.isArray(body.blocks) ? body.blocks : []).slice(0, 60).map(b => ({
+    id: clip(b && b.id, 10), kind: clip(b && b.kind, 30), where: clip(b && b.where, 80), text: clip(b && b.text, 2500) }));
+  const text = 'The rep asks: ' + clip(body.instruction, 1500) + '\n' +
+    'Report parts (JSON): ' + JSON.stringify(blocks);
+  return { content: [{ type: 'text', text }], blockIds: blocks.map(b => b.id) };
+}
 
 const CHAT_SCHEMA = {
   type: 'object', additionalProperties: false,
@@ -171,11 +196,17 @@ export default async function handler(req, res) {
   if (!apiKey) { res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured on the server' }); return; }
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
-  const mode = body.mode === 'write' ? 'write' : 'chat';
-  const { content, photoIds } = buildContent(body, mode);
-  const system = RULES + '\n\n' + (mode === 'write' ? WRITE_SHAPE : CHAT_SHAPE);
-  const schema = mode === 'write' ? WRITE_SCHEMA : CHAT_SCHEMA;
-  const effort = mode === 'write' ? 'medium' : 'low';
+  const mode = body.mode === 'write' ? 'write' : body.mode === 'edit' ? 'edit' : 'chat';
+  let content, photoIds = [], blockIds = [];
+  if (mode === 'edit') {
+    if (!String(body.instruction || '').trim()) { res.status(400).json({ error: 'Say what to change' }); return; }
+    ({ content, blockIds } = buildEditContent(body));
+  } else {
+    ({ content, photoIds } = buildContent(body, mode));
+  }
+  const system = RULES + '\n\n' + (mode === 'write' ? WRITE_SHAPE : mode === 'edit' ? EDIT_SHAPE : CHAT_SHAPE);
+  const schema = mode === 'write' ? WRITE_SCHEMA : mode === 'edit' ? EDIT_SCHEMA : CHAT_SCHEMA;
+  const effort = mode === 'chat' ? 'low' : 'medium';
 
   const client = new Anthropic({ apiKey, maxRetries: MAX_RETRIES });
   let msg;
@@ -200,6 +231,16 @@ export default async function handler(req, res) {
 
   if (mode === 'chat') {
     res.status(200).json({ reply: clip(out.reply, 2000), ready: !!out.ready });
+    return;
+  }
+  if (mode === 'edit') {
+    const done = new Set();
+    const edits = (Array.isArray(out.edits) ? out.edits : []).filter(e => {
+      const id = clip(e && e.id, 10);
+      if (!blockIds.includes(id) || done.has(id) || !String(e.text || '').trim()) return false;
+      done.add(id); return true;
+    }).map(e => ({ id: clip(e.id, 10), text: clip(e.text, 3000) }));
+    res.status(200).json({ reply: clip(out.reply, 600), edits });
     return;
   }
   /* Keep only photos we sent, each once. */

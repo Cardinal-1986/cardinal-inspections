@@ -6287,6 +6287,7 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 - [x] 1266, step 2: photo picker + the Claude assistant (`api/inspect-assist.js`). It writes into the
   existing template and labels the AI life estimate. ⚠ First real model run is Theo's; the container
   has no key.
-- [ ] Step 3: on the finished report, **Edit with assistant** or **Edit by hand**.
+- [x] 1267, step 3: the editor's Assistant panel gained **Change the report** (Claude edits the
+  written parts, saves, Undo) beside **Add a note**. Edit by hand is the editor itself.
 - [ ] Decide whether the guide should raise the General checklist's lead pop-up (`computeLeads`), as the
   General modal does.

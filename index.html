@@ -496,6 +496,13 @@ td.status small{display:block;color:var(--muted);font-size:13px;margin-top:3px;w
   background:var(--red);color:#fff;padding:10px 14px;cursor:pointer;
 }
 .assist-inputrow button:disabled{opacity:.5;cursor:default;}
+/* 1267: Change the report / Add a note */
+.assist-mode{display:flex;gap:6px;padding:10px 12px 0;}
+.assist-mode button{flex:1;min-height:44px;font:inherit;font-weight:700;font-size:13px;border-radius:6px;cursor:pointer;
+  border:1px solid #c9ccd4;background:#fff;color:#161616;}
+.assist-mode button[aria-pressed="true"]{background:var(--red,#c8202e);border-color:var(--red,#c8202e);color:#fff;}
+.amsg .ae-undo{margin-top:6px;min-height:44px;padding:0 14px;font:inherit;font-weight:700;font-size:13px;border-radius:6px;
+  border:1px solid #c9ccd4;background:#fff;color:#161616;cursor:pointer;}
 @media (max-width:820px){
   .editor-body{flex-direction:column;}
   #assistantPanel{width:100%;height:46%;border-left:0;border-top:4px solid var(--red);}
@@ -4133,7 +4140,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-08 build 1266<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-08 build 1267<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8793,6 +8800,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       </div>
       <input type="file" id="assistFile" accept="image/*" multiple style="display:none;">
       <input type="file" id="assistCameraInput" accept="image/*" capture="environment" style="display:none;">
+      <div class="assist-mode" role="group" aria-label="What should the assistant do?">
+        <button type="button" id="assistModeEdit" aria-pressed="false">Change the report</button>
+        <button type="button" id="assistModeNote" aria-pressed="true">Add a note</button>
+      </div>
       <div class="assist-inputrow">
         <textarea id="assistText" placeholder="e.g. Cracked boot seal on the SE slope, two nail pops on the west face"></textarea>
         <button id="assistSend">Add</button>
@@ -25637,6 +25648,10 @@ var assistSend = document.getElementById('assistSend');
 
 document.getElementById('assistantBtn').addEventListener('click', function(){
   assistantPanel.classList.toggle('open');
+  if(assistantPanel.classList.contains('open')){
+    try{ var _d = /** @type {any} */ (frame).contentDocument;
+      setAssistMode(_d && _d.querySelector('[data-ai-summary],[data-ai-narrative]') ? 'edit' : 'note'); }catch(_){}
+  }
 });
 document.getElementById('assistantClose').addEventListener('click', function(){
   assistantPanel.classList.remove('open');
@@ -26060,6 +26075,7 @@ assistText.addEventListener('keydown', function(e){
 async function sendAssistNote(){
   var note = assistText.value.trim();
   if(!note) return;
+  if(assistMode === 'edit') return sendAssistEdit(note);   /* 1267 */
   var doc = frame.contentDocument;
   if(!doc){ assistMsg('bot err', 'Open a report first.'); return; }
   assistText.value = '';
@@ -26085,6 +26101,106 @@ async function sendAssistNote(){
   }
   assistSend.disabled = false;
 }
+/* 1267: "Change the report" — the assistant panel's second mode (Theo: "an
+   option to edit with the chatbox or manually"). The rep says what to change in
+   plain words; /api/inspect-assist (mode 'edit') returns new text for the parts
+   it changed, which are written in place, saved, and can be undone. The parts
+   are a VIEW of the live document built per request (summary, each section's
+   write-up, recommendations, photo captions) — nothing is stamped into the
+   document, because serializeFrame()'s output is what reaches the client.
+   "Add a note" is the 1068-era intake, untouched. Editing by hand is the editor
+   itself: every line is already tappable. */
+var assistMode = 'note';
+/* typed handles on the panel's controls and the report frame (gate_types) */
+var aeText = /** @type {any} */ (assistText), aeSend = /** @type {any} */ (assistSend), aeFrame = /** @type {any} */ (frame);
+function setAssistMode(m){
+  assistMode = m === 'edit' ? 'edit' : 'note';
+  var a = document.getElementById('assistModeEdit'), b = document.getElementById('assistModeNote');
+  if(a) a.setAttribute('aria-pressed', String(assistMode === 'edit'));
+  if(b) b.setAttribute('aria-pressed', String(assistMode === 'note'));
+  aeText.placeholder = assistMode === 'edit'
+    ? 'e.g. make the summary shorter, or say the porch was outside this inspection'
+    : 'e.g. Cracked boot seal on the SE slope, two nail pops on the west face';
+  assistSend.textContent = assistMode === 'edit' ? 'Change' : 'Add';
+}
+/** @param {any} doc */
+function aeBlocks(doc){
+  var out = [];
+  function aeTake(el, kind, where){
+    if(!el) return;
+    var t = (el.textContent || '').trim();
+    out.push({ el: el, kind: kind, where: where, text: t.charAt(0) === '[' ? '' : t });
+  }
+  var sh = doc.querySelector('[data-cardinal-summary-heading]');
+  for(var e = sh && sh.nextElementSibling; e && !/^H[23]$/.test(e.tagName); e = e.nextElementSibling){
+    if(e.tagName === 'P' && (e.classList.contains('fill') || e.classList.contains('ph'))){ aeTake(e, 'summary', 'Overall Condition Assessment'); break; }
+  }
+  Array.prototype.forEach.call(doc.querySelectorAll('h2.sec'), function(h){
+    var n = h.querySelector('.num'), num = n ? n.textContent.trim() : '';
+    if(!/^\d+$/.test(num) || +num < 3 || +num > 9) return;
+    var where = num + ' ' + h.textContent.replace(num, '').trim(), got = false;
+    for(var x = h.nextElementSibling; x && !(x.tagName === 'H2' && x.classList.contains('sec')); x = x.nextElementSibling){
+      if(!got && x.tagName === 'P' && (x.classList.contains('fill') || x.classList.contains('ph'))){ aeTake(x, num === '9' ? 'recommendations' : 'write-up', where); got = true; }
+      Array.prototype.forEach.call(x.querySelectorAll('.cap .fill, .cap .ph'), function(c){ aeTake(c, 'photo caption', where); });
+    }
+  });
+  return out.slice(0, 60);
+}
+/** @param {any} note */
+async function sendAssistEdit(note){
+  var doc = aeFrame.contentDocument;
+  if(!doc){ assistMsg('bot err', 'Open a report first.'); return; }
+  aeText.value = '';
+  assistMsg('user', escHtml(note));
+  var working = assistMsg('bot', 'Changing the report…');
+  aeSend.disabled = true;
+  var blocks = aeBlocks(doc);
+  try{
+    var res = await fetch('/api/inspect-assist', {
+      method: 'POST', headers: await window.aiHeaders(),
+      body: JSON.stringify({ mode: 'edit', instruction: note,
+        blocks: blocks.map(function(b, i){ return { id: 'b' + i, kind: b.kind, where: b.where, text: b.text }; }) })
+    });
+    var data = null;
+    try{ data = await res.json(); }catch(pe){}
+    if(!res.ok || !data) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+    var undo = [];
+    (data.edits || []).forEach(function(ed){
+      var m = /^b(\d+)$/.exec(String(ed && ed.id || '')), b = m ? blocks[+m[1]] : null;
+      if(!b || typeof ed.text !== 'string' || !ed.text.trim()) return;
+      undo.push({ el: b.el, html: b.el.innerHTML, cls: b.el.className });
+      b.el.textContent = ed.text.trim();
+      b.el.classList.remove('ph'); b.el.classList.add('fill');
+    });
+    working.innerHTML = escHtml(data.reply || (undo.length ? 'Done.' : 'Nothing to change.')) +
+      (undo.length ? '<br><small>Changed ' + undo.length + ' part' + (undo.length === 1 ? '' : 's') + ' and saved.</small> <button type="button" class="ae-undo">Undo</button>' : '');
+    if(undo.length){
+      await saveCurrent();
+      var ub = /** @type {any} */ (working.querySelector('.ae-undo'));
+      if(ub) ub.addEventListener('click', async function(){
+        ub.disabled = true;
+        undo.forEach(function(u){ if(u.el.isConnected){ u.el.innerHTML = u.html; u.el.className = u.cls; } });
+        await saveCurrent();
+        ub.textContent = 'Undone';
+      });
+    }
+  }catch(e){
+    working.className = 'amsg bot err';
+    working.textContent = 'Could not change the report: ' + String((e && e.message) || e).slice(0, 250);
+  }
+  aeSend.disabled = false;
+}
+/* the guided report (cr-insg-script) opens the editor on a fresh AI draft */
+function openAssistEdit(){
+  assistantPanel.classList.add('open');
+  setAssistMode('edit');
+  assistMsg('bot', 'Your draft is written. Tell me what to change — “shorter summary”, “the porch was outside this inspection” — or close this and edit by hand: tap any line in the report.');
+}
+(function(){
+  var a = document.getElementById('assistModeEdit'), b = document.getElementById('assistModeNote');
+  if(a) a.addEventListener('click', function(){ setAssistMode('edit'); });
+  if(b) b.addEventListener('click', function(){ setAssistMode('note'); });
+})();
 function escHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -43837,6 +43953,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1267, d: '2026-10-08', t: 'Change the report by asking',
+    s: 'The report\u2019s <b>Assistant</b> panel has two modes now. <b>Change the report</b>: say what to change in plain words \u2014 \u201Cshorter summary\u201D, \u201Cthe porch was outside this inspection\u201D, \u201Cmake the chimney caption say the crown is cracked\u201D \u2014 and it rewrites just those parts, saves, and gives you an <b>Undo</b>. <b>Add a note</b> works as before. A report the assistant wrote opens with the panel ready to change it; close it to edit by hand \u2014 every line in the report is still tappable.' },
   { b: 1266, d: '2026-10-08', t: 'New inspection report: photos and the assistant',
     s: 'After the checklist, <b>+ New inspection report</b> now shows the job\u2019s photos with check boxes (up to 16; the inspection photos are pre-checked) and an assistant to talk to. Tell it what the photos don\u2019t show \u2014 a reported leak, how long, what the homeowner wants \u2014 and it asks back. <b>Write report</b> writes it into your normal template: the photos placed in the right sections with captions and HIGH / MODERATE / MONITOR tags, a short write-up for each section, the overall condition, and numbered recommendations. When the rep picked <b>Let the AI estimate it</b>, the life expectancy comes from the assistant and is marked as an AI estimate. Everything stays editable. <b>Start without AI</b> makes the plain report, as before.' },
   { b: 1265, d: '2026-10-08', t: 'New inspection report: pick what you inspected, then one checklist',
@@ -92877,8 +92995,10 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     var secs = igSections();
     igClose();
     var title = (pr && pr.name || 'Inspection') + (pr && pr.address ? ' — ' + pr.address : '');
-    createReportFrom(secs.roof ? REPORT_TEMPLATE : EXTERIOR_TEMPLATE, secs.roof ? 'Report' : 'Exterior report', secs.roof,
+    await createReportFrom(secs.roof ? REPORT_TEMPLATE : EXTERIOR_TEMPLATE, secs.roof ? 'Report' : 'Exterior report', secs.roof,
       { title: title, fill: function(id){ return igFill(id, j, secs.list); } });
+    /* 1267: the draft opens with the assistant ready to change it */
+    try{ if(typeof openAssistEdit === 'function') openAssistEdit(); }catch(_){}
   }
   /** @param {any} id @param {any} j @param {any} secs */
   async function igFill(id, j, secs){

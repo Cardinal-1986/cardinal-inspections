@@ -9,6 +9,7 @@
      5  write: photo ids the model invents, or repeats, are dropped; life_estimate is
         "" unless life_by is "ai"
      6  a refusal and a cut-off answer are 502s that say so
+     7  (1267) edit: needs an instruction; only the sent part ids come back
    usage: node gate_1266_api.mjs [path/to/inspect-assist.js]
 */
 import { readFileSync, writeFileSync, mkdtempSync } from 'fs';
@@ -82,6 +83,17 @@ need('5  life_estimate is "" unless life_by is "ai"', r5.body.life_estimate === 
 script = [{ stop: 'refusal' }]; const r6a = await call({ mode: 'chat' });
 script = [{ stop: 'max_tokens' }]; const r6b = await call({ mode: 'write' });
 need('6  a refusal and a cut-off answer are 502s that say so', r6a.status === 502 && /declined/.test(r6a.body.error) && r6b.status === 502 && /cut off/.test(r6b.body.error), JSON.stringify([r6a, r6b]));
+
+/* 7 — 1267: mode 'edit' */
+seen.length = 0;
+const r7a = await call({ mode: 'edit', instruction: '  ', blocks: [] });
+need('7  edit with no instruction → 400, no model call', r7a.status === 400 && seen.length === 0, JSON.stringify(r7a));
+script = [{ out: { reply: 'Shortened the summary.', edits: [{ id: 'b0', text: 'Short.' }, { id: 'b9', text: 'not sent' }, { id: 'b0', text: 'again' }, { id: 'b1', text: '  ' }] } }];
+const r7 = await call({ mode: 'edit', instruction: 'shorter summary', blocks: [{ id: 'b0', kind: 'summary', where: 'Overall', text: 'Long text.' }, { id: 'b1', kind: 'write-up', where: '5 Roof', text: 'x' }] });
+const p7 = (seen[0] || {}).params || {};
+const c7 = ((p7.messages || [])[0] || {}).content || [];
+need('7  edit: the instruction and the parts go, no photos, effort medium', c7.every(b => b.type === 'text') && c7.map(b => b.text).join('').includes('The rep asks: shorter summary') && c7.map(b => b.text).join('').includes('"id":"b0"') && p7.output_config && p7.output_config.effort === 'medium', JSON.stringify(p7.output_config));
+need('7  edit: only parts that were sent, once each, non-empty', r7.status === 200 && JSON.stringify(r7.body.edits) === '[{"id":"b0","text":"Short."}]' && r7.body.reply === 'Shortened the summary.', JSON.stringify(r7.body));
 
 console.log((fails.length ? 'GATE 1266 API RED' : 'GATE 1266 API GREEN') + ' — ' + passes + ' passed, ' + fails.length + ' failed');
 process.exit(fails.length ? 1 : 0);
