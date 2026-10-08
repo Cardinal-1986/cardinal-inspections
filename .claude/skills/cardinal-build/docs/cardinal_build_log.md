@@ -34333,6 +34333,98 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1261 — only Theo, Joan and Curtis schedule punch work; old leads get their Category and Work Type
+
+Theo, 8 Oct, answering the two questions left open at 1252 and 1253: *"Only Theo Joan and Curtis can
+schedule punch work. Yes fill in job categories."*
+
+### SQL first — both APPLIED to production 8 Oct, before the writer
+- **`punch_schedule_guard.sql`** — `punch_close_guard()`, create-or-replace. No new trigger, no DROP:
+  the two 1252 triggers (`punch_boss_guard_ins`, `punch_close_guard`) already call it. For anyone
+  `is_punch_boss()` is false for, it now also refuses:
+  - **an INSERT** that carries `scheduled_at` or `scheduled_time`. New work files undated, for Curtis.
+  - **an UPDATE** that changes either one. There are two deliberate exceptions:
+    1. **Putting a job on hold.** When the result is "on hold, `scheduled_at = hold_until`, no time",
+       that is 1249's look-again day (Theo's 3C), and 1252 left holding open to everyone.
+    2. **An older app's check-out.** Before 1261 the card asked the crew "Back on this tomorrow?" and
+       sent that date in the same update as the closed visit. When an update from anyone but the
+       three bosses moves the date AND changes `visits`, the visit is kept and the date is put back.
+       A phone that has not reloaded loses nothing.
+  - **Proven on production inside a rolled-back transaction.** It was a `DO` block that ends in
+    `raise exception`, so nothing it wrote survives. It ran as Scottie (via `request.jwt.claims`) on
+    an undated open item:
+    - refused: a date change; a time change; a date change under a hold that is not the hold day;
+      an insert with a date;
+    - allowed: an older app's check-out, which kept the visit and left the date null;
+    - allowed: a hold, which moved the job to its look-again day;
+    - allowed: an insert with no date, and an unrelated edit;
+    - as Curtis: a date and time change, allowed.
+
+    Afterwards the item read exactly as before, and no test row existed.
+- **`backfill_lead_category_worktype.sql`** — copies `checklist.lead.category` / `.worktype` into the
+  flat `job_category` / `work_type`, wherever the flat key is missing, null or `''`. It never
+  overwrites. Three leads have a flat Work Type that differs from the intake's, because someone
+  changed it on purpose. They keep it.
+  - **26 projects updated.** 18 got a category (all Residential). 24 got a work type: New 18, Repair 2,
+    Retail 2, Insurance 1, Warranty 1. Two had an empty intake Work Type and stay blank.
+  - **Proven by fingerprint.** For each of the 26, the md5 of its checklist minus the two keys was
+    taken before and after. All 26 are identical. The other 54 projects are byte-identical: one
+    digest across all of them, before and after. Afterwards, 0 rows still match.
+  - The ids, for the revert the SQL file describes:
+    `0efe9a9d 100dcf27 20d5ea76 21e1990d 3e4f0ff2 440506ad 5cea4c27 613acf81 66dfb293 69e1e2f7
+    6c3941cc 72fee071 77d374e3 7cf2b7b7 8c8d6198 91445acb 93f75acd a2a131a0 aa2caf1e ae1de0ea
+    ba11dc19 cc1530a5 d72498f9 daccf1bf e980898b ffdf1bf0` (first 8 hex of each uuid).
+  - Five of them were created on 7 Oct. All five were created before 1253 reached main (17:27 UTC),
+    so the 1253 intake fix is not leaking. No lead has been created since.
+
+### App — nobody is offered what the database now refuses
+- **"+ New" punch form.** The three bosses keep Schedule for. Anyone else reads **"Curtis schedules
+  it"**, the shape 1252 used for "Curtis assigns it".
+- **Card check-out.** A boss is still asked "Back on this tomorrow?". Anyone else is asked **"Tell
+  Curtis it needs another day?"**, with **Tell Curtis / Not now**.
+  - Yes writes the closed visit and a `needday` message on the job. It then buzzes `officeEmails()`
+    (Theo and Curtis, the pair 1252's "Tell Curtis it's finished" buzzes) with "Needs another day: …".
+  - It never sends a date.
+- **Hold:** unchanged, for everyone.
+- **Already bosses-only, not touched:**
+  - the card's own schedule fields (`isManager()`);
+  - the Assign sheet (1252);
+  - the route's "Add to today" (1254).
+- **Every writer of `scheduled_at` / `scheduled_time` in the file:** the form, check-out, hold, the
+  card's fields, the Assign sheet and the route. Server code writes no punch rows.
+
+### Found on the way — saving the Edit form erased a Retail or Insurance Work Type (pre-existing)
+- **Cause.** `cr-wtd-script` strips Insurance and Retail from `#ldWorkType` / `#pfWorkType` once, at
+  load. It keeps one only if it is the select's value at that moment, which is always `''` at load.
+- **Effect.** A lead saved as either opened in the Edit form as "not set", and Save wrote
+  `work_type: null` over it.
+- **Size.** 9 leads carry one (6 Retail, 3 Insurance), and 3 of them came from this build's backfill.
+  `gate_1261` G measured it on 1260: shown as `""`, saved as `null`.
+- **Fix.** The Edit form now puts the lead's own value back as a labelled option before selecting
+  it, in cr-wtd's own words: "Retail (legacy — set Claim Type instead)".
+- **Warranty.** The New Lead form offered it, but the Edit form and Job Details did not. Both do now.
+
+### Gates
+- **`gate_1261.mjs` (18), green:**
+  - **A** — as Scottie, "+ New" shows no date or time field and reads "Curtis schedules it". Filing
+    inserts an undated row.
+  - **B** — the check-out question and its buttons; yes writes the visit and a `needday` message
+    with no date; Curtis and Theo are buzzed.
+  - **C** — "Not now" writes only the visit.
+  - **D** — Scottie's hold still moves the job to its look-again day.
+  - **E** — as Curtis, the date fields are there; "Back on this tomorrow?" moves the date to a later
+    working day, never a Sunday.
+  - **F** — Warranty is in the Edit form and in Job Details.
+  - **G** — a Retail lead survives an Edit-form save.
+  - **RED on 1260** (11 failures, no crash).
+- **`gate_visits940.mjs` — repaired, and it had been RED since `crAsk` replaced `confirm()`:**
+  - It answered with `page.on('dialog')`, which never fires, so check-out never finished.
+  - Its "saying NO" check passed only because a second ask is refused while one is open.
+  - It now answers `#crAsk` itself and asserts the 1261 contract for Scottie.
+  - Green 16/16; RED on 1260 (3).
+- **Types:** one new TS2339 (`options` on `HTMLElement`), fixed with a JSDoc cast. Green.
+- **Also green:** dupes, scroll-lock (17 modules), `check_build`.
+
 ## Build 1260 — edit an appointment instead of deleting it (Jacob, via Theo)
 
 Jacob, 7 Oct, forwarded by Theo: *"Need a way to edit calendar instead of deleting the appointment
@@ -34701,6 +34793,7 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
     the Edit form writes, so whatever Joan picked never showed.
   - The intake now writes the flat keys too. The nested copy stays.
   - ⚠ Leads already entered keep their missing flat keys. They were not backfilled.
+    ✅ **Backfilled at 1261** (26 leads — see that entry).
 - **Ink:** the base `.tradeopt` is a light-era `#2b2b2b`, so the intake's labels inherit the form's
   ink instead (`--cr-stack` declared). Measured ≥4.5:1 in both themes, and every label is ≥44px.
 - **Not touched:** the other lead doors still take no trade:

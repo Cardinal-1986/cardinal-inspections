@@ -9576,3 +9576,17 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Save changes** sends only the changed fields. A moved build day buzzes production. A moved
   appointment jumps to its new day.
 - **Gate:** `gate_1260.mjs`.
+
+## Build 1261 — punch scheduling is the bosses' (`punch_schedule_guard.sql`)
+- Only Theo, Joan and Curtis set a punch item's date or time. That is the same three as assigning
+  and closing (1252), enforced in `punch_close_guard()`.
+- **Anyone else:**
+  - "+ New" reads "Curtis schedules it";
+  - checking out of unfinished work asks **"Tell Curtis it needs another day?"**. Yes leaves a
+    `needday` message and buzzes Curtis and Theo. It never moves the date.
+- **Holds** still move a job to its look-again day, whoever sets them.
+- **Job Category / Work Type:**
+  - leads entered before 1253 were backfilled (`backfill_lead_category_worktype.sql`, 26 leads);
+  - Warranty is a Work Type in the Edit form and Job Details;
+  - the Edit form keeps a legacy Retail/Insurance value (labelled) instead of saving null over it.
+- **Gates:** `gate_1261.mjs`; `gate_visits940.mjs` (repaired).
