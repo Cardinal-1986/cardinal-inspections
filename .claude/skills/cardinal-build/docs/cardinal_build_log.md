@@ -34333,6 +34333,82 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1266 — New inspection report, guided, step 2: photos and the Claude assistant (Theo)
+
+Theo, 8 Oct: *"a screen that has a photo picker, you check the boxes and add them to the
+reports. Before the report gets written there is an ai personal assistant chat box"*, and
+*"Claude"*. Step 2 of three. 1265 was the checklist.
+
+- **The screen.** After the checklist saves, or Skip checklist, the guide now shows **Photos
+  and assistant**:
+  - The job's `project_photos` with check boxes, up to 16. The inspection set (`insp_photos`) is
+    pre-checked.
+  - A chat with the assistant.
+  - **Start without AI** makes the plain report, as before. **Write report** has the assistant
+    write it.
+- **The route: `api/inspect-assist.js` (new, 37 functions now).**
+  - Claude **`claude-opus-5-5`**, structured output.
+  - Chat runs at effort low and returns `{reply, ready}`. Write runs at medium and returns
+    `{summary, sections, photos, recommendations, life_estimate}`.
+  - The server-side refusal fallback beta (`fallbacks:'default'`) is on, with one retry without it
+    if the account rejects the beta.
+  - Staff gate (`_staff.js`), the same as every AI route.
+  - `maxDuration` 60 added to `vercel.json`.
+  - Uses the `ANTHROPIC_API_KEY` that is already set in Vercel (checked by name only).
+- **Photos go as signed URLs, never bytes.** 16 data URLs would break Vercel's body limit.
+  - Only this project's own storage URLs (`…/storage/v1/object/{sign,public}/photos/`) are
+    accepted, so the route cannot be pointed at an arbitrary address.
+  - Photo ids the model invents or repeats are dropped.
+- **The writing rules** come from `INSPECTION_REPORTS.md`'s settled calls:
+  - Captions say only what the photo shows. No side, room or elevation the rep didn't name.
+  - What the rep said goes in as fact ("Homeowner reports …").
+  - What was only seen in a photo is worded carefully.
+  - Nothing is invented. No prices. Owens Corning.
+  - Out-of-scope items are still recommended, and say so.
+- **Filling the report.** It goes into the SAME template and the SAME creator.
+  - `createReportFrom()` gained an optional fourth argument, `{title, fill}`. Three-argument
+    callers are unchanged.
+  - The fill places each photo through `placePhotoInSection()` in the section the model chose,
+    within 3–8, read from the template itself. Each gets its caption and a HIGH / MODERATE /
+    MONITOR tag (`CK_PR`). Photos are signed at the document TTL, as `transferPhotosToReport` does.
+  - It writes section narratives (`data-ai-narrative`), the Overall Condition paragraph
+    (`data-ai-summary`) and numbered Recommendations into the placeholders only.
+  - A checked photo the model left out still goes in, in section 5.
+- **Life expectancy.** When the rep picked "Let the AI estimate it", the answer is saved as
+  `life_left: "AI estimate: …"`. The Age row then shows it, labelled.
+- **Photos and third-party AI.** The Vision-suite fence says customer photos never go to
+  third-party AI without an explicit yes. **This is that yes**: Theo asked for the assistant to
+  read the photos, and named Claude. The photos were already going to Gemini through `/api/caption`.
+- **Gates:**
+  - **`gate_1266.mjs` (15), Chromium, as nick, three photos seeded, the route stubbed:**
+    - the screen appears after the checklist;
+    - "2 of 16";
+    - a chat request carries the two signed URLs, the checklist facts and the rep's words, and the
+      reply shows;
+    - a failed Write says so and makes no report;
+    - Write sends sections 3–8 and `life_by:ai`, then makes ONE report with no title prompt;
+    - in the saved html, ph1 is in section 5 and ph3 in section 8, unchecked ph2 is absent, with
+      captions, tags, write-ups, the summary and numbered recommendations;
+    - the AI life estimate is in the checklist.
+    - RED on 1265 (14 failed, no crash).
+  - **`gate_1266_api.mjs` (10)** drives the SHIPPED route with a fake SDK and a fake session check:
+    - 401 / 403 without reaching the model;
+    - foreign URLs dropped;
+    - model, fallback beta, schema and effort;
+    - a 400 on the beta is retried once without it;
+    - invented and repeated ids dropped;
+    - `life_estimate` blank unless asked;
+    - refusal and cut-off answers are 502s.
+    - Poisoned (URL fence and staff gate removed), it goes RED on exactly those two.
+  - `gate_1265` now taps Start without AI at the new screen, and is green on 1265 and 1266.
+  - `check_build`, types, dupes (helper renamed `igPut`), `gate_stack` CLEAN, scroll-lock roster
+    unchanged at 17.
+  - Sentinel over four states including the photo screen (390 + 1440, both themes): **CLEAN, 16
+    renders.**
+- **Not verified here: a real Claude answer.** The container has no key and must not have one. The
+  first real run is Theo's.
+- **Next, step 3:** on the finished report, Edit with assistant or Edit by hand.
+
 ## Build 1265 — New inspection report, guided: pick what you inspected, then one checklist (Theo)
 
 Theo, 8 Oct: *"checkboxes … Roof, Siding, Gutters, Fascia, Soffit, Windows, Doors. Then once you hit

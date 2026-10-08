@@ -9620,3 +9620,13 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Then `createReportFrom()` with the roof or exterior template. **Skip checklist** goes straight there.
 - Light sheet, by Theo's call.
 - **Gate:** `gate_1265.mjs`.
+
+## Build 1266 — Guided report, step 2: photos + the assistant (`cr-insg-script` screen 3, `api/inspect-assist.js`)
+- After the checklist: the job's photos with check boxes (up to 16, inspection set pre-checked) and
+  a chat with Claude (`claude-opus-5-5`).
+- **Write report** fills the normal template through `createReportFrom(tpl, label, roofy,
+  {title, fill})`: photos in sections 3–8 with captions and tags, section narratives, the overall
+  condition, numbered recommendations, and the AI life estimate when asked.
+- **Start without AI** makes the plain report.
+- Photos are sent as signed storage URLs. Only this project's storage is accepted.
+- **Gates:** `gate_1266.mjs`, `gate_1266_api.mjs`.

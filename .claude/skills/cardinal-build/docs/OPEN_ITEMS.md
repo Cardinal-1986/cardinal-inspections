@@ -6284,8 +6284,9 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 ## Guided inspection report — layer of 8 Oct 2026 (Theo, preview `JqX8AZTJGqCUARyPh2oAHt`)
 - [x] 1265, step 1: pick what was inspected (General + seven trades), then one dropdown checklist. It
   saves into the existing checklists. Life expectancy by rule or AI. Skip checklist.
-- [ ] Step 2: photo picker (check boxes) + the Claude assistant chat. It writes the report into Theo's
-  existing template. It honours `life_by:'ai'` and labels that value as an AI estimate.
+- [x] 1266, step 2: photo picker + the Claude assistant (`api/inspect-assist.js`). It writes into the
+  existing template and labels the AI life estimate. ⚠ First real model run is Theo's; the container
+  has no key.
 - [ ] Step 3: on the finished report, **Edit with assistant** or **Edit by hand**.
 - [ ] Decide whether the guide should raise the General checklist's lead pop-up (`computeLeads`), as the
   General modal does.
