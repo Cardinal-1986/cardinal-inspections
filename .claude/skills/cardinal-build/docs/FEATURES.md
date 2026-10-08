@@ -9569,3 +9569,10 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - `sw.js` resolves a push's link against the app's root.
 - A `hashchange` restore opens `#p/<id>[/<tab>]` in an already-open app.
 - **Gate:** `gate_1259.mjs`.
+
+## Build 1260 — edit an appointment (`apptEditStart`, `apptSaveEdit`)
+- **Edit** on each appointment row the person may change (creator or admin). The day-sheet form
+  becomes Edit appointment, with a Date field.
+- **Save changes** sends only the changed fields. A moved build day buzzes production. A moved
+  appointment jumps to its new day.
+- **Gate:** `gate_1260.mjs`.
