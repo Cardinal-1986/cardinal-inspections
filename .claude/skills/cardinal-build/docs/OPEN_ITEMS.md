@@ -6259,8 +6259,10 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
    - `harness_notifyindep1126` needs `web-push` installed;
    - `harness_deeplink1125`'s call count is stale.
    ✅ **Theo's call, 7 Oct: only Theo, Joan and Curtis assign and close (1252, `punch_boss_guard.sql`).**
-   Still open by design: anyone signed in may edit the other fields (title, detail, schedule, photos,
-   steps). Say if scheduling should be bosses-only too. Original list: Punch List page with **Tarps · Repairs · Callbacks ·
+   ✅ **Theo, 8 Oct: scheduling too (1261, `punch_schedule_guard.sql`).** Anyone can still put a job on
+   hold, which moves it to its look-again day; the crew's check-out now asks Curtis for another day
+   instead of moving it. Still open by design: anyone signed in may edit title, detail, photos and
+   steps. ✅ **Lead Category / Work Type backfilled at 1261** (26 leads). Original list: Punch List page with **Tarps · Repairs · Callbacks ·
    Punch-outs** tabs (all four `kind`s already exist — `ticket` is shown as "Repair"); a per-person
    **My page** (Today · Overdue · In progress · Up next · **On hold** · Completed) — On hold is the
    only new state and must carry a **reason + a revisit date**; Curtis's 3pm plan buzz + 6pm crew

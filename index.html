@@ -4113,7 +4113,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-07 build 1260<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-08 build 1261<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8254,7 +8254,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </select></label>
     <label>Work type<select id="pfWorkType">
       <option value="">— not set —</option><option>Inspection</option><option>Insurance</option><option>New</option>
-      <option>Repair</option><option>Retail</option><option>Service</option>
+      <option>Repair</option><option>Retail</option><option>Service</option><option>Warranty</option>
     </select></label>
     <label style="margin-bottom:2px;">Trades</label>
     <div class="tradegrid" id="pfTrades">
@@ -12547,7 +12547,7 @@ function renderAcxOverview(){
   html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('tag') + 'Job Details</h3>' +
   '<div class="acxsec acxjdsec"><div class="acxbody"><div class="ackv acxjd">' +
     '<span>Job Category</span><div class="acxsl"><select class="acxsel" id="acxCat" aria-label="Job Category">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
-    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt" aria-label="Work Type">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
+    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt" aria-label="Work Type">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service','Warranty'], ck.work_type) + '</select></div>' +
     '<span>Trade Type</span><div class="acxsl"><button type="button" class="acxsel acxtrbtn" id="acxTrBtn" aria-expanded="' + (acxTrOpen ? 'true' : 'false') + '">' +
       (_acxTr.length ? esc(_acxTr.join(', ')) : '\u2014') + '</button></div>' +
     '<div class="acxtrs" id="acxTrPanel"' + (acxTrOpen ? '' : ' hidden') + '>' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
@@ -16359,7 +16359,24 @@ function openProjModal(pr){
     if(_jcLbl) _jcLbl.style.display = isAdminUser() ? '' : 'none';
   }catch(_jc){}
   document.getElementById('pfCategory').value = _ck.job_category || '';
-  document.getElementById('pfWorkType').value = _ck.work_type || '';
+  /* 1261: cr-wtd-script strips Insurance/Retail from this list at load and keeps
+     one only if it is the value AT THAT MOMENT ('' at load), so a lead saved as
+     either fell to "not set" here and the next Save wrote null over it. Keep the
+     lead's own value as a labelled option — cr-wtd's own wording for a legacy
+     type — then select it. */
+  (function(sel, v){
+    if(!sel) return;
+    Array.prototype.slice.call(sel.querySelectorAll('option[data-cr-legacy]')).forEach(function(o){ o.remove(); });
+    if(v && !Array.prototype.some.call(sel.options, function(o){ return (o.value || o.textContent || '').trim() === v; })){
+      var red = (window.CardinalWorkTypeDedupe && window.CardinalWorkTypeDedupe.redundant) || [];
+      var o = document.createElement('option');
+      o.value = v;
+      o.textContent = red.indexOf(v) !== -1 ? v + ' (legacy — set Claim Type instead)' : v;
+      o.setAttribute('data-cr-legacy', '1');
+      sel.appendChild(o);
+    }
+    sel.value = v || '';
+  })((/** @type {HTMLSelectElement} */ (document.getElementById('pfWorkType'))), _ck.work_type || '');
   var _trList = (_ck.trades && _ck.trades.length) ? _ck.trades : (_ck.trade ? [_ck.trade] : []);
   document.querySelectorAll('#pfTrades input').forEach(function(cb){
     cb.checked = _trList.indexOf(cb.value) !== -1;
@@ -43783,6 +43800,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1261, d: '2026-10-08', t: 'Only Theo, Joan and Curtis schedule punch work',
+    s: 'Picking the day for a punch-out, repair, callback or tarp is now for Theo, Joan and Curtis, the same three who assign and close them. Anyone else files new work without a date (the form says <b>Curtis schedules it</b>), and checking out of a job that is not finished asks <b>Tell Curtis it needs another day?</b> \u2014 yes leaves a note on the job and lets Curtis and Theo know. Anyone can still put a job on hold, and it still comes back on its look-again day. Leads entered before yesterday now show their Job Category and Work Type, Warranty is a Work Type everywhere, and saving the Edit form no longer erases a lead’s Retail or Insurance Work Type.' },
   { b: 1260, d: '2026-10-07', t: 'Edit an appointment instead of deleting it',
     s: 'Open a day on the calendar and every appointment you made has an <b>Edit</b> button. It fills the form with that appointment \u2014 what, type, time, client, notes and the <b>date</b> \u2014 so you can change one thing and tap <b>Save changes</b>. Move it to another day and the calendar jumps there. If a build day moves, the crew is told. If you had added it to your phone\u2019s calendar, add it again after a change.' },
   { b: 1259, d: '2026-10-07', t: 'Tapping an alert opens the job',
@@ -56254,10 +56273,14 @@ function openAdd(presetProjectId){
     ((typeof window.isPunchBoss === 'function' && !window.isPunchBoss())
       ? '<div><label>Assign to</label><div class="pbnote" style="padding:10px 0;">Curtis assigns it</div></div>'
       : '<div><label>Assign to</label><select data-f="assigned">' + who + '</select></div>') +
-    '<div><label>Schedule for</label><div class="cr-when2">' +
-      '<input type="date" data-f="when">' +
-      '<input type="time" data-f="whentime" aria-label="Time (optional)">' +
-    '</div></div>' +
+    /* 1261: only they schedule, too — punch_schedule_guard.sql refuses a dated
+       row from anyone else, so anyone else files it undated for Curtis */
+    ((typeof window.isPunchBoss === 'function' && !window.isPunchBoss())
+      ? '<div><label>Schedule for</label><div class="pbnote" style="padding:10px 0;">Curtis schedules it</div></div>'
+      : '<div><label>Schedule for</label><div class="cr-when2">' +
+          '<input type="date" data-f="when">' +
+          '<input type="time" data-f="whentime" aria-label="Time (optional)">' +
+        '</div></div>') +
     '</div>' +
     '<label>Detail</label>' +
     '<textarea data-f="detail" placeholder="Optional"></textarea>' +
@@ -57313,11 +57336,36 @@ async function checkOut(){
   /* Theo's call: ASK, then move. Nothing reschedules itself behind him — he
      may be checking out because he is waiting on a part, and then tomorrow is
      the wrong date and nobody was consulted. */
+  var needDay = false;
   if(it.status !== 'done'){
-    var back = await crAsk('Not finished yet.\n\nBack on this tomorrow?');
-    if(back) patch.scheduled_at = nextWorkDay(now);
+    if(isManager()){
+      var back = await crAsk('Not finished yet.\n\nBack on this tomorrow?');
+      if(back) patch.scheduled_at = nextWorkDay(now);
+    } else {
+      /* 1261: only Theo, Joan and Curtis schedule (punch_schedule_guard.sql).
+         The crew says it needs another day; Curtis picks the day. */
+      needDay = !!(await crAsk('Not finished yet.\n\nTell Curtis it needs another day?',
+                               { verb:'Tell Curtis', cancel:'Not now', tone:'plain' }));
+      if(needDay){
+        var me = myEmail();
+        patch.comments = comments().concat([{ by:me, name:nameOf(me), at:now.toISOString(),
+          text:'Not finished \u2014 needs another day. Curtis to schedule it.', flag:'needday' }]);
+      }
+    }
   }
-  save(patch);
+  if(!needDay){ save(patch); return; }
+  await save(patch);
+  var to = officeEmails();
+  if(to.length && typeof window.notifyTeam === 'function'){
+    var pr = projectFor(it.project_id), who = myEmail();
+    try{
+      var res = await window.notifyTeam(to, 'Needs another day: ' + ((pr && pr.name) || 'a job') + ' \u2014 ' + (it.title || 'punch-out'),
+        '<p><b>' + esc(nameOf(who)) + '</b> checked out of <b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b>. It is not finished and needs another day \u2014 pick the day on the card.</p>',
+        punchLink(it.project_id));
+      outMsg = outcomeText(res, to);
+    }catch(_){ outMsg = 'Saved \u2014 could not tell whether Curtis was buzzed.'; }
+    lastSig = ''; render();
+  }
 }
 
 function visitHtml(){

@@ -1,6 +1,14 @@
 /* Gate for 940 — check in / check out. Optional path arg = negative control.
    Drives the REAL punch card as Scottie and reads the writes the app actually
-   makes, not a re-implementation. */
+   makes, not a re-implementation.
+   ⚠ 1261: this gate had been RED since crAsk (the app's own question sheet,
+   #crAsk) replaced window.confirm — it answered with page.on('dialog'), which
+   never fires, so check-out never finished and its "saying NO" check passed
+   only because a SECOND ask is refused while one is open. It now answers the
+   sheet itself. And at 1261 the check-out contract changed on purpose: only
+   Theo, Joan and Curtis schedule, so Scottie is asked "Tell Curtis it needs
+   another day?" and his yes leaves a message, never a date. Curtis's "Back on
+   this tomorrow?" (and the never-a-Sunday rule) is gate_1261 E. */
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 let chromium; for (const p of ['playwright','/opt/node22/lib/node_modules/playwright/index.js']){try{chromium=require(p).chromium;break;}catch(e){}}
@@ -41,7 +49,17 @@ await page.route('**/*', async r=>{const u=r.request().url();
     body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64')});
   return r.fulfill({status:200,body:''});});
 await page.addInitScript(SETUP);
-page.on('dialog', async d => { await d.accept(); });     /* "back tomorrow?" -> yes */
+page.on('dialog', async d => { await d.accept(); });     /* only if crAsk falls back to confirm() */
+/* crAsk is #crAsk.open — answer it there, and report what it asked */
+async function answer(yes){
+  for(let i=0;i<40;i++){
+    const q=await page.evaluate(()=>{ const n=document.querySelector('#crAsk.open'); if(!n) return null;
+      return ((n.querySelector('.askq')||{}).textContent||'')+' '+((n.querySelector('.askwhy')||{}).textContent||''); }).catch(()=>null);
+    if(q){ await page.evaluate(y=>{ const b=document.querySelector('#crAsk.open '+(y?'.askgo':'.askno')); if(b) b.click(); }, yes); return q.trim(); }
+    await page.waitForTimeout(100);
+  }
+  return null;
+}
 await page.goto('https://sentinel.test/?as=scottie',{waitUntil:'domcontentloaded'});
 await page.waitForTimeout(1600);
 
@@ -77,14 +95,16 @@ if(await tap(page,'cin')){
 }
 
 if(await tap(page,'cout')){
+  const asked=await answer(true);
   await page.waitForTimeout(600);
   const d=await state(page);
   const v=d.patch&&d.patch.visits;
+  const last=d.patch&&Array.isArray(d.patch.comments)?d.patch.comments[d.patch.comments.length-1]:null;
+  ok(/Tell Curtis it needs another day\?/.test(asked||''), 'checking out of unfinished work asks "Tell Curtis it needs another day?" ('+asked+')');
   ok(v&&v[0].out, 'checking out closes the visit');
-  ok(d.patch&&typeof d.patch.scheduled_at==='string' && /^\d{4}-\d{2}-\d{2}$/.test(d.patch.scheduled_at),
-     'and "back tomorrow?" = yes moved the date to '+(d.patch?d.patch.scheduled_at:'nothing'));
-  const moved=d.patch&&d.patch.scheduled_at;
-  ok(moved && new Date(moved+'T12:00:00').getDay()!==0, 'which is never a Sunday ('+moved+')');
+  ok(d.patch && !('scheduled_at' in d.patch),
+     'and Scottie\u2019s yes moves NO date — only Theo, Joan and Curtis schedule (patch keys: '+(d.patch?Object.keys(d.patch).join(','):'none')+')');
+  ok(last && last.flag==='needday', 'it leaves a "needs another day" message on the job instead ('+(last?last.text:'none')+')');
   ok(d.hasIn&&!d.hasOut, 'and it offers Check in again — "'+d.stripText+'"');
 }
 
@@ -96,10 +116,11 @@ const before2 = await page.evaluate(()=>{
   return w.length; });
 if(await tap(page,'cin')){ await page.waitForTimeout(400); }
 if(await tap(page,'cout')){
+  await answer(false);
   await page.waitForTimeout(600);
   const e=await state(page);
-  ok(e.patch && !('scheduled_at' in e.patch),
-     'saying NO to "back tomorrow?" leaves the date completely alone (patch keys: '+(e.patch?Object.keys(e.patch).join(','):'none')+')');
+  ok(e.patch && Object.keys(e.patch).join(',')==='visits',
+     'saying NOT NOW writes the closed visit and nothing else (patch keys: '+(e.patch?Object.keys(e.patch).join(','):'none')+')');
   /* ⚠ This assertion was written BACKWARDS on the first run and failed correct
      code: it demanded a "Day 2" chip after two check-ins on the SAME day. One
      day worked twice is one day — counting distinct LOCAL days rather than
@@ -110,5 +131,5 @@ if(await tap(page,'cout')){
 }
 
 await ctx.close(); await browser.close();
-console.log(fails?('\nRED — '+fails+' failed'):'\nGREEN — the visit loop works and the date only moves when he says so');
+console.log(fails?('\nRED — '+fails+' failed'):'\nGREEN — the visit loop works, and the crew\u2019s check-out never moves the date');
 process.exit(fails?1:0);
