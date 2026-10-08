@@ -34333,6 +34333,81 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1265 — New inspection report, guided: pick what you inspected, then one checklist (Theo)
+
+Theo, 8 Oct: *"checkboxes … Roof, Siding, Gutters, Fascia, Soffit, Windows, Doors. Then once you hit
+next, a checklist screen … pitch, number of stories, residential yes/no, layers, attic access and maybe
+life expectancy"*. Then: *"also current ventilation configuration"*, *"instead of soffit intake, Intake
+type. Then if its blocked"*, *"a general inspection report option and … an option to skip it
+entirely"*, *"start off in light mode"*, *"add a decking type. Maybe a drop down"*.
+Previewed first (artifact `JqX8AZTJGqCUARyPh2oAHt`, three versions). **Step 1 of three.**
+
+- **The door.** Inspections had two buttons: + New inspection report and + New exterior report. Now
+  there is ONE. It opens `#insgSheet` (`cr-insg-script`, `window.CardinalInspGuide`), a full-screen
+  **light** sheet.
+- **Screen 1, what was inspected.** **General inspection** (a quick whole-house rating) and/or Roof,
+  Siding, Gutters, Fascia, Soffit, Windows, Doors. Roof is checked by default. The last picks are
+  remembered in `checklist.insp.types`.
+- **Screen 2, one checklist** with only those sections. Every question is a dropdown, and multi-picks
+  are native `<select multiple>`.
+  - **Roof asks:**
+    - method, structure;
+    - **residential** (filled from `job_category`);
+    - **stories**;
+    - roof type, layers, **decking type**, decking condition;
+    - pitch (2/12–12/12, plus flat and steeper);
+    - age, overall condition, attic access;
+    - **current ventilation**;
+    - **intake type** (soffit vents / continuous soffit / edge vent / fascia vent / none);
+    - **is it blocked** (hidden when "None");
+    - ventilation condition;
+    - **life expectancy**: the rule (default) or "Let the AI estimate it" for a newer rep.
+  - **General** rates seven parts, Doors added.
+  - **The other trades** each get a condition rating plus a few extras: siding material, gutter size
+    and guards, fascia and soffit material, window count and type, door count.
+- **It saves into the checklists that already exist. Nothing was forked.**
+  - The roof answers are the Roofing Inspection Checklist's own keys. So `getChecklist()`, the report
+    prefill, `buildChecklistFindings()` and the estimates keep reading them.
+  - `soffit` is derived from intake type (None → "No"), so the old "no soffit intake" finding still
+    fires.
+  - The ratings are `general.*`.
+  - New keys: `stories` (the downspout estimate already read it, and nothing had ever written it),
+    `residential`, `intake_types`, `life_by`, `life_left`, and `insp.*`.
+  - The old checklist modal gains "Partly blocked" for intake baffles.
+- **Life expectancy rule:**
+  - base years: asphalt 25, metal 45, low slope and flat 18;
+  - times condition: Excellent 1.1, Good 1, Fair .85, Poor .65, Critical .4;
+  - minus age, shown as a range ("About 2–5 years of service life left").
+  - The AI option records `life_by:'ai'` and leaves the value for step 2.
+- **The report.** "Save and start report" calls the same `createReportFrom()`:
+  - the roof template when Roof was checked (or nothing was picked);
+  - the exterior template otherwise.
+  - `CK_REPORT_MAP` carries stories into **Structure** ("Single Family · 2 stories") and the life
+    expectancy into **Estimated Roof Age**.
+  - **Skip checklist** goes straight to the report and writes nothing.
+- **Known differences:**
+  - The guide does not raise the General checklist's lead pop-up (`computeLeads`). The General modal
+    still does.
+  - `drive_lifecycle.mjs` S3 still clicks `pNewReportBtn`, so it now opens the guide. That is a drive,
+    not a gate, and was not updated.
+- **Gates:**
+  - **`gate_1265.mjs` (18), Chromium, as nick:**
+    - one button, opening a light sheet with the eight choices;
+    - refuses with nothing checked, and refuses with roof answers missing (writes nothing);
+    - Roof + Gutters shows only those cards, all dropdowns;
+    - "None" hides "blocked"; the life rule computes;
+    - the save lands in the same keys (`soffit` "No", `general.gutters`, `insp.types`);
+    - a roof report whose live document reads the stories and the life expectancy;
+    - General only + Skip makes an exterior report with no checklist write.
+  - RED on 1264: 17 failed, no crash.
+  - Also green: `check_build`, types, dupes (helper renamed `igEl`), `gate_stack` CLEAN, scroll-lock
+    roster unchanged at 17 (the sheet scrolls itself and takes no lock), `gate_sheets937`, 1082, 1241.
+  - 1069, 736 and setupleak read identically on 1264.
+  - Sentinel over the tab, the pick screen and the checklist (390 + 1440, both themes): **CLEAN, 12
+    renders, nothing new.**
+- **Next:** step 2 is the photo picker and the Claude assistant writing the report. Step 3 is editing
+  by chat or by hand.
+
 ## Build 1264 — the Community client page, laid out like Retail's (Theo)
 
 Theo, 8 Oct: *"I need a total revamp of community crm to match exactly the retail crm in its
