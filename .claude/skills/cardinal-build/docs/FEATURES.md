@@ -9590,3 +9590,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
   - Warranty is a Work Type in the Edit form and Job Details;
   - the Edit form keeps a legacy Retail/Insurance value (labelled) instead of saving null over it.
 - **Gates:** `gate_1261.mjs`; `gate_visits940.mjs` (repaired).
+
+## Build 1262 — Upload a signed contract (`cr-ctup-script`)
+- Contracts → **Upload signed contract** (Roofing, Siding, Gutters, Windows, Other / handwritten).
+  Photos or a PDF, the amount and the date signed.
+- It saves as a signed `Contract — <Trade> — <client>` document, so Invoices & Payments and A/R open.
+- **Gate:** `gate_1262.mjs`.

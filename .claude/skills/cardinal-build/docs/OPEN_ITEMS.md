@@ -6248,6 +6248,9 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
    - ✅ the **"Uncontacted" marker** shipped at 1256 (A3);
    - ✅ **calendar sync, B1** at 1258 ("Add to calendar": an Apple `.ics` or a Google link).
    - ✅ **Edit an appointment** (Jacob, 7 Oct) at 1260, instead of ✕ and retype.
+   - ✅ **Upload a signed contract** (Jacob, 8 Oct) at 1262 — windows and handwritten agreements get A/R.
+     ⚠ Still open: a Windows agreement TEMPLATE needs Theo's master; `docs/Cardinal_Window_Contract.pdf`
+     is referenced by Company Documents and is missing from the repo (so is `Cardinal_Gutter_Contract_Fillable.pdf`).
      ⚠ The iPhone path is unverified on a phone; if iOS won't take the blob, serve the `.ics` from a
      small `/api` route.
    - ✅ **Company Documents traps you**: fixed at 1257 (in-app viewer; the preview names whoever is
