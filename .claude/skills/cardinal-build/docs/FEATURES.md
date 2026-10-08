@@ -9596,3 +9596,6 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
   Photos or a PDF, the amount and the date signed.
 - It saves as a signed `Contract — <Trade> — <client>` document, so Invoices & Payments and A/R open.
 - **Gate:** `gate_1262.mjs`.
+
+## Build 1263 — Leads & Jobs: Newest first (default) / Oldest first sorts (`LJ_SORTS`)
+- **Gate:** `gate_1263.mjs`.

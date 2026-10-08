@@ -34333,6 +34333,24 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1263 — Leads & Jobs opens Newest first (Theo)
+
+Theo, 8 Oct: *"make the filters for leads, prospects, etc be able to go from newest to oldest"*.
+
+- **Before:** Leads & Jobs, which every pipeline circle opens filtered to its stage, had no
+  date-created sort. Its default was Age in Status, and the only reverse was an unlabelled ⇅ icon.
+- **Now:**
+  - **Newest first** and **Oldest first** (by `created_at`) are at the top of `LJ_SORTS`.
+  - **Newest first is the default.**
+  - Every other sort and the ⇅ reverse are unchanged.
+- **Gates:**
+  - `gate_1263.mjs` (5) seeds three leads with known dates. It checks newest-first on open, the
+    chip label, both options, the Oldest first reversal, and that Age in Status still works.
+    RED on 1262 (4 failures).
+  - Green: types, dupes, 1253, 1256.
+  - Older Leads gates 752/753/754/755/757 fail identically on 1262. They are pre-existing, not this
+    build.
+
 ## Build 1262 — Upload a signed contract (Jacob, via Theo — urgent)
 
 Jacob, 8 Oct: *"In contracts it only has siding, roofing, gutters. There isn't a way to upload

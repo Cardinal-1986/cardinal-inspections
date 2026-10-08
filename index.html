@@ -4133,7 +4133,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-08 build 1262<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-08 build 1263<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4385,7 +4385,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
     <div class="ljctl">
       <span class="sl">Sort by</span>
-      <button class="ljsortchip" id="ljSortChip">Age in Status</button>
+      <button class="ljsortchip" id="ljSortChip">Newest first</button>
       <div class="right">
         <div class="ljico" id="ljDirBtn" title="Reverse order">&#8645;</div>
         <div class="ljico" id="ljFunnelBtn" title="Filters">&#9923;<span class="bdg" id="ljFBadge">0</span></div>
@@ -13370,9 +13370,12 @@ document.getElementById('tskModal').addEventListener('click', function(e){ if(e.
 /* =========================================================================
    ASSIGNED LEADS & JOBS
    ========================================================================= */
-var ljState = { sel:null, sort:'status', dir:1, tab:'map', open:{}, sets:{} };
+var ljState = { sel:null, sort:'newest', dir:1, tab:'map', open:{}, sets:{} };
 var ljSheetState = { cat:null, pend:[] };
 var LJ_SORTS = [
+  /* 1263: Theo — "be able to go from newest to oldest" */
+  { key:'newest',   label:'Newest first' },
+  { key:'oldest',   label:'Oldest first' },
   { key:'status',   label:'Age in Status' },
   { key:'jobname',  label:'Job#/Lead Name' },
   { key:'category', label:'Job Category' },
@@ -13482,7 +13485,10 @@ function ljMatches(p){
 function ljCmp(a, b){
   var s = ljState.sort, ca = parseCkAll(a), cb = parseCkAll(b), r = 0;
   function alpha(x, y){ return String(x||'').localeCompare(String(y||'')); }
-  if(s === 'status'){
+  if(s === 'newest' || s === 'oldest'){
+    r = alpha(b.created_at || b.updated_at, a.created_at || a.updated_at);
+    if(s === 'oldest') r = -r;
+  } else if(s === 'status'){
     r = alpha(ca.stage_since || a.updated_at || a.created_at, cb.stage_since || b.updated_at || b.created_at);
   } else if(s === 'jobname'){
     var pa = Number(ca.po) || 0, pb = Number(cb.po) || 0;
@@ -43822,6 +43828,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1263, d: '2026-10-08', t: 'Leads and Prospects show newest first',
+    s: 'Tap Leads, Prospects or any stage circle and the list now opens <b>Newest first</b> \u2014 the lead entered most recently is on top. Sort by also has <b>Oldest first</b>, and every other sort is still there.' },
   { b: 1262, d: '2026-10-08', t: 'Upload a signed contract',
     s: 'Contracts has <b>Upload signed contract</b>: pick the trade (Roofing, Siding, Gutters, <b>Windows</b> or <b>Other / handwritten</b>), add photos or a PDF of the signed paper, type the amount and the date it was signed. It is saved as a real signed contract, so Invoices &amp; Payments and A/R open for windows jobs and paper agreements \u2014 no more making a roofing contract to get there.' },
   { b: 1261, d: '2026-10-08', t: 'Only Theo, Joan and Curtis schedule punch work',
