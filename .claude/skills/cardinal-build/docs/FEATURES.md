@@ -9609,3 +9609,14 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
   Thread.
 - Not Awarded writes `lead.not_awarded_reason`.
 - **Gate:** `gate_1264.mjs`.
+
+## Build 1265 — New inspection report, guided (`cr-insg-script`, `#insgSheet`, `window.CardinalInspGuide`)
+- Inspections → **+ New inspection report** (the only one now).
+  - Screen 1: General inspection and/or Roof, Siding, Gutters, Fascia, Soffit, Windows, Doors.
+  - Screen 2: one checklist of only those sections, all dropdowns.
+- The roof answers are the Roofing Inspection Checklist's keys, plus `stories`, `residential`,
+  `intake_types`, `life_by` and `life_left`. Ratings go to `general.*`, extras to `insp.*`.
+- Life expectancy: the rule (`CardinalInspGuide.life`) or AI.
+- Then `createReportFrom()` with the roof or exterior template. **Skip checklist** goes straight there.
+- Light sheet, by Theo's call.
+- **Gate:** `gate_1265.mjs`.
