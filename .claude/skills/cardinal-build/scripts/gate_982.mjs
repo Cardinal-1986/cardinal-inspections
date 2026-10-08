@@ -228,6 +228,16 @@ await browser.close();
    (.ct.bill .k light 5.21:1 in both). */
 const BILL = ['.ct.bill .k (BILL TO)', '.ct.bill .v (partner)'];
 const billMeasured = BILL.filter(k => L[k] && typeof L[k]==='object' && D[k] && typeof D[k]==='object');
+/* 1264: the pin's Bill to cell is retired — the funding partner now lives in Job
+   Details as Partnership Organization (gate_1264 A; the sentinel owns its ink).
+   On 1264+ these two checks assert the move instead of measuring a cell that
+   is deliberately no longer drawn. */
+const MOVED1264 = /cr-cc2-styles/.test(APP);
+if(MOVED1264){
+need('6a (1264) Bill to moved into Job Details as Partnership Organization',
+     /Partnership Organization/.test(APP) && /contactsHtml\(pr, true\)/.test(APP),
+     'the partner row did not move');
+}else
 need('6a the funding-partner cell rendered and was measured in both themes',
      billMeasured.length === 2,
      'measured ' + billMeasured.length + ' of 2 — this build\'s headline defect went unchecked. ' +
@@ -241,6 +251,7 @@ const darkFail = Object.keys(D).filter(k => D[k] && typeof D[k]==='object' && D[
 need('7 ...and dark still clears too — this build must not move what works',
      darkFail.length === 0,
      darkFail.map(k => k+' '+D[k].r+':1').join(', '));
+if(!MOVED1264)
 need('8 the funding-partner cell keeps its gradient border',
      billBorder === 'gradient border kept', String(billBorder));
 /* say plainly what could not be measured rather than passing over it — the

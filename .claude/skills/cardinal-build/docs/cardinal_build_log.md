@@ -34333,6 +34333,67 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1264 — the Community client page, laid out like Retail's (Theo)
+
+Theo, 8 Oct: *"I need a total revamp of community crm to match exactly the retail crm in its
+functions. It's too confusing."* Then: *"Where it says lead source add in the partnership
+organizations instead"*, *"Don't drop anything into the retail page. Just re do the community
+page"*, and *"yes, put the thread in communication"*.
+
+- **First of several builds.** This one rebuilds the Community client PAGE only, inside
+  `cr-cc-script`. Nothing in the retail page changed.
+- **The page now runs in Retail's order:**
+  - name card (email, text, call, Edit);
+  - money ring;
+  - Payment Information;
+  - stage band with ‹ › arrows, a ⋮ menu, and "N days in this stage";
+  - Job Menu;
+  - Location;
+  - Job Details: category, work type, and trade buttons;
+  - Homeowner & Site, with an Estimate due date;
+  - Assigned To, which an admin can reassign;
+  - Partner Work Orders;
+  - Reviews.
+- **Partnership Organization replaces Lead Source** (`ppSync`, relabelled). Bill-to now lives there.
+- **The Thread is in the Job Menu's Communication tile.** The Estimate is a sub-view too.
+- **Stage moves keep the old bookkeeping:**
+  - › to Prospect runs `ccDoAct('submitted')`.
+  - › to Completed or Invoiced runs `complete` or `invoice`.
+  - › to Approved writes `bid.awarded_amount` and `awarded_at` BEFORE `setStage`.
+  - Any other move asks first.
+- **The ⋮ menu:**
+  - On Hold and Referred open the existing sheet (`ocOpen`).
+  - **Not Awarded asks why**, writes `lead.not_awarded_reason`, then sets Lost.
+- **Styles:** `cr-cc2-styles`, on `--ccm-*` tokens, every one with a literal fallback. No gradients.
+  Trade buttons are `cc2-tr`, not `.chip`, after `gate_stack` flagged the shared class.
+- **Gates:**
+  - `gate_1264.mjs` (16) is green. RED on 1263 (15 failures, no crash).
+  - `gate_972` check 11 and `gate_982` checks 6a/8 were written against the old page. They now branch
+    on `cr-cc2-styles`, and are green on both 1263 and 1264.
+  - `check_build`, types, dupes, `gate_stack` CLEAN.
+  - Sentinel fair rerun: no finding on the new page. Two `.chip` OVERRIDDEN were fixed by the rename.
+    Two TRUNCATED and one header rule are pre-existing.
+- **Still to come:** stage labels in one place; New Lead intake with the real partner list; a
+  Community home like Retail's (pipeline, calendar, A/R); retiring the old Community screens.
+
+## Build 1263 — Leads & Jobs opens Newest first (Theo)
+
+Theo, 8 Oct: *"make the filters for leads, prospects, etc be able to go from newest to oldest"*.
+
+- **Before:** Leads & Jobs, which every pipeline circle opens filtered to its stage, had no
+  date-created sort. Its default was Age in Status, and the only reverse was an unlabelled ⇅ icon.
+- **Now:**
+  - **Newest first** and **Oldest first** (by `created_at`) are at the top of `LJ_SORTS`.
+  - **Newest first is the default.**
+  - Every other sort and the ⇅ reverse are unchanged.
+- **Gates:**
+  - `gate_1263.mjs` (5) seeds three leads with known dates. It checks newest-first on open, the
+    chip label, both options, the Oldest first reversal, and that Age in Status still works.
+    RED on 1262 (4 failures).
+  - Green: types, dupes, 1253, 1256.
+  - Older Leads gates 752/753/754/755/757 fail identically on 1262. They are pre-existing, not this
+    build.
+
 ## Build 1262 — Upload a signed contract (Jacob, via Theo — urgent)
 
 Jacob, 8 Oct: *"In contracts it only has siding, roofing, gutters. There isn't a way to upload

@@ -206,9 +206,18 @@ need('9 schedule opens the composer instead of flipping the stage',
 need('10 there is exactly ONE path to Scheduled, not two',
      !/setStage\(pr\.id, 'Scheduled'\)/.test(CC),
      'a direct setStage to Scheduled still exists beside the composer');
+/* 1264 retired the pin entirely (Theo: the Community page in Retail's order);
+   the bid deadline is now the Estimate due row in Homeowner & Site, which has
+   no urgency paint at all. Before 1264 the old assertion still holds. */
+if(/cr-cc2-styles/.test(APP)){
+need('11 (1264) the pin is gone; the deadline is the Estimate due row',
+     !/'<div class="pin">'/.test(CC) && /data-cc2f="due"/.test(CC),
+     'the pin is still built, or Estimate due is missing');
+}else{
 need('11 the pin stops painting amber for a deadline already passed',
      /dueLive972/.test(APP) && /due >= 0/.test(APP),
      'pin urgency still ungated');
+}
 
 clearTimeout(watchdog);
 await browser.close();
