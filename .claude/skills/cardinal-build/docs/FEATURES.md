@@ -9630,3 +9630,12 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Start without AI** makes the plain report.
 - Photos are sent as signed storage URLs. Only this project's storage is accepted.
 - **Gates:** `gate_1266.mjs`, `gate_1266_api.mjs`.
+
+## Build 1267 — Change the report by asking (`#assistantPanel` modes, `sendAssistEdit`, `api/inspect-assist` mode `edit`)
+- The editor's Assistant panel has two modes: **Change the report** and **Add a note** (the old
+  intake, unchanged).
+- Change the report rewrites only the parts asked about: summary, section write-ups,
+  recommendations and captions. It saves, and offers **Undo**.
+- AI-written reports open in Change the report, and the guided flow opens the panel on its draft.
+- Edit by hand: tap any line, as always.
+- **Gates:** `gate_1267.mjs`, `gate_1266_api.mjs` §7.

@@ -34333,6 +34333,57 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1267 — guided report, step 3: Change the report by asking, or edit by hand (Theo)
+
+Theo, 8 Oct: *"Then when the report is made an option to edit with the chatbox or manually."*
+Step 3 of three.
+
+- **Extended, not added.** The editor already had the **Assistant** panel (`#assistantPanel`).
+  Its "Add a note" intake (`/api/organize`, Gemini) files a sentence into a section. The panel now
+  has two modes behind a two-button switch (`#assistModeEdit` / `#assistModeNote`):
+  - **Change the report** (new): the rep says what to change in plain words.
+    - `sendAssistEdit()` builds a VIEW of the live document's editable parts (`aeBlocks()`): the
+      Overall Condition paragraph, each section's write-up in 3–8, Recommendations (9), and every
+      photo caption. Each part carries an index id, and blanks are sent empty.
+    - It POSTs them with the instruction to `/api/inspect-assist` in the new `mode:'edit'`.
+    - It writes the returned text into exactly those elements, then **saves** through
+      `saveCurrent()` and offers **Undo**, which restores and saves again.
+    - Nothing is stamped into the document: `serializeFrame()`'s output is what reaches the client.
+  - **Add a note**: unchanged.
+- **Which mode opens:**
+  - A report the assistant wrote (`data-ai-summary` / `data-ai-narrative` present) opens the panel
+    in Change the report.
+  - Any other report opens in Add a note.
+  - The guided flow (1266) now awaits `createReportFrom()` and calls `openAssistEdit()`. The fresh
+    draft opens with the panel open and a greeting that says to close it to edit by hand.
+- **Editing by hand** is the editor itself. Every line was already tappable, so nothing was built
+  for it.
+- **`api/inspect-assist.js` `mode:'edit'`:**
+  - an empty instruction is a 400;
+  - parts only, no photos or facts;
+  - effort medium;
+  - schema `{reply, edits:[{id,text}]}`;
+  - only ids that were sent come back, once each, non-empty.
+- **Gates:**
+  - **`gate_1267.mjs` (8)** builds an AI draft through the 1266 flow (stubbed route), then checks:
+    - the panel is open in Change the report;
+    - "shorter summary" sends an edit request with summary, write-up, recommendations and caption
+      parts;
+    - the live summary changes and is saved;
+    - Undo restores it and saves;
+    - Add a note still calls `/api/organize`;
+    - a plain report just created opens in Add a note.
+    - An early version of the last check passed by accident, by tapping a button that was not on
+      screen. It was rewritten to assert the plain report was really created.
+    - RED on 1266: 7 failed, no crash. The one pass is Add a note, the untouched old path.
+  - **`gate_1266_api.mjs` +3 (13):** edit needs an instruction; only sent ids come back; no images.
+    The 1266 route fails exactly those 3.
+  - 1265 and 1266 are green.
+  - `check_build`, types (casts for the new DOM reads), dupes (helper renamed `aeTake`),
+    `gate_stack` CLEAN, scroll-lock unchanged.
+  - Sentinel with an assistant-panel state.
+- **Not verified here:** a real Claude edit. As with 1266, the first real run is Theo's.
+
 ## Build 1266 — New inspection report, guided, step 2: photos and the Claude assistant (Theo)
 
 Theo, 8 Oct: *"a screen that has a photo picker, you check the boxes and add them to the
