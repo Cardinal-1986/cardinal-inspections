@@ -9564,3 +9564,8 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
   Calendar `.ics` or a Google Calendar link.
 - One-way.
 - **Gate:** `gate_1258.mjs`.
+
+## Build 1259 — alert links open the job
+- `sw.js` resolves a push's link against the app's root.
+- A `hashchange` restore opens `#p/<id>[/<tab>]` in an already-open app.
+- **Gate:** `gate_1259.mjs`.
