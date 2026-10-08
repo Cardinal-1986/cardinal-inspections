@@ -34333,6 +34333,51 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1262 — Upload a signed contract (Jacob, via Theo — urgent)
+
+Jacob, 8 Oct: *"In contracts it only has siding, roofing, gutters. There isn't a way to upload
+contracts for windows and hand written agreements especially for previous customers or active ones.
+I'm having to manipulate it for current active ones in order to put A/R."*
+
+- **Why it hurt:** Invoices & Payments, and so A/R, open only once a job has a SIGNED contract with a
+  total. `jobFinance()` counts `Contract…` documents carrying `signed_at` and `total > 0`. The app can
+  only build a Roofing, Siding or Gutter agreement, so a windows job or a paper agreement had no way
+  in. The workaround was a fake roofing contract.
+- **The door** (`cr-ctup-script`, `#ctUpSheet`). Contracts gets **Upload signed contract**, and the
+  sheet takes:
+  - the trade: Roofing, Siding, Gutters, **Windows**, or **Other / handwritten**;
+  - photos or a PDF of the signed paper;
+  - the amount, and the date it was signed.
+
+  It saves an ordinary document titled `Contract — <Trade> — <client>`, so `isContractTitle()` and
+  `jobFinance()` count it unchanged:
+  - Photos are redrawn at 1700px JPEG. PDF pages are drawn by the pdf.js the app already loads, up to
+    15 pages, with a 9 MB cap.
+  - `signed_at` and `total` are then set, and the upload is audit-logged.
+  - Saving does not rewrite the total later: the document has no `#estTotal`, so `saveCurrent`
+    leaves it alone.
+- **It does not move the stage.** The existing "Contract signed" prompt offers that, and for a past or
+  active customer a forced Approved would move them backwards.
+- **Not done, on purpose — a Windows agreement TEMPLATE.** It is legal text (terms, the 3-day
+  cancellation notice). Company Documents also points at `docs/Cardinal_Window_Contract.pdf`, which
+  **is not in the repo**, so that link is dead. Recorded for Theo.
+- **Gates:**
+  - **`gate_1262.mjs` (10), as Nick (sales):**
+    - the button, and the sheet with Windows and Other;
+    - refuses without an amount or a file, and writes nothing;
+    - one `Contract — Windows — Mark Diamond` document, with the photo as a JPEG;
+    - `signed_at` 2026-09-30 and total 8450;
+    - `jobFinance` moves from 0/none to 8450/contract;
+    - the list shows it SIGNED.
+  - **RED on 1261** (9 failures, no crash).
+  - **Also green:** `check_build`, types, dupes (after prefixing the module's helpers `ctu*`),
+    scroll-lock, `gate_1243`, `gate_stack`.
+- **Sentinel** (contracts tab plus the open sheet, 2 widths × 2 themes): one real catch, fixed.
+  - **UNWIRED:** the button was delegated from `document`. It is now wired on the button itself.
+  - **Judged, not changed:**
+    - OVERRIDDEN `display:none` — the sheet was rendered open;
+    - OVERRIDDEN input `font-size` — the phone-wide 18px rule wins, by design.
+
 ## Build 1261 — only Theo, Joan and Curtis schedule punch work; old leads get their Category and Work Type
 
 Theo, 8 Oct, answering the two questions left open at 1252 and 1253: *"Only Theo Joan and Curtis can
