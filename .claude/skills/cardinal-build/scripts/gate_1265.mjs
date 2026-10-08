@@ -94,6 +94,10 @@ need('E  intake "None" hides "is the intake blocked?"', e1.blk==='none', e1.blk)
 need('E  life expectancy is worked out (asphalt, 18 yrs, Fair → about 2–5 years)', /About 2–5 years of service life left/.test(e1.life), e1.life);
 await mark();
 await click('#insgSheet [data-ig="save"]');
+await page.waitForTimeout(900);
+/* 1266: the photo + assistant screen sits between the checklist and the report;
+   "Start without AI" is the plain path this gate is about. */
+await click('#insgSheet [data-ig="plain"]');
 await page.waitForTimeout(2500);
 const pw=(await W('projects')).map(x=>x.row).find(r=>r.checklist);
 let ck={}; try{ ck=JSON.parse(pw.checklist); }catch(_){}
@@ -120,6 +124,10 @@ await click('#insgSheet [data-ig="next"]');
 const gcard=await page.evaluate(()=>[...document.querySelectorAll('#insgSheet .ig-card h3')].map(h=>h.textContent));
 need('F  General only → a General inspection card rating seven parts, Doors included', JSON.stringify(gcard)==='["General inspection"]' && await page.evaluate(()=>document.querySelectorAll('#insgSheet .ig-card select').length===7 && !!document.getElementById('insg_general_doors')), JSON.stringify(gcard));
 await click('#insgSheet [data-ig="skip"]');
+await page.waitForTimeout(900);
+/* 1266: the photo + assistant screen sits between the checklist and the report;
+   "Start without AI" is the plain path this gate is about. */
+await click('#insgSheet [data-ig="plain"]');
 await page.waitForTimeout(2500);
 const rep2=(await W('inspection_reports')).filter(x=>x.op==='insert').map(x=>x.row)[0]||{};
 need('F  Skip checklist → an EXTERIOR report, and no checklist write', /Exterior Inspection Report/.test(String(rep2.html||'')) && (await W('projects')).filter(x=>x.row.checklist).length===0, String(rep2.title||'none'));

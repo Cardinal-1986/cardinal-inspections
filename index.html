@@ -4133,7 +4133,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-08 build 1265<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-08 build 1266<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -24976,7 +24976,7 @@ var EST_TYPES = {
    grows a second copy of a feature. `roofy` is false for the exterior report: the
    Roofing Inspection Checklist feeds roof specs and has nothing to say about
    siding, windows or grounds, so it is neither required nor injected there. */
-async function createReportFrom(tpl, kindLabel, roofy){
+async function createReportFrom(tpl, kindLabel, roofy, opts){
   if(!currentProject) return;
   var cl = roofy ? getChecklist(currentProject) : null;
   if(roofy && !cl){
@@ -24987,13 +24987,19 @@ async function createReportFrom(tpl, kindLabel, roofy){
       return;
     }
   }
-  var title = prompt(kindLabel + ' title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
+  /* 1266: the guided assistant names the report itself and fills it before it opens */
+  var title = (opts && opts.title) ? opts.title
+            : prompt(kindLabel + ' title:', currentProject.name + (currentProject.address ? ' \u2014 ' + currentProject.address : ''));
   if(title === null) return;
   try{
     var tpl0 = prefillUserInfo(prefillClientInfo(tpl, currentProject));
     if(cl) tpl0 = injectChecklistFindings(prefillChecklist(tpl0, cl), cl);
     var id = await db.create(title.trim() || ('Untitled ' + kindLabel.toLowerCase()), tpl0,
                              currentProject.name, currentProject.id);
+    if(opts && opts.fill){
+      try{ await opts.fill(id); }
+      catch(eF){ showError('The report was created, but the assistant\u2019s draft could not be added: ' + ((eF && eF.message) || eF)); }
+    }
     await reload();
     await openEditor(id);
   }catch(err){ showError('Could not create report: ' + (err.message || err)); }
@@ -43831,6 +43837,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1266, d: '2026-10-08', t: 'New inspection report: photos and the assistant',
+    s: 'After the checklist, <b>+ New inspection report</b> now shows the job\u2019s photos with check boxes (up to 16; the inspection photos are pre-checked) and an assistant to talk to. Tell it what the photos don\u2019t show \u2014 a reported leak, how long, what the homeowner wants \u2014 and it asks back. <b>Write report</b> writes it into your normal template: the photos placed in the right sections with captions and HIGH / MODERATE / MONITOR tags, a short write-up for each section, the overall condition, and numbered recommendations. When the rep picked <b>Let the AI estimate it</b>, the life expectancy comes from the assistant and is marked as an AI estimate. Everything stays editable. <b>Start without AI</b> makes the plain report, as before.' },
   { b: 1265, d: '2026-10-08', t: 'New inspection report: pick what you inspected, then one checklist',
     s: '<b>+ New inspection report</b> on Inspections now asks what you inspected: a quick <b>General inspection</b>, and/or Roof, Siding, Gutters, Fascia, Soffit, Windows and Doors. The next screen is one checklist with only those parts, every question a dropdown. The roof asks method, structure, residential (filled from the job category), stories, roof type, layers, decking type and condition, pitch, age, condition, attic access, current ventilation, intake type and whether it is blocked, ventilation condition, and life expectancy, worked out from roof type, age and condition, or left for the AI. It saves into the same Roofing and General checklists as before, then starts the report. <b>Skip checklist</b> goes straight to the report. Photos and the AI assistant come next.' },
   { b: 1264, d: '2026-10-08', t: 'The Community job page, laid out like Retail',
@@ -92522,6 +92530,22 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 #insgSheet .ig-go{border:0;background:#c8202e;color:#ffffff;}
 #insgSheet .ig-go[disabled]{opacity:.6;}
 #insgSheet .ig-alt{border:1px solid #c9ccd4;background:#ffffff;color:#161616;}
+/* 1266: the photo grid and the assistant */
+#insgSheet .ig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;}
+#insgSheet .ig-ph{position:relative;aspect-ratio:1;padding:0;border:3px solid transparent;border-radius:10px;overflow:hidden;background:#e7e8ec;cursor:pointer;}
+#insgSheet .ig-ph img{width:100%;height:100%;object-fit:cover;display:block;}
+#insgSheet .ig-ph i{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,.45);border:2px solid #ffffff;}
+#insgSheet .ig-ph.on{border-color:#c8202e;}
+#insgSheet .ig-ph.on i{background:#c8202e;}
+#insgSheet .ig-ph.on i::after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #ffffff;border-width:0 2px 2px 0;transform:rotate(45deg);}
+#insgSheet .ig-chat{display:grid;gap:8px;max-height:46vh;overflow:auto;}
+#insgSheet .ig-m{max-width:88%;padding:10px 12px;border-radius:14px;font:400 15px/1.4 'Segoe UI',Arial,sans-serif;white-space:pre-wrap;}
+#insgSheet .ig-m.ai{background:#f0f1f4;border:1px solid #d9dbe1;color:#161616;justify-self:start;}
+#insgSheet .ig-m.me{background:#c8202e;color:#ffffff;justify-self:end;}
+#insgSheet .ig-m.ig-wait{color:#5c6070;}
+#insgSheet .ig-say{display:flex;gap:8px;align-items:stretch;}
+#insgSheet .ig-say textarea{flex:1;min-width:0;min-height:48px;padding:10px 12px;border:1px solid #c9ccd4;border-radius:10px;background:#ffffff;color:#161616;font:400 16px 'Segoe UI',Arial,sans-serif;resize:vertical;}
+#insgSheet .ig-send{min-width:76px;min-height:48px;border-radius:10px;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 </style>
 <script id="cr-insg-script">
 /* 1265: New inspection report, guided — Theo, 8 Oct. Step 1 of three.
@@ -92733,7 +92757,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       if(go){ go.disabled = false; go.textContent = 'Save and start report'; }
       return;
     }
-    igStart();
+    igStep3();
   }
   function igStart(){
     /* the roof template when the roof was inspected (or nothing was picked);
@@ -92743,12 +92767,185 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     if(roof) createReportFrom(REPORT_TEMPLATE, 'Report', true);
     else createReportFrom(EXTERIOR_TEMPLATE, 'Exterior report', false);
   }
+  /* ---- 1266: step 2 — pick photos, talk to the assistant, write the report ---- */
+  var P = { list: [], picked: {}, chat: [], busy: false, loaded: false };
+  var PIC_MAX = 16;
+  function igPhotoSrc(p){ return p._thumb || p._src || p.data || ''; }
+  function igPickedList(){ return P.list.filter(function(p){ return P.picked[p.id]; }); }
+  function igStep3(){
+    sheet.innerHTML = igTop('Photos and assistant', false) + '<div class="ig-body">' +
+      '<p class="ig-who">Check the photos for the report, up to ' + PIC_MAX + '. Then tell the assistant anything the photos don’t show.</p>' +
+      '<div class="ig-card"><div class="ig-lab" id="insgPicN"></div><div class="ig-grid" id="insgGrid"><p class="ig-who">Loading photos…</p></div></div>' +
+      '<div class="ig-card"><div class="ig-lab">Assistant · Claude</div><div class="ig-chat" id="insgChat" aria-live="polite"></div>' +
+        '<div class="ig-say"><textarea id="insgSay" rows="2" aria-label="Message to the assistant" placeholder="e.g. homeowner says it leaks in the front bedroom when it rains hard"></textarea>' +
+        '<button type="button" class="ig-go ig-send" data-ig="send">Send</button></div></div>' +
+      '<p class="ig-err" id="insgErr"></p></div>' +
+      '<div class="ig-foot"><button type="button" class="ig-alt" data-ig="plain">Start without AI</button><button type="button" class="ig-go" data-ig="write">Write report</button></div>';
+    if(!P.chat.length) P.chat.push({ role: 'ai', text: 'I have your checklist. Check the photos you want in the report, and tell me anything they don’t show — a reported leak, how long, what the homeowner wants. Tap Write report when you’re ready.' });
+    igChatPaint();
+    sheet.scrollTop = 0;
+    igLoadPhotos();
+  }
+  async function igLoadPhotos(){
+    var pr = igProj(); if(!pr) return;
+    if(!P.loaded){
+      try{ P.list = (await photoDb.listByProject(pr.id)) || []; }catch(e){ P.list = []; var er = igEl('insgErr'); if(er) er.textContent = 'Could not load the photos: ' + ((e && e.message) || e); }
+      P.loaded = true;
+      var ids = []; try{ ids = getInspPhotoIds(pr) || []; }catch(_){}
+      ids.slice(0, PIC_MAX).forEach(function(id){ if(P.list.some(function(p){ return String(p.id) === String(id); })) P.picked[id] = true; });
+    }
+    igGridPaint();
+  }
+  function igGridPaint(){
+    var g = igEl('insgGrid'); if(!g) return;
+    var n = igPickedList().length;
+    var lab = igEl('insgPicN'); if(lab) lab.textContent = P.list.length ? ('Photos · ' + n + ' of ' + PIC_MAX + ' checked') : 'Photos';
+    if(!P.list.length){ g.innerHTML = '<p class="ig-who">No photos on this job yet. Add them in the Photo Album, or write the report from the checklist and the chat.</p>'; return; }
+    g.innerHTML = P.list.map(function(p){
+      var on = !!P.picked[p.id];
+      return '<button type="button" class="ig-ph' + (on ? ' on' : '') + '" data-ph="' + igEsc(p.id) + '" aria-pressed="' + on + '" aria-label="Photo' + (p.caption ? ': ' + igEsc(p.caption) : '') + '">' +
+        '<img src="' + igEsc(igPhotoSrc(p)) + '" alt="" loading="lazy"><i></i></button>'; }).join('');
+  }
+  function igChatPaint(){
+    var c = igEl('insgChat'); if(!c) return;
+    c.innerHTML = P.chat.map(function(m){ return '<div class="ig-m ' + (m.role === 'ai' ? 'ai' : 'me') + '">' + igEsc(m.text) + '</div>'; }).join('') +
+      (P.busy ? '<div class="ig-m ai ig-wait">Thinking…</div>' : '');
+    c.scrollTop = c.scrollHeight;
+  }
+  function igFacts(){
+    var a = S.all || {}, f = {};
+    if(S.types.Roof) ROOF.forEach(function(r){ var v = a[r[0]]; if(v != null && v !== '' && r[0] !== 'life_by') f[r[1]] = String(v); });
+    var g = a.general || {};
+    ['roof','siding','soffit','fascia','gutters','windows','doors'].forEach(function(k){ if(g[k] && (S.general || S.types[k.charAt(0).toUpperCase() + k.slice(1)])) f['Condition: ' + k] = String(g[k]); });
+    var ins = a.insp || {};
+    Object.keys(EXTRA).forEach(function(t){ if(!S.types[t]) return; (EXTRA[t] || []).forEach(function(x){ var k = x[0].split('.')[1]; if(ins[k]) f[x[1]] = String(ins[k]); }); });
+    if(a.notes) f['Field notes'] = String(a.notes);
+    return f;
+  }
+  function igSections(){
+    var roof = !!S.types.Roof || (!S.general && !TYPES.some(function(t){ return S.types[t]; }));
+    var tpl = roof ? REPORT_TEMPLATE : EXTERIOR_TEMPLATE;
+    var d = new DOMParser().parseFromString(tpl, 'text/html'), out = [];
+    Array.prototype.forEach.call(d.querySelectorAll('h2.sec'), function(h){
+      var n = h.querySelector('.num'); var num = n ? n.textContent.trim() : '';
+      if(!/^[3-8]$/.test(num)) return;
+      var name = h.textContent.replace(num, '').trim();
+      out.push({ num: Number(num), name: name });
+    });
+    return { roof: roof, list: out };
+  }
+  function igPayload(mode){
+    return { mode: mode, trades: TYPES.filter(function(t){ return S.types[t]; }), general: !!S.general,
+      facts: igFacts(), life_by: (S.types.Roof && S.all.life_by === 'ai') ? 'ai' : 'rule',
+      photos: igPickedList().filter(function(p){ return !!p._src; }).map(function(p){ return { id: String(p.id), url: p._src }; }),
+      history: P.chat.slice(1), sections: igSections().list };
+  }
+  async function igAsk(mode){
+    var r = await fetch('/api/inspect-assist', { method: 'POST', headers: await window.aiHeaders(), body: JSON.stringify(igPayload(mode)) });
+    var j = null; try{ j = await r.json(); }catch(_){}
+    if(!r.ok || !j) throw new Error((j && (j.error + (j.detail ? ' — ' + j.detail : ''))) || ('The assistant is unavailable (' + r.status + ')'));
+    return j;
+  }
+  async function igSend(){
+    var box = igEl('insgSay'); var t = box ? String(box.value || '').trim() : '';
+    if(!t || P.busy) return;
+    box.value = '';
+    P.chat.push({ role: 'me', text: t }); P.busy = true; igChatPaint();
+    try{ var j = await igAsk('chat'); P.chat.push({ role: 'ai', text: j.reply || '…' }); }
+    catch(e){ P.chat.push({ role: 'ai', text: 'I couldn’t answer that: ' + ((e && e.message) || e) + '. Your notes are kept; try again, or tap Write report.' }); }
+    P.busy = false; igChatPaint();
+  }
+  async function igWrite(){
+    if(P.busy) return;
+    var err = igEl('insgErr'), go = sheet.querySelector('[data-ig="write"]');
+    P.busy = true; if(go){ go.disabled = true; go.textContent = 'Writing… up to a minute'; }
+    if(err) err.textContent = '';
+    var j;
+    try{ j = await igAsk('write'); }
+    catch(e){
+      P.busy = false; if(go){ go.disabled = false; go.textContent = 'Write report'; }
+      if(err) err.textContent = 'The report was not written: ' + ((e && e.message) || e) + '. Nothing was saved; try again, or tap Start without AI.';
+      return;
+    }
+    P.busy = false;
+    var pr = igProj();
+    if(pr && S.types.Roof && S.all.life_by === 'ai' && j.life_estimate){
+      S.all.life_left = 'AI estimate: ' + j.life_estimate;
+      try{ var json = JSON.stringify(S.all); await pdb.update(pr.id, { checklist: json }); pr.checklist = json;
+        try{ var cp = cacheProjects.find(function(x){ return x.id === pr.id; }); if(cp) cp.checklist = json; }catch(_){} }catch(_){}
+    }
+    var secs = igSections();
+    igClose();
+    var title = (pr && pr.name || 'Inspection') + (pr && pr.address ? ' — ' + pr.address : '');
+    createReportFrom(secs.roof ? REPORT_TEMPLATE : EXTERIOR_TEMPLATE, secs.roof ? 'Report' : 'Exterior report', secs.roof,
+      { title: title, fill: function(id){ return igFill(id, j, secs.list); } });
+  }
+  /** @param {any} id @param {any} j @param {any} secs */
+  async function igFill(id, j, secs){
+    var full = await db.get(id); if(!full) return;
+    var doc = new DOMParser().parseFromString(full.html, 'text/html');
+    var nums = secs.map(function(s){ return s.num; }), dflt = nums.indexOf(5) !== -1 ? 5 : (nums[0] || 5);
+    var picked = igPickedList(), byId = {};
+    picked.forEach(function(p){ byId[String(p.id)] = p; });
+    var urls = await signedPhotoMap(picked.map(photoPathOf).filter(Boolean), PHOTO_DOC_URL_TTL);
+    function srcOf(p){ var k = photoPathOf(p); return (k && urls[k]) || p.data; }
+    var done = {};
+    function igPut(p, num, cap, sev){
+      var src = srcOf(p); if(!src) return;
+      if(!placePhotoInSection(doc, nums.indexOf(num) !== -1 ? num : dflt, src, cap || '', true)) return;
+      done[String(p.id)] = true;
+      var imgs = doc.querySelectorAll('.fig .frame img'), img = imgs[imgs.length - 1];
+      for(var i = imgs.length - 1; i >= 0; i--){ if(imgs[i].getAttribute('src') === src){ img = imgs[i]; break; } }
+      var fr = img && img.parentElement;
+      if(fr && CK_PR[sev] && !fr.querySelector('.tag')){
+        var tag = doc.createElement('span'); tag.className = 'tag';
+        tag.innerHTML = '<span class="chip ' + CK_PR[sev][0] + '">' + CK_PR[sev][1] + '</span>';
+        fr.insertBefore(tag, fr.firstChild);
+      }
+      var cp = fr && fr.parentElement && fr.parentElement.querySelector('.cap .ph');
+      if(cp && cap){ cp.classList.remove('ph'); cp.classList.add('fill'); }
+    }
+    (j.photos || []).forEach(function(x){ var p = byId[x.id]; if(p && !done[x.id]) igPut(p, x.section, x.caption, x.severity); });
+    picked.forEach(function(p){ if(!done[String(p.id)]) igPut(p, dflt, '', 'none'); });
+    function fillAfter(head, text, attr){
+      if(!head || !text) return null;
+      var el = head.nextElementSibling;
+      while(el && !(el.tagName === 'H2' && el.classList.contains('sec'))){
+        if(el.tagName === 'P' && el.classList.contains('ph') && /^\[/.test((el.textContent || '').trim())){
+          el.textContent = text; el.classList.remove('ph'); el.classList.add('fill'); el.setAttribute(attr, '1'); return el;
+        }
+        el = el.nextElementSibling;
+      }
+      return null;
+    }
+    (j.sections || []).forEach(function(s){ if(nums.indexOf(s.num) !== -1) fillAfter(findSectionHeading(doc, s.num), s.narrative, 'data-ai-narrative'); });
+    fillAfter(doc.querySelector('[data-cardinal-summary-heading]'), j.summary, 'data-ai-summary');
+    var recH = null;
+    Array.prototype.forEach.call(doc.querySelectorAll('h2.sec'), function(h){ if(!recH && /Recommendation/i.test(h.textContent)) recH = h; });
+    if(recH && (j.recommendations || []).length){
+      var rp = fillAfter(recH, j.recommendations.map(function(r, i){ return (i + 1) + '. ' + r; }).join('\n'), 'data-ai-narrative');
+      if(rp) rp.style.whiteSpace = 'pre-line';
+    }
+    await db.update(id, { html: '<!DOCTYPE html>\n' + doc.documentElement.outerHTML });
+    var pr = igProj();
+    if(pr && picked.length){ try{ await pdb.update(pr.id, { photos_transferred: true }); }catch(_){} }
+  }
   function igClick(e){
+    var ph = e.target.closest('[data-ph]');
+    if(ph){
+      var pid = ph.getAttribute('data-ph'), on = !P.picked[pid];
+      if(on && igPickedList().length >= PIC_MAX){ var er = igEl('insgErr'); if(er) er.textContent = 'Up to ' + PIC_MAX + ' photos per report.'; return; }
+      if(on) P.picked[pid] = true; else delete P.picked[pid];
+      igGridPaint(); return;
+    }
     var b = e.target.closest('[data-ig]'); if(!b) return;
     var a = b.getAttribute('data-ig');
     if(a === 'close') return igClose();
     if(a === 'back') return igStep1();
-    if(a === 'skip') return igStart();
+    if(a === 'skip') return igStep3();
+    if(a === 'plain') return igStart();
+    if(a === 'write') return igWrite();
+    if(a === 'send') return igSend();
     if(a === 'save') return igSave();
     if(a === 'next'){
       if(!S.general && !TYPES.some(function(t){ return S.types[t]; })){ igEl('insgErr').textContent = 'Check at least one, or General inspection.'; return; }
@@ -92762,6 +92959,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     var was = (S.all.insp && S.all.insp.types) || [];
     S.types = {}; TYPES.forEach(function(t){ S.types[t] = was.length ? was.indexOf(t) !== -1 : t === 'Roof'; });
     S.general = !!(S.all.insp && S.all.insp.general);
+    P.list = []; P.picked = {}; P.chat = []; P.busy = false; P.loaded = false;
     igBuild(); igStep1();
     sheet.classList.add('open');
     sheet.scrollTop = 0;

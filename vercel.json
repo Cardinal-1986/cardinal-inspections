@@ -72,6 +72,9 @@
     "api/hover.js": {
       "maxDuration": 60
     },
+    "api/inspect-assist.js": {
+      "maxDuration": 60
+    },
     "api/librarian.js": {
       "maxDuration": 60
     },
