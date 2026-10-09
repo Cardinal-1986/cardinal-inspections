@@ -34333,6 +34333,43 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1269 — the estimate's Publish bar was under the installed app's nav; plus an Email button (Jacob, via Theo)
+
+Theo, 9 Oct, after 1268: *"There's still no publish button or a way to email. Can you just wire an
+email button."*
+
+- **Reproduced, not guessed.**
+  - On a phone, Save and Publish live in the estimate's fixed thumb bar (`.cr-est-phonebar`, 1029,
+    `bottom:0`) inside `#cr-est-view` (stacking context z 9500).
+  - In the **installed** app, `body.standalone #pwaNav` is `z-index:9990 !important` and sits on
+    exactly the same strip.
+  - With `navigator.standalone` true at 390px, a tap at Publish's centre hit **`#pwaNav`**. Every
+    rep on the installed app had no way to publish, so no way to email.
+- **Why no gate saw it.** `gate_1211` (31 checks) and `gate_1029` sweep widths in a browser and
+  never run the app as installed, where `#pwaNav` exists. Bug class *z-index stranding vs #pwaNav*,
+  again, in the one mode the gates skipped.
+- **Fix:**
+  - In standalone only, the bar sits at `bottom: calc(64px + safe-area)`, on top of the nav, the
+    same allowance other installed-app screens make (`padding-bottom: 88px` family). The body pads
+    for both. Both rules carry `--cr-stack` reasons. The browser keeps `bottom:0`.
+  - **Email** joins Save and Publish in the bar. It runs the same Publish (`cr-epub-btn`). When the
+    published document is the one in the editor (`reportFrame.dataset.docId`, loaded), it clicks that
+    document's **Email to client**: the 738 price guard, the community funder recipient, everything
+    as today. No second email pipeline.
+  - If the editor never shows the document within 12s, it says "published, tap Email to client".
+  - Publish alone never emails. The flag is read and cleared at the top of `handlePublishClick`.
+- **Gates:**
+  - **`gate_1269.mjs` (5):**
+    - in the installed app, Save, Email and Publish are each what a tap at their centre hits;
+    - Publish alone publishes and opens the document without emailing;
+    - Email publishes, opens it, and runs Email to client exactly once;
+    - in the browser the bar stays at `bottom:0`.
+  - **RED on 1268:** Save and Publish "covered by pwaNav", Email missing.
+  - `gate_1211` 31/31, `gate_1029` green.
+  - `check_build`, types (one cast), dupes (`tick` renamed `ewTick`), `gate_stack` CLEAN, scroll-lock
+    unchanged.
+  - Sentinel on the builder, installed, both themes: CLEAN.
+
 ## Build 1268 — Print / PDF on iPhone and iPad (Jacob, via Theo)
 
 Jacob, 8 Oct, 9:06 PM, with a screenshot of the estimate Preview: *"How do you send an estimate

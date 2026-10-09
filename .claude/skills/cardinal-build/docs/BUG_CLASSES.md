@@ -4967,3 +4967,9 @@ being switched off.*
 **The general rule: when a check means "did this PR change X", compute it from
 the PR's diff against its merge base. A snapshot comparison silently folds in
 everything the base branch did in the meantime.**
+
+## Note (1269) — gates that never run the app as installed cannot see `#pwaNav`
+`body.standalone #pwaNav` is z 9990 and exists only in the installed PWA. A browser width sweep (1211)
+passed 31/31 while every installed-app rep had Publish under the nav. **Any gate about a fixed bottom
+control must run once with `navigator.standalone = true` and hit-test the control**
+(`document.elementFromPoint` at its centre). `gate_1269.mjs` is the pattern.

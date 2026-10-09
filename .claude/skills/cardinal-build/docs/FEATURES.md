@@ -9645,3 +9645,8 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - On Apple touch devices it prints the page itself, with a shadow-root copy of the document in
   `#crPrintHost`. Elsewhere it uses the iframe print, as before.
 - **Gate:** `gate_1268.mjs`.
+
+## Build 1269 — Estimate thumb bar in the installed app, plus Email (`.cr-est-phonebar`, `bar-email`)
+- In standalone the bar sits above `#pwaNav`.
+- **Email** = Publish, then the document's own Email to client.
+- **Gate:** `gate_1269.mjs`, which runs the app as installed.
