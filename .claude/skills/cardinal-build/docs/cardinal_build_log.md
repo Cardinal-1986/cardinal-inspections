@@ -34333,6 +34333,28 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1274 — an estimate's price table reads on a phone SCREEN (Theo, screenshot of the email link)
+
+- **The report:** "Estimate still looks bad" — EST-2026-0912 opened from the email link in Safari on
+  his iPhone (the share page, with the Stripe deposit card). Not the printout (1272): the screen.
+- **Measured on 1273 at 390px:** the five-column table kept five columns; the description column got
+  **102px of 367**. That is the screenshot.
+- **Fix — one rule, two places:** under `@media screen and (max-width:560px)` each `table.items` row
+  becomes a wrapping flex row: the description takes the full width, then `qty unit × price`, and the
+  amount at the right edge; empty cells drop out; totals stay right-aligned; the header row hides.
+  - **`api/share.js`** injects it (`ITEMS_PHONE`, ahead of `shareFix`), so every estimate **already
+    sent** reads the new way — the stored html is never edited.
+  - **The estimate template** (`cr-epub-script`) carries it, so a new estimate reads properly in the
+    in-app viewer and in the emailed file too.
+  Print and anything wider than 560px are untouched.
+- **⚠ My first gate was vacuous:** the rig's estimate is flat-priced, so it renders the two-column
+  table and passed on 1273 too. The gate now builds **Jacob's own estimate** (the $5,000 "Item" line,
+  the long roof write-up at 1 LS, a flat lump line) through the shipped
+  `CardinalEstimatePublish.buildDocHtml`, and the share half runs the shipped route against a document
+  with the rule stripped out.
+- **Gate:** `gate_1274.mjs` (6) GREEN; RED 4/6 on 1273. 1268, 1270, 1272, 1273, 1273_api,
+  check_build, types, dupes, stack, scroll-lock green. Looked at by eye in a 390px render.
+
 ## Build 1273 — edit the email's subject and message before it goes (Theo, 9 Oct)
 
 - **The ask:** "When sending the email of estimate allow us to edit the email subject and body."

@@ -9673,3 +9673,7 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
   address and view-online link below the rep's message. reply_to stays the sender.
 - Email right after Publish now knows the client (the handler reloads the document list first).
 - **Gates:** `gate_1273.mjs`, `gate_1273_api.mjs`.
+
+## Build 1274 — estimate price table stacks on a phone screen (`ITEMS_PHONE` in api/share.js + the template)
+- Under 560px: description full width, then qty · unit × price, amount on the right. Old sent estimates too.
+- **Gate:** `gate_1274.mjs`.

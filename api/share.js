@@ -211,7 +211,10 @@ export default async function handler(req, res) {
     let html = rows[0].html;
     // Client-facing cleanup: hide the editor help panel, unused photo boxes,
     // unfilled placeholders, and empty sections - on screen AND in the client's own print.
-    const FIX = '<style id="shareFix">.howto{display:none !important}' +
+    // 1274: the estimate's price table stacks on a phone. Injected here so every
+    // estimate already sent reads properly; new ones carry it in their template.
+    const ITEMS_PHONE = '@media screen and (max-width:560px){table.items thead{display:none}table.items,table.items tbody,table.items tfoot{display:block;width:100%}table.items tr{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:9px 4px;border-bottom:1px solid var(--hair,#e5e2dc)}table.items td{display:block;width:auto !important;padding:0 !important;border:0 !important}table.items tbody tr>td:first-child{flex:1 1 100%;margin-bottom:3px}table.items td.qty,table.items td.unit,table.items td.rate{font-size:10.5pt;color:#555;text-align:left}table.items td:empty{display:none}table.items td.unit+td.rate:not(:empty):not(:last-child)::before{content:"\\00d7  "}table.items tr>td.rate:last-child{margin-left:auto;font-size:11pt;font-weight:700;color:var(--ink,#1d1d1f)}table.items tr.zeb{background:#f7f6f3}table.items tr.sec-banner{padding:0;border:0}table.items tr.sec-banner>td{flex:1 1 100%;padding:10px 9px 8px !important}table.items tr.sec-sub>td:first-child{flex:1 1 auto;margin:0}table.items tr.sec-sub td.val{margin-left:auto}table.items tfoot tr{border:0;justify-content:flex-end;padding:4px}table.items tfoot td:empty{display:none}table.items tfoot td.val{margin-left:14px}table.items tfoot tr.grand{border-top:2px solid var(--ink,#1d1d1f);padding-top:8px;margin-top:4px}}';
+    const FIX = '<style id="shareFix">.howto{display:none !important}' + ITEMS_PHONE +
       '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important}' +
       '@media print{.page-break{display:none !important}h2.sec{break-after:avoid}' +
       '.figrow,.fig,tr{break-inside:avoid}' +
