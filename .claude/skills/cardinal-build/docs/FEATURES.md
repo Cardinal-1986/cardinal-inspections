@@ -9639,3 +9639,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - AI-written reports open in Change the report, and the guided flow opens the panel on its draft.
 - Edit by hand: tap any line, as always.
 - **Gates:** `gate_1267.mjs`, `gate_1266_api.mjs` §7.
+
+## Build 1268 — Printing on iPhone/iPad (`window.CardinalPrint`, `cr-dl-script`)
+- The estimate preview, report editor and document viewer print through `CardinalPrint`.
+- On Apple touch devices it prints the page itself, with a shadow-root copy of the document in
+  `#crPrintHost`. Elsewhere it uses the iframe print, as before.
+- **Gate:** `gate_1268.mjs`.
