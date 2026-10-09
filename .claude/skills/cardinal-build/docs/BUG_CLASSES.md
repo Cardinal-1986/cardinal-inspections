@@ -4979,3 +4979,10 @@ The emailed document is an `.html` file. iOS Mail previews it without loading an
 so a site-relative src (`/cardinal-report-logo.png`) or a signed storage URL is a "?" box on the
 client's phone, while every in-app render looks perfect. **Test the bytes that leave**, captured at
 `/api/senddoc` (`gate_1270.mjs`), not the screen that sent them.
+
+### 1273 — a just-created row is not in the cache the next screen reads
+`publish()` inserts the document and opens it, but never reloads `cacheRows`, so everything that
+looks the row up by id (`currentDocRow()`, `currentDocProject()`) gets null until something else
+reloads. Email straight after Publish lost its client. **A gate that types the answer in for the app
+(gate_1270 accepted the prompt with an address) cannot see a missing default.** Check what the
+screen pre-fills, not only what it sends.

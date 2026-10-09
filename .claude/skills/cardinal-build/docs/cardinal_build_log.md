@@ -34333,6 +34333,28 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1273 — edit the email's subject and message before it goes (Theo, 9 Oct)
+
+- **The ask:** "When sending the email of estimate allow us to edit the email subject and body."
+- **Email to client** used a bare `prompt()` for the address; the subject and body were fixed in
+  `api/senddoc.js`. It now opens `#crEmailSheet` (`crEmailSheet()` in the main block): To, Subject,
+  Message, prefilled with the exact words senddoc has always sent. Send / Cancel; empty To, Subject
+  or Message is refused in the sheet. z-index 9995, above the installed app's `#pwaNav` (9990) —
+  the 1269 lesson, applied up front, and gated in installed mode.
+- **senddoc:** the homeowner path takes `subject` (one line, 200 chars, newlines stripped) and
+  `message` (plain text, 5,000 chars, escaped; blank lines become paragraphs). The rep's signature,
+  the company address and the view-online link are still added by the server, below the message.
+  From and `reply_to` (the signed-in sender) are unchanged. With neither field the email is the one
+  that always shipped, so the guide's caller is untouched. The carrier branch is untouched.
+- **⚠ A REAL BUG FOUND BY THE GATE, fixed here:** a document published a moment ago is not in
+  `cacheRows`, because `publish()` never reloads. `currentDocRow()` was null, so Email straight after
+  Publish (exactly what 1269's estimate-bar **Email** does) had no client: no To, "Hi," and
+  "Cardinal Document" in the subject. The handler now runs `reload()` first when the row is missing.
+  gate_1270 never saw it because it typed the address into the prompt itself.
+- **Gates:** `gate_1273.mjs` (8, installed app) GREEN, RED 1/8 on 1272. `gate_1273_api.mjs` (6, the
+  shipped route with a stubbed fetch) GREEN, RED 3/6 on 1272's route. `gate_1270` updated to send
+  through the sheet; 1201, 1204, 1206, 1268–1272, check_build, types, dupes, stack, scroll-lock green.
+
 ## Build 1272 — an estimate printed from an iPhone keeps the Letter layout (Theo, two screenshots)
 
 - **What Theo sent:** EST-2026-0912 on screen (the app's own letterhead document, which he took for
