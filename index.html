@@ -4140,7 +4140,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1268<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1269<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43954,6 +43954,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1269, d: '2026-10-09', t: 'Publish and Email on the estimate, in the installed app',
+    s: 'In the installed app on a phone, the bar with <b>Save</b> and <b>Publish</b> at the bottom of an estimate sat underneath the app\u2019s bottom menu, so it could not be tapped. It now sits above the menu. It also has a new <b>Email</b> button: it publishes the estimate and opens the email to the client in one tap.' },
   { b: 1268, d: '2026-10-09', t: 'Print / PDF works on iPhone and iPad',
     s: 'On an iPhone or iPad, <b>Print / PDF</b> could do nothing at all \u2014 in the estimate preview, the report editor and the document viewer. It now opens the print sheet, where you can print or save a PDF. Computers print as before. To <b>send</b> an estimate, use <b>Publish</b>: it opens the finished estimate with Email to client, Text to sign and Share link.' },
   { b: 1267, d: '2026-10-08', t: 'Change the report by asking',
@@ -50090,6 +50092,12 @@ body.standalone #cr-est-picker .box-list{padding-bottom:calc(88px + env(safe-are
 :root[data-theme="rb-light"] #cr-est-view .cr-est-phonebar{background:rgba(255,255,255,.95);border-top-color:var(--estc-line,#E2E8F0);}
 :root[data-theme="rb-light"] #cr-est-view .cr-est-phonebar button{color:#2c2c2c;}
 :root[data-theme="rb-light"] #cr-est-view .cr-est-phonebar button.primary{color:#ffffff;}
+/* 1269: in the INSTALLED app #pwaNav (z 9990) covered this whole bar, so Save,
+   Publish and Email could not be tapped. It now sits on top of the nav. */
+body.standalone #cr-est-view .cr-est-phonebar{--cr-stack:"installed-app offset above #pwaNav; the base rule still serves the browser";
+  bottom:calc(64px + env(safe-area-inset-bottom,0px));padding-bottom:10px;}
+body.standalone #cr-est-view .cr-est-body{--cr-stack:"room for the bar AND the nav in the installed app";
+  padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));}
 
 </style>
 <script id="cr-est-script">
@@ -50622,6 +50630,7 @@ view.innerHTML =
 /* 1029: fixed under the thumb on a phone; display:none on desktop */
 '<div class="cr-est-phonebar">' +
 '<button data-act="bar-save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
+'<button data-act="bar-email" type="button">Email</button>' +
 '<button class="primary" data-act="bar-publish" type="button">Publish</button>' +
 '</div>' +
 '<div class="cr-est-body">' +
@@ -51191,6 +51200,14 @@ close();
 view.querySelector('[data-act="save"]').onclick = handleSave;
 var barSave = view.querySelector('[data-act="bar-save"]');
 if(barSave) barSave.onclick = handleSave;
+/* 1269: Email = Publish, then the document's own Email to client */
+var barEmail = view.querySelector('[data-act="bar-email"]');
+if(barEmail) barEmail.onclick = function(){
+var pb = document.getElementById('cr-epub-btn');
+if(!pb){ crTell('Publish is still loading \u2014 give it a second and tap again.'); return; }
+window.__crEstEmailNext = true;
+pb.click();
+};
 var barPub = view.querySelector('[data-act="bar-publish"]');
 if(barPub) barPub.onclick = function(){
 var pb = document.getElementById('cr-epub-btn');
@@ -52804,7 +52821,21 @@ b.disabled = busy;
 b.textContent = busy ? 'Publishing\u2026' : 'Publish';
 });
 }
+/* 1269: after an Email tap publishes, open the email as soon as the document
+   is the one on screen (openEditor is not awaited by openDoc) */
+function emailWhenOpen(docId){
+var t0 = Date.now();
+(function ewTick(){
+var f = /** @type {any} */ (document.getElementById('reportFrame')), b = document.getElementById('emailDocBtn');
+var ready = f && f.dataset.docId === String(docId) && f.contentDocument && f.contentDocument.readyState === 'complete';
+if(ready && b){ b.click(); return; }
+if(Date.now() - t0 < 12000) setTimeout(ewTick, 250);
+else crTell('The estimate is published. Tap Email to client at the top to send it.');
+})();
+}
 async function handlePublishClick(){
+var _emailNext = !!window.__crEstEmailNext;
+window.__crEstEmailNext = false;
 var btn = document.getElementById('cr-epub-btn');
 if(!btn) return;
 if(!(window.CardinalEstimates && typeof window.CardinalEstimates.save === 'function')){
@@ -52840,7 +52871,8 @@ document.dispatchEvent(new CustomEvent('cr-est-published', { detail: {
 id: est.id, docId: docId, prevStatus: est.status || 'draft', project: projectBefore,
 } }));
 }catch(_){ }
-if(!openDoc(docId)){
+if(openDoc(docId)){ if(_emailNext) emailWhenOpen(docId); }
+else {
 crTell('Estimate published as ' + (est.estimate_number || 'a document') +
 '.\n\nOpen it from the client\u2019s document list to share, email, or collect a signature.');
 }
