@@ -4140,7 +4140,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1270<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1271<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4624,6 +4624,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <button class="estopt" data-tpl="general">General repair estimate</button>
           </div>
         </span>
+        <button class="btn" id="pUploadEstimateBtn" type="button" style="margin-left:8px;">Upload estimate</button>
         <!-- 1028: the profile's AI-Estimate door is closed (its wiring in the main
              block is guarded and stays). The AI assists inside the editor now. -->
       </div>
@@ -14518,7 +14519,7 @@ function renderProjectDocs(){
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
-    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>\uFF0B From a template</b> to start from a trade template, or <b>Blank estimate</b> to write your own.</div>';
+    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>\uFF0B From a template</b> to start from a trade template, or <b>Upload estimate</b> for one written on paper or in another program.</div>';
   /* 654 (CR-AUD-013): sent estimates living only in the estimates TABLE
      have no doc row to list here — say so instead of looking empty while
      the money panes price the job from them. */
@@ -44006,6 +44007,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1271, d: '2026-10-09', t: 'Upload an estimate',
+    s: 'Estimates has <b>Upload estimate</b>: an estimate written on paper or in another program comes in as photos or a PDF, with its trade, amount and date. It files under Estimates, the job is priced from it until a contract is signed, and it opens, prints and emails like any estimate.' },
   { b: 1270, d: '2026-10-09', t: 'Emailed estimates show their pictures',
     s: 'An estimate or report sent with <b>Email to client</b> arrives as a file. Opened on an iPhone, every picture in it was a \u201C?\u201D box \u2014 the Cardinal logo and the photos \u2014 and the yellow \u201CEditing mode\u201D banner could ride along at the top. The pictures now travel inside the file, so they show without the internet, and the banner never goes out.' },
   { b: 1269, d: '2026-10-09', t: 'Publish and Email on the estimate, in the installed app',
@@ -92645,6 +92648,15 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   'use strict';
   var TRADES = [['Roofing','Roofing'], ['Siding','Siding'], ['Gutters','Gutters'], ['Windows','Windows'], ['Other','Other / handwritten']];
   var MAX_PAGES = 15, MAX_HTML = 9 * 1024 * 1024;
+  /* 1271: one sheet, two kinds. An uploaded estimate is the same paper-to-document
+     step as a signed contract; only the words, the title and signed_at differ. */
+  var CTU_KINDS = {
+    contract: { head:'Upload signed contract', intro:'A windows job, or an agreement signed on paper. Add photos or a PDF of the signed contract and its amount — it counts like any signed contract, and the invoice opens.',
+      amt:'Contract amount', date:'Date signed', file:'Photos or PDF of the signed contract', go:'Save signed contract', noun:'contract' },
+    estimate: { head:'Upload estimate', intro:'An estimate written on paper or in another program. Add photos or a PDF of it and its amount — it files under Estimates, prices the job until a contract is signed, and emails like any estimate.',
+      amt:'Estimate amount', date:'Estimate date', file:'Photos or PDF of the estimate', go:'Save estimate', noun:'estimate' }
+  };
+  var ctuKind = 'contract';
   function ctuEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
   function ctuToday(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -92652,32 +92664,37 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   var sheet = null;
   function el(id){ return /** @type {any} */ (document.getElementById(id)); }
   function ctuBuild(){
-    if(sheet) return sheet;
-    sheet = document.createElement('div');
-    sheet.id = 'ctUpSheet';
-    sheet.setAttribute('role', 'dialog');
-    sheet.setAttribute('aria-label', 'Upload signed contract');
-    sheet.innerHTML = '<div class="q"><b>Upload signed contract</b>' +
-      '<p>A windows job, or an agreement signed on paper. Add photos or a PDF of the signed contract and its amount — it counts like any signed contract, and the invoice opens.</p>' +
+    var K = CTU_KINDS[ctuKind];
+    if(!sheet){
+      sheet = document.createElement('div');
+      sheet.id = 'ctUpSheet';
+      sheet.setAttribute('role', 'dialog');
+      document.body.appendChild(sheet);
+    }
+    if(sheet.getAttribute('data-kind') === ctuKind) return sheet;
+    sheet.setAttribute('data-kind', ctuKind);
+    sheet.setAttribute('aria-label', K.head);
+    sheet.innerHTML = '<div class="q"><b>' + K.head + '</b>' +
+      '<p>' + K.intro + '</p>' +
       '<label>Trade<select id="ctUpTrade">' + TRADES.map(function(t){ return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('') + '</select></label>' +
-      '<label>Contract amount ($)<input id="ctUpAmt" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 8450"></label>' +
-      '<label>Date signed<input id="ctUpDate" type="date"></label>' +
-      '<label>Photos or PDF of the signed contract<input id="ctUpFile" type="file" accept="image/*,application/pdf" multiple></label>' +
+      '<label>' + K.amt + ' ($)<input id="ctUpAmt" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 8450"></label>' +
+      '<label>' + K.date + '<input id="ctUpDate" type="date"></label>' +
+      '<label>' + K.file + '<input id="ctUpFile" type="file" accept="image/*,application/pdf" multiple></label>' +
       '<div class="st" id="ctUpSt" role="status"></div>' +
-      '<div class="row"><button type="button" class="pri" id="ctUpGo">Save signed contract</button><button type="button" class="no" id="ctUpNo">Cancel</button></div></div>';
-    document.body.appendChild(sheet);
+      '<div class="row"><button type="button" class="pri" id="ctUpGo">' + K.go + '</button><button type="button" class="no" id="ctUpNo">Cancel</button></div></div>';
     el('ctUpNo').addEventListener('click', ctuClose);
     el('ctUpGo').addEventListener('click', ctuSave);
     return sheet;
   }
-  function ctuOpen(){
+  function ctuOpen(kind){
+    ctuKind = (kind === 'estimate') ? 'estimate' : 'contract';
     var pr = ctuProj();
-    if(!pr){ if(window.crToastErr) window.crToastErr('Open a client first — a contract needs a job to belong to.'); return; }
+    if(!pr){ if(window.crToastErr) window.crToastErr('Open a client first — ' + (ctuKind === 'estimate' ? 'an estimate' : 'a contract') + ' needs a job to belong to.'); return; }
     ctuBuild();
     var ts = (pr.trade || ((typeof parseCkAll === 'function') ? ((parseCkAll(pr).trades || [])[0]) : '') || '');
     el('ctUpTrade').value = /window/i.test(ts) ? 'Windows' : /siding/i.test(ts) ? 'Siding' : /gutter/i.test(ts) ? 'Gutters' : 'Roofing';
     el('ctUpAmt').value = ''; el('ctUpDate').value = ctuToday(); el('ctUpFile').value = ''; el('ctUpSt').textContent = '';
-    el('ctUpGo').disabled = false; el('ctUpGo').textContent = 'Save signed contract';
+    el('ctUpGo').disabled = false; el('ctUpGo').textContent = CTU_KINDS[ctuKind].go;
     sheet.classList.add('open');
   }
   function ctuClose(){ if(sheet) sheet.classList.remove('open'); }
@@ -92713,15 +92730,16 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   }
   async function ctuSave(){
     var pr = ctuProj(); if(!pr) return ctuClose();
+    var K = CTU_KINDS[ctuKind], isEst = ctuKind === 'estimate';
     var st = el('ctUpSt'), go = el('ctUpGo');
     var trade = el('ctUpTrade').value || 'Other';
     var label = trade === 'Other' ? 'Handwritten agreement' : trade;
     var amt = parseFloat(String(el('ctUpAmt').value || '').replace(/[^0-9.]/g, ''));
     var day = el('ctUpDate').value;
     var files = Array.prototype.slice.call(el('ctUpFile').files || []);
-    if(!(amt > 0)){ st.textContent = 'Enter the contract amount.'; return; }
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(day || '')){ st.textContent = 'Pick the date it was signed.'; return; }
-    if(!files.length){ st.textContent = 'Add a photo or PDF of the signed contract.'; return; }
+    if(!(amt > 0)){ st.textContent = 'Enter the ' + K.noun + ' amount.'; return; }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day || '')){ st.textContent = isEst ? 'Pick the estimate date.' : 'Pick the date it was signed.'; return; }
+    if(!files.length){ st.textContent = isEst ? 'Add a photo or PDF of the estimate.' : 'Add a photo or PDF of the signed contract.'; return; }
     go.disabled = true; go.textContent = 'Saving…';
     try{
       var pages = [];
@@ -92730,7 +92748,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
         var f = files[i];
         if(/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)) pages = pages.concat(await pdfPages(f));
         else pages.push(await shrinkImage(f));
-        if(pages.length > MAX_PAGES) throw new Error('That is more than ' + MAX_PAGES + ' pages — upload the signed pages only.');
+        if(pages.length > MAX_PAGES) throw new Error('That is more than ' + MAX_PAGES + ' pages — upload ' + (isEst ? 'the estimate pages' : 'the signed pages') + ' only.');
       }
       var me = (window.currentUser && window.currentUser.email) || '';
       var money = (typeof fmtMoney === 'function') ? fmtMoney(amt, true) : ('$' + amt.toFixed(2));
@@ -92739,29 +92757,36 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
         '<style>body{margin:24px;font:15px \'Segoe UI\',Arial,sans-serif;color:#1b1b1b;background:#fff}' +
         'h1{font-size:22px;margin:0 0 6px}.meta{margin:0 0 18px;color:#444}.meta b{color:#1b1b1b}' +
         'img{display:block;width:100%;max-width:900px;margin:0 auto 18px;border:1px solid #d6d6d6}</style></head><body data-cr-upload="1">' +
-        '<h1>Signed agreement — ' + ctuEsc(label) + '</h1>' +
+        '<h1>' + (isEst ? 'Estimate' : 'Signed agreement') + ' — ' + ctuEsc(label) + '</h1>' +
         '<p class="meta"><b>' + ctuEsc(pr.name || 'Client') + '</b>' + (pr.address ? ' · ' + ctuEsc(pr.address) : '') +
-        '<br>Contract amount <b>' + ctuEsc(money) + '</b> · signed <b>' + ctuEsc(signedNice) + '</b>' +
-        '<br>Uploaded ' + ctuEsc(new Date().toLocaleDateString('en-US')) + (me ? ' by ' + ctuEsc(me) : '') + ' — the signed paper is the contract; this is its copy.</p>' +
-        pages.map(function(u, k){ return '<img alt="Signed contract, page ' + (k + 1) + '" src="' + u + '">'; }).join('') +
+        '<br>' + (isEst ? 'Estimate' : 'Contract') + ' amount <b>' + ctuEsc(money) + '</b> · ' + (isEst ? 'dated' : 'signed') + ' <b>' + ctuEsc(signedNice) + '</b>' +
+        '<br>Uploaded ' + ctuEsc(new Date().toLocaleDateString('en-US')) + (me ? ' by ' + ctuEsc(me) : '') + (isEst ? ' — a copy of the original estimate.' : ' — the signed paper is the contract; this is its copy.') + '</p>' +
+        pages.map(function(u, k){ return '<img alt="' + (isEst ? 'Estimate' : 'Signed contract') + ', page ' + (k + 1) + '" src="' + u + '">'; }).join('') +
         '</body></html>';
       if(html.length > MAX_HTML) throw new Error('Those pages are too large together — upload fewer, or photos instead of a big PDF.');
       st.textContent = 'Saving…';
-      var id = await db.create('Contract — ' + label + ' — ' + (pr.name || 'Client'), html, pr.name, pr.id);
-      await db.update(id, { signed_at: new Date(day + 'T12:00:00').toISOString(), total: Math.round(amt * 100) / 100 });
-      if(typeof window.auditLog === 'function'){ try{ window.auditLog('contract', 'Uploaded signed contract (' + label + ', ' + money + ')', pr.id); }catch(_){} }
+      /* 1271: an estimate is titled so isEstimateTitle() files it, and carries a
+         total but never signed_at — jobFinance's document leg prices the job
+         from it until a contract is signed. */
+      var id = await db.create((isEst ? 'Estimate — ' : 'Contract — ') + label + ' — ' + (pr.name || 'Client'), html, pr.name, pr.id);
+      await db.update(id, isEst ? { total: Math.round(amt * 100) / 100 }
+        : { signed_at: new Date(day + 'T12:00:00').toISOString(), total: Math.round(amt * 100) / 100 });
+      if(typeof window.auditLog === 'function'){ try{ window.auditLog(isEst ? 'estimate' : 'contract', (isEst ? 'Uploaded estimate (' : 'Uploaded signed contract (') + label + ', ' + money + ')', pr.id); }catch(_){} }
       try{ await reload(); }catch(_r){}
       try{ if(typeof renderProjectDocs === 'function') renderProjectDocs(); }catch(_d){}
       ctuClose();
-      if(window.crToastOk) window.crToastOk('Signed ' + label + ' contract saved — ' + money + '. Invoices & Payments can open now.');
+      if(window.crToastOk) window.crToastOk(isEst ? (label + ' estimate saved — ' + money + '. It is under Estimates.')
+        : ('Signed ' + label + ' contract saved — ' + money + '. Invoices & Payments can open now.'));
     }catch(err){
       st.textContent = (err && err.message) || String(err);
-      go.disabled = false; go.textContent = 'Save signed contract';
+      go.disabled = false; go.textContent = K.go;
     }
   }
   /* wired on the button itself — it is static markup, so it exists by now */
   var upBtn = document.getElementById('pUploadContractBtn');
-  if(upBtn) upBtn.addEventListener('click', function(e){ e.preventDefault(); ctuOpen(); });
+  if(upBtn) upBtn.addEventListener('click', function(e){ e.preventDefault(); ctuOpen('contract'); });
+  var upEst = document.getElementById('pUploadEstimateBtn');   /* 1271 */
+  if(upEst) upEst.addEventListener('click', function(e){ e.preventDefault(); ctuOpen('estimate'); });
   window.CardinalContractUpload = Object.assign(window.CardinalContractUpload || {}, { open: ctuOpen, close: ctuClose });
 })();
 </script>
