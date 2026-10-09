@@ -4973,3 +4973,9 @@ everything the base branch did in the meantime.**
 passed 31/31 while every installed-app rep had Publish under the nav. **Any gate about a fixed bottom
 control must run once with `navigator.standalone = true` and hit-test the control**
 (`document.elementFromPoint` at its centre). `gate_1269.mjs` is the pattern.
+
+## Note (1270) — what the client opens is an attachment, and an attachment has no internet
+The emailed document is an `.html` file. iOS Mail previews it without loading any remote resource,
+so a site-relative src (`/cardinal-report-logo.png`) or a signed storage URL is a "?" box on the
+client's phone, while every in-app render looks perfect. **Test the bytes that leave**, captured at
+`/api/senddoc` (`gate_1270.mjs`), not the screen that sent them.
