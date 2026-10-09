@@ -4160,7 +4160,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1273<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1274<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44082,6 +44082,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1274, d: '2026-10-09', t: 'Estimates read on a phone',
+    s: 'Opened on a phone \u2014 from the email link or in the app \u2014 an estimate squeezed its five columns onto the screen, so the description ran one word to a line. Each line now stacks: the description across the screen, then the quantity, unit and price with the amount on the right. Estimates already sent read the new way too.' },
   { b: 1273, d: '2026-10-09', t: 'Edit the email before it goes',
     s: '<b>Email to client</b> now opens a sheet with the address, the subject and the message, filled in with what the email has always said. Change any of it, then <b>Send</b>. Your name, the company address and the view-online link are still added under your message.' },
   { b: 1272, d: '2026-10-09', t: 'Estimates print full width on an iPhone',
@@ -52376,6 +52378,9 @@ return '<!DOCTYPE html>\n' +
 '.accept-card .ac-cell:last-child{border-bottom:0}\n' +
 '.accept-card .ac-sign{flex-direction:column;gap:20px}\n' +
 '}\n' +
+/* 1274: on a phone each priced line stacks — the description full width, then
+   "qty unit × price" and the amount — instead of five columns at 390px. */
+'@media screen and (max-width:560px){table.items thead{display:none}table.items,table.items tbody,table.items tfoot{display:block;width:100%}table.items tr{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:9px 4px;border-bottom:1px solid var(--hair,#e5e2dc)}table.items td{display:block;width:auto !important;padding:0 !important;border:0 !important}table.items tbody tr>td:first-child{flex:1 1 100%;margin-bottom:3px}table.items td.qty,table.items td.unit,table.items td.rate{font-size:10.5pt;color:#555;text-align:left}table.items td:empty{display:none}table.items td.unit+td.rate:not(:empty):not(:last-child)::before{content:"\\00d7  "}table.items tr>td.rate:last-child{margin-left:auto;font-size:11pt;font-weight:700;color:var(--ink,#1d1d1f)}table.items tr.zeb{background:#f7f6f3}table.items tr.sec-banner{padding:0;border:0}table.items tr.sec-banner>td{flex:1 1 100%;padding:10px 9px 8px !important}table.items tr.sec-sub>td:first-child{flex:1 1 auto;margin:0}table.items tr.sec-sub td.val{margin-left:auto}table.items tfoot tr{border:0;justify-content:flex-end;padding:4px}table.items tfoot td:empty{display:none}table.items tfoot td.val{margin-left:14px}table.items tfoot tr.grand{border-top:2px solid var(--ink,#1d1d1f);padding-top:8px;margin-top:4px}}\n' +
 '</style>\n' +
 '</head>\n' +
 '<body>\n' +
