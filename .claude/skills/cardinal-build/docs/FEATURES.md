@@ -9656,3 +9656,10 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
   budget), because iOS Mail's attachment preview loads nothing from the internet.
 - Every editing banner is stripped from what is saved and sent.
 - **Gate:** `gate_1270.mjs`.
+
+## Build 1271 — Upload an estimate (`pUploadEstimateBtn`, the 1262 sheet with a kind)
+- Estimates → **Upload estimate**: trade, amount, date, photos or a PDF of an estimate made elsewhere.
+- Saved as `Estimate — <Trade> — <client>` with `total`, never `signed_at`; it files under Estimates and
+  prices the job (jobFinance's document leg) until a contract is signed.
+- One sheet for both uploads: `CardinalContractUpload.open('estimate' | 'contract')`.
+- **Gate:** `gate_1271.mjs`.

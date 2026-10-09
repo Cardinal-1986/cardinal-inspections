@@ -34333,6 +34333,24 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1271 — Upload an estimate (Theo, 9 Oct: "Can you have a way to upload estimates")
+
+- **The ask:** an estimate written somewhere else (paper at the table, Roofr, a supplier quote)
+  had no way onto the job.
+- **The door already existed — for contracts (1262, `cr-ctup-script`).** It was extended, not
+  copied: the one sheet now has a kind (`CTU_KINDS.contract` / `.estimate`). `ctuOpen(kind)`
+  rebuilds the sheet's words only when the kind changes (`data-kind`).
+- **Estimates → Upload estimate**: trade, amount, date, photos/PDF (the same 1700px JPEG / pdf.js
+  pages). Saved as `Estimate — <Trade> — <client>`, so `isEstimateTitle()` files it under
+  Estimates, with `total` set and **no `signed_at`**.
+- **No money code touched.** `jobFinance()`'s 1011 document leg already prices a job from an
+  Estimate-titled document that no estimates-table row points at, below tier 2 and with no signed
+  contract. Measured in the gate: Mark Diamond goes 0/none → 12300/estimate.
+- It opens, prints and emails like any document; its pages are `data:` URIs, so 1270's inlining has
+  nothing to do.
+- **Gate:** `gate_1271.mjs` (9) — GREEN; RED 1/9 on 1270 with no crash. `gate_1262` still GREEN
+  10/10 (the contract path), plus 1269, 1270, 1206, check_build, types, dupes, stack, scroll-lock.
+
 ## Build 1270 — emailed estimates show their pictures, and never carry the editing banner (Jacob, via Theo)
 
 Theo, 9 Oct, 10:11 PM, two iPhone screenshots of the emailed estimate, with *"This is what shows
