@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     // 672: subject / variant / replyTo are ADDITIVE. Both shipped callers send
     // none of them, so each falls back to the exact behaviour that shipped.
     const { to, clientName, title, html, shareUrl, propertyLine,
-            subject, variant, replyTo, quantitiesOnly } = req.body || {};
+            subject, variant, replyTo, quantitiesOnly, message } = req.body || {};
     // 672: `to` must be a non-empty STRING. `!to` passes a non-empty ARRAY,
     // which then reaches `to: [to]` below as [[a,b]] — Resend 422s and the
     // caller sees a truncated vendor string instead of its own mistake.
@@ -72,6 +72,24 @@ export default async function handler(req, res) {
       Cardinal Roofing and Renovations, LLC · 5735 Webster Street, Dayton, OH 45414</p>
     </div>`;
 
+    // 1273: the rep may edit the message (Email to client's sheet). Plain text
+    // only — escaped, blank lines become paragraphs. The signature, address and
+    // view-online link below it are not the rep's to remove. With no message
+    // the body is the one that always shipped.
+    const msg = (!isCarrier && typeof message === 'string') ? message.trim().slice(0, 5000) : '';
+    const msgHtml = msg.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
+      .map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('\n      ');
+    const sig = `<p style="color:#8a6f66;">— ${esc(user.user_metadata?.full_name || user.email)}<br>
+      Cardinal Roofing and Renovations, LLC · 5735 Webster Street, Dayton, OH 45414</p>`;
+    const editedBody = `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:560px;margin:0 auto;">
+      <h2 style="color:#C8202E;border-bottom:3px solid #C8202E;padding-bottom:6px;">Cardinal Roofing &amp; Renovations</h2>
+      ${msgHtml}
+      ${shareUrl ? `<p>You can also view it online any time: <a href="${esc(shareUrl)}">${esc(shareUrl)}</a></p>` : ''}
+      ${sig}
+    </div>`;
+    // 1273: the homeowner path takes an edited subject too. One line, 200 chars.
+    const subj = (!isCarrier && typeof subject === 'string') ? subject.replace(/[\r\n]+/g, ' ').trim().slice(0, 200) : '';
+
     const body = `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:560px;margin:0 auto;">
       <h2 style="color:#C8202E;border-bottom:3px solid #C8202E;padding-bottom:6px;">Cardinal Roofing &amp; Renovations</h2>
       <p>Hi${clientName ? ' ' + esc(clientName) : ''},</p>
@@ -103,8 +121,10 @@ export default async function handler(req, res) {
         // Gated for the same reason. (`title` already reached the subject
         // pre-672, so this half is a smaller delta than it looks — but there
         // is no caller that needs it ungated, so it is not left open.)
-        subject: (isCarrier && subject) || `${title} — Cardinal Roofing & Renovations`,
-        html: isCarrier ? carrierBody : body,
+        // 1273: now there is one — Email to client lets the rep edit it. It is
+        // `subj` (one line, 200 chars); From and reply_to are unchanged.
+        subject: (isCarrier && subject) || subj || `${title} — Cardinal Roofing & Renovations`,
+        html: isCarrier ? carrierBody : (msgHtml ? editedBody : body),
         attachments: [{ filename: safeName + '.html',
                         content: Buffer.from(html, 'utf8').toString('base64') }]
       })

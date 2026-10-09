@@ -1035,6 +1035,26 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
   border-radius:10px;cursor:pointer;text-decoration:none;font:700 15px 'Segoe UI',Arial,sans-serif;}
 #apptCalSheet .pri{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
 #apptCalSheet .no{background:transparent;border:1px solid #3a3e46;color:#eceef0;}
+/* 1273: Email to client — the 1262 sheet. z-index above body.standalone #pwaNav
+   (9990), or the installed app's nav covers Send. */
+#crEmailSheet{position:fixed;left:0;right:0;bottom:0;z-index:9995;display:none;max-height:92vh;overflow:auto;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#16161b;color:#eceef0;
+  border-top:1px solid #2a2d33;box-shadow:0 -8px 30px rgba(0,0,0,.4);}
+#crEmailSheet.open{display:block;}
+#crEmailSheet .q{max-width:560px;margin:0 auto;}
+#crEmailSheet b{display:block;font:700 18px 'Segoe UI',Arial,sans-serif;color:#eceef0;}
+#crEmailSheet p{margin:4px 0 12px;font:400 15px 'Segoe UI',Arial,sans-serif;color:#b8bec6;}
+#crEmailSheet label{display:block;margin:0 0 12px;font:700 13px 'Segoe UI',Arial,sans-serif;color:#b8bec6;}
+#crEmailSheet input, #crEmailSheet textarea{display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:48px;
+  padding:12px;border-radius:10px;border:1px solid #3a3e46;background:#0f1014;color:#eceef0;
+  font:400 16px 'Segoe UI',Arial,sans-serif;}
+#crEmailSheet textarea{min-height:190px;line-height:1.45;resize:vertical;}
+#crEmailSheet .st{min-height:22px;margin:0 0 10px;font:600 15px 'Segoe UI',Arial,sans-serif;color:#e8b04a;}
+#crEmailSheet .row{display:flex;flex-wrap:wrap;gap:10px;}
+#crEmailSheet .pri, #crEmailSheet .no{flex:1 1 140px;display:flex;align-items:center;justify-content:center;min-height:48px;
+  border-radius:10px;cursor:pointer;font:700 15px 'Segoe UI',Arial,sans-serif;}
+#crEmailSheet .pri{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
+#crEmailSheet .no{background:transparent;border:1px solid #3a3e46;color:#eceef0;}
 /* 1262: Upload signed contract — the same fixed dark sheet as 1258 */
 #ctUpSheet{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;max-height:92vh;overflow:auto;
   padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#16161b;color:#eceef0;
@@ -4140,7 +4160,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1271<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1273<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -27290,6 +27310,51 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
     }catch(err){ showError('Could not start the text: ' + (err.message || err)); }
   });
   document.getElementById('editEstBtn').addEventListener('click', editEstimateFromDoc);
+/* 1273: Email to client opens a sheet instead of a bare address prompt — Theo,
+   9 Oct: "allow us to edit the email subject and body". To, Subject and the
+   message come prefilled with exactly what the email has always said; whatever
+   the rep leaves is what /api/senddoc sends. The rep's name, the company
+   address and the view-online link are still added below the message by the
+   server, so a client always sees who it is from. Resolves null on Cancel. */
+function crEmailSheet(o){
+  return new Promise(function(resolve){
+    var sh = document.getElementById('crEmailSheet');
+    if(!sh){
+      sh = document.createElement('div');
+      sh.id = 'crEmailSheet';
+      sh.setAttribute('role', 'dialog');
+      sh.setAttribute('aria-label', 'Email to client');
+      document.body.appendChild(sh);
+    }
+    sh.innerHTML = '<div class="q"><b>Email to client</b>' +
+      '<p>Change anything before it goes. Your name, the company address and the view-online link go below your message.</p>' +
+      '<label><span id="emShTo"></span><input id="emShAddr" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false"></label>' +
+      '<label>Subject<input id="emShSubj" type="text" autocomplete="off" maxlength="200"></label>' +
+      '<label>Message<textarea id="emShMsg" rows="9" maxlength="5000"></textarea></label>' +
+      '<div class="st" id="emShSt" role="status"></div>' +
+      '<div class="row"><button type="button" class="pri" id="emShGo">Send</button><button type="button" class="no" id="emShNo">Cancel</button></div></div>';
+    var emQ = function(id){ return /** @type {any} */ (document.getElementById(id)); };
+    emQ('emShTo').textContent = o.toLabel || 'Send to';
+    emQ('emShAddr').value = o.to || '';
+    emQ('emShSubj').value = o.subject || '';
+    emQ('emShMsg').value = o.message || '';
+    function emDone(v){ sh.classList.remove('open'); try{ document.removeEventListener('keydown', emKey); }catch(_){} resolve(v); }
+    function emKey(e){ if(e.key === 'Escape') emDone(null); }
+    document.addEventListener('keydown', emKey);
+    emQ('emShNo').addEventListener('click', function(){ emDone(null); });
+    emQ('emShGo').addEventListener('click', function(){
+      var to = String(emQ('emShAddr').value || '').trim();
+      var subj = String(emQ('emShSubj').value || '').replace(/[\r\n]+/g, ' ').trim();
+      var msg = String(emQ('emShMsg').value || '').trim();
+      if(!to || to.indexOf('@') === -1){ emQ('emShSt').textContent = 'Enter a valid email address.'; return; }
+      if(!subj){ emQ('emShSt').textContent = 'Add a subject.'; return; }
+      if(!msg){ emQ('emShSt').textContent = 'Add a message.'; return; }
+      emDone({ to: to, subject: subj, message: msg });
+    });
+    sh.classList.add('open');
+    try{ emQ(o.to ? 'emShSubj' : 'emShAddr').focus(); }catch(_){}
+  });
+}
 document.getElementById('emailDocBtn').addEventListener('click', async function(){
   var btn = this;
   var _bl = btn.querySelector('.bl') || btn;
@@ -27297,6 +27362,9 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     await saveCurrent();
     /* 738: emailing is the path that reaches the client, so it is guarded first. */
     if(!await priceOkToSend((titleInput.value || '').trim() || 'document')) return;
+    /* 1273: just published (the estimate bar's Email does exactly this) — the
+       list has not caught up, so fetch it before reading who this is for. */
+    if(!currentDocRow()){ try{ await reload(); }catch(_rl){} }
     var row = currentDocRow();
     var pr = currentDocProject();
     /* Community jobs are funded by a partner (Habitat, Rebuilding Together, the
@@ -27358,11 +27426,6 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
         }
       }catch(__x){}
     }
-    var to = prompt(toAsk, toDflt);
-    if(to === null) return;
-    to = to.trim();
-    if(!to || to.indexOf('@') === -1){ showError('Enter a valid email address.'); return; }
-    btn.disabled = true; _bl.textContent = 'Sending\u2026';
     /* Who the email greets, and the one line that says whose house this is.
        On a community job the recipient is the partner, so greeting them by the
        homeowner's name (or by the concatenated project name) reads as a mistake. */
@@ -27379,6 +27442,17 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
         else if(_ad)   propLine = 'This covers work at ' + _ad + '.';
       }
     }catch(_e2){ try{ if(window.report) window.report(_e2, 'Documents', 'send greeting'); }catch(__e){} }
+    /* 1273: the rep sees and can change To, Subject and Message. The defaults are
+       the words senddoc has always sent. */
+    var _docTtl = (row && row.title) || 'Cardinal Document';
+    var em = await crEmailSheet({ toLabel: toAsk.replace(/:\s*$/, ''), to: toDflt,
+      subject: _docTtl + ' \u2014 Cardinal Roofing & Renovations',
+      message: 'Hi' + (greetName ? ' ' + greetName : '') + ',\n\n' +
+        'Please find your ' + _docTtl + ' attached. Open the attachment in any web browser to view it, and print or save it as a PDF from there.' +
+        (propLine ? '\n\n' + propLine : '') + '\n\nQuestions? Just reply to this email.' });
+    if(!em) return;
+    var to = em.to;
+    btn.disabled = true; _bl.textContent = 'Sending\u2026';
     var tok = null;
     try{ tok = await ensureShareToken(); }catch(e){}
     var session = TEAM ? (await sb.auth.getSession()).data.session : null;
@@ -27393,6 +27467,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
         clientName: greetName,
         propertyLine: propLine,
         title: (row && row.title) || 'Cardinal Document',
+        subject: em.subject, message: em.message,   /* 1273 */
         html: await inlineDocImages(serializeFrame()),   /* 1270 */
         shareUrl: tok ? shareUrlFor(tok) : null
       })
@@ -44007,6 +44082,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1273, d: '2026-10-09', t: 'Edit the email before it goes',
+    s: '<b>Email to client</b> now opens a sheet with the address, the subject and the message, filled in with what the email has always said. Change any of it, then <b>Send</b>. Your name, the company address and the view-online link are still added under your message.' },
+  { b: 1272, d: '2026-10-09', t: 'Estimates print full width on an iPhone',
+    s: 'Printing an estimate or report from an iPhone squeezed it to the width of the phone, so the description ran one word to a line. It now prints laid out on a Letter page, the way it looks on a computer.' },
   { b: 1271, d: '2026-10-09', t: 'Upload an estimate',
     s: 'Estimates has <b>Upload estimate</b>: an estimate written on paper or in another program comes in as photos or a PDF, with its trade, amount and date. It files under Estimates, the job is priced from it until a contract is signed, and it opens, prints and emails like any estimate.' },
   { b: 1270, d: '2026-10-09', t: 'Emailed estimates show their pictures',
@@ -69627,7 +69706,12 @@ function printDoc(d, win){
   var root = host.attachShadow({ mode: 'open' });
   var bodyCls = String(d.body.className || '').replace(/"/g, '');
   var bodySty = String(d.body.getAttribute('style') || '').replace(/"/g, '&quot;');
-  root.innerHTML = links + '<style>' + css + '</style>' +
+  /* 1272: lay the copy out on Letter, not on the phone. The document's own print
+     rule is body{width:auto}, and here "auto" is the app page — 390px on an
+     iPhone — so a printed estimate came out one word per line. 7.2in is the
+     Letter text width under the templates' 0.65in side margins. */
+  var LETTER = '@media print{.crp-body{width:7.2in !important;max-width:none !important;box-sizing:border-box;}}';
+  root.innerHTML = links + '<style>' + css + '\n' + LETTER + '</style>' +
     '<div class="crp-html"><div class="crp-body ' + bodyCls + '" style="' + bodySty + '">' + d.body.innerHTML + '</div></div>';
   var st = document.createElement('style');
   st.id = 'crPrintHostStyle';

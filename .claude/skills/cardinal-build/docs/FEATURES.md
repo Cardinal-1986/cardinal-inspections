@@ -9663,3 +9663,13 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
   prices the job (jobFinance's document leg) until a contract is signed.
 - One sheet for both uploads: `CardinalContractUpload.open('estimate' | 'contract')`.
 - **Gate:** `gate_1271.mjs`.
+
+## Build 1272 — iPhone print keeps the Letter layout (print host only)
+- 1268's print host lays the document out at 7.2in in print, not at the phone's width.
+- **Gate:** `gate_1272.mjs`.
+
+## Build 1273 — Email to client: edit To, Subject and Message (`#crEmailSheet`, senddoc `subject`/`message`)
+- The sheet is prefilled with what the email always said; the server still adds the signature,
+  address and view-online link below the rep's message. reply_to stays the sender.
+- Email right after Publish now knows the client (the handler reloads the document list first).
+- **Gates:** `gate_1273.mjs`, `gate_1273_api.mjs`.

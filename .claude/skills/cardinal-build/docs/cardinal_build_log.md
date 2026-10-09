@@ -34333,6 +34333,44 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1273 — edit the email's subject and message before it goes (Theo, 9 Oct)
+
+- **The ask:** "When sending the email of estimate allow us to edit the email subject and body."
+- **Email to client** used a bare `prompt()` for the address; the subject and body were fixed in
+  `api/senddoc.js`. It now opens `#crEmailSheet` (`crEmailSheet()` in the main block): To, Subject,
+  Message, prefilled with the exact words senddoc has always sent. Send / Cancel; empty To, Subject
+  or Message is refused in the sheet. z-index 9995, above the installed app's `#pwaNav` (9990) —
+  the 1269 lesson, applied up front, and gated in installed mode.
+- **senddoc:** the homeowner path takes `subject` (one line, 200 chars, newlines stripped) and
+  `message` (plain text, 5,000 chars, escaped; blank lines become paragraphs). The rep's signature,
+  the company address and the view-online link are still added by the server, below the message.
+  From and `reply_to` (the signed-in sender) are unchanged. With neither field the email is the one
+  that always shipped, so the guide's caller is untouched. The carrier branch is untouched.
+- **⚠ A REAL BUG FOUND BY THE GATE, fixed here:** a document published a moment ago is not in
+  `cacheRows`, because `publish()` never reloads. `currentDocRow()` was null, so Email straight after
+  Publish (exactly what 1269's estimate-bar **Email** does) had no client: no To, "Hi," and
+  "Cardinal Document" in the subject. The handler now runs `reload()` first when the row is missing.
+  gate_1270 never saw it because it typed the address into the prompt itself.
+- **Gates:** `gate_1273.mjs` (8, installed app) GREEN, RED 1/8 on 1272. `gate_1273_api.mjs` (6, the
+  shipped route with a stubbed fetch) GREEN, RED 3/6 on 1272's route. `gate_1270` updated to send
+  through the sheet; 1201, 1204, 1206, 1268–1272, check_build, types, dupes, stack, scroll-lock green.
+
+## Build 1272 — an estimate printed from an iPhone keeps the Letter layout (Theo, two screenshots)
+
+- **What Theo sent:** EST-2026-0912 on screen (the app's own letterhead document, which he took for
+  "Jacob using Claude") beside the same estimate printed from Jacob's iPhone, where the description
+  column ran one word per line.
+- **Measured, not guessed:** in print media at a 390px iPhone viewport, 1268's print host lays the
+  document out at **390px**. The host lives in the app page, the app page is device-width, and the
+  template's own print rule is `body{width:auto}`.
+- **Fix:** inside the host's shadow style only, `@media print{.crp-body{width:7.2in !important}}` —
+  the Letter text width under the templates' 0.65in side margins. A phone shrinks a page wider than
+  itself to the paper. Computers never use the host, so nothing changes there.
+- **Not provable here:** Chromium is not iOS WebKit. The layout width is measured; the real iPhone
+  printout is Theo's to confirm.
+- **Gate:** `gate_1272.mjs` (4) — GREEN; RED 2/4 on 1271 (body 390px). 1268, 1269, 1270, 1271,
+  check_build, types, dupes, scroll-lock green. Sentinel on 1271: CLEAN, 32 renders.
+
 ## Build 1271 — Upload an estimate (Theo, 9 Oct: "Can you have a way to upload estimates")
 
 - **The ask:** an estimate written somewhere else (paper at the table, Roofr, a supplier quote)

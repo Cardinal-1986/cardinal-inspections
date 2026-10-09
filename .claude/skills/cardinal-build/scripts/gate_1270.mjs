@@ -59,7 +59,9 @@ const planted=await page.evaluate((url)=>{ const f=document.getElementById('repo
   return d.querySelectorAll('[data-cardinal-hint]').length; }, PHOTO_URL);
 await page.evaluate(()=>{ const b=document.getElementById('emailDocBtn'); if(b) b.click(); });
 for(let i=0;i<40 && !sent;i++){ await page.waitForTimeout(500);
-  await page.evaluate(()=>{ const g=document.querySelector('#crAsk.open .askgo'); if(g) g.click(); }); }
+  await page.evaluate(()=>{ const g=document.querySelector('#crAsk.open .askgo'); if(g) g.click();
+    /* 1273: the address is asked in a sheet now, not a prompt */
+    const s=document.querySelector('#crEmailSheet.open'); if(s){ const a=document.getElementById('emShAddr'); if(a && !a.value) a.value='dave@dsmccoy.com'; const b=document.getElementById('emShGo'); if(b) b.click(); } }); }
 
 need('A  the email request is made (with the banner planted twice: '+planted+')', !!sent && typeof sent.html==='string', sent?Object.keys(sent).join(','):'not sent');
 const html=String((sent&&sent.html)||'');
