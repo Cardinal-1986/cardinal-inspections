@@ -4140,7 +4140,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1269<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1270<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -26908,6 +26908,7 @@ async function openEditor(id){
       }
       doc.body.setAttribute('spellcheck','true');
       doc.body.style.outline = 'none';
+      Array.prototype.forEach.call(doc.querySelectorAll('[data-cardinal-hint]'), function(el){ el.remove(); });   /* 1270 */
       var hint = doc.createElement('div');
       hint.setAttribute('data-cardinal-hint','1');
       hint.className = 'no-print';
@@ -27060,11 +27061,62 @@ function wireInvoiceLive(doc, r){
   }catch(e){}
 }
 
+/* 1270: the emailed copy is an .html ATTACHMENT. Opened from Mail on an iPhone
+   it shows in a preview that never loads anything from the internet, so every
+   picture was a "?" box: the logo (a site-relative /cardinal-report-logo.png
+   that has no site to resolve against) and every photo (signed storage URLs).
+   Pictures now travel INSIDE the file: each is fetched, scaled to 1400px JPEG
+   (the logo stays PNG for its transparency) and written as a data: URI, inside
+   a budget that keeps the request under Vercel's body limit. Past the budget,
+   or if one will not load, it keeps an absolute URL — the email's own "view it
+   online" link still shows it. */
+var INLINE_BUDGET = 3200000;   /* characters of data: URI, total */
+/** @param {any} blob */
+function inlBlobToData(blob){
+  return new Promise(function(res, rej){ var r = new FileReader(); r.onload = function(){ res(String(r.result)); }; r.onerror = rej; r.readAsDataURL(blob); });
+}
+/** @param {any} blob */
+async function inlShrink(blob){
+  if(/png/i.test(blob.type) && blob.size < 400000) return inlBlobToData(blob);
+  var bmp = await createImageBitmap(blob);
+  var k = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+  var c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+  var g = /** @type {any} */ (c.getContext('2d'));
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+  g.drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.82);
+}
+/** @param {any} html */
+async function inlineDocImages(html){
+  var d = new DOMParser().parseFromString(String(html || ''), 'text/html');
+  var used = 0, cache = {};
+  var imgs = Array.prototype.slice.call(d.querySelectorAll('img[src]'));
+  for(var i = 0; i < imgs.length; i++){
+    var im = imgs[i], src = im.getAttribute('src') || '';
+    if(!src || /^data:/i.test(src)) continue;
+    var abs = src;
+    try{ abs = new URL(src, location.origin).href; }catch(_){}
+    im.setAttribute('src', abs);
+    if(used > INLINE_BUDGET) continue;
+    try{
+      if(!cache[abs]){
+        var r = await fetch(abs, { credentials: 'omit' });
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        cache[abs] = await inlShrink(await r.blob());
+        used += cache[abs].length;
+      }
+      if(used <= INLINE_BUDGET) im.setAttribute('src', cache[abs]);
+    }catch(_){ /* keeps the absolute URL */ }
+  }
+  return '<!DOCTYPE html>\n' + d.documentElement.outerHTML;
+}
 function serializeFrame(){
   var doc = frame.contentDocument;
   var clone = doc.documentElement.cloneNode(true);
-  var hint = clone.querySelector('[data-cardinal-hint]');
-  if(hint) hint.remove();
+  /* 1270: ALL of them. The banner is added each time the frame loads, so a
+     document opened twice carried two, and querySelector took off one. */
+  clone.querySelectorAll('[data-cardinal-hint]').forEach(function(el){ el.remove(); });
   /* 1109: the live invoice status/balance/ledger is a view-time layer, never saved. */
   clone.querySelectorAll('[data-cardinal-live]').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('.fig .frame button, .fig .frame input[type=file]').forEach(function(el){ el.remove(); });
@@ -27340,7 +27392,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
         clientName: greetName,
         propertyLine: propLine,
         title: (row && row.title) || 'Cardinal Document',
-        html: serializeFrame(),
+        html: await inlineDocImages(serializeFrame()),   /* 1270 */
         shareUrl: tok ? shareUrlFor(tok) : null
       })
     });
@@ -43954,6 +44006,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1270, d: '2026-10-09', t: 'Emailed estimates show their pictures',
+    s: 'An estimate or report sent with <b>Email to client</b> arrives as a file. Opened on an iPhone, every picture in it was a \u201C?\u201D box \u2014 the Cardinal logo and the photos \u2014 and the yellow \u201CEditing mode\u201D banner could ride along at the top. The pictures now travel inside the file, so they show without the internet, and the banner never goes out.' },
   { b: 1269, d: '2026-10-09', t: 'Publish and Email on the estimate, in the installed app',
     s: 'In the installed app on a phone, the bar with <b>Save</b> and <b>Publish</b> at the bottom of an estimate sat underneath the app\u2019s bottom menu, so it could not be tapped. It now sits above the menu. It also has a new <b>Email</b> button: it publishes the estimate and opens the email to the client in one tap.' },
   { b: 1268, d: '2026-10-09', t: 'Print / PDF works on iPhone and iPad',

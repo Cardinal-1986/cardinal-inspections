@@ -9650,3 +9650,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - In standalone the bar sits above `#pwaNav`.
 - **Email** = Publish, then the document's own Email to client.
 - **Gate:** `gate_1269.mjs`, which runs the app as installed.
+
+## Build 1270 — Emailed documents carry their pictures (`inlineDocImages`, email path only)
+- Email to client sends the document with every picture inside it as a `data:` URI (scaled, with a
+  budget), because iOS Mail's attachment preview loads nothing from the internet.
+- Every editing banner is stripped from what is saved and sent.
+- **Gate:** `gate_1270.mjs`.

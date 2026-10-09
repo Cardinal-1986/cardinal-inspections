@@ -34333,6 +34333,48 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1270 — emailed estimates show their pictures, and never carry the editing banner (Jacob, via Theo)
+
+Theo, 9 Oct, 10:11 PM, two iPhone screenshots of the emailed estimate, with *"This is what shows
+when emailed 😖"*:
+- the Cardinal logo and the cover photo were both "?" boxes;
+- the yellow "Editing mode — click any text to type over it…" banner sat across the top.
+
+- **How the email travels.** Email to client posts `serializeFrame()` to `api/senddoc.js`, which
+  sends it as an **`.html` attachment**. Mail on iOS opens it in a preview that **does not load
+  remote resources**. So nothing that pointed off the file could ever show:
+  - the logo is site-relative (`CARDINAL_LOGO_SRC = '/cardinal-report-logo.png'`, 1182) and there
+    is no site to resolve it against;
+  - photos are signed storage URLs.
+
+  Measured on 1269 by the new gate: the attached html carried `/cardinal-report-logo.png` and the
+  raw storage URL, as in the screenshot.
+- **Pictures now travel inside the file.** `inlineDocImages(html)` runs on the email path only:
+  - every `<img>` is made absolute, fetched, and written as a `data:` URI;
+  - PNG under 400 KB stays PNG (the logo keeps its transparency); anything else is redrawn at
+    1400px as JPEG q.82 on white;
+  - a 3.2M-character budget keeps the request under Vercel's body limit;
+  - past the budget, or on a failed fetch, the picture keeps its **absolute** URL, and the email's
+    online link still shows it.
+
+  The stored document is unchanged.
+- **The banner.** `serializeFrame()` removed only the FIRST `[data-cardinal-hint]`, but the
+  editor's `frame.onload` adds a banner every load, so a document opened twice carried two. One rode
+  along to the client, and to every later save. Now all of them are removed, and onload clears any
+  banner before adding its one.
+- **Gates:**
+  - **`gate_1270.mjs` (5):**
+    - publish an estimate in the installed-app phone rig, plant a storage photo and a second banner,
+      press Email to client, capture `/api/senddoc`;
+    - no banner in the attached html, every `<img>` a `data:` URI (logo PNG, photo JPEG), no
+      site-relative src;
+    - the editor on screen keeps its banner.
+    - **RED on 1269:** the banner present, `/cardinal-report-logo.png` and the storage URL raw.
+  - Also green: `gate_1269`, `gate_1268`, `gate_1182` 19/19 (the logo constant), `check_build`,
+    types, dupes, `gate_stack` CLEAN, scroll-lock unchanged. `gate_1050` / `gate_1069` read as on
+    1268.
+- **Not verified here:** iOS Mail itself. The first real email is the test.
+
 ## Build 1269 — the estimate's Publish bar was under the installed app's nav; plus an Email button (Jacob, via Theo)
 
 Theo, 9 Oct, after 1268: *"There's still no publish button or a way to email. Can you just wire an
