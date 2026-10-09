@@ -4140,7 +4140,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1271<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1272<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44007,6 +44007,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1272, d: '2026-10-09', t: 'Estimates print full width on an iPhone',
+    s: 'Printing an estimate or report from an iPhone squeezed it to the width of the phone, so the description ran one word to a line. It now prints laid out on a Letter page, the way it looks on a computer.' },
   { b: 1271, d: '2026-10-09', t: 'Upload an estimate',
     s: 'Estimates has <b>Upload estimate</b>: an estimate written on paper or in another program comes in as photos or a PDF, with its trade, amount and date. It files under Estimates, the job is priced from it until a contract is signed, and it opens, prints and emails like any estimate.' },
   { b: 1270, d: '2026-10-09', t: 'Emailed estimates show their pictures',
@@ -69627,7 +69629,12 @@ function printDoc(d, win){
   var root = host.attachShadow({ mode: 'open' });
   var bodyCls = String(d.body.className || '').replace(/"/g, '');
   var bodySty = String(d.body.getAttribute('style') || '').replace(/"/g, '&quot;');
-  root.innerHTML = links + '<style>' + css + '</style>' +
+  /* 1272: lay the copy out on Letter, not on the phone. The document's own print
+     rule is body{width:auto}, and here "auto" is the app page — 390px on an
+     iPhone — so a printed estimate came out one word per line. 7.2in is the
+     Letter text width under the templates' 0.65in side margins. */
+  var LETTER = '@media print{.crp-body{width:7.2in !important;max-width:none !important;box-sizing:border-box;}}';
+  root.innerHTML = links + '<style>' + css + '\n' + LETTER + '</style>' +
     '<div class="crp-html"><div class="crp-body ' + bodyCls + '" style="' + bodySty + '">' + d.body.innerHTML + '</div></div>';
   var st = document.createElement('style');
   st.id = 'crPrintHostStyle';

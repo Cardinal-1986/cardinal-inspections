@@ -34333,6 +34333,22 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1272 — an estimate printed from an iPhone keeps the Letter layout (Theo, two screenshots)
+
+- **What Theo sent:** EST-2026-0912 on screen (the app's own letterhead document, which he took for
+  "Jacob using Claude") beside the same estimate printed from Jacob's iPhone, where the description
+  column ran one word per line.
+- **Measured, not guessed:** in print media at a 390px iPhone viewport, 1268's print host lays the
+  document out at **390px**. The host lives in the app page, the app page is device-width, and the
+  template's own print rule is `body{width:auto}`.
+- **Fix:** inside the host's shadow style only, `@media print{.crp-body{width:7.2in !important}}` —
+  the Letter text width under the templates' 0.65in side margins. A phone shrinks a page wider than
+  itself to the paper. Computers never use the host, so nothing changes there.
+- **Not provable here:** Chromium is not iOS WebKit. The layout width is measured; the real iPhone
+  printout is Theo's to confirm.
+- **Gate:** `gate_1272.mjs` (4) — GREEN; RED 2/4 on 1271 (body 390px). 1268, 1269, 1270, 1271,
+  check_build, types, dupes, scroll-lock green. Sentinel on 1271: CLEAN, 32 renders.
+
 ## Build 1271 — Upload an estimate (Theo, 9 Oct: "Can you have a way to upload estimates")
 
 - **The ask:** an estimate written somewhere else (paper at the table, Roofr, a supplier quote)
