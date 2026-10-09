@@ -34333,6 +34333,57 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1268 — Print / PDF on iPhone and iPad (Jacob, via Theo)
+
+Jacob, 8 Oct, 9:06 PM, with a screenshot of the estimate Preview: *"How do you send an estimate
+directly from the app"*. Then: *"If I click print/pdf it doesn't do anything so I can't do anything
+with the estimate."*
+
+- **Sending was already there.** Preview is a look only. **Publish** creates the document and opens
+  it in the editor, whose primary buttons are Email to client, Text to sign and Share link (1204).
+  Theo was given that line for Jacob. The CHANGELOG entry says it too.
+- **The print bug.** All three Print buttons called `frame.contentWindow.print()`:
+  - the estimate preview (`pv-print`, `cr-epub`);
+  - the report editor (`printBtn`);
+  - the document viewer (`dvAct`).
+
+  On an iPhone or iPad, that call on an iframe can return having done nothing: no sheet, no error.
+  Not reproduced on a device; WebKit is not in this container. It fits the screenshot, and it is the
+  only print call these buttons make.
+- **The fix: `window.CardinalPrint` (`cr-dl-script`, beside `CardinalDownload`).** On Apple touch
+  devices (the iPad reports MacIntel with touch points):
+  - the document is copied into `#crPrintHost` on the main page, inside a **shadow root**, so its
+    CSS and the app's cannot touch each other;
+  - its `html` / `body` / `:root` rules are rewritten onto two wrapper divs (`.crp-html`,
+    `.crp-body`), and the body's class and style are kept;
+  - its `@page` rules move to the page;
+  - in print media everything else under `body` is hidden;
+  - `window.print()` runs, and the host clears on `afterprint`, with a 10-minute fallback.
+- **Computers keep the iframe print**, unchanged. That is what the existing print gates measure.
+  `window.__crPrintHost = true` forces the host path.
+- **The first run of the gate caught a real cascade bug.** Two existing app print rules,
+  `body > :not(#cr-ce-view)` and `body > :not(#cr-lrs-view)`, carry an id inside `:not()`, which
+  outranks a plain `#crPrintHost`. The host was hidden in print. It is now
+  `body > #crPrintHost#crPrintHost`.
+- **Gates:**
+  - **`gate_1268.mjs` (8), Chromium, with print spies:**
+    - a computer keeps the iframe print;
+    - an iPhone user agent prints the page, not the iframe;
+    - in print media the app is hidden and the host shows the document's text;
+    - the document's own CSS styles the copy (body rule, class rule, body class), and its `@page`
+      rule moves;
+    - the host is invisible on screen;
+    - `afterprint` removes it;
+    - the report editor's real Print button goes through it with the report inside.
+    - RED on 1267: 7 failed, no crash. The one pass is "a computer keeps the iframe print", which is
+      unchanged by design.
+  - The two gate faults found along the way were in the gate: a text read that started with the
+    style sheet, and an unanswered crAsk on a job with no checklist.
+  - `check_build`, types (one cast), dupes, `gate_stack` CLEAN, scroll-lock unchanged.
+  - `gate_1050` and `gate_1069` read identically on 1267 (1050 needs a PDF tool the container lacks).
+  - Sentinel not run: no screen changed; the host is display:none on screen.
+- **Not verified here: a real iPhone print.** The first real tap is Jacob's.
+
 ## Build 1267 — guided report, step 3: Change the report by asking, or edit by hand (Theo)
 
 Theo, 8 Oct: *"Then when the report is made an option to edit with the chatbox or manually."*

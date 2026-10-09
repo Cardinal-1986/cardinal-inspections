@@ -4140,7 +4140,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-08 build 1267<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1268<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -28031,8 +28031,9 @@ document.getElementById('printBtn').addEventListener('click', async function(){
     var d = frame.contentDocument;
     ensurePrintFix(d);
     if(d) compactForPrint(d);
-    frame.contentWindow.focus();
-    frame.contentWindow.print();
+    /* 1268: through CardinalPrint, which prints the page itself on iPhone/iPad */
+    if(window.CardinalPrint) window.CardinalPrint.doc(d, /** @type {any} */ (frame).contentWindow);
+    else { frame.contentWindow.focus(); frame.contentWindow.print(); }
     if(d) restorePrintMarks(d);
   }
   catch(e){ showError('Print failed: ' + e.message); }
@@ -43953,6 +43954,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1268, d: '2026-10-09', t: 'Print / PDF works on iPhone and iPad',
+    s: 'On an iPhone or iPad, <b>Print / PDF</b> could do nothing at all \u2014 in the estimate preview, the report editor and the document viewer. It now opens the print sheet, where you can print or save a PDF. Computers print as before. To <b>send</b> an estimate, use <b>Publish</b>: it opens the finished estimate with Email to client, Text to sign and Share link.' },
   { b: 1267, d: '2026-10-08', t: 'Change the report by asking',
     s: 'The report\u2019s <b>Assistant</b> panel has two modes now. <b>Change the report</b>: say what to change in plain words \u2014 \u201Cshorter summary\u201D, \u201Cthe porch was outside this inspection\u201D, \u201Cmake the chimney caption say the crown is cracked\u201D \u2014 and it rewrites just those parts, saves, and gives you an <b>Undo</b>. <b>Add a note</b> works as before. A report the assistant wrote opens with the panel ready to change it; close it to edit by hand \u2014 every line in the report is still tappable.' },
   { b: 1266, d: '2026-10-08', t: 'New inspection report: photos and the assistant',
@@ -52696,8 +52699,9 @@ previewEl.querySelector('[data-act="pv-print"]').onclick = function(){
 var f = previewEl.querySelector('[data-slot="pv-frame"]');
 if(!f || !f.contentWindow) return;
 try{
-f.contentWindow.focus();
-f.contentWindow.print();
+/* 1268: iPhone/iPad print the page itself (see CardinalPrint) */
+if(window.CardinalPrint) window.CardinalPrint.frame(f);
+else { f.contentWindow.focus(); f.contentWindow.print(); }
 }catch(e){
 crTell('Print failed: ' + (e.message || e));
 }
@@ -69498,6 +69502,70 @@ function downloadUrl(url, title){
   setTimeout(function(){ a.remove(); }, 1500);
   return true;
 }
+/* 1268: print a document that lives in an iframe — Jacob, 8 Oct: "If I click
+   print/pdf it doesn't do anything". Every Print button here called
+   frame.contentWindow.print(). On an iPhone or iPad that call can return without
+   doing anything — no dialog, no error — so the button looked dead. There the
+   page itself is printed instead: a copy of the document goes into a hidden
+   host on the main page, inside a shadow root so the document's CSS and the
+   app's CSS cannot touch each other, every other part of the page is hidden for
+   print, and window.print() runs. Computers keep the iframe print they already
+   had — it works there and its page breaks are what the print gates measure.
+   window.__crPrintHost = true forces the host path (the gate uses it). */
+function isAppleTouch(){
+  var ua = navigator.userAgent || '';
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1);
+}
+var PAGE_RULE = /@page[^{]*\{(?:[^{}]|\{[^{}]*\})*\}/g;
+/** @param {any} d @param {any} win */
+function printDoc(d, win){
+  if(!d || !d.documentElement || !d.body) return false;
+  if(!window.__crPrintHost && !isAppleTouch() && win){
+    try{ win.focus(); win.print(); return true; }catch(_){}
+  }
+  var old = document.getElementById('crPrintHost'); if(old) old.remove();
+  var oldSt = document.getElementById('crPrintHostStyle'); if(oldSt) oldSt.remove();
+  var css = Array.prototype.map.call(d.querySelectorAll('style'), function(s){ return s.textContent || ''; }).join('\n');
+  var pages = (css.match(PAGE_RULE) || []).join('\n');
+  /* the document's html/body rules become rules on two wrapper divs, because a
+     shadow root has no html or body of its own */
+  css = css.replace(PAGE_RULE, '')
+           .replace(/(^|[\s,{}>+~(])(html|body)(?=[\s,.:#\[{>+~)]|$)/g, '$1.crp-$2')
+           .replace(/:root\b/g, '.crp-html');
+  var links = Array.prototype.map.call(d.querySelectorAll('link[rel="stylesheet"]'), function(l){ return l.outerHTML; }).join('');
+  var host = document.createElement('div');
+  host.id = 'crPrintHost';
+  var root = host.attachShadow({ mode: 'open' });
+  var bodyCls = String(d.body.className || '').replace(/"/g, '');
+  var bodySty = String(d.body.getAttribute('style') || '').replace(/"/g, '&quot;');
+  root.innerHTML = links + '<style>' + css + '</style>' +
+    '<div class="crp-html"><div class="crp-body ' + bodyCls + '" style="' + bodySty + '">' + d.body.innerHTML + '</div></div>';
+  var st = document.createElement('style');
+  st.id = 'crPrintHostStyle';
+  st.textContent = '@media screen{#crPrintHost{display:none !important;}}' +
+    '@media print{html,body{background:#fff !important;margin:0 !important;padding:0 !important;height:auto !important;' +
+    'min-height:0 !important;overflow:visible !important;position:static !important;}' +
+    'body > *:not(#crPrintHost){display:none !important;}' +
+    /* two ids: the app's own print rules (body > :not(#cr-ce-view), …) carry an
+       id inside :not() and would otherwise outrank a single #crPrintHost */
+    'body > #crPrintHost#crPrintHost{display:block !important;}}' + pages;
+  document.head.appendChild(st);
+  document.body.appendChild(host);
+  var done = false;
+  function clean(){ if(done) return; done = true; host.remove(); st.remove(); window.removeEventListener('afterprint', clean); }
+  window.addEventListener('afterprint', clean);
+  /* iOS may return from print() before the sheet closes; the host is invisible
+     on screen, so a late clean-up costs nothing */
+  setTimeout(clean, 10 * 60 * 1000);
+  try{ window.print(); }catch(e){ clean(); crTell('Print failed: ' + (e.message || e)); return false; }
+  return true;
+}
+/** @param {any} frame */
+function printFrame(frame){
+  var d = frame && (frame.contentDocument || (frame.contentWindow && frame.contentWindow.document));
+  return printDoc(d, frame && frame.contentWindow);
+}
+window.CardinalPrint = Object.assign(window.CardinalPrint || {}, { doc: printDoc, frame: printFrame, appleTouch: isAppleTouch });
 window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
   html : downloadHtml,
   frame: downloadFrame,
@@ -90221,7 +90289,7 @@ function dvAct(){
   if(!cur) return;
   if(cur.html){
     var f = /** @type {HTMLIFrameElement} */ (bodyEl.querySelector('iframe'));
-    try{ if(f && f.contentWindow) f.contentWindow.print(); }catch(_){}
+    try{ if(f && window.CardinalPrint) window.CardinalPrint.frame(f); else if(f && f.contentWindow) f.contentWindow.print(); }catch(_){}
     return;
   }
   var abs = new URL(cur.url, location.href).href;
