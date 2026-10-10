@@ -9734,3 +9734,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Dark retail client profile:** one sans font, and flat `#0F1521` panels for the client card, the money card, the Job Menu tiles and the section cards.
 - **Kept their colour:** the stage band, the stage spine, the money ring, and History's red top.
 - **Gate:** `gate_1286.mjs`.
+
+## Build 1287: one typeface across the app (dark retail)
+- Dark retail uses `'Segoe UI',Arial,sans-serif` everywhere, set once.
+- The drawer and SVG text are excluded.
+- Light mode is unchanged.
+- **Gate:** `gate_1287.mjs`.

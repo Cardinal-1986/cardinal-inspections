@@ -34333,6 +34333,39 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1287: one typeface across the app in dark retail (follow-up 4 to 1283, option B)
+
+**Why one rule.** 1283 and 1286 removed Georgia and `ui-monospace` from two screens by
+naming each element. A survey of the rest showed both everywhere:
+
+- Every page title was Georgia: Leads, Client Directory, Estimates, Punch and AR.
+- Their small labels and counts were `ui-monospace`.
+- `ui-monospace` alone is declared **256 times**, mostly inside `font:` shorthands.
+
+Doing that screen by screen would mean 256 out-rankings. Instead the app's typeface is set
+once for dark retail, using `!important`. That is deliberate: a `font:` shorthand set on
+the element itself always beats an inherited family, so nothing short of `!important` can
+be a single rule.
+
+**What is excluded.**
+- The drawer (`#cr-lnav`): its section labels are part of the look Theo picked.
+- SVG text.
+- Documents in iframes and shadow roots. These are separate trees, so the rule cannot
+  reach them.
+
+**⚠ The font stack is the app's own, `'Segoe UI',Arial,sans-serif`, not `system-ui`
+first.** My first pass put `system-ui` ahead of Arial. On the test machine that resolves
+to a wider face, `gate_1224` went from 2 to 5 failures, and "Communication",
+"Measurements" and "Appointments" split across lines in the Job Menu. With the app's own
+stack the widths are what they were, and `gate_1224` is back to its pre-existing 2
+("Communication" at 360px Larger). Those 2 were already red on the 1285 tree and are not
+this build's.
+
+**Gates.**
+- `gate_1287.mjs`: 9 screens show no Georgia or monospace text, the drawer keeps its
+  labels, and light mode is untouched. It fails 1 of 3 on 1286.
+- Also green: `gate_983`, `gate_1081`, `gate_1067`, `gate_1206` and `gate_stack`.
+
 ## Build 1286 — the client page in the drawer's style (follow-up 4 to 1283, option B)
 
 **What made it cartoony,** measured in dark retail on the client profile:

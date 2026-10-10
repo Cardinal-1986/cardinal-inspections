@@ -4148,7 +4148,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1286<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1287<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44117,6 +44117,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1287, d: '2026-10-10', t: 'One typeface across the app',
+    s: 'Every screen now uses the same plain typeface as the side menu \u2014 the old storybook page titles and typewriter labels are gone from Leads, the Client Directory, Estimates, Punch, Accounts Receivable and the rest. The side menu keeps its own look. Dark mode first.' },
   { b: 1286, d: '2026-10-10', t: 'A cleaner client page, like the side menu',
     s: 'The client page now matches the home screen and the side menu: one plain typeface for the client name and the counts, and flat dark cards instead of glossy grey ones for the client card, the money box, the Job Menu buttons and every section. The green stage bar and the money ring keep their colours. Dark mode.' },
   { b: 1285, d: '2026-10-10', t: 'Calendar arrows and Activity, flat like the rest',
@@ -73961,6 +73963,18 @@ background:#0F1521;border:1px solid #223047;box-shadow:none;}
 background:#0F1521;border-left:1px solid #223047;border-right:1px solid #223047;border-bottom:1px solid #223047;box-shadow:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .jabox:hover{
 --cr-stack:"1286 hover lifts the ground, not a shadow";background:#141C29;}
+
+/* ── Build 1287 · one typeface across the app, dark retail (Theo: option B) ─
+   Every page title was Georgia and ui-monospace is declared 256 times, mostly in
+   `font:` shorthands. One rule instead of 256 out-rankings; !important is why it
+   can be one rule. The drawer keeps its own labels (Theo picked that look), and
+   svg text is not touched. Dark retail only; light follows. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *){
+--cr-stack:"1287 one sans across dark retail; the drawer is excluded";
+font-family:'Segoe UI',Arial,sans-serif !important;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :is(.pmoney,.jan,.cnt,.n,.c,.gn,.gt,.kpcnt,.cd,.ch){
+--cr-stack:"1287 counts and figures line up";
+font-variant-numeric:tabular-nums;}
 
 /* ── Build 527 · the Schedule Board ───────────────────────────────────────
    Fourteen white slabs down a near-black page - the one retail surface that
