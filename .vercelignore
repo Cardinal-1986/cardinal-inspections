@@ -113,6 +113,12 @@ spark/
 #     Build 805 is why this is a separate file rather than a screen in
 #     index.html: a hostname check inside one big file separates nothing. ---
 
+# --- oc-preferred-contractor.png DELIBERATELY SHIPS (build 1277). The Owens
+#     Corning Preferred Contractor lockup, cut from Theo's printed master
+#     docs/Cardinal_Roofing_Contract.pdf. Client estimates fetch it by path
+#     (OC_PREFERRED_SRC), exactly like cardinal-report-logo.png below, so it
+#     must NOT be added to this file. Public brand artwork; nothing private.
+#     Theo, 10 Oct 2026: no OC approval needed for it — "It's only the pink panther."
 # --- cardinal-report-logo.png DELIBERATELY SHIPS (build 1182). It is the
 #     Cardinal mark on the cover of an inspection report, and it MUST NOT be
 #     added to this file. It was a base64 data URI written into index.html

@@ -9685,3 +9685,8 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 ## Build 1276 — retail estimates print Description + Price (`packageView` in buildDocHtml)
 - Insurance and Community keep Qty / Unit / Unit Price. A job with no type recorded counts as retail.
 - **Gate:** `gate_1276.mjs`.
+
+## Build 1277 — OC Preferred Contractor lockup on estimates (`/oc-preferred-contractor.png`, `OC_PREFERRED_SRC`)
+- Under the Cardinal logo on the published estimate, Good/Better/Best, and the editor's roofing template.
+- From Theo's printed roofing contract; no OC approval needed (only the Pink Panther needs it).
+- **Gate:** `gate_1277.mjs`.

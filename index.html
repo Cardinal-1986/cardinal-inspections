@@ -4160,7 +4160,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1276<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1277<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8876,6 +8876,8 @@ var SUPABASE_ANON_KEY = "sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ";
    exactly that way), and writing both makes tsc see two declarations of one
    name, which sends gate_types red with TS2403. */
 var CARDINAL_LOGO_SRC = '/cardinal-report-logo.png';
+/* 1277: the OC Preferred Contractor lockup, cut from Theo's printed roofing contract. */
+var OC_PREFERRED_SRC = '/oc-preferred-contractor.png';
 
 /* Embedded Cardinal report template (verbatim). Injected at build time. */
 var REPORT_TEMPLATE = `<!DOCTYPE html>
@@ -9781,6 +9783,8 @@ body{
   display:inline-block;font-size:10pt;font-weight:700;color:#fff;
   background:#d40f7d;border-radius:14px;padding:3px 14px;margin-top:4px;letter-spacing:.03em;
 }
+/* 1277: the real OC Preferred Contractor lockup replaced the pill above */
+.est-oc-img{display:block;width:1.9in;max-width:55%;margin:8px auto 0;}
 .rule{height:3px;background:var(--red);border:0;margin:8px 0 14px;}
 
 /* meta + facts tables */
@@ -9882,7 +9886,7 @@ table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
   <img class="est-logo" src="__LOGO__" alt="Cardinal Roofing &amp; Renovations">
   <div class="est-title">ROOFING <span>ESTIMATE</span></div>
   <div class="est-sub">Cardinal Roofing &amp; Renovations</div>
-  <div class="est-oc">⭐ Owens Corning® Preferred Contractor</div>
+  <img class="est-oc-img" src="/oc-preferred-contractor.png" alt="Owens Corning Preferred Contractor">
 </div>
 <hr class="rule">
 
@@ -44082,6 +44086,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1277, d: '2026-10-10', t: 'Owens Corning Preferred Contractor on every estimate',
+    s: 'Estimates now carry the Owens Corning Preferred Contractor badge under the Cardinal logo \u2014 the same artwork printed on our roofing contract. It shows on the published estimate, the emailed copy, the print and the Good / Better / Best proposal.' },
   { b: 1276, d: '2026-10-10', t: 'Retail estimates: Description and Price',
     s: 'A retail estimate now shows the homeowner two columns \u2014 what the work is, and its price. No more Qty, Unit and Unit Price columns on the client\u2019s copy. You still price lines the same way in the builder, and the totals are the same. Insurance and Community estimates keep the full table.' },
   { b: 1275, d: '2026-10-10', t: 'Publish checks your lines first',
@@ -52304,6 +52310,7 @@ return '<!DOCTYPE html>\n' +
 '.est-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:10px}\n' +
 '.est-brand{flex:0 0 auto}\n' +
 '.est-logo{width:2.15in;max-width:100%;display:block}\n' +
+'.est-ocpc{display:block;width:1.75in;max-width:70%;margin-top:10px}\n' +
 '.est-co{flex:0 0 auto;text-align:right;font-size:10pt;line-height:1.6;color:#5a5a5a}\n' +
 '.est-co .co-name{font-weight:700;font-size:11pt;color:var(--ink);margin-bottom:3px;letter-spacing:.02em}\n' +
 '.est-title{font-size:24pt;font-weight:400;letter-spacing:.22em;text-align:right;margin:10px 0 2px;color:var(--ink)}\n' +
@@ -52398,6 +52405,7 @@ return '<!DOCTYPE html>\n' +
 '<div class="est-head">' +
 '<div class="est-brand">' +
 (logo ? '<img class="est-logo" src="' + logo + '" alt="Cardinal Roofing &amp; Renovations">' : '') +
+'<img class="est-ocpc" src="' + (window.OC_PREFERRED_SRC || '/oc-preferred-contractor.png') + '" alt="Owens Corning Preferred Contractor">' +   /* 1277 */
 '</div>' +
 '<div class="est-co">' +
 '<div class="co-name">Cardinal Roofing &amp; Renovations, LLC</div>' +
@@ -52669,6 +52677,7 @@ function buildGbbHtml(tiers, project, plan){
     '@media print{.no-print{display:none!important}body{width:auto;margin:0;padding:0}}\n' +
     '.est-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:8px}\n' +
     '.est-logo{width:2in;max-width:100%;display:block}\n' +
+    '.est-ocpc{display:block;width:1.65in;max-width:70%;margin-top:9px}\n' +
     '.est-co{text-align:right;font-size:9.5pt;line-height:1.55;color:#5a5a5a}\n' +
     '.est-co .co-name{font-weight:700;font-size:10.5pt;color:var(--ink);margin-bottom:2px;letter-spacing:.02em}\n' +
     '.gbb-title{font-size:23pt;font-weight:400;letter-spacing:.14em;margin:8px 0 2px;color:var(--ink)}\n' +
@@ -52715,7 +52724,7 @@ function buildGbbHtml(tiers, project, plan){
     '}\n' +
     '</style>\n</head>\n<body>\n' +
     '<div class="est-head">' +
-    '<div class="est-brand">' + (logo ? '<img class="est-logo" src="' + logo + '" alt="Cardinal Roofing &amp; Renovations">' : '') + '</div>' +
+    '<div class="est-brand">' + (logo ? '<img class="est-logo" src="' + logo + '" alt="Cardinal Roofing &amp; Renovations">' : '') + '<img class="est-ocpc" src="' + (window.OC_PREFERRED_SRC || '/oc-preferred-contractor.png') + '" alt="Owens Corning Preferred Contractor">' + '</div>' +
     '<div class="est-co">' +
     '<div class="co-name">Cardinal Roofing &amp; Renovations, LLC</div>' +
     '5735 Webster Street<br>Dayton, Ohio 45414<br>Office # (937) 576-6753<br>Admin@cardinalrenovations.net' +

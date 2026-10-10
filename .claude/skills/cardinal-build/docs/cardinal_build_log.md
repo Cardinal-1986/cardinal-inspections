@@ -34333,6 +34333,23 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1277 — the Owens Corning Preferred Contractor lockup on every estimate (Theo, pick #7)
+
+- **Theo, 10 Oct, three lines:** *"I don't need approval for the preferred contractor logo"* · *"It's
+  only the pink panther"* · *"You have the logo, it's in the roof contract you made."*
+- **The artwork** is cut from **docs/Cardinal_Roofing_Contract.pdf page 1, top left** — rendered by
+  pdf.js 3.11.174 at 6× in Chromium and cropped (pypdf/fitz are not usable in the container). Theo's own
+  printed master, not redrawn. Ships at the root as **`oc-preferred-contractor.png`** (651×171, 25 KB),
+  noted as DELIBERATELY SHIPS in `.vercelignore`. ⚠ The image embedded in the in-app roofing agreement
+  (`ROOF_AGREEMENT_BODY`) is the **roof cutaway diagram**, not the lockup — checked first.
+- **Where:** `OC_PREFERRED_SRC` beside `CARDINAL_LOGO_SRC`; `<img class="est-ocpc">` under the Cardinal
+  logo in `buildDocHtml` and `buildGbbHtml`; the in-editor ROOFING ESTIMATE template's pink text pill
+  "⭐ Owens Corning® Preferred Contractor" is **replaced** by the real lockup (`.est-oc-img`).
+- **Email:** 1270's `inlineDocImages` carries it inside the emailed file — `gate_1270` now serves it and
+  requires it as a `data:` URI (it read as "not inlined" while the rig did not serve the file).
+- **Gate:** `gate_1277.mjs` (5) GREEN; RED 4/5 on 1276. Also green: 1027, 1141, 1182, 1270, 1272,
+  1274, 1276, check_build, types, dupes. Looked at in a render, desktop and phone.
+
 ## Build 1276 — a retail estimate is Description + Price (Theo, 10 Oct, pick #4, option A)
 
 - **Picked from a rendered preview** (today's five columns / A: Description + Price / B: the same with a
