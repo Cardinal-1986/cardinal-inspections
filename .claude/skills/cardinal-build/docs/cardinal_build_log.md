@@ -34333,6 +34333,37 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1281 — the home Approvals card reads on the dark home screen (Theo's photo, 10 Oct)
+
+Theo sent a photo of the home screen and said "Fix first."
+
+**What was wrong**
+- The heading "Approvals — signed estimates awaiting contract" was `.projsec`'s light-era
+  ink `#1c1416` on the navy home card: **1.16:1**.
+- Each approval was a white `.apprrow` slab, with a `#1d4f91` name and a `#666` detail
+  line.
+- This is the same light-ink-on-dark-ground class as 527 and 689.
+
+**What changed**
+- Following 527's Schedule Board approach, the fix is applied at the card itself
+  (`#approvalsCard`) and limited to dark retail.
+- The heading uses `--rbe-head` (**15.6:1**).
+- The row uses the `--rbe-bg1/bg2` card gradient with a dark ridge.
+- The name is `--rbe-head` (12.71:1) and the detail is `--rbe-mute` (6.79:1).
+- Light mode and Claims/Community are unchanged, which `gate_1281` C asserts.
+- The overrides carry `--cr-stack` because they out-rank the light-era base on purpose,
+  and the base still serves light mode. `gate_stack` is clean.
+
+**Gates:** `gate_1281.mjs`, 3 checks, red 2/3 on 1280.
+
+**Not changed: the cardinal-on-a-hammer watermark behind Next 30 Days.** It is deliberate
+(1183) at opacity .14 in dark mode. Theo's photo makes it look heavier than it renders; the
+question of fading or removing it is put to him, not decided here.
+
+**On hold, on Theo's say-so ("I don't know on calander put it on hold"):** the report that
+appointments no longer reach the Apple calendar. The code has been unchanged since 1258 and
+works in Chromium. The four-way diagnosis question is parked in `OPEN_ITEMS.md`.
+
 ## Build 1280: a slim pay bar, and pay by check (Theo: "The payment screen is too large compared to estimate. Also a lot people pay by check.")
 
 - **The bar.** In 1279 the pay card covered about a third of a phone screen on top of

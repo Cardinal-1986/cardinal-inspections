@@ -9708,3 +9708,8 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Pay** opens `#crPaySheet`: bank (no fee), card (+3%), check (no fee).
 - The check option gives payee, mailing address and memo line. It writes nothing; record checks in Money In.
 - **Gate:** `gate_1280.mjs`.
+
+## Build 1281 — Approvals card themed for dark home
+- `#approvalsCard` heading, rows, name and detail all use `--rbe-*` tokens in dark retail.
+- Light mode and Claims/Community are unchanged.
+- **Gate:** `gate_1281.mjs`.
