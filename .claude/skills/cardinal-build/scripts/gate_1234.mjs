@@ -64,7 +64,8 @@ for (const th of ['dark', 'rb-light']) {
   await p.close();
   const c = r.close || {}, h = r.h2 || {}, t = r.tools || [];
   ok(c.w === 44 && c.h === 44 && c.svg && c.aria === 'Close', 'A  ' + th + ' builder: back is a 44x44 icon labelled Close', JSON.stringify(c).slice(0, 120));
-  ok(/Georgia/.test(h.font || '') && h.h < 40 && h.t >= c.t - 4 && h.b <= c.b + 4, 'A  ' + th + ' builder: Georgia title on one line beside the back', JSON.stringify(h).slice(0, 120));
+  /* 1287: dark retail app screens take the drawer's sans (Theo: option B); light keeps Georgia/mono. */
+  ok((th === 'dark' ? /Segoe UI/.test(h.font || '') : /Georgia/.test(h.font || '')) && h.h < 40 && h.t >= c.t - 4 && h.b <= c.b + 4, 'A  ' + th + ' builder: Georgia title on one line beside the back', JSON.stringify(h).slice(0, 120));
   ok(r.num && r.num.t >= h.b - 6, 'A  ' + th + ' builder: the estimate number sits under the title', JSON.stringify(r.num));
   ok(t.length === 3 && t.every(x => x.t === t[0].t && x.t >= (r.num ? r.num.b : h.b) - 2 && x.h >= 44 && x.tt === 'none'), 'A  ' + th + ' builder: Preview / Options / Contract on one row under the title, 44px, sentence case', JSON.stringify(t.map(x => [x.txt, x.t, x.h, x.tt])));
   ok([c, h, ...t].every(x => x.ratio >= 4.5), 'A  ' + th + ' builder: every header text clears 4.5:1', [c, h, ...t].map(x => x.ratio).join(' '));
@@ -86,7 +87,8 @@ for (const th of ['dark', 'rb-light']) {
     return { first: kids[0] === cl, nBtn: hd.querySelectorAll('button').length, cl: R(cl), h2: Object.assign(R(h2), { font: getComputedStyle(h2).fontFamily }), add: R(add) }; }).catch(e => ({ err: String(e) }));
   await p.close();
   ok(r.first && r.cl && r.cl.w === 44 && r.cl.h === 44, 'C  ' + th + ' Line Items: back first, 44x44', JSON.stringify(r).slice(0, 140));
-  ok(r.h2 && /Georgia/.test(r.h2.font) && r.h2.h < 40 && r.nBtn === 2 && r.add.l > r.h2.l, 'C  ' + th + ' Line Items: Georgia title on one line, + Add the one action', JSON.stringify(r.h2) + ' buttons=' + r.nBtn);
+  /* 1287: dark retail app screens take the drawer's sans (Theo: option B); light keeps Georgia/mono. */
+  ok(r.h2 && (th === 'dark' ? /Segoe UI/.test(r.h2.font || '') : /Georgia/.test(r.h2.font || '')) && r.h2.h < 40 && r.nBtn === 2 && r.add.l > r.h2.l, 'C  ' + th + ' Line Items: Georgia title on one line, + Add the one action', JSON.stringify(r.h2) + ' buttons=' + r.nBtn);
   ok(r.cl.ratio >= 3 && r.h2.ratio >= 4.5, 'C  ' + th + ' Line Items: back and title clear their floors', r.cl.ratio + ' / ' + r.h2.ratio);
 }
 await browser.close();

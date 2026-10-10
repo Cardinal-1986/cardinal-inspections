@@ -9740,3 +9740,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - The drawer and SVG text are excluded.
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
+
+## Builds 1288–1289: Leads/Punch/AR/Crews cards flat; presentation screens keep their type
+- **Dark retail:** the Leads and Punch cards are flat, and AR and Crews have no shadows.
+- **Unchanged:** Production and Dispatch.
+- **Why, Colors, Showcase and Appointment** are excluded from the 1287 typeface.
+- **Gates:** `gate_1288.mjs`; `gate_1287` D.

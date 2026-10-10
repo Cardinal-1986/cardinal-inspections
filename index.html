@@ -4148,7 +4148,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1287<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1289<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44117,6 +44117,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1289, d: '2026-10-10', t: 'Presentation screens keep their own look',
+    s: 'The screens you show a homeowner at the table \u2014 Why Cardinal, Owens Corning Colors, the Showcase and The Appointment \u2014 keep their own designed lettering. The plain typeface from 1287 now applies only to the working screens of the app.' },
+  { b: 1288, d: '2026-10-10', t: 'Flat cards on Leads, Punch, Receivables and Crews',
+    s: 'The cards on Leads & Jobs and the Punch page are flat dark panels now instead of glossy ones, and Accounts Receivable and Crews lose their drop shadows. Production and the dispatch board keep their own look. Dark mode.' },
   { b: 1287, d: '2026-10-10', t: 'One typeface across the app',
     s: 'Every screen now uses the same plain typeface as the side menu \u2014 the old storybook page titles and typewriter labels are gone from Leads, the Client Directory, Estimates, Punch, Accounts Receivable and the rest. The side menu keeps its own look. Dark mode first.' },
   { b: 1286, d: '2026-10-10', t: 'A cleaner client page, like the side menu',
@@ -73971,12 +73975,26 @@ background:#0F1521;border-left:1px solid #223047;border-right:1px solid #223047;
    `font:` shorthands. One rule instead of 256 out-rankings; !important is why it
    can be one rule. The drawer keeps its own labels (Theo picked that look), and
    svg text is not touched. Dark retail only; light follows. */
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *){
---cr-stack:"1287 one sans across dark retail; the drawer is excluded";
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt) *){
+--cr-stack:"1287 one sans across dark retail; the drawer and (1289) the client-facing presentation screens — Why, Colors, Showcase, Appointment — are excluded";
 font-family:'Segoe UI',Arial,sans-serif !important;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :is(.pmoney,.jan,.cnt,.n,.c,.gn,.gt,.kpcnt,.cd,.ch){
 --cr-stack:"1287 counts and figures line up";
 font-variant-numeric:tabular-nums;}
+
+/* ── Build 1288 · Leads, Punch, AR and Crews cards in the drawer's style ───
+   Leads/Punch share the generic bg1/bg2 gloss → the flat drawer panel. AR and
+   Crews have their own ground tokens → shadow only (1286's lesson). Production
+   and Dispatch are left alone on purpose. Dark retail only. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pu-hero .pu-card,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView .pu-card{
+--cr-stack:"1288 flat drawer panel (was bg1/bg2 gloss + shadow)";
+background:#0F1521;border:1px solid #223047;box-shadow:none;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-ar-view .crar-btn:not(.primary),
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-ar-view .crar-empty,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #crewsView .crw-card{
+--cr-stack:"1288 shadow off; the ground stays on its own token";
+box-shadow:none;}
 
 /* ── Build 527 · the Schedule Board ───────────────────────────────────────
    Fourteen white slabs down a near-black page - the one retail surface that
@@ -74457,15 +74475,16 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    object seen twice. Light: the bright white card on the off-white page, lifted
    the same way.                                                             */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard{
-  background:linear-gradient(180deg,var(--nv-card1,#1A2434),var(--nv-card2,#141C29));
+  /* 1288: flat, the drawer's style (Theo: option B); ground stays on its --nv token */
+  background:var(--nv-card2,#141C29);
   border:1px solid var(--nv-bd,#223047);
-  border-top:2px solid var(--nv-edge,#33496A);
-  box-shadow:0 10px 24px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.07);
+  border-top:1px solid var(--nv-bd,#223047);
+  box-shadow:none;
   color:var(--nv-ink,#dfe5ee);
 }
 @media (hover:hover){
   :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard:hover{
-    box-shadow:0 20px 40px rgba(0,0,0,.74), inset 0 1px 0 rgba(255,255,255,.13);
+    box-shadow:none;background:var(--nv-card1,#1A2434);
     border-top-color:#435C82;
   }
 }
