@@ -159,7 +159,7 @@ const cardFeeCents = (cents) => Math.round(cents * CARD_FEE_PCT / 100);
    button a thumb can barely hit. Zoom the bars (and the signing sheet) back up
    by 1/scale; the document itself stays the Letter page. */
 const LETTER_UI = `<script id="crLetterUi">(function(){
-  var IDS = ['crPayBar', 'csBar', 'csOverlay'];
+  var IDS = ['crPayBar', 'crPaySheet', 'csBar', 'csOverlay'];   // 1280: + the pay sheet
   function fit(){
     var vv = window.visualViewport, vw = document.documentElement.clientWidth || 0;
     var s = vv && vv.scale ? vv.scale : (screen.width && vw ? screen.width / vw : 1);
@@ -174,37 +174,61 @@ const LETTER_UI = `<script id="crLetterUi">(function(){
 // payUi: a polished, trustworthy pay bar. It links to /api/pay?t=… (which does
 // the server-side charge); the amount shown here is display only.
 function payUi(token, cents, label, name) {
-  const dollars = (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  /* 1280: a slim strip, not a card. 1279's card covered a third of a phone over
+     the estimate (Theo: "too large compared to estimate"). The strip carries the
+     amount and one Pay button; the three ways to pay open in a sheet on tap. */
+  const fmt = (c) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  const dollars = fmt(cents);
+  const cardDollars = fmt(cents + cardFeeCents(cents));   // 1279
   const safeName = String(name || 'Cardinal Roofing & Renovations').replace(/[<>&"]/g, '').slice(0, 64);
   const href = '/api/pay?t=' + encodeURIComponent(token);
-  const cardCents = cents + cardFeeCents(cents);   // 1279
-  const cardDollars = (cardCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif";
   const lock = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-1px;margin-right:5px;">'
     + '<path d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2.5 2.5 0 0 1 2.5 2.5v5A2.5 2.5 0 0 1 16 22H8a2.5 2.5 0 0 1-2.5-2.5v-5A2.5 2.5 0 0 1 8 10z" stroke="#8b8f98" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const opt = 'display:block;margin-top:9px;text-decoration:none;border-radius:12px;padding:11px 14px;';
   return `
 <div id="crPayBar" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;
-  padding:0 12px calc(12px + env(safe-area-inset-bottom,0px));pointer-events:none;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-  <div style="pointer-events:auto;max-width:520px;margin:0 auto;background:#ffffff;
-    border:1px solid #ece7e3;border-radius:18px 18px 14px 14px;
-    box-shadow:0 -1px 8px rgba(20,10,8,.05),0 16px 44px rgba(20,10,8,.20);padding:15px 18px 13px;">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;">
-      <div style="min-width:0;">
-        <div style="font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#6b5d52;">${label}</div>
-        <div style="font-size:13px;color:#6b645e;margin-top:3px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;">${safeName}</div>
-      </div>
-      <div style="font-size:31px;font-weight:800;color:#231b18;letter-spacing:-.015em;white-space:nowrap;line-height:1;">${dollars}</div>
+  padding:0 10px calc(8px + env(safe-area-inset-bottom,0px));pointer-events:none;font-family:${FONT};">
+  <div style="pointer-events:auto;max-width:460px;margin:0 auto;background:#ffffff;border:1px solid #ece7e3;
+    border-radius:14px;box-shadow:0 6px 20px rgba(20,10,8,.16);padding:6px 6px 6px 14px;
+    display:flex;align-items:center;gap:10px;">
+    <div style="min-width:0;flex:1;line-height:1.15;">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6b5d52;">${label}</div>
+      <div style="font-size:17px;font-weight:800;color:#231b18;white-space:nowrap;">${dollars}</div>
     </div>
-    <a id="crPayBank" href="${href}&m=bank" style="display:block;margin-top:15px;text-align:center;text-decoration:none;
-      background:#C8202E;color:#ffffff;font-size:17px;font-weight:800;letter-spacing:.01em;
-      padding:13px 20px;border-radius:12px;box-shadow:0 6px 15px rgba(200,32,46,.30);">Pay by bank &middot; ${dollars}
+    <button id="crPayOpen" type="button" onclick="document.getElementById('crPaySheet').style.display='block'"
+      style="border:0;border-radius:10px;background:#C8202E;color:#ffffff;font-family:${FONT};font-size:15px;font-weight:800;
+      min-height:44px;padding:0 22px;cursor:pointer;">Pay</button>
+  </div>
+</div>
+<div id="crPaySheet" onclick="if(event.target===this)this.style.display='none'"
+  style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(20,10,8,.55);font-family:${FONT};">
+  <div style="position:absolute;left:0;right:0;bottom:0;max-width:460px;margin:0 auto;background:#ffffff;
+    border-radius:16px 16px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+      <div style="min-width:0;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6b5d52;">${label}</div>
+        <div style="font-size:13px;color:#6b645e;margin-top:2px;">${safeName}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="font-size:22px;font-weight:800;color:#231b18;white-space:nowrap;">${dollars}</div>
+        <button id="crPayClose" type="button" aria-label="Close" onclick="document.getElementById('crPaySheet').style.display='none'"
+          style="border:0;background:#f4f1ee;color:#4a403a;border-radius:10px;width:44px;height:44px;font-size:20px;line-height:1;cursor:pointer;">&times;</button>
+      </div>
+    </div>
+    <a id="crPayBank" href="${href}&m=bank" style="${opt}background:#C8202E;color:#ffffff;margin-top:12px;">
+      <span style="display:block;font-size:16px;font-weight:800;">Pay by bank &middot; ${dollars}</span>
       <span style="display:block;font-size:12px;font-weight:600;opacity:.9;margin-top:2px;">No fee</span></a>
-    <a id="crPayCard" href="${href}&m=card" style="display:block;margin-top:9px;text-align:center;text-decoration:none;
-      background:#ffffff;color:#231b18;border:1.5px solid #d9d0ca;font-size:16px;font-weight:800;
-      padding:11px 20px;border-radius:12px;">Pay by card &middot; ${cardDollars}
-      <span style="display:block;font-size:12px;font-weight:600;color:#6b645e;margin-top:2px;">Includes a ${CARD_FEE_PCT}% card processing fee</span></a>
+    <a id="crPayCard" href="${href}&m=card" style="${opt}background:#ffffff;color:#231b18;border:1.5px solid #d9d0ca;">
+      <span style="display:block;font-size:16px;font-weight:800;">Pay by card &middot; ${cardDollars}</span>
+      <span style="display:block;font-size:12px;font-weight:600;color:#6b645e;margin-top:2px;">Includes a ${CARD_FEE_PCT}% card processing fee &middot; credit or debit</span></a>
+    <div id="crPayCheck" style="${opt}background:#f8f5f2;color:#231b18;border:1.5px solid #ece7e3;">
+      <span style="display:block;font-size:16px;font-weight:800;">Pay by check &middot; ${dollars}</span>
+      <span style="display:block;font-size:12.5px;font-weight:500;color:#4a403a;margin-top:4px;line-height:1.4;">
+        No fee. Make it payable to <b>Cardinal Roofing &amp; Renovations, LLC</b> and hand it to your Cardinal rep,
+        or mail it to 5735 Webster Street, Dayton, Ohio 45414. Please write <b>${safeName}</b> on the memo line.</span></div>
     <div style="text-align:center;margin-top:11px;font-size:11.5px;font-weight:600;color:#6b645e;">
-      ${lock}Secure checkout &middot; processed by Stripe &middot; card payments, credit or debit, carry a ${CARD_FEE_PCT}% fee</div>
+      ${lock}Bank and card checkout is secure &middot; processed by Stripe</div>
   </div>
 </div>`;
 }

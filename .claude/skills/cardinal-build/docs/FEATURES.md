@@ -9702,3 +9702,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Debit cards are charged too (Theo's decision, made with the network-rule caveat in front of him).
 - Pay and sign bars stay full size on the 900px Letter estimate page on phones (`LETTER_UI`).
 - **Gate:** `gate_1279.mjs`.
+
+## Build 1280 — slim pay strip and Pay by check
+- Share-link pay bar is a slim strip (label, amount, Pay).
+- **Pay** opens `#crPaySheet`: bank (no fee), card (+3%), check (no fee).
+- The check option gives payee, mailing address and memo line. It writes nothing; record checks in Money In.
+- **Gate:** `gate_1280.mjs`.

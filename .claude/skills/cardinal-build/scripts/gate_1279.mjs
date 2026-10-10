@@ -146,6 +146,8 @@ ok(feeOf(share).length > 40 && feeOf(share) === feeOf(paySrc), 'G  CARD_FEE_PCT 
     const pg = await ctx.newPage();
     await pg.route('**/*', r => r.request().url().startsWith('https://share.test/') ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : r.fulfill({ status: 200, body: '' }));
     await pg.goto('https://share.test/x', { waitUntil: 'domcontentloaded' }); await pg.waitForTimeout(700);
+    /* 1280 moved the pay buttons into a sheet behind one Pay button — open it first */
+    await pg.evaluate(() => { const o = document.getElementById('crPayOpen'); if (o) o.click(); }); await pg.waitForTimeout(150);
     const m = await pg.evaluate((sel) => { const e = document.querySelector(sel); const sc = window.visualViewport ? visualViewport.scale : 1;
       const r = e ? e.getBoundingClientRect() : null;
       return { found: !!e, scale: +sc.toFixed(3), h: r ? Math.round(r.height * sc) : 0, w: r ? Math.round(r.width * sc) : 0, layoutW: document.documentElement.clientWidth }; }, sel);

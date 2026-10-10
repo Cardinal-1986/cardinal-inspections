@@ -34333,6 +34333,32 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1280: a slim pay bar, and pay by check (Theo: "The payment screen is too large compared to estimate. Also a lot people pay by check.")
+
+- **The bar.** In 1279 the pay card covered about a third of a phone screen on top of
+  the estimate. It is now a slim strip: the label, the amount and a Pay button. It
+  measures 58px on a 844px screen (6.9%), and the Pay button is 44px.
+- **The sheet.** Tapping **Pay** opens a sheet (`#crPaySheet`) with three ways to pay:
+  - **bank:** no fee
+  - **card:** +3%, credit or debit (1279)
+  - **check:** no fee
+- **The check option** tells the client how to pay:
+  - Make the check payable to **Cardinal Roofing & Renovations, LLC**.
+  - Hand it to the rep, or mail it to 5735 Webster Street, Dayton, Ohio 45414.
+  - Write the client's name on the memo line.
+
+  It is text, not a link, and it writes nothing. A check is recorded in the app by hand
+  in Money In, as it always was. The payee matches the invoice template, which already
+  says "Checks payable to Cardinal Roofing & Renovations". The address comes from the
+  letterhead.
+- `LETTER_UI` zooms the sheet too, so it stays full size on the 900px Letter page.
+- **Gates.**
+  - New: `gate_1280.mjs` has 5 checks: strip size, sheet contents, check copy, and
+    closing the sheet by tapping outside it. It fails 4 of 5 on 1279's `share.js`.
+  - Updated: `gate_1279` H now opens the sheet before measuring the card button.
+  - Still green: 1199, 1278, 1274 and check_build. Re-running the patch on a fresh copy
+    reproduces the files exactly.
+
 ## Build 1279: card payments carry a 3% fee, bank payments none (Theo: "1 yes debit gets charges also")
 
 Theo asked whether the estimate offers card payment, and said that if it does, the card

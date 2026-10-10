@@ -4160,7 +4160,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1279<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1280<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44129,6 +44129,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1280, d: '2026-10-10', t: 'A slim pay bar, and pay by check',
+    s: 'The pay box on an estimate, contract or invoice link was too big next to the document. It is now a slim strip at the bottom with the amount and a Pay button. Tapping Pay shows three ways to pay: by bank (no fee), by card (3% fee), or by check (no fee) \u2014 payable to Cardinal Roofing & Renovations, LLC, handed to your rep or mailed to 5735 Webster Street, with the client\u2019s name on the memo line. Record a check in the app the way you always have.' },
   { b: 1279, d: '2026-10-10', t: 'Pay by bank, or by card with a 3% fee',
     s: 'The pay bar on an estimate, contract or invoice link now has two buttons. Pay by bank costs the client nothing extra. Pay by card adds a 3% card processing fee, shown on the button and on the Stripe receipt before they pay. The job\u2019s payments record what was owed \u2014 the fee is noted on the payment and never counts toward the balance.' },
   { b: 1278, d: '2026-10-10', t: 'An estimate looks the same on a phone',
