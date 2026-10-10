@@ -34333,6 +34333,47 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1283 — the home screen in the drawer's style (Theo: "B")
+
+**The ask.** Theo, verbatim: "Is there any way to not make the interface look cartooony, maybe
+look more like the left side drawer menu?"
+
+**Options.** Two were previewed on the real app at desktop and phone width:
+- A: quiet grey uppercase labels
+- B: white sentence-case headings and a thin red edge
+
+He picked **B**.
+
+**What made it cartoony,** measured in Chromium rather than guessed:
+- **Georgia** on every card title, the greeting, `#brandTitle h1` and `.pcini`.
+- **ui-monospace** on the pipeline money, the 30-day calendar, the punch tags and the PO
+  chips.
+- A **gloss gradient, drop shadow and glint line** on every `.pipecard`.
+
+The drawer uses one sans font and flat `#0F1521` panels on `#223047` hairlines.
+
+**What changed.** One block, applied to dark retail on the home screen only (`#mainView` and
+the brand title):
+- one sans font everywhere: Segoe UI first, falling back to the system font
+- tabular numerals for the figures
+- flat `#0F1521` cards with a 3px `#c8202e` left edge and no shadow
+- no glint lines
+- white 15px headings (18.27:1)
+- flat punch cards, each keeping its own priority edge
+
+Every rule carries `--cr-stack` (`gate_stack` is clean). Light mode, Claims and Community
+are untouched; gate D asserts this.
+
+**Gates.** `gate_1283.mjs` has 4 checks: all pass, and 2 fail against 1282 (A and B, as
+expected). Also green: check_build, gate_stack, gate_1206, gate_1281 and gate_1183.
+
+**Next, one at a time:**
+- the header's glossy + and search buttons
+- the Team Calendar's red arrows
+- the Activity panel
+- then the client page, Leads and the rest
+- light mode once dark is settled
+
 ## Build 1282 — the hammer watermark comes off Next 30 Days (Theo: "3", remove it)
 
 1183 wired the cardinal-on-a-hatchet artwork behind the home schedule card. Theo's photo
