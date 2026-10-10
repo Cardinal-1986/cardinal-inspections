@@ -5097,15 +5097,40 @@ the text compare could not.
 
 ---
 
-## 🟠 AccuLynx migration — gates 1–2 RUN, blocked on a stale password (13 Aug 2026)
+## 🟠 AccuLynx migration — gates 1–3 PASSED, parked on two decisions (re-measured 6 Oct 2026)
 
-**The API key works and the records are fetched.** All **166 in-scope jobs** are on local disk
-(lead 3 · prospect 81 · approved 41 · completed 8 · invoiced 12 · closed 21; cancelled and dead
-left behind per the 11 Aug decision). Nothing has been written to Cardinal.
+**Re-pulled 6 Oct 2026 from a cloud session: 238 jobs, 192 in migration scope**
+(lead 11 · prospect 83 · approved 53 · completed 8 · invoiced 13 · closed 24 · cancelled 46).
+That is **26 more live jobs than August's 166**, so the August dry-run figures
+(`164 new · 2 collisions · PO 1044–1207`) are stale and must be re-read, not assumed.
+Still nothing written to Cardinal. 0 blank addresses in 238 records and reps resolving across
+all six people, so the five August faults stay fixed on fresh data.
 
-⛔ **The one blocker: `CARDINAL_PASSWORD` is stale** — Supabase auth returns
-`400 invalid_credentials`. The email is right and there is no whitespace/quoting problem. Refresh
-it and gates 3 (dry run) → 4 (5-client pilot) → 5 (real run) proceed exactly as the runbook says.
+✅ **The password was never wrong** — only the *cloud environment's* copy of it was stale. Gate 3
+(dry run) passed for real from Theo's Windows desktop on 13 Aug and matched the connector replay
+exactly. **Do not re-report a credentials blocker.**
+
+⚠️ **"Dead" is not a stage on this tenant, and the old counts double-counted.** AccuLynx's
+`dead` and `cancelled` filters return the **identical 45 job ids**, all carrying
+`currentMilestone: "Cancelled"`. This file previously recorded "cancelled 35 + dead 35" as two
+piles; it was one pile of 35 counted twice. **Exclude on the milestone, not the filter** — one
+job (Kate Sandford) is Cancelled but sits in neither filter because it is unassigned, which is
+the difference between 46 and 45.
+
+⛔ **The two open decisions, which block gate 4 (the 5-client pilot):**
+1. **Two real collisions** — Karrie Johnson (804 E Center St) and Dan Thompson (2825 Arden Ave),
+   both already in Cardinal. Default is **attach, not duplicate**. Re-confirm against a fresh
+   dry run; the set may have grown with the 26 new jobs.
+2. **Two AccuLynx test records** that would otherwise import as clients — `test test` and
+   `Team Test`, both at 5735 Webster Street.
+
+**Desktop handoff: `.claude/skills/cardinal-build/docs/HANDOFF_ACCULYNX_2026-10-06.md`** — why the
+push belongs on Theo's PC rather than a cloud session, the command sequence, and
+`spark/acculynx_sheet.py` (a dependency-free `.xlsx`/CSV export of the whole client base).
+
+⚠️ **Worth deciding separately: 179 of the 238 jobs have no email address in AccuLynx** and 32
+have no phone (street addresses are complete). Source data, not the export — the import must not
+invent contact details.
 
 ✅ **Files AND notes are a confirmed NO-GO — one gap, one decision (13 Aug).** AccuLynx's API is
 upload-and-audit, not read. All six file read routes 404 on every job. And **806 job messages across
