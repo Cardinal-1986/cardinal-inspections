@@ -9685,3 +9685,26 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 ## Build 1276 — retail estimates print Description + Price (`packageView` in buildDocHtml)
 - Insurance and Community keep Qty / Unit / Unit Price. A job with no type recorded counts as retail.
 - **Gate:** `gate_1276.mjs`.
+
+## Build 1277 — OC Preferred Contractor lockup on estimates (`/oc-preferred-contractor.png`, `OC_PREFERRED_SRC`)
+- Under the Cardinal logo on the published estimate, Good/Better/Best, and the editor's roofing template.
+- From Theo's printed roofing contract; no OC approval needed (only the Pink Panther needs it).
+- **Gate:** `gate_1277.mjs`.
+
+## Build 1278 — estimates look the same on a phone as on paper
+- Published estimates, GBB, share links (old ones too, via `api/share.js`) and the in-app viewer (`fitEstimateFrame()`) all show the Letter page scaled to fit. No phone restack.
+- Text autosizing off (`text-size-adjust:100%`), so no single paragraph inflates.
+- **Gate:** `gate_1278.mjs`. Reverses the 1027/1274 phone reflow on Theo's ruling.
+
+## Build 1279 — Pay by bank (no fee) or Pay by card (+3%)
+- Share-link pay bar has two buttons. `api/pay.js?m=card` adds a separate "Card processing fee (3%)" line. Bank, or a bare link, carries no fee.
+- The ledger (`collections`) records only what was owed. The fee is noted on the row.
+- Debit cards are charged too (Theo's decision, made with the network-rule caveat in front of him).
+- Pay and sign bars stay full size on the 900px Letter estimate page on phones (`LETTER_UI`).
+- **Gate:** `gate_1279.mjs`.
+
+## Build 1280 — slim pay strip and Pay by check
+- Share-link pay bar is a slim strip (label, amount, Pay).
+- **Pay** opens `#crPaySheet`: bank (no fee), card (+3%), check (no fee).
+- The check option gives payee, mailing address and memo line. It writes nothing; record checks in Money In.
+- **Gate:** `gate_1280.mjs`.

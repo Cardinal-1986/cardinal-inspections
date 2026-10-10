@@ -87,7 +87,13 @@ export default async function handler(req, res) {
          existed — and left it booked if the debit later bounced. Money is
          recorded when it has ARRIVED, and by nothing else. */
       const paid = s.payment_status === 'paid';
-      const amount = (Number(s.amount_total) || 0) / 100;
+      /* 1279: a card checkout carries a fee line on top of what was owed. The
+         ledger records the PRINCIPAL — amount_total would credit the fee
+         toward the client's balance. Sessions from before 1279 carry no
+         principal_cents and fall back to amount_total, as before. */
+      const principal = Number(meta.principal_cents);
+      const feeCents = Number(meta.fee_cents) || 0;
+      const amount = (principal > 0 ? principal : (Number(s.amount_total) || 0)) / 100;
       // a deposit records as 'deposit'; an invoice balance as 'final' (collections.type CHECK)
       const collType = meta.kind === 'balance' ? 'final' : 'deposit';
       const method = paymentMethodFor(event.type);
@@ -106,7 +112,9 @@ export default async function handler(req, res) {
             source: 'homeowner',
             method,
             external_ref: String(s.payment_intent || s.id),
-            notes: paymentNoteFor(method),
+            notes: paymentNoteFor(method) + (feeCents > 0
+              ? ' — plus a $' + (feeCents / 100).toFixed(2) + ' card processing fee, not applied to the balance'
+              : ''),
             created_by: 'stripe'
           }])
         });

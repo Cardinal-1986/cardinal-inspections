@@ -41,6 +41,8 @@ let sent=null;
 await page.route('**/*', async r=>{ const u=r.request().url();
   if(u.startsWith('https://sentinel.test/api/senddoc')){ try{ sent=JSON.parse(r.request().postData()||'{}'); }catch(_){ sent={}; } return r.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'}); }
   if(u.startsWith('https://sentinel.test/cardinal-report-logo.png')) return r.fulfill({status:200,contentType:'image/png',body:LOGO,headers:{'access-control-allow-origin':'*'}});
+  /* 1277: the OC Preferred lockup ships beside the logo and must travel inside the email too */
+  if(u.startsWith('https://sentinel.test/oc-preferred-contractor.png')){ try{ return r.fulfill({status:200,contentType:'image/png',body:readFileSync(join(HERE,'../../../../oc-preferred-contractor.png')),headers:{'access-control-allow-origin':'*'}}); }catch(_){ return r.fulfill({status:404,body:''}); } }
   if(u.startsWith('https://yipslubcptjoarblzbpl.supabase.co/storage/')) return r.fulfill({status:200,contentType:'image/png',body:PHOTO,headers:{'access-control-allow-origin':'*'}});
   if(u.startsWith('https://sentinel.test/')) return r.fulfill({status:200,contentType:'text/html; charset=utf-8',body:APP});
   return r.fulfill({status:200,body:''}); });
