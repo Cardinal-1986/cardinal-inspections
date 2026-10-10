@@ -4148,7 +4148,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1283<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1284<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44117,6 +44117,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1284, d: '2026-10-10', t: 'A flat top bar, like the side menu',
+    s: 'The bar across the top is now the same flat dark as the side menu, without the glossy shine and shadow, and its two buttons are flat too \u2014 the + is solid Cardinal red and the search is a plain dark square. Dark mode first.' },
   { b: 1283, d: '2026-10-10', t: 'A cleaner home screen, like the side menu',
     s: 'The home screen now looks like the side menu: one plain typeface everywhere instead of the old storybook serif and typewriter lettering, and flat dark cards with a thin red edge instead of glossy ones. Dark mode first; light mode and the other screens follow one at a time.' },
   { b: 1282, d: '2026-10-10', t: 'The bird is off the calendar',
@@ -73897,6 +73899,22 @@ box-shadow:none;border-radius:10px;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pu-card{
 --cr-stack:"1283 flat punch card; its own priority edge stays";
 background:#141B27;box-shadow:none;border-top:1px solid #223047;border-bottom:1px solid #223047;border-right:1px solid #223047;}
+
+/* ── Build 1284 · the top bar in the drawer's style (Theo: option B) ──────
+   The header was a navy gloss gradient with a drop shadow and two raised gloss
+   buttons. The drawer beside it is a flat #0A0E16 well. Dark retail only; the
+   header's own tokens carry the ground, so every rule that reads them follows. */
+:root:not([data-theme="rb-light"]) body[data-crm-head="retail"] .site{
+--cr-stack:"1284 flat header ground, the drawer's well";
+--hbg:#0A0E16;--htint:#0A0E16;--hsf:#0F1521;
+box-shadow:none;border-bottom:1px solid #223047;}
+:root:not([data-theme="rb-light"]) body[data-crm-head="retail"] #cr-hd2-bar .cr-ib,
+:root:not([data-theme="rb-light"]) body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-home{
+--cr-stack:"1284 flat header buttons (were gloss bevels)";
+background:#0F1521;border:1px solid #223047;box-shadow:none;color:#c2cbd8;}
+:root:not([data-theme="rb-light"]) body[data-crm-head="retail"] #cr-hd2-bar .cr-ib.primary{
+--cr-stack:"1284 flat red + (was sky-blue gloss)";
+background:#c8202e;border:1px solid #c8202e;box-shadow:none;color:#ffffff;}
 
 /* ── Build 527 · the Schedule Board ───────────────────────────────────────
    Fourteen white slabs down a near-black page - the one retail surface that
