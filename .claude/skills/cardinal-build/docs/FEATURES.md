@@ -9713,3 +9713,7 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - `#approvalsCard` heading, rows, name and detail all use `--rbe-*` tokens in dark retail.
 - Light mode and Claims/Community are unchanged.
 - **Gate:** `gate_1281.mjs`.
+
+## Build 1282 — no watermark on Next 30 Days
+- The cardinal-on-a-hammer watermark (1183) has been removed at Theo's request, and `cardinal-prod.png` deleted.
+- **Gate:** `gate_1183` now asserts it stays gone.

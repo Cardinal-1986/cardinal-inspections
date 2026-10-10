@@ -34333,6 +34333,29 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1282 — the hammer watermark comes off Next 30 Days (Theo: "3", remove it)
+
+1183 wired the cardinal-on-a-hatchet artwork behind the home schedule card. Theo's photo
+showed it as a big pink bird over the dates. Offered three options (leave it, fade it,
+remove it), he picked remove.
+
+**Deleted at source:**
+- the `.pipecard.prodcal::before` paint
+- its dark-mode `.14` opacity twin
+- the content lift that existed only to keep the dates above the watermark
+- `cardinal-prod.png` itself (nothing else referenced it: not `sw.js`, not any other page)
+
+**Kept:**
+- `.pipecard.prodcal{position:relative;overflow:hidden}`, which is harmless, and other
+  gates read `.prodcal`
+- the Team Calendar's pencil watermark, untouched
+
+**Gates:**
+- `gate_1183` now asserts the hammer stays gone: no mask, the artwork is never fetched,
+  and the file is deleted.
+- Its glyph-drift check is retired with the watermark.
+- Green 21/21; red 19/21 on 1281.
+
 ## Build 1281 — the home Approvals card reads on the dark home screen (Theo's photo, 10 Oct)
 
 Theo sent a photo of the home screen and said "Fix first."

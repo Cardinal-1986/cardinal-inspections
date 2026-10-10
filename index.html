@@ -1829,20 +1829,8 @@ html, body{overflow-x:hidden;max-width:100%;}
    watermark would escape to the nearest positioned ancestor and paint across
    the page. So the host context is declared here rather than assumed. */
 .pipecard.prodcal{position:relative;overflow:hidden;}
-/* ⚠ AND THE CONTENT HAS TO BE LIFTED, or the watermark paints ON TOP OF THE
-   DATES. Measured, not assumed: with the numbers left in normal flow, 13.8% of
-   their glyph pixels changed when the watermark came on — a positioned
-   ::before paints above non-positioned in-flow siblings whatever its z-index,
-   so dropping it to 0 changed nothing (13.1%). Lifting the content is what
-   works, and it is the same move `.cr-pcard.community .t` already makes.
-   After: 2.2%, which is glyph anti-aliasing against a changed ground, not
-   text being covered. */
-.pipecard.prodcal > *{position:relative;z-index:6;}
-.pipecard.prodcal::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(125deg,#e2574a 20%,#c8202e 58%,#e35c63);
-  -webkit-mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
-  mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
-  opacity:.24;pointer-events:none;z-index:5;}
+/* 1282: the hammer watermark is gone (Theo, 10 Oct: remove it). The lift that kept
+   the dates above it went with it; the host rule above stays, harmlessly. */
 /* 689: this rule pinned both calendar titles to #1c1416 — a light-era
    near-black — with NO theme gate, so it painted 1.06:1 on the dark card
    while every other .pipetitle sat at 15.60:1. The light twin below was
@@ -4160,7 +4148,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1281<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1282<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44129,6 +44117,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1282, d: '2026-10-10', t: 'The bird is off the calendar',
+    s: 'The big cardinal-on-a-hammer drawing behind Next 30 Days on the home screen is gone, so the dates sit on a plain card. The Team Calendar keeps its own pencil drawing.' },
   { b: 1281, d: '2026-10-10', t: 'Approvals you can read on the home screen',
     s: 'The Approvals box on the home screen \u2014 signed estimates waiting for a contract \u2014 had a heading in dark letters on the dark card, so it could not be read, and each estimate sat on a bright white strip. The heading is white now and each estimate sits on the same dark card as the rest of the home screen. Light mode is unchanged.' },
   { b: 1280, d: '2026-10-10', t: 'A slim pay bar, and pay by check',
@@ -74081,13 +74071,6 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* the watermark bird was set for a cream ground and muddies the navy */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.teamcal::before{
   opacity:.10;
-}
-/* 1183: the same correction for the hammer. The .24 in the base rule was drawn
-   for teamcal's white paper card; on the navy ground the schedule card actually
-   has, it reads as a dark smudge rather than a watermark. Measured at .24/.18/
-   .14/.10 and rendered — .14 shows the artwork and leaves the dates clean. */
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.prodcal::before{
-  opacity:.14;
 }
 /* "Take the all jobs off the calander it makes the calander in level."
    Hidden rather than deleted from the JS: the string is still computed and

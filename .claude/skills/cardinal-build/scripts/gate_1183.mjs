@@ -48,14 +48,14 @@ ok(APP_HTML.indexOf('cr-cmark') === -1 && APP_HTML.indexOf('community-action-ico
 
 /* the cleanup must STOP where it stopped. These four are live or deliberate. */
 for (const [f, why] of [
-  ['cardinal-prod.png', 'the hammer this build just wired'],
   ['cardinal-board.png', 'the pencil on the Team Calendar'],
   ['cardinal-transparent.png', 'the sign-in mark'],
   ['cardinal-report-logo.png', 'the report letterhead (1182)'],
   ['community-action-dayton.png', 'the DELIBERATE portal-picker fallback — reachable only if CardinalFrontDoor is missing, which is not a reason to delete it'],
 ]) ok(fs.existsSync(ROOT + f), `${f} still exists — ${why}`);
 
-for (const f of ['cardinal-hammer.png', 'community-action-icon.png'])
+/* 1282: the hammer was removed on Theo's say-so; cardinal-prod.png went with it */
+for (const f of ['cardinal-hammer.png', 'community-action-icon.png', 'cardinal-prod.png'])
   ok(!fs.existsSync(ROOT + f), `${f} is deleted — nothing could reach it`);
 
 /* -------------------------------------------------------------- RUNTIME */
@@ -138,12 +138,10 @@ ok(r.found && /Next 30 Days/i.test(r.title), `and it is the Next 30 Days card (t
 ok(r.found && r.pos === 'relative',
    `the card is the containing block (position: ${r.pos}) — otherwise the watermark paints across the page`);
 ok(r.found && r.ovf === 'hidden', `and it clips (overflow: ${r.ovf})`);
-ok(r.found && /cardinal-prod\.png/.test(r.mask),
-   `the mask resolves to the hammer artwork (${String(r.mask).slice(0, 70)})`);
-ok(fetched.has('cardinal-prod.png'),
-   'and the browser ACTUALLY FETCHED it — the whole point; it never did before this build');
-/* it is a watermark, not a picture: it must stay faint and behind nothing legible */
-ok(r.found && r.op > 0 && r.op <= 0.3, `it is faint, as a watermark must be (opacity ${r.op})`);
+/* 1282: the hammer watermark was REMOVED (Theo, 10 Oct: "3" — remove it). These
+   assert it stays gone; the glyph-drift check below retired with it. */
+ok(r.found && !/cardinal-prod\.png/.test(r.mask), `no hammer mask on the card (${String(r.mask).slice(0, 70)})`);
+ok(!fetched.has('cardinal-prod.png'), 'and the browser never fetches the deleted artwork');
 /* the card must not have grown to page width — the escape symptom */
 ok(r.found && r.cardW < r.vw * 0.92,
    `the card is still a card, not the page (${r.cardW}px of ${r.vw}px)`);
@@ -195,11 +193,8 @@ async function glyphDrift() {
   }, ['data:image/png;base64,' + off.buf.toString('base64'),
       'data:image/png;base64,' + on.buf.toString('base64')]);
 }
-const d = await glyphDrift();
-ok(d && d.glyph > 200, `enough date glyphs were sampled to mean anything (${d && d.glyph})`);
-ok(d && d.pct >= 0 && d.pct < 3,
-   `the watermark stays BEHIND the dates — ${d && d.pct.toFixed(1)}% of glyph pixels disturbed ` +
-   `(unlifted content measured 13.8%, so this is the check that would catch a regression)`);
+/* 1282: glyphDrift() is kept for reference but no longer called — there is no watermark to drift. */
+void glyphDrift;
 
 await browser.close();
 console.log((fail ? 'RED  ' : 'GREEN  ') + pass + '/' + (pass + fail) + (fail ? '\n  - ' + bad.join('\n  - ') : ''));
