@@ -34399,6 +34399,15 @@ They are recorded here for a separate fix.
 
 **Gate.** `gate_1286.mjs`: 4/4 on this build, 2 of 4 on 1285. `gate_stack` is clean.
 
+**⚠ Second regression of mine, caught by CI (`gate_chromium`).** `gate_1216` stayed GREEN on
+its negative control. 1286 had painted `.crji-card`'s background directly, so the card no
+longer read its own `--crji-card` token, and breaking that token changed nothing. The gate
+was therefore protecting nothing. The fix: `.crji-card` now only loses its shadow, and its
+ground stays on the token. `gate_1216` is green again, and red again with
+`--crji-card:#ffffff`. **Rule for these drawer-style passes:** where a surface already
+has its own theme token, flatten its shadow and leave the ground on the token. Do not
+paint over the token.
+
 ## Build 1285 — Team Calendar arrows and the Activity panel, drawer style (follow-ups 2–3 to 1283)
 
 - **Team Calendar arrows.** The month arrows (`.teamcal .minical .calnav`) were solid red

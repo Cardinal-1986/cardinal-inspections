@@ -39,10 +39,12 @@ background:#0F1521;border-top:1px solid #223047;border-right:1px solid #223047;b
 {P} {V} .jabox:hover,
 {P} {V} .jobvalrow,
 {P} {V} .jobvalrow:hover,
-{P} {V} .crji-card,
 {P} {V} .rvcard{{
 --cr-stack:"1286 flat drawer panel (was gloss + drop shadow)";
 background:#0F1521;border:1px solid #223047;box-shadow:none;}}
+{P} {V} .crji-card{{
+--cr-stack:"1286 Invoices card: shadow off; its ground stays on its own --crji-card token (gate_1216 guards it)";
+border:1px solid #223047;box-shadow:none;}}
 {P} {V} .kpsec{{
 --cr-stack:"1286 flat History card; its red TOP border is its own marker (797) and stays";
 background:#0F1521;border-left:1px solid #223047;border-right:1px solid #223047;border-bottom:1px solid #223047;box-shadow:none;}}
