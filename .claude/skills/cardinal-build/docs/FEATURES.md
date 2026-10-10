@@ -9729,3 +9729,8 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Dark retail:** header on the flat `#0A0E16` well with a flat red +, flat search, flat month arrows, and the Activity panel as a flat card with a red edge.
 - **Light mode:** untouched.
 - **Gates:** `gate_1284.mjs`, `gate_1285.mjs`.
+
+## Build 1286 — client page in the drawer's style
+- **Dark retail client profile:** one sans font, and flat `#0F1521` panels for the client card, the money card, the Job Menu tiles and the section cards.
+- **Kept their colour:** the stage band, the stage spine, the money ring, and History's red top.
+- **Gate:** `gate_1286.mjs`.

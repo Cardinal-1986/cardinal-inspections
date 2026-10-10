@@ -34333,6 +34333,39 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1286 — the client page in the drawer's style (follow-up 4 to 1283, option B)
+
+**What made it cartoony,** measured in dark retail on the client profile:
+- Georgia on the client name (`#projName .heroNm`) and on the History heading
+  (`.kpsech .kpst`).
+- `ui-monospace` on the Job Menu counts (`.jabox .jan`) and on `.kpcnt`.
+- A gloss gradient and a drop shadow on the client card, the money card, every Job Menu
+  tile and every section card.
+
+**What changed:**
+- One sans font throughout, with tabular figures.
+- Flat `#0F1521` panels on `#223047` hairlines, and no shadows.
+- The 790 dark-card ground (`.acxsec:not(.rvsec)`, `.dbmoney`, `.dbrow`) is edited **at
+  source**. That rule out-ranked any new one through its `:not()`, so overriding it would
+  have meant out-specifying it rather than fixing it.
+
+**What keeps its colour** (because each carries meaning):
+- the green stage band
+- the client card's stage spine
+- the money ring
+- History's red top border, which is its own marker
+
+**My regression, caught by `gate_797` and fixed before commit:** the first pass gave
+`.kpsec` a full hairline border, which wiped History's red top border.
+
+**Pre-existing reds, not this build's:** these were red on the 1285 tree too.
+- `gate_1224`: the "Communication" label splits a word at 360px.
+- `gate_791`: the map card order / `#acxMount` flex.
+
+They are recorded here for a separate fix.
+
+**Gate.** `gate_1286.mjs`: 4/4 on this build, 2 of 4 on 1285. `gate_stack` is clean.
+
 ## Build 1285 — Team Calendar arrows and the Activity panel, drawer style (follow-ups 2–3 to 1283)
 
 - **Team Calendar arrows.** The month arrows (`.teamcal .minical .calnav`) were solid red
