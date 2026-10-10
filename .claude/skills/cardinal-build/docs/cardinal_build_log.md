@@ -34333,6 +34333,49 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1279: card payments carry a 3% fee, bank payments none (Theo: "1 yes debit gets charges also")
+
+Theo asked whether the estimate offers card payment, and said that if it does, the card
+fee should be passed on. It did: `api/pay.js` opened one Stripe Checkout with card and
+ACH, and Cardinal absorbed about 2.9% + 30¢ on every card. On a $12k deposit that is
+roughly $348.
+
+**Decision (Theo, option 1 of 4):** two buttons, "Pay by bank" with no fee and "Pay by
+card" with 3% added. He was told that card-network rules bar surcharging **debit** cards
+and that Checkout cannot tell debit from credit. He chose to charge debit as well. That
+is his call and is recorded here; do not remove the debit charge without asking him.
+
+- **`api/pay.js`**
+  - `?m=card` opens a card-only session with two lines: the principal, plus
+    "Card processing fee (3%)".
+  - Anything else, including a bare link, opens a bank-only session with no fee. A card
+    is never offered without its fee.
+  - The fee is computed on the server, just like the principal.
+  - `metadata` carries `principal_cents`, `fee_cents` and `pay_by`.
+- **`api/pay-webhook.js`** records the **principal**, not `amount_total`. Recording
+  `amount_total` would have credited the fee toward the client's balance (a $12,360
+  payment would book $12,360 against a $12,000 deposit). The fee is named in the
+  row's `notes`. Sessions created before 1279 have no `principal_cents` and fall back
+  to `amount_total`.
+- **`api/share.js`**
+  - The pay bar shows both totals and discloses the fee before checkout.
+  - `CARD_FEE_PCT` and `cardFeeCents` are byte-identical in `pay.js` and `share.js`
+    (KEEP IN SYNC, asserted by G).
+- ⚠ **1278 regression, found and fixed here.** 1278 serves an estimate at a 900px
+  Letter viewport. On a phone that shrinks the whole page, including its fixed bars, to
+  about 43%. The client's **Sign** button measured **16px** on screen and the pay bar
+  shrank the same way. `LETTER_UI` zooms `#crPayBar`, `#csBar` and `#csOverlay` back up
+  by `1/visualViewport.scale`. The sign button is now 37px; the "Pay by card" button is
+  59px. 1278's gates checked the document and never checked the bars on top of it.
+- **Gates**
+  - New: `gate_1279.mjs`, 12 checks. The money checks A–G run against the shipped
+    routes with stub Stripe and stub fetch. H renders the page in Chromium at phone size.
+    Run against the 1278 API files it fails 11 of 12.
+  - Still green: `gate_1199` (37), `gate_1278`, `gate_1274`, check_build.
+  - **`gate_1151` cannot run in this container.** It imports the `stripe` package, which
+    is not installed here, so it crashes on the old tree too. The webhook paths it
+    covers are re-run by `gate_1199` D and `gate_1279` D–E.
+
 ## Build 1278 — an estimate looks the same on a phone as on paper (Theo: "It shouldn't")
 
 Theo asked why a finished estimate looked different on the phone. It did because at

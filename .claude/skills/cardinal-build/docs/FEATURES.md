@@ -9695,3 +9695,10 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Published estimates, GBB, share links (old ones too, via `api/share.js`) and the in-app viewer (`fitEstimateFrame()`) all show the Letter page scaled to fit. No phone restack.
 - Text autosizing off (`text-size-adjust:100%`), so no single paragraph inflates.
 - **Gate:** `gate_1278.mjs`. Reverses the 1027/1274 phone reflow on Theo's ruling.
+
+## Build 1279 — Pay by bank (no fee) or Pay by card (+3%)
+- Share-link pay bar has two buttons. `api/pay.js?m=card` adds a separate "Card processing fee (3%)" line. Bank, or a bare link, carries no fee.
+- The ledger (`collections`) records only what was owed. The fee is noted on the row.
+- Debit cards are charged too (Theo's decision, made with the network-rule caveat in front of him).
+- Pay and sign bars stay full size on the 900px Letter estimate page on phones (`LETTER_UI`).
+- **Gate:** `gate_1279.mjs`.

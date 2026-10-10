@@ -147,12 +147,38 @@ async function owedOn(sbHeaders, rep) {
   return { cents: Math.round((deposit - collected) * 100), label: 'Deposit' };
 }
 
+/* 1279: CARD FEE. Theo's pick — a card pays a 3% processing fee on top, a bank
+   (ACH) payment pays none. He was told card-network rules bar surcharging DEBIT
+   cards and chose to charge debit too. KEEP IN SYNC: CARD_FEE_PCT and cardFeeCents
+   are byte-identical in api/pay.js and api/share.js (share shows both totals). */
+const CARD_FEE_PCT = 3;
+const cardFeeCents = (cents) => Math.round(cents * CARD_FEE_PCT / 100);
+
+/* 1279: an estimate is served at a 900px Letter viewport (1278), so a phone
+   shrinks the page to fit — and every fixed bar on it with it, to ~43%: a pay
+   button a thumb can barely hit. Zoom the bars (and the signing sheet) back up
+   by 1/scale; the document itself stays the Letter page. */
+const LETTER_UI = `<script id="crLetterUi">(function(){
+  var IDS = ['crPayBar', 'csBar', 'csOverlay'];
+  function fit(){
+    var vv = window.visualViewport, vw = document.documentElement.clientWidth || 0;
+    var s = vv && vv.scale ? vv.scale : (screen.width && vw ? screen.width / vw : 1);
+    var k = s < 0.98 ? 1 / s : 1;
+    IDS.forEach(function(id){ var e = document.getElementById(id); if (e) e.style.zoom = k > 1 ? k.toFixed(3) : ''; });
+  }
+  fit();
+  if (window.visualViewport) visualViewport.addEventListener('resize', fit);
+  addEventListener('resize', fit); addEventListener('orientationchange', fit);
+})();</script>`;
+
 // payUi: a polished, trustworthy pay bar. It links to /api/pay?t=… (which does
 // the server-side charge); the amount shown here is display only.
 function payUi(token, cents, label, name) {
   const dollars = (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   const safeName = String(name || 'Cardinal Roofing & Renovations').replace(/[<>&"]/g, '').slice(0, 64);
   const href = '/api/pay?t=' + encodeURIComponent(token);
+  const cardCents = cents + cardFeeCents(cents);   // 1279
+  const cardDollars = (cardCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   const lock = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-1px;margin-right:5px;">'
     + '<path d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2.5 2.5 0 0 1 2.5 2.5v5A2.5 2.5 0 0 1 16 22H8a2.5 2.5 0 0 1-2.5-2.5v-5A2.5 2.5 0 0 1 8 10z" stroke="#8b8f98" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   return `
@@ -169,11 +195,16 @@ function payUi(token, cents, label, name) {
       </div>
       <div style="font-size:31px;font-weight:800;color:#231b18;letter-spacing:-.015em;white-space:nowrap;line-height:1;">${dollars}</div>
     </div>
-    <a href="${href}" style="display:block;margin-top:15px;text-align:center;text-decoration:none;
+    <a id="crPayBank" href="${href}&m=bank" style="display:block;margin-top:15px;text-align:center;text-decoration:none;
       background:#C8202E;color:#ffffff;font-size:17px;font-weight:800;letter-spacing:.01em;
-      padding:15px 20px;border-radius:12px;box-shadow:0 6px 15px rgba(200,32,46,.30);">Pay ${dollars}</a>
+      padding:13px 20px;border-radius:12px;box-shadow:0 6px 15px rgba(200,32,46,.30);">Pay by bank &middot; ${dollars}
+      <span style="display:block;font-size:12px;font-weight:600;opacity:.9;margin-top:2px;">No fee</span></a>
+    <a id="crPayCard" href="${href}&m=card" style="display:block;margin-top:9px;text-align:center;text-decoration:none;
+      background:#ffffff;color:#231b18;border:1.5px solid #d9d0ca;font-size:16px;font-weight:800;
+      padding:11px 20px;border-radius:12px;">Pay by card &middot; ${cardDollars}
+      <span style="display:block;font-size:12px;font-weight:600;color:#6b645e;margin-top:2px;">Includes a ${CARD_FEE_PCT}% card processing fee</span></a>
     <div style="text-align:center;margin-top:11px;font-size:11.5px;font-weight:600;color:#6b645e;">
-      ${lock}Secure checkout &middot; processed by Stripe</div>
+      ${lock}Secure checkout &middot; processed by Stripe &middot; card payments, credit or debit, carry a ${CARD_FEE_PCT}% fee</div>
   </div>
 </div>`;
 }
@@ -268,7 +299,9 @@ export default async function handler(req, res) {
     // paper. Estimates stored before 1278 carry a device-width viewport; serve them
     // at Letter width too, so a client's phone never restacks them — and never
     // enlarges one paragraph of it on its own (text autosizing).
+    let letterView = false;   // 1279: LETTER_UI zooms the bars back up on this page
     if (/class="est-head"/.test(html) && /<table class="items">/.test(html)) {
+      letterView = true;
       html = html.replace(/<meta name="viewport" content="[^"]*">/, '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>');
     }
     const signable = (SIGN_RX.test(html) || SLOT_RX.test(html)) && !html.includes('data-clientsigned');
@@ -295,6 +328,7 @@ export default async function handler(req, res) {
         }
       }
     }
+    if (letterView) html = html.includes('</body>') ? html.replace('</body>', LETTER_UI + '\n</body>') : html + LETTER_UI;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('X-Robots-Tag', 'noindex');
     res.setHeader('Cache-Control', 'private, max-age=0');

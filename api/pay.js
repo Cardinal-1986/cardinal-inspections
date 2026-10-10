@@ -24,6 +24,12 @@ const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const TOKEN_RX = /^[a-f0-9-]{20,60}$/i;
 const MIN_CENTS = 50;                    // Stripe's own floor ($0.50)
 const MAX_CENTS = 100000 * 100;          // $100k ceiling — a data-error guard
+/* 1279: CARD FEE. Theo's pick — a card pays a 3% processing fee on top, a bank
+   (ACH) payment pays none. He was told card-network rules bar surcharging DEBIT
+   cards and chose to charge debit too. KEEP IN SYNC: CARD_FEE_PCT and cardFeeCents
+   are byte-identical in api/pay.js and api/share.js (share shows both totals). */
+const CARD_FEE_PCT = 3;
+const cardFeeCents = (cents) => Math.round(cents * CARD_FEE_PCT / 100);
 
 // KEEP IN SYNC with api/share.js. Returns what is owed on THIS document, in
 // cents, plus a human label — or { cents: 0 } when nothing is due.
@@ -118,7 +124,21 @@ export default async function handler(req, res) {
     const kind = /^invoice/i.test(String(rep.title || '').trim()) ? 'balance' : 'deposit';
     const name = String(rep.project || rep.title || 'Cardinal Roofing & Renovations').slice(0, 90);
     const back = `https://${req.headers.host}/api/share?t=${encodeURIComponent(t)}`;
-    const meta = { kind, share_token: t, project_id: rep.project_id || '', report_id: rep.id };
+    /* 1279: ?m=card → card only, with the fee as its own line. Anything else
+       (including a bare link) → bank only, no fee — never a card without its fee. */
+    const payBy = String((req.query && req.query.m) || '').toLowerCase() === 'card' ? 'card' : 'bank';
+    const fee = payBy === 'card' ? cardFeeCents(cents) : 0;
+    const meta = { kind, share_token: t, project_id: rep.project_id || '', report_id: rep.id,
+                   pay_by: payBy, principal_cents: String(cents), fee_cents: String(fee) };
+    const items = [{
+      quantity: 1,
+      price_data: { currency: 'usd', unit_amount: cents, product_data: { name: `${label} — ${name}` } }
+    }];
+    if (fee > 0) items.push({
+      quantity: 1,
+      price_data: { currency: 'usd', unit_amount: fee,
+                    product_data: { name: `Card processing fee (${CARD_FEE_PCT}%)` } }
+    });
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       /* 1151: ACH alongside card. On roofing money the fee difference is not
@@ -130,15 +150,10 @@ export default async function handler(req, res) {
          checkout.session.async_payment_succeeded (or never, as
          async_payment_failed). api/pay-webhook.js handles both — do not add a
          delayed method here without checking that it still does. */
-      payment_method_types: ['card', 'us_bank_account'],
-      line_items: [{
-        quantity: 1,
-        price_data: {
-          currency: 'usd',
-          unit_amount: cents,
-          product_data: { name: `${label} — ${name}` }
-        }
-      }],
+      /* 1279: one method per session now — the fee depends on the method, and
+         Checkout cannot change the total after the client picks one. */
+      payment_method_types: payBy === 'card' ? ['card'] : ['us_bank_account'],
+      line_items: items,
       success_url: `${back}&paid=1`,
       cancel_url:  `${back}&paid=0`,
       client_reference_id: rep.project_id || rep.id,
