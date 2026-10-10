@@ -32,13 +32,13 @@ await page.addInitScript(SETUP);
 await page.goto('https://sentinel.test/?as=nick',{waitUntil:'domcontentloaded'}); await page.waitForTimeout(2600);
 await page.evaluate(async()=>{ const s=(window.__sentinelStates||[]).find(x=>x.name==='estbuilder'); try{ await s.run(); }catch(_){} });
 await page.waitForTimeout(1500);
-/* Jacob's own estimate, 9 Oct: a $5,000 "Item" line, then the long roof write-up at 1 LS
+/* Jacob's own estimate, 9 Oct (on an INSURANCE job since 1276 — retail is two columns now, insurance keeps the five this gate stacks): a $5,000 "Item" line, then the long roof write-up at 1 LS
    with no price, plus a flat lump line — built by the SHIPPED document builder. */
 const docHtml=await page.evaluate(()=>{ const B=window.CardinalEstimatePublish; if(!B||!B.buildDocHtml) return '';
   const long='Remove existing layers of shingles and dispose of them. Inspect wood decking for damages. If damage is found, replace each 4x8 Sheet of OSB for $50/Sheet. Install a new Owens Corning roofing system with the proper intake and exhaust. New roof will be installed in accordance with Ohio codes and manufacturer installation.';
   const est={ estimate_number:'EST-2026-0912', title:'Estimate', itemized:true, subtotal:5500, discount:0, total:5500, deposit_pct:30, valid_through:'2026-11-08',
     line_items:[ { name:'Item', qty:1, unit_price:5000 }, { name:'Ohio Codes & Manufacturer Installation', description:long, qty:1, unit:'LS' }, { name:'Debris haul-away', flat:true, amount:500 } ], photos:[] };
-  try{ return B.buildDocHtml(est, { name:'Dave McCoy', address:'5226 Kellenberger, Huber Heights, OH 45424', phone:'(425) 444-1076', email:'dave@dsmccoy.com' }, {}); }catch(e){ return 'ERR '+e.message; } });
+  try{ return B.buildDocHtml(est, { name:'Dave McCoy', address:'5226 Kellenberger, Huber Heights, OH 45424', phone:'(425) 444-1076', email:'dave@dsmccoy.com', checklist: JSON.stringify({ lead:{ claim_type:'insurance' } }) }, {}); }catch(e){ return 'ERR '+e.message; } });
 await ctx.close();
 need('setup  Jacob’s estimate built by the shipped builder, five columns', /table class="items"/.test(docHtml) && /<th[^>]*>Unit Price<\/th>/.test(docHtml), docHtml.slice(0,80));
 

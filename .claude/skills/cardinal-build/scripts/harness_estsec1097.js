@@ -73,7 +73,8 @@ guard('buildDocHtml extract', function(){
     'cardinalLogo','esc','money','nl2br','docPhotoUrl','fmtDate','window',
     extract('function buildDocHtml(est, project, urls){') + '\nreturn buildDocHtml;'
   )(function(){return '';}, esc, money, nl2br, function(){return '';}, function(x){return String(x);},
-    { crEstGroups: estGroups });   // the doc uses the SAME grouping model
+    { crEstGroups: estGroups,      // the doc uses the SAME grouping model
+      projClaimType: function(){ return 'insurance'; } });   // 1276: retail is two columns; the 5-col banner checks run on insurance
 });
 function itemsTable(html){ const i = html.indexOf('<table class="items">'), j = html.indexOf('</table>', i); return html.slice(i, j); }
 guard('buildDocHtml', function(){

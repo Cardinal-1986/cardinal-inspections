@@ -101,7 +101,10 @@ guard('buildDocHtml', function(){
   const buildDocHtml = new Function(
     'cardinalLogo','esc','money','nl2br','docPhotoUrl','fmtDate','window',
     extract('function buildDocHtml(est, project, urls){') + '\nreturn buildDocHtml;'
-  )(function(){return '';}, esc, money, nl2br, function(){return '';}, function(x){return String(x);}, {});
+  )(function(){return '';}, esc, money, nl2br, function(){return '';}, function(x){return String(x);},
+    /* 1276: a RETAIL estimate prints Description + Price only; these checks are
+       about the five-column table, which insurance (and community) keep. */
+    { projClaimType: function(){ return 'insurance'; } });
   const proj = { name:'Bonita Wilburn', address:'3800 Klepinger Rd' };
   const mk = (lines) => ({ line_items:lines, photos:[], subtotal:0, total:0, deposit_amount:0,
                            title:'T', estimate_number:'E1', valid_through:'', created_at:'2026-08-27' });
