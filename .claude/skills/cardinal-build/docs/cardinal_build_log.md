@@ -34333,6 +34333,29 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1285 — Team Calendar arrows and the Activity panel, drawer style (follow-ups 2–3 to 1283)
+
+- **Team Calendar arrows.** The month arrows (`.teamcal .minical .calnav`) were solid red
+  bevel buttons. They are now the flat `#0F1521` panel that search became at 1284, with a
+  glyph at 11.16:1.
+- **Activity panel.** `.actcard` was a `#16161B` slab with a 30px drop shadow and a ridge.
+  It is now the flat card with a red edge that every home card has.
+- **Scope.** Dark retail only. In light mode the arrows stay red and the panel stays
+  raised.
+- **Gate.** `gate_1285.mjs`: 3/3 on this build, 2 of 3 fail on 1284.
+
+## Build 1284 — the top bar in the drawer's style (follow-up 1 to 1283; Theo: "Go")
+
+- **Header ground.** The retail header in dark was a navy gloss gradient with a drop
+  shadow. Its own `--hbg`/`--htint` tokens now carry the drawer's flat `#0A0E16` well, the
+  shadow is gone, and a `#223047` hairline runs underneath.
+- **The + button** was a sky-blue gloss bevel. It is now solid `#c8202e` with a white
+  glyph (5.67:1).
+- **Search** was a steel gloss bevel. It is now a flat panel.
+- Both buttons are still 44px.
+- **Scope.** Light mode and the other CRM headers are untouched.
+- **Gate.** `gate_1284.mjs`: 4/4 on this build, 3 of 4 fail on 1283.
+
 ## Build 1283 — the home screen in the drawer's style (Theo: "B")
 
 **The ask.** Theo, verbatim: "Is there any way to not make the interface look cartooony, maybe

@@ -9724,3 +9724,8 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Headings are white.
 - Light mode is unchanged.
 - **Gate:** `gate_1283.mjs`.
+
+## Builds 1284–1285 — drawer style for the top bar, Team Calendar arrows and the Activity panel
+- **Dark retail:** header on the flat `#0A0E16` well with a flat red +, flat search, flat month arrows, and the Activity panel as a flat card with a red edge.
+- **Light mode:** untouched.
+- **Gates:** `gate_1284.mjs`, `gate_1285.mjs`.

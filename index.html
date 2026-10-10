@@ -4148,7 +4148,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1284<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1285<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44117,6 +44117,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1285, d: '2026-10-10', t: 'Calendar arrows and Activity, flat like the rest',
+    s: 'The month arrows on the Team Calendar are plain dark squares now instead of red bumps, and the Activity panel on the right is the same flat card with a red edge as the rest of the home screen. Dark mode.' },
   { b: 1284, d: '2026-10-10', t: 'A flat top bar, like the side menu',
     s: 'The bar across the top is now the same flat dark as the side menu, without the glossy shine and shadow, and its two buttons are flat too \u2014 the + is solid Cardinal red and the search is a plain dark square. Dark mode first.' },
   { b: 1283, d: '2026-10-10', t: 'A cleaner home screen, like the side menu',
@@ -73915,6 +73917,17 @@ background:#0F1521;border:1px solid #223047;box-shadow:none;color:#c2cbd8;}
 :root:not([data-theme="rb-light"]) body[data-crm-head="retail"] #cr-hd2-bar .cr-ib.primary{
 --cr-stack:"1284 flat red + (was sky-blue gloss)";
 background:#c8202e;border:1px solid #c8202e;box-shadow:none;color:#ffffff;}
+
+/* ── Build 1285 · Team Calendar arrows + Activity panel, drawer style ────── */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .teamcal .minical .calnav{
+--cr-stack:"1285 flat month arrows (were red bevels)";
+background:#0F1521;border:1px solid #223047;box-shadow:none;color:#c2cbd8;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .teamcal .minical .calnav:hover{
+--cr-stack:"1285 hover for the flat arrows";
+background:#141C29;color:#ffffff;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .actcard{
+--cr-stack:"1285 flat Activity panel (was slab + drop shadow + ridge)";
+background:#0F1521;border:1px solid #223047;border-left:3px solid #c8202e;box-shadow:none;border-radius:10px;}
 
 /* ── Build 527 · the Schedule Board ───────────────────────────────────────
    Fourteen white slabs down a near-black page - the one retail surface that
