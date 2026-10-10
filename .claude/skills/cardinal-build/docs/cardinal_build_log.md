@@ -34333,6 +34333,101 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1283 — the home screen in the drawer's style (Theo: "B")
+
+**The ask.** Theo, verbatim: "Is there any way to not make the interface look cartooony, maybe
+look more like the left side drawer menu?"
+
+**Options.** Two were previewed on the real app at desktop and phone width:
+- A: quiet grey uppercase labels
+- B: white sentence-case headings and a thin red edge
+
+He picked **B**.
+
+**What made it cartoony,** measured in Chromium rather than guessed:
+- **Georgia** on every card title, the greeting, `#brandTitle h1` and `.pcini`.
+- **ui-monospace** on the pipeline money, the 30-day calendar, the punch tags and the PO
+  chips.
+- A **gloss gradient, drop shadow and glint line** on every `.pipecard`.
+
+The drawer uses one sans font and flat `#0F1521` panels on `#223047` hairlines.
+
+**What changed.** One block, applied to dark retail on the home screen only (`#mainView` and
+the brand title):
+- one sans font everywhere: Segoe UI first, falling back to the system font
+- tabular numerals for the figures
+- flat `#0F1521` cards with a 3px `#c8202e` left edge and no shadow
+- no glint lines
+- white 15px headings (18.27:1)
+- flat punch cards, each keeping its own priority edge
+
+Every rule carries `--cr-stack` (`gate_stack` is clean). Light mode, Claims and Community
+are untouched; gate D asserts this.
+
+**Gates.** `gate_1283.mjs` has 4 checks: all pass, and 2 fail against 1282 (A and B, as
+expected). Also green: check_build, gate_stack, gate_1206, gate_1281 and gate_1183.
+
+**Next, one at a time:**
+- the header's glossy + and search buttons
+- the Team Calendar's red arrows
+- the Activity panel
+- then the client page, Leads and the rest
+- light mode once dark is settled
+
+## Build 1282 — the hammer watermark comes off Next 30 Days (Theo: "3", remove it)
+
+1183 wired the cardinal-on-a-hatchet artwork behind the home schedule card. Theo's photo
+showed it as a big pink bird over the dates. Offered three options (leave it, fade it,
+remove it), he picked remove.
+
+**Deleted at source:**
+- the `.pipecard.prodcal::before` paint
+- its dark-mode `.14` opacity twin
+- the content lift that existed only to keep the dates above the watermark
+- `cardinal-prod.png` itself (nothing else referenced it: not `sw.js`, not any other page)
+
+**Kept:**
+- `.pipecard.prodcal{position:relative;overflow:hidden}`, which is harmless, and other
+  gates read `.prodcal`
+- the Team Calendar's pencil watermark, untouched
+
+**Gates:**
+- `gate_1183` now asserts the hammer stays gone: no mask, the artwork is never fetched,
+  and the file is deleted.
+- Its glyph-drift check is retired with the watermark.
+- Green 21/21; red 19/21 on 1281.
+
+## Build 1281 — the home Approvals card reads on the dark home screen (Theo's photo, 10 Oct)
+
+Theo sent a photo of the home screen and said "Fix first."
+
+**What was wrong**
+- The heading "Approvals — signed estimates awaiting contract" was `.projsec`'s light-era
+  ink `#1c1416` on the navy home card: **1.16:1**.
+- Each approval was a white `.apprrow` slab, with a `#1d4f91` name and a `#666` detail
+  line.
+- This is the same light-ink-on-dark-ground class as 527 and 689.
+
+**What changed**
+- Following 527's Schedule Board approach, the fix is applied at the card itself
+  (`#approvalsCard`) and limited to dark retail.
+- The heading uses `--rbe-head` (**15.6:1**).
+- The row uses the `--rbe-bg1/bg2` card gradient with a dark ridge.
+- The name is `--rbe-head` (12.71:1) and the detail is `--rbe-mute` (6.79:1).
+- Light mode and Claims/Community are unchanged, which `gate_1281` C asserts.
+- The overrides carry `--cr-stack` because they out-rank the light-era base on purpose,
+  and the base still serves light mode. `gate_stack` is clean.
+
+**Gates:** `gate_1281.mjs`, 3 checks, red 2/3 on 1280.
+
+**Not changed: the cardinal-on-a-hammer watermark behind Next 30 Days.** It is deliberate
+(1183) at opacity .14 in dark mode. Theo's photo makes it look heavier than it renders; the
+question of fading or removing it is put to him, not decided here.
+
+**On hold, on Theo's say-so ("I don't know on calander put it on hold"):** the report that
+appointments no longer reach the Apple calendar. The code has been unchanged since 1258 and
+works in Chromium. The four-way diagnosis question is parked in `OPEN_ITEMS.md`.
+
 ## Build 1280: a slim pay bar, and pay by check (Theo: "The payment screen is too large compared to estimate. Also a lot people pay by check.")
 
 - **The bar.** In 1279 the pay card covered about a third of a phone screen on top of

@@ -9708,3 +9708,19 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - **Pay** opens `#crPaySheet`: bank (no fee), card (+3%), check (no fee).
 - The check option gives payee, mailing address and memo line. It writes nothing; record checks in Money In.
 - **Gate:** `gate_1280.mjs`.
+
+## Build 1281 — Approvals card themed for dark home
+- `#approvalsCard` heading, rows, name and detail all use `--rbe-*` tokens in dark retail.
+- Light mode and Claims/Community are unchanged.
+- **Gate:** `gate_1281.mjs`.
+
+## Build 1282 — no watermark on Next 30 Days
+- The cardinal-on-a-hammer watermark (1183) has been removed at Theo's request, and `cardinal-prod.png` deleted.
+- **Gate:** `gate_1183` now asserts it stays gone.
+
+## Build 1283: the drawer style on the home screen (option B)
+- Dark retail home uses one sans typeface (no Georgia, no monospace).
+- Cards are flat `#0F1521` with a red left edge, no gloss and no glint.
+- Headings are white.
+- Light mode is unchanged.
+- **Gate:** `gate_1283.mjs`.

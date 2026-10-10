@@ -1829,20 +1829,8 @@ html, body{overflow-x:hidden;max-width:100%;}
    watermark would escape to the nearest positioned ancestor and paint across
    the page. So the host context is declared here rather than assumed. */
 .pipecard.prodcal{position:relative;overflow:hidden;}
-/* ⚠ AND THE CONTENT HAS TO BE LIFTED, or the watermark paints ON TOP OF THE
-   DATES. Measured, not assumed: with the numbers left in normal flow, 13.8% of
-   their glyph pixels changed when the watermark came on — a positioned
-   ::before paints above non-positioned in-flow siblings whatever its z-index,
-   so dropping it to 0 changed nothing (13.1%). Lifting the content is what
-   works, and it is the same move `.cr-pcard.community .t` already makes.
-   After: 2.2%, which is glyph anti-aliasing against a changed ground, not
-   text being covered. */
-.pipecard.prodcal > *{position:relative;z-index:6;}
-.pipecard.prodcal::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(125deg,#e2574a 20%,#c8202e 58%,#e35c63);
-  -webkit-mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
-  mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
-  opacity:.24;pointer-events:none;z-index:5;}
+/* 1282: the hammer watermark is gone (Theo, 10 Oct: remove it). The lift that kept
+   the dates above it went with it; the host rule above stays, harmlessly. */
 /* 689: this rule pinned both calendar titles to #1c1416 — a light-era
    near-black — with NO theme gate, so it painted 1.06:1 on the dark card
    while every other .pipetitle sat at 15.60:1. The light twin below was
@@ -4160,7 +4148,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1280<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1283<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44129,6 +44117,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1283, d: '2026-10-10', t: 'A cleaner home screen, like the side menu',
+    s: 'The home screen now looks like the side menu: one plain typeface everywhere instead of the old storybook serif and typewriter lettering, and flat dark cards with a thin red edge instead of glossy ones. Dark mode first; light mode and the other screens follow one at a time.' },
+  { b: 1282, d: '2026-10-10', t: 'The bird is off the calendar',
+    s: 'The big cardinal-on-a-hammer drawing behind Next 30 Days on the home screen is gone, so the dates sit on a plain card. The Team Calendar keeps its own pencil drawing.' },
+  { b: 1281, d: '2026-10-10', t: 'Approvals you can read on the home screen',
+    s: 'The Approvals box on the home screen \u2014 signed estimates waiting for a contract \u2014 had a heading in dark letters on the dark card, so it could not be read, and each estimate sat on a bright white strip. The heading is white now and each estimate sits on the same dark card as the rest of the home screen. Light mode is unchanged.' },
   { b: 1280, d: '2026-10-10', t: 'A slim pay bar, and pay by check',
     s: 'The pay box on an estimate, contract or invoice link was too big next to the document. It is now a slim strip at the bottom with the amount and a Pay button. Tapping Pay shows three ways to pay: by bank (no fee), by card (3% fee), or by check (no fee) \u2014 payable to Cardinal Roofing & Renovations, LLC, handed to your rep or mailed to 5735 Webster Street, with the client\u2019s name on the memo line. Record a check in the app the way you always have.' },
   { b: 1279, d: '2026-10-10', t: 'Pay by bank, or by card with a 3% fee',
@@ -73842,6 +73836,68 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo:hover,
 body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow:hover,
 body:not(.claim-insurance):not(.claim-community) #projectView .jabox:hover{box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
 
+/* ── Build 1281 · the home Approvals card ─────────────────────────────────
+   Theo's photo: the heading was #1c1416 (.projsec's light-era ink) on the navy
+   home card, ~1.1:1, and every approval was a white slab with a #1d4f91 name.
+   Themed at the card, dark retail only — 527's shape — so light and the other
+   CRMs keep what they have. --cr-stack: these out-rank the light-era base on
+   purpose; the base still serves light mode and Claims/Community. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #approvalsCard h3.projsec{
+--cr-stack:"1281 dark twin of the light-era .projsec ink";
+color:var(--rbe-head,#ffffff);border-bottom-color:var(--rbe-line3,#3a3a44);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #approvalsCard .apprrow{
+--cr-stack:"1281 dark twin of the white .apprrow slab";
+--rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);
+background:linear-gradient(180deg,var(--rbe-bg1,#2e333b),var(--rbe-bg2,#262a31));
+border:1px solid var(--rbe-line2,#2b2b33);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #approvalsCard .apprcli{
+--cr-stack:"1281 dark twin of #1d4f91";color:var(--rbe-head,#ffffff);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #approvalsCard .apprdet{
+--cr-stack:"1281 dark twin of #666";color:var(--rbe-mute,#b8bec6);}
+
+/* ── Build 1283 · the home screen in the drawer's style (Theo: option B) ──
+   Theo: "not make the interface look cartooony, maybe look more like the left
+   side drawer menu". Measured: Georgia on every card title, ui-monospace on the
+   pipeline money, the 30-day calendar and the punch tags, and a gloss gradient +
+   drop shadow + glint line on every card. The drawer uses one sans and flat
+   #0F1521 panels on #223047 hairlines; this brings the home screen to it.
+   Dark retail, home only. --cr-stack on each: the older rules still serve light. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipetitle,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipetitle *,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-hd2-mid #brandTitle h1,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView #heroGreeting,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView #heroGreeting .qmark,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .viewhead,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .calhead b,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pu-strip .sh b,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pcini{
+--cr-stack:"1283 one sans like the drawer (was Georgia)";
+font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pmoney,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .cal30 .ch,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .cal30 .cd,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pu-strip .sh .n,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pu-tag,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pu-st,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pu-sched,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pcpo{
+--cr-stack:"1283 one sans like the drawer (was ui-monospace)";
+font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipetitle{
+--cr-stack:"1283 white sentence-case card heading";
+font-size:15px;font-weight:700;letter-spacing:0;color:var(--rbe-head,#ffffff);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipecard{
+--cr-stack:"1283 flat drawer panel (was gloss gradient + drop shadow)";
+background:#0F1521;border:1px solid #223047;border-left:3px solid #c8202e;
+box-shadow:none;border-radius:10px;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipecard::after{
+--cr-stack:"1283 no glint line";display:none;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .rowfil{
+--cr-stack:"1283 no glint divider";display:none;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pu-card{
+--cr-stack:"1283 flat punch card; its own priority edge stays";
+background:#141B27;box-shadow:none;border-top:1px solid #223047;border-bottom:1px solid #223047;border-right:1px solid #223047;}
+
 /* ── Build 527 · the Schedule Board ───────────────────────────────────────
    Fourteen white slabs down a near-black page - the one retail surface that
    never got tokenised. Themed here rather than at source, so Claims and
@@ -74060,13 +74116,6 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* the watermark bird was set for a cream ground and muddies the navy */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.teamcal::before{
   opacity:.10;
-}
-/* 1183: the same correction for the hammer. The .24 in the base rule was drawn
-   for teamcal's white paper card; on the navy ground the schedule card actually
-   has, it reads as a dark smudge rather than a watermark. Measured at .24/.18/
-   .14/.10 and rendered — .14 shows the artwork and leaves the dates clean. */
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.prodcal::before{
-  opacity:.14;
 }
 /* "Take the all jobs off the calander it makes the calander in level."
    Hidden rather than deleted from the JS: the string is still computed and

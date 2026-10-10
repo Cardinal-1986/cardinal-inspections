@@ -6291,3 +6291,15 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
   written parts, saves, Undo) beside **Add a note**. Edit by hand is the editor itself.
 - [ ] Decide whether the guide should raise the General checklist's lead pop-up (`computeLeads`), as the
   General modal does.
+
+## ON HOLD (10 Oct 2026, Theo): "It's no longer adding to apples calander"
+Theo, verbatim: "I don't know on calander put it on hold."
+- The calendar export code has been unchanged since build 1258 and works in Chromium.
+- The open question was which of four paths fails on his iPhone:
+  1. the .ics download
+  2. the subscribe link
+  3. the share sheet
+  4. the per-event "Add to calendar" button
+- He doesn't know which. **Do not build on a guess.** Reopen this when he can show the
+  failure on the phone, with a screen recording or a screenshot of the step that does
+  nothing.
