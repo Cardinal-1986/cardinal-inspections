@@ -34333,6 +34333,22 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1275 — Publish checks the lines first (Theo, 10 Oct, pick #1 of 7)
+
+- **Why:** Jacob's EST-2026-0912 printed a $5,000 line as **"Item"** — `rowFor()` prints the literal
+  word Item when a line has no name — and the roof write-up on the next line with no price.
+- **What:** `estLineProblems(est)` in `cr-epub-script`, priced exactly as `rowFor` prices (flat →
+  amount, else qty × unit price; `itemized:false` rows count as flat). Three cases: a price but no
+  name, words but no price, nothing at all. `handlePublishClick` asks once through `crAsk`
+  (**Fix it** / **Publish anyway**, plain tone) just before `publish()`; **Fix it** publishes nothing.
+  A clean estimate publishes with no question. The 1269 bar **Email** goes through the same path.
+- **Gate:** `gate_1275.mjs` (7) GREEN; RED 4/7 on 1274. It stands in for `CardinalEstimates.save()`
+  so the estimate carries Jacob's exact lines; the check under test is the shipped handler.
+  ⚠ Two test-order traps cost a round each: the app's own "Estimate published — send it?" ask from
+  the previous step was still open (`crAsk` returns false while busy), and `closeEditor()` then the
+  builder state did not always reopen the builder — the gate now asserts the reopen.
+  Also green: 1201, 1204, 1211, 1268–1274, check_build, types, dupes, scroll-lock.
+
 ## Build 1274 — an estimate's price table reads on a phone SCREEN (Theo, screenshot of the email link)
 
 - **The report:** "Estimate still looks bad" — EST-2026-0912 opened from the email link in Safari on

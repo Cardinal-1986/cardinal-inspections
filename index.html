@@ -4160,7 +4160,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-09 build 1274<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1275<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44082,6 +44082,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1275, d: '2026-10-10', t: 'Publish checks your lines first',
+    s: 'Before an estimate is published, the app now looks at every line. A line with a price but no name (it would print as \u201cItem\u201d), a line with words but no price, or an empty line \u2014 it tells you which, and you can <b>Fix it</b> or <b>Publish anyway</b>. A clean estimate publishes with no question.' },
   { b: 1274, d: '2026-10-09', t: 'Estimates read on a phone',
     s: 'Opened on a phone \u2014 from the email link or in the app \u2014 an estimate squeezed its five columns onto the screen, so the description ran one word to a line. Each line now stacks: the description across the screen, then the quantity, unit and price with the amount on the right. Estimates already sent read the new way too.' },
   { b: 1273, d: '2026-10-09', t: 'Edit the email before it goes',
@@ -52953,6 +52955,24 @@ saveBtn.parentNode.insertBefore(btn, saveBtn);
    Build 732 lost a round to a patch whose own prose contained the literal its
    self-check asserted on, and planting a string here would make every future
    grep for that control report a hit that is not code. */
+/* 1275: what would print badly, in words a rep reads. Priced exactly as
+   buildDocHtml's rowFor prices a line. */
+function estLineProblems(est){
+  var lines = (est && Array.isArray(est.line_items)) ? est.line_items : [];
+  var out = [];
+  lines.forEach(function(l, i){
+    if(!l) return;
+    var flat = l.flat === true || (est.itemized === false && l.flat == null);
+    var amt  = flat ? (Number(l.amount) || 0) : ((Number(l.qty) || 0) * (Number(l.unit_price) || 0));
+    var name = String(l.name || '').trim(), words = String(l.description || '').trim();
+    var n = 'Line ' + (i + 1);
+    var money = (typeof window.fmtMoney === 'function') ? window.fmtMoney(amt) : ('$' + amt.toFixed(2));
+    if(!name && !words && !amt) out.push(n + ' is empty \u2014 it prints as \u201cItem\u201d with nothing next to it.');
+    else if(!name && amt) out.push(n + ' has a price (' + money + ') but no name \u2014 it prints as \u201cItem\u201d.');
+    else if(!amt) out.push(n + ' (\u201c' + (name || words).slice(0, 40) + '\u201d) has no price \u2014 its amount prints blank.');
+  });
+  return out;
+}
 function pubSet(busy){
 [document.getElementById('cr-epub-btn'),
  document.querySelector('#cr-est-view [data-act="bar-publish"]')]
@@ -53004,6 +53024,14 @@ return;
 if(!est || String(est.project_id) !== String(projectBefore.id)){
 crTell('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.');
 return;
+}
+/* 1275: a nameless or priceless line is the client's first impression of the
+   job. Ask once; "Fix it" publishes nothing. */
+var _probs = estLineProblems(est);
+if(_probs.length){
+  var _ask = (typeof window.crAsk === 'function') ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+  var _go = await _ask('Check these lines before the client sees them\n\n' + _probs.join(' '), { verb: 'Publish anyway', cancel: 'Fix it', tone: 'plain' });
+  if(!_go){ pubSet(false); return; }
 }
 var docId = await publish(est, projectBefore);
 if(!docId){ return; }
