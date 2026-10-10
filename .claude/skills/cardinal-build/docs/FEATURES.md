@@ -9690,3 +9690,8 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Under the Cardinal logo on the published estimate, Good/Better/Best, and the editor's roofing template.
 - From Theo's printed roofing contract; no OC approval needed (only the Pink Panther needs it).
 - **Gate:** `gate_1277.mjs`.
+
+## Build 1278 — estimates look the same on a phone as on paper
+- Published estimates, GBB, share links (old ones too, via `api/share.js`) and the in-app viewer (`fitEstimateFrame()`) all show the Letter page scaled to fit. No phone restack.
+- Text autosizing off (`text-size-adjust:100%`), so no single paragraph inflates.
+- **Gate:** `gate_1278.mjs`. Reverses the 1027/1274 phone reflow on Theo's ruling.

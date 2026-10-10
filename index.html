@@ -4160,7 +4160,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1277<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1278<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -26931,6 +26931,14 @@ async function openEditor(id){
           '@media screen{html,body{overscroll-behavior:contain;}}';
         doc.head.appendChild(sfx);
       }
+      /* 1278: an estimate keeps its Letter body in the editor too (screenFix above
+         would let it run to the frame's width); fitEstimateFrame scales the frame. */
+      if(doc.querySelector('.est-head') && doc.querySelector('table.items') && !doc.getElementById('estFrameFix')){
+        var _eff = doc.createElement('style');
+        _eff.id = 'estFrameFix';
+        _eff.textContent = '@media screen{body{width:8.5in !important;max-width:none !important;padding:0.75in 0.65in 0.9in !important;}}';
+        doc.head.appendChild(_eff);
+      }
       doc.body.setAttribute('spellcheck','true');
       doc.body.style.outline = 'none';
       Array.prototype.forEach.call(doc.querySelectorAll('[data-cardinal-hint]'), function(el){ el.remove(); });   /* 1270 */
@@ -26954,6 +26962,7 @@ async function openEditor(id){
       wireColorSelects(doc);
       wireWoFields(doc);
       wireInvoiceLive(doc, r);   /* 1109: live invoice status/balance/ledger */
+      fitEstimateFrame();   /* 1278 */
       refreshSigBtn();
       __fillIdx = 0;
       refreshFillChip();
@@ -27136,6 +27145,33 @@ async function inlineDocImages(html){
   }
   return '<!DOCTYPE html>\n' + d.documentElement.outerHTML;
 }
+/* 1278: on a narrow screen an ESTIMATE is shown as its Letter page, shrunk to fit,
+   so it looks the same as on paper and on a computer. An iframe ignores a viewport
+   meta and its media queries read the iframe's own width, so the frame itself is
+   given a Letter-wide 880px and scaled down from outside. Anything else, and any
+   screen wide enough, gets the frame back exactly as it was. */
+var EST_FIT_W = 880;
+function fitEstimateFrame(){
+  try{
+    var wrap = document.getElementById('reportFrameWrap');
+    var d = frame && /** @type {any} */ (frame).contentDocument;
+    var isEst = !!(d && d.querySelector('.est-head') && d.querySelector('table.items'));
+    var ww = wrap ? wrap.clientWidth : 0, wh = wrap ? wrap.clientHeight : 0;
+    if(isEst && ww && ww < EST_FIT_W){
+      var k = ww / EST_FIT_W;
+      frame.style.width = EST_FIT_W + 'px';
+      frame.style.height = (wh / k) + 'px';
+      frame.style.right = 'auto'; frame.style.bottom = 'auto';
+      frame.style.transformOrigin = '0 0';
+      frame.style.transform = 'scale(' + k + ')';
+      frame.setAttribute('data-est-fit', k.toFixed(3));
+    } else if(frame && frame.hasAttribute('data-est-fit')){
+      ['width','height','right','bottom','transformOrigin','transform'].forEach(function(p){ frame.style[p] = ''; });
+      frame.removeAttribute('data-est-fit');
+    }
+  }catch(_f){}
+}
+window.addEventListener('resize', function(){ fitEstimateFrame(); });
 function serializeFrame(){
   var doc = frame.contentDocument;
   var clone = doc.documentElement.cloneNode(true);
@@ -27172,6 +27208,13 @@ function serializeFrame(){
   });
   var sf = clone.querySelector('#screenFix');
   if(sf) sf.remove();
+  var _ef = clone.querySelector('#estFrameFix');   /* 1278 */
+  if(_ef) _ef.remove();
+  /* 1278: an estimate is laid out at Letter width on every screen. */
+  if(clone.querySelector('.est-head') && clone.querySelector('table.items')){
+    var _vp = clone.querySelector('meta[name="viewport"]');
+    if(_vp) _vp.setAttribute('content', 'width=900');
+  }
   clone.querySelectorAll('.cbx[data-cbx]').forEach(function(el){ el.removeAttribute('data-cbx'); });
   /* 750: same reason as data-cbx above \u2014 drop the wired marker so a reopened
      document re-binds. The `selected` attribute is left alone: it IS the answer. */
@@ -44086,6 +44129,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1278, d: '2026-10-10', t: 'An estimate looks the same on a phone',
+    s: 'On a phone an estimate used to rearrange itself into one narrow column. It now shows the same Letter page you see on a computer and on paper, shrunk to fit the screen \u2014 pinch to zoom in. That holds in the app, on the link the client opens, and in the emailed file, for estimates already sent too.' },
   { b: 1277, d: '2026-10-10', t: 'Owens Corning Preferred Contractor on every estimate',
     s: 'Estimates now carry the Owens Corning Preferred Contractor badge under the Cardinal logo \u2014 the same artwork printed on our roofing contract. It shows on the published estimate, the emailed copy, the print and the Good / Better / Best proposal.' },
   { b: 1276, d: '2026-10-10', t: 'Retail estimates: Description and Price',
@@ -52298,7 +52343,7 @@ return '<!DOCTYPE html>\n' +
 /* 1027: without this, a phone renders the 8.5in body at 816 CSS px and the
    client reads their estimate through a pinch-zoom. The two screen media
    queries in the sheet below do the actual reflow. Print is untouched. */
-'<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+'<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>\n' +   /* 1278: the Letter page, shrunk to fit — same as paper */
 '<title>Cardinal Roofing &amp; Renovations \u2014 ' + esc(est.title || 'Estimate') + '</title>\n' +
 '<style>\n' +
 ':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#8a8a8a;--hair:#e5e2dc;--wash:#faf8f4;--amber:#E8A33D}\n' +
@@ -52667,7 +52712,7 @@ function buildGbbHtml(tiers, project, plan){
     finNote = '<span>&nbsp;</span>';
   }
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n' +
-    '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+    '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>\n' +   /* 1278 */
     '<title>Cardinal Roofing &amp; Renovations — Roof Options</title>\n' +
     '<style>\n' +
     ':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#8a8a8a;--hair:#e5e2dc;--wash:#faf8f4}\n' +

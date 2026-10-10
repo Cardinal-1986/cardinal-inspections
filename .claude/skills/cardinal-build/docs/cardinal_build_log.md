@@ -34333,6 +34333,32 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1278 — an estimate looks the same on a phone as on paper (Theo: "It shouldn't")
+
+Theo asked why a finished estimate looked different on the phone. It did because at
+≤560px the 1027/1274 phone rules restacked it: the header went to one column and the
+item table turned into cards. **Theo's ruling: it shouldn't.** This build reverses that
+direction on purpose. The estimate is now the Letter page, shrunk to fit, on every screen.
+
+- **Templates** (`buildDocHtml` and GBB): viewport `width=900` plus
+  `html{text-size-adjust:100%}`. The second part matters. With only the viewport, mobile
+  browsers autosized the acceptance paragraph to roughly twice the size of the rest of the
+  page, and only the phone screenshot showed it.
+- **`api/share.js`**: estimates stored before 1278 still carry `device-width`. They are
+  rewritten as they are served (`est-head` + `table.items`), so links already sent to
+  clients get fixed with no data migration.
+- **`serializeFrame()`**: the next save or email of an old estimate writes the Letter
+  viewport into the stored document.
+- **In-app viewer**: `fitEstimateFrame()` renders the frame 880px wide and scales it to
+  fit the wrapper on narrow screens. It resets for non-estimates and on desktop, and
+  re-runs on resize. `#estFrameFix` holds the editor's 8.5in body and is stripped by
+  `serializeFrame`.
+- The 1274 `ITEMS_PHONE` rules stay in the file. At width=900 they never match, so they do
+  no harm. Deleting them belongs in a separate cleanup.
+- **Gates**: `gate_1278.mjs`, 8 checks, red 4/8 on 1277. `gate_1027`'s phone check now
+  expects `row`, with a comment citing this reversal. Standing gates and 1268–1277 are
+  green.
+
 ## Build 1277 — the Owens Corning Preferred Contractor lockup on every estimate (Theo, pick #7)
 
 - **Theo, 10 Oct, three lines:** *"I don't need approval for the preferred contractor logo"* · *"It's

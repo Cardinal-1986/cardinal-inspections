@@ -264,6 +264,13 @@ export default async function handler(req, res) {
       'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",run);else run();' +
       '})();</scr' + 'ipt>';
     html = html.includes('</head>') ? html.replace('</head>', FIX + '\n</head>') : FIX + html;
+    // 1278: an estimate is shown as its Letter page on every screen, the same as
+    // paper. Estimates stored before 1278 carry a device-width viewport; serve them
+    // at Letter width too, so a client's phone never restacks them — and never
+    // enlarges one paragraph of it on its own (text autosizing).
+    if (/class="est-head"/.test(html) && /<table class="items">/.test(html)) {
+      html = html.replace(/<meta name="viewport" content="[^"]*">/, '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>');
+    }
     const signable = (SIGN_RX.test(html) || SLOT_RX.test(html)) && !html.includes('data-clientsigned');
     if (signable) {
       const ui = signUi(t);

@@ -108,7 +108,10 @@ async function judge(html, tag) {
   const probes = await renderProbe(doc);
   if (probes.phone.scrollW > probes.phone.innerW + 1)
     fails.push(`phone overflow: scrollWidth ${probes.phone.scrollW} > viewport ${probes.phone.innerW}`);
-  if (probes.phone.headDir !== 'column') fails.push(`phone header not stacked (flex-direction ${probes.phone.headDir})`);
+  /* 1278 (Theo, 10 Oct: "It shouldn't [look different on the phone]") REVERSED the phone reflow
+     this gate was written for: an estimate is now laid out at Letter width on a phone
+     (viewport width=900) and shrunk to fit, so the header is a ROW, exactly as on paper. */
+  if (probes.phone.headDir !== 'row') fails.push(`phone header is not the paper layout (flex-direction ${probes.phone.headDir})`);
   if (probes.desk.numBg !== 'rgb(200, 32, 46)') fails.push(`section-number chip not cardinal red: ${probes.desk.numBg}`);
   if (probes.desk.bodyW < 750 || probes.desk.bodyW > 850) fails.push(`desktop page width off Letter: ${probes.desk.bodyW}px`);
   return { fails, doc };
