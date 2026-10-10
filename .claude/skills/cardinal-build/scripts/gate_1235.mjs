@@ -64,10 +64,10 @@ for (const [st, view] of [['leads', 'leadsView'], ['photoactivity', 'photoView']
   let r = await p.evaluate(LJ, view).catch(e => ({ err: String(e) }));
   if (r.none) r = await p.evaluate(() => { const t = [...document.querySelectorAll('.ljtitle')].find(e => e.getClientRects().length); return t ? t.closest('[id]').id : 'none'; }).then(id => p.evaluate(LJ, id));
   await p.close();
-  /* 1287: dark retail app screens take the drawer's sans (Theo: option B); light keeps Georgia/mono. */
-  ok((th === 'dark' ? /Segoe UI/.test(r.font || '') : /Georgia/.test(r.font || '')) && r.th < 40 && r.align !== 'center' && r.sl != null && Math.abs(r.tl - r.sl) <= 2, 'A  ' + th + ' ' + st + ': Georgia title, one line, left with the search box', JSON.stringify([r.font && r.font.slice(0, 8), r.th, r.align, r.tl, r.sl]));
+  /* 1287: dark retail app screens take the drawer's sans (Theo: option B); light followed at 1290. */
+  ok(/Segoe UI/.test(r.font || '') && r.th < 40 && r.align !== 'center' && r.sl != null && Math.abs(r.tl - r.sl) <= 2, 'A  ' + th + ' ' + st + ': Georgia title, one line, left with the search box', JSON.stringify([r.font && r.font.slice(0, 8), r.th, r.align, r.tl, r.sl]));
   ok(r.btns === 0, 'A  ' + th + ' ' + st + ': no back button on a top-level page', r.btns);
-  ok(r.subTop >= r.tBottom - 2 && r.subTT === 'uppercase' && (th === 'dark' ? /Segoe UI/.test(r.subFont || '') : /mono|Menlo|SF Mono/i.test(r.subFont)), 'A  ' + th + ' ' + st + ': the count line is the eyebrow under the title', JSON.stringify([r.subTop, r.tBottom, r.subTT]));
+  ok(r.subTop >= r.tBottom - 2 && r.subTT === 'uppercase' && /Segoe UI/.test(r.subFont || ''), 'A  ' + th + ' ' + st + ': the count line is the eyebrow under the title', JSON.stringify([r.subTop, r.tBottom, r.subTT]));
   ok(r.rT >= 3 && r.rS >= 3 && r.rSub >= 4.5, 'A  ' + th + ' ' + st + ': title, red half and eyebrow clear their floors', [r.rT, r.rS, r.rSub].join(' / '));
 }
 for (const th of ['dark', 'rb-light']) {
@@ -78,8 +78,8 @@ for (const th of ['dark', 'rb-light']) {
       font: getComputedStyle(h).fontFamily, hh: Math.round(hr.height), span: !!h.querySelector('span'), rT: +window.__ratio(h).toFixed(2), rB: +window.__ratio(n).toFixed(2) }; }).catch(e => ({ err: String(e) }));
   await p.close();
   ok(r.nw === 44 && r.nh === 44 && r.svg && r.aria === 'Back', 'B  ' + th + ' Insurance Clients: back is a 44x44 icon labelled Back', JSON.stringify(r).slice(0, 120));
-  /* 1287: dark retail app screens take the drawer's sans (Theo: option B); light keeps Georgia/mono. */
-  ok((th === 'dark' ? /Segoe UI/.test(r.font || '') : /Georgia/.test(r.font || '')) && r.hh < 40 && r.span && r.rT >= 3 && r.rB >= 3, 'B  ' + th + ' Insurance Clients: Georgia title on one line with its red half, readable', JSON.stringify([r.hh, r.span, r.rT, r.rB]));
+  /* 1287: dark retail app screens take the drawer's sans (Theo: option B); light followed at 1290. */
+  ok(/Segoe UI/.test(r.font || '') && r.hh < 40 && r.span && r.rT >= 3 && r.rB >= 3, 'B  ' + th + ' Insurance Clients: Georgia title on one line with its red half, readable', JSON.stringify([r.hh, r.span, r.rT, r.rB]));
 }
 const BAND = () => { const b = document.querySelector('.dbstage'); if (!b) return { none: true };
   const t = b.querySelector('.dbstgmid b'), sm = b.querySelector('.dbstgmid small');

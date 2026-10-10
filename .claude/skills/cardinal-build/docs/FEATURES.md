@@ -9741,6 +9741,15 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1290: light mode in the drawer's style
+
+Light retail matches the dark clean-up:
+- one sans font
+- a flat white header
+- flat white cards with a hairline and the 3px red edge (home, client page, Leads, Punch, AR, Crews)
+
+Light retail no longer has gradients, drop shadows, Georgia or monospace. Insurance, Community, the drawer and the presentation screens are untouched. Gate: `gate_1290.mjs`.
+
 ## Builds 1288–1289: Leads/Punch/AR/Crews cards flat; presentation screens keep their type
 - **Dark retail:** the Leads and Punch cards are flat, and AR and Crews have no shadows.
 - **Unchanged:** Production and Dispatch.

@@ -4148,7 +4148,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1289<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1290<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44117,6 +44117,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1290, d: '2026-10-10', t: 'Light mode, cleaned up like the side menu',
+    s: 'Light mode now matches the new dark look: one plain typeface, flat white cards with a thin red edge instead of shiny ones, a flat white top bar with a solid red +, and flat buttons. The screens you show homeowners keep their own look.' },
   { b: 1289, d: '2026-10-10', t: 'Presentation screens keep their own look',
     s: 'The screens you show a homeowner at the table \u2014 Why Cardinal, Owens Corning Colors, the Showcase and The Appointment \u2014 keep their own designed lettering. The plain typeface from 1287 now applies only to the working screens of the app.' },
   { b: 1288, d: '2026-10-10', t: 'Flat cards on Leads, Punch, Receivables and Crews',
@@ -73994,6 +73996,64 @@ background:#0F1521;border:1px solid #223047;box-shadow:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-ar-view .crar-empty,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #crewsView .crw-card{
 --cr-stack:"1288 shadow off; the ground stays on its own token";
+box-shadow:none;}
+
+/* ── Build 1290 · light mode in the drawer's style (the light twin of 1283–1289) ──
+   The drawer's light palette: #f2f3f5 well, white cards, #dcdee2 hairlines, #161616
+   ink, the same thin red edge. Same scopes and exclusions as the dark builds. */
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt) *){
+--cr-stack:"1290 one sans across light retail; drawer + presentation screens excluded";
+font-family:'Segoe UI',Arial,sans-serif !important;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pipecard,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .actcard{
+--cr-stack:"1290 flat white card with the red edge (light twin of 1283/1285)";
+background:#ffffff;border:1px solid #dcdee2;box-shadow:none;border-left:3px solid #c8202e;border-radius:10px;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pipecard::after{--cr-stack:"1290 no glint";display:none;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .rowfil{--cr-stack:"1290 no glint divider";display:none;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pipetitle{
+--cr-stack:"1290 sentence-case card heading, light";
+font-size:15px;font-weight:700;letter-spacing:0;color:#161616;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pu-card{
+--cr-stack:"1290 flat punch card; its priority edge stays";
+background:#ffffff;box-shadow:none;border-top:1px solid #dcdee2;border-bottom:1px solid #dcdee2;border-right:1px solid #dcdee2;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .teamcal .minical .calnav{
+--cr-stack:"1290 flat month arrows, light";
+background:#ffffff;border:1px solid #dcdee2;box-shadow:none;color:#3f3f46;}
+:root[data-theme="rb-light"] body[data-crm-head="retail"] .site{
+--cr-stack:"1290 flat white header ground";
+--hbg:#ffffff;--htint:#ffffff;box-shadow:none;border-bottom:1px solid #dcdee2;}
+:root[data-theme="rb-light"] body[data-crm-head="retail"] #cr-hd2-bar .cr-ib,
+:root[data-theme="rb-light"] body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-home{
+--cr-stack:"1290 flat header buttons, light";
+background:#ffffff;border:1px solid #dcdee2;box-shadow:none;color:#3f3f46;}
+:root[data-theme="rb-light"] body[data-crm-head="retail"] #cr-hd2-bar .cr-ib.primary{
+--cr-stack:"1290 solid red +, light";
+background:#c8202e;border:1px solid #c8202e;box-shadow:none;color:#ffffff;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .projinfo,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .projinfo:hover{
+--cr-stack:"1290 flat client card; the stage spine stays";
+background:#ffffff;border-top:1px solid #dcdee2;border-right:1px solid #dcdee2;border-bottom:1px solid #dcdee2;box-shadow:none;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .jabox,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .jabox:hover,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .dbrow,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec),
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvcard,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #punchView .pu-card,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) .pu-hero .pu-card{
+--cr-stack:"1290 flat white panel (light twin of 1286/1288)";
+background:#ffffff;border:1px solid #dcdee2;box-shadow:none;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .jabox:hover{--cr-stack:"1290 hover lifts the ground";background:#f7f8fa;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .kpsec{
+--cr-stack:"1290 flat History; its red top stays";
+background:#ffffff;border-left:1px solid #dcdee2;border-right:1px solid #dcdee2;border-bottom:1px solid #dcdee2;box-shadow:none;}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .crji-card,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #cr-ar-view .crar-btn:not(.primary),
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #cr-ar-view .crar-empty,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #crewsView .crw-card{
+--cr-stack:"1290 shadow off; the ground stays on its own token";
 box-shadow:none;}
 
 /* ── Build 527 · the Schedule Board ───────────────────────────────────────

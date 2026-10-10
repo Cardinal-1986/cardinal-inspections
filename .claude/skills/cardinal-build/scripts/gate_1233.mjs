@@ -56,18 +56,18 @@ const HP = (sel) => {
 for (const th of ['dark', 'rb-light']) {
   const p = await at('ar', th); const r = await p.evaluate(HP, '#cr-ar-view .crar-top').catch(e => ({ err: String(e) })); await p.close();
   ok(!r.none && r.bw === 44 && r.bh === 44, 'A  ' + th + ' AR: back is a 44x44 square', JSON.stringify(r).slice(0, 140));
-  /* 1287: dark retail took Georgia off every title on Theo's pick (drawer style, option B); light keeps it.
+  /* 1287: dark retail took Georgia off every title on Theo's pick (drawer style, option B); light followed at 1290.
      The contract that matters is ONE line — the face is asserted per theme. */
-  ok((th === 'dark' ? /Segoe UI/.test(r.font || '') : /Georgia/.test(r.font || '')) && r.th < 40, 'A  ' + th + ' AR: title on one line (' + (th === 'dark' ? 'drawer sans' : 'Georgia') + ')', (r.font || '').slice(0, 20) + ' h=' + r.th);
+  ok(/Segoe UI/.test(r.font || '') && r.th < 40, 'A  ' + th + ' AR: title on one line (drawer sans)', (r.font || '').slice(0, 20) + ' h=' + r.th);
   ok(r.rT >= 3 && r.rB >= 3, 'A  ' + th + ' AR: title and back clear their floors', r.rT + ' / ' + r.rB);
   ok(r.nAct <= 1, 'B  ' + th + ' AR: at most one action on the right', r.nAct);
 }
 for (const th of ['dark', 'rb-light']) {
   const p = await at('lrs', th); const r = await p.evaluate(HP, '#cr-lrs-view .lrs-topbar').catch(e => ({ err: String(e) }));
   ok(!r.none && r.bw === 44 && r.bh === 44, 'A  ' + th + ' Labor Rates: back is a 44x44 square', JSON.stringify(r).slice(0, 140));
-  /* 1287: dark retail took Georgia off every title on Theo's pick (drawer style, option B); light keeps it.
+  /* 1287: dark retail took Georgia off every title on Theo's pick (drawer style, option B); light followed at 1290.
      The contract that matters is ONE line — the face is asserted per theme. */
-  ok((th === 'dark' ? /Segoe UI/.test(r.font || '') : /Georgia/.test(r.font || '')) && r.th < 40, 'A  ' + th + ' Labor Rates: title on one line (' + (th === 'dark' ? 'drawer sans' : 'Georgia') + ')', (r.font || '').slice(0, 20) + ' h=' + r.th);
+  ok(/Segoe UI/.test(r.font || '') && r.th < 40, 'A  ' + th + ' Labor Rates: title on one line (drawer sans)', (r.font || '').slice(0, 20) + ' h=' + r.th);
   ok(r.rT >= 3 && r.rB >= 3, 'A  ' + th + ' Labor Rates: title and back clear their floors', r.rT + ' / ' + r.rB);
   await p.evaluate(() => { const c = document.querySelector('#cr-lrs-view .lrs-crew, #cr-lrs-view [data-crew]'); if (c) c.click(); }).catch(() => {});
   await p.waitForTimeout(900);

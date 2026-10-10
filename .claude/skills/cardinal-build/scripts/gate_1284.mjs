@@ -3,7 +3,7 @@
      A  dark: the header ground is flat (no gradient, no drop shadow)
      B  dark: the + and search buttons are flat (no gradient, no shadow) and still 44px
      C  dark: the + glyph is white on Cardinal red, ≥4.5:1
-     D  light: the header and its + keep their gradients
+     D  light (since 1290): the header ground is flat too
    Usage: node gate_1284.mjs [index.html] — control: the 1283 tree (RED, no crash) */
 import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 import { readFileSync } from 'fs'; import { dirname, join } from 'path'; import { fileURLToPath } from 'url';
@@ -30,6 +30,6 @@ ok(d.theme !== 'rb-light' && d.head && !/gradient/.test(d.head.bgi) && d.head.sh
 ok(d.plus && d.lens && [d.plus, d.lens].every(b => !/gradient/.test(b.bgi) && b.sh === 'none' && b.h >= 44 && b.w >= 44), 'B  dark: + and search are flat and still 44px', JSON.stringify([d.plus, d.lens].map(b => b && { bgi: b.bgi.slice(0, 20), sh: b.sh.slice(0, 20), w: b.w, h: b.h })));
 const pr = d.plus ? ratio(d.plus.c, d.plus.bg) : 0;
 ok(pr >= 4.5 && d.plus.bg === 'rgb(200, 32, 46)', 'C  dark: the + glyph is white on Cardinal red, ≥4.5:1', d.plus && `${d.plus.c} on ${d.plus.bg} → ${pr}:1`);
-ok(l.theme === 'rb-light' && l.head && /gradient/.test(l.head.bgi), 'D  light: the header keeps its own ground', JSON.stringify(l.head && l.head.bgi.slice(0, 60)));
+ok(l.theme === 'rb-light' && l.head && !/gradient/.test(l.head.bgi), 'D  light (build 1290): the header ground is flat too', JSON.stringify(l.head && l.head.bgi.slice(0, 60)));
 await browser.close();
 console.log(`\nGATE 1284 ${fail ? 'RED' : 'GREEN'} — ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
