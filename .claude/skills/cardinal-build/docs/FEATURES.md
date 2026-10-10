@@ -9724,3 +9724,19 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Headings are white.
 - Light mode is unchanged.
 - **Gate:** `gate_1283.mjs`.
+
+## Builds 1284–1285 — drawer style for the top bar, Team Calendar arrows and the Activity panel
+- **Dark retail:** header on the flat `#0A0E16` well with a flat red +, flat search, flat month arrows, and the Activity panel as a flat card with a red edge.
+- **Light mode:** untouched.
+- **Gates:** `gate_1284.mjs`, `gate_1285.mjs`.
+
+## Build 1286 — client page in the drawer's style
+- **Dark retail client profile:** one sans font, and flat `#0F1521` panels for the client card, the money card, the Job Menu tiles and the section cards.
+- **Kept their colour:** the stage band, the stage spine, the money ring, and History's red top.
+- **Gate:** `gate_1286.mjs`.
+
+## Build 1287: one typeface across the app (dark retail)
+- Dark retail uses `'Segoe UI',Arial,sans-serif` everywhere, set once.
+- The drawer and SVG text are excluded.
+- Light mode is unchanged.
+- **Gate:** `gate_1287.mjs`.

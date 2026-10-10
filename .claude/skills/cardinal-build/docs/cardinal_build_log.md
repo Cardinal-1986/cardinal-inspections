@@ -34333,6 +34333,104 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1287: one typeface across the app in dark retail (follow-up 4 to 1283, option B)
+
+**Why one rule.** 1283 and 1286 removed Georgia and `ui-monospace` from two screens by
+naming each element. A survey of the rest showed both everywhere:
+
+- Every page title was Georgia: Leads, Client Directory, Estimates, Punch and AR.
+- Their small labels and counts were `ui-monospace`.
+- `ui-monospace` alone is declared **256 times**, mostly inside `font:` shorthands.
+
+Doing that screen by screen would mean 256 out-rankings. Instead the app's typeface is set
+once for dark retail, using `!important`. That is deliberate: a `font:` shorthand set on
+the element itself always beats an inherited family, so nothing short of `!important` can
+be a single rule.
+
+**What is excluded.**
+- The drawer (`#cr-lnav`): its section labels are part of the look Theo picked.
+- SVG text.
+- Documents in iframes and shadow roots. These are separate trees, so the rule cannot
+  reach them.
+
+**⚠ The font stack is the app's own, `'Segoe UI',Arial,sans-serif`, not `system-ui`
+first.** My first pass put `system-ui` ahead of Arial. On the test machine that resolves
+to a wider face, `gate_1224` went from 2 to 5 failures, and "Communication",
+"Measurements" and "Appointments" split across lines in the Job Menu. With the app's own
+stack the widths are what they were, and `gate_1224` is back to its pre-existing 2
+("Communication" at 360px Larger). Those 2 were already red on the 1285 tree and are not
+this build's.
+
+**Gates.**
+- `gate_1287.mjs`: 9 screens show no Georgia or monospace text, the drawer keeps its
+  labels, and light mode is untouched. It fails 1 of 3 on 1286.
+- Also green: `gate_983`, `gate_1081`, `gate_1067`, `gate_1206` and `gate_stack`.
+
+## Build 1286 — the client page in the drawer's style (follow-up 4 to 1283, option B)
+
+**What made it cartoony,** measured in dark retail on the client profile:
+- Georgia on the client name (`#projName .heroNm`) and on the History heading
+  (`.kpsech .kpst`).
+- `ui-monospace` on the Job Menu counts (`.jabox .jan`) and on `.kpcnt`.
+- A gloss gradient and a drop shadow on the client card, the money card, every Job Menu
+  tile and every section card.
+
+**What changed:**
+- One sans font throughout, with tabular figures.
+- Flat `#0F1521` panels on `#223047` hairlines, and no shadows.
+- The 790 dark-card ground (`.acxsec:not(.rvsec)`, `.dbmoney`, `.dbrow`) is edited **at
+  source**. That rule out-ranked any new one through its `:not()`, so overriding it would
+  have meant out-specifying it rather than fixing it.
+
+**What keeps its colour** (because each carries meaning):
+- the green stage band
+- the client card's stage spine
+- the money ring
+- History's red top border, which is its own marker
+
+**My regression, caught by `gate_797` and fixed before commit:** the first pass gave
+`.kpsec` a full hairline border, which wiped History's red top border.
+
+**Pre-existing reds, not this build's:** these were red on the 1285 tree too.
+- `gate_1224`: the "Communication" label splits a word at 360px.
+- `gate_791`: the map card order / `#acxMount` flex.
+
+They are recorded here for a separate fix.
+
+**Gate.** `gate_1286.mjs`: 4/4 on this build, 2 of 4 on 1285. `gate_stack` is clean.
+
+**⚠ Second regression of mine, caught by CI (`gate_chromium`).** `gate_1216` stayed GREEN on
+its negative control. 1286 had painted `.crji-card`'s background directly, so the card no
+longer read its own `--crji-card` token, and breaking that token changed nothing. The gate
+was therefore protecting nothing. The fix: `.crji-card` now only loses its shadow, and its
+ground stays on the token. `gate_1216` is green again, and red again with
+`--crji-card:#ffffff`. **Rule for these drawer-style passes:** where a surface already
+has its own theme token, flatten its shadow and leave the ground on the token. Do not
+paint over the token.
+
+## Build 1285 — Team Calendar arrows and the Activity panel, drawer style (follow-ups 2–3 to 1283)
+
+- **Team Calendar arrows.** The month arrows (`.teamcal .minical .calnav`) were solid red
+  bevel buttons. They are now the flat `#0F1521` panel that search became at 1284, with a
+  glyph at 11.16:1.
+- **Activity panel.** `.actcard` was a `#16161B` slab with a 30px drop shadow and a ridge.
+  It is now the flat card with a red edge that every home card has.
+- **Scope.** Dark retail only. In light mode the arrows stay red and the panel stays
+  raised.
+- **Gate.** `gate_1285.mjs`: 3/3 on this build, 2 of 3 fail on 1284.
+
+## Build 1284 — the top bar in the drawer's style (follow-up 1 to 1283; Theo: "Go")
+
+- **Header ground.** The retail header in dark was a navy gloss gradient with a drop
+  shadow. Its own `--hbg`/`--htint` tokens now carry the drawer's flat `#0A0E16` well, the
+  shadow is gone, and a `#223047` hairline runs underneath.
+- **The + button** was a sky-blue gloss bevel. It is now solid `#c8202e` with a white
+  glyph (5.67:1).
+- **Search** was a steel gloss bevel. It is now a flat panel.
+- Both buttons are still 44px.
+- **Scope.** Light mode and the other CRM headers are untouched.
+- **Gate.** `gate_1284.mjs`: 4/4 on this build, 3 of 4 fail on 1283.
+
 ## Build 1283 — the home screen in the drawer's style (Theo: "B")
 
 **The ask.** Theo, verbatim: "Is there any way to not make the interface look cartooony, maybe
