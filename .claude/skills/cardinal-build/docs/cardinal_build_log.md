@@ -34333,6 +34333,52 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1289: the client-facing presentation screens keep their own type (fixes 1287, my regression)
+
+**What went wrong.** 1287 set one sans across dark retail with a single `!important` rule,
+and the only exclusion was the drawer. The rule also reached the client-facing
+presentation surfaces, which carry their own designed type and are shown across the
+kitchen table, not used as app chrome:
+- Why Cardinal (`#cr-why`)
+- OC Colors (`#cr-occ`), governed by `OC_BRAND_RULES`
+- the Showcase (`#cr-show`)
+- The Appointment (`#cr-appt`)
+
+**How it was found.** `gate_1236` is not in CI's `gate_chromium` list, and 1287 merged
+with it red. It was found by sweeping every gate that names Georgia or monospace, which
+should have been done before 1287 shipped. **Lesson:** when a build changes a property
+app-wide, run every gate that asserts that property, not only CI's list.
+
+**The fix.** Those four roots are excluded from the 1287 rule.
+
+**Gates.**
+- `gate_1287` gains check D: Why keeps its own title face. D is red on 1288.
+- `gate_1236` is green again.
+- `gate_1233`, `gate_1234` and `gate_1235` asserted Georgia or a monospace eyebrow on
+  **app** screens: AR, Labor Rates, the builder, Line Items, Leads, Photo Activity and
+  Insurance Clients. That was the 1233–1235 shared header, which Theo's option B replaces.
+  They now assert per theme: the drawer sans in dark, Georgia/mono in light. Each one's
+  real contract is unchanged: one line, alignment, the back control and the red half.
+
+## Build 1288: Leads, Punch, AR and Crews cards in the drawer's style (Theo: "merge and go")
+
+**What changed.**
+- **Punch:** the hero card was on the shared `--rbe-bg1/bg2` gloss. It is now the flat
+  `#0F1521` panel.
+- **Leads:** its own 535-era dark rule (`--nv-*` tokens) is edited at source. The card is
+  now flat on `--nv-card2`, with no shadow, and the hover lifts the ground instead.
+- **AR** (`--est-*`) and **Crews** (`--crw-card`) only lose their drop shadows. The ground
+  stays on their own tokens, which is 1286's lesson.
+
+**Left alone on purpose.**
+- Production: its own sanctioned "Cardinal Steel" design.
+- Dispatch: the crew, lane and day colours carry meaning.
+
+**Gates.**
+- `gate_1288` is 3/3. It fails 2 of 3 against 1287.
+- **Pre-existing, not this build:** `gate_1127` (punch description line) is red on the
+  1287 tree too.
+
 ## Build 1287: one typeface across the app in dark retail (follow-up 4 to 1283, option B)
 
 **Why one rule.** 1283 and 1286 removed Georgia and `ui-monospace` from two screens by

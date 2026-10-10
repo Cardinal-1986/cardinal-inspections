@@ -4,6 +4,7 @@
         estimates, punch, AR, production or sales floor
      B  dark: the drawer keeps its own section labels (excluded on purpose)
      C  light: the Leads page title is still Georgia (light follows later)
+     D  dark: Why Cardinal keeps its own designed title face (1289 — presentation screens excluded)
    Usage: node gate_1287.mjs [index.html] — control: the 1286 tree (RED, no crash) */
 import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 import { readFileSync } from 'fs'; import { dirname, join } from 'path'; import { fileURLToPath } from 'url';
@@ -31,6 +32,10 @@ const badS = Object.entries(res).filter(([, v]) => v.length);
 ok(badS.length === 0, `A  dark: no Georgia or monospace text on ${STATES.length} screens`, badS.map(([k, v]) => `${k}: ${v.slice(0, 2).join(', ')} (${v.length})`).join(' | ') || 'none');
 const nav = await p.evaluate(() => { const e = document.querySelector('#cr-lnav .lnav-sec'); return e ? getComputedStyle(e).fontFamily : null; });
 ok(!!nav && /monospace/i.test(nav), 'B  dark: the drawer keeps its own section labels', String(nav).slice(0, 40));
+/* 1289: the client-facing presentation screens keep their own type */
+await run(p, 'why'); await p.waitForTimeout(900);
+const why = await p.evaluate(() => { const h = document.querySelector('#cr-why h1, #cr-why h2, #cr-why [class*="title"]'); return h ? getComputedStyle(h).fontFamily : null; });
+ok(!!why && !/Segoe UI/.test(why.split(',')[0]), 'D  dark: Why Cardinal (client-facing) keeps its own title face (1289)', String(why).slice(0, 40));
 await ctx.close();
 const L = await boot(true); await run(L.p, 'leads'); await L.p.waitForTimeout(900);
 const lt = await L.p.evaluate(() => { const e = document.querySelector('.ljtitle'); return { theme: document.documentElement.getAttribute('data-theme'), f: e ? getComputedStyle(e).fontFamily : null }; });
