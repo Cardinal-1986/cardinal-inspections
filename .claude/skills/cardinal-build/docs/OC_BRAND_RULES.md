@@ -101,6 +101,11 @@ a document homeowners sign.
 
 ## The approval gate — this blocks shipping, and it is Theo's to pass
 
+> ✅ **PASSED BY THEO, 10 Oct 2026, verbatim: "I don't need approval for the preferred contractor
+> logo."** For the Preferred Contractor lockup on Cardinal's own documents, do not ask again and do not
+> route it to LMARoofing. What still blocks it is **the official file** — it comes from Theo, never
+> drawn by hand. (The Pink Panther / MGM review below is a separate mark and is not covered.)
+
 - **All material co-branded with Owens Corning** goes to
   **LMARoofing@owenscorning.com** for review and approval.
 - **Websites specifically:** send a JPEG/PDF of the layout **and the test-site

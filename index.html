@@ -4160,7 +4160,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1275<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1276<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44082,6 +44082,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1276, d: '2026-10-10', t: 'Retail estimates: Description and Price',
+    s: 'A retail estimate now shows the homeowner two columns \u2014 what the work is, and its price. No more Qty, Unit and Unit Price columns on the client\u2019s copy. You still price lines the same way in the builder, and the totals are the same. Insurance and Community estimates keep the full table.' },
   { b: 1275, d: '2026-10-10', t: 'Publish checks your lines first',
     s: 'Before an estimate is published, the app now looks at every line. A line with a price but no name (it would print as \u201cItem\u201d), a line with words but no price, or an empty line \u2014 it tells you which, and you can <b>Fix it</b> or <b>Publish anyway</b>. A clean estimate publishes with no question.' },
   { b: 1274, d: '2026-10-09', t: 'Estimates read on a phone',
@@ -52162,7 +52164,14 @@ var total    = Number(est.total) || 0;
 var depPct   = Number(est.deposit_pct) || 0;
 var depAmt   = Number(est.deposit_amount) || 0;
 var balance  = Math.max(0, total - depAmt);
-var anyDetailed = lines.some(function(l){ return l.flat !== true; });
+/* 1276 (Theo, pick #4 A): a RETAIL estimate is Description + Price — a
+   homeowner reads the line and its price, not qty x unit. Insurance and
+   Community keep the full table. rowFor's two-column branch already prints
+   each line's own amount (flat -> amount, else qty x unit price). */
+var _ct = '';
+try{ _ct = (project && typeof window.projClaimType === 'function') ? String(window.projClaimType(project) || '') : ''; }catch(_c){ _ct = ''; }
+var packageView = _ct !== 'insurance' && _ct !== 'community';
+var anyDetailed = !packageView && lines.some(function(l){ return l.flat !== true; });
 var COLS = anyDetailed ? 5 : 2;
 function rowFor(l, zi){
 var flat = l.flat === true;
@@ -52208,7 +52217,7 @@ var headRow = anyDetailed
 '<th style="text-align:right;">Unit Price</th>' +
 '<th style="text-align:right;">Amount</th>' +
 '</tr>'
-: '<tr><th>Description</th><th style="text-align:right;">Amount</th></tr>';
+: '<tr><th>Description</th><th style="text-align:right;">' + (packageView ? 'Price' : 'Amount') + '</th></tr>';
 var pad = SPAN > 0 ? '<td colspan="' + SPAN + '"></td>' : '';
 var totalsRows =
 '<tr class="totals">' + pad + '<td class="lbl">Subtotal</td><td class="val">' + money(subtotal) + '</td></tr>' +

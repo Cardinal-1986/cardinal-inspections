@@ -34333,6 +34333,26 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1276 — a retail estimate is Description + Price (Theo, 10 Oct, pick #4, option A)
+
+- **Picked from a rendered preview** (today's five columns / A: Description + Price / B: the same with a
+  grey "28 SQ × $425.00" under each line). Theo: **"A"**.
+- **What:** `buildDocHtml` computes `packageView` = the job is not insurance and not community
+  (`projClaimType`; a job with no type recorded counts as retail). In package view `anyDetailed` is
+  false, so `rowFor`'s existing two-column branch prints each line's OWN amount (flat → amount, else
+  qty × unit price) and the header reads **Description / Price**. Totals are computed exactly as before;
+  the builder still prices by qty × unit price. **Insurance and Community keep the five-column table.**
+- **Gates:** `gate_1276.mjs` (6) GREEN; RED 2/6 on 1275. `gate_1274` now builds on an insurance job
+  (the five-column table it stacks). `harness_estflat1096` / `harness_estsec1097` pass an insurance
+  `projClaimType` for their table assertions — estflat is back to its **two pre-existing** failures
+  (`renderLine` renamed, older than this build), estsec GREEN. 1027, 1130, 1136, 1141, 1182,
+  harness_estdoc1099, 1268, 1270, 1272, 1273, 1275, check_build, types, dupes green.
+
+### ✅ SETTLED 10 Oct 2026 (Theo, verbatim): *"I don't need approval for the preferred contractor logo."*
+The OC_BRAND_RULES approval gate for the **Preferred Contractor lockup** is Theo's to pass, and he has
+passed it. Do not route the lockup to LMARoofing@ again. Still required before it ships: **the official
+lockup file**, from Theo (light-background variant for the white estimate). Not hand-drawn, ever.
+
 ## Build 1275 — Publish checks the lines first (Theo, 10 Oct, pick #1 of 7)
 
 - **Why:** Jacob's EST-2026-0912 printed a $5,000 line as **"Item"** — `rowFor()` prints the literal

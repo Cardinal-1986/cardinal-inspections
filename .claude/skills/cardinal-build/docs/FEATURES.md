@@ -9681,3 +9681,7 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 ## Build 1275 — Publish checks the estimate's lines (`estLineProblems`)
 - A priced line with no name (prints "Item"), a line with no price, or an empty line → Fix it / Publish anyway.
 - **Gate:** `gate_1275.mjs`.
+
+## Build 1276 — retail estimates print Description + Price (`packageView` in buildDocHtml)
+- Insurance and Community keep Qty / Unit / Unit Price. A job with no type recorded counts as retail.
+- **Gate:** `gate_1276.mjs`.
