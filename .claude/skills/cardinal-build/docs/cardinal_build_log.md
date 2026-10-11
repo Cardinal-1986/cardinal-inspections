@@ -34333,6 +34333,22 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1295: the rain flag (Theo's pick 7B, 10 Oct)
+
+**What it does.**
+- A punch-out booked on a day with a wet forecast gets a blue chip on its Punch List row and on its card's dispatch line: "Rain 80%", "Storm 60%" or "Snow".
+- Curtis's existing 3pm "Plan <day>" buzz ends with "Rain 80% forecast: Mark Diamond, Joe Ruiz." There is no new buzz and no new cron.
+
+**Where the forecast comes from.** It is the one the app already has: `cr-wx-script`, Open-Meteo, free, no key, 14 days. A job further out shows no chip until the forecast reaches it. "Wet" is `CardinalWx.wet()` (50% or more, or a rain/storm/snow code); the new `CardinalWx.flag()` is just its words. A failed fetch flags nothing and never blocks a buzz.
+
+**The server copy.** `api/punch-buzz.js` carries a copy of the rule (`wxKind` / `wxFlag`) and fetches the forecast only in the 3pm plan slot. `gate_1295` A feeds both copies the same 20 days and fails if they ever disagree, the 1255 two-copies rule.
+
+**Gates.**
+- `gate_1295`: 6 checks. Its forecast is seeded through the app's own cache key (`cr-dispwx`), so the rig never calls out.
+- Control: the 1294 `index.html` plus the old `punch-buzz.js`, run from a folder with its sibling imports, is red on all 6.
+- ⚠ My first draft of the gate failed correct code: it required 5 dry days and the table has 4. The test was wrong, not the app.
+- `gate_1255` is green. `gate_949` (1 check) and `gate_959` (#10) are red identically on the 1294 tree, so they are pre-existing.
+
 ## Build 1294: time on job (Theo's pick 2B, 10 Oct)
 
 The crew's check-in and check-out has been on every punch-out since 940 (`punch_items.visits`), but nothing added it up. Now:

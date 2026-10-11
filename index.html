@@ -4152,7 +4152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1294<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1295<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44122,6 +44122,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1295, d: '2026-10-10', t: 'Rain flag on punch-outs',
+    s: 'If rain, a storm or snow is forecast for the day a punch-out is booked, its Punch List row and its card show a blue Rain chip with the chance, like Rain 80%. Curtis\u2019s 3pm Plan buzz now ends with the jobs that look wet the next day, so he can move them. It uses the same free 14-day forecast as Dispatch, so a job more than two weeks out shows no chip until the forecast reaches it.' },
   { b: 1294, d: '2026-10-10', t: 'Time on job',
     s: 'A punch-out now adds up the time on site. The card lists every visit, with the day, who, when they checked in and out and how long, and a total underneath. Each row on the Punch List shows the total too, or the time so far while someone is there. It comes from the check-in and check-out the crew already does, so there is nothing new to type. A check-in from an earlier day that was never checked out is not counted.' },
   { b: 1293, d: '2026-10-10', t: 'Communication fits on a small phone',
@@ -57548,6 +57550,9 @@ window.CardinalProduction = {
 #cr-pk .pkvstale{ color:#f0a24a; }
 #cr-pk .pkvwas{ color:var(--pk-ink,#eceef0); }
 #cr-pk .pkvnone{ color:var(--pk-dim,#9aa2ae); }
+/* 1295: the rain flag on the dispatch line */
+#cr-pk .pkrain{ font-weight:700; color:#6db3f2; white-space:nowrap; }
+:root[data-theme="rb-light"] #cr-pk .pkrain{ color:#1f5e99; }
 /* 1294: the visit log. Inks ride the card's own tokens, which flip with the theme. */
 #cr-pk .pkvlog{ margin:6px 0 2px; padding:4px 2px; }
 #cr-pk .pkvl{ display:flex; justify-content:space-between; gap:10px; padding:5px 0; font:400 13px 'Segoe UI',Arial,sans-serif;
@@ -57936,6 +57941,7 @@ function ensure(){
 }
 function render(){
   if(!el || !it) return;
+  if(window.CardinalWx) window.CardinalWx.load(function(){ render(); });   /* 1295 */
   var html = cardHtml() + (galleryOpen ? galleryHtml() : '');
   if(html === lastSig) return;      /* the 606 stored-signature guard */
   lastSig = html;
@@ -58149,9 +58155,13 @@ async function holdClear(){
 function dispatchLine(){
   var whoTxt = it.assigned_to ? nameOf(it.assigned_to) : 'Unassigned';
   var whenTxt = it.scheduled_at ? fmtSchedule(it.scheduled_at, it.scheduled_time) : 'no day set';
+  /* 1295: the rain flag, on the day the job is booked (never once it is done) */
+  var rain = (it.status !== 'done' && it.scheduled_at && window.CardinalWx && window.CardinalWx.flag)
+    ? window.CardinalWx.flag(String(it.scheduled_at).slice(0, 10)) : '';
   return '<button class="pkfold" data-act="dispatch" type="button">' + svg('user') +
     '<span class="tx">' + esc(whoTxt) + ' \u00b7 ' + esc(whenTxt) +
-    (it.priority === 'high' ? ' \u00b7 Urgent' : '') + '</span><span class="ch">\u203A</span></button>';
+    (it.priority === 'high' ? ' \u00b7 Urgent' : '') +
+    (rain ? ' <b class="pkrain" data-cr-1295>' + esc(rain) + '</b>' : '') + '</span><span class="ch">\u203A</span></button>';
 }
 function jobHtml(pr){
   var addr = pr ? (pr.address || '') : '';
@@ -68840,6 +68850,9 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-row.k-callback .pl-dot{background:var(--pl-callback,#9670e0);}
 .pl-row.k-punch .pl-dot{background:var(--pl-punch,#2fa86a);}
 .pl-flag{font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--pl-late,#f08a90);white-space:nowrap;}
+/* 1295: the rain flag — blue, its own word, computed on both grounds */
+.pl-flag.rain{color:#6db3f2;}
+:root[data-theme="rb-light"] .pl-flag.rain{color:#1f5e99;}
 .pl-cl{grid-area:cl;display:flex;align-items:baseline;gap:8px;min-width:0;}
 .pl-cl b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;color:var(--rbe-head,#ffffff);}
 .pl-cl small{font-size:13px;color:var(--rbe-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 0;min-width:0;}
@@ -69290,8 +69303,14 @@ function plOnSite(it){
   if(!s.ms) return '';
   return s.live ? T.fmt(s.live) + ' so far' + (s.ms > s.live ? ' · ' + T.fmt(s.ms) + ' total' : '') : T.fmt(s.ms) + ' on site';
 }
+/* 1295: the rain flag for an open, dated, not-held job — '' otherwise. */
+function plRain(it){
+  var g = plBase(it); if(g === 'closed' || g === 'hold') return '';
+  var d = plDay(it); if(!d || !window.CardinalWx || !window.CardinalWx.flag) return '';
+  return window.CardinalWx.flag(d);
+}
 function plRow(it){
-  var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it);
+  var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it), rain = plRain(it);
   var urg = isUrgent(it), age = ageDays(it.created_at);
   var supp = String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0;
   var who = it.assigned_to;
@@ -69302,7 +69321,8 @@ function plRow(it){
       (ping ? '<span class="pl-flag">Follow up</span>' : '') +
       (urg ? '<span class="pl-flag">Urgent</span>' : '') +
       (supp ? '<span class="pl-flag">Supplement</span>' : '') +
-      (plBackFromHold(it) ? '<span class="pl-flag">Back from hold</span>' : '') + '</span>' +
+      (plBackFromHold(it) ? '<span class="pl-flag">Back from hold</span>' : '') +
+      (rain ? '<span class="pl-flag rain" data-cr-1295>' + esc(rain) + '</span>' : '') + '</span>' +
     '<span class="pl-cl"><b>' + (ping ? '<i class="pl-bang" aria-label="Needs follow-up">!</i>' : '') +
       esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</b>' +
       '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
@@ -69360,6 +69380,7 @@ var CATS = function(){ return {
 function count(){ var n = 0; for(var k in PU.sets) n += PU.sets[k].length; return n; }
 
 function render(){
+  if(window.CardinalWx) window.CardinalWx.load(function(){ render(); });   /* 1295: the rain flag */
   var all = rows();
   /* 1248: every open item is in exactly one place — the pinned queue (no one
      on it yet) or one WHEN group below. Closed work has its own view. */
@@ -88385,8 +88406,16 @@ window.CardinalStorm = Object.assign(window.CardinalStorm || {}, {
       (p >= m ? '<i>' + p + '%</i>' : '') + '</span>';
   }
 
+  /* 1295: the rain flag's words — "Rain 80%", "Storm 60%", "Snow" — or '' when
+     the day is dry or past the 14-day horizon. Punch List rows and the card use it. */
+  function flag(s){
+    if(!wet(s)) return '';
+    var d = day(s), k = kind(d.c), p = +d.p || 0;
+    var w = k === 'storm' ? 'Storm' : k === 'snow' ? 'Snow' : 'Rain';
+    return w + (p ? ' ' + p + '%' : '');
+  }
   window.CardinalWx = Object.assign(window.CardinalWx || {}, {
-    load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell
+    load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell, flag: flag
   });
 })();
 </script>
