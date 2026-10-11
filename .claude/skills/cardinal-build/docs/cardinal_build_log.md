@@ -34333,6 +34333,42 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1293: Communication fits at 360px Larger text; old reds cleared
+
+- **The real fix.** At 360px with Larger text (zoom 1.15), "Communication" split as "Communicatio / n". `gate_1224` had been red since 1287, because the app's single sans font is wider than the old face. Largest already had a narrow-phone rule (1224); Larger had none. It now gets the same tighter tile below 400px: 6px side padding, 4px gap, 13px label, which is on the Type 1 scale (12px fit too but is off the scale). `gate_1224` is 54/54 and its control is red on 2.
+- **Corner drift.** The Line Items head buttons had drifted to an 11px corner; every other button uses `--btn-rad` (12px). Back on the token, and `gate_1223` is green.
+- **Gates that were wrong, not the app:**
+  - `gate_791` asserted the pre-1225 phone order (map 3rd) and the pre-1227 desktop block. Both were changed on Theo's picks, so the gate now asserts the settled order.
+  - `gate_1127` measured `.pu-m`, which the 1248 Punch List no longer renders on that screen; the row's description is `.pl-pb`. It measures both now: 9.9:1.
+- **Still red, pre-existing (red on main 1289 too), not touched:**
+  - `gate_1144`: 4 checks that the header follows the theme.
+  - `gate_753`: the + menu's left edge at 768px.
+  - `gate_752`: chrome and landing matches.
+  - `harness_estasm1098`: `loadAssemblies reads the shared library`.
+
+## Build 1292: Buttons A, phase 1 (Theo, 6 Oct: "red · outline · red text")
+
+**The rule.** One solid-red main action. Every other action is an outline: no fill, a hairline and ink text. Delete is red words with no fill. Every change was edited at source.
+
+**This phase:**
+- `.chipbtn` has no fill in either theme.
+- `.chipbtn.danger` and the estimate head's Delete are red words, with no red block on hover.
+- The estimate add row has one red button (+ From Library). + Custom (was pink), + ABC Supply (was green), + Section and + Assembly (was a second red) are ink outlines.
+- The estimate phone bar's Save Draft / Email outline is a hairline, not red.
+- AR buttons are transparent with no shadow, and AR's red primary is flat.
+
+**Gates.**
+- `gate_1292`: 8 checks across both themes. The control is red on all 8.
+- `gate_1217` D: the no-op guard now expects the chrome ink.
+- `gate_1223`: the builder's primary sample is now + From Library.
+- `harness_estasm1098`: asserts + Assembly is an outline.
+
+**Census and later phases.** A 32-state census found 236 buttons in 54 classes; most are tiles, tabs and chips, not actions. Later phases will cover Claims (`cr-c-h-btn`), Community and the remaining Delete styles. Production and Dispatch are left alone (Theo).
+
+## Build 1291: flat billing tiles
+
+The Billed / Collected / Balance tiles (`.crji-nums>span`) lose their neumorphic inset, edited at source. The replacement is a 1px outline in their own `--crji-tile-lo` tone, and the ground stays on `--crji-tile` (the 1216 lesson). `gate_1291` covers both themes; the control is red on both.
+
 ## Build 1290: light mode in the drawer's style (the light twin of 1283–1289)
 
 **What changed.** Light retail now gets the same clean-up dark got:

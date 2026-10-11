@@ -121,7 +121,8 @@ const MEASURE = `(sel) => {
 /* ── 3. the token, on two real grounds ─────────────────────────────────── */
 {
   const p = await open('punch');
-  const rows = await p.evaluate(new Function('return ' + MEASURE)(), '.pu-m').catch(() => []);
+  /* 1248 rebuilt the Punch List as rows: the description is .pl-pb there; .pu-m is the older card. Measure both. */
+  const rows = await p.evaluate(new Function('return ' + MEASURE)(), '.pu-m, .pl-pb').catch(() => []);
   ok(rows.length > 0, 'the punch card renders its description line (' + rows.length + ')');
   const w = rows.slice().sort((a,b) => a.ratio - b.ratio)[0];
   ok(w && w.ratio >= FLOOR,

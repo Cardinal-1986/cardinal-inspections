@@ -123,7 +123,7 @@ ok(src.indexOf('sSave.onclick = function(){ saveSectionAsAssembly(sid); }') !== 
 ok(/\(isGeneral \? '' : '<button type="button" class="sec-saveasm"/.test(src), 'Save as Assembly shows only on a named section (not General Scope)');
 
 /* ── 6. CSS ────────────────────────────────────────────────────────────────── */
-ok(src.indexOf('.cr-est-items-head .add-assembly{background:var(--est-red,#c8202e);color:#fff') !== -1, 'CSS: + Assembly is a solid Cardinal-red button');
+ok(src.indexOf('.cr-est-items-head .add-assembly{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30)}') !== -1, 'CSS: + Assembly is an outline (1292, Buttons A: one red per row)');
 ok(src.indexOf('#cr-est-picker .asm-card .asm-insert{') !== -1 && src.indexOf('#cr-est-picker .asm-card .asm-sq{') !== -1, 'CSS: assembly card Insert + Squares styled');
 
 console.log(fails ? ('\nHARNESS RED — ' + fails + ' failure(s)') : '\nHARNESS GREEN — scaling math, presets, injection, DB paths, picker & wiring all proven');

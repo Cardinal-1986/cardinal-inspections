@@ -183,9 +183,10 @@ try {
        String(v) + ' luminance ' + Math.round(lumOf(v)*1000)/1000);
 
   console.log('\nD  THE TWO SILENT NO-OPS — asserted by COMPUTED colour, not by rule text');
-  ok(d.btnCustom === 'rgb(240, 138, 144)', 'the + Custom ink actually computes to the chrome red',
+  /* 1292 Buttons A: + Custom and + ABC are plain outlines with the chrome INK; the no-op guard still holds */
+  ok(d.btnCustom === 'rgb(233, 236, 241)', 'the + Custom ink actually computes to the chrome ink',
      String(d.btnCustom));
-  ok(d.btnAbc === 'rgb(52, 211, 153)', 'the + ABC Supply ink actually computes to the chrome green',
+  ok(d.btnAbc === 'rgb(233, 236, 241)', 'the + ABC Supply ink actually computes to the chrome ink',
      String(d.btnAbc));
   ok(d.label === 'rgb(168, 176, 186)', 'the field labels actually compute to the chrome dim',
      String(d.label));

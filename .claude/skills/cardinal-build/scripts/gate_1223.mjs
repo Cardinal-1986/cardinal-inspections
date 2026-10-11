@@ -34,7 +34,7 @@ const same = (a, b) => a && b && a.slice(0, 3).every((v, i) => Math.abs(v - b[i]
 const TARGETS = [
   { state: 'estbuilder', kind: 'primary', label: "the estimate builder's Publish", css: '#cr-est-view .cr-est-phonebar button.primary' },
   { state: 'estbuilder', kind: 'primary', label: "the estimate builder's + From Library", css: '#cr-est-view .cr-est-items-head .add-lib:not(.ai-assist)' },
-  { state: 'estbuilder', kind: 'primary', label: "the estimate builder's + Assembly", css: '#cr-est-view .cr-est-items-head .add-assembly' },
+  { state: 'estbuilder', kind: 'primary', label: "the estimate builder's + From Library", css: '#cr-est-view .cr-est-items-head .add-lib' }, /* 1292: + Assembly became an outline (Buttons A) */
   { state: 'lineitems', kind: 'primary', label: "Line Items' + Add", css: '.cr-lil-head button.primary' },
   { state: 'photoeditor', kind: 'primary', label: "the photo editor's Save", css: '.cr-ped-head button.primary' },
   { state: 'crews', kind: 'primary', label: "Crews' + New crew", css: '#crewsView .crw-btn.primary' },

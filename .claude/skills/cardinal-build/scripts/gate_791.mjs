@@ -143,7 +143,8 @@ ok('...and neither renders off-profile on a phone (799 chip retirement + namebar
 ok('the pipeline bar is ordered first and bleeds edge to edge',
   m.stageOrder === '1' && m.stageBox && m.stageBox.left === 0 && m.stageBox.right === m.screen,
   JSON.stringify({ order: m.stageOrder, box: m.stageBox }));
-ok('the map card comes next', m.locOrder === '3' && m.locTop > m.stageBox.top, JSON.stringify({ locOrder: m.locOrder }));
+/* 1225 (Theo's pick, 2 Oct) moved the Job Menu (2) and the money (3) ahead of Location on a phone, so the map is 4th now. */
+ok('the map card comes after the stage, the Job Menu and the money (1225 order)', m.locOrder === '4' && m.locTop > m.stageBox.top, JSON.stringify({ locOrder: m.locOrder }));
 
 console.log('\n--- D. the pencil actually opens the editor ---');
 const pen = await P.page.evaluate(async () => {
@@ -205,7 +206,8 @@ ok('no band on the desktop', dm.band === false);
    lives in the burger menu now), so the chip is no longer part of this check. */
 ok('the old card and Overview dropdown are still there (chip retired at 799)',
   dm.oldCard && dm.overview, JSON.stringify(dm));
-ok('#acxMount is still a plain block (no reorder)', dm.mountDisplay === 'block', dm.mountDisplay);
+/* 1227 (Theo's pick, 2 Oct): the desktop is reordered too, as a single flex column below 1600px. */
+ok('#acxMount is the 1227 desktop column (flex)', dm.mountDisplay === 'flex', dm.mountDisplay);
 if (PREV) {
   const P2 = await boot(readFileSync(PREV, 'utf8'), 1280, 'retail');
   await open(P2.page, 'p-1');
