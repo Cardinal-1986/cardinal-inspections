@@ -28,7 +28,7 @@ await browser.close();
 const shared = live.cc;
 ok(!!shared && STAGES.every(s => typeof shared[s] === 'string' && shared[s]), 'A  window.CC_STAGE_LABEL carries all nine stages', JSON.stringify(shared));
 
-ok(/community:\s*CC_STAGE_LABEL\b/.test(APP), 'B  the Client Directory’s community map is the shared object, not a copy');
+ok(/community:\s*(?:window\.)?CC_STAGE_LABEL\b/.test(APP), 'B  the Client Directory’s community map is the shared object, not a copy');
 
 const fallbacks = [];
 for (const m of APP.matchAll(/var (COM_LABEL|LABEL) = (window\.CC_STAGE_LABEL \|\| )?\{(?:[ \t]*\/\*[^*]*\*\/)?\s*'Lead':\s*'Estimate Requested'/g)) {

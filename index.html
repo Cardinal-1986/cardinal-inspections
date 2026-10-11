@@ -4152,7 +4152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1299<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1301<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -20839,6 +20839,16 @@ function insStageLabel(s, short){
   return INS_STAGE_LABEL[s] || s;
 }
 window.insStageLabel = insStageLabel;
+/* 1301: ONE Community stage map. Four copies existed (this file's directory map,
+   cr-comstage's COM_LABEL and two identical `var LABEL`s in the Community modules);
+   each now reads this first and keeps its own copy only as a standalone fallback,
+   the 655 shape INS_STAGE_LABEL already has. gate_1301 holds them equal.
+   On window only, not also a top-level var: the pair reads as a type clash to gate_types. */
+window.CC_STAGE_LABEL = {
+  'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
+  'Approved':'Awarded', 'Scheduled':'Scheduled', 'Completed':'Build Complete',
+  'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded'
+};
 var CD_STAGE_LABEL = {
   retail:    { 'Closed':'Archived' },
   insurance: INS_STAGE_LABEL,
@@ -20846,10 +20856,7 @@ var CD_STAGE_LABEL = {
      "Awaiting Funding" on the hub and card and raw "OnHold" in the Client
      Directory and the pipeline toast. Four copies of this map exist; making
      them one is its own item (recorded in OPEN_ITEMS). */
-  community: { 'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
-               'Approved':'Awarded',
-               'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Invoiced',
-               'Closed':'Closed', 'Lost':'Not Awarded' }
+  community: window.CC_STAGE_LABEL   /* 1301: the one map, defined just above */
 };
 var CD_SORTS = [
   { key:'name',    label:'Client name' },
@@ -38506,7 +38513,7 @@ onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
 <script id="cr-comstage-script">
 (function () {
 'use strict';
-var COM_LABEL = {
+var COM_LABEL = window.CC_STAGE_LABEL || {   /* 1301: shared map first */
 'Lead':      'Estimate Requested',
 'Prospect':  'Estimate Submitted',
 'OnHold':    'Awaiting Funding',   /* 710: was missing — the pipeline toast
@@ -44241,6 +44248,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1301, d: '2026-10-11', t: 'Community stage names live in one place',
+    s: 'Behind the scenes: the Community stage names (Estimate Requested, Awarded, Build Complete\u2026) were written out four separate times, and once one copy was missing a stage. They now come from one list, so a name can only ever be changed in one spot and every Community screen says the same thing. Nothing you see changes.' },
+  { b: 1300, d: '2026-10-11', t: 'The route page says when a tick is waiting for signal',
+    s: 'Ticking the load-the-truck list on the route page, or Curtis moving a job to the day, already worked with no signal \u2014 the tick stays and is sent when the phone is back online. Now it also says so, with the same line the punch-out card uses: \u201cNo signal \u2014 saved on this phone. It will sync by itself.\u201d' },
   { b: 1299, d: '2026-10-11', t: 'Job links open the job again',
     s: 'Every check in the app was run, and the ones that failed because of the app are fixed here. The big one: a link to a job \u2014 the punch-out text Curtis gets, a client link, an alert \u2014 opened the home screen instead of the job whenever the app was not already open, since the change that made signing in go straight to your home (30 Aug). The address is now read before anything can change it, so the link lands on the right client and the right tab. Also: the Switch portal row on the desktop rail has its yellow back (the rename had quietly dropped it); the CompanyCam job-link error and the \u201cPlace a LIVE order with ABC Supply?\u201d question use the app\u2019s own message and question sheet instead of the phone\u2019s grey box; three delete questions no longer fall back to the grey box if the sheet is ever missing \u2014 they simply do not delete; and the Cancel / Not now / Close buttons on the white forms (Add project, the checklist, the gutter calculator, the lead form, the calendar\u2019s appointment sheet) are readable in dark mode again \u2014 my button change last night had made them white on white. And Production and the dispatch board get their own lettering back (the crew name tags in capitals) \u2014 the one-typeface change was not meant to reach them.' },
   { b: 1298, d: '2026-10-11', t: 'Receipts',
@@ -62357,7 +62368,7 @@ var d = new Date(iso);
 if(isNaN(d)) return null;
 return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
-var LABEL = {
+var LABEL = window.CC_STAGE_LABEL || {   /* 1301: shared map first */
 'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
 'Approved':'Awarded',
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
@@ -64255,7 +64266,7 @@ if(!window.currentProject || String(window.currentProject.id) !== String(pid)) r
 await load(pid);
 if(window.currentProject && String(window.currentProject.id) === String(pid)) render();
 }
-var LABEL = {
+var LABEL = window.CC_STAGE_LABEL || {   /* 1301: shared map first */
 'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
 'Approved':'Awarded',
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
@@ -87522,13 +87533,18 @@ async function rtTickTruck(v){
   tk[i] = Object.assign({}, x, { d: !x.d, by: !x.d ? me : null, at: !x.d ? new Date().toISOString() : null });
   var r = await P.update(id, { truck: tk });
   if(!(r && r.ok)){ try{ window.crTell('Could not save that tick: ' + ((r && r.error) || 'write refused')); }catch(_){} }
+  else if(r.queued) rtQueuedNote();
   rtDraw();
 }
+/* 1300: the card's 1049 receipt, on the route page. This full screen covers the
+   global sync badge, so a held write would otherwise look saved. */
+function rtQueuedNote(){ try{ window.crTell('No signal \u2014 saved on this phone. It will sync by itself.', 'ok'); }catch(_){} }
 async function rtAddToDay(id){
   if(!rtIsBoss()) return;
   var P = window.CardinalPunch; if(!(P && P.update)) return;
   var r = await P.update(id, { scheduled_at: day, scheduled_time: null });
   if(!(r && r.ok)){ try{ window.crTell('Could not move it: ' + ((r && r.error) || 'write refused')); }catch(_){} }
+  else if(r.queued) rtQueuedNote();
   if(typeof window.renderPunchView === 'function'){ try{ window.renderPunchView(); }catch(_){} }
   rtDraw();
 }

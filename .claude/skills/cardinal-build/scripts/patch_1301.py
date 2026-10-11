@@ -22,13 +22,13 @@ B = """window.insStageLabel = insStageLabel;
 /* 1301: ONE Community stage map. Four copies existed (this file's directory map,
    cr-comstage's COM_LABEL and two identical `var LABEL`s in the Community modules);
    each now reads this first and keeps its own copy only as a standalone fallback,
-   the 655 shape INS_STAGE_LABEL already has. gate_1301 holds them equal. */
-var CC_STAGE_LABEL = {
+   the 655 shape INS_STAGE_LABEL already has. gate_1301 holds them equal.
+   On window only, not also a top-level var: the pair reads as a type clash to gate_types. */
+window.CC_STAGE_LABEL = {
   'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
   'Approved':'Awarded', 'Scheduled':'Scheduled', 'Completed':'Build Complete',
   'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded'
 };
-window.CC_STAGE_LABEL = CC_STAGE_LABEL;
 """
 src = pl.sub(src, A, B)
 
@@ -36,7 +36,7 @@ A = """  community: { 'Lead':'Estimate Requested', 'Prospect':'Estimate Submitte
                'Approved':'Awarded',
                'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Invoiced',
                'Closed':'Closed', 'Lost':'Not Awarded' }"""
-B = """  community: CC_STAGE_LABEL   /* 1301: the one map, defined just above */"""
+B = """  community: window.CC_STAGE_LABEL   /* 1301: the one map, defined just above */"""
 src = pl.sub(src, A, B)
 
 A = "var COM_LABEL = {\n'Lead':      'Estimate Requested',"
