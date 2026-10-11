@@ -135,7 +135,24 @@ async function owedOn(sbHeaders, rep) {
         contractTotal += Number(r.total);
       }
     }
-    const jobTotal = contractTotal > 0 ? contractTotal : (Number(rep.total) || 0);
+    // 1314: the job total is jobFinance()'s, not a narrower one. Signed contract
+    // documents OR the contracts table (whichever carries more — never both), plus
+    // manual extras; the invoice's own stored total only when neither exists.
+    let tableTotal = 0;
+    for (const r of await readRows(sbHeaders, 'contracts',
+        `${SUPABASE_URL}/rest/v1/contracts?project_id=eq.${rep.project_id}&select=total,homeowner_signed_at,voided_at`)) {
+      if (r.homeowner_signed_at && !r.voided_at) tableTotal += Number(r.total) || 0;
+    }
+    const pj = (await readRows(sbHeaders, 'projects',
+        `${SUPABASE_URL}/rest/v1/projects?id=eq.${rep.project_id}&select=checklist&limit=1`))[0];
+    let manual = 0;
+    try {
+      const ck = pj && (typeof pj.checklist === 'string' ? JSON.parse(pj.checklist || '{}') : (pj.checklist || {}));
+      manual = Number(ck && ck.manual_value) || 0;
+    } catch (_) { manual = 0; }
+    const signedTotal = Math.max(contractTotal, tableTotal);
+    const jobTotal = signedTotal > 0 ? signedTotal + manual
+                   : (manual > 0 ? manual : (Number(rep.total) || 0));
     return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due' };
   }
 

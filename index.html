@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1313<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1314<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -10901,7 +10901,7 @@ var INVOICE_TERMS =
   '<b>Payment terms.</b> Balance is due upon receipt of this invoice. Accounts unpaid after 30 days ' +
   'accrue a late charge of 1.5% per month (18% APR) on the outstanding balance. Please contact our ' +
   'office with any questions about this invoice or to arrange payment.';
-var INVOICE_TEMPLATE = buildEstimate('SERVICE <span>INVOICE</span>', INVOICE_BODY, INVOICE_TERMS);
+var INVOICE_TEMPLATE = buildEstimate('<span>INVOICE</span>', INVOICE_BODY, INVOICE_TERMS);   /* 1314: Theo \u2014 "just invoice" */
 
 function cbxColor(name, hex){
   return '<span class="sw"><span class="chipc" style="background:' + hex + ';"></span>' +
@@ -11336,7 +11336,8 @@ var moneyDb = {
      total is never fuller than the viewer is entitled to. Narrow select. */
   collections: async function(){
     if(!TEAM) return [];
-    var r = await sb.from('collections').select('project_id,amount');
+    /* 1314: collected_at too \u2014 Paid this month (cr-ar-script) reads it, and without it the KPI was always $0 */
+    var r = await sb.from('collections').select('project_id,amount,collected_at,created_at');
     if(r.error) throw r.error;
     return r.data || [];
   }
@@ -11672,7 +11673,8 @@ async function reload(){
          reload(), and with it the entire client profile. */
       moneyDb.estimates().catch(function(){ return []; }),
       moneyDb.contracts().catch(function(){ return []; }),
-      moneyDb.collections().catch(function(){ return []; }),
+      /* 1314: a failed read is NOT an empty ledger \u2014 null keeps the last good figures (see below) */
+      moneyDb.collections().catch(function(){ return null; }),
       /* 723: crew work-order dispatch/completion, keyed to its document by
          report_id. is_full_access RLS, so a rep reads [] — which is exactly
          who never issues one. Catches to [] like the money tables. */
@@ -11714,7 +11716,11 @@ async function reload(){
     }catch(_ov2){}
     cacheAppts = res[2];
     indexMoney(res[3], res[4]);
-    indexCollections(res[5]);
+    /* 1314: [] here used to turn one failed request into "nobody has paid anything" on every
+       Balance Due, the A/R list and the aging chart. Keep what we had and say so. */
+    if(res[5] === null){
+      try{ crTell('Payments did not load just now \u2014 the balances on screen may be out of date. Pull down to refresh.'); }catch(_){}
+    }else indexCollections(res[5]);
     indexWorkOrders(res[6]);
     cacheLoaded = true;   /* 493: only here, and only after the awaits resolved */
     if(currentProject){
@@ -15909,7 +15915,9 @@ async function payMigrateLegacyIn(){
   payGoLogCollection();
 }
 document.getElementById('paySummary').addEventListener('click', function(e){
-  if(e.target.closest('[data-paycontracts]')){ openContractPaid(); return; }
+  /* 1314: "From signed contracts" opened a form that wrote the old worksheet store. It now goes
+     where every dollar in goes. openContractPaid() stays defined for its gate, unreached. */
+  if(e.target.closest('[data-paycontracts]')){ payGoLogCollection(); return; }
   var add = e.target.closest('[data-payadd]');
   if(add){
     /* 996: money IN has one door, and this is not it. Two rows sat directly
@@ -17419,6 +17427,8 @@ function renderWorksheet(pr, fin){
   var invBtn = (fin.value > 0 && fin.source !== 'estimate')
     ? '<div style="text-align:right;margin:2px 0 6px;"><button class="chipbtn" data-mkinv="1">&#129534; Create invoice (balance ' + fmtMoney(fin.balance) + ')</button></div>'
     : '';
+  var wsFoot = '<div class="wsrow" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><span>Paid <b>' + fmtMoney(fin.paid, true) + '</b> \u00b7 Balance due <b>' + fmtMoney(fin.balance, true) + '</b></span>' +
+    '<button class="chipbtn" data-wsrecord="1" type="button">Record payment</button></div>';
   mount.innerHTML = invBtn + fin.contracts.map(function(r){
     var tot = Number(r.total) || 0;
     var paid = Number((ws[r.id] || {}).paid) || 0;
@@ -17427,11 +17437,10 @@ function renderWorksheet(pr, fin){
       '<div class="wstitle">' + esc(r.title) + (r.signed_at ? '' : '<span class="unsig">awaiting signature</span>') + '</div>' +
       '<div class="wsgrid">' +
         '<span><label>Contract Total</label><b>' + (tot ? fmtMoney(tot) : '--') + '</b></span>' +
-        '<span><label>Amount Collected</label><input type="number" min="0" step="0.01" class="wspaid" ' +
-          'data-doc="' + r.id + '" value="' + (paid || '') + '" placeholder="0.00"' + (r.signed_at ? '' : ' disabled') + '></span>' +
-        '<span><label>Remaining</label><b>' + (tot ? fmtMoney(rem) : '--') + '</b></span>' +
+        /* 1314: the Amount Collected box wrote a store Balance Due ignores once any payment is
+           recorded, and the pay link never reads. Money in has one door: Record payment (below). */
       '</div></div>';
-  }).join('');
+  }).join('') + wsFoot;
 }
 async function createInvoiceFor(pr){
   var fin = jobFinance(pr);
@@ -17465,6 +17474,7 @@ async function createInvoiceFor(pr){
 }
 document.getElementById('wsMount').addEventListener('click', function(e){
   if(e.target.closest('[data-mkinv]') && currentProject) createInvoiceFor(currentProject);
+  if(e.target instanceof Element && e.target.closest('[data-wsrecord]') && currentProject){ try{ payGoLogCollection(); }catch(_){} }   /* 1314 */
 });
 document.getElementById('wsMount').addEventListener('change', async function(e){
   var inp = e.target.closest('.wspaid');
@@ -27399,7 +27409,9 @@ async function saveCurrent(){
       title: titleInput.value.trim() || 'Untitled inspection'
     };
     var tot = readEstimateTotal();
-    if(tot !== null) fields.total = tot;
+    /* 1314: on an invoice #estTotal is BALANCE DUE, not the job total \u2014 saving used to
+       overwrite the stored total the server falls back to, then subtract payments again. */
+    if(tot !== null && !/^invoice/i.test(fields.title)) fields.total = tot;
     await db.update(current.id, fields);
     savedFlash.textContent = 'Saved \u2713';
     /* 733: .toolbar #savedFlash is display:none under 760px, so on a phone this
@@ -44292,6 +44304,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1314, d:'2026-10-11', t:'One balance everywhere', s:'The pay link, the reminder texts and the app could each come up with a different amount owed \u2014 the server ignored extras added to a job and payments typed into the old Amount Collected box. They all use the same total now, and there is one place to record money in: Record payment. A bank payment still clearing stops the client paying twice. Paid this month finally counts this month\u2019s payments (it always read $0). If payments fail to load, the app says so instead of showing every job as unpaid. The invoice heading now just says INVOICE.' },
   { b: 1313, d:'2026-10-11', t:'An invoice can be paid', s:'An invoice used to be an estimate with a new title: it still had a signature line, so the link you sent asked the client to Accept & Sign and never showed a Pay button. It also said Estimate #, Valid Through and had an empty photo box. An invoice now has its own header \u2014 Bill To, Invoice Date, Due upon receipt \u2014 no signature line, and the link opens with Pay. The text button on an invoice says Text pay link.' },
   { b: 1312, d:'2026-10-11', t:'Community says estimate, not bid',
     s:'The Community screens called one thing two names: the stages and the list said Estimate, while the pipeline, the job page and the New Estimate form said bid. Now it is estimate everywhere \u2014 the pipeline\u2019s P reads Estimate Submitted, the job page says Open estimate, Build the estimate and Mark this estimate submitted, and the morning chip counts estimates past due. Nothing about the jobs themselves changed.' },

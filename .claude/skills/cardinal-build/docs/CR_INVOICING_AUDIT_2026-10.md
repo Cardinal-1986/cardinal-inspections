@@ -29,22 +29,22 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 | # | Finding | Where | Proof |
 |---|---|---|---|
 | M1 | ✅ **FIXED 1313** — Invoice share link offers Accept & Sign, never Pay | `buildEstimate` ~10403–10419, `api/share.js:331` | ✅ code + render |
-| M2 | Pay link / reminder texts use a different balance from the app: server = signed contract docs − `collections`; app (`jobFinance` ~17200) also adds `manual_value`, the `contracts` table, and legacy `checklist.payments` / `ws[].paid`. $20k contract + $5k legacy deposit → app says $15k, Stripe charges **$20k**. Contract + $2k manual extras → app $17k, Stripe $15k, then job shows $2k owed forever | `api/pay.js:55–77`, `share.js`, `remind.js:177–184` | ✅ code; executed |
-| M3 | First `collections` row silently drops all legacy payments — `jobFinance` uses collections **or** legacy, never both. Live: Dan's $8,008.94 exists only in `checklist.payments` (not in collections, no commission, not in "Paid this month") | `jobFinance` ~17262 | executed + live data |
-| M4 | Legacy money-in doors still live: Worksheet "Amount Collected" (~17447), Payments-page Add row defaulting to "Received" (~4955), `openContractPaid` (~15698) | | traced |
-| M5 | Pending ACH does not stop a second full payment — `pay.js` never asks Stripe about processing payments; each Checkout fixes its amount at creation | `api/pay.js` | traced |
-| M6 | Saving an invoice overwrites its `total` with BALANCE DUE (`#estTotal`); servers fall back to `rep.total` and subtract collections again | `saveCurrent` ~27372 | overwrite traced |
+| M2 | ✅ **FIXED 1314** — Pay link / reminder texts use a different balance from the app: server = signed contract docs − `collections`; app (`jobFinance` ~17200) also adds `manual_value`, the `contracts` table, and legacy `checklist.payments` / `ws[].paid`. $20k contract + $5k legacy deposit → app says $15k, Stripe charges **$20k**. Contract + $2k manual extras → app $17k, Stripe $15k, then job shows $2k owed forever | `api/pay.js:55–77`, `share.js`, `remind.js:177–184` | ✅ code; executed |
+| M3 | ✅ **FIXED 1314** — First `collections` row silently drops all legacy payments — `jobFinance` uses collections **or** legacy, never both. Live: Dan's $8,008.94 exists only in `checklist.payments` (not in collections, no commission, not in "Paid this month") | `jobFinance` ~17262 | executed + live data |
+| M4 | ✅ **FIXED 1314** — Legacy money-in doors still live: Worksheet "Amount Collected" (~17447), Payments-page Add row defaulting to "Received" (~4955), `openContractPaid` (~15698) | | traced |
+| M5 | ✅ **FIXED 1314** — Pending ACH does not stop a second full payment — `pay.js` never asks Stripe about processing payments; each Checkout fixes its amount at creation | `api/pay.js` | traced |
+| M6 | ✅ **FIXED 1314** — Saving an invoice overwrites its `total` with BALANCE DUE (`#estTotal`); servers fall back to `rep.total` and subtract collections again | `saveCurrent` ~27372 | overwrite traced |
 | M7 | Refunds/disputes never recorded — webhook ignores `charge.refunded`, `charge.dispute.*`; UI has no void/refund | `api/pay-webhook.js:71–79` | traced |
 | M8 | Overpayment invisible — `paid` clamped to `value`; no cap in the pay modal; commission booked on the full amount | `jobFinance` ~17263, `savePayModal` ~90070 | executed |
 | M9 | Community bid-only jobs: clamp makes paid = 0 when value = 0. Habitat $12k awarded, $6k collected → tile $12k, cc2 page $12k, profile $0, Invoices & AR omits it. True answer $6k | `jobFinance` clamp; `cr-ch2` ~63364; `cc2Page` ~65274 | executed |
-| M10 | A failed collections read becomes an empty ledger in the app (`.catch(()=>[])`) — every Balance Due shows full contract. Server already fixed this at 1199 | ~11652 | traced |
+| M10 | ✅ **FIXED 1314** — A failed collections read becomes an empty ledger in the app (`.catch(()=>[])`) — every Balance Due shows full contract. Server already fixed this at 1199 | ~11652 | traced |
 | M11 | Reps can record unbounded payments that create their own 10% commission and can't correct them (update = full access, delete = admin) | `collections_rep_insert.sql`, `commission_system.sql:175–206` | traced |
 
 ## A/R reporting wrong
 
 | # | Finding | Where |
 |---|---|---|
-| R1 | "Paid this month" is always $0 — `paidThisMonth()` reads `collected_at`, the cache selects only `project_id,amount` | ✅ ~89690 vs ~11316 |
+| R1 | ✅ **FIXED 1314** — "Paid this month" is always $0 — `paidThisMonth()` reads `collected_at`, the cache selects only `project_id,amount` | ✅ ~89690 vs ~11316 |
 | R2 | Home "Money Collected (30d)" sums `ws[].log`, whose only writer (`#acxPayBtn`) is no longer rendered | ~12005 / ~12876 |
 | R3 | Three "who owes me" totals: Invoices & AR (any CRM, Invoiced **or** has invoice, Closed included), Home chart (Invoiced only, current board's CRM), Partner A/R (Community, bid fallback). Partner money is missing from Invoices & AR | ~89677, ~12071, ~63364 |
 | R4 | Three aging clocks: `sent_at` → `t_Invoiced` → `pr.stage_since` (column does not exist; lives in checklist) → `updated_at` (resets on any edit) / home `t_Invoiced` / digest `stage_since` | ~89665, ~12071, `api/digest.js:115` |

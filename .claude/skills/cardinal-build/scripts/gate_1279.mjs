@@ -57,7 +57,9 @@ const J = (v) => ({ ok: true, status: 200, json: async () => v, text: async () =
 
 /* ── A–C · pay.js ── */
 const created = [];
-class PayStripe { constructor() { this.checkout = { sessions: { create: async (o) => { created.push(o); return { url: 'https://checkout.test/s' }; } } }; } }
+class PayStripe { constructor() { this.checkout = { sessions: { create: async (o) => { created.push(o); return { url: 'https://checkout.test/s' }; } } };
+    /* 1314: pay.js asks Stripe for a payment still processing before a checkout; none here */
+    this.paymentIntents = { search: async () => ({ data: [] }) }; } }
 const payFetch = async (url) => {
   url = String(url);
   if (url.includes('share_token=eq.')) return J([{ id: 'doc1', project_id: 'p1', project: 'Kirby', title: 'Estimate — Kirby', total: 40000, signed_at: null }]);

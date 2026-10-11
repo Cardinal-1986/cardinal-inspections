@@ -9835,3 +9835,13 @@ Theo: *"I believe that's why I've been confused since the first day I set up com
 
 ## Build 1313: an invoice can be paid
 `buildEstimate()` gives an INVOICE heading its own header (Bill To · Invoice Date · Due: upon receipt · Property Address · Client Contact · Prepared By) and strips the cover photo, the concealed-conditions note, the Notes placeholder, the acceptance paragraph and `SIGN_FOOTER`. Page title reads "— Invoice". `api/share.js` never treats an `^invoice` title as signable, so even an invoice carrying the old signature line gets the pay bar. The editor's `#textSignBtn` reads **Text pay link** on an invoice and its message says "view and pay". **Gate:** `gate_1313.mjs` (template contents, real `share.js` handler, old-style invoice; control 1312 RED 12/14).
+
+## Build 1314: one balance everywhere
+- **Server parity:** `owedOn()` (byte-identical in `api/pay.js` and `api/share.js`) and `api/remind.js` total an invoiced job the way `jobFinance()` does — signed contract docs **or** the `contracts` table (whichever is more), **plus** `checklist.manual_value`; the invoice's stored `total` only when neither exists.
+- **ACH double-pay guard:** `api/pay.js` searches Stripe for a `processing` PaymentIntent on the job before creating a Checkout session → 409 "already on its way"; fails closed (503) if Stripe cannot be asked.
+- **One money-in door:** the worksheet's Amount Collected input is gone (a Paid · Balance due line + **Record payment** button, `data-wsrecord`); the Payment Information "From signed contracts" row (`data-paycontracts`) routes to `payGoLogCollection()`. `openContractPaid()` stays defined, unreached.
+- `moneyDb.collections()` selects `collected_at,created_at` (Invoices & AR "Paid this month" had always read $0); a failed load keeps the last good figures and says so (`res[5] === null`).
+- `saveCurrent()` never writes `total` from `#estTotal` on an invoice (it is BALANCE DUE there).
+- Invoice heading `<span>INVOICE</span>` (Theo: "just invoice").
+- **Gate:** `gate_1314.mjs` (real share/pay handlers with a stand-in Stripe; control 1313 RED 11/13).
+
