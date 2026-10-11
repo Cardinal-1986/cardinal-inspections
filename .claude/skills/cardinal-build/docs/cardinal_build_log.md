@@ -34333,6 +34333,10 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1307: Prospects get an orange stripe on Leads & Jobs (Theo, from a phone screenshot)
+- "Leads and prospects look like the same color." `LJ_SPINE` had Lead `#FFE600` and Prospect `#ffd84d`, two yellows. Prospect is now `#ff7a00`, the pipeline P's orange family. Only the stripe changed: the P badge (`LJ_SOLID` `#c8202e`), the inks and the other stages are untouched. A stripe is a 3px bar, not text, so the contrast floor does not apply. ⚠ On Hold's stripe is a paler orange (`#ff9f43`), so the two are near each other. On Hold is rare on Retail (one job), and Theo can call it if it reads too close.
+- **`gate_1307` (3):** the shipped `ljCardHtml` draws a Lead and a Prospect card. Their stripes are #FFE600 vs #ff7a00, the hues are ≥25° apart (54° vs 29°), and every other stage's stripe is unchanged. RED on 1306. ⚠ The first cut read only the seeded cards. The seed has no Prospect, so A could never pass and could never test the change; it now draws its own cards with the real function. Also green: 1226, stack, types, dupes, a11y, harnesses.
+
 ## Build 1306: the seven pipeline cards wrap on the iPad (Theo: "You choose" → 2W)
 - With the rail open at 1194px, the main column is ~413–449px and seven cards need ~616px. The row scrolled sideways and hid I, Closed and On Hold. One scoped rule, `body.cr-lnav-on .piperow{flex-wrap:wrap;row-gap:8px;overflow-x:visible}`, exempted for `gate_stack` with a reason. Measured: scrollWidth 413 = clientWidth 413, all 7 cards. Phones are untouched. **`gate_1114` is its gate**: red since 1114 waiting on this pick, now GREEN 58/58 and RED on 1305 (2 failures). Also green: 957, 1167, 1173, 1176, 1178, 1220.
 

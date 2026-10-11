@@ -9741,6 +9741,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1307: Prospect stripe orange
+`LJ_SPINE.Prospect` = `#ff7a00` (was `#ffd84d`, read as Lead's yellow). **Gate:** `gate_1307.mjs`.
+
 ## Build 1306: pipeline wraps with the rail open
 `body.cr-lnav-on .piperow` wraps the seven cards onto two rows. **Gate:** `gate_1114.mjs`.
 
