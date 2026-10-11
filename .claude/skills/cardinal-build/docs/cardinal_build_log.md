@@ -34333,6 +34333,28 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1298: receipts (Theo's pick 3, 11 Oct)
+
+**What it does.**
+- **Punch-out card:** a "Receipts · N on this job" section with an outline **Add receipt** camera button. There is **no dollar figure** on the card (settled: no money on Production).
+- **Files:** a receipt is an ordinary job file named "Receipt <stamp>.jpg", so the viewer, rename and delete work unchanged. It carries a **Needs amount / Priced** tag; Files shows no dollars, because the crew reads it.
+- **Payments:** "N receipts need an amount" sits **at the top**. Add amount turns one into an Additional job expense with `receipt: <file id>`. Payment Log expense rows show a **Receipt** chip, or **Attach receipt** when they have none.
+
+**How it's stored.**
+- The existing job-file path: `db.create('File: …', {file:1,…, receipt:1, by, punch})`.
+- The photo is shrunk to 1600px JPEG at q0.8 first; a raw phone photo is about 7 MB of base64 in a row.
+- The link is the payment row pointing at the file id, so pricing never rewrites the file.
+- No SQL.
+- `db.list` doesn't load file bodies, so there are **no thumbnails**. That is a deliberate change from the preview: it would mean downloading every image.
+
+**Found on the way (pre-existing, fixed at source).** The shared `.tskrow` ink was the white-page `#2b2b2b`, which read **1.4:1** on the dark ground. It is used by Files, the Payment Log, Tasks, Appointments, the measurements lists and Address Check. It now uses the `--rbe-ink/-line/-mute` token pair: dark **13.58:1**, light 13.22 → **16.89:1**. Insurance's own override is untouched.
+
+**Gates.**
+- `gate_1298`: 6 checks, including the full crew → office → Files flow through a real file chooser and the readability check. The control against 1297 is red on all 6.
+- My first draft failed correct code on letter case (the button renders as uppercase). The test was fixed.
+- `gate_types` caught 3 TS2339 of mine (`e.target.closest`), fixed with the `HTMLElement` cast.
+- The Payments gates (1010, 1051, 1076, 796, 996) are green.
+
 ## Build 1297: the load-the-truck list (Theo's pick 5B, 10 Oct)
 
 **What it does.**
