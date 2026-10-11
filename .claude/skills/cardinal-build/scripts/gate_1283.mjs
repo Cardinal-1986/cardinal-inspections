@@ -3,7 +3,7 @@
      A  dark: no Georgia and no monospace text left on the home screen or the brand title
      B  dark: every home card is a flat panel — no gradient, no drop shadow, a red left edge
      C  dark: card headings are white, ≥4.5:1 on the panel
-     D  light: untouched — the card titles are still Georgia and the cards still graded
+     D  light (since 1290): the light twin — Segoe titles, flat cards
    Usage: node gate_1283.mjs [index.html]  — control: the 1282 tree (RED, no crash) */
 import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 import { readFileSync } from 'fs'; import { dirname, join } from 'path'; import { fileURLToPath } from 'url';
@@ -39,6 +39,6 @@ ok(d.theme !== 'rb-light' && d.odd.length === 0, 'A  dark: no Georgia or monospa
 ok(d.cards.length >= 5 && d.cards.every(c => !c.grad && c.sh === 'none' && /rgb\(200, 32, 46\) 3px/.test(c.bl)), 'B  dark: every home card is flat with a red left edge', JSON.stringify(d.cards.slice(0, 2)));
 const tr = d.title && d.cards[0] ? ratio(d.title.c, d.cards[0].bg) : 0;
 ok(tr >= 4.5, 'C  dark: card headings clear 4.5:1 on the panel', d.title && `${d.title.c} on ${d.cards[0] && d.cards[0].bg} → ${tr}:1`);
-ok(l.theme === 'rb-light' && l.title && /Georgia/.test(l.title.f) && l.cards.some(c => c.grad || c.sh !== 'none'), 'D  light: untouched (Georgia titles, raised cards)', JSON.stringify({ f: l.title && l.title.f, card: l.cards[0] }));
+ok(l.theme === 'rb-light' && l.title && !/Georgia/.test(l.title.f) && l.cards.length > 0 && l.cards.every(c => !c.grad && c.sh === 'none'), 'D  light (build 1290): Segoe titles and flat cards, like dark', JSON.stringify({ f: l.title && l.title.f, card: l.cards[0] }));
 await browser.close();
 console.log(`\nGATE 1283 ${fail ? 'RED' : 'GREEN'} — ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

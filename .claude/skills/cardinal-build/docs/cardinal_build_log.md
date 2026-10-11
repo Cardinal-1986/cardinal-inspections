@@ -34333,6 +34333,30 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1290: light mode in the drawer's style (the light twin of 1283–1289)
+
+**What changed.** Light retail now gets the same clean-up dark got:
+- one sans, `'Segoe UI',Arial,sans-serif`, with the same exclusions as dark (the drawer, and the four presentation screens from 1289)
+- the header ground is flat white with a hairline
+- home pipeline cards and the Activity panel: white, a `#dcdee2` hairline and the 3px red left edge, with no shadow
+- the client page (client card, money, Job Menu tiles, section cards), Leads, Punch, AR and Crews: white with a hairline, no gradient, no drop shadow
+- `.kpsec` keeps its red top border
+- `.crji-card`, AR and Crews have only their shadow removed, so their own ground tokens still decide the ground (the 1216 lesson)
+
+Insurance and Community are excluded (`body:not(.claim-insurance):not(.claim-community)`), as they are in dark.
+
+**Gates.**
+- New: `gate_1290.mjs`, 5 checks, light plus one dark-unchanged check. The control against the 1289 tree goes red on 4 and does not crash.
+- Flipped from "light untouched" to "light follows": 1283 D, 1284 D, 1285 C, 1286 D and 1287 C.
+- 1233, 1234 and 1235 now assert Segoe in both themes.
+- Reproduce check `cmp`-identical; gate_stack clean; types, dupes, 1206, 990, 1268 and gate_chromium all green.
+
+**Caught by the light sentinel before merge (my miss).** The light "+" stayed the blue per-CRM accent. The old `#addProjectBtn` rule has two ids and `!important`, and my red rule was DEAD under it, while the CHANGELOG claimed a solid red +. Fixed at source: retail comes out of the accent rule (`body:not([data-crm-head="retail"])`), and Insurance and Community keep their accent +. `gate_1290` F now holds it (red on the unfixed tree). `gate_1198`'s text check accepts the narrowed selector. The sentinel's other new finding, `.acxsel` OVERRIDDEN, is a false positive: that select computes 18px before and after, because the iOS no-zoom `input,select{font-size:18px !important}` has always won.
+
+**Known leftovers.**
+- The billing tiles inside Invoices & Payments (Billed / Collected / Balance) still carry a soft inset look. They are a different module and are not in this build.
+- The money ring keeps its gradient, because it is a chart.
+
 ## Build 1289: the client-facing presentation screens keep their own type (fixes 1287, my regression)
 
 **What went wrong.** 1287 set one sans across dark retail with a single `!important` rule,

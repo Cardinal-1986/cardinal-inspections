@@ -2,7 +2,7 @@
 /* gate_1285 — Team Calendar arrows + Activity panel in the drawer's style, dark retail.
      A  dark: both month arrows are flat panels (not Cardinal red, no shadow), ≥4.5:1 glyph
      B  dark: the Activity panel is flat (no drop shadow) with the red left edge
-     C  light: the arrows are still red and the Activity panel still raised
+     C  light (since 1290): flat white arrows, Activity panel with the red edge
    Usage: node gate_1285.mjs [index.html] — control: the 1284 tree (RED, no crash) */
 import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 import { readFileSync } from 'fs'; import { dirname, join } from 'path'; import { fileURLToPath } from 'url';
@@ -27,6 +27,6 @@ const probe = async (light) => {
 const d = await probe(false), l = await probe(true);
 ok(d.theme !== 'rb-light' && d.arrows.length === 2 && d.arrows.every(a => a.bg !== 'rgb(200, 32, 46)' && a.sh === 'none' && ratio(a.c, a.bg) >= 4.5), 'A  dark: both month arrows are flat panels with a readable glyph', JSON.stringify(d.arrows.map(a => ({ bg: a.bg, r: ratio(a.c, a.bg) }))));
 ok(!!d.act && d.act.sh === 'none' && /rgb\(200, 32, 46\) 3px/.test(d.act.bl), 'B  dark: the Activity panel is flat with the red edge', JSON.stringify(d.act && { sh: d.act.sh.slice(0, 30), bl: d.act.bl }));
-ok(l.theme === 'rb-light' && l.arrows.length === 2 && l.arrows.every(a => a.bg !== 'rgb(15, 21, 33)') && !!l.act && l.act.bl.indexOf('3px') === -1, 'C  light: arrows and Activity untouched', JSON.stringify({ a: l.arrows.map(a => a.bg), act: l.act && l.act.bl }));
+ok(l.theme === 'rb-light' && l.arrows.length === 2 && l.arrows.every(a => a.bg === 'rgb(255, 255, 255)' && a.sh === 'none') && !!l.act && l.act.bl.indexOf('3px') !== -1, 'C  light (build 1290): flat white arrows, Activity panel with the red edge', JSON.stringify({ a: l.arrows.map(a => a.bg), act: l.act && l.act.bl }));
 await browser.close();
 console.log(`\nGATE 1285 ${fail ? 'RED' : 'GREEN'} — ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

@@ -3,7 +3,7 @@
      A  dark: no Georgia or monospace text on home, client, leads, client directory,
         estimates, punch, AR, production or sales floor
      B  dark: the drawer keeps its own section labels (excluded on purpose)
-     C  light: the Leads page title is still Georgia (light follows later)
+     C  light (since 1290): the Leads title is Segoe too
      D  dark: Why Cardinal keeps its own designed title face (1289 — presentation screens excluded)
    Usage: node gate_1287.mjs [index.html] — control: the 1286 tree (RED, no crash) */
 import { createRequire } from 'module'; const require = createRequire(import.meta.url);
@@ -39,6 +39,6 @@ ok(!!why && !/Segoe UI/.test(why.split(',')[0]), 'D  dark: Why Cardinal (client-
 await ctx.close();
 const L = await boot(true); await run(L.p, 'leads'); await L.p.waitForTimeout(900);
 const lt = await L.p.evaluate(() => { const e = document.querySelector('.ljtitle'); return { theme: document.documentElement.getAttribute('data-theme'), f: e ? getComputedStyle(e).fontFamily : null }; });
-ok(lt.theme === 'rb-light' && /Georgia/.test(String(lt.f)), 'C  light: untouched (Leads title still Georgia)', JSON.stringify(lt));
+ok(lt.theme === 'rb-light' && /Segoe UI/.test(String(lt.f)) && !/Georgia/.test(String(lt.f)), 'C  light (build 1290): the Leads title is Segoe too', JSON.stringify(lt));
 await L.ctx.close(); await browser.close();
 console.log(`\nGATE 1287 ${fail ? 'RED' : 'GREEN'} — ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
