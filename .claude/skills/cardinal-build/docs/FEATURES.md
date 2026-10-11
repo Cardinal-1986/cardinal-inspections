@@ -9741,6 +9741,10 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1298: receipts
+
+The punch-out card has **Add receipt** (camera, no dollars). Receipts are job files ("Receipt …") tagged Needs amount / Priced in Files. Payments lists receipts that need an amount at the top, and Add amount makes an Additional job expense linked to the file (`payments[].receipt`). Expense rows show their Receipt or offer **Attach receipt**. No SQL. Also fixed: the shared `.tskrow` ink, 1.4:1 → 13.6:1 in dark. Gate: `gate_1298`.
+
 ## Build 1297: load-the-truck list
 
 Each punch-out card has a "Bring" list (add / tick / remove), and a person's day page shows one "Load the truck" list for the day, grouped by stop. SQL: `punch_truck.sql` (applied). Gate: `gate_1297`.
