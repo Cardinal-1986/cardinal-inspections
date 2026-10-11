@@ -34333,6 +34333,9 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1308: the P badge matches its orange stripe (Theo: "Make the p the same color")
+- `LJ_SOLID.Prospect` `#c8202e` → `#ff7a00`, and `LJ_INK.Prospect` `#ffffff` → `#15171b`, because white on that orange is 2.61:1 and the dark ink is 6.87:1. The badge is drawn on the card and in the lead's detail pane, and both read these maps. **`gate_1308`** (gate_1307 plus check D) reads the rendered badge as rgb(255,122,0) with its letter at 6.87:1. RED on 1307 (D). Also green: 1226, 1307, stack, types, dupes, a11y, harnesses.
+
 ## Build 1307: Prospects get an orange stripe on Leads & Jobs (Theo, from a phone screenshot)
 - "Leads and prospects look like the same color." `LJ_SPINE` had Lead `#FFE600` and Prospect `#ffd84d`, two yellows. Prospect is now `#ff7a00`, the pipeline P's orange family. Only the stripe changed: the P badge (`LJ_SOLID` `#c8202e`), the inks and the other stages are untouched. A stripe is a 3px bar, not text, so the contrast floor does not apply. ⚠ On Hold's stripe is a paler orange (`#ff9f43`), so the two are near each other. On Hold is rare on Retail (one job), and Theo can call it if it reads too close.
 - **`gate_1307` (3):** the shipped `ljCardHtml` draws a Lead and a Prospect card. Their stripes are #FFE600 vs #ff7a00, the hues are ≥25° apart (54° vs 29°), and every other stage's stripe is unchanged. RED on 1306. ⚠ The first cut read only the seeded cards. The seed has no Prospect, so A could never pass and could never test the change; it now draws its own cards with the real function. Also green: 1226, stack, types, dupes, a11y, harnesses.

@@ -4156,7 +4156,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1307<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1308<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -13466,7 +13466,8 @@ var LJ_GROUPS = [
    them apart. Bright orange now, the pipeline P's family. */
 var LJ_SPINE = { Lead:'#FFE600', Prospect:'#ff7a00', OnHold:'#ff9f43', Approved:'#3dff9a', Scheduled:'#3dff9a',
   Completed:'#6fc3ff', Invoiced:'#c9a2ff', Closed:'#9aa4af', Lost:'#ff8a7a' };
-var LJ_SOLID = { Lead:'#FFE600', Prospect:'#c8202e', OnHold:'#c8862b', Approved:'#3fae6a', Scheduled:'#3fae6a',
+/* 1308: the P badge matches 1307's orange stripe (Theo). */
+var LJ_SOLID = { Lead:'#FFE600', Prospect:'#ff7a00', OnHold:'#c8862b', Approved:'#3fae6a', Scheduled:'#3fae6a',
   Completed:'#29A3DC', Invoiced:'#9170c3', Closed:'#5e7b88', Lost:'#8d6e63' };
 /* 475: Invoiced 3.5% lighter and Closed 1.6% darker. Those two sit mid-luminance
    and fail against BOTH inks; every other stage is fixed by ink alone. The same
@@ -13475,7 +13476,8 @@ var LJ_SOLID = { Lead:'#FFE600', Prospect:'#c8202e', OnHold:'#c8862b', Approved:
 /* Per-stage label ink: whichever of the two wins on that colour, same in both
    themes because the pill's ground is the stage colour, not the page. Ratios
    against the colour above: 14.16 (1226, lemon; was 5.78 on grey) / 5.67 / 6.39 / 6.39 / 6.29 / 4.54 / 4.50 / 4.62. */
-var LJ_INK = { Lead:'#15171b', Prospect:'#ffffff', OnHold:'#15171b', Approved:'#15171b', Scheduled:'#15171b',
+/* 1308: white on the new orange is 2.61:1, so Prospect takes the dark ink, 6.87:1. */
+var LJ_INK = { Lead:'#15171b', Prospect:'#15171b', OnHold:'#15171b', Approved:'#15171b', Scheduled:'#15171b',
   Completed:'#15171b', Invoiced:'#15171b', Closed:'#ffffff', Lost:'#ffffff' };
 function ljTrades(p){
   var ck = parseCkAll(p);
@@ -44258,6 +44260,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1308, d: '2026-10-11', t: 'The P badge is orange to match its stripe',
+    s: 'On Leads & Jobs the round P on a Prospect card was red while its stripe had just turned orange. The P is now the same orange, with a dark letter so it stays easy to read.' },
   { b: 1307, d: '2026-10-11', t: 'Prospects have an orange stripe on the Leads list',
     s: 'On Leads & Jobs, a Lead and a Prospect both had a yellow stripe down the left of the card and looked the same. A Prospect\u2019s stripe is now bright orange, so the two read apart at a glance. Nothing else on the card changes.' },
   { b: 1306, d: '2026-10-11', t: 'On the iPad, all seven pipeline cards show',
