@@ -152,8 +152,10 @@ const tools = await P.page.evaluate(() => {
 ok('New Bid is not inside the collapsed details', !tools.none && tools.primaryVisible, JSON.stringify(tools));
 /* 1092 MOVED the Analytics button out of the Tools sheet into the hub tab
    strip ("moved, not duplicated" — build log); five tools remain inside. */
-ok('closed by default, with the 5 secondary tools inside it (analytics moved to the strip at 1092)',
-  !tools.none && !tools.beforeOpen && tools.beforeCount === 5, JSON.stringify(tools));
+/* 1309 (Theo, "All"): Properties, Work Orders, Calendar and All Partners left the sheet
+   (dead ends and repeats); Activity is the one tool that stays. */
+ok('closed by default, with the 1 secondary tool inside it (Activity; 1309 retired the other four)',
+  !tools.none && !tools.beforeOpen && tools.beforeCount === 1, JSON.stringify(tools));
 ok('clicking the summary opens it', !tools.none && tools.afterOpen === true, JSON.stringify(tools));
 const dataGoWired = await P.page.evaluate(() => {
   /* analytics left the sheet at 1092 — probe a tool still inside it, and prove

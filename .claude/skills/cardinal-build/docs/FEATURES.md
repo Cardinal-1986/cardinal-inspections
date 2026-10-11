@@ -9741,6 +9741,13 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Builds 1309–1311: Community clean-up
+- More tools holds only **Activity**. Properties and Work Orders (dead ends), and Calendar and All Partners (repeats), are gone.
+- **Estimates** is the All estimates table alone, open by default. The waitlist is reached through the filter facet.
+- **Clients** keeps By partner; By stage is gone.
+- Client-list search, CSV and Select are ≥44px (1310).
+- **Gates:** `gate_1309`, `gate_1311`, `gate_944`; `gate_975` and `gate_977` are ported.
+
 ## Build 1308: Prospect badge orange
 `LJ_SOLID.Prospect` `#ff7a00` with dark ink `#15171b` (6.87:1). **Gate:** `gate_1308.mjs`.
 
@@ -9757,7 +9764,7 @@ Main action `var(--cr-act,#c8202e)`, others outline `var(--cr-btnline,…)`. `--
 `.cc-ops` holds `.cc-cal30` (appointments on Community jobs, 30-day grid → Schedule Board) and `.cc-ar` (owed on Invoiced Community jobs by paying partner, Habitat first, over-30 count → door onto Invoiced; hidden for Production). Owed = `jobFinance().balance` when it has a value, else the bid. **Gate:** `gate_1304.mjs`.
 
 ## Build 1303: the Community home pipeline and the Tarp Only tile
-The Community home (`cr-ch2`, pane `home`) opens on Retail's pipeline: `window.PIPE_BUCKETS` read live, with `CC_PIPE_WORDS` overriding Prospect → "Bid Submitted" and OnHold → "Waiting" (sphere "W"). Each `.pipebtn[data-ccpipe]` is a 975 door (`doors['pipe:KEY']`) onto All estimates; Approved includes Scheduled. Below it, `.cc-tarponly` counts jobs with Work Type "Tarp Only" (`wtOf()`, either field) and opens Clients via the `wtype` facet in `CH_GROUPS`. On a phone it is a 4 + 3 grid, and 7 across from 700px. Production sees no dollars. **Gate:** `gate_1303.mjs`.
+The Community home (`cr-ch2`, pane `home`) opens on Retail's pipeline: `window.PIPE_BUCKETS` read live, with `CC_PIPE_WORDS` overriding Prospect → "Estimate Submitted" (was "Bid Submitted" until 1312) and OnHold → "Waiting" (sphere "W"). Each `.pipebtn[data-ccpipe]` is a 975 door (`doors['pipe:KEY']`) onto All estimates; Approved includes Scheduled. Below it, `.cc-tarponly` counts jobs with Work Type "Tarp Only" (`wtOf()`, either field) and opens Clients via the `wtype` facet in `CH_GROUPS`. On a phone it is a 4 + 3 grid, and 7 across from 700px. Production sees no dollars. **Gate:** `gate_1303.mjs`.
 
 ## Build 1302: Tarp Only work type
 "Tarp Only" is a Work Type in all five Work Type lists. It is not a stage. **Gate:** `gate_1302.mjs`.
@@ -9822,3 +9829,7 @@ Light retail no longer has gradients, drop shadows, Georgia or monospace. Insura
 - **Unchanged:** Production and Dispatch.
 - **Why, Colors, Showcase and Appointment** are excluded from the 1287 typeface.
 - **Gates:** `gate_1288.mjs`; `gate_1287` D.
+
+## Build 1312: Community says "estimate", never "bid"
+Theo: *"I believe that's why I've been confused since the first day I set up community page. Let's keep it estimate and no bid."* Every visible "bid" in `cr-ch2`, `cr-cc`, `cr-nbid` and `cr-cpartners` now says estimate — the pipeline's P (`CC_PIPE_WORDS.Prospect` → "Estimate Submitted", matching `CC_STAGE_LABEL`), the job page (Open estimate, Build the estimate, Mark this estimate SUBMITTED/AWARDED, Estimate awarded / not awarded), the New Estimate form's subline and errors, the partner editor, the morning chip and front-door line ("estimates past due"), the left-rail subline and the CRM picker. **Internal keys stay "bid" on purpose** — `data-pane="bids"`, `data-act="newbid"`, `checklist.bid`, `bidAmt`, `source:'community-bid'`, the morning counter `c.bids` — rows and other modules read them. Retail's Sales Floor copy about a *competitor's* bid is a different thing and is untouched. **Gate:** `gate_1312.mjs` (lexer over the four blocks + the rendered home, Estimates pane and a job page).
+

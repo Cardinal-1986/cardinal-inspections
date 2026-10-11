@@ -20,6 +20,11 @@
      9  the Waitlist tile is a door onto exactly those jobs
     10  tarped_at is REUSED, not duplicated
 
+   1311 (Theo, "All") retired the KPI tiles, Waitlist and Open bids among them, because
+   the 1303/1304 home shows the pipeline. On a tree carrying 1311, 7–9 check that the
+   tiles stayed retired and that the waitlist is still ONE door away: the filter's
+   Waitlist facet narrows All estimates to exactly the waitlisted jobs.
+
    Usage: node gate_977.mjs [path] — previous build = negative control; must go
    RED with named failures and MUST NOT crash (BUG_CLASSES 37). */
 import { createRequire } from 'module';
@@ -183,6 +188,21 @@ const read = () => page.evaluate(()=>{
     rows: fold ? Array.from(fold.querySelectorAll('tbody tr')).map(t=>t.getAttribute('data-open')) : [] };
 });
 const base = await read();
+const RET = APP.indexOf('var mine1311') !== -1;
+if(RET){
+need('7 (1311) the KPI tiles stayed retired', base.tiles.length === 0, JSON.stringify(base.tiles));
+const hub = async (sel) => page.evaluate(s => { const e = document.querySelector('#cr-ch2 [data-pane="bids"] ' + s) || document.querySelector('#cr-ch2 ' + s); if (!e) return false; e.click(); return true; }, sel);
+const a1 = await hub('[data-ch="filter"]'); await page.waitForTimeout(300);
+const a2 = await hub('[data-cat="waitlist"]'); await page.waitForTimeout(300);
+const opts = await page.evaluate(() => Array.from(document.querySelectorAll('#cr-ch2 [data-sh="sub"] [data-opt]')).map(e => e.getAttribute('data-opt')));
+need('8 (1311) the filter still offers the waitlist on its own', a1 && a2 && opts.indexOf('On the waitlist') !== -1, JSON.stringify({ a1, a2, opts }));
+const a3 = await hub('[data-opt="On the waitlist"]'); await page.waitForTimeout(200);
+const a4 = await hub('[data-ch="apply"]'); await page.waitForTimeout(600);
+const afterW = await read();
+need('9 (1311) the Waitlist filter is a door onto exactly those jobs',
+     a3 && a4 && afterW.rows.length === 2 && ['c4','c5'].every(id=>afterW.rows.indexOf(id)!==-1),
+     JSON.stringify({ a3, a4, rows: afterW.rows }));
+}else{
 const tile = k => base.tiles.filter(t=>t.key===k)[0] || base.tiles.filter(t=>/waitlist/i.test(String(t.label)))[0];
 const openTile = base.tiles.filter(t=>/open bids/i.test(String(t.label)))[0];
 
@@ -205,6 +225,7 @@ const after = await read();
 need('9 the Waitlist tile is a door onto exactly those jobs',
      tapped && after.rows.length === 2 && ['c4','c5'].every(id=>after.rows.indexOf(id)!==-1),
      tapped ? ('showing ' + JSON.stringify(after.rows) + ' (want c4, c5)') : 'no Waitlist tile to tap');
+}
 
 clearTimeout(watchdog);
 await browser.close();

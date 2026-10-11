@@ -24,6 +24,12 @@
     12  a Production user gets three sibling waiting rows, not three nested
         unclosed ones
 
+   1311 (Theo, "All"): the KPI tiles, the waiting rows, Due soon and By stage were
+   RETIRED because the 1303/1304 home shows them. On a tree carrying 1311 the checks
+   that drove a retired tile drive its home successor instead (a pipeline bucket is the
+   Open-bids door, the home's "Overdue and due soon" list is Due soon) and the retired
+   pieces must STAY retired. Older trees run the original checks unchanged.
+
    Usage: node gate_975.mjs [path] — previous build = negative control; must go
    RED with named failures and MUST NOT crash (BUG_CLASSES 37). */
 import { createRequire } from 'module';
@@ -36,6 +42,7 @@ const HERE=dirname(fileURLToPath(import.meta.url));
 const FILE=process.argv[2]||join(HERE,'../../../../index.html');
 const LABEL=process.argv[3]||'SHIPPED';
 const APP=readFileSync(FILE,'utf8');
+const RET=APP.indexOf('var mine1311')!==-1;   /* 1311 retired the tiles and folds */
 const SETUP=readFileSync(join(HERE,'sentinel_setup_cardinal.js'),'utf8')+'\n;\n'+readFileSync(join(HERE,'e2e_mock_supa.js'),'utf8');
 
 let fails=[], passes=0;
@@ -98,6 +105,10 @@ const read = () => page.evaluate(()=>{
     .map(p=>({ txt:(p.textContent||'').trim(), red:p.classList.contains('due') })) : [];
   return {
     tiles, rows, shown, dueRows, redPills,
+    pipe: Array.from(host.querySelectorAll('.pipebtn[data-ccpipe]')).map(b=>b.getAttribute('data-ccpipe')),
+    homeDue: (function(){ const out=[]; let on=false; host.querySelectorAll('[data-pane="home"] .cc-aqh, [data-pane="home"] .cc-arow').forEach(e=>{
+      if(e.classList.contains('cc-aqh')){ on = /overdue and due soon/i.test(e.textContent); return; }
+      if(on) out.push(e.getAttribute('data-open')); }); return out; })(),
     allOpen: !!(allFold && allFold.classList.contains('open')),
     queues: Array.from(host.querySelectorAll('[data-queue]')).map(e=>e.getAttribute('data-queue')),
     tallies: Array.from(host.querySelectorAll('[data-tally]')).map(e=>e.getAttribute('data-tally')+':'+e.getAttribute('data-val'))
@@ -105,6 +116,12 @@ const read = () => page.evaluate(()=>{
 });
 
 const base = await read();
+if(RET){
+need('0 the hub rendered with the seeded book (1311: All estimates is the whole pane, open)', !base.err && base.rows.length === 8 && base.allOpen,
+     base.err || ('rows=' + base.rows.length + ' open=' + base.allOpen + ' seed=' + JSON.stringify(seeded)));
+need('1311 the KPI tiles stayed retired', base.tiles.length === 0, JSON.stringify(base.tiles));
+need('1311 the waiting rows stayed retired', base.queues.length === 0, JSON.stringify(base.queues));
+}else{
 need('0 the hub rendered with the seeded book', !base.err && base.tiles.length > 0,
      base.err || ('tiles=' + base.tiles.length + ' seed=' + JSON.stringify(seeded)));
 
@@ -116,6 +133,7 @@ need('1 a live tile is a button, and carries a door',
 need('2 Open bids counts the OPEN stages, not every community job',
      !!(tile('open') && tile('open').value === '5'),
      'Open bids reads ' + JSON.stringify(tile('open') && tile('open').value) + ' of 8 community jobs (5 are open)');
+}
 
 async function tap(sel){
   const ok = await page.evaluate((s)=>{
@@ -128,6 +146,21 @@ async function tap(sel){
 }
 
 /* ---- 3,4: the Open bids door ---- */
+if(RET){
+await page.evaluate(()=>{ try{ window.CardinalCommunityHome.tab('home'); window.CardinalCommunityHub.render(); }catch(e){} });
+await page.waitForTimeout(400);
+const tappedL = await tap('[data-pane="home"] .pipebtn[data-ccpipe="Lead"]');
+const afterL = await read();
+need('3 (1311) tapping the L bucket narrows All estimates to exactly the leads',
+     tappedL && afterL.rows.length === 3 && ['c1','c2','c3'].every(id=>afterL.rows.indexOf(id)!==-1),
+     tappedL ? JSON.stringify(afterL.rows) : 'no L bucket to tap');
+need('4 ...and the All estimates fold is open', afterL.allOpen === true, 'open=' + afterL.allOpen);
+await page.evaluate(()=>{ try{ window.CardinalCommunityHub.render(); }catch(e){} });
+await page.waitForTimeout(400);
+const afterR = await read();
+need('5 the fold you are filtering in survives a render', afterR.allOpen === true && afterR.rows.length === 3,
+     'open=' + afterR.allOpen + ' rows=' + afterR.rows.length);
+}else{
 const tappedOpen = await tap('[data-cckpi="open"]');
 const afterOpen = await read();
 need('3 tapping Open bids narrows All bids to exactly those rows',
@@ -146,11 +179,19 @@ const afterRender = await read();
 need('5 the fold you are filtering in survives a render',
      afterRender.allOpen === true && afterRender.rows.length === 5,
      'open=' + afterRender.allOpen + ' rows=' + afterRender.rows.length);
+}
 
 /* ---- 6: the deadline door ---- */
 await tap('[data-ch="clear"]').catch(()=>{});
 await page.evaluate(()=>{ try{ window.CardinalCommunityHub.render(); }catch(e){} });
 await page.waitForTimeout(300);
+if(RET){
+await page.evaluate(()=>{ try{ window.CardinalCommunityHome.tab('home'); window.CardinalCommunityHub.render(); }catch(e){} });
+await page.waitForTimeout(400);
+const home = await read();
+need('6 (1311) the home lists the overdue / this-week / past-check-back jobs under Overdue and due soon',
+     ['c1','c2','c5'].every(id=>home.homeDue.indexOf(id)!==-1), 'home due list: ' + JSON.stringify(home.homeDue));
+}else{
 const tappedDue = await tap('[data-cckpi="due7"]');
 const afterDue = await read();
 need('6 Due <= 7 days routes to the overdue / today / this-week band',
@@ -158,18 +199,25 @@ need('6 Due <= 7 days routes to the overdue / today / this-week band',
      ['c1','c2','c5'].every(id=>afterDue.rows.indexOf(id)!==-1),
      tappedDue ? ('showing ' + JSON.stringify(afterDue.rows) + ' (want c1 overdue, c2 in 3d, c5 parked past its check-back)')
                : 'no Due tile to tap');
+}
 
 /* ---- 7,8: the rows nobody could tap ---- */
-need('7 a waiting row is a door onto its own stage',
+if(!RET) need('7 a waiting row is a door onto its own stage',
      base.queues.length >= 1 && base.queues.indexOf('Prospect') !== -1,
      'waiting rows carry: ' + JSON.stringify(base.queues));
 await page.evaluate(()=>{ try{ window.CardinalCommunityHome.tab('clients'); window.CardinalCommunityHub.render(); }catch(e){} });
 await page.waitForTimeout(400);
 const clientsView = await read();
+if(RET){
+need('8 (1311) By partner is still a door, and By stage stayed retired',
+     clientsView.tallies.some(t=>t.indexOf('partner:')===0) && !clientsView.tallies.some(t=>t.indexOf('stage:')===0),
+     'tally rows carry: ' + JSON.stringify(clientsView.tallies.slice(0,6)));
+}else{
 need('8 a by-stage tally row is a door',
      clientsView.tallies.some(t=>t.indexOf('stage:')===0) &&
      clientsView.tallies.some(t=>t.indexOf('partner:')===0),
      'tally rows carry: ' + JSON.stringify(clientsView.tallies.slice(0,6)));
+}
 
 /* ---- 9: the nested-card artifact ---- */
 const nest = await page.evaluate(()=>{
@@ -181,7 +229,7 @@ const nest = await page.evaluate(()=>{
   return { tile: ct.borderLeftWidth, k: ck ? ck.borderLeftWidth : null, v: cv ? cv.borderLeftWidth : null,
            kBg: ck ? ck.backgroundImage.slice(0,20) : null };
 });
-need('9 a KPI tile draws ONE card, not three nested',
+if(!RET) need('9 a KPI tile draws ONE card, not three nested',
      !!(nest && nest.tile !== '0px' && nest.k === '0px' && nest.v === '0px'),
      nest ? ('tile=' + nest.tile + '  .k=' + nest.k + '  .v=' + nest.v) : 'no tile found');
 
@@ -189,10 +237,10 @@ need('9 a KPI tile draws ONE card, not three nested',
 await page.evaluate(()=>{ try{ window.CardinalCommunityHome.tab('bids'); window.CardinalCommunityHub.render(); }catch(e){} });
 await page.waitForTimeout(400);
 const bids = await read();
-need('11 an overdue check-back reaches Due soon at all',
+if(!RET) need('11 an overdue check-back reaches Due soon at all',
      bids.dueRows.some(r=>r.id==='c5'),
      'Due soon shows: ' + JSON.stringify(bids.dueRows.map(r=>r.id)));
-await tap('[data-cckpi="open"]');
+if(!RET) await tap('[data-cckpi="open"]');
 const opened = await read();
 const c5pill = (opened.redPills||[]).filter(p=>/hold/.test(p.txt))[0];
 need('10 an overdue check-back goes red',
@@ -219,7 +267,8 @@ const prod = await page.evaluate((APPSRC)=>{
   box.innerHTML = html;
   return { top: box.children.length, nestedRows: box.querySelectorAll('.cc-prow .cc-prow').length };
 }, APP);
-need('12 a Production user gets sibling waiting rows, not nested unclosed ones',
+if(RET) need('12 (1311) queue() left with the waiting rows', !!(prod && prod.err === 'queue() not found'), JSON.stringify(prod));
+else need('12 a Production user gets sibling waiting rows, not nested unclosed ones',
      !!(prod && prod.top === 2 && prod.nestedRows === 0),
      prod && prod.err ? prod.err : ('top-level rows=' + (prod&&prod.top) + '  nested=' + (prod&&prod.nestedRows)));
 

@@ -34333,6 +34333,33 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1311: Community Estimates and Clients stop repeating the home (Theo: "All", items D and E)
+- **Estimates (`pane 'bids'`)** loses the KPI tiles (`KPI975`), Due soon, the Partners fold and the Waiting on you fold. The 1303/1304 home shows all four: pipeline counts and money, "Overdue and due soon", the same chase/sched/inv queues listed per job, and the Partners door. What is left is **All estimates**, open by default, because it is the whole pane and every home door lands on it. The sales line "your bids only" stays. The `kpi:` and `q:` doors, `queue()`, `dueBody`, `partnersBody` and `weekBody` go with them, along with the `[data-cckpi]` / `[data-queue]` wiring.
+  - ⚠ **The Waitlist tile (977) was a door.** The home does not show the waitlist, so it is reached through the filter's Waitlist facet (`CH_GROUPS`, unchanged); `gate_977` now drives that path.
+  - ⚠ **Residue, recorded rather than widened:** the `.cc-kpi` / `.cc-tile` / `.cc-duegrid` rules in `cr-ch2-styles` now style nothing (0 markup users, grep). Delete them at source in a later clean-up.
+- **Clients** loses "By stage", which is the pipeline again. "By partner" stays.
+- **`gate_1311` (5):** Estimates draws only `allbids`, open, with all 5 jobs; a pipeline tap lands on it narrowed; Clients has By partner and no By stage; a sales rep still sees "your bids only". RED on 1310 (3 failures). ⚠ **My first cut queried `#cr-ch2 [data-pane="bids"]`, which matched the home's Estimates DOOR before the pane.** A passed vacuously on zero folds. It now reads `div[data-pane]` and requires at least one fold.
+- **Ported gates:** `gate_975` and `gate_977`. On a 1311 tree their checks that drove a retired tile drive its home successor instead: an L pipeline tap, the home's Overdue list, the Waitlist filter facet. They also assert the tiles, rows and By stage stay retired. Older trees run the original checks, so both still pass on 1310.
+
+## Build 1310: three client-list controls reach 44px (gate_944 red since 1306)
+- My 1306 wrap made the iPad home taller, so `gate_944`'s walk scrolled one step further and reached the client-history header for the first time. The search box was 43px, ⬇ CSV 25px and ☐ Select 25px. They were always that size; the walk had just never reached them. Now `min-height:44px` at the three source rules (`.controls input[type=search]`, `.cr-csv-btn`, `#cr-bulk-toggle`). **`gate_944`** is the gate: GREEN on 1310, RED on 1306–1309. The bisect showed 1305 GREEN and 1306 RED.
+
+## Build 1309: Community clean-up, part 1 (Theo: "All", items A, B and C)
+- **A, dead code:**
+  - `shortOrg()` (only its own definition).
+  - The old job page's `[data-t]` tab handler (nothing emits `data-t` since 1264).
+  - The `#cr-cc .tabbar` rules.
+  - `dupedHere()`'s Community branch, which looked for the hub tab strip retired at 1179 and so always answered no. The pills still always show.
+- **B, dead-end buttons:**
+  - More tools → Properties (opened with no partner id and only said "open a partner first").
+  - More tools → Work Orders (a toast; work orders live on the job page).
+  - Their `props` and `wo` dispatch branches. `CardinalCommunityProperties` stays.
+- **C, repeats:**
+  - More tools → Calendar (the Next 30 Days card) and All Partners (the Partners door). Their dispatch stays, because the card and the partner rows use it.
+  - Activity stays: it is the home's only door to the team feed.
+- **Audit first.** An inventory of every Community surface showed that the pre-1264 job page is already gone. `cr-cc-script` only renders the 1264 page, and its fallbacks show the Retail profile.
+- **`gate_1309` (10):** More tools holds only Activity, wired. Calendar and Partners are still reachable by real taps. The banner pills show. The dead code is absent from the source. A Community job page still opens. RED on 1308. **`gate_802`** E now expects 1 tool in the sheet (was 5).
+
 ## Build 1308: the P badge matches its orange stripe (Theo: "Make the p the same color")
 - `LJ_SOLID.Prospect` `#c8202e` → `#ff7a00`, and `LJ_INK.Prospect` `#ffffff` → `#15171b`, because white on that orange is 2.61:1 and the dark ink is 6.87:1. The badge is drawn on the card and in the lead's detail pane, and both read these maps. **`gate_1308`** (gate_1307 plus check D) reads the rendered badge as rgb(255,122,0) with its letter at 6.87:1. RED on 1307 (D). Also green: 1226, 1307, stack, types, dupes, a11y, harnesses.
 
@@ -35929,3 +35956,11 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
     - the boxes reset when the form reopens.
     - **RED on 1252.**
   - **Also green:** types (after typing three DOM reads), dupes, stack, 1243.
+
+## Build 1312: Community says "estimate", never "bid" (Theo: "Let's keep it estimate and no bid")
+- **Why:** the stages and the list said Estimate (CC_STAGE_LABEL, 1301; "All estimates"), while the pipeline's P, the job page, the New Estimate form, the partner editor and the morning chip said bid. One thing, two names — Theo: "that's why I've been confused since the first day."
+- **What:** 30 literal edits across cr-ch2, cr-cc, cr-nbid, cr-cpartners, cr-morning, cr-fd, cr-lr and cr-cct. "on the bid form" became "on the New Estimate form", which is what that form is titled. "Invited to bid." became "Asked for an estimate." The CRM picker's "Non-profits (bidding)" lost the parenthesis rather than gaining a worse one.
+- **Kept:** internal keys — `data-pane="bids"`, `data-act="newbid"`, `checklist.bid`, `bidAmt`, `source:'community-bid'`, `c.bids`. Sales Floor's competitor-bid copy (retail).
+- **Gates:** `gate_1312.mjs` GREEN 6/6; control (1311) RED 3/6. Its static half (`gate_1312_static.py`) lexes 2,650 string literals and finds 0 (28 on 1311). Its first run went red on the seed client "Bid Bea" — the fixture, not the app. Ported to accept the new words: `gate_1303` B, `gate_1311` E, `gate_971` 2, `render_fd1164`, `harness_709`, `harness_710`. Standing gates green: check_build, types, dupes, a11y, 1206, stack, scroll-lock (17), 944, harnesses; Community gates 971/972/975/977/1264/1303/1311 green.
+- ⚠ **`harness_709.js` and `harness_710.js` crash with `ReferenceError: priceOf is not defined` on 1311 too** — old debt, not this build, and neither is in `gate_harnesses`' list.
+
