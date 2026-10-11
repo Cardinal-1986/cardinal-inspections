@@ -9741,6 +9741,10 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1296: callback cause + original crew
+
+A Callback card records why (Workmanship / Material / Storm / Homeowner / Other) and the original crew, auto-filled from the job's crew work order. Crews → a crew → Jobs lists its callbacks for 12 months, with the cause. SQL: `punch_callback_cause.sql` (applied). Gate: `gate_1296`.
+
 ## Build 1295: rain flag on punch-outs
 
 A blue "Rain 80%" / "Storm" / "Snow" chip appears on Punch List rows and on the card's dispatch line when the booked day has a wet forecast (the app's 14-day Open-Meteo forecast). Curtis's 3pm Plan buzz names the wet jobs. The rule is `CardinalWx.flag`, with a server copy `wxFlag` in `api/punch-buzz.js`. Gate: `gate_1295`.

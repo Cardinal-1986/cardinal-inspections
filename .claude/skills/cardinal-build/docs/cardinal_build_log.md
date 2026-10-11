@@ -34333,6 +34333,22 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1296: callback cause + original crew (Theo's pick 1B, 10 Oct)
+
+**What it does.**
+- A Callback card gets a "Why the callback" section: five 44px cause chips (Workmanship · Material · Storm · Homeowner · Other) and the **original crew**.
+- The original crew fills itself in once, from the most recent non-superseded crew work order on the job, and is saved. It can be changed from a picker that lists "On this job" crews first.
+- Each crew's **Jobs** tab under Crews lists its callbacks for the last 12 months, with the cause; workmanship is in amber.
+
+**SQL.** `punch_callback_cause.sql` was **applied 11 Oct 2026 before this shipped**. It adds `callback_cause` (CHECK on the five words), `orig_crew_id` (no FK, so history survives the crew) and `orig_crew_name`, plus a partial index. Additive only; the columns ride the existing `punch_items` RLS.
+
+**Why the name is stored too.** `crews` and `crew_work_orders` are `is_full_access()` RLS (Theo, Joan, Curtis, Scottie), so a sales rep opening a callback reads `[]`. The card then shows the stored `orig_crew_name` and no picker, rather than a blank. `gate_1296` E simulates that refusal.
+
+**Gates.**
+- `gate_1296`: 7 checks. The control against 1295 is red on all 7.
+- `gate_dupes` caught a local `opt` helper colliding with two others; it was renamed `cbOpt`, not rebaselined.
+- Crews gates 733/740/744/745, 937, 941 and 1288, plus the punch gates, are green.
+
 ## Build 1295: the rain flag (Theo's pick 7B, 10 Oct)
 
 **What it does.**
