@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1312<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1313<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -10406,6 +10406,29 @@ function buildEstimate(titleHtml, body, terms){
     out = out.replace('<b>Acceptance.</b> This estimate is valid through the date shown above. Signature below',
                       '<b>Acceptance.</b> Signature below');
   }
+  /* 1313: an INVOICE is a bill, not an estimate. It used to keep the estimate's
+     cover photo, Estimate # / Valid Through, a second Client Contact row, the
+     concealed-conditions change-order note, the "this estimate is valid" acceptance
+     paragraph and the Client Acceptance signature line — and that line made
+     api/share.js offer Accept & Sign instead of Pay on every invoice link. */
+  if(/\bINVOICE\b/i.test(plain)){
+    out = out.replace('<title>Cardinal Roofing &amp; Renovations — Estimate</title>',
+                      '<title>Cardinal Roofing &amp; Renovations — Invoice</title>');
+    out = out.replace('<div class="cover-photo">PROPERTY PHOTO</div>\n\n', '');
+    out = out.replace(/<table class="meta">\s*<tr><td class="k">Prepared For<\/td>[\s\S]*?<\/table>/,
+      '<table class="meta">\n' +
+      '  <tr><td class="k">Bill To</td><td><span class="ph">[Client name]</span></td>\n' +
+      '      <td class="k">Invoice Date</td><td><span class="ph">[Date]</span></td></tr>\n' +
+      '  <tr><td class="k">Property Address</td><td><span class="ph">[Street, City, State ZIP]</span></td>\n' +
+      '      <td class="k">Due</td><td>Upon receipt</td></tr>\n' +
+      '  <tr><td class="k">Client Contact</td><td><span class="ph">[Phone · Email]</span></td>\n' +
+      '      <td class="k">Prepared By</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>\n' +
+      '</table>');
+    out = out.replace(/<[d]iv class="note"><b>Concealed conditions\.<\/b>[\s\S]*?<\/[d]iv>\s*/, '');
+    out = out.replace(/<h2 class="sec">Notes<\/h2>\s*<p class="ph">\[Job-specific notes[\s\S]*?<\/p>\s*/, '');
+    out = out.replace(/<[d]iv class="note"><b>Acceptance\.<\/b>[\s\S]*?<\/[d]iv>/, '');
+    out = out.replace(SIGN_FOOTER, '');
+  }
   /* 889: a crew WORK ORDER is not an estimate. Strip the estimate cover (Prepared
      For / Estimate # / Valid Through), the property photo, the generic Notes
      placeholder and the client-acceptance footer \u2014 woBody carries its own
@@ -10861,7 +10884,7 @@ var INVOICE_BODY =
   '<div class="secthead">INVOICE</div>' +
   '<table style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px;">' +
     '<tr><td style="padding:4px 0;color:#666;width:130px;">Invoice #</td><td style="font-weight:800;">[INV_NUM]</td>' +
-    '<td style="padding:4px 0;color:#666;width:110px;">Date</td><td style="font-weight:700;">[INV_DATE]</td></tr>' +
+    '<td></td><td></td></tr>' +
   '</table>' +
   '<div class="secthead">SUMMARY</div>' +
   '<table style="width:100%;border-collapse:collapse;font-size:14px;">' +
@@ -27073,6 +27096,13 @@ async function openEditor(id){
       wireColorSelects(doc);
       wireWoFields(doc);
       wireInvoiceLive(doc, r);   /* 1109: live invoice status/balance/ledger */
+      /* 1313: an invoice is paid, not signed — the text button says so */
+      (function(){
+        var tb = document.getElementById('textSignBtn'); if(!tb) return;
+        var inv = /^invoice/i.test(String(r.title || '').trim());
+        var bl = tb.querySelector('.bl'); if(bl) bl.textContent = inv ? 'Text pay link' : 'Text to sign';
+        tb.title = inv ? 'Text the client a link to view and pay this invoice' : 'Text the client a link to review and sign';
+      })();
       fitEstimateFrame();   /* 1278 */
       refreshSigBtn();
       __fillIdx = 0;
@@ -27455,7 +27485,8 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
       var name = String((proj && (proj.name || proj.client_name)) || '').trim();
       var title = (titleInput.value || '').trim() || 'your document';
       var body = (name ? 'Hi ' + name + ' \u2014 ' : '') + 'here is ' + title +
-        ' from Cardinal Roofing & Renovations. You can review and sign it right here: ' + url;
+        ' from Cardinal Roofing & Renovations. ' +
+        (/^invoice/i.test(title) ? 'You can view and pay it right here: ' : 'You can review and sign it right here: ') + url;
       var tel = (proj && proj.phone) ? String(proj.phone).replace(/[^+\d]/g, '') : '';
       if(tel){
         location.href = 'sms:' + tel + '?&body=' + encodeURIComponent(body);
@@ -44261,6 +44292,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1313, d:'2026-10-11', t:'An invoice can be paid', s:'An invoice used to be an estimate with a new title: it still had a signature line, so the link you sent asked the client to Accept & Sign and never showed a Pay button. It also said Estimate #, Valid Through and had an empty photo box. An invoice now has its own header \u2014 Bill To, Invoice Date, Due upon receipt \u2014 no signature line, and the link opens with Pay. The text button on an invoice says Text pay link.' },
   { b: 1312, d:'2026-10-11', t:'Community says estimate, not bid',
     s:'The Community screens called one thing two names: the stages and the list said Estimate, while the pipeline, the job page and the New Estimate form said bid. Now it is estimate everywhere \u2014 the pipeline\u2019s P reads Estimate Submitted, the job page says Open estimate, Build the estimate and Mark this estimate submitted, and the morning chip counts estimates past due. Nothing about the jobs themselves changed.' },
   { b: 1311, d: '2026-10-11', t: 'Community Estimates and Clients stop repeating the home',

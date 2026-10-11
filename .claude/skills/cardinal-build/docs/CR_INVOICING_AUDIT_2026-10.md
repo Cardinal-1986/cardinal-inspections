@@ -20,7 +20,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 3. **A/R today = $14,006.73, all of it "30+ overdue", none of it invoiced.** Two jobs (Dan, Vandalyn)
    were moved to Invoiced by hand with no invoice and no signed contract; their value comes from
    estimates. Aging runs from the stage change (`t_Invoiced`), so un-billed work reads as overdue.
-4. **$26,760 sits at Closed with $0 recorded paid** (Carl $12,000 — Completed→Invoiced→Closed in
+4. ✅ *Resolved 11 Oct: Theo confirmed both paid by check; recorded in `collections`.* **$26,760 sat at Closed with $0 recorded paid** (Carl $12,000 — Completed→Invoiced→Closed in
    6 seconds on 10 Aug; Annette $14,760). A/R filters by stage, so it is invisible.
 5. **Payments live in three ledgers and the app and server count them differently.**
 
@@ -28,7 +28,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 
 | # | Finding | Where | Proof |
 |---|---|---|---|
-| M1 | Invoice share link offers Accept & Sign, never Pay | `buildEstimate` ~10403–10419, `api/share.js:331` | ✅ code + render |
+| M1 | ✅ **FIXED 1313** — Invoice share link offers Accept & Sign, never Pay | `buildEstimate` ~10403–10419, `api/share.js:331` | ✅ code + render |
 | M2 | Pay link / reminder texts use a different balance from the app: server = signed contract docs − `collections`; app (`jobFinance` ~17200) also adds `manual_value`, the `contracts` table, and legacy `checklist.payments` / `ws[].paid`. $20k contract + $5k legacy deposit → app says $15k, Stripe charges **$20k**. Contract + $2k manual extras → app $17k, Stripe $15k, then job shows $2k owed forever | `api/pay.js:55–77`, `share.js`, `remind.js:177–184` | ✅ code; executed |
 | M3 | First `collections` row silently drops all legacy payments — `jobFinance` uses collections **or** legacy, never both. Live: Dan's $8,008.94 exists only in `checklist.payments` (not in collections, no commission, not in "Paid this month") | `jobFinance` ~17262 | executed + live data |
 | M4 | Legacy money-in doors still live: Worksheet "Amount Collected" (~17447), Payments-page Add row defaulting to "Received" (~4955), `openContractPaid` (~15698) | | traced |

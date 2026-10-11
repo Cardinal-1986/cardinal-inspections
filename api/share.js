@@ -328,7 +328,10 @@ export default async function handler(req, res) {
       letterView = true;
       html = html.replace(/<meta name="viewport" content="[^"]*">/, '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>');
     }
-    const signable = (SIGN_RX.test(html) || SLOT_RX.test(html)) && !html.includes('data-clientsigned');
+    // 1313: an invoice is paid, never signed — even one made before invoices lost their
+    // signature line. Without this, Accept & Sign took the place of the pay bar.
+    const isInvoiceDoc = /^invoice/i.test(String(rows[0].title || '').trim());
+    const signable = !isInvoiceDoc && (SIGN_RX.test(html) || SLOT_RX.test(html)) && !html.includes('data-clientsigned');
     if (signable) {
       const ui = signUi(t);
       html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
