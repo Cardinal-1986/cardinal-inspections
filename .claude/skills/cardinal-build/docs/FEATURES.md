@@ -9741,6 +9741,12 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1301: one Community stage map
+`window.CC_STAGE_LABEL` is the single source for Community stage names (Estimate Requested … Not Awarded). `CD_STAGE_LABEL.community` is it; `COM_LABEL` and both Community `LABEL`s read it first (fallback copies held equal by `gate_1301`). No wording change.
+
+## Build 1300: route-page ticks say when they are waiting for signal
+Truck ticks and Add to <day> on `#cr-route` already queue offline (1049's outbox via `CardinalPunch.update`); a queued write now shows "No signal — saved on this phone. It will sync by itself." Gate: `gate_1300`.
+
 ## Build 1299: job links open the job; every gate run
 - **Deep links work cold again.** `#p/<id>` and `#p/<id>/<tab>` (punch-out texts, client links, alert links) land on that client and tab when the app was closed; since 1165 they opened Home. The fragment is stashed at parse time as `__restoreBootHash`.
 - **Switch portal** on the desktop rail has its yellow (dark) / amber (light) back — the rules now key `data-k="switchportal"`.

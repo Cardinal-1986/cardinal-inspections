@@ -6291,7 +6291,7 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 ## Community revamp — layer of 8 Oct 2026 (Theo: "match exactly the retail crm")
 - [x] 1264: the client page in Retail's order. Thread in Communication. Partnership Organization in
   place of Lead Source.
-- [ ] Stage labels in one place. There are three `LABEL` maps today, two of them identical.
+- [x] 1301: Stage labels in one place — `window.CC_STAGE_LABEL` (four copies were found, not three; the fallbacks are held equal by `gate_1301`).
 - [ ] New Lead intake with the real partner list.
 - [ ] A Community home like Retail's: pipeline, calendar, A/R.
 - [ ] Retire the old Community screens once the above are in.

@@ -34333,6 +34333,18 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1301: Community's stage names live in one place (Community revamp row 2)
+
+- **Four identical copies** of the Community stage map: the Client Directory's `CD_STAGE_LABEL.community`, cr-comstage's `COM_LABEL`, and the two byte-identical `var LABEL` maps (CLAUDE.md's LABEL trap). 710 had already found one missing `OnHold`. Measured identical before the change, so **no wording moved**.
+- Now **one map**, `window.CC_STAGE_LABEL`, beside `INS_STAGE_LABEL`. The directory map IS it; the other three read it first and keep their copy only as a standalone fallback — the 655 (CR-AUD-014) shape insurance already has.
+- **`gate_1301` (6):** the shared map has all nine stages in a real render; the directory uses the object, not a copy; three fallbacks found, each reading the shared map first, and **none may differ from it** (so the copies cannot drift again); the words are unchanged. RED on 1300. ⚠ My first cut of C passed on ZERO fallbacks — its regex did not allow the `/* 1301 */` comment after the brace, so "none drifted" was vacuous. The count now gates it.
+
+## Build 1300: the route page says when a tick is waiting for signal (Theo's 4)
+
+- **The tick already worked offline.** Measured with `navigator.onLine` false and a "Load failed" fetch: the route page's truck tick (and Curtis's Add to <day>) goes through `CardinalPunch.update`, which since **1049** keeps the change and queues it in the outbox. The tick stays, the outbox holds the patch, no error. My note from 10 Oct that it did not was wrong.
+- **What was missing was the receipt.** The punch-out card says "No signal — saved on this phone" (1049); the route page said nothing, and its full screen covers the sync badge. Same words, as an `ok` toast.
+- **`gate_1300` (4):** offline the tick stays, the outbox holds it, no "Could not save", and the route page says so. On 1299 A–C already pass (1049's outbox) and **D is RED** — the build is D.
+
 ## Build 1299: every gate, run — and the reds that were the app's (Theo, 11 Oct: "do 3 … don't stop till it's fixed to your standards")
 
 **How it was found.** All 379 `gate_*.mjs` and every CI harness, swept against `main` (1298), four at a time, with arguments resolved per gate (no-arg → `index.html` on usage → the scripts folder on ENOENT). ⚠ The first two sweeps were WRONG and said so: run without the path, and then with it for every gate, they reported ~140 reds that were the sweep's own fault (usage exits, `api/`-arg gates handed `index.html`, ESM packages missing). Only the third shape is trustworthy.
