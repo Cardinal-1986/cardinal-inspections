@@ -6293,7 +6293,7 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 - [x] 1264: the client page in Retail's order. Thread in Communication. Partnership Organization in
   place of Lead Source.
 - [x] 1301: Stage labels in one place — `window.CC_STAGE_LABEL` (four copies were found, not three; the fallbacks are held equal by `gate_1301`).
-- [ ] New Lead intake with the real partner list.
+- [x] New Lead intake with the real partner list — already true (Theo, 11 Oct: "1 done"): the Community + opens New Estimate (`cr-nbid`), whose first field is the masked `community_partners` list, Habitat first (973).
 - [x] 1302: "Tarp Only" is a Work Type (Theo: "not a stage just standalone").
 - [x] 1303: the Community home opens on Retail's pipeline (P = Bid Submitted, On Hold = Waiting, Theo's pick 1) with a Tarp Only tile; layout A.
 - [x] 1304: the Next 30 Days calendar and Partner A/R on the Community home — layout A complete.
