@@ -119,7 +119,7 @@ try {
      'A  seven buckets in Retail’s order', JSON.stringify(s.btns.map(b => b.key)));
   ok(s.order === true, 'A  the pipeline sits above "waiting on you"');
   const L = Object.fromEntries((s.btns || []).map(b => [b.key, b.label]));
-  ok(L.Prospect === 'Bid Submitted' && L.OnHold === 'Waiting', 'B  P reads Bid Submitted, On Hold reads Waiting', JSON.stringify(L));
+  ok(/^(Bid|Estimate) Submitted$/.test(L.Prospect) && L.OnHold === 'Waiting', 'B  P reads Estimate Submitted (Bid Submitted before 1312), On Hold reads Waiting', JSON.stringify(L));
   ok(L.Lead === 'L' && L.Approved === 'A' && L.Completed === 'C' && L.Invoiced === 'I' && L.Closed === 'Closed', 'B  the rest are Retail’s own words');
   const N = Object.fromEntries((s.btns || []).map(b => [b.key, b.n]));
   ok(N.Lead === 3 && N.Prospect === 2 && N.OnHold === 1 && N.Approved === 2 && N.Completed === 2 && N.Closed === 1 && N.Invoiced === 0,

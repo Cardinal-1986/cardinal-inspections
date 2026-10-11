@@ -54,7 +54,7 @@ if (boot.api) {
   ok(st.rows.length === 9, '9 door rows (got ' + st.rows.length + ')');
   ok(st.rows.every(r => r.h >= 44), 'every row ≥44px (min ' + Math.min(...st.rows.map(r => r.h)).toFixed(1) + ')');
   ok(st.quote, 'the daily quote renders');
-  ok(/3 bids past due/.test(st.hotline), 'community state line shows the mocked 3 (got "' + st.hotline + '")');
+  ok(/3 (bids|estimates) past due/.test(st.hotline), 'community state line shows the mocked 3 (got "' + st.hotline + '")');
 
   // every door routes — real taps
   for (const d of ['community', 'production', 'sales', 'insurance', 'library', 'showroom', 'colors']) {

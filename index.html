@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1311<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1312<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -38169,7 +38169,7 @@ var bd = host.querySelector('.cr-cp-bd');
 bd.innerHTML =
 '<div class="m" style="margin:0 0 13px;line-height:1.55;opacity:.8">' +
 'Researched, not yet worked with. Every contact below came from a public source \u2014 ' +
-'confirm it before you send a bid.</div>' + body;
+'confirm it before you send an estimate.</div>' + body;
 bd.querySelectorAll('.cr-cp-row').forEach(function(row){
 var b = row.querySelector('[data-act="edit"]');
 if(b) b.onclick = function(){
@@ -38385,7 +38385,7 @@ return;
 var _em = String(next.contact_email == null ? '' : next.contact_email).trim();
 if(canEditContacts && _em && !window.crValid.email(_em).ok){
 err.style.display = 'block';
-err.textContent   = 'That contact email is not a complete address \u2014 bids default to it, so it has to be right.';
+err.textContent   = 'That contact email is not a complete address \u2014 estimates default to it, so it has to be right.';
 var _ei = form.querySelector('[name="contact_email"]');
 if(_ei){ window.crValid.mark(_ei, false, 'Not a complete email address.'); window.crValid.shake(_ei); _ei.focus(); }
 return;
@@ -38687,7 +38687,7 @@ bg.className = 'cr-nbid-bg';
 bg.innerHTML =
 '<div class="cr-nbid-box">' +
 '<h3>' + (editPr ? '\u270F\uFE0F Edit Estimate' : '\uD83D\uDEA9 New Estimate') + '</h3>' +
-'<p class="subline">Create a community bid opportunity. ' +
+'<p class="subline">Create a community estimate request. ' +
 'It\'ll appear as <b>Estimate Requested</b> on the Hub pipeline.</p>' +
 '<div class="rule"></div>' +
 '<label>Partner <span class="req">*</span></label>' +
@@ -38929,7 +38929,7 @@ var clientName = hoName
 ? hoName + ' \u2014 ' + partner.name
 : (address
 ? partner.name + ' \u2014 ' + address
-: partner.name + ' bid');
+: partner.name + ' estimate');
 if(editPr){
   var mergedLead = Object.assign({}, editLead, {
     claim_type      : 'community',
@@ -39020,7 +39020,7 @@ setTimeout(function(){ window.openProject(r.data.id); }, 80);
 setTimeout(function(){ window.CardinalCommunityHub.show(); }, 80);
 }
 }catch(e){
-crTell('Could not create bid: ' + (e.message || e));
+crTell('Could not create estimate: ' + (e.message || e));
 saveBtn.disabled = false;
 saveBtn.textContent = 'Save Estimate';
 }
@@ -39367,7 +39367,7 @@ desc:'Homeowner-paid work — roofs, siding, windows, gutters.' },
 { key:'insurance', icon:'\uD83D\uDEE1\uFE0F',  name:'Insurance',
 desc:'Storm and claim work — carrier, adjuster, ACV/RCV.' },
 { key:'community', icon:'\uD83C\uDFD8\uFE0F',  name:'Community',
-desc:'Non-profits (bidding) and property-manager portfolios.' },
+desc:'Non-profits and property-manager portfolios.' },
 { key:'unknown',   icon:'\u2753',              name:'Unassigned',
 desc:'Not yet classified.' },
 ];
@@ -44261,6 +44261,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1312, d:'2026-10-11', t:'Community says estimate, not bid',
+    s:'The Community screens called one thing two names: the stages and the list said Estimate, while the pipeline, the job page and the New Estimate form said bid. Now it is estimate everywhere \u2014 the pipeline\u2019s P reads Estimate Submitted, the job page says Open estimate, Build the estimate and Mark this estimate submitted, and the morning chip counts estimates past due. Nothing about the jobs themselves changed.' },
   { b: 1311, d: '2026-10-11', t: 'Community Estimates and Clients stop repeating the home',
     s: 'The Community home already shows the pipeline money, what is due soon, what is waiting on you and the partners, so the Estimates screen no longer repeats them: it opens straight on the full list of estimates, with its filter and sort. The Clients screen drops its By stage count for the same reason; By partner stays. The waitlist is still one tap away in the filter.' },
   { b: 1310, d: '2026-10-11', t: 'Client list buttons are big enough to tap',
@@ -54301,7 +54303,7 @@ lv.innerHTML =
 '<span class="ic">\uD83C\uDFD8\uFE0F</span>' +
 '<span class="tx">' +
 '<span class="tt">Community</span>' +
-'<span class="sb">Partners, non-profits, HOAs \u2014 bids and awards.</span>' +
+'<span class="sb">Partners, non-profits, HOAs \u2014 estimates and awards.</span>' +
 '<span class="n">' + c.community + ' client' + (c.community === 1 ? '' : 's') + '</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
@@ -63152,7 +63154,7 @@ return String(name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(
    you fold left Estimates — the 1303/1304 home shows all four. The Waitlist count is
    still a filter facet (CH_GROUPS). */
 doors = {};
-var mine1311 = (role === 'sales') ? '<div class="cc-mine">Your pipeline \u2014 your bids only</div>' : '';
+var mine1311 = (role === 'sales') ? '<div class="cc-mine">Your pipeline \u2014 your estimates only</div>' : '';
 
 /* The filter and sort apply to THIS table only. The Due-soon block and the
    Clients tab keep their own orders on purpose - a filter that silently
@@ -63184,8 +63186,8 @@ esc(LABEL[st] || st) + '</span></td>' +
 (role === 'prod' ? '' : '<td data-l="Amount" class="cc-money" style="text-align:right">' + (amt ? usd(amt) : '\u2014') + '</td>') +
 '<td data-l="Rep">' + repAv(pr.created_by) + '</td></tr>';
 }).join('') + '</tbody></table>'
-: '<div class="cc-empty">No bids match these filters.</div>')
-: '<div class="cc-empty">No bids yet.</div>';
+: '<div class="cc-empty">No estimates match these filters.</div>')
+: '<div class="cc-empty">No estimates yet.</div>';
 
 var bidsPane = '<div data-pane="bids" class="' + (pane === 'bids' ? 'on' : '') + '">' +
 mine1311 +
@@ -63296,7 +63298,7 @@ var overdueCount = d.due.filter(function(r){ return r.d != null && r.d < 0; }).l
 /* 1303: Retail's pipeline, read live from PIPE_BUCKETS so the two cannot drift,
    with Theo's two Community words. Each bucket is a 975 door onto All estimates. */
 var CC_PIPE_WORDS = {
-Prospect: { label:'BID SUBMITTED', short:'Bid Submitted', letter:'P', tip:'Bid is in \u2014 waiting on the partner' },
+Prospect: { label:'ESTIMATE SUBMITTED', short:'Estimate Submitted', letter:'P', tip:'Estimate is in \u2014 waiting on the partner' },
 OnHold:   { label:'WAITING', short:'Waiting', letter:'W', tip:'Waiting on a grant or funding decision' }
 };
 var ccBuckets = (window.PIPE_BUCKETS || []).map(function(b){
@@ -63946,10 +63948,10 @@ var OC_HORIZONS = [{ m:3, l:'3 mo' }, { m:6, l:'6 mo' }, { m:12, l:'1 yr' }, { m
    preselection, not a silent default - the segment is always on screen. */
 var OC_DEFAULT_MONTHS = 12;
 var OC_AUDIT = {
-awarded  : 'Bid awarded',
+awarded  : 'Estimate awarded',
 waiting  : 'Parked — waiting on funding',
 referred : 'Referred to another partner',
-lost     : 'Bid not awarded',
+lost     : 'Estimate not awarded',
 };
 function bidOf(pr){ return (ck(pr) || {}).bid || {}; }
 /* 977: a job we tarped for free and have not bid yet. Stage stays Lead — see
@@ -64072,7 +64074,7 @@ var l = lead(pr);
 var amt = priceOf(pr).amt;
 return '<div class="hd">' + esc(homeownerOf(pr) || pr.name || 'This job') + '</div>' +
 '<div class="sub">' + esc(pr.address || 'No address') +
-(amt ? ' · bid ' + usd(amt) : '') +
+(amt ? ' · estimate ' + usd(amt) : '') +
 (l.partner_name ? ' to ' + esc(l.partner_name) : '') + '</div>';
 }
 function ocTarp(){
@@ -64165,7 +64167,7 @@ return '<button type="button" data-oc="months" data-m="' + h.m + '" class="' +
 '" placeholder="optional"></div>' +
 '<div class="gap"><b>Stops the nagging.</b> ' +
 (l.bid_due_at
-? 'The bid deadline was ' + esc(fmtDay(l.bid_due_at)) + '. ' +
+? 'The estimate deadline was ' + esc(fmtDay(l.bid_due_at)) + '. ' +
 (dueIn != null && dueIn < 0
 ? 'Without this the job reads ' + Math.abs(dueIn) + 'd over and sorts as your most urgent forever. '
 : '')
@@ -64182,7 +64184,7 @@ ocPartnerField('Now with', 'referred_to', 'referred_id') +
 '<div class="f"><label>Check back</label>' +
 '<input type="date" data-oc="in" data-f="check_back_at" value="' + esc(oc.check_back_at) + '"></div>' +
 '</div>' +
-'<div class="gap">Every bid document, email and <b>Bill to</b> cell follows this. Without it the ' +
+'<div class="gap">Every estimate document, email and <b>Bill to</b> cell follows this. Without it the ' +
 'record still says <b>' + esc(l.partner_name || 'the old partner') + '</b> after the handoff.</div>';
 }else if(oc.kind === 'lost'){
 title = 'Step 2 · not awarded';
@@ -64455,7 +64457,7 @@ if(a === 'submitted'){
    setStage stamps stage_since + t_Prospect, so the hub's chase clock
    starts by itself. */
 var l710 = lead(pr);
-if(!await crAsk('Mark this bid SUBMITTED to ' + (l710.partner_name || 'the partner') + '?')) return;
+if(!await crAsk('Mark this estimate SUBMITTED to ' + (l710.partner_name || 'the partner') + '?')) return;
 var b710 = bidOf(pr), p971b = priceOf(pr);
 /* 971: was `e710 && e710.total` — a builder total only, so marking a hand-priced
    bid submitted recorded an empty amount. priceOf() is the one resolver. */
@@ -64539,7 +64541,7 @@ render();
 return;
 }
 if(a === 'won'){
-if(!await crAsk('Mark this bid AWARDED by ' + (lead(pr).partner_name || 'the partner') + '?')) return;
+if(!await crAsk('Mark this estimate AWARDED by ' + (lead(pr).partner_name || 'the partner') + '?')) return;
 await window.setStage(pr.id, 'Approved');
 }else if(a === 'lost'){
 await window.setStage(pr.id, 'Lost');
@@ -64592,10 +64594,10 @@ var wd977 = waitDays(pr);
 var tarp977 = l.tarped_at;
 out.push({ now:true, title:'On the waitlist', when:'now',
 txt:(tarp977 ? 'Tarped free on ' + fmtDay(tarp977) + '. ' : 'Tarped free. ') +
-'No bid yet' +
+'No estimate yet' +
 (wd977 == null ? '.' : wd977 === 0 ? ' \u2014 added today.'
 : ' \u2014 waiting ' + wd977 + ' day' + (wd977 === 1 ? '' : 's') + '.'),
-acts:[{ label:'Start the bid', how:'estimate' },
+acts:[{ label:'Start the estimate', how:'estimate' },
 { label:'Off the waitlist', how:'unwait', alt:true }] });
 }else{
 var due971 = due == null ? ''
@@ -64613,14 +64615,14 @@ out.push({ now:true, title:'Estimate ready to submit', when:'now',
 txt:'Priced at ' + usd(p971.amt) +
 (p971.src === 'builder'
 ? ' across ' + p971.lines + ' line items.'
-: ' on the bid form \u2014 not in the estimate builder.') + due971,
+: ' on the New Estimate form \u2014 not in the estimate builder.') + due971,
 acts:[{ label:'Mark it submitted', how:'submitted' },
 (p971.src === 'builder'
-? { label:'Open the bid', how:'open', alt:true }
+? { label:'Open the estimate', how:'open', alt:true }
 : { label:'Price it in the builder', how:'estimate', alt:true })] });
 }else{
 out.push({ now:true, title:'Estimate needs pricing', when:'now',
-txt:'Invited to bid.' + due971 + ' Nothing priced yet.',
+txt:'Asked for an estimate.' + due971 + ' Nothing priced yet.',
 acts:[{ label:'Price it', how:'estimate' },
 { label:'Log a submitted amount', how:'logsub', alt:true },
 /* 977: the way ON to the waitlist, offered only where it makes sense — an
@@ -64687,7 +64689,7 @@ out.push({ title:(LABEL['Lost'] || 'Not Awarded'),
 when: ago(c972.lost_at || c972.t_Lost || c972.stage_since || pr.created_at),
 /* defensive only: community deliberately records no loss reason (setStage skips
    LOSS_REASONS for community), and loss_reason is empty database-wide. Never prompt. */
-txt:'This bid did not come our way.' + (c972.loss_reason ? ' ' + c972.loss_reason : '') });
+txt:'This estimate did not come our way.' + (c972.loss_reason ? ' ' + c972.loss_reason : '') });
 }
 events.forEach(function(e){
 out.push({
@@ -64748,12 +64750,12 @@ if(!est){
 return '<div class="sheet"><div class="nobid">' +
 (pq.amt > 0
 ? '<p><b>' + usd(pq.amt) + '</b> \u2014 ' + commBidSource(pq.src) + '.<br>' +
-'This came off the bid form, not the estimate builder, so there are no ' +
+'This came off the New Estimate form, not the estimate builder, so there are no ' +
 'line items behind it.</p>' +
 '<button data-act="newbid" type="button">Price it in the builder</button>'
 : '<p>No estimate priced yet.<br>Estimates use the estimate builder \u2014 same ' +
 'line-item catalog as everything else, so your numbers stay consistent.</p>' +
-'<button data-act="newbid" type="button">Build the bid</button>') +
+'<button data-act="newbid" type="button">Build the estimate</button>') +
 '</div>' + rec + '</div>';
 }
 var items = est.line_items || [];
@@ -64818,11 +64820,11 @@ rec +
 '<span class="d">' + (due == null ? '\u2013' : due + 'd') + '</span>' +
 '<span class="x">' + (due == null ? 'No due date set.' :
 'Due to the partner.') + '<br>Not yet submitted.</span>' +
-'<button data-act="open" type="button">Open bid</button>' +
+'<button data-act="open" type="button">Open estimate</button>' +
 '</div>'
 : '<div class="duebar"><span class="x">' +
 esc(LABEL[normStage(pr.stage)] || pr.stage) +
-'</span><button data-act="open" type="button">Open bid</button></div>') +
+'</span><button data-act="open" type="button">Open estimate</button></div>') +
 '</div>';
 }
 function contactsHtml(pr, noBill){
@@ -64912,7 +64914,7 @@ if(pillEl && pillEl.isConnected) return;
 pillEl = document.createElement('button');
 pillEl.id = 'cr-cc-return';
 pillEl.type = 'button';
-pillEl.textContent = '\u2039 Back to bid view';
+pillEl.textContent = '\u2039 Back to estimate view';
 pillEl.onclick = resumeFromTab;
 document.body.appendChild(pillEl);
 }
@@ -89048,7 +89050,7 @@ window.renderMorningStrip = function(){
   if(c.date)  html += chip('warn', c.date,  'need a build date', 'date');
   if(c.punch) html += chip('hot',  c.punch, 'urgent punch-outs', 'punch');
   if(c.chase) html += chip('hot',  c.chase, 'carriers to chase', 'chase');
-  if(c.bids)  html += chip('hot',  c.bids,  c.bids === 1 ? 'bid past due' : 'bids past due', 'bids');
+  if(c.bids)  html += chip('hot',  c.bids,  c.bids === 1 ? 'estimate past due' : 'estimates past due', 'bids');
   if(c.today) html += chip('',     c.today, c.today === 1 ? 'thing today' : 'things today', 'today');
   host.innerHTML = '<div class="mrow">' + html + '</div>';
   host.style.display = 'block';
@@ -93423,7 +93425,7 @@ function render(){
       line([c && c.chase ? '<span class="hot">' + c.chase + (c.chase === 1 ? ' carrier to chase' : ' carriers to chase') + '</span>' : '',
             bk ? bk.insurance + ' claim' + (bk.insurance === 1 ? '' : 's') : '']) || 'Storm and claim work') +
     rowHtml('community', '#3faa6d', 'Community',
-      line([c && c.bids ? '<span class="hot">' + c.bids + (c.bids === 1 ? ' bid past due' : ' bids past due') + '</span>' : '',
+      line([c && c.bids ? '<span class="hot">' + c.bids + (c.bids === 1 ? ' estimate past due' : ' estimates past due') + '</span>' : '',
             bk ? bk.communityOpen + ' open' : '']) || 'Partners, non-profits, HOAs') +
     '<div class="fd-div"></div>' +
     rowHtml('production', '#e0762a', 'Production',

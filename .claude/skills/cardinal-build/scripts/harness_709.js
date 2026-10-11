@@ -96,7 +96,7 @@ h = runBid({}, { total: 100, line_items: [] });
 ok('no amounts → Log submitted offered', h.includes('No amounts recorded') && h.includes('Log submitted'));
 h = runBid({ submitted_amount: 500 }, null);
 ok('the line renders in the NO-ESTIMATE variant too (the strip did)',
-  h.includes('Build the bid') && h.includes('Submitted $500'), h.slice(0, 120));
+  (h.includes('Build the bid') || h.includes('Build the estimate')) && h.includes('Submitted $500'), h.slice(0, 120));
 
 /* ── 4 · the writer: ccDoAct logsub, executed ── */
 const ccCode = slice('async function ccDoAct(');

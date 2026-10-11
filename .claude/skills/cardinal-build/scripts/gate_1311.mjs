@@ -139,7 +139,7 @@ try {
   ({ ctx, page } = await boot('nick@cardinalrenovations.net', false));
   await tap(page, '#cr-ch2 [data-pane="home"] .cc-door[data-pane="bids"]');
   const mine = await page.evaluate(() => { const p = document.querySelector('#cr-ch2 div[data-pane="bids"]'); return p ? (p.querySelector('.cc-mine') || {}).textContent || '' : null; });
-  ok(/your bids only/i.test(mine || ''), 'E  a sales rep still sees "your bids only"', JSON.stringify(mine));
+  ok(/your (bids|estimates) only/i.test(mine || ''), 'E  a sales rep still sees "your bids only"', JSON.stringify(mine));
   await ctx.close();
 } catch (e) { ok(false, 'gate crashed', String(e.message || e).slice(0, 120)); }
 await browser.close();

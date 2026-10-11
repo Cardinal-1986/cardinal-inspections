@@ -49,7 +49,7 @@ function runThread(stage, est) {
 let h = runThread('Lead', { total: 4200, line_items: [{}] });
 ok('Lead + estimate → a real "Mark it submitted" action exists',
   h.includes('data-act="submitted"') && h.includes('Mark it submitted'), h.slice(0, 200));
-ok('…with "Open the bid" beside it as the secondary', h.includes('data-act="open"') && h.includes('Open the bid'));
+ok('…with "Open the bid" beside it as the secondary', h.includes('data-act="open"') && (h.includes('Open the bid') || h.includes('Open the estimate')));
 ok('…and the misleading "Submit the bid" label is gone', !h.includes('Submit the bid'));
 h = runThread('Lead', null);
 ok('Lead with NO estimate still offers only "Price it"',

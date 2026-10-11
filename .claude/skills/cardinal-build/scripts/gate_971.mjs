@@ -180,7 +180,7 @@ const hasSubmit = v => /Mark it submitted/.test(txt(v));
 
 need('1 a hand-typed price offers "Mark it submitted"', hasSubmit(R.typed),
      cases && cases.err ? ('threw: '+cases.err) : ('got: ' + txt(R.typed).slice(0,180)));
-need('2 ...and says the price came off the bid form', /bid form/i.test(txt(R.typed)),
+need('2 ...and says the price came off the bid form', /bid form|New Estimate form/i.test(txt(R.typed)),
      txt(R.typed).slice(0,180));
 need('3 a $0.00 draft estimate does NOT count as priced',
      !hasSubmit(R.zeroDraft) && /needs pricing|Price it/i.test(txt(R.zeroDraft)),

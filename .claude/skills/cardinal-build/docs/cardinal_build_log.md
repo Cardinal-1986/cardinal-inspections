@@ -35956,3 +35956,11 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
     - the boxes reset when the form reopens.
     - **RED on 1252.**
   - **Also green:** types (after typing three DOM reads), dupes, stack, 1243.
+
+## Build 1312: Community says "estimate", never "bid" (Theo: "Let's keep it estimate and no bid")
+- **Why:** the stages and the list said Estimate (CC_STAGE_LABEL, 1301; "All estimates"), while the pipeline's P, the job page, the New Estimate form, the partner editor and the morning chip said bid. One thing, two names — Theo: "that's why I've been confused since the first day."
+- **What:** 30 literal edits across cr-ch2, cr-cc, cr-nbid, cr-cpartners, cr-morning, cr-fd, cr-lr and cr-cct. "on the bid form" became "on the New Estimate form", which is what that form is titled. "Invited to bid." became "Asked for an estimate." The CRM picker's "Non-profits (bidding)" lost the parenthesis rather than gaining a worse one.
+- **Kept:** internal keys — `data-pane="bids"`, `data-act="newbid"`, `checklist.bid`, `bidAmt`, `source:'community-bid'`, `c.bids`. Sales Floor's competitor-bid copy (retail).
+- **Gates:** `gate_1312.mjs` GREEN 6/6; control (1311) RED 3/6. Its static half (`gate_1312_static.py`) lexes 2,650 string literals and finds 0 (28 on 1311). Its first run went red on the seed client "Bid Bea" — the fixture, not the app. Ported to accept the new words: `gate_1303` B, `gate_1311` E, `gate_971` 2, `render_fd1164`, `harness_709`, `harness_710`. Standing gates green: check_build, types, dupes, a11y, 1206, stack, scroll-lock (17), 944, harnesses; Community gates 971/972/975/977/1264/1303/1311 green.
+- ⚠ **`harness_709.js` and `harness_710.js` crash with `ReferenceError: priceOf is not defined` on 1311 too** — old debt, not this build, and neither is in `gate_harnesses`' list.
+
