@@ -4152,7 +4152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1293<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1294<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44122,6 +44122,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1294, d: '2026-10-10', t: 'Time on job',
+    s: 'A punch-out now adds up the time on site. The card lists every visit, with the day, who, when they checked in and out and how long, and a total underneath. Each row on the Punch List shows the total too, or the time so far while someone is there. It comes from the check-in and check-out the crew already does, so there is nothing new to type. A check-in from an earlier day that was never checked out is not counted.' },
   { b: 1293, d: '2026-10-10', t: 'Communication fits on a small phone',
     s: 'With Larger text turned on, a small phone showed the Job Menu tile as Communicatio / n. The tile is a little tighter there now, so every word stays whole. The Line Items buttons also get the same rounded corners as every other button.' },
   { b: 1292, d: '2026-10-10', t: 'One red button per screen',
@@ -57546,6 +57548,11 @@ window.CardinalProduction = {
 #cr-pk .pkvstale{ color:#f0a24a; }
 #cr-pk .pkvwas{ color:var(--pk-ink,#eceef0); }
 #cr-pk .pkvnone{ color:var(--pk-dim,#9aa2ae); }
+/* 1294: the visit log. Inks ride the card's own tokens, which flip with the theme. */
+#cr-pk .pkvlog{ margin:6px 0 2px; padding:4px 2px; }
+#cr-pk .pkvl{ display:flex; justify-content:space-between; gap:10px; padding:5px 0; font:400 13px 'Segoe UI',Arial,sans-serif;
+  color:var(--pk-dim,#9aa2ae); border-bottom:1px solid var(--pk-line,#252a30); font-variant-numeric:tabular-nums; }
+#cr-pk .pkvtot{ padding-top:7px; font:700 13px 'Segoe UI',Arial,sans-serif; color:var(--pk-ink,#eceef0); }
 #cr-pk .pkvb{ min-height:44px; padding:0 18px; border-radius:10px; cursor:pointer;
   font:800 13px 'Segoe UI',Arial,sans-serif; border:1px solid transparent; }
 #cr-pk .pkvb.in{ background:var(--pk-accd,#c8202e); color:#fff; }
@@ -57773,6 +57780,29 @@ function visitDayLabel(k){
   return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
 }
 
+/* 1294: time on job. ONE rule for the card and the Punch List
+   (window.CardinalPunchTime, read by cr-punch-script). A visit counts out−in;
+   an open visit counts only if it opened TODAY (now−in, "so far"); an open
+   visit from an earlier day is a forgotten check-out and counts nothing. */
+function pkLocalDay(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function pkTimeSum(list, now){
+  var v = Array.isArray(list) ? list : [], ms = 0, n = 0, live = 0, stale = false;
+  var t = now ? new Date(now) : new Date(), today = pkLocalDay(t);
+  for(var i = 0; i < v.length; i++){
+    var x = v[i]; if(!x || !x.in) continue;
+    var a = Date.parse(x.in); if(isNaN(a)) continue;
+    if(x.out){ var b = Date.parse(x.out); if(!isNaN(b) && b > a){ ms += b - a; n++; } continue; }
+    if(x.day === today && t.getTime() > a){ live = t.getTime() - a; ms += live; n++; } else stale = true;
+  }
+  return { ms:ms, visits:n, live:live, stale:stale };
+}
+function pkDur(ms){
+  var m = Math.round((+ms || 0) / 60000); if(m < 1) return '0m';
+  var h = Math.floor(m / 60); m = m % 60;
+  return h ? h + 'h ' + ('0' + m).slice(-2) + 'm' : m + 'm';
+}
+window.CardinalPunchTime = Object.assign(window.CardinalPunchTime || {}, { sum: pkTimeSum, fmt: pkDur });
+
 function checkIn(){
   if(openVisit()) return;                       /* already on site — no double */
   var now = new Date();
@@ -57846,7 +57876,23 @@ function visitHtml(){
     : (n
         ? '<span class="pkvwas">' + n + (n === 1 ? ' day' : ' days') + ' on site</span>'
         : '<span class="pkvnone">Not checked in</span>');
-  return '<div class="pkvis">' + line + right + '</div>';
+  return '<div class="pkvis">' + line + right + '</div>' + visitLogHtml();
+}
+/* 1294: each visit and the total. Shown once there is at least one visit. */
+function visitLogHtml(){
+  var v = visits(); if(!v.length) return '';
+  var now = new Date(), today = dayKey(now), rows = '';
+  for(var i = 0; i < v.length; i++){
+    var x = v[i]; if(!x || !x.in) continue;
+    var a = Date.parse(x.in), b = x.out ? Date.parse(x.out) : NaN, len;
+    if(x.out) len = (!isNaN(a) && !isNaN(b) && b > a) ? pkDur(b - a) : '';
+    else len = (x.day === today) ? pkDur(now.getTime() - a) + ' so far' : 'not checked out';
+    rows += '<div class="pkvl"><span>' + esc(visitDayLabel(x.day)) + (x.name ? ' · ' + esc(x.name) : '') + '</span>' +
+      '<span>' + esc(visitClock(x.in)) + (x.out ? ' – ' + esc(visitClock(x.out)) : '') + (len ? ' · ' + esc(len) : '') + '</span></div>';
+  }
+  var s = pkTimeSum(v, now);
+  return '<div class="pkvlog" data-cr-1294>' + rows +
+    '<div class="pkvtot">Total ' + esc(pkDur(s.ms)) + ' · ' + s.visits + (s.visits === 1 ? ' visit' : ' visits') + '</div></div>';
 }
 function stepsDone(){ return steps().filter(function(s){ return s && s.d; }).length; }
 function readyToClose(){
@@ -69237,6 +69283,13 @@ function plOrder(a, b){
     String(a.scheduled_time || '').localeCompare(String(b.scheduled_time || '')) ||
     String(a.created_at || '').localeCompare(String(b.created_at || ''));
 }
+/* 1294: time on site, from the card's ONE rule (window.CardinalPunchTime). */
+function plOnSite(it){
+  var T = window.CardinalPunchTime; if(!T || !T.sum) return '';
+  var s = T.sum(it && it.visits);
+  if(!s.ms) return '';
+  return s.live ? T.fmt(s.live) + ' so far' + (s.ms > s.live ? ' · ' + T.fmt(s.ms) + ' total' : '') : T.fmt(s.ms) + ' on site';
+}
 function plRow(it){
   var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it);
   var urg = isUrgent(it), age = ageDays(it.created_at);
@@ -69255,7 +69308,7 @@ function plRow(it){
       '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
     '<span class="pl-pb">' + (ping ? esc('\u201C' + (it.ping_note || '') + '\u201D \u2014 ' + plName(it.ping_by)) : esc(it.title || 'Untitled item')) + '</span>' +
     '<span class="pl-age">' + (age != null ? age + 'd' : '') + '</span>' +
-    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + esc(w.sub || '') + '</small></span>' +
+    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + esc([w.sub, plOnSite(it)].filter(Boolean).join(' \u00b7 ')) + '</small></span>' +
     '<span class="pl-cr">' + (who ? '<span class="pl-av">' + esc(plName(who).slice(0, 2).toUpperCase()) + '</span><span class="pl-nm">' + esc(plName(who)) + '</span>'
                               : '<span class="pl-nm">No one</span>') + '</span>' +
   '</div>';

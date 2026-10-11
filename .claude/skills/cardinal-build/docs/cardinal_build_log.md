@@ -34333,6 +34333,21 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1294: time on job (Theo's pick 2B, 10 Oct)
+
+The crew's check-in and check-out has been on every punch-out since 940 (`punch_items.visits`), but nothing added it up. Now:
+- **The card** lists each visit (day, who, in–out, length) under the check-in strip, with a total.
+- **The Punch List row** shows the total on its when-line ("5h 20m on site"), or "Xm so far" while someone is there.
+
+**One helper.** `window.CardinalPunchTime` lives in `cr-pk-script` and `cr-punch-script` reads it: two modules, one rule.
+
+**The counting rule.** A closed visit counts out−in. An open visit counts only if it opened today ("so far"). An open visit from an earlier day is a forgotten check-out and counts nothing; otherwise one missed tap would make a 20-hour job. No SQL, and nothing new to type.
+
+**Gates.**
+- `gate_1294` has 5 checks: the arithmetic including the forgotten check-out, the card log, the rows, and readability in both themes (dark 5.7:1, light 4.79:1). The control against 1293 is red on all 5.
+- Its seed is `gate_1294_seed.js`: the sentinel seed plus two closed visits on i4.
+- **Pre-existing reds, identical on the 1293 tree:** `gate_1254` (8, likely date-dependent seed), `gate_948`, `gate_976` and `gate_979`. Not touched.
+
 ## Build 1293: Communication fits at 360px Larger text; old reds cleared
 
 - **The real fix.** At 360px with Larger text (zoom 1.15), "Communication" split as "Communicatio / n". `gate_1224` had been red since 1287, because the app's single sans font is wider than the old face. Largest already had a narrow-phone rule (1224); Larger had none. It now gets the same tighter tile below 400px: 6px side padding, 4px gap, 13px label, which is on the Type 1 scale (12px fit too but is off the scale). `gate_1224` is 54/54 and its control is red on 2.

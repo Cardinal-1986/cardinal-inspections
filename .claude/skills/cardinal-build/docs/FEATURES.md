@@ -9741,6 +9741,10 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1294: time on job
+
+The punch-out card lists every visit (day, who, in–out, length) and a total. Punch List rows show the total, or the time so far while someone is on site. It comes from the existing check-in/out and needs no SQL. Helper: `window.CardinalPunchTime`. Gate: `gate_1294`.
+
 ## Build 1293: Communication fits on a small phone
 
 At 360px with Larger text, the Job Menu tile is tighter, so "Communication" stays one word. The Line Items buttons are back on the shared 12px corner. Gate: `gate_1224`.
