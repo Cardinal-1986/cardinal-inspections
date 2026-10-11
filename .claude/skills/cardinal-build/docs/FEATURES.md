@@ -9741,6 +9741,9 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1304: Community home — Next 30 Days and Partner A/R
+`.cc-ops` holds `.cc-cal30` (appointments on Community jobs, 30-day grid → Schedule Board) and `.cc-ar` (owed on Invoiced Community jobs by paying partner, Habitat first, over-30 count → door onto Invoiced; hidden for Production). Owed = `jobFinance().balance` when it has a value, else the bid. **Gate:** `gate_1304.mjs`.
+
 ## Build 1303: the Community home pipeline and the Tarp Only tile
 The Community home (`cr-ch2`, pane `home`) opens on Retail's pipeline: `window.PIPE_BUCKETS` read live, with `CC_PIPE_WORDS` overriding Prospect → "Bid Submitted" and OnHold → "Waiting" (sphere "W"). Each `.pipebtn[data-ccpipe]` is a 975 door (`doors['pipe:KEY']`) onto All estimates; Approved includes Scheduled. Below it, `.cc-tarponly` counts jobs with Work Type "Tarp Only" (`wtOf()`, either field) and opens Clients via the `wtype` facet in `CH_GROUPS`. On a phone it is a 4 + 3 grid, and 7 across from 700px. Production sees no dollars. **Gate:** `gate_1303.mjs`.
 

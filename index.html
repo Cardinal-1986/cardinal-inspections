@@ -4152,7 +4152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1303<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1304<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44249,6 +44249,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1304, d: '2026-10-11', t: 'Community home: the next 30 days and what partners owe',
+    s: 'Under the Community pipeline are the two cards from the Retail home. Next 30 Days shows the appointments booked on Community jobs and opens the Schedule Board. Partner A/R shows what is still owed on invoiced Community jobs, by the partner who pays, Habitat first, with how many are over 30 days; a tap opens those invoices. Production does not see the money card.' },
   { b: 1303, d: '2026-10-11', t: 'Community opens on the pipeline, with Tarp Only beside it',
     s: 'The Community home now starts with the same pipeline as Retail \u2014 L, Bid Submitted, A, C, I, Closed, Waiting \u2014 with the count and dollars in each, and a tap opens those jobs. Under it, a Tarp Only tile counts every job marked Tarp Only at any stage. What is waiting on you and the Clients, Estimates and Partners doors follow, as before.' },
   { b: 1302, d: '2026-10-11', t: 'Tarp Only is a work type',
@@ -62314,6 +62316,27 @@ box-shadow:var(--ccm-sh-xs)}
 #cr-ch2 .cc-tarponly span{font:700 15px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
 #cr-ch2 .cc-tarponly small{margin-left:auto;font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86)}
 #cr-ch2 .cc-tarponly:focus-visible{outline:2px solid var(--ccm-ac,#34D399);outline-offset:2px}
+
+/* ── 1304: Next 30 Days and Partner A/R, side by side; stacked on a phone ── */
+#cr-ch2 .cc-ops{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px;align-items:stretch}
+@media (max-width:640px){#cr-ch2 .cc-ops{grid-template-columns:1fr}}
+#cr-ch2 .cc-cal30,#cr-ch2 .cc-ar{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;color:inherit;
+  background:var(--ccm-card,#161918);border:1px solid var(--ccm-line,#2a2f2c);border-radius:11px;
+  padding:10px 12px;min-height:44px;cursor:pointer;font:inherit}
+#cr-ch2 .cc-ar.is-zero{cursor:default}
+#cr-ch2 .cc-cal30:focus-visible,#cr-ch2 .cc-ar:focus-visible{outline:2px solid var(--ccm-ac,#34D399);outline-offset:2px}
+#cr-ch2 .cc-pipek small{font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86);margin-left:6px}
+#cr-ch2 .cc-calg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+#cr-ch2 .cc-calg i{font:600 11px 'Segoe UI',Arial,sans-serif;font-style:normal;color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-calg span{font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3);padding:4px 0;border-radius:6px}
+#cr-ch2 .cc-calg span.t{background:var(--ccm-ac,#34D399);color:#06281b}
+#cr-ch2 .cc-calg span.j{box-shadow:inset 0 -3px 0 var(--ccm-ac,#34D399)}
+#cr-ch2 .cc-caln,#cr-ch2 .cc-arrow,#cr-ch2 .cc-arold{font:400 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-arbig{font:800 22px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-arold{color:#ff9a9a;font-weight:700}
+:root[data-theme="rb-light"] #cr-ch2 .cc-arold{color:#8f1620}
+:root[data-theme="rb-light"] #cr-ch2 .cc-calg span.t{background:#047857;color:#fff}
+:root[data-theme="rb-light"] #cr-ch2 .cc-calg span.j{box-shadow:inset 0 -3px 0 #047857}
 </style>
 <script id="cr-ch2-script">
 
@@ -62959,7 +62982,10 @@ var d = compute();
 return [pane, query, closedStamp, metaStamp, chStamp, chActiveCount(), roleOf(),
 d.out, d.owed, d.parked, d.win, d.due.length, d.chase.length,
 d.sched.length, d.inv.length, d.all.length,
-(window.cacheProjects || []).length].join('|');
+(window.cacheProjects || []).length,
+/* 1304: the pipeline, the Tarp Only tile and the calendar read these */
+(window.cacheAppts || []).length,
+d.all.map(function(pr){ return normStage(pr.stage) + (wtOf(pr) === 'Tarp Only' ? 't' : ''); }).join(',')].join('|');
 }
 function mountMissing(){
 var v = document.getElementById('communityHubView');
@@ -63369,9 +63395,66 @@ var pipeCard = ccBuckets.length
     : '<div class="cc-tarponly is-zero"><b>0</b><span>Tarp Only</span><small>none right now</small></div>')
 : '';
 
+/* 1304: Next 30 Days — Retail's 30-day grid, counting appointments on Community jobs. */
+var ccIds = {}; d.all.forEach(function(pr){ ccIds[pr.id] = 1; });
+var ccByDay = {}, ccBooked = 0;
+(window.cacheAppts || []).forEach(function(a){
+if(a && a.appt_date && ccIds[a.project_id]) ccByDay[a.appt_date] = (ccByDay[a.appt_date] || 0) + 1;
+});
+var c0 = new Date(); c0.setHours(0,0,0,0);
+var calG = ['S','M','T','W','T','F','S'].map(function(x){ return '<i>' + x + '</i>'; }).join('');
+var ci, cLast = c0;
+for(ci = 0; ci < c0.getDay(); ci++) calG += '<span></span>';
+for(ci = 0; ci < 30; ci++){
+var cd = new Date(c0.getFullYear(), c0.getMonth(), c0.getDate() + ci);
+var ckey = cd.getFullYear() + '-' + String(cd.getMonth()+1).padStart(2,'0') + '-' + String(cd.getDate()).padStart(2,'0');
+var cn = ccByDay[ckey] || 0; ccBooked += cn;
+calG += '<span class="' + (ci === 0 ? 't' : '') + (cn ? ' j' : '') + '"' + (cn ? ' title="' + cn + ' booked"' : '') + '>' + cd.getDate() + '</span>';
+cLast = cd;
+}
+var cMo = function(x){ return x.toLocaleDateString('en-US', { month:'short', day:'numeric' }); };
+var calCard = '<button type="button" class="cc-cal30" data-go="calendar" aria-label="Next 30 Days \u2014 open the Schedule Board">' +
+'<span class="cc-pipek">Next 30 Days <small>' + ccBooked + ' booked</small></span>' +
+'<span class="cc-calg">' + calG + '</span>' +
+'<span class="cc-caln">' + cMo(c0) + ' \u2013 ' + cMo(cLast) + ' \u00b7 tap for the Schedule Board</span></button>';
+
+/* 1304: Partner A/R — owed on Invoiced Community jobs, by the partner who pays. */
+var arCard = '';
+if(role !== 'prod'){
+var arBy = {}, arTot = 0, arN = 0, arOld = 0;
+d.all.forEach(function(pr){
+if(normStage(pr.stage) !== 'Invoiced') return;
+var owe = 0;
+/* jobFinance is the number when a contract or estimate carries one; a Community
+   job priced only by its bid (the usual shape) owes its bid. */
+try{ var jf = (typeof window.jobFinance === 'function') ? window.jobFinance(pr) : null;
+owe = (jf && jf.value > 0) ? (jf.balance || 0) : (bidAmt(pr) || 0); }catch(_1304){ owe = bidAmt(pr) || 0; }
+if(!(owe > 0)) return;
+var c = ck(pr) || {}, invAt = c.t_Invoiced || c.stage_since;
+if(invAt && (Date.now() - new Date(invAt).getTime()) > 30 * 86400000) arOld++;
+var pn = partnerOf(pr);
+arBy[pn] = (arBy[pn] || 0) + owe; arTot += owe; arN++;
+});
+var arNames = Object.keys(arBy).sort(function(a, b){
+var ha = /habitat/i.test(a), hb = /habitat/i.test(b);
+if(ha !== hb) return ha ? -1 : 1;
+return arBy[b] - arBy[a];
+});
+doors['ar'] = { sets:{ stage: stageLabels(['Invoiced']) }, pane:'bids', fold:'allbids' };
+arCard = (arN ? '<button type="button" class="cc-ar" data-ccar="1">' : '<div class="cc-ar is-zero">') +
+'<span class="cc-pipek">Partner A/R <small>' + arN + ' invoice' + (arN === 1 ? '' : 's') + '</small></span>' +
+'<b class="cc-arbig">' + usd(arTot) + '</b>' +
+(arN
+? arNames.slice(0, 3).map(function(n){ return '<span class="cc-arrow">' + pName(n) + ' \u00b7 ' + usd(arBy[n]) + '</span>'; }).join('') +
+  (arOld ? '<span class="cc-arold">' + arOld + ' over 30 days</span>' : '')
+: '<span class="cc-arrow">nothing outstanding</span>') +
+(arN ? '</button>' : '</div>');
+}
+var opsRow = '<div class="cc-ops">' + calCard + arCard + '</div>';
+
 var homePane = '<div data-pane="home" class="' + (pane === 'home' ? 'on' : '') + '">' +
 '<div class="cc-srch"><input type="search" id="cr-ch2-search" placeholder="Name, address, partner, work type\u2026" value="' + esc(query) + '"></div>' +
-pipeCard +
+pipeCard + opsRow +
 '<div class="cc-atop"><b>' + attnCount + '</b><span>waiting on you</span>' +
 (overdueCount ? '<span class="cc-aover">' + overdueCount + ' overdue</span>' : '') + '</div>' +
 '<div class="cc-acard">' + (attnBody || '<div class="cc-empty">Nothing waiting on you.</div>') + '</div>' +
@@ -63536,6 +63619,10 @@ el.onclick = function(){ applyDoor(doors['pipe:' + el.getAttribute('data-ccpipe'
 });
 host.querySelectorAll('[data-cctarp]').forEach(function(el){
 el.onclick = function(){ applyDoor(doors['tarponly']); };
+});
+/* 1304: the Partner A/R card */
+host.querySelectorAll('[data-ccar]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['ar']); };
 });
 host.querySelectorAll('[data-tally]').forEach(function(el){
 el.onclick = function(){

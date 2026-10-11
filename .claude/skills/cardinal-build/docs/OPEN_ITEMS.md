@@ -6295,7 +6295,7 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 - [ ] New Lead intake with the real partner list.
 - [x] 1302: "Tarp Only" is a Work Type (Theo: "not a stage just standalone").
 - [x] 1303: the Community home opens on Retail's pipeline (P = Bid Submitted, On Hold = Waiting, Theo's pick 1) with a Tarp Only tile; layout A.
-- [ ] 1304: the Next 30 Days calendar and Partner A/R on the Community home.
+- [x] 1304: the Next 30 Days calendar and Partner A/R on the Community home — layout A complete.
 - [ ] Retire the old Community screens once the above are in.
 
 ## Guided inspection report — layer of 8 Oct 2026 (Theo, preview `JqX8AZTJGqCUARyPh2oAHt`)
