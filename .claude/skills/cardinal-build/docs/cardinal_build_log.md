@@ -34333,6 +34333,16 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1303: the Community home opens on Retail's pipeline, with a Tarp Only tile (Theo: "1 and A")
+- **What:** Theo asked for the pipeline "same as retail but add bid submitted or waiting and tarp only", then said Tarp Only "is not a stage just standalone". He picked option 1 (P reads **Bid Submitted**, On Hold reads **Waiting**, no new stage) and home layout A (pipeline first). The pipeline reads `window.PIPE_BUCKETS` live and overrides only those two words, so Retail and Community cannot drift. Each bucket is a 975 door onto All estimates (A = Approved + Scheduled, as on Retail). Production gets counts and no dollars.
+- **Tarp Only** is a tile under the pipeline that counts jobs whose Work Type (1302) is Tarp Only, at any stage. Tapping it opens Clients through a new `wtype` facet in `CH_GROUPS`, so there is no second filter. `wtOf()` reads both spellings (flat `work_type`, written by the job card, and `lead.work_type`).
+- **Caught by the screenshot, not the gates:** seven buckets in a row scrolled sideways on a phone, and the Retail dark skin clipped "BID SUBMI…" in uppercase. Now a 4 + 3 grid on a phone and 7 across from 700px. The labels wrap, use no uppercase, and the sphere for Bid Submitted keeps "P". In dark, the cells are Retail's carved navy strip, because the hub body is not `.claim-community`. That is Retail's look, as asked.
+- **`gate_1303` (12):** order, words, counts, real taps on Bid Submitted and Tarp Only (exact rows), Production without dollars, and contrast ≥4.5:1 on all 25 new text pieces in both themes (min 5.1). The contrast check was proven able to fail: poisoning `.pmoney` to `#2a2a2a` makes it red. RED on 1302 (11 of 12). Also green: 1179, 754–759, 802–804, 953, 973–980, check_build, stack, types, dupes, 1206, a11y, scroll-lock.
+- **Not in this build:** the Next 30 Days calendar and Partner A/R (1304).
+
+## Build 1302: "Tarp Only" is a Work Type
+- Added beside New, Repair and Warranty in all five places the list is offered: the job card dropdown, `CC2_WT` (the Community job page), the Retail project form, the lead form, and the Community New Estimate form. `STAGES` and `normStage()` are untouched, so a job can never be misread as a Lead. **`gate_1302` (6):** RED on 1301.
+
 ## Build 1301: Community's stage names live in one place (Community revamp row 2)
 
 - **Four identical copies** of the Community stage map: the Client Directory's `CD_STAGE_LABEL.community`, cr-comstage's `COM_LABEL`, and the two byte-identical `var LABEL` maps (CLAUDE.md's LABEL trap). 710 had already found one missing `OnHold`. Measured identical before the change, so **no wording moved**.

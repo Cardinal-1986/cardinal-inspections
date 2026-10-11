@@ -4152,7 +4152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1301<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1303<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8295,7 +8295,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </select></label>
     <label>Work type<select id="pfWorkType">
       <option value="">— not set —</option><option>Inspection</option><option>Insurance</option><option>New</option>
-      <option>Repair</option><option>Retail</option><option>Service</option><option>Warranty</option>
+      <option>Repair</option><option>Retail</option><option>Service</option><option>Tarp Only</option><option>Warranty</option>
     </select></label>
     <label style="margin-bottom:2px;">Trades</label>
     <div class="tradegrid" id="pfTrades">
@@ -8559,7 +8559,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <label>Work Type
             <select id="ldWorkType"><option value="">&#8212; select &#8212;</option>
               <option>Inspection</option><option>Insurance</option><option>New</option><option>Repair</option>
-              <option>Retail</option><option>Service</option><option>Warranty</option></select></label>
+              <option>Retail</option><option>Service</option><option>Tarp Only</option><option>Warranty</option></select></label>
         </div>
         <!-- 1253: trades at intake — the same six, saved to checklist.trades like the Edit form -->
         <div class="ldtradehead">Trades</div>
@@ -12596,7 +12596,7 @@ function renderAcxOverview(){
   html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('tag') + 'Job Details</h3>' +
   '<div class="acxsec acxjdsec"><div class="acxbody"><div class="ackv acxjd">' +
     '<span>Job Category</span><div class="acxsl"><select class="acxsel" id="acxCat" aria-label="Job Category">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
-    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt" aria-label="Work Type">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service','Warranty'], ck.work_type) + '</select></div>' +
+    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt" aria-label="Work Type">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service','Tarp Only','Warranty'], ck.work_type) + '</select></div>' +
     '<span>Trade Type</span><div class="acxsl"><button type="button" class="acxsel acxtrbtn" id="acxTrBtn" aria-expanded="' + (acxTrOpen ? 'true' : 'false') + '">' +
       (_acxTr.length ? esc(_acxTr.join(', ')) : '\u2014') + '</button></div>' +
     '<div class="acxtrs" id="acxTrPanel"' + (acxTrOpen ? '' : ' hidden') + '>' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
@@ -38743,6 +38743,7 @@ esc(p.name) +
 '<option value="Windows">Windows</option>' +
 '<option value="Gutters">Gutters</option>' +
 '<option value="Multi-trade">Multi-trade</option>' +
+'<option value="Tarp Only">Tarp Only</option>' +   /* 1302 */
 '<option value="Other">Other</option>' +
 '</select>' +
 '</div>' +
@@ -44248,6 +44249,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1303, d: '2026-10-11', t: 'Community opens on the pipeline, with Tarp Only beside it',
+    s: 'The Community home now starts with the same pipeline as Retail \u2014 L, Bid Submitted, A, C, I, Closed, Waiting \u2014 with the count and dollars in each, and a tap opens those jobs. Under it, a Tarp Only tile counts every job marked Tarp Only at any stage. What is waiting on you and the Clients, Estimates and Partners doors follow, as before.' },
+  { b: 1302, d: '2026-10-11', t: 'Tarp Only is a work type',
+    s: 'A job that is only a tarp can now be marked that way: Tarp Only is in the Work Type list on the job, the lead and project forms, and the Community New Estimate form. It is not a pipeline stage, so the job keeps its stage as usual. The Community home will count these on their own tile next.' },
   { b: 1301, d: '2026-10-11', t: 'Community stage names live in one place',
     s: 'Behind the scenes: the Community stage names (Estimate Requested, Awarded, Build Complete\u2026) were written out four separate times, and once one copy was missing a stage. They now come from one list, so a name can only ever be changed in one spot and every Community screen says the same thing. Nothing you see changes.' },
   { b: 1300, d: '2026-10-11', t: 'The route page says when a tick is waiting for signal',
@@ -62285,6 +62290,30 @@ box-shadow:var(--ccm-sh-xs)}
 #cr-ch2 .cc-door b{display:block;font:700 15px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
 #cr-ch2 .cc-door small{color:var(--ccm-dim,#828c86);font-size:13px}
 #cr-ch2 .cc-door .ar{color:var(--ccm-dim,#828c86);font-size:18px;flex:0 0 auto}
+
+/* ── 1303: Retail's pipeline on the Community home, and the Tarp Only tile ── */
+#cr-ch2 .cc-pipe{background:var(--ccm-card,#161918);border:1px solid var(--ccm-line,#2a2f2c);
+  border-radius:11px;padding:10px 8px 8px;margin:10px 0 8px}
+#cr-ch2 .cc-pipek{font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3);margin:0 4px 8px}
+/* Seven buckets do not fit one row of a phone once two of them are words, so
+   the row is a grid: four then three on a phone (the preview Theo picked), all
+   seven in one row from 700px. */
+#cr-ch2 .cc-pipe .piperow{--cr-stack:"1303: Community fits all seven buckets on screen as a grid rather than a sideways scroll";
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;overflow:visible;padding:0}
+@media (min-width:700px){#cr-ch2 .cc-pipe .piperow{grid-template-columns:repeat(7,minmax(0,1fr))}}
+#cr-ch2 .cc-pipe .pipebtn{--cr-stack:"1303: a grid cell, not a fixed-width scroller cell";min-width:0;max-width:none}
+#cr-ch2 .pipebtn .plabel{--cr-stack:"1303: two Community words are longer than Retail's letters, so they wrap instead of clipping";
+  white-space:normal;overflow:visible;text-transform:none;letter-spacing:0;line-height:1.15;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .pipebtn .pcount{--cr-stack:"1303: Community card ink, both themes";color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .pipebtn .pmoney{--cr-stack:"1303: Community card ink, both themes";color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-tarponly{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;
+  background:var(--ccm-card,#161918);border:1px solid var(--ccm-line,#2a2f2c);border-left:3px solid #5B6B8C;
+  border-radius:11px;padding:10px 12px;min-height:44px;margin:0 0 8px;color:inherit;cursor:pointer}
+#cr-ch2 .cc-tarponly.is-zero{cursor:default}
+#cr-ch2 .cc-tarponly b{font:800 20px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-tarponly span{font:700 15px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-tarponly small{margin-left:auto;font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-tarponly:focus-visible{outline:2px solid var(--ccm-ac,#34D399);outline-offset:2px}
 </style>
 <script id="cr-ch2-script">
 
@@ -62459,6 +62488,12 @@ return ['Approved','Scheduled','Completed','Invoiced','Closed'];
 function stageLabels(keys){
 return (keys || []).map(function(k){ return LABEL[k] || k; });
 }
+/* 1303: a job's Work Type. The job card writes it flat (work_type), the
+   Community job page writes both flat and under lead — read both. */
+function wtOf(pr){
+var c = ck(pr) || {}, l = c.lead || {};
+return String(c.work_type || l.work_type || '').trim();
+}
 var chSheet = { cat:null, pend:[] };
 var CH_SORTS = [
 { key:'due',       label:'Due / check back' },
@@ -62538,7 +62573,9 @@ var CH_GROUPS = [
 { key:'rep',     label:'Assigned to',   get:chRepName },
 /* 977: the facet exists so the Waitlist TILE has somewhere to route — 975's
    applyDoor writes chState.sets keyed by these, and chMatches reads them. */
-{ key:'waitlist', label:'Waitlist',     get:function(pr){ return chWaiting(pr) ? 'On the waitlist' : 'Not waitlisted'; } }
+{ key:'waitlist', label:'Waitlist',     get:function(pr){ return chWaiting(pr) ? 'On the waitlist' : 'Not waitlisted'; } },
+/* 1303: the facet the Tarp Only tile routes through (975's door shape). */
+{ key:'wtype',   label:'Work type',     get:function(pr){ return wtOf(pr) || 'Not set'; } }
 ];
 function chActiveCount(){
 var n = 0;
@@ -63299,8 +63336,42 @@ attnGroup('Tarps still up', d.tarps, false);
 var attnCount = d.due.length + d.chase.length + d.sched.length + d.inv.length + d.tarps.length;
 var overdueCount = d.due.filter(function(r){ return r.d != null && r.d < 0; }).length;
 
+/* 1303: Retail's pipeline, read live from PIPE_BUCKETS so the two cannot drift,
+   with Theo's two Community words. Each bucket is a 975 door onto All estimates. */
+var CC_PIPE_WORDS = {
+Prospect: { label:'BID SUBMITTED', short:'Bid Submitted', letter:'P', tip:'Bid is in \u2014 waiting on the partner' },
+OnHold:   { label:'WAITING', short:'Waiting', letter:'W', tip:'Waiting on a grant or funding decision' }
+};
+var ccBuckets = (window.PIPE_BUCKETS || []).map(function(b){
+var o = {}, w = CC_PIPE_WORDS[b.key] || {};
+Object.keys(b).forEach(function(k){ o[k] = b[k]; });
+Object.keys(w).forEach(function(k){ o[k] = w[k]; });
+return o;
+});
+var pipeHtml = ccBuckets.map(function(b){
+var keys = b.key === 'Approved' ? ['Approved','Scheduled'] : [b.key];
+var inB = d.all.filter(function(pr){ return keys.indexOf(normStage(pr.stage)) !== -1; });
+var amt = inB.reduce(function(a,pr){ return a + (bidAmt(pr) || 0); }, 0);
+doors['pipe:' + b.key] = { sets:{ stage: stageLabels(keys) }, pane:'bids', fold:'allbids' };
+var full = b.label.charAt(0) + b.label.slice(1).toLowerCase();
+return '<button type="button" class="pipebtn" data-ccpipe="' + b.key + '" title="' + esc(b.tip || '') + '" aria-label="' + esc(full) + '">' +
+'<span class="pcirc ' + b.cls + '">' + (b.letter || b.label.charAt(0)) + '</span>' +
+'<span class="plabel">' + esc(b.short || full) + '</span>' +
+'<span class="pcount">' + inB.length + '</span>' +
+(role === 'prod' ? '' : '<span class="pmoney">' + usd(amt) + '</span>') + '</button>';
+}).join('');
+var tarpOnly = d.all.filter(function(pr){ return wtOf(pr) === 'Tarp Only'; });
+doors['tarponly'] = { sets:{ wtype:['Tarp Only'] }, pane:'clients' };
+var pipeCard = ccBuckets.length
+? '<div class="cc-pipe"><div class="cc-pipek">Community Pipeline</div><div class="piperow">' + pipeHtml + '</div></div>' +
+  (tarpOnly.length
+    ? '<button type="button" class="cc-tarponly" data-cctarp="1"><b>' + tarpOnly.length + '</b><span>Tarp Only</span><small>any stage \u203A</small></button>'
+    : '<div class="cc-tarponly is-zero"><b>0</b><span>Tarp Only</span><small>none right now</small></div>')
+: '';
+
 var homePane = '<div data-pane="home" class="' + (pane === 'home' ? 'on' : '') + '">' +
 '<div class="cc-srch"><input type="search" id="cr-ch2-search" placeholder="Name, address, partner, work type\u2026" value="' + esc(query) + '"></div>' +
+pipeCard +
 '<div class="cc-atop"><b>' + attnCount + '</b><span>waiting on you</span>' +
 (overdueCount ? '<span class="cc-aover">' + overdueCount + ' overdue</span>' : '') + '</div>' +
 '<div class="cc-acard">' + (attnBody || '<div class="cc-empty">Nothing waiting on you.</div>') + '</div>' +
@@ -63458,6 +63529,13 @@ el.onclick = function(){ applyDoor(doors['kpi:' + el.getAttribute('data-cckpi')]
 });
 host.querySelectorAll('[data-queue]').forEach(function(el){
 el.onclick = function(){ applyDoor(doors['q:' + el.getAttribute('data-queue')]); };
+});
+/* 1303: the pipeline buckets and the Tarp Only tile */
+host.querySelectorAll('[data-ccpipe]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['pipe:' + el.getAttribute('data-ccpipe')]); };
+});
+host.querySelectorAll('[data-cctarp]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['tarponly']); };
 });
 host.querySelectorAll('[data-tally]').forEach(function(el){
 el.onclick = function(){
@@ -65193,7 +65271,7 @@ document.body.classList.toggle('cr-cc-open', !!on);
 var CC2_ORD = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
 var CC2_TRADES = ['Roofing','Siding','Gutters','Windows','Repairs','Misc'];
 var CC2_CATS = ['Residential','Commercial','Property Management'];
-var CC2_WT = ['Inspection','Insurance','New','Repair','Retail','Service','Warranty'];
+var CC2_WT = ['Inspection','Insurance','New','Repair','Retail','Service','Tarp Only','Warranty'];   /* 1302: Tarp Only */
 var CC2_LOSS = ['Not funded','Went with another contractor','Partner cancelled','Homeowner declined','Other'];
 function cc2Ink(hex){
 var h = String(hex || '').replace('#', '');

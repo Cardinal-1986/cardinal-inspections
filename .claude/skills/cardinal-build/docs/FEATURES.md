@@ -9741,6 +9741,12 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1303: the Community home pipeline and the Tarp Only tile
+The Community home (`cr-ch2`, pane `home`) opens on Retail's pipeline: `window.PIPE_BUCKETS` read live, with `CC_PIPE_WORDS` overriding Prospect → "Bid Submitted" and OnHold → "Waiting" (sphere "W"). Each `.pipebtn[data-ccpipe]` is a 975 door (`doors['pipe:KEY']`) onto All estimates; Approved includes Scheduled. Below it, `.cc-tarponly` counts jobs with Work Type "Tarp Only" (`wtOf()`, either field) and opens Clients via the `wtype` facet in `CH_GROUPS`. On a phone it is a 4 + 3 grid, and 7 across from 700px. Production sees no dollars. **Gate:** `gate_1303.mjs`.
+
+## Build 1302: Tarp Only work type
+"Tarp Only" is a Work Type in all five Work Type lists. It is not a stage. **Gate:** `gate_1302.mjs`.
+
 ## Build 1301: one Community stage map
 `window.CC_STAGE_LABEL` is the single source for Community stage names (Estimate Requested … Not Awarded). `CD_STAGE_LABEL.community` is it; `COM_LABEL` and both Community `LABEL`s read it first (fallback copies held equal by `gate_1301`). No wording change.
 
