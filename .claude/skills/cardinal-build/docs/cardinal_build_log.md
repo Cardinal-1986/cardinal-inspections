@@ -34333,6 +34333,69 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1297: the load-the-truck list (Theo's pick 5B, 10 Oct)
+
+**What it does.**
+- **The punch card** has a "Bring" section: what to load before the truck leaves, with an "N / M loaded" count. Anyone can add a line or tick one; a manager can remove one (the checklist rule). It reuses the checklist's own row styling.
+- **The person's day page** (route page, 1254) shows one "Load the truck · <day>" list: every stop's lines, grouped by job, each 44px and tickable.
+
+**Data.** `punch_items.truck` jsonb `[{t,d,by,at}]`, from `punch_truck.sql`, **applied 11 Oct 2026 before this shipped**. Additive and idempotent.
+- The card writes through `save()`, so it uses the offline outbox like steps and visits.
+- The route page ticks through `CardinalPunch.update`, the one punch write path it already used for "Add to day". ⚠ That path is online-only: a tick there with no signal reports "Could not save that tick" rather than queuing. Ticking on the card itself does queue.
+
+**Gates.**
+- `gate_1297`: 6 checks, with seed `gate_1297_seed.js`. The control against 1296 is red on all 6.
+- ⚠ The first seed booked the truck job "today", and the container's clock read Sunday, which the route page deliberately skips. So the page opened on Monday and the list was correctly empty. The seed now books the first working day.
+- `gate_types` caught one new TS2339 of mine (`window.currentUser` typed `never` in the route script). It is fixed with an `any` cast, not rebaselined.
+- `gate_1254` is still red 8, the same as before; it is pre-existing.
+
+## Build 1296: callback cause + original crew (Theo's pick 1B, 10 Oct)
+
+**What it does.**
+- A Callback card gets a "Why the callback" section: five 44px cause chips (Workmanship · Material · Storm · Homeowner · Other) and the **original crew**.
+- The original crew fills itself in once, from the most recent non-superseded crew work order on the job, and is saved. It can be changed from a picker that lists "On this job" crews first.
+- Each crew's **Jobs** tab under Crews lists its callbacks for the last 12 months, with the cause; workmanship is in amber.
+
+**SQL.** `punch_callback_cause.sql` was **applied 11 Oct 2026 before this shipped**. It adds `callback_cause` (CHECK on the five words), `orig_crew_id` (no FK, so history survives the crew) and `orig_crew_name`, plus a partial index. Additive only; the columns ride the existing `punch_items` RLS.
+
+**Why the name is stored too.** `crews` and `crew_work_orders` are `is_full_access()` RLS (Theo, Joan, Curtis, Scottie), so a sales rep opening a callback reads `[]`. The card then shows the stored `orig_crew_name` and no picker, rather than a blank. `gate_1296` E simulates that refusal.
+
+**Gates.**
+- `gate_1296`: 7 checks. The control against 1295 is red on all 7.
+- `gate_dupes` caught a local `opt` helper colliding with two others; it was renamed `cbOpt`, not rebaselined.
+- Crews gates 733/740/744/745, 937, 941 and 1288, plus the punch gates, are green.
+
+## Build 1295: the rain flag (Theo's pick 7B, 10 Oct)
+
+**What it does.**
+- A punch-out booked on a day with a wet forecast gets a blue chip on its Punch List row and on its card's dispatch line: "Rain 80%", "Storm 60%" or "Snow".
+- Curtis's existing 3pm "Plan <day>" buzz ends with "Rain 80% forecast: Mark Diamond, Joe Ruiz." There is no new buzz and no new cron.
+
+**Where the forecast comes from.** It is the one the app already has: `cr-wx-script`, Open-Meteo, free, no key, 14 days. A job further out shows no chip until the forecast reaches it. "Wet" is `CardinalWx.wet()` (50% or more, or a rain/storm/snow code); the new `CardinalWx.flag()` is just its words. A failed fetch flags nothing and never blocks a buzz.
+
+**The server copy.** `api/punch-buzz.js` carries a copy of the rule (`wxKind` / `wxFlag`) and fetches the forecast only in the 3pm plan slot. `gate_1295` A feeds both copies the same 20 days and fails if they ever disagree, the 1255 two-copies rule.
+
+**Gates.**
+- `gate_1295`: 6 checks. Its forecast is seeded through the app's own cache key (`cr-dispwx`), so the rig never calls out.
+- Control: the 1294 `index.html` plus the old `punch-buzz.js`, run from a folder with its sibling imports, is red on all 6.
+- ⚠ My first draft of the gate failed correct code: it required 5 dry days and the table has 4. The test was wrong, not the app.
+- `gate_1255` is green. `gate_949` (1 check) and `gate_959` (#10) are red identically on the 1294 tree, so they are pre-existing.
+
+## Build 1294: time on job (Theo's pick 2B, 10 Oct)
+
+The crew's check-in and check-out has been on every punch-out since 940 (`punch_items.visits`), but nothing added it up. Now:
+- **The card** lists each visit (day, who, in–out, length) under the check-in strip, with a total.
+- **The Punch List row** shows the total on its when-line ("5h 20m on site"), or "Xm so far" while someone is there.
+
+**One helper.** `window.CardinalPunchTime` lives in `cr-pk-script` and `cr-punch-script` reads it: two modules, one rule.
+
+**The counting rule.** A closed visit counts out−in. An open visit counts only if it opened today ("so far"). An open visit from an earlier day is a forgotten check-out and counts nothing; otherwise one missed tap would make a 20-hour job. No SQL, and nothing new to type.
+
+**Gates.**
+- `gate_1294` has 5 checks: the arithmetic including the forgotten check-out, the card log, the rows, and readability in both themes (dark 5.7:1, light 4.79:1). The control against 1293 is red on all 5.
+- Its seed is `gate_1294_seed.js`: the sentinel seed plus two closed visits on i4.
+- **Pre-existing reds, identical on the 1293 tree:** `gate_1254` (8, likely date-dependent seed), `gate_948`, `gate_976` and `gate_979`. Not touched.
+
 ## Build 1293: Communication fits at 360px Larger text; old reds cleared
 
 - **The real fix.** At 360px with Larger text (zoom 1.15), "Communication" split as "Communicatio / n". `gate_1224` had been red since 1287, because the app's single sans font is wider than the old face. Largest already had a narrow-phone rule (1224); Larger had none. It now gets the same tighter tile below 400px: 6px side padding, 4px gap, 13px label, which is on the Type 1 scale (12px fit too but is off the scale). `gate_1224` is 54/54 and its control is red on 2.

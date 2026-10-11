@@ -4152,7 +4152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1293<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1297<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44122,6 +44122,14 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1297, d: '2026-10-10', t: 'Load-the-truck list',
+    s: 'Every punch-out has a Bring list now: what to load before the truck leaves, ticked off as it goes on. Anyone can add a line. On a person\u2019s day page, every stop\u2019s list shows in one place under Load the truck, grouped by job, so the morning load is one screen.' },
+  { b: 1296, d: '2026-10-10', t: 'Callback cause and original crew',
+    s: 'A Callback now says why the client called back, with Workmanship, Material, Storm, Homeowner or Other, and which crew did the original job. The crew fills itself in from the job\u2019s crew work order, and you can change it. Each crew\u2019s Jobs tab under Crews lists its callbacks for the last year, with the cause, so you can see who keeps getting called back.' },
+  { b: 1295, d: '2026-10-10', t: 'Rain flag on punch-outs',
+    s: 'If rain, a storm or snow is forecast for the day a punch-out is booked, its Punch List row and its card show a blue Rain chip with the chance, like Rain 80%. Curtis\u2019s 3pm Plan buzz now ends with the jobs that look wet the next day, so he can move them. It uses the same free 14-day forecast as Dispatch, so a job more than two weeks out shows no chip until the forecast reaches it.' },
+  { b: 1294, d: '2026-10-10', t: 'Time on job',
+    s: 'A punch-out now adds up the time on site. The card lists every visit, with the day, who, when they checked in and out and how long, and a total underneath. Each row on the Punch List shows the total too, or the time so far while someone is there. It comes from the check-in and check-out the crew already does, so there is nothing new to type. A check-in from an earlier day that was never checked out is not counted.' },
   { b: 1293, d: '2026-10-10', t: 'Communication fits on a small phone',
     s: 'With Larger text turned on, a small phone showed the Job Menu tile as Communicatio / n. The tile is a little tighter there now, so every word stays whole. The Line Items buttons also get the same rounded corners as every other button.' },
   { b: 1292, d: '2026-10-10', t: 'One red button per screen',
@@ -57546,6 +57554,28 @@ window.CardinalProduction = {
 #cr-pk .pkvstale{ color:#f0a24a; }
 #cr-pk .pkvwas{ color:var(--pk-ink,#eceef0); }
 #cr-pk .pkvnone{ color:var(--pk-dim,#9aa2ae); }
+/* 1297: the empty Bring list */
+#cr-pk .pktk0{ padding:8px 0 4px; font:400 13px 'Segoe UI',Arial,sans-serif; color:var(--pk-dim,#9aa2ae); }
+/* 1296: the callback cause chips and the crew picker. 44px, the card's own inks. */
+#cr-pk .pkcbk{ font:700 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--pk-dim,#9aa2ae); margin:4px 0 6px; }
+#cr-pk .pkcbk + .pkcbrow, #cr-pk .pkcbrow + .pkcbk{ margin-top:0; }
+#cr-pk .pkcbrow{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+#cr-pk .pkcbc{ min-height:44px; padding:0 14px; border-radius:10px; cursor:pointer; background:transparent;
+  border:1px solid var(--pk-line,#252a30); color:var(--pk-ink,#eceef0); font:600 13px 'Segoe UI',Arial,sans-serif; }
+#cr-pk .pkcbc.on{ border-color:#f0a24a; color:#f0a24a; font-weight:700; }
+:root[data-theme="rb-light"] #cr-pk .pkcbc.on{ border-color:#8a5500; color:#8a5500; }
+#cr-pk .pkcbsel{ width:100%; min-height:44px; border-radius:10px; padding:0 10px; background:transparent;
+  border:1px solid var(--pk-line,#252a30); color:var(--pk-ink,#eceef0); font:600 15px 'Segoe UI',Arial,sans-serif; }
+#cr-pk .pkcbsel option, #cr-pk .pkcbsel optgroup{ color:#111; }
+#cr-pk .pkcbname{ display:block; font:600 15px 'Segoe UI',Arial,sans-serif; color:var(--pk-ink,#eceef0); }
+/* 1295: the rain flag on the dispatch line */
+#cr-pk .pkrain{ font-weight:700; color:#6db3f2; white-space:nowrap; }
+:root[data-theme="rb-light"] #cr-pk .pkrain{ color:#1f5e99; }
+/* 1294: the visit log. Inks ride the card's own tokens, which flip with the theme. */
+#cr-pk .pkvlog{ margin:6px 0 2px; padding:4px 2px; }
+#cr-pk .pkvl{ display:flex; justify-content:space-between; gap:10px; padding:5px 0; font:400 13px 'Segoe UI',Arial,sans-serif;
+  color:var(--pk-dim,#9aa2ae); border-bottom:1px solid var(--pk-line,#252a30); font-variant-numeric:tabular-nums; }
+#cr-pk .pkvtot{ padding-top:7px; font:700 13px 'Segoe UI',Arial,sans-serif; color:var(--pk-ink,#eceef0); }
 #cr-pk .pkvb{ min-height:44px; padding:0 18px; border-radius:10px; cursor:pointer;
   font:800 13px 'Segoe UI',Arial,sans-serif; border:1px solid transparent; }
 #cr-pk .pkvb.in{ background:var(--pk-accd,#c8202e); color:#fff; }
@@ -57587,6 +57617,12 @@ var dispOpen = false, menuOpen = false;
 var holdOpen = false, holdPick = { r:'', d:'', n:'' };
 /* 1250: the follow-up flag's compose box */
 var pingOpen = false;
+/* 1296: the callback's crew list, loaded once per card (crews + this job's work orders) */
+var cbData = null;
+var CB_CAUSES = [
+  { k:'workmanship', l:'Workmanship' }, { k:'material', l:'Material' }, { k:'storm', l:'Storm' },
+  { k:'homeowner', l:'Homeowner' }, { k:'other', l:'Other' }
+];
 var HOLD_REASONS = [
   { k:'materials', l:'Materials',      s:'Waiting on an order' },
   { k:'homeowner', l:'Homeowner',      s:'Not home, or moving the day' },
@@ -57773,6 +57809,29 @@ function visitDayLabel(k){
   return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
 }
 
+/* 1294: time on job. ONE rule for the card and the Punch List
+   (window.CardinalPunchTime, read by cr-punch-script). A visit counts out−in;
+   an open visit counts only if it opened TODAY (now−in, "so far"); an open
+   visit from an earlier day is a forgotten check-out and counts nothing. */
+function pkLocalDay(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function pkTimeSum(list, now){
+  var v = Array.isArray(list) ? list : [], ms = 0, n = 0, live = 0, stale = false;
+  var t = now ? new Date(now) : new Date(), today = pkLocalDay(t);
+  for(var i = 0; i < v.length; i++){
+    var x = v[i]; if(!x || !x.in) continue;
+    var a = Date.parse(x.in); if(isNaN(a)) continue;
+    if(x.out){ var b = Date.parse(x.out); if(!isNaN(b) && b > a){ ms += b - a; n++; } continue; }
+    if(x.day === today && t.getTime() > a){ live = t.getTime() - a; ms += live; n++; } else stale = true;
+  }
+  return { ms:ms, visits:n, live:live, stale:stale };
+}
+function pkDur(ms){
+  var m = Math.round((+ms || 0) / 60000); if(m < 1) return '0m';
+  var h = Math.floor(m / 60); m = m % 60;
+  return h ? h + 'h ' + ('0' + m).slice(-2) + 'm' : m + 'm';
+}
+window.CardinalPunchTime = Object.assign(window.CardinalPunchTime || {}, { sum: pkTimeSum, fmt: pkDur });
+
 function checkIn(){
   if(openVisit()) return;                       /* already on site — no double */
   var now = new Date();
@@ -57846,7 +57905,23 @@ function visitHtml(){
     : (n
         ? '<span class="pkvwas">' + n + (n === 1 ? ' day' : ' days') + ' on site</span>'
         : '<span class="pkvnone">Not checked in</span>');
-  return '<div class="pkvis">' + line + right + '</div>';
+  return '<div class="pkvis">' + line + right + '</div>' + visitLogHtml();
+}
+/* 1294: each visit and the total. Shown once there is at least one visit. */
+function visitLogHtml(){
+  var v = visits(); if(!v.length) return '';
+  var now = new Date(), today = dayKey(now), rows = '';
+  for(var i = 0; i < v.length; i++){
+    var x = v[i]; if(!x || !x.in) continue;
+    var a = Date.parse(x.in), b = x.out ? Date.parse(x.out) : NaN, len;
+    if(x.out) len = (!isNaN(a) && !isNaN(b) && b > a) ? pkDur(b - a) : '';
+    else len = (x.day === today) ? pkDur(now.getTime() - a) + ' so far' : 'not checked out';
+    rows += '<div class="pkvl"><span>' + esc(visitDayLabel(x.day)) + (x.name ? ' · ' + esc(x.name) : '') + '</span>' +
+      '<span>' + esc(visitClock(x.in)) + (x.out ? ' – ' + esc(visitClock(x.out)) : '') + (len ? ' · ' + esc(len) : '') + '</span></div>';
+  }
+  var s = pkTimeSum(v, now);
+  return '<div class="pkvlog" data-cr-1294>' + rows +
+    '<div class="pkvtot">Total ' + esc(pkDur(s.ms)) + ' · ' + s.visits + (s.visits === 1 ? ' visit' : ' visits') + '</div></div>';
 }
 function stepsDone(){ return steps().filter(function(s){ return s && s.d; }).length; }
 function readyToClose(){
@@ -57890,13 +57965,64 @@ function ensure(){
 }
 function render(){
   if(!el || !it) return;
+  if(window.CardinalWx) window.CardinalWx.load(function(){ render(); });   /* 1295 */
   var html = cardHtml() + (galleryOpen ? galleryHtml() : '');
   if(html === lastSig) return;      /* the 606 stored-signature guard */
   lastSig = html;
   el.innerHTML = html;
   el.classList.toggle('field', !isManager());
   wire();
+  if(it.kind === 'callback') cbLoad();   /* 1296 */
   paintPhotos();
+}
+/* 1296: why the callback, and who did the original job. Shown on callbacks only. */
+async function cbLoad(){
+  if(!it || it.kind !== 'callback' || (cbData && cbData.id === it.id)) return;
+  var id = it.id, pid = it.project_id;
+  cbData = { id:id, crews:[], wo:[], ready:false };
+  var cx = window.supa || window.sb;
+  if(cx){
+    try{
+      var r = await Promise.all([
+        cx.from('crews').select('id,name,trade').eq('archived', false).order('name'),
+        cx.from('crew_work_orders').select('crew_id,wo_number,status,created_at').eq('project_id', pid).order('created_at', { ascending:false })
+      ]);
+      if(!cbData || cbData.id !== id) return;
+      cbData.crews = (r[0] && r[0].data) || [];
+      cbData.wo = ((r[1] && r[1].data) || []).filter(function(w){ return w && w.crew_id && w.status !== 'superseded'; });
+    }catch(_){}
+  }
+  if(!cbData || cbData.id !== id) return;
+  cbData.ready = true;
+  /* the work order is a fact: fill the crew in once, from the most recent one */
+  if(it && it.id === id && !it.orig_crew_id && cbData.wo.length){
+    var c = cbData.crews.filter(function(x){ return x.id === cbData.wo[0].crew_id; })[0];
+    if(c){ save({ orig_crew_id: c.id, orig_crew_name: c.name }); return; }
+  }
+  lastSig = ''; render();
+}
+function cbHtml(){
+  if(it.kind !== 'callback') return '';
+  var cause = it.callback_cause || '';
+  var chips = CB_CAUSES.map(function(c){
+    return '<button type="button" class="pkcbc' + (cause === c.k ? ' on' : '') + '" data-cbc="' + c.k + '" aria-pressed="' + (cause === c.k) + '">' + esc(c.l) + '</button>';
+  }).join('');
+  var crew;
+  if(cbData && cbData.id === it.id && cbData.crews.length){
+    var woIds = {}, woNo = {};
+    cbData.wo.forEach(function(w){ if(!woIds[w.crew_id]){ woIds[w.crew_id] = 1; woNo[w.crew_id] = w.wo_number; } });
+    var cbOpt = function(c){ return '<option value="' + esc(c.id) + '"' + (it.orig_crew_id === c.id ? ' selected' : '') + '>' +
+      esc(c.name) + (woNo[c.id] ? ' · ' + esc(woNo[c.id]) : '') + '</option>'; };
+    var onJob = cbData.crews.filter(function(c){ return woIds[c.id]; }), rest = cbData.crews.filter(function(c){ return !woIds[c.id]; });
+    crew = '<select class="pkcbsel" data-f="cbcrew" aria-label="Original crew"><option value="">' + (it.orig_crew_id ? 'Not recorded' : 'Pick the crew…') + '</option>' +
+      (onJob.length ? '<optgroup label="On this job">' + onJob.map(cbOpt).join('') + '</optgroup>' : '') +
+      (rest.length ? '<optgroup label="Other crews">' + rest.map(cbOpt).join('') + '</optgroup>' : '') + '</select>';
+  }else{
+    crew = '<span class="pkcbname">' + esc(it.orig_crew_name || (cbData && !cbData.ready ? 'Loading…' : 'Not recorded')) + '</span>';
+  }
+  return '<div class="pksec pkcb" data-cr-1296>' +
+    '<div class="pkcbk">Why the callback</div><div class="pkcbrow">' + chips + '</div>' +
+    '<div class="pkcbk">Original crew</div>' + crew + '</div>';
 }
 function cardHtml(){
   var pr = projectFor(it.project_id);
@@ -57909,8 +58035,8 @@ function cardHtml(){
   var working = !done && dayCount() > 0;
   var disp = (dispOpen || (isManager() && !working && !done)) ? metaHtml() : dispatchLine();
   var left = working
-    ? jobHtml(pr) + visitHtml() + checklistHtml() + photosHtml() + disp + descHtml()
-    : jobHtml(pr) + disp + visitHtml() + descHtml() + checklistHtml() + photosHtml();
+    ? jobHtml(pr) + cbHtml() + visitHtml() + checklistHtml() + truckHtml() + photosHtml() + disp + descHtml()
+    : jobHtml(pr) + cbHtml() + disp + visitHtml() + descHtml() + checklistHtml() + truckHtml() + photosHtml();
   return '<div class="pkwrap">' +
     '<div class="pktop">' +
       '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
@@ -58103,9 +58229,13 @@ async function holdClear(){
 function dispatchLine(){
   var whoTxt = it.assigned_to ? nameOf(it.assigned_to) : 'Unassigned';
   var whenTxt = it.scheduled_at ? fmtSchedule(it.scheduled_at, it.scheduled_time) : 'no day set';
+  /* 1295: the rain flag, on the day the job is booked (never once it is done) */
+  var rain = (it.status !== 'done' && it.scheduled_at && window.CardinalWx && window.CardinalWx.flag)
+    ? window.CardinalWx.flag(String(it.scheduled_at).slice(0, 10)) : '';
   return '<button class="pkfold" data-act="dispatch" type="button">' + svg('user') +
     '<span class="tx">' + esc(whoTxt) + ' \u00b7 ' + esc(whenTxt) +
-    (it.priority === 'high' ? ' \u00b7 Urgent' : '') + '</span><span class="ch">\u203A</span></button>';
+    (it.priority === 'high' ? ' \u00b7 Urgent' : '') +
+    (rain ? ' <b class="pkrain" data-cr-1295>' + esc(rain) + '</b>' : '') + '</span><span class="ch">\u203A</span></button>';
 }
 function jobHtml(pr){
   var addr = pr ? (pr.address || '') : '';
@@ -58403,6 +58533,39 @@ async function tickStep(i){
     at: !s.d ? new Date().toISOString() : null,
   });
   await save({ steps: st });
+}
+/* 1297: the load-the-truck list — same shape and save path as the steps */
+function truck(){ return Array.isArray(it && it.truck) ? it.truck : []; }
+async function tickTruck(i){
+  var tk = truck().slice(), x = tk[i]; if(!x) return;
+  tk[i] = Object.assign({}, x, { d: !x.d, by: !x.d ? (myEmail() || null) : null, at: !x.d ? new Date().toISOString() : null });
+  await save({ truck: tk });
+}
+async function addTruck(){
+  var t = prompt('What goes on the truck?\n\nFor example: Step flashing, 10 pcs');
+  if(!t || !String(t).trim()) return;
+  await save({ truck: truck().concat([{ t: String(t).trim().slice(0, 120), d: false, by: null, at: null }]) });
+}
+async function delTruck(i){
+  var tk = truck().slice(); if(!tk[i]) return;
+  if(!await crAsk('Take this off the list?\n\n' + (tk[i].t || ''))) return;
+  tk.splice(i, 1);
+  await save({ truck: tk });
+}
+function truckHtml(){
+  var tk = truck(), mgr = isManager(), done = it.status === 'done';
+  if(done && !tk.length) return '';
+  var n = tk.filter(function(x){ return x && x.d; }).length;
+  var body = tk.map(function(x, i){
+    return '<div class="pkck' + (x.d ? ' d' : '') + '">' +
+      '<button class="bx" data-truck="' + i + '" type="button" aria-label="' + (x.d ? 'Not loaded' : 'Loaded') + '">' + svg('tick') + '</button>' +
+      '<span class="bd"><span class="st">' + esc(x.t || '') + '</span></span>' +
+      (mgr ? '<button class="pkbtn" data-deltruck="' + i + '" type="button" aria-label="Remove">×</button>' : '') + '</div>';
+  }).join('');
+  return '<div class="pksec" id="pkSecTruck" data-cr-1297><div class="pkh">' + svg('list') + 'Bring' +
+    (tk.length ? '<span class="rt"><b>' + n + '</b> / ' + tk.length + ' loaded</span>' : '') + '</div>' +
+    (body || '<div class="pktk0">Nothing listed yet. Add what to load before the truck leaves.</div>') +
+    (done ? '' : '<button class="pkadd" data-act="addtruck" type="button">+ Add item</button>') + '</div>';
 }
 async function addStep(){
   var t = prompt('What is the step?');
@@ -58792,6 +58955,10 @@ function wire(){
   q('[data-act="cout"]', function(b){ b.onclick = function(){ checkOut(); }; });
   q('[data-tpl]', function(b){ b.onclick = function(){ useTemplate(b.getAttribute('data-tpl')); }; });
   q('[data-act="addstep"]', function(b){ b.onclick = addStep; });
+  /* 1297: the truck list */
+  q('[data-truck]', function(b){ b.onclick = function(){ tickTruck(Number(b.getAttribute('data-truck'))); }; });
+  q('[data-deltruck]', function(b){ b.onclick = function(){ delTruck(Number(b.getAttribute('data-deltruck'))); }; });
+  q('[data-act="addtruck"]', function(b){ b.onclick = addTruck; });
   q('[data-act="supp"]', function(b){ b.onclick = flagSupplement; });
   q('[data-act="dispatch"]', function(b){ b.onclick = function(){ dispOpen = !dispOpen; lastSig = ''; render(); }; });
   /* 1249: On hold */
@@ -58819,6 +58986,12 @@ function wire(){
   q('[data-act="pinggo"]', function(b){ b.onclick = pingRaise; });
   q('[data-act="pingdone"]', function(b){ b.onclick = pingHandled; });
   q('[data-act="menu"]', function(b){ b.onclick = function(){ menuOpen = !menuOpen; lastSig = ''; render(); }; });
+  /* 1296: callback cause + original crew */
+  q('[data-cbc]', function(b){ b.onclick = function(){ save({ callback_cause: b.getAttribute('data-cbc') }); }; });
+  q('[data-f="cbcrew"]', function(s){ s.onchange = function(){
+    var v = s.value || null, c = v && cbData ? cbData.crews.filter(function(x){ return x.id === v; })[0] : null;
+    save({ orig_crew_id: c ? c.id : null, orig_crew_name: c ? c.name : null });
+  }; });
   /* 947: the shortfall pieces on the Close button scroll to their section
      instead of letting the tap fall through to the not-ready alert */
   q('[data-jump]', function(s){ s.onclick = function(ev){
@@ -68794,6 +68967,9 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-row.k-callback .pl-dot{background:var(--pl-callback,#9670e0);}
 .pl-row.k-punch .pl-dot{background:var(--pl-punch,#2fa86a);}
 .pl-flag{font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--pl-late,#f08a90);white-space:nowrap;}
+/* 1295: the rain flag — blue, its own word, computed on both grounds */
+.pl-flag.rain{color:#6db3f2;}
+:root[data-theme="rb-light"] .pl-flag.rain{color:#1f5e99;}
 .pl-cl{grid-area:cl;display:flex;align-items:baseline;gap:8px;min-width:0;}
 .pl-cl b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;color:var(--rbe-head,#ffffff);}
 .pl-cl small{font-size:13px;color:var(--rbe-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 0;min-width:0;}
@@ -69237,8 +69413,21 @@ function plOrder(a, b){
     String(a.scheduled_time || '').localeCompare(String(b.scheduled_time || '')) ||
     String(a.created_at || '').localeCompare(String(b.created_at || ''));
 }
+/* 1294: time on site, from the card's ONE rule (window.CardinalPunchTime). */
+function plOnSite(it){
+  var T = window.CardinalPunchTime; if(!T || !T.sum) return '';
+  var s = T.sum(it && it.visits);
+  if(!s.ms) return '';
+  return s.live ? T.fmt(s.live) + ' so far' + (s.ms > s.live ? ' · ' + T.fmt(s.ms) + ' total' : '') : T.fmt(s.ms) + ' on site';
+}
+/* 1295: the rain flag for an open, dated, not-held job — '' otherwise. */
+function plRain(it){
+  var g = plBase(it); if(g === 'closed' || g === 'hold') return '';
+  var d = plDay(it); if(!d || !window.CardinalWx || !window.CardinalWx.flag) return '';
+  return window.CardinalWx.flag(d);
+}
 function plRow(it){
-  var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it);
+  var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it), rain = plRain(it);
   var urg = isUrgent(it), age = ageDays(it.created_at);
   var supp = String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0;
   var who = it.assigned_to;
@@ -69249,13 +69438,14 @@ function plRow(it){
       (ping ? '<span class="pl-flag">Follow up</span>' : '') +
       (urg ? '<span class="pl-flag">Urgent</span>' : '') +
       (supp ? '<span class="pl-flag">Supplement</span>' : '') +
-      (plBackFromHold(it) ? '<span class="pl-flag">Back from hold</span>' : '') + '</span>' +
+      (plBackFromHold(it) ? '<span class="pl-flag">Back from hold</span>' : '') +
+      (rain ? '<span class="pl-flag rain" data-cr-1295>' + esc(rain) + '</span>' : '') + '</span>' +
     '<span class="pl-cl"><b>' + (ping ? '<i class="pl-bang" aria-label="Needs follow-up">!</i>' : '') +
       esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</b>' +
       '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
     '<span class="pl-pb">' + (ping ? esc('\u201C' + (it.ping_note || '') + '\u201D \u2014 ' + plName(it.ping_by)) : esc(it.title || 'Untitled item')) + '</span>' +
     '<span class="pl-age">' + (age != null ? age + 'd' : '') + '</span>' +
-    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + esc(w.sub || '') + '</small></span>' +
+    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + esc([w.sub, plOnSite(it)].filter(Boolean).join(' \u00b7 ')) + '</small></span>' +
     '<span class="pl-cr">' + (who ? '<span class="pl-av">' + esc(plName(who).slice(0, 2).toUpperCase()) + '</span><span class="pl-nm">' + esc(plName(who)) + '</span>'
                               : '<span class="pl-nm">No one</span>') + '</span>' +
   '</div>';
@@ -69307,6 +69497,7 @@ var CATS = function(){ return {
 function count(){ var n = 0; for(var k in PU.sets) n += PU.sets[k].length; return n; }
 
 function render(){
+  if(window.CardinalWx) window.CardinalWx.load(function(){ render(); });   /* 1295: the rain flag */
   var all = rows();
   /* 1248: every open item is in exactly one place — the pinned queue (no one
      on it yet) or one WHEN group below. Closed work has its own view. */
@@ -75020,6 +75211,11 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 <div id="crewsView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
 <div id="payView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
 <style id="cr-crew-styles">
+/* 1296: the callbacks list on a crew's Jobs tab */
+#crewsView .crw-cbh{margin:18px 2px 8px;font:700 15px 'Segoe UI',Arial,sans-serif;color:var(--crw-ink,#eceef0);}
+#crewsView .crw-cb.wk{color:var(--crw-warn,#f0a24a);font-weight:700;}
+:root[data-theme="rb-light"] #crewsView .crw-cb.wk{color:#8a5500;}
+
 /* ══ Build 547 · Crews — trade nav, profile, compliance vault, notes ═══════
    Chrome is borrowed, not invented: the trade nav is #cr-lnav's banded
    sections over 536's recessed well; dark cards are 545's obsidian; status
@@ -75495,6 +75691,7 @@ var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted 
 var catalog = [], rates = [];   /* 548: pricing_items + crew_rates */
 var payments = [];              /* 556: crew_payments, admin-only */
 var workorders = [];            /* 847: crew_work_orders — the job history */
+var callbacks = [];             /* 1296: callback punch-outs with an original crew */
 
 function db(){ return window.supa || window.sb || null; }
 function view(){ return document.getElementById('crewsView'); }
@@ -75577,7 +75774,11 @@ async function load(){
        superseded rows: a re-crewed job is history, not something to hide. */
     cl.from('crew_work_orders')
       .select('id,wo_number,crew_id,project_id,report_id,status,sent_at,scope,amount,scheduled_on,completed_on,created_at')
-      .order('created_at', { ascending:false })
+      .order('created_at', { ascending:false }),
+    /* 1296: callbacks charged to a crew. punch_items is readable by everyone this
+       screen serves; an error degrades to an empty list like the tables above. */
+    cl.from('punch_items').select('id,project_id,title,detail,callback_cause,orig_crew_id,created_at,status')
+      .eq('kind', 'callback').not('orig_crew_id', 'is', null).order('created_at', { ascending:false })
   ]);
   if(res[0].error) throw res[0].error;
   crews = res[0].data || [];
@@ -75587,6 +75788,7 @@ async function load(){
   rates   = (res[4].data) || [];
   payments = (res[5].data) || [];
   workorders = (res[6].data) || [];
+  callbacks = (res[7] && res[7].data) || [];
   if(selId && !crews.some(function(c){ return c.id === selId; })) selId = null;
   if(!selId && crews.length) selId = crews[0].id;
 }
@@ -75764,7 +75966,23 @@ function jobsHtml(c){
             '<span class="crw-mut" style="margin-left:14px">Paid to crew <b>' + money(paidTotal, true) + '</b></span>';
   }
   out += '<div style="display:flex;justify-content:flex-end;align-items:baseline;flex-wrap:wrap;gap:2px;margin:8px 2px 4px">' + foot + '</div>';
-  return out;
+  return out + callbacksHtml(c, mine.length);
+}
+/* 1296: this crew's callbacks, last 12 months, with the cause. */
+var CB_LABEL = { workmanship:'Workmanship', material:'Material', storm:'Storm', homeowner:'Homeowner', other:'Other' };
+function callbacksHtml(c, jobs){
+  var since = Date.now() - 365 * 86400000;
+  var mine = callbacks.filter(function(p){ return p.orig_crew_id === c.id && Date.parse(p.created_at) >= since; });
+  var rows = mine.map(function(p){
+    var cz = CB_LABEL[p.callback_cause] || 'No cause yet';
+    return '<tr><td>' + esc(dstr(p.created_at)) + '</td><td>' + esc(projName(p.project_id) || '\u2014') + '</td>' +
+      '<td>' + esc(p.title || '') + '</td><td class="crw-cb' + (p.callback_cause === 'workmanship' ? ' wk' : '') + '">' + esc(cz) + '</td></tr>';
+  }).join('');
+  return '<div class="crw-cbh" data-cr-1296>Callbacks <span class="crw-mut">\u00b7 last 12 months \u00b7 ' + mine.length +
+      (mine.length === 1 ? ' callback' : ' callbacks') + (jobs ? ' on ' + jobs + (jobs === 1 ? ' job' : ' jobs') : '') + '</span></div>' +
+    '<div class="crw-rtwrap"><table class="crw-rt"><colgroup><col style="width:18%"><col style="width:30%"><col style="width:32%"><col style="width:20%"></colgroup>' +
+    '<thead><tr><th>Opened</th><th>Client</th><th>What</th><th>Cause</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="4" class="crw-mut">No callbacks charged to this crew.</td></tr>') + '</tbody></table></div>';
 }
 function payFor(crewId){
   return payments.filter(function(p){ return p.crew_id === crewId; });
@@ -87005,6 +87223,16 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 #cr-route .rtst .miss{ color:var(--rt-acc,#e35c63); font-weight:600; }
 #cr-route .rtt{ flex:none; font:700 13px var(--rt-mono,ui-monospace,Menlo,monospace); color:var(--rt-ink,#eceef0); }
 #cr-route .rtt.live{ color:var(--rt-ok,#6cb98f); }
+/* 1297: load the truck */
+#cr-route .rttruck{ border:1px solid var(--rt-line,rgba(230,235,240,.11)); border-radius:12px; padding:10px 12px; margin:12px 0; }
+#cr-route .rttruck h2{ margin:0 0 4px; font:700 15px 'Segoe UI',Arial,sans-serif; color:var(--rt-ink,#eceef0); display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+#cr-route .rttruck h2 small{ font:600 13px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); }
+#cr-route .rttk-h{ margin:10px 0 2px; font:700 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--rt-mut,#9aa3ab); }
+#cr-route .rttk{ display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:0 2px; border:0; border-top:1px solid var(--rt-line,rgba(230,235,240,.11));
+  background:transparent; color:var(--rt-ink,#eceef0); font:400 15px 'Segoe UI',Arial,sans-serif; text-align:left; cursor:pointer; }
+#cr-route .rttk .bx{ flex:none; width:22px; height:22px; border-radius:6px; border:1.5px solid var(--rt-mut,#9aa3ab); display:grid; place-items:center; font:700 13px 'Segoe UI',Arial,sans-serif; }
+#cr-route .rttk.d .bx{ background:#34d399; border-color:#34d399; color:#0c0d0f; }
+#cr-route .rttk.d > span:last-child{ color:var(--rt-mut,#9aa3ab); text-decoration:line-through; }
 #cr-route .rtempty{ padding:18px 12px; border-radius:12px; border:1px dashed var(--rt-line,rgba(230,235,240,.11));
   font:400 15px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); }
 #cr-route .rtgo{ display:flex; align-items:center; justify-content:center; margin-top:12px; min-height:48px; border-radius:10px;
@@ -87125,6 +87353,18 @@ function rtOnClick(e){
   else if(act === 'day'){ day = v; window.__crRouteLast = { who: who, day: day }; rtDraw(); }
   else if(act === 'stop'){ if(window.CardinalPunchCard && window.CardinalPunchCard.open) window.CardinalPunchCard.open(v, { back: 'none' }); }
   else if(act === 'add') rtAddToDay(v);
+  else if(act === 'truck') rtTickTruck(v);
+}
+/* 1297: tick a truck line from the route page, through the one punch write path */
+async function rtTickTruck(v){
+  var p = String(v).split(':'), id = p[0], i = Number(p[1]);
+  var P = window.CardinalPunch; if(!(P && P.update)) return;
+  var it = rtRows().filter(function(x){ return String(x.id) === id; })[0]; if(!it || !Array.isArray(it.truck) || !it.truck[i]) return;
+  var cu = /** @type {any} */ (window).currentUser, tk = it.truck.slice(), x = tk[i], me = (cu && cu.email) || null;
+  tk[i] = Object.assign({}, x, { d: !x.d, by: !x.d ? me : null, at: !x.d ? new Date().toISOString() : null });
+  var r = await P.update(id, { truck: tk });
+  if(!(r && r.ok)){ try{ window.crTell('Could not save that tick: ' + ((r && r.error) || 'write refused')); }catch(_){} }
+  rtDraw();
 }
 async function rtAddToDay(id){
   if(!rtIsBoss()) return;
@@ -87182,6 +87422,21 @@ function rtDraw(){
     if(addrs.length){
       h += '<a class="rtgo" id="rtGo" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/' +
         [SHOP].concat(addrs).map(encodeURIComponent).join('/') + '">Directions in Google Maps</a>';
+    }
+    /* 1297: load the truck — every stop's Bring list for this day, one place */
+    var tkStops = list.filter(function(it){ return Array.isArray(it.truck) && it.truck.length; });
+    if(tkStops.length){
+      var tkAll = 0, tkOn = 0;
+      tkStops.forEach(function(it){ it.truck.forEach(function(x){ tkAll++; if(x && x.d) tkOn++; }); });
+      h += '<div class="rttruck" id="rtTruck" data-cr-1297><h2>Load the truck · ' + rtEsc(rtDayWord(day)) + '<small>' + tkOn + ' of ' + tkAll + ' loaded</small></h2>' +
+        tkStops.map(function(it){
+          var pr = rtProjOf(it.project_id);
+          return '<div class="rttk-h">' + rtEsc(pr ? pr.name : 'No client') + (it.scheduled_time ? ' · ' + rtEsc(rtClock(it.scheduled_time)) : '') + '</div>' +
+            it.truck.map(function(x, i){
+              return '<button type="button" class="rttk' + (x && x.d ? ' d' : '') + '" data-rt="truck" data-v="' + rtEsc(String(it.id)) + ':' + i + '" aria-pressed="' + !!(x && x.d) + '">' +
+                '<span class="bx">' + (x && x.d ? '✓' : '') + '</span><span>' + rtEsc((x && x.t) || '') + '</span></button>';
+            }).join('');
+        }).join('') + '</div>';
     }
     h += '<div class="rtnote">Minutes are estimates from straight-line distance (≈). Google Maps has the real drive.</div>';
   }
@@ -88332,8 +88587,16 @@ window.CardinalStorm = Object.assign(window.CardinalStorm || {}, {
       (p >= m ? '<i>' + p + '%</i>' : '') + '</span>';
   }
 
+  /* 1295: the rain flag's words — "Rain 80%", "Storm 60%", "Snow" — or '' when
+     the day is dry or past the 14-day horizon. Punch List rows and the card use it. */
+  function flag(s){
+    if(!wet(s)) return '';
+    var d = day(s), k = kind(d.c), p = +d.p || 0;
+    var w = k === 'storm' ? 'Storm' : k === 'snow' ? 'Snow' : 'Rain';
+    return w + (p ? ' ' + p + '%' : '');
+  }
   window.CardinalWx = Object.assign(window.CardinalWx || {}, {
-    load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell
+    load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell, flag: flag
   });
 })();
 </script>

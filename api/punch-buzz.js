@@ -100,8 +100,36 @@ function routeLink(email) { return '#route/' + encodeURIComponent(String(email).
 /* for gate_1255: the same stop rule the route page uses, so the two can be compared */
 export function _stopsFor(items, who, k, now) { return stopsFor(items, who, k, localNow(now).day); }
 
+/* 1295: the rain rule — a COPY of CardinalWx.wet/kind/flag in index.html
+   (cr-wx-script). gate_1295 feeds both the same days and fails if they differ.
+   wx is { 'YYYY-MM-DD': { c: weather_code, p: precip % } } from Open-Meteo. */
+function wxKind(c) {
+  c = +c;
+  if (c >= 95) return 'storm';
+  if ((c >= 71 && c <= 77) || c === 85 || c === 86) return 'snow';
+  if ((c >= 51 && c <= 67) || (c >= 80 && c <= 82)) return 'rain';
+  if (c === 0 || c === 1) return 'sun';
+  return 'cloud';
+}
+export function wxFlag(wx, s) {
+  const d = wx && wx[s]; if (!d) return '';
+  const k = wxKind(d.c), p = +d.p || 0;
+  if (!(p >= 50 || k === 'rain' || k === 'storm' || k === 'snow')) return '';
+  return (k === 'storm' ? 'Storm' : k === 'snow' ? 'Snow' : 'Rain') + (p ? ' ' + p + '%' : '');
+}
+async function fetchWx() {
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=39.7589&longitude=-84.1916' +
+      '&daily=weather_code,precipitation_probability_max&forecast_days=14&timezone=America%2FNew_York');
+    const j = await r.json(), d = j && j.daily, out = {};
+    if (!d || !d.time) return null;
+    d.time.forEach((t, i) => { out[t] = { c: (d.weather_code || [])[i], p: (d.precipitation_probability_max || [])[i] }; });
+    return out;
+  } catch (_) { return null; }                      /* no forecast = no rain line, never a failed buzz */
+}
+
 /* ── what is due at this moment — PURE, so the gate can run it ── */
-export function planBuzzes(items, projects, now, force) {
+export function planBuzzes(items, projects, now, force, wx) {
   const L = localNow(now), today = L.day, out = [];
   if (L.dow === 0 && !force) return out;
   const slot = force || Object.keys(SLOT_HOURS).find(s => SLOT_HOURS[s] === L.hour);
@@ -134,9 +162,13 @@ export function planBuzzes(items, projects, now, force) {
     const nx = nextWorkingDay(today);
     const nodate = items.filter(it => isOpen(it) && !onHold(it, today) && !dayOfIt(it) && !onSite(it)).length;
     const unasg = items.filter(it => isOpen(it) && !onHold(it, today) && !it.assigned_to).length;
+    /* 1295: the wet stops for that day, named, so Curtis can move them */
+    const rf = wxFlag(wx, nx);
+    const wetJobs = rf ? items.filter(it => isOpen(it) && !onHold(it, today) && dayOfIt(it) === nx) : [];
     out.push({ key: 'plan:' + nx, to: [CURTIS], title: 'Plan ' + dayName(nx),
       body: label(nx) + ': ' + perPerson(items, crew, nx, today) + '. Unassigned: ' + unasg + ' · No date: ' + nodate +
-        ' · Past due: ' + late.length + '.',
+        ' · Past due: ' + late.length + '.' +
+        (wetJobs.length ? ' ' + rf + ' forecast: ' + wetJobs.map(who).join(', ') + '.' : ''),
       url: '#punch' });
   }
   if (slot === 'crew') {
@@ -192,7 +224,9 @@ export default async function handler(req, res) {
   try {
     const items = await rest(KEY, 'punch_items?select=*');
     const projects = await rest(KEY, 'projects?select=id,name');
-    let buzzes = planBuzzes(items, projects, new Date(), force);
+    /* 1295: the forecast is only read by the 3pm plan slot */
+    const wx = (force === 'plan' || (!force && localNow(new Date()).hour === SLOT_HOURS.plan)) ? await fetchWx() : null;
+    let buzzes = planBuzzes(items, projects, new Date(), force, wx);
     const L = localNow(new Date());
     if (dry) { res.status(200).json({ ok: true, dry: true, local: L, buzzes }); return; }
 

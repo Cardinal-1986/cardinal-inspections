@@ -9741,6 +9741,22 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1297: load-the-truck list
+
+Each punch-out card has a "Bring" list (add / tick / remove), and a person's day page shows one "Load the truck" list for the day, grouped by stop. SQL: `punch_truck.sql` (applied). Gate: `gate_1297`.
+
+## Build 1296: callback cause + original crew
+
+A Callback card records why (Workmanship / Material / Storm / Homeowner / Other) and the original crew, auto-filled from the job's crew work order. Crews → a crew → Jobs lists its callbacks for 12 months, with the cause. SQL: `punch_callback_cause.sql` (applied). Gate: `gate_1296`.
+
+## Build 1295: rain flag on punch-outs
+
+A blue "Rain 80%" / "Storm" / "Snow" chip appears on Punch List rows and on the card's dispatch line when the booked day has a wet forecast (the app's 14-day Open-Meteo forecast). Curtis's 3pm Plan buzz names the wet jobs. The rule is `CardinalWx.flag`, with a server copy `wxFlag` in `api/punch-buzz.js`. Gate: `gate_1295`.
+
+## Build 1294: time on job
+
+The punch-out card lists every visit (day, who, in–out, length) and a total. Punch List rows show the total, or the time so far while someone is on site. It comes from the existing check-in/out and needs no SQL. Helper: `window.CardinalPunchTime`. Gate: `gate_1294`.
+
 ## Build 1293: Communication fits on a small phone
 
 At 360px with Larger text, the Job Menu tile is tighter, so "Communication" stays one word. The Line Items buttons are back on the shared 12px corner. Gate: `gate_1224`.
