@@ -45,7 +45,7 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 21 | 629 | `studio_tray_bins.sql` | 9 | ✅ | **⚠ YES** | build log only |
 | 22 | 636 | `photos_bucket_pdf.sql` | 1 | — | — | build log only |
 | 23 | 646 | `insurance_claim_backfill.sql` | 3 | — | — | FEATURES.md |
-| 24 | 650 | `commission_system.sql` | 49 | ✅ | **⚠ YES** | FEATURES.md, GUIDED_SALE_AUDIT_2026-09.md |
+| 24 | 650 | `commission_system.sql` | 49 | ✅ | **⚠ YES** | CR_INVOICING_AUDIT_2026-10.md, FEATURES.md … |
 | 25 | 650 | `crews_schema.sql` | 46 | ✅ | **⚠ YES** | CLAUDE.md, FEATURES.md |
 | 26 | 651 | `commission_finance_source.sql` | 5 | ✅ | **⚠ YES** | FEATURES.md, OPEN_ITEMS.md |
 | 27 | 655 | `insurance_claims_coverage_cols.sql` | 3 | ✅ | — | FEATURES.md |
@@ -80,7 +80,7 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 56 | 1056 | `claim_chase.sql` | 4 | ✅ | — | FEATURES.md |
 | 57 | 1078 | `document_versions.sql` | 13 | ✅ | — | OPEN_ITEMS.md |
 | 58 | 1098 | `estimate_assemblies.sql` | 11 | ✅ | — | FEATURES.md, OPEN_ITEMS.md |
-| 59 | 1108 | `collections_rep_insert.sql` | 2 | ✅ | — | FEATURES.md |
+| 59 | 1108 | `collections_rep_insert.sql` | 2 | ✅ | — | CR_INVOICING_AUDIT_2026-10.md, FEATURES.md |
 | 60 | 1110 | `pricing_roofing_labor.sql` | 5 | ✅ | **⚠ YES** | FEATURES.md |
 | 61 | 1111 | `preinstall_guide.sql` | 13 | ✅ | — | FEATURES.md, GUIDED_SALE_AUDIT_2026-09.md |
 | 62 | 1112 | `preinstall_guides_siding_windows.sql` | 2 | — | — | FEATURES.md |
