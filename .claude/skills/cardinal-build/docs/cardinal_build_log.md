@@ -34333,6 +34333,22 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1297: the load-the-truck list (Theo's pick 5B, 10 Oct)
+
+**What it does.**
+- **The punch card** has a "Bring" section: what to load before the truck leaves, with an "N / M loaded" count. Anyone can add a line or tick one; a manager can remove one (the checklist rule). It reuses the checklist's own row styling.
+- **The person's day page** (route page, 1254) shows one "Load the truck · <day>" list: every stop's lines, grouped by job, each 44px and tickable.
+
+**Data.** `punch_items.truck` jsonb `[{t,d,by,at}]`, from `punch_truck.sql`, **applied 11 Oct 2026 before this shipped**. Additive and idempotent.
+- The card writes through `save()`, so it uses the offline outbox like steps and visits.
+- The route page ticks through `CardinalPunch.update`, the one punch write path it already used for "Add to day". ⚠ That path is online-only: a tick there with no signal reports "Could not save that tick" rather than queuing. Ticking on the card itself does queue.
+
+**Gates.**
+- `gate_1297`: 6 checks, with seed `gate_1297_seed.js`. The control against 1296 is red on all 6.
+- ⚠ The first seed booked the truck job "today", and the container's clock read Sunday, which the route page deliberately skips. So the page opened on Monday and the list was correctly empty. The seed now books the first working day.
+- `gate_types` caught one new TS2339 of mine (`window.currentUser` typed `never` in the route script). It is fixed with an `any` cast, not rebaselined.
+- `gate_1254` is still red 8, the same as before; it is pre-existing.
+
 ## Build 1296: callback cause + original crew (Theo's pick 1B, 10 Oct)
 
 **What it does.**

@@ -9741,6 +9741,10 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1297: load-the-truck list
+
+Each punch-out card has a "Bring" list (add / tick / remove), and a person's day page shows one "Load the truck" list for the day, grouped by stop. SQL: `punch_truck.sql` (applied). Gate: `gate_1297`.
+
 ## Build 1296: callback cause + original crew
 
 A Callback card records why (Workmanship / Material / Storm / Homeowner / Other) and the original crew, auto-filled from the job's crew work order. Crews → a crew → Jobs lists its callbacks for 12 months, with the cause. SQL: `punch_callback_cause.sql` (applied). Gate: `gate_1296`.

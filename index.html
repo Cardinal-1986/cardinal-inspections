@@ -4152,7 +4152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1296<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-10 build 1297<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44122,6 +44122,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1297, d: '2026-10-10', t: 'Load-the-truck list',
+    s: 'Every punch-out has a Bring list now: what to load before the truck leaves, ticked off as it goes on. Anyone can add a line. On a person\u2019s day page, every stop\u2019s list shows in one place under Load the truck, grouped by job, so the morning load is one screen.' },
   { b: 1296, d: '2026-10-10', t: 'Callback cause and original crew',
     s: 'A Callback now says why the client called back, with Workmanship, Material, Storm, Homeowner or Other, and which crew did the original job. The crew fills itself in from the job\u2019s crew work order, and you can change it. Each crew\u2019s Jobs tab under Crews lists its callbacks for the last year, with the cause, so you can see who keeps getting called back.' },
   { b: 1295, d: '2026-10-10', t: 'Rain flag on punch-outs',
@@ -57552,6 +57554,8 @@ window.CardinalProduction = {
 #cr-pk .pkvstale{ color:#f0a24a; }
 #cr-pk .pkvwas{ color:var(--pk-ink,#eceef0); }
 #cr-pk .pkvnone{ color:var(--pk-dim,#9aa2ae); }
+/* 1297: the empty Bring list */
+#cr-pk .pktk0{ padding:8px 0 4px; font:400 13px 'Segoe UI',Arial,sans-serif; color:var(--pk-dim,#9aa2ae); }
 /* 1296: the callback cause chips and the crew picker. 44px, the card's own inks. */
 #cr-pk .pkcbk{ font:700 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--pk-dim,#9aa2ae); margin:4px 0 6px; }
 #cr-pk .pkcbk + .pkcbrow, #cr-pk .pkcbrow + .pkcbk{ margin-top:0; }
@@ -58031,8 +58035,8 @@ function cardHtml(){
   var working = !done && dayCount() > 0;
   var disp = (dispOpen || (isManager() && !working && !done)) ? metaHtml() : dispatchLine();
   var left = working
-    ? jobHtml(pr) + cbHtml() + visitHtml() + checklistHtml() + photosHtml() + disp + descHtml()
-    : jobHtml(pr) + cbHtml() + disp + visitHtml() + descHtml() + checklistHtml() + photosHtml();
+    ? jobHtml(pr) + cbHtml() + visitHtml() + checklistHtml() + truckHtml() + photosHtml() + disp + descHtml()
+    : jobHtml(pr) + cbHtml() + disp + visitHtml() + descHtml() + checklistHtml() + truckHtml() + photosHtml();
   return '<div class="pkwrap">' +
     '<div class="pktop">' +
       '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
@@ -58530,6 +58534,39 @@ async function tickStep(i){
   });
   await save({ steps: st });
 }
+/* 1297: the load-the-truck list — same shape and save path as the steps */
+function truck(){ return Array.isArray(it && it.truck) ? it.truck : []; }
+async function tickTruck(i){
+  var tk = truck().slice(), x = tk[i]; if(!x) return;
+  tk[i] = Object.assign({}, x, { d: !x.d, by: !x.d ? (myEmail() || null) : null, at: !x.d ? new Date().toISOString() : null });
+  await save({ truck: tk });
+}
+async function addTruck(){
+  var t = prompt('What goes on the truck?\n\nFor example: Step flashing, 10 pcs');
+  if(!t || !String(t).trim()) return;
+  await save({ truck: truck().concat([{ t: String(t).trim().slice(0, 120), d: false, by: null, at: null }]) });
+}
+async function delTruck(i){
+  var tk = truck().slice(); if(!tk[i]) return;
+  if(!await crAsk('Take this off the list?\n\n' + (tk[i].t || ''))) return;
+  tk.splice(i, 1);
+  await save({ truck: tk });
+}
+function truckHtml(){
+  var tk = truck(), mgr = isManager(), done = it.status === 'done';
+  if(done && !tk.length) return '';
+  var n = tk.filter(function(x){ return x && x.d; }).length;
+  var body = tk.map(function(x, i){
+    return '<div class="pkck' + (x.d ? ' d' : '') + '">' +
+      '<button class="bx" data-truck="' + i + '" type="button" aria-label="' + (x.d ? 'Not loaded' : 'Loaded') + '">' + svg('tick') + '</button>' +
+      '<span class="bd"><span class="st">' + esc(x.t || '') + '</span></span>' +
+      (mgr ? '<button class="pkbtn" data-deltruck="' + i + '" type="button" aria-label="Remove">×</button>' : '') + '</div>';
+  }).join('');
+  return '<div class="pksec" id="pkSecTruck" data-cr-1297><div class="pkh">' + svg('list') + 'Bring' +
+    (tk.length ? '<span class="rt"><b>' + n + '</b> / ' + tk.length + ' loaded</span>' : '') + '</div>' +
+    (body || '<div class="pktk0">Nothing listed yet. Add what to load before the truck leaves.</div>') +
+    (done ? '' : '<button class="pkadd" data-act="addtruck" type="button">+ Add item</button>') + '</div>';
+}
 async function addStep(){
   var t = prompt('What is the step?');
   if(!t || !String(t).trim()) return;
@@ -58918,6 +58955,10 @@ function wire(){
   q('[data-act="cout"]', function(b){ b.onclick = function(){ checkOut(); }; });
   q('[data-tpl]', function(b){ b.onclick = function(){ useTemplate(b.getAttribute('data-tpl')); }; });
   q('[data-act="addstep"]', function(b){ b.onclick = addStep; });
+  /* 1297: the truck list */
+  q('[data-truck]', function(b){ b.onclick = function(){ tickTruck(Number(b.getAttribute('data-truck'))); }; });
+  q('[data-deltruck]', function(b){ b.onclick = function(){ delTruck(Number(b.getAttribute('data-deltruck'))); }; });
+  q('[data-act="addtruck"]', function(b){ b.onclick = addTruck; });
   q('[data-act="supp"]', function(b){ b.onclick = flagSupplement; });
   q('[data-act="dispatch"]', function(b){ b.onclick = function(){ dispOpen = !dispOpen; lastSig = ''; render(); }; });
   /* 1249: On hold */
@@ -87182,6 +87223,16 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 #cr-route .rtst .miss{ color:var(--rt-acc,#e35c63); font-weight:600; }
 #cr-route .rtt{ flex:none; font:700 13px var(--rt-mono,ui-monospace,Menlo,monospace); color:var(--rt-ink,#eceef0); }
 #cr-route .rtt.live{ color:var(--rt-ok,#6cb98f); }
+/* 1297: load the truck */
+#cr-route .rttruck{ border:1px solid var(--rt-line,rgba(230,235,240,.11)); border-radius:12px; padding:10px 12px; margin:12px 0; }
+#cr-route .rttruck h2{ margin:0 0 4px; font:700 15px 'Segoe UI',Arial,sans-serif; color:var(--rt-ink,#eceef0); display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+#cr-route .rttruck h2 small{ font:600 13px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); }
+#cr-route .rttk-h{ margin:10px 0 2px; font:700 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--rt-mut,#9aa3ab); }
+#cr-route .rttk{ display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:0 2px; border:0; border-top:1px solid var(--rt-line,rgba(230,235,240,.11));
+  background:transparent; color:var(--rt-ink,#eceef0); font:400 15px 'Segoe UI',Arial,sans-serif; text-align:left; cursor:pointer; }
+#cr-route .rttk .bx{ flex:none; width:22px; height:22px; border-radius:6px; border:1.5px solid var(--rt-mut,#9aa3ab); display:grid; place-items:center; font:700 13px 'Segoe UI',Arial,sans-serif; }
+#cr-route .rttk.d .bx{ background:#34d399; border-color:#34d399; color:#0c0d0f; }
+#cr-route .rttk.d > span:last-child{ color:var(--rt-mut,#9aa3ab); text-decoration:line-through; }
 #cr-route .rtempty{ padding:18px 12px; border-radius:12px; border:1px dashed var(--rt-line,rgba(230,235,240,.11));
   font:400 15px 'Segoe UI',Arial,sans-serif; color:var(--rt-mut,#9aa3ab); }
 #cr-route .rtgo{ display:flex; align-items:center; justify-content:center; margin-top:12px; min-height:48px; border-radius:10px;
@@ -87302,6 +87353,18 @@ function rtOnClick(e){
   else if(act === 'day'){ day = v; window.__crRouteLast = { who: who, day: day }; rtDraw(); }
   else if(act === 'stop'){ if(window.CardinalPunchCard && window.CardinalPunchCard.open) window.CardinalPunchCard.open(v, { back: 'none' }); }
   else if(act === 'add') rtAddToDay(v);
+  else if(act === 'truck') rtTickTruck(v);
+}
+/* 1297: tick a truck line from the route page, through the one punch write path */
+async function rtTickTruck(v){
+  var p = String(v).split(':'), id = p[0], i = Number(p[1]);
+  var P = window.CardinalPunch; if(!(P && P.update)) return;
+  var it = rtRows().filter(function(x){ return String(x.id) === id; })[0]; if(!it || !Array.isArray(it.truck) || !it.truck[i]) return;
+  var cu = /** @type {any} */ (window).currentUser, tk = it.truck.slice(), x = tk[i], me = (cu && cu.email) || null;
+  tk[i] = Object.assign({}, x, { d: !x.d, by: !x.d ? me : null, at: !x.d ? new Date().toISOString() : null });
+  var r = await P.update(id, { truck: tk });
+  if(!(r && r.ok)){ try{ window.crTell('Could not save that tick: ' + ((r && r.error) || 'write refused')); }catch(_){} }
+  rtDraw();
 }
 async function rtAddToDay(id){
   if(!rtIsBoss()) return;
@@ -87359,6 +87422,21 @@ function rtDraw(){
     if(addrs.length){
       h += '<a class="rtgo" id="rtGo" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/' +
         [SHOP].concat(addrs).map(encodeURIComponent).join('/') + '">Directions in Google Maps</a>';
+    }
+    /* 1297: load the truck — every stop's Bring list for this day, one place */
+    var tkStops = list.filter(function(it){ return Array.isArray(it.truck) && it.truck.length; });
+    if(tkStops.length){
+      var tkAll = 0, tkOn = 0;
+      tkStops.forEach(function(it){ it.truck.forEach(function(x){ tkAll++; if(x && x.d) tkOn++; }); });
+      h += '<div class="rttruck" id="rtTruck" data-cr-1297><h2>Load the truck · ' + rtEsc(rtDayWord(day)) + '<small>' + tkOn + ' of ' + tkAll + ' loaded</small></h2>' +
+        tkStops.map(function(it){
+          var pr = rtProjOf(it.project_id);
+          return '<div class="rttk-h">' + rtEsc(pr ? pr.name : 'No client') + (it.scheduled_time ? ' · ' + rtEsc(rtClock(it.scheduled_time)) : '') + '</div>' +
+            it.truck.map(function(x, i){
+              return '<button type="button" class="rttk' + (x && x.d ? ' d' : '') + '" data-rt="truck" data-v="' + rtEsc(String(it.id)) + ':' + i + '" aria-pressed="' + !!(x && x.d) + '">' +
+                '<span class="bx">' + (x && x.d ? '✓' : '') + '</span><span>' + rtEsc((x && x.t) || '') + '</span></button>';
+            }).join('');
+        }).join('') + '</div>';
     }
     h += '<div class="rtnote">Minutes are estimates from straight-line distance (≈). Google Maps has the real drive.</div>';
   }
