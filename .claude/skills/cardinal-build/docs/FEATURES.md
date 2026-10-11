@@ -9741,6 +9741,18 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1293: Communication fits on a small phone
+
+At 360px with Larger text, the Job Menu tile is tighter, so "Communication" stays one word. The Line Items buttons are back on the shared 12px corner. Gate: `gate_1224`.
+
+## Build 1292: Buttons A, phase 1
+
+Each screen has one solid-red main action. Other actions are outlines, and Delete is red words. Covered so far: `.chipbtn`, the estimate add row and phone bar, and Accounts Receivable. Gate: `gate_1292`.
+
+## Build 1291: flat billing tiles
+
+The Billed / Collected / Balance tiles have a thin outline instead of an inset shadow, in both themes. Gate: `gate_1291`.
+
 ## Build 1290: light mode in the drawer's style
 
 Light retail matches the dark clean-up:
