@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1315<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1316<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12088,30 +12088,26 @@ function renderOps(){
   }
 
   /* AR aging: invoiced projects, aged from invoice date */
+  /* 1316: the SAME list, clock and buckets as Invoices & AR (CardinalAR.list), for the jobs on
+     this board. It used to count Invoiced only, age from the stage date or the last edit,
+     and bucket <30 / 31-60 / 61-90 / >90 — so a day-30 job was "<30" here and "15–30" there. */
   var buckets = [
-    { lbl:'<30',   min:0,  max:30,       amt:0, col:'#7CB342' },
-    { lbl:'31-60', min:31, max:60,       amt:0, col:'#E8B10F' },
-    { lbl:'61-90', min:61, max:90,       amt:0, col:'#F08A24' },
-    { lbl:'>90',   min:91, max:Infinity, amt:0, col:'#C8202E' }
+    { lbl:'0–14', amt:0, col:'#7CB342' },
+    { lbl:'15–30', amt:0, col:'#E8B10F' },
+    { lbl:'31+',    amt:0, col:'#C8202E' }
   ];
   var total = 0;
   var _arBoard = (typeof boardProjects === 'function') ? boardProjects() : cacheProjects;
+  var _onBoard = {}; (_arBoard || []).forEach(function(p){ _onBoard[p.id] = 1; });
   var _arRows = [];
-  _arBoard.forEach(function(p){
-    if(normStage(p.stage) !== 'Invoiced') return;
-    var ck = parseCkAll(p);
-    var inv = ck.t_Invoiced || ck.stage_since || p.updated_at;
-    var days = inv ? Math.floor((Date.now() - new Date(inv).getTime())/86400000) : 0;
-    /* 654 (CR-AUD-004): outstanding is what is still OWED — value minus
-       payments received — not the gross job value. A half-paid job used to
-       read full here and half on its own profile. */
-    var v = jobFinance(p).balance;
+  var _arAll = (window.CardinalAR && typeof window.CardinalAR.list === 'function') ? window.CardinalAR.list() : [];
+  _arAll.forEach(function(x){
+    if(!_onBoard[x.pr.id]) return;
+    var v = Number(x.fin.balance) || 0;
     if(v <= 0) return;
     total += v;
-    _arRows.push({ name: p.name || 'Client', v: v });
-    for(var i=0;i<buckets.length;i++){
-      if(days >= buckets[i].min && days <= buckets[i].max){ buckets[i].amt += v; break; }
-    }
+    _arRows.push({ name: x.pr.name || 'Client', v: v });
+    buckets[window.CardinalAR.bucketOf(x.age)].amt += v;
   });
   var maxAmt = Math.max.apply(null, buckets.map(function(b){ return b.amt; }).concat([0]));
   function niceCeil(n){
@@ -44323,6 +44319,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1316, d:'2026-10-11', t:'One answer to who owes you', s:'Invoices & AR, the home card and Community\u2019s Partner A/R each counted different jobs, aged them from different dates and grouped them differently. They now share one set of rules: a job owes when it is Invoiced or Closed, or its invoice has gone out, and still has a balance; age runs from the day the invoice was sent; groups are 0\u201314, 15\u201330 and 31+ days. The oldest money is at the top. Finished jobs that were never invoiced have their own Ready to invoice group with a Create invoice button. Partner jobs show on Invoices & AR, and payments on them now count.' },
   { b: 1315, d:'2026-10-11', t:'Every send counts as sent', s:'Texting or emailing an invoice from the job card or the Invoices list now marks it sent and moves the job to Invoiced \u2014 before, only the editor\u2019s Email button did, so a texted invoice stayed Draft and was never reminded. Sending never moves a job backwards: a Closed job stays Closed. Create invoice can\u2019t make two by a double tap, says so when the job is paid in full, and asks before making a second one. The payment form works for a second payment without reloading.' },
   { b: 1314, d:'2026-10-11', t:'One balance everywhere', s:'The pay link, the reminder texts and the app could each come up with a different amount owed \u2014 the server ignored extras added to a job and payments typed into the old Amount Collected box. They all use the same total now, and there is one place to record money in: Record payment. A bank payment still clearing stops the client paying twice. Paid this month finally counts this month\u2019s payments (it always read $0). If payments fail to load, the app says so instead of showing every job as unpaid. The invoice heading now just says INVOICE.' },
   { b: 1313, d:'2026-10-11', t:'An invoice can be paid', s:'An invoice used to be an estimate with a new title: it still had a signature line, so the link you sent asked the client to Accept & Sign and never showed a Pay button. It also said Estimate #, Valid Through and had an empty photo box. An invoice now has its own header \u2014 Bill To, Invoice Date, Due upon receipt \u2014 no signature line, and the link opens with Pay. The text button on an invoice says Text pay link.' },
@@ -63420,16 +63417,17 @@ var calCard = '<button type="button" class="cc-cal30" data-go="calendar" aria-la
 var arCard = '';
 if(role !== 'prod'){
 var arBy = {}, arTot = 0, arN = 0, arOld = 0;
-d.all.forEach(function(pr){
-if(normStage(pr.stage) !== 'Invoiced') return;
-var owe = 0;
-/* jobFinance is the number when a contract or estimate carries one; a Community
-   job priced only by its bid (the usual shape) owes its bid. */
-try{ var jf = (typeof window.jobFinance === 'function') ? window.jobFinance(pr) : null;
-owe = (jf && jf.value > 0) ? (jf.balance || 0) : (bidAmt(pr) || 0); }catch(_1304){ owe = bidAmt(pr) || 0; }
+/* 1316: the same who-owes / how-much / how-old rules as Invoices & AR (CardinalAR.list), so
+   a partner's balance reads the same on both screens — and payments now count (a bid-only
+   job used to owe its whole bid however much the partner had paid). */
+var arMine = {}; d.all.forEach(function(pr){ arMine[pr.id] = 1; });
+var arSrc = (window.CardinalAR && typeof window.CardinalAR.list === 'function') ? window.CardinalAR.list() : [];
+arSrc.forEach(function(x){
+var pr = x.pr;
+if(!arMine[pr.id]) return;
+var owe = Number(x.fin.balance) || 0;
 if(!(owe > 0)) return;
-var c = ck(pr) || {}, invAt = c.t_Invoiced || c.stage_since;
-if(invAt && (Date.now() - new Date(invAt).getTime()) > 30 * 86400000) arOld++;
+if(x.age > 30) arOld++;
 var pn = partnerOf(pr);
 arBy[pn] = (arBy[pn] || 0) + owe; arTot += owe; arN++;
 });
@@ -89669,9 +89667,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       <button id="crarMaster" class="crar-btn" type="button" disabled>&hellip;</button>
     </div>
     <div class="crar-kpis">
-      <div class="crar-kpi"><span class="crar-k">Total outstanding</span><span class="crar-v" id="crarKpiOut">$0</span><span class="crar-sub" id="crarKpiOutSub">0 open invoices</span></div>
+      <div class="crar-kpi"><span class="crar-k">Total outstanding</span><span class="crar-v" id="crarKpiOut">$0</span><span class="crar-sub" id="crarKpiOutSub">0 jobs owe</span></div>
       <div class="crar-kpi"><span class="crar-k">Paid this month</span><span class="crar-v pos" id="crarKpiMonth">$0</span><span class="crar-sub">card &amp; offline</span></div>
-      <div class="crar-kpi alert"><span class="crar-k">Overdue &middot; 30+ days</span><span class="crar-v" id="crarKpiOver">$0</span><span class="crar-sub" id="crarKpiOverSub">nothing overdue</span></div>
+      <div class="crar-kpi alert"><span class="crar-k">Overdue &middot; 31+ days</span><span class="crar-v" id="crarKpiOver">$0</span><span class="crar-sub" id="crarKpiOverSub">nothing overdue</span></div>
     </div>
     <div class="crar-body" id="crarBody"></div>
   </div>
@@ -89726,32 +89724,68 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if(inv && inv.status === 'sent') return { k:'sent', label:'Sent' };
     return { k:'draft', label:'Draft' };
   }
-  /* days since the invoice was sent, else since Invoiced stage */
+  /* 1316: ONE aging clock for every A/R screen. The invoice's sent date; else the day the job
+     went Invoiced; else the invoice's own date. Never updated_at — any edit reset it to 0 —
+     and never pr.stage_since, which is not a column (it lives in the checklist). */
   function ageDays(pr, inv){
-    var iso = (inv && inv.sent_at) || null;
-    if(!iso){
-      var ck = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
-      iso = ck.t_Invoiced || pr.stage_since || pr.updated_at || null;
-    }
+    var ck = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
+    var iso = (inv && inv.sent_at) || ck.t_Invoiced || ck.stage_since || (inv && inv.created_at) || null;
     if(!iso) return 0;
     var d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
     return d > 0 ? d : 0;
   }
-
-  /* the AR set: invoiced (or invoice-bearing) jobs that still owe */
+  /* 1316: what a job owes. jobFinance's number, except a Community job priced only by its bid:
+     there jobFinance's value is 0 and its paid figure clamps to 0, so a $12,000 Habitat job
+     with $6,000 paid read $12,000 on one screen, $0 on another and was missing from a third.
+     It owes its bid less what has been paid. */
+  function owed(pr){
+    var fin = jobFinance(pr);
+    if(Number(fin.value) > 0) return fin;
+    var community = (typeof projClaimType === 'function') && projClaimType(pr) === 'community';
+    if(!community || typeof window.commBidAmount !== 'function') return fin;
+    var est = (typeof estBest !== 'undefined' && estBest) ? (Number(estBest[pr.id]) || 0) : 0;
+    var b = Number((window.commBidAmount(pr, { total: est }) || {}).amt) || 0;
+    var paid = (typeof collPaid !== 'undefined' && collPaid) ? (Number(collPaid[pr.id]) || 0) : 0;
+    return { contracts: fin.contracts, value: b, paid: paid, balance: b - paid,
+             pct: b ? Math.round(paid / b * 100) : 0, source: b ? 'bid' : 'none' };
+  }
+  function invSent(inv){ return !!(inv && inv.status === 'sent'); }
+  /* 1316: ONE rule for who owes. Invoiced or Closed, or an invoice that has gone out, with a
+     balance. Lost never counts. A Closed job with money owed used to vanish from the home card. */
   function arList(){
     var out = [];
     projects().forEach(function(pr){
+      var s = stg(pr);
+      if(s === 'Lost') return;
       var inv = invoiceFor(pr.id);
-      if(stg(pr) !== 'Invoiced' && !inv) return;
-      var fin = jobFinance(pr);
+      if(s !== 'Invoiced' && s !== 'Closed' && !invSent(inv)) return;
+      var fin = owed(pr);
       if(!(Number(fin.balance) > 0.005)) return;
       out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:ageDays(pr, inv) });
     });
     out.sort(function(a, b){ return b.age - a.age; });
     return out;
   }
+  /* 1316: finished work nobody has billed — the commonest case, and the list could never show
+     it, so its own Create invoice button never appeared. Retail and insurance only: Community
+     is billed to the partner from its own page. Estimate-priced jobs are left out because an
+     invoice needs contract money (createInvoiceFor refuses them). */
+  function readyList(){
+    var out = [];
+    projects().forEach(function(pr){
+      if(stg(pr) !== 'Completed') return;
+      if((typeof projClaimType === 'function') && projClaimType(pr) === 'community') return;
+      var inv = invoiceFor(pr.id);
+      if(invSent(inv)) return;
+      var fin = jobFinance(pr);
+      if(!(Number(fin.balance) > 0.005) || fin.source === 'estimate') return;
+      out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:0, ready:true });
+    });
+    return out;
+  }
+  /* 1316: one bucket set everywhere — 0–14, 15–30, 31+ */
   function bucketOf(age){ return age < 15 ? 0 : (age <= 30 ? 1 : 2); }
+  var BUCKET_LABELS = ['0–14 days', '15–30 days', '31+ days · overdue'];
   function paidThisMonth(){
     var now = new Date();
     var ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -89768,7 +89802,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var pr = x.pr, od = x.age > 30;
     var addr = esc2(pr.address || '');
     var nm = esc2(pr.name || 'Client');
-    var note = x.inv ? '' : ' &middot; not yet invoiced';
+    var note = x.ready ? ' &middot; finished, not invoiced yet' : (x.inv ? '' : ' &middot; not yet invoiced');
     var acts;
     if(x.inv){
       acts = '<button class="crar-btn ghost" type="button" data-arcopy="' + esc2(pr.id) + '">' + IC_LINK + 'Copy link</button>'
@@ -89780,7 +89814,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
            + '<button class="crar-btn ghost" type="button" data-aropen="' + esc2(pr.id) + '">Open job</button>';
     }
     acts += '<button class="crar-btn ghost" type="button" data-arpay="' + esc2(pr.id) + '">' + IC_CASH + 'Record payment</button>';
-    var ageTxt = od ? (x.age + ' days &middot; overdue')
+    var ageTxt = x.ready ? 'Ready' : od ? (x.age + ' days &middot; overdue')
                     : (x.inv && x.inv.status === 'sent' ? ('Sent ' + x.age + 'd ago') : (x.age + 'd'));
     return '<div class="crar-row' + (od ? ' od' : '') + '">'
       + '<div class="crar-who"><div class="crar-nm">' + nm + ' ' + pill(x.st) + '</div>'
@@ -89804,7 +89838,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if(q('crarKpiOut')) q('crarKpiOut').textContent = money(total);
     if(q('crarKpiMonth')) q('crarKpiMonth').textContent = money(paidThisMonth());
     if(q('crarKpiOver')) q('crarKpiOver').textContent = money(overdue);
-    if(q('crarKpiOutSub')) q('crarKpiOutSub').textContent = list.length + (list.length === 1 ? ' open invoice' : ' open invoices');
+    if(q('crarKpiOutSub')) q('crarKpiOutSub').textContent = list.length + (list.length === 1 ? ' job owes' : ' jobs owe');   /* 1316: not all have an invoice yet */
     if(q('crarKpiOverSub')) q('crarKpiOverSub').textContent = overdueN ? (overdueN + (overdueN === 1 ? ' invoice needs a nudge' : ' invoices need a nudge')) : 'nothing overdue';
     /* 1158: ONE remWire() call, on every path. 1157 put it after the bucket
        loop, behind an early `return` taken whenever the list was empty — so
@@ -89813,15 +89847,27 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
        book, and it is the screen the switch lives on. The list rendering is
        now a branch rather than an exit, so the switch cannot be skipped. */
     var body = q('crarBody');
+    var ready = readyList();
+    var readyHtml = '';
+    if(ready.length){
+      var rsub = 0; ready.forEach(function(x){ rsub += x.fin.balance; });
+      readyHtml = '<div class="crar-grp ready">'
+        + '<div class="crar-grphd"><b>Ready to invoice</b><span class="crar-line"></span><span class="crar-sub">' + money(rsub) + '</span></div>'
+        + ready.map(rowHtml).join('')
+        + '</div>';
+    }
     if(body){
-      if(!list.length){
+      if(!list.length && !ready.length){
         body.innerHTML = '<div class="crar-empty"><b>All clear.</b><br>No open balances right now.</div>';
+      } else if(!list.length){
+        body.innerHTML = readyHtml;
       } else {
         var buckets = [[], [], []];
         list.forEach(function(x){ buckets[bucketOf(x.age)].push(x); });
-        var labels = ['Current &middot; 0&ndash;14 days', '15&ndash;30 days', '30+ days &middot; overdue'];
+        var labels = ['0&ndash;14 days', '15&ndash;30 days', '31+ days &middot; overdue'];
         var html = '';
-        for(var i = 0; i < 3; i++){
+        /* 1316: the oldest money first — on a phone the 45-day job used to sit ~2,000px down */
+        for(var i = 2; i >= 0; i--){
           if(!buckets[i].length) continue;
           var sub = 0; buckets[i].forEach(function(x){ sub += x.fin.balance; });
           html += '<div class="crar-grp' + (i === 2 ? ' over' : '') + '">'
@@ -89829,7 +89875,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
             + buckets[i].map(rowHtml).join('')
             + '</div>';
         }
-        body.innerHTML = html;
+        body.innerHTML = readyHtml + html;
       }
     }
     remWire();
@@ -90204,6 +90250,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   window.CardinalAR = Object.assign(window.CardinalAR || {}, {
     open:open, render:render, close:close, list:arList,
     status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor,
+    owed:owed, age:function(pr){ return ageDays(pr, invoiceFor(pr.id)); }, ready:readyList,
+    bucketOf:bucketOf, bucketLabels:BUCKET_LABELS,   /* 1316: the one A/R rule set */
     markInvoiceSent:markInvoiceSent   /* 1315 */
   });
 })();

@@ -36,7 +36,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 | M6 | ✅ **FIXED 1314** — Saving an invoice overwrites its `total` with BALANCE DUE (`#estTotal`); servers fall back to `rep.total` and subtract collections again | `saveCurrent` ~27372 | overwrite traced |
 | M7 | Refunds/disputes never recorded — webhook ignores `charge.refunded`, `charge.dispute.*`; UI has no void/refund | `api/pay-webhook.js:71–79` | traced |
 | M8 | Overpayment invisible — `paid` clamped to `value`; no cap in the pay modal; commission booked on the full amount | `jobFinance` ~17263, `savePayModal` ~90070 | executed |
-| M9 | Community bid-only jobs: clamp makes paid = 0 when value = 0. Habitat $12k awarded, $6k collected → tile $12k, cc2 page $12k, profile $0, Invoices & AR omits it. True answer $6k | `jobFinance` clamp; `cr-ch2` ~63364; `cc2Page` ~65274 | executed |
+| M9 | ✅ **FIXED 1316** — Community bid-only jobs: clamp makes paid = 0 when value = 0. Habitat $12k awarded, $6k collected → tile $12k, cc2 page $12k, profile $0, Invoices & AR omits it. True answer $6k | `jobFinance` clamp; `cr-ch2` ~63364; `cc2Page` ~65274 | executed |
 | M10 | ✅ **FIXED 1314** — A failed collections read becomes an empty ledger in the app (`.catch(()=>[])`) — every Balance Due shows full contract. Server already fixed this at 1199 | ~11652 | traced |
 | M11 | Reps can record unbounded payments that create their own 10% commission and can't correct them (update = full access, delete = admin) | `collections_rep_insert.sql`, `commission_system.sql:175–206` | traced |
 
@@ -46,11 +46,11 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 |---|---|---|
 | R1 | ✅ **FIXED 1314** — "Paid this month" is always $0 — `paidThisMonth()` reads `collected_at`, the cache selects only `project_id,amount` | ✅ ~89690 vs ~11316 |
 | R2 | Home "Money Collected (30d)" sums `ws[].log`, whose only writer (`#acxPayBtn`) is no longer rendered | ~12005 / ~12876 |
-| R3 | Three "who owes me" totals: Invoices & AR (any CRM, Invoiced **or** has invoice, Closed included), Home chart (Invoiced only, current board's CRM), Partner A/R (Community, bid fallback). Partner money is missing from Invoices & AR | ~89677, ~12071, ~63364 |
-| R4 | Three aging clocks: `sent_at` → `t_Invoiced` → `pr.stage_since` (column does not exist; lives in checklist) → `updated_at` (resets on any edit) / home `t_Invoiced` / digest `stage_since` | ~89665, ~12071, `api/digest.js:115` |
-| R5 | Three bucket sets: 0–14 / 15–30 / "30+" (actually 31+) · ≤30 / 31–60 / 61–90 / >90 · over-30 | |
-| R6 | Closed with a balance: on Invoices & AR only if an invoice doc exists; with none, on no A/R surface at all | executed |
-| R7 | A finished job (Completed, signed contract, no invoice) is not on Invoices & AR, so its "Create invoice" button never appears for the commonest case | `arList` |
+| R3 | ✅ **FIXED 1316** — Three "who owes me" totals: Invoices & AR (any CRM, Invoiced **or** has invoice, Closed included), Home chart (Invoiced only, current board's CRM), Partner A/R (Community, bid fallback). Partner money is missing from Invoices & AR | ~89677, ~12071, ~63364 |
+| R4 | ✅ **FIXED 1316** — Three aging clocks: `sent_at` → `t_Invoiced` → `pr.stage_since` (column does not exist; lives in checklist) → `updated_at` (resets on any edit) / home `t_Invoiced` / digest `stage_since` | ~89665, ~12071, `api/digest.js:115` |
+| R5 | ✅ **FIXED 1316** — Three bucket sets: 0–14 / 15–30 / "30+" (actually 31+) · ≤30 / 31–60 / 61–90 / >90 · over-30 | |
+| R6 | ✅ **FIXED 1316** — Closed with a balance: on Invoices & AR only if an invoice doc exists; with none, on no A/R surface at all | executed |
+| R7 | ✅ **FIXED 1316** — A finished job (Completed, signed contract, no invoice) is not on Invoices & AR, so its "Create invoice" button never appears for the commonest case | `arList` |
 | R8 | Insurance: AR marks depreciation-pending jobs OVERDUE at 31 days; Claims hub "owed depreciation" ignores collections; deductibles summed on Closed/paid claims | `cr-cth` ~61178 |
 | R9 | Rep sees a different balance from admin when they can see a job but aren't its `sales_rep` (23/86 projects have no `sales_rep`; 2 differ from the assigned rep) — `collections` RLS keys on `sales_rep` only | `commission_system.sql:71` |
 
@@ -73,7 +73,7 @@ Passing, measured: nothing under 11px, every ink ≥ 4.5:1 both themes, no gradi
 - **D1** The invoice is an estimate wearing an invoice title: "Estimate #", "Estimate Date", "Valid Through", Client Contact twice, empty PROPERTY PHOTO box, concealed-conditions change-order clause, "This estimate is valid…" acceptance paragraph, page title "— Estimate". (`invoice_doc_afterpay_desk.png`)
 - **D2** Two balances on one invoice after a payment: live $9,800 card above a stored SUMMARY reading $14,800.
 - **D3** Too many words for three things — Billed / Job Value / Contract Price; Collected / Paid / Payments Received; Balance / Balance Due / Current Balance Due / Amount due / Total outstanding; Invoices & AR / Accounts receivable / Partner A/R; Generate / Create invoice; Record payment / Record offline payment; Text link / Resend text / Company SMS / My phone; Sent / UNSENT / Mark sent. Proposed: **Total · Paid · Balance due · Create invoice · Send · Record payment · Invoices**.
-- **D4** Oldest debt is at the bottom — Current renders first; on a phone the 45-day job is ~2,000px down.
+- **D4** ✅ *FIXED 1316* — Oldest debt is at the bottom — Current renders first; on a phone the 45-day job is ~2,000px down.
 - **D5** On a phone the Invoices & Payments card is ~1,300px below the money strip, under the 17-tile Job Menu; three separate money doors; "Balance Due" in the strip is not tappable.
 - **D6** "Invoice created" shows as a red error-style toast, points to a Worksheet not on screen; the editor toolbar offers "Text to sign" on an invoice.
 - **D7** Payment form: amount starts blank; Type always defaults to Deposit, even on a final payment.

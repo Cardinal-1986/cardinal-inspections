@@ -35983,3 +35983,9 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Gates:** `gate_1315` GREEN 7/7, control RED 6/7 (C, "Copy is not a send", is a must-not and passes on both by design). Green: check_build, types, dupes, scroll-lock, gate_1141/1201/1204/1313/1314, harness_inv1108/1109.
 - ⚠ Still stale, for the redesign build: the Create invoice toast still says "payments logged in the Worksheet. Email it…".
 
+## Build 1316: one A/R list (audit R3–R7, M9, D4, C4)
+- **What:** one who-owes / how-much / how-old / bucket rule set in `cr-ar-script`, read by the home card and Partner A/R; Ready to invoice group; oldest first; Closed-with-balance counted; Community bid-only jobs owe bid − paid.
+- **Live effect, worked out before shipping:** on today's data A/R shows Dan (Invoiced, $9,465.67 − $8,008.94 = $1,456.73) and Vandalyn ($12,550), both "not yet invoiced" and both still 31+ because their `t_Invoiced` is 44–53 days old — that is the truth: nobody has billed them. Carl and Annette now read $0 owed. No Completed job qualifies for Ready today (Betty is estimate-priced; Jarrett has no value).
+- **Gates:** `gate_1316` GREEN 8/8, control RED 6/8. Its first run went red on E because the rig's board was left on Community — the test's fault, fixed by setting the board explicitly. Green: check_build, gate_1168/1218/1291/1303/1304/1309/1311, harness_ar1107/ar1156/inv1108/inv1109.
+- **Not done here (redesign build):** row buttons (Buttons A), reminder strip on Ready rows, the 35px buttons, the words.
+

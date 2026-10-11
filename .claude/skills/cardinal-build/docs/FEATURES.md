@@ -9848,3 +9848,13 @@ Theo: *"I believe that's why I've been confused since the first day I set up com
 ## Build 1315: every send counts as sent
 `CardinalAR.markInvoiceSent(pid)` (cr-ar-script) writes `status:'sent'` + `sent_at` on the job's latest invoice and moves the job to Invoiced **only from a stage before it** (never from Invoiced, Closed or Lost). Called by Company SMS (on success), the job card's My phone and Email, the A/R list's Text and Email (`linkFor(pid, true)`), and the editor's Text pay link. Copy link is not a send. The editor's Email to client and Mark sent use the same forward-only rule. `createInvoiceFor` is single-flight (`__invBusy`), refuses a paid-in-full job, and asks before a second invoice; a failed pay-link mint now says so. The offline payment form's button resets on every open. **Gate:** `gate_1315.mjs` (real taps in the rig; control 1314 RED 6/7).
 
+## Build 1316: one A/R list
+The rules live in `cr-ar-script` and the other two A/R screens read them (`CardinalAR.list / owed / age / ready / bucketOf / bucketLabels`):
+- **Who owes:** stage Invoiced or Closed, or the invoice's `status==='sent'`, with a balance > 0. Lost never.
+- **How much:** `owed(pr)` = `jobFinance`, except a Community job priced only by its bid owes bid − `collPaid` (jobFinance's value is 0 there and its paid clamps to 0).
+- **How old:** invoice `sent_at` → `checklist.t_Invoiced` → `checklist.stage_since` → invoice `created_at`. Never `updated_at`, never `pr.stage_since` (not a column).
+- **Buckets:** 0–14 / 15–30 / 31+ everywhere; rendered oldest first.
+- **Ready to invoice:** Completed retail/insurance job, contract or manual value, balance > 0, no invoice sent — its own group at the top with Create invoice; not in Total outstanding.
+- The home `#arWrap` card reads `CardinalAR.list()` filtered to the current board; Community's Partner A/R (`.cc-arbig`) reads it filtered to the hub's jobs. KPI: "Overdue · 31+ days", "N jobs owe".
+- **Gate:** `gate_1316.mjs` (8 seeded jobs, exact dollars on all three screens; control 1315 RED 6/8).
+

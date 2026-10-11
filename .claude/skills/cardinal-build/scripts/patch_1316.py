@@ -249,6 +249,11 @@ if(!(owe > 0)) return;
 if(x.age > 30) arOld++;
 var pn = partnerOf(pr);""")
 
+# KPI words: 31+, and the count is of jobs owed (some have no invoice yet)
+one("""<span class="crar-k">Overdue &middot; 30+ days</span>""", """<span class="crar-k">Overdue &middot; 31+ days</span>""")
+one("""<span class="crar-sub" id="crarKpiOutSub">0 open invoices</span>""", """<span class="crar-sub" id="crarKpiOutSub">0 jobs owe</span>""")
+one("""    if(q('crarKpiOutSub')) q('crarKpiOutSub').textContent = list.length + (list.length === 1 ? ' open invoice' : ' open invoices');""",
+    """    if(q('crarKpiOutSub')) q('crarKpiOutSub').textContent = list.length + (list.length === 1 ? ' job owes' : ' jobs owe');   /* 1316: not all have an invoice yet */""")
 one(">v2026-10-11 build 1315<button", ">v2026-10-11 build 1316<button")
 one("var CHANGELOG = [", """var CHANGELOG = [
   { b: 1316, d:'2026-10-11', t:'One answer to who owes you', s:'Invoices & AR, the home card and Community\\u2019s Partner A/R each counted different jobs, aged them from different dates and grouped them differently. They now share one set of rules: a job owes when it is Invoiced or Closed, or its invoice has gone out, and still has a balance; age runs from the day the invoice was sent; groups are 0\\u201314, 15\\u201330 and 31+ days. The oldest money is at the top. Finished jobs that were never invoiced have their own Ready to invoice group with a Create invoice button. Partner jobs show on Invoices & AR, and payments on them now count.' },""")
