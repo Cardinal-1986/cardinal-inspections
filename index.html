@@ -1169,6 +1169,10 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
    so the text does not change; only the emoji do, and they are now icons anyway. */
 .pipetitle{font:800 15px Georgia,'Times New Roman',serif;color:var(--rbe-head);margin-bottom:10px;}
 .piperow{display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding-bottom:4px;justify-content:space-evenly;}
+/* 1306: with the left rail open the main column is too narrow for seven cards, so
+   they wrap onto two rows instead of hiding three off the edge (Theo's 2W). */
+body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rather than scroll (Theo 2W)";
+  flex-wrap:wrap;row-gap:8px;overflow-x:visible;}
 .pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;max-width:200px;}
 .pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
   margin:0 auto 6px;color:#141517;font:800 30px 'Segoe UI',Arial,sans-serif;/* 452: was #fff — 1.95:1 on Lead's fill, 4 of 5 circles under the 3.0 floor */
@@ -4152,7 +4156,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1304<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1306<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -32029,6 +32033,7 @@ function showList() {
    had a theme at all. Shape copied from cr-estimates-styles, which was already
    converted. */
 :root[data-theme="rb-light"] #cr-pricing-mount{
+  --cr-btnline:#c9cdd3;   /* 1305: the outline button edge in light */
   --cr-red:#D9282A;
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
@@ -32071,10 +32076,10 @@ function showList() {
   #cr-pricing-mount .cr-p-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
   #cr-pricing-mount .cr-p-search { flex: 1; min-width: 180px; padding: 10px 14px; border: 1px solid var(--cr-border); border-radius: 4px; font-size: 15px; font-family: inherit; color: var(--cr-text); }
   #cr-pricing-mount .cr-p-search:focus { outline: none; border-color: var(--cr-red); box-shadow: 0 0 0 3px var(--cr-red-tint); }
-  #cr-pricing-mount .cr-p-tool-btn { padding: 10px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; background: var(--cr-bg); border: 1px solid var(--cr-border); color: var(--cr-text); }
+  #cr-pricing-mount .cr-p-tool-btn { padding: 10px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; background: transparent; border: 1px solid var(--cr-btnline,#33333d); color: var(--cr-text); }
   #cr-pricing-mount .cr-p-tool-btn:hover { border-color: var(--cr-red); color: var(--cr-red); }
-  #cr-pricing-mount .cr-p-tool-btn.primary { background: var(--cr-red); border-color: var(--cr-red); color: white; }
-  #cr-pricing-mount .cr-p-tool-btn.primary:hover { background: var(--cr-red-dark); color: white; }
+  #cr-pricing-mount .cr-p-tool-btn.primary { background: var(--cr-act,#c8202e); border-color: var(--cr-act,#c8202e); color: white; }
+  #cr-pricing-mount .cr-p-tool-btn.primary:hover { background: var(--cr-act-dk,#8f1620); border-color: var(--cr-act-dk,#8f1620); color: white; }
 
   #cr-pricing-mount .cr-p-group { margin-bottom: 24px; }
   #cr-pricing-mount .cr-p-group-h { display: flex; align-items: center; gap: 12px; padding: 12px 0 8px; border-bottom: 1px solid var(--cr-border); margin-bottom: 6px; }
@@ -32136,8 +32141,8 @@ function showList() {
   #cr-pricing-mount .cr-p-modal input, #cr-pricing-mount .cr-p-modal select { width: 100%; padding: 10px 12px; border: 1px solid var(--cr-border); border-radius: 4px; font-size: 15px; font-family: inherit; color: var(--cr-text); }
   #cr-pricing-mount .cr-p-modal input:focus, #cr-pricing-mount .cr-p-modal select:focus { outline: none; border-color: var(--cr-red); box-shadow: 0 0 0 3px var(--cr-red-tint); }
   #cr-pricing-mount .cr-p-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  #cr-pricing-mount .cr-p-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-border); background:var(--cr-bg,#fff); color: var(--cr-text); }
-  #cr-pricing-mount .cr-p-modal-btn.primary { background: var(--cr-red); color: white; border-color: var(--cr-red); }
+  #cr-pricing-mount .cr-p-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-btnline,#33333d); background:transparent; color: var(--cr-text); }
+  #cr-pricing-mount .cr-p-modal-btn.primary { background: var(--cr-act,#c8202e); color: white; border-color: var(--cr-act,#c8202e); }
   #cr-pricing-mount .cr-p-modal-error { color: var(--cr-red); font-size: 13px; margin-top: 8px; font-weight: 600; }
 
   /* Category management */
@@ -33555,6 +33560,7 @@ function showList() {
    had a theme at all. Shape copied from cr-estimates-styles, which was already
    converted. */
 :root[data-theme="rb-light"] #cr-claims-mount{
+  --cr-btnline:#c9cdd3;   /* 1305: the outline button edge in light */
   --cr-red:#D9282A;
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
@@ -33594,13 +33600,13 @@ function showList() {
 
   /* Actions */
   #cr-claims-mount .cr-c-actions { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
-  #cr-claims-mount .cr-c-btn { flex: 1; padding: 12px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; background: var(--cr-bg); border: 1px solid var(--cr-border); color: var(--cr-text); font-family: inherit; letter-spacing: 1.2px; text-transform: uppercase; min-width: 130px; }
+  #cr-claims-mount .cr-c-btn { flex: 1; padding: 12px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; border: 1px solid var(--cr-btnline,#33333d); color: var(--cr-text); font-family: inherit; letter-spacing: 1.2px; text-transform: uppercase; min-width: 130px; }
   #cr-claims-mount .cr-c-btn:hover { border-color: var(--cr-muted-2); background: var(--cr-bg-subtle); }
   /* 1052: --cr-red is #ff6b6b in the dark half of this family — a light coral,
      right as INK on dark and wrong as a BUTTON GROUND under white text
      (2.78:1). --cr-red-dark's light value grounds it at 6.85:1. */
-  #cr-claims-mount .cr-c-btn.primary { background: #B01F21; color: white; border: 1px solid #B01F21; flex: 1.5; }
-  #cr-claims-mount .cr-c-btn.primary:hover { background: var(--cr-red-dark); }
+  #cr-claims-mount .cr-c-btn.primary { background: var(--cr-act,#c8202e); color: white; border: 1px solid var(--cr-act,#c8202e); flex: 1.5; }
+  #cr-claims-mount .cr-c-btn.primary:hover { background: var(--cr-act-dk,#8f1620); border-color: var(--cr-act-dk,#8f1620); }
 
   /* Filter tabs */
   #cr-claims-mount .cr-c-tabs { display: flex; border-bottom: 1px solid var(--cr-border); overflow-x: auto;overscroll-behavior-x:contain; -webkit-overflow-scrolling: touch; margin-bottom: 16px; }
@@ -33668,9 +33674,9 @@ function showList() {
   #cr-claims-mount .cr-c-section-h .num { color: var(--cr-red); }
   #cr-claims-mount .cr-c-section-h .h-actions { margin-left: auto; }
   #cr-claims-mount .cr-c-section-rule { height: 2px; background: var(--cr-red); margin: 10px 0 18px; }
-  #cr-claims-mount .cr-c-h-btn { background: var(--cr-bg); border: 1px solid var(--cr-border); color: var(--cr-muted); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+  #cr-claims-mount .cr-c-h-btn { background: transparent; border: 1px solid var(--cr-btnline,#33333d); color: var(--cr-text); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
   #cr-claims-mount .cr-c-h-btn:hover { border-color: var(--cr-red); color: var(--cr-red); }
-  #cr-claims-mount .cr-c-h-btn.primary { background: var(--cr-red); color: white; border-color: var(--cr-red); }
+  #cr-claims-mount .cr-c-h-btn.primary { background: var(--cr-act,#c8202e); color: white; border-color: var(--cr-act,#c8202e); }
 
   /* Financial summary card (on detail) */
   #cr-claims-mount .cr-c-fin { background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); color: white; border-radius: 6px; padding: 20px; margin-bottom: 24px; }
@@ -33773,8 +33779,8 @@ function showList() {
   #cr-claims-mount .cr-c-modal input:focus, #cr-claims-mount .cr-c-modal select:focus, #cr-claims-mount .cr-c-modal textarea:focus { outline: none; border-color: var(--cr-red); box-shadow: 0 0 0 3px var(--cr-red-tint); }
   #cr-claims-mount .cr-c-modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   #cr-claims-mount .cr-c-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  #cr-claims-mount .cr-c-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-border); background:var(--cr-bg,#fff); color: var(--cr-text); }
-  #cr-claims-mount .cr-c-modal-btn.primary { background: var(--cr-red); color: white; border-color: var(--cr-red); }
+  #cr-claims-mount .cr-c-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-btnline,#33333d); background:transparent; color: var(--cr-text); }
+  #cr-claims-mount .cr-c-modal-btn.primary { background: var(--cr-act,#c8202e); color: white; border-color: var(--cr-act,#c8202e); }
   #cr-claims-mount .cr-c-modal-err { color: var(--cr-red); font-size: 13px; margin-top: 8px; font-weight: 600; }
 
   /* Toast */
@@ -36436,6 +36442,7 @@ function showList() {
    had a theme at all. Shape copied from cr-estimates-styles, which was already
    converted. */
 :root[data-theme="rb-light"] #cr-coach-mount{
+  --cr-btnline:#c9cdd3;   /* 1305: the outline button edge in light */
   --cr-red:#D9282A;
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
@@ -36472,10 +36479,10 @@ function showList() {
   #cr-coach-mount .cr-k-fact .val strong{ font-weight:700; color:var(--cr-black); }
 
   #cr-coach-mount .cr-k-actions{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-  #cr-coach-mount .cr-k-btn{ flex:1; min-width:120px; padding:12px 8px; border-radius:4px; font-size:13px; font-weight:700; cursor:pointer; background:var(--cr-bg,#fff); border:1px solid var(--cr-border); color:var(--cr-text); font-family:inherit; letter-spacing:1.2px; text-transform:uppercase; }
+  #cr-coach-mount .cr-k-btn{ flex:1; min-width:120px; padding:12px 8px; border-radius:4px; font-size:13px; font-weight:700; cursor:pointer; background:transparent; border:1px solid var(--cr-btnline,#33333d); color:var(--cr-text); font-family:inherit; letter-spacing:1.2px; text-transform:uppercase; }
   #cr-coach-mount .cr-k-btn:hover{ border-color:var(--cr-muted-2); background:var(--cr-bg-subtle); }
-  #cr-coach-mount .cr-k-btn.primary{ background:var(--cr-red); color:#fff; border-color:var(--cr-red); flex:1.6; }
-  #cr-coach-mount .cr-k-btn.primary:hover{ background:var(--cr-red-dark); }
+  #cr-coach-mount .cr-k-btn.primary{ background:var(--cr-act,#c8202e); color:#fff; border-color:var(--cr-act,#c8202e); flex:1.6; }
+  #cr-coach-mount .cr-k-btn.primary:hover{ background:var(--cr-act-dk,#8f1620); border-color:var(--cr-act-dk,#8f1620); }
   #cr-coach-mount .cr-k-btn:disabled{ opacity:.5; cursor:not-allowed; }
 
   #cr-coach-mount .cr-k-tabs{ display:flex; border-bottom:1px solid var(--cr-border); overflow-x:auto;overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; margin-bottom:14px; }
@@ -36556,8 +36563,8 @@ function showList() {
   #cr-coach-mount .cr-k-modal input,#cr-coach-mount .cr-k-modal select,#cr-coach-mount .cr-k-modal textarea{ width:100%; padding:10px 12px; border:1px solid var(--cr-border); border-radius:4px; font-size:15px; font-family:inherit; color:var(--cr-text); }
   #cr-coach-mount .cr-k-modal textarea{ min-height:90px; resize:vertical; line-height:1.5; }
   #cr-coach-mount .cr-k-modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
-  #cr-coach-mount .cr-k-modal-btn{ padding:10px 18px; border-radius:4px; font-size:13px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; cursor:pointer; font-family:inherit; border:1px solid var(--cr-border); background:var(--cr-bg,#fff); color:var(--cr-text); }
-  #cr-coach-mount .cr-k-modal-btn.primary{ background:var(--cr-red); color:#fff; border-color:var(--cr-red); }
+  #cr-coach-mount .cr-k-modal-btn{ padding:10px 18px; border-radius:4px; font-size:13px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; cursor:pointer; font-family:inherit; border:1px solid var(--cr-btnline,#33333d); background:transparent; color:var(--cr-text); }
+  #cr-coach-mount .cr-k-modal-btn.primary{ background:var(--cr-act,#c8202e); color:#fff; border-color:var(--cr-act,#c8202e); }
   #cr-coach-mount .cr-k-err{ color:var(--cr-red); font-size:13px; margin-top:8px; font-weight:600; }
 
   #cr-coach-mount .cr-k-toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--cr-black); color:var(--cr-onsolid,#fff);/* 988 — see cr-pricing-styles */ padding:10px 18px; border-radius:20px; font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase; z-index:300; }
@@ -44249,6 +44256,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1306, d: '2026-10-11', t: 'On the iPad, all seven pipeline cards show',
+    s: 'With the side menu open on the iPad, the home pipeline used to scroll sideways and hide Invoiced, Closed and On Hold off the edge. The cards now wrap onto two rows so all seven are on screen, and the Activity column stays where it is.' },
+  { b: 1305, d: '2026-10-11', t: 'Claims, Pricing and Coach buttons match the rest of the app',
+    s: 'On Insurance Claims, the Pricing catalog and the Coach, the main button was pink in dark mode and the other buttons were grey blocks. Now it is the same as everywhere else: one solid Cardinal red button for the main action, and the rest are outlines. Red words on those screens are unchanged.' },
   { b: 1304, d: '2026-10-11', t: 'Community home: the next 30 days and what partners owe',
     s: 'Under the Community pipeline are the two cards from the Retail home. Next 30 Days shows the appointments booked on Community jobs and opens the Schedule Board. Partner A/R shows what is still owed on invoiced Community jobs, by the partner who pays, Habitat first, with how many are over 30 days; a tap opens those invoices. Production does not see the money card.' },
   { b: 1303, d: '2026-10-11', t: 'Community opens on the pipeline, with Tarp Only beside it',

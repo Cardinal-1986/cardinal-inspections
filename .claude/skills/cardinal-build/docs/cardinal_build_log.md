@@ -34333,6 +34333,16 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1306: the seven pipeline cards wrap on the iPad (Theo: "You choose" → 2W)
+- With the rail open at 1194px, the main column is ~413–449px and seven cards need ~616px. The row scrolled sideways and hid I, Closed and On Hold. One scoped rule, `body.cr-lnav-on .piperow{flex-wrap:wrap;row-gap:8px;overflow-x:visible}`, exempted for `gate_stack` with a reason. Measured: scrollWidth 413 = clientWidth 413, all 7 cards. Phones are untouched. **`gate_1114` is its gate**: red since 1114 waiting on this pick, now GREEN 58/58 and RED on 1305 (2 failures). Also green: 957, 1167, 1173, 1176, 1178, 1220.
+
+## Build 1305: Buttons A, part 2 — Claims, Pricing and Coach (Theo: "You choose" → 1A)
+- These modules' dark `--cr-red` is pink `#ff6b6b`. That is right for red **text** on dark, where #c8202e is under the floor, but it was also the button fill, so the main action was a pink block and the other buttons were grey blocks. Now the change is made **at the source rules**, not with the preview's `!important` overrides:
+  - main buttons use `var(--cr-act,#c8202e)` with hover `var(--cr-act-dk,#8f1620)`;
+  - other buttons are transparent with a `var(--cr-btnline,#33333d)` edge, and `--cr-btnline:#c9cdd3` is declared in each light block.
+  - `--cr-red` is untouched, so red words keep their ink. 17 rules in total: `.cr-p-tool-btn`, `.cr-p-modal-btn`, `.cr-c-btn`, `.cr-c-h-btn`, `.cr-c-modal-btn`, `.cr-k-btn`, `.cr-k-modal-btn`. Adjusters has no buttons of its own.
+- **`gate_1305` (9):** in both themes, measured in Chromium, every main button is rgb(200,32,46), every other button has no fill, and every label is ≥4.5:1 (min 5.67). `--cr-red` is still #ff6b6b in dark and #D9282A in light. There are floors on how many buttons it must see. RED on 1304 (5 failures). Also green: 1000, 1001, 1232, 755–757, 969, 987, 988, 993, stack, types, dupes, 1206, a11y, harnesses.
+
 ## Build 1304: the Community home's Next 30 Days and Partner A/R (finishes layout A)
 - **What:** these are Retail's two ops cards, fed Community jobs, placed between the pipeline and "waiting on you". They sit side by side, and stack below 640px.
   - **Next 30 Days** is Retail's `renderOps` grid. It counts `cacheAppts` whose `project_id` is a Community job, and the card opens the Schedule Board.

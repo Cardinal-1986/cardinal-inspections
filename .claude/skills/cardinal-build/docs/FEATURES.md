@@ -9741,6 +9741,12 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1306: pipeline wraps with the rail open
+`body.cr-lnav-on .piperow` wraps the seven cards onto two rows. **Gate:** `gate_1114.mjs`.
+
+## Build 1305: Buttons A on Claims, Pricing, Coach
+Main action `var(--cr-act,#c8202e)`, others outline `var(--cr-btnline,…)`. `--cr-red` stays the text red. **Gate:** `gate_1305.mjs`.
+
 ## Build 1304: Community home — Next 30 Days and Partner A/R
 `.cc-ops` holds `.cc-cal30` (appointments on Community jobs, 30-day grid → Schedule Board) and `.cc-ar` (owed on Invoiced Community jobs by paying partner, Habitat first, over-30 count → door onto Invoiced; hidden for Production). Owed = `jobFinance().balance` when it has a value, else the bid. **Gate:** `gate_1304.mjs`.
 
