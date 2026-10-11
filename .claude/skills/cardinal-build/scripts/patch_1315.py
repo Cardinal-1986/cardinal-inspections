@@ -26,7 +26,7 @@ def one(old, new, n=1):
     assert src.count(old) == n, (old[:90], src.count(old))
     src = src.replace(old, new)
 
-# ---- cr-ar-script: linkFor(pid, send) + markSent ----
+# ---- cr-ar-script: linkFor(pid, send) + markInvoiceSent ----
 one("""  function linkFor(pid){
     var inv = invoiceFor(pid);
     if(!inv) return Promise.reject(new Error('This job has no invoice yet — create one first.'));
@@ -34,7 +34,7 @@ one("""  function linkFor(pid){
   }""", """  function linkFor(pid, send){
     var inv = invoiceFor(pid);
     if(!inv) return Promise.reject(new Error('This job has no invoice yet — create one first.'));
-    return ensureTokenForRow(inv).then(function(tok){ if(send) markSent(pid, inv); return payUrl(tok); });
+    return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); });
   }
   /* 1315: sending is sending, whichever button did it. Before, only the editor's Email to
      client and Mark sent wrote status:'sent' and moved the stage, so an invoice texted from
@@ -42,7 +42,7 @@ one("""  function linkFor(pid){
      on the home A/R card (Invoiced only). Forward-only: a job already Invoiced, Closed or
      Lost is never pulled back by a re-send. */
   function stageBeforeInvoiced(s){ return ['Invoiced', 'Closed', 'Lost'].indexOf(s) === -1; }
-  function markSent(pid, inv){
+  function markInvoiceSent(pid, inv){
     inv = inv || invoiceFor(pid);
     if(!inv) return Promise.resolve(false);
     var now = new Date().toISOString();
@@ -66,10 +66,10 @@ one("""if(px) linkFor(px.id).then(function(url){ location.href = 'sms:?&body='""
 one("""if(pe) linkFor(pe.id).then(function(url){ location.href = 'mailto:?subject='""",
     """if(pe) linkFor(pe.id, true).then(function(url){ location.href = 'mailto:?subject='""")
 one("""        if(j && j.ok) crTell('Texted the pay link to ' + (pr.name || 'the client') + '.');""",
-    """        if(j && j.ok){ crTell('Texted the pay link to ' + (pr.name || 'the client') + '.'); markSent(pr.id); }   /* 1315 */""")
+    """        if(j && j.ok){ crTell('Texted the pay link to ' + (pr.name || 'the client') + '.'); markInvoiceSent(pr.id); }   /* 1315 */""")
 one("""    status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor
   });""", """    status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor,
-    markSent:markSent   /* 1315 */
+    markInvoiceSent:markInvoiceSent   /* 1315 */
   });""")
 # pay modal reset
 one("""    q('crpay-amt').value = ''; q('crpay-ref').value = '';
@@ -77,7 +77,7 @@ one("""    q('crpay-amt').value = ''; q('crpay-ref').value = '';
     """    q('crpay-amt').value = ''; q('crpay-ref').value = '';
     /* 1315: the modal is reused, and a successful save left this button disabled and
        reading "Saving…" — the next payment could not be recorded until a reload. */
-    var _sb = q('crpay-save'); if(_sb){ _sb.disabled = false; _sb.textContent = 'Record payment'; }
+    var _sb = q('crpay-save'); if(_sb instanceof HTMLButtonElement){ _sb.disabled = false; _sb.textContent = 'Record payment'; }
     setSeg('crpay-method', 'check'); setSeg('crpay-type', 'deposit');""")
 
 # ---- editor: forward-only on Email to client and Mark sent; Text pay link counts ----
@@ -96,7 +96,7 @@ one("""      var tel = (proj && proj.phone) ? String(proj.phone).replace(/[^+\\d
         location.href = 'sms:' + tel + '?&body=' + encodeURIComponent(body);""",
     """      var tel = (proj && proj.phone) ? String(proj.phone).replace(/[^+\\d]/g, '') : '';
       /* 1315: texting an invoice's pay link is sending it */
-      if(tel && proj && /^invoice/i.test(title) && window.CardinalAR && CardinalAR.markSent){ try{ CardinalAR.markSent(proj.id); }catch(_){} }
+      if(tel && proj && /^invoice/i.test(title) && window.CardinalAR && CardinalAR.markInvoiceSent){ try{ CardinalAR.markInvoiceSent(proj.id); }catch(_){} }
       if(tel){
         location.href = 'sms:' + tel + '?&body=' + encodeURIComponent(body);""")
 

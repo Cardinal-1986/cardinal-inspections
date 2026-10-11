@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1314<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1315<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -17442,12 +17442,22 @@ function renderWorksheet(pr, fin){
       '</div></div>';
   }).join('') + wsFoot;
 }
+var __invBusy = false;   /* 1315: one Create invoice at a time */
 async function createInvoiceFor(pr){
+  if(__invBusy) return;
+  __invBusy = true;
+  try{ await createInvoiceFor1315(pr); } finally { __invBusy = false; }
+}
+async function createInvoiceFor1315(pr){
   var fin = jobFinance(pr);
   if(!fin.value || fin.source === 'estimate'){ crTell('Create an invoice after a contract is signed \u2014 the totals come from the signed contract.'); return; }
+  /* 1315: a paid job has nothing to bill, and a second invoice should be on purpose */
+  if(!(fin.balance > 0.005)){ crTell('This job is paid in full \u2014 there is nothing to invoice.'); return; }
   var invCount = cacheRows.filter(function(r){
     return r.project_id === pr.id && /^invoice/i.test((r.title || '').trim());
   }).length;
+  if(invCount > 0 && !await crAsk('This job already has ' + (invCount === 1 ? 'an invoice' : invCount + ' invoices') +
+      '. Make another one for the ' + fmtMoney(fin.balance, true) + ' still owed?')) return;
   var num = '#' + (poOf(pr) || 'INV') + '-' + (invCount + 1);
   var tpl = prefillUserInfo(prefillClientInfo(INVOICE_TEMPLATE, pr));
   tpl = tpl.replace('[INV_NUM]', esc(num));
@@ -17466,7 +17476,10 @@ async function createInvoiceFor(pr){
       var _itok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
                 : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
       await db.update(id, { share_token: _itok, total: fin.value });
-    }catch(_it){}
+    }catch(_it){
+      /* 1315: say so — every Send button makes the link again, but the reminder texts skip an invoice without one */
+      try{ crTell('Invoice saved, but its pay link could not be set up yet \u2014 it will be made when you send it.'); }catch(_){}
+    }
     await reload();
     await openEditor(id);
     crTell('Invoice ' + num + ' created from the signed contract and payments logged in the Worksheet. Email it to the client \u2014 the job moves to INVOICED automatically when sent.');
@@ -27500,6 +27513,8 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
         ' from Cardinal Roofing & Renovations. ' +
         (/^invoice/i.test(title) ? 'You can view and pay it right here: ' : 'You can review and sign it right here: ') + url;
       var tel = (proj && proj.phone) ? String(proj.phone).replace(/[^+\d]/g, '') : '';
+      /* 1315: texting an invoice's pay link is sending it */
+      if(tel && proj && /^invoice/i.test(title) && window.CardinalAR && CardinalAR.markInvoiceSent){ try{ CardinalAR.markInvoiceSent(proj.id); }catch(_){} }
       if(tel){
         location.href = 'sms:' + tel + '?&body=' + encodeURIComponent(body);
       }else{
@@ -27680,7 +27695,8 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     await db.update(current.id, { status: 'sent', sent_at: new Date().toISOString() });
     crDocSent(current.id);
     try{ if(window.crToastOk) window.crToastOk('Sent \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
-    if(pr && row && /^invoice/i.test((row.title || '').trim()) && normStage(pr.stage) !== 'Invoiced'){
+    /* 1315: forward-only — a re-send never pulls a Closed (or Lost) job back to Invoiced */
+    if(pr && row && /^invoice/i.test((row.title || '').trim()) && ['Invoiced', 'Closed', 'Lost'].indexOf(normStage(pr.stage)) === -1){
       try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
     }
     _bl.textContent = '\u2713 Sent';
@@ -28382,7 +28398,10 @@ toggleBtn.addEventListener('click', async function(){
     if(toSent){
       crDocSent(current.id);
       var trow = cacheRows.find(function(r){ return r.id === current.id; });
-      if(trow && trow.project_id && /^invoice/i.test((trow.title || '').trim())){
+      var tpr = trow && cacheProjects.find(function(p){ return p.id === trow.project_id; });
+      /* 1315: forward-only, the same rule as Email to client */
+      if(trow && trow.project_id && /^invoice/i.test((trow.title || '').trim()) &&
+         (!tpr || ['Invoiced', 'Closed', 'Lost'].indexOf(normStage(tpr.stage)) === -1)){
         try{ await setStage(trow.project_id, 'Invoiced'); }catch(e){}
       }
     }
@@ -44304,6 +44323,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1315, d:'2026-10-11', t:'Every send counts as sent', s:'Texting or emailing an invoice from the job card or the Invoices list now marks it sent and moves the job to Invoiced \u2014 before, only the editor\u2019s Email button did, so a texted invoice stayed Draft and was never reminded. Sending never moves a job backwards: a Closed job stays Closed. Create invoice can\u2019t make two by a double tap, says so when the job is paid in full, and asks before making a second one. The payment form works for a second payment without reloading.' },
   { b: 1314, d:'2026-10-11', t:'One balance everywhere', s:'The pay link, the reminder texts and the app could each come up with a different amount owed \u2014 the server ignored extras added to a job and payments typed into the old Amount Collected box. They all use the same total now, and there is one place to record money in: Record payment. A bank payment still clearing stops the client paying twice. Paid this month finally counts this month\u2019s payments (it always read $0). If payments fail to load, the app says so instead of showing every job as unpaid. The invoice heading now just says INVOICE.' },
   { b: 1313, d:'2026-10-11', t:'An invoice can be paid', s:'An invoice used to be an estimate with a new title: it still had a signature line, so the link you sent asked the client to Accept & Sign and never showed a Pay button. It also said Estimate #, Valid Through and had an empty photo box. An invoice now has its own header \u2014 Bill To, Invoice Date, Due upon receipt \u2014 no signature line, and the link opens with Pay. The text button on an invoice says Text pay link.' },
   { b: 1312, d:'2026-10-11', t:'Community says estimate, not bid',
@@ -89908,10 +89928,31 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   }
   function payUrl(tok){ return location.origin + '/api/share?t=' + tok; }
   function firstName(pr){ return String((pr && pr.name) || '').trim().split(/\s+/)[0] || 'there'; }
-  function linkFor(pid){
+  function linkFor(pid, send){
     var inv = invoiceFor(pid);
     if(!inv) return Promise.reject(new Error('This job has no invoice yet — create one first.'));
-    return ensureTokenForRow(inv).then(payUrl);
+    return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); });
+  }
+  /* 1315: sending is sending, whichever button did it. Before, only the editor's Email to
+     client and Mark sent wrote status:'sent' and moved the stage, so an invoice texted from
+     here stayed Draft — no aging date, never reminded (remind.js reads status=sent), not
+     on the home A/R card (Invoiced only). Forward-only: a job already Invoiced, Closed or
+     Lost is never pulled back by a re-send. */
+  function stageBeforeInvoiced(s){ return ['Invoiced', 'Closed', 'Lost'].indexOf(s) === -1; }
+  function markInvoiceSent(pid, inv){
+    inv = inv || invoiceFor(pid);
+    if(!inv) return Promise.resolve(false);
+    var now = new Date().toISOString();
+    var w = (inv.status === 'sent' && inv.sent_at) ? Promise.resolve()
+      : db.update(inv.id, { status: 'sent', sent_at: inv.sent_at || now }).then(function(){
+          inv.status = 'sent'; inv.sent_at = inv.sent_at || now; });
+    return w.then(function(){
+      var pr = prById(pid);
+      if(pr && stageBeforeInvoiced(stg(pr)) && typeof setStage === 'function') return setStage(pid, 'Invoiced');
+    }).then(function(){ return true; }).catch(function(err){
+      fail(new Error('The link went out, but the invoice could not be marked sent: ' + ((err && err.message) || err)));
+      return false;
+    });
   }
   function fail(err){ if(typeof crTell === 'function') crTell((err && err.message) || String(err)); }
   function prById(id){ return projects().find(function(p){ return p.id === id; }) || null; }
@@ -89968,7 +90009,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }
     if((t = e.target.closest('[data-artext]'))){
       var prT = prById(t.getAttribute('data-artext'));
-      linkFor(t.getAttribute('data-artext')).then(function(url){
+      linkFor(t.getAttribute('data-artext'), true).then(function(url){
         var body = 'Hi ' + firstName(prT) + ', here’s your invoice from Cardinal Roofing — you can review it and pay securely here: ' + url;
         location.href = 'sms:?&body=' + encodeURIComponent(body);
       }).catch(fail);
@@ -89976,7 +90017,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }
     if((t = e.target.closest('[data-aremail]'))){
       var prE = prById(t.getAttribute('data-aremail'));
-      linkFor(t.getAttribute('data-aremail')).then(function(url){
+      linkFor(t.getAttribute('data-aremail'), true).then(function(url){
         var subj = 'Your invoice from Cardinal Roofing & Renovations';
         var body = 'Hi ' + firstName(prE) + ',\n\nHere is your invoice — you can review it and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations';
         location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
@@ -90044,7 +90085,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
           headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + tok },
           body: JSON.stringify({ project_id: pr.id, url: url }) });
       }).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(j){
-        if(j && j.ok) crTell('Texted the pay link to ' + (pr.name || 'the client') + '.');
+        if(j && j.ok){ crTell('Texted the pay link to ' + (pr.name || 'the client') + '.'); markInvoiceSent(pr.id); }   /* 1315 */
         else crTell((j && j.error) || 'Could not send the company text.');
       });
     }).catch(fail);
@@ -90100,6 +90141,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var fin = jobFinance(pr);
     q('crpay-sub').textContent = (pr.name || 'Client') + ' · balance ' + money(fin.balance);
     q('crpay-amt').value = ''; q('crpay-ref').value = '';
+    /* 1315: the modal is reused, and a successful save left this button disabled and
+       reading "Saving…" — the next payment could not be recorded until a reload. */
+    var _sb = q('crpay-save'); if(_sb instanceof HTMLButtonElement){ _sb.disabled = false; _sb.textContent = 'Record payment'; }
     setSeg('crpay-method', 'check'); setSeg('crpay-type', 'deposit');
     q('crpay-date').value = new Date().toISOString().slice(0, 10);
     m.classList.add('open');
@@ -90146,8 +90190,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if((t = e.target.closest('[data-inv-gen]'))){ var pg = prById(t.getAttribute('data-inv-gen')); if(pg && typeof createInvoiceFor === 'function') createInvoiceFor(pg); return; }
     if((t = e.target.closest('[data-inv-open]'))){ var iv = invoiceFor(t.getAttribute('data-inv-open')); if(iv && typeof openEditor === 'function') openEditor(iv.id); return; }
     if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms')); if(ps) companySms(ps); return; }
-    if((t = e.target.closest('[data-inv-text]'))){ var px = prById(t.getAttribute('data-inv-text')); if(px) linkFor(px.id).then(function(url){ location.href = 'sms:?&body=' + encodeURIComponent('Hi ' + firstName(px) + ', here’s your invoice from Cardinal Roofing — review and pay securely here: ' + url); }).catch(fail); return; }
-    if((t = e.target.closest('[data-inv-email]'))){ var pe = prById(t.getAttribute('data-inv-email')); if(pe) linkFor(pe.id).then(function(url){ location.href = 'mailto:?subject=' + encodeURIComponent('Your invoice from Cardinal Roofing & Renovations') + '&body=' + encodeURIComponent('Hi ' + firstName(pe) + ',\n\nHere is your invoice — review and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations'); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-text]'))){ var px = prById(t.getAttribute('data-inv-text')); if(px) linkFor(px.id, true).then(function(url){ location.href = 'sms:?&body=' + encodeURIComponent('Hi ' + firstName(px) + ', here’s your invoice from Cardinal Roofing — review and pay securely here: ' + url); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-email]'))){ var pe = prById(t.getAttribute('data-inv-email')); if(pe) linkFor(pe.id, true).then(function(url){ location.href = 'mailto:?subject=' + encodeURIComponent('Your invoice from Cardinal Roofing & Renovations') + '&body=' + encodeURIComponent('Hi ' + firstName(pe) + ',\n\nHere is your invoice — review and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations'); }).catch(fail); return; }
     if((t = e.target.closest('[data-inv-pay]'))){ var pp = prById(t.getAttribute('data-inv-pay')); if(pp) openPayModal(pp); return; }
     if((t = e.target.closest('[data-arpay]'))){ var pa = prById(t.getAttribute('data-arpay')); if(pa) openPayModal(pa); return; }
     if((t = e.target.closest('#crpay-cancel')) || (t = e.target.closest('#crpay-backdrop'))){ closePayModal(); return; }
@@ -90159,7 +90203,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   window.renderAR = render;
   window.CardinalAR = Object.assign(window.CardinalAR || {}, {
     open:open, render:render, close:close, list:arList,
-    status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor
+    status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor,
+    markInvoiceSent:markInvoiceSent   /* 1315 */
   });
 })();
 </script>

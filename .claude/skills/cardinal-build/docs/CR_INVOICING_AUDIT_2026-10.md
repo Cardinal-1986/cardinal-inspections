@@ -56,12 +56,12 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 
 ## Workflow gaps
 
-- **W1** Only editor "Email to client" and "Mark sent" set `status:'sent'` + Invoiced. Company SMS, My phone, Copy, AR Text/Email leave it **Draft** → no aging date, `remind.js` (`status=eq.sent`) never reminds it, Home/Partner A/R never count it.
-- **W2** Stage and money never reconcile: paid jobs stay Invoiced until closed by hand; re-sending moves a Closed job back to Invoiced (`setStage` has no forward guard, ~27640 / ~28343); reminders keep texting Closed jobs with a balance.
+- **W1** ✅ *FIXED 1315* — Only editor "Email to client" and "Mark sent" set `status:'sent'` + Invoiced. Company SMS, My phone, Copy, AR Text/Email leave it **Draft** → no aging date, `remind.js` (`status=eq.sent`) never reminds it, Home/Partner A/R never count it.
+- **W2** ✅ *FIXED 1315* — Stage and money never reconcile: paid jobs stay Invoiced until closed by hand; re-sending moves a Closed job back to Invoiced (`setStage` has no forward guard, ~27640 / ~28343); reminders keep texting Closed jobs with a balance.
 - **W3** The client sees the as-issued Balance Due next to the live pay amount; the live card (`wireInvoiceLive`) exists only in the editor and is stripped on save. No receipt is sent on payment.
-- **W4** Double tap on Generate makes two invoices, both `#PO-1`; deleted numbers are reused; a $0-due invoice can be made on a paid job.
-- **W5** Second offline payment in one session: the Save button stays "Saving…" disabled (~90087 / ~90051).
-- **W6** Token mint failure is swallowed (`catch(_it){}` ~17437) → invoice with no token, `total` null.
+- **W4** ✅ *FIXED 1315* — Double tap on Generate makes two invoices, both `#PO-1`; deleted numbers are reused; a $0-due invoice can be made on a paid job.
+- **W5** ✅ *FIXED 1315* — Second offline payment in one session: the Save button stays "Saving…" disabled (~90087 / ~90051).
+- **W6** ✅ *FIXED 1315* — Token mint failure is swallowed (`catch(_it){}` ~17437) → invoice with no token, `total` null.
 - **W7** Community and insurance jobs get the retail invoice; Company SMS would text the occupant, not the partner; insurance invoice can bill the homeowner for carrier money.
 - **W8** `api/sms-link.js` texts any `https?://` URL from the company number — not limited to the app's own share links.
 - **W9** Production (Curtis, Scottie) see Billed/Collected/Balance on the client profile and can generate invoices and record payments. Whether "no money on Production" covers the profile is **Theo's call**.

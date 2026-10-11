@@ -35977,3 +35977,9 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - ⚠ The audit's M4 was half wrong: the Payments-page Add/Received doors already went to collections (996/1050). Only the worksheet box and the contracts row were still live.
 - ⚠ `drive_lifecycle.mjs` crashes (`reading 'name'`) on main @1308 too — old debt, not in the harness list.
 
+## Build 1315: every send counts as sent (audit W1, W2, W4, W5, W6)
+- **What:** `markInvoiceSent` + `linkFor(pid, true)` on every send button; forward-only stage moves on all send paths; `createInvoiceFor` single-flight, paid-in-full refusal, second-invoice confirm, token-mint failure told; pay modal button reset.
+- **Two of my own catches before shipping:** `markSent` already existed in `cr-guide-script` (gate_dupes) — renamed `markInvoiceSent`; a `.disabled` on an `HTMLElement` (gate_types TS2339) — `instanceof HTMLButtonElement`. Neither rebaselined.
+- **Gates:** `gate_1315` GREEN 7/7, control RED 6/7 (C, "Copy is not a send", is a must-not and passes on both by design). Green: check_build, types, dupes, scroll-lock, gate_1141/1201/1204/1313/1314, harness_inv1108/1109.
+- ⚠ Still stale, for the redesign build: the Create invoice toast still says "payments logged in the Worksheet. Email it…".
+

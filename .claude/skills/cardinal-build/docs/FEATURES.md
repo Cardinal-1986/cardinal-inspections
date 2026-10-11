@@ -9845,3 +9845,6 @@ Theo: *"I believe that's why I've been confused since the first day I set up com
 - Invoice heading `<span>INVOICE</span>` (Theo: "just invoice").
 - **Gate:** `gate_1314.mjs` (real share/pay handlers with a stand-in Stripe; control 1313 RED 11/13).
 
+## Build 1315: every send counts as sent
+`CardinalAR.markInvoiceSent(pid)` (cr-ar-script) writes `status:'sent'` + `sent_at` on the job's latest invoice and moves the job to Invoiced **only from a stage before it** (never from Invoiced, Closed or Lost). Called by Company SMS (on success), the job card's My phone and Email, the A/R list's Text and Email (`linkFor(pid, true)`), and the editor's Text pay link. Copy link is not a send. The editor's Email to client and Mark sent use the same forward-only rule. `createInvoiceFor` is single-flight (`__invBusy`), refuses a paid-in-full job, and asks before a second invoice; a failed pay-link mint now says so. The offline payment form's button resets on every open. **Gate:** `gate_1315.mjs` (real taps in the rig; control 1314 RED 6/7).
+
