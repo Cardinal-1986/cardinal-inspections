@@ -245,6 +245,7 @@ h2.sec .num{
 .controls input[type=search]{
   font:inherit;font-size:15px;padding:9px 12px;border:1px solid var(--line);
   border-radius:6px;min-width:260px;flex:1;max-width:420px;background:#fff;
+  min-height:44px;   /* 1310: was 43px, the tap floor */
 }
 .filterbtn{
   font:inherit;font-size:13px;font-weight:700;cursor:pointer;
@@ -4156,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1308<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1311<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -43905,7 +43906,7 @@ window.CardinalPalette = { open: open, close: close };
 })();
 </script>
 
-<style id="cr-csv-styles">.cr-csv-btn{background:transparent;border:1px solid #c8202e;color:#8f1620;padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}.cr-csv-btn:hover{background:rgba(200,32,46,.14)}</style>
+<style id="cr-csv-styles">.cr-csv-btn{min-height:44px;background:transparent;border:1px solid #c8202e;color:#8f1620;padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}.cr-csv-btn:hover{background:rgba(200,32,46,.14)}</style>
 <script id="cr-csv-script">
 (function(){
 'use strict';
@@ -44260,6 +44261,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1311, d: '2026-10-11', t: 'Community Estimates and Clients stop repeating the home',
+    s: 'The Community home already shows the pipeline money, what is due soon, what is waiting on you and the partners, so the Estimates screen no longer repeats them: it opens straight on the full list of estimates, with its filter and sort. The Clients screen drops its By stage count for the same reason; By partner stays. The waitlist is still one tap away in the filter.' },
+  { b: 1310, d: '2026-10-11', t: 'Client list buttons are big enough to tap',
+    s: 'Above the client list on the home screen, the search box and the CSV and Select buttons were a little under the size a thumb can hit reliably. All three are full size now.' },
+  { b: 1309, d: '2026-10-11', t: 'Community More tools is down to what is not elsewhere',
+    s: 'Properties and Work Orders under More tools only ever told you to go somewhere else, so they are gone \u2014 work orders are on the job page. Calendar and All Partners are gone too, because the Next 30 Days card and the Partners door already open them. Activity stays. Old code the rebuilt Community screens no longer used has been cleared out; nothing else you see changes.' },
   { b: 1308, d: '2026-10-11', t: 'The P badge is orange to match its stripe',
     s: 'On Leads & Jobs the round P on a Prospect card was red while its stripe had just turned orange. The P is now the same orange, with a dark letter so it stays easy to read.' },
   { b: 1307, d: '2026-10-11', t: 'Prospects have an orange stripe on the Leads list',
@@ -45707,7 +45714,7 @@ else autoShow();
 })();
 </script>
 
-<style id="cr-bulk-styles">#cr-bulk-toggle{background:transparent;border:1px solid #4a6fa5;color:#4a6fa5;padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}#cr-bulk-toggle:hover{background:rgba(74,111,165,.12)}body.cr-bulk-mode #cr-bulk-toggle{background:#4a6fa5;color:#fff}.cr-bulk-checkbox{display:none;margin-right:8px;transform:scale(1.3);cursor:pointer;vertical-align:middle;accent-color:#c8202e}body.cr-bulk-mode .cr-bulk-checkbox{display:inline-block}.cr-bulk-bar{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:14px 20px 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));display:none;align-items:center;gap:10px;z-index:9500;box-shadow:0 -4px 16px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-bulk-bar.show{display:flex}.cr-bulk-bar button.destroy{background:var(--red-dk) !important;border-color:var(--red-dk) !important;color:#fff !important}.cr-bulk-bar button.destroy:hover:not(:disabled){background:#7d1219 !important}.cr-bulk-count{font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;flex:1;min-width:0}.cr-bulk-bar button{background:transparent;border:1px solid #c8202e;color:#c8202e;padding:7px 12px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap}.cr-bulk-bar button:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button.danger{border-color:var(--red);color:var(--red)}.cr-bulk-bar button.danger:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button:disabled{opacity:.5;cursor:wait}</style>
+<style id="cr-bulk-styles">#cr-bulk-toggle{min-height:44px;background:transparent;border:1px solid #4a6fa5;color:#4a6fa5;padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}#cr-bulk-toggle:hover{background:rgba(74,111,165,.12)}body.cr-bulk-mode #cr-bulk-toggle{background:#4a6fa5;color:#fff}.cr-bulk-checkbox{display:none;margin-right:8px;transform:scale(1.3);cursor:pointer;vertical-align:middle;accent-color:#c8202e}body.cr-bulk-mode .cr-bulk-checkbox{display:inline-block}.cr-bulk-bar{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:14px 20px 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));display:none;align-items:center;gap:10px;z-index:9500;box-shadow:0 -4px 16px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-bulk-bar.show{display:flex}.cr-bulk-bar button.destroy{background:var(--red-dk) !important;border-color:var(--red-dk) !important;color:#fff !important}.cr-bulk-bar button.destroy:hover:not(:disabled){background:#7d1219 !important}.cr-bulk-count{font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;flex:1;min-width:0}.cr-bulk-bar button{background:transparent;border:1px solid #c8202e;color:#c8202e;padding:7px 12px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap}.cr-bulk-bar button:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button.danger{border-color:var(--red);color:var(--red)}.cr-bulk-bar button.danger:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button:disabled{opacity:.5;cursor:wait}</style>
 <script id="cr-bulk-script">
 (function(){
 'use strict';
@@ -63141,99 +63148,11 @@ return String(name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(
 .slice(0,2).join('').toUpperCase();
 }
 
-/* ---- KPI strip (presentation-gated exactly as before) ---- */
-/* 975: every one of these counted something real and then left you to go and
-   find it by hand. Each is now a door onto exactly the rows it counted — the
-   number and the destination come from ONE declaration, so they cannot drift.
-   "Open bids" reads d.open rather than d.all.length: it was every community job
-   including the closed and the lost, which happens to be right today only
-   because all 15 are still at Lead.
-   A tile whose figure is zero stays a plain div: a door onto an empty list is
-   the same lie in the other direction. */
-var dueSoon975 = d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length;
-var KPI975 = [
-{ key:'open',   label:'Open bids',        text:String(d.open), n:d.open,
-sets:{ stage: stageLabels(openKeys()) }, pane:'bids', fold:'allbids' },
-{ key:'out',    label:'Out for decision', text:usd(d.out),     n:d.out,
-sets:{ stage: stageLabels(['Lead','Prospect']) }, pane:'bids', fold:'allbids', sort:'amount' },
-{ key:'parked', label:'Parked',           text:usd(d.parked),  n:d.parked, when:!!d.parked,
-sets:{ stage: stageLabels(['OnHold']) }, pane:'bids', fold:'allbids' },
-{ key:'awarded',label:'Awarded',          text:usd(awarded),   n:awarded,
-sets:{ stage: stageLabels(wonKeys()) }, pane:'bids', fold:'allbids', sort:'amount' },
-{ key:'due7',   label:'Due &le; 7 days',  text:String(dueSoon975), n:dueSoon975,
-sets:{ due: ['Overdue','Due today','Due this week'] }, pane:'bids', fold:'allbids' },
-/* 977: only when there is one — a tile reading 0 is not a door (975's rule). */
-{ key:'wait',   label:'Waitlist',         text:String(d.wait), n:d.wait, when:!!d.wait,
-sets:{ waitlist: ['On the waitlist'] }, pane:'bids', fold:'allbids' }
-];
+/* 1311 (Theo, "All"): the money tiles, Due soon, the Partners fold and the Waiting on
+   you fold left Estimates — the 1303/1304 home shows all four. The Waitlist count is
+   still a filter facet (CH_GROUPS). */
 doors = {};
-var kpi = (role === 'prod') ? '' :
-'<div class="cc-kpi">' +
-KPI975.filter(function(t){ return t.when !== false; }).map(function(t){
-var live = !!t.n;
-if(live) doors['kpi:' + t.key] = t;
-return (live
-? '<button type="button" class="cc-tile" data-cckpi="' + t.key + '">'
-: '<div>') +
-'<div class="k">' + t.label + '</div><div class="v">' + t.text + '</div>' +
-(live ? '</button>' : '</div>');
-}).join('') +
-'</div>' +
-(role === 'sales' ? '<div class="cc-mine">Your pipeline \u2014 your bids only</div>' : '');
-
-/* ---- BIDS ---- */
-var dueBody = d.due.length
-? '<div class="cc-duegrid">' + d.due.slice(0, 8).map(function(x){
-return '<div class="cc-due" data-open="' + esc(x.pr.id) + '">' +
-'<b' + (x.d != null && x.d < 0 ? ' class="hot"' : '') + '>' +
-(x.d == null ? '\u2013' : x.d) + '</b>' +
-'<div class="cc-idp">' +
-'<div class="k b">Bill to</div><div class="v">' + pName(partnerOf(x.pr)) + '</div>' +
-'<div class="k">Serving</div><div class="v">' + hoCell(x.pr) + '</div></div>' +
-(x.amt ? '<span class="cc-money">' + usd(x.amt) + '</span>' : '') + '</div>';
-}).join('') + '</div>'
-: '<div class="cc-empty">Nothing out for pricing right now.</div>';
-
-var partnersBody = ps.length
-? ps.slice(0, 6).map(function(p){
-return '<div class="cc-prow" data-go="partners">' +
-'<span class="cc-av ' + pClass(p.name) + '">' + initials(p.name) + '</span>' +
-'<span style="flex:1;min-width:0">' + pName(p.name) +
-'<div class="cc-mini">' + esc((p.type === 'pm' ? 'property manager' : p.type === 'gc' ? 'general contractor' : 'community program')) +
-' \u00b7 ' + p.jobs.length + ' live</div></span>' +
-/* 711: this figure is the partner's AWARDED money to date, and with nothing
-   yet awarded it rendered a bare em-dash on every row — sitting beside
-   "6 live" it read as a count with nothing to say it was money. Theo asked
-   what it was for; the honest answer is "nothing yet", so it now says
-   nothing at all until there is money to show. */
-(role === 'prod' || !p.awarded ? ''
-: '<span class="cc-money" title="Awarded to date">' + usd(p.awarded) + '</span>') +
-'</div>';
-}).join('')
-: '<div class="cc-empty">No partners yet.</div>';
-
-/* 975: two faults in four lines. data-q had NO handler anywhere, so the row
-   inherited .cc-prow's cursor:pointer and did nothing; and the row's closing
-   tag sat inside the non-prod arm, so a Production user got three nested
-   unclosed rows. The row now names the stage it counts and opens it.
-   NB the tag is spelled out nowhere in this comment on purpose: CI counts div
-   tags with a bare regex over the whole file, so prose naming one fails the
-   build. That is this repo's comment-pollution trap, wearing a CI hat. */
-function queue(label, list, stageKey){
-if(!list.length) return '';
-if(stageKey) doors['q:' + stageKey] = { sets:{ stage: stageLabels([stageKey]) },
-pane:'bids', fold:'allbids' };
-return '<div class="cc-prow"' + (stageKey ? ' data-queue="' + stageKey + '"' : '') +
-'><span style="flex:1">' + label +
-'<div class="cc-mini">' + list.length + ' waiting</div></span>' +
-(role === 'prod' ? '' : '<span class="cc-money">' +
-usd(list.reduce(function(a,x){ return a + (x.amt||0); }, 0)) + '</span>') +
-'</div>';
-}
-var weekBody = (queue('Chase a decision', d.chase, 'Prospect') +
-queue('Get on the calendar', d.sched, 'Approved') +
-queue('Invoice the partner', d.inv, 'Completed')) ||
-'<div class="cc-empty">Nothing waiting on you.</div>';
+var mine1311 = (role === 'sales') ? '<div class="cc-mine">Your pipeline \u2014 your bids only</div>' : '';
 
 /* The filter and sort apply to THIS table only. The Due-soon block and the
    Clients tab keep their own orders on purpose - a filter that silently
@@ -63269,13 +63188,8 @@ esc(LABEL[st] || st) + '</span></td>' +
 : '<div class="cc-empty">No bids yet.</div>';
 
 var bidsPane = '<div data-pane="bids" class="' + (pane === 'bids' ? 'on' : '') + '">' +
-kpi +
-fold('due', 'Due soon', d.due.length, dueBody) +
-'<div class="cc-g2">' +
-fold('partners', 'Partners', ps.length, partnersBody) +
-fold('week', 'Waiting on you', null, weekBody) +
-'</div>' +
-fold('allbids', 'All estimates', d.all.length, allBidsBody, false) +
+mine1311 +
+fold('allbids', 'All estimates', d.all.length, allBidsBody) +   /* 1311: the whole pane now, so open */
 '<div data-cc-punch></div>' +
 '</div>';
 
@@ -63302,15 +63216,13 @@ return fold('pg-' + g.key, g.label, members.length,
    is deliberately left alone — a filter that silently emptied it would hide
    overdue bids, which is what the original comment was guarding. */
 var cRows = chSorted(rows.filter(chMatches));
-var byPartner = {}, byStage = {};
+var byPartner = {};   /* 1311: By stage left Clients (the pipeline shows it) */
 cRows.forEach(function(pr){
 /* 975: this said 'No partner' where every other surface says 'No partner
    recorded', so the tally key did not match the filter value and the row could
    not become a door. partnerOf() is the one spelling. */
 var pn = partnerOf(pr);
 byPartner[pn] = (byPartner[pn] || 0) + 1;
-var st = LABEL[normStage(pr.stage)] || normStage(pr.stage);
-byStage[st] = (byStage[st] || 0) + 1;
 });
 /* 975: these rows carried .cc-prow's cursor:pointer and no attribute at all —
    the only truly dead tappable on the hub. `kind` names which CH_GROUPS facet
@@ -63490,10 +63402,8 @@ var clientsPane = '<div data-pane="clients" class="' + (pane === 'clients' ? 'on
 '<div class="cc-srch"><input type="search" id="cr-ch2-search" placeholder="Name, address, partner, work type\u2026" value="' + esc(query) + '"></div>' +
 chBar(cRows.length, rows.length) +
 fold('clist', 'Community clients', cRows.length, clientsBody) +
-'<div class="cc-g2">' +
 fold('bypartner', 'By partner', Object.keys(byPartner).length, tally(byPartner, true, 'partner')) +
-fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false, 'stage')) +
-'</div></div>';
+'</div>';
 
 /* 1179: the three tabs are gone. On the home there is nothing to switch
    between — the doors ARE the navigation — so the strip carries only the
@@ -63526,16 +63436,11 @@ homePane + clientsPane + bidsPane + partnersPane +
    front since it is the one action this screen exists for. */
 '<details class="cc-moretools"><summary>More tools</summary>' +
 '<div class="tools">' +
-'<button data-go="props" type="button"><span class="i">' + ICO('home') + '</span>' +
-'<span class="x"><b>Properties</b><small>Units and addresses</small></span></button>' +
-'<button data-go="wo" type="button"><span class="i">' + ICO('clipboard') + '</span>' +
-'<span class="x"><b>Work Orders</b><small>Open and scheduled</small></span></button>' +
-'<button data-go="partners" type="button"><span class="i">' + ICO('people') + '</span>' +
-'<span class="x"><b>All Partners</b><small>Contacts and terms</small></span></button>' +
+/* 1309 (Theo, "All"): Properties and Work Orders were dead ends; Calendar and All
+   Partners repeat the Next 30 Days card and the Partners door. Activity is the
+   home's only way to the team feed, so it stays. */
 '<button data-go="activity" type="button"><span class="i">' + ICO('bolt') + '</span>' +
 '<span class="x"><b>Activity</b><small>Team feed, newest first</small></span></button>' +
-'<button data-go="calendar" type="button"><span class="i">' + ICO('calendar') + '</span>' +
-'<span class="x"><b>Calendar</b><small>Jobs on the board</small></span></button>' +
 '</div></details>' + chSheets();
 host.querySelectorAll('.cc-fh').forEach(function(h){
 h.onclick = function(e){
@@ -63626,12 +63531,7 @@ if(t2 && t2.scrollIntoView) t2.scrollIntoView({ behavior:'smooth', block:'start'
 }catch(_975c){}
 }
 }
-host.querySelectorAll('[data-cckpi]').forEach(function(el){
-el.onclick = function(){ applyDoor(doors['kpi:' + el.getAttribute('data-cckpi')]); };
-});
-host.querySelectorAll('[data-queue]').forEach(function(el){
-el.onclick = function(){ applyDoor(doors['q:' + el.getAttribute('data-queue')]); };
-});
+/* 1311: the [data-cckpi] tiles and [data-queue] rows left with the Estimates folds. */
 /* 1303: the pipeline buckets and the Tarp Only tile */
 host.querySelectorAll('[data-ccpipe]').forEach(function(el){
 el.onclick = function(){ applyDoor(doors['pipe:' + el.getAttribute('data-ccpipe')]); };
@@ -63657,27 +63557,7 @@ if(k === 'calendar'){ if(typeof window.openScheduleBoard === 'function') window.
 if(k === 'newbid' && window.CardinalNewBid && window.CardinalNewBid.open){
 window.CardinalNewBid.open(); return;
 }
-/* Properties hang off a partner: openDirectory(partnerId) is the only entry
-   point, and with no id it says so itself. Previously this checked
-   window.CardinalCommunityProps, which does not exist - the module is
-   CardinalCommunityProperties - so the tile fell through to a generic
-   "Not available yet." */
-if(k === 'props'){
-if(window.CardinalCommunityProperties && window.CardinalCommunityProperties.openDirectory){
-window.CardinalCommunityProperties.openDirectory();
-}else{
-crTell('Properties live under each partner \u2014 open All Partners, then a partner.');
-}
-return;
-}
-/* Work orders render as a section on a community job, not as a standalone
-   view: CardinalWorkOrders exports only { render, canSee }, and
-   renderSection() removes itself unless window.currentProject is an open
-   community job. Calling render() from here would silently do nothing. */
-if(k === 'wo'){
-crTell('Open a community client \u2014 Work Orders is on the client card (Admin + Production).');
-return;
-}
+/* 1309: the 'props' and 'wo' branches went with their two dead-end buttons. */
 if(k === 'partners' && window.CardinalCommunityPartners &&
 window.CardinalCommunityPartners.openDirectory){
 window.CardinalCommunityPartners.openDirectory(); return;
@@ -63818,7 +63698,7 @@ dueBids  : chDueBidsCount,
 --heroA:var(--ccm-raise);--urgent:var(--ccm-rdw);--nowfill:var(--ccm-nowfill,#321a1c);--line:var(--ccm-line);
 --glow:var(--ccm-glow);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 22px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:11px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#c8d3cd}
 /* 982: #c8d3cd is 10.46:1 dark and 1.44:1 light. Light twin only. */
-[data-theme="rb-light"] #cr-cc .pin .facts .k{color:var(--ccm-chipink,#4a5350)}#cr-cc .pin .facts .v{font:800 18px var(--mono);margin-top:5px;color:var(--ink)}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc .tabbar{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}#cr-cc .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:11px 8px 12px;font-family:inherit;color:var(--dim);font-weight:700;font-size:13px}#cr-cc .tabbar button.on{color:var(--ink)}#cr-cc .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--nowfill),var(--nowfill)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}
+[data-theme="rb-light"] #cr-cc .pin .facts .k{color:var(--ccm-chipink,#4a5350)}#cr-cc .pin .facts .v{font:800 18px var(--mono);margin-top:5px;color:var(--ink)}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--nowfill),var(--nowfill)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}
 #cr-cc .ev.now .eh b{color:var(--ink)}
 /* 982: this rule pinned a single-theme grey that read 10.53:1 dark and
    inverted in light. Deleted rather than twinned: with --ccm-nowfill declared
@@ -63859,7 +63739,6 @@ background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A2
   #cr-cc .pin .facts div{padding:13px 10px}
   #cr-cc .pin .t .nm b{font-size:22px}
   #cr-cc .cts{grid-template-columns:1fr 1fr;gap:12px}
-  #cr-cc .tabbar button{font-size:15px}
 }
 #cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}
 /* 981 (Theo's B1): the mirror now carries the same drawn icon the rest of the
@@ -64001,15 +63880,6 @@ function lead(pr){ return (ck(pr) || {}).lead || {}; }
 function homeownerOf(pr){
 if(typeof window.projHomeowner === 'function') return window.projHomeowner(pr);
 return String(lead(pr).homeowner_name || '').trim();
-}
-/* Partner name trimmed to fit the 4-up facts strip. Full name goes in title. */
-function shortOrg(n){
-n = String(n || '').trim();
-if(!n) return '\u2014';
-if(n.length <= 13) return n;
-var w = n.split(/\s+/);
-var two = w[1] ? (w[0] + ' ' + w[1]) : w[0];
-return (w[0].length <= 6 && two.length <= 14) ? two : w[0];
 }
 function isCommunity(pr){
 return pr && typeof window.projClaimType === 'function' &&
@@ -65596,9 +65466,7 @@ takeOver(mount.childNodes.length > 0 && mount.offsetParent !== null);
 lastSig = signature();
 }
 function wire(mount, pr){
-mount.querySelectorAll('[data-t]').forEach(function(b){
-b.onclick = function(){ tab = b.dataset.t; render(); };
-});
+/* 1309: the old page's [data-t] tab handler went here; nothing has emitted data-t since 1264. */
 /* 1264 */
 mount.querySelectorAll('[data-cc2]').forEach(function(b){
 b.onclick = function(){
@@ -68511,11 +68379,9 @@ var PILL_HOME = [ { go:'contacts', label:'Contacts' }, { go:'leads', label:'Lead
    one way there. Checked live (getClientRects) rather than by guessing which
    view is open, because #crBanner outlives every view and the strips do not. */
 function dupedHere(go){
-  if(go === 'partners' || go === 'bids'){
-    var tb = document.querySelector('#cr-ch2 .tabbar');
-    return !!(tb && tb.getClientRects().length &&
-              tb.querySelector('[data-pane="' + go + '"]'));
-  }
+  /* 1309: the Community branch is gone. It hid Partners/Estimates while the hub's
+     own tab strip repeated them; that strip was retired at 1179, so it always
+     answered no and the pills always show — which is still what happens. */
   /* insurance: the Cardinal Truth strip (801) covers the client list four
      ways over. Its sibling "Claims" pill is NOT listed here on purpose -
      ROUTES.claims is crOpenClaims, the Claims Tracker, a different screen

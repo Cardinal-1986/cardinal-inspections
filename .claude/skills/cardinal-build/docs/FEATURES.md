@@ -9741,6 +9741,13 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Builds 1309–1311: Community clean-up
+- More tools holds only **Activity**. Properties and Work Orders (dead ends), and Calendar and All Partners (repeats), are gone.
+- **Estimates** is the All estimates table alone, open by default. The waitlist is reached through the filter facet.
+- **Clients** keeps By partner; By stage is gone.
+- Client-list search, CSV and Select are ≥44px (1310).
+- **Gates:** `gate_1309`, `gate_1311`, `gate_944`; `gate_975` and `gate_977` are ported.
+
 ## Build 1308: Prospect badge orange
 `LJ_SOLID.Prospect` `#ff7a00` with dark ink `#15171b` (6.87:1). **Gate:** `gate_1308.mjs`.
 
