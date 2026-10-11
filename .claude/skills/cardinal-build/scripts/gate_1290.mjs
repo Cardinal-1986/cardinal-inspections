@@ -6,6 +6,7 @@
      C  light client page: no Georgia or monospace text
      D  light Leads: flat white lead cards, Segoe title
      E  dark is unchanged: the 1286 client-card ground is still #0F1521
+     F  light home: the + is solid red with white (it kept the blue accent until the sentinel caught it)
    Usage: node gate_1290.mjs [index.html] — control: the 1289 tree (RED, no crash) */
 import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 import { readFileSync } from 'fs'; import { dirname, join } from 'path'; import { fileURLToPath } from 'url';
@@ -28,12 +29,13 @@ const probe = async (light, state) => {
     const odd = (R) => { const o = []; if (!R) return o; for (const e of R.querySelectorAll('*')) { const r = e.getBoundingClientRect(); if (!r.width) continue; if (e.closest('#cr-lnav')) continue; if (![...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
       const f = getComputedStyle(e).fontFamily.split(',')[0]; if (/Georgia|monospace/i.test(f)) o.push(String(e.className).slice(0, 30) + ':' + f); } return o; };
     const hd = document.querySelector('header.site'); const hk = hd && getComputedStyle(hd);
+    const pl = document.querySelector('#addProjectBtn'); const plk = pl && getComputedStyle(pl);
     const PV = document.getElementById('projectView'); const boxes = [];
     if (PV) for (const s of SEL) for (const e of PV.querySelectorAll(s)) { if (!e.getBoundingClientRect().height) continue; const k = getComputedStyle(e); boxes.push({ s, bg: k.backgroundColor, grad: /gradient/.test(k.backgroundImage), sh: k.boxShadow !== 'none' }); }
     const pi = PV && PV.querySelector('.projinfo'); const pk = pi && getComputedStyle(pi);
     const LV = document.getElementById('leadsView'); const lj = LV ? [...LV.querySelectorAll('.ljcard')].filter(e => e.getBoundingClientRect().height).map(e => { const k = getComputedStyle(e); return { bg: k.backgroundColor, sh: k.boxShadow }; }) : [];
     const lt = LV && LV.querySelector('h1,h2,.viewhead'); 
-    return { theme: document.documentElement.getAttribute('data-theme'), head: hk && { bgi: hk.backgroundImage, bg: hk.backgroundColor },
+    return { theme: document.documentElement.getAttribute('data-theme'), plus: plk && plk.backgroundColor, head: hk && { bgi: hk.backgroundImage, bg: hk.backgroundColor },
       oddMain: odd(document.getElementById('mainView')), oddPV: odd(PV), boxes, spine: pk && pk.borderLeftColor, piBg: pk && pk.backgroundColor, lj, ltF: lt && getComputedStyle(lt).fontFamily };
   }, SEL); await ctx.close(); return v; };
 const h = await probe(true, 'home'), c = await probe(true, 'client'), l = await probe(true, 'leads'), d = await probe(false, 'client');
@@ -43,4 +45,5 @@ ok(c.boxes.length >= 15 && bad.length === 0, 'B  light client: client card, mone
 ok(c.oddPV.length === 0, 'C  light client: no Georgia or monospace text', c.oddPV.slice(0, 5).join(', ') || 'none');
 ok(l.lj.length > 0 && l.lj.every(b => b.bg === 'rgb(255, 255, 255)' && b.sh === 'none') && /Segoe UI/.test(String(l.ltF)), 'D  light Leads: flat white cards, Segoe title', JSON.stringify({ card: l.lj[0], f: l.ltF }));
 ok(d.theme !== 'rb-light' && d.piBg === 'rgb(15, 21, 33)', 'E  dark: client card ground unchanged (#0F1521)', d.piBg);
+ok(h.plus === 'rgb(200, 32, 46)', 'F  light home: the + is solid red', String(h.plus));
 await browser.close(); console.log(`GATE 1290 ${fail ? 'RED' : 'GREEN'} — ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

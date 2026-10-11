@@ -84,6 +84,11 @@ background:#ffffff;border-left:1px solid #dcdee2;border-right:1px solid #dcdee2;
 box-shadow:none;}}
 
 """
+# the light + kept its per-CRM accent (#addProjectBtn, two ids + !important) and the red rule
+# below was DEAD in light (sentinel). Retail comes OUT of the accent rule at source; Insurance and
+# Community keep their accent +.
+src = pl.sub(src, ':root[data-theme="rb-light"] #cr-hd2-bar #addProjectBtn,\n:root[data-theme="rb-light"] header.site #addProjectBtn{',
+  ':root[data-theme="rb-light"] body:not([data-crm-head="retail"]) #cr-hd2-bar #addProjectBtn,\n:root[data-theme="rb-light"] body:not([data-crm-head="retail"]) header.site #addProjectBtn{')
 A = "/* ── Build 527 · the Schedule Board ───────────────────────────────────────"
 src = pl.sub(src, A, CSS + A)
 src = pl.sub(src, '">v2026-10-10 build 1289<button', '">v2026-10-10 build 1290<button')

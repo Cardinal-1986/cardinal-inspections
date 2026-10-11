@@ -34351,6 +34351,8 @@ Insurance and Community are excluded (`body:not(.claim-insurance):not(.claim-com
 - 1233, 1234 and 1235 now assert Segoe in both themes.
 - Reproduce check `cmp`-identical; gate_stack clean; types, dupes, 1206, 990, 1268 and gate_chromium all green.
 
+**Caught by the light sentinel before merge (my miss).** The light "+" stayed the blue per-CRM accent. The old `#addProjectBtn` rule has two ids and `!important`, and my red rule was DEAD under it, while the CHANGELOG claimed a solid red +. Fixed at source: retail comes out of the accent rule (`body:not([data-crm-head="retail"])`), and Insurance and Community keep their accent +. `gate_1290` F now holds it (red on the unfixed tree). `gate_1198`'s text check accepts the narrowed selector. The sentinel's other new finding, `.acxsel` OVERRIDDEN, is a false positive: that select computes 18px before and after, because the iOS no-zoom `input,select{font-size:18px !important}` has always won.
+
 **Known leftovers.**
 - The billing tiles inside Invoices & Payments (Billed / Collected / Balance) still carry a soft inset look. They are a different module and are not in this build.
 - The money ring keeps its gradient, because it is a chart.

@@ -67795,8 +67795,8 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
    every rule above lost to it. Treating it as text was the wrong shape: it wants
    to stay filled, in the LIGHT accent, with white on top. Measured white-on-accent
    per CRM: 5.20 / 5.24 / 5.21 / 5.36:1. */
-:root[data-theme="rb-light"] #cr-hd2-bar #addProjectBtn,
-:root[data-theme="rb-light"] header.site #addProjectBtn{
+:root[data-theme="rb-light"] body:not([data-crm-head="retail"]) #cr-hd2-bar #addProjectBtn,
+:root[data-theme="rb-light"] body:not([data-crm-head="retail"]) header.site #addProjectBtn{
   background:var(--hac,#376CA0) !important;color:#ffffff !important;
   border-color:var(--hac,#376CA0) !important;}
 #crBanner .cbmenu{display:none;position:absolute;top:100%;left:0;min-width:215px;background:var(--bink);
