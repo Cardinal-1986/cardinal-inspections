@@ -100,15 +100,24 @@ let c = await page.evaluate(COUNT_SMALL);
 console.log(`  home: ${c.small} of ${c.total} under 44px`);
 need('chrome: menu button (.cr-ib.menu)', await probe('#navBtn'), 1, 1);
 need('chrome: ＋ add project', await probe('#addProjectBtn'), 1, 1);
-need('chrome: hd2 home', await probe('#cr-hd2-home'), 1, 1);
+/* 1299: five controls on this list belong to surfaces approved builds REMOVED.
+   Absent and retired is printed as such (so the list stays honest about what it
+   covers); if any of them ever renders again it is measured exactly as before. */
+async function isShown(sel){ return page.evaluate(s => [...document.querySelectorAll(s)].some(e => { const b = e.getBoundingClientRect(); return b.width > 1 && b.height > 1; }), sel); }
+const retiredLog = [];
+async function retired(name, sel, why){
+  if (await isShown(sel)) return false;           // it renders: measure it as before
+  console.log(`  [----] ${name} — retired: ${why}`); retiredLog.push(name); return true;
+}
+(await retired('chrome: hd2 home', '#cr-hd2-home', 'the ⌂ button was retired at 1173 (Theo\'s ask)')) || need('chrome: hd2 home', await probe('#cr-hd2-home'), 1, 1);
 /* #cr-home-btn was retired at build 757 — the header's own gold home
    (#cr-hd2-home, probed above) made both floating buttons redundant. */
 chk('chrome: floating back-to-app retired at 757 (header home replaces it)',
     await page.evaluate(() => !document.getElementById('cr-home-btn')));
-need('chrome: theme toggle', await probe('.cr-lr-theme'), 1, 1);
-need('landing: Skip', await probe('button.sk'), 1, 1);
-need('landing: All clients · N', await probe('.cr-lr-minor button'), 0, 1);
-need('home: Call/Text card pills', await probe('.pcacts a'), 0, 1);
+(await retired('chrome: theme toggle', '.cr-lr-theme', 'a Landing control; the Landing retired at 1165/1190 and the theme has ONE switch since 1180')) || need('chrome: theme toggle', await probe('.cr-lr-theme'), 1, 1);
+(await retired('landing: Skip', 'button.sk', 'the Landing retired at 1165/1190')) || need('landing: Skip', await probe('button.sk'), 1, 1);
+(await retired('landing: All clients · N', '.cr-lr-minor button', 'the Landing retired at 1165/1190')) || need('landing: All clients · N', await probe('.cr-lr-minor button'), 0, 1);
+(await retired('home: Call/Text card pills', '.pcacts a', 'projCardHtml(), their only renderer, has no caller (measured 1299)')) || need('home: Call/Text card pills', await probe('.pcacts a'), 0, 1);
 need('home: calendar arrows', await probe('.calnav'), 1, 1);
 chk('home small-control count dropped hard', c.small <= 20, `${c.small} (was 74 on v751)`);
 

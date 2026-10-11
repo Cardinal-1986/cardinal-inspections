@@ -178,7 +178,13 @@ async function drive(appText){
         window.showCardinalTruth=function(){ landed='insurance-hub'; };
         if(hub) hub.show=function(){ landed='community-hub'; };
         const btn=document.getElementById('cr-hd2-home');
-        if(!btn) landed='no-home-button'; else btn.click();
+        /* 1299: the ⌂ button was retired at 1173 (Theo's ask); goHome() survives
+           and is still reached through CardinalHeader.goHome() by the Claims and
+           close-all paths. Drive THAT when the button is gone -- same function,
+           same three spied destinations, so the mapping is still what is tested. */
+        if(btn) btn.click();
+        else if(window.CardinalHeader && typeof window.CardinalHeader.goHome==='function') window.CardinalHeader.goHome();
+        else landed='no-home-button';
         await new Promise(r=>setTimeout(r,200));
         window.showHome=rH; window.showCardinalTruth=rT; if(hub) hub.show=rS;
         return { portal, v, head, crm, title, hbg, landed };

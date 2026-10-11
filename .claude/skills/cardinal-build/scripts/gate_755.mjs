@@ -119,9 +119,16 @@ await go(`window.showHome()`); /* leave, then deep-link from retail-adjacent sta
 await go(`window.CardinalCommunityHub.show()`);
 await go(`document.querySelector('#crBanner [data-go="partners"]').click()`);
 chk('Partners opens the hub', await page.evaluate(vis('communityHubView')));
-chk('…on the Partners tab', await page.evaluate(`(() => { const b = document.querySelector('#communityHubView [data-pane="partners"], #cr-ch2 [data-pane="partners"]'); return !!b && b.classList.contains('on'); })()`));
+/* 1299: 1179 retired the hub's three TABS ("Clients, Estimates and Partners are
+   doors underneath"), so there is no .on tab to find; the pill still routes
+   through CardinalCommunityHome.tab(k), which now opens that door as its own page
+   with a Back. Assert the page landed, by its heading, tab or no tab. */
+const paneIs = name => page.evaluate(n => { const b = document.querySelector('#communityHubView [data-pane="' + n.toLowerCase() + '"], #cr-ch2 [data-pane="' + n.toLowerCase() + '"]');
+  if (b && b.classList.contains('on')) return true;
+  const v = document.getElementById('communityHubView'); return !!v && new RegExp('Back\\s+' + n + '\\b').test(v.innerText.replace(/\s+/g, ' ')); }, name);
+chk('…on the Partners tab (its own page since 1179)', await paneIs('Partners'));
 await go(`document.querySelector('#crBanner [data-go="bids"]').click()`);
-chk('Bids lands on the Bids tab', await page.evaluate(`(() => { const b = document.querySelector('#communityHubView [data-pane="bids"], #cr-ch2 [data-pane="bids"]'); return !!b && b.classList.contains('on'); })()`));
+chk('Bids lands on the Bids tab (the Estimates page since 1179)', await paneIs('Estimates') || await paneIs('Bids'));
 
 /* ── the swap is reversible ── */
 await go(`window.showHome()`);

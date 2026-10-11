@@ -2,6 +2,21 @@
 
 ---
 
+## 🟠 OPEN — from the full gate sweep, build 1299 (11 Oct 2026)
+
+1. ✅ **DONE at 1306** (Theo: "You choose" → 2W, wrap to two rows; `gate_1114` green 58/58). ~~**The seven pipeline cards scroll sideways on the iPad width with the rail** (`gate_1114`,
+   the one gate still red). At 1194px the home's main column is 449px and the seven cards need
+   ~616px. It was always so with the rail; the gate passed vacuously before 1165. A LAYOUT call —
+   preview options for Theo (wrap to two rows / let the side column stack below ~1300px / smaller
+   cards), then build the pick.~~
+2. **Cleanup candidates, measured:** `projCardHtml()` (the 370 badge card + its Call/Text pills) has
+   no caller; the `cr-lr-*` Landing CSS has been unreachable since 1190. Delete at source in their
+   own build, after a grep for regex read-backs (the 1182 lesson).
+3. **`gate_prodwide904`** needs a seed JSON nothing provides (orphaned since recorded). Wire a seed
+   or retire it.
+
+---
+
 ## 🟠 OPEN — from the 9 Sep 2026 external assessment, after build 1199
 
 > Build 1199 shipped the findings that needed no decision (fail-closed pay routes, ACH label,
@@ -6216,7 +6231,8 @@ size). "A11" is read as **Buttons A · Type 1 · Forms 1**.
 
 - **Buttons A: red · outline · red text.** The main action is solid Cardinal red with white text.
   Every other action is an outline: no fill, a hairline, ink text. Delete is red words with no fill,
-  so it never looks like Save. All are 44px tall. *Being built.*
+  so it never looks like Save. All are 44px tall. *Being built.* **1305:** Claims, Pricing and Coach
+  done (their pink main button and grey blocks; `gate_1305`).
 - **Type 1: six sizes, 11 / 13 / 15 / 18 / 22 / 26px.** These replace 36. The fold is the table the
   preview showed: 11.5→11; 12 and 12.5→13; 13.5 to 15.5→15; 16 to 19→18; 20 to 23→22; 24 to 26→26.
   Sizes above 26 are display numbers and stay. `pt` sizes are print documents and stay. The app
@@ -6276,9 +6292,11 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 ## Community revamp — layer of 8 Oct 2026 (Theo: "match exactly the retail crm")
 - [x] 1264: the client page in Retail's order. Thread in Communication. Partnership Organization in
   place of Lead Source.
-- [ ] Stage labels in one place. There are three `LABEL` maps today, two of them identical.
+- [x] 1301: Stage labels in one place — `window.CC_STAGE_LABEL` (four copies were found, not three; the fallbacks are held equal by `gate_1301`).
 - [ ] New Lead intake with the real partner list.
-- [ ] A Community home like Retail's: pipeline, calendar, A/R.
+- [x] 1302: "Tarp Only" is a Work Type (Theo: "not a stage just standalone").
+- [x] 1303: the Community home opens on Retail's pipeline (P = Bid Submitted, On Hold = Waiting, Theo's pick 1) with a Tarp Only tile; layout A.
+- [x] 1304: the Next 30 Days calendar and Partner A/R on the Community home — layout A complete.
 - [ ] Retire the old Community screens once the above are in.
 
 ## Guided inspection report — layer of 8 Oct 2026 (Theo, preview `JqX8AZTJGqCUARyPh2oAHt`)

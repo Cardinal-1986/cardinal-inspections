@@ -63,9 +63,17 @@ const HOMES = `(() => {
   const gh = document.getElementById('cr-hd2-home');
   const gr = gh ? gh.getBoundingClientRect() : null;
   const at = gr ? document.elementFromPoint(Math.round(gr.left + gr.width / 2), Math.round(gr.top + gr.height / 2)) : null;
+  /* 1299: the way OUT once the gold home itself retired (1173): the drawer button
+     on a phone, the left rail on a desktop, and the portal title (the Front
+     Door's door, 1164/1172). At least one must be on screen and actually take a
+     tap -- that is what "never strand the user" means now. */
+  const tappable = sel => { const e = document.querySelector(sel); if (!vis(e)) return false;
+    const r = e.getBoundingClientRect(); const t = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2));
+    return !!(t && (t === e || e.contains(t))); };
   return { retired, visibleHomes: all,
            goldPresent: vis(gh),
-           goldHitTestable: !!(at && at.closest && at.closest('#cr-hd2-home')) };
+           goldHitTestable: !!(at && at.closest && at.closest('#cr-hd2-home')),
+           wayOut: { drawer: tappable('#navBtn'), rail: tappable('#cr-lnav .lnav-item'), title: tappable('#brandTitle') } };
 })()`;
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
@@ -102,8 +110,11 @@ for (const width of [390, 1194]) {
     const h = await probe(HOMES);
     if (h.__err) { chk(`${tag} ${name}: harness ran`, false, h.__err); continue; }
     chk(`${tag} ${name}: no retired Home buttons`, h.retired.every(r => !r.inDom), JSON.stringify(h.retired.filter(r => r.inDom).map(r => r.id)));
-    chk(`${tag} ${name}: exactly one Home control on screen`, h.visibleHomes.length === 1, JSON.stringify(h.visibleHomes));
-    chk(`${tag} ${name}: and it is the header's gold home`, h.visibleHomes[0] === 'cr-hd2-home', JSON.stringify(h.visibleHomes));
+    /* 1299: 757 retired two of three Home buttons; 1173 retired the third (Theo's
+       ask -- its one real job was papering over the pipeline race). So the count
+       is ZERO now, and the promise is a way out instead. */
+    chk(`${tag} ${name}: no Home button is back (1173 retired the last one)`, h.visibleHomes.length === 0 && !h.goldPresent, JSON.stringify(h.visibleHomes));
+    chk(`${tag} ${name}: a way out is on screen and takes a tap`, (h.wayOut.drawer || h.wayOut.rail) && h.wayOut.title, JSON.stringify(h.wayOut));
   }
 
   /* ── every tool screen ── */
@@ -114,18 +125,9 @@ for (const width of [390, 1194]) {
     const h = await probe(HOMES);
     if (h.__err) { chk(`${tag} ${id}: harness ran`, false, h.__err); continue; }
     chk(`${tag} ${id}: no retired Home buttons`, h.retired.every(r => !r.inDom), JSON.stringify(h.retired.filter(r => r.inDom).map(r => r.id)));
-    chk(`${tag} ${id}: exactly one Home control`, h.visibleHomes.length === 1, JSON.stringify(h.visibleHomes));
-    chk(`${tag} ${id}: the gold home survives and is hit-testable`, h.goldPresent && h.goldHitTestable);
-    /* and it still works */
-    await go(`document.getElementById('cr-hd2-home').click()`, 1000);
-    const a = await probe(`(() => {
-      const vis = e => { if (!e) return false; const cs = getComputedStyle(e);
-        return e.getClientRects().length > 0 && cs.display !== 'none'; };
-      return { open: vis(document.getElementById('${id}')),
-               truth: vis(document.getElementById('cardinalTruthView')),
-               main: vis(document.getElementById('mainView')) };
-    })()`);
-    chk(`${tag} ${id}: gold home still closes it and lands on Truth`, !a.open && a.truth && !a.main, JSON.stringify(a));
+    chk(`${tag} ${id}: no Home button is back (1173)`, h.visibleHomes.length === 0 && !h.goldPresent, JSON.stringify(h.visibleHomes));
+    /* the tool screen must not cover its own exits -- the 570-572 trap shape */
+    chk(`${tag} ${id}: a way out is on screen and takes a tap`, (h.wayOut.drawer || h.wayOut.rail) && h.wayOut.title, JSON.stringify(h.wayOut));
   }
 
   /* ── Escape still closes a tool screen (deliberately kept) ── */
@@ -154,7 +156,9 @@ chk('cr-home-btn-styles is gone', !src.includes('<style id="cr-home-btn-styles">
 chk('cr-pme-styles is gone', !src.includes('<style id="cr-pme-styles">'));
 chk('the Escape handler is kept', src.includes("e.key === 'Escape' && visibleMount()"));
 chk('crCloseAll is kept (two other modules call it)', src.includes('window.crCloseAll = function () {'));
-chk('the gold home and goHome() are untouched', (src.match(/function goHome\(\)\{/g) || []).length === 1 && src.includes("home.onclick = function(){ goHome(); };"));
+/* 1299: 1173 retired the gold home's button but KEPT goHome() (two paths call it
+   through CardinalHeader.goHome -- gate_979 drives it). Both halves asserted. */
+chk('goHome() survives, its retired button does not', (src.match(/function goHome\(\)\{/g) || []).length === 1 && !src.includes("home.onclick = function(){ goHome(); };"));
 /* the LAST-stylesheet positional pin is retired: later builds legitimately
    appended module stylesheets (791 namebar, 1080–83 ask sheet, …); the
    cascade-win proof lives in gate_752 now. */

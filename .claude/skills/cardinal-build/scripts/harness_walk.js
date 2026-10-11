@@ -204,12 +204,28 @@ async function boot(opts) {
   // not just what it answers. state.confirmReturn controls the simulated click.
   state.confirmReturn = opts.confirmReturn !== false;
   w.confirm = (msg) => { state.confirmCalls.push(msg); return state.confirmReturn; };
+  /* 1299: the module asks through crAsk() now (the app's own dialog, defined in
+     a different block), with confirm() only as a fallback when crAsk is absent.
+     Unspied, the guard threw ReferenceError and the harness CRASHED after 50
+     passes. Same spy, same answer, async like the real one. */
+  w.crAsk = (msg) => { state.confirmCalls.push(msg); return Promise.resolve(state.confirmReturn); };
+  lastDoc = w.document;
   w.console = Object.assign({}, console, { warn: (...a) => state.warns.push(a.join(' ')) });
 
   w.eval(MODULE_JS);
   return { w, d: w.document, state };
 }
-const settle = (ms) => new Promise(r => setTimeout(r, ms || 40));
+/* 1299: a fixed sleep is a timing assumption. Under load (the full gate sweep
+   runs six at once) 200ms did not cover shrink -> download -> detect -> repaint,
+   and "a box per finding" read 0 on correct code. Sleep the floor, then keep
+   waiting -- up to 4s -- while the module still SAYS it is busy. */
+let lastDoc = null;
+const settle = async (ms) => {
+  await new Promise(r => setTimeout(r, ms || 40));
+  const t0 = Date.now();
+  while (lastDoc && /Asking the AI…|Saving…/.test(lastDoc.body.textContent || '') && Date.now() - t0 < 4000)
+    await new Promise(r => setTimeout(r, 25));
+};
 const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
 
 (async () => {
@@ -762,6 +778,11 @@ const clickTab = (d, name) => d.querySelector(`[data-tab="${name}"]`).click();
     form.querySelector('[data-jp="0"]').click();
     form.querySelector('[data-jp="1"]').click(); await settle(40);
     form.querySelector('[data-jadd]').click(); await settle(250);
+    /* 1299: addShots() copies serially (shrink, two uploads, insert per photo)
+       and paints nothing while it does, so there is no busy text for settle()
+       to watch. Wait for the RESULT, bounded, rather than for a guessed time. */
+    for (const t0 = Date.now(); h.state.inserts.filter(i => i.table === 'walk_shots').length < 2 && Date.now() - t0 < 4000;)
+      await settle(25);
 
     ok('both were copied into walks/, not referenced',
       h.state.uploads.length >= 2 && h.state.uploads.every(p => p.slice(0, 6) === 'walks/'),

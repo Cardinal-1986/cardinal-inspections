@@ -97,9 +97,14 @@ const GATES = [
      breaking its module changes nothing — that is the fixtures missing, not the
      gate failing to see its module. Recorded as UNEXERCISABLE rather than
      counted as a pass it did not earn or a failure it did not commit. */
-  { g: 'audit_contrast.js',   args: a => [a], unexercisable:
-      'fixtures never committed — self-disables at exit 0; harness_colors and harness_occhead cover this surface',
-    breaks: [] },
+  /* 1299: the fixtures ARE committed now (fixtures/oc_colors_rows.json +
+     fixtures/oc_covers), so audit_contrast reaches its assertions and prints its
+     own verdict -- "CLEAN — ..." or "BELOW FLOOR (N):" -- a fifth output format
+     tally() did not read, which is why it was refused as "ran nothing". Read the
+     format, and break it for real: every ink in the relocated sheet goes to the
+     Blackout ground's own near-black. */
+  { g: 'audit_contrast.js',   args: a => [a],
+    breaks: [['colors.css', /(?<![\w-])color\s*:\s*#[0-9a-fA-F]{3,6}/g, 'color:#242021']] },
 ];
 
 const NODE = process.execPath;
@@ -120,6 +125,10 @@ function run(gate, args) {
    counted, and the summary line wins when present because it is the gate's own
    arithmetic rather than mine. */
 function tally(out, which) {
+  /* audit_contrast's own verdict line (1299) */
+  const below = out.match(/^BELOW FLOOR \((\d+)\)/m);
+  if (below) return which === 'pass' ? 0 : Number(below[1]);
+  if (/^CLEAN — /m.test(out)) return which === 'pass' ? 1 : 0;
   const sum = out.match(/\bpass\s+(\d+)\s+fail\s+(\d+)/i);
   if (sum) return Number(which === 'pass' ? sum[1] : sum[2]);
   const line = out.match(/—\s*(\d+)\s+passed,\s*(\d+)\s+failed/);

@@ -56,9 +56,15 @@ async function boot(as, theme){
   await page.addInitScript(()=>{
     const S=(window.__SEED__||{}).punch_items; if(!S) return;
     const key=d=>d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-    const t=new Date(), n=new Date(); n.setDate(n.getDate()+1); if(n.getDay()===0) n.setDate(n.getDate()+1);
+    /* 1299: the route skips Sunday, so on a Sunday it opens on MONDAY and calls it
+       "Mon 12 Oct", not "Today" -- correct app behaviour. This seed used the
+       calendar today, so every Sunday run booked the "today" stops on a day the
+       route never shows and 8 checks went red on correct code. Seed the route's
+       own first day (rtDays()[0]) and the working day after it. */
+    const t=new Date(); if(t.getDay()===0) t.setDate(t.getDate()+1);
+    const n=new Date(t); n.setDate(n.getDate()+1); if(n.getDay()===0) n.setDate(n.getDate()+1);
     const p=new Date(); p.setDate(p.getDate()-3);
-    window.__K={ today:key(t), next:key(n), past:key(p) };
+    window.__K={ today:key(t), next:key(n), past:key(p), sunday:new Date().getDay()===0 };
     const base={ status:'open', assigned_to:'scottie@cardinalrenovations.net', created_by:'theo@cardinalrenovations.net', created_at:'2026-09-01T12:00:00Z', photos:[], comments:[], steps:[], template:null, visits:[], detail:null, priority:'normal' };
     S.push(Object.assign({}, base, { id:'r1', project_id:'p2', title:'Reseal pipe boot', kind:'ticket', scheduled_at:key(t), scheduled_time:'13:00:00' }));
     S.push(Object.assign({}, base, { id:'r2', project_id:'p1', title:'Ridge cap lifted', kind:'punch', scheduled_at:key(t), scheduled_time:null }));
@@ -102,7 +108,7 @@ for(const theme of ['dark','light']){
   await tap(s,'#puRoutes [data-puroute="'+SC+'"]'); await s.waitForTimeout(700);
   let st=await state(s); const K=await s.evaluate(()=>window.__K);
   if(theme==='dark'){
-    need('B  the route opens on Scottie, today', !!st && st.open && /Scottie/.test(st.h1) && /Today/.test(st.h1), st&&st.h1);
+    need('B  the route opens on Scottie, today (Monday on a Sunday)', !!st && st.open && /Scottie/.test(st.h1) && (K.sunday ? /\bMon\b/.test(st.h1) : /Today/.test(st.h1)), st&&st.h1);
     need('B  two stops, the timed one first', !!st && st.stops.join(',')==='r1,r2', st&&st.stops.join(','));
     need('B  each leg reads "≈ N min · M mi"', !!st && st.legs.length===2 && st.legs.every(l=>/^≈ \d+ min · [\d.]+ mi$/.test(l)), st&&JSON.stringify(st.legs));
     need('B  the summary says ≈ minutes driving', !!st && /2 stops · ≈\d+ min driving/.test(st.sum), st&&st.sum);

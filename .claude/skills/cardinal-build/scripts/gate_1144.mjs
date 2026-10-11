@@ -131,9 +131,25 @@ const sweeps = await p.evaluate(async (CRMS) => {
   const res = [];
   for (const crm of CRMS) for (const th of [null, 'rb-light']) {
     document.body.setAttribute('data-crm-head', crm);
+    /* 1299: flip the theme the way the APP does when the app offers a switch.
+       A bare attribute flip skips whatever the real toggle repaints by script --
+       measured: retail's header stayed navy with #8fb4d8 under a hand-set
+       data-theme, and went white with #376CA0 through the real switch. The gate
+       was scoring a state no person can reach. Attribute only as a fallback. */
+    const RB = window.CardinalRBTheme;
+    if (RB && typeof RB.setLight === 'function') { try { RB.setLight(!!th); } catch (e) {} }
     if (th) document.documentElement.setAttribute('data-theme', th);
     else document.documentElement.removeAttribute('data-theme');
     await new Promise(r => setTimeout(r, 280));
+    /* 1299: a fixed 280ms is a timing assumption. The per-CRM --h* tokens are
+       repainted by script after the attribute flips, and under load (the full
+       sweep runs four gates at once) the read landed BEFORE the repaint -- so a
+       DIFFERENT CRM failed "follows the theme" on every run, on trees where it
+       was correct. Wait until the header's paint and accent hold still. */
+    { const sig = () => { const h = document.querySelector('header.site'); if (!h) return '';
+        const c = getComputedStyle(h); return c.backgroundImage + '|' + c.backgroundColor + '|' + c.getPropertyValue('--hac'); };
+      let prev = sig();
+      for (let i = 0; i < 30; i++) { await new Promise(r => setTimeout(r, 100)); const now = sig(); if (now === prev) break; prev = now; } }
     const hdr = document.querySelector('header.site');
     const cs = hdr ? getComputedStyle(hdr) : null;
     res.push({ crm, th: th || 'dark', rows: scan(),

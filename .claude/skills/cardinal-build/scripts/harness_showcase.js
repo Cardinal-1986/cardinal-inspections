@@ -258,11 +258,24 @@ const settle = () => new Promise(r => setTimeout(r, 30));
   /* ── 8 · integration points in the artifact ──────────────────────────── */
   console.log('\n── integration (artifact text) ──');
   {
-    ok('registered in hideAllViews array',
-      /\{ id:'cr-show', api:window\.CardinalShowcase \}\]\.forEach/.test(HTML));
+    /* 1299: was pinned to the closing `}].forEach` -- punctuation, which moved the
+       moment another view was registered after this one. Assert the CONTRACT:
+       the entry sits inside hideAllViews()'s own body. */
+    ok('registered in hideAllViews array', (() => {
+      const i = HTML.indexOf('function hideAllViews(');
+      if (i < 0) return false;
+      let d = 0, j = HTML.indexOf('{', i);
+      for (let k = j; k < HTML.length; k++) {
+        if (HTML[k] === '{') d++;
+        else if (HTML[k] === '}' && --d === 0) { j = k; break; }
+      }
+      return /\{ id:'cr-show', api:window\.CardinalShowcase \}/.test(HTML.slice(i, j));
+    })());
     ok('navRestore has a showcase case',
       /case 'showcase':\s*if\(window\.CardinalShowcase\) window\.CardinalShowcase\.open\(\); break;/.test(HTML));
-    ok('Sales Floor has the entry button', /data-go="showcase"/.test(HTML));
+    /* 1299: the tile is BUILT by tile(go, ...), which writes data-go="' + go + '",
+       so the literal attribute never exists in the file. Assert the call. */
+    ok('Sales Floor has the entry button', /tile\('showcase',/.test(HTML));
     ok('Sales Floor handler routes it',
       /if\(d === 'showcase' && window\.CardinalShowcase\)\{/.test(HTML));
     ok('handler closes SF before opening (no stacked overlays)',
@@ -276,7 +289,10 @@ const settle = () => new Promise(r => setTimeout(r, 30));
        one build later. This form also catches the real bug class, which is a
        stamp and a CHANGELOG that disagree about what shipped. */
     const stamp = (HTML.match(/data-cr-footer[^>]*>v2026-\d\d-\d\d build (\d+)/) || [])[1];
-    const newestEntry = Math.max(...[...HTML.matchAll(/\{ b:(\d+),/g)].map(m => +m[1]));
+    /* 1299: entries from 1156 on are written `{ b: 1298,` -- a space after the
+       colon -- and `\{ b:(\d+),` read every one of them as absent, reporting the
+       newest entry as 1155 for 140 builds. Either spacing. */
+    const newestEntry = Math.max(...[...HTML.matchAll(/\{\s*b:\s*(\d+)\s*,/g)].map(m => +m[1]));
     ok('app stamp exists and is numeric', !!stamp, String(stamp));
     ok('app stamp matches the newest CHANGELOG entry',
       Number(stamp) === newestEntry, `stamp=${stamp} newest CHANGELOG=${newestEntry}`);

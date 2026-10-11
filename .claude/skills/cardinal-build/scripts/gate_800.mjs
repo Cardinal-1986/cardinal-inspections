@@ -61,6 +61,11 @@ async function boot(html, width, kind, theme) {
     if (url.startsWith('https://app.cardinalroster.com/')) return route.fulfill({ status: 200, body: '' });
     return route.abort();
   });
+  /* 1299: light via the SAVED setting -- a hand-set data-theme is re-derived
+     from storage when a view opens (1180-1181), so openProject() handed the light
+     checks a dark page. Same fix as gate_736 / gate_959. The attribute below is
+     kept as a belt for trees that predate the single switch. */
+  if (theme === 'light') await page.addInitScript(() => { try { localStorage.setItem('cardinal.theme.rb', '1'); } catch (e) {} });
   await page.addInitScript(s => { window.__SEED__ = s; }, mkSeed(kind));
   await page.addInitScript(MOCK);
   await page.addInitScript(() => { try { Object.defineProperty(document, 'fonts', { configurable: true, get: () => ({ ready: Promise.resolve(), status: 'loaded', check: () => true, load: () => Promise.resolve([]), forEach: () => {}, addEventListener: () => {}, removeEventListener: () => {} }) }); } catch (e) {} });
@@ -135,9 +140,14 @@ for (const kind of ['insurance', 'community']) {
     const bar = document.getElementById('crBanner'); if (!bar) return { none: true };
     return { none: false, bg: getComputedStyle(bar).backgroundColor };
   });
-  const expected = kind === 'insurance' ? 'rgb(26, 14, 13)' : 'rgb(8, 33, 26)';
+  /* 1299: these were the DARK CRM heads, because in 800's day only retail's
+     chrome followed the theme. 1144 ("light chrome throughout", Theo's pick) gave
+     every CRM a light twin of its OWN hue -- insurance a rose, community a green.
+     The promise 800 made is unchanged: neither picks up RETAIL's light bar. Their
+     own dark value OR their own light twin both keep it; retail's does not. */
+  const own = kind === 'insurance' ? ['rgb(26, 14, 13)', 'rgb(249, 239, 238)'] : ['rgb(8, 33, 26)', 'rgb(234, 243, 239)'];
   ok(kind + ' still shows its own CRM-head colour, not the new retail-light white',
-    !r.none && r.bg === expected, JSON.stringify({ kind, bg: r.bg, expected }));
+    !r.none && own.includes(r.bg) && r.bg !== A.bg, JSON.stringify({ kind, bg: r.bg, own, retailLight: A.bg }));
   await IC.browser.close();
 }
 

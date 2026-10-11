@@ -109,8 +109,14 @@ const fails = judge(html, o);
 if (existsSync(REPO + 'api/estimate.js')) fails.push('api/estimate.js still exists');
 const vj = readFileSync(REPO + 'vercel.json', 'utf8');
 if (vj.includes('api/estimate.js')) fails.push('vercel.json still lists api/estimate.js');
-const e2c = readFileSync(REPO + 'api/estimate-to-contract.js', 'utf8');
-if (!e2c.includes('retired at build 1033')) fails.push('estimate-to-contract still accepts ai_estimate_id');
+/* 1299: 1212 deleted api/estimate-to-contract.js outright (no caller; its select
+   named columns `projects` never had, so every call 404'd). A route that does not
+   exist cannot accept ai_estimate_id -- the check holds by absence, and it still
+   goes red if the route ever comes back without the 1033 refusal. */
+if (existsSync(REPO + 'api/estimate-to-contract.js')) {
+  const e2c = readFileSync(REPO + 'api/estimate-to-contract.js', 'utf8');
+  if (!e2c.includes('retired at build 1033')) fails.push('estimate-to-contract still accepts ai_estimate_id');
+}
 for (const f of fails) console.log('  FAIL ' + f);
 console.log(fails.length ? `GATE 1033 RED — ${fails.length} failure(s)` : 'GATE 1033 GREEN — five states clean, arm gone, api gone');
 

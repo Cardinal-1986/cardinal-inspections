@@ -9741,6 +9741,41 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1308: Prospect badge orange
+`LJ_SOLID.Prospect` `#ff7a00` with dark ink `#15171b` (6.87:1). **Gate:** `gate_1308.mjs`.
+
+## Build 1307: Prospect stripe orange
+`LJ_SPINE.Prospect` = `#ff7a00` (was `#ffd84d`, read as Lead's yellow). **Gate:** `gate_1307.mjs`.
+
+## Build 1306: pipeline wraps with the rail open
+`body.cr-lnav-on .piperow` wraps the seven cards onto two rows. **Gate:** `gate_1114.mjs`.
+
+## Build 1305: Buttons A on Claims, Pricing, Coach
+Main action `var(--cr-act,#c8202e)`, others outline `var(--cr-btnline,…)`. `--cr-red` stays the text red. **Gate:** `gate_1305.mjs`.
+
+## Build 1304: Community home — Next 30 Days and Partner A/R
+`.cc-ops` holds `.cc-cal30` (appointments on Community jobs, 30-day grid → Schedule Board) and `.cc-ar` (owed on Invoiced Community jobs by paying partner, Habitat first, over-30 count → door onto Invoiced; hidden for Production). Owed = `jobFinance().balance` when it has a value, else the bid. **Gate:** `gate_1304.mjs`.
+
+## Build 1303: the Community home pipeline and the Tarp Only tile
+The Community home (`cr-ch2`, pane `home`) opens on Retail's pipeline: `window.PIPE_BUCKETS` read live, with `CC_PIPE_WORDS` overriding Prospect → "Bid Submitted" and OnHold → "Waiting" (sphere "W"). Each `.pipebtn[data-ccpipe]` is a 975 door (`doors['pipe:KEY']`) onto All estimates; Approved includes Scheduled. Below it, `.cc-tarponly` counts jobs with Work Type "Tarp Only" (`wtOf()`, either field) and opens Clients via the `wtype` facet in `CH_GROUPS`. On a phone it is a 4 + 3 grid, and 7 across from 700px. Production sees no dollars. **Gate:** `gate_1303.mjs`.
+
+## Build 1302: Tarp Only work type
+"Tarp Only" is a Work Type in all five Work Type lists. It is not a stage. **Gate:** `gate_1302.mjs`.
+
+## Build 1301: one Community stage map
+`window.CC_STAGE_LABEL` is the single source for Community stage names (Estimate Requested … Not Awarded). `CD_STAGE_LABEL.community` is it; `COM_LABEL` and both Community `LABEL`s read it first (fallback copies held equal by `gate_1301`). No wording change.
+
+## Build 1300: route-page ticks say when they are waiting for signal
+Truck ticks and Add to <day> on `#cr-route` already queue offline (1049's outbox via `CardinalPunch.update`); a queued write now shows "No signal — saved on this phone. It will sync by itself." Gate: `gate_1300`.
+
+## Build 1299: job links open the job; every gate run
+- **Deep links work cold again.** `#p/<id>` and `#p/<id>/<tab>` (punch-out texts, client links, alert links) land on that client and tab when the app was closed; since 1165 they opened Home. The fragment is stashed at parse time as `__restoreBootHash`.
+- **Switch portal** on the desktop rail has its yellow (dark) / amber (light) back — the rules now key `data-k="switchportal"`.
+- **No native dialogs left:** the CompanyCam link error uses `crTell`; "Place a LIVE order with ABC Supply?" uses `crAsk`; three private `confirm()` fallbacks now decline.
+- **Form sheets in dark:** an outline `.chipbtn` on the white `.projform` keeps paper ink (14.16:1).
+- **Production and Dispatch** are excluded from the 1287/1290 one-typeface rule (their own lettering, e.g. the mono crew tags).
+- **Gates:** `gate_1299`; ~45 older gates and 6 harnesses repaired to the builds that superseded them (see the build log); `gate_1175` retired; the harness debt register is empty.
+
 ## Build 1298: receipts
 
 The punch-out card has **Add receipt** (camera, no dollars). Receipts are job files ("Receipt …") tagged Needs amount / Priced in Files. Payments lists receipts that need an amount at the top, and Add amount makes an Additional job expense linked to the file (`payments[].receipt`). Expense rows show their Receipt or offer **Attach receipt**. No SQL. Also fixed: the shared `.tskrow` ink, 1.4:1 → 13.6:1 in dark. Gate: `gate_1298`.

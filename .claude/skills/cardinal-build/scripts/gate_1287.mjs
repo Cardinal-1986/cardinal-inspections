@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* gate_1287 — one typeface across the app in dark retail (Theo: option B).
      A  dark: no Georgia or monospace text on home, client, leads, client directory,
-        estimates, punch, AR, production or sales floor
+        estimates, punch, AR or sales floor
+     E  dark: Production keeps its own type (1299 — Theo: Production and Dispatch are left alone)
      B  dark: the drawer keeps its own section labels (excluded on purpose)
      C  light (since 1290): the Leads title is Segoe too
      D  dark: Why Cardinal keeps its own designed title face (1289 — presentation screens excluded)
@@ -26,10 +27,12 @@ const scan = (p) => p.evaluate(() => { const odd = []; for (const e of document.
   const f = k.fontFamily.split(',')[0]; if (/Georgia|monospace|Courier|Consolas/i.test(f)) odd.push(String(e.className).slice(0, 20) + ':' + f.replace(/"/g, '')); } return odd; });
 const run = (p, s) => p.evaluate(async (s) => { try { await window.__sentinelStates.find(x => x.name === s).run(); return true; } catch (e) { return false; } }, s);
 const { ctx, p } = await boot(false);
-const STATES = ['home', 'client', 'leads', 'clientdir', 'estimates', 'punch', 'ar', 'production', 'salesfloor'];
+const STATES = ['home', 'client', 'leads', 'clientdir', 'estimates', 'punch', 'ar', 'salesfloor'];
 const res = {}; for (const s of STATES) { await run(p, s); await p.waitForTimeout(900); res[s] = await scan(p); }
 const badS = Object.entries(res).filter(([, v]) => v.length);
 ok(badS.length === 0, `A  dark: no Georgia or monospace text on ${STATES.length} screens`, badS.map(([k, v]) => `${k}: ${v.slice(0, 2).join(', ')} (${v.length})`).join(' | ') || 'none');
+await run(p, 'production'); await p.waitForTimeout(900); const prodOdd = await scan(p);
+ok(prodOdd.length > 0, 'E  dark: Production keeps its own type (excluded at 1299)', String(prodOdd.length));
 const nav = await p.evaluate(() => { const e = document.querySelector('#cr-lnav .lnav-sec'); return e ? getComputedStyle(e).fontFamily : null; });
 ok(!!nav && /monospace/i.test(nav), 'B  dark: the drawer keeps its own section labels', String(nav).slice(0, 40));
 /* 1289: the client-facing presentation screens keep their own type */

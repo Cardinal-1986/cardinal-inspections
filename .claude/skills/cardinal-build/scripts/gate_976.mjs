@@ -217,9 +217,14 @@ need('5 the activity feed says the tarp is done, not repaired',
      'tarp=' + JSON.stringify(ran.actTarp) + ' punch=' + JSON.stringify(ran.actPunch));
 
 /* ---- 4: the filter facet ---- */
+/* 1299: the Type FACET was replaced by the Punch List's four type TABS (Theo's
+   pick from the Punch List preview): Punch / Repair / Callback / Tarps, each a
+   pu-tab with its own count. The promise -- one tap pulls up every tarp -- is
+   asserted on the tab, with the facet accepted if it ever returns. */
 need('4 the Type filter can pull up every tarp',
-     /vals:\s*\['punch','ticket','callback','tarp'\]/.test(src),
-     'the Type facet does not list tarp');
+     /vals:\s*\['punch','ticket','callback','tarp'\]/.test(src) ||
+     /class="pu-tab k-tarp"[^>]*data-putype="tarp"/.test(src),
+     'neither the Type facet nor a Tarps tab lists tarp');
 
 /* ---- 6,7,8: the chip, measured in a REAL render, both themes ---- */
 async function chips(theme){

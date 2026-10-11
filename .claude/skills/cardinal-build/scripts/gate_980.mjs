@@ -128,10 +128,13 @@ need('5 the repair is longhands, not an invented family',
    weight/size/line-height trio before 980, so a bare count says 5 and a
    hardcoded 3 fails correct code — a number read off my own patch rather than
    off the app. Assert the three SPECIFIC values the old shorthands carried. */
-const LH_WANTED = ['font-size:11.5px;line-height:1.45',
-                   'font-size:11.5px;line-height:1.55',
-                   'font-size:12px;line-height:1.5'];
-const lhMissing = LH_WANTED.filter(w => both.indexOf(w) === -1);
+/* 1299: the SIZES in these three moved on purpose since -- 1081's 11px floor and
+   1242's 11/13/15/18/22/26 scale retired 11.5px and 12px -- so the literal pairs
+   could never match again. What 980 promised was that the /line-height half of
+   each shorthand became a REAL line-height beside its size; assert that, at
+   whatever size the scale now gives it. */
+const LH_WANTED = ['1.45', '1.55', '1.5'];
+const lhMissing = LH_WANTED.filter(lh => !new RegExp('font-size:[\\d.]+px;line-height:' + lh.replace('.', '\\.') + '(?![\\d])').test(both));
 need('6 a `/line-height` in the old shorthand became a real line-height',
      lhMissing.length === 0,
      'not converted: ' + JSON.stringify(lhMissing));

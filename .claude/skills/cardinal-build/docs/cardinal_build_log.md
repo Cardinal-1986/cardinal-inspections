@@ -34333,6 +34333,78 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1308: the P badge matches its orange stripe (Theo: "Make the p the same color")
+- `LJ_SOLID.Prospect` `#c8202e` → `#ff7a00`, and `LJ_INK.Prospect` `#ffffff` → `#15171b`, because white on that orange is 2.61:1 and the dark ink is 6.87:1. The badge is drawn on the card and in the lead's detail pane, and both read these maps. **`gate_1308`** (gate_1307 plus check D) reads the rendered badge as rgb(255,122,0) with its letter at 6.87:1. RED on 1307 (D). Also green: 1226, 1307, stack, types, dupes, a11y, harnesses.
+
+## Build 1307: Prospects get an orange stripe on Leads & Jobs (Theo, from a phone screenshot)
+- "Leads and prospects look like the same color." `LJ_SPINE` had Lead `#FFE600` and Prospect `#ffd84d`, two yellows. Prospect is now `#ff7a00`, the pipeline P's orange family. Only the stripe changed: the P badge (`LJ_SOLID` `#c8202e`), the inks and the other stages are untouched. A stripe is a 3px bar, not text, so the contrast floor does not apply. ⚠ On Hold's stripe is a paler orange (`#ff9f43`), so the two are near each other. On Hold is rare on Retail (one job), and Theo can call it if it reads too close.
+- **`gate_1307` (3):** the shipped `ljCardHtml` draws a Lead and a Prospect card. Their stripes are #FFE600 vs #ff7a00, the hues are ≥25° apart (54° vs 29°), and every other stage's stripe is unchanged. RED on 1306. ⚠ The first cut read only the seeded cards. The seed has no Prospect, so A could never pass and could never test the change; it now draws its own cards with the real function. Also green: 1226, stack, types, dupes, a11y, harnesses.
+
+## Build 1306: the seven pipeline cards wrap on the iPad (Theo: "You choose" → 2W)
+- With the rail open at 1194px, the main column is ~413–449px and seven cards need ~616px. The row scrolled sideways and hid I, Closed and On Hold. One scoped rule, `body.cr-lnav-on .piperow{flex-wrap:wrap;row-gap:8px;overflow-x:visible}`, exempted for `gate_stack` with a reason. Measured: scrollWidth 413 = clientWidth 413, all 7 cards. Phones are untouched. **`gate_1114` is its gate**: red since 1114 waiting on this pick, now GREEN 58/58 and RED on 1305 (2 failures). Also green: 957, 1167, 1173, 1176, 1178, 1220.
+
+## Build 1305: Buttons A, part 2 — Claims, Pricing and Coach (Theo: "You choose" → 1A)
+- These modules' dark `--cr-red` is pink `#ff6b6b`. That is right for red **text** on dark, where #c8202e is under the floor, but it was also the button fill, so the main action was a pink block and the other buttons were grey blocks. Now the change is made **at the source rules**, not with the preview's `!important` overrides:
+  - main buttons use `var(--cr-act,#c8202e)` with hover `var(--cr-act-dk,#8f1620)`;
+  - other buttons are transparent with a `var(--cr-btnline,#33333d)` edge, and `--cr-btnline:#c9cdd3` is declared in each light block.
+  - `--cr-red` is untouched, so red words keep their ink. 17 rules in total: `.cr-p-tool-btn`, `.cr-p-modal-btn`, `.cr-c-btn`, `.cr-c-h-btn`, `.cr-c-modal-btn`, `.cr-k-btn`, `.cr-k-modal-btn`. Adjusters has no buttons of its own.
+- **`gate_1305` (9):** in both themes, measured in Chromium, every main button is rgb(200,32,46), every other button has no fill, and every label is ≥4.5:1 (min 5.67). `--cr-red` is still #ff6b6b in dark and #D9282A in light. There are floors on how many buttons it must see. RED on 1304 (5 failures). Also green: 1000, 1001, 1232, 755–757, 969, 987, 988, 993, stack, types, dupes, 1206, a11y, harnesses.
+
+## Build 1304: the Community home's Next 30 Days and Partner A/R (finishes layout A)
+- **What:** these are Retail's two ops cards, fed Community jobs, placed between the pipeline and "waiting on you". They sit side by side, and stack below 640px.
+  - **Next 30 Days** is Retail's `renderOps` grid. It counts `cacheAppts` whose `project_id` is a Community job, and the card opens the Schedule Board.
+  - **Partner A/R** covers Invoiced Community jobs. Each job owes `jobFinance().balance` when a contract or estimate carries the value, else its bid. ⚠ Community jobs are usually priced only by their bid, so with `jobFinance` alone the card would always read $0. Amounts are grouped by `partnerOf()` (Community bills the partner), Habitat first, and "over 30 days" uses `t_Invoiced`, Retail's clock. The card is a 975 door onto Invoiced. **Production gets no A/R card**, under the partner-money rule.
+- `signature()` now also folds in the appointment count, plus every job's stage and Tarp Only flag. Without that, a stage move with no change in totals would not repaint the pipeline.
+- **`gate_1304` (10):** the order; the calendar counts the two Community appointments on their day and not the Retail one; a real tap opens the Schedule Board; A/R totals $16,500 (not the Retail $77,777) with Habitat first even though Partner B owes more, and 1 over 30 days; a real tap opens exactly the 3 Invoiced jobs; Production sees no A/R card; contrast ≥4.5:1 on 46 pieces of text in both themes. RED on 1303 (0 of 10). Also green: stack, types, dupes, 1206, a11y, scroll-lock, harnesses, 1179, 1301–1303, 754–759, 802–804, 953, 973–980.
+
+## Build 1303: the Community home opens on Retail's pipeline, with a Tarp Only tile (Theo: "1 and A")
+- **What:** Theo asked for the pipeline "same as retail but add bid submitted or waiting and tarp only", then said Tarp Only "is not a stage just standalone". He picked option 1 (P reads **Bid Submitted**, On Hold reads **Waiting**, no new stage) and home layout A (pipeline first). The pipeline reads `window.PIPE_BUCKETS` live and overrides only those two words, so Retail and Community cannot drift. Each bucket is a 975 door onto All estimates (A = Approved + Scheduled, as on Retail). Production gets counts and no dollars.
+- **Tarp Only** is a tile under the pipeline that counts jobs whose Work Type (1302) is Tarp Only, at any stage. Tapping it opens Clients through a new `wtype` facet in `CH_GROUPS`, so there is no second filter. `wtOf()` reads both spellings (flat `work_type`, written by the job card, and `lead.work_type`).
+- **Caught by the screenshot, not the gates:** seven buckets in a row scrolled sideways on a phone, and the Retail dark skin clipped "BID SUBMI…" in uppercase. Now a 4 + 3 grid on a phone and 7 across from 700px. The labels wrap, use no uppercase, and the sphere for Bid Submitted keeps "P". In dark, the cells are Retail's carved navy strip, because the hub body is not `.claim-community`. That is Retail's look, as asked.
+- **`gate_1303` (12):** order, words, counts, real taps on Bid Submitted and Tarp Only (exact rows), Production without dollars, and contrast ≥4.5:1 on all 25 new text pieces in both themes (min 5.1). The contrast check was proven able to fail: poisoning `.pmoney` to `#2a2a2a` makes it red. RED on 1302 (11 of 12). Also green: 1179, 754–759, 802–804, 953, 973–980, check_build, stack, types, dupes, 1206, a11y, scroll-lock.
+- **Not in this build:** the Next 30 Days calendar and Partner A/R (1304).
+
+## Build 1302: "Tarp Only" is a Work Type
+- Added beside New, Repair and Warranty in all five places the list is offered: the job card dropdown, `CC2_WT` (the Community job page), the Retail project form, the lead form, and the Community New Estimate form. `STAGES` and `normStage()` are untouched, so a job can never be misread as a Lead. **`gate_1302` (6):** RED on 1301.
+
+## Build 1301: Community's stage names live in one place (Community revamp row 2)
+
+- **Four identical copies** of the Community stage map: the Client Directory's `CD_STAGE_LABEL.community`, cr-comstage's `COM_LABEL`, and the two byte-identical `var LABEL` maps (CLAUDE.md's LABEL trap). 710 had already found one missing `OnHold`. Measured identical before the change, so **no wording moved**.
+- Now **one map**, `window.CC_STAGE_LABEL`, beside `INS_STAGE_LABEL`. The directory map IS it; the other three read it first and keep their copy only as a standalone fallback — the 655 (CR-AUD-014) shape insurance already has.
+- **`gate_1301` (6):** the shared map has all nine stages in a real render; the directory uses the object, not a copy; three fallbacks found, each reading the shared map first, and **none may differ from it** (so the copies cannot drift again); the words are unchanged. RED on 1300. ⚠ My first cut of C passed on ZERO fallbacks — its regex did not allow the `/* 1301 */` comment after the brace, so "none drifted" was vacuous. The count now gates it.
+
+## Build 1300: the route page says when a tick is waiting for signal (Theo's 4)
+
+- **The tick already worked offline.** Measured with `navigator.onLine` false and a "Load failed" fetch: the route page's truck tick (and Curtis's Add to <day>) goes through `CardinalPunch.update`, which since **1049** keeps the change and queues it in the outbox. The tick stays, the outbox holds the patch, no error. My note from 10 Oct that it did not was wrong.
+- **What was missing was the receipt.** The punch-out card says "No signal — saved on this phone" (1049); the route page said nothing, and its full screen covers the sync badge. Same words, as an `ok` toast.
+- **`gate_1300` (4):** offline the tick stays, the outbox holds it, no "Could not save", and the route page says so. On 1299 A–C already pass (1049's outbox) and **D is RED** — the build is D.
+
+## Build 1299: every gate, run — and the reds that were the app's (Theo, 11 Oct: "do 3 … don't stop till it's fixed to your standards")
+
+**How it was found.** All 379 `gate_*.mjs` and every CI harness, swept against `main` (1298), four at a time, with arguments resolved per gate (no-arg → `index.html` on usage → the scripts folder on ENOENT). ⚠ The first two sweeps were WRONG and said so: run without the path, and then with it for every gate, they reported ~140 reds that were the sweep's own fault (usage exits, `api/`-arg gates handed `index.html`, ESM packages missing). Only the third shape is trustworthy.
+
+**The app's reds — fixed in `index.html`:**
+- **Job links opened Home, not the job — since 1165 (30 Aug).** Sign-in lands on `showHome()`, whose history wrapper pushes `#h` *before* `__tryRestoreFromHash` runs 60ms later, so every cold `#p/<id>(/tab)` — Curtis's punch-out texts, client links, the 1259 alert links — read `#h` and restored nothing. Bisected: green at 1164, red at 1165. Fix: the fragment is stashed at parse time (`__restoreBootHash`, the 1255 `#punch` pattern) and used until a restore actually happens (the project retry loop re-enters, so it is consumed only on `__restored = true`). ⚠ First name tried was `__bootHash` — **already taken** by the password-reset handler at ~29476. check_build's negative control caught it.
+- **Switch portal lost Theo's yellow (539/1035).** 1165 renamed the drawer row's label; the rail keys `data-k` off the label, and both rules still said `data-k="landing"`. Retargeted to `switchportal`. Same row, same colours.
+- **One native `alert()` survived 1080** (the CompanyCam job-link save error) → `crTell`.
+- **One native `confirm()` survived 1083 — "Place a LIVE order with ABC Supply?"** → `crAsk` with `verb:'Place order'`. Three modules carried a private `confirm()` fallback for crAsk; those now **decline** (a destructive question with no sheet is answered no), so crAsk's module is the only home of the browser box. Lexer: alert 2→1, confirm 5→1.
+- **MINE, from 1292:** the outline Cancel / Not now / Close / Cancel edit on the white `.projform` sheets (Add project, checklist, gutter calc, lead, appointment) was **1.22:1** in dark — light chip ink on a see-through chip on a sheet that is white in both themes (Forms 1). New `.projform .chipbtn` paper ink, **14.16:1**, `--cr-stack` declared. gate_1241 + gate_1260 found it.
+- **MINE, from 1287/1290:** the one-typeface rule reached `#cr-pb` and `#cr-disp`, which are left alone by Theo's call (1288's own banner says so); the Magnet Board's mono dog tags (948) went to Segoe. Both screens added to the exclusion, beside 1289's presentation screens. gate_948 found it.
+
+**The tests' reds — fixed in the tests (each comment says which approved build moved and why):** harness_showcase (3: `{ b: N` spacing since 1156, `tile('showcase',…)` builds the attribute, `hideAllViews` punctuation), harness_colors (`OVERLAY_IDS` retired with the home button at 757), harness_vision (generated documents and `#cr-owner`; now counted in module text so it is relocation-safe), harness_walk (crAsk spy; settle waits on busy text / results — **now runs all 152, not 50**), harness_estasm1098 (1139 widened the select), rebase_renumber.py (5 sites, same `{ b: N` spacing — would have failed the next collision). Gates: 1021 (1147 `url`), 1023 (now *renders* the ground — 1222 made `.btn.dark` an outline; 11.31:1 on the toolbar, both themes), 1033 (1212 deleted the route), 1035 (`switchportal`), 1038 / 1063 (1188/1190: the picker is the Front Door; 1063 now asserts every door lands on one document with the retired pane hidden), 1065 (1114: "just put Retail"), 1068 (opens the Admin row + a Completed client; 26 → 35 checks), 1069 (1204's three sends), 1116 (five new views classified, measured by `elementFromPoint`), 1144 (the real theme switch, and wait for the repaint), 1159 / 1160 (1190 + 1231's light twin), 1187 (the Showroom's 8th door, a page it ships), 1254 / 948 / 949 (Sundays), 959 / 736 / 798 / 800 (light via the saved setting — a hand-set `data-theme` is re-derived when a view opens), 743 (1207's `crClientHay`), 751 (asks `audit_scrolllock.py`), 753 (1176 put New on the right; clamped where anchoring would overflow), 754 / 756 / 757 / 979 (1173 retired ⌂: drive `CardinalHeader.goHome()`, and **every tool screen keeps a tappable way out**), 755 / 803 (1179 retired the hub tabs), 769 (1252: only bosses assign), 780 / 781 / 782 / 976 / 980 / 993 / 799 / 804 / 805 / 752 / setupleak (survivors of `hideAllViews()`, not "seen before") / relocation (audit_contrast's own verdict format, and its fixtures exist now).
+- **Retired:** `gate_1175` (the Vision hub's inks; `?vision=1` gone at 1190, nothing referenced it).
+- **Every repaired check was run red** against a poisoned copy or the 1298 tree before it was trusted.
+
+**Still red, and why:**
+- **`gate_1114` — a layout call for Theo, not a test fault.** At 1194px with the left rail, the home column is 449px and the seven pipeline cards need ~616, so the row scrolls sideways. It always did with the rail; before 1165 the gate measured before the rail mounted and passed vacuously. Options go to Theo as a preview.
+- **`gate_prodwide904`** — orphaned (needs a seed JSON nothing provides), as recorded before.
+
+**Environment, not code:** gate_1050 needs `pymupdf`; 1151–1196 need `jsdom` / `stripe` resolvable from an ESM import; gate_a11y needs `axe-core`; 1187–1189 need `cardinal-showroom` checked out beside this repo. All installed / cloned for the sweep.
+
+**Gates for this build.** `gate_1299` (8: the cold punch link, the cold client link, the rail colour in both themes, the form-sheet Cancel, the dispatch mono, alert/confirm by lexer) — **RED 0/8 on 1298**. check_build, stack, types (TS2322 17→12, rebaselined), dupes, 1206, a11y (region 302→299, deliberately NOT rebaselined — may be day-dependent), gate_chromium 23/23, harness gate with an **empty debt register** (rebaselined; selftest 8/8).
+
+**Found, not fixed:** `projCardHtml()` (the 370 badge card and its Call/Text pills) has no caller; the `cr-lr-*` Landing CSS is unreachable since 1190. Cleanup candidates.
+
 ## Build 1298: receipts (Theo's pick 3, 11 Oct)
 
 **What it does.**

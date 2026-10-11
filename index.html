@@ -1169,6 +1169,10 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
    so the text does not change; only the emoji do, and they are now icons anyway. */
 .pipetitle{font:800 15px Georgia,'Times New Roman',serif;color:var(--rbe-head);margin-bottom:10px;}
 .piperow{display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding-bottom:4px;justify-content:space-evenly;}
+/* 1306: with the left rail open the main column is too narrow for seven cards, so
+   they wrap onto two rows instead of hiding three off the edge (Theo's 2W). */
+body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rather than scroll (Theo 2W)";
+  flex-wrap:wrap;row-gap:8px;overflow-x:visible;}
 .pipebtn{flex:1 1 0;border:0;background:none;cursor:pointer;text-align:center;padding:4px 2px;min-width:88px;max-width:200px;}
 .pipebtn .pcirc{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;
   margin:0 auto 6px;color:#141517;font:800 30px 'Segoe UI',Arial,sans-serif;/* 452: was #fff — 1.95:1 on Lead's fill, 4 of 5 circles under the 3.0 floor */
@@ -4152,7 +4156,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1298<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1308<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8295,7 +8299,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </select></label>
     <label>Work type<select id="pfWorkType">
       <option value="">— not set —</option><option>Inspection</option><option>Insurance</option><option>New</option>
-      <option>Repair</option><option>Retail</option><option>Service</option><option>Warranty</option>
+      <option>Repair</option><option>Retail</option><option>Service</option><option>Tarp Only</option><option>Warranty</option>
     </select></label>
     <label style="margin-bottom:2px;">Trades</label>
     <div class="tradegrid" id="pfTrades">
@@ -8559,7 +8563,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <label>Work Type
             <select id="ldWorkType"><option value="">&#8212; select &#8212;</option>
               <option>Inspection</option><option>Insurance</option><option>New</option><option>Repair</option>
-              <option>Retail</option><option>Service</option><option>Warranty</option></select></label>
+              <option>Retail</option><option>Service</option><option>Tarp Only</option><option>Warranty</option></select></label>
         </div>
         <!-- 1253: trades at intake — the same six, saved to checklist.trades like the Edit form -->
         <div class="ldtradehead">Trades</div>
@@ -12596,7 +12600,7 @@ function renderAcxOverview(){
   html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('tag') + 'Job Details</h3>' +
   '<div class="acxsec acxjdsec"><div class="acxbody"><div class="ackv acxjd">' +
     '<span>Job Category</span><div class="acxsl"><select class="acxsel" id="acxCat" aria-label="Job Category">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
-    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt" aria-label="Work Type">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service','Warranty'], ck.work_type) + '</select></div>' +
+    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt" aria-label="Work Type">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service','Tarp Only','Warranty'], ck.work_type) + '</select></div>' +
     '<span>Trade Type</span><div class="acxsl"><button type="button" class="acxsel acxtrbtn" id="acxTrBtn" aria-expanded="' + (acxTrOpen ? 'true' : 'false') + '">' +
       (_acxTr.length ? esc(_acxTr.join(', ')) : '\u2014') + '</button></div>' +
     '<div class="acxtrs" id="acxTrPanel"' + (acxTrOpen ? '' : ' hidden') + '>' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
@@ -13458,9 +13462,12 @@ var LJ_GROUPS = [
 /* 1226: Lead is lemon here too. 1220 changed STAGE_COLORS and the pipeline
    strip and missed this list's own maps, so Leads & Jobs kept a grey pill and
    a near-white spine - Theo: "The lead color didn't change?" */
-var LJ_SPINE = { Lead:'#FFE600', Prospect:'#ffd84d', OnHold:'#ff9f43', Approved:'#3dff9a', Scheduled:'#3dff9a',
+/* 1307: Prospect was #ffd84d, a second yellow beside Lead's lemon — Theo could not tell
+   them apart. Bright orange now, the pipeline P's family. */
+var LJ_SPINE = { Lead:'#FFE600', Prospect:'#ff7a00', OnHold:'#ff9f43', Approved:'#3dff9a', Scheduled:'#3dff9a',
   Completed:'#6fc3ff', Invoiced:'#c9a2ff', Closed:'#9aa4af', Lost:'#ff8a7a' };
-var LJ_SOLID = { Lead:'#FFE600', Prospect:'#c8202e', OnHold:'#c8862b', Approved:'#3fae6a', Scheduled:'#3fae6a',
+/* 1308: the P badge matches 1307's orange stripe (Theo). */
+var LJ_SOLID = { Lead:'#FFE600', Prospect:'#ff7a00', OnHold:'#c8862b', Approved:'#3fae6a', Scheduled:'#3fae6a',
   Completed:'#29A3DC', Invoiced:'#9170c3', Closed:'#5e7b88', Lost:'#8d6e63' };
 /* 475: Invoiced 3.5% lighter and Closed 1.6% darker. Those two sit mid-luminance
    and fail against BOTH inks; every other stage is fixed by ink alone. The same
@@ -13469,7 +13476,8 @@ var LJ_SOLID = { Lead:'#FFE600', Prospect:'#c8202e', OnHold:'#c8862b', Approved:
 /* Per-stage label ink: whichever of the two wins on that colour, same in both
    themes because the pill's ground is the stage colour, not the page. Ratios
    against the colour above: 14.16 (1226, lemon; was 5.78 on grey) / 5.67 / 6.39 / 6.39 / 6.29 / 4.54 / 4.50 / 4.62. */
-var LJ_INK = { Lead:'#15171b', Prospect:'#ffffff', OnHold:'#15171b', Approved:'#15171b', Scheduled:'#15171b',
+/* 1308: white on the new orange is 2.61:1, so Prospect takes the dark ink, 6.87:1. */
+var LJ_INK = { Lead:'#15171b', Prospect:'#15171b', OnHold:'#15171b', Approved:'#15171b', Scheduled:'#15171b',
   Completed:'#15171b', Invoiced:'#15171b', Closed:'#ffffff', Lost:'#ffffff' };
 function ljTrades(p){
   var ck = parseCkAll(p);
@@ -14827,7 +14835,7 @@ document.addEventListener('click', async function(e){
       await saveCkPatch(k === 'pick'
         ? { cc_project_id: b.getAttribute('data-id'), cc_project_name: b.getAttribute('data-nm') || '' }
         : { cc_project_id: '', cc_project_name: '' });
-    }catch(err){ b.removeAttribute('disabled'); alert('Could not save the link: ' + (err.message || err)); return; }
+    }catch(err){ b.removeAttribute('disabled'); crTell('Could not save the link: ' + (err.message || err)); return; }   /* 1299: the one alert() 1080 missed */
     return galJobLoad();
   }
 });
@@ -20839,6 +20847,16 @@ function insStageLabel(s, short){
   return INS_STAGE_LABEL[s] || s;
 }
 window.insStageLabel = insStageLabel;
+/* 1301: ONE Community stage map. Four copies existed (this file's directory map,
+   cr-comstage's COM_LABEL and two identical `var LABEL`s in the Community modules);
+   each now reads this first and keeps its own copy only as a standalone fallback,
+   the 655 shape INS_STAGE_LABEL already has. gate_1301 holds them equal.
+   On window only, not also a top-level var: the pair reads as a type clash to gate_types. */
+window.CC_STAGE_LABEL = {
+  'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
+  'Approved':'Awarded', 'Scheduled':'Scheduled', 'Completed':'Build Complete',
+  'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded'
+};
 var CD_STAGE_LABEL = {
   retail:    { 'Closed':'Archived' },
   insurance: INS_STAGE_LABEL,
@@ -20846,10 +20864,7 @@ var CD_STAGE_LABEL = {
      "Awaiting Funding" on the hub and card and raw "OnHold" in the Client
      Directory and the pipeline toast. Four copies of this map exist; making
      them one is its own item (recorded in OPEN_ITEMS). */
-  community: { 'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
-               'Approved':'Awarded',
-               'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Invoiced',
-               'Closed':'Closed', 'Lost':'Not Awarded' }
+  community: window.CC_STAGE_LABEL   /* 1301: the one map, defined just above */
 };
 var CD_SORTS = [
   { key:'name',    label:'Client name' },
@@ -30440,9 +30455,19 @@ async function enableNotifications(){
   try{ if(/^#(punch$|route\/)/.test(location.hash)) window.__crBootLink = location.hash; }catch(e){}
   try{ if(!/^#(p|e|list)\//.test(location.hash) && !/type=recovery/.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash) && !/^#(punch$|route\/)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
+  /* 1299: since 1165 sign-in lands on showHome(), and the wrapper above makes
+     that push #h BEFORE this restore runs (60ms after showMain). So a cold open
+     of #p/<id>/punch -- the punch-out text, a client link, an alert -- read "#h"
+     here and restored nothing: the job link opened Home. The fragment is taken
+     NOW, at parse time, the way 1255 already stashes #punch / #route, and is
+     used until a restore has actually happened (the project retry loop below
+     re-enters this function, so it must not be consumed on the first pass). */
+  var __restoreBootHash = null;
+  try{ if(/^#(p|e|list)\//.test(location.hash) || /^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash)) __restoreBootHash = location.hash; }catch(e){}
   window.__tryRestoreFromHash = function(){
     if(__restored) return;
     var h = location.hash || '';
+    if(__restoreBootHash && (h === '' || h === '#h')) h = __restoreBootHash;
     var st = null, m;
     if((m = /^#p\/([^\/]+)(?:\/([a-z]+))?$/.exec(h))) st = { v:'project', id: m[1], tab: m[2] || null };
     else if((m = /^#e\/(.+)$/.exec(h))) st = { v:'editor', id: m[1] };
@@ -30456,13 +30481,13 @@ async function enableNotifications(){
     else if(h === '#me') st = { v:'me' };
     else if(h === '#team') st = { v:'team' };
     else if(h === '#settings') st = { v:'settings' };
-    if(!st){ __restored = true; document.body.classList.remove('restoring'); return; }
+    if(!st){ __restored = true; __restoreBootHash = null; document.body.classList.remove('restoring'); return; }
     if((st.v === 'project' || st.v === 'leads') && !cacheProjects.length && __restoreTries < 25){
       __restoreTries++; setTimeout(window.__tryRestoreFromHash, 250);
       if(__restoreTries >= 25) document.body.classList.remove('restoring');
       return;
     }
-    __restored = true;
+    __restored = true; __restoreBootHash = null;
     __histLock = true;
     try{
       if(st.v === 'project'){
@@ -32012,6 +32037,7 @@ function showList() {
    had a theme at all. Shape copied from cr-estimates-styles, which was already
    converted. */
 :root[data-theme="rb-light"] #cr-pricing-mount{
+  --cr-btnline:#c9cdd3;   /* 1305: the outline button edge in light */
   --cr-red:#D9282A;
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
@@ -32054,10 +32080,10 @@ function showList() {
   #cr-pricing-mount .cr-p-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
   #cr-pricing-mount .cr-p-search { flex: 1; min-width: 180px; padding: 10px 14px; border: 1px solid var(--cr-border); border-radius: 4px; font-size: 15px; font-family: inherit; color: var(--cr-text); }
   #cr-pricing-mount .cr-p-search:focus { outline: none; border-color: var(--cr-red); box-shadow: 0 0 0 3px var(--cr-red-tint); }
-  #cr-pricing-mount .cr-p-tool-btn { padding: 10px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; background: var(--cr-bg); border: 1px solid var(--cr-border); color: var(--cr-text); }
+  #cr-pricing-mount .cr-p-tool-btn { padding: 10px 14px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; background: transparent; border: 1px solid var(--cr-btnline,#33333d); color: var(--cr-text); }
   #cr-pricing-mount .cr-p-tool-btn:hover { border-color: var(--cr-red); color: var(--cr-red); }
-  #cr-pricing-mount .cr-p-tool-btn.primary { background: var(--cr-red); border-color: var(--cr-red); color: white; }
-  #cr-pricing-mount .cr-p-tool-btn.primary:hover { background: var(--cr-red-dark); color: white; }
+  #cr-pricing-mount .cr-p-tool-btn.primary { background: var(--cr-act,#c8202e); border-color: var(--cr-act,#c8202e); color: white; }
+  #cr-pricing-mount .cr-p-tool-btn.primary:hover { background: var(--cr-act-dk,#8f1620); border-color: var(--cr-act-dk,#8f1620); color: white; }
 
   #cr-pricing-mount .cr-p-group { margin-bottom: 24px; }
   #cr-pricing-mount .cr-p-group-h { display: flex; align-items: center; gap: 12px; padding: 12px 0 8px; border-bottom: 1px solid var(--cr-border); margin-bottom: 6px; }
@@ -32119,8 +32145,8 @@ function showList() {
   #cr-pricing-mount .cr-p-modal input, #cr-pricing-mount .cr-p-modal select { width: 100%; padding: 10px 12px; border: 1px solid var(--cr-border); border-radius: 4px; font-size: 15px; font-family: inherit; color: var(--cr-text); }
   #cr-pricing-mount .cr-p-modal input:focus, #cr-pricing-mount .cr-p-modal select:focus { outline: none; border-color: var(--cr-red); box-shadow: 0 0 0 3px var(--cr-red-tint); }
   #cr-pricing-mount .cr-p-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  #cr-pricing-mount .cr-p-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-border); background:var(--cr-bg,#fff); color: var(--cr-text); }
-  #cr-pricing-mount .cr-p-modal-btn.primary { background: var(--cr-red); color: white; border-color: var(--cr-red); }
+  #cr-pricing-mount .cr-p-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-btnline,#33333d); background:transparent; color: var(--cr-text); }
+  #cr-pricing-mount .cr-p-modal-btn.primary { background: var(--cr-act,#c8202e); color: white; border-color: var(--cr-act,#c8202e); }
   #cr-pricing-mount .cr-p-modal-error { color: var(--cr-red); font-size: 13px; margin-top: 8px; font-weight: 600; }
 
   /* Category management */
@@ -33538,6 +33564,7 @@ function showList() {
    had a theme at all. Shape copied from cr-estimates-styles, which was already
    converted. */
 :root[data-theme="rb-light"] #cr-claims-mount{
+  --cr-btnline:#c9cdd3;   /* 1305: the outline button edge in light */
   --cr-red:#D9282A;
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
@@ -33577,13 +33604,13 @@ function showList() {
 
   /* Actions */
   #cr-claims-mount .cr-c-actions { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
-  #cr-claims-mount .cr-c-btn { flex: 1; padding: 12px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; background: var(--cr-bg); border: 1px solid var(--cr-border); color: var(--cr-text); font-family: inherit; letter-spacing: 1.2px; text-transform: uppercase; min-width: 130px; }
+  #cr-claims-mount .cr-c-btn { flex: 1; padding: 12px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; border: 1px solid var(--cr-btnline,#33333d); color: var(--cr-text); font-family: inherit; letter-spacing: 1.2px; text-transform: uppercase; min-width: 130px; }
   #cr-claims-mount .cr-c-btn:hover { border-color: var(--cr-muted-2); background: var(--cr-bg-subtle); }
   /* 1052: --cr-red is #ff6b6b in the dark half of this family — a light coral,
      right as INK on dark and wrong as a BUTTON GROUND under white text
      (2.78:1). --cr-red-dark's light value grounds it at 6.85:1. */
-  #cr-claims-mount .cr-c-btn.primary { background: #B01F21; color: white; border: 1px solid #B01F21; flex: 1.5; }
-  #cr-claims-mount .cr-c-btn.primary:hover { background: var(--cr-red-dark); }
+  #cr-claims-mount .cr-c-btn.primary { background: var(--cr-act,#c8202e); color: white; border: 1px solid var(--cr-act,#c8202e); flex: 1.5; }
+  #cr-claims-mount .cr-c-btn.primary:hover { background: var(--cr-act-dk,#8f1620); border-color: var(--cr-act-dk,#8f1620); }
 
   /* Filter tabs */
   #cr-claims-mount .cr-c-tabs { display: flex; border-bottom: 1px solid var(--cr-border); overflow-x: auto;overscroll-behavior-x:contain; -webkit-overflow-scrolling: touch; margin-bottom: 16px; }
@@ -33651,9 +33678,9 @@ function showList() {
   #cr-claims-mount .cr-c-section-h .num { color: var(--cr-red); }
   #cr-claims-mount .cr-c-section-h .h-actions { margin-left: auto; }
   #cr-claims-mount .cr-c-section-rule { height: 2px; background: var(--cr-red); margin: 10px 0 18px; }
-  #cr-claims-mount .cr-c-h-btn { background: var(--cr-bg); border: 1px solid var(--cr-border); color: var(--cr-muted); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+  #cr-claims-mount .cr-c-h-btn { background: transparent; border: 1px solid var(--cr-btnline,#33333d); color: var(--cr-text); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; }
   #cr-claims-mount .cr-c-h-btn:hover { border-color: var(--cr-red); color: var(--cr-red); }
-  #cr-claims-mount .cr-c-h-btn.primary { background: var(--cr-red); color: white; border-color: var(--cr-red); }
+  #cr-claims-mount .cr-c-h-btn.primary { background: var(--cr-act,#c8202e); color: white; border-color: var(--cr-act,#c8202e); }
 
   /* Financial summary card (on detail) */
   #cr-claims-mount .cr-c-fin { background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); color: white; border-radius: 6px; padding: 20px; margin-bottom: 24px; }
@@ -33756,8 +33783,8 @@ function showList() {
   #cr-claims-mount .cr-c-modal input:focus, #cr-claims-mount .cr-c-modal select:focus, #cr-claims-mount .cr-c-modal textarea:focus { outline: none; border-color: var(--cr-red); box-shadow: 0 0 0 3px var(--cr-red-tint); }
   #cr-claims-mount .cr-c-modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   #cr-claims-mount .cr-c-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  #cr-claims-mount .cr-c-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-border); background:var(--cr-bg,#fff); color: var(--cr-text); }
-  #cr-claims-mount .cr-c-modal-btn.primary { background: var(--cr-red); color: white; border-color: var(--cr-red); }
+  #cr-claims-mount .cr-c-modal-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid var(--cr-btnline,#33333d); background:transparent; color: var(--cr-text); }
+  #cr-claims-mount .cr-c-modal-btn.primary { background: var(--cr-act,#c8202e); color: white; border-color: var(--cr-act,#c8202e); }
   #cr-claims-mount .cr-c-modal-err { color: var(--cr-red); font-size: 13px; margin-top: 8px; font-weight: 600; }
 
   /* Toast */
@@ -36419,6 +36446,7 @@ function showList() {
    had a theme at all. Shape copied from cr-estimates-styles, which was already
    converted. */
 :root[data-theme="rb-light"] #cr-coach-mount{
+  --cr-btnline:#c9cdd3;   /* 1305: the outline button edge in light */
   --cr-red:#D9282A;
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
@@ -36455,10 +36483,10 @@ function showList() {
   #cr-coach-mount .cr-k-fact .val strong{ font-weight:700; color:var(--cr-black); }
 
   #cr-coach-mount .cr-k-actions{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-  #cr-coach-mount .cr-k-btn{ flex:1; min-width:120px; padding:12px 8px; border-radius:4px; font-size:13px; font-weight:700; cursor:pointer; background:var(--cr-bg,#fff); border:1px solid var(--cr-border); color:var(--cr-text); font-family:inherit; letter-spacing:1.2px; text-transform:uppercase; }
+  #cr-coach-mount .cr-k-btn{ flex:1; min-width:120px; padding:12px 8px; border-radius:4px; font-size:13px; font-weight:700; cursor:pointer; background:transparent; border:1px solid var(--cr-btnline,#33333d); color:var(--cr-text); font-family:inherit; letter-spacing:1.2px; text-transform:uppercase; }
   #cr-coach-mount .cr-k-btn:hover{ border-color:var(--cr-muted-2); background:var(--cr-bg-subtle); }
-  #cr-coach-mount .cr-k-btn.primary{ background:var(--cr-red); color:#fff; border-color:var(--cr-red); flex:1.6; }
-  #cr-coach-mount .cr-k-btn.primary:hover{ background:var(--cr-red-dark); }
+  #cr-coach-mount .cr-k-btn.primary{ background:var(--cr-act,#c8202e); color:#fff; border-color:var(--cr-act,#c8202e); flex:1.6; }
+  #cr-coach-mount .cr-k-btn.primary:hover{ background:var(--cr-act-dk,#8f1620); border-color:var(--cr-act-dk,#8f1620); }
   #cr-coach-mount .cr-k-btn:disabled{ opacity:.5; cursor:not-allowed; }
 
   #cr-coach-mount .cr-k-tabs{ display:flex; border-bottom:1px solid var(--cr-border); overflow-x:auto;overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; margin-bottom:14px; }
@@ -36539,8 +36567,8 @@ function showList() {
   #cr-coach-mount .cr-k-modal input,#cr-coach-mount .cr-k-modal select,#cr-coach-mount .cr-k-modal textarea{ width:100%; padding:10px 12px; border:1px solid var(--cr-border); border-radius:4px; font-size:15px; font-family:inherit; color:var(--cr-text); }
   #cr-coach-mount .cr-k-modal textarea{ min-height:90px; resize:vertical; line-height:1.5; }
   #cr-coach-mount .cr-k-modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
-  #cr-coach-mount .cr-k-modal-btn{ padding:10px 18px; border-radius:4px; font-size:13px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; cursor:pointer; font-family:inherit; border:1px solid var(--cr-border); background:var(--cr-bg,#fff); color:var(--cr-text); }
-  #cr-coach-mount .cr-k-modal-btn.primary{ background:var(--cr-red); color:#fff; border-color:var(--cr-red); }
+  #cr-coach-mount .cr-k-modal-btn{ padding:10px 18px; border-radius:4px; font-size:13px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; cursor:pointer; font-family:inherit; border:1px solid var(--cr-btnline,#33333d); background:transparent; color:var(--cr-text); }
+  #cr-coach-mount .cr-k-modal-btn.primary{ background:var(--cr-act,#c8202e); color:#fff; border-color:var(--cr-act,#c8202e); }
   #cr-coach-mount .cr-k-err{ color:var(--cr-red); font-size:13px; margin-top:8px; font-weight:600; }
 
   #cr-coach-mount .cr-k-toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--cr-black); color:var(--cr-onsolid,#fff);/* 988 — see cr-pricing-styles */ padding:10px 18px; border-radius:20px; font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase; z-index:300; }
@@ -38496,7 +38524,7 @@ onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
 <script id="cr-comstage-script">
 (function () {
 'use strict';
-var COM_LABEL = {
+var COM_LABEL = window.CC_STAGE_LABEL || {   /* 1301: shared map first */
 'Lead':      'Estimate Requested',
 'Prospect':  'Estimate Submitted',
 'OnHold':    'Awaiting Funding',   /* 710: was missing — the pipeline toast
@@ -38726,6 +38754,7 @@ esc(p.name) +
 '<option value="Windows">Windows</option>' +
 '<option value="Gutters">Gutters</option>' +
 '<option value="Multi-trade">Multi-trade</option>' +
+'<option value="Tarp Only">Tarp Only</option>' +   /* 1302 */
 '<option value="Other">Other</option>' +
 '</select>' +
 '</div>' +
@@ -44015,6 +44044,12 @@ window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportCl
 :root:not([data-theme="rb-light"]) .chipbtn{background:transparent;color:#e6e9ee;border-color:#33333d;}
 :root:not([data-theme="rb-light"]) .chipbtn.danger{--cr-stack:"1292 Delete is red words, dark";color:#ff7b82;border-color:transparent;}
 :root:not([data-theme="rb-light"]) .chipbtn:hover{border-color:var(--red);color:#ff7b82;}
+/* 1299: a chip on the WHITE form sheet keeps paper ink. The sheet is white in both
+   themes (Forms 1), so the dark rule above — light ink on a transparent chip since
+   1292 — read 1.22:1 there. Outline style is unchanged: no fill, a hairline, ink. */
+:root:not([data-theme="rb-light"]) .projform .chipbtn{--cr-stack:"1299 the form sheet is white in dark too (Forms 1); 1292's light chip ink is for dark grounds";color:#2b2b2b;border-color:#c9c2b8;background:transparent;}
+:root:not([data-theme="rb-light"]) .projform .chipbtn:hover{border-color:var(--red);color:#9c1822;}
+:root:not([data-theme="rb-light"]) .projform .chipbtn.danger{color:#c8202e;border-color:transparent;}
 
 /* Inspections / Reports document list (listView, and the client-profile doc mounts) */
 :root:not([data-theme="rb-light"]) table.reports{background:transparent;border-color:#2a2a32;}
@@ -44225,6 +44260,26 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1308, d: '2026-10-11', t: 'The P badge is orange to match its stripe',
+    s: 'On Leads & Jobs the round P on a Prospect card was red while its stripe had just turned orange. The P is now the same orange, with a dark letter so it stays easy to read.' },
+  { b: 1307, d: '2026-10-11', t: 'Prospects have an orange stripe on the Leads list',
+    s: 'On Leads & Jobs, a Lead and a Prospect both had a yellow stripe down the left of the card and looked the same. A Prospect\u2019s stripe is now bright orange, so the two read apart at a glance. Nothing else on the card changes.' },
+  { b: 1306, d: '2026-10-11', t: 'On the iPad, all seven pipeline cards show',
+    s: 'With the side menu open on the iPad, the home pipeline used to scroll sideways and hide Invoiced, Closed and On Hold off the edge. The cards now wrap onto two rows so all seven are on screen, and the Activity column stays where it is.' },
+  { b: 1305, d: '2026-10-11', t: 'Claims, Pricing and Coach buttons match the rest of the app',
+    s: 'On Insurance Claims, the Pricing catalog and the Coach, the main button was pink in dark mode and the other buttons were grey blocks. Now it is the same as everywhere else: one solid Cardinal red button for the main action, and the rest are outlines. Red words on those screens are unchanged.' },
+  { b: 1304, d: '2026-10-11', t: 'Community home: the next 30 days and what partners owe',
+    s: 'Under the Community pipeline are the two cards from the Retail home. Next 30 Days shows the appointments booked on Community jobs and opens the Schedule Board. Partner A/R shows what is still owed on invoiced Community jobs, by the partner who pays, Habitat first, with how many are over 30 days; a tap opens those invoices. Production does not see the money card.' },
+  { b: 1303, d: '2026-10-11', t: 'Community opens on the pipeline, with Tarp Only beside it',
+    s: 'The Community home now starts with the same pipeline as Retail \u2014 L, Bid Submitted, A, C, I, Closed, Waiting \u2014 with the count and dollars in each, and a tap opens those jobs. Under it, a Tarp Only tile counts every job marked Tarp Only at any stage. What is waiting on you and the Clients, Estimates and Partners doors follow, as before.' },
+  { b: 1302, d: '2026-10-11', t: 'Tarp Only is a work type',
+    s: 'A job that is only a tarp can now be marked that way: Tarp Only is in the Work Type list on the job, the lead and project forms, and the Community New Estimate form. It is not a pipeline stage, so the job keeps its stage as usual. The Community home will count these on their own tile next.' },
+  { b: 1301, d: '2026-10-11', t: 'Community stage names live in one place',
+    s: 'Behind the scenes: the Community stage names (Estimate Requested, Awarded, Build Complete\u2026) were written out four separate times, and once one copy was missing a stage. They now come from one list, so a name can only ever be changed in one spot and every Community screen says the same thing. Nothing you see changes.' },
+  { b: 1300, d: '2026-10-11', t: 'The route page says when a tick is waiting for signal',
+    s: 'Ticking the load-the-truck list on the route page, or Curtis moving a job to the day, already worked with no signal \u2014 the tick stays and is sent when the phone is back online. Now it also says so, with the same line the punch-out card uses: \u201cNo signal \u2014 saved on this phone. It will sync by itself.\u201d' },
+  { b: 1299, d: '2026-10-11', t: 'Job links open the job again',
+    s: 'Every check in the app was run, and the ones that failed because of the app are fixed here. The big one: a link to a job \u2014 the punch-out text Curtis gets, a client link, an alert \u2014 opened the home screen instead of the job whenever the app was not already open, since the change that made signing in go straight to your home (30 Aug). The address is now read before anything can change it, so the link lands on the right client and the right tab. Also: the Switch portal row on the desktop rail has its yellow back (the rename had quietly dropped it); the CompanyCam job-link error and the \u201cPlace a LIVE order with ABC Supply?\u201d question use the app\u2019s own message and question sheet instead of the phone\u2019s grey box; three delete questions no longer fall back to the grey box if the sheet is ever missing \u2014 they simply do not delete; and the Cancel / Not now / Close buttons on the white forms (Add project, the checklist, the gutter calculator, the lead form, the calendar\u2019s appointment sheet) are readable in dark mode again \u2014 my button change last night had made them white on white. And Production and the dispatch board get their own lettering back (the crew name tags in capitals) \u2014 the one-typeface change was not meant to reach them.' },
   { b: 1298, d: '2026-10-11', t: 'Receipts',
     s: 'A punch-out card has an Add receipt button: the crew photographs the receipt and it is saved to the job\u2019s Files, with no dollar amount on the card. On the job\u2019s Payments page, receipts that still need an amount wait at the top; type the amount and it becomes an Additional job expense with its receipt attached. Older expense lines get an Attach receipt button, and Files marks each receipt as Needs amount or Priced.' },
   { b: 1297, d: '2026-10-10', t: 'Load-the-truck list',
@@ -49188,7 +49243,7 @@ async function onBulkDelete(){
 var galChecked = window.galChecked || {};
 var ids = Object.keys(galChecked).filter(function(id){ return galChecked[id]; });
 if(!ids.length) return;
-var ask = typeof window.crAsk === 'function' ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+var ask = typeof window.crAsk === 'function' ? window.crAsk : function(){ return Promise.resolve(false); /* 1299: no sheet, no destructive yes -- crAsk's module owns the browser box */ };
 if(!await ask('Delete ' + ids.length + ' photo' + (ids.length === 1 ? '' : 's') + ' from this album? This cannot be undone.')) return;
 var statusEl = actionBar.querySelector('[data-slot="status"]');
 var gone = [];
@@ -49800,7 +49855,7 @@ function mcHide(){
 }
 async function mcClose(){
   if(shots.length){
-    var ask = typeof window.crAsk === 'function' ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+    var ask = typeof window.crAsk === 'function' ? window.crAsk : function(){ return Promise.resolve(false); /* 1299: no sheet, no destructive yes -- crAsk's module owns the browser box */ };
     if(!await ask('Throw away the ' + shots.length + ' photo' + (shots.length === 1 ? '' : 's') + ' you took? They have not been uploaded.')) return;
   }
   mcDiscard();
@@ -53228,7 +53283,7 @@ return;
    job. Ask once; "Fix it" publishes nothing. */
 var _probs = estLineProblems(est);
 if(_probs.length){
-  var _ask = (typeof window.crAsk === 'function') ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+  var _ask = (typeof window.crAsk === 'function') ? window.crAsk : function(){ return Promise.resolve(false); /* 1299: no sheet, no destructive yes -- crAsk's module owns the browser box */ };
   var _go = await _ask('Check these lines before the client sees them\n\n' + _probs.join(' '), { verb: 'Publish anyway', cancel: 'Fix it', tone: 'plain' });
   if(!_go){ pubSet(false); return; }
 }
@@ -62256,6 +62311,51 @@ box-shadow:var(--ccm-sh-xs)}
 #cr-ch2 .cc-door b{display:block;font:700 15px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
 #cr-ch2 .cc-door small{color:var(--ccm-dim,#828c86);font-size:13px}
 #cr-ch2 .cc-door .ar{color:var(--ccm-dim,#828c86);font-size:18px;flex:0 0 auto}
+
+/* ── 1303: Retail's pipeline on the Community home, and the Tarp Only tile ── */
+#cr-ch2 .cc-pipe{background:var(--ccm-card,#161918);border:1px solid var(--ccm-line,#2a2f2c);
+  border-radius:11px;padding:10px 8px 8px;margin:10px 0 8px}
+#cr-ch2 .cc-pipek{font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3);margin:0 4px 8px}
+/* Seven buckets do not fit one row of a phone once two of them are words, so
+   the row is a grid: four then three on a phone (the preview Theo picked), all
+   seven in one row from 700px. */
+#cr-ch2 .cc-pipe .piperow{--cr-stack:"1303: Community fits all seven buckets on screen as a grid rather than a sideways scroll";
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;overflow:visible;padding:0}
+@media (min-width:700px){#cr-ch2 .cc-pipe .piperow{grid-template-columns:repeat(7,minmax(0,1fr))}}
+#cr-ch2 .cc-pipe .pipebtn{--cr-stack:"1303: a grid cell, not a fixed-width scroller cell";min-width:0;max-width:none}
+#cr-ch2 .pipebtn .plabel{--cr-stack:"1303: two Community words are longer than Retail's letters, so they wrap instead of clipping";
+  white-space:normal;overflow:visible;text-transform:none;letter-spacing:0;line-height:1.15;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .pipebtn .pcount{--cr-stack:"1303: Community card ink, both themes";color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .pipebtn .pmoney{--cr-stack:"1303: Community card ink, both themes";color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-tarponly{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;
+  background:var(--ccm-card,#161918);border:1px solid var(--ccm-line,#2a2f2c);border-left:3px solid #5B6B8C;
+  border-radius:11px;padding:10px 12px;min-height:44px;margin:0 0 8px;color:inherit;cursor:pointer}
+#cr-ch2 .cc-tarponly.is-zero{cursor:default}
+#cr-ch2 .cc-tarponly b{font:800 20px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-tarponly span{font:700 15px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-tarponly small{margin-left:auto;font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-tarponly:focus-visible{outline:2px solid var(--ccm-ac,#34D399);outline-offset:2px}
+
+/* ── 1304: Next 30 Days and Partner A/R, side by side; stacked on a phone ── */
+#cr-ch2 .cc-ops{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px;align-items:stretch}
+@media (max-width:640px){#cr-ch2 .cc-ops{grid-template-columns:1fr}}
+#cr-ch2 .cc-cal30,#cr-ch2 .cc-ar{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;color:inherit;
+  background:var(--ccm-card,#161918);border:1px solid var(--ccm-line,#2a2f2c);border-radius:11px;
+  padding:10px 12px;min-height:44px;cursor:pointer;font:inherit}
+#cr-ch2 .cc-ar.is-zero{cursor:default}
+#cr-ch2 .cc-cal30:focus-visible,#cr-ch2 .cc-ar:focus-visible{outline:2px solid var(--ccm-ac,#34D399);outline-offset:2px}
+#cr-ch2 .cc-pipek small{font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86);margin-left:6px}
+#cr-ch2 .cc-calg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+#cr-ch2 .cc-calg i{font:600 11px 'Segoe UI',Arial,sans-serif;font-style:normal;color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-calg span{font:600 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3);padding:4px 0;border-radius:6px}
+#cr-ch2 .cc-calg span.t{background:var(--ccm-ac,#34D399);color:#06281b}
+#cr-ch2 .cc-calg span.j{box-shadow:inset 0 -3px 0 var(--ccm-ac,#34D399)}
+#cr-ch2 .cc-caln,#cr-ch2 .cc-arrow,#cr-ch2 .cc-arold{font:400 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86)}
+#cr-ch2 .cc-arbig{font:800 22px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-ch2 .cc-arold{color:#ff9a9a;font-weight:700}
+:root[data-theme="rb-light"] #cr-ch2 .cc-arold{color:#8f1620}
+:root[data-theme="rb-light"] #cr-ch2 .cc-calg span.t{background:#047857;color:#fff}
+:root[data-theme="rb-light"] #cr-ch2 .cc-calg span.j{box-shadow:inset 0 -3px 0 #047857}
 </style>
 <script id="cr-ch2-script">
 
@@ -62339,7 +62439,7 @@ var d = new Date(iso);
 if(isNaN(d)) return null;
 return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
-var LABEL = {
+var LABEL = window.CC_STAGE_LABEL || {   /* 1301: shared map first */
 'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
 'Approved':'Awarded',
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
@@ -62430,6 +62530,12 @@ return ['Approved','Scheduled','Completed','Invoiced','Closed'];
 function stageLabels(keys){
 return (keys || []).map(function(k){ return LABEL[k] || k; });
 }
+/* 1303: a job's Work Type. The job card writes it flat (work_type), the
+   Community job page writes both flat and under lead — read both. */
+function wtOf(pr){
+var c = ck(pr) || {}, l = c.lead || {};
+return String(c.work_type || l.work_type || '').trim();
+}
 var chSheet = { cat:null, pend:[] };
 var CH_SORTS = [
 { key:'due',       label:'Due / check back' },
@@ -62509,7 +62615,9 @@ var CH_GROUPS = [
 { key:'rep',     label:'Assigned to',   get:chRepName },
 /* 977: the facet exists so the Waitlist TILE has somewhere to route — 975's
    applyDoor writes chState.sets keyed by these, and chMatches reads them. */
-{ key:'waitlist', label:'Waitlist',     get:function(pr){ return chWaiting(pr) ? 'On the waitlist' : 'Not waitlisted'; } }
+{ key:'waitlist', label:'Waitlist',     get:function(pr){ return chWaiting(pr) ? 'On the waitlist' : 'Not waitlisted'; } },
+/* 1303: the facet the Tarp Only tile routes through (975's door shape). */
+{ key:'wtype',   label:'Work type',     get:function(pr){ return wtOf(pr) || 'Not set'; } }
 ];
 function chActiveCount(){
 var n = 0;
@@ -62893,7 +63001,10 @@ var d = compute();
 return [pane, query, closedStamp, metaStamp, chStamp, chActiveCount(), roleOf(),
 d.out, d.owed, d.parked, d.win, d.due.length, d.chase.length,
 d.sched.length, d.inv.length, d.all.length,
-(window.cacheProjects || []).length].join('|');
+(window.cacheProjects || []).length,
+/* 1304: the pipeline, the Tarp Only tile and the calendar read these */
+(window.cacheAppts || []).length,
+d.all.map(function(pr){ return normStage(pr.stage) + (wtOf(pr) === 'Tarp Only' ? 't' : ''); }).join(',')].join('|');
 }
 function mountMissing(){
 var v = document.getElementById('communityHubView');
@@ -63270,8 +63381,99 @@ attnGroup('Tarps still up', d.tarps, false);
 var attnCount = d.due.length + d.chase.length + d.sched.length + d.inv.length + d.tarps.length;
 var overdueCount = d.due.filter(function(r){ return r.d != null && r.d < 0; }).length;
 
+/* 1303: Retail's pipeline, read live from PIPE_BUCKETS so the two cannot drift,
+   with Theo's two Community words. Each bucket is a 975 door onto All estimates. */
+var CC_PIPE_WORDS = {
+Prospect: { label:'BID SUBMITTED', short:'Bid Submitted', letter:'P', tip:'Bid is in \u2014 waiting on the partner' },
+OnHold:   { label:'WAITING', short:'Waiting', letter:'W', tip:'Waiting on a grant or funding decision' }
+};
+var ccBuckets = (window.PIPE_BUCKETS || []).map(function(b){
+var o = {}, w = CC_PIPE_WORDS[b.key] || {};
+Object.keys(b).forEach(function(k){ o[k] = b[k]; });
+Object.keys(w).forEach(function(k){ o[k] = w[k]; });
+return o;
+});
+var pipeHtml = ccBuckets.map(function(b){
+var keys = b.key === 'Approved' ? ['Approved','Scheduled'] : [b.key];
+var inB = d.all.filter(function(pr){ return keys.indexOf(normStage(pr.stage)) !== -1; });
+var amt = inB.reduce(function(a,pr){ return a + (bidAmt(pr) || 0); }, 0);
+doors['pipe:' + b.key] = { sets:{ stage: stageLabels(keys) }, pane:'bids', fold:'allbids' };
+var full = b.label.charAt(0) + b.label.slice(1).toLowerCase();
+return '<button type="button" class="pipebtn" data-ccpipe="' + b.key + '" title="' + esc(b.tip || '') + '" aria-label="' + esc(full) + '">' +
+'<span class="pcirc ' + b.cls + '">' + (b.letter || b.label.charAt(0)) + '</span>' +
+'<span class="plabel">' + esc(b.short || full) + '</span>' +
+'<span class="pcount">' + inB.length + '</span>' +
+(role === 'prod' ? '' : '<span class="pmoney">' + usd(amt) + '</span>') + '</button>';
+}).join('');
+var tarpOnly = d.all.filter(function(pr){ return wtOf(pr) === 'Tarp Only'; });
+doors['tarponly'] = { sets:{ wtype:['Tarp Only'] }, pane:'clients' };
+var pipeCard = ccBuckets.length
+? '<div class="cc-pipe"><div class="cc-pipek">Community Pipeline</div><div class="piperow">' + pipeHtml + '</div></div>' +
+  (tarpOnly.length
+    ? '<button type="button" class="cc-tarponly" data-cctarp="1"><b>' + tarpOnly.length + '</b><span>Tarp Only</span><small>any stage \u203A</small></button>'
+    : '<div class="cc-tarponly is-zero"><b>0</b><span>Tarp Only</span><small>none right now</small></div>')
+: '';
+
+/* 1304: Next 30 Days — Retail's 30-day grid, counting appointments on Community jobs. */
+var ccIds = {}; d.all.forEach(function(pr){ ccIds[pr.id] = 1; });
+var ccByDay = {}, ccBooked = 0;
+(window.cacheAppts || []).forEach(function(a){
+if(a && a.appt_date && ccIds[a.project_id]) ccByDay[a.appt_date] = (ccByDay[a.appt_date] || 0) + 1;
+});
+var c0 = new Date(); c0.setHours(0,0,0,0);
+var calG = ['S','M','T','W','T','F','S'].map(function(x){ return '<i>' + x + '</i>'; }).join('');
+var ci, cLast = c0;
+for(ci = 0; ci < c0.getDay(); ci++) calG += '<span></span>';
+for(ci = 0; ci < 30; ci++){
+var cd = new Date(c0.getFullYear(), c0.getMonth(), c0.getDate() + ci);
+var ckey = cd.getFullYear() + '-' + String(cd.getMonth()+1).padStart(2,'0') + '-' + String(cd.getDate()).padStart(2,'0');
+var cn = ccByDay[ckey] || 0; ccBooked += cn;
+calG += '<span class="' + (ci === 0 ? 't' : '') + (cn ? ' j' : '') + '"' + (cn ? ' title="' + cn + ' booked"' : '') + '>' + cd.getDate() + '</span>';
+cLast = cd;
+}
+var cMo = function(x){ return x.toLocaleDateString('en-US', { month:'short', day:'numeric' }); };
+var calCard = '<button type="button" class="cc-cal30" data-go="calendar" aria-label="Next 30 Days \u2014 open the Schedule Board">' +
+'<span class="cc-pipek">Next 30 Days <small>' + ccBooked + ' booked</small></span>' +
+'<span class="cc-calg">' + calG + '</span>' +
+'<span class="cc-caln">' + cMo(c0) + ' \u2013 ' + cMo(cLast) + ' \u00b7 tap for the Schedule Board</span></button>';
+
+/* 1304: Partner A/R — owed on Invoiced Community jobs, by the partner who pays. */
+var arCard = '';
+if(role !== 'prod'){
+var arBy = {}, arTot = 0, arN = 0, arOld = 0;
+d.all.forEach(function(pr){
+if(normStage(pr.stage) !== 'Invoiced') return;
+var owe = 0;
+/* jobFinance is the number when a contract or estimate carries one; a Community
+   job priced only by its bid (the usual shape) owes its bid. */
+try{ var jf = (typeof window.jobFinance === 'function') ? window.jobFinance(pr) : null;
+owe = (jf && jf.value > 0) ? (jf.balance || 0) : (bidAmt(pr) || 0); }catch(_1304){ owe = bidAmt(pr) || 0; }
+if(!(owe > 0)) return;
+var c = ck(pr) || {}, invAt = c.t_Invoiced || c.stage_since;
+if(invAt && (Date.now() - new Date(invAt).getTime()) > 30 * 86400000) arOld++;
+var pn = partnerOf(pr);
+arBy[pn] = (arBy[pn] || 0) + owe; arTot += owe; arN++;
+});
+var arNames = Object.keys(arBy).sort(function(a, b){
+var ha = /habitat/i.test(a), hb = /habitat/i.test(b);
+if(ha !== hb) return ha ? -1 : 1;
+return arBy[b] - arBy[a];
+});
+doors['ar'] = { sets:{ stage: stageLabels(['Invoiced']) }, pane:'bids', fold:'allbids' };
+arCard = (arN ? '<button type="button" class="cc-ar" data-ccar="1">' : '<div class="cc-ar is-zero">') +
+'<span class="cc-pipek">Partner A/R <small>' + arN + ' invoice' + (arN === 1 ? '' : 's') + '</small></span>' +
+'<b class="cc-arbig">' + usd(arTot) + '</b>' +
+(arN
+? arNames.slice(0, 3).map(function(n){ return '<span class="cc-arrow">' + pName(n) + ' \u00b7 ' + usd(arBy[n]) + '</span>'; }).join('') +
+  (arOld ? '<span class="cc-arold">' + arOld + ' over 30 days</span>' : '')
+: '<span class="cc-arrow">nothing outstanding</span>') +
+(arN ? '</button>' : '</div>');
+}
+var opsRow = '<div class="cc-ops">' + calCard + arCard + '</div>';
+
 var homePane = '<div data-pane="home" class="' + (pane === 'home' ? 'on' : '') + '">' +
 '<div class="cc-srch"><input type="search" id="cr-ch2-search" placeholder="Name, address, partner, work type\u2026" value="' + esc(query) + '"></div>' +
+pipeCard + opsRow +
 '<div class="cc-atop"><b>' + attnCount + '</b><span>waiting on you</span>' +
 (overdueCount ? '<span class="cc-aover">' + overdueCount + ' overdue</span>' : '') + '</div>' +
 '<div class="cc-acard">' + (attnBody || '<div class="cc-empty">Nothing waiting on you.</div>') + '</div>' +
@@ -63429,6 +63631,17 @@ el.onclick = function(){ applyDoor(doors['kpi:' + el.getAttribute('data-cckpi')]
 });
 host.querySelectorAll('[data-queue]').forEach(function(el){
 el.onclick = function(){ applyDoor(doors['q:' + el.getAttribute('data-queue')]); };
+});
+/* 1303: the pipeline buckets and the Tarp Only tile */
+host.querySelectorAll('[data-ccpipe]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['pipe:' + el.getAttribute('data-ccpipe')]); };
+});
+host.querySelectorAll('[data-cctarp]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['tarponly']); };
+});
+/* 1304: the Partner A/R card */
+host.querySelectorAll('[data-ccar]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['ar']); };
 });
 host.querySelectorAll('[data-tally]').forEach(function(el){
 el.onclick = function(){
@@ -64237,7 +64450,7 @@ if(!window.currentProject || String(window.currentProject.id) !== String(pid)) r
 await load(pid);
 if(window.currentProject && String(window.currentProject.id) === String(pid)) render();
 }
-var LABEL = {
+var LABEL = window.CC_STAGE_LABEL || {   /* 1301: shared map first */
 'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
 'Approved':'Awarded',
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
@@ -65164,7 +65377,7 @@ document.body.classList.toggle('cr-cc-open', !!on);
 var CC2_ORD = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
 var CC2_TRADES = ['Roofing','Siding','Gutters','Windows','Repairs','Misc'];
 var CC2_CATS = ['Residential','Commercial','Property Management'];
-var CC2_WT = ['Inspection','Insurance','New','Repair','Retail','Service','Warranty'];
+var CC2_WT = ['Inspection','Insurance','New','Repair','Retail','Service','Tarp Only','Warranty'];   /* 1302: Tarp Only */
 var CC2_LOSS = ['Not funded','Went with another contractor','Partner cancelled','Homeowner declined','Other'];
 function cc2Ink(hex){
 var h = String(hex || '').replace('#', '');
@@ -67394,7 +67607,9 @@ async function sendOrder(){
   if(sending) return;
   var probs = problems();
   if(probs.length){ st.step = 'build'; st.problems = probs; render(); return; }
-  if(!isTest() && !window.confirm('Place a LIVE order with ABC Supply?\n\nThis puts real materials on a truck and bills Cardinal.')) return;
+  /* 1299: the one confirm() 1083 missed -- and the most consequential question in
+     the app. Same sheet as every other "are you sure"; the verb says what it does. */
+  if(!isTest() && !(await window.crAsk('Place a LIVE order with ABC Supply?\n\nThis puts real materials on a truck and bills Cardinal.', { verb:'Place order' }))) return;
   sending = true; st.error = ''; render();
   var b = body();
   try{
@@ -74308,8 +74523,8 @@ background:#0F1521;border-left:1px solid #223047;border-right:1px solid #223047;
    `font:` shorthands. One rule instead of 256 out-rankings; !important is why it
    can be one rule. The drawer keeps its own labels (Theo picked that look), and
    svg text is not touched. Dark retail only; light follows. */
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt) *){
---cr-stack:"1287 one sans across dark retail; the drawer and (1289) the client-facing presentation screens — Why, Colors, Showcase, Appointment — are excluded";
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt,#cr-pb,#cr-disp)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt,#cr-pb,#cr-disp) *){
+--cr-stack:"1287 one sans across dark retail; the drawer, (1289) the client-facing presentation screens — Why, Colors, Showcase, Appointment — and (1299) Production and Dispatch, which are left alone, are excluded";
 font-family:'Segoe UI',Arial,sans-serif !important;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :is(.pmoney,.jan,.cnt,.n,.c,.gn,.gt,.kpcnt,.cd,.ch){
 --cr-stack:"1287 counts and figures line up";
@@ -74332,8 +74547,8 @@ box-shadow:none;}
 /* ── Build 1290 · light mode in the drawer's style (the light twin of 1283–1289) ──
    The drawer's light palette: #f2f3f5 well, white cards, #dcdee2 hairlines, #161616
    ink, the same thin red edge. Same scopes and exclusions as the dark builds. */
-:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt) *){
---cr-stack:"1290 one sans across light retail; drawer + presentation screens excluded";
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt,#cr-pb,#cr-disp)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt,#cr-pb,#cr-disp) *){
+--cr-stack:"1290 one sans across light retail; drawer, presentation screens and (1299) Production + Dispatch excluded";
 font-family:'Segoe UI',Arial,sans-serif !important;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pipecard,
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .actcard{
@@ -74769,12 +74984,12 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* ── DARK ────────────────────────────────────────────────────────────────── */
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#ef6b6b}
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#34D399}
-:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#f0c651}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx{color:#f0c651}  /* 1299: was data-k="landing"; 1165 renamed the row's label to "Switch portal" and data-k follows the label, so this matched nothing for 130 builds */
 
 /* ── LIGHT ───────────────────────────────────────────────────────────────── */
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#c8202e}
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#047857}
-:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#8a6100}  /* 539 chose literal yellow here (1.47:1, with the number in front of him); 1035 asked, and
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx{color:#8a6100}  /* 539 chose literal yellow here (1.47:1, with the number in front of him); 1035 asked, and
      the call came back "I trust you would do it best" (24 Aug). Best = the obsidian-tiles
      precedent (545/557): the SAME hue deepened, never a swap — dark keeps the true yellow,
      light gets 538's amber, computed for this exact rail (4.99 / 5.54 / 4.55). */
@@ -87502,13 +87717,18 @@ async function rtTickTruck(v){
   tk[i] = Object.assign({}, x, { d: !x.d, by: !x.d ? me : null, at: !x.d ? new Date().toISOString() : null });
   var r = await P.update(id, { truck: tk });
   if(!(r && r.ok)){ try{ window.crTell('Could not save that tick: ' + ((r && r.error) || 'write refused')); }catch(_){} }
+  else if(r.queued) rtQueuedNote();
   rtDraw();
 }
+/* 1300: the card's 1049 receipt, on the route page. This full screen covers the
+   global sync badge, so a held write would otherwise look saved. */
+function rtQueuedNote(){ try{ window.crTell('No signal \u2014 saved on this phone. It will sync by itself.', 'ok'); }catch(_){} }
 async function rtAddToDay(id){
   if(!rtIsBoss()) return;
   var P = window.CardinalPunch; if(!(P && P.update)) return;
   var r = await P.update(id, { scheduled_at: day, scheduled_time: null });
   if(!(r && r.ok)){ try{ window.crTell('Could not move it: ' + ((r && r.error) || 'write refused')); }catch(_){} }
+  else if(r.queued) rtQueuedNote();
   if(typeof window.renderPunchView === 'function'){ try{ window.renderPunchView(); }catch(_){} }
   rtDraw();
 }

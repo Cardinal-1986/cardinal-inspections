@@ -85,7 +85,10 @@ const ok = (c, m) => { if (!c) fails.push(m); };
 
 // ---- [B] _notifyOrQueue ----------------------------------------------------
 {
-  const anchor = 'function _notifyOrQueue(to, subject, html){';
+  /* 1299: was the full signature `(to, subject, html){` -- and 1147 rightly
+     added `url`, so the anchor matched nothing and [B] went red on correct
+     code. Anchor on the NAME; the body is brace-matched from there. */
+  const anchor = 'function _notifyOrQueue(';
   const at = src.indexOf(anchor);
   let body = null;
   if (at === -1) fails.push('[B] _notifyOrQueue not found');
@@ -102,7 +105,7 @@ const ok = (c, m) => { if (!c) fails.push(m); };
       const notifyTeam = () => Promise.resolve(notifyRes);
       const window = { CardinalOutbox: { queue: (e) => queued.push(e) } };
       const make = new Function('notifyTeam', 'window', body + '\nreturn _notifyOrQueue;');
-      make(notifyTeam, window)(['x@y'], 'subj', '<p>h</p>');
+      make(notifyTeam, window)(['x@y'], 'subj', '<p>h</p>', '/?p=1');
       await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
       return queued;
     };
@@ -113,6 +116,8 @@ const ok = (c, m) => { if (!c) fails.push(m); };
       const net = await run({ ok: false, reason: 'network' });
       ok(net.length === 1 && net[0].op === 'notify', `[B] a network failure must queue one op:'notify', got ${JSON.stringify(net)}`);
       ok(net[0].to && net[0].subject === 'subj' && net[0].html === '<p>h</p>', '[B] the queued entry must carry to/subject/html for replay');
+      // 1147: the link rides the outbox too, or an offline alert arrives useless
+      ok(net[0].url === '/?p=1', `[B] the queued entry must carry the url (1147), got ${JSON.stringify(net[0].url)}`);
 
       const off = await run({ ok: false, reason: 'offline' });
       ok(off.length === 1, '[B] an offline result must queue too');

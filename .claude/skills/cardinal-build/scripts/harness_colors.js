@@ -503,8 +503,12 @@ const ok = (l, c) => { if(c){ pass++; console.log('  PASS ' + l); }
      (OCC.match(/VIEW\.style\.display/g) || []).length === 2);
   ok('hideAllViews still closes #cr-occ with display:none',
      /getElementById\('cr-occ'\)[\s\S]{0,80}style\.display = 'none'/.test(html));
-  ok('#cr-occ still registered in OVERLAY_IDS and PANES',
-     /OVERLAY_IDS = \[[\s\S]{0,180}'cr-occ'/.test(html) && /var PANES = \[[\s\S]{0,220}'cr-occ'/.test(html));
+  /* 1299: OVERLAY_IDS was the floating Home button's list (cr-home-btn) and went
+     out WITH that button at build 757 ("one Home button, not three"). A registry
+     that no longer exists cannot hold anything; the two that remain are asserted,
+     and the retired one is asserted to STAY retired so a half-restore is caught. */
+  ok('#cr-occ still registered in PANES (OVERLAY_IDS retired at 757)',
+     /var PANES = \[[\s\S]{0,220}'cr-occ'/.test(html) && !/OVERLAY_IDS/.test(html));
   ok('the query still filters on hidden, never status',
      /\.eq\('hidden', false\)/.test(OCC) && !/\.eq\('status'/.test(OCC));
   ok('every --occ-* reference in the new CSS carries a literal fallback', (() => {

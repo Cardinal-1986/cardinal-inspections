@@ -51,7 +51,9 @@ def sh(*a, **k):
 
 def entries(block):
     """[(number, title)] for a chunk of CHANGELOG lines."""
-    return re.findall(r"\{ b:(\d+), d:'[^']*', t:'([^']*)'", block)
+    # 1299: entries from 1156 on are written `{ b: 1298, d: '...', t: '...'` --
+    # spaces after every colon. The strict `{ b:N, d:'` shape found none of them.
+    return re.findall(r"\{\s*b:\s*(\d+),\s*d:\s*'[^']*',\s*t:\s*'([^']*)'", block)
 
 def resolve_conflicts(s, old, new, title):
     """Both conflicts, in file order. Returns (text, notes)."""
@@ -84,10 +86,10 @@ def resolve_conflicts(s, old, new, title):
                              f'main\'s ({t_t[:40]!r}) — renumbering ours to {new}')
     shared = {(n, t) for n, t in ours_e} & {(n, t) for n, t in theirs_e}
     mine_lines = [l for l in mine.split('\n')
-                  if not any(f'b:{n},' in l and t in l for n, t in shared)]
-    mine_new = re.sub(r'\{ b:\d+,(?=[^}]*%s)' % re.escape(title),
-                      '{ b:%d,' % new, '\n'.join(mine_lines), count=1)
-    if f'b:{new},' not in mine_new:
+                  if not any(re.search(r'\bb:\s*%s\s*,' % n, l) and t in l for n, t in shared)]
+    mine_new = re.sub(r'(\{\s*b:\s*)\d+(\s*,)(?=[^}]*%s)' % re.escape(title),
+                      r'\g<1>%d\g<2>' % new, '\n'.join(mine_lines), count=1)
+    if not re.search(r'\bb:\s*%d\s*,' % new, mine_new):
         raise SystemExit('our entry was not renumbered — the title anchor did not match')
     notes.append(f'changelog: ours -> {new}; main keeps '
                  f'{sorted({n for n, _ in theirs_e}, key=int)} untouched'
@@ -111,7 +113,7 @@ def renumber_citations(s, old, new):
         cited = len(re.findall(r'⚠ %d CORRECTION' % old, t)) \
               + len(re.findall(r'/\* %d: ' % old, t)) \
               + len(re.findall(r'build %d' % old, t)) \
-              + len(re.findall(r'\{ b:%d,' % old, t))
+              + len(re.findall(r'\{\s*b:\s*%d\s*,' % old, t))
         return total - cited
     before = noncit(s)
     changed = 0

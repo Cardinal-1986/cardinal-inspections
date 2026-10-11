@@ -51,6 +51,11 @@ async function open(theme) {
     if (u.startsWith('https://app.cardinalroster.com/')) return r.fulfill({ status: 200, body: '' });
     return r.abort();
   });
+  /* 1299: light via the SAVED setting, not a hand-set attribute -- the one
+     light/dark switch (1180-1181) re-derives data-theme from storage when a view
+     opens, so openProject() below put the page back to dark and the LIGHT checks
+     measured dark values. Same fix as gate_959. */
+  if (theme === 'light') await page.addInitScript(() => { try { localStorage.setItem('cardinal.theme.rb', '1'); } catch (e) {} });
   await page.addInitScript(s => { window.__SEED__ = s; }, SEED);
   await page.addInitScript(MOCK);
   await page.addInitScript(() => { try { Object.defineProperty(document, 'fonts', { configurable: true, get: () => ({ ready: Promise.resolve(), status: 'loaded', check: () => true, load: () => Promise.resolve([]), forEach: () => {}, addEventListener: () => {} }) }); } catch (e) {} });

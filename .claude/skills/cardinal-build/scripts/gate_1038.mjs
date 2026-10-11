@@ -1,8 +1,13 @@
 /* gate_1038.mjs — build 1038 (audit F3a): the production exit room.
  * Drives the board's own exit (home-pane back control) on the rig:
- *   as CURTIS  (production): exit lands on the LANDING (portal picker) —
- *                            #landingView visible, retail home NOT shown;
+ *   as CURTIS  (production): exit lands on the PICKER — and never on the retail
+ *                            home (pipeline counts, A/R money);
  *   as THEO    (admin)     : exit still lands on the retail home — unchanged.
+ * 1299: "the picker" was #landingView (the portal picker) until build 1188, which
+ * made goToLanding() ONE path on every host: the account's own hub with
+ * Cardinal's Front Door over it (gate_1188 owns that contract). So "landed on the
+ * picker" now reads CardinalFrontDoor.isOpen(), and the doctrine this gate exists
+ * for -- Curtis is never dropped in the money room -- is asserted unchanged.
  * Run:  node gate_1038.mjs <artifact> [--control <index_1037>]
  * The control must go RED (Curtis lands on the retail home + its money).
  */
@@ -30,8 +35,10 @@ const SNAP = `(function(){
   var land = document.getElementById('landingView');
   var main = document.getElementById('mainView');
   var pb = document.getElementById('cr-pb');
+  var fd = window.CardinalFrontDoor;
   return {
-    landing : !!(land && land.style.display === 'block'),
+    landing : !!(land && land.style.display === 'block') ||
+              !!(fd && typeof fd.isOpen === 'function' && fd.isOpen()),
     retail  : !!(main && main.style.display !== 'none'),
     board   : !!(pb && pb.classList.contains('open'))
   };
@@ -69,7 +76,9 @@ async function sweep(html) {
 function judge(r) {
   const fails = [];
   if (!r.curtis.opened.board) { fails.push('rig fault: board never opened as Curtis (proves nothing)'); return fails; }
-  if (r.curtis.after.board) fails.push('Curtis: exit control did not close the board');
+  /* 1299: since 1188 a production account's hub IS the board, so it re-opens
+     UNDER the picker by design; "did the exit close the board" no longer
+     describes a correct outcome. What must hold is the picker and no money. */
   if (!r.curtis.after.landing) fails.push(`Curtis exit did NOT land on the Landing (landing=${r.curtis.after.landing}, retail=${r.curtis.after.retail})`);
   if (r.curtis.after.retail) fails.push('Curtis exit shows the retail home (the money room)');
   if (!r.admin.opened.board) { fails.push('rig fault: board never opened as admin (proves nothing)'); return fails; }

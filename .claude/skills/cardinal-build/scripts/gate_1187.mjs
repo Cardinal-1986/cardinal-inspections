@@ -157,15 +157,25 @@ for (const [q, id, label] of [['?open=why', 'cr-why', 'Why Cardinal'],
   await page.setContent('<script>' + S.slice(S.indexOf('var TILES'), S.indexOf('function drawLauncher')) +
                         'window.__T = TILES;</script>');
   const tiles = await page.evaluate(() => window.__T.map(t => ({ key: t.key, href: t.href || null, native: !t.href })));
-  ok('the launcher has all seven doors', tiles.length === 7, tiles.map(t => t.key).join(','));
+  /* 1299: the Showroom has since added an EIGHTH door, the Roof Project
+     prototype ("a page of this app (roof-project/)", in its own source). The seven
+     1187 canonicalised are each still asserted below; the floor is seven, not an
+     exact count a later Showroom build is allowed to grow. */
+  ok('the launcher has all seven doors (and may have more)', tiles.length >= 7 && Object.keys(WANT).every(k => tiles.some(t => t.key === k)), tiles.map(t => t.key).join(','));
   for (const k of Object.keys(WANT)) {
     const t = tiles.find(x => x.key === k);
     ok('  ' + k.padEnd(11) + (WANT[k] ? '→ canonical URL' : '→ native'),
        !!t && t.href === WANT[k], t ? String(t.href) : 'MISSING');
   }
-  ok('no launcher URL is a bare path',
-     tiles.every(t => !t.href || /^https:\/\//.test(t.href)),
-     tiles.filter(t => t.href && !/^https:/.test(t.href)).map(t => t.href).join(' '));
+  /* 1299: the rule exists for doors INTO THE CRM -- a bare path on the Showroom's
+     host resolves against the Showroom, not app.cardinalroster.com. A bare path to
+     a page the Showroom repo itself ships (roof-project/) is correct; any other
+     bare path is still red. */
+  const SR = dirname(SHOW);
+  const bareOk = h => existsSync(resolve(SR, h.replace(/^\//, ''), 'index.html')) || existsSync(resolve(SR, h.replace(/^\//, '')));
+  ok('no launcher URL is a bare path (except a page the Showroom itself ships)',
+     tiles.every(t => !t.href || /^https:\/\//.test(t.href) || bareOk(t.href)),
+     tiles.filter(t => t.href && !/^https:/.test(t.href)).map(t => t.href + (bareOk(t.href) ? ' (Showroom page)' : ' (NOT in the Showroom)')).join(' '));
   await ctx.close();
 }
 

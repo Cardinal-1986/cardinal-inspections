@@ -110,14 +110,25 @@ for (const width of [390, 768, 1194, 2560]) {
   if (!out.drawer) {
     chk(`${width}px: burger menu LEFT edge under the button`, Math.abs(m.l - b.l) <= 2, `menu.l=${m.l} btn.l=${b.l}`);
     chk(`${width}px: burger menu below the button`, m.t >= b.b, `menu.t=${m.t} btn.b=${b.b}`);
-    chk(`${width}px: + menu LEFT edge under the +`, Math.abs(n.l - a.l) <= 2, `menu.l=${n.l} btn.l=${a.l}`);
+    { const fits = a.l + (n.r - n.l) <= out.iw;
+      if (fits) chk(`${width}px: + menu LEFT edge under the +`, Math.abs(n.l - a.l) <= 2, `menu.l=${n.l} btn.l=${a.l}`);
+      else chk(`${width}px: + menu clamped on screen AND over the +`, n.l >= 0 && n.r <= out.iw && n.l <= a.l && n.r >= a.l, `menu x=[${n.l}..${n.r}] btn.l=${a.l}`); }
   } else {
     chk(`${width}px: 924 drawer slid fully in, anchored at the left edge`, m.l === 0, `menu.l=${m.l}`);
     /* the + dropdown anchors to its button only where it fits; on a narrow
        phone the handler clamps it into the viewport (already asserted
        fully-on-screen above), so the anchor check applies over 640 only. */
-    if (width > 640)
-      chk(`${width}px: + menu LEFT edge under the +`, Math.abs(n.l - a.l) <= 2, `menu.l=${n.l} btn.l=${a.l}`);
+    /* 1299: 1176 put New back on the RIGHT of the header. At 768px a menu
+       left-anchored under it would end at btn.l + menu width = 848 > 768, so the
+       handler clamps it — the same "only where it fits" rule as the phone. Where
+       it fits, the left edges must agree; where it cannot, it must still sit
+       over its button (no menu floating somewhere else) and on screen. */
+    if (width > 640) {
+      const fits = a.l + (n.r - n.l) <= out.iw;
+      if (fits) chk(`${width}px: + menu LEFT edge under the +`, Math.abs(n.l - a.l) <= 2, `menu.l=${n.l} btn.l=${a.l}`);
+      else chk(`${width}px: + menu clamped on screen AND over the + (anchoring would overflow by ${a.l + (n.r - n.l) - out.iw}px)`,
+               n.l >= 0 && n.r <= out.iw && n.l <= a.l && n.r >= a.l, `menu x=[${n.l}..${n.r}] btn.l=${a.l}`);
+    }
   }
   if (nav) {
     chk('burger item still navigates (Leads & Jobs opens)', nav.opened && !nav.err, nav.err || '');

@@ -75,10 +75,15 @@ async function at(width) {
              secondaryDisplay: sec ? getComputedStyle(sec).display : '(absent)',
              moreShown: vis(document.getElementById('edMoreBtn')) };
   })()`);
-  const want = ['saveBtn','printBtn','fillChipBtn','edMoreBtn'];
+  /* 1299: 1204 (A12 of the Sep walk) made the three REAL sends primary --
+     Email / Text / Share were MOVED out of #edSecondary onto the bar, because
+     after Publish the prominent button was "Mark sent", which sends nothing.
+     So the phone bar is Save, Print, the fill chip, the three sends, More.
+     The rule this check guards is unchanged: nothing from #edSecondary shows. */
+  const want = ['saveBtn','printBtn','fillChipBtn','emailDocBtn','textSignBtn','shareBtn','edMoreBtn'];
   JSON.stringify(r.shown.slice().sort()) === JSON.stringify(want.slice().sort())
-    ? ok('390px — exactly the three primaries + More', r.shown.join(', '))
-    : bad('390px — exactly the three primaries + More', 'saw ' + r.shown.join(', '));
+    ? ok('390px — exactly the primaries (incl. 1204\'s three sends) + More', r.shown.join(', '))
+    : bad('390px — exactly the primaries (incl. 1204\'s three sends) + More', 'saw ' + r.shown.join(', '));
   r.secondaryDisplay === 'none'
     ? ok('390px — #edSecondary is hidden')
     : bad('390px — #edSecondary is hidden', 'display is ' + r.secondaryDisplay);
@@ -112,20 +117,21 @@ async function at(width) {
   before === after ? ok('the drawer writes NO global scroll lock', `body.style.overflow stayed "${after||'(empty)'}"`)
                    : bad('the drawer writes NO global scroll lock', `"${before}" -> "${after}" — that would be a 14th writer`);
 
-  /* a drawer row delegates to the real button */
+  /* a drawer row delegates to the real button. 1299: Share left the drawer at
+     1204, so this drives Download, which is still a drawer row. */
   const deleg = await page.evaluate(`(() => {
     let fired = 0;
-    const real = document.getElementById('shareBtn');
-    if(!real) return { found:false, fired:0, why:'no shareBtn' };
-    real.addEventListener('click', () => fired++, { once:true });
+    const real = document.getElementById('dlBtn');
+    if(!real) return { found:false, fired:0, why:'no dlBtn' };
+    real.addEventListener('click', e => { fired++; e.stopImmediatePropagation(); e.preventDefault(); }, { once:true, capture:true });
     const row = [...document.querySelectorAll('#edDrawer .edrow')]
-      .find(r => /Share link/i.test(r.textContent));
+      .find(r => /Download/i.test(r.textContent));
     if (!row) return { found:false };
     row.click();
     return { found:true, fired };
   })()`);
   deleg.found && deleg.fired === 1
-    ? ok('a drawer row clicks the REAL button', 'shareBtn fired once')
+    ? ok('a drawer row clicks the REAL button', 'dlBtn fired once')
     : bad('a drawer row clicks the REAL button', JSON.stringify(deleg));
   await ctx.close();
 }

@@ -92,22 +92,28 @@ const C = await P.page.evaluate(async () => {
   const btn = document.getElementById('navBtn'); if (!btn) return { none: true };
   btn.click();
   await new Promise(r => setTimeout(r, 200));
-  const opt = document.querySelector('.navopt[data-nav="portal"]');
+  /* 1299: since 1165 the drawer row is "Switch portal" on data-nav="landing", and
+     since 1171 ("One way to switch portals, not four") EVERY switch door opens the
+     Front Door -- the old .cr-psheet is a fallback only if the panel is missing,
+     and gate_1171 asserts it never appears. So "opens the SAME sheet" is now "opens
+     the one picker": the Front Door, with its portal rows. */
+  const opt = document.querySelector('.navopt[data-nav="portal"]') ||
+              [...document.querySelectorAll('.navopt[data-nav="landing"]')].find(o => /switch portal/i.test(o.textContent));
   if (!opt) return { none: true, foundBtn: true };
-  const before = document.querySelector('.cr-psheet-bg');
   opt.click();
-  await new Promise(r => setTimeout(r, 300));
-  const sheet = document.querySelector('.cr-psheet-bg');
-  const cards = sheet ? sheet.querySelectorAll('.cr-pcard').length : 0;
-  return { none: false, beforeExists: !!before, afterExists: !!sheet, cards };
+  await new Promise(r => setTimeout(r, 400));
+  const fd = window.CardinalFrontDoor;
+  return { none: false, frontDoor: !!(fd && fd.isOpen && fd.isOpen()),
+           oldSheet: !!document.querySelector('.cr-psheet-bg'),
+           cards: document.querySelectorAll('#cr-fd [data-fd]').length };
 });
 ok('the menu carries a Switch Portal option', !C.none, JSON.stringify(C));
-ok('tapping it opens the SAME sheet (portal cards present)',
-  !C.none && !C.beforeExists && C.afterExists && C.cards >= 3, JSON.stringify(C));
+ok('tapping it opens the ONE picker (the Front Door, 1171), with its portal rows',
+  !C.none && C.frontDoor && !C.oldSheet && C.cards >= 3, JSON.stringify(C));
 
 console.log('\n--- D. picking a portal from it still actually switches ---');
 const D = await P.page.evaluate(async () => {
-  const card = document.querySelector('.cr-pcard[data-p="insurance"]');
+  const card = document.querySelector('#cr-fd [data-fd="insurance"]') || document.querySelector('.cr-pcard[data-p="insurance"]');
   if (!card) return { none: true };
   card.click();
   await new Promise(r => setTimeout(r, 500));
@@ -127,8 +133,12 @@ const srcCheck = (APP.match(/window\.CardinalPortal\.pick\(\);/g) || []).length;
 /* 924 (the phone slide-out drawer) added a THIRD deliberate caller — the
    drawer header's .cr-dh-switch. The count is pinned so an accidental removal
    OR duplication still goes red; bump it only with a build-log citation. */
-ok('exactly three callers of pick() remain — the menu item, the Insurance mini-chip, and 924\'s drawer switch',
-  srcCheck === 3, srcCheck);
+/* 1299: 1171 routed the menu item, the drawer switch and the insurance chip
+   through the Front Door; pick() survives only as the fallback where the panel
+   is missing (the 'portal' nav case, and one other). Pinned at the measured 2 so
+   an accidental removal OR a new direct caller still goes red. */
+ok('exactly two callers of pick() remain — the fallbacks 1171 kept behind the Front Door',
+  srcCheck === 2, srcCheck);
 await CT.browser.close();
 
 console.log('\n--- F. desktop: chip gone there too (deliberately not phone-scoped), menu works there too ---');
@@ -138,8 +148,11 @@ const Fr = await DT.page.evaluate(async () => {
   const chipVisible = window.__v(document.getElementById('crPortalChip'));
   const btn = document.getElementById('navBtn');
   if (btn) { btn.click(); await new Promise(r => setTimeout(r, 200)); }
-  const opt = document.querySelector('.navopt[data-nav="portal"]');
-  return { chipVisible, menuHasOption: !!opt };
+  const opt = document.querySelector('.navopt[data-nav="portal"]') ||
+              [...document.querySelectorAll('.navopt[data-nav="landing"]')].find(o => /switch portal/i.test(o.textContent));
+  /* on the desktop the left rail carries the same row (cr-lnav mirrors the drawer) */
+  const rail = document.querySelector('#cr-lnav .lnav-item[data-k="switchportal"]');
+  return { chipVisible, menuHasOption: !!opt || !!rail };
 });
 ok('the chip is hidden on desktop too (this fix is deliberately global, not @media-scoped)',
   !Fr.chipVisible, JSON.stringify(Fr));

@@ -84,6 +84,10 @@ const PROBE = `(() => {
     main: vis(document.getElementById('mainView')),
   };
 })()`;
+/* 1299: the ⌂ button retired at 1173 (Theo's ask); goHome() was kept and is
+   reached through CardinalHeader.goHome(). "Press Home" drives the button if it
+   ever returns, else the function -- the destinations 754 proves are the same. */
+const HOME = `(document.getElementById('cr-hd2-home') ? document.getElementById('cr-hd2-home').click() : window.CardinalHeader.goHome())`;
 const go = async code => { await page.evaluate(code); await page.waitForTimeout(850); return page.evaluate(PROBE); };
 
 /* ── retail baseline ── */
@@ -95,7 +99,7 @@ const retailLeads = await go(`document.querySelector('#crBanner [data-go="leads"
    that the PAGE ground never follows and that home remembers the portal. */
 chk('RETAIL: shared screen wears the neutral head (1116)', retailLeads.head === 'production', retailLeads.head);
 chk('RETAIL: shared screen names itself, not a portal (1116)', retailLeads.title.trim() === 'Leads', retailLeads.title.trim());
-const retailBack = await go(`document.getElementById('cr-hd2-home').click()`);
+const retailBack = await go(HOME);
 chk('RETAIL: home returns to the retail dashboard', retailBack.main && !retailBack.truth, JSON.stringify({ main: retailBack.main }));
 
 /* ── insurance ── */
@@ -121,13 +125,13 @@ chk('tap Leads: switcher highlights no CRM on a neutral screen (1116)', insLeads
 chk('tap Leads: page ground = the retail-portal ground (no light wash)', insLeads.bodyPaint === retailLeads.bodyPaint, insLeads.bodyPaint);
 chk('crmHead() resolves the neutral head on the shared screen (1116)',
     await page.evaluate(`window.CardinalHeader && window.CardinalHeader.crmHead ? window.CardinalHeader.crmHead() : '(absent)'`) === 'production');
-const insBack = await go(`document.getElementById('cr-hd2-home').click()`);
+const insBack = await go(HOME);
 chk('HOME FROM LEADS RETURNS TO CARDINAL TRUTH (the reported bug)', insBack.truth && !insBack.main, JSON.stringify({ truth: insBack.truth, main: insBack.main }));
 
 /* burger route too */
 await go(`window.showCardinalTruth()`);
 await go(`(() => { document.getElementById('navBtn').click(); document.querySelector('#navMenu [data-nav="leads"]').click(); })()`);
-const insBack2 = await go(`document.getElementById('cr-hd2-home').click()`);
+const insBack2 = await go(HOME);
 chk('same via the burger: home returns to Cardinal Truth', insBack2.truth, JSON.stringify({ truth: insBack2.truth }));
 
 /* an open RETAIL client outranks the sticky insurance portal */
@@ -143,7 +147,7 @@ const comLeads = await go(`(() => { document.getElementById('navBtn').click(); d
 chk('tap Leads: header goes neutral from community too (1116)', comLeads.head === 'production', comLeads.head);
 chk('tap Leads: same neutral header paint as from the other portals (1116)', comLeads.hdPaint === retailLeads.hdPaint);
 chk('tap Leads: page stays retail-grounded', comLeads.crm === 'retail', comLeads.crm);
-const comBack = await go(`document.getElementById('cr-hd2-home').click()`);
+const comBack = await go(HOME);
 chk('home returns to the Community hub', comBack.hub && !comBack.main, JSON.stringify({ hub: comBack.hub }));
 
 /* ── the explicit switcher still works from a shared screen ── */
@@ -155,7 +159,10 @@ chk('switcher from a shared screen: Insurance opens Cardinal Truth', switched.tr
 const src = APP;
 /* 26 at build 754; later header work (979/1104/1116 arc) legitimately added
    three more. Re-pinned at the measured current count. */
-chk('29 header selectors migrated to data-crm-head', (src.match(/body\[data-crm-head="/g) || []).length === 29, (src.match(/body\[data-crm-head="/g) || []).length);
+/* 1299: re-pinned twice now (26 -> 29 -> 41 measured), each time because a later
+   header build legitimately ADDED selectors. An exact pin fails correct growth;
+   what 754 guarantees is that its migration never reverts. A floor says that. */
+chk('the 26 header selectors 754 migrated are still on data-crm-head (floor, may grow)', (src.match(/body\[data-crm-head="/g) || []).length >= 26, (src.match(/body\[data-crm-head="/g) || []).length);
 chk('the two page grounds did NOT move', src.includes('body[data-crm="community"]{background:var(--ccm-ground,#0e100f)}') && src.includes('body[data-crm="insurance"]{background:var(--ct-bg)}'));
 chk('PIPE_SKIP still reads the page CRM', src.includes("var _crm = document.body.dataset.crm || 'retail';"));
 chk('openLeadForm defaults from crmHead', src.includes('(_h.crmHead || _h.crm)'));

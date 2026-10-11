@@ -1,19 +1,15 @@
 {
   "harness_showcase.js": {
-    "passes": 121,
-    "fails": 3,
-    "names": [
-      "Sales Floor has the entry button",
-      "app stamp matches the newest CHANGELOG entry",
-      "registered in hideAllViews array"
-    ],
-    "code": 1
-  },
-  "harness_walk.js": {
-    "passes": 50,
+    "passes": 124,
     "fails": 0,
     "names": [],
-    "code": 1
+    "code": 0
+  },
+  "harness_walk.js": {
+    "passes": 152,
+    "fails": 0,
+    "names": [],
+    "code": 0
   },
   "harness_tray.js": {
     "passes": 57,
@@ -28,19 +24,15 @@
     "code": 0
   },
   "harness_colors.js": {
-    "passes": 109,
-    "fails": 1,
-    "names": [
-      "#cr-occ still registered in OVERLAY_IDS and PANES"
-    ],
-    "code": 1
+    "passes": 110,
+    "fails": 0,
+    "names": [],
+    "code": 0
   },
   "harness_vision.js": {
-    "passes": 12,
-    "fails": 1,
-    "names": [
-      "and it is scoped — exactly 2 declarations in the whole file, both here"
-    ],
-    "code": 1
+    "passes": 13,
+    "fails": 0,
+    "names": [],
+    "code": 0
   }
 }

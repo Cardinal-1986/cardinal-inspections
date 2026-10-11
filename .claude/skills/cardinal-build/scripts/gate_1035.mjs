@@ -45,7 +45,12 @@ async function probe(html, light) {
   await page.evaluate(`Promise.resolve(window.__sentinelStates[0].run())`);
   await page.waitForTimeout(700);
   const ink = await page.evaluate(`(function(){
-    var el = document.querySelector('#cr-lnav .lnav-item[data-k="landing"] .lnav-tx');
+    /* 1299: the row is the SAME row (data-nav="landing"), but 1165 renamed its
+       label to "Switch portal", and the rail keys data-k off the LABEL — so the
+       rules on data-k="landing" stopped matching anything and the colour Theo
+       chose at 539 silently fell off. Read the row by what it does, not by a
+       name that moved. */
+    var el = document.querySelector('#cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx');
     return el ? getComputedStyle(el).color : 'MISSING';
   })()`);
   await browser.close();
