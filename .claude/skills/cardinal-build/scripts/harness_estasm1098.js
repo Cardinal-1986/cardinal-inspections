@@ -103,7 +103,13 @@ ok(/if\(!title\.trim\(\)\)\{[\s\S]{0,160}\.sec-title[\s\S]{0,40}focus/.test(src)
 ok(/window\.supa\.from\('estimate_assemblies'\)\.insert\(payload\)/.test(src), 'save inserts into estimate_assemblies');
 ok(/var o = \{ name: l\.name \|\| '', description: l\.description \|\| '', qty:[^}]*unit_price:[^}]*\};[\s\S]{0,60}if\(l\.flat === true\) o\.flat = true;/.test(src),
    'save strips editor-only keys (_lid/section_id/sec/amount), keeps flat');
-ok(src.indexOf("window.supa.from('estimate_assemblies').select('id,name,trade,lines')") !== -1, 'loadAssemblies reads the shared library');
+/* 1299: was the EXACT select string, which 1139 legitimately widened with
+   created_by,is_default (the pin star). Assert the four columns the picker
+   needs are read, whatever else rides along. */
+ok((() => { const m = src.match(/window\.supa\.from\('estimate_assemblies'\)\.select\('([^']*)'\)/);
+            if (!m) return false; const cols = m[1].split(',').map(c => c.trim());
+            return ['id', 'name', 'trade', 'lines'].every(c => cols.includes(c)); })(),
+   'loadAssemblies reads the shared library');
 ok(/if\(r\.error \|\| !Array\.isArray\(r\.data\)\) return;/.test(src), 'loadAssemblies degrades silently when the table/connection is absent');
 ok(/catch\(_e\)\{ \/\* defaults still work \*\/ \}/.test(src), 'loadAssemblies keeps defaults working on any error');
 ok(/async function deleteAssembly\(id\)\{[\s\S]{0,120}if\(!a \|\| a\._default\) return;/.test(src), 'deleteAssembly refuses to delete a built-in default');

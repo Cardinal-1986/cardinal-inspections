@@ -82,12 +82,27 @@ async function run(theme, width) {
   await page.goto('https://g68.test/', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(900);
 
+  /* 1299: two targets live where no sentinel state stands any more. 1225 folded
+     Convert to Insurance behind the client page's collapsed ADMIN row, and the
+     review switch renders only on a job in a review stage (Completed). Neither
+     element moved or changed colour -- the walk just stopped reaching them, and
+     the coverage floor (rightly) went red. So: every state also opens the Admin
+     row if it is on screen, and one extra stop opens a client as Completed. The
+     elements are still found by selector and scored the same way. */
   const names = await page.evaluate(`(window.__sentinelStates||[]).map(s=>s.name)`);
+  names.push('(1299) a Completed client, Admin row open');
+  const REVEAL = `(function(){ var t=document.querySelector('#acxMount > .cr-admin-tog'); var pv=document.getElementById('projectView');
+    if(t && pv && !pv.classList.contains('cr-admin-open') && t.getBoundingClientRect().width > 1) t.click(); })()`;
+  const COMPLETED = `(function(){ try{ hideAllViews(); }catch(e){}
+    var pr=(window.cacheProjects||[])[0]; if(!pr) return; pr.stage='Completed'; try{ openProject(pr.id); }catch(e){} })()`;
   const got = {};
   for (let i = 0; i < names.length; i++) {
     if (Object.keys(got).length === TARGETS.length) break;
-    await page.evaluate(`Promise.resolve(window.__sentinelStates[${i}].run())`);
+    if (i < names.length - 1) await page.evaluate(`Promise.resolve(window.__sentinelStates[${i}].run())`);
+    else await page.evaluate(COMPLETED);
     await page.waitForTimeout(300);
+    await page.evaluate(REVEAL).catch(() => {});
+    await page.waitForTimeout(200);
     const found = await page.evaluate(({ targets, done }) => {
       const num = c => (c.match(/[-\d.]+/g) || []).map(Number);
       const rel = ([r, g, b]) => {

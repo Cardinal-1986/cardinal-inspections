@@ -95,7 +95,16 @@ async function boot(w,h,wxMode){          /* wxMode: 'fixture' | 'abort' */
     need('wet ink is the computed --disp-wx blue', f.wx1ink==='rgb(109, 179, 242)', f.wx1ink);
     need('every rendered dog tag carries a .cf free-day line', f.nCf>0 && f.cfShape,
       'n='+f.nCf);
-    need('Betos (booked +1d/+5d) reads "free today"', f.betosCf==='free today', String(f.betosCf));
+    /* 1299: "free today" is only right when today is not a Sunday -- the tag
+       SKIPS Sundays (949's own note). Run on a Sunday, Betos (booked +1d, +5d) is
+       free on the first day that is neither Sunday nor booked: Tuesday. The
+       expected label is computed the way the app computes it, not hardcoded. */
+    const betosWant = (() => { const D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      for (let i = 0; i < 7; i++) { const d = new Date(); d.setDate(d.getDate() + i);
+        if (d.getDay() === 0 || i === 1 || i === 5) continue;
+        return i === 0 ? 'free today' : 'free ' + D[d.getDay()] + ' ' + d.getDate(); }
+      return 'booked all 7'; })();
+    need('Betos (booked +1d/+5d) reads its first free working day ("' + betosWant + '")', f.betosCf===betosWant, String(f.betosCf));
   }
   await page.close();
 }

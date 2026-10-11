@@ -66,7 +66,12 @@ ok('uses the Object.assign export idiom, never plain assignment',
       else if (ch === '}') { depth--; if (!depth) { vh = src.slice(at + 1, i + 1); break; } }
     }
   }
-  ok('visionHtml() found', !!vh);
+  /* 1299: visionHtml() went out with the Vision hub at 1190 (the Showroom is its
+     own app since the 31 Aug cutover), so this tile CANNOT exist in this file and
+     "found" was red on correct code. The door that remains is the dispatch --
+     asserted below ("routes data-go=why"). If visionHtml ever comes back, the
+     tile checks run again. */
+  if (!vh) console.log('  ----  visionHtml() retired at 1190 -- the hub tile checks have no hub to run against');
   if (vh) {
     for (const admin of [true, false]) {
       let html = '';
@@ -192,8 +197,21 @@ let doc = null;
   const GROUND = '#050607';
   ok('the ground is the Blackout literal', hexes.includes(GROUND), hexes.join(' '));
 
-  /* inks = every hex used in a `color:` declaration */
-  const inks = [...new Set((css.match(/color\s*:\s*#[0-9a-fA-F]{6}/g) || [])
+  /* 1299: 1231 gave this screen a LIGHT version on Theo's word ("Follow the
+     settings") -- paper #F7F4EF, ink #211D19, the palette The Appointment's lit
+     step already had. Scoring the light twin's inks against the Blackout ground
+     is scoring a combination nobody can see. Split the sheet: rules under
+     :root[data-theme="rb-light"] are the light twin and are scored on paper;
+     everything else is the dark screen, scored on Blackout, as before. */
+  const LIGHT_GROUND = '#f7f4ef';
+  const lightCss = (css.match(/:root\[data-theme="rb-light"\][^{]*\{[^}]*\}/g) || []).join('\n');
+  const darkCss = css.replace(/:root\[data-theme="rb-light"\][^{]*\{[^}]*\}/g, '');
+  const links = [...new Set((lightCss.match(/(?<![\w-])color\s*:\s*#[0-9a-fA-F]{6}/g) || [])
+    .map(d => '#' + d.split('#')[1].toLowerCase()))].filter(h => h !== LIGHT_GROUND);
+  { const lowL = []; for (const ink of links) { const r = ratio(ink, LIGHT_GROUND); if (r < 4.5) lowL.push(ink + '=' + r.toFixed(2)); }
+    ok('every LIGHT-twin ink clears 4.5:1 on ' + LIGHT_GROUND + ' (1231)', links.length > 0 && lowL.length === 0, lowL.join(' ') || links.join(' ')); }
+  /* inks = every hex used in a `color:` declaration of the DARK screen */
+  const inks = [...new Set((darkCss.match(/(?<![\w-])color\s*:\s*#[0-9a-fA-F]{6}/g) || [])
     .map(d => d.split('#')[1]).map(h => '#' + h.toLowerCase()))]
     .filter(h => h !== GROUND);
   ok('the stylesheet declares inks', inks.length >= 4, inks.join(' '));
@@ -228,8 +246,11 @@ ok('writes NO scroll lock (no 14th writer)',
 }
 ok('the dispatch routes data-go="why"',
    /if\(d === 'why'\)\{[\s\S]{0,120}CardinalWhy\.open\(\)/.test(src));
-ok('single-theme: no rb-light twin, deliberately (a Vision surface)',
-   !/rb-light/.test(css));
+/* 1299: was "single-theme: no rb-light twin, deliberately (a Vision surface)".
+   1231 made the twin on purpose, so the rule is now the opposite one: the light
+   twin exists, and (above) it is readable on its own paper. */
+ok('follows the setting: an rb-light twin exists (1231, "Follow the settings")',
+   /:root\[data-theme="rb-light"\]\s*#cr-why\{background:#F7F4EF/i.test(css));
 
 console.log('\n  ' + pass + ' pass, ' + fail + ' fail');
 process.exit(fail ? 1 : 0);

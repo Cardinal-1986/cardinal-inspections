@@ -72,6 +72,11 @@ async function boot(w,h,wxMode,theme){
     if(/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(u)) return r.fulfill({status:200,contentType:'image/png',
       body:Buffer.from('iVBORw0KGgoAAAABAAAAAQAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64')});
     return r.fulfill({status:200,body:''});});
+  /* 1299: light the way a PERSON gets it -- the saved setting. A data-theme set
+     by hand after boot is re-derived from storage when a view opens (the one
+     light/dark switch, 1180-1181), so the board this gate opened was DARK while
+     the gate called it light, and check 10 measured a dark card. */
+  if(theme==='light') await page.addInitScript(()=>{ try{ localStorage.setItem('cardinal.theme.rb','1'); }catch(e){} });
   await page.addInitScript(SETUP);
   /* a stale cache would hide a broken fetch AND make the one-fetch count lie */
   await page.addInitScript(`try{ localStorage.removeItem('cr-dispwx'); }catch(e){}`);

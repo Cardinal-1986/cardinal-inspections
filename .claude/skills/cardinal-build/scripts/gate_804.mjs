@@ -82,8 +82,11 @@ const A = await page.evaluate(() => {
   const lens = document.getElementById('cr-hd2-lens');
   const home = document.getElementById('cr-hd2-home');
   const mid = document.getElementById('cr-hd2-mid');
-  if (!lens || !row || !home) return { none: true };
-  const lr = lens.getBoundingClientRect(), hr = home.getBoundingClientRect();
+  /* 1299: the ⌂ this measured against was retired at 1173. The lens's place is
+     unchanged in intent -- the right-hand group, never on the centred title --
+     so with no Home the anchor is the title's own right edge. */
+  if (!lens || !row) return { none: true };
+  const lr = lens.getBoundingClientRect(), hr = home ? home.getBoundingClientRect() : (mid ? { left: mid.getBoundingClientRect().right - 1 } : { left: -1 });
   const mr = mid ? mid.getBoundingClientRect() : null;
   return { none: false,
     rowH: getComputedStyle(row).display === 'none' ? 0 : Math.round(row.getBoundingClientRect().height),
@@ -94,7 +97,7 @@ const A = await page.evaluate(() => {
 });
 ok('the search row is collapsed on load', !A.none && A.rowH === 0, JSON.stringify(A));
 ok('the lens exists and carries the app icon', !A.none && A.hasIcon, JSON.stringify(A));
-ok('the lens sits to the RIGHT of Home, not on the title', !A.none && A.lensX > A.homeX && !A.overlapsTitle, JSON.stringify(A));
+ok('the lens sits to the RIGHT of Home (of the title, since 1173), not on the title', !A.none && A.lensX > A.homeX && !A.overlapsTitle, JSON.stringify(A));
 
 console.log('\n--- B. tap opens + focuses; tap again closes ---');
 const B = await page.evaluate(async () => {
@@ -169,8 +172,17 @@ const E = await page.evaluate(async () => {
     reachable: !!(hit && (hit === b || b.contains(hit))),
     rowCollapsed: getComputedStyle(document.getElementById('cr-hd2-srch')).display === 'none' };
 });
-ok('the Docket/Siren switch lives in the header now', !E.none && E.host === 'cr-hd2-bar', JSON.stringify(E));
-ok('and is visible + reachable with the row collapsed', !E.none && E.shown && E.reachable && E.rowCollapsed, JSON.stringify(E));
+/* 1299: 1181 ("One light/dark button, the same in every portal") retired
+   insurance's own Docket/Siren control; insurance is switched by the SAME control
+   as Retail and Community -- the drawer's Appearance pair. So "insurance keeps
+   its theme switch" is asserted on whichever exists: its own (pre-1181) or the
+   shared one, reachable while Cardinal Truth is up. gate_1176 owns the count. */
+const E2 = E.none ? await page.evaluate(() => document.querySelectorAll('#navMenu [data-cr-appear]').length) : null;
+ok('the Docket/Siren switch lives in the header now (or the one shared switch, since 1181)', E.none ? E2 === 2 : E.host === 'cr-hd2-bar', JSON.stringify(E.none ? { shared: E2 } : E));
+const E3 = E.none ? await page.evaluate(() => { const b = document.getElementById('navBtn'); if (!b) return false; const r = b.getBoundingClientRect();
+  const t = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)); return !!(t && (t === b || b.contains(t))); }) : null;
+ok('and is visible + reachable with the row collapsed (the drawer that holds the shared one takes a tap)',
+   E.none ? E3 === true : (E.shown && E.reachable && E.rowCollapsed), JSON.stringify(E.none ? { drawerTappable: E3 } : E));
 
 console.log('\n--- F. the height actually comes back, all three CRMs ---');
 const F = await page.evaluate(async () => {

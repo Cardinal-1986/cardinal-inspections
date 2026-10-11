@@ -151,7 +151,10 @@ ok('only the buyer signing advances the pipeline', /if\(_who === 'buyer'\)/.test
 ok('the footer is stripped for deals only (estimates keep it)',
   /if\(isDeal\)\{[\s\S]{0,400}out\.replace\(SIGN_FOOTER, ''\)/.test(APP_HTML));
 ok('all three agreements carry the slots (roof, siding, gutter)',
-  (APP_HTML.match(/data-sig="buyer"/g) || []).length === 3);
+  /* 1299: count SLOTS, not the attribute -- 1262's upload check carries the
+     same text inside a regex literal (/class="sigslot" data-sig="buyer"/), a 4th
+     hit that is code, not a contract. A real slot holds its [sign] placeholder. */
+  (APP_HTML.match(/data-sig="buyer"><span class="ph">/g) || []).length === 3);
 
 if (SHOT) {
   const html = await A.page.evaluate(() => document.getElementById('reportFrame').contentDocument.documentElement.outerHTML);

@@ -9741,6 +9741,14 @@ The intake writes `checklist.trades` plus flat `job_category` / `work_type` (the
 - Light mode is unchanged.
 - **Gate:** `gate_1287.mjs`.
 
+## Build 1299: job links open the job; every gate run
+- **Deep links work cold again.** `#p/<id>` and `#p/<id>/<tab>` (punch-out texts, client links, alert links) land on that client and tab when the app was closed; since 1165 they opened Home. The fragment is stashed at parse time as `__restoreBootHash`.
+- **Switch portal** on the desktop rail has its yellow (dark) / amber (light) back — the rules now key `data-k="switchportal"`.
+- **No native dialogs left:** the CompanyCam link error uses `crTell`; "Place a LIVE order with ABC Supply?" uses `crAsk`; three private `confirm()` fallbacks now decline.
+- **Form sheets in dark:** an outline `.chipbtn` on the white `.projform` keeps paper ink (14.16:1).
+- **Production and Dispatch** are excluded from the 1287/1290 one-typeface rule (their own lettering, e.g. the mono crew tags).
+- **Gates:** `gate_1299`; ~45 older gates and 6 harnesses repaired to the builds that superseded them (see the build log); `gate_1175` retired; the harness debt register is empty.
+
 ## Build 1298: receipts
 
 The punch-out card has **Add receipt** (camera, no dollars). Receipts are job files ("Receipt …") tagged Needs amount / Priced in Files. Payments lists receipts that need an amount at the top, and Add amount makes an Additional job expense linked to the file (`payments[].receipt`). Expense rows show their Receipt or offer **Attach receipt**. No SQL. Also fixed: the shared `.tskrow` ink, 1.4:1 → 13.6:1 in dark. Gate: `gate_1298`.

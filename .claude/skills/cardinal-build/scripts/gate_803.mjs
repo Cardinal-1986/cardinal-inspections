@@ -97,9 +97,18 @@ console.log('\n--- A. Community hub: the duplicated pills go ---');
 await page.evaluate(() => { if (window.CardinalCommunityHub) window.CardinalCommunityHub.show(); });
 await page.waitForTimeout(1600);
 const A = await page.evaluate(() => window.__pills());
-ok('Partners pill hidden while the hub strip is up', A['Partners'] === false, JSON.stringify(A));
+/* 1299: 803 hid these pills because the hub's OWN tab strip repeated them. 1179
+   retired that strip ("the three tabs are gone"), so there is nothing left for
+   them to duplicate -- and dupedHere() correctly answers false. The rule is
+   unchanged and now asserted in both directions: hidden while a strip that
+   repeats them is on screen, SHOWN when none is (or they would be lost). */
+/* the app's own test (dupedHere): a VISIBLE tab bar that actually carries the pane */
+const stripUp = await page.evaluate(() => { const tb = document.querySelector('#cr-ch2 .tabbar'); return !!(tb && tb.getClientRects().length && tb.querySelector('[data-pane="partners"]')); });
+const est = A['Estimates'] !== undefined ? A['Estimates'] : A['Bids'];
+ok(stripUp ? 'Partners pill hidden while the hub strip is up' : 'no hub strip since 1179, so the Partners pill is SHOWN (nothing duplicates it)',
+   A['Partners'] === !stripUp, JSON.stringify(A));
 /* 1091 renamed the Community pill 'Bids' -> 'Estimates' (display text only). */
-ok('Bids/Estimates pill hidden too', (A['Estimates'] !== undefined ? A['Estimates'] : A['Bids']) === false, JSON.stringify(A));
+ok(stripUp ? 'Bids/Estimates pill hidden too' : '…and the Estimates pill too', est === !stripUp, JSON.stringify(A));
 ok('Photos / Production / Tools all stay', A['Photos'] === true && A['Production'] === true && A['Tools'] === true, JSON.stringify(A));
 
 console.log('\n--- B. the hub strip still works ---');
@@ -111,8 +120,13 @@ const B = await page.evaluate(async () => {
   const on = document.querySelector('#cr-ch2 .tabbar [data-pane].on');
   return { tabs, active: on ? on.dataset.pane : null };
 });
-ok('all three tabs still present', B.tabs.join(',') === 'clients,bids,partners', JSON.stringify(B));
-ok('tapping Partners still switches the pane', B.active === 'partners', JSON.stringify(B));
+if (stripUp) {
+  ok('all three tabs still present', B.tabs.join(',') === 'clients,bids,partners', JSON.stringify(B));
+  ok('tapping Partners still switches the pane', B.active === 'partners', JSON.stringify(B));
+} else {
+  /* the strip was retired at 1179 on Theo's word; its doors are pages now (gate_755 drives them) */
+  ok('the retired strip has not half-returned (no tabs without a strip)', B.tabs.length === 0, JSON.stringify(B));
+}
 
 console.log('\n--- C. off the hub the pills COME BACK (no route lost) ---');
 const C = await page.evaluate(async () => {

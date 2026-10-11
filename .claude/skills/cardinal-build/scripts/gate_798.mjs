@@ -58,6 +58,11 @@ async function boot(html, width, kind, theme) {
     if (url.startsWith('https://app.cardinalroster.com/')) return route.fulfill({ status: 200, body: '' });
     return route.abort();
   });
+  /* 1299: light via the SAVED setting -- a hand-set data-theme is re-derived
+     from storage when a view opens (1180-1181), so openProject() handed the light
+     checks a dark page. Same fix as gate_736 / gate_959. The attribute below is
+     kept as a belt for trees that predate the single switch. */
+  if (theme === 'light') await page.addInitScript(() => { try { localStorage.setItem('cardinal.theme.rb', '1'); } catch (e) {} });
   await page.addInitScript(s => { window.__SEED__ = s; }, mkSeed(kind));
   await page.addInitScript(MOCK);
   await page.addInitScript(() => { try { Object.defineProperty(document, 'fonts', { configurable: true, get: () => ({ ready: Promise.resolve(), status: 'loaded', check: () => true, load: () => Promise.resolve([]), forEach: () => {}, addEventListener: () => {}, removeEventListener: () => {} }) }); } catch (e) {} });

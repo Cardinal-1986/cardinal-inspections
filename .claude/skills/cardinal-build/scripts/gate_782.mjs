@@ -171,8 +171,14 @@ const empty = await page.evaluate(() => ({
   err: (document.getElementById('ldError').textContent || '').trim(),
   wrote: (window.__WRITES__ || []).filter(w => w.table === 'projects').length
 }));
-ok('an empty form is still refused for name/address', empty.wrote === 0 && /First Name/.test(empty.err), empty.err.slice(0, 80));
-ok('...and the contact rule did not replace them', /Street|City|Zip/.test(empty.err), empty.err.slice(0, 80));
+ok('an empty form is still refused for the name', empty.wrote === 0 && /First Name/.test(empty.err), empty.err.slice(0, 80));
+/* 1299: 1208 ("The Lead form stops refusing a phone call") made the ADDRESS
+   required only once a Job Category is set -- a name and a way to reach someone
+   is a lead. So an empty form must NOT demand the street any more; what 782 cared
+   about (the contact rule never REPLACES the other requirements) is that the
+   name requirement still shows alongside it. */
+ok('...and the contact rule did not replace them (address waits for a Job Category, 1208)',
+   /First Name/.test(empty.err) && /Last Name/.test(empty.err) && !/Street|City|Zip/.test(empty.err), empty.err.slice(0, 80));
 
 console.log('\n--- 7. state does not leak between leads ---');
 await openForm();

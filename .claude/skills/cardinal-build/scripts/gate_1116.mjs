@@ -23,7 +23,17 @@ const ok = (c, m) => { if (!c) { console.log('  FAIL ' + m); fails++; } else con
 /* every id hideAllViews() knows, classified. A new view in NO bucket is a RED:
    that is the whole point — drifting used to be the default for a new screen. */
 const CRM_OR_SPECIAL = ['landingView', 'cardinalTruthView', 'insClientsView'];
-const DEFERRED = ['cr-occ', 'cr-est-view', 'cr-owner', 'cr-disp', 'cr-can', 'cr-show-form'];
+const DEFERRED = ['cr-occ', 'cr-est-view', 'cr-owner', 'cr-disp', 'cr-can', 'cr-show-form',
+  /* 1299: the bulk-assign module (cr-bpa) — CLAUDE.md: "left deliberately", its own
+     hardcoded white surface and no theme; classified here so it cannot drift silently. */
+  'cr-bulk-mount'];
+/* 1299: views registered since this gate was written that COVER the header, so
+   there is no shared header for them to drift — measured at 390px with
+   elementFromPoint on the header's own row (it lands inside the view): the Front
+   Door (1164, the picker itself), Why Cardinal (1160) and The Appointment (1161).
+   Finance rates (1153) is the same fixed inset:0, display-shown shape. A new view
+   in NO bucket is still red; that is the point of the check. */
+const OWN_SCREEN = ['cr-fd', 'cr-fin', 'cr-why', 'cr-appt'];
 
 (async () => {
   const dir = path.dirname(path.resolve(FILE)), base = path.basename(FILE);
@@ -172,7 +182,7 @@ const DEFERRED = ['cr-occ', 'cr-est-view', 'cr-owner', 'cr-disp', 'cr-can', 'cr-
   let d = 0, end = j;
   for (let k = j; k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) { end = k; break; } } }
   const ids = [...new Set([...src.slice(i, end).matchAll(/getElementById\(\s*['"]([\w-]+)['"]/g)].map(m => m[1]))];
-  const known = new Set([...Object.keys(EXPECT), ...CRM_OR_SPECIAL, ...DEFERRED]);
+  const known = new Set([...Object.keys(EXPECT), ...CRM_OR_SPECIAL, ...DEFERRED, ...OWN_SCREEN]);
   const unclassified = ids.filter(x => !known.has(x));
   ok(unclassified.length === 0,
      'every full-screen view is classified — pinned, CRM, or explicitly deferred (unclassified: ' +

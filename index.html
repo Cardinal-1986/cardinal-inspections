@@ -4152,7 +4152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1298<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1299<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -14827,7 +14827,7 @@ document.addEventListener('click', async function(e){
       await saveCkPatch(k === 'pick'
         ? { cc_project_id: b.getAttribute('data-id'), cc_project_name: b.getAttribute('data-nm') || '' }
         : { cc_project_id: '', cc_project_name: '' });
-    }catch(err){ b.removeAttribute('disabled'); alert('Could not save the link: ' + (err.message || err)); return; }
+    }catch(err){ b.removeAttribute('disabled'); crTell('Could not save the link: ' + (err.message || err)); return; }   /* 1299: the one alert() 1080 missed */
     return galJobLoad();
   }
 });
@@ -30440,9 +30440,19 @@ async function enableNotifications(){
   try{ if(/^#(punch$|route\/)/.test(location.hash)) window.__crBootLink = location.hash; }catch(e){}
   try{ if(!/^#(p|e|list)\//.test(location.hash) && !/type=recovery/.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash) && !/^#(punch$|route\/)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
+  /* 1299: since 1165 sign-in lands on showHome(), and the wrapper above makes
+     that push #h BEFORE this restore runs (60ms after showMain). So a cold open
+     of #p/<id>/punch -- the punch-out text, a client link, an alert -- read "#h"
+     here and restored nothing: the job link opened Home. The fragment is taken
+     NOW, at parse time, the way 1255 already stashes #punch / #route, and is
+     used until a restore has actually happened (the project retry loop below
+     re-enters this function, so it must not be consumed on the first pass). */
+  var __restoreBootHash = null;
+  try{ if(/^#(p|e|list)\//.test(location.hash) || /^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash)) __restoreBootHash = location.hash; }catch(e){}
   window.__tryRestoreFromHash = function(){
     if(__restored) return;
     var h = location.hash || '';
+    if(__restoreBootHash && (h === '' || h === '#h')) h = __restoreBootHash;
     var st = null, m;
     if((m = /^#p\/([^\/]+)(?:\/([a-z]+))?$/.exec(h))) st = { v:'project', id: m[1], tab: m[2] || null };
     else if((m = /^#e\/(.+)$/.exec(h))) st = { v:'editor', id: m[1] };
@@ -30456,13 +30466,13 @@ async function enableNotifications(){
     else if(h === '#me') st = { v:'me' };
     else if(h === '#team') st = { v:'team' };
     else if(h === '#settings') st = { v:'settings' };
-    if(!st){ __restored = true; document.body.classList.remove('restoring'); return; }
+    if(!st){ __restored = true; __restoreBootHash = null; document.body.classList.remove('restoring'); return; }
     if((st.v === 'project' || st.v === 'leads') && !cacheProjects.length && __restoreTries < 25){
       __restoreTries++; setTimeout(window.__tryRestoreFromHash, 250);
       if(__restoreTries >= 25) document.body.classList.remove('restoring');
       return;
     }
-    __restored = true;
+    __restored = true; __restoreBootHash = null;
     __histLock = true;
     try{
       if(st.v === 'project'){
@@ -44015,6 +44025,12 @@ window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportCl
 :root:not([data-theme="rb-light"]) .chipbtn{background:transparent;color:#e6e9ee;border-color:#33333d;}
 :root:not([data-theme="rb-light"]) .chipbtn.danger{--cr-stack:"1292 Delete is red words, dark";color:#ff7b82;border-color:transparent;}
 :root:not([data-theme="rb-light"]) .chipbtn:hover{border-color:var(--red);color:#ff7b82;}
+/* 1299: a chip on the WHITE form sheet keeps paper ink. The sheet is white in both
+   themes (Forms 1), so the dark rule above — light ink on a transparent chip since
+   1292 — read 1.22:1 there. Outline style is unchanged: no fill, a hairline, ink. */
+:root:not([data-theme="rb-light"]) .projform .chipbtn{--cr-stack:"1299 the form sheet is white in dark too (Forms 1); 1292's light chip ink is for dark grounds";color:#2b2b2b;border-color:#c9c2b8;background:transparent;}
+:root:not([data-theme="rb-light"]) .projform .chipbtn:hover{border-color:var(--red);color:#9c1822;}
+:root:not([data-theme="rb-light"]) .projform .chipbtn.danger{color:#c8202e;border-color:transparent;}
 
 /* Inspections / Reports document list (listView, and the client-profile doc mounts) */
 :root:not([data-theme="rb-light"]) table.reports{background:transparent;border-color:#2a2a32;}
@@ -44225,6 +44241,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1299, d: '2026-10-11', t: 'Job links open the job again',
+    s: 'Every check in the app was run, and the ones that failed because of the app are fixed here. The big one: a link to a job \u2014 the punch-out text Curtis gets, a client link, an alert \u2014 opened the home screen instead of the job whenever the app was not already open, since the change that made signing in go straight to your home (30 Aug). The address is now read before anything can change it, so the link lands on the right client and the right tab. Also: the Switch portal row on the desktop rail has its yellow back (the rename had quietly dropped it); the CompanyCam job-link error and the \u201cPlace a LIVE order with ABC Supply?\u201d question use the app\u2019s own message and question sheet instead of the phone\u2019s grey box; three delete questions no longer fall back to the grey box if the sheet is ever missing \u2014 they simply do not delete; and the Cancel / Not now / Close buttons on the white forms (Add project, the checklist, the gutter calculator, the lead form, the calendar\u2019s appointment sheet) are readable in dark mode again \u2014 my button change last night had made them white on white. And Production and the dispatch board get their own lettering back (the crew name tags in capitals) \u2014 the one-typeface change was not meant to reach them.' },
   { b: 1298, d: '2026-10-11', t: 'Receipts',
     s: 'A punch-out card has an Add receipt button: the crew photographs the receipt and it is saved to the job\u2019s Files, with no dollar amount on the card. On the job\u2019s Payments page, receipts that still need an amount wait at the top; type the amount and it becomes an Additional job expense with its receipt attached. Older expense lines get an Attach receipt button, and Files marks each receipt as Needs amount or Priced.' },
   { b: 1297, d: '2026-10-10', t: 'Load-the-truck list',
@@ -49188,7 +49206,7 @@ async function onBulkDelete(){
 var galChecked = window.galChecked || {};
 var ids = Object.keys(galChecked).filter(function(id){ return galChecked[id]; });
 if(!ids.length) return;
-var ask = typeof window.crAsk === 'function' ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+var ask = typeof window.crAsk === 'function' ? window.crAsk : function(){ return Promise.resolve(false); /* 1299: no sheet, no destructive yes -- crAsk's module owns the browser box */ };
 if(!await ask('Delete ' + ids.length + ' photo' + (ids.length === 1 ? '' : 's') + ' from this album? This cannot be undone.')) return;
 var statusEl = actionBar.querySelector('[data-slot="status"]');
 var gone = [];
@@ -49800,7 +49818,7 @@ function mcHide(){
 }
 async function mcClose(){
   if(shots.length){
-    var ask = typeof window.crAsk === 'function' ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+    var ask = typeof window.crAsk === 'function' ? window.crAsk : function(){ return Promise.resolve(false); /* 1299: no sheet, no destructive yes -- crAsk's module owns the browser box */ };
     if(!await ask('Throw away the ' + shots.length + ' photo' + (shots.length === 1 ? '' : 's') + ' you took? They have not been uploaded.')) return;
   }
   mcDiscard();
@@ -53228,7 +53246,7 @@ return;
    job. Ask once; "Fix it" publishes nothing. */
 var _probs = estLineProblems(est);
 if(_probs.length){
-  var _ask = (typeof window.crAsk === 'function') ? window.crAsk : function(m){ return Promise.resolve(confirm(m)); };
+  var _ask = (typeof window.crAsk === 'function') ? window.crAsk : function(){ return Promise.resolve(false); /* 1299: no sheet, no destructive yes -- crAsk's module owns the browser box */ };
   var _go = await _ask('Check these lines before the client sees them\n\n' + _probs.join(' '), { verb: 'Publish anyway', cancel: 'Fix it', tone: 'plain' });
   if(!_go){ pubSet(false); return; }
 }
@@ -67394,7 +67412,9 @@ async function sendOrder(){
   if(sending) return;
   var probs = problems();
   if(probs.length){ st.step = 'build'; st.problems = probs; render(); return; }
-  if(!isTest() && !window.confirm('Place a LIVE order with ABC Supply?\n\nThis puts real materials on a truck and bills Cardinal.')) return;
+  /* 1299: the one confirm() 1083 missed -- and the most consequential question in
+     the app. Same sheet as every other "are you sure"; the verb says what it does. */
+  if(!isTest() && !(await window.crAsk('Place a LIVE order with ABC Supply?\n\nThis puts real materials on a truck and bills Cardinal.', { verb:'Place order' }))) return;
   sending = true; st.error = ''; render();
   var b = body();
   try{
@@ -74308,8 +74328,8 @@ background:#0F1521;border-left:1px solid #223047;border-right:1px solid #223047;
    `font:` shorthands. One rule instead of 256 out-rankings; !important is why it
    can be one rule. The drawer keeps its own labels (Theo picked that look), and
    svg text is not touched. Dark retail only; light follows. */
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt) *){
---cr-stack:"1287 one sans across dark retail; the drawer and (1289) the client-facing presentation screens — Why, Colors, Showcase, Appointment — are excluded";
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt,#cr-pb,#cr-disp)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt,#cr-pb,#cr-disp) *){
+--cr-stack:"1287 one sans across dark retail; the drawer, (1289) the client-facing presentation screens — Why, Colors, Showcase, Appointment — and (1299) Production and Dispatch, which are left alone, are excluded";
 font-family:'Segoe UI',Arial,sans-serif !important;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :is(.pmoney,.jan,.cnt,.n,.c,.gn,.gt,.kpcnt,.cd,.ch){
 --cr-stack:"1287 counts and figures line up";
@@ -74332,8 +74352,8 @@ box-shadow:none;}
 /* ── Build 1290 · light mode in the drawer's style (the light twin of 1283–1289) ──
    The drawer's light palette: #f2f3f5 well, white cards, #dcdee2 hairlines, #161616
    ink, the same thin red edge. Same scopes and exclusions as the dark builds. */
-:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt) *){
---cr-stack:"1290 one sans across light retail; drawer + presentation screens excluded";
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) :not(svg):not(svg *):not(#cr-lnav):not(#cr-lnav *):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt,#cr-pb,#cr-disp)):not(:is(#cr-why,#cr-occ,#cr-show,#cr-appt,#cr-pb,#cr-disp) *){
+--cr-stack:"1290 one sans across light retail; drawer, presentation screens and (1299) Production + Dispatch excluded";
 font-family:'Segoe UI',Arial,sans-serif !important;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pipecard,
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .actcard{
@@ -74769,12 +74789,12 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* ── DARK ────────────────────────────────────────────────────────────────── */
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#ef6b6b}
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#34D399}
-:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#f0c651}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx{color:#f0c651}  /* 1299: was data-k="landing"; 1165 renamed the row's label to "Switch portal" and data-k follows the label, so this matched nothing for 130 builds */
 
 /* ── LIGHT ───────────────────────────────────────────────────────────────── */
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#c8202e}
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#047857}
-:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="landing"] .lnav-tx{color:#8a6100}  /* 539 chose literal yellow here (1.47:1, with the number in front of him); 1035 asked, and
+:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx{color:#8a6100}  /* 539 chose literal yellow here (1.47:1, with the number in front of him); 1035 asked, and
      the call came back "I trust you would do it best" (24 Aug). Best = the obsidian-tiles
      precedent (545/557): the SAME hue deepened, never a swap — dark keeps the true yellow,
      light gets 538's amber, computed for this exact rail (4.99 / 5.54 / 4.55). */

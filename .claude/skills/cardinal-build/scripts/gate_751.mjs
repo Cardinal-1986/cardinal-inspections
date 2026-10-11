@@ -154,16 +154,27 @@ const src = APP;
 /* 36 at build 751. Later builds legitimately added sites (the app-wide census
    is CLAUDE.md's, not this gate's); re-pinned at the measured current count so
    the tripwire still fires on an UNNOTICED new writer. */
-chk('no new scroll-lock writer', (src.match(/document\.body\.style\.overflow/g) || []).length === 43,
-    (src.match(/document\.body\.style\.overflow/g) || []).length);
+/* 1299: a bare-regex SITE count pinned at 43 is the method CLAUDE.md warns
+   against (comments and strings both lie), and it went stale as approved builds
+   added release sites. The standing instrument is audit_scrolllock.py: the
+   lexer, a per-module lock/release balance and a named roster that goes RED on
+   a new writer. Ask it. */
+{ let rc = 0, out = '';
+  try { out = (await import('node:child_process')).execFileSync('python3',
+      [new URL('./audit_scrolllock.py', import.meta.url).pathname, process.argv[2] || '/home/user/cardinal-inspections/index.html'], { encoding: 'utf8' }); }
+  catch (e) { rc = e.status || 1; out = String(e.stdout || '') + String(e.stderr || ''); }
+  chk('no new scroll-lock writer (audit_scrolllock roster)', rc === 0 && /AUDIT GREEN/.test(out),
+      (out.match(/AUDIT \w+[^\n]*/) || ['no verdict'])[0]); }
 /* ⚠️ NOT a file-wide test for "38px": SIX other controls legitimately use that
    size (icon boxes, a proof thumbnail, nav buttons, the burger). Test the
    VIEWER'S OWN RULE, which is the only one this build touched. */
 chk('the viewer close button is 44px in the stylesheet',
     /#cr-ri-zoom \.close\{[^}]*width:44px;height:44px;/.test(src));
 chk('and no longer 38px', !/#cr-ri-zoom \.close\{[^}]*width:38px/.test(src));
-chk('the other 38px controls were left alone',
-    (src.match(/width:38px;height:38px;/g) || []).length === 6,
+/* 1299: 751 left six alone; the 1206 tap-target pass later raised some to 44px
+   ON PURPOSE. "Left alone by 751" now means none was made SMALLER or added. */
+chk('the other 38px controls were left alone (or since raised to 44px)',
+    (src.match(/width:38px;height:38px;/g) || []).length <= 6,
     (src.match(/width:38px;height:38px;/g) || []).length);
 
 await browser.close();

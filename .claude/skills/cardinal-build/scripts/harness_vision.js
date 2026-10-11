@@ -144,8 +144,28 @@ const MS = require('./module_source.cjs');
 const occ = MS.moduleText(html, 'colors.css', { htmlPath: FILE, missing: 'throw', includeOpenTag: true });
 ok('#cr-occ declares text-size-adjust',
   /\n\s*-webkit-text-size-adjust:100%;\n\s*text-size-adjust:100%;/.test(occ));
-ok('and it is scoped — exactly 2 declarations in the whole file, both here',
-  (html.match(/(?<![\w-])(?:-webkit-)?text-size-adjust\s*:/g) || []).length === 2);
+/* 1299: "exactly 2 in the whole file" stopped being true when the printed
+   documents (built inside <script> strings, each a separate page with its own
+   html{} rule) and #cr-owner (its own fixed view) declared it too. Neither leaks:
+   a string is not this page's CSS, and an #id rule is scoped by construction.
+   The CONTRACT is "no unscoped declaration in this page's stylesheets". */
+ok('and it is scoped — every declaration is #cr-occ\'s, an #id rule, or a generated document', (() => {
+  const re = /(?<![\w-])(?:-webkit-)?text-size-adjust\s*:/g;
+  const scripts = [...html.matchAll(/<script\b[^>]*>[\s\S]*?<\/script>/g)].map(m => [m.index, m.index + m[0].length]);
+  const inScript = i => scripts.some(([a, b]) => i > a && i < b);
+  let bad = [], occN = 0, m;
+  while ((m = re.exec(html))) {
+    if (inScript(m.index)) continue;
+    const open = html.lastIndexOf('{', m.index);
+    const sel = html.slice(Math.max(html.lastIndexOf('}', open), html.lastIndexOf('*/', open), html.lastIndexOf('>', open)) + 1, open).replace(/^\/?\s*/, '').trim();   // lastIndexOf of the comment close lands on its star
+    if (/^#cr-occ\b/.test(sel)) continue;            // the module's own, counted below
+    if (!/^#[\w-]+$/.test(sel)) bad.push(sel || '(none)');
+  }
+  /* the module's pair, counted in the MODULE TEXT so it holds inline today and
+     relocated tomorrow (gate_relocation runs this against both) */
+  occN = (occ.match(re) || []).length;
+  return bad.length === 0 && occN === 2;
+})());
 ok('no [data-style="feature"] .occ-title rule was added (the CSS was never the cause)',
   !/\[data-style="feature"\][^{]*\.occ-title/.test(occ));
 

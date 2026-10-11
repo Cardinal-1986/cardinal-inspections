@@ -59,7 +59,9 @@ ok('cr-lr-script block located', lrBlk.length > 2000, 'len=' + lrBlk.length);
 
 /* ── 1 · the Vision hub tile, executed ─────────────────────────── */
 const vhSrc = grab('visionHtml');
-ok('visionHtml() found', !!vhSrc);
+/* 1299: visionHtml() was retired with the Vision hub at 1190. Its absence is the
+   shipped state, not a failure; the tile checks run again if it ever returns. */
+if (!vhSrc) console.log('  ----  visionHtml() retired at 1190 -- no hub tile to execute');
 if (vhSrc) {
   for (const admin of [true, false]) {
     let html = '';
@@ -108,7 +110,9 @@ if (bookAt > -1) {
       const a = d.querySelector('a.cr-lr-book');
       ok('landing: renders one .cr-lr-book anchor', !!a);
       if (a) {
-        ok('landing: href is the book', a.getAttribute('href') === '/popup.html');
+        /* 1299: 1187/1189 canonicalised this to the presentation host, measured:
+           the bare host serves the CRM, not the book. Either form IS the book. */
+        ok('landing: href is the book', /^(https:\/\/presentation\.cardinal(roster|renovations)\.com)?\/popup\.html$/.test(a.getAttribute('href') || ''), a.getAttribute('href'));
         ok('landing: new tab, safely',
            a.getAttribute('target') === '_blank' && /noopener/.test(a.getAttribute('rel') || ''));
         ok('landing: uses the styled parts (.ic/.tx/.tt/.sb/.go)',
@@ -170,8 +174,13 @@ if (bookAt > -1) {
           new Function('window', 'isVisionHost', body)(w, () => vision);
         } catch (e) { ok('designer: runs (vision=' + vision + ')', false, e.message); continue; }
         ok('designer: navigates (vision=' + vision + ')', !!href, href);
-        ok('designer: present=1 ' + (vision ? 'IS' : 'is NOT') + ' appended (vision=' + vision + ')',
-           /[?&]present=1/.test(href) === vision, href);
+        /* 1299: 1190 removed the isVisionHost() test from this branch with the
+           hub (CLAUDE.md records present=1 as the one flag that would be LOST,
+           and the Showroom's own launcher hard-codes it). So the in-app door
+           never appends it now, whatever the host says. */
+        const VISION_TEST = /isVisionHost\(/.test(body);
+        ok('designer: present=1 ' + (vision && VISION_TEST ? 'IS' : 'is NOT') + ' appended (vision=' + vision + ')',
+           /[?&]present=1/.test(href) === (vision && VISION_TEST), href);
         ok('designer: still points at the visualizer (vision=' + vision + ')',
            href.startsWith('/visualizer/'), href);
       }
@@ -180,8 +189,8 @@ if (bookAt > -1) {
       const w2 = { CR_VISUALIZER_URL: '/visualizer/?x=1',
                    location: { set href(v) { href2 = v; }, get href() { return href2; } } };
       new Function('window', 'isVisionHost', body)(w2, () => true);
-      ok('designer: an existing query gets & not a second ?',
-         href2 === '/visualizer/?x=1&present=1', href2);
+      ok('designer: an existing query is kept, never a second ?',
+         /isVisionHost\(/.test(body) ? href2 === '/visualizer/?x=1&present=1' : href2 === '/visualizer/?x=1', href2);
     }
   }
 }

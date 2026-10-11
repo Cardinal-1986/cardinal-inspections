@@ -34333,6 +34333,32 @@ Theo, 7 Oct: *"Only me Joan and Curtis can edit the assigned to, completion."*
 - **Also green:** 945, 947, 950, 1039, 1049, 1210 (run from the repo root), 1248, 1249, 1250,
   types, dupes, scroll-lock, 1243.
 
+## Build 1299: every gate, run — and the reds that were the app's (Theo, 11 Oct: "do 3 … don't stop till it's fixed to your standards")
+
+**How it was found.** All 379 `gate_*.mjs` and every CI harness, swept against `main` (1298), four at a time, with arguments resolved per gate (no-arg → `index.html` on usage → the scripts folder on ENOENT). ⚠ The first two sweeps were WRONG and said so: run without the path, and then with it for every gate, they reported ~140 reds that were the sweep's own fault (usage exits, `api/`-arg gates handed `index.html`, ESM packages missing). Only the third shape is trustworthy.
+
+**The app's reds — fixed in `index.html`:**
+- **Job links opened Home, not the job — since 1165 (30 Aug).** Sign-in lands on `showHome()`, whose history wrapper pushes `#h` *before* `__tryRestoreFromHash` runs 60ms later, so every cold `#p/<id>(/tab)` — Curtis's punch-out texts, client links, the 1259 alert links — read `#h` and restored nothing. Bisected: green at 1164, red at 1165. Fix: the fragment is stashed at parse time (`__restoreBootHash`, the 1255 `#punch` pattern) and used until a restore actually happens (the project retry loop re-enters, so it is consumed only on `__restored = true`). ⚠ First name tried was `__bootHash` — **already taken** by the password-reset handler at ~29476. check_build's negative control caught it.
+- **Switch portal lost Theo's yellow (539/1035).** 1165 renamed the drawer row's label; the rail keys `data-k` off the label, and both rules still said `data-k="landing"`. Retargeted to `switchportal`. Same row, same colours.
+- **One native `alert()` survived 1080** (the CompanyCam job-link save error) → `crTell`.
+- **One native `confirm()` survived 1083 — "Place a LIVE order with ABC Supply?"** → `crAsk` with `verb:'Place order'`. Three modules carried a private `confirm()` fallback for crAsk; those now **decline** (a destructive question with no sheet is answered no), so crAsk's module is the only home of the browser box. Lexer: alert 2→1, confirm 5→1.
+- **MINE, from 1292:** the outline Cancel / Not now / Close / Cancel edit on the white `.projform` sheets (Add project, checklist, gutter calc, lead, appointment) was **1.22:1** in dark — light chip ink on a see-through chip on a sheet that is white in both themes (Forms 1). New `.projform .chipbtn` paper ink, **14.16:1**, `--cr-stack` declared. gate_1241 + gate_1260 found it.
+- **MINE, from 1287/1290:** the one-typeface rule reached `#cr-pb` and `#cr-disp`, which are left alone by Theo's call (1288's own banner says so); the Magnet Board's mono dog tags (948) went to Segoe. Both screens added to the exclusion, beside 1289's presentation screens. gate_948 found it.
+
+**The tests' reds — fixed in the tests (each comment says which approved build moved and why):** harness_showcase (3: `{ b: N` spacing since 1156, `tile('showcase',…)` builds the attribute, `hideAllViews` punctuation), harness_colors (`OVERLAY_IDS` retired with the home button at 757), harness_vision (generated documents and `#cr-owner`; now counted in module text so it is relocation-safe), harness_walk (crAsk spy; settle waits on busy text / results — **now runs all 152, not 50**), harness_estasm1098 (1139 widened the select), rebase_renumber.py (5 sites, same `{ b: N` spacing — would have failed the next collision). Gates: 1021 (1147 `url`), 1023 (now *renders* the ground — 1222 made `.btn.dark` an outline; 11.31:1 on the toolbar, both themes), 1033 (1212 deleted the route), 1035 (`switchportal`), 1038 / 1063 (1188/1190: the picker is the Front Door; 1063 now asserts every door lands on one document with the retired pane hidden), 1065 (1114: "just put Retail"), 1068 (opens the Admin row + a Completed client; 26 → 35 checks), 1069 (1204's three sends), 1116 (five new views classified, measured by `elementFromPoint`), 1144 (the real theme switch, and wait for the repaint), 1159 / 1160 (1190 + 1231's light twin), 1187 (the Showroom's 8th door, a page it ships), 1254 / 948 / 949 (Sundays), 959 / 736 / 798 / 800 (light via the saved setting — a hand-set `data-theme` is re-derived when a view opens), 743 (1207's `crClientHay`), 751 (asks `audit_scrolllock.py`), 753 (1176 put New on the right; clamped where anchoring would overflow), 754 / 756 / 757 / 979 (1173 retired ⌂: drive `CardinalHeader.goHome()`, and **every tool screen keeps a tappable way out**), 755 / 803 (1179 retired the hub tabs), 769 (1252: only bosses assign), 780 / 781 / 782 / 976 / 980 / 993 / 799 / 804 / 805 / 752 / setupleak (survivors of `hideAllViews()`, not "seen before") / relocation (audit_contrast's own verdict format, and its fixtures exist now).
+- **Retired:** `gate_1175` (the Vision hub's inks; `?vision=1` gone at 1190, nothing referenced it).
+- **Every repaired check was run red** against a poisoned copy or the 1298 tree before it was trusted.
+
+**Still red, and why:**
+- **`gate_1114` — a layout call for Theo, not a test fault.** At 1194px with the left rail, the home column is 449px and the seven pipeline cards need ~616, so the row scrolls sideways. It always did with the rail; before 1165 the gate measured before the rail mounted and passed vacuously. Options go to Theo as a preview.
+- **`gate_prodwide904`** — orphaned (needs a seed JSON nothing provides), as recorded before.
+
+**Environment, not code:** gate_1050 needs `pymupdf`; 1151–1196 need `jsdom` / `stripe` resolvable from an ESM import; gate_a11y needs `axe-core`; 1187–1189 need `cardinal-showroom` checked out beside this repo. All installed / cloned for the sweep.
+
+**Gates for this build.** `gate_1299` (8: the cold punch link, the cold client link, the rail colour in both themes, the form-sheet Cancel, the dispatch mono, alert/confirm by lexer) — **RED 0/8 on 1298**. check_build, stack, types (TS2322 17→12, rebaselined), dupes, 1206, a11y (region 302→299, deliberately NOT rebaselined — may be day-dependent), gate_chromium 23/23, harness gate with an **empty debt register** (rebaselined; selftest 8/8).
+
+**Found, not fixed:** `projCardHtml()` (the 370 badge card and its Call/Text pills) has no caller; the `cr-lr-*` Landing CSS is unreachable since 1190. Cleanup candidates.
+
 ## Build 1298: receipts (Theo's pick 3, 11 Oct)
 
 **What it does.**

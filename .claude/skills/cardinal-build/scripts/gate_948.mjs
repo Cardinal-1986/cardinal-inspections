@@ -86,8 +86,19 @@ async function boot(w,h){
   else{
     need('seven day columns', f.nHeads===7, 'got '+f.nHeads);
     need('first column is TODAY (rolling window)', f.firstIsToday&&f.firstDate===f.todayDate, f.firstDate+' vs '+f.todayDate);
-    need('a Sunday column carries .sun', f.sunHead>=0, 'idx='+f.sunHead);
-    need('empty Sunday cells hatch', f.sunEmptyHatched);
+    /* 1299: the window is [today .. today+6], and a column is EITHER .today OR
+       .sun (the app gives today's highlight precedence). So on a SUNDAY the only
+       Sunday in the window is today itself, lit rather than hatched, and these two
+       went red on correct code every Sunday. Dispatch is left alone by Theo's
+       call; the gate states the Sunday case instead of the app changing for it. */
+    const sundayToday = new Date().getDay() === 0;
+    if (sundayToday) {
+      need('a Sunday column carries .sun (today IS Sunday: its column is lit as today, no other Sunday in the window)', f.sunHead === -1, 'idx='+f.sunHead);
+      console.log('  ----  empty Sunday cells hatch — not testable on a Sunday (the Sunday is today)');
+    } else {
+      need('a Sunday column carries .sun', f.sunHead>=0, 'idx='+f.sunHead);
+      need('empty Sunday cells hatch', f.sunEmptyHatched);
+    }
     need('trades on their own strips with counts', f.strips.length>=5 && f.strips.every(s=>/CREW|^\d+$/.test(s.cnt)||s.band==='__rep__'), JSON.stringify(f.strips.map(s=>s.band)));
     need('punch strip present and foldable', f.strips.some(s=>s.band==='__rep__'));
     need('dog tags: uppercase mono name', f.tagUpper==='uppercase'&&f.tagMono, f.tagUpper);

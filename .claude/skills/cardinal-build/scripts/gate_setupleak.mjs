@@ -140,6 +140,13 @@ if (names.length < MIN_STATES)
 console.log(`gate_setupleak — ${FILE}\n${names.length} states\n`);
 console.log('state            open overlays (that it did not open itself)');
 
+/* 1299: "first seen under an earlier state's name" called it a LEAK whenever two
+   states legitimately open the SAME screen -- estlibrary and estbuilder both open
+   #cr-est-view on purpose, and every state between them was clean of it. What
+   bleeds is a screen that SURVIVES THE TEARDOWN: so after each state, run the
+   app's own hideAllViews() and record what is still on screen. Only a survivor
+   that is still there after the next state ran counts as inherited. */
+let survivors = [];
 for (let i = 0; i < names.length; i++) {
   try {
     await page.evaluate(`Promise.resolve(window.__sentinelStates[${i}].run())`);
@@ -153,7 +160,7 @@ for (let i = 0; i < names.length; i++) {
   const nowFixed = await page.evaluate(onScreenFixed);
   const arrived = nowFixed.filter(id => !BASE.includes(id));
   /* leaked = on screen now, and first seen under an EARLIER state's name */
-  const open = arrived.filter(id => firstSeen.has(id) && firstSeen.get(id) !== names[i]);
+  const open = arrived.filter(id => firstSeen.has(id) && firstSeen.get(id) !== names[i] && survivors.includes(id));
   for (const id of arrived) if (!firstSeen.has(id)) firstSeen.set(id, names[i]);
 
   const ownNow = arrived.filter(id => !open.includes(id));
@@ -162,6 +169,10 @@ for (let i = 0; i < names.length; i++) {
   if (open.length)
     fails.push(`state "${names[i]}" inherited ${open.map(id => id + ' from "' + firstSeen.get(id) + '"').join(', ')}`
              + ` — it is measuring another screen`);
+  /* what hideAllViews() cannot put away is what the NEXT state would inherit */
+  await page.evaluate(`try{ if(typeof hideAllViews==='function') hideAllViews(); }catch(e){}`).catch(() => {});
+  await page.waitForTimeout(150);
+  survivors = (await page.evaluate(onScreenFixed)).filter(id => !BASE.includes(id));
 }
 
 await browser.close();

@@ -84,11 +84,17 @@ async function at(width, crmHead) {
 
 console.log(`gate_1065 — ${FILE}\n`);
 
-/* 1-2 — retail on a phone: gone, not cut off */
+/* 1-2 — retail on a phone. 1299: 1065 HID the slogan below 438px because
+   "Single source of truth" needed 247px and a phone gave it 150. 1114 then
+   replaced the slogan with "Retail" (Theo: "get rid of the single source of
+   truth on the header and just put Retail") and deleted the hide on purpose: a
+   six-letter word fits everywhere, and hiding it would blank the CRM name --
+   which since 1164 is also the Front Door's door. So the phone must now SHOW
+   it, uncut: "never cut off" was the 1065 rule, "never disappear" the 416 one. */
 const p390 = await at(390, 'retail');
-p390.display === 'none'
-  ? ok('390px retail — the slogan is hidden', 'display:none won over a later !important rule')
-  : bad('390px retail — the slogan is hidden', `display is "${p390.display}", text "${p390.text}"`);
+p390.onScreen && p390.truncated === false && p390.text === 'Retail'
+  ? ok('390px retail — "Retail" shown and not cut off (1114)', p390.text)
+  : bad('390px retail — "Retail" shown and not cut off (1114)', `display "${p390.display}", truncated ${p390.truncated}, text "${p390.text}"`);
 
 /* 3 — the width where it fits: present AND not truncated. Both halves matter;
    "present" alone would pass on the broken build too. */

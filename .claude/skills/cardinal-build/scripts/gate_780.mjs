@@ -111,7 +111,9 @@ const C = await A.page.evaluate(async () => {
 /* Read the confirm wording out of the shipped source for BOTH stage cases —
    the string is built at call time from the project's own stage. */
 const wording = {
-  staysPhrase: APP_HTML.indexOf('The pipeline stays at ') > -1,
+  /* 1299: the phrase moved mid-sentence (" — the pipeline stays at <stage>.") and
+     lost its capital; the promise it makes is unchanged. Either case. */
+  staysPhrase: /the pipeline stays at /i.test(APP_HTML),
   movesPhrase: APP_HTML.indexOf(' moves to ') > -1,
   oldPromise: APP_HTML.indexOf('Mark it as Sent and move the pipeline forward?') > -1,
   guard: /_willMove\s*=\s*!!\(STATUS_STAGE\.sent/.test(APP_HTML),

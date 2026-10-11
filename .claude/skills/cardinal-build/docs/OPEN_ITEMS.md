@@ -2,6 +2,21 @@
 
 ---
 
+## 🟠 OPEN — from the full gate sweep, build 1299 (11 Oct 2026)
+
+1. **The seven pipeline cards scroll sideways on the iPad width with the rail** (`gate_1114`,
+   the one gate still red). At 1194px the home's main column is 449px and the seven cards need
+   ~616px. It was always so with the rail; the gate passed vacuously before 1165. A LAYOUT call —
+   preview options for Theo (wrap to two rows / let the side column stack below ~1300px / smaller
+   cards), then build the pick.
+2. **Cleanup candidates, measured:** `projCardHtml()` (the 370 badge card + its Call/Text pills) has
+   no caller; the `cr-lr-*` Landing CSS has been unreachable since 1190. Delete at source in their
+   own build, after a grep for regex read-backs (the 1182 lesson).
+3. **`gate_prodwide904`** needs a seed JSON nothing provides (orphaned since recorded). Wire a seed
+   or retire it.
+
+---
+
 ## 🟠 OPEN — from the 9 Sep 2026 external assessment, after build 1199
 
 > Build 1199 shipped the findings that needed no decision (fail-closed pay routes, ACH label,

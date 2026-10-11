@@ -100,20 +100,33 @@ async function look(origin) {
 }
 
 // ── the customer-facing door ───────────────────────────────────────────────
-const s = await look('https://showroom.cardinalroster.com');
-chk('showroom: page evaluated', !s.error, s.error);
-chk('showroom: the Vision hub is built', !!s.hub);
-chk('showroom: the CRM main view is NOT rendered', s.mainView === false, 'mainView=' + s.mainView);
-chk('showroom: the CRM left rail is NOT rendered', s.leftnav === false, 'leftnav=' + s.leftnav);
-chk('showroom: the site header is refused, not merely covered',
-    s.header === 'none', 'computed display=' + s.header);
-chk('showroom: ZERO CRM surfaces on screen',
-    Array.isArray(s.crm) && s.crm.length === 0, JSON.stringify(s.crm));
-chk('showroom: no staff email address on screen', s.staff === false);
-chk('showroom: no client name on screen', s.client === false);
-chk('showroom: the hub is what a tap at the top actually hits',
-    typeof s.topmost === 'string' && s.topmost.includes('cr-vh'), s.topmost);
-chk('showroom: the document is marked for CSS to key off', s.visionAttr === '1', s.visionAttr);
+/* 1299: RETIRED WITH ITS HOST TEST AT 1190. Since the 31 Aug cutover
+   showroom.cardinalroster.com is the standalone Showroom project (its own repo,
+   cardinal-showroom), so this file is never served there, and 1190 deleted
+   isVisionHost()/visionHtml() as unreachable. A showroom.* request to THIS file
+   now renders the CRM by design -- which is exactly why the Showroom moved out
+   (805 is the build that proved one file cannot deliver that separation).
+   gate_1190 owns the retirement; gate_1187/1188/1189 check the Showroom's doors
+   against its own repo. If a host test ever returns, the checks below run again. */
+if (/function isVisionHost\(/.test(APP)) {
+  const s = await look('https://showroom.cardinalroster.com');
+  chk('showroom: page evaluated', !s.error, s.error);
+  chk('showroom: the Vision hub is built', !!s.hub);
+  chk('showroom: the CRM main view is NOT rendered', s.mainView === false, 'mainView=' + s.mainView);
+  chk('showroom: the CRM left rail is NOT rendered', s.leftnav === false, 'leftnav=' + s.leftnav);
+  chk('showroom: the site header is refused, not merely covered',
+      s.header === 'none', 'computed display=' + s.header);
+  chk('showroom: ZERO CRM surfaces on screen',
+      Array.isArray(s.crm) && s.crm.length === 0, JSON.stringify(s.crm));
+  chk('showroom: no staff email address on screen', s.staff === false);
+  chk('showroom: no client name on screen', s.client === false);
+  chk('showroom: the hub is what a tap at the top actually hits',
+      typeof s.topmost === 'string' && s.topmost.includes('cr-vh'), s.topmost);
+  chk('showroom: the document is marked for CSS to key off', s.visionAttr === '1', s.visionAttr);
+
+} else {
+  console.log('  ----  showroom host checks: retired at 1190 (the Showroom is its own app) — gate_1190 holds it');
+}
 
 // ── the CRM, which must be untouched ───────────────────────────────────────
 const a = await look('https://app.cardinalroster.com');

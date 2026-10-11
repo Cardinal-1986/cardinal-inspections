@@ -188,12 +188,23 @@ chk('a number nobody has matches nobody', real.noPhantom.length === 0, JSON.stri
 
 /* ── 4. all seven haystacks were wired, and no comparison was touched ─────── */
 const src = APP_HTML;
-chk('seven haystacks call phoneHay', (src.match(/(?<!function )phoneHay\((?:pr|p)\)/g) || []).length === 7,
-    'found ' + (src.match(/(?<!function )phoneHay\((?:pr|p)\)/g) || []).length);
+/* 1299: 1207 folded two of the seven haystacks -- the Clients directory and the
+   Insurance Clients list -- into ONE matcher, crClientHay(), which calls
+   phoneHay itself. Counting call SITES read that as a haystack losing phone
+   search; it is the opposite (one source instead of two copies). So the
+   contract is asserted directly: crClientHay carries phoneHay, every haystack
+   either calls phoneHay or goes through crClientHay, and the total covered is
+   still seven. */
+const directPH = (src.match(/(?<!function )phoneHay\((?:pr|p)\)/g) || []).length;
+const viaHay = (src.match(/(?<!function )crClientHay\(pr\)(?=\.indexOf| \+)/g) || []).length;
+const hayHasPH = /function crClientHay\(pr\)\{[^}]*phoneHay\(pr\)/.test(src);
+chk('seven haystacks reach phoneHay (directly, or through crClientHay since 1207)',
+    hayHasPH && (directPH - 1) + viaHay >= 7, `direct ${directPH} (1 is crClientHay's own) + crClientHay users ${viaHay}`);
 chk('the three module sites go through window.', (src.match(/window\.phoneHay\(/g) || []).length === 3);
 chk('the comparison lines are untouched (purely additive)',
     (src.match(/return hay\.indexOf\(q\) !== -1;/g) || []).length === 3 &&
-    (src.match(/if\(hay\.indexOf\(q\) === -1\) return false;/g) || []).length === 3);
+    (src.match(/if\(hay\.indexOf\(q\) === -1\) return false;/g) || []).length +
+    (src.match(/if\(q && crClientHay\(pr\)\.indexOf\(q\) === -1\) return false;/g) || []).length === 3);
 chk('phoneForms delegates digit extraction to build 739', /window\.crValid\.phone\(raw\)/.test(src));
 
 await browser.close();

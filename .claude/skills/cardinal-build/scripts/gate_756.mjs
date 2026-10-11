@@ -101,6 +101,8 @@ const STATE = id => `(() => {
     mountZ: m ? getComputedStyle(m).zIndex : null,
     headerShown: vis(hd), headerBottom: hr ? Math.round(hr.bottom) : null,
     homeHitTestable: !!(at && at.closest && at.closest('#cr-hd2-home')),
+    titleHit: (() => { const t = document.getElementById('brandTitle'); if (!t) return false; const r = t.getBoundingClientRect();
+      const x = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)); return !!(x && (x === t || t.contains(x))); })(),
     topmostAtHome: at ? (at.tagName.toLowerCase() + (at.id ? '#' + at.id : '')) : null,
     head: document.body.dataset.crmHead || '(unset)',
     exitShown: vis(exit), exitTop: er ? Math.round(er.top) : null,
@@ -110,6 +112,12 @@ const STATE = id => `(() => {
   };
 })()`;
 
+/* 1299: the ⌂ button was retired at 1173 (Theo's ask); goHome() was KEPT, and is
+   still reached through CardinalHeader.goHome(). Every "press Home" below drives
+   the button if a future build brings it back, else the function itself -- so
+   what 756 proves (Home means YOUR CRM's home, and the tool screen closes) is
+   still proved, through the code path that survives. */
+const HOME = `(document.getElementById('cr-hd2-home') ? document.getElementById('cr-hd2-home').click() : window.CardinalHeader.goHome())`;
 for (const width of [390, 1194]) {
   const { page, ctx, go, probe } = await session(width);
   const tag = `${width}px`;
@@ -120,12 +128,14 @@ for (const width of [390, 1194]) {
     const s = await probe(STATE(id));
     if (s.__err) { chk(`${tag} ${id}: harness ran`, false, s.__err); continue; }
     chk(`${tag} ${id}: opens`, s.mountShown);
-    chk(`${tag} ${id}: THE HEADER'S HOME IS HIT-TESTABLE`, s.homeHitTestable, `topmost=${s.topmostAtHome}`);
+    /* 1299: with no ⌂ to hit, the trap this guarded (a mount COVERING the header)
+       is checked on the header's own surviving door, the portal title. */
+    chk(`${tag} ${id}: THE HEADER IS NOT COVERED (its title takes a tap)`, s.homeHitTestable || s.titleHit, `topmost=${s.topmostAtHome}`);
     chk(`${tag} ${id}: the mount starts below the header`, s.mountTop !== null && s.headerBottom !== null && s.mountTop >= s.headerBottom - 1, `mountTop=${s.mountTop} headerBottom=${s.headerBottom}`);
     chk(`${tag} ${id}: the header still reads insurance`, s.head === 'insurance', s.head);
     if (s.exitShown) chk(`${tag} ${id}: the floating Home clears the header`, s.exitTop >= s.headerBottom - 1, `exitTop=${s.exitTop} headerBottom=${s.headerBottom}`);
     /* the header home must go to Truth AND close the tool screen */
-    await go(`document.getElementById('cr-hd2-home').click()`, 1000);
+    await go(HOME, 1000);
     const a = await probe(STATE(id));
     chk(`${tag} ${id}: header home -> Cardinal Truth`, a.truth && !a.main, JSON.stringify({ truth: a.truth, main: a.main }));
     chk(`${tag} ${id}: AND CLOSES THE TOOL SCREEN`, !a.mountShown, `stillOpen=${a.mountShown}`);
@@ -142,7 +152,7 @@ for (const width of [390, 1194]) {
 
   await go(`window.showCardinalTruth()`, 700);
   await go(`window.crOpenClaims()`, 1200);
-  await go(`document.getElementById('cr-hd2-home').click()`, 1200);
+  await go(HOME, 1200);
   const ex = await probe(STATE('cr-claims-mount'));
   chk(`${tag} Home from the claims mount -> Cardinal Truth (the reported bug)`, ex.truth && !ex.main, JSON.stringify({ truth: ex.truth, main: ex.main, head: ex.head }));
   chk(`${tag} …and the panel is closed`, !ex.mountShown);
@@ -150,14 +160,14 @@ for (const width of [390, 1194]) {
   /* community */
   await go(`window.CardinalCommunityHub.show()`, 1000);
   await go(`window.crOpenClaims()`, 1200);
-  await go(`document.getElementById('cr-hd2-home').click()`, 1200);
+  await go(HOME, 1200);
   const cm = await probe(STATE('cr-claims-mount'));
   chk(`${tag} COMMUNITY: Home from the mount -> the Community hub`, cm.hub && !cm.main, JSON.stringify({ hub: cm.hub, main: cm.main }));
 
   /* retail regression */
   await go(`window.showHome()`, 900);
   await go(`window.crOpenClaims()`, 1200);
-  await go(`document.getElementById('cr-hd2-home').click()`, 1200);
+  await go(HOME, 1200);
   const rt = await probe(STATE('cr-claims-mount'));
   chk(`${tag} RETAIL: Home from the mount still -> the retail dashboard`, rt.main && !rt.truth, JSON.stringify({ main: rt.main, truth: rt.truth }));
   chk(`${tag} RETAIL: and the panel closes`, !rt.mountShown);

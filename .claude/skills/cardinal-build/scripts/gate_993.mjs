@@ -129,6 +129,7 @@ const browser = await chromium.launch({
 
 let derived = null;
 const painted = new Map();  /* selector -> worst observation across the walk */
+const verticalSeen = new Set();  /* 1299: vertical scrollers the walk opened */
 const threw = [];
 
 for (const vp of VPS) {
@@ -154,6 +155,17 @@ for (const vp of VPS) {
     try { await page.evaluate(`Promise.resolve(window.__sentinelStates[${i}].run())`); await page.waitForTimeout(320); }
     catch (e) { threw.push(`${names[i]}@${vp.w}: ` + String(e.message).split('\n')[0]); continue; }
     const res = await page.evaluate(MEASURE(derived));
+    /* 1299: a hidden-scrollbar rule on a VERTICAL scroller (the drawer #navMenu,
+       the desktop rail #cr-lnav) is not a strip that can clip chips sideways, and
+       MEASURE only looks at overflow-x -- so both were "never reached" although
+       the nav state opens them every run. Record a vertical scroller as reached;
+       the clipping check below still applies to horizontal ones only. */
+    const vert = await page.evaluate(`(() => { const out = [];
+      for (const sel of ${JSON.stringify(derived)}) { let els = []; try { els = [...document.querySelectorAll(sel)]; } catch (e) { continue; }
+        if (els.some(el => { const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+          return cs.display !== 'none' && r.width > 2 && r.height > 2 && /auto|scroll/.test(cs.overflowY) && !/auto|scroll/.test(cs.overflowX); })) out.push(sel); }
+      return out; })()`);
+    for (const sel of vert) verticalSeen.add(sel);
     for (const [sel, obs] of Object.entries(res)) {
       const cur = painted.get(sel);
       if (!cur || obs.over > cur.over) painted.set(sel, { ...obs, at: `${names[i]}@${vp.w}px` });
@@ -177,7 +189,7 @@ for (const sel of MUST_REACH)
 
 /* 3 — the derived set, so tomorrow's scroller is covered without an edit here.
    A derived selector nobody reaches is reported, not silently dropped. */
-const unreached = derived.filter(s => !painted.has(s));
+const unreached = derived.filter(s => !painted.has(s) && !verticalSeen.has(s));
 need('every hidden-scrollbar selector in the CSS is reached by the walk',
      unreached.length === 0,
      unreached.join(', ') + ' — either add a state that opens it, or delete the rule if the strip is gone');

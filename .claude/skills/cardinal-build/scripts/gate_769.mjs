@@ -143,11 +143,15 @@ ok('...but never the actor', n.length === 1 &&
   !(n[0].to || []).includes('theo@cardinalrenovations.net'), JSON.stringify((n[0] || {}).to));
 
 console.log('\n--- filing work on YOURSELF buzzes nobody ---');
-await page.evaluate(() => { window.currentUser = { email: 'scottie@cardinalrenovations.net' }; });
+/* 1299: since 1252 only Theo, Joan and Curtis ASSIGN -- anyone else files it
+   unassigned for Curtis, with no Assign select at all -- so filing to yourself
+   as Scottie can no longer be expressed, and this step timed out on a select
+   that correctly is not there. Curtis can, so he is the one filing to himself. */
+await page.evaluate(() => { window.currentUser = { email: 'curtis@cardinalrenovations.net' }; });
 await page.evaluate(() => window.CardinalProduction.addFor('j-tac'));
 await page.waitForTimeout(600);
 await page.fill('#cr-pb-modal [data-f="title"]', 'Note to self');
-await page.selectOption('#cr-pb-modal [data-f="assigned"]', 'scottie@cardinalrenovations.net');
+await page.selectOption('#cr-pb-modal [data-f="assigned"]', 'curtis@cardinalrenovations.net');
 await page.evaluate(() => { window.__NOTIFIED__ = []; });
 await page.click('#cr-pb-modal [data-act="save"]');
 await page.waitForTimeout(1400);
