@@ -9961,3 +9961,7 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
   `srcdoc` and on close). `saveCurrent()` skips unless it equals `current.id`; `serializeFrame()` throws on an empty
   body. Closing a document while it is still opening can no longer write a blank page over it.
 - Gate: `gate_1328.mjs` (closes at the instant `srcdoc` is set). Control 1327 writes the 55-character blank page.
+
+## Build 1329: the estimate builder's Library loads on a phone
+- `openPicker()` in `cr-est` awaits `CardinalLineItems.load()` when the Library is empty on open and re-renders
+  ("Loading the Library…" meanwhile). Gate: `gate_1329.mjs`.

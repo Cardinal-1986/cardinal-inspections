@@ -36089,3 +36089,19 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Not done here:** EST-2026-0914 itself is still blank in the database. Restoring it from v6 is a write to a signed
   document, so it waits for Theo's yes. The $5,000 "Item" line with no name beside a $0 write-up line is how that
   estimate was built, not this bug.
+
+## Build 1329 — "+ From Library" said the Library was empty on a phone (Theo, 12 Oct 2026)
+- **The report:** "on mobile it does not give the library." Rendered at 390px first: the builder's + From Library
+  button is there and 44px, so the button was never the problem.
+- **Cause:** `CardinalLineItems` loads `estimate_line_items` ONCE, 800ms after parse. Its read policy is
+  `TO authenticated`; on a phone the session is usually not restored by then, so the read runs signed-out and RLS
+  answers `[]` with no error. `openPicker()` rendered "The library is empty", called `load()` to repair it, and never
+  re-rendered when the load came back — empty until closed and reopened. A desktop restores faster.
+- **Fix:** an empty Library on open shows "Loading the Library…", awaits `load()`, and re-renders if the picker is still
+  open on the Library. An honestly empty Library still says so.
+- **Gate:** `gate_1329.mjs` (makes the first read answer `[]`, as a signed-out read does) GREEN 3/3; control 1328 RED
+  2/3 — it shows "empty" with three items loaded. 774, 776, 1135, 1201, 1205, 1223, 1328, check_build, types, dupes,
+  scroll-lock green. No layout change; no sentinel run.
+- **Seen on the way, not changed:** 12 of the 19 Library items are priced $0; "Owen's Corning" is misspelt; a GAF
+  Timberline item is in an Owens Corning shop's Library; the "Ohio Codes" write-up is a $0 item by design, which is why
+  estimates come out as a nameless priced line plus a $0 scope line. All waiting on Theo.
