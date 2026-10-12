@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1317<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1318<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12492,7 +12492,7 @@ function renderAcxOverview(){
   html += '<div class="dbmoney">' +
     '<span><small>Job Value' + (fin.source === 'estimate' ? ' — from estimate' : '') + '</small><b>' + (fin.value ? fmtMoney(fin.value) : '$0.00') + '</b></span>' +
     '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
-    '<span style="text-align:right;"><small>Balance Due</small><b class="' + (fin.balance > 0 ? 'db-due' : 'db-paid') + '">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
+    '<span style="text-align:right;cursor:pointer;" data-crji-jump="1" role="button" tabindex="0" title="Go to the invoice"><small>Balance due</small><b class="' + (fin.balance > 0 ? 'db-due' : 'db-paid') + '">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
   /* 1108: the rep-facing Invoices & Payments block, right under the money strip. */
   html += (window.CardinalAR && window.CardinalAR.jobBlock) ? window.CardinalAR.jobBlock(pr, fin) : '';
@@ -17482,7 +17482,7 @@ async function createInvoiceFor1315(pr){
     }
     await reload();
     await openEditor(id);
-    crTell('Invoice ' + num + ' created from the signed contract and payments logged in the Worksheet. Email it to the client \u2014 the job moves to INVOICED automatically when sent.');
+    crTell('Invoice ' + num + ' is ready. Send it from the job\u2019s invoice card or the editor \u2014 the job moves to Invoiced when it goes out.');   /* 1318 */
   }catch(err){ showError('Could not create invoice: ' + (err.message || err)); }
 }
 document.getElementById('wsMount').addEventListener('click', function(e){
@@ -44339,6 +44339,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1318, d:'2026-10-11', t:'The invoice card, simpler', s:'A job\u2019s invoice card is one line now \u2014 the invoice and what is still owed \u2014 with a bar showing how much is paid, and one red button for the next thing to do: Create invoice, then Send, then Record payment. Send offers Company text, My phone or Email. Tapping Balance due at the top of the job jumps to the card. Record payment starts filled in with the balance, picks Final once the job is invoiced, takes Card, and records today\u2019s date even late at night.' },
   { b: 1317, d:'2026-10-11', t:'Scottie stays in Production', s:'Scottie\u2019s app now opens on Production and stays there: the menu shows only the Production Board, Crew Dispatch, Punch List and Notifications, the portal picker, search, + New and the section bar are gone, and the back button can\u2019t walk out. Client profiles don\u2019t open for him \u2014 the address, phone and directions are on each job\u2019s punch card \u2014 and the crew pay screen is off. Curtis keeps everything he has.' },
   { b: 1316, d:'2026-10-11', t:'One answer to who owes you', s:'Invoices & AR, the home card and Community\u2019s Partner A/R each counted different jobs, aged them from different dates and grouped them differently. They now share one set of rules: a job owes when it is Invoiced or Closed, or its invoice has gone out, and still has a balance; age runs from the day the invoice was sent; groups are 0\u201314, 15\u201330 and 31+ days. The oldest money is at the top. Finished jobs that were never invoiced have their own Ready to invoice group with a Create invoice button. Partner jobs show on Invoices & AR, and payments on them now count.' },
   { b: 1315, d:'2026-10-11', t:'Every send counts as sent', s:'Texting or emailing an invoice from the job card or the Invoices list now marks it sent and moves the job to Invoiced \u2014 before, only the editor\u2019s Email button did, so a texted invoice stayed Draft and was never reminded. Sending never moves a job backwards: a Closed job stays Closed. Create invoice can\u2019t make two by a double tap, says so when the job is paid in full, and asks before making a second one. The payment form works for a second payment without reloading.' },
@@ -89589,7 +89590,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   --crji-card:#141619; --crji-line:#262a30; --crji-ink:#f2f4f7; --crji-sub:#a8b0ba;
   --crji-tile:#1b1f24; --crji-tile-lo:#0d0f12; --crji-tile-hi:#23282e;
   --crji-pos:#34d399; --crji-due:#f08a90;
-  --crji-btn:#1b1f24; --crji-btn-ink:#e6e9ee;
+  --crji-btn:#1b1f24; --crji-btn-ink:#e6e9ee; --crji-btnline:#3a3d46;
   --crji-ghost:#1b1f24; --crji-ghost-ink:#a8b0ba;
   --crji-sh1:rgba(0,0,0,.45); --crji-sh2:rgba(0,0,0,.55);
 }
@@ -89597,7 +89598,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   --crji-card:#FFFFFF; --crji-line:#E2E8F0; --crji-ink:#0F172A; --crji-sub:#475569;
   --crji-tile:#EAEEF3; --crji-tile-lo:#D1D9E6; --crji-tile-hi:#FFFFFF;
   --crji-pos:#047857; --crji-due:#C8202E;
-  --crji-btn:#FFFFFF; --crji-btn-ink:#0F172A;
+  --crji-btn:#FFFFFF; --crji-btn-ink:#0F172A; --crji-btnline:#c9cdd3;
   --crji-ghost:#F8FAFC; --crji-ghost-ink:#475569;
   --crji-sh1:rgba(15,23,42,.06); --crji-sh2:rgba(15,23,42,.16);
 }
@@ -89616,10 +89617,24 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 .crji-nums b.pos{color:var(--crji-pos,#34d399);}
 .crji-nums b.due{color:var(--crji-due,#f08a90);}
 .crji-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-.crji-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--crji-line,#262a30);background:var(--crji-btn,#1b1f24);color:var(--crji-btn-ink,#e6e9ee);font-size:13px;font-weight:600;padding:9px 12px;border-radius:10px;box-shadow:0 1px 2px var(--crji-sh1,rgba(0,0,0,.45)),0 4px 10px var(--crji-sh1,rgba(0,0,0,.45));}
+.crji-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border:1px solid var(--crji-btnline,#3a3d46);background:transparent;color:var(--crji-btn-ink,#e6e9ee);font-size:13px;font-weight:600;padding:9px 14px;min-height:44px;border-radius:10px;box-shadow:none;}   /* 1318: outline, 44px (Buttons A) */
+.crji-card.v2 .crji-row{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.crji-card.v2 .crji-ttl{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.crji-card.v2 .crji-amt{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.crji-card.v2 .crji-amt.due{color:var(--crji-due,#f08a90);}
+.crji-card.v2 .crji-amt.paid{color:var(--crji-pos,#34d399);}
+.crji-card.v2 .crji-sub{font-size:13px;color:var(--crji-sub,#a8b0ba);margin-top:2px;}
+.crji-card.v2 .crji-bar{height:8px;border-radius:99px;background:var(--crji-tile,#1b1f24);overflow:hidden;margin:12px 0 6px;}
+.crji-card.v2 .crji-bar i{display:block;height:100%;background:var(--crji-pos,#34d399);border-radius:99px;}
+.crji-card.v2 .crji-acts{margin-top:12px;}
+.crji-card.v2 .crji-acts .crji-btn{flex:1 1 auto;}
+.crji-card.v2 .crji-sendrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.crji-card.v2 .crji-sendrow[hidden]{display:none;}
+#dbMoneyCard [data-crji-jump]{min-height:44px;display:flex;flex-direction:column;justify-content:center;}
+.crji-card.v2 .crji-sendrow .crji-btn{flex:1 1 30%;}
 .crji-btn svg{width:15px;height:15px;}
 .crji-btn.primary{background:#C8202E;border-color:#C8202E;color:#fff;box-shadow:0 2px 8px rgba(200,32,46,.28);}
-.crji-btn.ghost{background:var(--crji-ghost,#1b1f24);color:var(--crji-ghost-ink,#a8b0ba);box-shadow:none;}
+.crji-btn.ghost{background:transparent;color:var(--crji-ghost-ink,#a8b0ba);box-shadow:none;}
 .crji-hint{font-size:13px;color:var(--crji-sub,#a8b0ba);}
 
 /* status pills, UNSCOPED so they render in the job block too (same values as the
@@ -89659,10 +89674,10 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 #cr-pay-modal .crpay-amt{display:flex;align-items:center;gap:6px;background:var(--crpay-well,#1b1f24);border-radius:12px;padding:2px 12px;box-shadow:inset 4px 4px 9px var(--crpay-well-lo,#0d0f12), inset -4px -4px 9px var(--crpay-well-hi,#23282e);}
 #cr-pay-modal .crpay-amt span{font-weight:800;color:var(--crpay-sub,#a8b0ba);font-size:18px;}
 #cr-pay-modal .crpay-amt input{flex:1;border:0;background:transparent;font-size:22px;font-weight:800;color:var(--crpay-ink,#f2f4f7);padding:10px 0;outline:none;}
-#cr-pay-modal .crpay-in{width:100%;background:var(--crpay-field,#1b1f24);border:1px solid var(--crpay-line,#262a30);border-radius:10px;padding:11px 12px;font-size:15px;color:var(--crpay-ink,#f2f4f7);outline:none;}
+#cr-pay-modal .crpay-in{width:100%;min-height:44px;background:var(--crpay-field,#1b1f24);border:1px solid var(--crpay-line,#262a30);border-radius:10px;padding:11px 12px;font-size:15px;color:var(--crpay-ink,#f2f4f7);outline:none;}
 #cr-pay-modal .crpay-in:focus{border-color:#C8202E;box-shadow:0 0 0 3px rgba(200,32,46,.22);}
 #cr-pay-modal .crpay-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--crpay-well,#1b1f24);border-radius:12px;padding:4px;}
-#cr-pay-modal .crpay-seg button{border:0;background:transparent;color:var(--crpay-sub,#a8b0ba);font-size:13px;font-weight:600;padding:10px 6px;border-radius:9px;cursor:pointer;}
+#cr-pay-modal .crpay-seg button{border:0;background:transparent;color:var(--crpay-sub,#a8b0ba);font-size:13px;font-weight:600;padding:10px 6px;min-height:44px;border-radius:9px;cursor:pointer;}
 #cr-pay-modal .crpay-seg button.on{background:var(--crpay-on,#262a30);color:var(--crpay-ink,#f2f4f7);box-shadow:var(--crpay-on-sh,0 1px 2px rgba(0,0,0,.45),0 4px 10px rgba(0,0,0,.5));}
 #cr-pay-modal .crpay-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
 
@@ -90117,33 +90132,48 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function statusOf(pr){ return statusFor(pr, invoiceFor(pr.id)); }
 
   /* the porcelain "Invoices & Payments" card shown on a job profile */
+  /* 1318 (Theo's pick 2): one line, a paid bar, ONE red button — the next thing to do. */
   function jobBlockHtml(pr, fin){
     if(!pr) return '';
     fin = fin || jobFinance(pr);
     var inv = invoiceFor(pr.id);
     var st  = statusFor(pr, inv, fin);
     var canInvoice = Number(fin.value) > 0 && fin.source !== 'estimate';
-    var bal = Number(fin.balance) || 0;
-    var acts;
-    if(inv){
-      acts = '<button class="crji-btn primary" type="button" data-inv-sms="' + esc2(pr.id) + '">' + IC_SMS + 'Company SMS</button>'
-           + '<button class="crji-btn" type="button" data-inv-text="' + esc2(pr.id) + '">' + IC_SMS + 'My phone</button>'
-           + '<button class="crji-btn" type="button" data-inv-email="' + esc2(pr.id) + '">' + IC_MAIL + 'Email</button>'
-           + '<button class="crji-btn ghost" type="button" data-inv-open="' + esc2(pr.id) + '">Open invoice</button>';
-    }else if(canInvoice){
-      acts = '<button class="crji-btn primary" type="button" data-inv-gen="' + esc2(pr.id) + '">' + IC_DOC + 'Generate invoice</button>';
+    var total = Number(fin.value) || 0, paid = Number(fin.paid) || 0, bal = Number(fin.balance) || 0;
+    var isPaid = total > 0 && bal <= 0.005;
+    var sent = !!(inv && inv.status === 'sent');
+    var pid = esc2(pr.id);
+    var pct = total > 0 ? Math.max(0, Math.min(100, Math.round(paid / total * 100))) : 0;
+    var title = inv ? ('Invoice' + (inv.title && /#[\w-]+/.test(inv.title) ? ' ' + esc2(inv.title.match(/#[\w-]+/)[0]) : '')) : 'No invoice yet';
+    var line2 = isPaid ? ('Paid in full' + (inv && inv.sent_at ? '' : ''))
+              : sent ? ('Sent ' + ageDays(pr, inv) + (ageDays(pr, inv) === 1 ? ' day' : ' days') + ' ago')
+              : inv ? 'Not sent yet'
+              : canInvoice ? 'Finished work is ready to bill' : 'An invoice opens once a contract is signed.';
+    var B = function(cls, attr, label){ return '<button class="crji-btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '="' + pid + '">' + label + '</button>'; };
+    var main = '', more = '';
+    if(!inv){
+      if(canInvoice) main = B('primary', 'data-inv-gen', IC_DOC + 'Create invoice');
+    }else if(isPaid){
+      more = B('', 'data-inv-open', 'Open invoice');
+    }else if(!sent){
+      main = B('primary', 'data-inv-sendmenu', IC_SMS + 'Send');
+      more = B('', 'data-inv-pay', IC_CASH + 'Record payment') + B('', 'data-inv-open', 'Open invoice');
     }else{
-      acts = '<span class="crji-hint">An invoice opens once a contract is signed.</span>';
+      main = B('primary', 'data-inv-pay', IC_CASH + 'Record payment');
+      more = B('', 'data-inv-sendmenu', IC_SMS + 'Send again') + B('', 'data-inv-open', 'Open invoice');
     }
-    if(canInvoice) acts += '<button class="crji-btn ghost" type="button" data-inv-pay="' + esc2(pr.id) + '">' + IC_CASH + 'Record offline payment</button>';
-    return '<div class="crji-card">'
-      + '<div class="crji-head"><span class="crji-ttl">Invoices &amp; Payments</span>' + pill(st) + '</div>'
-      + '<div class="crji-nums">'
-      +   '<span><small>Billed</small><b>' + money(fin.value) + '</b></span>'
-      +   '<span><small>Collected</small><b class="pos">' + money(fin.paid) + '</b></span>'
-      +   '<span><small>Balance</small><b class="' + (bal > 0 ? 'due' : 'paid') + '">' + money(bal) + '</b></span>'
-      + '</div>'
-      + '<div class="crji-acts">' + acts + '</div>'
+    if(!inv && canInvoice && paid < total) more = B('', 'data-inv-pay', IC_CASH + 'Record payment');
+    var sendRow = inv ? '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden>'
+        + B('', 'data-inv-sms', 'Company text') + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')
+        + '</div>' : '';
+    return '<div class="crji-card v2" role="region" aria-label="Invoice">'
+      + '<div class="crji-row"><span class="crji-ttl">' + title + ' ' + pill(st) + '</span>'
+      +   '<span class="crji-amt ' + (isPaid ? 'paid' : 'due') + '">' + (isPaid ? 'Paid' : money(bal)) + '</span></div>'
+      + '<div class="crji-row crji-sub"><span>' + line2 + '</span><span>' + (isPaid ? '' : 'balance due') + '</span></div>'
+      + (total > 0 ? '<div class="crji-bar" role="img" aria-label="' + pct + '% paid"><i style="width:' + pct + '%"></i></div>'
+                   + '<div class="crji-sub">' + money(paid) + ' paid of ' + money(total) + '</div>' : '')
+      + '<div class="crji-acts">' + main + more + '</div>'
+      + sendRow
       + '</div>';
   }
 
@@ -90178,7 +90208,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     m.innerHTML =
       '<div class="crpay-backdrop" id="crpay-backdrop"></div>' +
       '<div class="crpay-box" role="dialog" aria-modal="true" aria-label="Record offline payment">' +
-        '<div class="crpay-h">Record a payment</div>' +
+        '<div class="crpay-h">Record payment</div>' +
         '<div class="crpay-sub" id="crpay-sub"></div>' +
         '<label class="crpay-l" for="crpay-amt">Amount</label>' +
         '<div class="crpay-amt"><span>$</span><input type="number" id="crpay-amt" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>' +
@@ -90186,7 +90216,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
         '<div class="crpay-seg" id="crpay-method" data-v="check">' +
           '<button type="button" data-m="check" class="on">Check</button>' +
           '<button type="button" data-m="cash">Cash</button>' +
-          '<button type="button" data-m="ach">Bank transfer</button>' +
+          '<button type="button" data-m="ach">Bank</button>' +
+          '<button type="button" data-m="card">Card</button>' +
         '</div>' +
         '<input type="text" id="crpay-ref" class="crpay-in" placeholder="Check # (optional)">' +
         '<label class="crpay-l">Type</label>' +
@@ -90217,13 +90248,18 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     _payFor = pr;
     var m = ensurePayModal();
     var fin = jobFinance(pr);
-    q('crpay-sub').textContent = (pr.name || 'Client') + ' · balance ' + money(fin.balance);
-    q('crpay-amt').value = ''; q('crpay-ref').value = '';
+    q('crpay-sub').textContent = (pr.name || 'Client') + ' \u00b7 balance due ' + money(fin.balance);
+    /* 1318: start at the balance \u2014 the common case is "they paid what they owed" */
+    q('crpay-amt').value = (Number(fin.balance) > 0) ? (Math.round(Number(fin.balance) * 100) / 100).toFixed(2) : ''; q('crpay-ref').value = '';
     /* 1315: the modal is reused, and a successful save left this button disabled and
        reading "Saving…" — the next payment could not be recorded until a reload. */
     var _sb = q('crpay-save'); if(_sb instanceof HTMLButtonElement){ _sb.disabled = false; _sb.textContent = 'Record payment'; }
-    setSeg('crpay-method', 'check'); setSeg('crpay-type', 'deposit');
-    q('crpay-date').value = new Date().toISOString().slice(0, 10);
+    /* 1318: Final once the job is invoiced or its invoice has gone out; Deposit before */
+    var _inv = invoiceFor(pr.id), _s = stg(pr);
+    setSeg('crpay-method', 'check');
+    setSeg('crpay-type', (_s === 'Invoiced' || _s === 'Closed' || (_inv && _inv.status === 'sent')) ? 'final' : 'deposit');
+    /* 1318: today in Dayton \u2014 toISOString() is UTC, so after 8 pm it recorded tomorrow */
+    var _d = new Date(); q('crpay-date').value = _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0') + '-' + String(_d.getDate()).padStart(2, '0');
     m.classList.add('open');
     setTimeout(function(){ try{ q('crpay-amt').focus(); }catch(e){} }, 40);
   }
@@ -90247,7 +90283,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var date = q('crpay-date').value || new Date().toISOString().slice(0, 10);
     var typeMap = { deposit:'deposit', progress:'other', final:'final' };
     var me = (window.currentUser && currentUser.email) || '';
-    var notes = 'Offline ' + (method === 'ach' ? 'bank transfer' : method) + (ref ? ' #' + ref : '') + ' (recorded on-site)';
+    var notes = 'Offline ' + (method === 'ach' ? 'bank transfer' : method === 'card' ? 'card' : method) + (ref ? ' #' + ref : '') + ' (recorded on-site)';
     var row = { project_id: pr.id, collected_at: date, amount: amt,
                 type: typeMap[ptype] || 'other', source: 'homeowner', method: method,
                 notes: notes, created_by: me };
@@ -90265,6 +90301,10 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   /* second delegated listener: job-block actions + record-payment + the modal */
   document.addEventListener('click', function(e){
     var t;
+    /* 1318: Send opens its three ways; the strip's Balance due jumps to this card */
+    var _et = e.target instanceof Element ? e.target : null;
+    if(_et && (t = _et.closest('[data-inv-sendmenu]'))){ var sr = document.querySelector('[data-sendrow="' + t.getAttribute('data-inv-sendmenu') + '"]'); if(sr instanceof HTMLElement) sr.hidden = !sr.hidden; return; }
+    if(_et && (t = _et.closest('[data-crji-jump]'))){ var cj = document.querySelector('#projectView .crji-card'); if(cj && cj.scrollIntoView) cj.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
     if((t = e.target.closest('[data-inv-gen]'))){ var pg = prById(t.getAttribute('data-inv-gen')); if(pg && typeof createInvoiceFor === 'function') createInvoiceFor(pg); return; }
     if((t = e.target.closest('[data-inv-open]'))){ var iv = invoiceFor(t.getAttribute('data-inv-open')); if(iv && typeof openEditor === 'function') openEditor(iv.id); return; }
     if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms')); if(ps) companySms(ps); return; }

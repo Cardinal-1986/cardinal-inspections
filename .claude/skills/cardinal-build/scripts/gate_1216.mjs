@@ -93,7 +93,10 @@ const READ = function () {
   });
   const tok = (n) => cs.getPropertyValue(n).trim();
   const box = card.getBoundingClientRect();
-  const tile = card.querySelector('.crji-nums > span');
+  /* 1318: the v2 card has no tiles; its paid-bar track sits on the same --crji-tile ground */
+  let tile = card.querySelector('.crji-nums > span') || card.querySelector('.crji-bar');
+  /* the seeded client has no total, so v2 draws no bar: measure the real rule on a probe bar */
+  if (!tile && card.classList.contains('v2')) { tile = document.createElement('div'); tile.className = 'crji-bar'; card.appendChild(tile); }
   const pos  = card.querySelector('.crji-nums b.pos');
   const due  = card.querySelector('.crji-nums b.due');
   const ttl  = card.querySelector('.crji-ttl');
@@ -104,8 +107,8 @@ const READ = function () {
     posInk: pos ? getComputedStyle(pos).color : null,
     dueInk: due ? getComputedStyle(due).color : null,
     ttlInk: ttl ? getComputedStyle(ttl).color : null,
-    subInk: (card.querySelector('.crji-nums small') || {}) && card.querySelector('.crji-nums small')
-            ? getComputedStyle(card.querySelector('.crji-nums small')).color : null,
+    subInk: (card.querySelector('.crji-nums small') || card.querySelector('.crji-sub'))
+            ? getComputedStyle(card.querySelector('.crji-nums small') || card.querySelector('.crji-sub')).color : null,
     tokCard: tok('--crji-card'), tokInk: tok('--crji-ink'), tokLine: tok('--crji-line'),
     tokTile: tok('--crji-tile'), tokSub: tok('--crji-sub'),
     tokPos: tok('--crji-pos'), tokDue: tok('--crji-due'),
@@ -169,7 +172,7 @@ try {
     ok(!d.missing && d.cardLum < 0.12, 'the card ground is dark, not white',
        d.cardBg + '  luminance ' + d.cardLum);
     ok(!d.missing && d.tileBg && d.tileBg !== 'rgb(234, 238, 243)',
-       '  · and the inset tiles came with it', String(d.tileBg));
+       '  · and the inset tiles (or the 1318 paid-bar track) came with it', String(d.tileBg));
     const bad = (d.texts || []).filter(t => t.r < t.floor);
     ok(bad.length === 0, '  · every text node in the card clears its contrast floor',
        bad.length ? bad.map(t => `"${t.txt}" ${t.color} ${t.r}:1 < ${t.floor}`).join(' | ')

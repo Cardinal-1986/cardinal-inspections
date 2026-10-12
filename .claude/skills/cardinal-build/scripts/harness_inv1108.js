@@ -92,7 +92,7 @@ catch(e){ console.log('module threw: ' + e.message); process.exit(1); }
   // 1. job block per state
   const p2 = w.cacheProjects[0], p7 = w.cacheProjects[1], p6 = w.cacheProjects[2];
   const b2 = AR.jobBlock(p2, w.jobFinance(p2));
-  ok(/crji-card/.test(b2) && /Invoices &amp; Payments/.test(b2), 'job block renders a card with a title');
+  ok(/crji-card/.test(b2) && (/Invoices &amp; Payments/.test(b2) || /class="crji-ttl">[^<]*Invoice/.test(b2)), 'job block renders a card with a title');  // 1318 v2 title: Invoice #N
   ok(/data-inv-sms=/.test(b2) && /data-inv-text=/.test(b2) && /data-inv-email=/.test(b2), 'invoiced job shows all three send options');
   ok(/data-inv-open=/.test(b2) && /data-inv-pay=/.test(b2), 'invoiced job shows Open invoice + Record offline');
   ok(/crar-pill sent/.test(b2), 'status pill is Sent (invoice sent, nothing collected)');
@@ -109,7 +109,11 @@ catch(e){ console.log('module threw: ' + e.message); process.exit(1); }
   AR.recordPayment(p2);
   ok(!!w.document.getElementById('cr-pay-modal'), 'the offline payment modal is built');
   w.document.getElementById('crpay-amt').value = '500';
-  // default method=check, type=deposit
+  // default method=check. 1318 (audit D7): a SENT invoice defaults the type to Final, so pick Deposit
+  // explicitly to keep this path, and assert the new default first (older trees default Deposit).
+  { const tv = w.document.getElementById('crpay-type').getAttribute('data-v');
+    if (/crji-card v2/.test(b2)) ok(tv === 'final', 'a sent invoice defaults the payment type to Final (' + tv + ')');
+    const dep = w.document.querySelector('#crpay-type [data-t="deposit"]'); if (dep) dep.dispatchEvent(new w.Event('click', { bubbles:true })); }
   w.document.getElementById('crpay-save').dispatchEvent(new w.Event('click', { bubbles:true }));
   await new Promise(r => setTimeout(r, 30));
   const col = inserted.find(x => x.tbl === 'collections');

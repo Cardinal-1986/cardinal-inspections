@@ -6297,6 +6297,8 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 - [x] 1302: "Tarp Only" is a Work Type (Theo: "not a stage just standalone").
 - [x] 1303: the Community home opens on Retail's pipeline (P = Bid Submitted, On Hold = Waiting, Theo's pick 1) with a Tarp Only tile; layout A.
 - [x] 1304: the Next 30 Days calendar and Partner A/R on the Community home — layout A complete.
+- [x] 1318: the job's invoice card is compact — one balance, a paid bar, one red action (Theo's pick 2).
+- [ ] 1319: Invoices list option 1 — one-line KPI, one red action per row + a ⋯ menu, 44px.
 - [x] 1317: Scottie is a FIELD user — Production only, no money, in the app (settled, Theo: "Scottie stays only in productions and can't go anywhere else"; "he's never at a desk"). Curtis keeps full production access.
 - [ ] Field role in the database (RLS): Scottie out of `is_full_access()`; reads he needs (projects names/addresses, punch_items, appointments, crews, crew_work_orders without amount, crew_notes) granted to a field role. SQL first, Theo approves.
 - [x] 1312: Community says "estimate", never "bid" — settled (Theo: "Let's keep it estimate and no bid"). P now reads Estimate Submitted. Internal keys (`bids` pane, `newbid`, `checklist.bid`) keep the old word on purpose; do not rename them.

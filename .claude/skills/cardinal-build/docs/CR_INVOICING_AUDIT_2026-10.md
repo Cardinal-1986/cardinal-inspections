@@ -74,12 +74,12 @@ Passing, measured: nothing under 11px, every ink ≥ 4.5:1 both themes, no gradi
 - **D2** Two balances on one invoice after a payment: live $9,800 card above a stored SUMMARY reading $14,800.
 - **D3** Too many words for three things — Billed / Job Value / Contract Price; Collected / Paid / Payments Received; Balance / Balance Due / Current Balance Due / Amount due / Total outstanding; Invoices & AR / Accounts receivable / Partner A/R; Generate / Create invoice; Record payment / Record offline payment; Text link / Resend text / Company SMS / My phone; Sent / UNSENT / Mark sent. Proposed: **Total · Paid · Balance due · Create invoice · Send · Record payment · Invoices**.
 - **D4** ✅ *FIXED 1316* — Oldest debt is at the bottom — Current renders first; on a phone the 45-day job is ~2,000px down.
-- **D5** On a phone the Invoices & Payments card is ~1,300px below the money strip, under the 17-tile Job Menu; three separate money doors; "Balance Due" in the strip is not tappable.
+- **D5** ◐ *1318: Balance due in the strip now jumps to the card; the card stays after the Job Menu (Theo's 1225 order).* On a phone the Invoices & Payments card is ~1,300px below the money strip, under the 17-tile Job Menu; three separate money doors; "Balance Due" in the strip is not tappable.
 - **D6** "Invoice created" shows as a red error-style toast, points to a Worksheet not on screen; the editor toolbar offers "Text to sign" on an invoice.
-- **D7** Payment form: amount starts blank; Type always defaults to Deposit, even on a final payment.
-- **D8** Buttons A broken: job card "Company SMS" red, editor "Save" red not Send, AR rows have no consistent main action ("Resend text" red even when never texted).
-- **D9** 35px buttons on the job card and pay modal (floor is 44).
-- **D10** "Paid in Full" shows Balance "--", not $0.
+- **D7** ✅ *FIXED 1318* — Payment form: amount starts blank; Type always defaults to Deposit, even on a final payment.
+- **D8** ◐ *1318: job card fixed (one red action); AR rows are 1319.* Buttons A broken: job card "Company SMS" red, editor "Save" red not Send, AR rows have no consistent main action ("Resend text" red even when never texted).
+- **D9** ✅ *FIXED 1318* — 35px buttons on the job card and pay modal (floor is 44).
+- **D10** ✅ *FIXED 1318 on the invoice card (reads "Paid", $X paid of $X)* — "Paid in Full" shows Balance "--", not $0.
 - **D11** Partner A/R tile lands on a list titled "All estimates".
 - **D12** Five buttons per AR row wrap to 2–3 lines on a phone.
 

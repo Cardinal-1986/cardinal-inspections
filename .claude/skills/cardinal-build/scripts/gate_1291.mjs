@@ -21,9 +21,11 @@ const probe = async (light) => {
   try { await p.evaluate(async () => { await window.__sentinelStates.find(x => x.name === 'client').run(); }); } catch (e) {}
   await p.waitForTimeout(1200);
   const v = await p.evaluate(() => { const tok = getComputedStyle(document.querySelector('.crji-card') || document.body).getPropertyValue('--crji-tile').trim();
-    return { theme: document.documentElement.getAttribute('data-theme'), tok, tiles: [...document.querySelectorAll('#projectView .crji-nums>span')].filter(e => e.getBoundingClientRect().height).map(e => { const k = getComputedStyle(e); return { sh: k.boxShadow, bw: k.borderTopWidth, bg: k.backgroundColor }; }) }; });
+    return { theme: document.documentElement.getAttribute('data-theme'), tok, tiles: [...document.querySelectorAll('#projectView .crji-nums>span')].filter(e => e.getBoundingClientRect().height).map(e => { const k = getComputedStyle(e); return { sh: k.boxShadow, bw: k.borderTopWidth, bg: k.backgroundColor }; }), bar: [...(document.querySelector('#projectView .crji-card.v2 .crji-bar') ? document.querySelectorAll('#projectView .crji-card.v2 .crji-bar') : (() => { const c = document.querySelector('#projectView .crji-card.v2'); if (!c) return []; const b = document.createElement('div'); b.className = 'crji-bar'; c.appendChild(b); return [b]; })())].filter(e => e.getBoundingClientRect().height).map(e => { const k = getComputedStyle(e); return { sh: k.boxShadow, bg: k.backgroundColor }; }) }; });
   await ctx.close(); return v; };
 const hex = h => { const m = h.replace('#', ''); return `rgb(${parseInt(m.slice(0, 2), 16)}, ${parseInt(m.slice(2, 4), 16)}, ${parseInt(m.slice(4, 6), 16)})`; };
 for (const light of [false, true]) { const r = await probe(light); const nm = light ? 'B  light' : 'A  dark';
+  /* 1318 (Theo's pick "2"): the tiles became one paid bar. The rule carried over — flat, no shadow, on --crji-tile. */
+  if (!r.tiles.length && r.bar.length) { ok(r.bar.every(t => t.sh === 'none' && (!r.tok || t.bg === hex(r.tok))), nm + ': the v2 paid bar is flat, ground on its token', JSON.stringify({ tok: r.tok, b: r.bar[0] })); continue; }
   ok(r.tiles.length === 3 && r.tiles.every(t => t.sh === 'none' && t.bw === '1px' && (!r.tok || t.bg === hex(r.tok))), nm + ': the three billing tiles are flat with an outline, ground on its token', JSON.stringify({ tok: r.tok, t: r.tiles[0], n: r.tiles.length })); }
 await browser.close(); console.log(`GATE 1291 ${fail ? 'RED' : 'GREEN'} — ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

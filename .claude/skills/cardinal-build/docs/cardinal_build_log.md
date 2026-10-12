@@ -35996,3 +35996,10 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Gates:** `gate_1317` GREEN 7/7, control RED 6/7. 56 navigation/production/menu gates re-run green (gate_1035/1038/1042/1047 need the file argument). `gate_1148` crashes on 1316 too — old debt.
 - **Not yet:** the database half (Scottie out of `is_full_access()`, a field role on punch/appointments/crews reads). SQL goes to Theo first.
 
+## Build 1318 — the job's invoice card, compact (11 Oct 2026)
+- **Ask:** Theo, "2, 1" — invoice card option 2 (compact, paid bar) and Invoices list option 1 (next build).
+- **What:** `jobBlockHtml` rewritten to `.crji-card.v2`; one red action per state; send options folded into a row; Balance due in the strip jumps to the card; pay modal says "Record payment", starts at the balance, defaults Final on an invoiced/sent job, local date. Audit D5 (half: the strip is tappable; the card is not moved, per 1225), D7, D8 (job card), D9 (job card + pay modal), D10 fixed.
+- **Three old gates asserted the retired tiles** — gate_1216 (tile ground), gate_1291 (three flat tiles) and harness_inv1108 (title text, Deposit default). Ported to accept either shape, so they still pass on 1317 and still check the same rule on 1318. The seeded client has no total, so v2 draws no bar; both gates measure the real CSS on a probe bar rather than passing on nothing.
+- **Two standing gates caught my own work:** gate_1206 flagged the new Balance due tap at 61×41 (now 44px tall), and gate_a11y's `region` count rose by 2 (the paid bar and its line, outside any landmark). A rebaseline was refused, rightly; the card is now a named landmark (`role="region" aria-label="Invoice"`) and the count is back under baseline. gate_types caught two untyped `e.target.closest` calls in the new handlers; narrowed with `instanceof`.
+- **Gates:** gate_1318 GREEN 5/5, control RED 0/5; gate_1216/1218/1225/1286/1290/1291/1313/1314/1315/1316/1317/1010/1199/1279 and harness_inv1108/1109 green.
+

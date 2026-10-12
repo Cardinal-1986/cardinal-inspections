@@ -9867,3 +9867,11 @@ The rules live in `cr-ar-script` and the other two A/R screens read them (`Cardi
 - ⚠ **App half only.** The database still treats Scottie as `is_full_access()`; part 2 is a field role in RLS, SQL first.
 - **Gate:** `gate_1317.mjs` (signs in as Scottie and as Curtis; control 1316 RED 6/7).
 
+## Build 1318: the job's invoice card, compact (Theo's pick "2")
+`CardinalAR.jobBlock()` now draws `.crji-card.v2`: title + status pill, the **Balance due** figure, one line of detail, a paid bar (`.crji-bar`, on `--crji-tile`) reading "$X paid of $Y", and **one** red action. The three Billed / Collected / Balance tiles (`.crji-nums`) are gone.
+- **The one red button follows the job:** no invoice → Create invoice · draft → Send (opens a hidden row: Company text / My phone / Email) · sent → Record payment · paid → Open invoice only. Everything else is outline.
+- **Balance due in the money strip is a tap** (`data-crji-jump`) that scrolls to the card. The card stays after the Job Menu — Theo's 1225 order.
+- **Record payment** (was "Record offline payment"): amount starts at the balance; type defaults to **Final** once the job is Invoiced/Closed or the invoice was sent, else Deposit; methods Check / Cash / Bank / Card; date is the local day, not UTC.
+- Buttons are 44px; `--crji-btnline` (dark `#3a3d46`, light `#c9cdd3`) outlines them.
+- **Gate:** `gate_1318.mjs` (5 checks, control 1317 RED 0/5). gate_1216, gate_1291 and harness_inv1108 ported to read the v2 card (the paid-bar track carries the old tile ground rule; a sent invoice now defaults to Final).
+
