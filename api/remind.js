@@ -182,16 +182,18 @@ export default async function handler(req, res) {
 
       var collected = 0;
       (collByP[pid] || []).forEach(function (c) { collected += Number(c.amount) || 0; });
-      var contractTotal = 0;
+      var contractTotal = 0, coTotal = 0;
       (docsByP[pid] || []).forEach(function (d) {
         if (/^contract/i.test(String(d.title || '').trim()) && d.signed_at && Number(d.total) > 0) contractTotal += Number(d.total);
+        // 1323: a signed change order adds to the job (jobFinance() and owedOn() do the same)
+        if (/^change order/i.test(String(d.title || '').trim()) && d.signed_at && Number(d.total) > 0) coTotal += Number(d.total);
       });
       // 1314: the same total the app and the pay link use — contract docs or the
       // contracts table, whichever is more, plus manual extras
       var manual = 0;
       try { var ck0 = typeof p.checklist === 'string' ? JSON.parse(p.checklist || '{}') : (p.checklist || {}); manual = Number(ck0 && ck0.manual_value) || 0; } catch (_) { manual = 0; }
       var signedTotal = Math.max(contractTotal, ctrByP[pid] || 0);
-      var jobTotal = signedTotal > 0 ? signedTotal + manual : (manual > 0 ? manual : (Number(inv.total) || 0));
+      var jobTotal = signedTotal > 0 ? signedTotal + manual + coTotal : (manual > 0 ? manual + coTotal : (Number(inv.total) || 0));
       var balance = jobTotal - collected;
       if (!(balance > 0.005)) { skipped.paid++; continue; }
 

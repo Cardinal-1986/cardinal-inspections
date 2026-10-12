@@ -36033,3 +36033,9 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **a11y:** the admin tile added one node outside any landmark (`region` +1). Rather than rebaseline, the Job Menu is now a named region (`role="region" aria-label="Job menu"`) — the whole menu's tiles left the debt: 320 → 293 violation nodes.
 - **Gates:** gate_1322 GREEN 6/6, control RED 5/6 (no crash). Standing gates green (types, dupes, scroll, harnesses, stack, a11y, 1206, 944); gate_1316/1317/1319/1233/1218/1225/1227 green.
 
+## Build 1323 — Change order, signed on the phone (12 Oct 2026)
+- **Ask:** Theo's 2B, piece 2 of 4: the crew finds something, the homeowner signs the extra before the work starts, with a photo required. Every contract already promised "a written change order"; the app had no way to write one.
+- **Money:** a signed change order adds to the job in all four places that compute the job value (`jobFinance`, `owedOn` ×2, `remind.js`), same rule in each. gate_1323 E proves the pay link: $20k contract + $5,350 change order − $5k paid asks $20,350.00; the same order unsigned asks $15,000.00.
+- **Caught on the way:** the Job Menu anchor was indented six spaces, not eight; the exact-match assert refused before anything was written.
+- **Gates:** gate_1323 GREEN 7/7, control (1322 tree) RED 7/7 with no crash. check_build, types, dupes, scroll, harnesses, stack, a11y, 1206, 944, 1199, 1314, 1320 green.
+

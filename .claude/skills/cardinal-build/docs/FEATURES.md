@@ -9904,3 +9904,12 @@ Theo's pick 1A, "1 silent". `#cr-orv-view` / `cr-orv-script` / `cr-orv-styles`, 
 - ⚠ `owner_reviews.project_id` has **no foreign key**: any DDL that locks `public.projects` hangs through the tooling (see field_role.sql); the table was created one statement at a time.
 - Gate: `gate_1322.mjs` (6 checks incl. a sales rep seeing nothing; control 1321 RED 5/6).
 
+## Build 1323: Change order, signed on the phone
+Theo's pick 2B (photo required). `cr-co-script` / `cr-co-styles`, `window.CardinalChangeOrder` (`open(pr)`, `close`), a bottom sheet `#cr-co-sheet` opened by the Job Menu tile **Change order** (`data-jm="changeorder"`, count = change orders on the job). Every role that can open the job sees it.
+- **Order of the sheet:** photo of what was found (**required**: Homeowner signs stays off without it) · lines and prices, total adds itself · who pays (Homeowner / Insurance supplement, the latter worded "subject to the carrier's approval; any part not approved is the homeowner's") · Homeowner signs.
+- **Signature** borrows the app's one pad through `window.openSigner({id}, cb)` (the 722/1150 armed-id path). The pad is lifted to z-index 13000 while the sheet is up; the callback refuses if the armed id moved on.
+- **Saved as** an `inspection_reports` document titled `Change Order — <client>` (standalone HTML: logo, lines, total, paid by, the photo at 900px, the signature, who wrote it), then `total` + `signed_at`. The 1600px photo also goes to the job's photos (section "Change order"). `auditLog('money', …)`.
+- **It adds to the job value everywhere the value is computed:** `jobFinance()` in the app, `owedOn()` in `api/pay.js` and `api/share.js` (still byte-identical, gate_1199), and `api/remind.js`. Rule, all four: title `^change order`, `signed_at` set, `total > 0`. An unsigned change order adds nothing. The inspections count no longer counts it.
+- No body observer, no scroll-lock writer (the sheet does not lock the page).
+- Gate: `gate_1323.mjs` (7 checks; arg = repo root; control 1322 RED 7/7).
+
