@@ -89888,10 +89888,14 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   --ai-sheet:#FFFFFF; --ai-ink:#0F172A; --ai-dim:#475569; --ai-line:#E2E8F0; --ai-well:#F8FAFC;
   --ai-due:#B91C1C; --ai-pos:#047857; --ai-warn:#8a6420;
 }
-#cr-ai-fab{position:fixed; right:16px; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:9400; display:none;
+#cr-ai-fab{position:fixed; right:16px; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:9400;
+  display:inline-flex; align-items:center; gap:8px;
   height:48px; padding:0 18px; border-radius:99px; border:0; background:var(--ai-red,#C8202E); color:#fff;
   font:inherit; font-size:15px; font-weight:800; letter-spacing:.02em; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.35);}
-#cr-ai-fab.on{display:inline-flex; align-items:center; gap:8px;}
+/* hidden unless the signed-in person is Theo or Joan (.on). Written as :not(.on) so the rule only
+   ever MATCHES when it applies — a base display:none beaten by .on reads to the sentinel as a rule
+   that never wins. */
+#cr-ai-fab:not(.on){display:none;}
 #cr-ai-sheet{position:fixed; inset:0; z-index:12500; display:none;}
 #cr-ai-sheet.open{display:block;}
 #cr-ai-sheet .ai-scrim{position:absolute; inset:0; background:rgba(0,0,0,.55);}
