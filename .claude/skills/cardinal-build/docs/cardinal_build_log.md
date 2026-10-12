@@ -36039,3 +36039,9 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Caught on the way:** the Job Menu anchor was indented six spaces, not eight; the exact-match assert refused before anything was written.
 - **Gates:** gate_1323 GREEN 7/7, control (1322 tree) RED 7/7 with no crash. check_build, types, dupes, scroll, harnesses, stack, a11y, 1206, 944, 1199, 1314, 1320 green.
 
+## Build 1324 — the deductible box on insurance contracts (12 Oct 2026)
+- **Ask:** Theo's 3A, piece 3 of 4: the contract says in writing who pays what, and an insurance contract cannot go out without the deductible filled in.
+- **One guard, four ways out:** Share, Text, Email, Sign in person. Retail/community contracts, estimates, reports and invoices are untouched (gate E, and gate_1069/1141/1149/1149b/1201/1204/1269/1270/1273/722/730/731/781/965 all green).
+- **Caught on the way:** (1) the editor never strips `.ph` from a blank someone typed into, so a class check would have refused a typed deductible forever; the guard reads the text. (2) Two of the gate's own checks were vacuous on the first draft. Email first asks "no total — send anyway?", so the guard behind it was never reached in either tree. On a roofing agreement, Sign opens the "Who is signing?" picker, not the pad. Both are now detected, and the control flips every sub-check. (3) gate_dupes: `row` exists in other modules, so it was renamed `ipRow`. gate_types: `frame.contentDocument` and `titleInput.value` were cast.
+- **Gates:** gate_1324 GREEN 6/6, control RED 5/6, no crash. check_build, types, dupes, scroll, harnesses, stack, a11y, 1206, 944 green.
+

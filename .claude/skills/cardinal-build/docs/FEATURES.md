@@ -9913,3 +9913,12 @@ Theo's pick 2B (photo required). `cr-co-script` / `cr-co-styles`, `window.Cardin
 - No body observer, no scroll-lock writer (the sheet does not lock the page).
 - Gate: `gate_1323.mjs` (7 checks; arg = repo root; control 1322 RED 7/7).
 
+## Build 1324: the deductible box on every insurance contract
+Theo's pick 3A. Main block, beside `priceOkToSend()`: `insPartOkToSend()`, `ipBoxHtml()`, `ipRecalc()`, `ipNum()`.
+- **The box** (`[data-cr-inspart]`, inline styles so it prints): INSURANCE & YOUR PART: insurance approved (carrier, RCV), **your deductible, payable to Cardinal**, upgrades you chose (what + amount, typed), **your total out of pocket** (deductible + upgrades, worked out), and "Cardinal does not pay, waive or rebate any part of your deductible. Homeowner initials ____". It sits above the first signature row (`[data-sig]`'s table, else `.sign`). Figures come from the job's `insurance_claims` row.
+- **Required before it leaves the app.** Share link, Text to sign, Email to client and Sign in person each call the guard. Only a **contract** (`isContractTitle`) on an **insurance** job (`projClaimType`) is checked. First tap with no box: the box is added, saved, and the send stops once so the rep checks it. No deductible: refused, box scrolled into view. Claim marked **deductible WAIVED**: refused; the box would otherwise print a false sentence.
+- ⚠ **A typed blank keeps its `.ph` class in this editor** (nothing strips it on input), so `ipNum()` reads the TEXT (`[...]` = blank) and `ipRecalc()` promotes a filled `.ph` to `.fill`. Reading the class would refuse a deductible the rep had typed, forever.
+- Out of pocket is recalculated on every `saveCurrent()`, not only at send.
+- Not covered: a share link minted before 1324 still opens. The client's own signing page (`api/share.js`) is unchanged.
+- Gate: `gate_1324.mjs` (6 checks; control 1323 RED 5/6, every sub-check flips).
+
