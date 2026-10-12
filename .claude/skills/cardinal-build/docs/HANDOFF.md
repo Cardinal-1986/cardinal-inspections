@@ -4,6 +4,47 @@
 
 ---
 
+# Session of 23 Sep – 8 Oct 2026 — client paperwork, not code (branch `claude/door-estimate-pdf-3yyxqw`)
+
+**No build. `index.html` was not touched; the branch is identical to `main` at 1261.** This session
+made client documents from Theo's photos and numbers. What carries forward is the **report style
+and procedure**, now written down in **`INSPECTION_REPORTS.md`** with the generator in
+`scripts/reports/` — read that before making any inspection or completion report.
+
+## What we are trying to do
+Give Theo a fast, repeatable way to turn a site visit (photos + a few words) into a clean report
+for a client or a funder (Rebuilding Together / Caroline Brokaw), and get it **into the client's
+profile in the CRM**.
+
+## Where it stands
+| Item | State |
+|---|---|
+| **Report style** | Settled — the "Caroline / Darlene" landscape style. `INSPECTION_REPORTS.md` |
+| **Darlene Featherstone**, 4609 Queens Ave — roof, attic, windows (sticks hold the sashes), rear siding leak repaired **free**, chimney leak | Report done (8 pp) + her Invoice2go estimate #889 merged (10 pp, 6.6 MB). **She has NO client profile in the CRM** — create one, then upload |
+| **John Austin**, 215 E Siebenthaler Ave — for Caroline; main + back roof only per funder; redeck (spaced boards); two front-bedroom leaks; 1 rear door; 2 basement windows; porch recommended though out of scope | Report done (13 pp, 6.0 MB). Profile exists (Prospect, created 8 Oct). **Zip code still unknown** — not guessed |
+| **Uploading reports to a profile** | **Already built**: Job Menu → Files → Upload files. 10 MB cap per file — the reports were shrunk to fit. A cloud session cannot upload for Theo |
+| **Lift the 10 MB cap** (Files → Supabase Storage) | Proposed, not started. Needs Theo's go; real build + SQL |
+| **Spark** | Backup copy only, if anything. Never the live home (settled rule) |
+
+## Open items for Theo (none are code)
+- Darlene's estimate #889 is dated **9/28** (before the 10/7 inspection, deposit "due 9/28"),
+  says "Owen's Corning" twice, and has a different phone number from the reports; it does not
+  price the chimney crown/flashing the report recommends. Fix in Invoice2go.
+- Willie Parson (2408 Lakeview, ReBuild) is still at stage **Lead** though the roof was finished
+  1 Sep; the CRM spells him "Willie Parson", the completion report "Willy Parsons" — confirm which.
+- Earlier in the session (not in the CRM, no follow-up needed unless asked): door proposal for Gary
+  Gotlich (ProVia / Masonite / Andersen, + a twin-casement window proposal), a 10-window proposal
+  for Karen Anderson (Croyden **Drive**), and an invoice for Amanda Hoskins' exterior work for Karen ($1,500).
+
+## How Theo works on this (observed, this session)
+- Sends photos in batches from CompanyCam; the CompanyCam gallery link and `app.companycam.com`
+  are **blocked by this environment's network policy**, and the CRM's `companycam_photos` mirror
+  lags (Darlene's project was not in it) — ask for the images directly.
+- Wants it to look on time; hold the line on true dates (the photos carry EXIF) and offer a true
+  "requested on" line instead.
+
+---
+
 # Session of 9 September 2026 — the external assessment, two rebuttal rounds, build 1199
 
 Theo brought an outside assessment of the CRM at 1198 (`CR_EXTERNAL_ASSESSMENT_2026-09-09.md`

@@ -1,0 +1,41 @@
+{
+  "title": "Cardinal | Property Inspection Report | Homeowner Name",
+  "company": {"address": "5735 Webster Street · Dayton, Ohio 45414", "contact": "Theo Dorion · (937) 305-9251"},
+  "footer_left": "Prepared for Program Contact  /  Rebuilding Together",
+  "footer_right": "Roof, door & windows  /  Oct. 7, 2026",
+  "strip": "Homeowner Name  /  123 Example Avenue  /  Dayton, Ohio",
+  "cover": {
+    "eyebrow": "Roof, door & window inspection",
+    "title_lines": ["Property", "inspection", "report"],
+    "blocks": [
+      {"eyebrow": "Project property", "lines": ["123 Example Avenue", "Dayton, Ohio", "Homeowner: Homeowner Name"]},
+      {"eyebrow": "Prepared for", "lines": ["Program Contact", "Rebuilding Together Dayton"]},
+      {"eyebrow": "Inspection date", "lines": ["October 7, 2026"]}
+    ],
+    "photo": "img/front.jpg", "photo_label": "123 Example Avenue  /  front",
+    "intro": "At the request of Rebuilding Together Dayton, Cardinal Roofing & Renovations inspected ... on October 7, 2026. This report presents the conditions observed and our recommendations."
+  },
+  "pages": [
+    {"title": "Main roof", "subtitle": "The roof over the main house, from above.", "strip_label": "Main roof",
+     "photos": [
+       {"img": "img/a.jpg", "label": "Main roof / front", "caption": "What the photo shows, in plain words."},
+       {"img": "img/b.jpg", "label": "Rear slope", "caption": "What the photo shows."}]},
+    {"title": "Shingle condition", "subtitle": "Close views of the shingle surface.", "strip_label": "Shingles",
+     "photos": [
+       {"img": "img/a.jpg", "label": "Curled tabs", "caption": "Caption."},
+       {"img": "img/b.jpg", "label": "Another slope", "caption": "Caption."},
+       {"img": "img/front.jpg", "label": "Worn granules", "caption": "Caption.", "crop": "50% 40%"}]},
+    {"title": "Windows", "subtitle": "A finding with no photo becomes a text panel.", "strip_label": "Windows",
+     "photos": [
+       {"img": "img/a.jpg", "label": "Photo", "caption": "Caption."},
+       {"label": "Unsafe operation", "caption": "A finding stated by the inspector, with no photograph."}]}
+  ],
+  "summary": {
+    "findings": [
+      {"label": "Roof", "text": "What we found."},
+      {"label": "Not included", "text": "Anything outside the funded scope, named plainly."}],
+    "recommendations": [
+      {"title": "Roof replacement", "text": "What we recommend."},
+      {"title": "Outside funded scope", "text": "Bad but not leaking: recommend, and say it is outside scope."}]
+  }
+}
