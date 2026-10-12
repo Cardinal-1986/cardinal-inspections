@@ -9894,3 +9894,13 @@ The invoice's SUMMARY (**Total · Paid · Balance due**, ids `invTotal` / `invPa
 - ⚠ On `projects`, DROP/CREATE POLICY hung past 60s three times with no visible blocker; **ALTER POLICY went through at once.** Use ALTER POLICY for the next change to that table.
 - Gate: `gate_1321.mjs` (control 1320 RED).
 
+## Build 1322: Owner Review (silent, admin-only)
+Theo's pick 1A, "1 silent". `#cr-orv-view` / `cr-orv-script` / `cr-orv-styles`, `window.CardinalOwnerReview` (`open(id)`, `flag(pr)`, `close`, `reload`), view key `ownerreview`. (Not the Owner Console — that is `#cr-owner` / `CardinalOwner`.)
+- **Silent by construction:** rows live in `public.owner_reviews` (`owner_review.sql`, applied), `is_cardinal_admin()` for read **and** write. Verified in the database: a sales rep's session reads 0 rows. Nothing is written to the job, its thread, notes or notifications. The drawer row (`data-nav="ownerreview"`, `hideOpt` for non-admins) and the client-page tile (`isAdminUser()`) are drawn for admins only.
+- **List** (open first, resolved folded) → **detail**: the money trail (first estimate and later ones, estimate discounts, document total changes from `document_versions`, signed documents, insurance RCV / deductible / waived, the job's estimate amount, manual extras, stage, job value, paid, balance; a ≥$1,000 drop from first estimate to job value is red), owner-only **notes**, Mark resolved / Reopen, Open the job.
+- **A job not in the app** (still in AccuLynx) can be added by name, rep and reason.
+- What's New entry is deliberately generic ("Behind the scenes") — the changelog is shown to the whole team.
+- No body observer, no scroll-lock writer. Registered in `hideAllViews`, `navRestore`, `SHARED_HEAD`.
+- ⚠ `owner_reviews.project_id` has **no foreign key**: any DDL that locks `public.projects` hangs through the tooling (see field_role.sql); the table was created one statement at a time.
+- Gate: `gate_1322.mjs` (6 checks incl. a sales rep seeing nothing; control 1321 RED 5/6).
+
