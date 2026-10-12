@@ -9922,3 +9922,20 @@ Theo's pick 3A. Main block, beside `priceOkToSend()`: `insPartOkToSend()`, `ipBo
 - Not covered: a share link minted before 1324 still opens. The client's own signing page (`api/share.js`) is unchanged.
 - Gate: `gate_1324.mjs` (6 checks; control 1323 RED 5/6, every sub-check flips).
 
+## Build 1325: Owner Review's automatic flags
+Theo's pick 4 ("all on", each switchable). In `cr-orv-script`: `ORV_RULES`, `orvRunRules()`, `orvLoadRules()`, `orvToggleRule()`; `CardinalOwnerReview.runRules()`.
+| rule key | fires when |
+|---|---|
+| `price_drop` | job value (`jobFinance`) is $1,000+ under the job's first estimate with a total |
+| `below_ins` | insurance job: signed contracts total more than $250 under the claim's approved RCV |
+| `ded_uncollected` | insurance job, Completed/Invoiced/Closed, deductible > 0: the claim is marked WAIVED, or money is still owed and no `insurance_payments` row of kind `deductible` covers it |
+| `extra_no_co` | a punch item's title/detail/comments say extra, added, build-out, extend or additional, and the job has no signed change order |
+| `done_unpaid` | Completed/Invoiced/Closed for 14+ days (`checklist.stage_since`) with $0 paid |
+| `invoiced_no_price` | Invoiced or Closed with a job value of $0 |
+- **Each rule flags a job once.** A row is `source:'auto'` with its `rule` key, and the unique index `(project_id, rule)` plus a pre-check mean a dismissed or resolved automatic flag never comes back. Automatic flags have a **Dismiss — not a problem** button.
+- **Switches** live in the list ("Automatic flags", six 44px On/Off buttons) and are stored in **`owner_review_rules`** (`owner_review_rules.sql`, applied 12 Oct; admin-only, read and write). A missing row means ON. ⚠ Deliberately NOT `app_settings`: that table is readable by every signed-in user, so a rule key there would tell a rep the rules exist.
+- **When:** each time Owner Review opens (at most once a minute), and once, quietly, ~20s after an admin signs in (a timer, not an observer; up to 20 tries for the jobs to load). For anyone who is not an admin it returns at once, writing and reading nothing (gate E).
+- Measured on production before shipping: about 5 Invoiced/Closed jobs with no contract (fewer once estimates count), about 2 done-and-unpaid, and 1 punch item mentioning extra work. Not a flood.
+- What's New entry is generic ("Behind the scenes").
+- Gate: `gate_1325.mjs` (6 checks; control 1324 RED 6/6, no crash). `gate_1322` B now counts only the MANUAL insert, because opening the review also runs the rules and its seed is a real $1,400 drop.
+

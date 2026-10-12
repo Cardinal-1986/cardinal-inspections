@@ -36045,3 +36045,10 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Caught on the way:** (1) the editor never strips `.ph` from a blank someone typed into, so a class check would have refused a typed deductible forever; the guard reads the text. (2) Two of the gate's own checks were vacuous on the first draft. Email first asks "no total — send anyway?", so the guard behind it was never reached in either tree. On a roofing agreement, Sign opens the "Who is signing?" picker, not the pad. Both are now detected, and the control flips every sub-check. (3) gate_dupes: `row` exists in other modules, so it was renamed `ipRow`. gate_types: `frame.contentDocument` and `titleInput.value` were cast.
 - **Gates:** gate_1324 GREEN 6/6, control RED 5/6, no crash. check_build, types, dupes, scroll, harnesses, stack, a11y, 1206, 944 green.
 
+## Build 1325 — Owner Review's automatic flags (12 Oct 2026)
+- **Ask:** Theo's 4, "all on", each switchable. This is the last of the four pieces (1322 page, 1323 change order, 1324 deductible box).
+- **SQL first:** `owner_review_rules.sql` applied, one statement per call. Verified with a rep's JWT: reads 0 rows, and the insert is refused (the test block rolled back). The switches were kept out of `app_settings` because every staff member can read that table.
+- **Measured before shipping** what the rules would raise on day one (≈5 / 2 / 1), so turning them on does not bury the real flags.
+- **Caught on the way:** gate_dupes found `hit` and `tick` already defined in other modules; renamed to `orvHit` and `orvTick`. The first control run CRASHED on a missing `runRules`, BUG_CLASSES 37; the calls are now null-safe and the control is RED 6/6. gate_1322 B went red for the right reason (its seed really is a $1,400 drop), so it now counts manual inserts only.
+- **Gates:** gate_1325 GREEN 6/6; gate_1322/1323/1324 green; check_build, types, dupes, scroll, harnesses, stack, a11y, 1206, 944 green.
+
