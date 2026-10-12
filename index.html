@@ -1267,6 +1267,12 @@ body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rathe
 .actitem .tm{display:block;color:var(--rbe-mute2);font-size:11px;margin-top:1px;}
 /* ---- team notes chat ---- */
 .chatbox{border:1px solid var(--line);border-radius:12px;background:#faf7f5;padding:12px;max-width:680px;}
+/* 1326: the @name chips sit on the chat box's cream (white on insurance) in every CRM and both
+   themes, so they take its dark ink. The dark theme's .chipbtn ink (cr-darkleak-fix) is for dark
+   grounds and measured 1.14:1 here. #5c4a42 7.83:1, border #8a7c76 3.77:1. */
+#commsView #chatTagRow .chipbtn{--cr-stack:"1326 chips on the cream chat box need its dark ink in both themes";
+  color:#5c4a42;border-color:#8a7c76;background:transparent;}
+#commsView #chatTagRow .chipbtn:hover{color:#9c1822;border-color:#C8202E;}
 .chatthread{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px;}
 .chatmsg{display:flex;gap:9px;align-items:flex-start;}
 .chatmsg .av{flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:var(--red);color:#fff;
@@ -1289,7 +1295,7 @@ body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rathe
 
 .ldbox{border:1px solid var(--line);border-radius:10px;background:#fcfaf9;padding:12px 14px;margin:0 0 12px;}
 .ldhead{font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--red-dk);border-bottom:2px solid var(--red);
-  padding-bottom:4px;margin-bottom:8px;}
+  padding-bottom:4px;margin-bottom:8px;display:flow-root;}   /* 1326: the floated hint wraps on a phone; the rule now runs under it, not through it */
 /* 932: note under Assign to. Cream ground, so dark ink — see the comment in
    the patch. 8.03:1 body, 6.55:1 on the amber the bucket chip uses. */
 .ldnote{margin-top:8px;font:600 11px 'Segoe UI',Arial,sans-serif;line-height:1.55;
@@ -4158,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1325<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1326<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8539,10 +8545,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <label>Billing Address<input type="text" id="ldBilling" autocomplete="off" placeholder="Leave blank if same"></label>
       </div>
 
-      <div class="ldbox">
+      <div class="ldbox" data-addr-scope="1">
         <div class="ldhead">Location Information <span class="ldreq">Needed once you set a Job Category</span></div>
         <label style="position:relative;">Street
-          <input type="text" id="ldStreet" autocomplete="off" data-cr-gmap="skip" placeholder="Start typing &#8212; address auto-completes">
+          <input type="text" id="ldStreet" autocomplete="off" data-cr-gmap="address" placeholder="Start typing &#8212; address auto-completes">
           <div id="ldSugg" class="ldsugg" style="display:none;"></div>
         </label>
         <label class="ldmore">Suite/Apt/Unit<input type="text" id="ldSuite" autocomplete="off"></label>
@@ -16953,11 +16959,14 @@ document.getElementById('ldCancel').addEventListener('click', function(){ leadFo
 /* street autocomplete (Photon / OpenStreetMap, free) */
 var ldSuggTimer = null;
 document.getElementById('ldStreet').addEventListener('input', function(){
-  var q = this.value.trim();
+  var q = this.value.trim(), inp = this;
   var box = document.getElementById('ldSugg');
   clearTimeout(ldSuggTimer);
+  /* 1326: Photon is the FALLBACK now. Once Google is live on this field it owns the list. */
+  if(inp.dataset.crGmapLive === '1'){ box.style.display = 'none'; return; }
   if(q.length < 5){ box.style.display = 'none'; return; }
   ldSuggTimer = setTimeout(async function(){
+    if(inp.dataset.crGmapLive === '1'){ box.style.display = 'none'; return; }
     try{
       var res = await fetch('https://photon.komoot.io/api/?limit=5&lang=en&q=' + encodeURIComponent(q + ' USA'));
       if(!res.ok) return;
@@ -44471,6 +44480,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1326, d:'2026-10-12', t:'Addresses find Dayton, and the tag buttons are readable', s:'On a new lead, the Street box now searches with Google, leaning toward the Dayton area, and fills City, State and Zip for you. The old search had no record of many local addresses and offered one in Arkansas instead. The line under Location Information no longer runs through its note on a phone. On the Communications page, the @name buttons are dark on the light chat box instead of nearly invisible.' },
   { b: 1325, d:'2026-10-12', t:'Behind the scenes', s:'Admin housekeeping. Nothing changes on your screens.' },
   { b: 1324, d:'2026-10-12', t:'Insurance contracts say who pays what', s:'Every contract on an insurance job now carries an INSURANCE & YOUR PART box above the signatures: what the insurance company approved, the homeowner\u2019s deductible (payable to Cardinal), any upgrades they chose, and their total out of pocket, with the line that Cardinal does not pay, waive or rebate a deductible. It fills itself from the claim. The contract cannot be shared, texted, emailed or signed until the deductible is filled in.' },
   { b: 1323, d:'2026-10-12', t:'Change orders, signed on the spot', s:'When the job changes on install day, open the client and tap Change order: take a photo of what you found, write the work and the price, pick who pays (homeowner or an insurance supplement), and the homeowner signs on your phone. It saves as a signed document in the job\u2019s Documents, the photo goes in the job\u2019s photos, and the amount is added to the job \u2014 so the invoice and the pay link ask for it.' },
@@ -48170,6 +48180,9 @@ if(el.dataset.crGmap === 'address') return true;
      804 Burleigh Ave, Dayton, OH 45402, USA, Dayton, OH 45414
      5735 Webster St,  Dayton, OH 45414, USA, dayton, OH 45432
    Two autocompletes fighting over one field. The splitting one wins. */
+/* 1326: ldStreet is BACK. 1154's failure was the scope (the <label>, with no City box in it),
+   not the field: its .ldbox now carries data-addr-scope, so a pick splits into ldCity / ldState /
+   ldZip. Photon (OpenStreetMap) had no record of plain Dayton addresses at all. */
 if(/^(qiAddrInp|qiNpAddr)$/.test(el.id || '')) return true;
 var probe = (el.placeholder || '') + ' ' + (el.name || '') + ' ' + (el.id || '');
 probe = probe.toLowerCase();
@@ -48244,7 +48257,10 @@ if(q.length < 3){ acClose(); return; }
 try{
 if(!acToken) acToken = new P.AutocompleteSessionToken();
 var res = await P.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-input: q, includedRegionCodes: ['us'], sessionToken: acToken
+input: q, includedRegionCodes: ['us'], sessionToken: acToken,
+/* 1326: lean toward the Dayton market (50 km is the API's largest bias circle). A lean, not a
+   fence — an out-of-area address still comes back. */
+locationBias: { center: { lat: 39.7589, lng: -84.1916 }, radius: 50000 }
 });
 /* the answer is stale if focus moved or they kept typing while it flew */
 if(acInput !== input) return;
@@ -48290,6 +48306,7 @@ bubbles: true,
 acToken = null; /* a session token ends at selection */
 }
 function attachSuggestions(input, P){
+input.dataset.crGmapLive = '1';   /* 1326: the lead form's Photon fallback reads this */
 input.setAttribute('autocomplete', 'off');
 input.addEventListener('focus', function(){ acInput = input; });
 input.addEventListener('input', function(){
@@ -48320,6 +48337,7 @@ if(acBox && acBox.style.display === 'block') acPosition();
    absent — then the field behaves exactly as it did before 719 instead of
    losing autocomplete altogether. */
 function attachLegacyAutocomplete(input){
+input.dataset.crGmapLive = '1';   /* 1326 */
 var ac = new google.maps.places.Autocomplete(input, {
 types: ['address'],
 componentRestrictions: { country: 'us' },

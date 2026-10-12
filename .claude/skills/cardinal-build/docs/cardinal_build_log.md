@@ -36052,3 +36052,10 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Caught on the way:** gate_dupes found `hit` and `tick` already defined in other modules; renamed to `orvHit` and `orvTick`. The first control run CRASHED on a missing `runRules`, BUG_CLASSES 37; the calls are now null-safe and the control is RED 6/6. gate_1322 B went red for the right reason (its seed really is a $1,400 drop), so it now counts manual inserts only.
 - **Gates:** gate_1325 GREEN 6/6; gate_1322/1323/1324 green; check_build, types, dupes, scroll, harnesses, stack, a11y, 1206, 944 green.
 
+## Build 1326 — Dayton addresses on a new lead; readable @name chips (12 Oct 2026)
+- **From two screenshots.** The address box offered only an Arkansas match. The Location heading's rule ran through its note. The Communications @chips were light-on-cream.
+- **Measured before fixing:** Photon has no record of the Dayton address; a location bias changes nothing, so the source had to change, not the ranking. The chips were 1.14:1 in dark, which is `cr-darkleak-fix`'s light ink on the chat box's cream.
+- **Reversed a 1154 decision on purpose:** Google is back on `ldStreet`. 1154's real failure was the split scope, and the box now carries `data-addr-scope`. gate_1154's check 1 now asserts the new contract, and its doubling checks are unchanged and green.
+- **Caught on the way:** my first Google stub had a bracket error, so check A "failed" while testing nothing. It is rewritten and parse-checked. A crashed stub reads like a real failure; parse the fixture first.
+- **Gates:** gate_1326 GREEN 4/4, control RED 3/4. gate_1154 47/47 (control 46/47). gate_1005/1008/1208/1253/782 green. check_build, types, dupes, scroll, harnesses, stack, a11y, 1206, 944 green. Sentinel run (colour build).
+

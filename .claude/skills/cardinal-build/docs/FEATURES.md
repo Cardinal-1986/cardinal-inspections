@@ -9939,3 +9939,10 @@ Theo's pick 4 ("all on", each switchable). In `cr-orv-script`: `ORV_RULES`, `orv
 - What's New entry is generic ("Behind the scenes").
 - Gate: `gate_1325.mjs` (6 checks; control 1324 RED 6/6, no crash). `gate_1322` B now counts only the MANUAL insert, because opening the review also runs the rules and its seed is a real $1,400 drop.
 
+## Build 1326: lead addresses find Dayton; the @name chips are readable
+From two screenshots Theo sent, 12 Oct.
+- **New lead, Street.** "1632 e 5th" offered only Fayetteville, Arkansas. Photon (OpenStreetMap) has **no record** of that Dayton address. That was measured: with or without a Dayton location bias it returns only the Arkansas one. So `ldStreet` now uses the app's Google Places path (`data-cr-gmap="address"`), and its `.ldbox` carries `data-addr-scope`, so `crAddrApply()` splits a pick into ldCity, ldState and ldZip. 1154 had excluded this field because its scope was the `<label>`, which has no City box in it; the scope was the bug, not the field. Google requests now carry `locationBias` (a 50 km circle on Dayton). It is a lean, not a fence. **Photon stays as the fallback**: it steps aside once `dataset.crGmapLive` is set by `attachSuggestions` or `attachLegacyAutocomplete`, so a missing key or Maps outage still autocompletes.
+- **Location Information heading:** `.ldhead` is `display:flow-root`, so the floated "Needed once you set a Job Category" wraps under the red rule on a phone instead of through it.
+- **Communications @name chips:** `#commsView #chatTagRow .chipbtn` uses `#5c4a42` ink (7.83:1) with a `#8a7c76` border (3.77:1). The chat box is cream (white on insurance) in every CRM and both themes; the dark-theme `.chipbtn` ink (`cr-darkleak-fix`) measured 1.14:1 on it.
+- Gate: `gate_1326.mjs` (Google stubbed to the 2024 Places shape, so the real acFetch, acChoose and crAddrApply run). Control 1325 is RED 3/4; B, the Photon fallback, is the one thing that was already true. `gate_1154` check 1 was updated to the new contract.
+

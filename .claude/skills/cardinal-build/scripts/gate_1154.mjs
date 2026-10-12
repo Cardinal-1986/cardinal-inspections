@@ -70,7 +70,7 @@ function grab(name) {
 console.log('gate_1154 — ' + FILE + '\n');
 
 /* ===== 1. ldStreet is excluded from Google's autocomplete ================ */
-console.log('1 — ldStreet no longer matches isAddressInput');
+console.log('1 — ldStreet: Google with a split scope (1326; was excluded at 1154)');
 
 const isAddrSrc = grab('isAddressInput');
 ok('isAddressInput() found in the file', !!isAddrSrc);
@@ -98,9 +98,14 @@ if (isAddressInput && ldTag) {
   ok('ldStreet placeholder really does contain "address" (the trap)',
      /address/i.test(ld.getAttribute('placeholder') || ''),
      JSON.stringify(ld.getAttribute('placeholder')));
-  ok('isAddressInput(ldStreet) === false',
-     isAddressInput(ld) === false,
-     'returned ' + isAddressInput(ld));
+  /* 1326 REVERSED the exclusion on purpose: Photon had no record of plain Dayton addresses. What
+     1154 really protected was "no doubled address", and that rested on the SCOPE: the <label> had
+     no City box in it, so crAddrApply could not split. The contract is now: Google owns ldStreet
+     AND its .ldbox carries data-addr-scope so a pick splits (gate_1326 A drives the whole pick). */
+  const box = (src.match(/<div class="ldbox"[^>]*>\s*<div class="ldhead">Location Information/) || [''])[0];
+  ok('isAddressInput(ldStreet) === true, and its box carries data-addr-scope (1326)',
+     isAddressInput(ld) === true && /data-addr-scope/.test(box),
+     'returned ' + isAddressInput(ld) + ' · box ' + JSON.stringify(box.slice(0, 60)));
 
   /* and the inputs that SHOULD still be claimed still are — this is the
      half that stops the fix being "turn the feature off" */
