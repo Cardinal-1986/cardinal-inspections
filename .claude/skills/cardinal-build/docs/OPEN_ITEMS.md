@@ -6356,3 +6356,11 @@ Theo, verbatim: "I don't know on calander put it on hold."
 - He doesn't know which. **Do not build on a guess.** Reopen this when he can show the
   failure on the phone, with a screen recording or a screenshot of the step that does
   nothing.
+
+## 12 Oct 2026 (build 1328)
+- **EST-2026-0914 is blank in the database** (wiped by the bug 1328 fixes). `document_versions` v6 has the 27,150-char
+  copy. Restore needs Theo's yes — it is a signed document.
+- **`public.job_total_for(uuid)` exists in production with no caller.** Created while drafting the invoicing-audit
+  M11 guard (reps' payments capped at the job total). Measured before using it: only **1 of 87** jobs has a signed
+  total, so a cap on it would refuse reps on nearly every job — the draft was NOT applied. M11 needs the estimate leg
+  (`jobFinance`'s tiers) or a different rule. Harmless as it stands.
