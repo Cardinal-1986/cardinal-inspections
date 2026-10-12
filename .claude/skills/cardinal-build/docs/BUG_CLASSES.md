@@ -4986,3 +4986,11 @@ looks the row up by id (`currentDocRow()`, `currentDocProject()`) gets null unti
 reloads. Email straight after Publish lost its client. **A gate that types the answer in for the app
 (gate_1270 accepted the prompt with an address) cannot see a missing default.** Check what the
 screen pre-fills, not only what it sends.
+
+## Note (1328) — `srcdoc` is asynchronous, so `frame.contentDocument` lies until `load`
+Assigning `iframe.srcdoc` does not replace `contentDocument` synchronously: until the new document commits, the
+frame still holds the previous one. Any code that serializes the frame between the assignment and `load` reads the
+OLD page — after a close, a blank one — and a save writes it over the new document. EST-2026-0914 was wiped this way.
+**Rule:** record which document a frame holds in its own `onload` (`frame.dataset.loadedId`) and refuse to read it
+for any other. **Gate shape:** close at the moment `srcdoc` is set (an instance setter on the frame); a plain
+open-then-close in a test closes before `current` exists and passes on the broken build.

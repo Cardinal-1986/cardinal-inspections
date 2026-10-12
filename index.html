@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1327<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1328<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -27077,10 +27077,15 @@ async function openEditor(id){
      there was nothing to compare the signature against — `current` and the
      frame both went stale together on the miss above, so they always agreed. */
   frame.dataset.docId = String(r.id);
+  /* 1328: srcdoc loads ASYNCHRONOUSLY. Until it commits, the frame still holds the previous
+     page (after a close, the blank one). loadedId says which document the frame really holds,
+     and saveCurrent() will not write anything until it matches. */
+  frame.dataset.loadedId = '';
   frame.srcdoc = r.html;
   frame.onload = function(){
     try{
       var doc = frame.contentDocument;
+      if(doc && doc.body && (doc.body.childElementCount || String(doc.body.textContent || '').trim())) frame.dataset.loadedId = String(r.id);
       lockTemplate(doc);
       /* 1069: pull the checklist through EVERY time, not just at creation.
          Blanks only, so a value Theo typed is never touched. Announced in the
@@ -27382,6 +27387,10 @@ function fitEstimateFrame(){
 window.addEventListener('resize', function(){ fitEstimateFrame(); });
 function serializeFrame(){
   var doc = frame.contentDocument;
+  /* 1328: never hand back an empty page as "the document" — that is what wiped EST-2026-0914 */
+  if(!doc || !doc.body || !(doc.body.childElementCount || String(doc.body.textContent || '').trim())){
+    throw new Error('the document has not finished opening');
+  }
   var clone = doc.documentElement.cloneNode(true);
   /* 1270: ALL of them. The banner is added each time the frame loads, so a
      document opened twice carried two, and querySelector took off one. */
@@ -27457,6 +27466,10 @@ function readEstimateTotal(){
 }
 async function saveCurrent(){
   if(!current) return;
+  /* 1328: the frame has not finished opening THIS document (closed while still loading).
+     Nothing can have been edited, so there is nothing to save — and saving would write the
+     previous, blank page over it. */
+  if(frame && frame.dataset && frame.dataset.loadedId !== String(current.id)) return;
   var html;
   try{ ipRecalc(frame && /** @type {any} */ (frame).contentDocument); }catch(_ip){}   /* 1324 */
   try{ html = serializeFrame(); }
@@ -28559,6 +28572,8 @@ async function closeEditor(){
   editor.classList.remove('open');
   editor.setAttribute('aria-hidden','true');
   document.body.style.overflow = '';
+  frame.onload = null;              /* 1328: the blank page's load must not run this document's wiring */
+  frame.dataset.loadedId = '';
   frame.srcdoc = '';
   current = null;
   await reload();
@@ -44480,6 +44495,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1328, d:'2026-10-12', t:'A document can no longer be saved blank', s:'If you opened an estimate, contract or report and went back before it had finished loading, the app could save an empty page over it, and the client link then showed nothing. It now saves only a document that has fully opened, and it refuses to save an empty page at all.' },
   { b: 1327, d:'2026-10-12', t:'An assistant for the office', s:'Theo and Joan get an Ask button in the corner of every screen. Ask it anything about jobs, money, crews or the schedule, or tell it what to change. It shows each change first and does nothing until you tap Approve.' },
   { b: 1326, d:'2026-10-12', t:'Addresses find Dayton, and the tag buttons are readable', s:'On a new lead, the Street box now searches with Google, leaning toward the Dayton area, and fills City, State and Zip for you. The old search had no record of many local addresses and offered one in Arkansas instead. The line under Location Information no longer runs through its note on a phone. On the Communications page, the @name buttons are dark on the light chat box instead of nearly invisible.' },
   { b: 1325, d:'2026-10-12', t:'Behind the scenes', s:'Admin housekeeping. Nothing changes on your screens.' },

@@ -9955,3 +9955,9 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 - ⚠ The gate stubs the SDK (the repo has no node_modules), so the loop logic is proven but the live API's acceptance of the request is not. The first real question is that test, and an error shows in the chat.
 - Gate: `gate_1327.mjs` (S1–S5 server with a scripted stub SDK; B1–B5 browser). Control 1326 is RED 5/5 on the browser half; the server half is new and passes both ways by construction.
 
+
+## Build 1328: the editor only saves a document it actually opened
+- `frame.dataset.loadedId` (set in the editor frame's `onload` once the body has content, cleared before every
+  `srcdoc` and on close). `saveCurrent()` skips unless it equals `current.id`; `serializeFrame()` throws on an empty
+  body. Closing a document while it is still opening can no longer write a blank page over it.
+- Gate: `gate_1328.mjs` (closes at the instant `srcdoc` is set). Control 1327 writes the 55-character blank page.

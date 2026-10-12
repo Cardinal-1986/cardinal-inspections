@@ -36066,3 +36066,26 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Caught on the way:** gate_stack flagged two redundant `box-sizing` declarations (the global `*` rule already sets it), now removed. The first control run crashed (BUG_CLASSES 37); the browser steps are now null-safe and the control is RED 5/5.
 - **Gates:** gate_1327 GREEN 10/10. check_build, types, dupes, scroll, stack, a11y, 1206, 944 and harnesses green.
 
+
+## Build 1328 — the document editor could save a BLANK page over a real document (Jacob, via Theo, 12 Oct 2026)
+- **The report:** "Jacob says the estimates are still wacky." No screenshot. Read the data before guessing.
+- **Measured:** his four latest estimates add up (line items = totals). But **EST-2026-0914**'s stored document was
+  **55 characters** — `<!DOCTYPE html>\n<html><head></head><body></body></html>` — since a save on 10 Oct 21:18 UTC.
+  `document_versions` v6 holds the 27,150-character document from one second earlier. One document of all of them
+  is blank (`length(html) < 400` across `inspection_reports`).
+- **Cause:** `frame.srcdoc = r.html` loads asynchronously; until it commits, the frame still holds the previous page,
+  and after `closeEditor()` that is the blank `srcdoc = ''`. Close while a document is still opening and
+  `closeEditor() → saveCurrent() → serializeFrame()` writes the blank page over the document in `current`. The old
+  `onload` also stayed attached, so the blank page's own load ran the previous document's wiring.
+- **Fix:** `frame.dataset.loadedId` is cleared before srcdoc and set in `onload` only once the body has content;
+  `saveCurrent()` skips quietly unless it matches `current.id` (nothing can have been edited yet); `serializeFrame()`
+  refuses an empty body for every caller (save, email, share); `closeEditor()` detaches `onload` before blanking.
+- **⚠ The gate's first two shapes could not fail.** A bare `openEditor()` + `closeEditor()` closed before `current`
+  was set, so both trees wrote nothing and both passed; the app's `closeEditor` wrapper also routes through
+  `history.back()`. The gate now closes at the exact instant srcdoc is set (an instance setter on the frame), which is
+  the race as it happens on a phone — and the control writes the identical 55-character page.
+- **Gates:** `gate_1328.mjs` GREEN 4/4; control 1327 RED 3/4 (writes the 55-char page). 1149, 1268, 1270, 1271, 1273,
+  1323, 1324, check_build, types, dupes, scroll-lock green. Not a screen change — no sentinel run.
+- **Not done here:** EST-2026-0914 itself is still blank in the database. Restoring it from v6 is a write to a signed
+  document, so it waits for Theo's yes. The $5,000 "Item" line with no name beside a $0 write-up line is how that
+  estimate was built, not this bug.
