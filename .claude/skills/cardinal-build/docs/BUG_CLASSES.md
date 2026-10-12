@@ -4994,3 +4994,9 @@ OLD page — after a close, a blank one — and a save writes it over the new do
 **Rule:** record which document a frame holds in its own `onload` (`frame.dataset.loadedId`) and refuse to read it
 for any other. **Gate shape:** close at the moment `srcdoc` is set (an instance setter on the frame); a plain
 open-then-close in a test closes before `current` exists and passes on the broken build.
+
+## Note (1329) — a boot-time read that runs before the session is back returns [] and no error
+RLS policies `TO authenticated` answer an empty list, not an error, to a read made before supabase-js has restored
+the session. A module that loads once on a timer (`setTimeout(load, 800)`) therefore caches "nothing" on a slow
+phone and a fast desktop never sees it. **Rule:** a consumer that finds such a cache empty must AWAIT the reload and
+redraw; firing `load()` and rendering the empty state is the bug. **Gate shape:** make the first read answer `[]`.
