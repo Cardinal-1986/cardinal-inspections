@@ -36025,3 +36025,11 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **App half:** `window.is_full_access` drops Scottie. Its callers (ABC order button, CRM portals, punch delete, Payments page) are all screens he cannot reach, and punch delete matches the database.
 - **Gates:** gate_1321 GREEN 3/3, control RED.
 
+## Build 1322 — Owner Review, silent (12 Oct 2026)
+- **Ask:** Theo, "flag certain clients for owner review and put them in an admin only area, but still workable by the rep"; picks 1A, silent; "all 4" (this is piece 1 of 4: 1323 change order, 1324 deductible box, 1325 automatic flags).
+- **SQL first:** `owner_review.sql` applied. The single-transaction migration timed out twice — once on a foreign key to `projects` (the same lock that hung at 1321), once with no FK at all; one statement per call went through instantly. Recorded in FEATURES.
+- **Silence, proved twice:** in the database (a rep's JWT reads 0 rows) and in the app (gate_1322 F: no drawer row, no tile on his own job, `open()` draws nothing). The What's New entry says nothing a rep could read into.
+- **Caught on the way:** gate_dupes — every helper name (`q`, `esc`, `open`, `render`…) already existed in other modules; prefixed `orv`. The test double does not apply column defaults, so a new row came back without `status` and offered Reopen; inserts now write `status` and `notes` explicitly. The drawer folds its sections on a phone, so the drawer check compares the row with Invoices & AR beside it rather than demanding it be visible.
+- **a11y:** the admin tile added one node outside any landmark (`region` +1). Rather than rebaseline, the Job Menu is now a named region (`role="region" aria-label="Job menu"`) — the whole menu's tiles left the debt: 320 → 293 violation nodes.
+- **Gates:** gate_1322 GREEN 6/6, control RED 5/6 (no crash). Standing gates green (types, dupes, scroll, harnesses, stack, a11y, 1206, 944); gate_1316/1317/1319/1233/1218/1225/1227 green.
+
