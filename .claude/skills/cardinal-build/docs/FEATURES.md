@@ -9858,3 +9858,12 @@ The rules live in `cr-ar-script` and the other two A/R screens read them (`Cardi
 - The home `#arWrap` card reads `CardinalAR.list()` filtered to the current board; Community's Partner A/R (`.cc-arbig`) reads it filtered to the hub's jobs. KPI: "Overdue · 31+ days", "N jobs owe".
 - **Gate:** `gate_1316.mjs` (8 seeded jobs, exact dollars on all three screens; control 1315 RED 6/8).
 
+## Build 1317: Scottie stays in Production (field user, app half)
+`FIELD_EMAILS = ['scottie@…']` + `isFieldUser()` beside `PRODUCTION_EMAILS`; `body.cr-field` toggled at sign-in beside `cr-prod`. Curtis is production but **not** field — unchanged.
+- **Every way home → Production:** `showHome()`, `showLanding()`, `goToLanding()` (no Front Door on top); `navRestore()` keeps only production / dispatch / punchcard / route / punch; the hub's own popstate listener no longer shuts the hub behind that redirect; the old hash router sends a field user to Production.
+- **No client profiles:** `openProject()` refuses with "The job's address, phone and directions are on its punch card." (profiles carry Balance Due and every money tab).
+- **Off:** Front Door `open()`/`go()`, Ctrl-K palette, the desktop rail (`on()`), the hub's Crews tile (crew pay/rates), and on screen `#crBanner`, `#cbCrm`, `#cbSearch`, `#headSearch`, `#newWrap`, `#brandTitle` taps, the menu's section headers.
+- **Menu:** Production Board, Crew Dispatch, Punch List, Notifications, Text size, Sign out — one flat list (the drawer accordion is skipped for a field user, or the rows would sit folded under headers he cannot see).
+- ⚠ **App half only.** The database still treats Scottie as `is_full_access()`; part 2 is a field role in RLS, SQL first.
+- **Gate:** `gate_1317.mjs` (signs in as Scottie and as Curtis; control 1316 RED 6/7).
+

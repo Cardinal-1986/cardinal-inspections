@@ -35989,3 +35989,10 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Gates:** `gate_1316` GREEN 8/8, control RED 6/8. Its first run went red on E because the rig's board was left on Community — the test's fault, fixed by setting the board explicitly. Green: check_build, gate_1168/1218/1291/1303/1304/1309/1311, harness_ar1107/ar1156/inv1108/inv1109.
 - **Not done here (redesign build):** row buttons (Buttons A), reminder strip on Ready rows, the 35px buttons, the words.
 
+## Build 1317: Scottie stays in Production (Theo: "Scottie stays only in productions and can't go anywhere else" — option 2, app half)
+- **What:** `isFieldUser()` and the gates listed in FEATURES.md 1317. Recon mapped ~20 doors; each choke point is guarded in code and the doors are also taken off the screen.
+- **Two things the first gate run caught:** (1) the Production hub's own popstate listener closed the hub right after `navRestore` redirected a field user's Back to it — fixed in that listener; (2) the drawer folds every section shut and I had hidden the section headers, so Scottie's four rows would have been unreachable — a field user now gets a flat list. Both were mine; both are in gate_1317 now (E checks the real opened drawer).
+- **A false alarm of my own, recorded so nobody chases it:** a `sed | cut -c1-150` view of the navRestore guard hid its opening brace and read like a syntax bug. The file was correct.
+- **Gates:** `gate_1317` GREEN 7/7, control RED 6/7. 56 navigation/production/menu gates re-run green (gate_1035/1038/1042/1047 need the file argument). `gate_1148` crashes on 1316 too — old debt.
+- **Not yet:** the database half (Scottie out of `is_full_access()`, a field role on punch/appointments/crews reads). SQL goes to Theo first.
+

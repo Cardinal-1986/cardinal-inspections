@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1316<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1317<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -14380,6 +14380,7 @@ document.getElementById('rptTabs').addEventListener('click', function(e){
 /* ---------- project profile ---------- */
 var projectView = document.getElementById('projectView');
 function showHome(){
+  if((typeof isFieldUser === 'function' && isFieldUser()) && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }   /* 1317: field users live in Production */
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   var hc = document.getElementById('headCtx');
   if(hc) hc.textContent = '';
@@ -14396,6 +14397,9 @@ function showHome(){
   window.scrollTo(0,0);
 }
 function openProject(id){
+  /* 1317: a client profile carries Balance Due and every money tab. A field user's job
+     details — address, phone, directions — are on the punch card. */
+  if((typeof isFieldUser === 'function' && isFieldUser())){ try{ crTell('The job\u2019s address, phone and directions are on its punch card.'); }catch(_){} return; }
   var pr = cacheProjects.find(function(x){ return x.id === id; });
   if(!pr){
     /* 787: this was a bare `return`, and it is how tapping through to a client
@@ -28485,6 +28489,12 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
+/* 1317: a FIELD user works Production and nothing else — Theo, 11 Oct: "Scottie stays only in
+   productions and can't go anywhere else". Curtis is production but not field: he keeps
+   everything he has. This is the app half; the database half is a field role in RLS. */
+var FIELD_EMAILS = ['scottie@cardinalrenovations.net'];
+function isFieldUser(){ return !!(TEAM && currentUser && FIELD_EMAILS.indexOf(String(currentUser.email || '').toLowerCase()) !== -1); }
+window.isFieldUser = isFieldUser;
 /* 1252: who may assign and close punch work — Theo's rule, the same three
    addresses as public.is_punch_boss() (punch_boss_guard.sql), which is the
    authority. This only keeps the app from offering what it would refuse. */
@@ -28706,6 +28716,7 @@ window.addEventListener('visibilitychange', function(){
 });
 
 function showLanding(userEmail){
+  if((typeof isFieldUser === 'function' && isFieldUser()) && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }   /* 1317: field users live in Production */
   /* 1190 — the vision branch is gone with the hostname it served. Since the
      Showroom cutover (31 Aug) showroom.cardinalroster.com is served by the
      standalone Showroom project, so the host test could only ever answer
@@ -28923,6 +28934,7 @@ function backToLanding(){
 /* Same as backToLanding, but called from the app menu — also clears main-app views
    so the transition is clean. */
 function goToLanding(){
+  if((typeof isFieldUser === 'function' && isFieldUser()) && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }   /* 1317: field users live in Production */
   /* 1188 — THE HOSTNAME IS GONE FROM THIS DECISION. There is one path now.
 
      What this replaced: an `isVisionHost()` fork whose true branch showed
@@ -29380,6 +29392,7 @@ var hd = document.querySelector('header.site');
      stops showing the retail nav row). toggle, not add — a role change on
      re-login must clear it. */
   try{ document.body.classList.toggle('cr-prod', typeof isProductionUser === 'function' && !!isProductionUser()); }catch(_cp){}
+  try{ document.body.classList.toggle('cr-field', (typeof isFieldUser === 'function' && isFieldUser())); }catch(_cf){}   /* 1317 */
   if(typeof isProductionUser === 'function' && isProductionUser() &&
      window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
     try{ var _plv = document.getElementById('landingView'); if(_plv) _plv.style.display = 'none'; }catch(_pl){}
@@ -29620,6 +29633,10 @@ function __histPush(st){
        __histPush already honors __histLock; hold it for the restore window. */
     __histLock = true;
     try{
+      /* 1317: the back button cannot walk a field user out of Production */
+      if((typeof isFieldUser === 'function' && isFieldUser()) && ['production', 'dispatch', 'punchcard', 'route', 'punch'].indexOf(state.view) === -1){
+        state = { app: state.app, view: 'production', data: null };
+      }
       switch(state.view){
         case 'landing':         if(typeof goToLanding === 'function') goToLanding(); break;
         case 'home':            if(typeof showHome === 'function') showHome(); break;
@@ -30601,6 +30618,8 @@ async function enableNotifications(){
        hash router doesn't understand them and its final else fell through to showHome(),
        so Back restored the right view and was instantly overwritten by Home. */
     if(e.state && e.state.app === 'cardinal-nav') return;
+    /* 1317: none of the old hash-router views are field screens */
+    if(window.isFieldUser && window.isFieldUser()){ if(window.CardinalProduction && window.CardinalProduction.open) window.CardinalProduction.open(); return; }
     var st = e.state || { v:'home' };
     __histLock = true;
     try{
@@ -43957,6 +43976,7 @@ currentBg = null;
 document.addEventListener('keydown', function(e){
 if((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')){
 e.preventDefault();
+if((window.isFieldUser && window.isFieldUser())) return;   /* 1317 */
 if(visible) close(); else open();
 }
 });
@@ -44319,6 +44339,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1317, d:'2026-10-11', t:'Scottie stays in Production', s:'Scottie\u2019s app now opens on Production and stays there: the menu shows only the Production Board, Crew Dispatch, Punch List and Notifications, the portal picker, search, + New and the section bar are gone, and the back button can\u2019t walk out. Client profiles don\u2019t open for him \u2014 the address, phone and directions are on each job\u2019s punch card \u2014 and the crew pay screen is off. Curtis keeps everything he has.' },
   { b: 1316, d:'2026-10-11', t:'One answer to who owes you', s:'Invoices & AR, the home card and Community\u2019s Partner A/R each counted different jobs, aged them from different dates and grouped them differently. They now share one set of rules: a job owes when it is Invoiced or Closed, or its invoice has gone out, and still has a balance; age runs from the day the invoice was sent; groups are 0\u201314, 15\u201330 and 31+ days. The oldest money is at the top. Finished jobs that were never invoiced have their own Ready to invoice group with a Create invoice button. Partner jobs show on Invoices & AR, and payments on them now count.' },
   { b: 1315, d:'2026-10-11', t:'Every send counts as sent', s:'Texting or emailing an invoice from the job card or the Invoices list now marks it sent and moves the job to Invoiced \u2014 before, only the editor\u2019s Email button did, so a texted invoice stayed Draft and was never reminded. Sending never moves a job backwards: a Closed job stays Closed. Create invoice can\u2019t make two by a double tap, says so when the job is paid in full, and asks before making a second one. The payment form works for a second payment without reloading.' },
   { b: 1314, d:'2026-10-11', t:'One balance everywhere', s:'The pay link, the reminder texts and the app could each come up with a different amount owed \u2014 the server ignored extras added to a job and payments typed into the old Amount Collected box. They all use the same total now, and there is one place to record money in: Record payment. A bank payment still clearing stops the client paying twice. Paid this month finally counts this month\u2019s payments (it always read $0). If payments fail to load, the app says so instead of showing every job as unpaid. The invoice heading now just says INVOICE.' },
@@ -56740,7 +56761,7 @@ function wire(){
          their own open(), so drop the hub without showHome() first. Close only
          when the target module is actually present. */
       if(h === 'dispatch' && window.CardinalDispatch && window.CardinalDispatch.open){ close(false); window.CardinalDispatch.open(); }
-      else if(h === 'crews' && window.CardinalCrews && window.CardinalCrews.open){ close(false); window.CardinalCrews.open(); }
+      else if(h === 'crews' && !(window.isFieldUser && window.isFieldUser()) && window.CardinalCrews && window.CardinalCrews.open){ close(false); window.CardinalCrews.open(); }   /* 1317: crew pay is not a field screen */
     };
   });
   qAll('[data-go="cal"]').forEach(function(b){
@@ -57295,6 +57316,8 @@ function start(){
 }
 window.addEventListener('popstate', function(ev){
   var v = ev.state && ev.state.view;
+  /* 1317: navRestore sends a field user's Back to production; do not shut the hub behind it */
+  if(window.isFieldUser && window.isFieldUser() && ['dispatch', 'punchcard', 'route', 'punch'].indexOf(v) === -1) return;
   if(v !== 'production' && el && el.classList.contains('open')){
     el.classList.remove('open');
     document.body.style.overflow = '';
@@ -69080,6 +69103,15 @@ if(typeof _origOLF === 'function'){
 :root[data-theme="rb-light"] .pu-who.own-scottie,:root[data-theme="rb-light"] .pu-asgrow .nm.own-scottie{color:#6a4db0;}
 :root[data-theme="rb-light"] .pu-age{color:#8a5500;}
 #punchView{display:none;min-height:100vh;background:var(--bg);}
+/* 1317: a field user (Scottie) works Production and nothing else. Every door out is closed in
+   code as well (showHome, openProject, navRestore, the Front Door); these rules take the
+   doors off the screen so there is nothing to tap that does nothing. */
+body.cr-field #crBanner, body.cr-field #cbCrm, body.cr-field #cbSearch, body.cr-field #headSearch,
+body.cr-field #newWrap, body.cr-field #cr-lnav, body.cr-field .pbnavbtn[data-hub="crews"],
+body.cr-field #navMenu .navsec{ --cr-stack:"1317 field user: Production only"; display:none !important; }
+body.cr-field #navMenu .navopt:not([data-nav="prodboard"]):not([data-nav="dispatch"]):not([data-nav="punch"]):not([data-nav="notify"]){
+  --cr-stack:"1317 field user: Production only"; display:none !important; }
+body.cr-field #brandTitle{ --cr-stack:"1317 field user: no portal picker"; pointer-events:none; }
 /* 1042 (audit F4): for production accounts the punch page joins the
    full-screen family — fixed over the retail chrome (nav row + desktop
    rail), its own scroll, same ground. Everyone else keeps the in-shell
@@ -73742,7 +73774,7 @@ production: '#96560c',
 sales     : '#b23730'
 };
 
-function on(){ return window.matchMedia('(min-width:' + W + 'px)').matches; }
+function on(){ if((window.isFieldUser && window.isFieldUser())) return false; /* 1317 */ return window.matchMedia('(min-width:' + W + 'px)').matches; }
 function menu(){ return document.getElementById('navMenu'); }
 function host(){ return document.getElementById(MOUNT); }
 
@@ -88297,7 +88329,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     }
     function applySections(){
       if(applying) return;
-      if(!isDrawer() || railWidth()){
+      if(!isDrawer() || railWidth() || (window.isFieldUser && window.isFieldUser())){   /* 1317: a field user's few rows are one flat list */
         applying = true; try{ clearSections(); }catch(_){ } applying = false; return;
       }
       applying = true;
@@ -93588,6 +93620,7 @@ function ensureView(){
   document.body.appendChild(v);
 }
 function open(){
+  if((window.isFieldUser && window.isFieldUser())) return;   /* 1317: no portal picker for a field user */
   ensureView();
   render();  /* fresh counts and quote on every open */
   q('cr-fd').classList.add('open');
@@ -93617,6 +93650,7 @@ function isOpen(){
 }
 function go(d){
   close();
+  if((window.isFieldUser && window.isFieldUser())) return;   /* 1317 */
   try{ if(window.CardinalPortal && typeof window.CardinalPortal.set === 'function' &&
         (d === 'retail' || d === 'insurance' || d === 'community')) window.CardinalPortal.set(d, false); }catch(_e){}
   if(d === 'retail'){ if(typeof hideAllViews === 'function') hideAllViews(); if(typeof showHome === 'function') showHome(); return; }
