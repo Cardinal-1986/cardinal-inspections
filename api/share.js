@@ -153,7 +153,8 @@ async function owedOn(sbHeaders, rep) {
     const signedTotal = Math.max(contractTotal, tableTotal);
     const jobTotal = signedTotal > 0 ? signedTotal + manual
                    : (manual > 0 ? manual : (Number(rep.total) || 0));
-    return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due' };
+    return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due',
+             totalCents: Math.round(jobTotal * 100), paidCents: Math.round(collected * 100) };   // 1320: the invoice's summary
   }
 
   // estimate / contract → the deposit (reachable via either the estimate doc or
@@ -162,6 +163,24 @@ async function owedOn(sbHeaders, rep) {
       `${SUPABASE_URL}/rest/v1/estimates?or=(doc_id.eq.${rep.id},contract_doc_id.eq.${rep.id})&select=deposit_amount&limit=1`))[0];
   const deposit = Number(est && est.deposit_amount) || 0;
   return { cents: Math.round((deposit - collected) * 100), label: 'Deposit' };
+}
+
+/* 1320: ONE balance on an invoice. The stored SUMMARY was frozen the day the invoice was
+   made, so after a payment the page said "Pay $9,800" over "BALANCE DUE $14,800". The
+   three cells are rewritten here from owedOn() — the figure the pay bar charges. New
+   invoices carry ids; older ones are found by their labels. */
+const usd = (c) => '$' + (Math.abs(c) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function liveInvoiceSummary(html, o) {
+  const day = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric' });
+  const due = o.cents;
+  const cell = (re, val) => { html = html.replace(re, (all, open) => open + val + '</td>'); };
+  cell(/(<td[^>]*id="invTotal"[^>]*>)[\s\S]*?<\/td>/, usd(o.totalCents));
+  cell(/(Contract Price<\/td>\s*<td[^>]*>)[\s\S]*?<\/td>/, usd(o.totalCents));
+  cell(/(<td[^>]*id="invPaid"[^>]*>)[\s\S]*?<\/td>/, '&#8722;' + usd(o.paidCents));
+  cell(/(Payments Received<\/td>\s*<td[^>]*>)[\s\S]*?<\/td>/, '&#8722;' + usd(o.paidCents));
+  cell(/(<td[^>]*id="estTotal"[^>]*>)[\s\S]*?<\/td>/, due <= 0 ? '$0.00 &middot; Paid in full' : usd(due));
+  html = html.replace(/(<span id="invAsOf"[^>]*>)[\s\S]*?<\/span>/, (all, open) => open + 'as of ' + day + '</span>');
+  return html;
 }
 
 /* 1279: CARD FEE. Theo's pick — a card pays a 3% processing fee on top, a bank
@@ -357,7 +376,9 @@ export default async function handler(req, res) {
       // a deposit on an estimate/contract, or a live balance on an invoice. The
       // bar is best-effort; a lookup hiccup must never block the document itself.
       try {
-        const { cents, label } = await owedOn(sbHeaders, rows[0]);
+        const owed = await owedOn(sbHeaders, rows[0]);
+        const { cents, label } = owed;
+        if (isInvoiceDoc) html = liveInvoiceSummary(html, owed);   /* 1320 */
         if (cents >= 50 && cents <= 10000000) {
           const ui = payUi(t, cents, label, rows[0].project || rows[0].title);
           html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;

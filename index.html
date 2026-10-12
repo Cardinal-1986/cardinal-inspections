@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1319<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1320<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -10888,11 +10888,11 @@ var INVOICE_BODY =
   '</table>' +
   '<div class="secthead">SUMMARY</div>' +
   '<table style="width:100%;border-collapse:collapse;font-size:14px;">' +
-    '<tr><td style="padding:9px 6px;border-bottom:1px solid #ddd;">Contract Price</td>' +
-      '<td style="padding:9px 6px;border-bottom:1px solid #ddd;text-align:right;font-weight:700;">[INV_TOTAL]</td></tr>' +
-    '<tr><td style="padding:9px 6px;border-bottom:1px solid #ddd;">Payments Received</td>' +
-      '<td style="padding:9px 6px;border-bottom:1px solid #ddd;text-align:right;font-weight:700;">&#8722;[INV_PAID]</td></tr>' +
-    '<tr><td style="padding:12px 6px;font-weight:800;font-size:16px;">BALANCE DUE</td>' +
+    '<tr><td style="padding:9px 6px;border-bottom:1px solid #ddd;">Total</td>' +
+      '<td id="invTotal" style="padding:9px 6px;border-bottom:1px solid #ddd;text-align:right;font-weight:700;">[INV_TOTAL]</td></tr>' +
+    '<tr><td style="padding:9px 6px;border-bottom:1px solid #ddd;">Paid</td>' +
+      '<td id="invPaid" style="padding:9px 6px;border-bottom:1px solid #ddd;text-align:right;font-weight:700;">&#8722;[INV_PAID]</td></tr>' +
+    '<tr><td style="padding:12px 6px;font-weight:800;font-size:16px;">Balance due <span id="invAsOf" style="display:block;font-size:12px;font-weight:400;color:#555;"></span></td>' +
       '<td id="estTotal" style="padding:12px 6px;text-align:right;font-weight:800;font-size:16px;color:#9c1822;">[INV_DUE]</td></tr>' +
   '</table>' +
   '<p style="font-size:12.5px;color:#555;margin-top:14px;">Please remit the balance due upon receipt. ' +
@@ -27184,6 +27184,25 @@ var INV_LIVE_CSS = `
   #cr-inv-ledger table{page-break-inside:auto;}
   #cr-inv-ledger tr{page-break-inside:avoid;}
 }`;
+/* 1320: Total · Paid · Balance due from the ledger. New invoices carry ids; older ones
+   are found by their labels. The same rewrite runs server-side in api/share.js. */
+function invLiveSummary(doc, billed, paid, bal){
+  try{
+    var byLabel = function(re){
+      var tds = doc.querySelectorAll('td');
+      for(var i = 0; i < tds.length; i++){ if(re.test((tds[i].textContent || '').trim())){ var n = tds[i].nextElementSibling; if(n) return n; } }
+      return null;
+    };
+    var t = doc.getElementById('invTotal') || byLabel(/^Contract Price$/i);
+    var p = doc.getElementById('invPaid') || byLabel(/^Payments Received$/i);
+    var d = doc.getElementById('estTotal');
+    if(t) t.innerHTML = fmtMoney(billed, true);
+    if(p) p.innerHTML = '&#8722;' + fmtMoney(paid, true);
+    if(d) d.innerHTML = (billed > 0 && bal <= 0.005) ? fmtMoney(0, true) + ' &middot; Paid in full' : fmtMoney(bal, true);
+    var a = doc.getElementById('invAsOf');
+    if(a) a.textContent = 'as of ' + new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }catch(_){}
+}
 function wireInvoiceLive(doc, r){
   try{
     if(!doc || !r || !/^invoice/i.test(String(r.title || '').trim())) return;
@@ -27221,14 +27240,14 @@ function wireInvoiceLive(doc, r){
     if(isPaid){
       card.className = 'paid';
       card.innerHTML = '<div class="cil-badge">&#10003; PAID IN FULL</div>'
-        + '<div class="cil-sub"><span>Balance</span><b>' + fmtMoney(0, true) + '</b></div>'
         + (lastDate ? '<div class="cil-sub"><span>Paid in full on</span><b>' + esc(lastDate) + '</b></div>' : '');
     }else{
-      card.innerHTML = '<div class="cil-row"><span class="cil-lbl">Current Balance Due</span>'
-        + (st ? '<span class="cil-pill ' + st.k + '">' + esc(st.label) + '</span>' : '') + '</div>'
-        + '<div class="cil-amt">' + fmtMoney(bal, true) + '</div>'
-        + '<div class="cil-meta">Billed ' + fmtMoney(billed, true) + ' &middot; Paid ' + fmtMoney(paid, true) + '</div>';
+      /* 1320: status only — the amount lives once, in the SUMMARY below */
+      card.innerHTML = '<div class="cil-row"><span class="cil-lbl">Invoice status</span>'
+        + (st ? '<span class="cil-pill ' + st.k + '">' + esc(st.label) + '</span>' : '') + '</div>';
     }
+    /* 1320: the SUMMARY is the one balance — written live here, so print and save carry it */
+    invLiveSummary(doc, billed, paid, bal);
     var estCell = doc.getElementById('estTotal');
     var table = estCell && estCell.closest ? estCell.closest('table') : null;
     var anchor = null;
@@ -44339,6 +44358,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1320, d:'2026-10-12', t:'One balance on the invoice', s:'An invoice now shows one balance, and it is always today\u2019s. When a client opens it, the Total, Paid and Balance due lines are filled in from what has actually been paid \u2014 the same amount the Pay button charges \u2014 with the date. A paid invoice says Paid in full. Printing or saving from the editor carries the same live numbers, and the second balance box in the editor is gone.' },
   { b: 1319, d:'2026-10-12', t:'The Invoices list, simpler', s:'Invoices now opens on one line \u2014 what you are owed, what is overdue and what came in this month \u2014 and every job on it has one red button for the next thing to do (Create invoice, Send, Remind, or Record payment) and a \u22ef for everything else: copy the link, email it, record a payment, open the job, and the reminder history. The oldest money is still at the top.' },
   { b: 1318, d:'2026-10-11', t:'The invoice card, simpler', s:'A job\u2019s invoice card is one line now \u2014 the invoice and what is still owed \u2014 with a bar showing how much is paid, and one red button for the next thing to do: Create invoice, then Send, then Record payment. Send offers Company text, My phone or Email. Tapping Balance due at the top of the job jumps to the card. Record payment starts filled in with the balance, picks Final once the job is invoiced, takes Card, and records today\u2019s date even late at night.' },
   { b: 1317, d:'2026-10-11', t:'Scottie stays in Production', s:'Scottie\u2019s app now opens on Production and stays there: the menu shows only the Production Board, Crew Dispatch, Punch List and Notifications, the portal picker, search, + New and the section bar are gone, and the back button can\u2019t walk out. Client profiles don\u2019t open for him \u2014 the address, phone and directions are on each job\u2019s punch card \u2014 and the crew pay screen is off. Curtis keeps everything he has.' },

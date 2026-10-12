@@ -90,7 +90,8 @@ async function owedOn(sbHeaders, rep) {
     const signedTotal = Math.max(contractTotal, tableTotal);
     const jobTotal = signedTotal > 0 ? signedTotal + manual
                    : (manual > 0 ? manual : (Number(rep.total) || 0));
-    return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due' };
+    return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due',
+             totalCents: Math.round(jobTotal * 100), paidCents: Math.round(collected * 100) };   // 1320: the invoice's summary
   }
 
   // estimate / contract → the deposit (reachable via either the estimate doc or

@@ -58,7 +58,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 
 - **W1** ✅ *FIXED 1315* — Only editor "Email to client" and "Mark sent" set `status:'sent'` + Invoiced. Company SMS, My phone, Copy, AR Text/Email leave it **Draft** → no aging date, `remind.js` (`status=eq.sent`) never reminds it, Home/Partner A/R never count it.
 - **W2** ✅ *FIXED 1315* — Stage and money never reconcile: paid jobs stay Invoiced until closed by hand; re-sending moves a Closed job back to Invoiced (`setStage` has no forward guard, ~27640 / ~28343); reminders keep texting Closed jobs with a balance.
-- **W3** The client sees the as-issued Balance Due next to the live pay amount; the live card (`wireInvoiceLive`) exists only in the editor and is stripped on save. No receipt is sent on payment.
+- **W3** ◐ *1320: the client's page shows one live balance. Still open: no receipt is sent on payment.* The client sees the as-issued Balance Due next to the live pay amount; the live card (`wireInvoiceLive`) exists only in the editor and is stripped on save. No receipt is sent on payment.
 - **W4** ✅ *FIXED 1315* — Double tap on Generate makes two invoices, both `#PO-1`; deleted numbers are reused; a $0-due invoice can be made on a paid job.
 - **W5** ✅ *FIXED 1315* — Second offline payment in one session: the Save button stays "Saving…" disabled (~90087 / ~90051).
 - **W6** ✅ *FIXED 1315* — Token mint failure is swallowed (`catch(_it){}` ~17437) → invoice with no token, `total` null.
@@ -71,7 +71,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 Passing, measured: nothing under 11px, every ink ≥ 4.5:1 both themes, no gradients, AR dashboard buttons 44px.
 
 - **D1** The invoice is an estimate wearing an invoice title: "Estimate #", "Estimate Date", "Valid Through", Client Contact twice, empty PROPERTY PHOTO box, concealed-conditions change-order clause, "This estimate is valid…" acceptance paragraph, page title "— Estimate". (`invoice_doc_afterpay_desk.png`)
-- **D2** Two balances on one invoice after a payment: live $9,800 card above a stored SUMMARY reading $14,800.
+- **D2** ✅ *FIXED 1320* — Two balances on one invoice after a payment: live $9,800 card above a stored SUMMARY reading $14,800.
 - **D3** ◐ *1318–1319: the job card and Invoices list say Total · Paid · Balance due · Create invoice · Send · Record payment.* Too many words for three things — Billed / Job Value / Contract Price; Collected / Paid / Payments Received; Balance / Balance Due / Current Balance Due / Amount due / Total outstanding; Invoices & AR / Accounts receivable / Partner A/R; Generate / Create invoice; Record payment / Record offline payment; Text link / Resend text / Company SMS / My phone; Sent / UNSENT / Mark sent. Proposed: **Total · Paid · Balance due · Create invoice · Send · Record payment · Invoices**.
 - **D4** ✅ *FIXED 1316* — Oldest debt is at the bottom — Current renders first; on a phone the 45-day job is ~2,000px down.
 - **D5** ◐ *1318: Balance due in the strip now jumps to the card; the card stays after the Job Menu (Theo's 1225 order).* On a phone the Invoices & Payments card is ~1,300px below the money strip, under the 17-tile Job Menu; three separate money doors; "Balance Due" in the strip is not tappable.
