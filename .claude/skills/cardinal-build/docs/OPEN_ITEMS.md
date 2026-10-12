@@ -6304,7 +6304,7 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 - [x] 1322: Owner Review — silent admin-only list of jobs under review, money trail, owner notes (Theo's 1A).
 - [x] 1323: change order on the phone — photo required, homeowner signs, adds to the job value app and server side (Theo's 2B).
 - [x] 1324: insurance contracts carry the INSURANCE & YOUR PART box; no share/text/email/sign without the deductible; a WAIVED claim is refused (Theo's 3A).
-- [ ] 1325 automatic owner flags (all six on).
+- [x] 1325: Owner Review's six automatic flags — on by default, each switchable, each fires once, Dismiss sticks (Theo's 4).
 - [x] 1321: Scottie's field role is in the database (field_role.sql applied 12 Oct) and the app mirror matches. Residual, by design: `projects.checklist` money fields and `crew_work_orders.amount` are row-readable to him (the app never shows them).
 - [x] 1312: Community says "estimate", never "bid" — settled (Theo: "Let's keep it estimate and no bid"). P now reads Estimate Submitted. Internal keys (`bids` pane, `newbid`, `checklist.bid`) keep the old word on purpose; do not rename them.
 - [x] 1309–1311: the old Community screens retired, on Theo's "All" (dead code; More tools down to Activity; Estimates = All estimates; Clients without By stage). Residue: the `.cc-kpi`/`.cc-tile`/`.cc-duegrid` CSS now styles nothing — delete at source next clean-up.

@@ -78,7 +78,7 @@ try {
     const v = document.getElementById('cr-orv-view'), txt = v ? v.innerText.replace(/\s+/g, ' ') : '';
     const red = [...document.querySelectorAll('#cr-orv-view .orv-tbl tr.red')].map(r => r.innerText.replace(/\s+/g, ' '));
     const w = (window.__WRITES__ || []).filter(x => x.table === 'owner_reviews');
-    return { shown: v && getComputedStyle(v).display === 'block', reason: /Price check/.test(txt), first: /First estimate/.test(txt), red, ins: w.filter(x => x.op === 'insert').length, nav: history.state && history.state.view };
+    return { shown: v && getComputedStyle(v).display === 'block', reason: /Price check/.test(txt), first: /First estimate/.test(txt), red, ins: w.filter(x => x.op === 'insert' && x.payload && x.payload.source === 'manual').length,   /* 1325: opening the review also runs the automatic rules, and this seed IS a $1,400 drop */ nav: history.state && history.state.view };
   });
   ok(B.shown && B.reason && B.ins === 1 && B.nav === 'ownerreview', 'B  flagging from the client page writes one owner_reviews row and opens it', JSON.stringify(B));
   ok(B.first && B.red.some(r => /Drop/.test(r) && /1,400/.test(r)), 'C  the money trail shows the first estimate and the $1,400 drop in red', JSON.stringify(B.red));
