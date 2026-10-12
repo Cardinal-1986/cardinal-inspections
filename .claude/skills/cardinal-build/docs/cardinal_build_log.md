@@ -36003,3 +36003,11 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Two standing gates caught my own work:** gate_1206 flagged the new Balance due tap at 61×41 (now 44px tall), and gate_a11y's `region` count rose by 2 (the paid bar and its line, outside any landmark). A rebaseline was refused, rightly; the card is now a named landmark (`role="region" aria-label="Invoice"`) and the count is back under baseline. gate_types caught two untyped `e.target.closest` calls in the new handlers; narrowed with `instanceof`.
 - **Gates:** gate_1318 GREEN 5/5, control RED 0/5; gate_1216/1218/1225/1286/1290/1291/1313/1314/1315/1316/1317/1010/1199/1279 and harness_inv1108/1109 green.
 
+## Build 1319 — the Invoices list, rows with the action showing (12 Oct 2026)
+- **Ask:** Theo, "2, 1" — the 1 is the Invoices list option 1.
+- **What:** one KPI line; each row one action + ⋯; the action follows the job (Create invoice / Send / Remind red, Record payment outline). Audit D3 (the list's words), D8 (AR rows), D12 (five buttons wrapping to three lines) fixed.
+- **Caught on the way:** `money(0)` prints `--`, which read "-- paid this month" on the new line — the KPIs now print `$0`. A Ready row (no invoice) showed a "Draft" status pill beside "Ready" — the pill now waits for an invoice.
+- **Old gates ported:** harness_inv1108 (the Record-payment hook is built through a helper now); gate_1218's ink sweep had the floor at 25 text nodes but only counted childless elements, so no button with an icon had ever been scored — it now scores any element carrying its own text and opens every ⋯ first (27 nodes on 1319, 35 on 1318, 0 below floor on either).
+- **Standing gates caught two of mine:** gate_dupes — a second `B` helper in `cr-ar-script` (1318 owns one; renamed `RB`); gate_types — `isNaN(date)` (now `getTime()`).
+- **Gates:** gate_1319 GREEN 8/8, control RED 0/8. types, dupes, scroll, harnesses, stack, a11y, 1206, 944 and the 17 invoice/AR gates green.
+

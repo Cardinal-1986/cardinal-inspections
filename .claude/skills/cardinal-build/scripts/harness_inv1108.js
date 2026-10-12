@@ -152,7 +152,7 @@ catch(e){ console.log('module threw: ' + e.message); process.exit(1); }
   // 6. wiring landed in the artifact
   ok(/window\.CardinalAR\.jobBlock\(pr, fin\)/.test(html), 'renderAcxOverview mounts the job block');
   ok(/await db\.update\(id, \{ share_token: _itok, total: fin\.value \}\)/.test(html), 'createInvoiceFor mints token + total');
-  ok(/data-arpay=/.test(html), 'AR rows gained a Record-payment action');
+  ok(/data-arpay=/.test(html) || /'data-arpay', IC_CASH \+ 'Record payment'/.test(html), 'AR rows gained a Record-payment action');  // 1319 builds the attribute through a helper
 
   clearTimeout(wd);
   console.log(fails ? ('\nRED — ' + fails + ' failed') : '\nGREEN — all Build 1108 assertions passed');

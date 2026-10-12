@@ -9875,3 +9875,10 @@ The rules live in `cr-ar-script` and the other two A/R screens read them (`Cardi
 - Buttons are 44px; `--crji-btnline` (dark `#3a3d46`, light `#c9cdd3`) outlines them.
 - **Gate:** `gate_1318.mjs` (5 checks, control 1317 RED 0/5). gate_1216, gate_1291 and harness_inv1108 ported to read the v2 card (the paid-bar track carries the old tile ground rule; a sent invoice now defaults to Final).
 
+## Build 1319: the Invoices list, rows with the action showing (Theo's pick "1")
+`#cr-ar-view` (`cr-ar-script`): the three KPI tiles are one line — **"$X owed"** and under it **"$Y overdue · $Z paid this month"** (same ids: `crarKpiOut`, `crarKpiOver`, `crarKpiMonth`; zero reads `$0`, not `--`).
+- **Each row:** name, status pill (only once there is an invoice), an age pill, one line of what happened ("Paid $5,000 of $20,000 · Sent Sep 2"), the balance on the right.
+- **One action + ⋯:** Create invoice (nothing billed) · Send (invoice not out) · Remind (out, 31+ days) — red; Record payment (out, not overdue) — outline. `⋯` (`data-armore`, `aria-expanded`) opens the rest (`data-armenu`): Copy link, Text link, Email, Record payment, Open job, and the reminder history + mute (`data-remfor`). Ready rows carry no reminder strip.
+- Every `data-ar*` hook is unchanged; only the layout moved. The rows' old Billed / Collected / Balance columns and the 560/640px grid media rules were deleted, not overridden.
+- **Gate:** `gate_1319.mjs` (8 checks, control 1318 RED 0/8, no crash). gate_1218's ink sweep now scores any element with its own text (icon buttons were never scored) and opens each ⋯ first.
+
