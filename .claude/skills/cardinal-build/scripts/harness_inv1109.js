@@ -60,7 +60,10 @@ let doc = makeInvoiceDoc();
 w.wireInvoiceLive(doc, { title:'Invoice — Whitfield', project_id:'P1' });
 const card = doc.getElementById('cr-inv-live');
 ok(!!card, 'a balance card is injected on an invoice');
-ok(/Current Balance Due/.test(card.innerHTML) && /\$7,400\.00/.test(card.innerHTML), 'card shows the live Current Balance Due ($7,400.00)');
+// 1320: the balance lives once, in the SUMMARY (written live); the card is status only. Older trees: the card carried it.
+if (/function invLiveSummary/.test(html)) {
+  ok((doc.getElementById('estTotal') || {}).textContent === '$7,400.00' && !/\$/.test(card.textContent), 'the live $7,400.00 is in the SUMMARY, and the card prints no second amount');
+} else ok(/Current Balance Due/.test(card.innerHTML) && /\$7,400\.00/.test(card.innerHTML), 'card shows the live Current Balance Due ($7,400.00)');
 ok(/Deposit Paid/.test(card.innerHTML), 'card carries the live status pill');
 const sums = Array.from(doc.querySelectorAll('.secthead')).filter(e => /summary/i.test(e.textContent));
 ok(sums.length && card.compareDocumentPosition(sums[0]) & 4 /* card precedes SUMMARY */, 'card sits above the SUMMARY section');

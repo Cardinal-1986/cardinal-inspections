@@ -36011,3 +36011,9 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Standing gates caught two of mine:** gate_dupes — a second `B` helper in `cr-ar-script` (1318 owns one; renamed `RB`); gate_types — `isNaN(date)` (now `getTime()`).
 - **Gates:** gate_1319 GREEN 8/8, control RED 0/8. types, dupes, scroll, harnesses, stack, a11y, 1206, 944 and the 17 invoice/AR gates green.
 
+## Build 1320 — the invoice says one balance, always the live one (12 Oct 2026)
+- **Ask:** Theo, "merge when good then next" — next was audit D2 / W3.
+- **What:** the client's invoice page rewrites Total / Paid / Balance due from `owedOn()` (the pay bar's figure) with today's date; the editor does the same from `jobFinance()`; the editor's live card no longer prints a second amount (unpaid or paid). New invoices use the words Total / Paid / Balance due.
+- **Why server-side:** the share page is what the client sees and prints, and the editor's live card was stripped on save — so before this the client always saw the number frozen on the day the invoice was made.
+- **Gates:** gate_1320 GREEN 8/8, control RED 7/8 (E — a failed read keeps the stored figure — is true on 1319 too, by construction). harness_inv1109 ported (accepts either shape).
+

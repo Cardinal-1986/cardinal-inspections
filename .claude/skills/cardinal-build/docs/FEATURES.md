@@ -9882,3 +9882,10 @@ The rules live in `cr-ar-script` and the other two A/R screens read them (`Cardi
 - Every `data-ar*` hook is unchanged; only the layout moved. The rows' old Billed / Collected / Balance columns and the 560/640px grid media rules were deleted, not overridden.
 - **Gate:** `gate_1319.mjs` (8 checks, control 1318 RED 0/8, no crash). gate_1218's ink sweep now scores any element with its own text (icon buttons were never scored) and opens each ⋯ first.
 
+## Build 1320: the invoice says one balance, always the live one
+The invoice's SUMMARY (**Total · Paid · Balance due**, ids `invTotal` / `invPaid` / `estTotal`, plus `invAsOf`) is the one balance, and it is written from the ledger every time it is shown.
+- **Client's page** (`api/share.js` `liveInvoiceSummary()`): rewritten from `owedOn()` — the figure the pay bar charges — with "as of <today>" (Dayton). Paid in full reads "$0.00 · Paid in full". A failed ledger read keeps the stored figures and shows the existing "could not be verified" notice. Older invoices are matched by their old labels (Contract Price / Payments Received).
+- **Editor** (`invLiveSummary()`, called from `wireInvoiceLive`): the same cells from `jobFinance()`, so print and save carry today's numbers. The live card is status only (pill, or PAID IN FULL + date) — no second amount.
+- `owedOn()` returns `totalCents` and `paidCents` too; still byte-identical in `api/pay.js` and `api/share.js` (gate_1199).
+- **Gate:** `gate_1320.mjs` (8 checks, runs the real share.js; control 1319 RED 7/8). harness_inv1109 ported.
+
