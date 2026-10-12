@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1320<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1321<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -30890,13 +30890,13 @@ body.claim-insurance #brandLogo{
     catch (e) { return false; }
   };
 
-  // ── is_full_access(): admins + production crew
+  // ── is_full_access(): admins + Curtis. 1321: mirrors the database — Scottie is a
+  //    FIELD user (is_field() / isFieldUser()) since field_role.sql, 12 Oct 2026.
   window.is_full_access = function () {
     var FULL = [
       'theo@cardinalrenovations.net',
       'joan@cardinalrenovations.net',
       'curtis@cardinalrenovations.net',
-      'scottie@cardinalrenovations.net',
     ];
     try { return FULL.indexOf(window.my_email()) !== -1; }
     catch (e) { return false; }
@@ -44358,6 +44358,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1321, d:'2026-10-12', t:'Scottie\u2019s access, finished', s:'Scottie\u2019s account now sees only Production in the database as well as on screen: every job on the board, punch cards, crews and photos \u2014 and no estimates, contracts, invoices or payments. Theo, Joan and Curtis are unchanged.' },
   { b: 1320, d:'2026-10-12', t:'One balance on the invoice', s:'An invoice now shows one balance, and it is always today\u2019s. When a client opens it, the Total, Paid and Balance due lines are filled in from what has actually been paid \u2014 the same amount the Pay button charges \u2014 with the date. A paid invoice says Paid in full. Printing or saving from the editor carries the same live numbers, and the second balance box in the editor is gone.' },
   { b: 1319, d:'2026-10-12', t:'The Invoices list, simpler', s:'Invoices now opens on one line \u2014 what you are owed, what is overdue and what came in this month \u2014 and every job on it has one red button for the next thing to do (Create invoice, Send, Remind, or Record payment) and a \u22ef for everything else: copy the link, email it, record a payment, open the job, and the reminder history. The oldest money is still at the top.' },
   { b: 1318, d:'2026-10-11', t:'The invoice card, simpler', s:'A job\u2019s invoice card is one line now \u2014 the invoice and what is still owed \u2014 with a bar showing how much is paid, and one red button for the next thing to do: Create invoice, then Send, then Record payment. Send offers Company text, My phone or Email. Tapping Balance due at the top of the job jumps to the card. Record payment starts filled in with the balance, picks Final once the job is invoiced, takes Card, and records today\u2019s date even late at night.' },

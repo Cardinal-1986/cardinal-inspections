@@ -9889,3 +9889,8 @@ The invoice's SUMMARY (**Total · Paid · Balance due**, ids `invTotal` / `invPa
 - `owedOn()` returns `totalCents` and `paidCents` too; still byte-identical in `api/pay.js` and `api/share.js` (gate_1199).
 - **Gate:** `gate_1320.mjs` (8 checks, runs the real share.js; control 1319 RED 7/8). harness_inv1109 ported.
 
+## Build 1321: Scottie's lock, both halves
+`field_role.sql` is **applied** (12 Oct 2026, Theo: "run it"): `is_field()` = Scottie; `is_full_access()` = Theo, Joan, Curtis; projects readable/updatable by a field user; crews / crew_notes / crew_work_orders read-only for him; estimates, inspection_reports and document_versions no longer open to him through "you can see the job". The app's mirror `window.is_full_access` now matches (Scottie removed). Verified as Scottie in the database: 86 jobs, 14 punch items, 12 crews, 4 work orders, 340 photos; 0 estimates, documents, collections, contracts, commissions, crew rates. Curtis unchanged.
+- ⚠ On `projects`, DROP/CREATE POLICY hung past 60s three times with no visible blocker; **ALTER POLICY went through at once.** Use ALTER POLICY for the next change to that table.
+- Gate: `gate_1321.mjs` (control 1320 RED).
+

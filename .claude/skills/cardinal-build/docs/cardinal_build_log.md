@@ -36017,3 +36017,11 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Why server-side:** the share page is what the client sees and prints, and the editor's live card was stripped on save — so before this the client always saw the number frozen on the day the invoice was made.
 - **Gates:** gate_1320 GREEN 8/8, control RED 7/8 (E — a failed read keeps the stored figure — is true on 1319 too, by construction). harness_inv1109 ported (accepts either shape).
 
+## Build 1321 — Scottie's lock, both halves (12 Oct 2026)
+- **Ask:** Theo, "Also run it" — field_role.sql.
+- **Applied** in steps, Scottie leaving `is_full_access()` LAST so he never lost the board mid-way: `is_field()` → projects policies → crew read policies → money policies → `is_full_access()`.
+- **The one that fought back:** the single-transaction migration on `projects` timed out at 60s (rolled back — verified nothing changed), then twice more with `lock_timeout = 8s` and nothing in `pg_locks`. Every other table took a CREATE POLICY instantly. `ALTER POLICY … USING (…)` on projects went through at once. Recorded in the SQL file's header.
+- **Checked as Scottie and as Curtis** (role `authenticated` + JWT claims, rolled back): Scottie 86 jobs / 14 punch / 12 crews / 4 WOs / 340 photos / 0 money rows; Curtis unchanged. Appointments read 0 for Scottie — **not a regression**: all 23 are sales appointments or job entries with no job attached, which only their creator ever saw.
+- **App half:** `window.is_full_access` drops Scottie. Its callers (ABC order button, CRM portals, punch delete, Payments page) are all screens he cannot reach, and punch delete matches the database.
+- **Gates:** gate_1321 GREEN 3/3, control RED.
+
