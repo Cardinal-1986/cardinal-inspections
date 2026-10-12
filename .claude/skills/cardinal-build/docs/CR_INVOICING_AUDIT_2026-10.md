@@ -64,7 +64,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 - **W6** ✅ *FIXED 1315* — Token mint failure is swallowed (`catch(_it){}` ~17437) → invoice with no token, `total` null.
 - **W7** Community and insurance jobs get the retail invoice; Company SMS would text the occupant, not the partner; insurance invoice can bill the homeowner for carrier money.
 - **W8** `api/sms-link.js` texts any `https?://` URL from the company number — not limited to the app's own share links.
-- **W9** Production (Curtis, Scottie) see Billed/Collected/Balance on the client profile and can generate invoices and record payments. Whether "no money on Production" covers the profile is **Theo's call**.
+- **W9** ✅ *Settled + done 1317/1321: only Curtis sees money; Scottie is Production only, in the app and the database.* Production (Curtis, Scottie) see Billed/Collected/Balance on the client profile and can generate invoices and record payments. Whether "no money on Production" covers the profile is **Theo's call**.
 
 ## Design & ease of use
 

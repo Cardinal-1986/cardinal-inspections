@@ -6301,7 +6301,7 @@ is working."* Then: *"Let's do it all."* Order, settled that night:
 - [x] 1319: the Invoices list — one KPI line, one action per row + a ⋯ (Theo's pick 1).
 - [x] 1320: the invoice says one balance — live on the client's page, in the editor and in print (audit D2 / W3).
 - [x] 1317: Scottie is a FIELD user — Production only, no money, in the app (settled, Theo: "Scottie stays only in productions and can't go anywhere else"; "he's never at a desk"). Curtis keeps full production access.
-- [ ] Field role in the database (RLS): Scottie out of `is_full_access()`; reads he needs (projects names/addresses, punch_items, appointments, crews, crew_work_orders without amount, crew_notes) granted to a field role. SQL first, Theo approves.
+- [x] 1321: Scottie's field role is in the database (field_role.sql applied 12 Oct) and the app mirror matches. Residual, by design: `projects.checklist` money fields and `crew_work_orders.amount` are row-readable to him (the app never shows them).
 - [x] 1312: Community says "estimate", never "bid" — settled (Theo: "Let's keep it estimate and no bid"). P now reads Estimate Submitted. Internal keys (`bids` pane, `newbid`, `checklist.bid`) keep the old word on purpose; do not rename them.
 - [x] 1309–1311: the old Community screens retired, on Theo's "All" (dead code; More tools down to Activity; Estimates = All estimates; Clients without By stage). Residue: the `.cc-kpi`/`.cc-tile`/`.cc-duegrid` CSS now styles nothing — delete at source next clean-up.
 

@@ -2,8 +2,15 @@
 -- "Scottie 2 — I don't want to complicate things for Scottie, he's never at a desk").
 -- The app half shipped at build 1317 (isFieldUser / body.cr-field).
 --
--- ⚠ NOT APPLIED. Theo approves first. Run it BEFORE the app build that takes Scottie out of
---   the app's own is_full_access() shim (index.html, "is_full_access(): admins + production crew").
+-- ✅ APPLIED 12 Oct 2026 (Theo: "run it"). The app half that takes Scottie out of the app's own
+--   is_full_access() mirror is build 1321.
+--   ⚠ HOW IT WAS APPLIED: DROP/CREATE POLICY on public.projects hung past 60s every time (three
+--   tries, even with lock_timeout, no blocker visible in pg_locks), while every other table took
+--   it at once. ALTER POLICY ... USING (...) went through instantly. The policies below are what
+--   is live; on projects/estimates/inspection_reports/document_versions they were set with ALTER
+--   POLICY, the same expressions as written here. Verified as Scottie: 86 jobs, 14 punch items,
+--   12 crews, 4 work orders, 340 photos; 0 estimates, documents, collections, contracts,
+--   commissions, crew rates. Curtis unchanged (27 estimates, 55 documents, 5 collections).
 -- ⚠ After running: sign in AS SCOTTIE on a phone and walk Production Board, Crew Dispatch,
 --   Punch List, a punch card (photos, receipts, time on job), Route, and Notifications.
 --   Revert block at the bottom.
