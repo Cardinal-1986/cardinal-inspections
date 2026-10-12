@@ -4157,7 +4157,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-11 build 1312<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1319<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -10406,6 +10406,29 @@ function buildEstimate(titleHtml, body, terms){
     out = out.replace('<b>Acceptance.</b> This estimate is valid through the date shown above. Signature below',
                       '<b>Acceptance.</b> Signature below');
   }
+  /* 1313: an INVOICE is a bill, not an estimate. It used to keep the estimate's
+     cover photo, Estimate # / Valid Through, a second Client Contact row, the
+     concealed-conditions change-order note, the "this estimate is valid" acceptance
+     paragraph and the Client Acceptance signature line — and that line made
+     api/share.js offer Accept & Sign instead of Pay on every invoice link. */
+  if(/\bINVOICE\b/i.test(plain)){
+    out = out.replace('<title>Cardinal Roofing &amp; Renovations — Estimate</title>',
+                      '<title>Cardinal Roofing &amp; Renovations — Invoice</title>');
+    out = out.replace('<div class="cover-photo">PROPERTY PHOTO</div>\n\n', '');
+    out = out.replace(/<table class="meta">\s*<tr><td class="k">Prepared For<\/td>[\s\S]*?<\/table>/,
+      '<table class="meta">\n' +
+      '  <tr><td class="k">Bill To</td><td><span class="ph">[Client name]</span></td>\n' +
+      '      <td class="k">Invoice Date</td><td><span class="ph">[Date]</span></td></tr>\n' +
+      '  <tr><td class="k">Property Address</td><td><span class="ph">[Street, City, State ZIP]</span></td>\n' +
+      '      <td class="k">Due</td><td>Upon receipt</td></tr>\n' +
+      '  <tr><td class="k">Client Contact</td><td><span class="ph">[Phone · Email]</span></td>\n' +
+      '      <td class="k">Prepared By</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>\n' +
+      '</table>');
+    out = out.replace(/<[d]iv class="note"><b>Concealed conditions\.<\/b>[\s\S]*?<\/[d]iv>\s*/, '');
+    out = out.replace(/<h2 class="sec">Notes<\/h2>\s*<p class="ph">\[Job-specific notes[\s\S]*?<\/p>\s*/, '');
+    out = out.replace(/<[d]iv class="note"><b>Acceptance\.<\/b>[\s\S]*?<\/[d]iv>/, '');
+    out = out.replace(SIGN_FOOTER, '');
+  }
   /* 889: a crew WORK ORDER is not an estimate. Strip the estimate cover (Prepared
      For / Estimate # / Valid Through), the property photo, the generic Notes
      placeholder and the client-acceptance footer \u2014 woBody carries its own
@@ -10861,7 +10884,7 @@ var INVOICE_BODY =
   '<div class="secthead">INVOICE</div>' +
   '<table style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px;">' +
     '<tr><td style="padding:4px 0;color:#666;width:130px;">Invoice #</td><td style="font-weight:800;">[INV_NUM]</td>' +
-    '<td style="padding:4px 0;color:#666;width:110px;">Date</td><td style="font-weight:700;">[INV_DATE]</td></tr>' +
+    '<td></td><td></td></tr>' +
   '</table>' +
   '<div class="secthead">SUMMARY</div>' +
   '<table style="width:100%;border-collapse:collapse;font-size:14px;">' +
@@ -10878,7 +10901,7 @@ var INVOICE_TERMS =
   '<b>Payment terms.</b> Balance is due upon receipt of this invoice. Accounts unpaid after 30 days ' +
   'accrue a late charge of 1.5% per month (18% APR) on the outstanding balance. Please contact our ' +
   'office with any questions about this invoice or to arrange payment.';
-var INVOICE_TEMPLATE = buildEstimate('SERVICE <span>INVOICE</span>', INVOICE_BODY, INVOICE_TERMS);
+var INVOICE_TEMPLATE = buildEstimate('<span>INVOICE</span>', INVOICE_BODY, INVOICE_TERMS);   /* 1314: Theo \u2014 "just invoice" */
 
 function cbxColor(name, hex){
   return '<span class="sw"><span class="chipc" style="background:' + hex + ';"></span>' +
@@ -11313,7 +11336,8 @@ var moneyDb = {
      total is never fuller than the viewer is entitled to. Narrow select. */
   collections: async function(){
     if(!TEAM) return [];
-    var r = await sb.from('collections').select('project_id,amount');
+    /* 1314: collected_at too \u2014 Paid this month (cr-ar-script) reads it, and without it the KPI was always $0 */
+    var r = await sb.from('collections').select('project_id,amount,collected_at,created_at');
     if(r.error) throw r.error;
     return r.data || [];
   }
@@ -11649,7 +11673,8 @@ async function reload(){
          reload(), and with it the entire client profile. */
       moneyDb.estimates().catch(function(){ return []; }),
       moneyDb.contracts().catch(function(){ return []; }),
-      moneyDb.collections().catch(function(){ return []; }),
+      /* 1314: a failed read is NOT an empty ledger \u2014 null keeps the last good figures (see below) */
+      moneyDb.collections().catch(function(){ return null; }),
       /* 723: crew work-order dispatch/completion, keyed to its document by
          report_id. is_full_access RLS, so a rep reads [] — which is exactly
          who never issues one. Catches to [] like the money tables. */
@@ -11691,7 +11716,11 @@ async function reload(){
     }catch(_ov2){}
     cacheAppts = res[2];
     indexMoney(res[3], res[4]);
-    indexCollections(res[5]);
+    /* 1314: [] here used to turn one failed request into "nobody has paid anything" on every
+       Balance Due, the A/R list and the aging chart. Keep what we had and say so. */
+    if(res[5] === null){
+      try{ crTell('Payments did not load just now \u2014 the balances on screen may be out of date. Pull down to refresh.'); }catch(_){}
+    }else indexCollections(res[5]);
     indexWorkOrders(res[6]);
     cacheLoaded = true;   /* 493: only here, and only after the awaits resolved */
     if(currentProject){
@@ -12059,30 +12088,26 @@ function renderOps(){
   }
 
   /* AR aging: invoiced projects, aged from invoice date */
+  /* 1316: the SAME list, clock and buckets as Invoices & AR (CardinalAR.list), for the jobs on
+     this board. It used to count Invoiced only, age from the stage date or the last edit,
+     and bucket <30 / 31-60 / 61-90 / >90 — so a day-30 job was "<30" here and "15–30" there. */
   var buckets = [
-    { lbl:'<30',   min:0,  max:30,       amt:0, col:'#7CB342' },
-    { lbl:'31-60', min:31, max:60,       amt:0, col:'#E8B10F' },
-    { lbl:'61-90', min:61, max:90,       amt:0, col:'#F08A24' },
-    { lbl:'>90',   min:91, max:Infinity, amt:0, col:'#C8202E' }
+    { lbl:'0–14', amt:0, col:'#7CB342' },
+    { lbl:'15–30', amt:0, col:'#E8B10F' },
+    { lbl:'31+',    amt:0, col:'#C8202E' }
   ];
   var total = 0;
   var _arBoard = (typeof boardProjects === 'function') ? boardProjects() : cacheProjects;
+  var _onBoard = {}; (_arBoard || []).forEach(function(p){ _onBoard[p.id] = 1; });
   var _arRows = [];
-  _arBoard.forEach(function(p){
-    if(normStage(p.stage) !== 'Invoiced') return;
-    var ck = parseCkAll(p);
-    var inv = ck.t_Invoiced || ck.stage_since || p.updated_at;
-    var days = inv ? Math.floor((Date.now() - new Date(inv).getTime())/86400000) : 0;
-    /* 654 (CR-AUD-004): outstanding is what is still OWED — value minus
-       payments received — not the gross job value. A half-paid job used to
-       read full here and half on its own profile. */
-    var v = jobFinance(p).balance;
+  var _arAll = (window.CardinalAR && typeof window.CardinalAR.list === 'function') ? window.CardinalAR.list() : [];
+  _arAll.forEach(function(x){
+    if(!_onBoard[x.pr.id]) return;
+    var v = Number(x.fin.balance) || 0;
     if(v <= 0) return;
     total += v;
-    _arRows.push({ name: p.name || 'Client', v: v });
-    for(var i=0;i<buckets.length;i++){
-      if(days >= buckets[i].min && days <= buckets[i].max){ buckets[i].amt += v; break; }
-    }
+    _arRows.push({ name: x.pr.name || 'Client', v: v });
+    buckets[window.CardinalAR.bucketOf(x.age)].amt += v;
   });
   var maxAmt = Math.max.apply(null, buckets.map(function(b){ return b.amt; }).concat([0]));
   function niceCeil(n){
@@ -12467,7 +12492,7 @@ function renderAcxOverview(){
   html += '<div class="dbmoney">' +
     '<span><small>Job Value' + (fin.source === 'estimate' ? ' — from estimate' : '') + '</small><b>' + (fin.value ? fmtMoney(fin.value) : '$0.00') + '</b></span>' +
     '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
-    '<span style="text-align:right;"><small>Balance Due</small><b class="' + (fin.balance > 0 ? 'db-due' : 'db-paid') + '">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
+    '<span style="text-align:right;cursor:pointer;" data-crji-jump="1" role="button" tabindex="0" title="Go to the invoice"><small>Balance due</small><b class="' + (fin.balance > 0 ? 'db-due' : 'db-paid') + '">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
   /* 1108: the rep-facing Invoices & Payments block, right under the money strip. */
   html += (window.CardinalAR && window.CardinalAR.jobBlock) ? window.CardinalAR.jobBlock(pr, fin) : '';
@@ -14355,6 +14380,7 @@ document.getElementById('rptTabs').addEventListener('click', function(e){
 /* ---------- project profile ---------- */
 var projectView = document.getElementById('projectView');
 function showHome(){
+  if((typeof isFieldUser === 'function' && isFieldUser()) && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }   /* 1317: field users live in Production */
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   var hc = document.getElementById('headCtx');
   if(hc) hc.textContent = '';
@@ -14371,6 +14397,9 @@ function showHome(){
   window.scrollTo(0,0);
 }
 function openProject(id){
+  /* 1317: a client profile carries Balance Due and every money tab. A field user's job
+     details — address, phone, directions — are on the punch card. */
+  if((typeof isFieldUser === 'function' && isFieldUser())){ try{ crTell('The job\u2019s address, phone and directions are on its punch card.'); }catch(_){} return; }
   var pr = cacheProjects.find(function(x){ return x.id === id; });
   if(!pr){
     /* 787: this was a bare `return`, and it is how tapping through to a client
@@ -15886,7 +15915,9 @@ async function payMigrateLegacyIn(){
   payGoLogCollection();
 }
 document.getElementById('paySummary').addEventListener('click', function(e){
-  if(e.target.closest('[data-paycontracts]')){ openContractPaid(); return; }
+  /* 1314: "From signed contracts" opened a form that wrote the old worksheet store. It now goes
+     where every dollar in goes. openContractPaid() stays defined for its gate, unreached. */
+  if(e.target.closest('[data-paycontracts]')){ payGoLogCollection(); return; }
   var add = e.target.closest('[data-payadd]');
   if(add){
     /* 996: money IN has one door, and this is not it. Two rows sat directly
@@ -17396,6 +17427,8 @@ function renderWorksheet(pr, fin){
   var invBtn = (fin.value > 0 && fin.source !== 'estimate')
     ? '<div style="text-align:right;margin:2px 0 6px;"><button class="chipbtn" data-mkinv="1">&#129534; Create invoice (balance ' + fmtMoney(fin.balance) + ')</button></div>'
     : '';
+  var wsFoot = '<div class="wsrow" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><span>Paid <b>' + fmtMoney(fin.paid, true) + '</b> \u00b7 Balance due <b>' + fmtMoney(fin.balance, true) + '</b></span>' +
+    '<button class="chipbtn" data-wsrecord="1" type="button">Record payment</button></div>';
   mount.innerHTML = invBtn + fin.contracts.map(function(r){
     var tot = Number(r.total) || 0;
     var paid = Number((ws[r.id] || {}).paid) || 0;
@@ -17404,18 +17437,27 @@ function renderWorksheet(pr, fin){
       '<div class="wstitle">' + esc(r.title) + (r.signed_at ? '' : '<span class="unsig">awaiting signature</span>') + '</div>' +
       '<div class="wsgrid">' +
         '<span><label>Contract Total</label><b>' + (tot ? fmtMoney(tot) : '--') + '</b></span>' +
-        '<span><label>Amount Collected</label><input type="number" min="0" step="0.01" class="wspaid" ' +
-          'data-doc="' + r.id + '" value="' + (paid || '') + '" placeholder="0.00"' + (r.signed_at ? '' : ' disabled') + '></span>' +
-        '<span><label>Remaining</label><b>' + (tot ? fmtMoney(rem) : '--') + '</b></span>' +
+        /* 1314: the Amount Collected box wrote a store Balance Due ignores once any payment is
+           recorded, and the pay link never reads. Money in has one door: Record payment (below). */
       '</div></div>';
-  }).join('');
+  }).join('') + wsFoot;
 }
+var __invBusy = false;   /* 1315: one Create invoice at a time */
 async function createInvoiceFor(pr){
+  if(__invBusy) return;
+  __invBusy = true;
+  try{ await createInvoiceFor1315(pr); } finally { __invBusy = false; }
+}
+async function createInvoiceFor1315(pr){
   var fin = jobFinance(pr);
   if(!fin.value || fin.source === 'estimate'){ crTell('Create an invoice after a contract is signed \u2014 the totals come from the signed contract.'); return; }
+  /* 1315: a paid job has nothing to bill, and a second invoice should be on purpose */
+  if(!(fin.balance > 0.005)){ crTell('This job is paid in full \u2014 there is nothing to invoice.'); return; }
   var invCount = cacheRows.filter(function(r){
     return r.project_id === pr.id && /^invoice/i.test((r.title || '').trim());
   }).length;
+  if(invCount > 0 && !await crAsk('This job already has ' + (invCount === 1 ? 'an invoice' : invCount + ' invoices') +
+      '. Make another one for the ' + fmtMoney(fin.balance, true) + ' still owed?')) return;
   var num = '#' + (poOf(pr) || 'INV') + '-' + (invCount + 1);
   var tpl = prefillUserInfo(prefillClientInfo(INVOICE_TEMPLATE, pr));
   tpl = tpl.replace('[INV_NUM]', esc(num));
@@ -17434,14 +17476,18 @@ async function createInvoiceFor(pr){
       var _itok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
                 : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
       await db.update(id, { share_token: _itok, total: fin.value });
-    }catch(_it){}
+    }catch(_it){
+      /* 1315: say so — every Send button makes the link again, but the reminder texts skip an invoice without one */
+      try{ crTell('Invoice saved, but its pay link could not be set up yet \u2014 it will be made when you send it.'); }catch(_){}
+    }
     await reload();
     await openEditor(id);
-    crTell('Invoice ' + num + ' created from the signed contract and payments logged in the Worksheet. Email it to the client \u2014 the job moves to INVOICED automatically when sent.');
+    crTell('Invoice ' + num + ' is ready. Send it from the job\u2019s invoice card or the editor \u2014 the job moves to Invoiced when it goes out.');   /* 1318 */
   }catch(err){ showError('Could not create invoice: ' + (err.message || err)); }
 }
 document.getElementById('wsMount').addEventListener('click', function(e){
   if(e.target.closest('[data-mkinv]') && currentProject) createInvoiceFor(currentProject);
+  if(e.target instanceof Element && e.target.closest('[data-wsrecord]') && currentProject){ try{ payGoLogCollection(); }catch(_){} }   /* 1314 */
 });
 document.getElementById('wsMount').addEventListener('change', async function(e){
   var inp = e.target.closest('.wspaid');
@@ -27073,6 +27119,13 @@ async function openEditor(id){
       wireColorSelects(doc);
       wireWoFields(doc);
       wireInvoiceLive(doc, r);   /* 1109: live invoice status/balance/ledger */
+      /* 1313: an invoice is paid, not signed — the text button says so */
+      (function(){
+        var tb = document.getElementById('textSignBtn'); if(!tb) return;
+        var inv = /^invoice/i.test(String(r.title || '').trim());
+        var bl = tb.querySelector('.bl'); if(bl) bl.textContent = inv ? 'Text pay link' : 'Text to sign';
+        tb.title = inv ? 'Text the client a link to view and pay this invoice' : 'Text the client a link to review and sign';
+      })();
       fitEstimateFrame();   /* 1278 */
       refreshSigBtn();
       __fillIdx = 0;
@@ -27369,7 +27422,9 @@ async function saveCurrent(){
       title: titleInput.value.trim() || 'Untitled inspection'
     };
     var tot = readEstimateTotal();
-    if(tot !== null) fields.total = tot;
+    /* 1314: on an invoice #estTotal is BALANCE DUE, not the job total \u2014 saving used to
+       overwrite the stored total the server falls back to, then subtract payments again. */
+    if(tot !== null && !/^invoice/i.test(fields.title)) fields.total = tot;
     await db.update(current.id, fields);
     savedFlash.textContent = 'Saved \u2713';
     /* 733: .toolbar #savedFlash is display:none under 760px, so on a phone this
@@ -27455,8 +27510,11 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
       var name = String((proj && (proj.name || proj.client_name)) || '').trim();
       var title = (titleInput.value || '').trim() || 'your document';
       var body = (name ? 'Hi ' + name + ' \u2014 ' : '') + 'here is ' + title +
-        ' from Cardinal Roofing & Renovations. You can review and sign it right here: ' + url;
+        ' from Cardinal Roofing & Renovations. ' +
+        (/^invoice/i.test(title) ? 'You can view and pay it right here: ' : 'You can review and sign it right here: ') + url;
       var tel = (proj && proj.phone) ? String(proj.phone).replace(/[^+\d]/g, '') : '';
+      /* 1315: texting an invoice's pay link is sending it */
+      if(tel && proj && /^invoice/i.test(title) && window.CardinalAR && CardinalAR.markInvoiceSent){ try{ CardinalAR.markInvoiceSent(proj.id); }catch(_){} }
       if(tel){
         location.href = 'sms:' + tel + '?&body=' + encodeURIComponent(body);
       }else{
@@ -27637,7 +27695,8 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     await db.update(current.id, { status: 'sent', sent_at: new Date().toISOString() });
     crDocSent(current.id);
     try{ if(window.crToastOk) window.crToastOk('Sent \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
-    if(pr && row && /^invoice/i.test((row.title || '').trim()) && normStage(pr.stage) !== 'Invoiced'){
+    /* 1315: forward-only — a re-send never pulls a Closed (or Lost) job back to Invoiced */
+    if(pr && row && /^invoice/i.test((row.title || '').trim()) && ['Invoiced', 'Closed', 'Lost'].indexOf(normStage(pr.stage)) === -1){
       try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
     }
     _bl.textContent = '\u2713 Sent';
@@ -28339,7 +28398,10 @@ toggleBtn.addEventListener('click', async function(){
     if(toSent){
       crDocSent(current.id);
       var trow = cacheRows.find(function(r){ return r.id === current.id; });
-      if(trow && trow.project_id && /^invoice/i.test((trow.title || '').trim())){
+      var tpr = trow && cacheProjects.find(function(p){ return p.id === trow.project_id; });
+      /* 1315: forward-only, the same rule as Email to client */
+      if(trow && trow.project_id && /^invoice/i.test((trow.title || '').trim()) &&
+         (!tpr || ['Invoiced', 'Closed', 'Lost'].indexOf(normStage(tpr.stage)) === -1)){
         try{ await setStage(trow.project_id, 'Invoiced'); }catch(e){}
       }
     }
@@ -28427,6 +28489,12 @@ var ADMIN_EMAILS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.ne
 var PRODUCTION_EMAILS = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
 function isAdminUser(){ return TEAM && currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1; }
 function isProductionUser(){ return TEAM && currentUser && PRODUCTION_EMAILS.indexOf(currentUser.email) !== -1; }
+/* 1317: a FIELD user works Production and nothing else — Theo, 11 Oct: "Scottie stays only in
+   productions and can't go anywhere else". Curtis is production but not field: he keeps
+   everything he has. This is the app half; the database half is a field role in RLS. */
+var FIELD_EMAILS = ['scottie@cardinalrenovations.net'];
+function isFieldUser(){ return !!(TEAM && currentUser && FIELD_EMAILS.indexOf(String(currentUser.email || '').toLowerCase()) !== -1); }
+window.isFieldUser = isFieldUser;
 /* 1252: who may assign and close punch work — Theo's rule, the same three
    addresses as public.is_punch_boss() (punch_boss_guard.sql), which is the
    authority. This only keeps the app from offering what it would refuse. */
@@ -28648,6 +28716,7 @@ window.addEventListener('visibilitychange', function(){
 });
 
 function showLanding(userEmail){
+  if((typeof isFieldUser === 'function' && isFieldUser()) && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }   /* 1317: field users live in Production */
   /* 1190 — the vision branch is gone with the hostname it served. Since the
      Showroom cutover (31 Aug) showroom.cardinalroster.com is served by the
      standalone Showroom project, so the host test could only ever answer
@@ -28865,6 +28934,7 @@ function backToLanding(){
 /* Same as backToLanding, but called from the app menu — also clears main-app views
    so the transition is clean. */
 function goToLanding(){
+  if((typeof isFieldUser === 'function' && isFieldUser()) && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }   /* 1317: field users live in Production */
   /* 1188 — THE HOSTNAME IS GONE FROM THIS DECISION. There is one path now.
 
      What this replaced: an `isVisionHost()` fork whose true branch showed
@@ -29322,6 +29392,7 @@ var hd = document.querySelector('header.site');
      stops showing the retail nav row). toggle, not add — a role change on
      re-login must clear it. */
   try{ document.body.classList.toggle('cr-prod', typeof isProductionUser === 'function' && !!isProductionUser()); }catch(_cp){}
+  try{ document.body.classList.toggle('cr-field', (typeof isFieldUser === 'function' && isFieldUser())); }catch(_cf){}   /* 1317 */
   if(typeof isProductionUser === 'function' && isProductionUser() &&
      window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
     try{ var _plv = document.getElementById('landingView'); if(_plv) _plv.style.display = 'none'; }catch(_pl){}
@@ -29562,6 +29633,10 @@ function __histPush(st){
        __histPush already honors __histLock; hold it for the restore window. */
     __histLock = true;
     try{
+      /* 1317: the back button cannot walk a field user out of Production */
+      if((typeof isFieldUser === 'function' && isFieldUser()) && ['production', 'dispatch', 'punchcard', 'route', 'punch'].indexOf(state.view) === -1){
+        state = { app: state.app, view: 'production', data: null };
+      }
       switch(state.view){
         case 'landing':         if(typeof goToLanding === 'function') goToLanding(); break;
         case 'home':            if(typeof showHome === 'function') showHome(); break;
@@ -30543,6 +30618,8 @@ async function enableNotifications(){
        hash router doesn't understand them and its final else fell through to showHome(),
        so Back restored the right view and was instantly overwritten by Home. */
     if(e.state && e.state.app === 'cardinal-nav') return;
+    /* 1317: none of the old hash-router views are field screens */
+    if(window.isFieldUser && window.isFieldUser()){ if(window.CardinalProduction && window.CardinalProduction.open) window.CardinalProduction.open(); return; }
     var st = e.state || { v:'home' };
     __histLock = true;
     try{
@@ -43899,6 +43976,7 @@ currentBg = null;
 document.addEventListener('keydown', function(e){
 if((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')){
 e.preventDefault();
+if((window.isFieldUser && window.isFieldUser())) return;   /* 1317 */
 if(visible) close(); else open();
 }
 });
@@ -44261,6 +44339,13 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1319, d:'2026-10-12', t:'The Invoices list, simpler', s:'Invoices now opens on one line \u2014 what you are owed, what is overdue and what came in this month \u2014 and every job on it has one red button for the next thing to do (Create invoice, Send, Remind, or Record payment) and a \u22ef for everything else: copy the link, email it, record a payment, open the job, and the reminder history. The oldest money is still at the top.' },
+  { b: 1318, d:'2026-10-11', t:'The invoice card, simpler', s:'A job\u2019s invoice card is one line now \u2014 the invoice and what is still owed \u2014 with a bar showing how much is paid, and one red button for the next thing to do: Create invoice, then Send, then Record payment. Send offers Company text, My phone or Email. Tapping Balance due at the top of the job jumps to the card. Record payment starts filled in with the balance, picks Final once the job is invoiced, takes Card, and records today\u2019s date even late at night.' },
+  { b: 1317, d:'2026-10-11', t:'Scottie stays in Production', s:'Scottie\u2019s app now opens on Production and stays there: the menu shows only the Production Board, Crew Dispatch, Punch List and Notifications, the portal picker, search, + New and the section bar are gone, and the back button can\u2019t walk out. Client profiles don\u2019t open for him \u2014 the address, phone and directions are on each job\u2019s punch card \u2014 and the crew pay screen is off. Curtis keeps everything he has.' },
+  { b: 1316, d:'2026-10-11', t:'One answer to who owes you', s:'Invoices & AR, the home card and Community\u2019s Partner A/R each counted different jobs, aged them from different dates and grouped them differently. They now share one set of rules: a job owes when it is Invoiced or Closed, or its invoice has gone out, and still has a balance; age runs from the day the invoice was sent; groups are 0\u201314, 15\u201330 and 31+ days. The oldest money is at the top. Finished jobs that were never invoiced have their own Ready to invoice group with a Create invoice button. Partner jobs show on Invoices & AR, and payments on them now count.' },
+  { b: 1315, d:'2026-10-11', t:'Every send counts as sent', s:'Texting or emailing an invoice from the job card or the Invoices list now marks it sent and moves the job to Invoiced \u2014 before, only the editor\u2019s Email button did, so a texted invoice stayed Draft and was never reminded. Sending never moves a job backwards: a Closed job stays Closed. Create invoice can\u2019t make two by a double tap, says so when the job is paid in full, and asks before making a second one. The payment form works for a second payment without reloading.' },
+  { b: 1314, d:'2026-10-11', t:'One balance everywhere', s:'The pay link, the reminder texts and the app could each come up with a different amount owed \u2014 the server ignored extras added to a job and payments typed into the old Amount Collected box. They all use the same total now, and there is one place to record money in: Record payment. A bank payment still clearing stops the client paying twice. Paid this month finally counts this month\u2019s payments (it always read $0). If payments fail to load, the app says so instead of showing every job as unpaid. The invoice heading now just says INVOICE.' },
+  { b: 1313, d:'2026-10-11', t:'An invoice can be paid', s:'An invoice used to be an estimate with a new title: it still had a signature line, so the link you sent asked the client to Accept & Sign and never showed a Pay button. It also said Estimate #, Valid Through and had an empty photo box. An invoice now has its own header \u2014 Bill To, Invoice Date, Due upon receipt \u2014 no signature line, and the link opens with Pay. The text button on an invoice says Text pay link.' },
   { b: 1312, d:'2026-10-11', t:'Community says estimate, not bid',
     s:'The Community screens called one thing two names: the stages and the list said Estimate, while the pipeline, the job page and the New Estimate form said bid. Now it is estimate everywhere \u2014 the pipeline\u2019s P reads Estimate Submitted, the job page says Open estimate, Build the estimate and Mark this estimate submitted, and the morning chip counts estimates past due. Nothing about the jobs themselves changed.' },
   { b: 1311, d: '2026-10-11', t: 'Community Estimates and Clients stop repeating the home',
@@ -56678,7 +56763,7 @@ function wire(){
          their own open(), so drop the hub without showHome() first. Close only
          when the target module is actually present. */
       if(h === 'dispatch' && window.CardinalDispatch && window.CardinalDispatch.open){ close(false); window.CardinalDispatch.open(); }
-      else if(h === 'crews' && window.CardinalCrews && window.CardinalCrews.open){ close(false); window.CardinalCrews.open(); }
+      else if(h === 'crews' && !(window.isFieldUser && window.isFieldUser()) && window.CardinalCrews && window.CardinalCrews.open){ close(false); window.CardinalCrews.open(); }   /* 1317: crew pay is not a field screen */
     };
   });
   qAll('[data-go="cal"]').forEach(function(b){
@@ -57233,6 +57318,8 @@ function start(){
 }
 window.addEventListener('popstate', function(ev){
   var v = ev.state && ev.state.view;
+  /* 1317: navRestore sends a field user's Back to production; do not shut the hub behind it */
+  if(window.isFieldUser && window.isFieldUser() && ['dispatch', 'punchcard', 'route', 'punch'].indexOf(v) === -1) return;
   if(v !== 'production' && el && el.classList.contains('open')){
     el.classList.remove('open');
     document.body.style.overflow = '';
@@ -63355,16 +63442,17 @@ var calCard = '<button type="button" class="cc-cal30" data-go="calendar" aria-la
 var arCard = '';
 if(role !== 'prod'){
 var arBy = {}, arTot = 0, arN = 0, arOld = 0;
-d.all.forEach(function(pr){
-if(normStage(pr.stage) !== 'Invoiced') return;
-var owe = 0;
-/* jobFinance is the number when a contract or estimate carries one; a Community
-   job priced only by its bid (the usual shape) owes its bid. */
-try{ var jf = (typeof window.jobFinance === 'function') ? window.jobFinance(pr) : null;
-owe = (jf && jf.value > 0) ? (jf.balance || 0) : (bidAmt(pr) || 0); }catch(_1304){ owe = bidAmt(pr) || 0; }
+/* 1316: the same who-owes / how-much / how-old rules as Invoices & AR (CardinalAR.list), so
+   a partner's balance reads the same on both screens — and payments now count (a bid-only
+   job used to owe its whole bid however much the partner had paid). */
+var arMine = {}; d.all.forEach(function(pr){ arMine[pr.id] = 1; });
+var arSrc = (window.CardinalAR && typeof window.CardinalAR.list === 'function') ? window.CardinalAR.list() : [];
+arSrc.forEach(function(x){
+var pr = x.pr;
+if(!arMine[pr.id]) return;
+var owe = Number(x.fin.balance) || 0;
 if(!(owe > 0)) return;
-var c = ck(pr) || {}, invAt = c.t_Invoiced || c.stage_since;
-if(invAt && (Date.now() - new Date(invAt).getTime()) > 30 * 86400000) arOld++;
+if(x.age > 30) arOld++;
 var pn = partnerOf(pr);
 arBy[pn] = (arBy[pn] || 0) + owe; arTot += owe; arN++;
 });
@@ -69017,6 +69105,15 @@ if(typeof _origOLF === 'function'){
 :root[data-theme="rb-light"] .pu-who.own-scottie,:root[data-theme="rb-light"] .pu-asgrow .nm.own-scottie{color:#6a4db0;}
 :root[data-theme="rb-light"] .pu-age{color:#8a5500;}
 #punchView{display:none;min-height:100vh;background:var(--bg);}
+/* 1317: a field user (Scottie) works Production and nothing else. Every door out is closed in
+   code as well (showHome, openProject, navRestore, the Front Door); these rules take the
+   doors off the screen so there is nothing to tap that does nothing. */
+body.cr-field #crBanner, body.cr-field #cbCrm, body.cr-field #cbSearch, body.cr-field #headSearch,
+body.cr-field #newWrap, body.cr-field #cr-lnav, body.cr-field .pbnavbtn[data-hub="crews"],
+body.cr-field #navMenu .navsec{ --cr-stack:"1317 field user: Production only"; display:none !important; }
+body.cr-field #navMenu .navopt:not([data-nav="prodboard"]):not([data-nav="dispatch"]):not([data-nav="punch"]):not([data-nav="notify"]){
+  --cr-stack:"1317 field user: Production only"; display:none !important; }
+body.cr-field #brandTitle{ --cr-stack:"1317 field user: no portal picker"; pointer-events:none; }
 /* 1042 (audit F4): for production accounts the punch page joins the
    full-screen family — fixed over the retail chrome (nav row + desktop
    rail), its own scroll, same ground. Everyone else keeps the in-shell
@@ -73679,7 +73776,7 @@ production: '#96560c',
 sales     : '#b23730'
 };
 
-function on(){ return window.matchMedia('(min-width:' + W + 'px)').matches; }
+function on(){ if((window.isFieldUser && window.isFieldUser())) return false; /* 1317 */ return window.matchMedia('(min-width:' + W + 'px)').matches; }
 function menu(){ return document.getElementById('navMenu'); }
 function host(){ return document.getElementById(MOUNT); }
 
@@ -88234,7 +88331,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     }
     function applySections(){
       if(applying) return;
-      if(!isDrawer() || railWidth()){
+      if(!isDrawer() || railWidth() || (window.isFieldUser && window.isFieldUser())){   /* 1317: a field user's few rows are one flat list */
         applying = true; try{ clearSections(); }catch(_){ } applying = false; return;
       }
       applying = true;
@@ -89395,15 +89492,19 @@ body.cr-landing-on footer.site{display:none !important;}
 #cr-ar-view .crar-top{padding:6px 2px 0;}
 
 /* KPI tray — neumorphic inset porcelain tiles */
-#cr-ar-view .crar-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin-bottom:8px;}
+#cr-ar-view .crar-kpis{margin-bottom:8px;}   /* 1319: one line, not three tiles */
 #cr-ar-view .crar-kpi{
   background:var(--est-numbg); border-radius:14px; padding:15px 17px;
   box-shadow:var(--est-inset); display:flex; flex-direction:column; gap:5px;
 }
 #cr-ar-view .crar-k{font-size:13px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--est-dim);}
 #cr-ar-view .crar-v{font-size:29px; font-weight:800; letter-spacing:-.02em; color:var(--est-ink); font-variant-numeric:tabular-nums; line-height:1.05;}
-#cr-ar-view .crar-v.pos{color:var(--crar-pos,#34d399); --cr-stack:"state modifier on .crar-v: a KPI that is money COLLECTED reads green; the base ink must stay for the other two tiles";}
-#cr-ar-view .crar-kpi.alert .crar-v{color:var(--crar-alert,#f08a90); --cr-stack:"state modifier on .crar-v: the overdue tile alerts; the base ink must stay for the other two tiles";}
+#cr-ar-view .crar-kbig{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+#cr-ar-view .crar-kow{font-size:18px; font-weight:700; color:var(--est-ink);}
+#cr-ar-view .crar-kline{font-size:15px; color:var(--est-dim);}
+#cr-ar-view .crar-kline b{font-weight:700; font-variant-numeric:tabular-nums;}
+#cr-ar-view .crar-kline b.od{color:var(--crar-alert,#f08a90);}
+#cr-ar-view .crar-kline b.pos{color:var(--crar-pos,#34d399);}
 #cr-ar-view .crar-sub{font-size:13px; color:var(--est-dim);}  /* #475569 clears 4.5:1 on the inset tile and porcelain (mist did not) */
 
 /* aging group */
@@ -89419,7 +89520,7 @@ body.cr-landing-on footer.site{display:none !important;}
 
 /* invoice row */
 #cr-ar-view .crar-row{
-  display:grid; grid-template-columns:1.35fr .95fr auto; align-items:center; gap:14px;
+  display:block;
   background:var(--est-panel); border:1px solid var(--est-line); border-radius:14px;
   box-shadow:var(--est-lift); padding:14px 16px; margin-bottom:10px; position:relative;
 }
@@ -89428,15 +89529,11 @@ body.cr-landing-on footer.site{display:none !important;}
 #cr-ar-view .crar-who{min-width:0;}
 #cr-ar-view .crar-nm{font-size:15px; font-weight:600; display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
 #cr-ar-view .crar-addr{font-size:13px; color:var(--est-dim); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-#cr-ar-view .crar-money{display:flex; gap:16px; justify-content:flex-end;}
-#cr-ar-view .crar-col{display:flex; flex-direction:column; align-items:flex-end; gap:2px;}
-#cr-ar-view .crar-cl{font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--crar-mist);}
-#cr-ar-view .crar-mv{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--est-ink);}
-#cr-ar-view .crar-mv.dim{color:var(--crar-mist); font-weight:500;}
-#cr-ar-view .crar-mv.pos{color:var(--crar-pos,#34d399);}
-#cr-ar-view .crar-mv.bal{font-size:18px; font-weight:800;}
-#cr-ar-view .crar-mv.bal.od{color:var(--crar-alert,#f08a90);}
-#cr-ar-view .crar-age{font-size:13px; font-weight:600; color:var(--crar-mist); white-space:nowrap;}
+#cr-ar-view .crar-top2{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
+#cr-ar-view .crar-amt{font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--est-ink);}
+#cr-ar-view .crar-amt.od{color:var(--crar-alert,#f08a90);}
+#cr-ar-view .crar-age{display:inline-flex; padding:2px 9px; border:1px solid var(--est-line); border-radius:999px;
+  font-size:13px; font-weight:600; color:var(--crar-mist); white-space:nowrap;}
 #cr-ar-view .crar-age.od{color:var(--crar-alert,#f08a90);}
 
 /* status pills — semantic hues, dark inks for a 4.5:1 floor on the light tints */
@@ -89450,8 +89547,12 @@ body.cr-landing-on footer.site{display:none !important;}
 #cr-ar-view .crar-pill.over{color:#B91C1C; background:#FCEAEA;}
 
 /* actions */
-#cr-ar-view .crar-acts{grid-column:1 / -1; display:flex; gap:8px; flex-wrap:wrap;
-  border-top:1px dashed var(--est-line); margin-top:2px; padding-top:12px;}
+#cr-ar-view .crar-acts{display:flex; gap:8px; margin-top:12px;}
+#cr-ar-view .crar-acts .crar-go{flex:1 1 auto; justify-content:center;}
+#cr-ar-view .crar-more{min-width:44px; justify-content:center;}
+#cr-ar-view .crar-menu{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--est-line);}
+#cr-ar-view .crar-menu[hidden]{display:none;}
+#cr-ar-view .crar-menu .crar-rem{flex-basis:100%;}
 #cr-ar-view .crar-btn{
   display:inline-flex; align-items:center; gap:6px; cursor:pointer;
   border:1px solid var(--est-line); background:transparent; color:var(--est-ink);
@@ -89472,14 +89573,6 @@ body.cr-landing-on footer.site{display:none !important;}
 body.cr-ar-adm #arCard{cursor:pointer;}
 body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px rgba(15,23,42,.12);}
 
-@media(max-width:640px){
-  #cr-ar-view .crar-kpis{grid-template-columns:1fr;}
-}
-@media(max-width:560px){
-  #cr-ar-view .crar-row{grid-template-columns:1fr;}
-  #cr-ar-view .crar-money{justify-content:flex-start;}
-  #cr-ar-view .crar-age{margin-top:2px;}
-}
 
 /* ═══ 1108: the in-profile Invoices & Payments card + the offline payment modal.
    The porcelain "money" language, self-contained (own light bg + dark ink), so it
@@ -89494,7 +89587,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   --crji-card:#141619; --crji-line:#262a30; --crji-ink:#f2f4f7; --crji-sub:#a8b0ba;
   --crji-tile:#1b1f24; --crji-tile-lo:#0d0f12; --crji-tile-hi:#23282e;
   --crji-pos:#34d399; --crji-due:#f08a90;
-  --crji-btn:#1b1f24; --crji-btn-ink:#e6e9ee;
+  --crji-btn:#1b1f24; --crji-btn-ink:#e6e9ee; --crji-btnline:#3a3d46;
   --crji-ghost:#1b1f24; --crji-ghost-ink:#a8b0ba;
   --crji-sh1:rgba(0,0,0,.45); --crji-sh2:rgba(0,0,0,.55);
 }
@@ -89502,7 +89595,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   --crji-card:#FFFFFF; --crji-line:#E2E8F0; --crji-ink:#0F172A; --crji-sub:#475569;
   --crji-tile:#EAEEF3; --crji-tile-lo:#D1D9E6; --crji-tile-hi:#FFFFFF;
   --crji-pos:#047857; --crji-due:#C8202E;
-  --crji-btn:#FFFFFF; --crji-btn-ink:#0F172A;
+  --crji-btn:#FFFFFF; --crji-btn-ink:#0F172A; --crji-btnline:#c9cdd3;
   --crji-ghost:#F8FAFC; --crji-ghost-ink:#475569;
   --crji-sh1:rgba(15,23,42,.06); --crji-sh2:rgba(15,23,42,.16);
 }
@@ -89521,10 +89614,24 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 .crji-nums b.pos{color:var(--crji-pos,#34d399);}
 .crji-nums b.due{color:var(--crji-due,#f08a90);}
 .crji-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-.crji-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--crji-line,#262a30);background:var(--crji-btn,#1b1f24);color:var(--crji-btn-ink,#e6e9ee);font-size:13px;font-weight:600;padding:9px 12px;border-radius:10px;box-shadow:0 1px 2px var(--crji-sh1,rgba(0,0,0,.45)),0 4px 10px var(--crji-sh1,rgba(0,0,0,.45));}
+.crji-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border:1px solid var(--crji-btnline,#3a3d46);background:transparent;color:var(--crji-btn-ink,#e6e9ee);font-size:13px;font-weight:600;padding:9px 14px;min-height:44px;border-radius:10px;box-shadow:none;}   /* 1318: outline, 44px (Buttons A) */
+.crji-card.v2 .crji-row{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.crji-card.v2 .crji-ttl{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.crji-card.v2 .crji-amt{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.crji-card.v2 .crji-amt.due{color:var(--crji-due,#f08a90);}
+.crji-card.v2 .crji-amt.paid{color:var(--crji-pos,#34d399);}
+.crji-card.v2 .crji-sub{font-size:13px;color:var(--crji-sub,#a8b0ba);margin-top:2px;}
+.crji-card.v2 .crji-bar{height:8px;border-radius:99px;background:var(--crji-tile,#1b1f24);overflow:hidden;margin:12px 0 6px;}
+.crji-card.v2 .crji-bar i{display:block;height:100%;background:var(--crji-pos,#34d399);border-radius:99px;}
+.crji-card.v2 .crji-acts{margin-top:12px;}
+.crji-card.v2 .crji-acts .crji-btn{flex:1 1 auto;}
+.crji-card.v2 .crji-sendrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.crji-card.v2 .crji-sendrow[hidden]{display:none;}
+#dbMoneyCard [data-crji-jump]{min-height:44px;display:flex;flex-direction:column;justify-content:center;}
+.crji-card.v2 .crji-sendrow .crji-btn{flex:1 1 30%;}
 .crji-btn svg{width:15px;height:15px;}
 .crji-btn.primary{background:#C8202E;border-color:#C8202E;color:#fff;box-shadow:0 2px 8px rgba(200,32,46,.28);}
-.crji-btn.ghost{background:var(--crji-ghost,#1b1f24);color:var(--crji-ghost-ink,#a8b0ba);box-shadow:none;}
+.crji-btn.ghost{background:transparent;color:var(--crji-ghost-ink,#a8b0ba);box-shadow:none;}
 .crji-hint{font-size:13px;color:var(--crji-sub,#a8b0ba);}
 
 /* status pills, UNSCOPED so they render in the job block too (same values as the
@@ -89564,10 +89671,10 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 #cr-pay-modal .crpay-amt{display:flex;align-items:center;gap:6px;background:var(--crpay-well,#1b1f24);border-radius:12px;padding:2px 12px;box-shadow:inset 4px 4px 9px var(--crpay-well-lo,#0d0f12), inset -4px -4px 9px var(--crpay-well-hi,#23282e);}
 #cr-pay-modal .crpay-amt span{font-weight:800;color:var(--crpay-sub,#a8b0ba);font-size:18px;}
 #cr-pay-modal .crpay-amt input{flex:1;border:0;background:transparent;font-size:22px;font-weight:800;color:var(--crpay-ink,#f2f4f7);padding:10px 0;outline:none;}
-#cr-pay-modal .crpay-in{width:100%;background:var(--crpay-field,#1b1f24);border:1px solid var(--crpay-line,#262a30);border-radius:10px;padding:11px 12px;font-size:15px;color:var(--crpay-ink,#f2f4f7);outline:none;}
+#cr-pay-modal .crpay-in{width:100%;min-height:44px;background:var(--crpay-field,#1b1f24);border:1px solid var(--crpay-line,#262a30);border-radius:10px;padding:11px 12px;font-size:15px;color:var(--crpay-ink,#f2f4f7);outline:none;}
 #cr-pay-modal .crpay-in:focus{border-color:#C8202E;box-shadow:0 0 0 3px rgba(200,32,46,.22);}
 #cr-pay-modal .crpay-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--crpay-well,#1b1f24);border-radius:12px;padding:4px;}
-#cr-pay-modal .crpay-seg button{border:0;background:transparent;color:var(--crpay-sub,#a8b0ba);font-size:13px;font-weight:600;padding:10px 6px;border-radius:9px;cursor:pointer;}
+#cr-pay-modal .crpay-seg button{border:0;background:transparent;color:var(--crpay-sub,#a8b0ba);font-size:13px;font-weight:600;padding:10px 6px;min-height:44px;border-radius:9px;cursor:pointer;}
 #cr-pay-modal .crpay-seg button.on{background:var(--crpay-on,#262a30);color:var(--crpay-ink,#f2f4f7);box-shadow:var(--crpay-on-sh,0 1px 2px rgba(0,0,0,.45),0 4px 10px rgba(0,0,0,.5));}
 #cr-pay-modal .crpay-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
 
@@ -89604,9 +89711,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       <button id="crarMaster" class="crar-btn" type="button" disabled>&hellip;</button>
     </div>
     <div class="crar-kpis">
-      <div class="crar-kpi"><span class="crar-k">Total outstanding</span><span class="crar-v" id="crarKpiOut">$0</span><span class="crar-sub" id="crarKpiOutSub">0 open invoices</span></div>
-      <div class="crar-kpi"><span class="crar-k">Paid this month</span><span class="crar-v pos" id="crarKpiMonth">$0</span><span class="crar-sub">card &amp; offline</span></div>
-      <div class="crar-kpi alert"><span class="crar-k">Overdue &middot; 30+ days</span><span class="crar-v" id="crarKpiOver">$0</span><span class="crar-sub" id="crarKpiOverSub">nothing overdue</span></div>
+      <div class="crar-kpi"><div class="crar-kbig"><span class="crar-v" id="crarKpiOut">$0</span> <span class="crar-kow">owed</span> <span class="crar-sub" id="crarKpiOutSub">0 jobs owe</span></div>
+        <div class="crar-kline"><b class="od" id="crarKpiOver">$0</b> overdue &middot; <b class="pos" id="crarKpiMonth">$0</b> paid this month <span class="crar-sub" id="crarKpiOverSub"></span></div></div>
     </div>
     <div class="crar-body" id="crarBody"></div>
   </div>
@@ -89661,32 +89767,68 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if(inv && inv.status === 'sent') return { k:'sent', label:'Sent' };
     return { k:'draft', label:'Draft' };
   }
-  /* days since the invoice was sent, else since Invoiced stage */
+  /* 1316: ONE aging clock for every A/R screen. The invoice's sent date; else the day the job
+     went Invoiced; else the invoice's own date. Never updated_at — any edit reset it to 0 —
+     and never pr.stage_since, which is not a column (it lives in the checklist). */
   function ageDays(pr, inv){
-    var iso = (inv && inv.sent_at) || null;
-    if(!iso){
-      var ck = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
-      iso = ck.t_Invoiced || pr.stage_since || pr.updated_at || null;
-    }
+    var ck = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
+    var iso = (inv && inv.sent_at) || ck.t_Invoiced || ck.stage_since || (inv && inv.created_at) || null;
     if(!iso) return 0;
     var d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
     return d > 0 ? d : 0;
   }
-
-  /* the AR set: invoiced (or invoice-bearing) jobs that still owe */
+  /* 1316: what a job owes. jobFinance's number, except a Community job priced only by its bid:
+     there jobFinance's value is 0 and its paid figure clamps to 0, so a $12,000 Habitat job
+     with $6,000 paid read $12,000 on one screen, $0 on another and was missing from a third.
+     It owes its bid less what has been paid. */
+  function owed(pr){
+    var fin = jobFinance(pr);
+    if(Number(fin.value) > 0) return fin;
+    var community = (typeof projClaimType === 'function') && projClaimType(pr) === 'community';
+    if(!community || typeof window.commBidAmount !== 'function') return fin;
+    var est = (typeof estBest !== 'undefined' && estBest) ? (Number(estBest[pr.id]) || 0) : 0;
+    var b = Number((window.commBidAmount(pr, { total: est }) || {}).amt) || 0;
+    var paid = (typeof collPaid !== 'undefined' && collPaid) ? (Number(collPaid[pr.id]) || 0) : 0;
+    return { contracts: fin.contracts, value: b, paid: paid, balance: b - paid,
+             pct: b ? Math.round(paid / b * 100) : 0, source: b ? 'bid' : 'none' };
+  }
+  function invSent(inv){ return !!(inv && inv.status === 'sent'); }
+  /* 1316: ONE rule for who owes. Invoiced or Closed, or an invoice that has gone out, with a
+     balance. Lost never counts. A Closed job with money owed used to vanish from the home card. */
   function arList(){
     var out = [];
     projects().forEach(function(pr){
+      var s = stg(pr);
+      if(s === 'Lost') return;
       var inv = invoiceFor(pr.id);
-      if(stg(pr) !== 'Invoiced' && !inv) return;
-      var fin = jobFinance(pr);
+      if(s !== 'Invoiced' && s !== 'Closed' && !invSent(inv)) return;
+      var fin = owed(pr);
       if(!(Number(fin.balance) > 0.005)) return;
       out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:ageDays(pr, inv) });
     });
     out.sort(function(a, b){ return b.age - a.age; });
     return out;
   }
+  /* 1316: finished work nobody has billed — the commonest case, and the list could never show
+     it, so its own Create invoice button never appeared. Retail and insurance only: Community
+     is billed to the partner from its own page. Estimate-priced jobs are left out because an
+     invoice needs contract money (createInvoiceFor refuses them). */
+  function readyList(){
+    var out = [];
+    projects().forEach(function(pr){
+      if(stg(pr) !== 'Completed') return;
+      if((typeof projClaimType === 'function') && projClaimType(pr) === 'community') return;
+      var inv = invoiceFor(pr.id);
+      if(invSent(inv)) return;
+      var fin = jobFinance(pr);
+      if(!(Number(fin.balance) > 0.005) || fin.source === 'estimate') return;
+      out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:0, ready:true });
+    });
+    return out;
+  }
+  /* 1316: one bucket set everywhere — 0–14, 15–30, 31+ */
   function bucketOf(age){ return age < 15 ? 0 : (age <= 30 ? 1 : 2); }
+  var BUCKET_LABELS = ['0–14 days', '15–30 days', '31+ days · overdue'];
   function paidThisMonth(){
     var now = new Date();
     var ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -89699,35 +89841,43 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 
   function pill(st){ return '<span class="crar-pill ' + st.k + '">' + esc2(st.label) + '</span>'; }
 
+  /* 1319 (Theo's pick 1): one red button for the next thing to do, a ⋯ for the rest */
+  var IC_MORE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+  function shortDate(v){ var d = v ? new Date(v) : null; return (d && !isNaN(d.getTime())) ? d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) : ''; }
   function rowHtml(x){
-    var pr = x.pr, od = x.age > 30;
-    var addr = esc2(pr.address || '');
+    var pr = x.pr, od = x.age > 30, id = esc2(pr.id);
     var nm = esc2(pr.name || 'Client');
-    var note = x.inv ? '' : ' &middot; not yet invoiced';
-    var acts;
-    if(x.inv){
-      acts = '<button class="crar-btn ghost" type="button" data-arcopy="' + esc2(pr.id) + '">' + IC_LINK + 'Copy link</button>'
-           + '<button class="crar-btn' + (od ? ' primary' : '') + '" type="button" data-artext="' + esc2(pr.id) + '">' + IC_SMS + (od ? 'Resend text' : 'Text link') + '</button>'
-           + '<button class="crar-btn" type="button" data-aremail="' + esc2(pr.id) + '">' + IC_MAIL + 'Email</button>'
-           + '<button class="crar-btn ghost" type="button" data-aropen="' + esc2(pr.id) + '">Open job</button>';
+    var sent = !!(x.inv && x.inv.status === 'sent');
+    var RB = function(cls, attr, label){ return '<button class="crar-btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '="' + id + '">' + label + '</button>'; };
+    var bits = [];
+    if(x.ready) bits.push('Finished &middot; signed contract');
+    else if(!x.inv) bits.push('Not invoiced yet');
+    if(x.fin.paid > 0) bits.push('Paid ' + money(x.fin.paid) + ' of ' + money(x.fin.value));
+    if(x.inv) bits.push(sent ? ('Sent ' + esc2(shortDate(x.inv.sent_at) || (x.age + ' days ago'))) : 'Invoice not sent');
+    var ageTxt = x.ready ? 'Ready' : (x.age + (x.age === 1 ? ' day' : ' days'));
+    var go, more = [];
+    if(!x.inv){
+      go = RB('primary crar-go', 'data-armkinv', 'Create invoice');
+      more.push(RB('', 'data-arpay', IC_CASH + 'Record payment'));
+    } else if(!sent){
+      go = RB('primary crar-go', 'data-artext', IC_SMS + 'Send');
+      more.push(RB('', 'data-arcopy', IC_LINK + 'Copy link'), RB('', 'data-aremail', IC_MAIL + 'Email'), RB('', 'data-arpay', IC_CASH + 'Record payment'));
+    } else if(od){
+      go = RB('primary crar-go', 'data-artext', IC_SMS + 'Remind');
+      more.push(RB('', 'data-arcopy', IC_LINK + 'Copy link'), RB('', 'data-aremail', IC_MAIL + 'Email'), RB('', 'data-arpay', IC_CASH + 'Record payment'));
     } else {
-      acts = '<button class="crar-btn" type="button" data-armkinv="' + esc2(pr.id) + '">Create invoice</button>'
-           + '<button class="crar-btn ghost" type="button" data-aropen="' + esc2(pr.id) + '">Open job</button>';
+      go = RB('crar-go', 'data-arpay', IC_CASH + 'Record payment');
+      more.push(RB('', 'data-arcopy', IC_LINK + 'Copy link'), RB('', 'data-artext', IC_SMS + 'Text link'), RB('', 'data-aremail', IC_MAIL + 'Email'));
     }
-    acts += '<button class="crar-btn ghost" type="button" data-arpay="' + esc2(pr.id) + '">' + IC_CASH + 'Record payment</button>';
-    var ageTxt = od ? (x.age + ' days &middot; overdue')
-                    : (x.inv && x.inv.status === 'sent' ? ('Sent ' + x.age + 'd ago') : (x.age + 'd'));
+    more.push(RB('', 'data-aropen', 'Open job'));
     return '<div class="crar-row' + (od ? ' od' : '') + '">'
-      + '<div class="crar-who"><div class="crar-nm">' + nm + ' ' + pill(x.st) + '</div>'
-      +   '<div class="crar-addr">' + (addr || '&mdash;') + note + '</div>'
-      +   '<div class="crar-rem" data-remfor="' + esc2(pr.id) + '"></div></div>'
-      + '<div class="crar-money">'
-      +   '<div class="crar-col"><span class="crar-cl">Billed</span><span class="crar-mv dim">' + money(x.fin.value) + '</span></div>'
-      +   '<div class="crar-col"><span class="crar-cl">Collected</span><span class="crar-mv' + (x.fin.paid > 0 ? ' pos' : ' dim') + '">' + money(x.fin.paid) + '</span></div>'
-      +   '<div class="crar-col"><span class="crar-cl">Balance</span><span class="crar-mv bal' + (od ? ' od' : '') + '">' + money(x.fin.balance) + '</span></div>'
-      + '</div>'
-      + '<div class="crar-age' + (od ? ' od' : '') + '">' + ageTxt + '</div>'
-      + '<div class="crar-acts">' + acts + '</div>'
+      + '<div class="crar-top2"><div class="crar-who"><div class="crar-nm">' + nm + (x.inv ? ' ' + pill(x.st) : '') + ' <span class="crar-age' + (od ? ' od' : '') + '">' + ageTxt + '</span></div>'
+      +   '<div class="crar-addr">' + bits.join(' &middot; ') + '</div></div>'
+      +   '<div class="crar-amt' + (od ? ' od' : '') + '">' + money(x.fin.balance) + '</div></div>'
+      + '<div class="crar-acts">' + go
+      +   '<button class="crar-btn crar-more" type="button" data-armore="' + id + '" aria-expanded="false" aria-label="More for ' + nm + '">' + IC_MORE + '</button></div>'
+      + '<div class="crar-menu" data-armenu="' + id + '" hidden>' + more.join('')
+      +   (x.inv ? '<div class="crar-rem" data-remfor="' + id + '"></div>' : '') + '</div>'
       + '</div>';
   }
 
@@ -89736,11 +89886,12 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var list = arList();
     var total = 0, overdue = 0, overdueN = 0;
     list.forEach(function(x){ total += x.fin.balance; if(x.age > 30){ overdue += x.fin.balance; overdueN++; } });
-    if(q('crarKpiOut')) q('crarKpiOut').textContent = money(total);
-    if(q('crarKpiMonth')) q('crarKpiMonth').textContent = money(paidThisMonth());
-    if(q('crarKpiOver')) q('crarKpiOver').textContent = money(overdue);
-    if(q('crarKpiOutSub')) q('crarKpiOutSub').textContent = list.length + (list.length === 1 ? ' open invoice' : ' open invoices');
-    if(q('crarKpiOverSub')) q('crarKpiOverSub').textContent = overdueN ? (overdueN + (overdueN === 1 ? ' invoice needs a nudge' : ' invoices need a nudge')) : 'nothing overdue';
+    var m0 = function(n){ return Number(n) > 0 ? money(n) : '$0'; };   /* 1319 */
+    if(q('crarKpiOut')) q('crarKpiOut').textContent = m0(total);
+    if(q('crarKpiMonth')) q('crarKpiMonth').textContent = m0(paidThisMonth());
+    if(q('crarKpiOver')) q('crarKpiOver').textContent = m0(overdue);
+    if(q('crarKpiOutSub')) q('crarKpiOutSub').textContent = list.length + (list.length === 1 ? ' job owes' : ' jobs owe');   /* 1316: not all have an invoice yet */
+    if(q('crarKpiOverSub')) q('crarKpiOverSub').textContent = '';   /* 1319: the one line says it */
     /* 1158: ONE remWire() call, on every path. 1157 put it after the bucket
        loop, behind an early `return` taken whenever the list was empty — so
        with nothing owed the master switch never painted and sat on
@@ -89748,15 +89899,27 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
        book, and it is the screen the switch lives on. The list rendering is
        now a branch rather than an exit, so the switch cannot be skipped. */
     var body = q('crarBody');
+    var ready = readyList();
+    var readyHtml = '';
+    if(ready.length){
+      var rsub = 0; ready.forEach(function(x){ rsub += x.fin.balance; });
+      readyHtml = '<div class="crar-grp ready">'
+        + '<div class="crar-grphd"><b>Ready to invoice</b><span class="crar-line"></span><span class="crar-sub">' + money(rsub) + '</span></div>'
+        + ready.map(rowHtml).join('')
+        + '</div>';
+    }
     if(body){
-      if(!list.length){
+      if(!list.length && !ready.length){
         body.innerHTML = '<div class="crar-empty"><b>All clear.</b><br>No open balances right now.</div>';
+      } else if(!list.length){
+        body.innerHTML = readyHtml;
       } else {
         var buckets = [[], [], []];
         list.forEach(function(x){ buckets[bucketOf(x.age)].push(x); });
-        var labels = ['Current &middot; 0&ndash;14 days', '15&ndash;30 days', '30+ days &middot; overdue'];
+        var labels = ['0&ndash;14 days', '15&ndash;30 days', '31+ days &middot; overdue'];
         var html = '';
-        for(var i = 0; i < 3; i++){
+        /* 1316: the oldest money first — on a phone the 45-day job used to sit ~2,000px down */
+        for(var i = 2; i >= 0; i--){
           if(!buckets[i].length) continue;
           var sub = 0; buckets[i].forEach(function(x){ sub += x.fin.balance; });
           html += '<div class="crar-grp' + (i === 2 ? ' over' : '') + '">'
@@ -89764,7 +89927,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
             + buckets[i].map(rowHtml).join('')
             + '</div>';
         }
-        body.innerHTML = html;
+        body.innerHTML = readyHtml + html;
       }
     }
     remWire();
@@ -89863,10 +90026,31 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   }
   function payUrl(tok){ return location.origin + '/api/share?t=' + tok; }
   function firstName(pr){ return String((pr && pr.name) || '').trim().split(/\s+/)[0] || 'there'; }
-  function linkFor(pid){
+  function linkFor(pid, send){
     var inv = invoiceFor(pid);
     if(!inv) return Promise.reject(new Error('This job has no invoice yet — create one first.'));
-    return ensureTokenForRow(inv).then(payUrl);
+    return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); });
+  }
+  /* 1315: sending is sending, whichever button did it. Before, only the editor's Email to
+     client and Mark sent wrote status:'sent' and moved the stage, so an invoice texted from
+     here stayed Draft — no aging date, never reminded (remind.js reads status=sent), not
+     on the home A/R card (Invoiced only). Forward-only: a job already Invoiced, Closed or
+     Lost is never pulled back by a re-send. */
+  function stageBeforeInvoiced(s){ return ['Invoiced', 'Closed', 'Lost'].indexOf(s) === -1; }
+  function markInvoiceSent(pid, inv){
+    inv = inv || invoiceFor(pid);
+    if(!inv) return Promise.resolve(false);
+    var now = new Date().toISOString();
+    var w = (inv.status === 'sent' && inv.sent_at) ? Promise.resolve()
+      : db.update(inv.id, { status: 'sent', sent_at: inv.sent_at || now }).then(function(){
+          inv.status = 'sent'; inv.sent_at = inv.sent_at || now; });
+    return w.then(function(){
+      var pr = prById(pid);
+      if(pr && stageBeforeInvoiced(stg(pr)) && typeof setStage === 'function') return setStage(pid, 'Invoiced');
+    }).then(function(){ return true; }).catch(function(err){
+      fail(new Error('The link went out, but the invoice could not be marked sent: ' + ((err && err.message) || err)));
+      return false;
+    });
   }
   function fail(err){ if(typeof crTell === 'function') crTell((err && err.message) || String(err)); }
   function prById(id){ return projects().find(function(p){ return p.id === id; }) || null; }
@@ -89906,6 +90090,11 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       }
       return;
     }
+    if(e.target instanceof Element && (t = e.target.closest('[data-armore]'))){   /* 1319 */
+      var mn = document.querySelector('#cr-ar-view [data-armenu="' + t.getAttribute('data-armore') + '"]');
+      if(mn instanceof HTMLElement){ mn.hidden = !mn.hidden; t.setAttribute('aria-expanded', mn.hidden ? 'false' : 'true'); }
+      return;
+    }
     if((t = e.target.closest('[data-aropen]'))){ if(window.openProject) window.openProject(t.getAttribute('data-aropen')); return; }
     if((t = e.target.closest('[data-armkinv]'))){
       var pr = prById(t.getAttribute('data-armkinv'));
@@ -89923,7 +90112,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }
     if((t = e.target.closest('[data-artext]'))){
       var prT = prById(t.getAttribute('data-artext'));
-      linkFor(t.getAttribute('data-artext')).then(function(url){
+      linkFor(t.getAttribute('data-artext'), true).then(function(url){
         var body = 'Hi ' + firstName(prT) + ', here’s your invoice from Cardinal Roofing — you can review it and pay securely here: ' + url;
         location.href = 'sms:?&body=' + encodeURIComponent(body);
       }).catch(fail);
@@ -89931,7 +90120,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }
     if((t = e.target.closest('[data-aremail]'))){
       var prE = prById(t.getAttribute('data-aremail'));
-      linkFor(t.getAttribute('data-aremail')).then(function(url){
+      linkFor(t.getAttribute('data-aremail'), true).then(function(url){
         var subj = 'Your invoice from Cardinal Roofing & Renovations';
         var body = 'Hi ' + firstName(prE) + ',\n\nHere is your invoice — you can review it and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations';
         location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
@@ -89953,33 +90142,48 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function statusOf(pr){ return statusFor(pr, invoiceFor(pr.id)); }
 
   /* the porcelain "Invoices & Payments" card shown on a job profile */
+  /* 1318 (Theo's pick 2): one line, a paid bar, ONE red button — the next thing to do. */
   function jobBlockHtml(pr, fin){
     if(!pr) return '';
     fin = fin || jobFinance(pr);
     var inv = invoiceFor(pr.id);
     var st  = statusFor(pr, inv, fin);
     var canInvoice = Number(fin.value) > 0 && fin.source !== 'estimate';
-    var bal = Number(fin.balance) || 0;
-    var acts;
-    if(inv){
-      acts = '<button class="crji-btn primary" type="button" data-inv-sms="' + esc2(pr.id) + '">' + IC_SMS + 'Company SMS</button>'
-           + '<button class="crji-btn" type="button" data-inv-text="' + esc2(pr.id) + '">' + IC_SMS + 'My phone</button>'
-           + '<button class="crji-btn" type="button" data-inv-email="' + esc2(pr.id) + '">' + IC_MAIL + 'Email</button>'
-           + '<button class="crji-btn ghost" type="button" data-inv-open="' + esc2(pr.id) + '">Open invoice</button>';
-    }else if(canInvoice){
-      acts = '<button class="crji-btn primary" type="button" data-inv-gen="' + esc2(pr.id) + '">' + IC_DOC + 'Generate invoice</button>';
+    var total = Number(fin.value) || 0, paid = Number(fin.paid) || 0, bal = Number(fin.balance) || 0;
+    var isPaid = total > 0 && bal <= 0.005;
+    var sent = !!(inv && inv.status === 'sent');
+    var pid = esc2(pr.id);
+    var pct = total > 0 ? Math.max(0, Math.min(100, Math.round(paid / total * 100))) : 0;
+    var title = inv ? ('Invoice' + (inv.title && /#[\w-]+/.test(inv.title) ? ' ' + esc2(inv.title.match(/#[\w-]+/)[0]) : '')) : 'No invoice yet';
+    var line2 = isPaid ? ('Paid in full' + (inv && inv.sent_at ? '' : ''))
+              : sent ? ('Sent ' + ageDays(pr, inv) + (ageDays(pr, inv) === 1 ? ' day' : ' days') + ' ago')
+              : inv ? 'Not sent yet'
+              : canInvoice ? 'Finished work is ready to bill' : 'An invoice opens once a contract is signed.';
+    var B = function(cls, attr, label){ return '<button class="crji-btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '="' + pid + '">' + label + '</button>'; };
+    var main = '', more = '';
+    if(!inv){
+      if(canInvoice) main = B('primary', 'data-inv-gen', IC_DOC + 'Create invoice');
+    }else if(isPaid){
+      more = B('', 'data-inv-open', 'Open invoice');
+    }else if(!sent){
+      main = B('primary', 'data-inv-sendmenu', IC_SMS + 'Send');
+      more = B('', 'data-inv-pay', IC_CASH + 'Record payment') + B('', 'data-inv-open', 'Open invoice');
     }else{
-      acts = '<span class="crji-hint">An invoice opens once a contract is signed.</span>';
+      main = B('primary', 'data-inv-pay', IC_CASH + 'Record payment');
+      more = B('', 'data-inv-sendmenu', IC_SMS + 'Send again') + B('', 'data-inv-open', 'Open invoice');
     }
-    if(canInvoice) acts += '<button class="crji-btn ghost" type="button" data-inv-pay="' + esc2(pr.id) + '">' + IC_CASH + 'Record offline payment</button>';
-    return '<div class="crji-card">'
-      + '<div class="crji-head"><span class="crji-ttl">Invoices &amp; Payments</span>' + pill(st) + '</div>'
-      + '<div class="crji-nums">'
-      +   '<span><small>Billed</small><b>' + money(fin.value) + '</b></span>'
-      +   '<span><small>Collected</small><b class="pos">' + money(fin.paid) + '</b></span>'
-      +   '<span><small>Balance</small><b class="' + (bal > 0 ? 'due' : 'paid') + '">' + money(bal) + '</b></span>'
-      + '</div>'
-      + '<div class="crji-acts">' + acts + '</div>'
+    if(!inv && canInvoice && paid < total) more = B('', 'data-inv-pay', IC_CASH + 'Record payment');
+    var sendRow = inv ? '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden>'
+        + B('', 'data-inv-sms', 'Company text') + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')
+        + '</div>' : '';
+    return '<div class="crji-card v2" role="region" aria-label="Invoice">'
+      + '<div class="crji-row"><span class="crji-ttl">' + title + ' ' + pill(st) + '</span>'
+      +   '<span class="crji-amt ' + (isPaid ? 'paid' : 'due') + '">' + (isPaid ? 'Paid' : money(bal)) + '</span></div>'
+      + '<div class="crji-row crji-sub"><span>' + line2 + '</span><span>' + (isPaid ? '' : 'balance due') + '</span></div>'
+      + (total > 0 ? '<div class="crji-bar" role="img" aria-label="' + pct + '% paid"><i style="width:' + pct + '%"></i></div>'
+                   + '<div class="crji-sub">' + money(paid) + ' paid of ' + money(total) + '</div>' : '')
+      + '<div class="crji-acts">' + main + more + '</div>'
+      + sendRow
       + '</div>';
   }
 
@@ -89999,7 +90203,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
           headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + tok },
           body: JSON.stringify({ project_id: pr.id, url: url }) });
       }).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(j){
-        if(j && j.ok) crTell('Texted the pay link to ' + (pr.name || 'the client') + '.');
+        if(j && j.ok){ crTell('Texted the pay link to ' + (pr.name || 'the client') + '.'); markInvoiceSent(pr.id); }   /* 1315 */
         else crTell((j && j.error) || 'Could not send the company text.');
       });
     }).catch(fail);
@@ -90014,7 +90218,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     m.innerHTML =
       '<div class="crpay-backdrop" id="crpay-backdrop"></div>' +
       '<div class="crpay-box" role="dialog" aria-modal="true" aria-label="Record offline payment">' +
-        '<div class="crpay-h">Record a payment</div>' +
+        '<div class="crpay-h">Record payment</div>' +
         '<div class="crpay-sub" id="crpay-sub"></div>' +
         '<label class="crpay-l" for="crpay-amt">Amount</label>' +
         '<div class="crpay-amt"><span>$</span><input type="number" id="crpay-amt" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>' +
@@ -90022,7 +90226,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
         '<div class="crpay-seg" id="crpay-method" data-v="check">' +
           '<button type="button" data-m="check" class="on">Check</button>' +
           '<button type="button" data-m="cash">Cash</button>' +
-          '<button type="button" data-m="ach">Bank transfer</button>' +
+          '<button type="button" data-m="ach">Bank</button>' +
+          '<button type="button" data-m="card">Card</button>' +
         '</div>' +
         '<input type="text" id="crpay-ref" class="crpay-in" placeholder="Check # (optional)">' +
         '<label class="crpay-l">Type</label>' +
@@ -90053,10 +90258,18 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     _payFor = pr;
     var m = ensurePayModal();
     var fin = jobFinance(pr);
-    q('crpay-sub').textContent = (pr.name || 'Client') + ' · balance ' + money(fin.balance);
-    q('crpay-amt').value = ''; q('crpay-ref').value = '';
-    setSeg('crpay-method', 'check'); setSeg('crpay-type', 'deposit');
-    q('crpay-date').value = new Date().toISOString().slice(0, 10);
+    q('crpay-sub').textContent = (pr.name || 'Client') + ' \u00b7 balance due ' + money(fin.balance);
+    /* 1318: start at the balance \u2014 the common case is "they paid what they owed" */
+    q('crpay-amt').value = (Number(fin.balance) > 0) ? (Math.round(Number(fin.balance) * 100) / 100).toFixed(2) : ''; q('crpay-ref').value = '';
+    /* 1315: the modal is reused, and a successful save left this button disabled and
+       reading "Saving…" — the next payment could not be recorded until a reload. */
+    var _sb = q('crpay-save'); if(_sb instanceof HTMLButtonElement){ _sb.disabled = false; _sb.textContent = 'Record payment'; }
+    /* 1318: Final once the job is invoiced or its invoice has gone out; Deposit before */
+    var _inv = invoiceFor(pr.id), _s = stg(pr);
+    setSeg('crpay-method', 'check');
+    setSeg('crpay-type', (_s === 'Invoiced' || _s === 'Closed' || (_inv && _inv.status === 'sent')) ? 'final' : 'deposit');
+    /* 1318: today in Dayton \u2014 toISOString() is UTC, so after 8 pm it recorded tomorrow */
+    var _d = new Date(); q('crpay-date').value = _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0') + '-' + String(_d.getDate()).padStart(2, '0');
     m.classList.add('open');
     setTimeout(function(){ try{ q('crpay-amt').focus(); }catch(e){} }, 40);
   }
@@ -90080,7 +90293,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var date = q('crpay-date').value || new Date().toISOString().slice(0, 10);
     var typeMap = { deposit:'deposit', progress:'other', final:'final' };
     var me = (window.currentUser && currentUser.email) || '';
-    var notes = 'Offline ' + (method === 'ach' ? 'bank transfer' : method) + (ref ? ' #' + ref : '') + ' (recorded on-site)';
+    var notes = 'Offline ' + (method === 'ach' ? 'bank transfer' : method === 'card' ? 'card' : method) + (ref ? ' #' + ref : '') + ' (recorded on-site)';
     var row = { project_id: pr.id, collected_at: date, amount: amt,
                 type: typeMap[ptype] || 'other', source: 'homeowner', method: method,
                 notes: notes, created_by: me };
@@ -90098,11 +90311,15 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   /* second delegated listener: job-block actions + record-payment + the modal */
   document.addEventListener('click', function(e){
     var t;
+    /* 1318: Send opens its three ways; the strip's Balance due jumps to this card */
+    var _et = e.target instanceof Element ? e.target : null;
+    if(_et && (t = _et.closest('[data-inv-sendmenu]'))){ var sr = document.querySelector('[data-sendrow="' + t.getAttribute('data-inv-sendmenu') + '"]'); if(sr instanceof HTMLElement) sr.hidden = !sr.hidden; return; }
+    if(_et && (t = _et.closest('[data-crji-jump]'))){ var cj = document.querySelector('#projectView .crji-card'); if(cj && cj.scrollIntoView) cj.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
     if((t = e.target.closest('[data-inv-gen]'))){ var pg = prById(t.getAttribute('data-inv-gen')); if(pg && typeof createInvoiceFor === 'function') createInvoiceFor(pg); return; }
     if((t = e.target.closest('[data-inv-open]'))){ var iv = invoiceFor(t.getAttribute('data-inv-open')); if(iv && typeof openEditor === 'function') openEditor(iv.id); return; }
     if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms')); if(ps) companySms(ps); return; }
-    if((t = e.target.closest('[data-inv-text]'))){ var px = prById(t.getAttribute('data-inv-text')); if(px) linkFor(px.id).then(function(url){ location.href = 'sms:?&body=' + encodeURIComponent('Hi ' + firstName(px) + ', here’s your invoice from Cardinal Roofing — review and pay securely here: ' + url); }).catch(fail); return; }
-    if((t = e.target.closest('[data-inv-email]'))){ var pe = prById(t.getAttribute('data-inv-email')); if(pe) linkFor(pe.id).then(function(url){ location.href = 'mailto:?subject=' + encodeURIComponent('Your invoice from Cardinal Roofing & Renovations') + '&body=' + encodeURIComponent('Hi ' + firstName(pe) + ',\n\nHere is your invoice — review and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations'); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-text]'))){ var px = prById(t.getAttribute('data-inv-text')); if(px) linkFor(px.id, true).then(function(url){ location.href = 'sms:?&body=' + encodeURIComponent('Hi ' + firstName(px) + ', here’s your invoice from Cardinal Roofing — review and pay securely here: ' + url); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-email]'))){ var pe = prById(t.getAttribute('data-inv-email')); if(pe) linkFor(pe.id, true).then(function(url){ location.href = 'mailto:?subject=' + encodeURIComponent('Your invoice from Cardinal Roofing & Renovations') + '&body=' + encodeURIComponent('Hi ' + firstName(pe) + ',\n\nHere is your invoice — review and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations'); }).catch(fail); return; }
     if((t = e.target.closest('[data-inv-pay]'))){ var pp = prById(t.getAttribute('data-inv-pay')); if(pp) openPayModal(pp); return; }
     if((t = e.target.closest('[data-arpay]'))){ var pa = prById(t.getAttribute('data-arpay')); if(pa) openPayModal(pa); return; }
     if((t = e.target.closest('#crpay-cancel')) || (t = e.target.closest('#crpay-backdrop'))){ closePayModal(); return; }
@@ -90114,7 +90331,10 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   window.renderAR = render;
   window.CardinalAR = Object.assign(window.CardinalAR || {}, {
     open:open, render:render, close:close, list:arList,
-    status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor
+    status:statusOf, jobBlock:jobBlockHtml, recordPayment:openPayModal, payLink:linkFor,
+    owed:owed, age:function(pr){ return ageDays(pr, invoiceFor(pr.id)); }, ready:readyList,
+    bucketOf:bucketOf, bucketLabels:BUCKET_LABELS,   /* 1316: the one A/R rule set */
+    markInvoiceSent:markInvoiceSent   /* 1315 */
   });
 })();
 </script>
@@ -93450,6 +93670,7 @@ function ensureView(){
   document.body.appendChild(v);
 }
 function open(){
+  if((window.isFieldUser && window.isFieldUser())) return;   /* 1317: no portal picker for a field user */
   ensureView();
   render();  /* fresh counts and quote on every open */
   q('cr-fd').classList.add('open');
@@ -93479,6 +93700,7 @@ function isOpen(){
 }
 function go(d){
   close();
+  if((window.isFieldUser && window.isFieldUser())) return;   /* 1317 */
   try{ if(window.CardinalPortal && typeof window.CardinalPortal.set === 'function' &&
         (d === 'retail' || d === 'insurance' || d === 'community')) window.CardinalPortal.set(d, false); }catch(_e){}
   if(d === 'retail'){ if(typeof hideAllViews === 'function') hideAllViews(); if(typeof showHome === 'function') showHome(); return; }

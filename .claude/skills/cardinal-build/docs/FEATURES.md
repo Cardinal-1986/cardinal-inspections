@@ -9833,3 +9833,52 @@ Light retail no longer has gradients, drop shadows, Georgia or monospace. Insura
 ## Build 1312: Community says "estimate", never "bid"
 Theo: *"I believe that's why I've been confused since the first day I set up community page. Let's keep it estimate and no bid."* Every visible "bid" in `cr-ch2`, `cr-cc`, `cr-nbid` and `cr-cpartners` now says estimate — the pipeline's P (`CC_PIPE_WORDS.Prospect` → "Estimate Submitted", matching `CC_STAGE_LABEL`), the job page (Open estimate, Build the estimate, Mark this estimate SUBMITTED/AWARDED, Estimate awarded / not awarded), the New Estimate form's subline and errors, the partner editor, the morning chip and front-door line ("estimates past due"), the left-rail subline and the CRM picker. **Internal keys stay "bid" on purpose** — `data-pane="bids"`, `data-act="newbid"`, `checklist.bid`, `bidAmt`, `source:'community-bid'`, the morning counter `c.bids` — rows and other modules read them. Retail's Sales Floor copy about a *competitor's* bid is a different thing and is untouched. **Gate:** `gate_1312.mjs` (lexer over the four blocks + the rendered home, Estimates pane and a job page).
 
+## Build 1313: an invoice can be paid
+`buildEstimate()` gives an INVOICE heading its own header (Bill To · Invoice Date · Due: upon receipt · Property Address · Client Contact · Prepared By) and strips the cover photo, the concealed-conditions note, the Notes placeholder, the acceptance paragraph and `SIGN_FOOTER`. Page title reads "— Invoice". `api/share.js` never treats an `^invoice` title as signable, so even an invoice carrying the old signature line gets the pay bar. The editor's `#textSignBtn` reads **Text pay link** on an invoice and its message says "view and pay". **Gate:** `gate_1313.mjs` (template contents, real `share.js` handler, old-style invoice; control 1312 RED 12/14).
+
+## Build 1314: one balance everywhere
+- **Server parity:** `owedOn()` (byte-identical in `api/pay.js` and `api/share.js`) and `api/remind.js` total an invoiced job the way `jobFinance()` does — signed contract docs **or** the `contracts` table (whichever is more), **plus** `checklist.manual_value`; the invoice's stored `total` only when neither exists.
+- **ACH double-pay guard:** `api/pay.js` searches Stripe for a `processing` PaymentIntent on the job before creating a Checkout session → 409 "already on its way"; fails closed (503) if Stripe cannot be asked.
+- **One money-in door:** the worksheet's Amount Collected input is gone (a Paid · Balance due line + **Record payment** button, `data-wsrecord`); the Payment Information "From signed contracts" row (`data-paycontracts`) routes to `payGoLogCollection()`. `openContractPaid()` stays defined, unreached.
+- `moneyDb.collections()` selects `collected_at,created_at` (Invoices & AR "Paid this month" had always read $0); a failed load keeps the last good figures and says so (`res[5] === null`).
+- `saveCurrent()` never writes `total` from `#estTotal` on an invoice (it is BALANCE DUE there).
+- Invoice heading `<span>INVOICE</span>` (Theo: "just invoice").
+- **Gate:** `gate_1314.mjs` (real share/pay handlers with a stand-in Stripe; control 1313 RED 11/13).
+
+## Build 1315: every send counts as sent
+`CardinalAR.markInvoiceSent(pid)` (cr-ar-script) writes `status:'sent'` + `sent_at` on the job's latest invoice and moves the job to Invoiced **only from a stage before it** (never from Invoiced, Closed or Lost). Called by Company SMS (on success), the job card's My phone and Email, the A/R list's Text and Email (`linkFor(pid, true)`), and the editor's Text pay link. Copy link is not a send. The editor's Email to client and Mark sent use the same forward-only rule. `createInvoiceFor` is single-flight (`__invBusy`), refuses a paid-in-full job, and asks before a second invoice; a failed pay-link mint now says so. The offline payment form's button resets on every open. **Gate:** `gate_1315.mjs` (real taps in the rig; control 1314 RED 6/7).
+
+## Build 1316: one A/R list
+The rules live in `cr-ar-script` and the other two A/R screens read them (`CardinalAR.list / owed / age / ready / bucketOf / bucketLabels`):
+- **Who owes:** stage Invoiced or Closed, or the invoice's `status==='sent'`, with a balance > 0. Lost never.
+- **How much:** `owed(pr)` = `jobFinance`, except a Community job priced only by its bid owes bid − `collPaid` (jobFinance's value is 0 there and its paid clamps to 0).
+- **How old:** invoice `sent_at` → `checklist.t_Invoiced` → `checklist.stage_since` → invoice `created_at`. Never `updated_at`, never `pr.stage_since` (not a column).
+- **Buckets:** 0–14 / 15–30 / 31+ everywhere; rendered oldest first.
+- **Ready to invoice:** Completed retail/insurance job, contract or manual value, balance > 0, no invoice sent — its own group at the top with Create invoice; not in Total outstanding.
+- The home `#arWrap` card reads `CardinalAR.list()` filtered to the current board; Community's Partner A/R (`.cc-arbig`) reads it filtered to the hub's jobs. KPI: "Overdue · 31+ days", "N jobs owe".
+- **Gate:** `gate_1316.mjs` (8 seeded jobs, exact dollars on all three screens; control 1315 RED 6/8).
+
+## Build 1317: Scottie stays in Production (field user, app half)
+`FIELD_EMAILS = ['scottie@…']` + `isFieldUser()` beside `PRODUCTION_EMAILS`; `body.cr-field` toggled at sign-in beside `cr-prod`. Curtis is production but **not** field — unchanged.
+- **Every way home → Production:** `showHome()`, `showLanding()`, `goToLanding()` (no Front Door on top); `navRestore()` keeps only production / dispatch / punchcard / route / punch; the hub's own popstate listener no longer shuts the hub behind that redirect; the old hash router sends a field user to Production.
+- **No client profiles:** `openProject()` refuses with "The job's address, phone and directions are on its punch card." (profiles carry Balance Due and every money tab).
+- **Off:** Front Door `open()`/`go()`, Ctrl-K palette, the desktop rail (`on()`), the hub's Crews tile (crew pay/rates), and on screen `#crBanner`, `#cbCrm`, `#cbSearch`, `#headSearch`, `#newWrap`, `#brandTitle` taps, the menu's section headers.
+- **Menu:** Production Board, Crew Dispatch, Punch List, Notifications, Text size, Sign out — one flat list (the drawer accordion is skipped for a field user, or the rows would sit folded under headers he cannot see).
+- ⚠ **App half only.** The database still treats Scottie as `is_full_access()`; part 2 is a field role in RLS, SQL first.
+- **Gate:** `gate_1317.mjs` (signs in as Scottie and as Curtis; control 1316 RED 6/7).
+
+## Build 1318: the job's invoice card, compact (Theo's pick "2")
+`CardinalAR.jobBlock()` now draws `.crji-card.v2`: title + status pill, the **Balance due** figure, one line of detail, a paid bar (`.crji-bar`, on `--crji-tile`) reading "$X paid of $Y", and **one** red action. The three Billed / Collected / Balance tiles (`.crji-nums`) are gone.
+- **The one red button follows the job:** no invoice → Create invoice · draft → Send (opens a hidden row: Company text / My phone / Email) · sent → Record payment · paid → Open invoice only. Everything else is outline.
+- **Balance due in the money strip is a tap** (`data-crji-jump`) that scrolls to the card. The card stays after the Job Menu — Theo's 1225 order.
+- **Record payment** (was "Record offline payment"): amount starts at the balance; type defaults to **Final** once the job is Invoiced/Closed or the invoice was sent, else Deposit; methods Check / Cash / Bank / Card; date is the local day, not UTC.
+- Buttons are 44px; `--crji-btnline` (dark `#3a3d46`, light `#c9cdd3`) outlines them.
+- **Gate:** `gate_1318.mjs` (5 checks, control 1317 RED 0/5). gate_1216, gate_1291 and harness_inv1108 ported to read the v2 card (the paid-bar track carries the old tile ground rule; a sent invoice now defaults to Final).
+
+## Build 1319: the Invoices list, rows with the action showing (Theo's pick "1")
+`#cr-ar-view` (`cr-ar-script`): the three KPI tiles are one line — **"$X owed"** and under it **"$Y overdue · $Z paid this month"** (same ids: `crarKpiOut`, `crarKpiOver`, `crarKpiMonth`; zero reads `$0`, not `--`).
+- **Each row:** name, status pill (only once there is an invoice), an age pill, one line of what happened ("Paid $5,000 of $20,000 · Sent Sep 2"), the balance on the right.
+- **One action + ⋯:** Create invoice (nothing billed) · Send (invoice not out) · Remind (out, 31+ days) — red; Record payment (out, not overdue) — outline. `⋯` (`data-armore`, `aria-expanded`) opens the rest (`data-armenu`): Copy link, Text link, Email, Record payment, Open job, and the reminder history + mute (`data-remfor`). Ready rows carry no reminder strip.
+- Every `data-ar*` hook is unchanged; only the layout moved. The rows' old Billed / Collected / Balance columns and the 560/640px grid media rules were deleted, not overridden.
+- **Gate:** `gate_1319.mjs` (8 checks, control 1318 RED 0/8, no crash). gate_1218's ink sweep now scores any element with its own text (icon buttons were never scored) and opens each ⋯ first.
+

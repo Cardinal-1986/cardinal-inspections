@@ -156,7 +156,9 @@ function mkRes() {
 }
 {
   const created = [];
-  class StripeStub { constructor() { this.checkout = { sessions: { create: async (o) => { created.push(o); return { url: 'https://checkout.test/s' }; } } }; } }
+  class StripeStub { constructor() { this.checkout = { sessions: { create: async (o) => { created.push(o); return { url: 'https://checkout.test/s' }; } } };
+    /* 1314: pay.js asks Stripe for a payment still processing before a checkout; none here */
+    this.paymentIntents = { search: async () => ({ data: [] }) }; } }
   const procStub = { env: { SUPABASE_SERVICE_ROLE_KEY: 'srk', STRIPE_SECRET_KEY: 'sk' } };
   const TOKEN = 'abcdef0123456789abcdef01';
   const REP = [{ id: 'doc1', project_id: 'p1', project: 'Lawson', title: 'Invoice — Roof', total: 10000, signed_at: null }];

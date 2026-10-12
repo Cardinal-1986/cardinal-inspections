@@ -109,7 +109,9 @@ const PROBE = `(${function () {
       let n = 0;
       root.querySelectorAll('*').forEach(el => {
         const t = (el.textContent || '').trim();
-        if (!t || el.children.length) return;
+        /* 1319: score any element that carries its OWN text — a button with an icon has a
+           child (the svg) and used to be skipped, so no labelled button was ever scored */
+        if (!t || ![...el.childNodes].some(c => c.nodeType === 3 && c.textContent.trim())) return;
         const cs = getComputedStyle(el);
         if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return;
         const r = el.getBoundingClientRect();
@@ -200,7 +202,8 @@ console.log('gate_1218 — AR dashboard + payment sheet · ' + LABEL);
 /* ── A. DARK ─────────────────────────────────────────────────────────── */
 {
   const { b, p } = await run('dark');
-  const R = await p.evaluate(`(()=>{ const P=${PROBE}; return {
+  /* 1319: each row's ⋯ menu is opened first, so the sweep scores the buttons inside it too */
+  const R = await p.evaluate(`(()=>{ const P=${PROBE}; document.querySelectorAll('#cr-ar-view [data-armore]').forEach(b => b.click()); return {
       open:   P.exists('#cr-ar-view'),
       shown:  getComputedStyle(document.getElementById('cr-ar-view')||document.createElement('i')).display,
       lumView: P.groundLum('#cr-ar-view'),
@@ -285,7 +288,8 @@ console.log('gate_1218 — AR dashboard + payment sheet · ' + LABEL);
 /* ── B. LIGHT — the porcelain must be exactly what shipped ───────────── */
 {
   const { b, p } = await run('rb-light');
-  const R = await p.evaluate(`(()=>{ const P=${PROBE}; return {
+  /* 1319: each row's ⋯ menu is opened first, so the sweep scores the buttons inside it too */
+  const R = await p.evaluate(`(()=>{ const P=${PROBE}; document.querySelectorAll('#cr-ar-view [data-armore]').forEach(b => b.click()); return {
       theme: document.documentElement.getAttribute('data-theme'),
       lumView: P.groundLum('#cr-ar-view'),
       tokens: {

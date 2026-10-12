@@ -35964,3 +35964,50 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Gates:** `gate_1312.mjs` GREEN 6/6; control (1311) RED 3/6. Its static half (`gate_1312_static.py`) lexes 2,650 string literals and finds 0 (28 on 1311). Its first run went red on the seed client "Bid Bea" — the fixture, not the app. Ported to accept the new words: `gate_1303` B, `gate_1311` E, `gate_971` 2, `render_fd1164`, `harness_709`, `harness_710`. Standing gates green: check_build, types, dupes, a11y, 1206, stack, scroll-lock (17), 944, harnesses; Community gates 971/972/975/977/1264/1303/1311 green.
 - ⚠ **`harness_709.js` and `harness_710.js` crash with `ReferenceError: priceOf is not defined` on 1311 too** — old debt, not this build, and neither is in `gate_harnesses`' list.
 
+## Build 1313: an invoice can be paid (invoicing audit M1 + D1; Theo: "yes please fix invoicing on everything")
+- **Why:** the invoice was an estimate with a new title. It kept the Client Acceptance signature line, so `api/share.js` showed Accept & Sign and never reached the pay bar. No invoice had been sent yet (0 in production, measured 11 Oct), so no client saw it.
+- **What:** invoice header and strips in `buildEstimate()`; the duplicate Date row left the body; `share.js` `isInvoiceDoc` guard; Text pay link label and message.
+- **Gates:** `gate_1313` GREEN 14/14, control (1312 index + share.js) RED 12/14. Green: check_build, types, dupes, harnesses, stack, scroll-lock (17), gate_1015/1141/1201/1204/1278/781, harness_inv1108/1109. Rendered the real share handler at 390px: invoice + "$9,800.00 · Pay".
+- **Data, same session:** recorded Carl's $12,000 check (from Rebuild, 10 Aug) and Annette's $14,760 check (4 Oct) in `collections` on Theo's confirmation; dates are the jobs' Closed dates since none were given. Neither creates a commission (rep Theo / none).
+
+## Build 1314: one balance everywhere (audit M2–M6, M10, R1; Theo: "Why the words service invoice instead of just invoice")
+- **What:** server totals match `jobFinance` (contracts table + manual extras); ACH-processing guard in `pay.js`; the worksheet Amount Collected box and the "From signed contracts" row now go to Record payment; collections load selects `collected_at` and fails closed; invoice save keeps its total; heading INVOICE.
+- **Data, same session (Theo's confirmations):** Carl is Nick's job — `projects.sales_rep` set to nick@, and his 10% ($1,200) recorded in `commissions` as **paid** (pay date/method not given). Annette is a house deal — no commission. Dan's two Zelle payments ($5,000 + $3,008.94, 9 Aug) moved from `checklist.payments` into `collections` exactly as the app's own "move" button does (type other, notes "Moved from Payment Information · Zelle"); his rep is Theo so no commission. After this, no job has money in the old store.
+- **Gates:** `gate_1314` GREEN 13/13, control RED 11/13. Ported: `gate_1199` and `gate_1279` stand-in Stripes gained `paymentIntents.search`; `gate_1010` [6] accepts the new route. Green: check_build, types (one new TS2339 from my own `e.target.closest` fixed with `instanceof Element`, not rebaselined), dupes, harnesses, stack, scroll-lock, gate_1313, harness_remind1156/inv1108/inv1109.
+- ⚠ The audit's M4 was half wrong: the Payments-page Add/Received doors already went to collections (996/1050). Only the worksheet box and the contracts row were still live.
+- ⚠ `drive_lifecycle.mjs` crashes (`reading 'name'`) on main @1308 too — old debt, not in the harness list.
+
+## Build 1315: every send counts as sent (audit W1, W2, W4, W5, W6)
+- **What:** `markInvoiceSent` + `linkFor(pid, true)` on every send button; forward-only stage moves on all send paths; `createInvoiceFor` single-flight, paid-in-full refusal, second-invoice confirm, token-mint failure told; pay modal button reset.
+- **Two of my own catches before shipping:** `markSent` already existed in `cr-guide-script` (gate_dupes) — renamed `markInvoiceSent`; a `.disabled` on an `HTMLElement` (gate_types TS2339) — `instanceof HTMLButtonElement`. Neither rebaselined.
+- **Gates:** `gate_1315` GREEN 7/7, control RED 6/7 (C, "Copy is not a send", is a must-not and passes on both by design). Green: check_build, types, dupes, scroll-lock, gate_1141/1201/1204/1313/1314, harness_inv1108/1109.
+- ⚠ Still stale, for the redesign build: the Create invoice toast still says "payments logged in the Worksheet. Email it…".
+
+## Build 1316: one A/R list (audit R3–R7, M9, D4, C4)
+- **What:** one who-owes / how-much / how-old / bucket rule set in `cr-ar-script`, read by the home card and Partner A/R; Ready to invoice group; oldest first; Closed-with-balance counted; Community bid-only jobs owe bid − paid.
+- **Live effect, worked out before shipping:** on today's data A/R shows Dan (Invoiced, $9,465.67 − $8,008.94 = $1,456.73) and Vandalyn ($12,550), both "not yet invoiced" and both still 31+ because their `t_Invoiced` is 44–53 days old — that is the truth: nobody has billed them. Carl and Annette now read $0 owed. No Completed job qualifies for Ready today (Betty is estimate-priced; Jarrett has no value).
+- **Gates:** `gate_1316` GREEN 8/8, control RED 6/8. Its first run went red on E because the rig's board was left on Community — the test's fault, fixed by setting the board explicitly. Green: check_build, gate_1168/1218/1291/1303/1304/1309/1311, harness_ar1107/ar1156/inv1108/inv1109.
+- **Not done here (redesign build):** row buttons (Buttons A), reminder strip on Ready rows, the 35px buttons, the words.
+
+## Build 1317: Scottie stays in Production (Theo: "Scottie stays only in productions and can't go anywhere else" — option 2, app half)
+- **What:** `isFieldUser()` and the gates listed in FEATURES.md 1317. Recon mapped ~20 doors; each choke point is guarded in code and the doors are also taken off the screen.
+- **Two things the first gate run caught:** (1) the Production hub's own popstate listener closed the hub right after `navRestore` redirected a field user's Back to it — fixed in that listener; (2) the drawer folds every section shut and I had hidden the section headers, so Scottie's four rows would have been unreachable — a field user now gets a flat list. Both were mine; both are in gate_1317 now (E checks the real opened drawer).
+- **A false alarm of my own, recorded so nobody chases it:** a `sed | cut -c1-150` view of the navRestore guard hid its opening brace and read like a syntax bug. The file was correct.
+- **Gates:** `gate_1317` GREEN 7/7, control RED 6/7. 56 navigation/production/menu gates re-run green (gate_1035/1038/1042/1047 need the file argument). `gate_1148` crashes on 1316 too — old debt.
+- **Not yet:** the database half (Scottie out of `is_full_access()`, a field role on punch/appointments/crews reads). SQL goes to Theo first.
+
+## Build 1318 — the job's invoice card, compact (11 Oct 2026)
+- **Ask:** Theo, "2, 1" — invoice card option 2 (compact, paid bar) and Invoices list option 1 (next build).
+- **What:** `jobBlockHtml` rewritten to `.crji-card.v2`; one red action per state; send options folded into a row; Balance due in the strip jumps to the card; pay modal says "Record payment", starts at the balance, defaults Final on an invoiced/sent job, local date. Audit D5 (half: the strip is tappable; the card is not moved, per 1225), D7, D8 (job card), D9 (job card + pay modal), D10 fixed.
+- **Three old gates asserted the retired tiles** — gate_1216 (tile ground), gate_1291 (three flat tiles) and harness_inv1108 (title text, Deposit default). Ported to accept either shape, so they still pass on 1317 and still check the same rule on 1318. The seeded client has no total, so v2 draws no bar; both gates measure the real CSS on a probe bar rather than passing on nothing.
+- **Two standing gates caught my own work:** gate_1206 flagged the new Balance due tap at 61×41 (now 44px tall), and gate_a11y's `region` count rose by 2 (the paid bar and its line, outside any landmark). A rebaseline was refused, rightly; the card is now a named landmark (`role="region" aria-label="Invoice"`) and the count is back under baseline. gate_types caught two untyped `e.target.closest` calls in the new handlers; narrowed with `instanceof`.
+- **Gates:** gate_1318 GREEN 5/5, control RED 0/5; gate_1216/1218/1225/1286/1290/1291/1313/1314/1315/1316/1317/1010/1199/1279 and harness_inv1108/1109 green.
+
+## Build 1319 — the Invoices list, rows with the action showing (12 Oct 2026)
+- **Ask:** Theo, "2, 1" — the 1 is the Invoices list option 1.
+- **What:** one KPI line; each row one action + ⋯; the action follows the job (Create invoice / Send / Remind red, Record payment outline). Audit D3 (the list's words), D8 (AR rows), D12 (five buttons wrapping to three lines) fixed.
+- **Caught on the way:** `money(0)` prints `--`, which read "-- paid this month" on the new line — the KPIs now print `$0`. A Ready row (no invoice) showed a "Draft" status pill beside "Ready" — the pill now waits for an invoice.
+- **Old gates ported:** harness_inv1108 (the Record-payment hook is built through a helper now); gate_1218's ink sweep had the floor at 25 text nodes but only counted childless elements, so no button with an icon had ever been scored — it now scores any element carrying its own text and opens every ⋯ first (27 nodes on 1319, 35 on 1318, 0 below floor on either).
+- **Standing gates caught two of mine:** gate_dupes — a second `B` helper in `cr-ar-script` (1318 owns one; renamed `RB`); gate_types — `isNaN(date)` (now `getTime()`).
+- **Gates:** gate_1319 GREEN 8/8, control RED 0/8. types, dupes, scroll, harnesses, stack, a11y, 1206, 944 and the 17 invoice/AR gates green.
+

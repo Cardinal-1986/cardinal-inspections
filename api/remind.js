@@ -149,7 +149,9 @@ export default async function handler(req, res) {
       fetch(SUPABASE_URL + '/rest/v1/projects?id=' + inList + '&select=id,name,phone,checklist,reminders_muted', { headers: H }),
       fetch(SUPABASE_URL + '/rest/v1/collections?project_id=' + inList + '&select=project_id,amount,collected_at,created_at', { headers: H }),
       fetch(SUPABASE_URL + '/rest/v1/inspection_reports?project_id=' + inList + '&select=project_id,title,total,signed_at', { headers: H }),
-      fetch(SUPABASE_URL + '/rest/v1/payment_reminders?project_id=' + inList + '&select=project_id,sent_at,ok&order=sent_at.desc', { headers: H })
+      fetch(SUPABASE_URL + '/rest/v1/payment_reminders?project_id=' + inList + '&select=project_id,sent_at,ok&order=sent_at.desc', { headers: H }),
+      // 1314: the contracts table is the second contract store jobFinance() reads
+      fetch(SUPABASE_URL + '/rest/v1/contracts?project_id=' + inList + '&select=project_id,total,homeowner_signed_at,voided_at', { headers: H })
     ]);
     for (var ri = 0; ri < reads.length; ri++) {
       if (!reads[ri].ok) { res.status(500).json({ ok: false, error: 'read ' + ri + ' failed (' + reads[ri].status + ')' }); return; }
@@ -158,6 +160,10 @@ export default async function handler(req, res) {
     var collRows = await reads[1].json();
     var docRows = await reads[2].json();
     var logRows = await reads[3].json();
+    var ctrRows = await reads[4].json();
+    var ctrByP = {}; ctrRows.forEach(function (c) {
+      if (c.homeowner_signed_at && !c.voided_at) ctrByP[c.project_id] = (ctrByP[c.project_id] || 0) + (Number(c.total) || 0);
+    });
 
     var projById = {}; projRows.forEach(function (p) { projById[p.id] = p; });
     var collByP = {}; collRows.forEach(function (c) { (collByP[c.project_id] = collByP[c.project_id] || []).push(c); });
@@ -180,7 +186,12 @@ export default async function handler(req, res) {
       (docsByP[pid] || []).forEach(function (d) {
         if (/^contract/i.test(String(d.title || '').trim()) && d.signed_at && Number(d.total) > 0) contractTotal += Number(d.total);
       });
-      var jobTotal = contractTotal > 0 ? contractTotal : (Number(inv.total) || 0);
+      // 1314: the same total the app and the pay link use — contract docs or the
+      // contracts table, whichever is more, plus manual extras
+      var manual = 0;
+      try { var ck0 = typeof p.checklist === 'string' ? JSON.parse(p.checklist || '{}') : (p.checklist || {}); manual = Number(ck0 && ck0.manual_value) || 0; } catch (_) { manual = 0; }
+      var signedTotal = Math.max(contractTotal, ctrByP[pid] || 0);
+      var jobTotal = signedTotal > 0 ? signedTotal + manual : (manual > 0 ? manual : (Number(inv.total) || 0));
       var balance = jobTotal - collected;
       if (!(balance > 0.005)) { skipped.paid++; continue; }
 

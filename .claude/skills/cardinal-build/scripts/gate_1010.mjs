@@ -12,7 +12,7 @@
 //   Expenses(data-paysec="exp") heading tap  -> openPayRow('exp', null)
 //   + button (data-payadd="in")              -> payGoLogCollection      (996 still holds)
 //   a data-payedit row tap                    -> openPayRow(null, <index>) (edit legacy row)
-//   a data-paycontracts row tap               -> openContractPaid
+//   a data-paycontracts row tap               -> payGoLogCollection (1314; openContractPaid before)
 //
 // Usage:
 //   node gate_1010.mjs                    # working tree index.html  -> GREEN
@@ -136,10 +136,13 @@ const calledWith = (r, fn, pred) => (r.calls || []).some(c => c.fn === fn && pre
   ok(calledWith(r, 'openPayRow', a => a[0] === null && a[1] === 0),
      `[5] edit row must call openPayRow(null, 0); calls=${JSON.stringify(r.calls)}`);
 }
-// [6] contracts row -> openContractPaid
+// [6] contracts row -> the one money-in door. 1314 retired openContractPaid's route: it wrote
+//     the old worksheet store that Balance Due ignores once any payment is recorded. Before
+//     1314 this row called openContractPaid; either is accepted so the gate still runs on an
+//     older tree as a control, but the CURRENT tree must take the new route (see gate_1314 A4).
 {
   const r = await click('#contracts-row');
-  ok(called(r, 'openContractPaid'), `[6] contracts row must call openContractPaid; calls=${JSON.stringify(r.calls)}`);
+  ok(called(r, 'payGoLogCollection') || called(r, 'openContractPaid'), `[6] contracts row opens a money-in form; calls=${JSON.stringify(r.calls)}`);
 }
 
 await browser.close();
