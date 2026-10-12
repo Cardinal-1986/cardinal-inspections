@@ -36059,3 +36059,10 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Caught on the way:** my first Google stub had a bracket error, so check A "failed" while testing nothing. It is rewritten and parse-checked. A crashed stub reads like a real failure; parse the fixture first.
 - **Gates:** gate_1326 GREEN 4/4, control RED 3/4. gate_1154 47/47 (control 46/47). gate_1005/1008/1208/1253/782 green. check_build, types, dupes, scroll, harnesses, stack, a11y, 1206, 944 green. Sentinel run (colour build).
 
+## Build 1327 — the assistant for Theo and Joan (12 Oct 2026)
+- **Ask:** a personal assistant AI for the owner, as a tab app-wide, that knows the whole CRM. Picks 1A / 2C / 3B; Joan gets one too; both read and write.
+- **Shape chosen for safety, not convenience:** the model can only *propose*. Approve runs each change in the browser as the person, so RLS, refusals and Activity are exactly what a hand edit gets. Reads also use the person's own JWT; there is no service key in the route.
+- **Shipped in the same PR as 1326** because the stop hook required the 1327 work to be committed while 1326 waited on the sentinel. Recorded so the span isn't mistaken for drift.
+- **Caught on the way:** gate_stack flagged two redundant `box-sizing` declarations (the global `*` rule already sets it), now removed. The first control run crashed (BUG_CLASSES 37); the browser steps are now null-safe and the control is RED 5/5.
+- **Gates:** gate_1327 GREEN 10/10. check_build, types, dupes, scroll, stack, a11y, 1206, 944 and harnesses green.
+
