@@ -65,12 +65,14 @@ async function owedOn(sbHeaders, rep) {
   if (isInvoice) {
     // balance due = signed-contract total for the job − collected (jobFinance's
     // contracted-job case). Falls back to the invoice's own stored total.
-    let contractTotal = 0;
+    let contractTotal = 0, coTotal = 0;
     for (const r of await readRows(sbHeaders, 'inspection_reports',
         `${SUPABASE_URL}/rest/v1/inspection_reports?project_id=eq.${rep.project_id}&select=title,total,signed_at`)) {
       if (/^contract/i.test(String(r.title || '').trim()) && r.signed_at && Number(r.total) > 0) {
         contractTotal += Number(r.total);
       }
+      // 1323: a signed change order adds to the job (jobFinance() does the same)
+      if (/^change order/i.test(String(r.title || '').trim()) && r.signed_at && Number(r.total) > 0) coTotal += Number(r.total);
     }
     // 1314: the job total is jobFinance()'s, not a narrower one. Signed contract
     // documents OR the contracts table (whichever carries more — never both), plus
@@ -88,8 +90,8 @@ async function owedOn(sbHeaders, rep) {
       manual = Number(ck && ck.manual_value) || 0;
     } catch (_) { manual = 0; }
     const signedTotal = Math.max(contractTotal, tableTotal);
-    const jobTotal = signedTotal > 0 ? signedTotal + manual
-                   : (manual > 0 ? manual : (Number(rep.total) || 0));
+    const jobTotal = signedTotal > 0 ? signedTotal + manual + coTotal
+                   : (manual > 0 ? manual + coTotal : (Number(rep.total) || 0));
     return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due',
              totalCents: Math.round(jobTotal * 100), paidCents: Math.round(collected * 100) };   // 1320: the invoice's summary
   }
