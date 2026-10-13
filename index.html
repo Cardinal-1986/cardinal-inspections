@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-13 build 1332<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-13 build 1333<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44602,6 +44602,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1333, d:'2026-10-13', t:'Every crew can be booked', s:'On the dispatch board, tapping a job that needs a crew now shows every crew\u2019s row, so any of them can be picked. Before, crews with nothing booked that week were folded away behind \u201cidle crews \u00b7 tap to show\u201d, and only the first one was tappable. Browsing the week, quiet crews still fold to keep the board short.' },
   { b: 1332, d:'2026-10-13', t:'Upload several PDFs at once', s:'Insurance documents, measurement reports and work orders now take more than one file at a time \u2014 pick them all together and each is filed on its own. For Hover and Roofr reports, the numbers are read from the first report so a second one cannot overwrite them. The Files tab already did this.' },
   { b: 1331, d:'2026-10-13', t:'Install photos before a job is Completed', s:'Every roofing job now has an Install photos tile in its Job Menu: eight guided shots from Before to Yard + magnet, with a short set for siding and gutter jobs. Wood replaced and Flashing each ask for one line about what you saw. A job cannot be marked Completed until all of them are in; the app says which are missing and opens the photos. Repairs, warranty and inspection jobs are not affected.' },
   { b: 1330, d:'2026-10-13', t:'One way to make an estimate', s:'On a job\u2019s Estimates page, the From a template choices now open the estimate builder with that trade\u2019s standard line already on it, priced from the Library \u2014 roofing starts with the Owens Corning Preferred Roofing System. Add the rest from the Library as usual. Estimates made on the old fill-in form no longer send their empty lines: once any line has a price, the lines without one are left off what the client receives and prints. You still see every line while you edit.' },
@@ -85563,7 +85564,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       if(!active.length && idle.length){ lanes = lane(idle[0]); idle = idle.slice(1); }
       var idleRow = '';
       if(idle.length){
-        if(showIdle[tr]){ lanes += idle.map(lane).join(''); }
+        /* 1333: a job in the hand shows EVERY crew — booking Santiago must not need a hidden tap first */
+        if(showIdle[tr] || armed || mvWo){ lanes += idle.map(lane).join(''); }
         else idleRow = '<div class="idle" data-idle="' + esc(tr) + '"><span class="il"><b>' +
           idle.length + ' idle ' + esc(tr.toLowerCase()) + (idle.length===1?' crew':' crews') + '</b> &middot; tap to show</span></div>';
       }
