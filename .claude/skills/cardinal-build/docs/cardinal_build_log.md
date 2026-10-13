@@ -36157,3 +36157,13 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
   made once, for the first file. Left single on purpose: Scope of Loss reader, crew compliance (each file has its own
   type + expiry), materials.
 - **Gates:** `gate_1332.mjs` GREEN 4/4, control 1331 RED 3/4. check_build, types, dupes green.
+
+## Build 1333 — every crew can be booked from the dispatch board (Theo, 13 Oct 2026)
+- **Why:** showing Curtis how to schedule, Theo could pick Beto but not Santiago.
+- **Cause (measured):** five roofing crews, all active. The Magnet Board (`cr-disp`, 949) folds a trade's crews with
+  nothing booked this week behind "N idle roofing crews · tap to show", and when none is booked it shows only the first
+  idle one — alphabetically Alberto ("Beto"). With a job armed, his was the only row of day squares. Nothing missing; folded.
+- **Fix:** `if(showIdle[tr] || armed || mvWo)` — while a job is in the hand (Needs-a-crew chip armed, or a booked job
+  picked up to move) every crew of every trade is shown. Browsing the week, quiet crews still fold.
+- **Gates:** `gate_1333.mjs` GREEN 3/3 (folds when nothing armed; all 5 rows when armed; tapping Santiago's day opens the
+  work order with Santiago preset); control 1332 RED 2/3 — Theo's bug reproduced. check_build, types, dupes, scroll-lock green.

@@ -6367,3 +6367,8 @@ Theo, verbatim: "I don't know on calander put it on hold."
 - **`drive_lifecycle.mjs` (the 773 end-to-end drive) is broken from S1b on, on 1329 and 1330 alike** — not in CI, so it
   rotted unseen. S4 also targets the old estimate form, retired as a door at 1330. Rewrite against today's screens.
 - **12 Library items still have a $0 price** (Theo's to fill: Menu → Admin → Line Item Library).
+
+- **(13 Oct, found at 1333) `gate_1116.mjs` RED on main since 1322:** "every full-screen view is classified — pinned,
+  CRM, or explicitly deferred (unclassified: cr-orv-view)". The Owner Review view (1322) was never added to the gate's
+  classification table. Not in CI's set, so it did not block. Fix: classify `cr-orv-view` (admin-only, theme-pinned?)
+  in gate_1116 after checking how it themes. Red identically on 1332 and 1333.

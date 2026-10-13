@@ -9979,3 +9979,5 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1332: several PDFs at once
 - Insurance documents, measurement reports and work orders take multiple files; each filed on its own, "Filed N of M"
   toast. Hover/Roofr numbers come from the first report only. Gate: `gate_1332.mjs`.
+## Build 1333: every crew bookable
+- Magnet Board: with a job armed or picked up to move, every crew row shows (idle crews no longer folded). Gate: `gate_1333.mjs`.
