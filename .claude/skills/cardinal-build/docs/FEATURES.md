@@ -9976,3 +9976,6 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 - Job Menu → Install photos: guided slots (roofing 8 / siding 6 / gutters 4), saved as `project_photos` section
   `Install · <slot>`; Wood replaced + Flashing need a note. `setStage()` refuses Completed until they are in;
   Theo/Joan override with a reason (manual Owner Review row). `window.CardinalInstall`. Gate: `gate_1331.mjs`.
+## Build 1332: several PDFs at once
+- Insurance documents, measurement reports and work orders take multiple files; each filed on its own, "Filed N of M"
+  toast. Hover/Roofr numbers come from the first report only. Gate: `gate_1332.mjs`.

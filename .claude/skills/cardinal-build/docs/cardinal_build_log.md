@@ -36144,3 +36144,16 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
   owner override + Owner Review row, Before saves, Wood replaced needs its note); control 1330 RED 5/7. 1021, 1315,
   1316, 1322, 1323, 1325, 1327, 1328, 1330, 972, 766, check_build, types, dupes, scroll-lock, stack, a11y, 1206 green.
   Rendered at 390px dark + light: every ink ≥ 6.89:1, slots 84px.
+- **CI correction before merge:** gate_1200 counts `crStageIsForward` (one definition + exactly two call sites).
+  The guard's own call made it 4 and chromium went red. The guard now reads `['Invoiced','Closed'].indexOf(prev) === -1`
+  instead — moving back to Completed from Invoiced/Closed stays free; every other move to Completed asks.
+
+## Build 1332 — upload several PDFs at once (Theo, 13 Oct 2026)
+- **Why:** "please allow us to upload more than one pdf at a time." The Files tab already took many; three PDF doors took one.
+- **What:** `multiple` on `#insDocFileInput` (insurance documents), `#msFileInput` (measurements) and `[data-wo-file]`
+  (work orders), each handler looping the files in order. One bad file does not stop the rest; the toast says
+  "Filed N of M" and names what was not filed. Measurements: every report is filed, but only the FIRST Hover/Roofr
+  report is read into the job's numbers, so a second cannot overwrite them. Insurance: the "read this scope?" offer is
+  made once, for the first file. Left single on purpose: Scope of Loss reader, crew compliance (each file has its own
+  type + expiry), materials.
+- **Gates:** `gate_1332.mjs` GREEN 4/4, control 1331 RED 3/4. check_build, types, dupes green.
