@@ -6364,3 +6364,6 @@ Theo, verbatim: "I don't know on calander put it on hold."
   M11 guard (reps' payments capped at the job total). Measured before using it: only **1 of 87** jobs has a signed
   total, so a cap on it would refuse reps on nearly every job — the draft was NOT applied. M11 needs the estimate leg
   (`jobFinance`'s tiers) or a different rule. Harmless as it stands.
+- **`drive_lifecycle.mjs` (the 773 end-to-end drive) is broken from S1b on, on 1329 and 1330 alike** — not in CI, so it
+  rotted unseen. S4 also targets the old estimate form, retired as a door at 1330. Rewrite against today's screens.
+- **12 Library items still have a $0 price** (Theo's to fill: Menu → Admin → Line Item Library).
