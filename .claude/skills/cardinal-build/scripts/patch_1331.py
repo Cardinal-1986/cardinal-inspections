@@ -42,7 +42,7 @@ one("""  var prev = normStage(pr.stage);
 """  var prev = normStage(pr.stage);
   /* 1331: a job is not Completed until its install photos are in (Theo, 3A). The guard says what is
      missing; Theo and Joan can complete it anyway with a reason, which goes on Owner Review. */
-  if(v === 'Completed' && prev !== 'Completed' && crStageIsForward(prev, 'Completed') &&
+  if(v === 'Completed' && prev !== 'Completed' && ['Invoiced','Closed'].indexOf(prev) === -1 &&
      window.CardinalInstall && window.CardinalInstall.guard){
     var _instOk = false;
     try{ _instOk = await window.CardinalInstall.guard(pr); }catch(_ig){ _instOk = false; }
