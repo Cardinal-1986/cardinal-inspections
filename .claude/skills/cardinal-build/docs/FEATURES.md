@@ -9965,3 +9965,9 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1329: the estimate builder's Library loads on a phone
 - `openPicker()` in `cr-est` awaits `CardinalLineItems.load()` when the Library is empty on open and re-renders
   ("Loading the Library…" meanwhile). Gate: `gate_1329.mjs`.
+
+## Build 1330: one way to make an estimate
+- "+ From a template ▾" opens the estimate BUILDER with the trade's standard Library line (`CardinalEstimates.openWithTrade`,
+  `TRADE_START`). The old fill-in form is no longer created; old-form documents still open and edit.
+- Old-form estimates send and print only the lines with a quantity and a price, once any line has both
+  (`crMarkUnpriced`; `data-unpriced` + `#crUnpricedCss` on the saved page, `data-emptyrow` at print). Gate: `gate_1330.mjs`.

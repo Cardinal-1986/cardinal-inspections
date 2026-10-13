@@ -36105,3 +36105,24 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Seen on the way, not changed:** 12 of the 19 Library items are priced $0; "Owen's Corning" is misspelt; a GAF
   Timberline item is in an Owens Corning shop's Library; the "Ohio Codes" write-up is a $0 item by design, which is why
   estimates come out as a nameless priced line plus a $0 scope line. All waiting on Theo.
+
+## Build 1330 — one way to make an estimate; the old form stops sending blanks (Theo's pick C, 13 Oct 2026)
+- **Why:** Jacob's "wacky" estimate was the OLD fill-in form behind "+ From a template ▾": 12 printed lines, 1 priced,
+  11 sent to the client as `[LF]` / `[qty]` / `[0.00]`. 12 old-form estimates exist; 2 sent; 3 in the last 30 days.
+- **B — the menu opens the builder.** `CardinalEstimates.openWithTrade(project, kind)` (`TRADE_START` in `cr-est`):
+  roof → Owens Corning Preferred, siding → vinyl siding, windows → replacement vinyl, andersen → Andersen, general →
+  repair; gutters opens the Library searched to "Gutters" (5″ vs 6″ is a choice); no Library match → the Library.
+  `createEstimateOfKind` stays as the fallback when the builder is absent. No old-form documents are created.
+- **A — old-form estimates already made.** `crMarkUnpriced(root, attr)` (main block): once ANY `#estItems tr.li` has a
+  quantity AND a price, the rest are marked. `serializeFrame()` marks them `data-unpriced` and adds `#crUnpricedCss`
+  (`display:none !important` — beats share.js's ITEMS_PHONE flex rule), so the share link and email drop them;
+  `compactForPrint()` marks them `data-emptyrow` (printFix hides it), `restorePrintMarks()` clears it. The editor adds a
+  `data-cardinal-live` style showing every line. Nothing priced = every line kept (a blank to print and hand-fill).
+- **Data, same session (Theo: "Do yours"):** EST-2026-0914 restored from `document_versions` v6 (27,150 chars, guarded
+  on `length(html)=55`). Library: "Owen's Corning" → "Owens Corning"; the Ohio Codes write-up prepended into the OC
+  Preferred item's description; GAF Timberline and the $0 Ohio Codes item set `active=false` (hidden, not deleted).
+- **Gates:** `gate_1330.mjs` GREEN 5/5; control 1329 RED 4/5. 774, 1201, 1223, 1268, 1270–1274, 1324, 1328, 1329,
+  1028, 1033, harness_717, check_build, types, dupes, scroll-lock green.
+- **⚠ Found, not mine, not fixed:** `drive_lifecycle.mjs` (773) fails from S1b on BOTH 1329 and 1330 — identical step
+  results. It is in no CI job, so it rotted unseen. Its S4 also drives the old form's Roofing button, which now opens the
+  builder; it needs rewriting against today's screens, not a patch. Recorded in OPEN_ITEMS.

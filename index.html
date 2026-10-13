@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-12 build 1329<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-13 build 1330<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -25256,7 +25256,11 @@ pEstMenu.addEventListener('click', function(e){
   if(!opt || !currentProject) return;
   e.stopPropagation();
   pEstMenu.style.display = 'none';
-  createEstimateOfKind(opt.getAttribute('data-tpl'));
+  /* 1330: the builder, not the old fill-in form (Theo's pick C). The form stays only as a
+     fallback for a page whose builder failed to load. */
+  var _k = opt.getAttribute('data-tpl');
+  if(window.CardinalEstimates && window.CardinalEstimates.openWithTrade) window.CardinalEstimates.openWithTrade(currentProject, _k);
+  else createEstimateOfKind(_k);
 });
 
 /* =========================================================================
@@ -27086,6 +27090,14 @@ async function openEditor(id){
     try{
       var doc = frame.contentDocument;
       if(doc && doc.body && (doc.body.childElementCount || String(doc.body.textContent || '').trim())) frame.dataset.loadedId = String(r.id);
+      /* 1330: the saved page hides unpriced old-form lines from the client; the editor shows them */
+      try{
+        if(doc && doc.getElementById('estItems') && !doc.getElementById('crUnpricedEdit')){
+          var _ue = doc.createElement('style'); _ue.id = 'crUnpricedEdit'; _ue.setAttribute('data-cardinal-live', '1');
+          _ue.textContent = '#estItems tr[data-unpriced]{display:table-row !important}';
+          (doc.head || doc.documentElement).appendChild(_ue);
+        }
+      }catch(_ue2){}
       lockTemplate(doc);
       /* 1069: pull the checklist through EVERY time, not just at creation.
          Blanks only, so a value Theo typed is never touched. Announced in the
@@ -27397,6 +27409,18 @@ function serializeFrame(){
   clone.querySelectorAll('[data-cardinal-hint]').forEach(function(el){ el.remove(); });
   /* 1109: the live invoice status/balance/ledger is a view-time layer, never saved. */
   clone.querySelectorAll('[data-cardinal-live]').forEach(function(el){ el.remove(); });
+  /* 1330: what the client opens drops the unpriced lines of an old-form estimate */
+  try{
+    var _cu = clone.querySelector('#crUnpricedCss'); if(_cu) _cu.remove();
+    if(crMarkUnpriced(clone, 'data-unpriced')){
+      var _hd = clone.querySelector('head');
+      if(_hd){
+        var _st = doc.createElement('style'); _st.id = 'crUnpricedCss';
+        _st.textContent = '#estItems tr[data-unpriced]{display:none !important}';
+        _hd.appendChild(_st);
+      }
+    }
+  }catch(_cu2){}
   clone.querySelectorAll('.fig .frame button, .fig .frame input[type=file]').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('.reanalyzeBar, .reanalyzeBtn').forEach(function(el){ el.remove(); });
   clone.querySelectorAll('h2.sec[data-rewired]').forEach(function(el){ el.removeAttribute('data-rewired'); });
@@ -28364,7 +28388,31 @@ window.openSigner = function(contract, cb){
   sigModal.style.display = 'block';
 };
 
+/* 1330: an old-form estimate (#estItems) sends only the lines that carry a quantity AND a price,
+   once at least one does. Blanks are read from the TEXT ("[...]" or empty = not filled), as
+   ipNum() does, because a typed blank keeps its .ph class. Returns how many rows it marked. */
+function crEstNum(td){
+  if(!td) return null;
+  var t = String(td.textContent || '').trim();
+  if(!t || t.charAt(0) === '[') return null;
+  var v = Number(t.replace(/[^0-9.\-]/g, ''));
+  return isFinite(v) && v > 0 ? v : null;
+}
+function crMarkUnpriced(root, attr){
+  var t = root && root.querySelector && root.querySelector('#estItems');
+  if(!t) return 0;
+  var rows = t.querySelectorAll('tr.li'), priced = 0, un = [];
+  for(var i = 0; i < rows.length; i++){
+    rows[i].removeAttribute(attr);
+    if(crEstNum(rows[i].querySelector('td.qty')) && crEstNum(rows[i].querySelector('td.rate'))) priced++;
+    else un.push(rows[i]);
+  }
+  if(!priced) return 0;   /* nothing priced: a blank form to print and fill by hand keeps every line */
+  un.forEach(function(r){ r.setAttribute(attr, '1'); });
+  return un.length;
+}
 function compactForPrint(d){
+  try{ crMarkUnpriced(d, 'data-emptyrow'); }catch(_cu){}   /* 1330: printFix hides [data-emptyrow] */
   /* photo boxes: never print an empty frame (all document types) */
   d.querySelectorAll('.fig, .cover-photo').forEach(function(f){
     var fr = f.classList.contains('cover-photo') ? f : f.querySelector('.frame');
@@ -28462,6 +28510,7 @@ function compactForPrint(d){
 }
 function restorePrintMarks(d){
   if(!d) return;
+  try{ d.querySelectorAll('#estItems tr.li[data-emptyrow]').forEach(function(r){ r.removeAttribute('data-emptyrow'); }); }catch(_cu){}   /* 1330 */
   d.querySelectorAll('h2.sec .num[data-orignum]').forEach(function(sp){
     sp.textContent = sp.getAttribute('data-orignum');
     sp.removeAttribute('data-orignum');
@@ -44495,6 +44544,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1330, d:'2026-10-13', t:'One way to make an estimate', s:'On a job\u2019s Estimates page, the From a template choices now open the estimate builder with that trade\u2019s standard line already on it, priced from the Library \u2014 roofing starts with the Owens Corning Preferred Roofing System. Add the rest from the Library as usual. Estimates made on the old fill-in form no longer send their empty lines: once any line has a price, the lines without one are left off what the client receives and prints. You still see every line while you edit.' },
   { b: 1329, d:'2026-10-12', t:'The Library shows up on a phone', s:'In the estimate builder, + From Library could say the Library was empty on a phone the first time you opened it, because it had tried to load before you were fully signed in. It now shows Loading the Library, then lists every item as soon as they arrive.' },
   { b: 1328, d:'2026-10-12', t:'A document can no longer be saved blank', s:'If you opened an estimate, contract or report and went back before it had finished loading, the app could save an empty page over it, and the client link then showed nothing. It now saves only a document that has fully opened, and it refuses to save an empty page at all.' },
   { b: 1327, d:'2026-10-12', t:'An assistant for the office', s:'Theo and Joan get an Ask button in the corner of every screen. Ask it anything about jobs, money, crews or the schedule, or tell it what to change. It shows each change first and does nothing until you tap Approve.' },
@@ -51259,6 +51309,34 @@ state.status = d.status;
 var sel = view && view.querySelector('[data-f="status"]');
 if(sel) sel.value = d.status;
 });
+/* 1330: one way to make an estimate. Each "From a template" choice maps to the Library line a
+   rep starts that trade with; the rep adds the rest from the Library as usual. A choice the
+   Library cannot answer opens the Library itself, at that trade, rather than guessing. */
+var TRADE_START = {
+  roof:     { cat:'Roofing', name:/owens corning preferred/i },
+  siding:   { cat:'Siding',  name:/vinyl siding/i },
+  windows:  { cat:'Windows', name:/replacement vinyl windows/i },
+  andersen: { cat:'Windows', name:/andersen/i },
+  gutters:  { cat:'Gutters', name:null },
+  general:  { cat:'Repair',  name:/repair/i }
+};
+async function openWithTrade(project, kind){
+  var t = TRADE_START[kind] || {};
+  var L = window.CardinalLineItems;
+  try{ if(L && !L.all().length) await L.load(); }catch(_l){}
+  var lib = (L && t.name) ? L.all().filter(function(i){ return i.category === t.cat && t.name.test(i.name || ''); })[0] : null;
+  openEditor(project, null);
+  if(lib){
+    state.lines.push({ _lid:newLineId(), library_id:lib.id, name:lib.name, description:lib.description || '',
+      qty:1, unit:lib.unit || '', unit_price:Number(lib.default_price) || 0, amount:Number(lib.default_price) || 0 });
+    render();
+    autosizeDescs();
+  }else{
+    openPicker('library');
+    if(t.cat){ var si = picker && picker.querySelector('.box-search input'); if(si){ si.value = t.cat; pickerQuery = t.cat; renderPicker(); } }
+  }
+  return !!lib;
+}
 function buildDefaultTitle(project){
 var who = (project && (project.name || project.client_name || '')) || 'Client';
 return 'Estimate — ' + who;
@@ -52567,6 +52645,8 @@ close            : close,
 save             : save,
 loadForProject   : loadForProject,
 refreshSavedList : refreshSavedList,
+/* 1330: "+ From a template" opens HERE, with the trade's standard Library line on it */
+openWithTrade    : openWithTrade,
 currentState     : function(){
 if(!state) return null;
 var t = computeTotals(state);
