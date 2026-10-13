@@ -9971,3 +9971,8 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
   `TRADE_START`). The old fill-in form is no longer created; old-form documents still open and edit.
 - Old-form estimates send and print only the lines with a quantity and a price, once any line has both
   (`crMarkUnpriced`; `data-unpriced` + `#crUnpricedCss` on the saved page, `data-emptyrow` at print). Gate: `gate_1330.mjs`.
+
+## Build 1331: install photos before Completed
+- Job Menu → Install photos: guided slots (roofing 8 / siding 6 / gutters 4), saved as `project_photos` section
+  `Install · <slot>`; Wood replaced + Flashing need a note. `setStage()` refuses Completed until they are in;
+  Theo/Joan override with a reason (manual Owner Review row). `window.CardinalInstall`. Gate: `gate_1331.mjs`.

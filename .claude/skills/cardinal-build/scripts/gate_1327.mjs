@@ -106,7 +106,9 @@ const ASKED = [], ANSWERS = [];
 const SEED = {
   team_profiles: [{ email: 'theo@cardinalrenovations.net', name: 'Theo Dorion', role: 'admin', title: 'Owner' }, { email: 'joan@cardinalrenovations.net', name: 'Joan Hunt', role: 'admin', title: 'Office' }, { email: REP, name: 'Rep', role: 'sales', title: 'Sales' }],
   projects: [{ id: PID, name: 'Dana Test', stage: 'Approved', address: '1 Main St', phone: '', email: '', sales_rep: REP, checklist: JSON.stringify({ lead: { claim_type: 'retail' } }), created_at: '2026-09-01T12:00:00Z', updated_at: '2026-09-01T12:00:00Z' }],
-  inspection_reports: [], collections: [], estimates: [], audit_events: [], appointments: [], commissions: [], contracts: [], punch_items: [], insurance_claims: [], owner_reviews: [] };
+  inspection_reports: [], collections: [], estimates: [], audit_events: [], appointments: [], commissions: [], contracts: [], punch_items: [], insurance_claims: [], owner_reviews: [],
+  /* 1331: Dana is a roofing job, and Completed now needs its install photos — B4 moves her there */
+  project_photos: ['Before','Tear-off','Wood replaced','Ice & water','Flashing','Ridge / vents','Finished roof','Yard + magnet'].map((l, i) => ({ id: 'dph' + i, project_id: PID, data: 'data:image/png;base64,iVBORw0KGgo=', storage_path: null, section: 'Install \u00b7 ' + l, caption: (l === 'Wood replaced' || l === 'Flashing') ? 'noted' : null, created_at: '2026-10-13T12:00:00Z' })) };
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 
 async function boot(as, light){

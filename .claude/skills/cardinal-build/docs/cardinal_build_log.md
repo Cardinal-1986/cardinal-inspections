@@ -36126,3 +36126,21 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **⚠ Found, not mine, not fixed:** `drive_lifecycle.mjs` (773) fails from S1b on BOTH 1329 and 1330 — identical step
   results. It is in no CI job, so it rotted unseen. Its S4 also drives the old form's Roofing button, which now opens the
   builder; it needs rewriting against today's screens, not a patch. Recorded in OPEN_ITEMS.
+
+## Build 1331 — install photos are required to mark a job Completed (Theo's picks 3A + 3.2B, 13 Oct 2026)
+- **Why:** a job could go Scheduled → Completed with no install photos at all (McConnel: none 7–11 Aug).
+- **What:** `cr-inst-styles` / `cr-inst-script`, `window.CardinalInstall {open, close, guard, badge, setFor, missing}`.
+  A Job Menu tile "Install photos" (badge done/needed, `#jmInstallN`) opens a sheet of guided slots — roofing 8,
+  siding 6, gutters 4; repair / warranty / inspection jobs have none. Photos go through `photoDb.add()` into
+  `project_photos` with section `Install · <slot>` and the note as caption — no new table, no SQL.
+  3.2B: Wood replaced and Flashing will not save without a one-line note.
+- **The rule (3A):** `setStage()` refuses a forward move to Completed while a slot is missing and returns `false`.
+  A non-admin is told INSIDE the sheet what is missing (first version toasted it — the gate found the toast sitting
+  over the sheet's Save button on a phone). Theo/Joan: crAsk, then a reason → a manual `owner_reviews` row
+  ("Completed without install photos: …") and an activity line, then it completes.
+- **The assistant (1327) is told too:** its Approve now throws "Not moved: install photos…" when setStage refuses,
+  rather than reporting a stage move that did not happen. gate_1327's Dana seed gained her 8 install photos.
+- **Gates:** `gate_1331.mjs` GREEN 7/7 (crew refused + sheet, repair exempt, full set passes, missing note refused,
+  owner override + Owner Review row, Before saves, Wood replaced needs its note); control 1330 RED 5/7. 1021, 1315,
+  1316, 1322, 1323, 1325, 1327, 1328, 1330, 972, 766, check_build, types, dupes, scroll-lock, stack, a11y, 1206 green.
+  Rendered at 390px dark + light: every ink ≥ 6.89:1, slots 84px.
