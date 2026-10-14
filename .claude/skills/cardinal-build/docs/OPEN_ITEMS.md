@@ -6376,3 +6376,7 @@ Theo, verbatim: "I don't know on calander put it on hold."
 - **(14 Oct, 1335)** An invoice made from an accepted estimate stores its total at creation; owedOn's fallback reads that
   stored total, so a change order signed AFTER the invoice is not on it. **FIXED at 1336** (owedOn/remind read the accepted estimate live + coTotal). Fix if it bites: owedOn/remind fallback = accepted
   estimate total + signed change orders. `harness_654.js` crashes on `collPaid` (pre-existing, not in CI).
+- **(14 Oct, 1337)** Estimate/invoice pass items 4–6 (card "-- paid of", "signed contract" label on estimate jobs, no
+  over-balance check on Record payment) — **FIXED at 1337.** Still open from that pass: **item 3, Theo's call** — a
+  homeowner's estimate signature goes to the Approvals card and does not set `estimates.status='accepted'`; decide
+  whether signing should count as accepted, or keep the Approvals step.
