@@ -10010,3 +10010,8 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1336: payment receipts + server balance parity
 - `api/receipt.js` (text + email receipt), Record payment tick box on by default, webhook sends on new online payments.
   owedOn/remind price no-contract jobs by max(manual, accepted estimate) + signed change orders. Gate: `gate_1336.mjs`.
+
+## Build 1342: empty-page guard on every document save
+- `crPageIsEmpty()` (main block, beside `var TABLE = 'inspection_reports'`) — `db.update` refuses an `html` that
+  shows nothing; `serializeFrame()` checks after stripping the editing banner. Server twin:
+  `inspection_reports_blank_guard.sql` (trigger still to be created by hand). Gate: `gate_1342.mjs`.

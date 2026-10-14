@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1341<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1342<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -10997,6 +10997,15 @@ window.aiHeaders = async function(){
   return hdrs;
 };
 var TABLE = 'inspection_reports';
+/* 1342: true when an html page shows nothing at all — no text, no image, no table cell. The same test
+   as inspection_reports_blank_guard.sql on the server. A real Cardinal document is never this. */
+function crPageIsEmpty(html){
+  var t = String(html == null ? '' : html);
+  if(t.length > 1500) return false;
+  t = t.replace(/<(head|style|script)[^>]*>[\s\S]*?<\/\1>/gi, '');
+  if(/<(img|td|svg)\b/i.test(t)) return false;
+  return !t.replace(/<[^>]*>/g, '').replace(/&nbsp;|\s/g, '');
+}
 
 /* ---------- helpers ---------- */
 function esc(s){
@@ -11230,6 +11239,10 @@ var db = {
     return id;
   },
   update: async function(id, fields){
+    /* 1342: no writer may store an empty page over a document (EST-2026-0910, 13 Oct). */
+    if(fields && ('html' in fields) && crPageIsEmpty(fields.html)){
+      throw new Error('the page is empty, so it was not saved \u2014 close the document and open it again');
+    }
     fields.updated_at = new Date().toISOString();
     if(TEAM){
       /* 869: no signal — hold the change in the outbox and apply it locally now,
@@ -27549,7 +27562,11 @@ function serializeFrame(){
     body.style.outline = '';
     if(!body.getAttribute('style')) body.removeAttribute('style');
   }
-  return '<!DOCTYPE html>\n' + clone.outerHTML;
+  var _out = '<!DOCTYPE html>\n' + clone.outerHTML;
+  /* 1342: checked AFTER the editor's banner and live layers are stripped — before, a frame holding only
+     the "Editing mode" banner passed the 1328 check and saved an empty page. */
+  if(crPageIsEmpty(_out)) throw new Error('the document has not finished opening');
+  return _out;
 }
 
 function readEstimateTotal(){
@@ -44685,6 +44702,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1342, d:'2026-10-14', t:'A document can never be saved as an empty page', s:'An estimate page was saved empty from a phone that was still running an older copy of the app, so it opened blank. The page has been put back from its saved copy. Now the app refuses to save an empty page over any estimate, contract, invoice or report, whichever button the save comes from.' },
   { b: 1341, d:'2026-10-14', t:'Five fixes from the full app check', s:'Tools \u2192 Financing Rates opens the rates again instead of a blank page. The \u00d7 on Suppliers takes you home instead of leaving an empty screen. On a phone, the Tools menu stays on the screen. The Ask button steps out of the way while the client form is open, so Save is fully tappable. And swiping Back while the client form or a signature box is open now closes it and keeps you where you were; Esc does the same on a computer.' },
   { b: 1340, d:'2026-10-14', t:'A signed estimate is an accepted estimate', s:'When the homeowner signs an estimate, on your phone or through the link you texted, the estimate is now marked Accepted straight away, so you can create the invoice without another step. It still shows in Approvals for making the contract.' },
   { b: 1339, d:'2026-10-14', t:'The light and dark switch is back on screen', s:'There is a sun and moon button in the top bar again, next to +. Tap it to switch between dark and light. It is there on the phone and on a computer, in Retail, Insurance and Community. Before, it was only in the phone menu under Appearance, so on a computer there was no way to switch at all. The Appearance row in the menu still works too.' },

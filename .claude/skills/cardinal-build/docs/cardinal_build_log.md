@@ -36299,3 +36299,25 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   portal has no ×; small targets (Crews tabs 26px, crew rows 36px, client stage arrow 40px, estimate-builder side
   sections ~30px, desktop doc Save 42px). Other modals (estimate picker, photo editor, walkthrough, What's New…)
   still do not close on Back.
+
+## Build 1342 — a document page can never be saved empty, wherever the save comes from
+
+- **What happened.** 13 Oct 23:17 UTC a phone PATCHed `inspection_reports.html` for EST-2026-0910 to
+  `<!DOCTYPE html>\n<html><head></head><body></body></html>` (55 chars) over an 11,059-char page. Read from
+  `document_versions` (the 1079 `before_edit` snapshot fired at 23:17:02.677, 150 ms before the write) and the
+  Supabase edge log (two PATCHes from one iPhone, 23:17 and 23:19). Build 1328 already guards the editor's
+  save, so the writer was most likely an installed copy of the app still holding a pre-1328 build in memory.
+  Theo saw it as "Can't open" the next morning.
+- **Restored** 14 Oct from that snapshot (the restore only ran while the row was under 100 chars). No other
+  document has a version more than twice its current size — this was the only victim.
+- **Client guard, two places:** `crPageIsEmpty(html)` beside `var TABLE = 'inspection_reports'` (no text, no
+  img/td/svg, ≤1,500 chars). (1) `db.update` refuses an empty `html` before the outbox and before the write —
+  every writer in the file passes through it. (2) `serializeFrame()` re-checks AFTER stripping
+  `[data-cardinal-hint]` and the live layers: 1328's check ran before the strip, so a frame holding only the
+  "Editing mode" banner passed it.
+- **Server guard:** `inspection_reports_blank_guard.sql` — the same rule as a `before update of html` trigger,
+  which is the only thing an old copy of the app cannot skip. ⚠ **The FUNCTION is applied
+  (`inspection_reports_blank_guard_1342_fn`); the `create trigger` timed out through the MCP twice** (also with
+  `lock_timeout = 8s`, and with no long transaction in `pg_stat_activity`) — the same failure as the
+  `collections_rep_guard` trigger. Theo runs the two trigger lines in the SQL editor.
+- **Gates:** `gate_1342.mjs` GREEN 11, control 1341 RED 3. check_build, types, dupes, scroll-lock GREEN.
