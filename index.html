@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1337<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1338<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44609,6 +44609,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1338, d:'2026-10-14', t:'Insurance money waits on the carrier, not the homeowner', s:'On Invoices and Payments, an insurance job waiting for the carrier to release depreciation now sits in its own "Waiting on the carrier" group. It is no longer marked overdue at 31 days, it does not count toward the overdue total, and its button opens the job instead of texting the homeowner a reminder for the insurer\'s money. On the claims hub, a closed claim no longer counts toward deductibles due. The company text only ever sends Cardinal\'s own pay link.' },
   { b: 1337, d:'2026-10-14', t:'Invoice card tidy-ups', s:'The invoice card now reads \u201c$0 paid of\u201d instead of \u201c-- paid of\u201d when nothing has been paid yet. The Ready to invoice list says whether a job is billed from a signed contract or an accepted estimate. Record payment now checks with you before recording more than the balance, so a typo can\u2019t quietly mark a job paid.' },
   { b: 1336, d:'2026-10-14', t:'Payment receipts by text and email', s:'When a payment is recorded, the homeowner now gets a receipt by text and by email: the amount, how they paid, the date, and the balance left on the job. Record payment has a tick box for it, on by default. Online payments made through the pay link send a receipt automatically. Insurance-company checks and Community jobs do not send one. If the job has no phone or email on file, the message says so.' },
   { b: 1335, d:'2026-10-14', t:'Invoice from an accepted estimate', s:'A job with an accepted estimate can now be invoiced, even when the agreement was signed on paper instead of in the app. The invoice uses the estimate\u2019s total plus any signed change order, so no amount is typed in. An estimate that has only been sent, not accepted, still can\u2019t be invoiced. Tip: sign any change order first, then create the invoice, so it is included.' },
@@ -61619,7 +61620,7 @@ if(c.supplement_status === 'filed'){
 owedSupp += Number(c.supplement_filed) || 0;
 }
 acvReleased += Number(c.approved_acv) || 0;
-if(!c.deductible_waived && Number(c.deductible) > 0){
+if(st !== 'Closed' && !c.deductible_waived && Number(c.deductible) > 0){   /* 1338 (audit R8): Closed is settled */
 dedDue += Number(c.deductible); dedCount++;
 }
 });
@@ -90887,7 +90888,11 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       if(s !== 'Invoiced' && s !== 'Closed' && !invSent(inv)) return;
       var fin = owed(pr);
       if(!(Number(fin.balance) > 0.005)) return;
-      out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:ageDays(pr, inv) });
+      /* 1338 (audit R8): an insurance job at Invoiced is waiting on the CARRIER to release
+         depreciation. Aging it against the homeowner made it red at 31 days and offered
+         Remind, which texts the homeowner for the insurer's money. */
+      var carrier = s === 'Invoiced' && (typeof projClaimType === 'function') && projClaimType(pr) === 'insurance';
+      out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:ageDays(pr, inv), carrier:carrier });
     });
     out.sort(function(a, b){ return b.age - a.age; });
     return out;
@@ -90928,7 +90933,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   var IC_MORE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   function shortDate(v){ var d = v ? new Date(v) : null; return (d && !isNaN(d.getTime())) ? d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) : ''; }
   function rowHtml(x){
-    var pr = x.pr, od = x.age > 30, id = esc2(pr.id);
+    var pr = x.pr, od = x.age > 30 && !x.carrier, id = esc2(pr.id);   /* 1338 */
     var nm = esc2(pr.name || 'Client');
     var sent = !!(x.inv && x.inv.status === 'sent');
     var RB = function(cls, attr, label){ return '<button class="crar-btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '="' + id + '">' + label + '</button>'; };
@@ -90945,6 +90950,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     } else if(!sent){
       go = RB('primary crar-go', 'data-artext', IC_SMS + 'Send');
       more.push(RB('', 'data-arcopy', IC_LINK + 'Copy link'), RB('', 'data-aremail', IC_MAIL + 'Email'), RB('', 'data-arpay', IC_CASH + 'Record payment'));
+    } else if(x.carrier){   /* 1338: chase the carrier from the job, never text the homeowner */
+      go = RB('crar-go', 'data-aropen', 'Open job');
+      more.push(RB('', 'data-arpay', IC_CASH + 'Record payment'), RB('', 'data-arcopy', IC_LINK + 'Copy link'));
     } else if(od){
       go = RB('primary crar-go', 'data-artext', IC_SMS + 'Remind');
       more.push(RB('', 'data-arcopy', IC_LINK + 'Copy link'), RB('', 'data-aremail', IC_MAIL + 'Email'), RB('', 'data-arpay', IC_CASH + 'Record payment'));
@@ -90952,7 +90960,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       go = RB('crar-go', 'data-arpay', IC_CASH + 'Record payment');
       more.push(RB('', 'data-arcopy', IC_LINK + 'Copy link'), RB('', 'data-artext', IC_SMS + 'Text link'), RB('', 'data-aremail', IC_MAIL + 'Email'));
     }
-    more.push(RB('', 'data-aropen', 'Open job'));
+    if(!x.carrier) more.push(RB('', 'data-aropen', 'Open job'));
+    if(x.carrier) bits.push('Waiting on the carrier');
     return '<div class="crar-row' + (od ? ' od' : '') + '">'
       + '<div class="crar-top2"><div class="crar-who"><div class="crar-nm">' + nm + (x.inv ? ' ' + pill(x.st) : '') + ' <span class="crar-age' + (od ? ' od' : '') + '">' + ageTxt + '</span></div>'
       +   '<div class="crar-addr">' + bits.join(' &middot; ') + '</div></div>'
@@ -90968,7 +90977,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var view = q('cr-ar-view'); if(!view) return;
     var list = arList();
     var total = 0, overdue = 0, overdueN = 0;
-    list.forEach(function(x){ total += x.fin.balance; if(x.age > 30){ overdue += x.fin.balance; overdueN++; } });
+    list.forEach(function(x){ total += x.fin.balance; if(x.age > 30 && !x.carrier){ overdue += x.fin.balance; overdueN++; } });   /* 1338 */
     var m0 = function(n){ return Number(n) > 0 ? money(n) : '$0'; };   /* 1319 */
     if(q('crarKpiOut')) q('crarKpiOut').textContent = m0(total);
     if(q('crarKpiMonth')) q('crarKpiMonth').textContent = m0(paidThisMonth());
@@ -90997,8 +91006,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       } else if(!list.length){
         body.innerHTML = readyHtml;
       } else {
-        var buckets = [[], [], []];
-        list.forEach(function(x){ buckets[bucketOf(x.age)].push(x); });
+        var buckets = [[], [], []], carrierRows = [];
+        list.forEach(function(x){ (x.carrier ? carrierRows : buckets[bucketOf(x.age)]).push(x); });   /* 1338 */
         var labels = ['0&ndash;14 days', '15&ndash;30 days', '31+ days &middot; overdue'];
         var html = '';
         /* 1316: the oldest money first — on a phone the 45-day job used to sit ~2,000px down */
@@ -91008,6 +91017,13 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
           html += '<div class="crar-grp' + (i === 2 ? ' over' : '') + '">'
             + '<div class="crar-grphd"><b>' + labels[i] + '</b><span class="crar-line"></span><span class="crar-sub">' + money(sub) + '</span></div>'
             + buckets[i].map(rowHtml).join('')
+            + '</div>';
+        }
+        if(carrierRows.length){
+          var csub = 0; carrierRows.forEach(function(x){ csub += x.fin.balance; });
+          html += '<div class="crar-grp carrier">'
+            + '<div class="crar-grphd"><b>Waiting on the carrier</b><span class="crar-line"></span><span class="crar-sub">' + money(csub) + '</span></div>'
+            + carrierRows.map(rowHtml).join('')
             + '</div>';
         }
         body.innerHTML = readyHtml + html;

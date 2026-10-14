@@ -36222,3 +36222,18 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
   `finally`. Nothing is blocked — overpayments and deposits-in-advance are real — it is a second look, not a wall.
 - **Gates:** `gate_1337.mjs` GREEN, control (1336) RED 5. 1315, 1316, 1318, 1319, 1320, 1323, 1335, 1336,
   gate_harnesses, check_build, types, dupes, scroll-lock green.
+
+## Build 1338 — audit W8 + R8: our pay link only; carrier money is not homeowner-overdue
+- **W8 (`api/sms-link.js`)** — the route texts from the company Twilio number and accepted any `https?://` URL.
+  New `ownPayLink(raw, req)`: https only, no credentials, host = this deployment's own host or
+  `app.cardinalroster.com` / `app.cardinalrenovations.com`, path exactly `/api/share`, token `^[A-Za-z0-9_-]{8,128}$`;
+  the URL is rebuilt from those parts so extra params never ride along. All 3 production share tokens match (measured).
+- **R8a (A/R, `cr-ar-script`)** — an insurance job at Invoiced is waiting on the carrier's depreciation release. It was
+  aged against the homeowner: red at 31 days, in the overdue KPI, and its button was **Remind** (texts the homeowner
+  for the insurer's money). Now tagged `carrier`, grouped under **Waiting on the carrier**, never `od`, out of the
+  overdue total, main button Open job, no text actions.
+- **R8c (claims hub, `cr-cth`)** — a Closed claim's deductible no longer counts in "Deductibles due".
+- **R8b NOT done** — "owed depreciation ignores collections". The hub doesn't load collections, and the database
+  holds **2** insurance claims, neither Invoiced, no payments (measured) — no data to verify a rule against. Left open.
+- **Gates:** `gate_1338.mjs` GREEN 20, control 1337 RED 10. 1315, 1316, 1318, 1319, 1320, 1323, 1335, 1336, 1337,
+  gate_harnesses, check_build, types, dupes, scroll-lock green.

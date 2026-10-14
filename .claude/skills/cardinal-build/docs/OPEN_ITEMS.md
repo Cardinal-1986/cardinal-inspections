@@ -6380,3 +6380,8 @@ Theo, verbatim: "I don't know on calander put it on hold."
   over-balance check on Record payment) — **FIXED at 1337.** Still open from that pass: **item 3, Theo's call** — a
   homeowner's estimate signature goes to the Approvals card and does not set `estimates.status='accepted'`; decide
   whether signing should count as accepted, or keep the Approvals step.
+- **(14 Oct, 1338)** Audit **W8 FIXED** (company text sends only our pay link) and **R8 a+c FIXED** (carrier money
+  not homeowner-overdue; Closed claims out of Deductibles due). **R8b open**: the claims hub's "owed depreciation"
+  still ignores carrier payments received — 2 claims in the database, none invoiced, so no data to build it against.
+  Still to do from the audit: **M7** (refunds/disputes), **M11 + R9** (the `collections_guards` SQL — M11's job-total
+  rule must include accepted estimates first, or it refuses reps on almost every job), **W7**.

@@ -9986,6 +9986,10 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1335: invoice from an accepted estimate
 - `crBillable(fin)`: signed contract / manual / change order value, or an ACCEPTED estimate. Sent-only estimates still
   can't be invoiced. Gate: `gate_1335.mjs`.
+## Build 1338: pay-link-only company texts; carrier money waits on the carrier
+- `api/sms-link.js` `ownPayLink()` — only `/api/share?t=` on our hosts is texted. A/R groups insurance jobs at Invoiced
+  under "Waiting on the carrier" (not overdue, no Remind). Claims hub skips Closed claims in Deductibles due. Gate: `gate_1338.mjs`.
+
 ## Build 1337: invoice card tidy-ups
 - Invoice card shows "$0 paid of …" instead of "-- paid of"; the A/R ready list labels estimate-priced jobs "accepted
   estimate"; Record payment asks before saving an amount larger than the balance (`_payOver`, `crAsk`). Gate: `gate_1337.mjs`.
