@@ -10027,3 +10027,7 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1345: document Trash (30 days)
 - `db.remove` → `trash_document()`; `crRenderTrash()` draws "Trash (n)" with Restore under Contracts and Estimates
   (`.cr-trash-mount`); `restore_document()` puts it back. SQL: `document_trash.sql`. Gate: `gate_1345.mjs`.
+
+## Build 1346: deposits before Invoiced
+- Invoices & Payments "Deposits & progress payments" group (`depositList()`, not in owed/overdue); the job card's
+  red button is Record payment until the work is finished. Gate: `gate_1346.mjs`.

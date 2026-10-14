@@ -36372,3 +36372,17 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   The two document confirms now say where it goes.
 - **Gates:** `gate_1345.mjs` (Chromium + mock) GREEN 5, control 1344 RED 5. check_build, types (one cast), dupes,
   scroll-lock GREEN.
+
+## Build 1346 — a deposit can be recorded before the job is Invoiced
+
+- **Theo, 14 Oct: "No payment screen for deposits until after pipeline set to invoiced."** Measured in Chromium
+  first: the job card DID offer Record payment at every stage once a contract was signed — but as the grey
+  secondary button under a red "Create invoice", over the line "Finished work is ready to bill". And Invoices &
+  Payments lists only `arList` (Invoiced/Closed or a sent invoice) and `readyList` (Completed): **a signed job at
+  Approved or Scheduled — exactly when a deposit is taken — was on no list.**
+- `depositList()`: retail/insurance jobs at Approved or Scheduled, billable (`crBillable`'s rule), balance > 0,
+  no sent invoice → a "Deposits & progress payments" group, "Before work", red Record payment. **Not added to
+  the owed / overdue KPIs** — nothing is owed yet.
+- Job card, stage Lead…Scheduled with no invoice: Record payment is the red button, Create invoice the secondary,
+  line "Signed — record the deposit here" (or "progress payments" once something is paid). Completed+ unchanged.
+- **Gates:** `gate_1346.mjs` (Chromium) GREEN 7, control 1345 RED 5. 1315, 1316, 1318, 1319, 1335, 1337, 1338 GREEN.
