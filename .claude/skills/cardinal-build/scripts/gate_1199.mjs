@@ -140,7 +140,13 @@ function loadModule(text, params) {
   let t = text.replace(/^import\s+Stripe\s+from\s+'stripe';\s*$/m, '')
               .replace(/^import\s+\{\s*createClient\s*\}\s+from\s+'@supabase\/supabase-js';\s*$/m, '')
               .replace(/^export const config\b/m, 'const config')
-              .replace(/^export default async function handler/m, 'async function handler');
+              .replace(/^export default async function handler/m, 'async function handler')
+              /* 1336: pay.js re-exports owedOn for api/receipt.js. A named-export list
+                 is the one module form this loader cannot evaluate, so drop it; the
+                 handler under test does not use it. */
+              .replace(/^export\s*\{[^}]*\};?.*$/m, '')
+              /* 1336: the webhook imports sendReceipt; the drive passes a stub in its place */
+              .replace(/^import\s+\{\s*sendReceipt\s*\}\s+from\s+'\.\/receipt\.js';.*$/m, '');
   if (/^\s*(import|export)\b/m.test(t)) throw new Error('module still carries an import/export after stripping');
   return new AsyncFunction(...params, t + '\nreturn handler;');
 }
@@ -192,13 +198,15 @@ console.log('D · api/pay-webhook.js, executed with a stub Stripe');
     if (String(url).includes('/rest/v1/collections') && opt.method === 'POST') { writes.push(JSON.parse(opt.body)[0]); return { ok: true, status: 201, text: async () => '' }; }
     return { ok: true, status: 200, text: async () => '[]', json: async () => [] };
   };
-  const handler = await loadModule(src('pay-webhook.js'), ['Stripe', 'fetch', 'process', 'Buffer'])(StripeStub, fetchStub, procStub, Buffer);
+  const receipts = [];
+  const receiptStub = async (o) => { receipts.push(o); return { sent: [] }; };
+  const handler = await loadModule(src('pay-webhook.js'), ['Stripe', 'fetch', 'process', 'Buffer', 'sendReceipt'])(StripeStub, fetchStub, procStub, Buffer, receiptStub);
   const META = { kind: 'deposit', share_token: 't', project_id: 'p1', report_id: 'r1' };
   const fire = async (type, over) => {
-    writes.length = 0;
+    writes.length = 0; receipts.length = 0;
     const raw = JSON.stringify({ id: 'evt', type, data: { object: { id: 'cs_1', amount_total: 1200000, metadata: META, payment_intent: 'pi_1', ...over } } });
     const req = Readable.from([Buffer.from(raw)]); req.method = 'POST'; req.headers = { 'stripe-signature': 'sig' };
-    const res = mkRes(); await handler(req, res); return { res, rows: writes.slice() };
+    const res = mkRes(); await handler(req, res); return { res, rows: writes.slice(), receipts: receipts.slice() };
   };
   let r = await fire('checkout.session.completed', { status: 'complete', payment_status: 'paid' });
   ok(r.res.code === 200 && r.rows.length === 1 && r.rows[0].method === 'card', 'a paid CARD completion records method card (preserved)', JSON.stringify(r.rows[0] && { method: r.rows[0].method, notes: r.rows[0].notes }));
@@ -207,6 +215,9 @@ console.log('D · api/pay-webhook.js, executed with a stub Stripe');
   ok(r.rows[0] && /ACH|bank/i.test(r.rows[0].notes || '') && !/card/i.test(r.rows[0].notes || ''), '  · and its note names the bank payment, not a card');
   r = await fire('checkout.session.completed', { status: 'complete', payment_status: 'unpaid' });
   ok(r.res.code === 200 && r.rows.length === 0, 'an UNSETTLED debit at checkout still records nothing (1151 preserved)');
+  ok(r.receipts.length === 0, '  · and sends no receipt (1336)');
+  r = await fire('checkout.session.completed', { status: 'complete', payment_status: 'paid' });
+  ok(r.receipts.length === 1 && r.receipts[0].externalRef === 'pi_1', 'a recorded card payment sends ONE receipt, keyed by the payment intent (1336)', JSON.stringify(r.receipts));
 }
 
 /* ── E · the conversion route — RETIRED AT 1212 ─────────────────────
