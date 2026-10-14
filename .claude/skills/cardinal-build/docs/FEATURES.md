@@ -9981,3 +9981,5 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
   toast. Hover/Roofr numbers come from the first report only. Gate: `gate_1332.mjs`.
 ## Build 1333: every crew bookable
 - Magnet Board: with a job armed or picked up to move, every crew row shows (idle crews no longer folded). Gate: `gate_1333.mjs`.
+## Build 1334: change-order photo from the library
+- `#coFile` no longer forces the camera; library or camera. Gate: `gate_1334.mjs`.

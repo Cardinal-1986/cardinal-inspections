@@ -36167,3 +36167,10 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
   picked up to move) every crew of every trade is shown. Browsing the week, quiet crews still fold.
 - **Gates:** `gate_1333.mjs` GREEN 3/3 (folds when nothing armed; all 5 rows when armed; tapping Santiago's day opens the
   work order with Santiago preset); control 1332 RED 2/3 — Theo's bug reproduced. check_build, types, dupes, scroll-lock green.
+
+## Build 1334 — change-order photo from the library (Jacob, 14 Oct 2026)
+- **Why:** "Under change order it won't let me upload a photo just take a picture." The box reads "Take or choose a
+  photo" but `#coFile` carried `capture="environment"`, which opens the camera directly on iPhone/Android.
+- **What:** attribute removed; the phone's own picker now offers Photo Library / Take Photo / Choose File. A photo is
+  still required before the homeowner signs. Install-photo slots (1331) deliberately stay camera-first.
+- **Gates:** `gate_1334.mjs` GREEN 4/4, control 1333 RED. check_build, types, dupes, gate_1323 green.
