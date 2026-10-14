@@ -58,6 +58,20 @@ async function requireSession(req, res){
   }
 }
 
+const OWN_HOSTS = ['app.cardinalroster.com', 'app.cardinalrenovations.com'];
+export function ownPayLink(raw, req){
+  var u;
+  try{ u = new URL(String(raw || '')); }catch(_){ return ''; }
+  var here = String((req && req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '').toLowerCase();
+  var host = u.host.toLowerCase();
+  if(u.protocol !== 'https:' || u.username || u.password) return '';
+  if(host !== here && OWN_HOSTS.indexOf(host) === -1) return '';
+  if(u.pathname !== '/api/share') return '';
+  var t = u.searchParams.get('t') || '';
+  if(!/^[A-Za-z0-9_-]{8,128}$/.test(t)) return '';
+  return 'https://' + host + '/api/share?t=' + t;
+}
+
 export default async function handler(req, res){
   if(req.method !== 'POST'){ res.status(405).json({ ok:false, error:'POST only' }); return; }
   const caller = await requireSession(req, res);
@@ -80,6 +94,13 @@ export default async function handler(req, res){
     var url = String(body.url || '').trim();
     if(!projectId || !/^https?:\/\//i.test(url)){
       res.status(400).json({ ok:false, error:'Missing project or pay link.' }); return;
+    }
+    // 1338 (audit W8): this route texts from the COMPANY number, so it sends only the app's
+    // own pay link — /api/share?t=<token> on this deployment's host or a Cardinal domain —
+    // rebuilt from its parts so nothing else rides along. Before, any https URL went out.
+    url = ownPayLink(url, req);
+    if(!url){
+      res.status(400).json({ ok:false, error:'Only a Cardinal pay link can be texted from the company number.' }); return;
     }
 
     // read the phone SERVER-SIDE with the caller's token — RLS scopes this to a
