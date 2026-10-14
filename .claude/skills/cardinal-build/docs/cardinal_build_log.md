@@ -36237,3 +36237,21 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
   holds **2** insurance claims, neither Invoiced, no payments (measured) — no data to verify a rule against. Left open.
 - **Gates:** `gate_1338.mjs` GREEN 20, control 1337 RED 10. 1315, 1316, 1318, 1319, 1320, 1323, 1335, 1336, 1337,
   gate_harnesses, check_build, types, dupes, scroll-lock green.
+
+## Build 1339 — the light/dark switch is back in the header bar
+Theo, 14 Oct: **"please bring back the light dark theme."**
+- **Measured first:** since 1230 the switch lived only in the menu drawer's Appearance row. On a **desktop** the
+  drawer never opens (the left nav replaces it) and the header button hid itself whenever the old search row was
+  absent — so **a desktop had no way to switch theme at all.** On a phone it sat at the bottom of the drawer.
+- **Now:** `#cr-dark-toggle` lives in `#cr-hd2-bar`, between + (order 8) and Search (order 10) at `order:9`, on
+  every portal, phone and desktop, as a drawn sun/moon with a label that says what the next tap does. It never
+  floats, so 1230's reason for taking it off the corner still holds. Blackout screens (Showcase, OC Colors,
+  Dispatch) still hide it. The drawer row stays.
+- **Two traps found on the way:** the 417 search-row adopter (driven by a body observer) re-took the button
+  whenever it was not `.afloat`, which would have handed it back and forth with the 1s sweep forever — it now
+  leaves a button in the bar alone. And `apply()` wrote the glyph every second whether or not it changed (a
+  mutation each time, waking every body observer); `paintGlyph()` now writes only on a change — 0 mutations in 3s.
+- `gate_1176`'s "exactly one control on insurance" counted the drawer row as a control; it now counts the header
+  switch when present, and separately asserts no insurance-only control (1181's actual ruling).
+- **Gates:** `gate_1339` 14/14, control 1338 RED 12. `gate_1176` 12/12 (both trees), `gate_1181` 18/18, `gate_1230`
+  19/19, `gate_1179` 25/25, check_build, types, dupes green.
