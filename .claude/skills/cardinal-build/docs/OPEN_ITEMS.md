@@ -6405,6 +6405,12 @@ Theo, verbatim: "I don't know on calander put it on hold."
   `collections_rep_guard()` are now IN production; the trigger that switches the guard on, and the R9/M11 policies,
   are NOT — `create trigger` on `collections` times out through the MCP. Run the trigger + policy part of
   `collections_guards.sql` in the Supabase SQL editor.
+- **(14 Oct, 1345) RUN IN THE SUPABASE SQL EDITOR: `document_trash.sql`, whole.** Until it runs, deleting a
+  document is REFUSED (fail-closed, by design). The MCP hung on every DDL this session.
+- **(14 Oct, 1342) RUN IN THE SUPABASE SQL EDITOR:** the two trigger lines at the bottom of
+  `inspection_reports_blank_guard.sql` (the function is already applied; `create trigger` times out through the
+  MCP, same as `collections_guards.sql`'s trigger). Until then an old copy of the app on a phone can still blank
+  a page; current builds refuse in `db.update`.
 - **(14 Oct, 1341)** End-to-end audit (`docs/E2E_AUDIT_2026-10-14.md`): 5 confirmed — **all fixed at 1341**. Still
   open from its "likely" list: Self Check Back lands on Production; phone menu ignores Back/Esc; Switch portal has
   no ×; sub-44px targets (Crews tabs 26, crew rows 36, client stage arrow 40, estimate-builder side sections ~30,

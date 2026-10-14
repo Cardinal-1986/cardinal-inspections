@@ -36299,3 +36299,90 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   portal has no ×; small targets (Crews tabs 26px, crew rows 36px, client stage arrow 40px, estimate-builder side
   sections ~30px, desktop doc Save 42px). Other modals (estimate picker, photo editor, walkthrough, What's New…)
   still do not close on Back.
+
+## Build 1342 — a document page can never be saved empty, wherever the save comes from
+
+- **What happened.** 13 Oct 23:17 UTC a phone PATCHed `inspection_reports.html` for EST-2026-0910 to
+  `<!DOCTYPE html>\n<html><head></head><body></body></html>` (55 chars) over an 11,059-char page. Read from
+  `document_versions` (the 1079 `before_edit` snapshot fired at 23:17:02.677, 150 ms before the write) and the
+  Supabase edge log (two PATCHes from one iPhone, 23:17 and 23:19). Build 1328 already guards the editor's
+  save, so the writer was most likely an installed copy of the app still holding a pre-1328 build in memory.
+  Theo saw it as "Can't open" the next morning.
+- **Restored** 14 Oct from that snapshot (the restore only ran while the row was under 100 chars). No other
+  document has a version more than twice its current size — this was the only victim.
+- **Client guard, two places:** `crPageIsEmpty(html)` beside `var TABLE = 'inspection_reports'` (no text, no
+  img/td/svg, ≤1,500 chars). (1) `db.update` refuses an empty `html` before the outbox and before the write —
+  every writer in the file passes through it. (2) `serializeFrame()` re-checks AFTER stripping
+  `[data-cardinal-hint]` and the live layers: 1328's check ran before the strip, so a frame holding only the
+  "Editing mode" banner passed it.
+- **Server guard:** `inspection_reports_blank_guard.sql` — the same rule as a `before update of html` trigger,
+  which is the only thing an old copy of the app cannot skip. ⚠ **The FUNCTION is applied
+  (`inspection_reports_blank_guard_1342_fn`); the `create trigger` timed out through the MCP twice** (also with
+  `lock_timeout = 8s`, and with no long transaction in `pg_stat_activity`) — the same failure as the
+  `collections_rep_guard` trigger. Theo runs the two trigger lines in the SQL editor.
+- **Gates:** `gate_1342.mjs` GREEN 11, control 1341 RED 3. check_build, types, dupes, scroll-lock GREEN.
+
+## Build 1343 — renaming a document never changes what it is; an uploaded estimate can be corrected
+
+- **"Jacob's contract got deleted after editing" (Theo, 14 Oct).** It was not deleted. A signed uploaded
+  contract was renamed "<client> Exterior Contract" — no leading "Contract" — and every document kind here is
+  read from the title's FIRST WORD (`isContractTitle`, `isEstimateTitle`, `/^invoice/`, `/^change order/`,
+  `/^work order/`; `job_total_for()` uses the same regex). It left the Contracts list and the job value.
+  (Two real DELETEs did happen on that job from the same Mac, 14:08 and 14:16 UTC, each through a
+  "cannot be undone" confirm; `document_versions` cascades on delete, so neither is recoverable.)
+- **`crKeepDocKind(id, title)`** beside `crPageIsEmpty`, applied in the documents `db.update`: a title that
+  drops a kind prefix gets it back (estimate number kept). One chokepoint for every rename path.
+- **Uploaded estimates** (`body[data-cr-upload]`, build 1271) have no `estimates` row, so "Edit estimate" said
+  "No live estimate is linked" and stopped. It now asks for the corrected amount and writes the doc `total`,
+  which is what `jobFinance` prices the job from until a contract is signed.
+- **NOT changed, waiting on Theo:** the renamed contract's title was left as it is — restoring "Contract"
+  would make TWO signed exterior contracts count ($44,652.46 and $44,682.46, almost certainly one agreement
+  uploaded twice). And several estimates on one job still price at the LARGEST, not the sum — his call.
+- **Gates:** `gate_1343.mjs` GREEN 11, control 1342 RED 4. check_build, types (two casts), dupes, scroll-lock GREEN.
+
+## Build 1344 — several ACCEPTED estimates on one job add up
+
+- **Theo, 14 Oct: "3a"** — estimates for different trades add up. `estimates` has no trade column, and the jobs
+  with several estimates today are OPTIONS for one roof (one job: shingle 17,730 / stone-coated 36,432 / standing
+  seam 34,050, all drafts), so summing every estimate would triple a job. The line is **accepted**: a homeowner
+  accepts windows AND siding, never two versions of one roof. Sent/draft keep "largest".
+- Same rule in all five places: `jobFinance` (`estBest`, tier 2 sums), `api/pay.js` + `api/share.js`
+  (`accEst +=`), `api/remind.js` (`estByP`), and `job_total_for()` (**applied** as
+  `job_total_for_1344_accepted_sum`; `collections_guards.sql` updated).
+- **Measured before shipping: no job has two accepted estimates today** — this changes no current total.
+- **Gates:** `gate_1344.mjs` GREEN 9, control 1343 RED 4. `gate_1199` 39/39, `gate_1314`, `gate_1336` GREEN.
+
+## Build 1345 — deleted documents go to a Trash, restorable for 30 days
+
+- **Theo, 14 Oct: "2a".** Five signed/priced documents on one job were deleted from one Mac in three minutes
+  (14:34–14:37 UTC), each through a "cannot be undone" confirm, and nothing could restore them: a DELETE on
+  `inspection_reports` cascades `document_versions` too.
+- **`document_trash.sql`**: table `document_trash` (row + its versions as jsonb, `deleted_by`, `deleted_at`;
+  read = full access or the deleter, delete = admin) and two functions — `trash_document(p_doc)` (the
+  `reports_delete` permission; copies then deletes; purges >30 days, since `pg_cron` is not installed) and
+  `restore_document(p_id)` (full access or the deleter; same id, versions back).
+  ⚠ **NOT APPLIED.** Every DDL through the Supabase MCP hung this session (create table, create policy, even
+  create function by the end), with `pg_stat_activity` empty and `statement_timeout` not firing — the hang is
+  outside Postgres. A stray `document_trash_probe` (empty, `id int`) was left by the diagnosis; the file drops it.
+- **`db.remove`** (the one delete pipeline) calls `trash_document`. **Fail-closed:** if the function is missing
+  it refuses ("the Trash is not set up yet, so nothing was deleted") — never a hard delete. So **deleting a
+  document is paused until the SQL runs**, on purpose. The `estimates.doc_id` clears are dropped so a restore
+  keeps its estimate link (a dangling doc_id already self-heals on publish, 1014).
+- **UI:** a "Trash (n)" line under Contracts and under Estimates on the client page, each item with Restore.
+  The two document confirms now say where it goes.
+- **Gates:** `gate_1345.mjs` (Chromium + mock) GREEN 5, control 1344 RED 5. check_build, types (one cast), dupes,
+  scroll-lock GREEN.
+
+## Build 1346 — a deposit can be recorded before the job is Invoiced
+
+- **Theo, 14 Oct: "No payment screen for deposits until after pipeline set to invoiced."** Measured in Chromium
+  first: the job card DID offer Record payment at every stage once a contract was signed — but as the grey
+  secondary button under a red "Create invoice", over the line "Finished work is ready to bill". And Invoices &
+  Payments lists only `arList` (Invoiced/Closed or a sent invoice) and `readyList` (Completed): **a signed job at
+  Approved or Scheduled — exactly when a deposit is taken — was on no list.**
+- `depositList()`: retail/insurance jobs at Approved or Scheduled, billable (`crBillable`'s rule), balance > 0,
+  no sent invoice → a "Deposits & progress payments" group, "Before work", red Record payment. **Not added to
+  the owed / overdue KPIs** — nothing is owed yet.
+- Job card, stage Lead…Scheduled with no invoice: Record payment is the red button, Create invoice the secondary,
+  line "Signed — record the deposit here" (or "progress payments" once something is paid). Completed+ unchanged.
+- **Gates:** `gate_1346.mjs` (Chromium) GREEN 7, control 1345 RED 5. 1315, 1316, 1318, 1319, 1335, 1337, 1338 GREEN.

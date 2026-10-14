@@ -36,7 +36,8 @@ as $$
     select coalesce(sum(total) filter (where homeowner_signed_at is not null and voided_at is null), 0) as table_total
     from contracts where project_id = pid
   ), est as (
-    select coalesce(max(total) filter (where status in ('accepted','signed') and not coalesce(archived, false)), 0) as acc
+    -- 1344: several ACCEPTED estimates add up (windows + siding)
+    select coalesce(sum(total) filter (where status in ('accepted','signed') and not coalesce(archived, false) and total > 0), 0) as acc
     from estimates where project_id = pid
   ), man as (
     select coalesce(case when checklist ~ '^\s*\{' then nullif(checklist::jsonb ->> 'manual_value', '')::numeric end, 0) as manual
