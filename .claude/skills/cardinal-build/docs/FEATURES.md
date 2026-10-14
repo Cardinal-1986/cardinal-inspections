@@ -10019,3 +10019,7 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1343: a rename keeps a document's kind; uploaded estimate amount is editable
 - `crKeepDocKind()` in the documents `db.update` restores a dropped Contract / Estimate / Invoice / Change Order /
   Work Order prefix. "Edit estimate" on an uploaded estimate (`data-cr-upload`) asks for the amount. Gate: `gate_1343.mjs`.
+
+## Build 1344: accepted estimates add up
+- Several accepted estimates on a job sum (client `estBest`, pay/share/remind, `job_total_for`); sent ones stay
+  "largest" because they are options. Gate: `gate_1344.mjs`.

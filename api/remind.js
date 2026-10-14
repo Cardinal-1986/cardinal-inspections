@@ -165,7 +165,7 @@ export default async function handler(req, res) {
     var ctrRows = await reads[4].json();
     var estRows = await reads[5].json();
     var estByP = {}; estRows.forEach(function (e) {
-      if (!e.archived && Number(e.total) > (estByP[e.project_id] || 0)) estByP[e.project_id] = Number(e.total);
+      if (!e.archived && Number(e.total) > 0) estByP[e.project_id] = (estByP[e.project_id] || 0) + Number(e.total);   // 1344: accepted add up
     });
     var ctrByP = {}; ctrRows.forEach(function (c) {
       if (c.homeowner_signed_at && !c.voided_at) ctrByP[c.project_id] = (ctrByP[c.project_id] || 0) + (Number(c.total) || 0);

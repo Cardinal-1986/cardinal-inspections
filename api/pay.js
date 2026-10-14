@@ -97,7 +97,7 @@ async function owedOn(sbHeaders, rep) {
     if (!(signedTotal > 0)) {
       for (const e of await readRows(sbHeaders, 'estimates',
           `${SUPABASE_URL}/rest/v1/estimates?project_id=eq.${rep.project_id}&status=in.(accepted,signed)&select=total,archived`)) {
-        if (!e.archived && Number(e.total) > accEst) accEst = Number(e.total);
+        if (!e.archived && Number(e.total) > 0) accEst += Number(e.total);   // 1344: accepted estimates add up
       }
     }
     const base = Math.max(manual, accEst);

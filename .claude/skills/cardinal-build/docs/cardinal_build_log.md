@@ -36339,3 +36339,15 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   would make TWO signed exterior contracts count ($44,652.46 and $44,682.46, almost certainly one agreement
   uploaded twice). And several estimates on one job still price at the LARGEST, not the sum — his call.
 - **Gates:** `gate_1343.mjs` GREEN 11, control 1342 RED 4. check_build, types (two casts), dupes, scroll-lock GREEN.
+
+## Build 1344 — several ACCEPTED estimates on one job add up
+
+- **Theo, 14 Oct: "3a"** — estimates for different trades add up. `estimates` has no trade column, and the jobs
+  with several estimates today are OPTIONS for one roof (one job: shingle 17,730 / stone-coated 36,432 / standing
+  seam 34,050, all drafts), so summing every estimate would triple a job. The line is **accepted**: a homeowner
+  accepts windows AND siding, never two versions of one roof. Sent/draft keep "largest".
+- Same rule in all five places: `jobFinance` (`estBest`, tier 2 sums), `api/pay.js` + `api/share.js`
+  (`accEst +=`), `api/remind.js` (`estByP`), and `job_total_for()` (**applied** as
+  `job_total_for_1344_accepted_sum`; `collections_guards.sql` updated).
+- **Measured before shipping: no job has two accepted estimates today** — this changes no current total.
+- **Gates:** `gate_1344.mjs` GREEN 9, control 1343 RED 4. `gate_1199` 39/39, `gate_1314`, `gate_1336` GREEN.
