@@ -136,16 +136,21 @@ ok(s.crm === 'insurance', 'on insurance (crm=' + s.crm + ')');
    would make this gate demand the very thing the next build deleted, which is
    how a stale test starts dictating the app. gate_1181 owns the light/dark
    question now; what stays below is 1176's OWN subject, the header layout. */
+/* 1339: Theo, 14 Oct: "please bring back the light dark theme". The shared switch is back in the
+   header bar on every portal, and the drawer's Appearance row stays as its menu copy. What 1181
+   ruled out was insurance having its OWN, different control; that is what is counted now: no
+   insurance-only button, and exactly one header switch, which is the shared one. */
 const themeCount = await page.evaluate(() => {
   const vis = el => el && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
   let n = 0;
   document.querySelectorAll('.cr-ins-theme').forEach(e => { if (vis(e)) n++; });
   const d = document.getElementById('cr-dark-toggle'); if (vis(d)) n++;
-  /* 1230: the one control is the drawer's Appearance row now (gate_1181) */
-  if (document.querySelectorAll('#navMenu [data-cr-appear]').length === 2) n++;
+  /* 1230: with no header switch, the drawer's Appearance row is the control (gate_1181) */
+  if (!vis(d) && document.querySelectorAll('#navMenu [data-cr-appear]').length === 2) n++;
   return n;
 });
 ok(themeCount === 1, 'exactly ONE light/dark control on the insurance screen (got ' + themeCount + ')');
+ok(await page.evaluate(() => [...document.querySelectorAll('.cr-ins-theme')].every(e => getComputedStyle(e).display === 'none' || !e.getBoundingClientRect().width)), '  · and it is not an insurance-only one (1181)');
 
 /* the ink assertion that sat here went with the control it measured — see the
    note above. The "exactly one light/dark control" check below is kept, because

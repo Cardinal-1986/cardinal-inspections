@@ -6385,3 +6385,18 @@ Theo, verbatim: "I don't know on calander put it on hold."
   still ignores carrier payments received — 2 claims in the database, none invoiced, so no data to build it against.
   Still to do from the audit: **M7** (refunds/disputes), **M11 + R9** (the `collections_guards` SQL — M11's job-total
   rule must include accepted estimates first, or it refuses reps on almost every job), **W7**.
+- **(14 Oct, 1am) `collections_guards.sql` — WRITTEN, NOT APPLIED.** Theo's pick: "cap payments to estimate total".
+  Reps (not Theo/Joan/Curtis, not the Stripe webhook) can record payments only up to the job total — signed contract,
+  else the larger of manual value and the ACCEPTED estimate, plus signed change orders; a job with neither refuses a
+  rep payment ("the office records this payment"). Also R9 (the assigned rep reads/records the job's money) and a
+  48-hour correction window while the commission is pending. Measured: 6 of 100 live jobs have a total today; reps
+  have recorded 1 payment ever. **Every DDL on `collections` timed out through the Supabase MCP** (rolled-back test,
+  a one-trigger probe, and `apply_migration`), with no lock or active session visible and nothing applied —
+  verified after each try. Run it in the Supabase SQL editor, or retry the MCP later. Revert is in the file.
+- **A per-rep profit-split pay plan** (Theo, 14 Oct) — for one rep: 10% overhead off the top, then a 50/50 split of
+  the profit, instead of the flat 10% of each collection `make_commission()` books today. Theo's answers:
+  costs = **crew + materials + permits + dump fees** (1c); payout **advance at deposit or settle at close, chosen per
+  job** (2 a/b, situational); applies to **every job that rep sells** (3), **but HOLD the build until Theo has
+  talked with the rep.** Blocker found: the app has no per-job cost record for materials, permits or dump fees —
+  only `crew_payments` (labour). The plan needs a job-cost ledger first. Store the plan as data on the rep (no name
+  in code).

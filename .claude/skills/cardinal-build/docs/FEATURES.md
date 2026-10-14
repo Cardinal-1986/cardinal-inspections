@@ -9986,6 +9986,10 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1335: invoice from an accepted estimate
 - `crBillable(fin)`: signed contract / manual / change order value, or an ACCEPTED estimate. Sent-only estimates still
   can't be invoiced. Gate: `gate_1335.mjs`.
+## Build 1339: light/dark switch back in the header bar
+- `#cr-dark-toggle` sits in `#cr-hd2-bar` (order 9, between + and Search) on every portal and width; drawn sun/moon;
+  `paintGlyph()` writes only on a change. Hidden on Blackout screens. Drawer Appearance row kept. Gate: `gate_1339.mjs`.
+
 ## Build 1338: pay-link-only company texts; carrier money waits on the carrier
 - `api/sms-link.js` `ownPayLink()` — only `/api/share?t=` on our hosts is texted. A/R groups insurance jobs at Invoiced
   under "Waiting on the carrier" (not overdue, no Remind). Claims hub skips Closed claims in Deductibles due. Gate: `gate_1338.mjs`.
