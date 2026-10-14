@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1334<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1335<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -17340,7 +17340,14 @@ function jobFinance(pr){
   if(paid > value) paid = value;
   return { contracts: contracts, value: value, paid: paid,
            balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0,
-           source: source };
+           source: source,
+           /* 1335: the estimate behind an estimate-sourced value is the ACCEPTED one (tier 2) */
+           estAccepted: source === 'estimate' && (estTier[pr.id] || 0) >= 2 };
+}
+/* 1335 (Theo's pick 1): what may be invoiced — a signed contract (or manual / change-order value),
+   or an ACCEPTED estimate. A sent-but-not-accepted estimate never opens the invoice path. */
+function crBillable(fin){
+  return !!fin && Number(fin.value) > 0 && (fin.source !== 'estimate' || !!fin.estAccepted);
 }
 var STAGE_COLORS = { Lead:'#FFE600', Prospect:'#F08A24', OnHold:'#0F9B8E', Approved:'#7CB342', Scheduled:'#7CB342',
   Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d8d8d' };
@@ -17470,7 +17477,7 @@ function renderWorksheet(pr, fin){
   var ws = parseCkAll(pr).ws || {};
   /* 654: estimate-sourced value must never open the invoice path — an
      invoice claims contract money, and there is no contract yet. */
-  var invBtn = (fin.value > 0 && fin.source !== 'estimate')
+  var invBtn = crBillable(fin)   /* 1335: or an accepted estimate */
     ? '<div style="text-align:right;margin:2px 0 6px;"><button class="chipbtn" data-mkinv="1">&#129534; Create invoice (balance ' + fmtMoney(fin.balance) + ')</button></div>'
     : '';
   var wsFoot = '<div class="wsrow" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><span>Paid <b>' + fmtMoney(fin.paid, true) + '</b> \u00b7 Balance due <b>' + fmtMoney(fin.balance, true) + '</b></span>' +
@@ -17496,7 +17503,7 @@ async function createInvoiceFor(pr){
 }
 async function createInvoiceFor1315(pr){
   var fin = jobFinance(pr);
-  if(!fin.value || fin.source === 'estimate'){ crTell('Create an invoice after a contract is signed \u2014 the totals come from the signed contract.'); return; }
+  if(!crBillable(fin)){ crTell('Create an invoice after a contract is signed or the estimate is accepted \u2014 the totals come from that document.'); return; }   /* 1335 */
   /* 1315: a paid job has nothing to bill, and a second invoice should be on purpose */
   if(!(fin.balance > 0.005)){ crTell('This job is paid in full \u2014 there is nothing to invoice.'); return; }
   var invCount = cacheRows.filter(function(r){
@@ -44602,6 +44609,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1335, d:'2026-10-14', t:'Invoice from an accepted estimate', s:'A job with an accepted estimate can now be invoiced, even when the agreement was signed on paper instead of in the app. The invoice uses the estimate\u2019s total plus any signed change order, so no amount is typed in. An estimate that has only been sent, not accepted, still can\u2019t be invoiced. Tip: sign any change order first, then create the invoice, so it is included.' },
   { b: 1334, d:'2026-10-14', t:'Change-order photo from your library', s:'The change order\u2019s photo box now lets you pick a picture you already took, as well as take a new one. Before, it opened the camera only.' },
   { b: 1333, d:'2026-10-13', t:'Every crew can be booked', s:'On the dispatch board, tapping a job that needs a crew now shows every crew\u2019s row, so any of them can be picked. Before, crews with nothing booked that week were folded away behind \u201cidle crews \u00b7 tap to show\u201d, and only the first one was tappable. Browsing the week, quiet crews still fold to keep the board short.' },
   { b: 1332, d:'2026-10-13', t:'Upload several PDFs at once', s:'Insurance documents, measurement reports and work orders now take more than one file at a time \u2014 pick them all together and each is filed on its own. For Hover and Roofr reports, the numbers are read from the first report so a second one cannot overwrite them. The Files tab already did this.' },
@@ -90892,7 +90900,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       var inv = invoiceFor(pr.id);
       if(invSent(inv)) return;
       var fin = jobFinance(pr);
-      if(!(Number(fin.balance) > 0.005) || fin.source === 'estimate') return;
+      if(!(Number(fin.balance) > 0.005) || !(Number(fin.value) > 0 && (fin.source !== 'estimate' || !!fin.estAccepted))) return;   /* 1335: crBillable()'s rule — this block also runs standalone, so it is stated here */
       out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:0, ready:true });
     });
     return out;
@@ -91219,7 +91227,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     fin = fin || jobFinance(pr);
     var inv = invoiceFor(pr.id);
     var st  = statusFor(pr, inv, fin);
-    var canInvoice = Number(fin.value) > 0 && fin.source !== 'estimate';
+    var canInvoice = Number(fin.value) > 0 && (fin.source !== 'estimate' || !!fin.estAccepted);   /* 1335: crBillable()'s rule — a signed contract or an ACCEPTED estimate */
     var total = Number(fin.value) || 0, paid = Number(fin.paid) || 0, bal = Number(fin.balance) || 0;
     var isPaid = total > 0 && bal <= 0.005;
     var sent = !!(inv && inv.status === 'sent');
@@ -91229,7 +91237,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var line2 = isPaid ? ('Paid in full' + (inv && inv.sent_at ? '' : ''))
               : sent ? ('Sent ' + ageDays(pr, inv) + (ageDays(pr, inv) === 1 ? ' day' : ' days') + ' ago')
               : inv ? 'Not sent yet'
-              : canInvoice ? 'Finished work is ready to bill' : 'An invoice opens once a contract is signed.';
+              : canInvoice ? 'Finished work is ready to bill' : 'An invoice opens once a contract is signed or the estimate is accepted.';
     var B = function(cls, attr, label){ return '<button class="crji-btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '="' + pid + '">' + label + '</button>'; };
     var main = '', more = '';
     if(!inv){

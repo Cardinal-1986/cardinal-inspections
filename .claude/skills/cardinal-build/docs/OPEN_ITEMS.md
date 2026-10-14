@@ -6372,3 +6372,7 @@ Theo, verbatim: "I don't know on calander put it on hold."
   CRM, or explicitly deferred (unclassified: cr-orv-view)". The Owner Review view (1322) was never added to the gate's
   classification table. Not in CI's set, so it did not block. Fix: classify `cr-orv-view` (admin-only, theme-pinned?)
   in gate_1116 after checking how it themes. Red identically on 1332 and 1333.
+
+- **(14 Oct, 1335)** An invoice made from an accepted estimate stores its total at creation; owedOn's fallback reads that
+  stored total, so a change order signed AFTER the invoice is not on it. Fix if it bites: owedOn/remind fallback = accepted
+  estimate total + signed change orders. `harness_654.js` crashes on `collPaid` (pre-existing, not in CI).

@@ -153,13 +153,16 @@ console.log('\n── estimates count (013), structural + executed dedupe ──
   ok('dedupe math: 1 doc + (null-doc_id row + orphaned-doc_id row) = 3', w.__n === 3, w.__n);
 }
 
-console.log('\n── the invoice path stays contract-conservative ──');
+console.log('\n── the invoice path: a signed contract, or an ACCEPTED estimate (1335, Theo\u2019s pick 1) ──');
 {
-  ok('worksheet invoice button refuses estimate-sourced value',
-    SRC.includes("var invBtn = (fin.value > 0 && fin.source !== 'estimate')"));
-  const ci = fnText('createInvoiceFor') || '';
-  ok('createInvoiceFor refuses estimate-sourced value',
-    ci.includes("fin.source === 'estimate'"));
+  /* 1335 changed the rule on Theo's decision: an accepted estimate may be invoiced; a merely SENT
+     estimate still may not. One helper, crBillable(), decides for every invoice door. */
+  const cb = fnText('crBillable') || '';
+  ok('crBillable lets estimate-sourced value through ONLY when accepted',
+    cb.includes("fin.source !== 'estimate' || !!fin.estAccepted"));
+  ok('worksheet invoice button asks crBillable', SRC.includes('var invBtn = crBillable(fin)'));
+  const ci = fnText('createInvoiceFor1315') || fnText('createInvoiceFor') || '';
+  ok('createInvoiceFor refuses what crBillable refuses', ci.includes('if(!crBillable(fin))'));
 }
 
 console.log('\n── provenance labels ──');

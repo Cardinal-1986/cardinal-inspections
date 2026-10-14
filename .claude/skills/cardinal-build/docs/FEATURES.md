@@ -9983,3 +9983,6 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 - Magnet Board: with a job armed or picked up to move, every crew row shows (idle crews no longer folded). Gate: `gate_1333.mjs`.
 ## Build 1334: change-order photo from the library
 - `#coFile` no longer forces the camera; library or camera. Gate: `gate_1334.mjs`.
+## Build 1335: invoice from an accepted estimate
+- `crBillable(fin)`: signed contract / manual / change order value, or an ACCEPTED estimate. Sent-only estimates still
+  can't be invoiced. Gate: `gate_1335.mjs`.
