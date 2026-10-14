@@ -151,7 +151,9 @@ export default async function handler(req, res) {
       fetch(SUPABASE_URL + '/rest/v1/inspection_reports?project_id=' + inList + '&select=project_id,title,total,signed_at', { headers: H }),
       fetch(SUPABASE_URL + '/rest/v1/payment_reminders?project_id=' + inList + '&select=project_id,sent_at,ok&order=sent_at.desc', { headers: H }),
       // 1314: the contracts table is the second contract store jobFinance() reads
-      fetch(SUPABASE_URL + '/rest/v1/contracts?project_id=' + inList + '&select=project_id,total,homeowner_signed_at,voided_at', { headers: H })
+      fetch(SUPABASE_URL + '/rest/v1/contracts?project_id=' + inList + '&select=project_id,total,homeowner_signed_at,voided_at', { headers: H }),
+      // 1336: accepted estimates price a job with no signed contract, as jobFinance() and owedOn() do
+      fetch(SUPABASE_URL + '/rest/v1/estimates?project_id=' + inList + '&status=in.(accepted,signed)&select=project_id,total,archived', { headers: H })
     ]);
     for (var ri = 0; ri < reads.length; ri++) {
       if (!reads[ri].ok) { res.status(500).json({ ok: false, error: 'read ' + ri + ' failed (' + reads[ri].status + ')' }); return; }
@@ -161,6 +163,10 @@ export default async function handler(req, res) {
     var docRows = await reads[2].json();
     var logRows = await reads[3].json();
     var ctrRows = await reads[4].json();
+    var estRows = await reads[5].json();
+    var estByP = {}; estRows.forEach(function (e) {
+      if (!e.archived && Number(e.total) > (estByP[e.project_id] || 0)) estByP[e.project_id] = Number(e.total);
+    });
     var ctrByP = {}; ctrRows.forEach(function (c) {
       if (c.homeowner_signed_at && !c.voided_at) ctrByP[c.project_id] = (ctrByP[c.project_id] || 0) + (Number(c.total) || 0);
     });
@@ -193,7 +199,8 @@ export default async function handler(req, res) {
       var manual = 0;
       try { var ck0 = typeof p.checklist === 'string' ? JSON.parse(p.checklist || '{}') : (p.checklist || {}); manual = Number(ck0 && ck0.manual_value) || 0; } catch (_) { manual = 0; }
       var signedTotal = Math.max(contractTotal, ctrByP[pid] || 0);
-      var jobTotal = signedTotal > 0 ? signedTotal + manual + coTotal : (manual > 0 ? manual + coTotal : (Number(inv.total) || 0));
+      var base = Math.max(manual, estByP[pid] || 0);   // 1336: accepted estimate, like owedOn()
+      var jobTotal = signedTotal > 0 ? signedTotal + manual + coTotal : (base > 0 ? base + coTotal : (Number(inv.total) || 0));
       var balance = jobTotal - collected;
       if (!(balance > 0.005)) { skipped.paid++; continue; }
 

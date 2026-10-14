@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1335<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1336<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44609,6 +44609,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1336, d:'2026-10-14', t:'Payment receipts by text and email', s:'When a payment is recorded, the homeowner now gets a receipt by text and by email: the amount, how they paid, the date, and the balance left on the job. Record payment has a tick box for it, on by default. Online payments made through the pay link send a receipt automatically. Insurance-company checks and Community jobs do not send one. If the job has no phone or email on file, the message says so.' },
   { b: 1335, d:'2026-10-14', t:'Invoice from an accepted estimate', s:'A job with an accepted estimate can now be invoiced, even when the agreement was signed on paper instead of in the app. The invoice uses the estimate\u2019s total plus any signed change order, so no amount is typed in. An estimate that has only been sent, not accepted, still can\u2019t be invoiced. Tip: sign any change order first, then create the invoice, so it is included.' },
   { b: 1334, d:'2026-10-14', t:'Change-order photo from your library', s:'The change order\u2019s photo box now lets you pick a picture you already took, as well as take a new one. Before, it opened the camera only.' },
   { b: 1333, d:'2026-10-13', t:'Every crew can be booked', s:'On the dispatch board, tapping a job that needs a crew now shows every crew\u2019s row, so any of them can be picked. Before, crews with nothing booked that week were folded away behind \u201cidle crews \u00b7 tap to show\u201d, and only the first one was tappable. Browsing the week, quiet crews still fold to keep the board short.' },
@@ -90014,7 +90015,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 #cr-pay-modal .crpay-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--crpay-well,#1b1f24);border-radius:12px;padding:4px;}
 #cr-pay-modal .crpay-seg button{border:0;background:transparent;color:var(--crpay-sub,#a8b0ba);font-size:13px;font-weight:600;padding:10px 6px;min-height:44px;border-radius:9px;cursor:pointer;}
 #cr-pay-modal .crpay-seg button.on{background:var(--crpay-on,#262a30);color:var(--crpay-ink,#f2f4f7);box-shadow:var(--crpay-on-sh,0 1px 2px rgba(0,0,0,.45),0 4px 10px rgba(0,0,0,.5));}
-#cr-pay-modal .crpay-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+#cr-pay-modal .crpay-rcpt{display:flex;align-items:center;gap:10px;margin:14px 0 4px;font-size:13px;min-height:44px;cursor:pointer}
+.crpay-rcpt input{width:22px;height:22px;margin:0;flex:0 0 auto}
+.crpay-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
 
 /* ── 1156: automatic payment reminders — history line + mute, per AR row.
       Buttons reuse .crar-btn so the 44px touch floor holds. ── */
@@ -91288,6 +91291,25 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }).catch(fail);
   }
 
+  /* 1336 (4C): text + email the homeowner a receipt for a payment just recorded. Never throws into the
+     save — the payment is already recorded; this only reports what the receipt did. */
+  function sendPayReceipt(collectionId, amt){
+    var cx = window.sb || window.supa;
+    (cx && cx.auth ? cx.auth.getSession() : Promise.resolve({})).then(function(s){
+      var tok = s && s.data && s.data.session ? s.data.session.access_token : '';
+      return fetch('/api/receipt', { method:'POST',
+        headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + tok },
+        body: JSON.stringify({ collection_id: collectionId }) });
+    }).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(j){
+      var went = [];
+      if(j && j.texted) went.push('texted');
+      if(j && j.emailed) went.push('emailed');
+      var why = (j && j.skipped && j.skipped.length) ? j.skipped.join('; ') : ((j && j.error) || '');
+      if(went.length) crTell('Receipt for ' + money(amt) + ' ' + went.join(' and ') + (why ? ' (' + why + ')' : '') + '.');
+      else crTell('No receipt sent' + (why ? ': ' + why : '') + '.');
+    }).catch(function(){ crTell('The payment is recorded, but the receipt could not be sent.'); });
+  }
+
   /* ---- the offline payment modal (check / cash / bank transfer) ---- */
   function ensurePayModal(){
     var m = q('cr-pay-modal');
@@ -91317,6 +91339,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
         '</div>' +
         '<label class="crpay-l" for="crpay-date">Date</label>' +
         '<input type="date" id="crpay-date" class="crpay-in">' +
+        /* 1336 (4.2B): on by default — the homeowner gets a receipt by text and email */
+        '<label class="crpay-rcpt"><input type="checkbox" id="crpay-receipt" checked> Send the homeowner a receipt (text + email)</label>' +
         '<div class="crpay-foot">' +
           '<button type="button" class="crji-btn ghost" id="crpay-cancel">Cancel</button>' +
           '<button type="button" class="crji-btn primary" id="crpay-save">Record payment</button>' +
@@ -91343,6 +91367,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     /* 1315: the modal is reused, and a successful save left this button disabled and
        reading "Saving…" — the next payment could not be recorded until a reload. */
     var _sb = q('crpay-save'); if(_sb instanceof HTMLButtonElement){ _sb.disabled = false; _sb.textContent = 'Record payment'; }
+    var _rc = q('crpay-receipt'); if(_rc instanceof HTMLInputElement) _rc.checked = true;   /* 1336 */
     /* 1318: Final once the job is invoiced or its invoice has gone out; Deposit before */
     var _inv = invoiceFor(pr.id), _s = stg(pr);
     setSeg('crpay-method', 'check');
@@ -91356,7 +91381,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function collectionsInsert(row){
     var cx = window.sb || window.supa;
     if(cx && cx.from){
-      return cx.from('collections').insert(row).then(function(r){
+      return cx.from('collections').insert(row).select('id').then(function(r){   /* 1336: the new row's id, for its receipt */
         if(r && r.error) throw new Error(r.error.message || 'Could not record the payment'); return r;
       });
     }
@@ -91377,9 +91402,12 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
                 type: typeMap[ptype] || 'other', source: 'homeowner', method: method,
                 notes: notes, created_by: me };
     var btn = q('crpay-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
-    collectionsInsert(row).then(function(){
+    var _rcpt = q('crpay-receipt'), wantReceipt = !(_rcpt instanceof HTMLInputElement) || _rcpt.checked;   /* 1336 */
+    collectionsInsert(row).then(function(r){
       closePayModal();
-      crTell('Recorded ' + money(amt) + '. Status updated.');
+      crTell('Recorded ' + money(amt) + '. Status updated.' + (wantReceipt ? ' Sending the receipt\u2026' : ''));
+      var _cid = r && r.data && (Array.isArray(r.data) ? (r.data[0] && r.data[0].id) : r.data.id);
+      if(wantReceipt && _cid) sendPayReceipt(_cid, amt);
       if(typeof reload === 'function'){ reload().then(refreshInv).catch(refreshInv); } else refreshInv();
     }).catch(function(err){
       if(btn){ btn.disabled = false; btn.textContent = 'Record payment'; }

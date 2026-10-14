@@ -17,6 +17,7 @@
 // Needs STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET + SUPABASE_SERVICE_ROLE_KEY.
 export const config = { api: { bodyParser: false } };
 import Stripe from 'stripe';
+import { sendReceipt } from './receipt.js';   // 1336
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 
@@ -124,6 +125,12 @@ export default async function handler(req, res) {
         if (!ins.ok && ins.status !== 409) {
           const t = await ins.text();
           if (t.indexOf('23505') < 0) { res.status(500).send('record failed'); return; }
+        }
+        // 1336 (Theo's pick 4C): a NEW online payment texts + emails the homeowner a receipt.
+        // Only on a fresh insert — a redelivered event hits the unique guard (409) and sends nothing.
+        // Best-effort: a receipt that fails never fails the webhook (the money is already recorded).
+        if (ins.ok) {
+          try { await sendReceipt({ externalRef: String(s.payment_intent || s.id) }); } catch (_r) {}
         }
       }
     }

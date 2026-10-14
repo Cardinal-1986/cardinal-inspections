@@ -36190,3 +36190,21 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Gates:** `gate_1335.mjs` GREEN, control 1334 RED. `harness_654` updated with written reason (its estimate-refusal
   assertions are now the accepted/sent split; it already crashed on `collPaid` before this build — pre-existing, not
   in CI). gate_harnesses, gate_1011, 1315, 1316, 1318, 1323, 1330, check_build, types, dupes green.
+
+## Build 1336 — payment receipts by text + email (4C, 4.2B), and one balance for estimate-priced jobs
+- **Receipts:** new `api/receipt.js` — `sendReceipt()` texts (Twilio, same TWILIO_* as sms-link) and emails (Resend) the
+  homeowner on file: amount, method, date, job, balance remaining. Balance comes from `owedOn()` imported from
+  `api/pay.js` (`export { owedOn }` appended — function text unchanged, still byte-identical with share.js). Carrier
+  checks (`source='insurance'`) and Community jobs send nothing; each channel best-effort and reports why not.
+  `POST /api/receipt {collection_id}`: staff session required, then RLS (caller's token) decides visibility.
+  `api/pay-webhook.js` sends one on a FRESH insert only (`ins.ok`; a 409 redelivery sends nothing), never failing the hook.
+  Record payment: "Send the homeowner a receipt (text + email)" tick box, ON by default; insert now `.select('id')`.
+- **Server money parity (found by tonight's audit):** with no signed contract, `owedOn()` (pay.js + share.js) and
+  `remind.js` fell back to the invoice's FROZEN total and skipped `coTotal`, and preferred any manual value over the
+  estimate. Reproduced: invoice before a $299 change order → app $1,199 due, pay link $900; manual $500 → pay link $299.
+  Now: `base = max(manual, accepted estimate)` read live from `estimates` (status accepted/signed, not archived),
+  `+ coTotal`; the stored invoice total only when neither exists — the same rule as `jobFinance()`. Re-run of the audit's
+  `sim_share`: all three orderings now $1,199, invoice total $1,699.
+- **Gates:** `gate_1336.mjs` GREEN 14/14 (owedOn orderings, manual, contract-wins, byte-identity, remind, receipt
+  text/html, carrier skip, webhook 409, modal, wiring); control main RED 7. 1313, 1314, 1315, 1316, 1318, 1319, 1320,
+  1323, 1335, gate_harnesses, check_build, types, dupes, scroll-lock green.

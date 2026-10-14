@@ -6374,5 +6374,5 @@ Theo, verbatim: "I don't know on calander put it on hold."
   in gate_1116 after checking how it themes. Red identically on 1332 and 1333.
 
 - **(14 Oct, 1335)** An invoice made from an accepted estimate stores its total at creation; owedOn's fallback reads that
-  stored total, so a change order signed AFTER the invoice is not on it. Fix if it bites: owedOn/remind fallback = accepted
+  stored total, so a change order signed AFTER the invoice is not on it. **FIXED at 1336** (owedOn/remind read the accepted estimate live + coTotal). Fix if it bites: owedOn/remind fallback = accepted
   estimate total + signed change orders. `harness_654.js` crashes on `collPaid` (pre-existing, not in CI).
