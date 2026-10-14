@@ -36321,3 +36321,21 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   `lock_timeout = 8s`, and with no long transaction in `pg_stat_activity`) — the same failure as the
   `collections_rep_guard` trigger. Theo runs the two trigger lines in the SQL editor.
 - **Gates:** `gate_1342.mjs` GREEN 11, control 1341 RED 3. check_build, types, dupes, scroll-lock GREEN.
+
+## Build 1343 — renaming a document never changes what it is; an uploaded estimate can be corrected
+
+- **"Jacob's contract got deleted after editing" (Theo, 14 Oct).** It was not deleted. A signed uploaded
+  contract was renamed "<client> Exterior Contract" — no leading "Contract" — and every document kind here is
+  read from the title's FIRST WORD (`isContractTitle`, `isEstimateTitle`, `/^invoice/`, `/^change order/`,
+  `/^work order/`; `job_total_for()` uses the same regex). It left the Contracts list and the job value.
+  (Two real DELETEs did happen on that job from the same Mac, 14:08 and 14:16 UTC, each through a
+  "cannot be undone" confirm; `document_versions` cascades on delete, so neither is recoverable.)
+- **`crKeepDocKind(id, title)`** beside `crPageIsEmpty`, applied in the documents `db.update`: a title that
+  drops a kind prefix gets it back (estimate number kept). One chokepoint for every rename path.
+- **Uploaded estimates** (`body[data-cr-upload]`, build 1271) have no `estimates` row, so "Edit estimate" said
+  "No live estimate is linked" and stopped. It now asks for the corrected amount and writes the doc `total`,
+  which is what `jobFinance` prices the job from until a contract is signed.
+- **NOT changed, waiting on Theo:** the renamed contract's title was left as it is — restoring "Contract"
+  would make TWO signed exterior contracts count ($44,652.46 and $44,682.46, almost certainly one agreement
+  uploaded twice). And several estimates on one job still price at the LARGEST, not the sum — his call.
+- **Gates:** `gate_1343.mjs` GREEN 11, control 1342 RED 4. check_build, types (two casts), dupes, scroll-lock GREEN.

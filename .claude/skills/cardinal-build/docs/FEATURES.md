@@ -10015,3 +10015,7 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 - `crPageIsEmpty()` (main block, beside `var TABLE = 'inspection_reports'`) — `db.update` refuses an `html` that
   shows nothing; `serializeFrame()` checks after stripping the editing banner. Server twin:
   `inspection_reports_blank_guard.sql` (trigger still to be created by hand). Gate: `gate_1342.mjs`.
+
+## Build 1343: a rename keeps a document's kind; uploaded estimate amount is editable
+- `crKeepDocKind()` in the documents `db.update` restores a dropped Contract / Estimate / Invoice / Change Order /
+  Work Order prefix. "Edit estimate" on an uploaded estimate (`data-cr-upload`) asks for the amount. Gate: `gate_1343.mjs`.
