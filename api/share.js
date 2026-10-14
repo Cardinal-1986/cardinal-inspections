@@ -153,8 +153,19 @@ async function owedOn(sbHeaders, rep) {
       manual = Number(ck && ck.manual_value) || 0;
     } catch (_) { manual = 0; }
     const signedTotal = Math.max(contractTotal, tableTotal);
+    // 1336: no signed contract -> the job is priced like jobFinance(): the higher of the manual value and the
+    // ACCEPTED estimate, plus signed change orders, read live. The invoice's own frozen total is only the last
+    // resort, so a change order signed after the invoice still reaches the pay link.
+    let accEst = 0;
+    if (!(signedTotal > 0)) {
+      for (const e of await readRows(sbHeaders, 'estimates',
+          `${SUPABASE_URL}/rest/v1/estimates?project_id=eq.${rep.project_id}&status=in.(accepted,signed)&select=total,archived`)) {
+        if (!e.archived && Number(e.total) > accEst) accEst = Number(e.total);
+      }
+    }
+    const base = Math.max(manual, accEst);
     const jobTotal = signedTotal > 0 ? signedTotal + manual + coTotal
-                   : (manual > 0 ? manual + coTotal : (Number(rep.total) || 0));
+                   : (base > 0 ? base + coTotal : (Number(rep.total) || 0));
     return { cents: Math.round((jobTotal - collected) * 100), label: 'Amount due',
              totalCents: Math.round(jobTotal * 100), paidCents: Math.round(collected * 100) };   // 1320: the invoice's summary
   }
