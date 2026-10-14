@@ -36208,3 +36208,17 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **Gates:** `gate_1336.mjs` GREEN 14/14 (owedOn orderings, manual, contract-wins, byte-identity, remind, receipt
   text/html, carrier skip, webhook 409, modal, wiring); control main RED 7. 1313, 1314, 1315, 1316, 1318, 1319, 1320,
   1323, 1335, gate_harnesses, check_build, types, dupes, scroll-lock green.
+- **Late fix before merge:** CI's `gate_1199` crashed (not an assertion) — its module loader refused pay.js's new
+  `export { owedOn }` and the webhook's `import { sendReceipt }`. The loader now strips both and passes a stub
+  `sendReceipt`; two new checks: a recorded card payment sends exactly one receipt keyed by the payment intent, an
+  unsettled debit sends none. Negative control (receipt call disabled) RED 1. Merged as #673.
+
+## Build 1337 — invoice card tidy-ups (audit items 4, 5, 6)
+- **"-- paid of"** on the job's invoice card now reads **"$0 paid of …"** when nothing has been collected.
+- **"Finished · signed contract"** in the ready-to-invoice list now says **"accepted estimate"** when the job is priced
+  by an accepted estimate (1335 made those invoiceable; the label still claimed a contract).
+- **Record payment over the balance** asks first ("That's more than the $X still owed. Record it anyway?") through
+  `crAsk`, which sits above the pay modal. A `_payOver` flag lets the confirmed retry through once; it is cleared in a
+  `finally`. Nothing is blocked — overpayments and deposits-in-advance are real — it is a second look, not a wall.
+- **Gates:** `gate_1337.mjs` GREEN, control (1336) RED 5. 1315, 1316, 1318, 1319, 1320, 1323, 1335, 1336,
+  gate_harnesses, check_build, types, dupes, scroll-lock green.

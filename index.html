@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1336<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1337<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44609,6 +44609,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1337, d:'2026-10-14', t:'Invoice card tidy-ups', s:'The invoice card now reads \u201c$0 paid of\u201d instead of \u201c-- paid of\u201d when nothing has been paid yet. The Ready to invoice list says whether a job is billed from a signed contract or an accepted estimate. Record payment now checks with you before recording more than the balance, so a typo can\u2019t quietly mark a job paid.' },
   { b: 1336, d:'2026-10-14', t:'Payment receipts by text and email', s:'When a payment is recorded, the homeowner now gets a receipt by text and by email: the amount, how they paid, the date, and the balance left on the job. Record payment has a tick box for it, on by default. Online payments made through the pay link send a receipt automatically. Insurance-company checks and Community jobs do not send one. If the job has no phone or email on file, the message says so.' },
   { b: 1335, d:'2026-10-14', t:'Invoice from an accepted estimate', s:'A job with an accepted estimate can now be invoiced, even when the agreement was signed on paper instead of in the app. The invoice uses the estimate\u2019s total plus any signed change order, so no amount is typed in. An estimate that has only been sent, not accepted, still can\u2019t be invoiced. Tip: sign any change order first, then create the invoice, so it is included.' },
   { b: 1334, d:'2026-10-14', t:'Change-order photo from your library', s:'The change order\u2019s photo box now lets you pick a picture you already took, as well as take a new one. Before, it opened the camera only.' },
@@ -90932,7 +90933,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var sent = !!(x.inv && x.inv.status === 'sent');
     var RB = function(cls, attr, label){ return '<button class="crar-btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '="' + id + '">' + label + '</button>'; };
     var bits = [];
-    if(x.ready) bits.push('Finished &middot; signed contract');
+    if(x.ready) bits.push('Finished &middot; ' + (x.fin && x.fin.source === 'estimate' ? 'accepted estimate' : 'signed contract'));   /* 1337 */
     else if(!x.inv) bits.push('Not invoiced yet');
     if(x.fin.paid > 0) bits.push('Paid ' + money(x.fin.paid) + ' of ' + money(x.fin.value));
     if(x.inv) bits.push(sent ? ('Sent ' + esc2(shortDate(x.inv.sent_at) || (x.age + ' days ago'))) : 'Invoice not sent');
@@ -91263,7 +91264,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       +   '<span class="crji-amt ' + (isPaid ? 'paid' : 'due') + '">' + (isPaid ? 'Paid' : money(bal)) + '</span></div>'
       + '<div class="crji-row crji-sub"><span>' + line2 + '</span><span>' + (isPaid ? '' : 'balance due') + '</span></div>'
       + (total > 0 ? '<div class="crji-bar" role="img" aria-label="' + pct + '% paid"><i style="width:' + pct + '%"></i></div>'
-                   + '<div class="crji-sub">' + money(paid) + ' paid of ' + money(total) + '</div>' : '')
+                   + '<div class="crji-sub">' + (paid > 0 ? money(paid) : '$0') + ' paid of ' + money(total) + '</div>'   /* 1337: money(0) prints '--' */ : '')
       + '<div class="crji-acts">' + main + more + '</div>'
       + sendRow
       + '</div>';
@@ -91387,10 +91388,23 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }
     return Promise.reject(new Error('Not signed in'));
   }
+  var _payOver = false;   /* 1337: set while re-running a confirmed over-balance save */
   function savePayModal(){
     var pr = _payFor; if(!pr) return;
     var amt = parseFloat(q('crpay-amt').value);
     if(!(amt > 0)){ crTell('Enter an amount.'); return; }
+    /* 1337: a typo above the balance would land in collections (and commissions) and then hide behind "Paid in
+       Full" — ask before recording more than is owed. An honest overpayment can still go through. */
+    var _bal = Number(jobFinance(pr).balance) || 0;
+    if(amt > _bal + 0.005 && !_payOver){
+      var _btnO = q('crpay-save');
+      crAsk('That is ' + money(amt) + ', but the balance is ' + money(Math.max(0, _bal)) + '. Record it anyway?').then(function(yes){
+        if(!yes) return;
+        _payOver = true;
+        try{ savePayModal(); } finally { _payOver = false; }
+      });
+      return;
+    }
     var method = q('crpay-method').getAttribute('data-v') || 'check';
     var ptype  = q('crpay-type').getAttribute('data-v') || 'deposit';
     var ref = String(q('crpay-ref').value || '').trim();
