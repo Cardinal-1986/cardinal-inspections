@@ -6400,3 +6400,8 @@ Theo, verbatim: "I don't know on calander put it on hold."
   talked with the rep.** Blocker found: the app has no per-job cost record for materials, permits or dump fees —
   only `crew_payments` (labour). The plan needs a job-cost ledger first. Store the plan as data on the rep (no name
   in code).
+- **(14 Oct, 1340)** Theo's call made: a homeowner's estimate signature **counts as accepted** (built). The dispatch
+  "28px move button" was a gate_1206 measuring fault, fixed in the gate. **Payment cap:** `job_total_for` and
+  `collections_rep_guard()` are now IN production; the trigger that switches the guard on, and the R9/M11 policies,
+  are NOT — `create trigger` on `collections` times out through the MCP. Run the trigger + policy part of
+  `collections_guards.sql` in the Supabase SQL editor.

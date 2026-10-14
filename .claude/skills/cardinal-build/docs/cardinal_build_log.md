@@ -36255,3 +36255,25 @@ Theo, 14 Oct: **"please bring back the light dark theme."**
   switch when present, and separately asserts no insurance-only control (1181's actual ruling).
 - **Gates:** `gate_1339` 14/14, control 1338 RED 12. `gate_1176` 12/12 (both trees), `gate_1181` 18/18, `gate_1230`
   19/19, `gate_1179` 25/25, check_build, types, dupes green.
+
+## Build 1340 — a signed estimate is an accepted estimate
+Theo, 14 Oct: **"2 (1)"** (a homeowner's signature counts as accepted) and **"fix the dispatch button"**.
+- **Signature → accepted.** A signature wrote `inspection_reports.signed_at` and nothing else, so the estimates
+  row stayed `sent` and 1335's rule would not let the job be invoiced. New `crAcceptEstimateForDoc(docId)` (main
+  block) moves the row linked by `doc_id` from draft/sent to `accepted` on both in-person paths (buyer slot and
+  single line); `api/clientsign.js` does the same after the signature is saved, best-effort. A contract page links
+  by `contract_doc_id`, so it never matches. The Approvals card and its email are unchanged (contract generation).
+  RLS: `est_update` is full access or creator, so a rep signing a colleague's estimate in person does not flip it
+  (the texted link always does — service role).
+- **Measured in production:** 2 signed estimates were still `sent` ($25,525 together) — backfilled after merge.
+- **"The dispatch button" was a false positive, and the gate was the bug.** `#cr-disp .job .mv` has a 45px pad
+  (1040) and measures 46×46 on every job when brought into view. `gate_1206` measured each control in whatever
+  sideways pan the PREVIOUS control's `scrollIntoView` had left the board in, so the weekend card sat half under
+  the pinned 118px crew column and read 28px (36px with a scroll-padding I tried and then dropped — no page change
+  was needed). The gate now brings any control inside a horizontal scroller into view before measuring. GREEN on
+  1339 and 1340 alike, which is the proof the page never changed.
+- **Gates:** `gate_1340` 18/18, control 1339 RED 5. `gate_1206` 13/13. 1315, 1316, 1318, 1319, 1320, 1323, 1335–1339,
+  check_build, types, dupes, scroll-lock green.
+- **Still open:** the `collections_rep_guard` TRIGGER. Its two functions applied cleanly today (`job_total_for`
+  with the estimate leg, `collections_rep_guard()`), but `create trigger` on `collections` timed out again through
+  the MCP with no lock or session visible. The guard is therefore NOT active; the R9/M11 policies are not applied.
