@@ -36277,3 +36277,25 @@ Theo, 14 Oct: **"2 (1)"** (a homeowner's signature counts as accepted) and **"fi
 - **Still open:** the `collections_rep_guard` TRIGGER. Its two functions applied cleanly today (`job_total_for`
   with the estimate leg, `collections_rep_guard()`), but `create trigger` on `collections` timed out again through
   the MCP with no lock or session visible. The guard is therefore NOT active; the R9/M11 policies are not applied.
+
+## Build 1341 — the five confirmed findings of the end-to-end audit
+Theo, 14 Oct: **"please do an end to end audit on all buttons, pages, if a page traps you, ease of use, missing
+buttons, buttons that got unlinked etc."** Report: `docs/E2E_AUDIT_2026-10-14.md` — 806 controls tapped across 31
+screens at 390 and 1440px; 26 "nothing happened" candidates, **all 26 false positives** on re-test; 0 tap-caused
+script errors; 0 sideways-scrolling screens; Back left every screen. Five confirmed, all fixed here:
+1. **Financing Rates opened blank, every time.** `hideAllViews()` wrote `display:none` on `#cr-fin`, which is
+   CLASS-shown (`.open`), and `open()` calls `hideAllViews()` first — so the inline style always won. The 570–572
+   "lever must match how it is shown" class. Now removes `.open` and releases the scroll lock open() took.
+2. **Suppliers' × left a blank page** (home hidden by `open()`'s `hideAllViews()`). `close()` now `showHome()`s.
+   `hideAllViews()` hides `cr-abc` by display directly, so there is no loop.
+3. **Phone Tools dropdown ran ~⅓ off-screen** (x 299–512 at 390). `fitMenu()` slides an opening menu back on.
+4. **Ask FAB (z 9400) covered the client form's Save** (`#projModal` z 200). It gets `.tucked` while the form is
+   up — a MutationObserver on `#projModal` alone (not the body), writing only on change.
+5. **Back with the client form / signature pad open changed the screen behind and left the form up.** The main
+   popstate listener now clicks that form's own Cancel and `history.forward()`s, so you stay put; Esc does the same.
+- **Gates:** `gate_1341` 9/9 in Chromium, control 1340 RED 7 (every check). 1176, 1181, 1206, 1230, 1315–1320,
+  1335–1340, check_build, types, dupes (a `sync` name collision caught and renamed `fabTuck`), scroll-lock, stack CLEAN.
+- **Not done (audit "likely", smaller):** Self Check Back lands on Production; phone menu ignores Back/Esc; Switch
+  portal has no ×; small targets (Crews tabs 26px, crew rows 36px, client stage arrow 40px, estimate-builder side
+  sections ~30px, desktop doc Save 42px). Other modals (estimate picker, photo editor, walkthrough, What's New…)
+  still do not close on Back.
