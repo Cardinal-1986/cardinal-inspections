@@ -36351,3 +36351,24 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   `job_total_for_1344_accepted_sum`; `collections_guards.sql` updated).
 - **Measured before shipping: no job has two accepted estimates today** — this changes no current total.
 - **Gates:** `gate_1344.mjs` GREEN 9, control 1343 RED 4. `gate_1199` 39/39, `gate_1314`, `gate_1336` GREEN.
+
+## Build 1345 — deleted documents go to a Trash, restorable for 30 days
+
+- **Theo, 14 Oct: "2a".** Five signed/priced documents on one job were deleted from one Mac in three minutes
+  (14:34–14:37 UTC), each through a "cannot be undone" confirm, and nothing could restore them: a DELETE on
+  `inspection_reports` cascades `document_versions` too.
+- **`document_trash.sql`**: table `document_trash` (row + its versions as jsonb, `deleted_by`, `deleted_at`;
+  read = full access or the deleter, delete = admin) and two functions — `trash_document(p_doc)` (the
+  `reports_delete` permission; copies then deletes; purges >30 days, since `pg_cron` is not installed) and
+  `restore_document(p_id)` (full access or the deleter; same id, versions back).
+  ⚠ **NOT APPLIED.** Every DDL through the Supabase MCP hung this session (create table, create policy, even
+  create function by the end), with `pg_stat_activity` empty and `statement_timeout` not firing — the hang is
+  outside Postgres. A stray `document_trash_probe` (empty, `id int`) was left by the diagnosis; the file drops it.
+- **`db.remove`** (the one delete pipeline) calls `trash_document`. **Fail-closed:** if the function is missing
+  it refuses ("the Trash is not set up yet, so nothing was deleted") — never a hard delete. So **deleting a
+  document is paused until the SQL runs**, on purpose. The `estimates.doc_id` clears are dropped so a restore
+  keeps its estimate link (a dangling doc_id already self-heals on publish, 1014).
+- **UI:** a "Trash (n)" line under Contracts and under Estimates on the client page, each item with Restore.
+  The two document confirms now say where it goes.
+- **Gates:** `gate_1345.mjs` (Chromium + mock) GREEN 5, control 1344 RED 5. check_build, types (one cast), dupes,
+  scroll-lock GREEN.

@@ -10023,3 +10023,7 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1344: accepted estimates add up
 - Several accepted estimates on a job sum (client `estBest`, pay/share/remind, `job_total_for`); sent ones stay
   "largest" because they are options. Gate: `gate_1344.mjs`.
+
+## Build 1345: document Trash (30 days)
+- `db.remove` → `trash_document()`; `crRenderTrash()` draws "Trash (n)" with Restore under Contracts and Estimates
+  (`.cr-trash-mount`); `restore_document()` puts it back. SQL: `document_trash.sql`. Gate: `gate_1345.mjs`.

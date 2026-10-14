@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1344<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1345<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4653,6 +4653,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
              block is guarded and stays). The AI assists inside the editor now. -->
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
+      <div class="cr-trash-mount"></div>
     </div>
 
     <div id="tab-contracts" style="display:none;">
@@ -4677,6 +4678,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <button class="btn" id="pUploadContractBtn" type="button" style="margin-left:8px;">Upload signed contract</button>
       </div>
       <div id="contractDocsMount"><div class="loading">Loading…</div></div>
+      <div class="cr-trash-mount"></div>
     </div>
 
     <div id="tab-commissions" style="display:none;">
@@ -11306,8 +11308,15 @@ var db = {
   },
   remove: async function(id){
     if(TEAM){
-      var r = await sb.from(TABLE).delete().eq('id', id);
-      if(r.error) throw r.error;
+      /* 1345: a delete goes to the Trash (document_trash.sql) — restorable for 30 days, saved versions
+         included. Never a hard delete: if the Trash is not set up, nothing is deleted. */
+      var tr = await sb.rpc('trash_document', { p_doc: id });
+      if(tr.error){
+        var _tm = String(tr.error.code || '') + ' ' + String(tr.error.message || '');
+        if(/PGRST202|42883|could not find the function/i.test(_tm)) throw new Error('the Trash is not set up yet, so nothing was deleted');
+        throw tr.error;
+      }
+      return;
       /* 1014 (audit DB-1): deleting a document never cleared the estimates rows
          pointing at it — 5 estimates ($71,845.99) were left publishing into a
          nonexistent doc (db.update matches 0 rows, no error, nothing created).
@@ -14664,7 +14673,52 @@ function renderProjectDocs(){
   var cm = document.getElementById('contractDocsMount');
   if(cm) cm.innerHTML = ctrs.length ? docTable(ctrs)
     : '<div class="empty"><b>No contracts yet.</b><br>Use <b>+ New contract</b>, or approve the job from the pipeline to auto-create one.</div>';
+  try{ crRenderTrash(); }catch(_t){}   /* 1345 */
 }
+/* 1345: this job's Trash — documents deleted in the last 30 days, each with Restore. Drawn under Contracts
+   and under Estimates. Silent when the Trash is empty or not set up. */
+var _crTrashSeq = 0;
+function crRenderTrash(){
+  var pr = currentProject, seq = ++_crTrashSeq;
+  var mounts = document.querySelectorAll('.cr-trash-mount');
+  if(!mounts.length) return;
+  mounts.forEach(function(m){ m.innerHTML = ''; });
+  if(!pr || !TEAM || !sb || typeof sb.from !== 'function') return;
+  var since = new Date(Date.now() - 30 * 86400000).toISOString();
+  Promise.resolve(sb.from('document_trash').select('id,title,deleted_by,deleted_at').eq('project_id', pr.id)
+    .gte('deleted_at', since).order('deleted_at', { ascending: false })).then(function(r){
+    if(seq !== _crTrashSeq || !r || r.error || !r.data || !r.data.length) return;
+    var rows = r.data.map(function(t){
+      var nm = String(t.title || 'Untitled').replace(/^file:\s*/i, '');
+      var when = new Date(t.deleted_at), left = Math.max(0, 30 - Math.floor((Date.now() - when.getTime()) / 86400000));
+      return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
+        '<span style="flex:1;min-width:0;"><b style="display:block;overflow:hidden;text-overflow:ellipsis;">' + esc(nm) + '</b>' +
+        '<small>Deleted ' + esc(when.toLocaleDateString('en-US', { month:'short', day:'numeric' })) +
+        (t.deleted_by ? ' by ' + esc((typeof rptRepName === 'function' && rptRepName(t.deleted_by)) || t.deleted_by) : '') +
+        ' \u00b7 ' + left + ' day' + (left === 1 ? '' : 's') + ' left</small></span>' +
+        '<button class="btn" type="button" data-trash-restore="' + esc(t.id) + '" style="min-height:44px;">Restore</button></div>';
+    }).join('');
+    var html = '<details class="cr-trash" style="margin-top:12px;"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700;">Trash (' +
+      r.data.length + ') \u2014 deleted in the last 30 days</summary>' + rows + '</details>';
+    document.querySelectorAll('.cr-trash-mount').forEach(function(m){ m.innerHTML = html; });
+  }, function(){});
+}
+document.addEventListener('click', async function(e){
+  var _et = /** @type {any} */ (e.target);
+  var b = _et && _et.closest ? _et.closest('[data-trash-restore]') : null;
+  if(!b) return;
+  b.disabled = true; b.textContent = 'Restoring\u2026';
+  try{
+    var r = await sb.rpc('restore_document', { p_id: b.getAttribute('data-trash-restore') });
+    if(r.error) throw r.error;
+    try{ if(window.crToastOk) window.crToastOk('Restored \u2014 it is back on this job.'); }catch(_){}
+    await reload();
+    try{ renderProjectDocs(); }catch(_r){}
+  }catch(err){
+    b.disabled = false; b.textContent = 'Restore';
+    showError('Could not restore: ' + (err.message || err));
+  }
+});
 function showTab(name){
   /* 556: commissions are fetched per-tab rather than cached with the project —
      the row set depends on who is asking (a rep sees only their own), so it must
@@ -14743,7 +14797,7 @@ async function handleDocAction(e){
     if(act === 'dup'){ await db.duplicate(id); await reload(); return; }
     if(act === 'del'){
       var r2 = cacheRows.find(function(x){ return String(x.id) === String(id); });
-      if(await crAsk('Delete "' + ((r2 && r2.title) || 'Untitled inspection') + '"? This removes it for the whole team and cannot be undone.')){
+      if(await crAsk('Move "' + ((r2 && r2.title) || 'Untitled inspection') + '" to the Trash? It leaves this job for everyone, and it can be restored from the Trash under Contracts for 30 days.')){
         await db.remove(id); await reload();
       }
       return;
@@ -16365,7 +16419,7 @@ document.getElementById('jdMount').addEventListener('click', async function(e){
   if(ren){ renameJobDoc(ren.getAttribute('data-jdren')); return; }
   var del = e.target.closest('[data-jddel]');
   if(del){
-    if(!await crAsk('Delete this file for everyone?')) return;
+    if(!await crAsk('Move this file to the Trash? It can be restored from the Trash under Contracts for 30 days.')) return;
     db.remove(del.getAttribute('data-jddel'))
       .then(function(){ return reload(); })
       .then(renderDocsPage)
@@ -44741,6 +44795,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1345, d:'2026-10-14', t:'Deleted documents go to a Trash', s:'Deleting an estimate, contract, invoice, report or file no longer erases it. It goes to the Trash for 30 days \u2014 open Contracts or Estimates on the client\u2019s page and tap Trash to see what was deleted, by whom, and Restore it. A restored document comes back exactly as it was, with its saved versions.' },
   { b: 1344, d:'2026-10-14', t:'Accepted estimates add up', s:'When a homeowner accepts more than one estimate on a job \u2014 windows and siding, say \u2014 the job is now worth all of them together, everywhere: the job card, A/R, invoices and the pay link. Estimates that are only sent or drafted are still treated as options, so the job shows the largest one.' },
   { b: 1343, d:'2026-10-14', t:'Renaming a contract keeps it a contract', s:'A signed contract that was renamed without the word "Contract" at the start disappeared from the Contracts list and from the job total, so it looked deleted. Renaming any contract, estimate, invoice, change order or work order now keeps what it is. And Edit estimate on an uploaded estimate lets you correct its amount instead of saying no live estimate is linked.' },
   { b: 1342, d:'2026-10-14', t:'A document can never be saved as an empty page', s:'An estimate page was saved empty from a phone that was still running an older copy of the app, so it opened blank. The page has been put back from its saved copy. Now the app refuses to save an empty page over any estimate, contract, invoice or report, whichever button the save comes from.' },
