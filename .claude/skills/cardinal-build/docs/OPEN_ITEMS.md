@@ -6393,6 +6393,10 @@ Theo, verbatim: "I don't know on calander put it on hold."
   have recorded 1 payment ever. **Every DDL on `collections` timed out through the Supabase MCP** (rolled-back test,
   a one-trigger probe, and `apply_migration`), with no lock or active session visible and nothing applied —
   verified after each try. Run it in the Supabase SQL editor, or retry the MCP later. Revert is in the file.
-- **Jacob's pay plan** (Theo, 14 Oct): 10% overhead off the top, then a 50/50 profit split — not the flat 10% of each
-  collection that `make_commission()` books today. Needs Theo's answers (what costs count, when it's paid) before
-  any build.
+- **A per-rep profit-split pay plan** (Theo, 14 Oct) — for one rep: 10% overhead off the top, then a 50/50 split of
+  the profit, instead of the flat 10% of each collection `make_commission()` books today. Theo's answers:
+  costs = **crew + materials + permits + dump fees** (1c); payout **advance at deposit or settle at close, chosen per
+  job** (2 a/b, situational); applies to **every job that rep sells** (3), **but HOLD the build until Theo has
+  talked with the rep.** Blocker found: the app has no per-job cost record for materials, permits or dump fees —
+  only `crew_payments` (labour). The plan needs a job-cost ledger first. Store the plan as data on the rep (no name
+  in code).
