@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1340<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1341<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -19903,7 +19903,13 @@ function hideAllViews(){
   var _occ = document.getElementById('cr-occ');
   if(_occ) _occ.style.display = 'none';
   var _fin = document.getElementById('cr-fin');
-  if(_fin) _fin.style.display = 'none';   /* 1153 finance rates */
+  /* 1341 (audit #1): cr-fin is CLASS-shown (#cr-fin.open{display:flex}), not display-shown. Writing
+     display:none here made the inline style beat .open forever, so every open() (which calls this
+     first) painted a blank page. Remove the class instead, and release the lock its open() took. */
+  if(_fin && _fin.classList.contains('open')){
+    _fin.classList.remove('open');
+    if(document.body.style.overflow === 'hidden') document.body.style.overflow = '';
+  }
   /* 1160: Why Cardinal is a fixed inset:0 view, DISPLAY-shown like
      cr-occ and cr-fin, so display:none is the correct lever. */
   var _why = document.getElementById('cr-why');
@@ -29999,10 +30005,27 @@ function __histPush(st){
       }
     }catch(_e){}
   };
+  /* 1341 (audit #5): the client form and the signature pad are not in history, so Back changed the
+     screen BEHIND them and left them open over the wrong one. Back now closes the open one through its
+     own Cancel and steps forward again, so you stay where you were (the forward pop restores it). */
+  function crOpenFormCancel(){
+    var pairs = [['projModal', 'pfCancel'], ['sigModal', 'sigCancel']];
+    for(var i = 0; i < pairs.length; i++){
+      var m = document.getElementById(pairs[i][0]);
+      if(m && getComputedStyle(m).display !== 'none') return document.getElementById(pairs[i][1]);
+    }
+    return null;
+  }
   window.addEventListener('popstate', function(e){
+    var c = crOpenFormCancel();
+    if(c){ try{ c.click(); }catch(_e){} try{ history.forward(); }catch(_e2){} return; }
     if(e.state && e.state.app === 'cardinal-nav'){
       navRestore(e.state);
     }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape' || e.defaultPrevented) return;
+    var c = crOpenFormCancel(); if(c){ e.preventDefault(); c.click(); }
   });
   /* Wrap the main navigation functions so every entry to a view records state.
      Runs deferred so all the target functions are defined first. */
@@ -44662,6 +44685,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1341, d:'2026-10-14', t:'Five fixes from the full app check', s:'Tools \u2192 Financing Rates opens the rates again instead of a blank page. The \u00d7 on Suppliers takes you home instead of leaving an empty screen. On a phone, the Tools menu stays on the screen. The Ask button steps out of the way while the client form is open, so Save is fully tappable. And swiping Back while the client form or a signature box is open now closes it and keeps you where you were; Esc does the same on a computer.' },
   { b: 1340, d:'2026-10-14', t:'A signed estimate is an accepted estimate', s:'When the homeowner signs an estimate, on your phone or through the link you texted, the estimate is now marked Accepted straight away, so you can create the invoice without another step. It still shows in Approvals for making the contract.' },
   { b: 1339, d:'2026-10-14', t:'The light and dark switch is back on screen', s:'There is a sun and moon button in the top bar again, next to +. Tap it to switch between dark and light. It is there on the phone and on a computer, in Retail, Insurance and Community. Before, it was only in the phone menu under Appearance, so on a computer there was no way to switch at all. The Appearance row in the menu still works too.' },
   { b: 1338, d:'2026-10-14', t:'Insurance money waits on the carrier, not the homeowner', s:'On Invoices and Payments, an insurance job waiting for the carrier to release depreciation now sits in its own "Waiting on the carrier" group. It is no longer marked overdue at 31 days, it does not count toward the overdue total, and its button opens the job instead of texting the homeowner a reminder for the insurer\'s money. On the claims hub, a closed claim no longer counts toward deductibles due. The company text only ever sends Cardinal\'s own pay link.' },
@@ -67591,7 +67615,10 @@ function open(){
   if(typeof window.navSetView === 'function'){ try{ window.navSetView('suppliers'); }catch(_){} }
   refreshStatus();
 }
-function close(){ if(el) el.style.display = 'none'; }
+/* 1341 (audit #2): open() runs hideAllViews(), which hides home, so hiding only this view left a blank
+   page under the header. Go home, as Financing Rates' close() does. hideAllViews() hides cr-abc by
+   display directly and never calls this, so there is no loop. */
+function close(){ if(el) el.style.display = 'none'; if(typeof window.showHome === 'function'){ try{ window.showHome(); }catch(_e){} } }
 /* 774: the estimate editor prices line items through these. They are the
    same api() calls the Suppliers screen uses — one code path, so a fix
    there is a fix here. cfg() is exposed so the editor can tell a rep to
@@ -68822,6 +68849,15 @@ else { resolveHide(); }
 function closeMenus(){
   Array.prototype.forEach.call(B.querySelectorAll('.cbdd.open'), function(x){ x.classList.remove('open'); });
 }
+/* 1341 (audit #3): the menus hang from their tab's left edge, so on a phone Tools ran a third off the
+   right side ("AI Estima…", "Financin…"). Measured on open: slide it back on, 8px from the edge. */
+function fitMenu(dd){
+  var m = dd.querySelector('.cbmenu'); if(!m) return;
+  m.style.left = '';
+  var r = m.getBoundingClientRect(), vw = document.documentElement.clientWidth || window.innerWidth;
+  var over = r.right - (vw - 8);
+  if(over > 0) m.style.left = Math.round(-Math.min(over, Math.max(0, r.left - 8))) + 'px';
+}
 B.addEventListener('click', function(e){
   if(!e.target || !e.target.closest) return;
   var item = e.target.closest('[data-go]');
@@ -68839,7 +68875,7 @@ B.addEventListener('click', function(e){
     e.stopPropagation();
     var was = dd.classList.contains('open');
     closeMenus();
-    if(!was) dd.classList.add('open');
+    if(!was){ dd.classList.add('open'); fitMenu(dd); }
   }
 });
 document.addEventListener('click', function(e){
@@ -90136,6 +90172,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
    ever MATCHES when it applies — a base display:none beaten by .on reads to the sentinel as a rule
    that never wins. */
 #cr-ai-fab:not(.on){display:none;}
+/* 1341 (audit #4): it sat over the client form's Save on a phone */
+#cr-ai-fab.tucked{display:none;}
 #cr-ai-sheet{position:fixed; inset:0; z-index:12500; display:none;}
 #cr-ai-sheet.open{display:block;}
 #cr-ai-sheet .ai-scrim{position:absolute; inset:0; background:rgba(0,0,0,.55);}
@@ -90302,6 +90340,16 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   if(ta0) ta0.addEventListener('keydown', function(e){ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); aiSend(); } });
   /* who is signed in changes rarely; a cheap timer, not an observer */
   aiPaintFab(); setInterval(aiPaintFab, 3000);
+  /* 1341 (audit #4): tuck the button while the client form is up. Watches ONE element's style (not the
+     body), and writes only on a change. */
+  (function(){
+    var pm = document.getElementById('projModal'), f = aiQ('cr-ai-fab');
+    if(!pm || !f || !window.MutationObserver) return;
+    var was = null;
+    function fabTuck(){ var up = getComputedStyle(pm).display !== 'none'; if(up !== was){ was = up; f.classList.toggle('tucked', up); } }
+    new MutationObserver(fabTuck).observe(pm, { attributes:true, attributeFilter:['style', 'class'] });
+    fabTuck();
+  })();
   window.CardinalAssistant = Object.assign(window.CardinalAssistant || {}, { open:aiOpen, close:aiClose, paint:aiPaintFab });
 })();
 </script>

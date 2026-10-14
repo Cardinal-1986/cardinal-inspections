@@ -6405,3 +6405,9 @@ Theo, verbatim: "I don't know on calander put it on hold."
   `collections_rep_guard()` are now IN production; the trigger that switches the guard on, and the R9/M11 policies,
   are NOT — `create trigger` on `collections` times out through the MCP. Run the trigger + policy part of
   `collections_guards.sql` in the Supabase SQL editor.
+- **(14 Oct, 1341)** End-to-end audit (`docs/E2E_AUDIT_2026-10-14.md`): 5 confirmed — **all fixed at 1341**. Still
+  open from its "likely" list: Self Check Back lands on Production; phone menu ignores Back/Esc; Switch portal has
+  no ×; sub-44px targets (Crews tabs 26, crew rows 36, client stage arrow 40, estimate-builder side sections ~30,
+  desktop doc Save 42); the remaining modals (estimate picker, photo editor, walkthrough, What's New, AccuLynx
+  import) do not close on Back. Audit coverage gaps: non-admin roles, the inspection checklist modal,
+  Insurance/Production/Community-only menu sections.
