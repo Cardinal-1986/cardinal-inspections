@@ -9986,6 +9986,10 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1335: invoice from an accepted estimate
 - `crBillable(fin)`: signed contract / manual / change order value, or an ACCEPTED estimate. Sent-only estimates still
   can't be invoiced. Gate: `gate_1335.mjs`.
+## Build 1340: a homeowner's signature marks the estimate accepted
+- `crAcceptEstimateForDoc(docId)` (in-person signing, both paths) and `api/clientsign.js` (texted link) set the
+  estimates row linked by `doc_id` from draft/sent to `accepted`, so the job can be invoiced (1335). Gate: `gate_1340.mjs`.
+
 ## Build 1339: light/dark switch back in the header bar
 - `#cr-dark-toggle` sits in `#cr-hd2-bar` (order 9, between + and Search) on every portal and width; drawn sun/moon;
   `paintGlyph()` writes only on a change. Hidden on Blackout screens. Drawer Appearance row kept. Gate: `gate_1339.mjs`.

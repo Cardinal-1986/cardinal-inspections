@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1339<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1340<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -16426,6 +16426,16 @@ renderAcxOverview = function(){
 
 /* ---------- transfer checked photos into an inspection report ---------- */
 var galXferMenu = document.getElementById('galXferMenu');
+/* 1340 (Theo: a homeowner's signature counts as accepted). A signed estimate page is linked to its
+   estimates row by doc_id; mark that row accepted so the job can be invoiced (1335). Only draft or sent
+   rows move: an accepted, signed or declined one is left alone. Resolves true when a row changed. */
+function crAcceptEstimateForDoc(docId){
+  var cx = window.sb || window.supa;
+  if(!docId || !cx || !cx.from) return Promise.resolve(false);
+  return Promise.resolve(cx.from('estimates').update({ status:'accepted', updated_at:new Date().toISOString() })
+    .eq('doc_id', docId).in('status', ['draft', 'sent']).select('id'))
+    .then(function(r){ return !!(r && !r.error && r.data && r.data.length); }, function(){ return false; });
+}
 function isEstimateTitle(t){
   /* 1015: publish() titles every numbered estimate doc 'EST-YYYY-NNNN — …', so
      the leading-word regex missed every one of them — a SIGNED published
@@ -28377,6 +28387,7 @@ document.getElementById('sigApply').addEventListener('click', async function(){
           setEditorStatus(current.status, current.sent_at, _sAt);
           var _t = (titleInput.value || '').trim();
           if(/^contract/i.test(_t) && current.project_id){ await setStage(current.project_id, 'Approved'); }
+          else if(isEstimateTitle(_t)){ await crAcceptEstimateForDoc(current.id); }   /* 1340 */
         }
       }catch(_e){}
       try{ if(window.crToastOk) window.crToastOk('Signed \u2014 ' + _who); }catch(_e2){}
@@ -28411,9 +28422,10 @@ document.getElementById('sigApply').addEventListener('click', async function(){
       await setStage(current.project_id, 'Approved');
       crTell('Contract signed \u2014 project moved to APPROVED. Curtis has been notified to schedule and order materials.');
     }else if(isEstimateTitle(t)){
+      await crAcceptEstimateForDoc(current.id);   /* 1340: signed = accepted, so it can be invoiced */
       notifyTeam(ADMIN_EMAILS, 'Estimate signed \u2014 needs approval: ' + t,
         '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>', clientLink(current.project_id));
-      crTell('Estimate signed. It now appears in the admin Approvals queue \u2014 a contract will be generated on approval.');
+      crTell('Estimate signed and accepted \u2014 it can be invoiced now. It also appears in Approvals, to generate the contract.');
     }
     await reload();
   }catch(e){}
@@ -44650,6 +44662,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1340, d:'2026-10-14', t:'A signed estimate is an accepted estimate', s:'When the homeowner signs an estimate, on your phone or through the link you texted, the estimate is now marked Accepted straight away, so you can create the invoice without another step. It still shows in Approvals for making the contract.' },
   { b: 1339, d:'2026-10-14', t:'The light and dark switch is back on screen', s:'There is a sun and moon button in the top bar again, next to +. Tap it to switch between dark and light. It is there on the phone and on a computer, in Retail, Insurance and Community. Before, it was only in the phone menu under Appearance, so on a computer there was no way to switch at all. The Appearance row in the menu still works too.' },
   { b: 1338, d:'2026-10-14', t:'Insurance money waits on the carrier, not the homeowner', s:'On Invoices and Payments, an insurance job waiting for the carrier to release depreciation now sits in its own "Waiting on the carrier" group. It is no longer marked overdue at 31 days, it does not count toward the overdue total, and its button opens the job instead of texting the homeowner a reminder for the insurer\'s money. On the claims hub, a closed claim no longer counts toward deductibles due. The company text only ever sends Cardinal\'s own pay link.' },
   { b: 1337, d:'2026-10-14', t:'Invoice card tidy-ups', s:'The invoice card now reads \u201c$0 paid of\u201d instead of \u201c-- paid of\u201d when nothing has been paid yet. The Ready to invoice list says whether a job is billed from a signed contract or an accepted estimate. Record payment now checks with you before recording more than the balance, so a typo can\u2019t quietly mark a job paid.' },

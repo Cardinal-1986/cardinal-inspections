@@ -100,7 +100,13 @@ const PROBE = `(function(FLOOR){
        window straddles the screen edge had its reach cut by the glass, not by the page — a
        layout change of 10px elsewhere moved a punch box (39) and a vent checkbox (15) across
        the bottom edge and they read as having SHRUNK. Bring it fully on screen first. */
-    if (cy - FLOOR / 2 < 0 || cy + FLOOR / 2 > innerHeight || cx - FLOOR / 2 < 0 || cx + FLOOR / 2 > innerWidth) {
+    /* 1340: a control inside a SIDEWAYS-scrolling box (the dispatch board) is measured in whatever pan
+       the previous control's scrollIntoView left behind, so the board's pinned crew column could be
+       covering it: the result depended on DOM order, not on the page. A thumb scrolls to what it taps,
+       so a control in a horizontal scroller is always brought into view first. */
+    var hs = el.parentElement, inHScroll = false;
+    while (hs && hs !== document.body) { var o = getComputedStyle(hs).overflowX; if ((o === 'auto' || o === 'scroll') && hs.scrollWidth > hs.clientWidth) { inHScroll = true; break; } hs = hs.parentElement; }
+    if (inHScroll || cy - FLOOR / 2 < 0 || cy + FLOOR / 2 > innerHeight || cx - FLOOR / 2 < 0 || cx + FLOOR / 2 > innerWidth) {
       el.scrollIntoView({ block: 'center', inline: 'center' });
       b = el.getBoundingClientRect(); cx = b.left + b.width / 2; cy = b.top + b.height / 2;
     }
