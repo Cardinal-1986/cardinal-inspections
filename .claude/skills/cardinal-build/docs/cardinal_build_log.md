@@ -36174,3 +36174,19 @@ Theo, 7 Oct: *"Joan says she can't put trade type when she inputs a leads. She c
 - **What:** attribute removed; the phone's own picker now offers Photo Library / Take Photo / Choose File. A photo is
   still required before the homeowner signs. Install-photo slots (1331) deliberately stay camera-first.
 - **Gates:** `gate_1334.mjs` GREEN 4/4, control 1333 RED. check_build, types, dupes, gate_1323 green.
+
+## Build 1335 — an accepted estimate can be invoiced (Theo's pick 1, 14 Oct 2026)
+- **Why:** Jacob, Karen Frantz: job Completed, estimate **accepted** $1,400, paper agreement photographed into Files, no
+  in-app contract — the card said "An invoice opens once a contract is signed" and offered nothing. Since 654 only a
+  signed contract opened the invoice path.
+- **What:** `jobFinance()` returns `estAccepted` (estTier 2 — accepted/signed). `crBillable(fin)` in the main block:
+  value > 0 and (not estimate-sourced, or the accepted estimate). Used by the worksheet button and `createInvoiceFor`.
+  The two `cr-ar-script` sites (job invoice card, A/R ready-to-bill list) state the same rule inline because that
+  block also runs standalone in `harness_inv1108`. A **sent-but-not-accepted** estimate still cannot be invoiced.
+  The invoice total is jobFinance's value: the accepted estimate + any signed change order — nobody types a number.
+- **Server:** unchanged. `owedOn()` (pay.js/share.js) and `remind.js` already fall back to the invoice's stored total
+  when there's no signed contract / manual value. **Known limit:** a change order signed after the invoice is made is
+  not in that invoice's stored total — sign the CO first, or make a second invoice for the balance (OPEN_ITEMS).
+- **Gates:** `gate_1335.mjs` GREEN, control 1334 RED. `harness_654` updated with written reason (its estimate-refusal
+  assertions are now the accepted/sent split; it already crashed on `collPaid` before this build — pre-existing, not
+  in CI). gate_harnesses, gate_1011, 1315, 1316, 1318, 1323, 1330, check_build, types, dupes green.
