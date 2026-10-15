@@ -36255,3 +36255,19 @@ Theo, 14 Oct: **"please bring back the light dark theme."**
   switch when present, and separately asserts no insurance-only control (1181's actual ruling).
 - **Gates:** `gate_1339` 14/14, control 1338 RED 12. `gate_1176` 12/12 (both trees), `gate_1181` 18/18, `gate_1230`
   19/19, `gate_1179` 25/25, check_build, types, dupes green.
+## Build 1340: the Check Register, crew All Payments, Masonry + Plumbing (15 Oct 2026)
+- **Check Register** (`cr-reg-styles` + `cr-reg-script`, `window.CardinalRegister`): a new Owner Console area,
+  mounted by the console's `render()` into `[data-reg-mount]`. Table `bank_register` (`bank_register.sql`) mirrors
+  Chase business checking — 563 rows loaded from the 14 Oct read-only sweep (data never committed). Tabs: All ·
+  Received · My payments (owner draws) · Production & Office · Sales · Jerry · Crews & Subs · Other. Search, month,
+  category, method, matched filters; totals strip; List / By person; re-match a row to a client job; CSV export.
+  **Owner only** (RLS `auth.email() = theo@`, card hidden and area refused for every other login, Joan included —
+  owner draws and the member buyout are confidential under the separation agreement §3.1).
+- **Why its own table:** `collections` fires `commission_on_collection`, and collections/crew_payments drive live
+  balances — a bank import there would mint commissions and double-count hand-logged payments.
+- **Crews:** All Payments (admin-only, above the trade sections) — every `crew_payments` row with search, crew /
+  trade / month filters, total and CSV; a crew name opens that crew's Payments tab. **Masonry** and **Plumbing**
+  added to `crews_trade_ck` and all three mirrors (`TRADES`, `WO_TRADES`, `TRADE_ORDER`) —
+  `crews_trades_masonry_plumbing.sql`, applied before the HTML.
+- **Gates:** `gate_1340` 10/10 (owner, Joan, admin Crews, production Crews), control 1339 RED 8 without crashing.
+  check_build green. Rendered at 390 and 1280 px.
