@@ -81,6 +81,17 @@ export default async function handler(req, res) {
         body: JSON.stringify({ html: newHtml, signed_at: new Date().toISOString(), updated_at: new Date().toISOString() }) });
     if (!up.ok) throw new Error('save failed: ' + (await up.text()).slice(0, 200));
 
+    /* 1340 (Theo: a homeowner's signature counts as accepted). The signer here is always the client.
+       A signed estimate page is linked to its estimates row by doc_id (a contract page is
+       contract_doc_id, so it never matches); move that row from draft/sent to accepted so the job can
+       be invoiced. Best-effort: the signature is already saved. */
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/estimates?doc_id=eq.${doc.id}&status=in.(draft,sent)`,
+        { method: 'PATCH',
+          headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ status: 'accepted', updated_at: new Date().toISOString() }) });
+    } catch (_a) {}
+
     // advance the pipeline to Approved AND reach the team the way an in-person
     // signature does. 1007: setStage (the in-person path) emails/pushes Curtis
     // "schedule + order materials" on the move to Approved; a remote signature

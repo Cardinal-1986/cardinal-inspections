@@ -6400,3 +6400,29 @@ Theo, verbatim: "I don't know on calander put it on hold."
   talked with the rep.** Blocker found: the app has no per-job cost record for materials, permits or dump fees —
   only `crew_payments` (labour). The plan needs a job-cost ledger first. Store the plan as data on the rep (no name
   in code).
+- **(14 Oct, 1340)** Theo's call made: a homeowner's estimate signature **counts as accepted** (built). The dispatch
+  "28px move button" was a gate_1206 measuring fault, fixed in the gate. **Payment cap:** `job_total_for` and
+  `collections_rep_guard()` are now IN production; the trigger that switches the guard on, and the R9/M11 policies,
+  are NOT — `create trigger` on `collections` times out through the MCP. Run the trigger + policy part of
+  `collections_guards.sql` in the Supabase SQL editor.
+- **(15 Oct, 3am) ✅ ALL THREE SQL PIECES ARE APPLIED AND TESTED.** `document_trash.sql` (table + policies by the MCP;
+  `trash_document` / `restore_document` pasted by Theo), the `inspection_reports_blank_guard` trigger and the full
+  `collections_guards.sql` (trigger + four policies) — both pasted by Theo. Rolled-back tests on production: delete →
+  Trash → restore round-trips with versions; a stranger cannot trash; a rep can pay half of a $20,525 job but not then
+  the full amount ("$10,262.50 of $20,525.00 is already paid"); a rep cannot pay on a job with no total; the office can;
+  a blank page over a real document is refused. ⚠ **Why the MCP could not apply them:** the Supabase MCP holds any
+  statement containing a delete / drop / create trigger for a confirmation that never reaches the user, so it times out
+  at 60s with nothing applied. Hand such SQL to Theo as a paste from the start. Leftovers, harmless: an empty table
+  `document_trash_probe` and a function `_probe_1345()`.
+- **(14 Oct, 1345) RUN IN THE SUPABASE SQL EDITOR: `document_trash.sql`, whole.** Until it runs, deleting a
+  document is REFUSED (fail-closed, by design). The MCP hung on every DDL this session.
+- **(14 Oct, 1342) RUN IN THE SUPABASE SQL EDITOR:** the two trigger lines at the bottom of
+  `inspection_reports_blank_guard.sql` (the function is already applied; `create trigger` times out through the
+  MCP, same as `collections_guards.sql`'s trigger). Until then an old copy of the app on a phone can still blank
+  a page; current builds refuse in `db.update`.
+- **(14 Oct, 1341)** End-to-end audit (`docs/E2E_AUDIT_2026-10-14.md`): 5 confirmed — **all fixed at 1341**. Still
+  open from its "likely" list: Self Check Back lands on Production; phone menu ignores Back/Esc; Switch portal has
+  no ×; sub-44px targets (Crews tabs 26, crew rows 36, client stage arrow 40, estimate-builder side sections ~30,
+  desktop doc Save 42); the remaining modals (estimate picker, photo editor, walkthrough, What's New, AccuLynx
+  import) do not close on Back. Audit coverage gaps: non-admin roles, the inspection checklist modal,
+  Insurance/Production/Community-only menu sections.

@@ -27,6 +27,8 @@ const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
 const MODEL = 'claude-opus-5-5';
 const DEADLINE_MS = 54000;     // whole request; Vercel stops us at 60s
+const CALL_MAX_MS = 45000;     // one model call, at most
+const MIN_CALL_MS = 8000;      // less than this left: answer with what we have instead of starting a call
 const MAX_STEPS = 8;           // tool rounds per question
 
 /* the people this route serves, and what kind */
@@ -258,11 +260,15 @@ async function runSelect(person, token, input) {
   return body.length > 60000 ? body.slice(0, 60000) + '\n…cut off at 60,000 characters; query more narrowly.' : body;
 }
 
-function ask(client, system, tools, messages, withFallbacks) {
+/* 504 fix (15 Oct 2026): the deadline was only checked BEFORE a step, and each call had its own
+   45s timeout plus an SDK retry, so a step starting at 40s ran Vercel past 60s and the browser got
+   a bare HTTP 504. Every call now gets only what is left of the whole-request budget. */
+function ask(client, system, tools, messages, withFallbacks, timeout) {
   const params = { model: MODEL, max_tokens: 16000, output_config: { effort: 'medium' }, system, tools, messages };
+  const opts = { timeout, maxRetries: 0 };
   const stream = withFallbacks
-    ? client.beta.messages.stream({ ...params, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }, { timeout: 45000 })
-    : client.messages.stream(params, { timeout: 45000 });
+    ? client.beta.messages.stream({ ...params, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }, opts)
+    : client.messages.stream(params, opts);
   return stream.finalMessage();
 }
 
@@ -295,14 +301,19 @@ export default async function handler(req, res) {
   if (messages.length && messages[messages.length - 1].role === 'user') messages[messages.length - 1].content += '\n\n' + question;
   else messages.push({ role: 'user', content: question });
 
-  const client = new Anthropic({ apiKey, maxRetries: 1 });
+  const client = new Anthropic({ apiKey, maxRetries: 0 });
+  const left = () => Math.min(CALL_MAX_MS, DEADLINE_MS - (Date.now() - started));
   let fallbacks = true, proposals = null, usage = { input: 0, output: 0, cache_read: 0 };
   try {
     for (let step = 0; step < MAX_STEPS; step++) {
-      if (Date.now() - started > DEADLINE_MS) break;
+      if (left() < MIN_CALL_MS) break;
       let msg;
-      try { msg = await ask(client, system, tools, messages, fallbacks); }
-      catch (e) { if (fallbacks && e && e.status === 400) { fallbacks = false; msg = await ask(client, system, tools, messages, false); } else throw e; }
+      try { msg = await ask(client, system, tools, messages, fallbacks, left()); }
+      catch (e) {
+        if (fallbacks && e && e.status === 400 && left() >= MIN_CALL_MS) { fallbacks = false; msg = await ask(client, system, tools, messages, false, left()); }
+        else if (step > 0 && e && typeof e.status !== 'number') break;   // ran out of time mid-lookup: answer below, not a 502
+        else throw e;
+      }
       const u = msg.usage || {};
       usage.input += u.input_tokens || 0; usage.output += u.output_tokens || 0; usage.cache_read += u.cache_read_input_tokens || 0;
       if (msg.stop_reason === 'refusal') { res.status(200).json({ reply: 'I can’t help with that one.', proposals: null }); return; }

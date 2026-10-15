@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-15 build 1340<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-15 build 1347<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4653,6 +4653,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
              block is guarded and stays). The AI assists inside the editor now. -->
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
+      <div class="cr-trash-mount"></div>
     </div>
 
     <div id="tab-contracts" style="display:none;">
@@ -4677,6 +4678,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <button class="btn" id="pUploadContractBtn" type="button" style="margin-left:8px;">Upload signed contract</button>
       </div>
       <div id="contractDocsMount"><div class="loading">Loading…</div></div>
+      <div class="cr-trash-mount"></div>
     </div>
 
     <div id="tab-commissions" style="display:none;">
@@ -10997,6 +10999,33 @@ window.aiHeaders = async function(){
   return hdrs;
 };
 var TABLE = 'inspection_reports';
+/* 1342: true when an html page shows nothing at all — no text, no image, no table cell. The same test
+   as inspection_reports_blank_guard.sql on the server. A real Cardinal document is never this. */
+/* 1343: the kind of a document lives in the first word of its title. A rename that drops it moved a
+   signed contract out of Contracts and out of the job's value (14 Oct). Put the prefix back. */
+function crKeepDocKind(id, title){
+  try{
+    var prev = /** @type {any} */ ((cacheRows || []).filter(function(/** @type {any} */ x){ return String(x.id) === String(id); })[0]);
+    var was = String((prev && prev.title) || '').trim(), now = String(title || '').trim();
+    if(!was || !now) return title;
+    var K = /** @type {any} */ ([[/^change order/i, 'Change Order'], [/^work order/i, 'Work Order'], [/^invoice/i, 'Invoice'], [/^contract/i, 'Contract']]);
+    for(var i = 0; i < K.length; i++){
+      if(K[i][0].test(was) && !K[i][0].test(now)) return K[i][1] + ' \u2014 ' + now;
+    }
+    if(typeof isEstimateTitle === 'function' && isEstimateTitle(was) && !isEstimateTitle(now)){
+      var num = /^(EST-\d{4}-\d+)\s*\u2014\s*/i.exec(was);
+      return (num ? num[1] + ' \u2014 ' : '') + 'Estimate \u2014 ' + now.replace(/^EST-\d{4}-\d+\s*\u2014\s*/i, '');
+    }
+  }catch(_){}
+  return title;
+}
+function crPageIsEmpty(html){
+  var t = String(html == null ? '' : html);
+  if(t.length > 1500) return false;
+  t = t.replace(/<(head|style|script)[^>]*>[\s\S]*?<\/\1>/gi, '');
+  if(/<(img|td|svg)\b/i.test(t)) return false;
+  return !t.replace(/<[^>]*>/g, '').replace(/&nbsp;|\s/g, '');
+}
 
 /* ---------- helpers ---------- */
 function esc(s){
@@ -11230,6 +11259,12 @@ var db = {
     return id;
   },
   update: async function(id, fields){
+    /* 1342: no writer may store an empty page over a document (EST-2026-0910, 13 Oct). */
+    if(fields && ('html' in fields) && crPageIsEmpty(fields.html)){
+      throw new Error('the page is empty, so it was not saved \u2014 close the document and open it again');
+    }
+    /* 1343: a rename never changes what the document IS (kind is read from the title's first word). */
+    if(fields && typeof fields.title === 'string') fields.title = crKeepDocKind(id, fields.title);
     fields.updated_at = new Date().toISOString();
     if(TEAM){
       /* 869: no signal — hold the change in the outbox and apply it locally now,
@@ -11273,8 +11308,15 @@ var db = {
   },
   remove: async function(id){
     if(TEAM){
-      var r = await sb.from(TABLE).delete().eq('id', id);
-      if(r.error) throw r.error;
+      /* 1345: a delete goes to the Trash (document_trash.sql) — restorable for 30 days, saved versions
+         included. Never a hard delete: if the Trash is not set up, nothing is deleted. */
+      var tr = await sb.rpc('trash_document', { p_doc: id });
+      if(tr.error){
+        var _tm = String(tr.error.code || '') + ' ' + String(tr.error.message || '');
+        if(/PGRST202|42883|could not find the function/i.test(_tm)) throw new Error('the Trash is not set up yet, so nothing was deleted');
+        throw tr.error;
+      }
+      return;
       /* 1014 (audit DB-1): deleting a document never cleared the estimates rows
          pointing at it — 5 estimates ($71,845.99) were left publishing into a
          nonexistent doc (db.update matches 0 rows, no error, nothing created).
@@ -14631,7 +14673,52 @@ function renderProjectDocs(){
   var cm = document.getElementById('contractDocsMount');
   if(cm) cm.innerHTML = ctrs.length ? docTable(ctrs)
     : '<div class="empty"><b>No contracts yet.</b><br>Use <b>+ New contract</b>, or approve the job from the pipeline to auto-create one.</div>';
+  try{ crRenderTrash(); }catch(_t){}   /* 1345 */
 }
+/* 1345: this job's Trash — documents deleted in the last 30 days, each with Restore. Drawn under Contracts
+   and under Estimates. Silent when the Trash is empty or not set up. */
+var _crTrashSeq = 0;
+function crRenderTrash(){
+  var pr = currentProject, seq = ++_crTrashSeq;
+  var mounts = document.querySelectorAll('.cr-trash-mount');
+  if(!mounts.length) return;
+  mounts.forEach(function(m){ m.innerHTML = ''; });
+  if(!pr || !TEAM || !sb || typeof sb.from !== 'function') return;
+  var since = new Date(Date.now() - 30 * 86400000).toISOString();
+  Promise.resolve(sb.from('document_trash').select('id,title,deleted_by,deleted_at').eq('project_id', pr.id)
+    .gte('deleted_at', since).order('deleted_at', { ascending: false })).then(function(r){
+    if(seq !== _crTrashSeq || !r || r.error || !r.data || !r.data.length) return;
+    var rows = r.data.map(function(t){
+      var nm = String(t.title || 'Untitled').replace(/^file:\s*/i, '');
+      var when = new Date(t.deleted_at), left = Math.max(0, 30 - Math.floor((Date.now() - when.getTime()) / 86400000));
+      return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
+        '<span style="flex:1;min-width:0;"><b style="display:block;overflow:hidden;text-overflow:ellipsis;">' + esc(nm) + '</b>' +
+        '<small>Deleted ' + esc(when.toLocaleDateString('en-US', { month:'short', day:'numeric' })) +
+        (t.deleted_by ? ' by ' + esc((typeof rptRepName === 'function' && rptRepName(t.deleted_by)) || t.deleted_by) : '') +
+        ' \u00b7 ' + left + ' day' + (left === 1 ? '' : 's') + ' left</small></span>' +
+        '<button class="btn" type="button" data-trash-restore="' + esc(t.id) + '" style="min-height:44px;">Restore</button></div>';
+    }).join('');
+    var html = '<details class="cr-trash" style="margin-top:12px;"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700;">Trash (' +
+      r.data.length + ') \u2014 deleted in the last 30 days</summary>' + rows + '</details>';
+    document.querySelectorAll('.cr-trash-mount').forEach(function(m){ m.innerHTML = html; });
+  }, function(){});
+}
+document.addEventListener('click', async function(e){
+  var _et = /** @type {any} */ (e.target);
+  var b = _et && _et.closest ? _et.closest('[data-trash-restore]') : null;
+  if(!b) return;
+  b.disabled = true; b.textContent = 'Restoring\u2026';
+  try{
+    var r = await sb.rpc('restore_document', { p_id: b.getAttribute('data-trash-restore') });
+    if(r.error) throw r.error;
+    try{ if(window.crToastOk) window.crToastOk('Restored \u2014 it is back on this job.'); }catch(_){}
+    await reload();
+    try{ renderProjectDocs(); }catch(_r){}
+  }catch(err){
+    b.disabled = false; b.textContent = 'Restore';
+    showError('Could not restore: ' + (err.message || err));
+  }
+});
 function showTab(name){
   /* 556: commissions are fetched per-tab rather than cached with the project —
      the row set depends on who is asking (a rep sees only their own), so it must
@@ -14710,7 +14797,7 @@ async function handleDocAction(e){
     if(act === 'dup'){ await db.duplicate(id); await reload(); return; }
     if(act === 'del'){
       var r2 = cacheRows.find(function(x){ return String(x.id) === String(id); });
-      if(await crAsk('Delete "' + ((r2 && r2.title) || 'Untitled inspection') + '"? This removes it for the whole team and cannot be undone.')){
+      if(await crAsk('Move "' + ((r2 && r2.title) || 'Untitled inspection') + '" to the Trash? It leaves this job for everyone, and it can be restored from the Trash under Contracts for 30 days.')){
         await db.remove(id); await reload();
       }
       return;
@@ -16332,7 +16419,7 @@ document.getElementById('jdMount').addEventListener('click', async function(e){
   if(ren){ renameJobDoc(ren.getAttribute('data-jdren')); return; }
   var del = e.target.closest('[data-jddel]');
   if(del){
-    if(!await crAsk('Delete this file for everyone?')) return;
+    if(!await crAsk('Move this file to the Trash? It can be restored from the Trash under Contracts for 30 days.')) return;
     db.remove(del.getAttribute('data-jddel'))
       .then(function(){ return reload(); })
       .then(renderDocsPage)
@@ -16426,6 +16513,16 @@ renderAcxOverview = function(){
 
 /* ---------- transfer checked photos into an inspection report ---------- */
 var galXferMenu = document.getElementById('galXferMenu');
+/* 1340 (Theo: a homeowner's signature counts as accepted). A signed estimate page is linked to its
+   estimates row by doc_id; mark that row accepted so the job can be invoiced (1335). Only draft or sent
+   rows move: an accepted, signed or declined one is left alone. Resolves true when a row changed. */
+function crAcceptEstimateForDoc(docId){
+  var cx = window.sb || window.supa;
+  if(!docId || !cx || !cx.from) return Promise.resolve(false);
+  return Promise.resolve(cx.from('estimates').update({ status:'accepted', updated_at:new Date().toISOString() })
+    .eq('doc_id', docId).in('status', ['draft', 'sent']).select('id'))
+    .then(function(r){ return !!(r && !r.error && r.data && r.data.length); }, function(){ return false; });
+}
 function isEstimateTitle(t){
   /* 1015: publish() titles every numbered estimate doc 'EST-YYYY-NNNN — …', so
      the leading-word regex missed every one of them — a SIGNED published
@@ -19893,7 +19990,13 @@ function hideAllViews(){
   var _occ = document.getElementById('cr-occ');
   if(_occ) _occ.style.display = 'none';
   var _fin = document.getElementById('cr-fin');
-  if(_fin) _fin.style.display = 'none';   /* 1153 finance rates */
+  /* 1341 (audit #1): cr-fin is CLASS-shown (#cr-fin.open{display:flex}), not display-shown. Writing
+     display:none here made the inline style beat .open forever, so every open() (which calls this
+     first) painted a blank page. Remove the class instead, and release the lock its open() took. */
+  if(_fin && _fin.classList.contains('open')){
+    _fin.classList.remove('open');
+    if(document.body.style.overflow === 'hidden') document.body.style.overflow = '';
+  }
   /* 1160: Why Cardinal is a fixed inset:0 view, DISPLAY-shown like
      cr-occ and cr-fin, so display:none is the correct lever. */
   var _why = document.getElementById('cr-why');
@@ -22468,6 +22571,8 @@ function indexMoney(estimates, contracts){
     var tier = ACCEPTED_EST[st] ? 2 : 1;
     var cur = estTier[e.project_id] || 0;
     if(tier > cur){ estTier[e.project_id] = tier; estBest[e.project_id] = t; }
+    /* 1344: ACCEPTED estimates add up (windows + siding); sent ones are options, so the largest */
+    else if(tier === cur && tier === 2) estBest[e.project_id] = (estBest[e.project_id] || 0) + t;
     else if(tier === cur && t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
   });
   ctrSigned = {};
@@ -27533,7 +27638,11 @@ function serializeFrame(){
     body.style.outline = '';
     if(!body.getAttribute('style')) body.removeAttribute('style');
   }
-  return '<!DOCTYPE html>\n' + clone.outerHTML;
+  var _out = '<!DOCTYPE html>\n' + clone.outerHTML;
+  /* 1342: checked AFTER the editor's banner and live layers are stripped — before, a frame holding only
+     the "Editing mode" banner passed the 1328 check and saved an empty page. */
+  if(crPageIsEmpty(_out)) throw new Error('the document has not finished opening');
+  return _out;
 }
 
 function readEstimateTotal(){
@@ -28150,6 +28259,23 @@ async function editEstimateFromDoc(){
     crTell('This document is not linked to a client, so its estimate cannot be found.');
     return;
   }
+  /* 1343: an UPLOADED estimate is a copy of the paper — there is no builder estimate behind it, so the
+     only thing to edit is its amount (the job is priced from it until a contract is signed). */
+  var _ud = null; try{ _ud = frame && /** @type {any} */ (frame).contentDocument; }catch(_f){}
+  if(_ud && _ud.body && _ud.body.hasAttribute('data-cr-upload')){
+    var _was = Number(/** @type {any} */ (cur).total) || 0;
+    var _ans = window.prompt('This estimate was uploaded as a copy of the paper, so it has no line items to edit.\n\nCorrect its amount (what the job is priced from):', _was ? String(_was) : '');
+    if(_ans === null) return;
+    var _amt = parseFloat(String(_ans).replace(/[^0-9.]/g, ''));
+    if(!(_amt > 0)){ crTell('Enter an amount above $0.'); return; }
+    try{
+      await db.update(cur.id, { total: Math.round(_amt * 100) / 100 });
+      /** @type {any} */ (cur).total = Math.round(_amt * 100) / 100;
+      try{ if(window.crToastOk) window.crToastOk('Estimate amount saved \u2014 ' + (typeof fmtMoney === 'function' ? fmtMoney(_amt, true) : '$' + _amt.toFixed(2))); }catch(_t){}
+      reload();
+    }catch(err){ showError('Could not save the amount: ' + (err.message || err)); }
+    return;
+  }
   var rows = [];
   try{ rows = (await E.loadForProject(pid)) || []; }catch(_){ }
   var docId = cur.id;
@@ -28377,6 +28503,7 @@ document.getElementById('sigApply').addEventListener('click', async function(){
           setEditorStatus(current.status, current.sent_at, _sAt);
           var _t = (titleInput.value || '').trim();
           if(/^contract/i.test(_t) && current.project_id){ await setStage(current.project_id, 'Approved'); }
+          else if(isEstimateTitle(_t)){ await crAcceptEstimateForDoc(current.id); }   /* 1340 */
         }
       }catch(_e){}
       try{ if(window.crToastOk) window.crToastOk('Signed \u2014 ' + _who); }catch(_e2){}
@@ -28411,9 +28538,10 @@ document.getElementById('sigApply').addEventListener('click', async function(){
       await setStage(current.project_id, 'Approved');
       crTell('Contract signed \u2014 project moved to APPROVED. Curtis has been notified to schedule and order materials.');
     }else if(isEstimateTitle(t)){
+      await crAcceptEstimateForDoc(current.id);   /* 1340: signed = accepted, so it can be invoiced */
       notifyTeam(ADMIN_EMAILS, 'Estimate signed \u2014 needs approval: ' + t,
         '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>', clientLink(current.project_id));
-      crTell('Estimate signed. It now appears in the admin Approvals queue \u2014 a contract will be generated on approval.');
+      crTell('Estimate signed and accepted \u2014 it can be invoiced now. It also appears in Approvals, to generate the contract.');
     }
     await reload();
   }catch(e){}
@@ -29987,10 +30115,27 @@ function __histPush(st){
       }
     }catch(_e){}
   };
+  /* 1341 (audit #5): the client form and the signature pad are not in history, so Back changed the
+     screen BEHIND them and left them open over the wrong one. Back now closes the open one through its
+     own Cancel and steps forward again, so you stay where you were (the forward pop restores it). */
+  function crOpenFormCancel(){
+    var pairs = [['projModal', 'pfCancel'], ['sigModal', 'sigCancel']];
+    for(var i = 0; i < pairs.length; i++){
+      var m = document.getElementById(pairs[i][0]);
+      if(m && getComputedStyle(m).display !== 'none') return document.getElementById(pairs[i][1]);
+    }
+    return null;
+  }
   window.addEventListener('popstate', function(e){
+    var c = crOpenFormCancel();
+    if(c){ try{ c.click(); }catch(_e){} try{ history.forward(); }catch(_e2){} return; }
     if(e.state && e.state.app === 'cardinal-nav'){
       navRestore(e.state);
     }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape' || e.defaultPrevented) return;
+    var c = crOpenFormCancel(); if(c){ e.preventDefault(); c.click(); }
   });
   /* Wrap the main navigation functions so every entry to a view records state.
      Runs deferred so all the target functions are defined first. */
@@ -44650,7 +44795,14 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b: 1340, d:'2026-10-15', t:'Check Register, crew payments in one place, Masonry and Plumbing', s:'The Owner Console has a new Check Register: every check, ACH and Zelle through the Chase business account, with tabs for money received, your own payments, the Cardinal team, sales, Jerry, crews and subs, and everything else. Search, filter by month, category or method, see totals, view it by person or company, match a payment to a client job, and export what you are looking at as a spreadsheet. Only your login can see it. The Crews page has an All Payments tab at the top that lists every crew payment with filters and a total, and two new sections, Masonry and Plumbing.' },
+  { b: 1347, d:'2026-10-15', t:'Check Register, crew payments in one place, Masonry and Plumbing', s:'The Owner Console has a new Check Register: every check, ACH and Zelle through the Chase business account, with tabs for money received, your own payments, the Cardinal team, sales, Jerry, crews and subs, and everything else. Search, filter by month, category or method, see totals, view it by person or company, match a payment to a client job, and export what you are looking at as a spreadsheet. Only your login can see it. The Crews page has an All Payments tab at the top that lists every crew payment with filters and a total, and two new sections, Masonry and Plumbing.' },
+  { b: 1346, d:'2026-10-14', t:'Record a deposit before the job is invoiced', s:'A signed job now shows Record payment as its main button until the work is finished, so a deposit or a progress payment goes in from the job page without moving the pipeline. Invoices & Payments has a new Deposits & progress payments group listing every signed job at Approved or Scheduled that still has money to come. Those jobs are not counted as owed or overdue.' },
+  { b: 1345, d:'2026-10-14', t:'Deleted documents go to a Trash', s:'Deleting an estimate, contract, invoice, report or file no longer erases it. It goes to the Trash for 30 days \u2014 open Contracts or Estimates on the client\u2019s page and tap Trash to see what was deleted, by whom, and Restore it. A restored document comes back exactly as it was, with its saved versions.' },
+  { b: 1344, d:'2026-10-14', t:'Accepted estimates add up', s:'When a homeowner accepts more than one estimate on a job \u2014 windows and siding, say \u2014 the job is now worth all of them together, everywhere: the job card, A/R, invoices and the pay link. Estimates that are only sent or drafted are still treated as options, so the job shows the largest one.' },
+  { b: 1343, d:'2026-10-14', t:'Renaming a contract keeps it a contract', s:'A signed contract that was renamed without the word "Contract" at the start disappeared from the Contracts list and from the job total, so it looked deleted. Renaming any contract, estimate, invoice, change order or work order now keeps what it is. And Edit estimate on an uploaded estimate lets you correct its amount instead of saying no live estimate is linked.' },
+  { b: 1342, d:'2026-10-14', t:'A document can never be saved as an empty page', s:'An estimate page was saved empty from a phone that was still running an older copy of the app, so it opened blank. The page has been put back from its saved copy. Now the app refuses to save an empty page over any estimate, contract, invoice or report, whichever button the save comes from.' },
+  { b: 1341, d:'2026-10-14', t:'Five fixes from the full app check', s:'Tools \u2192 Financing Rates opens the rates again instead of a blank page. The \u00d7 on Suppliers takes you home instead of leaving an empty screen. On a phone, the Tools menu stays on the screen. The Ask button steps out of the way while the client form is open, so Save is fully tappable. And swiping Back while the client form or a signature box is open now closes it and keeps you where you were; Esc does the same on a computer.' },
+  { b: 1340, d:'2026-10-14', t:'A signed estimate is an accepted estimate', s:'When the homeowner signs an estimate, on your phone or through the link you texted, the estimate is now marked Accepted straight away, so you can create the invoice without another step. It still shows in Approvals for making the contract.' },
   { b: 1339, d:'2026-10-14', t:'The light and dark switch is back on screen', s:'There is a sun and moon button in the top bar again, next to +. Tap it to switch between dark and light. It is there on the phone and on a computer, in Retail, Insurance and Community. Before, it was only in the phone menu under Appearance, so on a computer there was no way to switch at all. The Appearance row in the menu still works too.' },
   { b: 1338, d:'2026-10-14', t:'Insurance money waits on the carrier, not the homeowner', s:'On Invoices and Payments, an insurance job waiting for the carrier to release depreciation now sits in its own "Waiting on the carrier" group. It is no longer marked overdue at 31 days, it does not count toward the overdue total, and its button opens the job instead of texting the homeowner a reminder for the insurer\'s money. On the claims hub, a closed claim no longer counts toward deductibles due. The company text only ever sends Cardinal\'s own pay link.' },
   { b: 1337, d:'2026-10-14', t:'Invoice card tidy-ups', s:'The invoice card now reads \u201c$0 paid of\u201d instead of \u201c-- paid of\u201d when nothing has been paid yet. The Ready to invoice list says whether a job is billed from a signed contract or an accepted estimate. Record payment now checks with you before recording more than the balance, so a typo can\u2019t quietly mark a job paid.' },
@@ -67579,7 +67731,10 @@ function open(){
   if(typeof window.navSetView === 'function'){ try{ window.navSetView('suppliers'); }catch(_){} }
   refreshStatus();
 }
-function close(){ if(el) el.style.display = 'none'; }
+/* 1341 (audit #2): open() runs hideAllViews(), which hides home, so hiding only this view left a blank
+   page under the header. Go home, as Financing Rates' close() does. hideAllViews() hides cr-abc by
+   display directly and never calls this, so there is no loop. */
+function close(){ if(el) el.style.display = 'none'; if(typeof window.showHome === 'function'){ try{ window.showHome(); }catch(_e){} } }
 /* 774: the estimate editor prices line items through these. They are the
    same api() calls the Suppliers screen uses — one code path, so a fix
    there is a fix here. cfg() is exposed so the editor can tell a rep to
@@ -68810,6 +68965,15 @@ else { resolveHide(); }
 function closeMenus(){
   Array.prototype.forEach.call(B.querySelectorAll('.cbdd.open'), function(x){ x.classList.remove('open'); });
 }
+/* 1341 (audit #3): the menus hang from their tab's left edge, so on a phone Tools ran a third off the
+   right side ("AI Estima…", "Financin…"). Measured on open: slide it back on, 8px from the edge. */
+function fitMenu(dd){
+  var m = dd.querySelector('.cbmenu'); if(!m) return;
+  m.style.left = '';
+  var r = m.getBoundingClientRect(), vw = document.documentElement.clientWidth || window.innerWidth;
+  var over = r.right - (vw - 8);
+  if(over > 0) m.style.left = Math.round(-Math.min(over, Math.max(0, r.left - 8))) + 'px';
+}
 B.addEventListener('click', function(e){
   if(!e.target || !e.target.closest) return;
   var item = e.target.closest('[data-go]');
@@ -68827,7 +68991,7 @@ B.addEventListener('click', function(e){
     e.stopPropagation();
     var was = dd.classList.contains('open');
     closeMenus();
-    if(!was) dd.classList.add('open');
+    if(!was){ dd.classList.add('open'); fitMenu(dd); }
   }
 });
 document.addEventListener('click', function(e){
@@ -76368,8 +76532,8 @@ var TRADES = [
   ['Windows',         'Window Installers'],
   ['Gutters',         'Gutter Crews'],
   ['General Repairs', 'General Repairs'],
-  ['Masonry',         'Masonry'],          /* 1340 */
-  ['Plumbing',        'Plumbing']          /* 1340 */
+  ['Masonry',         'Masonry'],          /* 1347 */
+  ['Plumbing',        'Plumbing']          /* 1347 */
 ];
 var DOCS = [
   ['w9', 'W-9'],
@@ -76394,7 +76558,7 @@ function tabsFor(){
 var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted = false;
 var catalog = [], rates = [];   /* 548: pricing_items + crew_rates */
 var payments = [];              /* 556: crew_payments, admin-only */
-/* 1340: the All Payments tab - every crew payment in one list, admin-only like
+/* 1347: the All Payments tab - every crew payment in one list, admin-only like
    the per-crew Payments tab it sits above. */
 var allPay = false, apf = { q:'', crew:'', trade:'', month:'' };
 var workorders = [];            /* 847: crew_work_orders — the job history */
@@ -76735,7 +76899,7 @@ function paymentsHtml(c){
     '<button class="crw-btn primary" style="margin-top:12px" data-act="addpay">Record payment</button>' +
     '<span class="crw-mut" data-paymsg style="margin-left:10px;font-size:13px"></span>';
 }
-/* ── 1340: All Payments ──────────────────────────────────────────────────────
+/* ── 1347: All Payments ──────────────────────────────────────────────────────
    Every crew_payments row in one list, newest first, with a search, crew / trade /
    month filters and a total. Same admin fence as the per-crew Payments tab (the
    caller checks canSeeRates()). Rows are read from the `payments` array load()
@@ -77186,7 +77350,7 @@ function wire(){
     else if(k === 'addcustomrate'){ addCustomRate(); }
     else if(k === 'addpay'){ addPayment(); }
   });
-  /* 1340: All Payments filters repaint the list only, so the search box keeps focus */
+  /* 1347: All Payments filters repaint the list only, so the search box keeps focus */
   v.addEventListener('input', function(e){
     var k = e.target.getAttribute && e.target.getAttribute('data-apf');
     if(k){ apf[k] = e.target.value; var o = v.querySelector('[data-aplist]'); if(o) o.innerHTML = apListHtml(); }
@@ -86839,7 +87003,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     LEDGER = (res[5] && res[5].data) || [];
     LTXNS  = (res[6] && res[6].data) || [];
     VAULT  = (res[7] && res[7].data) || [];
-    /* 1340: warm the register so its hub card can show a count. Owner only;
+    /* 1347: warm the register so its hub card can show a count. Owner only;
        a failure here leaves the card at a dash and never fails the console. */
     try{ if(window.CardinalRegister && window.CardinalRegister.allowed()) await window.CardinalRegister.preload(); }catch(_rg){}
   }
@@ -87225,7 +87389,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
         var oweTot = op.filter(function(a){ return a.kind === 'borrowed'; })
                        .reduce(function(s, a){ return s + balanceOf(a.id); }, 0);
         return { n:fmtMoney(oweTot), w:'you owe' }; } },
-    /* 1340: the Check Register. owner:true hides the card (and refuses the area)
+    /* 1347: the Check Register. owner:true hides the card (and refuses the area)
        for any login but the owner's - bank_register is theo@-only in RLS. */
     { k:'register', t:'Check Register', d:'Every check, ACH and Zelle through Chase', owner:true,
       fn:function(){ return '<div data-reg-mount></div>'; },
@@ -87286,7 +87450,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     var body = view.querySelector('.ow-wrap');
     body.innerHTML = (area ? areaHTML(area) : hubHTML()) +
       '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations &middot; Owner</div></div>';
-    /* 1340: the register needs the width a table needs; every other area keeps 640px. */
+    /* 1347: the register needs the width a table needs; every other area keeps 640px. */
     view.classList.toggle('ow-reg-wide', area === 'register');
     if(area === 'register'){
       var _rm = view.querySelector('[data-reg-mount]');
@@ -90251,6 +90415,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
    ever MATCHES when it applies — a base display:none beaten by .on reads to the sentinel as a rule
    that never wins. */
 #cr-ai-fab:not(.on){display:none;}
+/* 1341 (audit #4): it sat over the client form's Save on a phone */
+#cr-ai-fab.tucked{display:none;}
 #cr-ai-sheet{position:fixed; inset:0; z-index:12500; display:none;}
 #cr-ai-sheet.open{display:block;}
 #cr-ai-sheet .ai-scrim{position:absolute; inset:0; background:rgba(0,0,0,.55);}
@@ -90417,6 +90583,16 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   if(ta0) ta0.addEventListener('keydown', function(e){ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); aiSend(); } });
   /* who is signed in changes rarely; a cheap timer, not an observer */
   aiPaintFab(); setInterval(aiPaintFab, 3000);
+  /* 1341 (audit #4): tuck the button while the client form is up. Watches ONE element's style (not the
+     body), and writes only on a change. */
+  (function(){
+    var pm = document.getElementById('projModal'), f = aiQ('cr-ai-fab');
+    if(!pm || !f || !window.MutationObserver) return;
+    var was = null;
+    function fabTuck(){ var up = getComputedStyle(pm).display !== 'none'; if(up !== was){ was = up; f.classList.toggle('tucked', up); } }
+    new MutationObserver(fabTuck).observe(pm, { attributes:true, attributeFilter:['style', 'class'] });
+    fabTuck();
+  })();
   window.CardinalAssistant = Object.assign(window.CardinalAssistant || {}, { open:aiOpen, close:aiClose, paint:aiPaintFab });
 })();
 </script>
@@ -91085,6 +91261,21 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     });
     return out;
   }
+  /* 1346: signed work not yet done — where a deposit or progress payment is recorded. Never "owed". */
+  function depositList(){
+    var out = [];
+    projects().forEach(function(pr){
+      var s = stg(pr);
+      if(s !== 'Approved' && s !== 'Scheduled') return;
+      if((typeof projClaimType === 'function') && projClaimType(pr) === 'community') return;
+      var inv = invoiceFor(pr.id);
+      if(invSent(inv)) return;
+      var fin = jobFinance(pr);
+      if(!(Number(fin.balance) > 0.005) || !(Number(fin.value) > 0 && (fin.source !== 'estimate' || !!fin.estAccepted))) return;
+      out.push({ pr:pr, inv:inv, fin:fin, st:statusFor(pr, inv, fin), age:0, dep:true });
+    });
+    return out;
+  }
   /* 1316: one bucket set everywhere — 0–14, 15–30, 31+ */
   function bucketOf(age){ return age < 15 ? 0 : (age <= 30 ? 1 : 2); }
   var BUCKET_LABELS = ['0–14 days', '15–30 days', '31+ days · overdue'];
@@ -91109,13 +91300,16 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var sent = !!(x.inv && x.inv.status === 'sent');
     var RB = function(cls, attr, label){ return '<button class="crar-btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '="' + id + '">' + label + '</button>'; };
     var bits = [];
-    if(x.ready) bits.push('Finished &middot; ' + (x.fin && x.fin.source === 'estimate' ? 'accepted estimate' : 'signed contract'));   /* 1337 */
+    if(x.dep) bits.push(esc2(stg(pr)) + ' &middot; ' + (x.fin && x.fin.source === 'estimate' ? 'accepted estimate' : 'signed contract') + (x.fin.paid > 0 ? '' : ' &middot; no deposit yet'));   /* 1346 */
+    else if(x.ready) bits.push('Finished &middot; ' + (x.fin && x.fin.source === 'estimate' ? 'accepted estimate' : 'signed contract'));   /* 1337 */
     else if(!x.inv) bits.push('Not invoiced yet');
     if(x.fin.paid > 0) bits.push('Paid ' + money(x.fin.paid) + ' of ' + money(x.fin.value));
     if(x.inv) bits.push(sent ? ('Sent ' + esc2(shortDate(x.inv.sent_at) || (x.age + ' days ago'))) : 'Invoice not sent');
-    var ageTxt = x.ready ? 'Ready' : (x.age + (x.age === 1 ? ' day' : ' days'));
+    var ageTxt = x.dep ? 'Before work' : x.ready ? 'Ready' : (x.age + (x.age === 1 ? ' day' : ' days'));
     var go, more = [];
-    if(!x.inv){
+    if(x.dep){   /* 1346: a deposit or progress payment — record it */
+      go = RB('primary crar-go', 'data-arpay', IC_CASH + 'Record payment');
+    } else if(!x.inv){
       go = RB('primary crar-go', 'data-armkinv', 'Create invoice');
       more.push(RB('', 'data-arpay', IC_CASH + 'Record payment'));
     } else if(!sent){
@@ -91163,6 +91357,15 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
        now a branch rather than an exit, so the switch cannot be skipped. */
     var body = q('crarBody');
     var ready = readyList();
+    /* 1346: deposits & progress payments — listed, never counted as owed */
+    var dep = depositList(), depHtml = '';
+    if(dep.length){
+      var dsub = 0; dep.forEach(function(x){ dsub += x.fin.balance; });
+      depHtml = '<div class="crar-grp dep">'
+        + '<div class="crar-grphd"><b>Deposits &amp; progress payments</b><span class="crar-line"></span><span class="crar-sub">' + money(dsub) + ' to come</span></div>'
+        + dep.map(rowHtml).join('')
+        + '</div>';
+    }
     var readyHtml = '';
     if(ready.length){
       var rsub = 0; ready.forEach(function(x){ rsub += x.fin.balance; });
@@ -91173,9 +91376,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }
     if(body){
       if(!list.length && !ready.length){
-        body.innerHTML = '<div class="crar-empty"><b>All clear.</b><br>No open balances right now.</div>';
+        body.innerHTML = '<div class="crar-empty"><b>All clear.</b><br>No open balances right now.</div>' + depHtml;
       } else if(!list.length){
-        body.innerHTML = readyHtml;
+        body.innerHTML = readyHtml + depHtml;
       } else {
         var buckets = [[], [], []], carrierRows = [];
         list.forEach(function(x){ (x.carrier ? carrierRows : buckets[bucketOf(x.age)]).push(x); });   /* 1338 */
@@ -91197,7 +91400,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
             + carrierRows.map(rowHtml).join('')
             + '</div>';
         }
-        body.innerHTML = readyHtml + html;
+        body.innerHTML = readyHtml + html + depHtml;
       }
     }
     remWire();
@@ -91425,9 +91628,12 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var pid = esc2(pr.id);
     var pct = total > 0 ? Math.max(0, Math.min(100, Math.round(paid / total * 100))) : 0;
     var title = inv ? ('Invoice' + (inv.title && /#[\w-]+/.test(inv.title) ? ' ' + esc2(inv.title.match(/#[\w-]+/)[0]) : '')) : 'No invoice yet';
+    /* 1346: before the work is finished, the money that comes in is a deposit or progress payment */
+    var _pre = ['Lead', 'Prospect', 'OnHold', 'Approved', 'Scheduled'].indexOf(normStage(pr.stage)) !== -1;
     var line2 = isPaid ? ('Paid in full' + (inv && inv.sent_at ? '' : ''))
               : sent ? ('Sent ' + ageDays(pr, inv) + (ageDays(pr, inv) === 1 ? ' day' : ' days') + ' ago')
               : inv ? 'Not sent yet'
+              : (canInvoice && _pre) ? (paid > 0 ? 'Signed \u2014 record progress payments here' : 'Signed \u2014 record the deposit here')   /* 1346 */
               : canInvoice ? 'Finished work is ready to bill' : 'An invoice opens once a contract is signed or the estimate is accepted.';
     var B = function(cls, attr, label){ return '<button class="crji-btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '="' + pid + '">' + label + '</button>'; };
     var main = '', more = '';
@@ -91443,6 +91649,10 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       more = B('', 'data-inv-sendmenu', IC_SMS + 'Send again') + B('', 'data-inv-open', 'Open invoice');
     }
     if(!inv && canInvoice && paid < total) more = B('', 'data-inv-pay', IC_CASH + 'Record payment');
+    if(!inv && canInvoice && paid < total && _pre){   /* 1346 */
+      main = B('primary', 'data-inv-pay', IC_CASH + 'Record payment');
+      more = B('', 'data-inv-gen', IC_DOC + 'Create invoice');
+    }
     var sendRow = inv ? '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden>'
         + B('', 'data-inv-sms', 'Company text') + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')
         + '</div>' : '';
@@ -95905,7 +96115,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 </script>
 <style id="cr-reg-styles">
 /* ═══════════════════════════════════════════════════════════════════════════
-   The Check Register — v2026-10-15 · build 1340
+   The Check Register — v2026-10-15 · build 1347
    Every check, ACH and Zelle through Cardinal's Chase business checking, one row
    each (table bank_register). Lives INSIDE the Owner Console as an area, so it
    inherits the console's surface, its history entry and its close button.
@@ -96004,7 +96214,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 }
 </style>
 <script id="cr-reg-script">
-/* The Check Register — build 1340. window.CardinalRegister = { mount, preload, stat, allowed, reload }.
+/* The Check Register — build 1347. window.CardinalRegister = { mount, preload, stat, allowed, reload }.
    The Owner Console calls mount(el) when its 'register' area is open; everything
    else (data, filters, events) lives here. One write only: re-linking a row to a
    client job (bank_register.project_id), owner-only by RLS. It never touches
@@ -96201,7 +96411,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
         '</div>';
       }).join('') + '</div>';
   }
-  /* 1340: how often someone is paid, from the median gap between payment dates -
+  /* 1347: how often someone is paid, from the median gap between payment dates -
      so a missed or doubled week on the Cardinal Team stands out. */
   function rhythm(dates){
     var d = Object.keys(dates || {}).sort(); if(d.length < 3) return '';

@@ -9986,6 +9986,15 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1335: invoice from an accepted estimate
 - `crBillable(fin)`: signed contract / manual / change order value, or an ACCEPTED estimate. Sent-only estimates still
   can't be invoiced. Gate: `gate_1335.mjs`.
+## Build 1341: end-to-end audit fixes
+- Financing Rates no longer opens blank; Suppliers × goes home; top-bar dropdowns stay on screen (`fitMenu`); Ask
+  FAB tucks while `#projModal` is open; Back/Esc close the client form and signature pad in place. Audit:
+  `docs/E2E_AUDIT_2026-10-14.md`. Gate: `gate_1341.mjs`.
+
+## Build 1340: a homeowner's signature marks the estimate accepted
+- `crAcceptEstimateForDoc(docId)` (in-person signing, both paths) and `api/clientsign.js` (texted link) set the
+  estimates row linked by `doc_id` from draft/sent to `accepted`, so the job can be invoiced (1335). Gate: `gate_1340.mjs`.
+
 ## Build 1339: light/dark switch back in the header bar
 - `#cr-dark-toggle` sits in `#cr-hd2-bar` (order 9, between + and Search) on every portal and width; drawn sun/moon;
   `paintGlyph()` writes only on a change. Hidden on Blackout screens. Drawer Appearance row kept. Gate: `gate_1339.mjs`.
@@ -10002,7 +10011,28 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 - `api/receipt.js` (text + email receipt), Record payment tick box on by default, webhook sends on new online payments.
   owedOn/remind price no-contract jobs by max(manual, accepted estimate) + signed change orders. Gate: `gate_1336.mjs`.
 
-## Build 1340 — the Check Register (Owner Console) and Crews → All Payments
+## Build 1342: empty-page guard on every document save
+- `crPageIsEmpty()` (main block, beside `var TABLE = 'inspection_reports'`) — `db.update` refuses an `html` that
+  shows nothing; `serializeFrame()` checks after stripping the editing banner. Server twin:
+  `inspection_reports_blank_guard.sql` (trigger still to be created by hand). Gate: `gate_1342.mjs`.
+
+## Build 1343: a rename keeps a document's kind; uploaded estimate amount is editable
+- `crKeepDocKind()` in the documents `db.update` restores a dropped Contract / Estimate / Invoice / Change Order /
+  Work Order prefix. "Edit estimate" on an uploaded estimate (`data-cr-upload`) asks for the amount. Gate: `gate_1343.mjs`.
+
+## Build 1344: accepted estimates add up
+- Several accepted estimates on a job sum (client `estBest`, pay/share/remind, `job_total_for`); sent ones stay
+  "largest" because they are options. Gate: `gate_1344.mjs`.
+
+## Build 1345: document Trash (30 days)
+- `db.remove` → `trash_document()`; `crRenderTrash()` draws "Trash (n)" with Restore under Contracts and Estimates
+  (`.cr-trash-mount`); `restore_document()` puts it back. SQL: `document_trash.sql`. Gate: `gate_1345.mjs`.
+
+## Build 1346: deposits before Invoiced
+- Invoices & Payments "Deposits & progress payments" group (`depositList()`, not in owed/overdue); the job card's
+  red button is Record payment until the work is finished. Gate: `gate_1346.mjs`.
+
+## Build 1347 — the Check Register (Owner Console) and Crews → All Payments
 | Feature | Where | Notes |
 |---|---|---|
 | **Check Register** | Owner Console → "Check Register" card; `cr-reg-script` / `window.CardinalRegister` (`mount`, `preload`, `stat`, `allowed`, `reload`) | Table `bank_register`, **owner-only RLS (theo@)**, narrower than `is_cardinal_admin()` on purpose. Tabs are predicates over `grp` + `category` (My payments = people/Owner draw). One write: `project_id` re-match. Never writes collections, crew_payments or commissions. |
