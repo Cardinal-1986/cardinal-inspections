@@ -44650,7 +44650,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b: 1340, d:'2026-10-15', t:'Check Register, crew payments in one place, Masonry and Plumbing', s:'The Owner Console has a new Check Register: every check, ACH and Zelle through the Chase business account, with tabs for money received, your own payments, production and office, sales, Jerry, crews and subs, and everything else. Search, filter by month, category or method, see totals, view it by person or company, match a payment to a client job, and export what you are looking at as a spreadsheet. Only your login can see it. The Crews page has an All Payments tab at the top that lists every crew payment with filters and a total, and two new sections, Masonry and Plumbing.' },
+  { b: 1340, d:'2026-10-15', t:'Check Register, crew payments in one place, Masonry and Plumbing', s:'The Owner Console has a new Check Register: every check, ACH and Zelle through the Chase business account, with tabs for money received, your own payments, the Cardinal team, sales, Jerry, crews and subs, and everything else. Search, filter by month, category or method, see totals, view it by person or company, match a payment to a client job, and export what you are looking at as a spreadsheet. Only your login can see it. The Crews page has an All Payments tab at the top that lists every crew payment with filters and a total, and two new sections, Masonry and Plumbing.' },
   { b: 1339, d:'2026-10-14', t:'The light and dark switch is back on screen', s:'There is a sun and moon button in the top bar again, next to +. Tap it to switch between dark and light. It is there on the phone and on a computer, in Retail, Insurance and Community. Before, it was only in the phone menu under Appearance, so on a computer there was no way to switch at all. The Appearance row in the menu still works too.' },
   { b: 1338, d:'2026-10-14', t:'Insurance money waits on the carrier, not the homeowner', s:'On Invoices and Payments, an insurance job waiting for the carrier to release depreciation now sits in its own "Waiting on the carrier" group. It is no longer marked overdue at 31 days, it does not count toward the overdue total, and its button opens the job instead of texting the homeowner a reminder for the insurer\'s money. On the claims hub, a closed claim no longer counts toward deductibles due. The company text only ever sends Cardinal\'s own pay link.' },
   { b: 1337, d:'2026-10-14', t:'Invoice card tidy-ups', s:'The invoice card now reads \u201c$0 paid of\u201d instead of \u201c-- paid of\u201d when nothing has been paid yet. The Ready to invoice list says whether a job is billed from a signed contract or an accepted estimate. Record payment now checks with you before recording more than the balance, so a typo can\u2019t quietly mark a job paid.' },
@@ -95997,9 +95997,9 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   #cr-reg .rg-r .k{display:none;}
   #cr-reg .rg-det dl{grid-template-columns:1fr;}
   #cr-reg .rg-det dt{margin-top:6px;}
-  #cr-reg .rg-pr{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n t" "c d";}
+  #cr-reg .rg-pr{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n t" "c d" "o o";}
   #cr-reg .rg-pr .pn{grid-area:n;} #cr-reg .rg-pr .pc{grid-area:c;color:#6b5f54;font-size:13px;}
-  #cr-reg .rg-pr .pt{grid-area:t;} #cr-reg .rg-pr .po{display:none;} #cr-reg .rg-pr .pd{grid-area:d;color:#6b5f54;font-size:13px;text-align:right;}
+  #cr-reg .rg-pr .pt{grid-area:t;} #cr-reg .rg-pr .po{grid-area:o;text-align:left;color:#6b5f54;font-size:13px;} #cr-reg .rg-pr .pd{grid-area:d;color:#6b5f54;font-size:13px;text-align:right;}
   #cr-reg .rg-ph{display:none;}
 }
 </style>
@@ -96020,7 +96020,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     ['all','All',          function(){ return true; }],
     ['received','Received',function(r){ return r.direction === 'in'; }],
     ['mine','My payments', function(r){ return r.grp === 'people' && r.category === 'Owner draw'; }],
-    ['team','Production & Office', function(r){ return r.grp === 'people' && r.category !== 'Owner draw'; }],
+    ['team','Cardinal Team', function(r){ return r.grp === 'people' && r.category !== 'Owner draw'; }],
     ['sales','Sales',      function(r){ return r.grp === 'sales'; }],
     ['jerry','Jerry',      function(r){ return r.grp === 'jerry'; }],
     ['subs','Crews & Subs',function(r){ return r.grp === 'subs'; }],
@@ -96186,19 +96186,28 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       var k = r.party; var x = g[k] || (g[k] = { name:k, n:0, inn:0, out:0, last:'', cats:{} });
       x.n++; if(r.direction === 'in') x.inn += Number(r.amount) || 0; else x.out += Number(r.amount) || 0;
       if(r.txn_date > x.last) x.last = r.txn_date; x.cats[r.category] = 1;
+      (x.dates || (x.dates = {}))[r.txn_date] = 1;
     });
     var arr = Object.keys(g).map(function(k){ return g[k]; }).sort(function(a,b){ return (b.inn + b.out) - (a.inn + a.out); });
     if(!arr.length) return '<div class="rg-list"><div class="rg-empty">Nothing matches these filters.</div></div>';
-    return '<div class="rg-list"><div class="rg-pr rg-ph"><div>Name</div><div class="n">Count</div><div class="n">Money in</div><div class="n">Money out</div><div class="n">Last</div></div>' +
+    return '<div class="rg-list"><div class="rg-pr rg-ph"><div>Name</div><div class="n">Count</div><div class="n">Total</div><div class="n">Paid</div><div class="n">Last</div></div>' +
       arr.map(function(x){
         return '<div class="rg-pr" data-rgparty="' + esc(x.name) + '" role="button" tabindex="0">' +
           '<div class="pn"><b>' + esc(x.name) + '</b></div>' +
           '<div class="n pc">' + x.n + ' · ' + esc(Object.keys(x.cats).join(', ')) + '</div>' +
           '<div class="n pt' + (x.inn ? ' in' : '') + '">' + (x.inn ? money(x.inn) : '') + (x.out ? '<span class="out">' + (x.inn ? ' / ' : '') + money(x.out) + '</span>' : '') + '</div>' +
-          '<div class="n po"></div>' +
+          '<div class="n po">' + esc(rhythm(x.dates)) + '</div>' +
           '<div class="n pd">' + esc(dstr(x.last)) + '</div>' +
         '</div>';
       }).join('') + '</div>';
+  }
+  /* 1340: how often someone is paid, from the median gap between payment dates -
+     so a missed or doubled week on the Cardinal Team stands out. */
+  function rhythm(dates){
+    var d = Object.keys(dates || {}).sort(); if(d.length < 3) return '';
+    var g = []; for(var i = 1; i < d.length; i++) g.push(Math.round((Date.parse(d[i]) - Date.parse(d[i-1])) / 86400000));
+    g.sort(function(a,b){ return a - b; }); var m = g[Math.floor(g.length / 2)];
+    return m >= 5 && m <= 9 ? 'Weekly' : m >= 12 && m <= 16 ? 'Every 2 weeks' : m >= 26 && m <= 35 ? 'Monthly' : '~' + m + ' days';
   }
   function outHTML(){
     var list = filtered();
