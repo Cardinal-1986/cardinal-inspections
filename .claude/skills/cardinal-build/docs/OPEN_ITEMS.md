@@ -6405,6 +6405,15 @@ Theo, verbatim: "I don't know on calander put it on hold."
   `collections_rep_guard()` are now IN production; the trigger that switches the guard on, and the R9/M11 policies,
   are NOT — `create trigger` on `collections` times out through the MCP. Run the trigger + policy part of
   `collections_guards.sql` in the Supabase SQL editor.
+- **(15 Oct, 3am) ✅ ALL THREE SQL PIECES ARE APPLIED AND TESTED.** `document_trash.sql` (table + policies by the MCP;
+  `trash_document` / `restore_document` pasted by Theo), the `inspection_reports_blank_guard` trigger and the full
+  `collections_guards.sql` (trigger + four policies) — both pasted by Theo. Rolled-back tests on production: delete →
+  Trash → restore round-trips with versions; a stranger cannot trash; a rep can pay half of a $20,525 job but not then
+  the full amount ("$10,262.50 of $20,525.00 is already paid"); a rep cannot pay on a job with no total; the office can;
+  a blank page over a real document is refused. ⚠ **Why the MCP could not apply them:** the Supabase MCP holds any
+  statement containing a delete / drop / create trigger for a confirmation that never reaches the user, so it times out
+  at 60s with nothing applied. Hand such SQL to Theo as a paste from the start. Leftovers, harmless: an empty table
+  `document_trash_probe` and a function `_probe_1345()`.
 - **(14 Oct, 1345) RUN IN THE SUPABASE SQL EDITOR: `document_trash.sql`, whole.** Until it runs, deleting a
   document is REFUSED (fail-closed, by design). The MCP hung on every DDL this session.
 - **(14 Oct, 1342) RUN IN THE SUPABASE SQL EDITOR:** the two trigger lines at the bottom of
