@@ -10038,3 +10038,10 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 | **Check Register** | Owner Console → "Check Register" card; `cr-reg-script` / `window.CardinalRegister` (`mount`, `preload`, `stat`, `allowed`, `reload`) | Table `bank_register`, **owner-only RLS (theo@)**, narrower than `is_cardinal_admin()` on purpose. Tabs are predicates over `grp` + `category` (My payments = people/Owner draw). One write: `project_id` re-match. Never writes collections, crew_payments or commissions. |
 | **Crews → All Payments** | Crews nav, top item `[data-allpay]` (admin-only, `canSeeRates()`) | Reads the `payments` array `load()` already fetched; filters repaint `[data-aplist]` only so the search keeps focus. |
 | **Masonry, Plumbing trades** | `crews_trade_ck` + `TRADES` + `WO_TRADES` + `TRADE_ORDER` | One grows, all grow. |
+
+## Build 1348 — the 2nd TO: only Theo or Joan mark a job Lost
+| Feature | Where | Notes |
+|---|---|---|
+| **2nd TO guard** | `setStage()` (main block) — the single chokepoint every Lost path reaches (menu, stage list, declined estimate, partner not-awarded) | A non-admin's Lost returns `false`, resets `#stageSel`, and calls `CardinalSecondTO.request()`; the stage never moves. Admins stamp `checklist.lost_by`. Server twin: `second_to_lost_guard.sql` (trigger `projects_lost_guard`, `is_cardinal_admin()`; service jobs with no `auth.uid()` pass). The audit wrapper returns early on `false`. |
+| **Request / decide** | `cr-sto-styles` + `cr-sto-script`, `window.CardinalSecondTO` (`request`, `decide`, `banner`, `mount`, `stat`, `canDecide`, `pending`) | Request asks reason + note, writes `checklist.second_to {status:'requested', by, at, reason, note, from}`, emails Theo + Joan. Profile strip under the stage banner: admins get I'll take it / Send back / Mark Lost; the rep sees "Waiting on Theo or Joan". Menu reads "Request 2nd TO" for non-admins. |
+| **Owner Console → 2nd TO** | AREAS row `secondto`, mounted into `[data-sto-mount]` | Queue, then clean-up: Lost with no 2nd TO and no admin `lost_by`; open (Prospect…Invoiced) jobs idle 30+ days by newest t_*, stage_since, comment or payment. Rows open the job. |

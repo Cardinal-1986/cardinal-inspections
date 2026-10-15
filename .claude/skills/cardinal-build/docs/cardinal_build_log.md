@@ -36403,3 +36403,6 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   `crews_trades_masonry_plumbing.sql`, applied before the HTML.
 - **Gates:** `gate_1347` 10/10 (owner, Joan, admin Crews, production Crews), control 1346 RED 8 without crashing.
   check_build green. Rendered at 390 and 1280 px.
+
+## Build 1348: the 2nd TO (15 Oct 2026)
+- Theo: "no one should mark a job lost without me looking at it for a 2nd TO" / "not able to without approval from me or joan". setStage() refuses a non-admin Lost and turns it into a request (checklist.second_to); profile strip with take / send back / mark lost; Owner Console 2nd TO card with queue + clean-up (Lost without a 2nd TO, open jobs idle 30+ days); admins stamp lost_by. SQL second_to_lost_guard.sql (trigger) runs BEFORE the HTML. Gates: gate_1348 7/7 GREEN, control 1347 RED 5 fail; gate_1347 still 10/10; check_build green.

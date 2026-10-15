@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-15 build 1347<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-15 build 1348<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12533,10 +12533,12 @@ function renderAcxOverview(){
     '<span class="msmenu" style="position:relative;"><span class="dots" id="msDots" style="cursor:pointer;font-size:22px;color:inherit;padding:0 6px;">&#8942;</span>' +
     '<div id="msDrop" style="display:none;position:absolute;right:0;top:130%;z-index:70;background:#fff;border:1px solid #c9c2bf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);min-width:180px;overflow:hidden;">' +
       (nx ? '<button class="estopt" data-act="adv">Advance to ' + esc(nx) + '</button>' : '') +
-      (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
+      (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">' + ((typeof isAdminUser === 'function' && isAdminUser()) ? 'Mark Lost' : 'Request 2nd TO') + '</button>' : '') +
       (stg === 'Lost' || stg === 'Closed' ? '<button class="estopt" data-act="reopen">Reopen as Lead</button>' : '') +
     '</div></span>' +
   '</div>';
+  /* 1348: an open 2nd TO shows right under the stage banner */
+  try{ if(window.CardinalSecondTO) html += window.CardinalSecondTO.banner(pr); }catch(_sto){}
   /* ---- money strip ---- */
   html += '<div class="dbmoney">' +
     '<span><small>Job Value' + (fin.source === 'estimate' ? ' — from estimate' : '') + '</small><b>' + (fin.value ? fmtMoney(fin.value) : '$0.00') + '</b></span>' +
@@ -20929,6 +20931,15 @@ async function setStage(prId, v){
       return false;
     }
   }
+  /* 1348: the 2nd TO. Only Theo or Joan move a job to Lost; anyone else's Lost becomes a
+     request for a second look and the job stays where it was. Every Lost path in the app
+     (menu, stage list, declined estimate, partner not-awarded) arrives here; the database
+     trigger in second_to_lost_guard.sql refuses the write too. */
+  if(v === 'Lost' && prev !== 'Lost' && !(typeof isAdminUser === 'function' && isAdminUser())){
+    try{ var _ssel = /** @type {any} */ (document.getElementById('stageSel')); if(_ssel && currentProject && currentProject.id === pr.id) _ssel.value = prev; }catch(_sse){}
+    try{ if(window.CardinalSecondTO) await window.CardinalSecondTO.request(pr, prev); }catch(_to){ console.warn('2nd TO', _to); }
+    return false;
+  }
   await pdb.update(pr.id, { stage: v });
   pr.stage = v;
   var _now = new Date().toISOString();
@@ -20956,6 +20967,7 @@ async function setStage(prId, v){
       _ckPatch.loss_reason = _reason;
     }
     _ckPatch.lost_at = _now;
+    try{ _ckPatch.lost_by = (currentUser && currentUser.email) || null; }catch(_lb){}   /* 1348 */
   }
   patchProjectCk(pr, _ckPatch).catch(function(){});
   if(currentProject && currentProject.id === pr.id){
@@ -30371,6 +30383,7 @@ var AUDIT_TYPES = {
     var pr = cacheProjects.find(function(p){ return p.id === id; });
     var from = pr ? normStage(pr.stage) : '';
     var out = await _ss.apply(this, arguments);
+    if(out === false) return out;   /* 1348: refused (2nd TO, install photos) - nothing moved */
     try{
       var nm = pr ? pr.name : '';
       if(v === 'Lost'){
@@ -44795,6 +44808,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1348, d:'2026-10-15', t:'The 2nd TO: only Theo or Joan mark a job lost', s:'Nobody but Theo or Joan can mark a job Lost any more. When a salesperson presses Mark Lost, or moves a job to Lost any other way, the app asks why and what happened, keeps the job open, and sends it to Theo and Joan for a 2nd TO. On the job you will see the request with three buttons: take it, send it back with a note, or mark it lost. The Owner Console has a new 2nd TO card with everything waiting on you, plus a clean-up list of jobs marked lost before this rule and open jobs nobody has touched in over a month.' },
   { b: 1347, d:'2026-10-15', t:'Check Register, crew payments in one place, Masonry and Plumbing', s:'The Owner Console has a new Check Register: every check, ACH and Zelle through the Chase business account, with tabs for money received, your own payments, the Cardinal team, sales, Jerry, crews and subs, and everything else. Search, filter by month, category or method, see totals, view it by person or company, match a payment to a client job, and export what you are looking at as a spreadsheet. Only your login can see it. The Crews page has an All Payments tab at the top that lists every crew payment with filters and a total, and two new sections, Masonry and Plumbing.' },
   { b: 1346, d:'2026-10-14', t:'Record a deposit before the job is invoiced', s:'A signed job now shows Record payment as its main button until the work is finished, so a deposit or a progress payment goes in from the job page without moving the pipeline. Invoices & Payments has a new Deposits & progress payments group listing every signed job at Approved or Scheduled that still has money to come. Those jobs are not counted as owed or overdue.' },
   { b: 1345, d:'2026-10-14', t:'Deleted documents go to a Trash', s:'Deleting an estimate, contract, invoice, report or file no longer erases it. It goes to the Trash for 30 days \u2014 open Contracts or Estimates on the client\u2019s page and tap Trash to see what was deleted, by whom, and Restore it. A restored document comes back exactly as it was, with its saved versions.' },
@@ -54254,7 +54268,7 @@ displayStage('Lost') + '?'
 );
 if(!ok) return;
 try{
-await window.setStage(project.id, 'Lost');
+if(await window.setStage(project.id, 'Lost') !== false)
 toast('Moved to ' + displayStage('Lost'));
 }catch(e){
 console.warn('[ess] setStage Lost failed:', e);
@@ -87394,6 +87408,10 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     { k:'register', t:'Check Register', d:'Every check, ACH and Zelle through Chase', owner:true,
       fn:function(){ return '<div data-reg-mount></div>'; },
       stat:function(){ return window.CardinalRegister ? window.CardinalRegister.stat() : { n:'\u2014', w:'' }; } },
+    /* 1348: the 2nd TO queue and the clean-up list */
+    { k:'secondto', t:'2nd TO', d:'Jobs a rep wants to mark lost, plus the clean-up list',
+      fn:function(){ return '<div data-sto-mount></div>'; },
+      stat:function(){ return window.CardinalSecondTO ? window.CardinalSecondTO.stat() : { n:'\u2014', w:'' }; } },
     { k:'vault', t:'The Vault', d:'Company documents, admin only',
       fn:function(){ return vaultHTML(); },
       stat:function(){
@@ -87455,6 +87473,10 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     if(area === 'register'){
       var _rm = view.querySelector('[data-reg-mount]');
       if(_rm && window.CardinalRegister) try{ window.CardinalRegister.mount(_rm); }catch(_re){ console.warn('register mount', _re); }
+    }
+    if(area === 'secondto'){
+      var _sm = view.querySelector('[data-sto-mount]');
+      if(_sm && window.CardinalSecondTO) try{ window.CardinalSecondTO.mount(_sm); }catch(_se){ console.warn('2nd TO mount', _se); }
     }
     /* a fresh area starts at the top; without this you land mid-page because the
        scroller keeps the hub's offset. */
@@ -96536,6 +96558,169 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   window.CardinalRegister = Object.assign(window.CardinalRegister || {}, {
     mount: mount, preload: preload, stat: stat, allowed: allowed,
     reload: async function(){ await load(true); paint(); }
+  });
+})();
+</script>
+
+<!-- 1348: the 2nd TO. No job is marked Lost until Theo or Joan has looked at it (Theo, 15 Oct:
+     "no one should mark a job lost without me looking at it for a 2nd TO"; "they should not be able
+     to without approval from me or joan"). A rep's Mark Lost becomes a request; the decision lives
+     in the job's checklist under second_to; the queue and the clean-up list live in the Owner Console. -->
+<style id="cr-sto-styles">
+.sto-ban{margin:8px 12px 0;padding:10px 12px;border-radius:10px;border:1px solid #e0b4ae;background:#fdf3f1;font:13px/1.4 'Segoe UI',Arial,sans-serif;color:#3a1d1a;}
+.sto-ban b{color:#8b1a1a;}
+.sto-ban .sto-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.sto-btn{border:1px solid #c9c2bf;background:#fff;border-radius:8px;padding:7px 12px;font:600 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;min-height:36px;}
+.sto-btn.pri{background:#8b1a1a;border-color:#8b1a1a;color:#fff;}
+.sto-wrap{padding:6px 18px 18px;font:13px/1.4 'Segoe UI',Arial,sans-serif;}
+.sto-h{font:700 14px 'Segoe UI',Arial,sans-serif;margin:14px 0 6px;}
+.sto-note{color:#666;font-size:12px;margin:0 0 6px;}
+.sto-row{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #e3dcda;border-radius:9px;margin:6px 0;background:#fff;cursor:pointer;}
+.sto-row small{color:#666;display:block;}
+.sto-row .sto-d{white-space:nowrap;font-weight:700;color:#8b1a1a;}
+.sto-empty{color:#777;padding:8px 2px;}
+</style>
+<script id="cr-sto-script">
+(function(){
+  var DECIDERS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
+  var OPEN = ['Prospect','OnHold','Approved','Scheduled','Invoiced'];
+  function me(){ try{ return ((window.currentUser && window.currentUser.email) || '').toLowerCase(); }catch(_){ return ''; } }
+  function canDecide(){ return DECIDERS.indexOf(me()) !== -1; }
+  function E(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function ck(pr){ try{ return (typeof parseCkAll === 'function' ? parseCkAll(pr) : JSON.parse(pr.checklist || '{}')) || {}; }catch(_){ return {}; } }
+  function tell(m){ try{ if(window.crTell) return window.crTell(m); }catch(_){} try{ console.log('[2nd TO] ' + m); }catch(_){} }
+  function projects(){ try{ return (typeof cacheProjects !== 'undefined' && cacheProjects) || []; }catch(_){ return []; } }
+  function find(id){ return projects().find(function(p){ return String(p.id) === String(id); }); }
+  function stageOf(pr){ try{ return typeof normStage === 'function' ? normStage(pr.stage) : pr.stage; }catch(_){ return pr.stage; } }
+  function repOf(pr){ try{ return (typeof assignedRepOf === 'function' && assignedRepOf(pr)) || pr.sales_rep || pr.created_by || ''; }catch(_){ return pr.sales_rep || ''; } }
+  function short(e){ return String(e || '').split('@')[0] || '—'; }
+  function daysAgo(iso){ var t = iso ? new Date(iso).getTime() : NaN; return isNaN(t) ? null : Math.floor((Date.now() - t) / 86400000); }
+  function lastTouch(pr){
+    var c = ck(pr), best = 0;
+    function take(v){ var t = v ? new Date(v).getTime() : NaN; if(!isNaN(t) && t > best) best = t; }
+    Object.keys(c).forEach(function(k){ if(/^t_/.test(k) || k === 'stage_since') take(c[k]); });
+    (Array.isArray(c.comments) ? c.comments : []).forEach(function(x){ take(x && x.at); });
+    (Array.isArray(c.payments) ? c.payments : []).forEach(function(x){ take(x && (x.at || x.date)); });
+    if(!best) take(pr.created_at);
+    return best ? new Date(best).toISOString() : null;
+  }
+  function pending(pr){ var s = ck(pr).second_to; return !!(s && s.status === 'requested' && stageOf(pr) !== 'Lost'); }
+  function notify(to, subject, body, pid){
+    try{ if(typeof _notifyOrQueue === 'function') _notifyOrQueue(to, subject, body, typeof clientLink === 'function' ? clientLink(pid) : undefined); }catch(_){}
+  }
+  function audit(pr, text){ try{ if(typeof auditLog === 'function') auditLog('stage', (pr.name || '') + ' — ' + text, pr.id); }catch(_){} }
+  async function patch(pr, p){ if(typeof patchProjectCk === 'function') return patchProjectCk(pr, p); }
+  function rerender(){ try{ if(typeof renderAcxOverview === 'function' && window.currentProject) renderAcxOverview(); }catch(_){} try{ if(typeof renderPipeline === 'function') renderPipeline(); }catch(_){} try{ if(window.CardinalOwner && window.CardinalOwner.reload) window.CardinalOwner.reload(); }catch(_){} }
+
+  /* A rep pressed Mark Lost (any path - the menu, the stage list, a declined estimate, a partner
+     "not awarded"). The job stays where it is; Theo and Joan get the request. */
+  async function request(pr, prev){
+    var reasons = (typeof LOSS_REASONS !== 'undefined' && LOSS_REASONS) || [];
+    var r = prompt('Only Theo or Joan can mark a job Lost. This sends it to them for a 2nd TO.\n\nWhy do you think it is lost?\n' +
+      reasons.map(function(x, i){ return (i + 1) + '. ' + x; }).join('\n') + '\n\nEnter a number or type a reason:', '');
+    if(r === null) return false;
+    var i = parseInt(r, 10), reason = (i >= 1 && i <= reasons.length) ? reasons[i - 1] : (String(r).trim() || 'Unspecified');
+    var note = prompt('For the 2nd TO: what happened, and when did you last talk to the customer?', '');
+    if(note === null) return false;
+    var rec = { status:'requested', by:me(), at:new Date().toISOString(), reason:reason, note:String(note).trim(), from:prev };
+    await patch(pr, { second_to: rec });
+    audit(pr, '2nd TO requested by ' + short(rec.by) + ' (' + reason + ')');
+    notify(DECIDERS, '2nd TO requested: ' + (pr.name || ''),
+      '<p><b>' + E(short(rec.by)) + '</b> wants to mark <b>' + E(pr.name || '') + '</b> (' + E(pr.address || '') + ') lost.</p>' +
+      '<p><b>Reason:</b> ' + E(reason) + '<br><b>Note:</b> ' + E(rec.note || '—') + '</p>' +
+      '<p>Open the job to take it, send it back, or mark it lost.</p>', pr.id);
+    tell('Sent to Theo and Joan for a 2nd TO. The job stays open until they decide.');
+    rerender();
+    return true;
+  }
+
+  async function decide(id, act){
+    var pr = find(id); if(!pr || !canDecide()) return;
+    var s = Object.assign({}, ck(pr).second_to || {});
+    var now = new Date().toISOString();
+    if(act === 'take'){
+      s.status = 'taken'; s.decided_by = me(); s.decided_at = now;
+      await patch(pr, { second_to: s });
+      audit(pr, '2nd TO taken by ' + short(me()));
+      if(s.by) notify([s.by], '2nd TO: ' + short(me()) + ' is taking ' + (pr.name || ''), '<p>' + E(short(me())) + ' is taking a second turn at <b>' + E(pr.name || '') + '</b>. Do not mark it lost.</p>', pr.id);
+      tell('Yours. The job stays open.');
+    }else if(act === 'back'){
+      var why = prompt('Send it back to ' + short(s.by) + '. What should they do next?', '');
+      if(why === null) return;
+      s.status = 'returned'; s.decided_by = me(); s.decided_at = now; s.answer = String(why).trim();
+      await patch(pr, { second_to: s });
+      audit(pr, '2nd TO sent back by ' + short(me()));
+      if(s.by) notify([s.by], '2nd TO: keep working ' + (pr.name || ''), '<p><b>' + E(pr.name || '') + '</b> is not lost yet.</p><p>' + E(s.answer || '') + '</p>', pr.id);
+      tell('Sent back to ' + short(s.by) + '.');
+    }else if(act === 'lost'){
+      var ok = await window.setStage(pr.id, 'Lost');
+      if(ok === false) return;
+      s.status = 'lost'; s.decided_by = me(); s.decided_at = now;
+      await patch(pr, { second_to: s });
+      if(s.by) notify([s.by], '2nd TO: ' + (pr.name || '') + ' marked lost', '<p>' + E(short(me())) + ' reviewed <b>' + E(pr.name || '') + '</b> and marked it lost.</p>', pr.id);
+    }
+    rerender();
+  }
+
+  /* the strip on a job's profile while a 2nd TO is open */
+  function banner(pr){
+    var s = ck(pr).second_to;
+    if(!s || stageOf(pr) === 'Lost') return '';
+    if(s.status === 'requested'){
+      return '<div class="sto-ban" data-sto-ban><b>2nd TO requested</b> by ' + E(short(s.by)) + ' ' + E(daysAgo(s.at) === 0 ? 'today' : (daysAgo(s.at) + ' days ago')) +
+        '<br><b>Reason:</b> ' + E(s.reason || '—') + (s.note ? '<br><b>Note:</b> ' + E(s.note) : '') +
+        (canDecide()
+          ? '<div class="sto-acts"><button type="button" class="sto-btn pri" data-sto="take" data-id="' + E(pr.id) + '">I’ll take it</button>' +
+            '<button type="button" class="sto-btn" data-sto="back" data-id="' + E(pr.id) + '">Send back</button>' +
+            '<button type="button" class="sto-btn" data-sto="lost" data-id="' + E(pr.id) + '">Mark Lost</button></div>'
+          : '<div class="sto-note" style="margin-top:6px">Waiting on Theo or Joan. Keep it open until they decide.</div>') + '</div>';
+    }
+    if(s.status === 'returned') return '<div class="sto-ban"><b>Sent back by ' + E(short(s.decided_by)) + ':</b> ' + E(s.answer || 'keep working it') + '</div>';
+    if(s.status === 'taken') return '<div class="sto-ban"><b>' + E(short(s.decided_by)) + ' took this job</b> on the 2nd TO.</div>';
+    return '';
+  }
+
+  /* Owner Console area: the queue, then the clean-up list */
+  function listRow(pr, right, sub){
+    return '<div class="sto-row" data-sto-open="' + E(pr.id) + '"><span><b>' + E(pr.name || '(no name)') + '</b><small>' + E(sub) + '</small></span><span class="sto-d">' + E(right) + '</span></div>';
+  }
+  function mount(el){
+    if(!el) return;
+    var P = projects();
+    var q = P.filter(pending).sort(function(a, b){ return String(ck(a).second_to.at).localeCompare(String(ck(b).second_to.at)); });
+    var lostNoTO = P.filter(function(p){ var s = ck(p).second_to; return stageOf(p) === 'Lost' && !(s && s.status === 'lost') && DECIDERS.indexOf(String(ck(p).lost_by || '').toLowerCase()) === -1; });
+    var stale = P.filter(function(p){ return OPEN.indexOf(stageOf(p)) !== -1 && !pending(p); })
+      .map(function(p){ return { p:p, d:daysAgo(lastTouch(p)) }; })
+      .filter(function(x){ return x.d != null && x.d > 30; })
+      .sort(function(a, b){ return b.d - a.d; });
+    var h = '<div class="sto-wrap">' +
+      '<p class="sto-note">Nobody marks a job lost until you or Joan have looked at it. Reps send a request; you take it, send it back, or mark it lost.</p>' +
+      '<div class="sto-h">Waiting for a 2nd TO (' + q.length + ')</div>' +
+      (q.length ? q.map(function(p){ var s = ck(p).second_to; return listRow(p, short(s.by), (s.reason || '') + (s.note ? ' — ' + s.note : '')); }).join('') : '<div class="sto-empty">Nothing waiting.</div>') +
+      '<div class="sto-h">Clean-up: marked Lost without a 2nd TO (' + lostNoTO.length + ')</div>' +
+      '<p class="sto-note">Lost before this rule. Open one and Reopen as Lead if it deserves another try.</p>' +
+      (lostNoTO.length ? lostNoTO.map(function(p){ return listRow(p, short(repOf(p)), ck(p).loss_reason || 'no reason'); }).join('') : '<div class="sto-empty">None.</div>') +
+      '<div class="sto-h">Clean-up: open jobs untouched for 30+ days (' + stale.length + ')</div>' +
+      '<p class="sto-note">Prospect or later with no note, stage change or payment in over a month.</p>' +
+      (stale.length ? stale.map(function(x){ return listRow(x.p, x.d + ' days', stageOf(x.p) + ' · ' + short(repOf(x.p))); }).join('') : '<div class="sto-empty">None.</div>') +
+      '</div>';
+    el.innerHTML = h;
+  }
+  function stat(){ var n = projects().filter(pending).length; return { n:String(n), w:(n === 1 ? 'job waiting on you' : 'jobs waiting on you') }; }
+
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('[data-sto]');
+    if(b){ e.preventDefault(); decide(b.getAttribute('data-id'), b.getAttribute('data-sto')).catch(function(err){ tell('That did not save — ' + ((err && err.message) || err)); }); return; }
+    var o = e.target.closest && e.target.closest('[data-sto-open]');
+    if(o){
+      var id = o.getAttribute('data-sto-open');
+      try{ if(window.CardinalOwner && window.CardinalOwner.close) window.CardinalOwner.close(); }catch(_){}
+      try{ window.openProject(id); }catch(_){}
+    }
+  });
+
+  window.CardinalSecondTO = Object.assign(window.CardinalSecondTO || {}, {
+    canDecide: canDecide, request: request, decide: decide, banner: banner, mount: mount, stat: stat, pending: pending
   });
 })();
 </script>
