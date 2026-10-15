@@ -10031,3 +10031,10 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 ## Build 1346: deposits before Invoiced
 - Invoices & Payments "Deposits & progress payments" group (`depositList()`, not in owed/overdue); the job card's
   red button is Record payment until the work is finished. Gate: `gate_1346.mjs`.
+
+## Build 1347 — the Check Register (Owner Console) and Crews → All Payments
+| Feature | Where | Notes |
+|---|---|---|
+| **Check Register** | Owner Console → "Check Register" card; `cr-reg-script` / `window.CardinalRegister` (`mount`, `preload`, `stat`, `allowed`, `reload`) | Table `bank_register`, **owner-only RLS (theo@)**, narrower than `is_cardinal_admin()` on purpose. Tabs are predicates over `grp` + `category` (My payments = people/Owner draw). One write: `project_id` re-match. Never writes collections, crew_payments or commissions. |
+| **Crews → All Payments** | Crews nav, top item `[data-allpay]` (admin-only, `canSeeRates()`) | Reads the `payments` array `load()` already fetched; filters repaint `[data-aplist]` only so the search keeps focus. |
+| **Masonry, Plumbing trades** | `crews_trade_ck` + `TRADES` + `WO_TRADES` + `TRADE_ORDER` | One grows, all grow. |

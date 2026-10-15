@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-14 build 1346<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-15 build 1347<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -23265,7 +23265,7 @@ async function delCommission(id){
   await renderCommissions();
 }
 
-var WO_TRADES = ['Roofing','Siding','Windows','Gutters','General Repairs'];
+var WO_TRADES = ['Roofing','Siding','Windows','Gutters','General Repairs','Masonry','Plumbing'];
 
 function woEsc(s){
   return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
@@ -44795,6 +44795,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1347, d:'2026-10-15', t:'Check Register, crew payments in one place, Masonry and Plumbing', s:'The Owner Console has a new Check Register: every check, ACH and Zelle through the Chase business account, with tabs for money received, your own payments, the Cardinal team, sales, Jerry, crews and subs, and everything else. Search, filter by month, category or method, see totals, view it by person or company, match a payment to a client job, and export what you are looking at as a spreadsheet. Only your login can see it. The Crews page has an All Payments tab at the top that lists every crew payment with filters and a total, and two new sections, Masonry and Plumbing.' },
   { b: 1346, d:'2026-10-14', t:'Record a deposit before the job is invoiced', s:'A signed job now shows Record payment as its main button until the work is finished, so a deposit or a progress payment goes in from the job page without moving the pipeline. Invoices & Payments has a new Deposits & progress payments group listing every signed job at Approved or Scheduled that still has money to come. Those jobs are not counted as owed or overdue.' },
   { b: 1345, d:'2026-10-14', t:'Deleted documents go to a Trash', s:'Deleting an estimate, contract, invoice, report or file no longer erases it. It goes to the Trash for 30 days \u2014 open Contracts or Estimates on the client\u2019s page and tap Trash to see what was deleted, by whom, and Restore it. A restored document comes back exactly as it was, with its saved versions.' },
   { b: 1344, d:'2026-10-14', t:'Accepted estimates add up', s:'When a homeowner accepts more than one estimate on a job \u2014 windows and siding, say \u2014 the job is now worth all of them together, everywhere: the job card, A/R, invoices and the pay link. Estimates that are only sent or drafted are still treated as options, so the job shows the largest one.' },
@@ -76530,7 +76531,9 @@ var TRADES = [
   ['Siding',          'Siding Crews'],
   ['Windows',         'Window Installers'],
   ['Gutters',         'Gutter Crews'],
-  ['General Repairs', 'General Repairs']
+  ['General Repairs', 'General Repairs'],
+  ['Masonry',         'Masonry'],          /* 1347 */
+  ['Plumbing',        'Plumbing']          /* 1347 */
 ];
 var DOCS = [
   ['w9', 'W-9'],
@@ -76555,6 +76558,9 @@ function tabsFor(){
 var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted = false;
 var catalog = [], rates = [];   /* 548: pricing_items + crew_rates */
 var payments = [];              /* 556: crew_payments, admin-only */
+/* 1347: the All Payments tab - every crew payment in one list, admin-only like
+   the per-crew Payments tab it sits above. */
+var allPay = false, apf = { q:'', crew:'', trade:'', month:'' };
 var workorders = [];            /* 847: crew_work_orders — the job history */
 var callbacks = [];             /* 1296: callback punch-outs with an original crew */
 
@@ -76660,11 +76666,15 @@ async function load(){
 
 function navHtml(){
   var out = '';
+  if(canSeeRates()){
+    out += '<div class="crw-sec"><span>Payments</span><span>' + payments.length + '</span></div>' +
+      '<div class="crw-item' + (allPay ? ' on' : '') + '" data-allpay="1"><span>All Payments</span></div>';
+  }
   TRADES.forEach(function(t){
     var list = crews.filter(function(c){ return c.trade === t[0]; });
     out += '<div class="crw-sec"><span>' + esc(t[1]) + '</span><span>' + list.length + '</span></div>';
     list.forEach(function(c){
-      out += '<div class="crw-item' + (c.id === selId ? ' on' : '') + '" data-crew="' + esc(c.id) + '">' +
+      out += '<div class="crw-item' + (c.id === selId && !allPay ? ' on' : '') + '" data-crew="' + esc(c.id) + '">' +
              '<span>' + esc(c.name) + '</span>' +
              '<span class="crw-dot ' + crewState(c.id) + '"></span></div>';
     });
@@ -76889,6 +76899,90 @@ function paymentsHtml(c){
     '<button class="crw-btn primary" style="margin-top:12px" data-act="addpay">Record payment</button>' +
     '<span class="crw-mut" data-paymsg style="margin-left:10px;font-size:13px"></span>';
 }
+/* ── 1347: All Payments ──────────────────────────────────────────────────────
+   Every crew_payments row in one list, newest first, with a search, crew / trade /
+   month filters and a total. Same admin fence as the per-crew Payments tab (the
+   caller checks canSeeRates()). Rows are read from the `payments` array load()
+   already fetched, so this costs no extra query. Tapping a crew name opens that
+   crew's own Payments tab, which is where a row is added or removed. */
+var AP_MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function apCrew(id){ return crews.find(function(c){ return c.id === id; }) || null; }
+function apRows(){
+  var q = (apf.q || '').trim().toLowerCase();
+  return payments.filter(function(p){
+    var c = apCrew(p.crew_id);
+    if(apf.crew && p.crew_id !== apf.crew) return false;
+    if(apf.trade && (!c || c.trade !== apf.trade)) return false;
+    if(apf.month && String(p.paid_on || '').slice(0, 7) !== apf.month) return false;
+    if(!q) return true;
+    var hay = [c ? c.name : '', c ? c.trade : '', p.reference, p.memo, String(p.amount), projName(p.project_id)].join(' ').toLowerCase();
+    return q.split(/\s+/).every(function(w){ return hay.indexOf(w) !== -1; });
+  }).sort(function(a, b){ return String(b.paid_on || '') < String(a.paid_on || '') ? -1 : String(b.paid_on || '') > String(a.paid_on || '') ? 1 : 0; });
+}
+function apListHtml(){
+  var list = apRows(), total = 0;
+  var rows = list.map(function(p){
+    var c = apCrew(p.crew_id), v = Number(p.amount);
+    if(isFinite(v)) total += v;
+    var meth = (PAY_METHODS.find(function(m){ return m[0] === p.method; }) || [null, p.method || ''])[1];
+    return '<tr>' +
+      '<td>' + esc(p.paid_on ? dstr(p.paid_on) : '—') + '</td>' +
+      '<td>' + (c ? '<button type="button" class="crw-btn" style="padding:3px 8px" data-apcrew="' + esc(c.id) + '">' + esc(c.name) + '</button>' : '<span class="crw-mut">Archived crew</span>') + '</td>' +
+      '<td>' + esc(c ? c.trade : '') + '</td>' +
+      '<td style="text-align:right">' + money(p.amount, true) + '</td>' +
+      '<td>' + esc(meth) + '</td>' +
+      '<td>' + esc(p.reference || '') + '</td>' +
+      '<td>' + esc(p.memo || '') + '</td>' +
+    '</tr>';
+  }).join('');
+  return '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin:2px 2px 10px">' +
+      '<span class="crw-mut">' + list.length + (list.length === 1 ? ' payment' : ' payments') + '</span>' +
+      '<span><span class="crw-mut">Total&nbsp;</span><b style="font-size:18px">' + money(total, true) + '</b></span></div>' +
+    '<div class="crw-rtwrap"><table class="crw-rt">' +
+      '<colgroup><col style="width:12%"><col style="width:20%"><col style="width:12%"><col style="width:12%">' +
+      '<col style="width:9%"><col style="width:12%"><col style="width:23%"></colgroup>' +
+      '<thead><tr><th>Paid</th><th>Crew</th><th>Trade</th><th style="text-align:right">Amount</th><th>Method</th>' +
+      '<th>Reference</th><th>Memo</th></tr></thead>' +
+      '<tbody>' + (rows || '<tr><td colspan="7" class="crw-mut">No payments match.</td></tr>') + '</tbody></table></div>';
+}
+function allPaymentsHtml(){
+  var months = {};
+  payments.forEach(function(p){ if(p.paid_on) months[String(p.paid_on).slice(0, 7)] = 1; });
+  var mOpts = Object.keys(months).sort().reverse().map(function(m){
+    var a = m.split('-');
+    return '<option value="' + m + '"' + (apf.month === m ? ' selected' : '') + '>' + AP_MON[(+a[1]) - 1] + ' ' + a[0] + '</option>';
+  }).join('');
+  var cOpts = crews.slice().sort(function(a, b){ return String(a.name).localeCompare(String(b.name)); }).map(function(c){
+    return '<option value="' + esc(c.id) + '"' + (apf.crew === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+  }).join('');
+  var tOpts = TRADES.map(function(t){
+    return '<option value="' + esc(t[0]) + '"' + (apf.trade === t[0] ? ' selected' : '') + '>' + esc(t[1]) + '</option>';
+  }).join('');
+  return '<div class="crw-card crw-cardtop"><b style="font-size:15px">All Payments</b>' +
+      '<div class="crw-mut" style="margin-top:2px">Every payment to every crew. Tap a crew to add or remove one on its own Payments tab.</div></div>' +
+    '<div class="crw-card crw-cardbot">' +
+      '<div class="crw-grid2" style="margin-bottom:12px">' +
+        '<div><label>Search</label><input type="search" data-apf="q" value="' + esc(apf.q) + '" placeholder="Crew, memo, check #, amount" aria-label="Search payments"></div>' +
+        '<div><label>Crew</label><select data-apf="crew" aria-label="Crew"><option value="">All crews</option>' + cOpts + '</select></div>' +
+        '<div><label>Trade</label><select data-apf="trade" aria-label="Trade"><option value="">All trades</option>' + tOpts + '</select></div>' +
+        '<div><label>Month</label><select data-apf="month" aria-label="Month"><option value="">All months</option>' + mOpts + '</select></div>' +
+      '</div>' +
+      '<div style="margin:0 0 10px"><button type="button" class="crw-btn" data-apcsv="1">Export CSV</button></div>' +
+      '<div data-aplist>' + apListHtml() + '</div>' +
+    '</div>';
+}
+function apCsv(){
+  function q(v){ v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  var lines = ['Paid,Crew,Trade,Amount,Method,Reference,Memo'].concat(apRows().map(function(p){
+    var c = apCrew(p.crew_id);
+    return [p.paid_on, c ? c.name : '', c ? c.trade : '', Number(p.amount).toFixed(2), p.method, p.reference, p.memo].map(q).join(',');
+  }));
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\r\n')], { type:'text/csv' }));
+  a.download = 'cardinal-crew-payments-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(_){} }, 1500);
+}
 function pval(k){
   var el = view().querySelector('[data-p="' + k + '"]');
   return el ? el.value.trim() : '';
@@ -77030,6 +77124,7 @@ function notesHtml(c){
 }
 
 function panelHtml(){
+  if(allPay && canSeeRates()) return allPaymentsHtml();
   var c = sel();
   if(!c) return '<div class="crw-card"><div class="crw-empty"><b>No crews yet.</b><br>' +
     'Use <b>+ New crew</b> to add the first one.</div></div>';
@@ -77225,8 +77320,14 @@ function wire(){
   if(!v || booted) return;
   booted = true;
   v.addEventListener('click', function(e){
+    var ap = e.target.closest('[data-allpay]');
+    if(ap){ allPay = true; render(); return; }
+    var apx = e.target.closest('[data-apcsv]');
+    if(apx){ apCsv(); return; }
+    var apc = e.target.closest('[data-apcrew]');
+    if(apc){ allPay = false; selId = apc.getAttribute('data-apcrew'); tab = 'payments'; render(); return; }
     var t = e.target.closest('[data-crew]');
-    if(t){ selId = t.getAttribute('data-crew'); render(); return; }
+    if(t){ allPay = false; selId = t.getAttribute('data-crew'); render(); return; }
     var tb = e.target.closest('[data-tab]');
     if(tb){ tab = tb.getAttribute('data-tab'); render(); return; }
     var od = e.target.closest('[data-open]');
@@ -77248,6 +77349,15 @@ function wire(){
     else if(k === 'addcatrate'){ addCatRate(); }
     else if(k === 'addcustomrate'){ addCustomRate(); }
     else if(k === 'addpay'){ addPayment(); }
+  });
+  /* 1347: All Payments filters repaint the list only, so the search box keeps focus */
+  v.addEventListener('input', function(e){
+    var k = e.target.getAttribute && e.target.getAttribute('data-apf');
+    if(k){ apf[k] = e.target.value; var o = v.querySelector('[data-aplist]'); if(o) o.innerHTML = apListHtml(); }
+  });
+  v.addEventListener('change', function(e){
+    var k = e.target.getAttribute && e.target.getAttribute('data-apf');
+    if(k){ apf[k] = e.target.value; var o = v.querySelector('[data-aplist]'); if(o) o.innerHTML = apListHtml(); }
   });
 }
 
@@ -85577,7 +85687,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {}, foldTrade = {};
   var armed = null;   /* 949: the armed tray chip (the forecast moved to CardinalWx at 959) */
   var armedMove = null;   /* 958: the booked work order currently picked up */
-  var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
+  var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs','Masonry','Plumbing'];
   /* 913: the dispatch Map toggle — its own Leaflet map of this week's jobs by crew */
   var mapOn=false, dmap=null, dlayer=null, dmarkers={}, dgeoQueue=[], dgeoBusy=false, dUserMoved=false, dFitT=null, dMissT=null;
   var dRadarOn=false, dRadarLayer=null, dRadarTimer=null;   /* 915/916: rain radar overlay + auto-refresh */
@@ -86893,6 +87003,9 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     LEDGER = (res[5] && res[5].data) || [];
     LTXNS  = (res[6] && res[6].data) || [];
     VAULT  = (res[7] && res[7].data) || [];
+    /* 1347: warm the register so its hub card can show a count. Owner only;
+       a failure here leaves the card at a dash and never fails the console. */
+    try{ if(window.CardinalRegister && window.CardinalRegister.allowed()) await window.CardinalRegister.preload(); }catch(_rg){}
   }
 
   function greeting(){ var h = new Date().getHours(); return h < 12 ? 'Good morning' : (h < 17 ? 'Good afternoon' : 'Good evening'); }
@@ -87276,6 +87389,11 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
         var oweTot = op.filter(function(a){ return a.kind === 'borrowed'; })
                        .reduce(function(s, a){ return s + balanceOf(a.id); }, 0);
         return { n:fmtMoney(oweTot), w:'you owe' }; } },
+    /* 1347: the Check Register. owner:true hides the card (and refuses the area)
+       for any login but the owner's - bank_register is theo@-only in RLS. */
+    { k:'register', t:'Check Register', d:'Every check, ACH and Zelle through Chase', owner:true,
+      fn:function(){ return '<div data-reg-mount></div>'; },
+      stat:function(){ return window.CardinalRegister ? window.CardinalRegister.stat() : { n:'\u2014', w:'' }; } },
     { k:'vault', t:'The Vault', d:'Company documents, admin only',
       fn:function(){ return vaultHTML(); },
       stat:function(){
@@ -87289,8 +87407,12 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
         return { n:String(have) + '/2', w:'documents written' }; } }
   ];
 
+  function areaVisible(a){
+    if(!a.owner) return true;
+    try{ return !!(window.CardinalRegister && window.CardinalRegister.allowed()); }catch(_){ return false; }
+  }
   function areaOf(k){
-    for(var i = 0; i < AREAS.length; i++) if(AREAS[i].k === k) return AREAS[i];
+    for(var i = 0; i < AREAS.length; i++) if(AREAS[i].k === k) return areaVisible(AREAS[i]) ? AREAS[i] : null;
     return null;
   }
 
@@ -87310,7 +87432,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 
   function hubHTML(){
     return headHTML() +
-      '<div class="ow-hub">' + AREAS.map(cardHTML).join('') + '</div>';
+      '<div class="ow-hub">' + AREAS.filter(areaVisible).map(cardHTML).join('') + '</div>';
   }
 
   function areaHTML(k){
@@ -87328,6 +87450,12 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     var body = view.querySelector('.ow-wrap');
     body.innerHTML = (area ? areaHTML(area) : hubHTML()) +
       '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations &middot; Owner</div></div>';
+    /* 1347: the register needs the width a table needs; every other area keeps 640px. */
+    view.classList.toggle('ow-reg-wide', area === 'register');
+    if(area === 'register'){
+      var _rm = view.querySelector('[data-reg-mount]');
+      if(_rm && window.CardinalRegister) try{ window.CardinalRegister.mount(_rm); }catch(_re){ console.warn('register mount', _re); }
+    }
     /* a fresh area starts at the top; without this you land mid-page because the
        scroller keeps the hub's offset. */
     try{ view.scrollTop = 0; }catch(_){}
@@ -95985,5 +96113,432 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     setFor:function(pr){ return !!inSet(pr); }, missing:function(pr){ var set = inSet(pr); return set ? inLoad(pr).then(function(r){ return inMissing(set, r); }) : Promise.resolve([]); } });
 })();
 </script>
+<style id="cr-reg-styles">
+/* ═══════════════════════════════════════════════════════════════════════════
+   The Check Register — v2026-10-15 · build 1347
+   Every check, ACH and Zelle through Cardinal's Chase business checking, one row
+   each (table bank_register). Lives INSIDE the Owner Console as an area, so it
+   inherits the console's surface, its history entry and its close button.
+   OWNER ONLY: the table's RLS is auth.email() = theo@, narrower than
+   is_cardinal_admin(), because it carries owner draws and a member buyout.
+   PALETTE: the console's own literals (cream paper, Georgia, cardinal red) —
+   declared nowhere as tokens, the Showcase/Crews/Owner pattern. Inks computed on
+   the card ground #fffdf9: #231d18 16.4:1, #6b5f54 6.1:1, #c8202e 5.6:1,
+   #1f6b3a 6.6:1.
+   SCROLL LOCK: none — the console's own overlay scrolls.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#cr-owner.ow-reg-wide .ow-wrap{max-width:1180px;}
+#cr-reg{padding:6px 18px 30px;font-family:"Segoe UI",Arial,sans-serif;color:#231d18;}
+#cr-reg .rg-sub{font:400 14px/1.45 Georgia,serif;color:#6b5f54;margin:2px 2px 12px;}
+#cr-reg .rg-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;}
+#cr-reg .rg-tabs::-webkit-scrollbar{display:none;}
+#cr-reg .rg-tab{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #ddd2c4;
+  background:#fffdf9;color:#231d18;font:600 14px "Segoe UI",Arial,sans-serif;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;}
+#cr-reg .rg-tab small{font:600 12px "Segoe UI",Arial,sans-serif;color:#6b5f54;}
+#cr-reg .rg-tab.on{background:#231d18;border-color:#231d18;color:#fffdf9;}
+#cr-reg .rg-tab.on small{color:#e8ddd0;}
+#cr-reg .rg-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:4px 0 12px;}
+@media (max-width:640px){ #cr-reg .rg-sum{grid-template-columns:1fr 1fr;} }
+#cr-reg .rg-k{background:#fffdf9;border:1px solid #ddd2c4;border-radius:12px;padding:11px 13px;}
+#cr-reg .rg-k span{display:block;font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.14em;
+  text-transform:uppercase;color:#6b5f54;margin-bottom:7px;}
+#cr-reg .rg-k b{font:700 20px/1.1 "Segoe UI",Arial,sans-serif;color:#231d18;font-variant-numeric:tabular-nums;}
+#cr-reg .rg-k b.in{color:#1f6b3a;} #cr-reg .rg-k b.out{color:#c8202e;}
+#cr-reg .rg-f{display:grid;grid-template-columns:2fr repeat(5,minmax(0,1fr));gap:8px;margin-bottom:10px;}
+@media (max-width:900px){ #cr-reg .rg-f{grid-template-columns:1fr 1fr;} #cr-reg .rg-f .rg-q{grid-column:1/-1;} }
+#cr-reg .rg-f input,#cr-reg .rg-f select{width:100%;box-sizing:border-box;min-height:44px;padding:0 11px;
+  border:1px solid #d9cfc2;border-radius:10px;background:#fffdf9;color:#231d18;
+  font:400 15px "Segoe UI",Arial,sans-serif;}
+#cr-reg .rg-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:0 0 10px;}
+#cr-reg .rg-seg{display:inline-flex;border:1px solid #d9cfc2;border-radius:10px;overflow:hidden;}
+#cr-reg .rg-seg button{min-height:44px;padding:0 14px;border:0;background:#fffdf9;color:#231d18;
+  font:600 14px "Segoe UI",Arial,sans-serif;cursor:pointer;}
+#cr-reg .rg-seg button.on{background:#c8202e;color:#fff;}
+#cr-reg .rg-btn{min-height:44px;padding:0 14px;border:1px solid #d9cfc2;border-radius:10px;background:#fffdf9;
+  color:#231d18;font:600 14px "Segoe UI",Arial,sans-serif;cursor:pointer;}
+#cr-reg .rg-btn.red{background:#c8202e;border-color:#c8202e;color:#fff;}
+#cr-reg .rg-list{background:#fffdf9;border:1px solid #ddd2c4;border-radius:12px;overflow:hidden;}
+#cr-reg .rg-h,#cr-reg .rg-r{display:grid;grid-template-columns:96px 70px minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) 120px;
+  gap:10px;align-items:center;padding:10px 14px;}
+#cr-reg .rg-h{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;
+  color:#6b5f54;border-bottom:1px solid #e6ddd1;background:#f7f2ea;}
+#cr-reg .rg-r{border-bottom:1px solid #eee6db;cursor:pointer;font-size:14px;min-height:44px;}
+#cr-reg .rg-r:hover{background:#faf6f0;}
+#cr-reg .rg-r.open{background:#f7f2ea;}
+#cr-reg .rg-r .p{font-weight:600;overflow:hidden;text-overflow:ellipsis;}
+#cr-reg .rg-r .p small,#cr-reg .rg-r .d small{display:block;font-weight:400;font-size:12px;color:#6b5f54;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#cr-reg .rg-r .a{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
+#cr-reg .rg-r .a.in{color:#1f6b3a;}
+#cr-reg .rg-h .a{text-align:right;}
+#cr-reg .rg-chip{display:inline-block;padding:3px 8px;border-radius:12px;background:#f0e8df;color:#4a3f36;
+  font:600 12px "Segoe UI",Arial,sans-serif;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+#cr-reg .rg-job{color:#c8202e;font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#cr-reg .rg-none{color:#6b5f54;font-size:13px;}
+#cr-reg .rg-det{padding:12px 14px 16px;border-bottom:1px solid #e6ddd1;background:#f7f2ea;font-size:14px;}
+#cr-reg .rg-det dl{display:grid;grid-template-columns:140px minmax(0,1fr);gap:6px 12px;margin:0 0 12px;}
+#cr-reg .rg-det dt{color:#6b5f54;font-weight:600;}
+#cr-reg .rg-det dd{margin:0;word-break:break-word;}
+#cr-reg .rg-link{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+#cr-reg .rg-link select{min-height:44px;min-width:220px;flex:1 1 220px;border:1px solid #d9cfc2;border-radius:10px;
+  background:#fffdf9;color:#231d18;padding:0 10px;font:400 15px "Segoe UI",Arial,sans-serif;}
+#cr-reg .rg-more{display:block;width:100%;min-height:48px;border:0;border-top:1px solid #e6ddd1;background:#fffdf9;
+  color:#c8202e;font:700 14px "Segoe UI",Arial,sans-serif;cursor:pointer;}
+#cr-reg .rg-empty{padding:28px 16px;text-align:center;color:#6b5f54;font:400 15px Georgia,serif;}
+#cr-reg .rg-pr{display:grid;grid-template-columns:minmax(0,1.6fr) 70px 130px 130px 100px;gap:10px;align-items:center;
+  padding:11px 14px;border-bottom:1px solid #eee6db;cursor:pointer;font-size:14px;min-height:44px;}
+#cr-reg .rg-pr:hover{background:#faf6f0;}
+#cr-reg .rg-pr .n{text-align:right;font-variant-numeric:tabular-nums;}
+#cr-reg .rg-pr .in{color:#1f6b3a;font-weight:700;} #cr-reg .rg-pr .out{font-weight:700;}
+#cr-reg .rg-ph{font:700 11px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b5f54;
+  background:#f7f2ea;border-bottom:1px solid #e6ddd1;cursor:default;}
+#cr-reg .rg-ph:hover{background:#f7f2ea;}
+#cr-reg .rg-msg{font:400 13px "Segoe UI",Arial,sans-serif;color:#6b5f54;margin-left:6px;}
+#cr-reg .rg-note{font:400 13px/1.45 "Segoe UI",Arial,sans-serif;color:#6b5f54;margin:12px 2px 0;}
+/* phone: each payment becomes a two-line card */
+@media (max-width:720px){
+  #cr-reg{padding:6px 12px 30px;}
+  #cr-reg .rg-h{display:none;}
+  #cr-reg .rg-r{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"p a" "d d" "c j";gap:4px 10px;}
+  #cr-reg .rg-r .p{grid-area:p;} #cr-reg .rg-r .a{grid-area:a;}
+  #cr-reg .rg-r .d{grid-area:d;color:#6b5f54;font-size:13px;}
+  #cr-reg .rg-r .c{grid-area:c;} #cr-reg .rg-r .j{grid-area:j;text-align:right;}
+  #cr-reg .rg-r .k{display:none;}
+  #cr-reg .rg-det dl{grid-template-columns:1fr;}
+  #cr-reg .rg-det dt{margin-top:6px;}
+  #cr-reg .rg-pr{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n t" "c d" "o o";}
+  #cr-reg .rg-pr .pn{grid-area:n;} #cr-reg .rg-pr .pc{grid-area:c;color:#6b5f54;font-size:13px;}
+  #cr-reg .rg-pr .pt{grid-area:t;} #cr-reg .rg-pr .po{grid-area:o;text-align:left;color:#6b5f54;font-size:13px;} #cr-reg .rg-pr .pd{grid-area:d;color:#6b5f54;font-size:13px;text-align:right;}
+  #cr-reg .rg-ph{display:none;}
+}
+</style>
+<script id="cr-reg-script">
+/* The Check Register — build 1347. window.CardinalRegister = { mount, preload, stat, allowed, reload }.
+   The Owner Console calls mount(el) when its 'register' area is open; everything
+   else (data, filters, events) lives here. One write only: re-linking a row to a
+   client job (bank_register.project_id), owner-only by RLS. It never touches
+   collections, crew_payments or commissions — the register is a mirror of the
+   bank, read beside those ledgers and never summed into them. */
+(function(){
+  'use strict';
+  var OWNER = 'theo@cardinalrenovations.net';
+  var ROWS = null, PROJ = [], PMAP = {}, CMAP = {}, loading = null, lastErr = null;
+  var root = null;
+  var st = { tab:'all', view:'list', q:'', month:'', cat:'', method:'', link:'', sort:'new', shown:150, openId:null };
+  var TABS = [
+    ['all','All',          function(){ return true; }],
+    ['received','Received',function(r){ return r.direction === 'in'; }],
+    ['mine','My payments', function(r){ return r.grp === 'people' && r.category === 'Owner draw'; }],
+    ['team','Cardinal Team', function(r){ return r.grp === 'people' && r.category !== 'Owner draw'; }],
+    ['sales','Sales',      function(r){ return r.grp === 'sales'; }],
+    ['jerry','Jerry',      function(r){ return r.grp === 'jerry'; }],
+    ['subs','Crews & Subs',function(r){ return r.grp === 'subs'; }],
+    ['other','Other',      function(r){ return r.grp === 'other'; }]
+  ];
+  var METHODS = { check:'Check', ach:'ACH', zelle:'Zelle', wire:'Wire', card_batch:'Card batch', deposit:'Deposit' };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function cl(){ return window.sb || window.supa || null; }
+  function me(){ return ((window.currentUser && window.currentUser.email) || '').toLowerCase(); }
+  function allowed(){ return me() === OWNER; }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function money(n){ var v = Number(n) || 0; return (v < 0 ? '-' : '') + '$' + Math.abs(v).toLocaleString('en-US',{ minimumFractionDigits:2, maximumFractionDigits:2 }); }
+  function dstr(s){ if(!s) return ''; var p = String(s).slice(0,10).split('-'); return MON[(+p[1])-1] + ' ' + (+p[2]) + ', ' + p[0]; }
+  function mstr(m){ var p = m.split('-'); return MON[(+p[1])-1] + ' ' + p[0]; }
+  function tell(m){ try{ crTell(m); }catch(_){ } }
+
+  async function load(force){
+    if(!allowed()){ ROWS = []; return; }
+    if(ROWS && !force) return;
+    if(loading) return loading;
+    loading = (async function(){
+      var c = cl(); if(!c) throw new Error('not signed in');
+      var res = await Promise.all([
+        c.from('bank_register').select('*').order('txn_date', { ascending:false }).limit(5000),
+        c.from('projects').select('id,name').order('name'),
+        c.from('crews').select('id,name')
+      ]);
+      /* a failed read is never shown as an empty register */
+      if(res[0].error) throw res[0].error;
+      ROWS = res[0].data || [];
+      PROJ = (res[1] && res[1].data) || [];
+      PMAP = {}; PROJ.forEach(function(p){ PMAP[p.id] = p.name; });
+      CMAP = {}; (((res[2] && res[2].data)) || []).forEach(function(c){ CMAP[c.id] = c.name; });
+      lastErr = null;
+    })();
+    try{ await loading; }catch(e){ lastErr = e; ROWS = null; throw e; }
+    finally{ loading = null; }
+  }
+
+  function tabOf(k){ for(var i = 0; i < TABS.length; i++) if(TABS[i][0] === k) return TABS[i]; return TABS[0]; }
+  function matchQ(r, q){
+    if(!q) return true;
+    var hay = [r.party, r.party_detail, r.memo, r.check_no, r.category, r.bank_ref,
+               PMAP[r.project_id], CMAP[r.crew_id], String(r.amount), money(r.amount)].join(' ').toLowerCase();
+    return q.split(/\s+/).every(function(w){ return hay.indexOf(w) !== -1; });
+  }
+  function base(){ var t = tabOf(st.tab)[2]; return (ROWS || []).filter(t); }
+  function filtered(){
+    var q = st.q.trim().toLowerCase();
+    var out = base().filter(function(r){
+      if(st.month && String(r.txn_date).slice(0,7) !== st.month) return false;
+      if(st.cat && r.category !== st.cat) return false;
+      if(st.method && r.method !== st.method) return false;
+      if(st.link === 'job' && !r.project_id) return false;
+      if(st.link === 'nojob' && r.project_id) return false;
+      if(st.link === 'crew' && !r.crew_id) return false;
+      return matchQ(r, q);
+    });
+    var by = {
+      new:function(a,b){ return a.txn_date < b.txn_date ? 1 : a.txn_date > b.txn_date ? -1 : 0; },
+      old:function(a,b){ return a.txn_date < b.txn_date ? -1 : a.txn_date > b.txn_date ? 1 : 0; },
+      big:function(a,b){ return Number(b.amount) - Number(a.amount); },
+      small:function(a,b){ return Number(a.amount) - Number(b.amount); },
+      name:function(a,b){ return String(a.party).localeCompare(String(b.party)); }
+    }[st.sort] || null;
+    if(by) out.sort(by);
+    return out;
+  }
+  function totals(list){
+    var t = { inn:0, out:0, n:list.length };
+    list.forEach(function(r){ if(r.direction === 'in') t.inn += Number(r.amount) || 0; else t.out += Number(r.amount) || 0; });
+    return t;
+  }
+
+  function opts(list, cur, all){
+    return '<option value="">' + esc(all) + '</option>' + list.map(function(o){
+      return '<option value="' + esc(o[0]) + '"' + (o[0] === cur ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+    }).join('');
+  }
+  function filtersHTML(){
+    var b = base();
+    var months = {}, cats = {}, meth = {};
+    b.forEach(function(r){ months[String(r.txn_date).slice(0,7)] = 1; cats[r.category] = 1; meth[r.method] = 1; });
+    var mList = Object.keys(months).sort().reverse().map(function(m){ return [m, mstr(m)]; });
+    var cList = Object.keys(cats).sort().map(function(c){ return [c, c]; });
+    var tList = Object.keys(meth).sort().map(function(m){ return [m, METHODS[m] || m]; });
+    if(st.month && !months[st.month]) st.month = '';
+    if(st.cat && !cats[st.cat]) st.cat = '';
+    if(st.method && !meth[st.method]) st.method = '';
+    return '<div class="rg-f">' +
+      '<input class="rg-q" type="search" data-rgf="q" value="' + esc(st.q) + '" placeholder="Search name, memo, check #, client, amount" aria-label="Search the register">' +
+      '<select data-rgf="month" aria-label="Month">' + opts(mList, st.month, 'All months') + '</select>' +
+      '<select data-rgf="cat" aria-label="Category">' + opts(cList, st.cat, 'All categories') + '</select>' +
+      '<select data-rgf="method" aria-label="Method">' + opts(tList, st.method, 'All methods') + '</select>' +
+      '<select data-rgf="link" aria-label="Matched">' + opts([['job','Matched to a client job'],['nojob','Not matched to a job'],['crew','Matched to a crew']], st.link, 'Matched or not') + '</select>' +
+      '<select data-rgf="sort" aria-label="Sort">' +
+        [['new','Newest first'],['old','Oldest first'],['big','Largest first'],['small','Smallest first'],['name','Name A–Z']].map(function(o){
+          return '<option value="' + o[0] + '"' + (st.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+      '</select>' +
+    '</div>';
+  }
+  function tabsHTML(){
+    return '<div class="rg-tabs" role="tablist">' + TABS.map(function(t){
+      var n = (ROWS || []).filter(t[2]).length;
+      return '<button type="button" role="tab" aria-selected="' + (st.tab === t[0]) + '" class="rg-tab' + (st.tab === t[0] ? ' on' : '') +
+        '" data-rgtab="' + t[0] + '">' + esc(t[1]) + ' <small>' + n + '</small></button>';
+    }).join('') + '</div>';
+  }
+  function sumHTML(list){
+    var t = totals(list), net = t.inn - t.out;
+    return '<div class="rg-sum">' +
+      '<div class="rg-k"><span>Money in</span><b class="in">' + money(t.inn) + '</b></div>' +
+      '<div class="rg-k"><span>Money out</span><b class="out">' + money(t.out) + '</b></div>' +
+      '<div class="rg-k"><span>Net</span><b>' + money(net) + '</b></div>' +
+      '<div class="rg-k"><span>Entries</span><b>' + t.n + '</b></div>' +
+    '</div>';
+  }
+  function rowHTML(r){
+    var job = r.project_id ? '<span class="rg-job">' + esc(PMAP[r.project_id] || 'Client job') + '</span>'
+            : (r.crew_id ? '<span class="rg-none">Crew: ' + esc(CMAP[r.crew_id] || '') + '</span>' : '<span class="rg-none">—</span>');
+    var who = esc(r.party) + (r.party_detail ? '<small>' + esc(r.party_detail) + '</small>' : '');
+    var h = '<div class="rg-r' + (st.openId === r.id ? ' open' : '') + '" data-rgrow="' + esc(r.id) + '" role="button" tabindex="0" aria-expanded="' + (st.openId === r.id) + '">' +
+      '<div class="d">' + esc(dstr(r.txn_date)) + '<small>' + esc(METHODS[r.method] || r.method) + (r.check_no ? ' #' + esc(r.check_no) : '') + (r.memo ? ' · ' + esc(r.memo) : '') + '</small></div>' +
+      '<div class="k">' + esc(r.check_no ? '#' + r.check_no : (METHODS[r.method] || '')) + '</div>' +
+      '<div class="p">' + who + '</div>' +
+      '<div class="c"><span class="rg-chip">' + esc(r.category) + '</span></div>' +
+      '<div class="j">' + job + '</div>' +
+      '<div class="a' + (r.direction === 'in' ? ' in' : '') + '">' + (r.direction === 'in' ? '+' : '−') + money(r.amount) + '</div>' +
+    '</div>';
+    if(st.openId === r.id) h += detailHTML(r);
+    return h;
+  }
+  function detailHTML(r){
+    var dl = [
+      ['Date', dstr(r.txn_date)], ['Direction', r.direction === 'in' ? 'Money in' : 'Money out'],
+      ['Method', (METHODS[r.method] || r.method) + (r.check_no ? ' · check #' + r.check_no : '')],
+      ['Amount', money(r.amount)], ['Who', r.party + (r.party_detail ? ' (' + r.party_detail + ')' : '')],
+      ['Memo', r.memo || '—'], ['Category', r.category],
+      ['Crew', r.crew_id ? (CMAP[r.crew_id] || 'Crew') : '—'],
+      ['Account', r.account_last4 ? '…' + r.account_last4 : '—'],
+      ['Bank says', r.bank_ref || '—'], ['Note', r.note || '—'], ['Source', r.source]
+    ].map(function(x){ return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('');
+    var popts = '<option value="">Not matched to a client job</option>' + PROJ.map(function(p){
+      return '<option value="' + esc(p.id) + '"' + (p.id === r.project_id ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('');
+    return '<div class="rg-det" data-rgdet="' + esc(r.id) + '"><dl>' + dl + '</dl>' +
+      '<div class="rg-link"><select data-rglinksel aria-label="Client job">' + popts + '</select>' +
+      '<button type="button" class="rg-btn red" data-rgsave="' + esc(r.id) + '">Save match</button>' +
+      (r.project_id ? '<button type="button" class="rg-btn" data-rgopen="' + esc(r.project_id) + '">Open client</button>' : '') +
+      '<span class="rg-msg" data-rgmsg></span></div></div>';
+  }
+  function listHTML(list){
+    if(!list.length) return '<div class="rg-list"><div class="rg-empty">Nothing matches these filters.</div></div>';
+    var show = list.slice(0, st.shown);
+    return '<div class="rg-list"><div class="rg-h" aria-hidden="true"><div>Date</div><div>No.</div><div>Who</div><div>Category</div><div>Client / crew</div><div class="a">Amount</div></div>' +
+      show.map(rowHTML).join('') +
+      (list.length > show.length ? '<button type="button" class="rg-more" data-rgmore>Show more (' + (list.length - show.length) + ' left)</button>' : '') +
+    '</div>';
+  }
+  function partyHTML(list){
+    var g = {};
+    list.forEach(function(r){
+      var k = r.party; var x = g[k] || (g[k] = { name:k, n:0, inn:0, out:0, last:'', cats:{} });
+      x.n++; if(r.direction === 'in') x.inn += Number(r.amount) || 0; else x.out += Number(r.amount) || 0;
+      if(r.txn_date > x.last) x.last = r.txn_date; x.cats[r.category] = 1;
+      (x.dates || (x.dates = {}))[r.txn_date] = 1;
+    });
+    var arr = Object.keys(g).map(function(k){ return g[k]; }).sort(function(a,b){ return (b.inn + b.out) - (a.inn + a.out); });
+    if(!arr.length) return '<div class="rg-list"><div class="rg-empty">Nothing matches these filters.</div></div>';
+    return '<div class="rg-list"><div class="rg-pr rg-ph"><div>Name</div><div class="n">Count</div><div class="n">Total</div><div class="n">Paid</div><div class="n">Last</div></div>' +
+      arr.map(function(x){
+        return '<div class="rg-pr" data-rgparty="' + esc(x.name) + '" role="button" tabindex="0">' +
+          '<div class="pn"><b>' + esc(x.name) + '</b></div>' +
+          '<div class="n pc">' + x.n + ' · ' + esc(Object.keys(x.cats).join(', ')) + '</div>' +
+          '<div class="n pt' + (x.inn ? ' in' : '') + '">' + (x.inn ? money(x.inn) : '') + (x.out ? '<span class="out">' + (x.inn ? ' / ' : '') + money(x.out) + '</span>' : '') + '</div>' +
+          '<div class="n po">' + esc(rhythm(x.dates)) + '</div>' +
+          '<div class="n pd">' + esc(dstr(x.last)) + '</div>' +
+        '</div>';
+      }).join('') + '</div>';
+  }
+  /* 1347: how often someone is paid, from the median gap between payment dates -
+     so a missed or doubled week on the Cardinal Team stands out. */
+  function rhythm(dates){
+    var d = Object.keys(dates || {}).sort(); if(d.length < 3) return '';
+    var g = []; for(var i = 1; i < d.length; i++) g.push(Math.round((Date.parse(d[i]) - Date.parse(d[i-1])) / 86400000));
+    g.sort(function(a,b){ return a - b; }); var m = g[Math.floor(g.length / 2)];
+    return m >= 5 && m <= 9 ? 'Weekly' : m >= 12 && m <= 16 ? 'Every 2 weeks' : m >= 26 && m <= 35 ? 'Monthly' : '~' + m + ' days';
+  }
+  function outHTML(){
+    var list = filtered();
+    return sumHTML(list) +
+      '<div class="rg-bar"><div class="rg-seg" role="group" aria-label="View">' +
+        '<button type="button" data-rgview="list" class="' + (st.view === 'list' ? 'on' : '') + '">List</button>' +
+        '<button type="button" data-rgview="party" class="' + (st.view === 'party' ? 'on' : '') + '">By person / company</button>' +
+      '</div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="rg-btn" data-rgreset>Clear filters</button>' +
+        '<button type="button" class="rg-btn" data-rgcsv>Export CSV</button></div></div>' +
+      (st.view === 'party' ? partyHTML(list) : listHTML(list)) +
+      '<div class="rg-note">A copy of the Chase business checking account, Jan 1 – Oct 13, 2026. It is kept separate from invoices, collections and crew payments, so it never changes a client balance or creates a commission. Account numbers show the last 4 digits only.</div>';
+  }
+
+  function paint(){
+    if(!root || !root.isConnected) return;
+    if(!allowed()){ root.innerHTML = '<div class="rg-empty">The Check Register is for the owner’s login only.</div>'; return; }
+    if(lastErr){ root.innerHTML = '<div class="rg-empty">Could not load the register: ' + esc(lastErr.message || lastErr) + '<br><button type="button" class="rg-btn" data-rgretry style="margin-top:12px">Try again</button></div>'; return; }
+    if(!ROWS){ root.innerHTML = '<div class="rg-empty">Loading the register…</div>'; return; }
+    if(!ROWS.length){ root.innerHTML = '<div class="rg-empty">No bank entries have been loaded yet.</div>'; return; }
+    var first = ROWS.reduce(function(m,r){ return !m || r.txn_date < m ? r.txn_date : m; }, ''),
+        last  = ROWS.reduce(function(m,r){ return r.txn_date > m ? r.txn_date : m; }, '');
+    root.innerHTML = '<div class="rg-sub">Chase business checking …' + '2808 · ' + esc(dstr(first)) + ' – ' + esc(dstr(last)) + ' · ' + ROWS.length + ' entries</div>' +
+      '<div data-rgtabs>' + tabsHTML() + '</div>' +
+      '<div data-rgfilters>' + filtersHTML() + '</div>' +
+      '<div data-rgout>' + outHTML() + '</div>';
+  }
+  function repaintOut(){
+    if(!root) return;
+    var o = root.querySelector('[data-rgout]'); if(o) o.innerHTML = outHTML();
+  }
+  function repaintAll(){
+    if(!root) return;
+    var t = root.querySelector('[data-rgtabs]'), f = root.querySelector('[data-rgfilters]');
+    if(t) t.innerHTML = tabsHTML();
+    if(f) f.innerHTML = filtersHTML();
+    repaintOut();
+  }
+
+  function csv(){
+    var list = filtered();
+    var head = ['Date','Direction','Method','Check #','Amount','Who','Detail','Memo','Category','Client job','Crew','Account (last 4)','Bank description'];
+    function q(v){ v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }
+    var lines = [head.join(',')].concat(list.map(function(r){
+      return [r.txn_date, r.direction === 'in' ? 'In' : 'Out', METHODS[r.method] || r.method, r.check_no,
+              (r.direction === 'in' ? '' : '-') + Number(r.amount).toFixed(2), r.party, r.party_detail, r.memo, r.category,
+              PMAP[r.project_id] || '', CMAP[r.crew_id] || '', r.account_last4, r.bank_ref].map(q).join(',');
+    }));
+    var blob = new Blob([lines.join('\r\n')], { type:'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cardinal-check-register-' + st.tab + '-' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(_){ } }, 1500);
+  }
+
+  async function saveLink(id, btn){
+    var det = btn.closest('[data-rgdet]'); var sel = det && det.querySelector('[data-rglinksel]'); var msg = det && det.querySelector('[data-rgmsg]');
+    if(!sel || !allowed()) return;
+    var pid = sel.value || null;
+    if(msg) msg.textContent = 'Saving…';
+    var r = await cl().from('bank_register').update({ project_id:pid, updated_at:new Date().toISOString() }).eq('id', id).select('id,project_id');
+    if(r.error || !r.data || !r.data.length){ if(msg) msg.textContent = 'Could not save' + (r.error ? ': ' + r.error.message : '.'); return; }
+    (ROWS || []).forEach(function(x){ if(x.id === id) x.project_id = pid; });
+    repaintOut();
+    tell(pid ? 'Matched to ' + (PMAP[pid] || 'the client job') + '.' : 'Match removed.');
+  }
+  function openClient(pid){
+    var v = document.getElementById('cr-owner'); if(v) v.style.display = 'none';
+    var hdr = document.querySelector('header.site'); if(hdr) hdr.style.display = '';
+    try{ window.openProject(pid); }catch(e){ tell('Could not open that client.'); }
+  }
+
+  function wire(el){
+    el.addEventListener('click', function(e){
+      var t;
+      if((t = e.target.closest('[data-rgtab]'))){ st.tab = t.getAttribute('data-rgtab'); st.shown = 150; st.openId = null; repaintAll(); return; }
+      if((t = e.target.closest('[data-rgview]'))){ st.view = t.getAttribute('data-rgview'); repaintOut(); return; }
+      if((t = e.target.closest('[data-rgsave]'))){ saveLink(t.getAttribute('data-rgsave'), t); return; }
+      if((t = e.target.closest('[data-rgopen]'))){ openClient(t.getAttribute('data-rgopen')); return; }
+      if(e.target.closest('[data-rgdet]')) return;
+      if((t = e.target.closest('[data-rgrow]'))){ var id = t.getAttribute('data-rgrow'); st.openId = st.openId === id ? null : id; repaintOut(); return; }
+      if((t = e.target.closest('[data-rgparty]'))){ st.q = t.getAttribute('data-rgparty'); st.view = 'list'; st.shown = 150; repaintAll(); return; }
+      if(e.target.closest('[data-rgmore]')){ st.shown += 150; repaintOut(); return; }
+      if(e.target.closest('[data-rgcsv]')){ csv(); return; }
+      if(e.target.closest('[data-rgreset]')){ st.q = ''; st.month = ''; st.cat = ''; st.method = ''; st.link = ''; st.sort = 'new'; st.shown = 150; repaintAll(); return; }
+      if(e.target.closest('[data-rgretry]')){ lastErr = null; paint(); load(true).then(paint, paint); return; }
+    });
+    el.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      var t = e.target.closest('[data-rgrow],[data-rgparty]');
+      if(t && e.target === t){ e.preventDefault(); t.click(); }
+    });
+    el.addEventListener('input', function(e){
+      var f = e.target.getAttribute && e.target.getAttribute('data-rgf');
+      if(f === 'q'){ st.q = e.target.value; st.shown = 150; st.openId = null; repaintOut(); }
+    });
+    el.addEventListener('change', function(e){
+      var f = e.target.getAttribute && e.target.getAttribute('data-rgf');
+      if(f && f !== 'q'){ st[f] = e.target.value; st.shown = 150; st.openId = null; repaintOut(); }
+    });
+  }
+
+  function mount(el){
+    if(!el) return;
+    el.id = 'cr-reg';
+    root = el; wire(el); paint();
+    if(!ROWS && allowed()) load().then(paint, paint);
+  }
+  async function preload(){ try{ await load(); }catch(_){ } }
+  function stat(){
+    if(!ROWS) return { n:'—', w:'Chase checks, ACH and Zelle' };
+    return { n:String(ROWS.length), w:'bank entries' };
+  }
+
+  window.CardinalRegister = Object.assign(window.CardinalRegister || {}, {
+    mount: mount, preload: preload, stat: stat, allowed: allowed,
+    reload: async function(){ await load(true); paint(); }
+  });
+})();
+</script>
+
 </body>
 </html>
