@@ -8,6 +8,8 @@
  *   S4  the loop: read → propose → reply; assistant content (thinking blocks too) goes back
  *       unchanged; the refusal fallback is on; the rules are cached; NOTHING is written server-side
  *   S5  a refusal comes back as a polite line, not an error
+ *   S6  (504 fix) every call gets only what is left of the 54s budget, no SDK retry; no call starts
+ *       with under 8s left; a timeout mid-lookup answers 200 (proposals kept), never a Vercel 504
  * BROWSER (index.html):
  *   B1  the Ask button shows for Theo and Joan, 48px tall, never for a rep
  *   B2  a named job is a tappable link that opens the job
@@ -36,8 +38,9 @@ fs.writeFileSync(path.join(api, 'package.json'), JSON.stringify({ type: 'module'
 fs.writeFileSync(path.join(api, 'node_modules/@anthropic-ai/sdk/package.json'), JSON.stringify({ name: '@anthropic-ai/sdk', version: '0.0.0-stub', type: 'module', main: 'index.js' }));
 /* the stub SDK: hands back globalThis.__SCRIPT__ replies in order, records every request */
 fs.writeFileSync(path.join(api, 'node_modules/@anthropic-ai/sdk/index.js'), `
-function stream(p){ (globalThis.__REQS__ = globalThis.__REQS__ || []).push(JSON.parse(JSON.stringify(p)));
-  const r = (globalThis.__SCRIPT__ || []).shift(); return { finalMessage: async () => { if (!r) throw new Error('script ran out'); return r; } }; }
+function stream(p, o){ (globalThis.__REQS__ = globalThis.__REQS__ || []).push(JSON.parse(JSON.stringify(p))); (globalThis.__OPTS__ = globalThis.__OPTS__ || []).push(o || {});
+  const r = (globalThis.__SCRIPT__ || []).shift(); return { finalMessage: async () => { if (!r) throw new Error('script ran out');
+    if (r.__advance) globalThis.__CLOCK__ += r.__advance; if (r.__throw) throw Object.assign(new Error(r.__throw), r.__status ? { status: r.__status } : {}); return r; } }; }
 export default class Anthropic { constructor(){ this.messages = { stream }; this.beta = { messages: { stream } }; } }
 `);
 process.env.ANTHROPIC_API_KEY = 'dummy';
@@ -97,6 +100,29 @@ try {
   globalThis.__SCRIPT__ = [{ stop_reason: 'refusal', usage: {}, content: [] }];
   const r5 = await call('tok-joan', { question: 'x' });
   ok(r5.code === 200 && /can.t help/i.test(r5.out.reply), 'S5  a refusal comes back as a polite line', JSON.stringify(r5));
+  /* S6 — a fake clock: each scripted reply can advance it, or throw like an SDK timeout (no status) */
+  const realNow = Date.now; globalThis.__CLOCK__ = realNow(); Date.now = () => globalThis.__CLOCK__;
+  try {
+    const read = { stop_reason: 'tool_use', usage: {}, content: [{ type: 'tool_use', id: 'r1', name: 'db_select', input: { table: 'projects' } }] };
+    const prop = { stop_reason: 'tool_use', usage: {}, content: [{ type: 'tool_use', id: 'r2', name: 'propose_changes', input: { summary: 'Move', changes: [{ table: 'projects', action: 'update', id: 'p-1', values: { stage: 'Completed' }, label: 'Move Dana' }] } }] };
+    // a: 30s into the request, the next call may only have the 24s left; neither call retries
+    globalThis.__REQS__ = []; globalThis.__OPTS__ = [];
+    globalThis.__SCRIPT__ = [Object.assign({ __advance: 30000 }, read), { stop_reason: 'end_turn', usage: {}, content: [{ type: 'text', text: 'done' }] }];
+    const a = await call('tok-theo', { question: 'q' }); const O = globalThis.__OPTS__;
+    const budgetOk = O.length === 2 && O[0].timeout <= 45000 && O[1].timeout <= 24000 && O.every(o => o.maxRetries === 0);
+    // b: 50s gone after the first step — no second call is started, it answers 200
+    globalThis.__REQS__ = []; globalThis.__OPTS__ = [];
+    globalThis.__SCRIPT__ = [Object.assign({ __advance: 50000 }, read), { stop_reason: 'end_turn', usage: {}, content: [{ type: 'text', text: 'never' }] }];
+    const b = await call('tok-theo', { question: 'q' });
+    const noLateCall = globalThis.__REQS__.length === 1 && b.code === 200 && /too long/.test(b.out.reply);
+    // c: a proposal, then the next call times out — 200 with the proposal, not a 502
+    globalThis.__SCRIPT__ = [prop, { __advance: 20000, __throw: 'Request timed out.' }];
+    const c = await call('tok-theo', { question: 'q' });
+    const keptProposal = c.code === 200 && c.out.proposals && c.out.proposals.changes.length === 1;
+    ok(a.code === 200 && budgetOk && noLateCall && keptProposal,
+       'S6  504 fix: each call gets only the time left, no SDK retry; no call starts with <8s left; a mid-lookup timeout answers 200 with its proposals',
+       JSON.stringify({ a: a.code, timeouts: O.map(o => o.timeout), retries: O.map(o => o.maxRetries), b: b.code, bReqs: globalThis.__REQS__.length, c: c.code, cReply: c.out && (c.out.reply || c.out.error) }));
+  } finally { Date.now = realNow; }
 } catch (e) { ok(false, 'server half crashed', String(e && e.stack || e).slice(0, 300)); }
 
 /* ---------------- browser ---------------- */
