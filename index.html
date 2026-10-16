@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1357<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1358<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4926,7 +4926,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
                box-shadow:0 6px 18px rgba(0,0,0,.18);"></div>
         </span>
         <span id="galStatus" style="font:13px 'Segoe UI',Arial,sans-serif;color:#666;"></span>
-        <input type="file" id="galFileInput" accept="image/*" multiple style="display:none;">
+        <input type="file" id="galFileInput" accept="image/*,.heic,.heif" multiple style="display:none;">
         <input type="file" id="galCamInput" accept="image/*" capture="environment" style="display:none;">
       </div>
       <div id="galCcPanel" style="display:none;">
@@ -25481,7 +25481,40 @@ function setEditorStatus(status, sentAt, signedAt){
 /* ---------- photo upload + auto-caption (inside the report iframe) ---------- */
 /* Resize/compress a photo before embedding or sending for captioning.
    Keeps report size manageable and avoids oversized upload/API payloads. */
+/* 1358: an iPhone photo (HEIC) cannot be decoded by Chrome, so this wrapper converts it to JPEG first.
+   The converter loads from cdnjs only when a HEIC actually arrives. Every photo path calls resizeImageFile. */
+function crIsHeic(f){ return !!f && (/^image\/hei[cf]/i.test(String(f.type || '')) || /\.hei[cf]$/i.test(String(f.name || ''))); }
+var _crHeicLib = null;
+function crLoadHeic(){
+  var w = /** @type {any} */ (window);
+  if(w.heic2any) return Promise.resolve(w.heic2any);
+  if(_crHeicLib) return _crHeicLib;
+  _crHeicLib = new Promise(function(res, rej){
+    var sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js';
+    sc.async = true;
+    sc.onload = function(){ if(w.heic2any) res(w.heic2any); else { _crHeicLib = null; rej(new Error('the converter did not load')); } };
+    sc.onerror = function(){ _crHeicLib = null; rej(new Error('the converter could not be downloaded \u2014 check the connection and try again')); };
+    document.head.appendChild(sc);
+  });
+  return _crHeicLib;
+}
+async function crHeicToJpeg(file){
+  var h = await crLoadHeic();
+  var out = await h({ blob:file, toType:'image/jpeg', quality:0.9 });
+  var b = Array.isArray(out) ? out[0] : out;
+  var nm = String(file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+  try{ return new File([b], nm, { type:'image/jpeg' }); }catch(_){ return b; }
+}
 function resizeImageFile(file, maxDim, quality){
+  return crResizeRaw1358(file, maxDim, quality).catch(function(err){
+    if(!crIsHeic(file)) throw err;
+    return crHeicToJpeg(file).then(function(jpg){ return crResizeRaw1358(jpg, maxDim, quality); }, function(e2){
+      throw new Error('This iPhone photo (HEIC) could not be converted: ' + ((e2 && e2.message) || e2));
+    });
+  });
+}
+function crResizeRaw1358(file, maxDim, quality){
   return new Promise(function(resolve, reject){
     var reader = new FileReader();
     reader.onerror = function(){ reject(new Error('Could not read the file')); };
@@ -25544,7 +25577,7 @@ function scaleImageSrc(src, maxDim, quality){
   });
 }
 async function photoPrepFile(file){
-  if(!file || !/^image\//.test(file.type || '')) return file;
+  if(!file || !(/^image\//.test(file.type || '') || crIsHeic(file))) return file;   /* 1358: a HEIC with no type still converts */
   try{
     var d = await resizeImageFile(file, PHOTO_FULL.max, PHOTO_FULL.q);
     var b = await (await fetch(d)).blob();
@@ -44824,6 +44857,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1358, d:'2026-10-16', t:'iPhone photos upload', s:'Photos taken on an iPhone (HEIC files) now upload from a computer or an Android phone. Before, the photo album stopped with "Upload failed" because those browsers cannot open that kind of file. The app now turns it into a normal JPEG first, so it shows up, shrinks and shares like any other photo. The album’s file picker also lists .heic files now.' },
   { b: 1357, d:'2026-10-16', t:'Line items on invoices', s:'An invoice now lists its line items, and you can change them. Tap Line items on the job’s invoice card: it starts with the lines from the estimate or contract, plus any signed change order, and you can edit a description, quantity or price, add a line or remove one. Mark a line Extra when it is new work (extra sheets of decking, say): it is added to what the client owes on the job page, the pay link and the reminders. Plain lines only describe the job and never change the amount owed. A new invoice starts with the job’s lines already filled in.' },
   { b: 1356, d:'2026-10-16', t:'Back goes where you were', s:'The browser Back button could skip a screen and land on a client you had looked at earlier. Two things caused it: switching a tab on a client page could rewrite the history of the screen you were on, and opening a page like Production from Team, a list or the editor wiped that page out of your history. Back now walks the screens you visited, in order.' },
   { b: 1355, d:'2026-10-16', t:'The client in one slim bar', s:'On a wide screen the client card at the top of a job is one slim bar: the name, phone, email and address in a row, with the star and the pencil at the end, and the stage band under it is thinner. Phones and tablets look the same as before.' },

@@ -36555,3 +36555,20 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - Regressions GREEN: 1199 (owedOn executed), 1313, 1314 and the money/invoice gates listed in the PR.
   - types 1530 / dupes 11: identical to 1356. My first pass added TS2538 ×2, a `closest` on EventTarget and a `row` dupe; all fixed before commit.
   - Renders at 390px, dark and light: inks 11.1:1 / 10.0:1 (extra green) dark, 10.4:1 / 7.1:1 light.
+
+## Build 1358 — iPhone (HEIC) photos upload
+- **Why:** a rep tagged Theo on a client's thread: photos would not upload "due to Heic file".
+  - Reproduced in Chromium with a real HEIC (`scripts/fixtures/sample_1358.heic`). `resizeImageFile()` decodes through `<img>`; Chrome cannot decode HEIC (Safari can), so it rejected *"Could not decode the image"* and the album stopped at *"Upload failed: Could not decode the image"*, word for word what the rep saw.
+  - **The bucket was never the block.** `photos.allowed_mime_types` already includes `image/heic` / `image/heif`.
+- **What:**
+  - `resizeImageFile` is now a wrapper over the old body (`crResizeRaw1358`). On a decode failure of a HEIC/HEIF (by type OR name), it converts with heic2any 0.0.4 and shrinks the JPEG.
+  - The converter is loaded from cdnjs **only then**. It is 1.35 MB and never touches a normal launch or the gate_1214 sign-in budget.
+  - This is the single chokepoint, so the album, quick inspection, change orders, the punch-out card and `photoPrepFile` (which now also takes a HEIC with an empty type) are all covered.
+  - What is stored is a JPEG, so tile twins and captions work unchanged.
+  - The album picker accepts `image/*,.heic,.heif`.
+- **The CompanyCam half of the same tag is NOT an app bug:**
+  - The app never creates CompanyCam projects; no code path calls their create API, and there were no `/api/companycam*` errors in 3 days of logs. The error is inside CompanyCam's own app.
+  - Our mirror shows a CompanyCam project for that address already exists (created 16 Jul), which is the likely reason a second one is refused. Told Theo; nothing changed here.
+- **Gates:**
+  - `gate_1358` GREEN 6: (A) a real HEIC becomes a 1600×1200 JPEG; (B) the album adds it via `#galFileInput`; (C) no converter download on launch or for a PNG; (D) the accept list. Control 1357: RED 3, reproducing the rep's exact message.
+  - Also GREEN: 1214, 1221, 1222, 1323, 1331, 1334, 1357. check_build, scroll-lock audit, types 1530 / dupes 11 (inherited, unchanged).
