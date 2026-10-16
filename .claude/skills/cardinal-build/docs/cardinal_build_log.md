@@ -36475,3 +36475,23 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - asserts the right column's order holds while Job Details and the Payments card grow by five different amounts.
   - Control 1352: RED (dense). `gate_1351` still GREEN.
   - ⚠ The mock page lacks the late-arriving cards that triggered the jump live, so the order check alone stayed green on 1352. The dense assertion is what makes this gate able to fail. Recorded so nobody "simplifies" it away.
+
+## Build 1354 — the job page, readable and in two real columns (Theo's pick: B)
+- **Why:** Theo: *"the text is almost non readable. Color issue. Yes please clean messy look."* Measured on the job page at 1700px:
+  - ~30 text elements in a dim 13px grey (`#a8b0ba` / `#b8bec6` on navy, 6–10:1). That is legal, and still hard on a wide monitor;
+  - counts at 11px; review hints at 5.6:1; the Money In arrow at 2.2:1.
+  - The sentinel INK sweep reported **zero** findings, because every one clears the 4.5:1 floor. ⚠ Passing the floor is not the same as readable; this is the gap.
+  - The preview (`jobpage_preview`) offered A (same layout, cleaned) and B (money + tools left, the house right); he picked **B**.
+- **What (retail only; Insurance/Community untouched):**
+  - **Ink:** dark `#d4dbe4` (13.0:1 on the cards) / light `#334155` (10.3:1); labels, notes and tabs 14–15px, counts 13px; row arrows `#c3cbd5` / `#475569`.
+  - **No red rule** under `.projsec` headings.
+  - **Two real columns at 1600px+:** `CardinalJobPay.cols()` moves the cards into `.acx-cols > .acx-colL / .acx-colR` after every render (hooked into the namebar `run()`, after `tagOrder()`) and on resize.
+    - Left: `.crji-stack`, `#dbMoneyRow`, `.ja-menu`. Right: everything else, sorted by the CSS `order` 1225/1227 set (raw markup order puts History before Job Details).
+    - Below 1600px it puts every card back in its original position (`data-acx-i`), so the phone and tablet orders never see it.
+    - `.cr-admin-tog` and `#dbConvertIns` stay direct children: their click handler and hide rule use `#acxMount > …`.
+    - Two separate stacks cannot share row heights, which is what caused the 1351 hole and the 1353 jump.
+- ⚠ Not done from preview B: merging the client card and the stage band into one slim bar. The client card is drawn by a different renderer (`#projMeta`). Recorded as follow-up.
+- **Gates:**
+  - `gate_1354` GREEN 13 (1700 dark + light, 1200 after resize, 390): the columns, independence (a right card growing 500px moves the Job Menu 0px), the Admin row still opens, the inks, no red rule, columns undone below 1600. Control 1353: RED 9.
+  - `gate_1351` / `gate_1353` updated to look inside the columns; `gate_1216`'s light `--crji-sub` pin moved #475569 → #334155 (deliberate, noted in the gate). All GREEN, with 1349/1350/1318/1346.
+  - Renders checked at 1700px in both themes.
