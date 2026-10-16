@@ -36452,3 +36452,17 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - `gate_796`, `gate_797` and `gate_1209` print SUPERSEDED on a 1351+ artifact and still run in full against older ones.
   - `gate_1318` B/D and `gate_1337` A were moved onto the Payments card; they pass on 1351 and fail on 1350.
   - 1216/1286/1290/1291/1314/1316/1346/1349/1350 GREEN. check_build GREEN; types/dupes identical to 1350.
+
+## Build 1352 — quiet hours: nothing wakes the team at night
+- **Why:** Theo, 16 Oct: *"Can you silence the notifications to others so i dont wake them up between 9pm-7am everyday?"*
+- **What:** `api/notify.js`, the one chokepoint every team alert goes through. Between **9:00 pm and 7:00 am America/New_York** (daylight saving moves with it), for every recipient **except the caller**:
+  - **push is not sent** (it is what lights a phone, and it cannot be scheduled);
+  - the **email** gets Resend `scheduled_at` = the next 7:00 am;
+  - the **text** gets Twilio `SendAt` + `ScheduleType=fixed`. This needs the Messaging Service, and `TWILIO_MESSAGING_SERVICE_SID` was confirmed present in Vercel by name only, never by value. Without the service, the text is skipped and the reply says so.
+  - Twilio refuses a SendAt under 15 minutes away, so `quietSendAt()` floors it at now + 16 min (a 6:50 am alert goes at 7:06).
+- The caller's own copy goes now. The reply carries `quiet`, `held`, `send_at` and `quiet_detail` (push_held / mail_scheduled / text_scheduled / text_skipped_no_service).
+- **Off switch:** `NOTIFY_QUIET_HOURS=off` in Vercel turns it off without a deploy.
+- The timed routes are untouched; they already only send in daytime: digest 7 am, `remind` 11:10 am, `punch-buzz` by its own Dayton-hour slots.
+- **Gates:**
+  - `gate_1352.mjs` runs the shipped handler with fetch stubbed and the clock pinned: GREEN 11 (EDT and EST, the 7:06 floor, day vs night, the sender exempt, the reply). Control: the 1351 notify.js gives RED 5 without crashing.
+  - The timing-blind notify gates (1147, 1184, 1210, smsnotify874, harness_deeplink1125) now set `NOTIFY_QUIET_HOURS=off`. They test WHAT is sent, and run at night they would have read a correct hold as a failure. All are GREEN; 1125 still carries its one known debt line.

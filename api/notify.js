@@ -72,6 +72,30 @@ async function requireSession(req, res){
    cannot make sense of returns '' and is SKIPPED rather than sent to a bad
    number — a text to a malformed number is a wasted send, not a delivery. We
    never guess a country code for an unknown shape. */
+/* 1352: QUIET HOURS. 9:00 pm – 7:00 am in Dayton, every day. Exported for the gate. */
+const QUIET_TZ = 'America/New_York';
+function etParts(d){
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: QUIET_TZ, hourCycle: 'h23', year: 'numeric',
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(d);
+  const g = t => Number((p.find(x => x.type === t) || {}).value);
+  return { y: g('year'), m: g('month'), d: g('day'), h: g('hour'), mi: g('minute') };
+}
+export function isQuietHours(d){ const h = etParts(d).h; return h >= 21 || h < 7; }
+/* the next 7:00 am in Dayton, as a real instant (EDT is UTC-4, EST is UTC-5: try both, keep the one that reads 7:00) */
+export function quietSendAt(d){
+  const p = etParts(d);
+  let y = p.y, m = p.m, day = p.d;
+  if(p.h >= 7){ const t = new Date(Date.UTC(y, m - 1, day) + 86400000); y = t.getUTCFullYear(); m = t.getUTCMonth() + 1; day = t.getUTCDate(); }
+  let at = new Date(Date.UTC(y, m - 1, day, 11, 0));
+  for(const off of [4, 5]){
+    const c = new Date(Date.UTC(y, m - 1, day, 7 + off, 0)), q = etParts(c);
+    if(q.h === 7 && q.mi === 0 && q.d === day){ at = c; break; }
+  }
+  /* Twilio refuses a SendAt under 15 minutes away; Resend has no floor, but one time for both keeps them together */
+  const floor = new Date(d.getTime() + 16 * 60000);
+  return at < floor ? floor : at;
+}
+
 function normPhone(p){
   if(!p) return '';
   var s = String(p).trim();
@@ -199,6 +223,14 @@ export default async function handler(req, res){
       return;
     }
 
+    /* 1352: quiet hours — who gets it now and who gets it at 7:00 am */
+    var _me1352 = String((_caller && _caller.email) || '').toLowerCase();
+    var _now1352 = new Date();
+    /* NOTIFY_QUIET_HOURS=off in Vercel turns it off without a deploy (and the older timing-blind gates set it) */
+    var quiet = !/^(off|0|false|no)$/i.test(String(process.env.NOTIFY_QUIET_HOURS || '').trim()) && isQuietHours(_now1352);
+    var sendAt = quiet ? quietSendAt(_now1352) : null;
+    var isHeld = function(em){ return quiet && String(em || '').toLowerCase() !== _me1352; };
+    var held = emails.filter(isHeld).length, pushHeld = 0, smsHeldSkipped = 0, mailScheduled = 0, textScheduled = 0;
     var sent = 0, failed = 0, gone = 0, firstErr = null, subs = [];
     /* 1126: the THIRD abort point, and the least obvious of the three. A refused
        or errored push_subs query used to `return` here too — so a Supabase
@@ -227,6 +259,8 @@ export default async function handler(req, res){
     }else{
     subs = subsRaw;
     await Promise.all(subs.map(async function(row){
+      /* 1352: a push cannot be scheduled and it is what wakes a phone — at night it is simply not sent to others */
+      if(isHeld(row.email)){ pushHeld++; return; }
       try{
         await webpush.sendNotification(row.sub, JSON.stringify({ title:title, body:text, url:url }));
         sent++;
@@ -288,18 +322,24 @@ export default async function handler(req, res){
                              .replace(/</g, '&lt;').replace(/>/g, '&gt;');
         mailHtml += '<p style="margin:18px 0 0"><a href="' + hrefAttr + '">Open it in Cardinal</a></p>';
       }
-      try{
-        var mr = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + resendKey },
-          body: JSON.stringify({
-            from: from, to: emails, subject: title,
-            html: mailHtml
-          })
-        });
-        if(mr.ok) mailed = emails.length;
-        else mailErr = 'HTTP ' + mr.status + ' ' + (await mr.text()).slice(0, 90);
-      }catch(e3){ mailErr = String((e3 && e3.message) || e3).slice(0, 120); }
+      /* 1352: at night everyone but the sender gets it at 7:00 am (Resend scheduled_at) */
+      var mailGroups = [{ to: emails.filter(function(e){ return !isHeld(e); }), at: null },
+                        { to: emails.filter(isHeld), at: sendAt }];
+      for(var mg = 0; mg < mailGroups.length; mg++){
+        var grp = mailGroups[mg];
+        if(!grp.to.length) continue;
+        try{
+          var mailBody = { from: from, to: grp.to, subject: title, html: mailHtml };
+          if(grp.at) mailBody.scheduled_at = grp.at.toISOString();
+          var mr = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + resendKey },
+            body: JSON.stringify(mailBody)
+          });
+          if(mr.ok){ mailed += grp.to.length; if(grp.at) mailScheduled += grp.to.length; }
+          else if(!mailErr) mailErr = 'HTTP ' + mr.status + ' ' + (await mr.text()).slice(0, 90);
+        }catch(e3){ if(!mailErr) mailErr = String((e3 && e3.message) || e3).slice(0, 120); }
+      }
     }
 
     /* 874: SMS via Twilio, best-effort and gated on TWILIO_* exactly like email
@@ -337,6 +377,10 @@ export default async function handler(req, res){
         }else{
           phones = profs.map(function(p){ return normPhone(p.phone); }).filter(Boolean);
           phones = phones.filter(function(v, i){ return phones.indexOf(v) === i; });   /* de-dupe */
+          /* 1352: which numbers belong to someone asleep. A number shared with the sender is never held. */
+          var heldPhones = {};
+          profs.forEach(function(p){ var n = normPhone(p.phone); if(n && isHeld(p.email)) heldPhones[n] = true; });
+          profs.forEach(function(p){ var n = normPhone(p.phone); if(n && !isHeld(p.email)) delete heldPhones[n]; });
         }
         if(phones.length){
           /* 1125: the link goes in the TEXT — an SMS has no hyperlink, so a
@@ -352,11 +396,17 @@ export default async function handler(req, res){
             try{
               var params = { To: to, Body: smsBody };
               if(twMsgSvc) params.MessagingServiceSid = twMsgSvc; else params.From = twFrom;
+              /* 1352: schedule a sleeper's text for 7:00 am. Twilio schedules only through a Messaging Service. */
+              if(heldPhones[to]){
+                if(!twMsgSvc){ smsHeldSkipped++; return; }
+                params.SendAt = sendAt.toISOString();
+                params.ScheduleType = 'fixed';
+              }
               var form = new URLSearchParams(params).toString();
               var sr = await fetch(twUrl, { method: 'POST',
                 headers: { Authorization: twAuth, 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: form });
-              if(sr.ok) texted++;
+              if(sr.ok){ texted++; if(heldPhones[to]) textScheduled++; }
               else if(!smsErr){
                 /* 1105: this dumped raw Twilio JSON truncated at 90 chars, so the
                    screen showed `{"code":20003,"message":"Authenticate","more_info":"https://w`
@@ -423,6 +473,12 @@ export default async function handler(req, res){
          notifications": a correct-looking sentence blaming the user for a
          missing server env var. */
       push_error: pushErr || undefined,
+      /* 1352: what quiet hours did with this alert */
+      quiet: quiet || undefined,
+      held: quiet ? held : undefined,
+      send_at: sendAt ? sendAt.toISOString() : undefined,
+      quiet_detail: quiet ? { push_held: pushHeld, mail_scheduled: mailScheduled, text_scheduled: textScheduled,
+                              text_skipped_no_service: smsHeldSkipped } : undefined,
       env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey, sms: twReady /* 1106: same one source as the send gate */,
              push: pushReady }
     });

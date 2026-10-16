@@ -10,6 +10,7 @@
  * Negative control:  node gate_1147.mjs <path-to-1146-index.html>   -> RED
  */
 import { readFileSync } from 'fs';
+process.env.NOTIFY_QUIET_HOURS = 'off';   /* 1352: this gate is about WHAT is sent, not WHEN; quiet hours have their own gate (gate_1352) */
 const FILE = process.argv[2] || '../../../../index.html';
 const SRC  = readFileSync(FILE, 'utf8');
 const API  = readFileSync(new URL('../../../../api/notify.js', import.meta.url), 'utf8');
