@@ -56,6 +56,14 @@
 .crjp-card .crjp-form .crjp-chk{display:flex;align-items:center;gap:8px;min-height:44px;color:var(--crji-ink,#f2f4f7);font-size:15px;}
 .crjp-card .crjp-form .crjp-chk input{width:20px;height:20px;accent-color:#C8202E;}
 .crjp-card .crjp-err{font-size:13px;color:var(--crji-due,#f08a90);}
+/* Theo: "I like A colors and bar tho too" — option A's cost bar and key, inside B's card.
+   One set of segment colours for both themes: each is >= 3:1 against both card grounds (non-text floor). */
+.crjp-card .crjp-cbar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--crjp-seg,#1b1f24);margin:10px 0 6px;}
+.crjp-card .crjp-cbar i{display:block;height:100%;}
+.crjp-card .k-material{--crjp-k:#6b7c93;} .crjp-card .k-labor{--crjp-k:#b07a3a;} .crjp-card .k-other{--crjp-k:#8a6fb0;} .crjp-card .k-profit{--crjp-k:var(--crji-pos,#34d399);}
+.crjp-card .crjp-cbar i{background:var(--crjp-k,#6b7c93);}
+.crjp-card .crjp-key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--crji-sub,#a8b0ba);}
+.crjp-card .crjp-key span::before,.crjp-card .crjp-tag[class*="k-"]::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;background:var(--crjp-k,#6b7c93);margin-right:5px;vertical-align:0;}
 </style>
 <script id="cr-jpay-script">
 /* ═══ Build 1349 · Payments on the client page — v2026-10-16 build 1350 ═════
@@ -209,7 +217,7 @@
         amt: Number(c.amount) || 0, sortDay: String(c.collected_at || ''), sortAt: String(c.created_at || '') });
     });
     (d.costs || []).forEach(function(c){
-      rows.push({ k:'cost', id:c.id, raw:c, tbl:'job_costs',
+      rows.push({ k:'cost', id:c.id, raw:c, tbl:'job_costs', kind: c.kind || 'other',
         title: c.description || 'Cost',
         tag: (c.kind || 'other').toUpperCase(),
         when: jpDay(c.spent_on), entered: '', by: 'paid by ' + payer(c.paid_by),
@@ -245,7 +253,7 @@
   function costRows(rows){
     var out = rows.filter(function(r){ return r.k === 'cost'; });
     rows.forEach(function(r){
-      if(r.crew) out.push({ k:'cost', id:r.id, title: r.title.replace(/^Crew · /, ''), tag:'LABOR', fromCrews:true,
+      if(r.crew) out.push({ k:'cost', id:r.id, title: r.title.replace(/^Crew · /, ''), tag:'LABOR', kind:'labor', fromCrews:true,
         when: r.when, entered:'', by:'from Crews', amt: r.amt, sortDay: r.sortDay, sortAt: r.sortAt });
     });
     out.sort(sorter);
@@ -258,7 +266,7 @@
     var rm = (r.k === 'in' || (r.k === 'cost' && !r.fromCrews)) && r.raw && canRemove(r.raw);
     var amt = (sign ? (r.k === 'in' ? '+' : '−') : '') + M(r.amt);
     var h = '<div class="crjp-row" data-crjp-k="' + r.k + '">' +
-      '<div class="crjp-what"><b>' + E(r.title) + (r.tag ? '<span class="crjp-tag">' + E(r.tag) + '</span>' : '') + '</b>' +
+      '<div class="crjp-what"><b>' + E(r.title) + (r.tag ? '<span class="crjp-tag' + (r.k === 'cost' ? ' k-' + E(r.kind || 'other') : '') + '">' + E(r.tag) + '</span>' : '') + '</b>' +
         (sub ? '<small>' + E(sub) + '</small>' : '') + '</div>' +
       '<div class="crjp-amt ' + r.k + '">' + amt + '</div>' +
       (rm ? '<button type="button" class="crjp-dots" data-crjp-more="' + E(r.id) + '" aria-label="More for this entry" aria-expanded="false">⋯</button>'
@@ -348,6 +356,16 @@
     }
     h += '<hr><span class="crjp-bal">Balance due</span><b class="crjp-bal' + (total > 0 && bal <= 0.005 ? ' paid' : '') + '">' + M(bal) + '</b>' +
     '</div>';
+    if(office && (costT > 0 || total > 0)){
+      var byM = 0, byL = 0, byO = 0;
+      costs.forEach(function(r){ var v = Number(r.amt) || 0; if(r.kind === 'material') byM += v; else if(r.kind === 'labor') byL += v; else byO += v; });
+      var base = Math.max(total, costT) || 1, prof = Math.max(0, total - costT);
+      var pctOf = function(v){ return (Math.round(v / base * 1000) / 10) + '%'; };
+      var segs = [['material', 'Material', byM], ['labor', 'Labor', byL], ['other', 'Other', byO], ['profit', 'Profit', prof]];
+      h += '<div class="crjp-cbar" role="img" aria-label="' + E(segs.map(function(x){ return x[1] + ' ' + pctOf(x[2]); }).join(', ')) + '">' +
+        segs.map(function(x){ return Number(x[2]) > 0 ? '<i class="k-' + x[0] + '" style="width:' + pctOf(x[2]) + '"></i>' : ''; }).join('') + '</div>' +
+        '<div class="crjp-key">' + segs.map(function(x){ return '<span class="k-' + x[0] + '">' + x[1] + ' ' + E(M(x[2])) + '</span>'; }).join('') + '</div>';
+    }
     if(cents(paid) > cents(listedIn)){
       h += '<p class="crjp-note">' + M(paid - listedIn) + ' of it was recorded on the old payment sheet, so it is not listed here.</p>';
     }

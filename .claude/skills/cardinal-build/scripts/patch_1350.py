@@ -34,7 +34,7 @@ one("""        body.innerHTML = readyHtml + html + depHtml;
   }""")
 one(">v2026-10-16 build 1349<button", ">v2026-10-16 build 1350<button")
 one("""  { b: 1349, d:'2026-10-16',""",
-"""  { b: 1350, d:'2026-10-16', t:'What a job cost, its profit, and who is owed back', s:'The Payments card on the client page has a Costs tab. Add what the job cost (material, labor or other), when, and who paid for it. Crew payments recorded in Crews count as labor by themselves. The card shows the job\\'s costs, gross profit and margin. When someone paid out of their own pocket, tick Reimburse: it shows as Needs paid until the office marks it reimbursed, and Invoices & Payments lists everything still owed back to the team. Costs and profit are office only; a rep sees and adds their own receipts and whether they have been paid back.' },
+"""  { b: 1350, d:'2026-10-16', t:'What a job cost, its profit, and who is owed back', s:'The Payments card on the client page has a Costs tab. Add what the job cost (material, labor or other), when, and who paid for it. Crew payments recorded in Crews count as labor by themselves. The card shows the job\\'s costs, gross profit and margin, with a coloured bar splitting the job into material, labor, other and profit. When someone paid out of their own pocket, tick Reimburse: it shows as Needs paid until the office marks it reimbursed, and Invoices & Payments lists everything still owed back to the team. Costs and profit are office only; a rep sees and adds their own receipts and whether they have been paid back.' },
   { b: 1349, d:'2026-10-16',""")
 pl.write_atomic(path, s)
 print('patched', path)

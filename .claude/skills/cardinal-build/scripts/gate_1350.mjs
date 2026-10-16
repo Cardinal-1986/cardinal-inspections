@@ -45,6 +45,10 @@ async function run(as) {
     out.has = true;
     out.sum = card().querySelector('.crjp-sum').textContent.replace(/\s+/g, ' ');
     out.tabs = [...card().querySelectorAll('[data-crjp-tab]')].map(x => x.getAttribute('data-crjp-tab'));
+    const bar = card().querySelector('.crjp-cbar');
+    out.bar = bar ? [...bar.querySelectorAll('i')].map(i => i.className + ':' + i.style.width) : null;
+    out.key = (card().querySelector('.crjp-key') || {}).textContent || null;
+    out.segColor = bar && bar.querySelector('i.k-labor') ? getComputedStyle(bar.querySelector('i.k-labor')).backgroundColor : null;
     const ct = card().querySelector('[data-crjp-tab="cost"]');
     if (!ct) return out;
     ct.click(); await pause(200);
@@ -90,6 +94,9 @@ if (t.has) {
   ok(JSON.stringify(t.tabs) === '["in","out","cost","all"]', 'office tabs: Received, Paid out, Costs, All', JSON.stringify(t.tabs));
   ok(/Costs\s*\$14,993\.80/.test(t.sum), 'costs = job costs + crew labor ($14,993.80)', t.sum);
   ok(/Gross profit\s*\$9,856\.20/.test(t.sum) && /Margin\s*39\.7%/.test(t.sum), 'gross profit $9,856.20 and margin 39.7%', t.sum);
+  ok(t.bar && t.bar.length === 4 && t.bar[0] === 'k-material:37.3%' && t.bar[3] === 'k-profit:39.7%', 'the cost bar splits material / labor / other / profit', JSON.stringify(t.bar));
+  ok(/Material \$9,268\.80/.test(t.key || '') && /Labor \$5,600\.00/.test(t.key || '') && /Other \$125\.00/.test(t.key || '') && /Profit \$9,856\.20/.test(t.key || ''), 'the key names each part with its dollars', t.key);
+  ok(t.segColor === 'rgb(176, 122, 58)', 'labor paints in its own colour', t.segColor);
   ok(t.costRows && t.costRows.length === 4 && t.costRows.some(x => /Tear-off Crew/.test(x) && /LABOR/.test(x) && /from Crews/.test(x)), 'Costs tab lists the crew payment as labor from Crews', JSON.stringify(t.costRows));
   ok(/Reimburse Nick · Needs paid/.test(t.need || '') && t.markBtn, 'a pocket-paid cost reads Needs paid with Mark reimbursed', t.need);
   ok(/Reimbursed Oct 15/.test(t.done || ''), 'a paid-back one reads Reimbursed with its date', t.done);
@@ -107,6 +114,7 @@ ok(n.has, 'a rep sees the card');
 if (n.has) {
   ok(JSON.stringify(n.tabs) === '["in","cost"]', 'rep tabs: Received and My receipts only', JSON.stringify(n.tabs));
   ok(!/Gross profit|Margin|Costs/.test(n.sum), 'a rep never sees costs, profit or margin', n.sum);
+  ok(!n.bar, 'a rep sees no cost bar');
   ok(!n.hasPaidBy, 'a rep cannot choose who paid');
   ok(n.inserted && n.inserted.paid_by === NICK && n.inserted.reimburse === true, 'a rep\'s receipt is paid by them and marked to reimburse', JSON.stringify(n.inserted));
 }
