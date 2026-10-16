@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1358<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1359<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -16298,6 +16298,25 @@ function openStoredFile(dataUrl, mime, tab, label){
     return false;
   }
 }
+/* 1359: job files live in the job-files bucket (50 MB each); old rows still carry their bytes in `data`. */
+var JOB_FILE_MAX = 50 * 1024 * 1024;
+function crJobFileSafe(n){ return String(n || 'file').replace(/[^\w.\-]+/g, '_').slice(-120) || 'file'; }
+async function crJobFileUp(pid, file){
+  if(!TEAM || !sb) throw new Error('file storage needs a connection');
+  var key = String(pid) + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + '-' + crJobFileSafe(file.name);
+  var up = await sb.storage.from('job-files').upload(key, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+  if(up && up.error) throw new Error(up.error.message || 'the upload was refused');
+  return { file: 1, name: file.name, mime: file.type || '', size: file.size, bucket: 'job-files', path: key };
+}
+async function crJobFileBlob(meta){
+  if(meta && meta.path){
+    var r = await sb.storage.from(meta.bucket || 'job-files').download(meta.path);
+    if(!r || r.error || !r.data) throw new Error((r && r.error && r.error.message) || 'the file could not be downloaded');
+    return r.data;
+  }
+  if(meta && meta.data) return await (await fetch(meta.data)).blob();
+  throw new Error('there is no stored file');
+}
 async function openJobFile(id){
   /* opened inside the tap: db.get() is an await, and iOS blocks a popup that
      opens after one */
@@ -16306,6 +16325,13 @@ async function openJobFile(id){
   try{
     var row = await db.get(id);
     var meta = JSON.parse(row.html);
+    if(meta && meta.path){   /* 1359: a stored file — open its bytes as a blob document, same as openStoredFile */
+      var bl = await crJobFileBlob(meta);
+      var url = URL.createObjectURL(new Blob([bl], { type: meta.mime || bl.type || 'application/octet-stream' }));
+      if(tab && !tab.closed) tab.location = url; else window.open(url, '_blank');
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 120000);
+      return;
+    }
     openStoredFile(meta.data, meta.mime, tab, 'file');
   }catch(err){
     if(tab && !tab.closed) tab.close();
@@ -16364,32 +16390,27 @@ window.CardinalReceipts = Object.assign(window.CardinalReceipts || {}, {
 async function addJobFiles(files){
   if(!currentProject || !files || !files.length) return;
   var st = document.getElementById('jdStatus');
-  var added = 0;
+  var added = 0, big = [], bad = [], pr0 = currentProject;
   for(var i = 0; i < files.length; i++){
     var f = files[i];
-    if(f.size > 10 * 1024 * 1024){
-      st.textContent = '\u201C' + f.name + '\u201D skipped \u2014 over the 10 MB limit.';
-      continue;
-    }
-    st.textContent = 'Uploading ' + (i + 1) + ' of ' + files.length + '\u2026';
+    /* 1359: 50 MB a file, and a skipped or failed file is listed at the end instead of overwritten */
+    if(f.size > JOB_FILE_MAX){ big.push(f.name); continue; }
+    st.textContent = 'Uploading ' + (i + 1) + ' of ' + files.length + ' \u2014 ' + f.name + '\u2026';
     try{
-      var dataUrl = await new Promise(function(res, rej){
-        var rd = new FileReader();
-        rd.onload = function(){ res(rd.result); };
-        rd.onerror = function(){ rej(new Error('could not read file')); };
-        rd.readAsDataURL(f);
-      });
-      var payload = JSON.stringify({ file: 1, name: f.name, mime: f.type || '', size: f.size, data: dataUrl });
-      await db.create('File: ' + f.name, payload, currentProject.name, currentProject.id);
+      var payload = JSON.stringify(await crJobFileUp(pr0.id, f));
+      await db.create('File: ' + f.name, payload, pr0.name, pr0.id);
       added++;
     }catch(err){
-      st.textContent = 'Upload failed: ' + (err.message || err);
-      break;
+      bad.push(f.name + ' (' + ((err && err.message) || err) + ')');
     }
   }
+  var msg = [];
+  if(added) msg.push('\u2713 Added ' + added + ' file' + (added === 1 ? '' : 's') + '.');
+  if(big.length) msg.push('Over 50 MB, not added: ' + big.join(', ') + '.');
+  if(bad.length) msg.push('Could not upload: ' + bad.join(', ') + '.');
+  st.textContent = msg.join(' ');
+  if(added && !big.length && !bad.length) setTimeout(function(){ st.textContent = ''; }, 3500);
   if(added){
-    st.textContent = '\u2713 Added ' + added + ' file' + (added === 1 ? '' : 's') + '.';
-    setTimeout(function(){ st.textContent = ''; }, 3500);
     try{ await reload(); }catch(e){}
   }
   renderDocsPage();
@@ -18644,14 +18665,8 @@ function pickAndUploadInsDoc(typeKey){
 async function uploadInsuranceDoc(typeKey, file){
   var pr = insDocsProject();   /* 647: was currentProject — null on the claim screen */
   if(!pr) throw new Error('No client selected');
-  if(file.size > 10 * 1024 * 1024) throw new Error('File is over the 10 MB limit');
-  var dataUrl = await new Promise(function(res, rej){
-    var rd = new FileReader();
-    rd.onload = function(){ res(rd.result); };
-    rd.onerror = function(){ rej(new Error('could not read file')); };
-    rd.readAsDataURL(file);
-  });
-  var payload = JSON.stringify({ file: 1, name: file.name, mime: file.type || '', size: file.size, data: dataUrl });
+  if(file.size > JOB_FILE_MAX) throw new Error('File is over the 50 MB limit');   /* 1359 */
+  var payload = JSON.stringify(await crJobFileUp(pr.id, file));
   var title = 'Insurance Doc [' + typeKey + ']: ' + file.name;
   await db.create(title, payload, pr.name || '', pr.id);
   try{ await reload(); }catch(_e){}
@@ -19002,7 +19017,7 @@ async function readFiledScope(docId){
   if(!row){ crTell('That document is no longer on file.'); return; }
   var pay = null;
   try{ pay = JSON.parse(row.html || '{}'); }catch(e){}
-  if(!pay || !pay.file || !pay.data){
+  if(!pay || !pay.file || !(pay.data || pay.path)){   /* 1359: or a stored file */
     crTell('That document has no stored file to read.');
     return;
   }
@@ -19014,7 +19029,7 @@ async function readFiledScope(docId){
   var nm = pay.name || 'Scope of Loss';
   var f;
   try{
-    var blob = await (await fetch(pay.data)).blob();
+    var blob = (typeof crJobFileBlob === 'function') ? await crJobFileBlob(pay) : await (await fetch(pay.data)).blob();   /* 1359: either shape */
     f = new File([blob], nm, { type: pay.mime || blob.type || 'application/pdf' });
   }catch(e){
     crTell('Could not open that stored file: ' + (e.message || e));
@@ -44857,6 +44872,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1359, d:'2026-10-16', t:'Bigger job files, several at once', s:'Documents on a job (and insurance documents) can now be up to 50 MB each, up from 10 MB, and you can pick several at once. If a file is too big or does not upload, the page now lists it by name at the end instead of the message disappearing, and the rest still upload. Files you already have open exactly as before.' },
   { b: 1358, d:'2026-10-16', t:'iPhone photos upload', s:'Photos taken on an iPhone (HEIC files) now upload from a computer or an Android phone. Before, the photo album stopped with "Upload failed" because those browsers cannot open that kind of file. The app now turns it into a normal JPEG first, so it shows up, shrinks and shares like any other photo. The album’s file picker also lists .heic files now.' },
   { b: 1357, d:'2026-10-16', t:'Line items on invoices', s:'An invoice now lists its line items, and you can change them. Tap Line items on the job’s invoice card: it starts with the lines from the estimate or contract, plus any signed change order, and you can edit a description, quantity or price, add a line or remove one. Mark a line Extra when it is new work (extra sheets of decking, say): it is added to what the client owes on the job page, the pay link and the reminders. Plain lines only describe the job and never change the amount owed. A new invoice starts with the job’s lines already filled in.' },
   { b: 1356, d:'2026-10-16', t:'Back goes where you were', s:'The browser Back button could skip a screen and land on a client you had looked at earlier. Two things caused it: switching a tab on a client page could rewrite the history of the screen you were on, and opening a page like Production from Team, a list or the editor wiped that page out of your history. Back now walks the screens you visited, in order.' },
