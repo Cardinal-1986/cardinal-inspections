@@ -36611,3 +36611,19 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **Gates:**
   - `gate_1360` GREEN 6. It runs the shipped handler with a stubbed network: (A) the cron writes both project pages (3 projects) and still tops up photos; (B) a 503 on the project list still returns the top-up; (C) the admin button is unchanged; (D) a wrong cron secret is a 401 before CompanyCam is called. Control (1359's file): RED 3.
   - check_build GREEN.
+
+## Build 1361 — Edit client info can move a job from Retail to Insurance
+- **Why:** Theo, with a screenshot (Work type "Insurance (legacy — set Claim Type instead)"): *"Once a customer is put in as retail, changing the work type doesn't move them from retail to insurance … still shows as retail rather than in the insurance tab."*
+  - The tab is `checklist.lead.claim_type` (`projClaimType`). Work type never touched it. cr-wtd strips Insurance/Retail from that list on purpose and labels a leftover one "set Claim Type instead".
+  - But the form had no Claim Type, and `#dbConvertIns` (the only control that calls `changeClaimType`) is hidden behind the Admin row on retail. A rep could not move a job at all.
+- **What:**
+  - **Claim type row** in `#projModal` (Retail | Insurance, the Lead-source `pf-chip` look). It opens on the job's claim type. A job with none, but a legacy Insurance/Retail work type, opens on that one.
+  - **Legacy work type follows through:** picking the legacy Insurance/Retail work type moves the chip.
+  - **Save** calls `changeClaimType()` after the usual save and reload. That is the Convert button's own path, so going to Insurance with no claim data asks the carrier questions, and leaving Insurance still warns before deleting claim data.
+  - **Community** jobs show a note instead of the chips. That type comes from the community bid with partner billing, so it is never switched here.
+  - **New leads** can be started as Insurance or Retail (`lead.claim_type` at create).
+- **Gates:**
+  - `gate_1361` GREEN 6: (A) the form shows Retail on a retail job carrying the legacy Insurance work type; (B) re-picking the work type selects Insurance, and Save moves the job to insurance; (C) no claim type + legacy work type opens on Insurance; (D) community shows the note and stays community; (E) a new lead started as Insurance is created as insurance. Control 1360: RED 6.
+  - GREEN: 1155, 1203, 1218, 1261, 1341, check_build, scroll-lock. types 1530 / dupes 11 (inherited, unchanged).
+  - My first passes added two TS2339s, from narrowing lost inside callbacks; both fixed before commit.
+  - Rendered at 390px.

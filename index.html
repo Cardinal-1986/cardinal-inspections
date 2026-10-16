@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1360<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1361<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8304,6 +8304,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <input type="hidden" id="pfSource">
     <div class="pf-chips" id="pfSourceChips"><button type="button" class="pf-chip" data-src="Door knock">Door knock</button><button type="button" class="pf-chip" data-src="Referral">Referral</button><button type="button" class="pf-chip" data-src="Google / website">Google / website</button><button type="button" class="pf-chip" data-src="Yard sign">Yard sign</button><button type="button" class="pf-chip" data-src="Repeat customer">Repeat customer</button><button type="button" class="pf-chip" data-src="Storm canvass">Storm canvass</button><button type="button" class="pf-chip" data-src="Facebook / social">Facebook / social</button><button type="button" class="pf-chip" data-src="Other">Other</button></div>
     <label>Job cost (materials + labor, $)<input type="number" id="pfJobCost" min="0" step="0.01" placeholder="for profit reports"></label>
+    <label>Claim type</label>
+    <input type="hidden" id="pfClaim">
+    <div class="pf-chips" id="pfClaimChips"><button type="button" class="pf-chip" data-claim="retail">Retail</button><button type="button" class="pf-chip" data-claim="insurance">Insurance</button></div>
+    <div id="pfClaimNote" style="display:none;margin:6px 0 12px;font-size:13px;">Community job — set by the community bid, so it is changed from the community page.</div>
     <label>Job category<select id="pfCategory">
       <option value="">— not set —</option><option>Residential</option><option>Commercial</option><option>Property Management</option>
     </select></label>
@@ -16674,6 +16678,30 @@ var projModal = document.getElementById('projModal');
 var pfEditing = null; /* null = adding, else project id */
 var pfLastSource = null; /* 999: remembered lead source for the session, so a
    canvasser doing twenty doors taps once, not twenty times. */
+/* 1361: the Claim type chips on the client form */
+function pfSyncClaimChips(){
+  var host = document.getElementById('pfClaimChips'), hid = document.getElementById('pfClaim');
+  if(!host || !(hid instanceof HTMLInputElement)) return;
+  var cur = hid.value;
+  host.querySelectorAll('.pf-chip').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-claim') === cur); });
+}
+(function(){
+  var host = document.getElementById('pfClaimChips');
+  if(host) host.addEventListener('click', function(e){
+    var b = e.target instanceof Element ? e.target.closest('.pf-chip') : null; if(!b) return;
+    var hid = document.getElementById('pfClaim');
+    if(hid instanceof HTMLInputElement) hid.value = b.getAttribute('data-claim') || '';
+    pfSyncClaimChips();
+  });
+  /* picking the legacy Insurance / Retail work type moves the claim type with it */
+  var wt = document.getElementById('pfWorkType');
+  if(wt) wt.addEventListener('change', function(ev){
+    var tg = ev.target;
+    var v = (tg instanceof HTMLSelectElement) ? String(tg.value || '').toLowerCase() : '';
+    var hid = document.getElementById('pfClaim');
+    if((v === 'insurance' || v === 'retail') && hid instanceof HTMLInputElement && hid.value !== 'community'){ hid.value = v; pfSyncClaimChips(); }
+  });
+})();
 function pfSyncSourceChips(){
   var host = document.getElementById('pfSourceChips');
   var hid = document.getElementById('pfSource');
@@ -16737,6 +16765,17 @@ function openProjModal(pr){
     }
     sel.value = v || '';
   })((/** @type {HTMLSelectElement} */ (document.getElementById('pfWorkType'))), _ck.work_type || '');
+  /* 1361: the claim type is what decides the Retail / Insurance tab. A job with none set but a legacy
+     Insurance/Retail work type opens on that one, so saving finally moves it. */
+  (function(){
+    var ct = pr ? projClaimType(pr) : '';
+    if(ct === 'unknown' || !ct){ var lw = String(_ck.work_type || '').toLowerCase(); ct = (lw === 'insurance' || lw === 'retail') ? lw : ''; }
+    var hid = document.getElementById('pfClaim'), chips = document.getElementById('pfClaimChips'), note = document.getElementById('pfClaimNote');
+    if(hid instanceof HTMLInputElement) hid.value = ct;
+    if(chips) chips.style.display = (ct === 'community') ? 'none' : '';
+    if(note) note.style.display = (ct === 'community') ? '' : 'none';
+    pfSyncClaimChips();
+  })();
   var _trList = (_ck.trades && _ck.trades.length) ? _ck.trades : (_ck.trade ? [_ck.trade] : []);
   document.querySelectorAll('#pfTrades input').forEach(function(cb){
     cb.checked = _trList.indexOf(cb.value) !== -1;
@@ -19474,17 +19513,28 @@ document.getElementById('pfSave').addEventListener('click', async function(){
     var _trVal = [];
     document.querySelectorAll('#pfTrades input:checked').forEach(function(cb){ _trVal.push(cb.value); });
     if(!_trVal.length) _trVal = null;
+    var _clEl = document.getElementById('pfClaim');
+    var _clVal = (_clEl instanceof HTMLInputElement) ? _clEl.value : '';   /* 1361 */
     if(pfEditing){
+      var _edId = pfEditing;
       await pdb.update(pfEditing, fields);
       var _epr = cacheProjects.find(function(x){ return x.id === pfEditing; });
+      var _clWas = _epr ? projClaimType(_epr) : '';
       if(_epr) await patchProjectCk(_epr, { lead_source: _srcVal, job_cost: _jcVal, job_category: _catVal, work_type: _wtVal, trades: _trVal, trade: null });
       projModal.style.display = 'none';
       await reload();
-      if(currentProject && currentProject.id === pfEditing) openProject(pfEditing);
+      /* 1361: move it to the tab it now belongs to, through the Convert button's own path */
+      if(_clVal && _clVal !== 'community' && _clVal !== _clWas){
+        var _fr = cacheProjects.find(function(x){ return x.id === _edId; });
+        if(_fr) await changeClaimType(_fr, _clVal);
+      }
+      if(currentProject && currentProject.id === _edId) openProject(_edId);
     }else{
-      fields.checklist = JSON.stringify({ po: nextPo(), stage_since: new Date().toISOString(),
+      var _newCk = { po: nextPo(), stage_since: new Date().toISOString(),
         t_Lead: new Date().toISOString(), lead_source: _srcVal, job_cost: _jcVal,
-        job_category: _catVal, work_type: _wtVal, trades: _trVal });
+        job_category: _catVal, work_type: _wtVal, trades: _trVal };
+      if(_clVal === 'insurance' || _clVal === 'retail') _newCk.lead = { claim_type: _clVal, retail: _clVal === 'retail' };   /* 1361 */
+      fields.checklist = JSON.stringify(_newCk);
       fields.stage = 'Lead';
       var id = await pdb.create(fields);
       projModal.style.display = 'none';
@@ -44872,6 +44922,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1361, d:'2026-10-16', t:'Move a client to Insurance from Edit client info', s:'The Edit client info form now has a Claim type: Retail or Insurance. That is what decides which tab a client lives in. Changing the work type never moved anyone, which is why a client set to the old Insurance work type stayed under Retail. Pick Insurance and save, fill in the carrier and claim details it asks for, and the client moves to the Insurance tab. Picking the old Insurance work type now selects Insurance for you. A new lead can be started as Insurance too.' },
   { b: 1360, d:'2026-10-16', t:'New CompanyCam projects show up by morning', s:'The nightly CompanyCam sync now refreshes the list of CompanyCam projects as well as the photos. That list had stopped updating at the end of July, so a job could not find a CompanyCam project made after that. New projects now show up the next morning.' },
   { b: 1359, d:'2026-10-16', t:'Bigger job files, several at once', s:'Documents on a job (and insurance documents) can now be up to 50 MB each, up from 10 MB, and you can pick several at once. If a file is too big or does not upload, the page now lists it by name at the end instead of the message disappearing, and the rest still upload. Files you already have open exactly as before.' },
   { b: 1358, d:'2026-10-16', t:'iPhone photos upload', s:'Photos taken on an iPhone (HEIC files) now upload from a computer or an Android phone. Before, the photo album stopped with "Upload failed" because those browsers cannot open that kind of file. The app now turns it into a normal JPEG first, so it shows up, shrinks and shares like any other photo. The album’s file picker also lists .heic files now.' },
