@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1354<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1355<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44802,6 +44802,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1355, d:'2026-10-16', t:'The client in one slim bar', s:'On a wide screen the client card at the top of a job is one slim bar: the name, phone, email and address in a row, with the star and the pencil at the end, and the stage band under it is thinner. Phones and tablets look the same as before.' },
   { b: 1354, d:'2026-10-16', t:'A job page you can read', s:'The grey labels, notes and counts on a job page are brighter and one size bigger, in dark and light mode, and the red lines under every heading are gone. On a wide screen the page is two columns that never push each other around: the money and the Job Menu on the left, the house (location, job details, who is assigned, history, reviews) on the right.' },
   { b: 1353, d:'2026-10-16', t:'The job page no longer jumps on a wide screen', s:'On a wide screen, picking a Job Category or anything else that makes a card grow no longer reshuffles the cards on the right. They stay in the same order: Location, Job Details, Assigned To, History, Reviews.' },
   { b: 1352, d:'2026-10-16', t:'Quiet hours: nothing wakes the team at night', s:'Between 9 pm and 7 am, alerts to the rest of the team wait. Texts and emails are delivered at 7 am, and phone notifications are not sent at night. Whoever sets off the alert still gets their own copy right away. The morning digest, payment reminders and punch-out reminders already run only in the daytime.' },
@@ -96648,6 +96649,25 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
 .crjp-card .crjp-pbar i{display:block;height:100%;background:var(--crji-pos,#34d399);border-radius:99px;}
 /* 1351: retail — the invoice card and the Payments card travel together (one slot in every layout) */
 #projectView #acxMount .crji-stack > .crji-card{margin:12px 0 4px;}
+/* ═══ Build 1355 · the client card is one slim bar on a wide screen (Theo's pick B) ═══ */
+@media (min-width:1600px){
+  body:not(.claim-insurance):not(.claim-community) #projectView .projinfo{ --cr-stack:"1355 one slim client bar"; display:flex; flex-wrap:wrap; align-items:center; column-gap:22px; row-gap:0; padding:6px 16px; }
+  body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .poPfx{ order:1; margin:0; }
+  body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .heroNm{ order:2; flex:0 1 auto; min-width:0; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #projName .hcontact{ --cr-stack:"1355 one row"; order:3; flex-direction:row; align-items:center; gap:0 22px; margin:0; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #projName .hph, body:not(.claim-insurance):not(.claim-community) #projectView #projName .hem{ --cr-stack:"1355 inline, no label"; display:inline-flex; align-items:center; margin:0; font-size:15px; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #projName .hph::before, body:not(.claim-insurance):not(.claim-community) #projectView #projName .hem::before, body:not(.claim-insurance):not(.claim-community) #projectView #projMeta .mlbl{ --cr-stack:"1355 the bar needs no labels"; display:none; }
+  body:not(.claim-insurance):not(.claim-community) #projectView .projinfo > #projMeta{ order:4; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #projMeta .mrow{ --cr-stack:"1355 inline"; display:flex; margin:0; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #projName .hmanage{ --cr-stack:"1355 inline, no rule"; order:5; flex-basis:auto; margin:0; padding:0; border-top:0; }
+  body:not(.claim-insurance):not(.claim-community) #projectView .projinfo #favStar{ order:6; margin-left:auto; }
+  body:not(.claim-insurance):not(.claim-community) #projectView .projinfo #projEditBtn{ order:7; }
+  body:not(.claim-insurance):not(.claim-community) #projectView .projinfo > div:not(.projmeta){ order:9; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstage{ --cr-stack:"1355 slim stage band"; padding:4px 6px; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstage .dbstgmid b{ display:inline; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstage .dbstgmid small{ display:inline; margin-left:10px; font-size:13px; }
+}
+
 @media (max-width:560px){ #projectView #acxMount > .crji-stack{ order:3; } }
 @media (min-width:561px){ body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-stack{ order:3; } }
 @media (min-width:1600px){

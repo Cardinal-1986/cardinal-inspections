@@ -36495,3 +36495,17 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - `gate_1354` GREEN 13 (1700 dark + light, 1200 after resize, 390): the columns, independence (a right card growing 500px moves the Job Menu 0px), the Admin row still opens, the inks, no red rule, columns undone below 1600. Control 1353: RED 9.
   - `gate_1351` / `gate_1353` updated to look inside the columns; `gate_1216`'s light `--crji-sub` pin moved #475569 → #334155 (deliberate, noted in the gate). All GREEN, with 1349/1350/1318/1346.
   - Renders checked at 1700px in both themes.
+
+## Build 1355 — the client card is one slim bar on a wide screen (the rest of Theo's pick B)
+- **Why:** the follow-up 1354 left open. At 1700px on a retail job the client card was 275px tall (name, then PHONE / EMAIL / ADDRESS one per row, then Switch Primary · Add contact under a rule), with the stage band another 68px under it.
+- **What (CSS only, inside `@media (min-width:1600px)` and the retail fence, in `cr-jpay-styles`):**
+  - `.projinfo` becomes a wrapping flex row. `#projName` is `display:contents`, so its children order straight into it: PO, name, phone, email, address, Switch Primary · Add contact, then the star (`margin-left:auto`) and the pencil.
+  - The PHONE / EMAIL / ADDRESS labels are hidden on the bar; email goes to 15px to match phone.
+  - The stage band goes to `padding:4px 6px` (52px), with "8 Weeks Ago" inline beside the stage name.
+  - Every link keeps the 44px tap height from `cr-touch44`. 275 + 68 → 58 + 52.
+- ⚠ **Not literally one bar.** The stage band lives in `#acxMount` and the client card in `.projhead`, which are different containers. Moving the band's DOM would break `#acxMount > .dbstage` (1354's `cols()` STAY list, and gates 1052/1220/1225/1227/1235). So it is two thin rows, directly stacked.
+- Phone (the 791 namebar), tablet, Insurance and Community: untouched.
+- **Gates:**
+  - `gate_1355` GREEN 8: slim card ≤80px, four items on one row, star and pencil on the bar, 44px taps, the tel: link, stage ≤56px with 44px arrows, 1200px unchanged, 390 namebar. Control 1354: RED 3.
+  - GREEN: check_build, gate_stack, gate_1354/1353/1351/1216/1206, audit_scrolllock.
+  - types/dupes are red with the same counts as 1354 (inherited).
