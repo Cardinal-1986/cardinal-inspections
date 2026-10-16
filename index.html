@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1355<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1356<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -30113,8 +30113,13 @@ function __histPush(st){
        JSON.stringify(cur.data || null) === JSON.stringify(data || null)){
       return; /* already at this state; no double-push */
     }
+    /* 1356: replace only the empty first entry, or the legacy {v:…} twin this same navigation just pushed
+       (openProject & co. are wrapped by both systems). Any other legacy page — Team, a list, the editor — is a
+       real place, and replacing it made Back skip it. */
+    var _twin1356 = !!(cur && cur.app !== 'cardinal-nav' && cur.v && (cur.v === view || (cur.v === 'me' && view === 'profile')) &&
+      (view !== 'project' || (data && String(cur.id) === String(data.projectId))));
     try{
-      if(!cur || cur.app !== 'cardinal-nav'){
+      if(!cur || _twin1356){
         /* first app state — replace the empty initial entry so back doesn't exit */
         history.replaceState(st, '');
       } else {
@@ -30910,7 +30915,12 @@ async function enableNotifications(){
     var prev = window.__curTab;
     window.__curTab = name;
     var pv = document.getElementById('projectView');
-    if(!__histLock && currentProject && pv && pv.style.display !== 'none' && prev && prev !== name){
+    /* 1356: only rewrite the entry that IS this client. currentProject outlives the page, and a tab flip fired
+       from another screen rewrote that screen's entry as the last client (Back then "went somewhere random"). */
+    var _hs1356 = history.state, _cid1356 = currentProject && String(currentProject.id);
+    var _onIt1356 = !!(_hs1356 && ((_hs1356.v === 'project' && String(_hs1356.id) === _cid1356) ||
+      (_hs1356.app === 'cardinal-nav' && _hs1356.view === 'project' && _hs1356.data && String(_hs1356.data.projectId) === _cid1356)));
+    if(!__histLock && currentProject && _onIt1356 && pv && pv.style.display !== 'none' && prev && prev !== name){
       try{
         /* 1037 (audit F2): replaceState, not pushState. Stacking one entry per
            tab flip armed the back-trap (T6) — and people think of tabs as one
@@ -31015,6 +31025,11 @@ async function enableNotifications(){
      with pushState / replaceState, which do not raise hashchange. */
   window.addEventListener('hashchange', function(){
     if(!currentUser || !__restorableHash()) return;
+    /* 1356: Back/Forward between two of the app's own entries DOES raise hashchange when their fragments
+       differ (the comment above is wrong about that), and navSetView entries keep the previous page's
+       fragment. So Back onto Sales Floor read "#p/<last client>" here and opened that client over it.
+       The app's entries all carry a state; an alert link's fragment entry has none. */
+    if(history.state) return;
     __restored = false; __restoreTries = 0;
     setTimeout(window.__tryRestoreFromHash, 0);
   });
@@ -44802,6 +44817,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1356, d:'2026-10-16', t:'Back goes where you were', s:'The browser Back button could skip a screen and land on a client you had looked at earlier. Two things caused it: switching a tab on a client page could rewrite the history of the screen you were on, and opening a page like Production from Team, a list or the editor wiped that page out of your history. Back now walks the screens you visited, in order.' },
   { b: 1355, d:'2026-10-16', t:'The client in one slim bar', s:'On a wide screen the client card at the top of a job is one slim bar: the name, phone, email and address in a row, with the star and the pencil at the end, and the stage band under it is thinner. Phones and tablets look the same as before.' },
   { b: 1354, d:'2026-10-16', t:'A job page you can read', s:'The grey labels, notes and counts on a job page are brighter and one size bigger, in dark and light mode, and the red lines under every heading are gone. On a wide screen the page is two columns that never push each other around: the money and the Job Menu on the left, the house (location, job details, who is assigned, history, reviews) on the right.' },
   { b: 1353, d:'2026-10-16', t:'The job page no longer jumps on a wide screen', s:'On a wide screen, picking a Job Category or anything else that makes a card grow no longer reshuffles the cards on the right. They stay in the same order: Location, Job Details, Assigned To, History, Reviews.' },

@@ -36509,3 +36509,21 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - `gate_1355` GREEN 8: slim card ≤80px, four items on one row, star and pencil on the bar, 44px taps, the tel: link, stage ≤56px with 44px arrows, 1200px unchanged, 390 namebar. Control 1354: RED 3.
   - GREEN: check_build, gate_stack, gate_1354/1353/1351/1216/1206, audit_scrolllock.
   - types/dupes are red with the same counts as 1354 (inherited).
+
+## Build 1356 — Back goes where you were
+- **Why:** Theo: *"Sometimes when I hit the back button on my browser in chrome it takes me to random places instead of where I was at."*
+  - Reproduced in Chromium (no example needed): Production → client A → Estimates → A/R → Sales Floor → client B → Board, then Back ×7.
+  - It went Board → B → **A** → A/R → Estimates → A → Production. Sales Floor was gone, replaced by client A.
+  - Also: Team → Production → Back landed on **Home**.
+- **Three causes, all in the main block's history code. Two systems share one history stack: the hash router (`__histPush`, `{v:…}`) and `navSetView` (`{app:'cardinal-nav'}`).**
+  1. **The 1259 hashchange router reopened stale fragments.** `navSetView` pushes with no URL, so its entries keep the previous page's fragment. The 1259 comment says the app's own navigation "never fires" hashchange; that is wrong. Back/Forward between two entries whose fragments differ DOES fire it. So Back onto Sales Floor (fragment `#p/A`) opened client A over it and `replaceState`'d the entry.
+     - **Fix:** ignore hashchange when `history.state` is set. Every app entry carries a state; an alert link's fragment entry has none, so 1259 still works.
+  2. **`navSetView` replaced any non-cardinal-nav entry** as if it were the empty first one. That is right for the empty entry and for the `{v:…}` twin that the same navigation just pushed (openProject and a dozen others are wrapped by both systems, which is why one tap is one entry). It is wrong for Team, a list, the editor and My Profile: opening Production from one of them overwrote it.
+     - **Fix:** replace only when there is no state, or the entry is the same view's legacy twin (same id for a client).
+  3. **The 1037 tab memory** `replaceState`'d `{v:'project', id: currentProject.id}` on whatever entry was current. `currentProject` outlives the client page.
+     - **Fix:** it writes only when the current entry is this client.
+- **Gates:**
+  - `gate_1356` GREEN 7: (A) the seven-screen drive walks back in exact reverse; (B) Team → Production → Back is Team; (C) tab flips still cost one Back, and a tab flip never rewrites another screen's entry; (D) an alert fragment still opens the client. Control 1355: RED 3 (A×2, B).
+  - Navigation gates, all unchanged against 1355: 1022, 1036, 1037, 1076, 1137 and the rest of the sweep.
+  - check_build GREEN; types/dupes are the same inherited counts.
+- ⚠ **Not changed:** `navSetView` entries still carry the previous page's fragment, so a *reload* on Sales Floor reopens the last client. Harmless now that hashchange ignores traversal; recorded.
