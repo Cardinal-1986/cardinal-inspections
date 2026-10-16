@@ -36572,3 +36572,30 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **Gates:**
   - `gate_1358` GREEN 6: (A) a real HEIC becomes a 1600×1200 JPEG; (B) the album adds it via `#galFileInput`; (C) no converter download on launch or for a PNG; (D) the accept list. Control 1357: RED 3, reproducing the rep's exact message.
   - Also GREEN: 1214, 1221, 1222, 1323, 1331, 1334, 1357. check_build, scroll-lock audit, types 1530 / dupes 11 (inherited, unchanged).
+
+## Build 1359 — job files live in file storage, 50 MB each, several at once
+- **Why:** Theo, relaying a rep: *"There is a 10mb limit but some are much larger. He says it's still one doc at a time he can upload. Would it be better if we somehow stored to spark …?"*
+  - Measured: a job file was base64 text inside `inspection_reports.html`: 404 files, 180 MB in rows, the biggest 13 MB. That is the 10 MB cap.
+  - The Documents picker was already `multiple`. Why it read as "one at a time":
+    - a file over 10 MB was skipped;
+    - the next "Uploading 2 of 3" overwrote that message;
+    - the first failure `break`'d out of the loop.
+  - Theo picked **1 (file storage)** over the Spark. The Spark is never a live dependency (settled): off, rebooting or offline means nobody can open a contract at the kitchen table.
+- **SQL first, APPLIED via MCP:** `job_files_bucket.sql`.
+  - Private bucket `job-files`, 50 MB, any type.
+  - Read/insert only where `exists(projects p where p.id = first path segment)`, so the projects RLS decides, exactly as for the job's rows. Insert also requires `is_staff()`. Delete: uploader or admin. No update.
+  - Verified as a rep through `set local role authenticated` + jwt claims: own job visible, `is_staff()` true.
+- **What:**
+  - `crJobFileUp(pid, file)` uploads to `job-files/<pid>/<stamp>-<name>`; the row keeps `{file,name,mime,size,bucket,path}`, no `data`.
+  - `crJobFileBlob(meta)` reads either shape. `openJobFile` and `readFiledScope` take either. **Old rows open unchanged.** `readFiledScope` falls back to `fetch(data)` when the helper is absent, which keeps harness_657's extraction working.
+  - `addJobFiles` at 50 MB keeps going past a failure and ends with one message naming the added count, the too-big files and the failed ones. That message stays on screen when anything went wrong.
+  - `uploadInsuranceDoc` (1332's multi-pick) at 50 MB goes to storage.
+- **Not changed:**
+  - receipts (shrunk photos, well under the cap);
+  - the AI scope reader's own 12 MB cap (that is the model's limit);
+  - the 404 existing files stay in their rows (they open fine). Moving them out is a separate, optional cleanup.
+  - Deleting a document row leaves its storage object (as photos do).
+- **Gates:**
+  - `gate_1359` GREEN 7. (A) [small, 12 MB, 51 MB, refused, after]: 3 added, the 12 MB one included, the 51 MB and the refused one named, after.pdf still added. (B) rows point at `job-files/p1/…` with no base64. (C) the stored 12 MB file opens with its real bytes; an old inline row still opens. (D) a 15 MB insurance doc goes to storage. Control 1358: RED 5.
+  - GREEN: 1298, 1332, 1342, 1343, 1358, harness_673. harness_657 31/1, its inherited failure unchanged.
+  - check_build; types 1530 / dupes 11 / scroll-lock unchanged.
