@@ -21,6 +21,7 @@
  * regression. Verified by running it against the control.)
  */
 import path from 'path';
+process.env.NOTIFY_QUIET_HOURS = 'off';   /* 1352: this gate is about WHAT is sent, not WHEN; quiet hours have their own gate (gate_1352) */
 
 const FILE = process.argv[2] || 'api/notify.js';
 const ABS  = FILE.startsWith('/') ? FILE : path.resolve(process.cwd(), FILE);

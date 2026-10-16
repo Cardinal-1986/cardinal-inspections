@@ -33,6 +33,11 @@ const here = dirname(new URL(import.meta.url).pathname);
 const ROOT = resolve(here, '../../../..');
 const FILE = resolve(process.argv[2] || resolve(ROOT, 'index.html'));
 const APP = readFileSync(FILE, 'utf8');
+/* 1351 RETIRED what this gate guards on retail: Theo ("do all", 16 Oct) removed the retail money strip,
+   its phone wrapper (#dbMoneyCard) and the Payment Information row — the Payments card carries the money
+   once. gate_1351 asserts the new layout (and that Money In & Commissions is still reachable). Against an
+   artifact from before 1351 this gate still runs in full, so it stays a working control for that history. */
+if (APP.includes('var _rt1351')) { console.log('SUPERSEDED by gate_1351 — the retail money strip / Payment Information row this gate guards were removed at 1351 on purpose'); process.exit(0); }
 const MOCK = readFileSync(resolve(here, 'e2e_mock_supa.js'), 'utf8');
 
 const PW_SANDBOX = '/opt/node22/lib/node_modules/playwright/index.js';

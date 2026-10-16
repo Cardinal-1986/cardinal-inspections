@@ -13,6 +13,7 @@
  */
 import { pathToFileURL } from 'url';
 import { resolve } from 'path';
+process.env.NOTIFY_QUIET_HOURS = 'off';   /* 1352: this gate is about WHAT is sent, not WHEN; quiet hours have their own gate (gate_1352) */
 const TARGET = resolve(process.argv[2] || 'api/notify.js');
 
 let pass = 0, fail = 0;

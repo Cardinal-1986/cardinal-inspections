@@ -20,6 +20,7 @@
    Usage: node harness_deeplink1125.js [repo-root] */
 const fs = require('fs');
 const path = require('path');
+process.env.NOTIFY_QUIET_HOURS = 'off';   /* 1352: this harness is about WHAT is sent, not WHEN; quiet hours have their own gate (gate_1352) */
 
 const ROOT = process.argv[2] || path.resolve(__dirname, '../../../..');
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');

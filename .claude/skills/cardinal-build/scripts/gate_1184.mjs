@@ -21,6 +21,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+process.env.NOTIFY_QUIET_HOURS = 'off';   /* 1352: this gate is about WHAT is sent, not WHEN; quiet hours have their own gate (gate_1352) */
 
 const srcApi = path.resolve(process.argv[2] || new URL('../../../../api', import.meta.url).pathname);
 if (!fs.existsSync(path.join(srcApi, 'notify.js'))) {

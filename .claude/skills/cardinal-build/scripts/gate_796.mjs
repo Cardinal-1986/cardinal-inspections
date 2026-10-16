@@ -28,6 +28,11 @@ import { readFileSync } from 'fs';
 const ROOT = '/home/user/cardinal-inspections';
 const FILE = process.argv[2] || ROOT + '/index.html';
 const APP  = readFileSync(FILE, 'utf8');
+/* 1351 RETIRED what this gate guards on retail: Theo ("do all", 16 Oct) removed the retail money strip,
+   its phone wrapper (#dbMoneyCard) and the Payment Information row — the Payments card carries the money
+   once. gate_1351 asserts the new layout (and that Money In & Commissions is still reachable). Against an
+   artifact from before 1351 this gate still runs in full, so it stays a working control for that history. */
+if (APP.includes('var _rt1351')) { console.log('SUPERSEDED by gate_1351 — the retail money strip / Payment Information row this gate guards were removed at 1351 on purpose'); process.exit(0); }
 const MOCK = readFileSync(ROOT + '/.claude/skills/cardinal-build/scripts/e2e_mock_supa.js', 'utf8');
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { pass++; console.log('  ok   ' + n); } else { fail++; console.log('  FAIL ' + n + (x !== undefined ? '  — ' + x : '')); } };
