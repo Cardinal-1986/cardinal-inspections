@@ -296,6 +296,63 @@ async function topUp(key, service, pagesWanted) {
     stamped, total, direction, hit_page_cap: pagesDone >= cap && hasNext } };
 }
 
+/* 1360: the project list pass, shared by the admin button and the nightly cron. Until 1360 only the button ran
+   it, so companycam_projects froze on 31 Jul and a job's CompanyCam search could not find a project made after. */
+async function projectsPass(key, service) {
+    let cursor = null, wrote = 0, pages = 0, hasNext = true;
+    while (hasNext && pages < 40) {
+      const params = { limit: 100 };
+      if (cursor) params.after = cursor;
+      const r = await cc('/projects', key, params);
+      if (!r.ok) {
+        return { http: 502, body: { error: 'CompanyCam refused the project list',
+                               status: r.status, detail: scrub(r.raw, key), wrote, pages } };
+      }
+      pages++;
+      const data = (r.body && r.body.data) || [];
+      const meta = (r.body && r.body.meta) || {};
+      const rows = data.filter(p => p && p.id).map(p => {
+        /* Address arrives as an object on v1; flatten it to one searchable line
+           and tolerate a plain string, because this shape is unverified against
+           the live account. Missing pieces simply drop out. */
+        const a = p.address || {};
+        const addr = typeof a === 'string' ? a : [
+          a.street_address_1, a.street_address_2, a.city, a.state, a.postal_code
+        ].filter(Boolean).join(', ');
+        return {
+          id: String(p.id),
+          name: p.name || null,
+          address: addr || null,
+          status: p.status || null,
+          cc_created_at: iso(p.created_at),
+          synced_at: new Date().toISOString()
+        };
+      });
+      if (rows.length) {
+        const up = await sb(service, 'companycam_projects?on_conflict=id', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify(rows)
+        });
+        if (!up.ok) {
+          const why = await up.text();
+          return { http: 502, body: { error: 'Could not write the project list',
+                                 status: up.status, detail: scrub(why, service), wrote, pages } };
+        }
+        wrote += rows.length;
+      }
+      hasNext = meta.has_next === true && !!meta.next_cursor;
+      cursor = hasNext ? meta.next_cursor : null;
+      if (!data.length) hasNext = false;
+    }
+
+    /* Stamp the names onto the photos. One statement, not 60k round trips. */
+    const st = await stampNames(service);
+
+    return { http: 200, body: { projects: wrote, pages, stamped: st.stamped,
+                           backfilled: st.ok, done: true } };
+}
+
 export default async function handler(req, res) {
   /* GET is the cron's only shape, and it may only ever mean "top up". Every
      other action still requires POST and an admin session. */
@@ -316,7 +373,11 @@ export default async function handler(req, res) {
       const c = cronAuthorised(req);
       if (!c.ok) { res.status(401).json({ error: 'Unauthorized', detail: c.why }); return; }
       const out = await topUp(key, service, req.query && req.query.pages);
-      res.status(out.http || 200).json(out.body);
+      /* 1360: and refresh the project list (~10 pages), so new CompanyCam projects are findable by morning.
+         A failure here never hides the photo top-up's result. */
+      let proj;
+      try { proj = await projectsPass(key, service); } catch (e) { proj = { http: 500, body: { error: String((e && e.message) || e) } }; }
+      res.status(out.http || 200).json(Object.assign({}, out.body, { projects_pass: proj.body }));
       return;
     }
     const auth = req.headers.authorization || '';
@@ -404,60 +465,8 @@ export default async function handler(req, res) {
 
        Cheap: 775 projects is ~8 pages, not 617. Runs to completion in one call. */
     if (b.action === 'projects') {
-      let cursor = null, wrote = 0, pages = 0, hasNext = true;
-      while (hasNext && pages < 40) {
-        const params = { limit: 100 };
-        if (cursor) params.after = cursor;
-        const r = await cc('/projects', key, params);
-        if (!r.ok) {
-          res.status(502).json({ error: 'CompanyCam refused the project list',
-                                 status: r.status, detail: scrub(r.raw, key), wrote, pages });
-          return;
-        }
-        pages++;
-        const data = (r.body && r.body.data) || [];
-        const meta = (r.body && r.body.meta) || {};
-        const rows = data.filter(p => p && p.id).map(p => {
-          /* Address arrives as an object on v1; flatten it to one searchable line
-             and tolerate a plain string, because this shape is unverified against
-             the live account. Missing pieces simply drop out. */
-          const a = p.address || {};
-          const addr = typeof a === 'string' ? a : [
-            a.street_address_1, a.street_address_2, a.city, a.state, a.postal_code
-          ].filter(Boolean).join(', ');
-          return {
-            id: String(p.id),
-            name: p.name || null,
-            address: addr || null,
-            status: p.status || null,
-            cc_created_at: iso(p.created_at),
-            synced_at: new Date().toISOString()
-          };
-        });
-        if (rows.length) {
-          const up = await sb(service, 'companycam_projects?on_conflict=id', {
-            method: 'POST',
-            headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-            body: JSON.stringify(rows)
-          });
-          if (!up.ok) {
-            const why = await up.text();
-            res.status(502).json({ error: 'Could not write the project list',
-                                   status: up.status, detail: scrub(why, service), wrote, pages });
-            return;
-          }
-          wrote += rows.length;
-        }
-        hasNext = meta.has_next === true && !!meta.next_cursor;
-        cursor = hasNext ? meta.next_cursor : null;
-        if (!data.length) hasNext = false;
-      }
-
-      /* Stamp the names onto the photos. One statement, not 60k round trips. */
-      const st = await stampNames(service);
-
-      res.status(200).json({ projects: wrote, pages, stamped: st.stamped,
-                             backfilled: st.ok, done: true });
+      const out = await projectsPass(key, service);
+      res.status(out.http || 200).json(out.body);
       return;
     }
 

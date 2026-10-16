@@ -36599,3 +36599,15 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - `gate_1359` GREEN 7. (A) [small, 12 MB, 51 MB, refused, after]: 3 added, the 12 MB one included, the 51 MB and the refused one named, after.pdf still added. (B) rows point at `job-files/p1/…` with no base64. (C) the stored 12 MB file opens with its real bytes; an old inline row still opens. (D) a 15 MB insurance doc goes to storage. Control 1358: RED 5.
   - GREEN: 1298, 1332, 1342, 1343, 1358, harness_673. harness_657 31/1, its inherited failure unchanged.
   - check_build; types 1530 / dupes 11 / scroll-lock unchanged.
+
+## Build 1360 — the nightly CompanyCam sync refreshes the project list
+- **Why:** Theo: *"Can you run the sync"*. Measured first: the PHOTO mirror is healthy (the 03:00 UTC cron wrote 616 photos in 3 days; newest photo 15 Oct). But `companycam_projects` had not been written since **31 Jul**. Only the admin "projects" button ran that pass, never the cron. So a CompanyCam search from a job could not find any project made after July. Asked; Theo: *"Yes, refresh nightly."*
+- **What (`api/companycam-sync.js`):**
+  - The projects action body moved verbatim into `projectsPass(key, service)`, returning `{http, body}`. The admin button calls it as before.
+  - The cron GET, after `topUp()`, calls it too and adds `projects_pass` to its response. A refusal there is reported but never hides the top-up's result.
+  - Budget: top-up 4 pages + ~10 project pages, about 10 s of the route's 60 s `maxDuration`.
+  - `index.html`: stamp + changelog only.
+- I did not trigger the sync by hand. The cron needs `CRON_SECRET` (env values are never read here), and the button needs an admin session. The first run with the new code is tonight's 03:00 UTC (11 pm ET).
+- **Gates:**
+  - `gate_1360` GREEN 6. It runs the shipped handler with a stubbed network: (A) the cron writes both project pages (3 projects) and still tops up photos; (B) a 503 on the project list still returns the top-up; (C) the admin button is unchanged; (D) a wrong cron secret is a 401 before CompanyCam is called. Control (1359's file): RED 3.
+  - check_build GREEN.
