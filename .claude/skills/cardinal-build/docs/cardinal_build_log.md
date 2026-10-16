@@ -36403,3 +36403,15 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   `crews_trades_masonry_plumbing.sql`, applied before the HTML.
 - **Gates:** `gate_1347` 10/10 (owner, Joan, admin Crews, production Crews), control 1346 RED 8 without crashing.
   check_build green. Rendered at 390 and 1280 px.
+
+## Build 1349 — every payment on a job, in one place (Theo's pick: B, tabs)
+- **Why:** after one bank check was typed in twice on a job and "paid so far" read wrong, Theo: *"check the client profile and see how confusing it is to see whats been paid so far. There has to be a better way."* Preview offered A (one list) and B (tabs); he picked **B**.
+- **What:** `cr-jpay-styles` + `cr-jpay-script` / `window.CardinalJobPay` (`html`, `refresh`, `dupes`). `renderAcxOverview()` adds `CardinalJobPay.html(pr, fin)` right after `CardinalAR.jobBlock`. The card is a `.crji-card`, so it inherits the invoice card's ground, its 1286/1290 flat treatment and its `order:3` slot in the `#acxMount` column.
+  - Summary: Job total / Received / Paid out (office only) / Balance due. **Received and Balance are `jobFinance()`'s numbers, never recounted** (1314). When the listed rows add up to less, the card says the rest was recorded on the old payment sheet.
+  - Tabs Received / Paid out / All (office = `commFullAccess()`); a rep gets the Received list only and **never queries** `crew_payments`, `commissions` or `draws`.
+  - Paid out = `crew_payments` + **paid** `commissions` + **outstanding** `draws`. A repaid draw is left out: it was taken back out of a commission that is already listed.
+  - Each row shows its date, method, the time it was entered and who entered it.
+  - Duplicate flag: same amount to the cent, dated within 3 days; **the later-entered one** is flagged with "Remove this one" / "Keep both" (kept per device in `localStorage['cr-jpay-keep']`).
+  - Remove, from the row's ⋯ menu: offered to an admin, or to whoever entered it within 48 hours. The database still decides (`collections_delete`); because a refused RLS delete returns no row and no error, the deleted-row count is checked.
+- **No observer, no scroll lock, no SQL.** `html()` paints from cache and starts a fetch (throttled to 1.5s); the fetch repaints only this card.
+- **Gates:** `gate_1349.mjs` (Chromium) GREEN 18 (office + rep), control 1347 RED 2 without crashing. check_build GREEN. gate_types and gate_dupes give **identical** results on 1347 and 1349 (1530 errors; 11 names over), so this build adds nothing to either. Both were already red on main after 1347. Contrast: every new ink ≥ 6.5:1 in both themes, computed and confirmed by computed style in a real render.
