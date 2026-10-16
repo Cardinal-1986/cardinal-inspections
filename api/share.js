@@ -130,12 +130,14 @@ async function owedOn(sbHeaders, rep) {
     // contracted-job case). Falls back to the invoice's own stored total.
     let contractTotal = 0, coTotal = 0;
     for (const r of await readRows(sbHeaders, 'inspection_reports',
-        `${SUPABASE_URL}/rest/v1/inspection_reports?project_id=eq.${rep.project_id}&select=title,total,signed_at`)) {
+        `${SUPABASE_URL}/rest/v1/inspection_reports?project_id=eq.${rep.project_id}&select=title,total,signed_at,extra_total`)) {
       if (/^contract/i.test(String(r.title || '').trim()) && r.signed_at && Number(r.total) > 0) {
         contractTotal += Number(r.total);
       }
       // 1323: a signed change order adds to the job (jobFinance() does the same)
       if (/^change order/i.test(String(r.title || '').trim()) && r.signed_at && Number(r.total) > 0) coTotal += Number(r.total);
+      // 1357: an invoice's EXTRA lines add to the job, like a change order (jobFinance() does the same)
+      if (/^invoice/i.test(String(r.title || '').trim()) && Number(r.extra_total) > 0) coTotal += Number(r.extra_total);
     }
     // 1314: the job total is jobFinance()'s, not a narrower one. Signed contract
     // documents OR the contracts table (whichever carries more — never both), plus
