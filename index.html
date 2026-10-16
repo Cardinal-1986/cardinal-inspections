@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1349<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1350<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44797,6 +44797,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1350, d:'2026-10-16', t:'What a job cost, its profit, and who is owed back', s:'The Payments card on the client page has a Costs tab. Add what the job cost (material, labor or other), when, and who paid for it. Crew payments recorded in Crews count as labor by themselves. The card shows the job\'s costs, gross profit and margin. When someone paid out of their own pocket, tick Reimburse: it shows as Needs paid until the office marks it reimbursed, and Invoices & Payments lists everything still owed back to the team. Costs and profit are office only; a rep sees and adds their own receipts and whether they have been paid back.' },
   { b: 1349, d:'2026-10-16', t:'Every payment on a job, in one place', s:'The client page has a Payments card under the invoice. It shows the job total, what has been received, what has been paid out and the balance due, then every payment with its date, how it was paid, when it was entered and who entered it. Tabs switch between Received, Paid out and All. Paid out lists crew payments, paid commissions and draws, and only the office sees it. When two payments of the same amount are entered within a few days of each other, the second one is flagged so a check typed in twice is caught; remove it or keep both. A payment can be removed from its menu by the office, or by whoever entered it within 48 hours.' },
   { b: 1347, d:'2026-10-15', t:'Check Register, crew payments in one place, Masonry and Plumbing', s:'The Owner Console has a new Check Register: every check, ACH and Zelle through the Chase business account, with tabs for money received, your own payments, the Cardinal team, sales, Jerry, crews and subs, and everything else. Search, filter by month, category or method, see totals, view it by person or company, match a payment to a client job, and export what you are looking at as a spreadsheet. Only your login can see it. The Crews page has an All Payments tab at the top that lists every crew payment with filters and a total, and two new sections, Masonry and Plumbing.' },
   { b: 1346, d:'2026-10-14', t:'Record a deposit before the job is invoiced', s:'A signed job now shows Record payment as its main button until the work is finished, so a deposit or a progress payment goes in from the job page without moving the pipeline. Invoices & Payments has a new Deposits & progress payments group listing every signed job at Approved or Scheduled that still has money to come. Those jobs are not counted as owed or overdue.' },
@@ -91407,6 +91408,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       }
     }
     remWire();
+    /* 1350: unpaid reimbursements across every job, at the top (office only; it fetches its own rows) */
+    try{ if(window.CardinalJobPay && window.CardinalJobPay.owedInto) window.CardinalJobPay.owedInto(body); }catch(_){}
   }
 
   /* ═══ Build 1156: automatic payment reminders (AR arc Build 3 — the
@@ -96550,19 +96553,24 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
    office's only (crew payments, paid commissions, outstanding draws).
    The card rides .crji-card for its ground and its place in the column, so
    both themes and the 1286/1290 flat treatment come with it. Inks below are
-   computed against --crji-card in each theme. */
-:root{ --crjp-out:#f0a07a; --crjp-warn-bg:#3a2c08; --crjp-warn-ink:#ffd98a; --crjp-seg:#1b1f24; --crjp-seg-on:#2a3038; }
-:root[data-theme="rb-light"]{ --crjp-out:#9a3b12; --crjp-warn-bg:#fff3d6; --crjp-warn-ink:#6b4200; --crjp-seg:#eaeef3; --crjp-seg-on:#ffffff; }
+   computed against --crji-card in each theme.
+   Build 1350 adds the Costs tab (job_costs + crew payments), gross profit and
+   margin, the Add a cost form, and reimbursement chips. */
+:root{ --crjp-out:#f0a07a; --crjp-warn-bg:#3a2c08; --crjp-warn-ink:#ffd98a; --crjp-ok-bg:#0f2f22; --crjp-ok-ink:#7fe0b5; --crjp-seg:#1b1f24; --crjp-seg-on:#2a3038; }
+:root[data-theme="rb-light"]{ --crjp-out:#9a3b12; --crjp-warn-bg:#fff3d6; --crjp-warn-ink:#6b4200; --crjp-ok-bg:#e3f5ec; --crjp-ok-ink:#05603f; --crjp-seg:#eaeef3; --crjp-seg-on:#ffffff; }
 .crjp-card .crjp-sum{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-variant-numeric:tabular-nums;font-size:15px;}
 .crjp-card .crjp-sum span{color:var(--crji-sub,#a8b0ba);}
 .crjp-card .crjp-sum b{text-align:right;font-weight:700;}
 .crjp-card .crjp-sum .crjp-bal{color:var(--crji-ink,#f2f4f7);font-weight:700;}
 .crjp-card .crjp-sum b.crjp-bal{font-size:18px;color:var(--crji-due,#f08a90);}
 .crjp-card .crjp-sum b.crjp-bal.paid{color:var(--crji-pos,#34d399);}
+.crjp-card .crjp-sum b.crjp-gp{color:var(--crji-pos,#34d399);}
+.crjp-card .crjp-sum b.crjp-gp.neg{color:var(--crji-due,#f08a90);}
 .crjp-card .crjp-sum hr{grid-column:1/-1;border:0;border-top:1px solid var(--crji-line,#262a30);margin:4px 0;}
 .crjp-card .crjp-note{font-size:13px;color:var(--crji-sub,#a8b0ba);margin:6px 0 0;}
-.crjp-card .crjp-seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--crjp-seg,#1b1f24);border-radius:12px;padding:4px;margin:12px 0 4px;}
-.crjp-card .crjp-seg button{min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--crji-sub,#a8b0ba);font:600 13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;cursor:pointer;}
+.crjp-card .crjp-seg{display:grid;grid-template-columns:repeat(var(--crjp-n,3),1fr);gap:6px;background:var(--crjp-seg,#1b1f24);border-radius:12px;padding:4px;margin:12px 0 4px;}
+.crjp-card .crjp-seg button{min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--crji-sub,#a8b0ba);font:600 13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;padding:2px;}
+.crjp-card .crjp-seg button small{font-size:11px;font-weight:600;opacity:.9;}
 .crjp-card .crjp-seg button[aria-pressed="true"]{background:var(--crjp-seg-on,#2a3038);color:var(--crji-ink,#f2f4f7);}
 .crjp-card .crjp-row{display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--crji-line,#262a30);}
 .crjp-card .crjp-list > .crjp-row:first-child{border-top:0;}
@@ -96572,21 +96580,33 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 .crjp-card .crjp-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:99px;background:var(--crjp-seg,#1b1f24);color:var(--crji-sub,#a8b0ba);margin-left:6px;vertical-align:1px;}
 .crjp-card .crjp-amt{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .crjp-card .crjp-amt.in{color:var(--crji-pos,#34d399);}
-.crjp-card .crjp-amt.out{color:var(--crjp-out,#f0a07a);}
+.crjp-card .crjp-amt.out,.crjp-card .crjp-amt.cost{color:var(--crjp-out,#f0a07a);}
 .crjp-card .crjp-dots{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--crji-sub,#a8b0ba);font-size:20px;border-radius:10px;cursor:pointer;}
-.crjp-card .crjp-dots[hidden]{display:none;}
 .crjp-card .crjp-nodots{width:44px;}
 .crjp-card .crjp-flag{grid-column:1/-1;background:var(--crjp-warn-bg,#3a2c08);color:var(--crjp-warn-ink,#ffd98a);border-radius:10px;padding:8px 10px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .crjp-card .crjp-flag .crjp-fbtns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;}
-.crjp-card .crjp-flag button,.crjp-card .crjp-acts2 button{min-height:44px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer;}
+.crjp-card .crjp-flag button,.crjp-card .crjp-acts2 button,.crjp-card .crjp-rb button{min-height:44px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer;}
 .crjp-card .crjp-acts2{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;color:var(--crji-ink,#f2f4f7);}
-.crjp-card .crjp-acts2[hidden]{display:none;}
+.crjp-card .crjp-rb{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--crji-ink,#f2f4f7);}
+.crjp-card .crjp-st{font-size:12px;font-weight:700;padding:4px 9px;border-radius:99px;}
+.crjp-card .crjp-st.need{background:var(--crjp-warn-bg,#3a2c08);color:var(--crjp-warn-ink,#ffd98a);}
+.crjp-card .crjp-st.done{background:var(--crjp-ok-bg,#0f2f22);color:var(--crjp-ok-ink,#7fe0b5);}
 .crjp-card .crjp-empty{font-size:13px;color:var(--crji-sub,#a8b0ba);padding:8px 0;}
 .crjp-card .crjp-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
 .crjp-card .crjp-foot .crji-btn{flex:1 1 auto;}
+.crjp-card .crjp-form{border:1px dashed var(--crji-line,#262a30);border-radius:12px;padding:12px;display:grid;gap:10px;margin-top:10px;}
+.crjp-card .crjp-form label{display:grid;gap:4px;font-size:13px;color:var(--crji-sub,#a8b0ba);}
+.crjp-card .crjp-form input[type="text"],.crjp-card .crjp-form input[type="date"],.crjp-card .crjp-form select{box-sizing:border-box;width:100%;min-height:44px;border:1px solid var(--crji-btnline,#3a3d46);border-radius:8px;padding:8px 10px;background:var(--crji-btn,#1b1f24);color:var(--crji-ink,#f2f4f7);font-size:15px;}
+.crjp-card .crjp-form .crjp-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.crjp-card .crjp-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.crjp-card .crjp-chips button{min-height:44px;border:1px solid var(--crji-btnline,#3a3d46);border-radius:99px;padding:0 14px;background:transparent;color:var(--crji-ink,#f2f4f7);font-size:13px;font-weight:600;cursor:pointer;}
+.crjp-card .crjp-chips button[aria-pressed="true"]{background:var(--crji-ink,#f2f4f7);color:var(--crji-card,#141619);border-color:var(--crji-ink,#f2f4f7);}
+.crjp-card .crjp-form .crjp-chk{display:flex;align-items:center;gap:8px;min-height:44px;color:var(--crji-ink,#f2f4f7);font-size:15px;}
+.crjp-card .crjp-form .crjp-chk input{width:20px;height:20px;accent-color:#C8202E;}
+.crjp-card .crjp-err{font-size:13px;color:var(--crji-due,#f08a90);}
 </style>
 <script id="cr-jpay-script">
-/* ═══ Build 1349 · Payments on the client page — v2026-10-16 build 1349 ═════
+/* ═══ Build 1349 · Payments on the client page — v2026-10-16 build 1350 ═════
    Theo, after the Linda Lang reconciliation (one bank check typed in twice,
    "paid so far" reading $90k on a $68k job): "check the client profile and see
    how confusing it is to see whats been paid so far. There has to be a better
@@ -96611,12 +96631,28 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
    entered it within 48 hours while its commission is unpaid. A refused delete
    returns no row and no error, so the count of deleted rows is checked.
 
+   Build 1350 (Theo picked B again: "costs join the Payments card"):
+     Costs     — job_costs (material / labor / other) plus the crew payments
+                 already recorded in Crews, which count as labor without being
+                 typed twice. Gross profit = job total − costs; margin = profit ÷
+                 job total. Commission is NOT in it (that is #4, still open).
+     Reimburse — a cost paid out of someone's own pocket carries reimburse; it
+                 reads "Needs paid" until the office marks it reimbursed.
+     Reps      — RLS (job_costs.sql) shows a rep only the costs they entered, and
+                 lets them enter one only paid by themselves. So a rep sees
+                 Received and My receipts, never the job's costs or margin.
+     The office's list of what is owed back across all jobs is owedInto(), which
+     cr-ar-script's render() calls for its own body.
+
    No observer. html() paints from cache synchronously and starts a fetch; when
-   the fetch lands it repaints only this card. */
+   the fetch lands it repaints only this card. The form's half-typed values live
+   in `draft`, so a repaint never wipes them. */
 (function(){
-  var cache = {};          /* pid -> { at, colls, crew, comms, draws, crews } */
+  var cache = {};          /* pid -> { at, colls, crew, comms, draws, crews, costs } */
   var inflight = {};
   var tab = 'in';
+  var form = null;         /* pid whose Add-a-cost form is open */
+  var draft = {};
   var KEEP = 'cr-jpay-keep';
 
   function jpDb(){ return window.sb || window.supa; }
@@ -96631,6 +96667,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     try{ n = (typeof rptRepName === 'function' && rptRepName(em)) || ''; }catch(_){}
     return String(n || String(em).split('@')[0]).split(' ')[0];
   }
+  function payer(pb){ return (!pb || pb === 'company') ? 'company card' : jpWho(pb); }
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   /* a DATE column ('2026-10-14') is a calendar day, not a UTC instant */
   function jpDay(d){
@@ -96639,11 +96676,20 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     var s = MON[+m[2] - 1] + ' ' + (+m[3]);
     return (+m[1] !== new Date().getFullYear()) ? s + ', ' + m[1] : s;
   }
+  function stampDay(ts){
+    var t = ts ? new Date(ts) : null;
+    if(!t || isNaN(t.getTime())) return '';
+    return MON[t.getMonth()] + ' ' + t.getDate();
+  }
   function jpClock(ts){
     var t = ts ? new Date(ts) : null;
     if(!t || isNaN(t.getTime())) return '';
     var h = t.getHours(), mi = t.getMinutes();
     return ((h % 12) || 12) + ':' + (mi < 10 ? '0' : '') + mi + ' ' + (h < 12 ? 'am' : 'pm');
+  }
+  function jpToday(){
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
   function dayNum(d){
     var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(String(d || ''));
@@ -96660,6 +96706,14 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     m = String(m || '').toLowerCase();
     if(!m) return '';
     return ({ ach:'BANK', zelle:'ZELLE', card:'CARD', check:'CHECK', cash:'CASH', finance:'FINANCE' })[m] || m.toUpperCase();
+  }
+  var KINDS = [['material', 'Material'], ['labor', 'Labor'], ['other', 'Other']];
+  function team(){
+    var out = [];
+    try{ if(typeof teamEmails === 'function') out = teamEmails(); }catch(_){}
+    out = out.filter(function(e){ return /@cardinalrenovations\.net$/i.test(e); });
+    if(jpMe() && out.indexOf(jpMe()) === -1) out.unshift(jpMe());
+    return out;
   }
 
   /* id -> the earlier entry it duplicates. Same cents, dated within 3 days; the later-entered one is flagged. */
@@ -96680,9 +96734,11 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     return out;
   }
 
+  /* who may remove an entry: the admin, or whoever entered it within 48 hours (the DB re-checks) */
   function canRemove(c){
     if(jpAdmin()) return true;
     if(String(c.created_by || '').toLowerCase() !== jpMe() || !jpMe()) return false;
+    if(c.reimbursed_at) return false;
     var t = new Date(c.created_at).getTime();
     return isFinite(t) && (Date.now() - t) < 48 * 3600 * 1000;
   }
@@ -96694,17 +96750,24 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       if(c.source === 'finance') src = c.finance_company || 'Financing';
       else if(c.source === 'insurance') src = 'Insurance';
       else if(c.source === 'partner') src = 'Partner';
-      rows.push({ k:'in', id:c.id, raw:c,
+      rows.push({ k:'in', id:c.id, raw:c, tbl:'collections',
         title: jpType(c.type) + (src ? ' · ' + src : ''),
         tag: methodTag(c.method),
         when: jpDay(c.collected_at), entered: jpClock(c.created_at), by: jpWho(c.created_by),
         amt: Number(c.amount) || 0, sortDay: String(c.collected_at || ''), sortAt: String(c.created_at || '') });
     });
+    (d.costs || []).forEach(function(c){
+      rows.push({ k:'cost', id:c.id, raw:c, tbl:'job_costs',
+        title: c.description || 'Cost',
+        tag: (c.kind || 'other').toUpperCase(),
+        when: jpDay(c.spent_on), entered: '', by: 'paid by ' + payer(c.paid_by),
+        amt: Number(c.amount) || 0, sortDay: String(c.spent_on || ''), sortAt: String(c.created_at || '') });
+    });
     if(!isOffice()) return rows;
     var crewName = {};
     (d.crews || []).forEach(function(r){ crewName[r.id] = r.name; });
     (d.crew || []).forEach(function(p){
-      rows.push({ k:'out', id:p.id,
+      rows.push({ k:'out', id:p.id, crew:true,
         title: 'Crew · ' + (crewName[p.crew_id] || 'crew') + (p.memo ? ' · ' + p.memo : ''),
         tag: methodTag(p.method), when: jpDay(p.paid_on), entered: '', by: jpWho(p.created_by),
         amt: Number(p.amount) || 0, sortDay: String(p.paid_on || ''), sortAt: String(p.created_at || '') });
@@ -96726,26 +96789,77 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     return rows;
   }
 
-  function jpRow(r, sign, dup){
+  /* the Costs tab: every job_cost plus each crew payment as labor ("from Crews") */
+  function costRows(rows){
+    var out = rows.filter(function(r){ return r.k === 'cost'; });
+    rows.forEach(function(r){
+      if(r.crew) out.push({ k:'cost', id:r.id, title: r.title.replace(/^Crew · /, ''), tag:'LABOR', fromCrews:true,
+        when: r.when, entered:'', by:'from Crews', amt: r.amt, sortDay: r.sortDay, sortAt: r.sortAt });
+    });
+    out.sort(sorter);
+    return out;
+  }
+  function sorter(a, b){ return a.sortDay < b.sortDay ? 1 : a.sortDay > b.sortDay ? -1 : (a.sortAt < b.sortAt ? 1 : a.sortAt > b.sortAt ? -1 : 0); }
+
+  function rowHtmlOf(r, sign, dup){
     var sub = [r.when, r.entered ? 'entered ' + r.entered : '', r.by].filter(Boolean).join(' · ');
-    var rm = r.k === 'in' && canRemove(r.raw);
+    var rm = (r.k === 'in' || (r.k === 'cost' && !r.fromCrews)) && r.raw && canRemove(r.raw);
     var amt = (sign ? (r.k === 'in' ? '+' : '−') : '') + M(r.amt);
     var h = '<div class="crjp-row" data-crjp-k="' + r.k + '">' +
       '<div class="crjp-what"><b>' + E(r.title) + (r.tag ? '<span class="crjp-tag">' + E(r.tag) + '</span>' : '') + '</b>' +
         (sub ? '<small>' + E(sub) + '</small>' : '') + '</div>' +
       '<div class="crjp-amt ' + r.k + '">' + amt + '</div>' +
-      (rm ? '<button type="button" class="crjp-dots" data-crjp-more="' + E(r.id) + '" aria-label="More for this payment" aria-expanded="false">⋯</button>'
+      (rm ? '<button type="button" class="crjp-dots" data-crjp-more="' + E(r.id) + '" aria-label="More for this entry" aria-expanded="false">⋯</button>'
           : '<span class="crjp-nodots" aria-hidden="true"></span>');
     if(dup){
       h += '<div class="crjp-flag" role="note">⚠ Same amount as the ' + E(jpDay(dup.collected_at)) +
         (dup.created_at ? ' ' + E(jpClock(dup.created_at)) : '') + ' entry. Entered twice?' +
         '<span class="crjp-fbtns">' +
-          (rm ? '<button type="button" data-crjp-rm="' + E(r.id) + '">Remove this one</button>' : '') +
+          (rm ? '<button type="button" data-crjp-rm="' + E(r.id) + '" data-crjp-tbl="collections">Remove this one</button>' : '') +
           '<button type="button" data-crjp-keep="' + E(r.id) + '">Keep both</button>' +
         '</span></div>';
     }
-    if(rm) h += '<div class="crjp-acts2" data-crjp-acts="' + E(r.id) + '" hidden><button type="button" data-crjp-rm="' + E(r.id) + '">Remove this payment</button></div>';
+    if(r.k === 'cost' && r.raw && r.raw.reimburse){
+      var c = r.raw, nm = payer(c.paid_by);
+      h += '<div class="crjp-rb">' + (c.reimbursed_at
+        ? '<span class="crjp-st done">Reimbursed ' + E(stampDay(c.reimbursed_at)) + '</span>'
+        : '<span class="crjp-st need">Reimburse ' + E(nm) + ' · Needs paid</span>' +
+          (isOffice() ? '<button type="button" data-crjp-reimb="' + E(c.id) + '">Mark reimbursed</button>' : '')) + '</div>';
+    }
+    if(rm) h += '<div class="crjp-acts2" data-crjp-acts="' + E(r.id) + '" hidden><button type="button" data-crjp-rm="' + E(r.id) + '" data-crjp-tbl="' + E(r.tbl) + '">Remove this ' + (r.k === 'in' ? 'payment' : 'cost') + '</button></div>';
     return h + '</div>';
+  }
+
+  function formHtml(pid){
+    var office = isOffice();
+    var kind = draft.kind || 'material';
+    var pb = office ? (draft.paid_by || 'company') : jpMe();
+    var reimb = draft.reimburse != null ? !!draft.reimburse : (pb !== 'company');
+    var h = '<div class="crjp-form" data-crjp-form="' + E(pid) + '">' +
+      '<label>What<input type="text" id="crjpDesc" maxlength="200" placeholder="Shingles, dumpster, permit…" value="' + E(draft.desc || '') + '"></label>' +
+      '<div class="crjp-two">' +
+        '<label>Amount<input type="text" id="crjpAmt" inputmode="decimal" placeholder="0.00" value="' + E(draft.amt || '') + '"></label>' +
+        '<label>Date<input type="date" id="crjpDate" value="' + E(draft.date || jpToday()) + '"></label>' +
+      '</div>' +
+      '<div><span class="crjp-note" style="margin:0 0 4px;display:block">Kind</span><div class="crjp-chips" role="group" aria-label="Kind">' +
+        KINDS.map(function(k){ return '<button type="button" data-crjp-kind="' + k[0] + '" aria-pressed="' + (kind === k[0]) + '">' + k[1] + '</button>'; }).join('') +
+      '</div></div>';
+    if(office){
+      h += '<label>Paid by<select id="crjpPaidBy"><option value="company"' + (pb === 'company' ? ' selected' : '') + '>Company card</option>' +
+        team().map(function(em){ return '<option value="' + E(em) + '"' + (pb === em ? ' selected' : '') + '>' + E(jpWho(em)) + '</option>'; }).join('') +
+        '</select></label>';
+    }else{
+      h += '<span class="crjp-note" style="margin:0">Paid by you</span>';
+    }
+    if(pb !== 'company'){
+      h += '<label class="crjp-chk"><input type="checkbox" id="crjpReimb"' + (reimb ? ' checked' : '') + '> Reimburse ' + E(office ? jpWho(pb) : 'me') + '</label>';
+    }
+    h += '<span class="crjp-err" id="crjpErr" role="alert">' + E(draft.err || '') + '</span>' +
+      '<div class="crjp-foot" style="margin-top:0">' +
+        '<button type="button" class="crji-btn primary" data-crjp-save="' + E(pid) + '">Save cost</button>' +
+        '<button type="button" class="crji-btn" data-crjp-cancel="1">Cancel</button>' +
+      '</div></div>';
+    return h;
   }
 
   function inner(pr, fin){
@@ -96762,43 +96876,56 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       return h + '<div class="crjp-empty">Could not load the payments: ' + E(d.error) + '</div>';
     }
     var rows = rowsFor(d);
-    rows.sort(function(a, b){ return a.sortDay < b.sortDay ? 1 : a.sortDay > b.sortDay ? -1 : (a.sortAt < b.sortAt ? 1 : a.sortAt > b.sortAt ? -1 : 0); });
+    rows.sort(sorter);
     var ins = rows.filter(function(r){ return r.k === 'in'; });
     var outs = rows.filter(function(r){ return r.k === 'out'; });
-    var listedIn = 0, out = 0;
+    var costs = costRows(rows);
+    var listedIn = 0, costT = 0;
     ins.forEach(function(r){ listedIn += r.amt; });
-    outs.forEach(function(r){ out += r.amt; });
+    costs.forEach(function(r){ costT += r.amt; });
     var dmap = dupes(d.colls || []);
 
     h += '<div class="crjp-sum">' +
       '<span>Job total</span><b>' + M(total) + '</b>' +
-      '<span>Received</span><b>' + M(paid) + '</b>' +
-      (office ? '<span>Paid out</span><b>' + M(out) + '</b>' : '') +
-      '<hr><span class="crjp-bal">Balance due</span><b class="crjp-bal' + (total > 0 && bal <= 0.005 ? ' paid' : '') + '">' + M(bal) + '</b>' +
+      '<span>Received</span><b>' + M(paid) + '</b>';
+    if(office){
+      var gp = total - costT;
+      h += '<span>Costs</span><b>' + M(costT) + '</b>' +
+        '<span class="crjp-bal">Gross profit</span><b class="crjp-gp' + (gp < 0 ? ' neg' : '') + '">' + M(gp) + '</b>' +
+        '<span>Margin</span><b class="crjp-gp' + (gp < 0 ? ' neg' : '') + '">' + (total > 0 ? (Math.round(gp / total * 1000) / 10).toFixed(1) + '%' : '—') + '</b>';
+    }
+    h += '<hr><span class="crjp-bal">Balance due</span><b class="crjp-bal' + (total > 0 && bal <= 0.005 ? ' paid' : '') + '">' + M(bal) + '</b>' +
     '</div>';
-    if(cents(paid) > cents(listedIn) && cents(paid) - cents(listedIn) > 0){
+    if(cents(paid) > cents(listedIn)){
       h += '<p class="crjp-note">' + M(paid - listedIn) + ' of it was recorded on the old payment sheet, so it is not listed here.</p>';
     }
 
-    var showTab = office ? tab : 'in';
-    if(office){
-      h += '<div class="crjp-seg" role="group" aria-label="Show">' +
-        '<button type="button" data-crjp-tab="in" aria-pressed="' + (showTab === 'in') + '">Received · ' + ins.length + '</button>' +
-        '<button type="button" data-crjp-tab="out" aria-pressed="' + (showTab === 'out') + '">Paid out · ' + outs.length + '</button>' +
-        '<button type="button" data-crjp-tab="all" aria-pressed="' + (showTab === 'all') + '">All</button>' +
-      '</div>';
-    }
-    var list = showTab === 'in' ? ins : showTab === 'out' ? outs : rows;
+    var TABS = office
+      ? [['in', 'Received', ins.length], ['out', 'Paid out', outs.length], ['cost', 'Costs', costs.length], ['all', 'All', null]]
+      : [['in', 'Received', ins.length], ['cost', 'My receipts', costs.length]];
+    var showTab = TABS.some(function(t){ return t[0] === tab; }) ? tab : 'in';
+    h += '<div class="crjp-seg" role="group" aria-label="Show" style="--crjp-n:' + TABS.length + '">' +
+      TABS.map(function(t){
+        return '<button type="button" data-crjp-tab="' + t[0] + '" aria-pressed="' + (showTab === t[0]) + '">' + t[1] +
+          (t[2] != null ? '<small>' + t[2] + '</small>' : '') + '</button>';
+      }).join('') + '</div>';
+
+    var list = showTab === 'in' ? ins : showTab === 'out' ? outs : showTab === 'cost' ? costs
+      : rows.filter(function(r){ return r.k !== 'cost'; }).concat(rows.filter(function(r){ return r.k === 'cost'; })).sort(sorter);
     h += '<div class="crjp-list">';
     if(!list.length){
       h += '<div class="crjp-empty">' + (showTab === 'out'
         ? 'Nothing paid out on this job yet. Crew payments are recorded in Crews; commissions in Money In &amp; Commissions.'
+        : showTab === 'cost' ? (office ? 'No costs on this job yet. Crew payments recorded in Crews show here as labor.' : 'You have not added a receipt on this job.')
         : 'No payments recorded on this job yet.') + '</div>';
     }else{
-      h += list.map(function(r){ return jpRow(r, showTab === 'all', r.k === 'in' ? dmap[r.id] : null); }).join('');
+      h += list.map(function(r){ return rowHtmlOf(r, showTab === 'all', r.k === 'in' ? dmap[r.id] : null); }).join('');
     }
     h += '</div>';
-    if(total > 0 && bal > 0.005){
+    if(showTab === 'cost'){
+      if(form === pid) h += formHtml(pid);
+      else h += '<div class="crjp-foot"><button type="button" class="crji-btn primary" data-crjp-add="' + E(pid) + '">' + (office ? 'Add a cost' : 'Add a receipt') + '</button></div>';
+    }else if(total > 0 && bal > 0.005){
       h += '<div class="crjp-foot"><button type="button" class="crji-btn primary" data-arpay="' + E(pid) + '">Record payment</button></div>';
     }
     return h;
@@ -96816,7 +96943,9 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     var el = document.querySelector('.crjp-card[data-crjp="' + pid + '"]');
     var pr = window.currentProject;
     if(!el || !pr || String(pr.id) !== String(pid)) return;
+    var focusId = document.activeElement && el.contains(document.activeElement) ? document.activeElement.id : '';
     el.innerHTML = inner(pr, null);
+    if(focusId){ var f = document.getElementById(focusId); if(f && f.focus) f.focus(); }
   }
 
   function jpLoad(pid){
@@ -96829,13 +96958,16 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       db.from('collections').select('*').eq('project_id', pid),
       office ? db.from('crew_payments').select('*').eq('project_id', pid) : none,
       office ? db.from('commissions').select('*').eq('project_id', pid) : none,
-      office ? db.from('draws').select('*').eq('project_id', pid) : none
+      office ? db.from('draws').select('*').eq('project_id', pid) : none,
+      db.from('job_costs').select('*').eq('project_id', pid)
     ]).then(function(rs){
       if(rs[0].error) throw rs[0].error;
-      /* paid-out tables may legitimately refuse a role (crew_payments is admin-only): show what came back */
+      /* paid-out tables may legitimately refuse a role (crew_payments is admin-only): show what came back.
+         job_costs missing (SQL not run yet) reads as no costs, never as a broken card. */
       var crew = (!rs[1].error && rs[1].data) || [];
       var d = { at: Date.now(), colls: rs[0].data || [], crew: crew,
-                comms: (!rs[2].error && rs[2].data) || [], draws: (!rs[3].error && rs[3].data) || [], crews: [] };
+                comms: (!rs[2].error && rs[2].data) || [], draws: (!rs[3].error && rs[3].data) || [], crews: [],
+                costs: (!rs[4].error && rs[4].data) || [] };
       var ids = crew.map(function(x){ return x.crew_id; }).filter(Boolean);
       if(!ids.length) return d;
       return db.from('crews').select('id,name').in('id', ids).then(function(r){ d.crews = (r && r.data) || []; return d; }, function(){ return d; });
@@ -96851,54 +96983,155 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     return p;
   }
 
-  async function remove(id){
+  function jpTell(m){ if(typeof window.crTell === 'function') window.crTell(m); }
+  function jpAsk(m){ return typeof window.crAsk === 'function' ? window.crAsk(m) : Promise.resolve(false); }
+
+  async function remove(id, tbl){
     var pr = window.currentProject;
     var d = pr && cache[String(pr.id)];
-    var c = d && (d.colls || []).filter(function(x){ return String(x.id) === String(id); })[0];
+    if(!d) return;
+    var isCost = tbl === 'job_costs';
+    var c = (isCost ? d.costs : d.colls || []).filter(function(x){ return String(x.id) === String(id); })[0];
     if(!c) return;
-    var ask = typeof window.crAsk === 'function' ? window.crAsk : function(){ return Promise.resolve(false); };
-    if(!await ask('Remove the ' + M(c.amount) + ' payment dated ' + jpDay(c.collected_at) + '? Its unpaid commission goes with it.')) return;
-    var db = jpDb();
-    var r = await db.from('collections').delete().eq('id', id).select('id');
-    var tell = typeof window.crTell === 'function' ? window.crTell : function(){};
-    if(r.error){ tell('Could not remove it: ' + r.error.message); return; }
+    if(!await jpAsk(isCost
+      ? 'Remove the ' + M(c.amount) + ' cost "' + (c.description || '') + '"?'
+      : 'Remove the ' + M(c.amount) + ' payment dated ' + jpDay(c.collected_at) + '? Its unpaid commission goes with it.')) return;
+    var r = await jpDb().from(isCost ? 'job_costs' : 'collections').delete().eq('id', id).select('id');
+    if(r.error){ jpTell('Could not remove it: ' + r.error.message); return; }
     if(!r.data || !r.data.length){
-      tell('Not removed. After 48 hours, or once its commission is paid, only the office can remove a payment.');
+      jpTell(isCost ? 'Not removed. After 48 hours, or once it is reimbursed, only the office can remove a cost.'
+                  : 'Not removed. After 48 hours, or once its commission is paid, only the office can remove a payment.');
       return;
     }
-    tell('Removed the ' + M(c.amount) + ' payment.');
+    jpTell('Removed the ' + M(c.amount) + (isCost ? ' cost.' : ' payment.'));
     delete cache[String(pr.id)];
+    if(isCost){ jpLoad(String(pr.id)); return; }
     try{ if(typeof reload === 'function') await reload(); }catch(_){}
     try{ if(typeof renderAcxOverview === 'function') renderAcxOverview(); }catch(_){}
   }
 
+  /* mark one cost paid back; returns true when the DB took it */
+  async function reimburse(c){
+    if(!c) return false;
+    if(!await jpAsk('Mark ' + M(c.amount) + ' paid back to ' + payer(c.paid_by) + '?')) return false;
+    var r = await jpDb().from('job_costs').update({ reimbursed_at: new Date().toISOString(), reimbursed_by: jpMe() })
+      .eq('id', c.id).select('id');
+    if(r.error){ jpTell('Could not mark it: ' + r.error.message); return false; }
+    if(!r.data || !r.data.length){ jpTell('Not marked. Only the office can mark a cost reimbursed.'); return false; }
+    jpTell('Marked ' + M(c.amount) + ' reimbursed.');
+    return true;
+  }
+
+  async function jpSave(pid){
+    var desc = String(draft.desc || '').trim();
+    var amt = Number(String(draft.amt || '').replace(/[$,\s]/g, ''));
+    var office = isOffice();
+    var pb = office ? (draft.paid_by || 'company') : jpMe();
+    var reimb = pb !== 'company' && (draft.reimburse != null ? !!draft.reimburse : true);
+    draft.err = !desc ? 'Say what it was for.' : !(amt > 0) ? 'Enter the amount, more than $0.' : '';
+    if(draft.err){ jpRepaint(pid); return; }
+    var row = { project_id: pid, kind: draft.kind || 'material', description: desc.slice(0, 200),
+      amount: Math.round(amt * 100) / 100, spent_on: draft.date || jpToday(), paid_by: pb,
+      reimburse: reimb, created_by: jpMe() };
+    var r = await jpDb().from('job_costs').insert(row).select('id');
+    if(r.error || !r.data || !r.data.length){
+      draft.err = 'Not saved: ' + ((r.error && r.error.message) || 'the database refused it.');
+      jpRepaint(pid); return;
+    }
+    jpTell('Saved the ' + M(row.amount) + ' cost.' + (reimb ? ' It shows as Needs paid until the office pays it back.' : ''));
+    draft = {}; form = null;
+    delete cache[pid];
+    jpLoad(pid);
+  }
+
+  /* ---- the office's list of what is owed back, across every job (cr-ar-script calls this) ---- */
+  function owedInto(body){
+    if(!body || !isOffice()) return;
+    var db = jpDb(); if(!db) return;
+    db.from('job_costs').select('*').eq('reimburse', true).is('reimbursed_at', null).then(function(r){
+      if(r.error || !body.isConnected) return;
+      var rows = (r.data || []).slice().sort(function(a, b){ return String(a.spent_on) < String(b.spent_on) ? -1 : 1; });
+      var old = body.querySelector('.crar-grp.owed'); if(old) old.remove();
+      if(!rows.length) return;
+      var tot = 0; rows.forEach(function(c){ tot += Number(c.amount) || 0; });
+      var prs = (typeof cacheProjects !== 'undefined' && cacheProjects) || [];
+      var jpJobName = function(pid){ var p = prs.filter(function(x){ return x.id === pid; })[0]; return p ? (p.name || 'Client') : 'a job'; };
+      var g = document.createElement('div');
+      g.className = 'crar-grp owed';
+      g.innerHTML = '<div class="crar-grphd"><b>Owed back to the team</b><span class="crar-line"></span><span class="crar-sub">' + E(M(tot)) + '</span></div>' +
+        rows.map(function(c){
+          return '<div class="crar-row"><div class="crar-top2"><div class="crar-who"><div class="crar-nm">' + E(payer(c.paid_by)) + '</div>' +
+            '<div class="crar-addr">' + E(jpJobName(c.project_id)) + ' &middot; ' + E(c.description || '') + ' &middot; ' + E(jpDay(c.spent_on)) + '</div></div>' +
+            '<div class="crar-amt">' + E(M(c.amount)) + '</div></div>' +
+            '<div class="crar-acts"><button class="crar-btn primary crar-go" type="button" data-crjp-owed="' + E(c.id) + '">Mark reimbursed</button>' +
+            '<button class="crar-btn" type="button" data-aropen="' + E(c.project_id) + '">Open job</button></div></div>';
+        }).join('');
+      body.insertBefore(g, body.firstChild);
+      g.addEventListener('click', function(e){
+        var t = e.target instanceof Element ? e.target.closest('[data-crjp-owed]') : null;
+        if(!t) return;
+        var id = t.getAttribute('data-crjp-owed');
+        var c = rows.filter(function(x){ return String(x.id) === String(id); })[0];
+        reimburse(c).then(function(ok){ if(ok){ Object.keys(cache).forEach(function(k){ delete cache[k]; }); owedInto(body); } });
+      });
+    }, function(){});
+  }
+
+  document.addEventListener('input', function(e){
+    var el = e.target instanceof Element ? e.target : null;
+    if(!el || !el.closest('.crjp-form')) return;
+    if(el.id === 'crjpDesc') draft.desc = /** @type {any} */ (el).value;
+    else if(el.id === 'crjpAmt') draft.amt = /** @type {any} */ (el).value;
+    else if(el.id === 'crjpDate') draft.date = /** @type {any} */ (el).value;
+  });
+  document.addEventListener('change', function(e){
+    var el = e.target instanceof Element ? e.target : null;
+    if(!el || !el.closest('.crjp-form')) return;
+    var card = el.closest('.crjp-card');
+    if(el.id === 'crjpDate') draft.date = /** @type {any} */ (el).value;
+    else if(el.id === 'crjpReimb') draft.reimburse = !!(/** @type {any} */ (el).checked);
+    else if(el.id === 'crjpPaidBy'){ draft.paid_by = /** @type {any} */ (el).value; draft.reimburse = null; if(card) jpRepaint(card.getAttribute('data-crjp')); }
+  });
+
   document.addEventListener('click', function(e){
     var el = e.target instanceof Element ? e.target : null;
     if(!el || !el.closest('.crjp-card')) return;
+    var card = el.closest('.crjp-card');
+    var pid = card ? card.getAttribute('data-crjp') : '';
     var t;
     if((t = el.closest('[data-crjp-tab]'))){
       tab = t.getAttribute('data-crjp-tab') || 'in';
-      var card = t.closest('.crjp-card');
-      if(card) jpRepaint(card.getAttribute('data-crjp'));
+      jpRepaint(pid);
       return;
     }
     if((t = el.closest('[data-crjp-more]'))){
       var id = t.getAttribute('data-crjp-more');
-      var box = document.querySelector('[data-crjp-acts="' + id + '"]');
+      var box = card.querySelector('[data-crjp-acts="' + id + '"]');
       if(box instanceof HTMLElement){ box.hidden = !box.hidden; t.setAttribute('aria-expanded', String(!box.hidden)); }
       return;
     }
-    if((t = el.closest('[data-crjp-rm]'))){ remove(t.getAttribute('data-crjp-rm')); return; }
-    if((t = el.closest('[data-crjp-keep]'))){
-      keep(t.getAttribute('data-crjp-keep'));
-      var cd = t.closest('.crjp-card');
-      if(cd) jpRepaint(cd.getAttribute('data-crjp'));
+    if((t = el.closest('[data-crjp-rm]'))){ remove(t.getAttribute('data-crjp-rm'), t.getAttribute('data-crjp-tbl')); return; }
+    if((t = el.closest('[data-crjp-keep]'))){ keep(t.getAttribute('data-crjp-keep')); jpRepaint(pid); return; }
+    if((t = el.closest('[data-crjp-add]'))){ form = pid; draft = {}; jpRepaint(pid); var f = document.getElementById('crjpDesc'); if(f) f.focus(); return; }
+    if((t = el.closest('[data-crjp-cancel]'))){ form = null; draft = {}; jpRepaint(pid); return; }
+    if((t = el.closest('[data-crjp-kind]'))){ draft.kind = t.getAttribute('data-crjp-kind'); jpRepaint(pid); return; }
+    if((t = el.closest('[data-crjp-save]'))){
+      if(t.getAttribute('data-busy')) return;
+      t.setAttribute('data-busy', '1'); t.textContent = 'Saving…';
+      jpSave(pid);
+      return;
+    }
+    if((t = el.closest('[data-crjp-reimb]'))){
+      var cid = t.getAttribute('data-crjp-reimb');
+      var d = cache[pid];
+      var c = d && (d.costs || []).filter(function(x){ return String(x.id) === String(cid); })[0];
+      reimburse(c).then(function(ok){ if(ok){ delete cache[pid]; jpLoad(pid); } });
       return;
     }
   });
 
   window.CardinalJobPay = Object.assign(window.CardinalJobPay || {}, {
-    html: html, refresh: function(pid){ delete cache[String(pid)]; return jpLoad(String(pid)); }, dupes: dupes
+    html: html, refresh: function(pid){ delete cache[String(pid)]; return jpLoad(String(pid)); }, dupes: dupes, owedInto: owedInto
   });
 })();
 </script>

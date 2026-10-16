@@ -75,22 +75,22 @@ const t = await run('theo');
 ok(t.has, 'the client page has a Payments card');
 if (t.has) {
   ok(t.afterInvoice, 'it sits right after the invoice card');
-  ok(t.tabs.length === 3 && /Received · 3/.test(t.tabs[0]) && /Paid out · 1/.test(t.tabs[1]), 'office sees three tabs with counts', JSON.stringify(t.tabs));
+  ok(t.tabs.length >= 3 && /^Received\s*·?\s*3$/.test(t.tabs[0]) && /^Paid out\s*·?\s*1$/.test(t.tabs[1]), 'office sees Received and Paid out tabs with counts (1350 added Costs)', JSON.stringify(t.tabs));
   ok(t.rows === 3, 'Received tab lists the three payments', t.rows);
   ok(/Oct 14/.test(t.sub || '') && /entered \d{1,2}:\d\d (am|pm)/.test(t.sub || '') && /Nick/.test(t.sub || ''), 'each payment shows date, time entered and who', t.sub);
   ok(/CHECK/.test(t.text), 'the method is shown');
   ok(t.flags.length === 1 && t.flags[0] === 'c3', 'only the later-entered copy is flagged', JSON.stringify(t.flags));
-  ok(t.fin && t.text.indexOf('Balance due') !== -1 && /Paid out\s*\$8,000\.00/.test(t.text), 'summary shows paid out $8,000.00', t.text.slice(0, 200));
+  ok(t.fin && t.text.indexOf('Balance due') !== -1 && /Received\s*\$90,810\.46/.test(t.text), 'summary shows received and balance due (1350 moved paid out into its tab)', t.text.slice(0, 200));
   ok(/Tear-off Crew/.test(t.outText || '') && t.outRows === 1, 'Paid out tab lists the crew payment by crew name', t.outText);
   ok(t.allAmts && t.allAmts.some(x => /^\+\$/.test(x)) && t.allAmts.some(x => /^−\$8,000/.test(x)), 'All tab signs money in + and out −', JSON.stringify(t.allAmts));
   ok(t.rmOffered && /22,326\.23/.test(t.asked || ''), 'Remove this one asks first, naming the amount', t.asked);
   ok(t.deleted === 1 && JSON.stringify(t.left) === '["c1","c2"]', 'it deletes exactly the duplicate', JSON.stringify(t.left));
-  ok(t.after && t.after.rows === 2 && t.after.flags === 0 && /Received · 2/.test(t.after.tab || ''), 'the card repaints: two payments, no flag', JSON.stringify(t.after));
+  ok(t.after && t.after.rows === 2 && t.after.flags === 0 && /^Received\s*·?\s*2$/.test(t.after.tab || ''), 'the card repaints: two payments, no flag', JSON.stringify(t.after));
 }
 const n = await run('nick');
 ok(n.has, 'a rep sees the Payments card on their own job');
 if (n.has) {
-  ok(n.tabs.length === 0 && !/Paid out/.test(n.text), 'a rep sees no Paid out tab or total', JSON.stringify(n.tabs));
+  ok(!n.tabs.some(x => /Paid out/.test(x)) && !/Paid out/.test(n.text), 'a rep sees no Paid out tab or total', JSON.stringify(n.tabs));
   ok(!n.readTables.includes('crew_payments') && !n.readTables.includes('draws'), 'a rep never asks for crew payments or draws', JSON.stringify(n.readTables));
   ok(n.rows === 3, 'a rep sees the money that came in', n.rows);
   ok(!n.rmOffered, 'a rep is not offered Remove on a payment entered days ago');

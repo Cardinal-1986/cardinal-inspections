@@ -36415,3 +36415,20 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - Remove, from the row's ⋯ menu: offered to an admin, or to whoever entered it within 48 hours. The database still decides (`collections_delete`); because a refused RLS delete returns no row and no error, the deleted-row count is checked.
 - **No observer, no scroll lock, no SQL.** `html()` paints from cache and starts a fetch (throttled to 1.5s); the fetch repaints only this card.
 - **Gates:** `gate_1349.mjs` (Chromium) GREEN 18 (office + rep), control 1347 RED 2 without crashing. check_build GREEN. gate_types and gate_dupes give **identical** results on 1347 and 1349 (1530 errors; 11 names over), so this build adds nothing to either. Both were already red on main after 1347. Contrast: every new ink ≥ 6.5:1 in both themes, computed and confirmed by computed style in a real render.
+
+## Build 1350 — what a job cost, its profit, and who is owed back (Theo's pick: B, inside the Payments card)
+- **Why:** from the review of a rep's own CRM, Theo picked "3 then 1 and 2". #3 was 1349. This is #1 (per-job cost sheet: material, labor, other; contract − costs = gross profit) and #2 (expense reimbursement: who paid, Reimburse, Needs paid / Reimbursed). On the preview he said "your suggestion", which was **B**: costs join the Payments card instead of getting a card of their own.
+- **SQL first:** `job_costs.sql`, **applied 16 Oct through the MCP** (no drop statements in the first apply, so it did not hang) and **tested in a rolled-back transaction**:
+  - a rep can enter their own receipt;
+  - a rep cannot enter a company cost or a pre-reimbursed one;
+  - a rep marks their own reimbursed: 0 rows;
+  - a rep sees only their own rows;
+  - the office marks reimbursed: 1 row.
+- **No update policy for anyone but `is_full_access()`**, so a rep cannot mark their own receipt paid back. Delete: the admin, or the creator within 48 hours while unpaid.
+- **What:** `cr-jpay-script` block replaced whole (`patch_1350_block.html`).
+  - Office tabs: Received / Paid out / **Costs** / All. The count sits under each label so four tabs fit at 390px. Rep tabs: Received / **My receipts**.
+  - Costs = `job_costs` + each `crew_payments` row as LABOR "from Crews" (never typed twice).
+  - The summary shows Costs, Gross profit and Margin for the office only; Paid out moved out of the summary into its tab. **Commission is not in gross profit** (#4 waits on Theo's talk with that rep).
+  - Add a cost: what / amount / date / kind chips / paid by (office: company card or a teammate; rep: themselves) / Reimburse. The draft lives in a module variable, so a repaint (chip tap, background load) never wipes typed values.
+  - `cr-ar-script` `render()` calls `CardinalJobPay.owedInto(body)`, which prepends **Owed back to the team** (every unpaid reimbursement, Mark reimbursed / Open job) for the office.
+- **Gates:** `gate_1350.mjs` GREEN 20 (office + rep), control 1349 RED 16 without crashing. `gate_1349` updated for the intended layout change (four tabs, count under the label, paid out moved out of the summary); GREEN on both 1349 and 1350. 1216/1316/1346 GREEN. check_build GREEN; gate_types and gate_dupes identical to 1349 (1530 / 11). New inks ≥ 6.7:1.
