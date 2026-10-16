@@ -44,7 +44,7 @@ async function run(width) {
     const shown = sel => [...pv.querySelectorAll(sel)].filter(e => e.offsetParent || e.getClientRects().length).length;
     out.strip = shown('.dbmoney'); out.payRow = shown('#dbPayRow'); out.moneyRow = shown('#dbMoneyRow');
     out.moneyCard = !!document.getElementById('dbMoneyCard');
-    const stack = pv.querySelector('#acxMount > .crji-stack');
+    const stack = pv.querySelector('#acxMount .crji-stack');   /* 1354: inside the left column on a wide screen */
     out.stack = stack ? [...stack.children].map(c => c.className) : null;
     const inv = pv.querySelector('.crji-card:not(.crjp-card)');
     out.invAmt = inv ? !!inv.querySelector('.crji-amt') : null;
@@ -55,8 +55,8 @@ async function run(width) {
     out.balLabels = [...pv.querySelectorAll('*')].filter(e => e.children.length === 0 && (e.offsetParent || e.getClientRects().length) && /^\s*Balance due\s*$/i.test(e.textContent)).length;
     const ct = pc && pc.querySelector('[data-crjp-tab="cost"]');
     if (ct) { ct.click(); await pause(200); out.costs = [...pc.querySelectorAll('.crjp-list .crjp-row')].map(x => x.textContent.replace(/\s+/g, ' ')); }
-    const jm = pv.querySelector('#acxMount > .ja-menu');
-    if (stack && jm) { const a = stack.getBoundingClientRect(), m = jm.getBoundingClientRect(); out.geo = { stackL: Math.round(a.left), menuL: Math.round(m.left), stackTop: Math.round(a.top), menuTop: Math.round(m.top), col: getComputedStyle(stack).gridColumnStart }; }
+    const jm = pv.querySelector('#acxMount .ja-menu');
+    if (stack && jm) { const a = stack.getBoundingClientRect(), m = jm.getBoundingClientRect(); out.geo = { stackL: Math.round(a.left), menuL: Math.round(m.left), stackTop: Math.round(a.top), menuTop: Math.round(m.top), col: stack.closest('.acx-colL') ? '1' : getComputedStyle(stack).gridColumnStart }; }
     /* insurance stays as it was */
     const p2 = S.projects.find(x => x.id === 'p2');
     if (p2) {

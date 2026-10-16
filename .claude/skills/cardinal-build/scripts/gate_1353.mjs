@@ -19,13 +19,14 @@ const r = await p.evaluate(async () => {
   const pause = ms => new Promise(r => setTimeout(r, ms));
   window.openProject('p1'); await pause(2200);
   const m = document.querySelector('#projectView #acxMount');
-  const order = () => [...m.children].filter(e => e.offsetParent && getComputedStyle(e).gridColumnStart !== '1' && e.getBoundingClientRect().left > window.innerWidth / 2)
+  /* 1354: on a wide screen the right column is its own stack (.acx-colR); read it there when it exists */
+  const order = () => [...((m.querySelector(':scope > .acx-cols > .acx-colR') || m).children)].filter(e => e.offsetParent && getComputedStyle(e).gridColumnStart !== '1' && e.getBoundingClientRect().left > window.innerWidth / 2)
     .map(e => ({ k: e.getAttribute('data-cr-ord') || e.id || (e.className || '').toString().split(' ')[0], top: Math.round(e.getBoundingClientRect().top) }))
     .sort((a, b) => a.top - b.top).map(x => x.k);
   const before = order();
   /* make cards grow by different amounts — Job Details opening its Trade Type chips, the Payments card
      loading its rows — and require the right column's ORDER to hold at every size */
-  const jd = m.querySelector(':scope > [data-cr-ord="jd"]');
+  const jd = m.querySelector('[data-cr-ord="jd"]');
   const stack = m.querySelector(':scope > .crji-stack') || m.querySelector('.crjp-card');
   const seen = [];
   for (const [a, s] of [[60, 0], [140, 0], [0, 300], [60, 600], [220, 900]]) {

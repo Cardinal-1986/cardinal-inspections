@@ -197,7 +197,8 @@ try {
     const wantComputed = {
       cardBg: 'rgb(255, 255, 255)', cardInk: 'rgb(15, 23, 42)',
       cardBorder: 'rgb(226, 232, 240)', tileBg: 'rgb(234, 238, 243)',
-      ttlInk: 'rgb(15, 23, 42)', subInk: 'rgb(71, 85, 105)',
+      /* 1354: the job page's secondary ink was darkened on purpose (Theo: "almost non readable") — #475569 -> #334155 */
+      ttlInk: 'rgb(15, 23, 42)', subInk: 'rgb(51, 65, 85)',
     };
     for (const [k, v] of Object.entries(wantComputed))
       ok(l[k] === v, 'light ' + k + ' is still ' + v, String(l[k]));
@@ -205,7 +206,7 @@ try {
        proved — this is where "light is byte-identical" actually has to hold */
     const wantTokens = {
       tokCard:'#FFFFFF', tokInk:'#0F172A', tokLine:'#E2E8F0',
-      tokTile:'#EAEEF3', tokSub:'#475569', tokPos:'#047857', tokDue:'#C8202E',
+      tokTile:'#EAEEF3', tokSub:'#334155', tokPos:'#047857', tokDue:'#C8202E',   /* tokSub: 1354, see above */
     };
     for (const [k, v] of Object.entries(wantTokens))
       ok((l[k] || '').toUpperCase() === v, 'light ' + k + ' is still ' + v, String(l[k]));

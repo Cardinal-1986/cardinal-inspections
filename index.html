@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1353<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1354<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44802,6 +44802,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1354, d:'2026-10-16', t:'A job page you can read', s:'The grey labels, notes and counts on a job page are brighter and one size bigger, in dark and light mode, and the red lines under every heading are gone. On a wide screen the page is two columns that never push each other around: the money and the Job Menu on the left, the house (location, job details, who is assigned, history, reviews) on the right.' },
   { b: 1353, d:'2026-10-16', t:'The job page no longer jumps on a wide screen', s:'On a wide screen, picking a Job Category or anything else that makes a card grow no longer reshuffles the cards on the right. They stay in the same order: Location, Job Details, Assigned To, History, Reviews.' },
   { b: 1352, d:'2026-10-16', t:'Quiet hours: nothing wakes the team at night', s:'Between 9 pm and 7 am, alerts to the rest of the team wait. Texts and emails are delivered at 7 am, and phone notifications are not sent at night. Whoever sets off the alert still gets their own copy right away. The morning digest, payment reminders and punch-out reminders already run only in the daytime.' },
   { b: 1351, d:'2026-10-16', t:'The job page shows its money once', s:'On a retail job the money now lives in one place, the Payments card: job total, received, balance due and a bar showing how much is paid. The separate Job Value strip and the Payment Information row are gone, and the invoice card shows only where the invoice stands and its buttons. Anything that was only on the old payment sheet now shows in the Payments card, marked Old sheet. On a wide screen the invoice and Payments cards sit together on the left above the Job Menu. Community and insurance jobs are unchanged.' },
@@ -84850,7 +84851,9 @@ select{min-height:44px;}
       mount.insertBefore(moneyCard, moneyCardHomeNext);
     }
   }
-  function run(){ try{ build(); tagOrder(); syncMoneyCard(); }catch(_e){} }
+  function run(){ try{ build(); tagOrder(); syncMoneyCard(); }catch(_e){}
+    /* 1354: option B's two columns, after the tagger has done its `:scope >` work */
+    try{ if(window.CardinalJobPay && window.CardinalJobPay.cols) window.CardinalJobPay.cols(); }catch(_e){} }
   function hook(){
     if(typeof window.renderOverview !== 'function') return false;
     if(window.renderOverview.__crNameBar) return true;
@@ -84881,7 +84884,8 @@ select{min-height:44px;}
   var moneyRz = null;
   window.addEventListener('resize', function(){
     clearTimeout(moneyRz);
-    moneyRz = setTimeout(function(){ try{ syncMoneyCard(); }catch(_e){} }, 150);
+    moneyRz = setTimeout(function(){ try{ syncMoneyCard(); }catch(_e){}
+      try{ if(window.CardinalJobPay && window.CardinalJobPay.cols) window.CardinalJobPay.cols(); }catch(_e){} }, 150);
   });
 })();
 </script>
@@ -96612,11 +96616,38 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 .crjp-card .crjp-form .crjp-chk{display:flex;align-items:center;gap:8px;min-height:44px;color:var(--crji-ink,#f2f4f7);font-size:15px;}
 .crjp-card .crjp-form .crjp-chk input{width:20px;height:20px;accent-color:#C8202E;}
 .crjp-card .crjp-err{font-size:13px;color:var(--crji-due,#f08a90);}
+
+/* ═══ Build 1354 · the job page, readable (Theo: "the text is almost non readable") ═══
+   Retail only; Insurance and Community paint this page from their own palettes. Bright secondary ink in both
+   themes (dark #d4dbe4 = 12.5:1 on the cards, light #334155 = 10.3:1 on white), one size up, no red rules. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .crji-card, :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .crjp-card{ --crji-sub:#d4dbe4; }
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .crji-card, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .crjp-card{ --crji-sub:#334155; }
+body:not(.claim-insurance):not(.claim-community) #projectView .crjp-card .crjp-seg button{ font-size:14px; }
+body:not(.claim-insurance):not(.claim-community) #projectView .crjp-card .crjp-seg button small{ font-size:12px; }
+body:not(.claim-insurance):not(.claim-community) #projectView .crjp-card .crjp-what small, body:not(.claim-insurance):not(.claim-community) #projectView .crjp-card .crjp-note, body:not(.claim-insurance):not(.claim-community) #projectView .crjp-card .crjp-empty, body:not(.claim-insurance):not(.claim-community) #projectView .crjp-card .crjp-key,
+body:not(.claim-insurance):not(.claim-community) #projectView .crji-card.v2 .crji-sub{ font-size:14px; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .rvhint, :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .rvstatus.none, :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbg-t, :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .axnote, :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView #projName a.hem, :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView #projMeta .mlbl, :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .acxbody small{
+  --cr-stack:"1354 bright secondary ink on the job page (Theo could not read it)"; color:#d4dbe4; }
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvhint, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvstatus.none, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .dbg-t, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .axnote, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView #projName a.hem, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView #projMeta .mlbl, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .acxbody small{
+  --cr-stack:"1354 the light twin"; color:#334155; }
+body:not(.claim-insurance):not(.claim-community) #projectView .rvhint, body:not(.claim-insurance):not(.claim-community) #projectView .dbg-t, body:not(.claim-insurance):not(.claim-community) #projectView .axnote{ --cr-stack:"1354 one size up"; font-size:14px; }
+body:not(.claim-insurance):not(.claim-community) #projectView #projMeta .mlbl{ --cr-stack:"1354 one size up"; font-size:12px; }
+body:not(.claim-insurance):not(.claim-community) #projectView .jan, body:not(.claim-insurance):not(.claim-community) #projectView #kpHis .kpcnt{ --cr-stack:"1354 counts were 11px"; font-size:13px; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbgo, :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView #kpHis .kpcar{ --cr-stack:"1354 the row arrows were 2.2:1"; color:#c3cbd5; }
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .dbgo, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView #kpHis .kpcar{ --cr-stack:"1354 the light twin"; color:#475569; }
+body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-stack:"1354 no red rule under every heading (Theo picked the clean look)"; border-bottom-color:transparent; }
+/* ═══ Build 1354 · option B on a wide screen: two real columns ═══ */
+.acx-cols{ display:none; }
+@media (min-width:1600px){
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .acx-cols{ display:grid; grid-column:1 / -1; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:34px; align-items:start; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .acx-cols > .acx-colL, body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .acx-cols > .acx-colR{ display:flex; flex-direction:column; min-width:0; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .cr-admin-tog, body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbConvertIns{ grid-column:1 / -1; }
+}
 /* 1351: the % paid bar that used to sit in the money strip */
 .crjp-card .crjp-pbar{height:8px;border-radius:99px;background:var(--crjp-seg,#1b1f24);overflow:hidden;margin:10px 0 4px;}
 .crjp-card .crjp-pbar i{display:block;height:100%;background:var(--crji-pos,#34d399);border-radius:99px;}
 /* 1351: retail — the invoice card and the Payments card travel together (one slot in every layout) */
-#projectView #acxMount > .crji-stack > .crji-card{margin:12px 0 4px;}
+#projectView #acxMount .crji-stack > .crji-card{margin:12px 0 4px;}
 @media (max-width:560px){ #projectView #acxMount > .crji-stack{ order:3; } }
 @media (min-width:561px){ body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-stack{ order:3; } }
 @media (min-width:1600px){
@@ -97198,7 +97229,48 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     }
   });
 
+  /* 1354: option B on a wide screen. Two real stacks instead of a shared-row grid, so a card growing in one
+     column can never move a card in the other. Below 1600px (or off retail) everything goes back exactly
+     where it was, in its original order, so the phone and tablet orders never see this. */
+  var LEFT = ['.crji-stack', '#dbMoneyRow', '.ja-menu'];
+  var STAY = ['.dbstage', '.cr-admin-tog', '#dbConvertIns'];
+  function matchesAny(el, list){ for(var i = 0; i < list.length; i++){ try{ if(el.matches(list[i])) return true; }catch(_){} } return false; }
+  function cols(){
+    var mount = document.getElementById('acxMount');
+    if(!mount) return;
+    var b = document.body;
+    var retail = !(b.classList.contains('claim-insurance') || b.classList.contains('claim-community'));
+    var wide = !!(window.matchMedia && window.matchMedia('(min-width:1600px)').matches);
+    var box = mount.querySelector(':scope > .acx-cols');
+    if(!(retail && wide)){
+      if(!box) return;
+      var moved = [].slice.call(box.querySelectorAll(':scope > .acx-colL > *, :scope > .acx-colR > *'));
+      moved.sort(function(a, c){ return (+a.getAttribute('data-acx-i')) - (+c.getAttribute('data-acx-i')); });
+      moved.forEach(function(el){ mount.insertBefore(el, box); });
+      box.remove();
+      return;
+    }
+    var kids = [].slice.call(mount.children).filter(function(el){ return el !== box && !matchesAny(el, STAY); });
+    if(!kids.length) return;
+    if(!box){
+      box = document.createElement('div');
+      box.className = 'acx-cols';
+      box.innerHTML = '<div class="acx-colL"></div><div class="acx-colR"></div>';
+      var stage = mount.querySelector(':scope > .dbstage');
+      mount.insertBefore(box, stage ? stage.nextSibling : mount.firstChild);
+    }
+    var all = [].slice.call(mount.children);
+    var colL = box.firstChild, colR = box.lastChild;
+    /* keep the page's own card order (the CSS `order` 1225/1227 set), not the raw markup order, which puts
+       History before Job Details. Read it while the cards are still direct children, where those rules apply. */
+    var ord = function(el){ var o = parseInt(getComputedStyle(el).order, 10); return isFinite(o) ? o : 0; };
+    kids.forEach(function(el){ el.setAttribute('data-acx-i', String(all.indexOf(el))); el.__acxOrd = ord(el); });
+    kids.sort(function(a, c){ return (a.__acxOrd - c.__acxOrd) || ((+a.getAttribute('data-acx-i')) - (+c.getAttribute('data-acx-i'))); });
+    kids.forEach(function(el){ (matchesAny(el, LEFT) ? colL : colR).appendChild(el); });
+  }
+
   window.CardinalJobPay = Object.assign(window.CardinalJobPay || {}, {
+    cols: cols,
     html: html, refresh: function(pid){ delete cache[String(pid)]; return jpLoad(String(pid)); }, dupes: dupes, owedInto: owedInto
   });
 })();
