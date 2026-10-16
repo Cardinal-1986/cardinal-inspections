@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1359<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1360<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44872,6 +44872,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1360, d:'2026-10-16', t:'New CompanyCam projects show up by morning', s:'The nightly CompanyCam sync now refreshes the list of CompanyCam projects as well as the photos. That list had stopped updating at the end of July, so a job could not find a CompanyCam project made after that. New projects now show up the next morning.' },
   { b: 1359, d:'2026-10-16', t:'Bigger job files, several at once', s:'Documents on a job (and insurance documents) can now be up to 50 MB each, up from 10 MB, and you can pick several at once. If a file is too big or does not upload, the page now lists it by name at the end instead of the message disappearing, and the rest still upload. Files you already have open exactly as before.' },
   { b: 1358, d:'2026-10-16', t:'iPhone photos upload', s:'Photos taken on an iPhone (HEIC files) now upload from a computer or an Android phone. Before, the photo album stopped with "Upload failed" because those browsers cannot open that kind of file. The app now turns it into a normal JPEG first, so it shows up, shrinks and shares like any other photo. The album’s file picker also lists .heic files now.' },
   { b: 1357, d:'2026-10-16', t:'Line items on invoices', s:'An invoice now lists its line items, and you can change them. Tap Line items on the job’s invoice card: it starts with the lines from the estimate or contract, plus any signed change order, and you can edit a description, quantity or price, add a line or remove one. Mark a line Extra when it is new work (extra sheets of decking, say): it is added to what the client owes on the job page, the pay link and the reminders. Plain lines only describe the job and never change the amount owed. A new invoice starts with the job’s lines already filled in.' },
