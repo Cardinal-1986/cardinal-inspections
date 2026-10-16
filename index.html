@@ -4164,7 +4164,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1350<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-16 build 1351<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12537,16 +12537,21 @@ function renderAcxOverview(){
       (stg === 'Lost' || stg === 'Closed' ? '<button class="estopt" data-act="reopen">Reopen as Lead</button>' : '') +
     '</div></span>' +
   '</div>';
+  /* 1351: retail no longer shows the strip, the old Payment Information row, or the invoice + Payments cards
+     apart — the Payments card is the one place the job's money is read. Community / Insurance unchanged. */
+  var _rt1351 = (_ct !== 'insurance' && _ct !== 'community');
   /* ---- money strip ---- */
-  html += '<div class="dbmoney">' +
+  if(!_rt1351) html += '<div class="dbmoney">' +
     '<span><small>Job Value' + (fin.source === 'estimate' ? ' — from estimate' : '') + '</small><b>' + (fin.value ? fmtMoney(fin.value) : '$0.00') + '</b></span>' +
     '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
     '<span style="text-align:right;cursor:pointer;" data-crji-jump="1" role="button" tabindex="0" title="Go to the invoice"><small>Balance due</small><b class="' + (fin.balance > 0 ? 'db-due' : 'db-paid') + '">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
   /* 1108: the rep-facing Invoices & Payments block, right under the money strip. */
+  if(_rt1351) html += '<div class="crji-stack">';
   html += (window.CardinalAR && window.CardinalAR.jobBlock) ? window.CardinalAR.jobBlock(pr, fin) : '';
   /* 1349: every payment on the job, in and out, right under the invoice card */
   html += (window.CardinalJobPay && window.CardinalJobPay.html) ? window.CardinalJobPay.html(pr, fin) : '';
+  if(_rt1351) html += '</div>';
   /* 1111: manual re-send of the Pre-Install Guide (auto-sends on scheduling; this
      covers a job scheduled before the feature shipped, and re-sends). Roofing only. */
   html += (window.CardinalGuide && !window.CardinalGuide.isNonRoofOnly(pr)) ? ('<div class="db-guiderow"><span class="dbg-t">Roof Pre-Install Guide</span><button class="btn ghost" data-cr-guide-send="' + esc(pr.id) + '">Email to client</button></div>') : '';
@@ -12554,7 +12559,7 @@ function renderAcxOverview(){
   /* 796: the two money doors sit together. Money In was a half-width tile
      alone on its own row at the bottom of the Job Menu, and it is the ONLY
      door anywhere into the commissions tab, so it moved rather than went. */
-  html += '<div class="dbrow" id="dbPayRow"><span class="dbic1">$</span> Payment Information<span class="dbgo">&#8250;</span></div>' +
+  html += (_rt1351 ? '' : '<div class="dbrow" id="dbPayRow"><span class="dbic1">$</span> Payment Information<span class="dbgo">&#8250;</span></div>') +
     '<div class="dbrow" id="dbMoneyRow"><span class="dbic1">%</span> Money In &amp; Commissions<span class="dbgo">&#8250;</span></div>';
   /* ---- job menu ---- */
   function jt(ic, label, n, act, idn){
@@ -44797,6 +44802,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1351, d:'2026-10-16', t:'The job page shows its money once', s:'On a retail job the money now lives in one place, the Payments card: job total, received, balance due and a bar showing how much is paid. The separate Job Value strip and the Payment Information row are gone, and the invoice card shows only where the invoice stands and its buttons. Anything that was only on the old payment sheet now shows in the Payments card, marked Old sheet. On a wide screen the invoice and Payments cards sit together on the left above the Job Menu. Community and insurance jobs are unchanged.' },
   { b: 1350, d:'2026-10-16', t:'What a job cost, its profit, and who is owed back', s:'The Payments card on the client page has a Costs tab. Add what the job cost (material, labor or other), when, and who paid for it. Crew payments recorded in Crews count as labor by themselves. The card shows the job\'s costs, gross profit and margin, with a coloured bar splitting the job into material, labor, other and profit. When someone paid out of their own pocket, tick Reimburse: it shows as Needs paid until the office marks it reimbursed, and Invoices & Payments lists everything still owed back to the team. Costs and profit are office only; a rep sees and adds their own receipts and whether they have been paid back.' },
   { b: 1349, d:'2026-10-16', t:'Every payment on a job, in one place', s:'The client page has a Payments card under the invoice. It shows the job total, what has been received, what has been paid out and the balance due, then every payment with its date, how it was paid, when it was entered and who entered it. Tabs switch between Received, Paid out and All. Paid out lists crew payments, paid commissions and draws, and only the office sees it. When two payments of the same amount are entered within a few days of each other, the second one is flagged so a check typed in twice is caught; remove it or keep both. A payment can be removed from its menu by the office, or by whoever entered it within 48 hours.' },
   { b: 1347, d:'2026-10-15', t:'Check Register, crew payments in one place, Masonry and Plumbing', s:'The Owner Console has a new Check Register: every check, ACH and Zelle through the Chase business account, with tabs for money received, your own payments, the Cardinal team, sales, Jerry, crews and subs, and everything else. Search, filter by month, category or method, see totals, view it by person or company, match a payment to a client job, and export what you are looking at as a spreadsheet. Only your login can see it. The Crews page has an All Payments tab at the top that lists every crew payment with filters and a total, and two new sections, Masonry and Plumbing.' },
@@ -91662,12 +91668,12 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var sendRow = inv ? '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden>'
         + B('', 'data-inv-sms', 'Company text') + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')
         + '</div>' : '';
+    /* 1351: status and actions only. The balance, the bar and "$x paid of $y" live in the Payments card
+       right below — this card printed the same balance a third time (and "--" for $0). */
+    void bal; void pct;
     return '<div class="crji-card v2" role="region" aria-label="Invoice">'
-      + '<div class="crji-row"><span class="crji-ttl">' + title + ' ' + pill(st) + '</span>'
-      +   '<span class="crji-amt ' + (isPaid ? 'paid' : 'due') + '">' + (isPaid ? 'Paid' : money(bal)) + '</span></div>'
-      + '<div class="crji-row crji-sub"><span>' + line2 + '</span><span>' + (isPaid ? '' : 'balance due') + '</span></div>'
-      + (total > 0 ? '<div class="crji-bar" role="img" aria-label="' + pct + '% paid"><i style="width:' + pct + '%"></i></div>'
-                   + '<div class="crji-sub">' + (paid > 0 ? money(paid) : '$0') + ' paid of ' + money(total) + '</div>'   /* 1337: money(0) prints '--' */ : '')
+      + '<div class="crji-row"><span class="crji-ttl">' + title + ' ' + pill(st) + '</span></div>'
+      + '<div class="crji-row crji-sub"><span>' + line2 + '</span></div>'
       + '<div class="crji-acts">' + main + more + '</div>'
       + sendRow
       + '</div>';
@@ -96604,6 +96610,20 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 .crjp-card .crjp-form .crjp-chk{display:flex;align-items:center;gap:8px;min-height:44px;color:var(--crji-ink,#f2f4f7);font-size:15px;}
 .crjp-card .crjp-form .crjp-chk input{width:20px;height:20px;accent-color:#C8202E;}
 .crjp-card .crjp-err{font-size:13px;color:var(--crji-due,#f08a90);}
+/* 1351: the % paid bar that used to sit in the money strip */
+.crjp-card .crjp-pbar{height:8px;border-radius:99px;background:var(--crjp-seg,#1b1f24);overflow:hidden;margin:10px 0 4px;}
+.crjp-card .crjp-pbar i{display:block;height:100%;background:var(--crji-pos,#34d399);border-radius:99px;}
+/* 1351: retail — the invoice card and the Payments card travel together (one slot in every layout) */
+#projectView #acxMount > .crji-stack > .crji-card{margin:12px 0 4px;}
+@media (max-width:560px){ #projectView #acxMount > .crji-stack{ order:3; } }
+@media (min-width:561px){ body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-stack{ order:3; } }
+@media (min-width:1600px){
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-stack,
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbMoneyRow{ grid-column:1; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-stack{ grid-row:span 6; }
+  /* the right column backfills beside the stack instead of waiting for the Job Menu's row */
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount:has(> .crji-stack){ grid-auto-flow:row dense; }
+}
 /* Theo: "I like A colors and bar tho too" — option A's cost bar and key, inside B's card.
    One set of segment colours for both themes: each is >= 3:1 against both card grounds (non-text floor). */
 .crjp-card .crjp-cbar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--crjp-seg,#1b1f24);margin:10px 0 6px;}
@@ -96764,6 +96784,12 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
         when: jpDay(c.collected_at), entered: jpClock(c.created_at), by: jpWho(c.created_by),
         amt: Number(c.amount) || 0, sortDay: String(c.collected_at || ''), sortAt: String(c.created_at || '') });
     });
+    if(!(d.colls || []).length) (d.legacy || []).forEach(function(p, i){
+      if(p.dir !== 'in') return;
+      rows.push({ k:'in', id:'old-in-' + i, raw:null, title: 'Payment', tag:'OLD SHEET',
+        when: jpDay(p.date), entered:'', by:'old payment sheet',
+        amt: Number(p.amt) || 0, sortDay: String(p.date || ''), sortAt:'' });
+    });
     (d.costs || []).forEach(function(c){
       rows.push({ k:'cost', id:c.id, raw:c, tbl:'job_costs', kind: c.kind || 'other',
         title: c.description || 'Cost',
@@ -96772,6 +96798,17 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
         amt: Number(c.amount) || 0, sortDay: String(c.spent_on || ''), sortAt: String(c.created_at || '') });
     });
     if(!isOffice()) return rows;
+    (d.legacy || []).forEach(function(p, i){
+      if(p.dir !== 'out' && p.dir !== 'exp') return;
+      var a = Number(p.amt) || 0;
+      var dup = (d.crew || []).some(function(c){ return cents(c.amount) === cents(a) && Math.abs(dayNum(c.paid_on) - dayNum(p.date)) <= 7; });
+      if(dup || !a) return;
+      var acct = String(p.account || '');
+      rows.push({ k:'cost', id:'old-' + i, raw:null, kind: /labor/i.test(acct) ? 'labor' : /material/i.test(acct) ? 'material' : 'other',
+        title: acct || (p.dir === 'exp' ? 'Expense' : 'Paid out'), tag:'OLD SHEET',
+        when: jpDay(p.date), entered:'', by:'old payment sheet',
+        amt: a, sortDay: String(p.date || ''), sortAt:'' });
+    });
     var crewName = {};
     (d.crews || []).forEach(function(r){ crewName[r.id] = r.name; });
     (d.crew || []).forEach(function(p){
@@ -96814,7 +96851,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     var rm = (r.k === 'in' || (r.k === 'cost' && !r.fromCrews)) && r.raw && canRemove(r.raw);
     var amt = (sign ? (r.k === 'in' ? '+' : '−') : '') + M(r.amt);
     var h = '<div class="crjp-row" data-crjp-k="' + r.k + '">' +
-      '<div class="crjp-what"><b>' + E(r.title) + (r.tag ? '<span class="crjp-tag' + (r.k === 'cost' ? ' k-' + E(r.kind || 'other') : '') + '">' + E(r.tag) + '</span>' : '') + '</b>' +
+      '<div class="crjp-what"><b>' + E(r.title) + (r.tag ? '<span class="crjp-tag' + (r.k === 'cost' && r.tag !== 'OLD SHEET' ? ' k-' + E(r.kind || 'other') : '') + '">' + E(r.tag) + '</span>' : '') + '</b>' +
         (sub ? '<small>' + E(sub) + '</small>' : '') + '</div>' +
       '<div class="crjp-amt ' + r.k + '">' + amt + '</div>' +
       (rm ? '<button type="button" class="crjp-dots" data-crjp-more="' + E(r.id) + '" aria-label="More for this entry" aria-expanded="false">⋯</button>'
@@ -96904,6 +96941,11 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     }
     h += '<hr><span class="crjp-bal">Balance due</span><b class="crjp-bal' + (total > 0 && bal <= 0.005 ? ' paid' : '') + '">' + M(bal) + '</b>' +
     '</div>';
+    if(total > 0){
+      var pp = Math.max(0, Math.min(100, Math.round(paid / total * 100)));
+      h += '<div class="crjp-pbar" role="img" aria-label="' + pp + '% paid"><i style="width:' + pp + '%"></i></div>' +
+        '<div class="crjp-note" style="margin:0">' + pp + '% paid</div>';
+    }
     if(office && (costT > 0 || total > 0)){
       var byM = 0, byL = 0, byO = 0;
       costs.forEach(function(r){ var v = Number(r.amt) || 0; if(r.kind === 'material') byM += v; else if(r.kind === 'labor') byL += v; else byO += v; });
@@ -96990,6 +97032,12 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       if(!ids.length) return d;
       return db.from('crews').select('id,name').in('id', ids).then(function(r){ d.crews = (r && r.data) || []; return d; }, function(){ return d; });
     }).then(function(d){
+      /* 1351: the pre-1349 payment sheet (checklist.payments), read-only, so nothing on it is lost */
+      try{
+        var prs = (typeof cacheProjects !== 'undefined' && cacheProjects) || [];
+        var pr = prs.filter(function(x){ return String(x.id) === String(pid); })[0] || window.currentProject;
+        d.legacy = (pr && String(pr.id) === String(pid) && typeof parseCkAll === 'function') ? (parseCkAll(pr).payments || []) : [];
+      }catch(_){ d.legacy = []; }
       cache[pid] = d;
     }, function(e){
       cache[pid] = { at: Date.now(), error: (e && e.message) || String(e) };

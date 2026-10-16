@@ -6,7 +6,8 @@ const FILE = process.argv[2] || new URL('../../../../index.html', import.meta.ur
 const html = fs.readFileSync(FILE, 'utf8');
 let fail = 0;
 const ok = (c, m, d) => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (d !== undefined ? '  → ' + d : '')); if (!c) fail++; };
-ok(html.includes("(paid > 0 ? money(paid) : '$0') + ' paid of '"), 'A  the card prints $0, not --, when nothing is paid');
+/* 1351 moved the paid line into the Payments card, which prints through fmtMoney(n, true): $0.00, never '--' */
+ok(!html.includes("' paid of ' + money(total)") && html.includes("return (typeof fmtMoney === 'function') ? fmtMoney(Number(n) || 0, true)"), 'A  (1351) the paid figure prints $0.00, not --, when nothing is paid');
 ok(html.includes("x.fin.source === 'estimate' ? 'accepted estimate' : 'signed contract'"), 'B  Ready to invoice names its source');
 const i = html.indexOf('function savePayModal(){'); const body = i > 0 ? html.slice(i, html.indexOf('\n  }\n', i)) : '';
 ok(/amt > _bal \+ 0\.005 && !_payOver/.test(body) && /crAsk\(/.test(body), 'C  Record payment asks before recording more than the balance');

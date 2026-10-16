@@ -1,9 +1,9 @@
 /* gate_1318 — the invoice card (Theo's pick 2) and Record payment.
  *   A  one red button, the right one: no invoice → Create invoice · draft → Send ·
  *      sent with a balance → Record payment · paid → none
- *   B  the card leads with the Balance due, shows a paid bar at the right width and "$X paid of $Y"
+ *   B  (1351: moved) the Payments card under the invoice card carries the Balance due and the paid bar at the right width
  *   C  Send opens Company text / My phone / Email; every card button is 44px or taller
- *   D  the strip's Balance due jumps to the card
+ *   D  (1351: replaced) the page shows Balance due in ONE place — the strip that used to jump to the card is gone
  *   E  Record payment opens at the balance, Type Final on a sent invoice (Deposit before), today's LOCAL date,
  *      Card is a method, its buttons 44px
  * Arg: [index.html] -> negative control (1317: must go RED). */
@@ -69,7 +69,10 @@ const card = (page, id) => page.evaluate(async id => {
   return { reds: btns.filter(b => b.classList.contains('primary')).map(b => b.textContent.trim()),
     amt: (c.querySelector('.crji-amt') || {}).textContent || '', txt: c.textContent.replace(/\s+/g, ' '),
     bar: bar ? bar.style.width : null, minH: Math.min(...btns.map(b => b.getBoundingClientRect().height)),
-    jump: !!document.querySelector('#projectView [data-crji-jump]') };
+    jump: !!document.querySelector('#projectView [data-crji-jump]'),
+    pBal: (document.querySelector('#projectView .crjp-card b.crjp-bal') || {}).textContent || '',
+    pBar: (document.querySelector('#projectView .crjp-card .crjp-pbar i') || { style: {} }).style.width || null,
+    balCount: [...document.querySelectorAll('#projectView *')].filter(e => e.children.length === 0 && e.offsetParent && /^\s*Balance due\s*$/i.test(e.textContent)).length, balWhere: [...document.querySelectorAll('#projectView *')].filter(e => e.children.length === 0 && /^\s*Balance due\s*$/i.test(e.textContent)).map(e => (e.closest('[id],[class]')||{}).className + '|' + e.tagName + '|' + (e.offsetParent ? 'shown' : 'hidden')) };
 }, id);
 try {
   let { ctx, page } = await boot(null, false);
@@ -80,15 +83,15 @@ try {
   const R = x => JSON.stringify(x && x.reds);
   ok(c1 && R(c1) === '["Create invoice"]' && c2 && R(c2) === '["Send"]' && c3 && R(c3) === '["Record payment"]' && c4 && R(c4) === '[]',
      'A  one red button, the next step: Create invoice · Send · Record payment · none when paid', [c1, c2, c3, c4].map(R).join(' | '));
-  ok(c3 && /9,800/.test(c3.amt) && c3.bar === '34%' && /\$5,000(\.00)? paid of \$14,800(\.00)?/.test(c3.txt) && c4 && /Paid/.test(c4.amt) && c4.bar === '100%',
-     'B  balance due leads, bar 34% for $5,000 of $14,800, 100% when paid', JSON.stringify({ amt: c3 && c3.amt, bar: c3 && c3.bar, paidBar: c4 && c4.bar }));
+  ok(c3 && /9,800/.test(c3.pBal) && c3.pBar === '34%' && c4 && /\$0\.00/.test(c4.pBal) && c4.pBar === '100%',
+     'B  (1351) the Payments card: balance $9,800, bar 34% for $5,000 of $14,800, 100% when paid', JSON.stringify({ bal: c3 && c3.pBal, bar: c3 && c3.pBar, paidBar: c4 && c4.pBar }));
   const sendm = await page.evaluate(async () => { openProject('j3'); await new Promise(r => setTimeout(r, 1300));
     const b = document.querySelector('#projectView .crji-card [data-inv-sendmenu]'); if (!b) return null; b.click();
     const row = document.querySelector('#projectView .crji-card .crji-sendrow');
     return { open: !!(row && !row.hidden), labels: row ? [...row.querySelectorAll('.crji-btn')].map(x => x.textContent.trim()) : [] }; });
   ok(sendm && sendm.open && JSON.stringify(sendm.labels) === '["Company text","My phone","Email"]' && Math.min(c1.minH, c2.minH, c3.minH, c4.minH) >= 44,
      'C  Send opens Company text / My phone / Email; every card button ≥ 44px', JSON.stringify({ sendm, minH: [c1.minH, c2.minH, c3.minH, c4.minH] }));
-  ok(c3 && c3.jump, 'D  the strip’s Balance due is a jump to the card');
+  ok(c3 && !c3.jump && c3.balCount === 1, 'D  (1351) Balance due appears once on the page, in the Payments card', JSON.stringify({ jump: c3 && c3.jump, n: c3 && c3.balCount, where: c3 && c3.balWhere }));
   const pm = await page.evaluate(async () => {
     const out = {};
     window.CardinalAR.recordPayment(cacheProjects.find(p => p.id === 'j3')); await new Promise(r => setTimeout(r, 300));

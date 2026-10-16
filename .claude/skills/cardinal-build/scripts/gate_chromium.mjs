@@ -143,10 +143,13 @@ const GATES = [
      which both puts the money back on top AND — because the guard is now
      previousElementSibling — makes the reparent unsatisfiable, so the card
      is moved on every resize tick. One break, both failures. */
-  { name: 'gate_1209.mjs',
-    protects: 'on a phone the client name band renders above the money card, and the reparent guard settles',
-    break: { find: 'wrapEl.insertBefore(moneyCard, namebar.nextSibling);',
-             repl: 'wrapEl.insertBefore(moneyCard, namebar);' } },
+  /* 1351 replaced 1209 here: retail has no money card on the phone any more (the strip and its wrapper
+     were removed on Theo's instruction), so 1209's break could no longer turn anything red. The break
+     puts the retail strip back — exactly the "Balance due three times" Theo screenshotted. */
+  { name: 'gate_1351.mjs',
+    protects: 'a retail job shows its money once: no strip, no Payment Information row, invoice + Payments cards as one stack',
+    break: { find: "if(!_rt1351) html += '<div class=\"dbmoney\">' +",
+             repl: "html += '<div class=\"dbmoney\">' +" } },
   /* 1211: the estimate header stops duplicating the thumb bar on a phone.
      The break moves the hide rule from the phone bar's own 700px block up to
      1205's 760px wrap block — the breakpoint OPEN_ITEMS actually proposed. It

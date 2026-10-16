@@ -36433,3 +36433,22 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - Theo, on seeing B: *"I like A colors and bar tho too"* — so A's stacked bar and key (Material / Labor / Other / Profit, with dollars) sit under the office's summary, and the kind tags carry the same coloured dot. One segment palette for both themes; each ≥ 3:1 against both card grounds (non-text floor).
   - `cr-ar-script` `render()` calls `CardinalJobPay.owedInto(body)`, which prepends **Owed back to the team** (every unpaid reimbursement, Mark reimbursed / Open job) for the office.
 - **Gates:** `gate_1350.mjs` GREEN 24 (office + rep), control 1349 RED 19 without crashing. `gate_1349` updated for the intended layout change (four tabs, count under the label, paid out moved out of the summary); GREEN on both 1349 and 1350. 1216/1316/1346 GREEN. check_build GREEN; gate_types and gate_dupes identical to 1349 (1530 / 11). New inks ≥ 6.7:1.
+
+## Build 1351 — a retail job shows its money once (Theo: "do all")
+- **Why:** Theo's screenshot of a job page showed **Balance due three times**: the money strip, the invoice card (printing "--" for $0) and the Payments card. Job total showed twice, the "Payment Information" row opened the pre-1349 page, and at 1600px+ a hole sat under that row. Asked "Are there any redundancies?", given four fixes, he answered "do all".
+- **Retail only** (`_rt1351 = projClaimType(pr)` not insurance/community). Community's 1264 band and insurance's strip are untouched, and `gate_1351` asserts the insurance strip is still there.
+  1. **No money strip** (`.dbmoney`, and so no `#dbMoneyCard` wrapper on the phone). The Payments card gains the **% paid bar**.
+  2. **The invoice card is status + buttons only**: no balance, no bar, no "$x paid of $y". The "--" goes with it. This applies to every CRM, since the Payments card shows the balance in all of them.
+  3. **No Payment Information row**. Checked before removing it, measured 16 Oct:
+     - only **2 jobs** have rows on the old sheet (`checklist.payments`);
+     - their Labor rows are the **same checks recorded in Crews** (same amounts, ≤ 4 days apart);
+     - what only the old sheet held (two material receipts on one job, one customer payment on a job with no collections) now shows in the Payments card as **OLD SHEET**, read-only;
+     - labor rows that duplicate a crew payment (same cents, ≤ 7 days) are skipped, so nothing counts twice.
+
+     `openPaymentsPage()` is kept, because Community (705/972/1264) and insurance still open it.
+  4. **`.crji-stack`** wraps the invoice + Payments cards. At 1600px+ the stack sits in the left column (`grid-row: span 6`) above Money In and the Job Menu, and the grid flows `row dense`, so Location and Job Details backfill beside it. The hole was confirmed gone in a 1700px render.
+- **Gates:** `gate_1351` GREEN 21 (390 + 1700px), control 1350 RED 15.
+  - `gate_1351` **replaces `gate_1209` in `gate_chromium`**. 1209's break could no longer redden anything, since retail has no phone money card. 1351's break puts the strip back.
+  - `gate_796`, `gate_797` and `gate_1209` print SUPERSEDED on a 1351+ artifact and still run in full against older ones.
+  - `gate_1318` B/D and `gate_1337` A were moved onto the Payments card; they pass on 1351 and fail on 1350.
+  - 1216/1286/1290/1291/1314/1316/1346/1349/1350 GREEN. check_build GREEN; types/dupes identical to 1350.
