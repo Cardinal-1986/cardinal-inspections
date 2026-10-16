@@ -10043,3 +10043,10 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 | Feature | Where | Notes |
 |---|---|---|
 | **Payments (Received / Paid out / All)** | Client page, under the invoice card; `cr-jpay-script` / `window.CardinalJobPay` | Collections, plus crew payments, paid commissions and outstanding draws for the office. Duplicate flag (same cents, ≤3 days apart, later entry flagged); Remove via ⋯ (RLS `collections_delete` decides). Gate: `gate_1349.mjs`. |
+
+## Build 1350: Job costs, gross profit, reimbursements
+| Feature | Where | Notes |
+|---|---|---|
+| **Costs tab, gross profit, margin** | Payments card (`cr-jpay-script`), office only | `job_costs` + crew payments as labor. Commission not included. |
+| **Add a cost / receipt** | Costs tab (office) or My receipts (rep) | Rep: paid by self only; RLS in `job_costs.sql`. |
+| **Reimburse → Needs paid → Reimbursed** | cost rows; **Owed back to the team** group at the top of Invoices & Payments (`CardinalJobPay.owedInto`) | Only the office marks reimbursed (no update policy for anyone else). |
