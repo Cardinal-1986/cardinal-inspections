@@ -36466,3 +36466,12 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **Gates:**
   - `gate_1352.mjs` runs the shipped handler with fetch stubbed and the clock pinned: GREEN 11 (EDT and EST, the 7:06 floor, day vs night, the sender exempt, the reply). Control: the 1351 notify.js gives RED 5 without crashing.
   - The timing-blind notify gates (1147, 1184, 1210, smsnotify874, harness_deeplink1125) now set `NOTIFY_QUIET_HOURS=off`. They test WHAT is sent, and run at night they would have read a correct hold as a failure. All are GREEN; 1125 still carries its one known debt line.
+
+## Build 1353 — the wide-screen job page stops jumping
+- **Why:** Theo, 3:35 am, with a screen recording: *"I click one thing and it shifts"*. At 1962px, picking a Job Category (which opens the Trade Type chips) made Assigned To / History / Reviews jump above Location.
+- **Cause: my 1351 `grid-auto-flow: row dense`.** Dense packing lets a LATER item fill an EARLIER hole, so whenever the set of cards or the holes beside the money stack changed, the right column re-sorted. Removed. The right column keeps 1227's plain order. The cost is some empty space beside the money cards, the lesser fault: a page that moves under your finger is worse than a gap.
+- **Gate:** `gate_1353.mjs` at 1700px:
+  - asserts the grid is not dense;
+  - asserts the right column's order holds while Job Details and the Payments card grow by five different amounts.
+  - Control 1352: RED (dense). `gate_1351` still GREEN.
+  - ⚠ The mock page lacks the late-arriving cards that triggered the jump live, so the order check alone stayed green on 1352. The dense assertion is what makes this gate able to fail. Recorded so nobody "simplifies" it away.
