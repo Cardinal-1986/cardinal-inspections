@@ -148,7 +148,7 @@ export default async function handler(req, res) {
     var reads = await Promise.all([
       fetch(SUPABASE_URL + '/rest/v1/projects?id=' + inList + '&select=id,name,phone,checklist,reminders_muted', { headers: H }),
       fetch(SUPABASE_URL + '/rest/v1/collections?project_id=' + inList + '&select=project_id,amount,collected_at,created_at', { headers: H }),
-      fetch(SUPABASE_URL + '/rest/v1/inspection_reports?project_id=' + inList + '&select=project_id,title,total,signed_at', { headers: H }),
+      fetch(SUPABASE_URL + '/rest/v1/inspection_reports?project_id=' + inList + '&select=project_id,title,total,signed_at,extra_total', { headers: H }),
       fetch(SUPABASE_URL + '/rest/v1/payment_reminders?project_id=' + inList + '&select=project_id,sent_at,ok&order=sent_at.desc', { headers: H }),
       // 1314: the contracts table is the second contract store jobFinance() reads
       fetch(SUPABASE_URL + '/rest/v1/contracts?project_id=' + inList + '&select=project_id,total,homeowner_signed_at,voided_at', { headers: H }),
@@ -193,6 +193,8 @@ export default async function handler(req, res) {
         if (/^contract/i.test(String(d.title || '').trim()) && d.signed_at && Number(d.total) > 0) contractTotal += Number(d.total);
         // 1323: a signed change order adds to the job (jobFinance() and owedOn() do the same)
         if (/^change order/i.test(String(d.title || '').trim()) && d.signed_at && Number(d.total) > 0) coTotal += Number(d.total);
+        // 1357: an invoice's EXTRA lines add to the job (jobFinance() and owedOn() do the same)
+        if (/^invoice/i.test(String(d.title || '').trim()) && Number(d.extra_total) > 0) coTotal += Number(d.extra_total);
       });
       // 1314: the same total the app and the pay link use — contract docs or the
       // contracts table, whichever is more, plus manual extras

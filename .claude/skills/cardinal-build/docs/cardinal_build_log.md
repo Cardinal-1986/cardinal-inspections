@@ -36527,3 +36527,31 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - Navigation gates, all unchanged against 1355: 1022, 1036, 1037, 1076, 1137 and the rest of the sweep.
   - check_build GREEN; types/dupes are the same inherited counts.
 - ⚠ **Not changed:** `navSetView` entries still carry the previous page's fragment, so a *reload* on Sales Floor reopens the last client. Harmless now that hashchange ignores traversal; recorded.
+
+## Build 1357 — line items on an invoice, editable; EXTRA lines add to the job
+- **Why:** Theo: *"can you make it to where we can add line items to invoices? Make it editable as well."*
+  - Asked how lines and money relate. He picked **1**: the invoice is a breakdown of the job's own numbers, and a line marked EXTRA is new work that adds to what is owed, everywhere.
+  - Editable = the lines (description / qty / price), at any time.
+- **SQL first, APPLIED 16 Oct via MCP before the code:** `invoice_lines.sql`, additive. It adds `inspection_reports.inv_lines jsonb` (`[{d,q,p,x}]`) and `extra_total numeric(12,2) not null default 0` (check ≥ 0).
+  - ⚠ The app's document list now selects `extra_total`, so the migration must exist before this code ships. It does.
+- **What:**
+  - **Line items** button on the job's invoice card (`cr-ar-script` `jobBlockHtml`), whenever an invoice exists. It opens `#cr-invl-sheet` (`cr-invl-styles` / `cr-invl-script`, `window.CardinalInvLines` {open, close, seed}). This is the change-order sheet's shape with its own `--il-*` tokens and literal fallbacks, plus a light twin.
+  - **Starting lines (`ilStart`):**
+    - The estimate whose `contract_doc_id` is a signed contract, else the accepted estimate, line by line (flat lines as 1 × amount).
+    - A Discount/Adjustment line when the estimate total differs from its lines.
+    - Else one line per signed contract.
+    - Plus the manual job value and each signed change order.
+  - **Plain lines never move money.** If they do not add to the job, the sheet says so in words, and the client still owes the job's amount.
+  - **EXTRA lines:**
+    - `extra_total` is added by `jobFinance()` (beside `coAdd`), by `owedOn()` in `api/pay.js` + `api/share.js`, and by `api/remind.js`. Same shape as the 1323 change-order rule, in all four places.
+    - Pay link, reminders, A/R and the Payments card all move together.
+  - **Save** writes `inv_lines`, `extra_total`, the invoice's stored `total` (job total with extras), and an ITEMS table in the page. The table sits between `<!--invlines-->` markers above the SUMMARY; new invoices carry the markers in `INVOICE_BODY`, and older ones get the table inserted before SUMMARY. It also writes an audit line.
+  - **Create invoice** now seeds the starting lines into the new invoice before the editor opens. The seed never throws into Create invoice.
+  - **Validation:** every used line needs a description and a qty above 0; an EXTRA needs a price above 0. A plain line may be negative (a discount).
+  - No scroll-lock writer, no body observer, no back-button entry (a sheet, like the change order).
+- **Gates:**
+  - `gate_1357` GREEN 13: (A) seed = the estimate's 2 lines + ITEMS table, value unmoved; (B) the sheet loads them, +EXTRA 3 × $75 writes extra_total 225 and total 10,225 with one ADDED block, value 10,225, balance 8,225; (C) qty 4 → 300; remove → back to 10,000; (D) a priced line with no description cannot save; (E) the pay.js / share.js / remind.js rule. Control 1356: RED 8.
+  - First control run CRASHED on an unguarded read (BUG_CLASSES 37). Guarded, and it now reports red.
+  - Regressions GREEN: 1199 (owedOn executed), 1313, 1314 and the money/invoice gates listed in the PR.
+  - types 1530 / dupes 11: identical to 1356. My first pass added TS2538 ×2, a `closest` on EventTarget and a `row` dupe; all fixed before commit.
+  - Renders at 390px, dark and light: inks 11.1:1 / 10.0:1 (extra green) dark, 10.4:1 / 7.1:1 light.
