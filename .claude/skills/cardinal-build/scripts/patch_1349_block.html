@@ -1,0 +1,359 @@
+<style id="cr-jpay-styles">
+/* ═══ Build 1349 · Payments on the client page (Theo's pick: B, tabs) ═══════
+   One card under the invoice card: every payment on the job with its date,
+   method and who entered it. Tabs Received / Paid out / All; Paid out is the
+   office's only (crew payments, paid commissions, outstanding draws).
+   The card rides .crji-card for its ground and its place in the column, so
+   both themes and the 1286/1290 flat treatment come with it. Inks below are
+   computed against --crji-card in each theme. */
+:root{ --crjp-out:#f0a07a; --crjp-warn-bg:#3a2c08; --crjp-warn-ink:#ffd98a; --crjp-seg:#1b1f24; --crjp-seg-on:#2a3038; }
+:root[data-theme="rb-light"]{ --crjp-out:#9a3b12; --crjp-warn-bg:#fff3d6; --crjp-warn-ink:#6b4200; --crjp-seg:#eaeef3; --crjp-seg-on:#ffffff; }
+.crjp-card .crjp-sum{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-variant-numeric:tabular-nums;font-size:15px;}
+.crjp-card .crjp-sum span{color:var(--crji-sub,#a8b0ba);}
+.crjp-card .crjp-sum b{text-align:right;font-weight:700;}
+.crjp-card .crjp-sum .crjp-bal{color:var(--crji-ink,#f2f4f7);font-weight:700;}
+.crjp-card .crjp-sum b.crjp-bal{font-size:18px;color:var(--crji-due,#f08a90);}
+.crjp-card .crjp-sum b.crjp-bal.paid{color:var(--crji-pos,#34d399);}
+.crjp-card .crjp-sum hr{grid-column:1/-1;border:0;border-top:1px solid var(--crji-line,#262a30);margin:4px 0;}
+.crjp-card .crjp-note{font-size:13px;color:var(--crji-sub,#a8b0ba);margin:6px 0 0;}
+.crjp-card .crjp-seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--crjp-seg,#1b1f24);border-radius:12px;padding:4px;margin:12px 0 4px;}
+.crjp-card .crjp-seg button{min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--crji-sub,#a8b0ba);font:600 13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;cursor:pointer;}
+.crjp-card .crjp-seg button[aria-pressed="true"]{background:var(--crjp-seg-on,#2a3038);color:var(--crji-ink,#f2f4f7);}
+.crjp-card .crjp-row{display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--crji-line,#262a30);}
+.crjp-card .crjp-list > .crjp-row:first-child{border-top:0;}
+.crjp-card .crjp-what{min-width:0;}
+.crjp-card .crjp-what b{display:block;font-weight:600;font-size:15px;color:var(--crji-ink,#f2f4f7);}
+.crjp-card .crjp-what small{display:block;font-size:13px;color:var(--crji-sub,#a8b0ba);}
+.crjp-card .crjp-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:99px;background:var(--crjp-seg,#1b1f24);color:var(--crji-sub,#a8b0ba);margin-left:6px;vertical-align:1px;}
+.crjp-card .crjp-amt{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.crjp-card .crjp-amt.in{color:var(--crji-pos,#34d399);}
+.crjp-card .crjp-amt.out{color:var(--crjp-out,#f0a07a);}
+.crjp-card .crjp-dots{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--crji-sub,#a8b0ba);font-size:20px;border-radius:10px;cursor:pointer;}
+.crjp-card .crjp-dots[hidden]{display:none;}
+.crjp-card .crjp-nodots{width:44px;}
+.crjp-card .crjp-flag{grid-column:1/-1;background:var(--crjp-warn-bg,#3a2c08);color:var(--crjp-warn-ink,#ffd98a);border-radius:10px;padding:8px 10px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.crjp-card .crjp-flag .crjp-fbtns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;}
+.crjp-card .crjp-flag button,.crjp-card .crjp-acts2 button{min-height:44px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer;}
+.crjp-card .crjp-acts2{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;color:var(--crji-ink,#f2f4f7);}
+.crjp-card .crjp-acts2[hidden]{display:none;}
+.crjp-card .crjp-empty{font-size:13px;color:var(--crji-sub,#a8b0ba);padding:8px 0;}
+.crjp-card .crjp-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.crjp-card .crjp-foot .crji-btn{flex:1 1 auto;}
+</style>
+<script id="cr-jpay-script">
+/* ═══ Build 1349 · Payments on the client page — v2026-10-16 build 1349 ═════
+   Theo, after the Linda Lang reconciliation (one bank check typed in twice,
+   "paid so far" reading $90k on a $68k job): "check the client profile and see
+   how confusing it is to see whats been paid so far. There has to be a better
+   way." Then, on the preview: "B".
+
+   What it is: one card, rendered by renderAcxOverview() right under the invoice
+   card, listing every payment on the job.
+     Received  — collections (the table the balance is built from).
+     Paid out  — the office only: crew_payments, paid commissions, and draws still
+                 OUTSTANDING. A repaid draw is not listed: it was taken back out of
+                 a commission that is already on the list, so listing it too would
+                 count that money twice.
+   The summary's Received and Balance are jobFinance()'s numbers, never a
+   recount here — 1314's "one balance everywhere" rule. If the listed rows add
+   up to less (a job paid on the old payment sheet), the card says so.
+
+   Duplicate flag: two collections of the same amount, to the cent, dated within
+   3 days of each other. The one entered LATER is flagged, because that is the
+   one that was typed in again. "Keep both" is remembered on this device.
+
+   Remove: the database decides (collections_delete): an admin, or whoever
+   entered it within 48 hours while its commission is unpaid. A refused delete
+   returns no row and no error, so the count of deleted rows is checked.
+
+   No observer. html() paints from cache synchronously and starts a fetch; when
+   the fetch lands it repaints only this card. */
+(function(){
+  var cache = {};          /* pid -> { at, colls, crew, comms, draws, crews } */
+  var inflight = {};
+  var tab = 'in';
+  var KEEP = 'cr-jpay-keep';
+
+  function jpDb(){ return window.sb || window.supa; }
+  function E(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  function M(n){ return (typeof fmtMoney === 'function') ? fmtMoney(Number(n) || 0, true) : ('$' + (Number(n) || 0).toFixed(2)); }
+  function jpMe(){ return String((window.currentUser && currentUser.email) || '').toLowerCase(); }
+  function jpAdmin(){ try{ return typeof commAdmin === 'function' && !!commAdmin(); }catch(_){ return false; } }
+  function isOffice(){ try{ return typeof commFullAccess === 'function' && !!commFullAccess(); }catch(_){ return false; } }
+  function jpWho(em){
+    if(!em) return '';
+    var n = '';
+    try{ n = (typeof rptRepName === 'function' && rptRepName(em)) || ''; }catch(_){}
+    return String(n || String(em).split('@')[0]).split(' ')[0];
+  }
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  /* a DATE column ('2026-10-14') is a calendar day, not a UTC instant */
+  function jpDay(d){
+    var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(String(d || ''));
+    if(!m) return '';
+    var s = MON[+m[2] - 1] + ' ' + (+m[3]);
+    return (+m[1] !== new Date().getFullYear()) ? s + ', ' + m[1] : s;
+  }
+  function jpClock(ts){
+    var t = ts ? new Date(ts) : null;
+    if(!t || isNaN(t.getTime())) return '';
+    var h = t.getHours(), mi = t.getMinutes();
+    return ((h % 12) || 12) + ':' + (mi < 10 ? '0' : '') + mi + ' ' + (h < 12 ? 'am' : 'pm');
+  }
+  function dayNum(d){
+    var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(String(d || ''));
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000 : NaN;
+  }
+  function cents(n){ return Math.round((Number(n) || 0) * 100); }
+  function kept(){ try{ return JSON.parse(localStorage.getItem(KEEP) || '[]') || []; }catch(_){ return []; } }
+  function keep(id){ try{ var k = kept(); if(k.indexOf(id) === -1){ k.push(id); localStorage.setItem(KEEP, JSON.stringify(k.slice(-200))); } }catch(_){} }
+  function jpType(t){
+    try{ if(typeof commTypeLabel === 'function'){ var l = commTypeLabel(t); if(l) return l; } }catch(_){}
+    return t ? String(t).charAt(0).toUpperCase() + String(t).slice(1) : 'Payment';
+  }
+  function methodTag(m){
+    m = String(m || '').toLowerCase();
+    if(!m) return '';
+    return ({ ach:'BANK', zelle:'ZELLE', card:'CARD', check:'CHECK', cash:'CASH', finance:'FINANCE' })[m] || m.toUpperCase();
+  }
+
+  /* id -> the earlier entry it duplicates. Same cents, dated within 3 days; the later-entered one is flagged. */
+  function dupes(colls){
+    var out = {}, k = kept();
+    for(var i = 0; i < colls.length; i++){
+      for(var j = 0; j < colls.length; j++){
+        if(i === j) continue;
+        var a = colls[i], b = colls[j];
+        if(cents(a.amount) <= 0 || cents(a.amount) !== cents(b.amount)) continue;
+        var dd = Math.abs(dayNum(a.collected_at) - dayNum(b.collected_at));
+        if(!(dd <= 3)) continue;
+        var ta = String(a.created_at || ''), tb = String(b.created_at || '');
+        var aLater = ta > tb || (ta === tb && String(a.id) > String(b.id));
+        if(aLater && k.indexOf(String(a.id)) === -1 && !out[a.id]) out[a.id] = b;
+      }
+    }
+    return out;
+  }
+
+  function canRemove(c){
+    if(jpAdmin()) return true;
+    if(String(c.created_by || '').toLowerCase() !== jpMe() || !jpMe()) return false;
+    var t = new Date(c.created_at).getTime();
+    return isFinite(t) && (Date.now() - t) < 48 * 3600 * 1000;
+  }
+
+  function rowsFor(d){
+    var rows = [];
+    (d.colls || []).forEach(function(c){
+      var src = '';
+      if(c.source === 'finance') src = c.finance_company || 'Financing';
+      else if(c.source === 'insurance') src = 'Insurance';
+      else if(c.source === 'partner') src = 'Partner';
+      rows.push({ k:'in', id:c.id, raw:c,
+        title: jpType(c.type) + (src ? ' · ' + src : ''),
+        tag: methodTag(c.method),
+        when: jpDay(c.collected_at), entered: jpClock(c.created_at), by: jpWho(c.created_by),
+        amt: Number(c.amount) || 0, sortDay: String(c.collected_at || ''), sortAt: String(c.created_at || '') });
+    });
+    if(!isOffice()) return rows;
+    var crewName = {};
+    (d.crews || []).forEach(function(r){ crewName[r.id] = r.name; });
+    (d.crew || []).forEach(function(p){
+      rows.push({ k:'out', id:p.id,
+        title: 'Crew · ' + (crewName[p.crew_id] || 'crew') + (p.memo ? ' · ' + p.memo : ''),
+        tag: methodTag(p.method), when: jpDay(p.paid_on), entered: '', by: jpWho(p.created_by),
+        amt: Number(p.amount) || 0, sortDay: String(p.paid_on || ''), sortAt: String(p.created_at || '') });
+    });
+    (d.comms || []).forEach(function(c){
+      if(c.status !== 'paid') return;
+      rows.push({ k:'out', id:c.id,
+        title: 'Commission · ' + jpWho(c.rep_email),
+        tag: methodTag(c.method), when: jpDay(c.paid_on), entered: '', by: jpWho(c.paid_by),
+        amt: Number(c.amount) || 0, sortDay: String(c.paid_on || ''), sortAt: String(c.created_at || '') });
+    });
+    (d.draws || []).forEach(function(r){
+      if(r.status !== 'outstanding') return;
+      rows.push({ k:'out', id:r.id,
+        title: 'Draw (advance) · ' + jpWho(r.rep_email),
+        tag: '', when: jpDay(r.paid_at), entered: '', by: '',
+        amt: Number(r.amount) || 0, sortDay: String(r.paid_at || ''), sortAt: String(r.created_at || '') });
+    });
+    return rows;
+  }
+
+  function jpRow(r, sign, dup){
+    var sub = [r.when, r.entered ? 'entered ' + r.entered : '', r.by].filter(Boolean).join(' · ');
+    var rm = r.k === 'in' && canRemove(r.raw);
+    var amt = (sign ? (r.k === 'in' ? '+' : '−') : '') + M(r.amt);
+    var h = '<div class="crjp-row" data-crjp-k="' + r.k + '">' +
+      '<div class="crjp-what"><b>' + E(r.title) + (r.tag ? '<span class="crjp-tag">' + E(r.tag) + '</span>' : '') + '</b>' +
+        (sub ? '<small>' + E(sub) + '</small>' : '') + '</div>' +
+      '<div class="crjp-amt ' + r.k + '">' + amt + '</div>' +
+      (rm ? '<button type="button" class="crjp-dots" data-crjp-more="' + E(r.id) + '" aria-label="More for this payment" aria-expanded="false">⋯</button>'
+          : '<span class="crjp-nodots" aria-hidden="true"></span>');
+    if(dup){
+      h += '<div class="crjp-flag" role="note">⚠ Same amount as the ' + E(jpDay(dup.collected_at)) +
+        (dup.created_at ? ' ' + E(jpClock(dup.created_at)) : '') + ' entry. Entered twice?' +
+        '<span class="crjp-fbtns">' +
+          (rm ? '<button type="button" data-crjp-rm="' + E(r.id) + '">Remove this one</button>' : '') +
+          '<button type="button" data-crjp-keep="' + E(r.id) + '">Keep both</button>' +
+        '</span></div>';
+    }
+    if(rm) h += '<div class="crjp-acts2" data-crjp-acts="' + E(r.id) + '" hidden><button type="button" data-crjp-rm="' + E(r.id) + '">Remove this payment</button></div>';
+    return h + '</div>';
+  }
+
+  function inner(pr, fin){
+    var pid = String(pr.id);
+    var d = cache[pid];
+    fin = fin || (typeof jobFinance === 'function' ? jobFinance(pr) : { value:0, paid:0, balance:0 });
+    var total = Number(fin.value) || 0, paid = Number(fin.paid) || 0, bal = Number(fin.balance) || 0;
+    var office = isOffice();
+    var h = '<div class="crji-row"><span class="crji-ttl">Payments</span></div>';
+    if(!d){
+      return h + '<div class="crjp-empty">Loading payments…</div>';
+    }
+    if(d.error){
+      return h + '<div class="crjp-empty">Could not load the payments: ' + E(d.error) + '</div>';
+    }
+    var rows = rowsFor(d);
+    rows.sort(function(a, b){ return a.sortDay < b.sortDay ? 1 : a.sortDay > b.sortDay ? -1 : (a.sortAt < b.sortAt ? 1 : a.sortAt > b.sortAt ? -1 : 0); });
+    var ins = rows.filter(function(r){ return r.k === 'in'; });
+    var outs = rows.filter(function(r){ return r.k === 'out'; });
+    var listedIn = 0, out = 0;
+    ins.forEach(function(r){ listedIn += r.amt; });
+    outs.forEach(function(r){ out += r.amt; });
+    var dmap = dupes(d.colls || []);
+
+    h += '<div class="crjp-sum">' +
+      '<span>Job total</span><b>' + M(total) + '</b>' +
+      '<span>Received</span><b>' + M(paid) + '</b>' +
+      (office ? '<span>Paid out</span><b>' + M(out) + '</b>' : '') +
+      '<hr><span class="crjp-bal">Balance due</span><b class="crjp-bal' + (total > 0 && bal <= 0.005 ? ' paid' : '') + '">' + M(bal) + '</b>' +
+    '</div>';
+    if(cents(paid) > cents(listedIn) && cents(paid) - cents(listedIn) > 0){
+      h += '<p class="crjp-note">' + M(paid - listedIn) + ' of it was recorded on the old payment sheet, so it is not listed here.</p>';
+    }
+
+    var showTab = office ? tab : 'in';
+    if(office){
+      h += '<div class="crjp-seg" role="group" aria-label="Show">' +
+        '<button type="button" data-crjp-tab="in" aria-pressed="' + (showTab === 'in') + '">Received · ' + ins.length + '</button>' +
+        '<button type="button" data-crjp-tab="out" aria-pressed="' + (showTab === 'out') + '">Paid out · ' + outs.length + '</button>' +
+        '<button type="button" data-crjp-tab="all" aria-pressed="' + (showTab === 'all') + '">All</button>' +
+      '</div>';
+    }
+    var list = showTab === 'in' ? ins : showTab === 'out' ? outs : rows;
+    h += '<div class="crjp-list">';
+    if(!list.length){
+      h += '<div class="crjp-empty">' + (showTab === 'out'
+        ? 'Nothing paid out on this job yet. Crew payments are recorded in Crews; commissions in Money In &amp; Commissions.'
+        : 'No payments recorded on this job yet.') + '</div>';
+    }else{
+      h += list.map(function(r){ return jpRow(r, showTab === 'all', r.k === 'in' ? dmap[r.id] : null); }).join('');
+    }
+    h += '</div>';
+    if(total > 0 && bal > 0.005){
+      h += '<div class="crjp-foot"><button type="button" class="crji-btn primary" data-arpay="' + E(pid) + '">Record payment</button></div>';
+    }
+    return h;
+  }
+
+  function html(pr, fin){
+    if(!pr || !pr.id) return '';
+    var pid = String(pr.id);
+    var c = cache[pid];
+    if(!c || (Date.now() - c.at) > 1500) jpLoad(pid);
+    return '<div class="crji-card crjp-card" role="region" aria-label="Payments" data-crjp="' + E(pid) + '">' + inner(pr, fin) + '</div>';
+  }
+
+  function jpRepaint(pid){
+    var el = document.querySelector('.crjp-card[data-crjp="' + pid + '"]');
+    var pr = window.currentProject;
+    if(!el || !pr || String(pr.id) !== String(pid)) return;
+    el.innerHTML = inner(pr, null);
+  }
+
+  function jpLoad(pid){
+    if(inflight[pid]) return inflight[pid];
+    var db = jpDb();
+    if(!db){ return Promise.resolve(); }
+    var office = isOffice();
+    var none = Promise.resolve({ data: [] });
+    var p = Promise.all([
+      db.from('collections').select('*').eq('project_id', pid),
+      office ? db.from('crew_payments').select('*').eq('project_id', pid) : none,
+      office ? db.from('commissions').select('*').eq('project_id', pid) : none,
+      office ? db.from('draws').select('*').eq('project_id', pid) : none
+    ]).then(function(rs){
+      if(rs[0].error) throw rs[0].error;
+      /* paid-out tables may legitimately refuse a role (crew_payments is admin-only): show what came back */
+      var crew = (!rs[1].error && rs[1].data) || [];
+      var d = { at: Date.now(), colls: rs[0].data || [], crew: crew,
+                comms: (!rs[2].error && rs[2].data) || [], draws: (!rs[3].error && rs[3].data) || [], crews: [] };
+      var ids = crew.map(function(x){ return x.crew_id; }).filter(Boolean);
+      if(!ids.length) return d;
+      return db.from('crews').select('id,name').in('id', ids).then(function(r){ d.crews = (r && r.data) || []; return d; }, function(){ return d; });
+    }).then(function(d){
+      cache[pid] = d;
+    }, function(e){
+      cache[pid] = { at: Date.now(), error: (e && e.message) || String(e) };
+    }).then(function(){
+      delete inflight[pid];
+      jpRepaint(pid);
+    });
+    inflight[pid] = p;
+    return p;
+  }
+
+  async function remove(id){
+    var pr = window.currentProject;
+    var d = pr && cache[String(pr.id)];
+    var c = d && (d.colls || []).filter(function(x){ return String(x.id) === String(id); })[0];
+    if(!c) return;
+    var ask = typeof window.crAsk === 'function' ? window.crAsk : function(){ return Promise.resolve(false); };
+    if(!await ask('Remove the ' + M(c.amount) + ' payment dated ' + jpDay(c.collected_at) + '? Its unpaid commission goes with it.')) return;
+    var db = jpDb();
+    var r = await db.from('collections').delete().eq('id', id).select('id');
+    var tell = typeof window.crTell === 'function' ? window.crTell : function(){};
+    if(r.error){ tell('Could not remove it: ' + r.error.message); return; }
+    if(!r.data || !r.data.length){
+      tell('Not removed. After 48 hours, or once its commission is paid, only the office can remove a payment.');
+      return;
+    }
+    tell('Removed the ' + M(c.amount) + ' payment.');
+    delete cache[String(pr.id)];
+    try{ if(typeof reload === 'function') await reload(); }catch(_){}
+    try{ if(typeof renderAcxOverview === 'function') renderAcxOverview(); }catch(_){}
+  }
+
+  document.addEventListener('click', function(e){
+    var el = e.target instanceof Element ? e.target : null;
+    if(!el || !el.closest('.crjp-card')) return;
+    var t;
+    if((t = el.closest('[data-crjp-tab]'))){
+      tab = t.getAttribute('data-crjp-tab') || 'in';
+      var card = t.closest('.crjp-card');
+      if(card) jpRepaint(card.getAttribute('data-crjp'));
+      return;
+    }
+    if((t = el.closest('[data-crjp-more]'))){
+      var id = t.getAttribute('data-crjp-more');
+      var box = document.querySelector('[data-crjp-acts="' + id + '"]');
+      if(box instanceof HTMLElement){ box.hidden = !box.hidden; t.setAttribute('aria-expanded', String(!box.hidden)); }
+      return;
+    }
+    if((t = el.closest('[data-crjp-rm]'))){ remove(t.getAttribute('data-crjp-rm')); return; }
+    if((t = el.closest('[data-crjp-keep]'))){
+      keep(t.getAttribute('data-crjp-keep'));
+      var cd = t.closest('.crjp-card');
+      if(cd) jpRepaint(cd.getAttribute('data-crjp'));
+      return;
+    }
+  });
+
+  window.CardinalJobPay = Object.assign(window.CardinalJobPay || {}, {
+    html: html, refresh: function(pid){ delete cache[String(pid)]; return jpLoad(String(pid)); }, dupes: dupes
+  });
+})();
+</script>

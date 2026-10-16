@@ -10038,3 +10038,8 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 | **Check Register** | Owner Console → "Check Register" card; `cr-reg-script` / `window.CardinalRegister` (`mount`, `preload`, `stat`, `allowed`, `reload`) | Table `bank_register`, **owner-only RLS (theo@)**, narrower than `is_cardinal_admin()` on purpose. Tabs are predicates over `grp` + `category` (My payments = people/Owner draw). One write: `project_id` re-match. Never writes collections, crew_payments or commissions. |
 | **Crews → All Payments** | Crews nav, top item `[data-allpay]` (admin-only, `canSeeRates()`) | Reads the `payments` array `load()` already fetched; filters repaint `[data-aplist]` only so the search keeps focus. |
 | **Masonry, Plumbing trades** | `crews_trade_ck` + `TRADES` + `WO_TRADES` + `TRADE_ORDER` | One grows, all grow. |
+
+## Build 1349: Payments card on the client page
+| Feature | Where | Notes |
+|---|---|---|
+| **Payments (Received / Paid out / All)** | Client page, under the invoice card; `cr-jpay-script` / `window.CardinalJobPay` | Collections, plus crew payments, paid commissions and outstanding draws for the office. Duplicate flag (same cents, ≤3 days apart, later entry flagged); Remove via ⋯ (RLS `collections_delete` decides). Gate: `gate_1349.mjs`. |
