@@ -10050,3 +10050,8 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 | **Costs tab, gross profit, margin** | Payments card (`cr-jpay-script`), office only | `job_costs` + crew payments as labor. Commission not included. |
 | **Add a cost / receipt** | Costs tab (office) or My receipts (rep) | Rep: paid by self only; RLS in `job_costs.sql`. |
 | **Reimburse → Needs paid → Reimbursed** | cost rows; **Owed back to the team** group at the top of Invoices & Payments (`CardinalJobPay.owedInto`) | Only the office marks reimbursed (no update policy for anyone else). |
+
+## Build 1362: Sales Numbers
+| Feature | Where | Notes |
+|---|---|---|
+| **Sales Numbers by rep** | Owner Console → Sales Numbers (`cr-owner-script`, `salesHTML`/`snRows`) | Leads · Migrated · Sold · Sold $ (`jobFinance`) · Collected (`collections`). Month / Year / All time. Unassigned jobs count for `lead.unassigned_from.rep`. |
