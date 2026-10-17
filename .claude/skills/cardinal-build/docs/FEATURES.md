@@ -10058,3 +10058,6 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 
 ## Build 1363: Delete is red words
 `#delClientBtn` and `.cr-bulk-bar button.destroy` have no fill; ink `#ff7b82` dark / `#c8202e` light, Insurance by its docket/siren theme. **Gate:** `gate_1363.mjs`.
+
+## Build 1364: agreement header
+Agreements and the Service Contract print Prepared For / Date / Property Address / Prepared By / Client Contact (no Estimate #, no Valid Through), titled "— Agreement". `buildEstimate()` isDeal branch. **Gate:** `gate_1364.mjs`.

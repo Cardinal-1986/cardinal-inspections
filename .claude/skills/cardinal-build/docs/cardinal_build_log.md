@@ -36671,3 +36671,15 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - `gate_1363` GREEN 22: Retail, Insurance docket, Insurance siren and Community, both themes, plus the bulk bar. 1362 RED 16.
   - Also green: 1222 (50), 1292, 1305, 1032, 1206, check_build, stack, scroll-lock, repro cmp. types 1530 / dupes 11 (inherited).
   - `gate_stack` caught my duplicate `min-height` (1206 already sets it); removed.
+
+## Build 1364 — a contract's header stops saying Estimate (Theo, at a siding appointment: "Merge")
+- **Why:** Theo forgot his paper siding contracts and asked that the app's fit siding work. Checked first, in Chromium, with `createContractForCurrent('siding')` on a seeded client.
+  - The agreement itself is right: + New contract → Siding agreement (since 730), its eleven sections, buyer / address / phone / email / price prefilled, and Buyer / Co-buyer / Contractor slots.
+  - The shared header above it still read "Estimate # [e.g. EST-2026-041]", "Estimate Date" and "Valid Through <+30 days>", with two Client Contact rows. The page title said "— Estimate".
+- **What:** `buildEstimate()` gives every AGREEMENT / CONTRACT an agreement header, the way it already rebuilds the invoice's (1313) and strips the work order's (889).
+  - The header is Prepared For · Date · Property Address · Prepared By · Client Contact, using the same placeholders `prefillClientInfo()` fills. The title is "— Agreement".
+  - Roofing, Siding, Gutter and the Service Contract all build through it. Saved documents keep their header.
+- **Told Theo, not built:** the T&C and Ohio Notice of Cancellation live in the printed master (Company Documents → Siding), not in the generated agreement. The buyer must be given them. `docs/Cardinal_Siding_Contract.pdf` was confirmed live (200).
+- **Gates:**
+  - `gate_1364` GREEN 12; 1363 RED 5.
+  - Also green: 1015, 1141, 723, 1313, 1324, 1271, 1253, 1139, 1123, 1050, 1362, 1363, harness/render estdoc1099, check_build, repro cmp. types 1530 / dupes 11 (inherited).

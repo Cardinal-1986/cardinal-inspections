@@ -4173,7 +4173,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-17 build 1363<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-17 build 1364<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -10426,6 +10426,19 @@ function buildEstimate(titleHtml, body, terms){
     /* ...and it is an Agreement, not an estimate, once it is one. */
     out = out.replace('<b>Acceptance.</b> This estimate is valid through the date shown above. Signature below',
                       '<b>Acceptance.</b> Signature below');
+    /* 1364: ...and its header is an agreement's, not an estimate's: no Estimate #, no Valid Through, one
+       contact row. Same placeholders, so prefillClientInfo() fills it exactly as before. */
+    out = out.replace('<title>Cardinal Roofing &amp; Renovations — Estimate</title>',
+                      '<title>Cardinal Roofing &amp; Renovations — Agreement</title>');
+    out = out.replace(/<table class="meta">\s*<tr><td class="k">Prepared For<\/td>[\s\S]*?<\/table>/,
+      '<table class="meta">\n' +
+      '  <tr><td class="k">Prepared For</td><td><span class="ph">[Client name]</span></td>\n' +
+      '      <td class="k">Date</td><td><span class="ph">[Date]</span></td></tr>\n' +
+      '  <tr><td class="k">Property Address</td><td><span class="ph">[Street, City, State ZIP]</span></td>\n' +
+      '      <td class="k">Prepared By</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>\n' +
+      '  <tr><td class="k">Client Contact</td><td><span class="ph">[Phone · Email]</span></td>\n' +
+      '      <td class="k">&nbsp;</td><td>&nbsp;</td></tr>\n' +
+      '</table>');
   }
   /* 1313: an INVOICE is a bill, not an estimate. It used to keep the estimate's
      cover photo, Estimate # / Valid Through, a second Client Contact row, the
@@ -44930,6 +44943,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1364, d:'2026-10-17', t:'Contracts stop saying Estimate', s:'The top of a new Roofing, Siding or Gutter agreement (and a Service Contract) still carried the estimate header: an empty Estimate number, Estimate Date and a Valid Through date 30 days out. A signed agreement does not expire. The header now reads Prepared For, Date, Property Address, Prepared By and Client Contact, filled in as before. Contracts you already made keep the header they were saved with.' },
   { b: 1363, d:'2026-10-17', t:'Delete never looks like Save', s:'Delete Client was a solid red button, the same look as Save, on the one button you cannot undo. It is now red words with no fill, like every other Delete in the app. The Delete button on the bar that appears when you select several clients is the same now too.' },
   { b: 1362, d:'2026-10-17', t:'Sales Numbers in the Owner Console', s:'The Owner Console has a new Sales Numbers card: leads, jobs sold, sold dollars and money collected for each rep, for this month, this year or all time. It uses the same job value the client page and Balance Due use, so the numbers match the rest of the app. Clients moved over from the old system have their own Migrated column and do not count as new leads. A job moved to Unassigned still counts for the rep who had it.' },
   { b: 1361, d:'2026-10-16', t:'Move a client to Insurance from Edit client info', s:'The Edit client info form now has a Claim type: Retail or Insurance. That is what decides which tab a client lives in. Changing the work type never moved anyone, which is why a client set to the old Insurance work type stayed under Retail. Pick Insurance and save, fill in the carrier and claim details it asks for, and the client moves to the Insurance tab. Picking the old Insurance work type now selects Insurance for you. A new lead can be started as Insurance too.' },
