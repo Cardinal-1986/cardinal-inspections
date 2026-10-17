@@ -36627,3 +36627,24 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - GREEN: 1155, 1203, 1218, 1261, 1341, check_build, scroll-lock. types 1530 / dupes 11 (inherited, unchanged).
   - My first passes added two TS2339s, from narrowing lost inside callbacks; both fixed before commit.
   - Rendered at 390px.
+
+## Build 1362 — Sales Numbers in the Owner Console
+- **Why:** Theo: *"can we make sure the numbers data syncs up to what we have in the cardinal app"*, then picked option 3.
+  - Measured: the app had **no** per-rep sales screen. The YTD figures quoted to him came from ad-hoc queries, so nothing in the app could agree or disagree with them.
+- **Data step first (17 Oct, Theo's go, no schema change):** 73 jobs of two departed reps moved to Unassigned.
+  - 62 were from the 16 Oct AccuLynx import, which had put them on the admin. 11 were their own, 8 of those filed under a typed name instead of an email.
+  - Each keeps `lead.unassigned_from {rep, was_on, was_assigned, at}`, so the move is reversible.
+  - One closed job with collections and a commission stays on its rep. That keeps his sale and the commission's owner intact.
+- **What:** a new `sales` row in the Owner Console `AREAS` table (`salesHTML`, `snRows`).
+  - **Sold $** is `jobFinance(p).value`, the same job-value rule Balance Due, A/R, pay.js and share.js use.
+    - A job counts once it is at Approved or later AND `crBillable()` says it can be invoiced.
+    - Its date is the first signed contract or the first sold-stage stamp.
+  - **Collected** is the `collections` table by `collected_at`. For a job with no collections it uses dated legacy `payments[]`, which is jobFinance's own precedence. Undated legacy money is counted in the footnote.
+  - **Leads** are clients created in the period. Migrated clients have their own column.
+  - **Rep** is `sales_rep`, else `lead.unassigned_from.rep`, so history is kept. A typed name is matched to `TEAM_ROSTER`.
+  - Periods: This month / This year / All time. The hub card shows sold this year.
+- **Gates:**
+  - `gate_1362` GREEN 9; 1361 RED 9 (the negative control).
+  - GREEN: 1357, 1361, check_build, scroll-lock, repro cmp. types 1530 / dupes 11 (inherited, unchanged).
+  - First pass added two dupes (`row`, `take`); renamed before commit.
+  - The first control crashed on an unguarded `r.note` (BUG_CLASSES 37); guarded.
