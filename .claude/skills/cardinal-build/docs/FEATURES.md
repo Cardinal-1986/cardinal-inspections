@@ -10055,3 +10055,6 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 | Feature | Where | Notes |
 |---|---|---|
 | **Sales Numbers by rep** | Owner Console → Sales Numbers (`cr-owner-script`, `salesHTML`/`snRows`) | Leads · Migrated · Sold · Sold $ (`jobFinance`) · Collected (`collections`). Month / Year / All time. Unassigned jobs count for `lead.unassigned_from.rep`. |
+
+## Build 1363: Delete is red words
+`#delClientBtn` and `.cr-bulk-bar button.destroy` have no fill; ink `#ff7b82` dark / `#c8202e` light, Insurance by its docket/siren theme. **Gate:** `gate_1363.mjs`.

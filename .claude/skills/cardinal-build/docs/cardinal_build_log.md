@@ -36648,3 +36648,26 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - GREEN: 1357, 1361, check_build, scroll-lock, repro cmp. types 1530 / dupes 11 (inherited, unchanged).
   - First pass added two dupes (`row`, `take`); renamed before commit.
   - The first control crashed on an unguarded `r.note` (BUG_CLASSES 37); guarded.
+
+## Build 1363 — Buttons A, part 3: Delete is red words (Theo, 17 Oct: "1 and 2")
+- **Item 2 was already done:** the invoice screens redesign shipped at 1318 (job invoice card) and 1319 (Invoices list), on Theo's "2, 1" of 11 Oct. The to-do list had not been crossed off.
+- **Measured first.** A Chromium census of every visible button:
+  - covered the sentinel's 33 states plus a new Community walk (home, Estimates, Clients, Partners, the job page, Communication, Estimates);
+  - in both themes, at 390 and 1440px: 5,344 controls.
+  - Main actions are already one red per group wherever it walked; 1222/1292/1305 hold.
+- **What was left, and fixed:**
+  - **Delete Client** (`#delClientBtn`) was a solid Cardinal-red block with a red glow, styled inline. That is the look of Save, on the one button that cannot be undone. It shows on the Community job page, and behind the Admin row on Retail and Insurance. It is now red words, no fill, 44px (from 1206's existing rule).
+    - Ink per ground: `#ff7b82` on dark, `#c8202e` on light.
+    - Insurance follows its own docket/siren theme, not the app theme. `gate_1363`'s first run caught this: pink on docket paper was 2.36:1.
+  - **The bulk bar's Delete** (`.cr-bulk-bar button.destroy`) was a solid dark-red `!important` block. Now red words on the bar.
+- **Left alone on purpose:**
+  - crAsk's confirm (the dialog's main action is the delete), and its blue `.plain` confirm.
+  - Photo-tile × overlays, which tint on hover only.
+  - Production, Dispatch and Punch (Theo excluded them at 1292).
+  - The CRM-coloured header +.
+  - Selected-state chips, which are a state, not an action.
+  - Community's amber `.doit` nudge (28px).
+- **Gates:**
+  - `gate_1363` GREEN 22: Retail, Insurance docket, Insurance siren and Community, both themes, plus the bulk bar. 1362 RED 16.
+  - Also green: 1222 (50), 1292, 1305, 1032, 1206, check_build, stack, scroll-lock, repro cmp. types 1530 / dupes 11 (inherited).
+  - `gate_stack` caught my duplicate `min-height` (1206 already sets it); removed.

@@ -2369,6 +2369,15 @@ body.restoring #restoreVeil{display:flex;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney b.db-paid{color:#46701E}/* 1032: the Delete Client caption was inline #a89f9a — dark-era, 2.42:1 on the light
    profile. De-inlined; light reuses 1025's computed caption ink. */
 #dangerZone .danger-note{color:#a89f9a}
+/* 1363 (Buttons A): Delete is red words with no fill, so it never looks like Save. The ink is per ground:
+   pink on the dark grounds (Cardinal red is under the floor there), Cardinal red on the light ones. */
+#delClientBtn{background:transparent;border:1px solid transparent;border-radius:var(--btn-rad,12px);box-shadow:none;
+  color:#ff7b82;font:800 15px 'Segoe UI',Arial,sans-serif;padding:0 22px;cursor:pointer;}   /* its 44px is the 1206 rule's (.rvbtn,#delClientBtn) */
+#delClientBtn:hover,#delClientBtn:focus-visible{border-color:currentColor;}
+:root[data-theme="rb-light"] #delClientBtn{color:#c8202e;}
+/* Insurance keeps its own theme (docket paper / siren black), whatever the app theme is */
+body.claim-insurance #delClientBtn{color:#c8202e;}
+body[data-rltheme="siren"].claim-insurance #delClientBtn{color:#ff7b82;}
 :root[data-theme="rb-light"] #dangerZone .danger-note{color:#6c655e}
 .dbring{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
 .dbringin{width:58px;height:58px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
@@ -4164,7 +4173,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-17 build 1362<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-17 build 1363<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4838,8 +4847,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
   </div>
   <div class="wrap" id="dangerZone" style="display:none;text-align:center;padding:34px 0 44px;">
-    <button id="delClientBtn" style="background:#C8202E;color:#fff;border:0;border-radius:9px;
-      font:800 14px 'Segoe UI',Arial,sans-serif;padding:13px 26px;cursor:pointer;box-shadow:0 3px 10px rgba(200,32,46,.35);">
+    <button id="delClientBtn" type="button">
       &#128465; Delete Client</button>
     <div class="danger-note" style="font:12px 'Segoe UI',Arial,sans-serif;margin-top:8px;">Permanently removes this client and everything attached to them. Admins only.</div>
   </div>
@@ -44922,6 +44930,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1363, d:'2026-10-17', t:'Delete never looks like Save', s:'Delete Client was a solid red button, the same look as Save, on the one button you cannot undo. It is now red words with no fill, like every other Delete in the app. The Delete button on the bar that appears when you select several clients is the same now too.' },
   { b: 1362, d:'2026-10-17', t:'Sales Numbers in the Owner Console', s:'The Owner Console has a new Sales Numbers card: leads, jobs sold, sold dollars and money collected for each rep, for this month, this year or all time. It uses the same job value the client page and Balance Due use, so the numbers match the rest of the app. Clients moved over from the old system have their own Migrated column and do not count as new leads. A job moved to Unassigned still counts for the rep who had it.' },
   { b: 1361, d:'2026-10-16', t:'Move a client to Insurance from Edit client info', s:'The Edit client info form now has a Claim type: Retail or Insurance. That is what decides which tab a client lives in. Changing the work type never moved anyone, which is why a client set to the old Insurance work type stayed under Retail. Pick Insurance and save, fill in the carrier and claim details it asks for, and the client moves to the Insurance tab. Picking the old Insurance work type now selects Insurance for you. A new lead can be started as Insurance too.' },
   { b: 1360, d:'2026-10-16', t:'New CompanyCam projects show up by morning', s:'The nightly CompanyCam sync now refreshes the list of CompanyCam projects as well as the photos. That list had stopped updating at the end of July, so a job could not find a CompanyCam project made after that. New projects now show up the next morning.' },
@@ -46426,7 +46435,7 @@ else autoShow();
 })();
 </script>
 
-<style id="cr-bulk-styles">#cr-bulk-toggle{min-height:44px;background:transparent;border:1px solid #4a6fa5;color:#4a6fa5;padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}#cr-bulk-toggle:hover{background:rgba(74,111,165,.12)}body.cr-bulk-mode #cr-bulk-toggle{background:#4a6fa5;color:#fff}.cr-bulk-checkbox{display:none;margin-right:8px;transform:scale(1.3);cursor:pointer;vertical-align:middle;accent-color:#c8202e}body.cr-bulk-mode .cr-bulk-checkbox{display:inline-block}.cr-bulk-bar{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:14px 20px 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));display:none;align-items:center;gap:10px;z-index:9500;box-shadow:0 -4px 16px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-bulk-bar.show{display:flex}.cr-bulk-bar button.destroy{background:var(--red-dk) !important;border-color:var(--red-dk) !important;color:#fff !important}.cr-bulk-bar button.destroy:hover:not(:disabled){background:#7d1219 !important}.cr-bulk-count{font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;flex:1;min-width:0}.cr-bulk-bar button{background:transparent;border:1px solid #c8202e;color:#c8202e;padding:7px 12px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap}.cr-bulk-bar button:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button.danger{border-color:var(--red);color:var(--red)}.cr-bulk-bar button.danger:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button:disabled{opacity:.5;cursor:wait}</style>
+<style id="cr-bulk-styles">#cr-bulk-toggle{min-height:44px;background:transparent;border:1px solid #4a6fa5;color:#4a6fa5;padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}#cr-bulk-toggle:hover{background:rgba(74,111,165,.12)}body.cr-bulk-mode #cr-bulk-toggle{background:#4a6fa5;color:#fff}.cr-bulk-checkbox{display:none;margin-right:8px;transform:scale(1.3);cursor:pointer;vertical-align:middle;accent-color:#c8202e}body.cr-bulk-mode .cr-bulk-checkbox{display:inline-block}.cr-bulk-bar{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:14px 20px 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));display:none;align-items:center;gap:10px;z-index:9500;box-shadow:0 -4px 16px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-bulk-bar.show{display:flex}.cr-bulk-bar button.destroy{background:transparent !important;border-color:transparent !important;color:#ff7b82 !important}   /* 1363: Delete is red words */.cr-bulk-bar button.destroy:hover:not(:disabled){background:transparent !important;border-color:#ff7b82 !important}.cr-bulk-count{font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;flex:1;min-width:0}.cr-bulk-bar button{background:transparent;border:1px solid #c8202e;color:#c8202e;padding:7px 12px;border-radius:5px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap}.cr-bulk-bar button:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button.danger{border-color:var(--red);color:var(--red)}.cr-bulk-bar button.danger:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button:disabled{opacity:.5;cursor:wait}</style>
 <script id="cr-bulk-script">
 (function(){
 'use strict';
