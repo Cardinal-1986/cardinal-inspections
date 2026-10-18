@@ -10064,3 +10064,6 @@ Agreements and the Service Contract print Prepared For / Date / Property Address
 
 ## Build 1365: phone bottom bar (installed app)
 `#pwaNav` at ≤760px under `body.standalone`: ‹ Back · Home · Jobs · + · Schedule · Menu (`cr-pwatab-script`, `window.CardinalTabBar`). Header + / ☰ hidden there; Forward and Library off the phone bar (iPad keeps them). Field user: Back, Home, Menu. Same ~64px height every clearance uses. **Gate:** `gate_1365.mjs`.
+
+## Build 1367: invoice messages (audit D6 + D11)
+"Invoice … is ready" is the green `crTell(…, 'ok')` toast. Community's bids table is titled by its filter when only a stage is set (`bidsTitle1367()` in `cr-ch2`): Partner A/R → "Invoiced jobs", with the shown count; otherwise "All estimates". **Gate:** `gate_1367.mjs`.
