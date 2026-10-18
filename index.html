@@ -2370,6 +2370,15 @@ body.restoring #restoreVeil{display:flex;}
 .jabox:active{background:#f6f3f0;}
 .jabox .jan{font:800 18px 'Segoe UI',Arial,sans-serif;color:#F7941E;}
 .jabox .jan.zero{color:#c9c9c9;}
+/* 1373 (Theo's pick): a zero count is not news. The space stays, so a count arriving does not shift the tile. */
+#acxMount .jabox .jan.zero{visibility:hidden;}
+@media (max-width:760px){
+  /* the job's Work Orders tab is already a Job Menu tile; on a phone this button wrapped onto its own line */
+  header.site #woQuick{--cr-stack:"1373 on a phone the Job Menu's Work Orders tile replaces this header shortcut";display:none !important;}
+  /* the Ask button sat over the right-hand tiles: a round button with just the star */
+  #cr-ai-fab{--cr-stack:"1373 a round star on a phone; the pill stays on wider screens";width:52px;height:52px;padding:0;justify-content:center;font-size:22px;}
+  #cr-ai-fab .cr-ai-lbl{display:none;}
+}
 /* client dashboard */
 .dbstage{display:flex;align-items:center;gap:4px;border-radius:8px;padding:12px 6px;margin:0 0 12px;}
 .dbstgmid{flex:1;text-align:center;min-width:0;}
@@ -4201,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1372<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1373<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12249,7 +12258,7 @@ function renderOps(){
       return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); };
     _arRows.sort(function(a, b){ return b.v - a.v; });
     wrap.innerHTML =
-      '<div class="arbig">' + fmtMoney(total) +
+      '<div class="arbig">' + (total ? fmtMoney(total) : '$0') +   /* 1373 */
         '<span class="arbigl">' + (total
           ? 'outstanding across ' + _arRows.length + ' invoice' + (_arRows.length === 1 ? '' : 's')
           : 'nothing outstanding \u2014 every invoice is collected') + '</span></div>' +
@@ -12631,7 +12640,6 @@ function renderAcxOverview(){
   if(_rt1351) html += '</div>';
   /* 1111: manual re-send of the Pre-Install Guide (auto-sends on scheduling; this
      covers a job scheduled before the feature shipped, and re-sends). Roofing only. */
-  html += (window.CardinalGuide && !window.CardinalGuide.isNonRoofOnly(pr)) ? ('<div class="db-guiderow"><span class="dbg-t">Roof Pre-Install Guide</span><button class="btn ghost" data-cr-guide-send="' + esc(pr.id) + '">Email to client</button></div>') : '';
   /* ---- payment information + money in ---- */
   /* 796: the two money doors sit together. Money In was a half-width tile
      alone on its own row at the bottom of the Job Menu, and it is the ONLY
@@ -12727,6 +12735,8 @@ function renderAcxOverview(){
     '<div class="jaboxrow" style="grid-template-columns:1fr">' +
       jt(dbIc('workorder'), 'Work Orders', '', 'workorders') +
     '</div></div>';
+  /* 1373: written after the Job Menu (was before it). On a phone both are order:2, so page order decides. */
+  html += (window.CardinalGuide && !window.CardinalGuide.isNonRoofOnly(pr)) ? ('<div class="db-guiderow"><span class="dbg-t">Roof Pre-Install Guide</span><button class="btn ghost" data-cr-guide-send="' + esc(pr.id) + '">Email to client</button></div>') : '';
   /* ---- contacts: retired to the hero name row (Keeper, build 348). dbSwitchPrimary + add-contact live there now. ---- */
   var extra = ck.contacts || [];
   /* ---- payments + history pills (Keeper 3/3, build 349) \u2014 retail + community; insurance keeps its own cards ---- */
@@ -16814,9 +16824,9 @@ function pfNewJobFor(pr){
   openProjModal(null);
   pfFromJob = pr.id;
   document.getElementById('projModalTitle').textContent = 'New job for ' + (pr.name || 'this client');
-  var put = function(id, v){ var el = /** @type {HTMLInputElement|null} */ (document.getElementById(id)); if(el) el.value = v; };
-  put('pfName', pr.name || ''); put('pfAddress', pr.address || ''); put('pfPhone', pr.phone || ''); put('pfEmail', pr.email || '');
-  put('pfSource', 'Repeat customer');
+  var pfPut = function(id, v){ var el = /** @type {HTMLInputElement|null} */ (document.getElementById(id)); if(el) el.value = v; };
+  pfPut('pfName', pr.name || ''); pfPut('pfAddress', pr.address || ''); pfPut('pfPhone', pr.phone || ''); pfPut('pfEmail', pr.email || '');
+  pfPut('pfSource', 'Repeat customer');
   try{ pfSyncSourceChips(); }catch(_s){}
 }
 function openProjModal(pr){
@@ -24143,7 +24153,7 @@ function renderPipeline(){
       '<span class="pcirc ' + b.cls + '">' + (b.letter || b.label.charAt(0)) + '</span>' +
       '<span class="plabel">' + (b.short || _full) + '</span>' +
       '<span class="pcount">' + n + '</span>' +
-      '<span class="pmoney">' + fmtMoney(money) + '</span></button>';
+      '<span class="pmoney">' + (money ? fmtMoney(money) : '$0') + '</span></button>';   /* 1373: fmtMoney(0) is "--" */
   }).join('');
   var _sn = document.getElementById('pipeScopeNote');
   if(_sn){
@@ -45045,6 +45055,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1373, d:'2026-10-18', t:'A calmer phone screen', s:'On a client’s page the Job Menu no longer shows a 0 on every tile with nothing in it. On a phone the extra Work Orders button under the header is gone, because Work Orders is already a tile in the menu. The Roof Pre-Install Guide row now sits below the Job Menu instead of above it. The Ask button is a small round star that no longer covers the tiles. On Home, the pipeline and Accounts Receivable show $0 instead of two dashes.' },
   { b: 1372, d:'2026-10-18', t:'New job for the same client', s:'When a client comes back for more work, open their job, tap ⋮ on the stage bar and choose New job for this client. The new-lead form opens with their name, address, phone and email filled in and Repeat customer picked. It becomes its own job with its own price and invoice, so the old job’s balance is never mixed with the new one. Each job’s ⋮ menu can then open the earlier or newer job.' },
   { b: 1371, d:'2026-10-18', t:'Old invoices from AccuLynx show their real age', s:'Invoiced jobs brought over from AccuLynx had no invoice date, so Invoices & Payments showed them as invoiced two days ago. They now age from when the job started, which puts that old money in the 31+ days group where it belongs. Reports and the Community job timeline no longer show 16 October for those jobs either.' },
   { b: 1370, d:'2026-10-18', t:'Moved-over jobs stop counting as this month', s:'Jobs brought over from AccuLynx were stamped with the day they arrived, 16 October, wherever AccuLynx had no date for when they were approved, invoiced or closed. That made the home screen count 32 approvals and 20 closings in one day. Those arrival stamps no longer count in Activity Count or Sales Numbers. Real changes made in the app still count.' },
@@ -90923,7 +90934,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 #cr-ai-sheet .ai-in .ai-btn{flex:none; width:72px;}
 </style>
 <div id="cr-ai-root" role="region" aria-label="Assistant">
-  <button id="cr-ai-fab" type="button" aria-label="Ask the assistant">&#10022; Ask</button>
+  <button id="cr-ai-fab" type="button" aria-label="Ask the assistant">&#10022;<span class="cr-ai-lbl"> Ask</span></button>
   <div id="cr-ai-sheet" aria-hidden="true">
     <div class="ai-scrim" data-ai-close="1"></div>
     <div class="ai-box" role="dialog" aria-modal="true" aria-labelledby="aiTitle">

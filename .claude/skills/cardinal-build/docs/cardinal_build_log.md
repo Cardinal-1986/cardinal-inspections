@@ -36775,3 +36775,17 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - The new job records `prior_job`. ⋮ shows **Open earlier job** / **Open newer job**.
   - `pfFromJob` is cleared by every `openProjModal`, so the link never leaks into an unrelated lead (gate D).
 - **Gate:** `gate_1372.mjs` GREEN 8/8; control 1371 RED 5. Five type errors from bare `.value` writes were fixed with a typed helper; types are back to 1530.
+
+## Build 1373 — five clutter fixes on the phone (Theo: "all 5", from a rendered before/after of the real app)
+- **Origin:** Theo asked why a rep's demo CRM "looks so clean". A census measured the five busiest phone screens.
+  - Matching corners, heights and weights made no visible difference (measured, then previewed). It was not built.
+  - The visible noise was five specific things, previewed on the real app in dark and light. Theo picked all five.
+- **The five:**
+  - Zero counts hidden.
+  - Header Work Orders hidden on a phone. It shows only on an open job and goes to the same tab as the Job Menu tile.
+  - The guide row written after the Job Menu. Phone `order` ties at 2, so DOM order won.
+  - Ask is a round ✦ on a phone.
+  - $0 instead of "--" on Home.
+- **Also:** 1372's `put` helper renamed `pfPut`. gate_dupes caught it as a ninth definition of a shared name.
+- **Gate:** `gate_1373.mjs` GREEN 9/9; control 1372 RED 7.
+- **Other gates:** wide screens keep the header button and the Ask word. gate_1206 (44px) GREEN; gate_1365, gate_1372 GREEN; navclear OK. Types 1530 and dupes 11 (both inherited); stack clean; a11y GREEN.
