@@ -10073,3 +10073,6 @@ Office collection form → **This is a refund** (new entries only): saves a minu
 
 ## Build 1369: Money Collected counts the payments
 Home → Activity Count → **Money Collected** = `cacheCollections` rows dated in the last 30 days (refunds net), plus the old `checklist.ws[*].log` only on a job with no collections (jobFinance's 721 rule). It used to read only that log, so it was $0. For an admin the tile is a button that opens Invoices & Payments (`openAR`); a rep gets a plain tile. **Gate:** `gate_1369.mjs`.
+
+## Build 1370: migration noon stamps are not dates
+`crRealStamp(ck, v)` (main block, beside `parseCkAll`) returns null for a stage stamp equal to `acculynx_import` + `T12:00:00` — what `push_acculynx.py` wrote where AccuLynx had no history. Activity Count and Owner Console Sales Numbers (`snSoldAt`, stamps and `stage_since`) read through it. Data untouched. **Gate:** `gate_1370.mjs`.
