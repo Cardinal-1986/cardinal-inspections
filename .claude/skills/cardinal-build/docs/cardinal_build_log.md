@@ -36767,3 +36767,25 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - Non-migrated jobs and sent invoices are unchanged (gate B).
 - **Gate:** `gate_1371.mjs` GREEN 4/4; control 1370 RED 2, the 2-day age and the report date.
 - **Other gates:** gate_1370 GREEN; gate_1316 GREEN 8/8; types 1530; stack clean; a11y GREEN.
+
+## Build 1372 — New job for this client (Theo: a finished job's client is buying a full roof; "build it")
+- **Why a second project:** one project is one job, with one price, invoice, balance and commission. Adding a roof to an invoiced job would mix two sales in A/R, commissions and Sales Numbers. There was no "new job for this client" anywhere (searched).
+- **What:**
+  - ⋮ on the stage banner → **New job for this client**. It reuses `openProjModal(null)`, so every Add-project rule stays: required lead source, PO from the database, trades, claim type. The form is pre-filled with contact details, and Lead Source is Repeat customer.
+  - The new job records `prior_job`. ⋮ shows **Open earlier job** / **Open newer job**.
+  - `pfFromJob` is cleared by every `openProjModal`, so the link never leaks into an unrelated lead (gate D).
+- **Gate:** `gate_1372.mjs` GREEN 8/8; control 1371 RED 5. Five type errors from bare `.value` writes were fixed with a typed helper; types are back to 1530.
+
+## Build 1373 — five clutter fixes on the phone (Theo: "all 5", from a rendered before/after of the real app)
+- **Origin:** Theo asked why a rep's demo CRM "looks so clean". A census measured the five busiest phone screens.
+  - Matching corners, heights and weights made no visible difference (measured, then previewed). It was not built.
+  - The visible noise was five specific things, previewed on the real app in dark and light. Theo picked all five.
+- **The five:**
+  - Zero counts hidden.
+  - Header Work Orders hidden on a phone. It shows only on an open job and goes to the same tab as the Job Menu tile.
+  - The guide row written after the Job Menu. Phone `order` ties at 2, so DOM order won.
+  - Ask is a round ✦ on a phone.
+  - $0 instead of "--" on Home.
+- **Also:** 1372's `put` helper renamed `pfPut`. gate_dupes caught it as a ninth definition of a shared name.
+- **Gate:** `gate_1373.mjs` GREEN 9/9; control 1372 RED 7.
+- **Other gates:** wide screens keep the header button and the Ask word. gate_1206 (44px) GREEN; gate_1365, gate_1372 GREEN; navclear OK. Types 1530 and dupes 11 (both inherited); stack clean; a11y GREEN.

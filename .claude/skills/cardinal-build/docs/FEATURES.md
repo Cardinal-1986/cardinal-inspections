@@ -10079,3 +10079,15 @@ Home → Activity Count → **Money Collected** = `cacheCollections` rows dated 
 
 ## Build 1371: the invoiced dates too
 Invoices & Payments `ageDays` (1316 clock), `rptStageDate` (reports) and the Community timeline read stamps through `crRealStamp`. A migrated job with no real invoice date ages from its own `created_at` (upper bound). **Gate:** `gate_1371.mjs`.
+
+## Build 1372: New job for this client
+Stage banner ⋮ → **New job for this client** (`pfNewJobFor`) opens the Add project form filled with name / address / phone / email and Lead Source = Repeat customer. The new job stores `checklist.prior_job`; each job's ⋮ offers **Open earlier job** / **Open newer job**. Only contact details carry over. **Gate:** `gate_1372.mjs`.
+
+## Build 1373: a calmer phone screen (Theo: "all 5")
+1. `#acxMount .jabox .jan.zero{visibility:hidden}`: zero counts are gone (space kept).
+2. ≤760px: header `#woQuick` hidden; the Job Menu has the Work Orders tile.
+3. `.db-guiderow` is written after `.ja-menu`. Phone order ties at 2 (1225), so DOM order decides. Desktop explicit orders unchanged.
+4. ≤760px: `#cr-ai-fab` is a 52px round ✦; the word is `.cr-ai-lbl`; aria-label unchanged.
+5. Home pipeline `.pmoney` and A/R `.arbig` print `$0`, not fmtMoney(0)'s "--".
+
+**Gate:** `gate_1373.mjs`. Preview Theo picked from: the "Phone Declutter Preview" artifact.
