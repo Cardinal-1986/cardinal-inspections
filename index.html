@@ -2118,6 +2118,29 @@ body.standalone #pwaNav{display:flex;}
 #pwaNav button:active{transform:scale(.92);background:rgba(200,32,46,.35);}
 body.standalone{padding-bottom:calc(64px + env(safe-area-inset-bottom)) !important;}
 body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-bottom));box-sizing:border-box;}
+/* 1365: the phone tab bar. Same bar, same ~64px height every clearance in this file is built on. */
+#pwaNav .pwatab{--cr-stack:"1365 the tabs exist only on an installed phone; the round-button rule still serves Back and Forward";display:none}
+@media (max-width:760px){
+  body.standalone #pwaNav{--cr-stack:"1365 the tab row packs tighter than the two-arrow row the base rule still lays out for an iPad";
+    justify-content:space-between;gap:2px;padding:6px max(6px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));}
+  body.standalone #pwaNav .pwatab{--cr-stack:"1365 a labelled tab is not the round arrow button the base #pwaNav rule still draws for Back";
+    display:flex;flex:1 1 0;min-width:0;width:auto;height:50px;border-radius:12px;border:0;background:transparent;padding:0;
+    flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#bdb4aa;font:600 11px/1 'Segoe UI',Arial,sans-serif;}
+  body.standalone #pwaNav .pwatab svg{width:22px;height:22px;display:block}
+  body.standalone #pwaNav .pwatab.on{color:#ffffff}
+  body.standalone #pwaNav .pwatab.on svg{color:#ff7b82}
+  body.standalone #pwaNav .pwatab:active{transform:scale(.94);background:rgba(255,255,255,.06)}
+  body.standalone #pwaNav .pwaplus{color:#ffffff}
+  body.standalone #pwaNav .pwaplus b{display:flex;align-items:center;justify-content:center;width:44px;height:30px;border-radius:10px;
+    background:#c8202e;color:#fff;font:400 24px/1 'Segoe UI',Arial,sans-serif}
+  body.standalone #pwaNav #pwaBack{--cr-stack:"1365 Back shrinks to make room for five tabs";flex:0 0 40px;width:40px;height:40px;font-size:24px}
+  body.standalone #pwaNav #pwaFwd,body.standalone #pwaNav #pwaLib{--cr-stack:"1365 Forward and the Library leave the phone bar (the Library is in the menu); an iPad keeps both";display:none !important}
+  /* the header's + and menu live in the bar now */
+  body.standalone header.site #cr-hd2-bar #navBtn,body.standalone header.site #cr-hd2-bar #addProjectBtn{--cr-stack:"1365 on an installed phone + and menu move into the bottom bar";display:none !important}
+  body.standalone.cr-tb-menu #cr-ai-fab{visibility:hidden}
+  /* a field user (1317) keeps Back, Home and Menu */
+  body.standalone.cr-field #pwaNav #pwaJobs,body.standalone.cr-field #pwaNav #pwaNew,body.standalone.cr-field #pwaNav #pwaSched{display:none !important}
+}
 
 /* ---- list salesman filter ---- */
 .listctl{display:flex;align-items:center;gap:8px;margin:6px 0 12px;
@@ -4173,7 +4196,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-17 build 1364<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1365<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -31204,6 +31227,12 @@ async function enableNotifications(){
 </script>
 <div id="pwaNav">
   <button id="pwaBack" aria-label="Back">&#8249;</button>
+  <!-- 1365: the phone tab bar (Theo's pick). Each tab calls the existing entrance's own function. -->
+  <button id="pwaHome" class="pwatab" data-tab="home" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Home</span></button>
+  <button id="pwaJobs" class="pwatab" data-tab="jobs" aria-label="Jobs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg><span>Jobs</span></button>
+  <button id="pwaNew" class="pwatab pwaplus" data-tab="new" aria-label="New"><b aria-hidden="true">+</b><span>New</span></button>
+  <button id="pwaSched" class="pwatab" data-tab="sched" aria-label="Schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/></svg><span>Schedule</span></button>
+  <button id="pwaMenu" class="pwatab" data-tab="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span></button>
   <button id="pwaFwd" aria-label="Forward">&#8250;</button>
   <!-- 509: the Resource Library had three entrances and all three were
        page-specific. This bar is already fixed on every screen at the
@@ -44943,6 +44972,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1365, d:'2026-10-18', t:'A bottom bar on the phone', s:'In the installed app on a phone, the bar along the bottom now has Back, Home, Jobs, a red + for something new, Schedule and Menu, all under your thumb. The + and the menu moved down from the top. The button for the screen you are on lights up. Back still works the way it always did. On an iPad or in a browser nothing changes.' },
   { b: 1364, d:'2026-10-17', t:'Contracts stop saying Estimate', s:'The top of a new Roofing, Siding or Gutter agreement (and a Service Contract) still carried the estimate header: an empty Estimate number, Estimate Date and a Valid Through date 30 days out. A signed agreement does not expire. The header now reads Prepared For, Date, Property Address, Prepared By and Client Contact, filled in as before. Contracts you already made keep the header they were saved with.' },
   { b: 1363, d:'2026-10-17', t:'Delete never looks like Save', s:'Delete Client was a solid red button, the same look as Save, on the one button you cannot undo. It is now red words with no fill, like every other Delete in the app. The Delete button on the bar that appears when you select several clients is the same now too.' },
   { b: 1362, d:'2026-10-17', t:'Sales Numbers in the Owner Console', s:'The Owner Console has a new Sales Numbers card: leads, jobs sold, sold dollars and money collected for each rep, for this month, this year or all time. It uses the same job value the client page and Balance Due use, so the numbers match the rest of the app. Clients moved over from the old system have their own Migrated column and do not count as new leads. A job moved to Unassigned still counts for the rep who had it.' },
@@ -67031,7 +67061,7 @@ controls:[
    (#crPortalChip{display:none!important}) — the switcher moved into the burger
    menu, which is already covered by 'menu' below. Probing the hidden chip
    reported a phantom "zero size" failure for a control that is gone by design. */
-['#cr-hd2-home', 'home (banner)'], ['#addProjectBtn', 'add (+)'], ['#navBtn', 'menu'],
+['#cr-hd2-home', 'home (banner)'], ['#addProjectBtn, #pwaNew', 'add (+)'], ['#navBtn, #pwaMenu', 'menu'],   /* 1365: header or bar */
 ['#cardinalTruthView .cr-cth-stage', 'a pipeline stage'],
 ['#cardinalTruthView .cr-cth-tools [data-go="clients"]', 'Insurance Clients tile'],
 ['#cardinalTruthView .cr-cth-chase', 'chase list'],
@@ -67081,7 +67111,7 @@ controls:[
 ];
 var ALWAYS = [
 ['#pwaBack', 'PWA back arrow'],
-['#pwaFwd',  'PWA forward arrow'],
+['#pwaFwd, #pwaHome',  'PWA forward arrow (Home tab on a phone)'],   /* 1365 */
 ];
 var last = [];
 function describe(el){
@@ -67313,6 +67343,70 @@ probe  : probe,
 </script>
 
 <style id="cr-pnc-styles">body.standalone #cr-rltoc-btn{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-dark-toggle{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-nachi-mgr-btn{bottom:calc(133px + env(safe-area-inset-bottom,0px)) !important}/* 451: #cr-rlhome-btn (447) and #cr-rltheme-btn (this build) had no standalone-mode shift, so #cr-rlhome-btn collided with #cr-nachi-mgr-btn once IT shifted to 133 here. Same +55 shift already used by TOC (24->79) and Manage (78->133) — #pwaNav clearance is a fixed amount, so every stacked button needs the identical shift, not a recomputed gap. Library: 133+55=188. Theme toggle: 187+55=242. */body.standalone #cr-rlhome-btn{bottom:calc(188px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-rltheme-btn{bottom:calc(242px + env(safe-area-inset-bottom,0px)) !important}body.standalone #pwaNav{z-index:9990 !important}body.standalone #pwaNav button{position:relative;z-index:1}body.standalone #pwaNav #crPortalChip{flex:0 1 auto;min-width:0;max-width:calc(100% - 128px);/* never crowd the two 46px arrows */ margin:0 10px;padding:9px 14px;border-radius:22px;font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(255,255,255,.07);border:1px solid rgba(200,32,46,.55);color:#f3e9dc;cursor:pointer;position:relative;z-index:1}body.standalone #pwaNav #crPortalChip:active{transform:scale(.96)}body.standalone #pwaNav #crPortalChip .sw{margin-left:5px;opacity:.7;font-size:11px}body.standalone #pwaNav #crPortalChip.retail{border-color:rgba(200,32,46,.75);color:#e35c63}body.standalone #pwaNav #crPortalChip.insurance{border-color:rgba(196,24,15,.85);color:#ff8a7a}body.standalone #pwaNav #crPortalChip.community{border-color:rgba(4,120,87,.9);color:#34D399}body.standalone #pwaNav #crPortalChip.all{border-color:rgba(220,220,220,.5);color:#dcdcdc}</style>
+<script id="cr-pwatab-script">
+/* 1365: the phone tab bar's taps and its lit tab. No observer: the lit tab is recomputed after a tap anywhere and
+   on Back/Forward, and is written only when it changes. */
+(function(){
+  'use strict';
+  function tbShown(id){
+    var e = document.getElementById(id);
+    if(!e || e.style.display === 'none') return false;
+    try{ return getComputedStyle(e).display !== 'none'; }catch(_){ return false; }
+  }
+  function tbWhich(){
+    if(tbShown('boardView')) return 'sched';
+    if(tbShown('leadsView') || tbShown('projectView') || tbShown('clientsView')) return 'jobs';
+    if(tbShown('mainView')) return 'home';
+    return '';
+  }
+  var lit = null;
+  function tbPaint(){
+    var k = tbWhich();
+    if(k === lit) return;
+    lit = k;
+    var tabs = document.querySelectorAll('#pwaNav .pwatab');
+    for(var i = 0; i < tabs.length; i++){
+      var on = tabs[i].getAttribute('data-tab') === k;
+      tabs[i].classList.toggle('on', on);
+      if(on) tabs[i].setAttribute('aria-current', 'page'); else tabs[i].removeAttribute('aria-current');
+    }
+  }
+  /* the header's menus drop from the header; opened from the bar they rise from the bar instead */
+  function rise(menu){
+    if(!menu || menu.style.display !== 'block') return;
+    var nav = document.getElementById('pwaNav');
+    var h = nav ? nav.getBoundingClientRect().height : 64;
+    menu.style.top = 'auto';
+    menu.style.bottom = Math.round(h + 8) + 'px';
+    menu.style.maxHeight = Math.max(200, window.innerHeight - h - 80) + 'px';
+    /* the menu lives inside the header's stacking layer (z 90), so no z-index lifts it over the floating Ask
+       button (9400); Ask steps aside while the menu is up and comes back the moment it closes */
+    document.body.classList.add('cr-tb-menu');
+    var tbOff = function(){ setTimeout(function(){
+      if(menu.style.display !== 'block'){ document.body.classList.remove('cr-tb-menu'); document.removeEventListener('click', tbOff, true); }
+    }, 0); };
+    document.addEventListener('click', tbOff, true);
+  }
+  document.addEventListener('click', function(e){
+    var b = (e.target instanceof Element) ? e.target.closest('#pwaNav .pwatab') : null;
+    if(!b){ setTimeout(tbPaint, 120); return; }
+    e.preventDefault(); e.stopPropagation();
+    var k = b.getAttribute('data-tab'), w = /** @type {any} */ (window);
+    try{
+      if(k === 'home'){ var H = w.CardinalHeader; if(H && typeof H.goHome === 'function') H.goHome(); else if(typeof w.showHome === 'function') w.showHome(); }   /* goHome lives inside the header module */
+      else if(k === 'jobs'){ if(typeof w.openLeadsView === 'function') w.openLeadsView(); }
+      else if(k === 'sched'){ if(typeof w.openScheduleBoard === 'function') w.openScheduleBoard(); }
+      else if(k === 'new'){ var a = document.getElementById('addProjectBtn'); if(a){ a.click(); rise(document.getElementById('newMenu')); } }
+      else if(k === 'menu'){ var m = document.getElementById('navBtn'); if(m) m.click(); }
+    }catch(err){ try{ if(w.report) w.report(err, 'Navigation', 'bottom bar'); }catch(_){} }
+    setTimeout(tbPaint, 60);
+  }, true);
+  window.addEventListener('popstate', function(){ setTimeout(tbPaint, 120); });
+  window.addEventListener('hashchange', function(){ setTimeout(tbPaint, 120); });
+  setTimeout(tbPaint, 1500);
+  window.CardinalTabBar = Object.assign(window.CardinalTabBar || {}, { paint: tbPaint, which: tbWhich });
+})();
+</script>
 <script id="cr-pnc-script">
 (function(){
 'use strict';
