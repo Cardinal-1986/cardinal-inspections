@@ -1986,6 +1986,11 @@ html, body{overflow-x:hidden;max-width:100%;}
              0 1px 0 rgba(255,255,255,.9) inset;}
 :root[data-theme="rb-light"] .actbox span{color:#5f6670;}
 :root[data-theme="rb-light"] .actbox b{color:#C25A18;}
+/* 1369: Money Collected is a door to Invoices & Payments (admins) */
+button.actbox{width:100%;margin:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+button.actbox:active{transform:scale(.97);}
+.actbox.actgo b::after{content:" \203A";font-weight:700;color:#9aa0a8;}
+:root[data-theme="rb-light"] .actbox.actgo b::after{color:#5f6670;}
 
 @media (max-width:900px){ .actstrip{grid-template-columns:repeat(3,1fr);gap:8px;} .actbox b{font-size:18px;} }
 .arhead{font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-top:8px;}
@@ -4196,7 +4201,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1367<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1369<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12127,21 +12132,39 @@ function renderActivityCount(){
     if(inWin(ck.t_Completed)) completed++;
     if(inWin(ck.t_Invoiced)) invoiced++;
     if(inWin(ck.t_Closed)) closed++;
+    /* 1369: the old worksheet log counts only on a job with no collections (jobFinance's rule, 721) */
+    if(collPaid[p.id] !== undefined) return;
     var ws = ck.ws || {};
     Object.keys(ws).forEach(function(k){
       (ws[k].log || []).forEach(function(en){ if(inWin(en.at)) collected += Number(en.a) || 0; });
     });
   });
+  /* 1369: the money is in collections. This read only the log above, which nothing has written since 1314: $0 always. */
+  (cacheCollections || []).forEach(function(c){
+    if(inWin(c.collected_at || c.created_at)) collected += Number(c.amount) || 0;
+  });
   function box(lbl, val){
     return '<div class="actbox"><span>' + lbl + '</span><b>' + val + '</b></div>';
+  }
+  var adm1369 = false, w1369 = /** @type {any} */ (window); try{ adm1369 = !!(w1369.is_admin && w1369.is_admin()); }catch(_a){}
+  function moneyBox(lbl, val){
+    if(!adm1369) return box(lbl, val);
+    return '<button type="button" class="actbox actgo" data-actmoney title="Open Invoices &amp; Payments"><span>' + lbl + '</span><b>' + val + '</b></button>';
   }
   el.innerHTML =
     box('New<br>Leads', leads) +
     box('Jobs<br>Approved', approved) +
     box('Jobs<br>Completed', completed) +
-    box('Money<br>Collected', '$' + Math.round(collected).toLocaleString('en-US')) +
+    moneyBox('Money<br>Collected', '$' + Math.round(collected).toLocaleString('en-US')) +
     box('Jobs<br>Invoiced', invoiced) +
     box('Jobs<br>Closed', closed);
+  if(el.dataset.crMoney !== '1'){   /* #actStrip is static markup: wire it once */
+    el.dataset.crMoney = '1';
+    el.addEventListener('click', function(e){
+      var t = (e.target instanceof Element) ? e.target.closest('[data-actmoney]') : null;
+      var w = /** @type {any} */ (window); if(t && typeof w.openAR === 'function') w.openAR();
+    });
+  }
 }
 function renderOps(){
   /* wire the three Work Schedule counters once — they route to the right view */
@@ -23075,6 +23098,12 @@ async function renderCommissions(){
             woEsc((editing && editing.finance_company) || (editing ? '' : 'Service Finance')) + '"></label>' +
         '</div>' +
         '<label style="display:block;margin-top:8px">Notes<input type="text" id="miNotes" ' + inp + ' value="' + woEsc((editing && editing.notes) || '') + '"></label>' +
+        /* 1368: a refund is a minus collection; its commission comes back from the rep who earned it */
+        (editing ? '' : '<label class="mi-refund" style="display:flex;align-items:center;gap:10px;margin-top:10px;min-height:44px">' +
+          '<input type="checkbox" id="miRefund" style="width:22px;height:22px;margin:0"> This is a refund (money back to the client)</label>' +
+          /* Theo, 18 Oct: "a checkbox where the refund may not take out of commission" */
+          '<label class="mi-refund" style="display:flex;align-items:center;gap:10px;margin:2px 0 0 32px;min-height:44px">' +
+          '<input type="checkbox" id="miKeepComm" style="width:22px;height:22px;margin:0"> Don’t take it out of the rep’s commission</label>') +
         '<button class="btn" style="margin-top:12px" id="miSave">' + (editing ? 'Save changes' : 'Save collection') + '</button>' +
         '<span class="subnote" id="miMsg" style="margin-left:10px"></span></div>';
     }
@@ -23250,6 +23279,9 @@ async function miSaveColl(){
   var msg = document.getElementById('miMsg');
   var amt = Number(document.getElementById('miAmt').value.replace(/[$,\s]/g, ''));
   if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
+  var _rf = /** @type {HTMLInputElement|null} */ (document.getElementById('miRefund')), refund1368 = !!(_rf && _rf.checked);   /* 1368 */
+  if(refund1368) amt = -Math.abs(amt);
+  var _kc = /** @type {HTMLInputElement|null} */ (document.getElementById('miKeepComm')), keep1368 = refund1368 && !!(_kc && _kc.checked);
   var row = {
     collected_at: document.getElementById('miDate').value || commToday(),
     amount: amt,
@@ -23259,6 +23291,8 @@ async function miSaveColl(){
       ? (document.getElementById('miFinCo').value.trim() || 'Service Finance') : null,
     notes: document.getElementById('miNotes').value.trim() || null,
   };
+  if(refund1368) row.notes = 'Refund' + (row.notes ? ' \u2014 ' + row.notes : '');
+  if(keep1368) row.keep_commission = true;   /* make_commission() books no take-back for this row */
   if(msg) msg.textContent = 'Saving…';
   /* 734: what commissions existed BEFORE the insert. The trigger writes the new
      one server-side, so this is the only way to tell it apart afterwards. */
@@ -23287,15 +23321,16 @@ async function miSaveColl(){
       var _fresh = (commUi.lastComms || []).filter(function(c){ return !_before[c.id]; });
       if(_fresh.length === 1){
         var _c = _fresh[0];
-        _extra = ' \u00b7 ' + fmtMoney(Number(_c.amount) || 0, true) + ' commission for ' +
-                 rptRepName(_c.rep_email);
+        _extra = (Number(_c.amount) < 0)
+          ? ' \u00b7 ' + fmtMoney(Math.abs(Number(_c.amount)), true) + ' commission taken back from ' + rptRepName(_c.rep_email)   /* 1368 */
+          : ' \u00b7 ' + fmtMoney(Number(_c.amount) || 0, true) + ' commission for ' + rptRepName(_c.rep_email);
       }else if(_fresh.length > 1){
         var _sum = _fresh.reduce(function(t, c){ return t + (Number(c.amount) || 0); }, 0);
         _extra = ' \u00b7 ' + fmtMoney(_sum, true) + ' in commissions';
       }
     }
   }catch(_){}
-  try{ if(window.crToastOk) window.crToastOk('Collection logged \u2014 ' + fmtMoney(amt, true) + _extra); }catch(_){}
+  try{ if(window.crToastOk) window.crToastOk((amt < 0 ? 'Refund logged \u2014 ' + fmtMoney(-amt, true) : 'Collection logged \u2014 ' + fmtMoney(amt, true)) + (keep1368 ? ' \u00b7 the rep\u2019s commission is left as it was' : _extra)); }catch(_){}
   } finally { _busy(); }
 }
 function miEditColl(id){
@@ -44972,6 +45007,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1369, d:'2026-10-18', t:'Money Collected counts your payments', s:'The Money Collected box on the home screen showed $0 because it only read the old worksheet notes, not the payments you record. It now adds up every payment from the last 30 days, with refunds taken off. Tap it to open Invoices & Payments.' },
+  { b: 1368, d:'2026-10-18', t:'Refunds take the commission back', s:'When you log a collection there is now a box for a refund. Tick it and the amount comes off the job, the note says Refund, and 10% comes back off the commission of the rep who earned the job, even if the job has been reassigned since. It shows up against their next payout. Tick Don’t take it out of the rep’s commission to leave their commission alone. Stripe refunds are not connected, so log those here too.' },
   { b: 1367, d:'2026-10-18', t:'Two invoice messages say the right thing', s:'Making an invoice now shows a green message that clears itself, instead of a red one that looked like something went wrong. On Community, tapping Partner A/R or a pipeline bucket opens the list titled by what it shows, such as Invoiced jobs, with that count, instead of All estimates.' },
   { b: 1366, d:'2026-10-18', t:'Payments can cover invoice extra lines', s:'When an invoice has extra lines added, the job total now includes them everywhere, including the check that stops a payment being recorded for more than a job is owed. Before, a rep recording the payment for those extra lines would have been told it was too much. Nobody had hit it yet.' },
   { b: 1365, d:'2026-10-18', t:'A bottom bar on the phone', s:'In the installed app on a phone, the bar along the bottom now has Back, Home, Jobs, a red + for something new, Schedule and Menu, all under your thumb. The + and the menu moved down from the top. The button for the screen you are on lights up. Back still works the way it always did. On an iPad or in a browser nothing changes.' },

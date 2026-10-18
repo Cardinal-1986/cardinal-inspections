@@ -36720,3 +36720,24 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **D6, checked before building:** two of its three halves were already fixed. The Worksheet wording went at 1318, and the editor's button has read "Text pay link" on an invoice since 1313. Still broken: "Invoice … is ready" used `crTell`'s default kind, `'err'`, which is red and stays until dismissed. It now passes `'ok'`.
 - **D11:** Partner A/R and every pipeline bucket land on the bids table, which said "All estimates 3" over a list of 1. When only a stage filter is set, `bidsTitle1367()` titles it by the stage ("Invoiced jobs") with the shown count. Clear brings back "All estimates".
 - **Gate:** `gate_1367.mjs` GREEN 5/5; control 1366 RED 4, no crash. check_build GREEN; stack clean; a11y GREEN; scroll roster unchanged. Types and dupes show the inherited 1530 / 11, identical on the control.
+
+## Build 1368 — refunds take the commission back (invoicing audit M7; Theo: "1A 2b")
+- **Theo's picks:** 1A, a refund claws the rep's commission back automatically. 2b, Stripe's refund and dispute events stay off for now, so the office logs refunds by hand.
+- **Measured first, in a rolled-back transaction:** the ledger already held a refund. The office form accepted a minus amount, and `make_commission()` wrote 10% of it, so a −$100 row booked a −$10 pending commission to the right rep. `groupOwed()` in `api/commissions-digest.js` sums signed amounts, so it nets against the next payout. Nothing on screen said any of this.
+- **SQL (apply BEFORE the code):** `commission_clawback.sql`. A minus row now goes to the rep on the job's latest positive commission, not the job's current `sales_rep`. With 73 jobs just unassigned, a refund there would otherwise have clawed back from nobody. Positive rows are unchanged.
+- **index.html:** a "This is a refund" box on a new collection (a 56px row). The amount is saved as a minus, the note starts "Refund", and the toast reads "Refund logged — $X · $Y commission taken back from <rep>".
+- **Theo, same evening:** "a checkbox where the refund may not take out of commission". A second box under the refund box sets `collections.keep_commission` (new column in the same SQL), and `make_commission()` books nothing for that row. The toast says "the rep’s commission is left as it was". On a payment it is ignored. Gate F covers it (13 checks green; control RED 8).
+- **e2e_mock_supa.js:** the trigger model mirrors the new rule and the owner exclusion.
+- **Gate:** `gate_1368.mjs` GREEN 8/8; control 1367 RED 5. `gate_734` has 1 inherited red (it counts 6 commission queries against its pinned 5), identical on the control.
+- **Other gates:** check_build GREEN; types / dupes at the inherited 1530 / 11; stack clean; a11y GREEN; scroll roster unchanged.
+- **Not built:** the webhook still ignores `charge.refunded` / `charge.dispute.*`. That waits for Theo to turn the events on.
+
+## Build 1369 — Activity Count's Money Collected was always $0 (Theo, screenshot: "Is this even accurately working? The money received should be able to be clicked on")
+- **Root cause:** `renderActivityCount()` summed only `checklist.ws[*].log`, the pre-1314 worksheet log. Payments have lived in `collections` since 721/1314, so the tile said $0 whatever came in.
+- **Fix:**
+  - The tile sums `cacheCollections` (already loaded by `reload()`) by `collected_at` (else `created_at`) over the last 30 days, with refunds netted.
+  - The old log still counts on a job with no collections, which is jobFinance's rule, so nothing is counted twice.
+- **Tap:** for an admin, the tile is a `<button data-actmoney>` that opens Invoices & Payments. A rep gets a plain tile, because AR is admin-only.
+- **The other five tiles were checked, not changed.** `spark/push_acculynx.py` writes AccuLynx's own milestone dates (`t_<Stage>`), so the migration did not inflate them. That is not yet verified against live rows: Supabase was disconnected.
+- **Gate:** `gate_1369.mjs` GREEN 5/5. On the 1368 control it goes RED 3: the same seed showed $1,299, the worksheet log only.
+- **Other gates:** types at the inherited 1530; stack clean; a11y GREEN; scroll roster unchanged. Two type errors were fixed on the way: an expando flag on the element, then on the function. The fix was `el.dataset`.
