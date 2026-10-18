@@ -36757,3 +36757,13 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **Gate:** `gate_1370.mjs` GREEN 6/6; control 1369 RED 6.
   - The first cut had an informational check that could not fail. It was replaced with a real one (BUG_CLASSES: a check that cannot fail is worse than none).
 - **Other gates:** gate_1369 and gate_1362 GREEN; types 1530; stack clean; a11y GREEN.
+
+## Build 1371 — the invoiced dates too (Theo: "Fix the invoiced dates too")
+- **Measured:** the 9 migrated jobs with an import-noon `t_Invoiced` have **no invoice document**, and were created 96–163 days ago. The 1316 aging clock read sent_at → t_Invoiced → stage_since → invoice created_at. Every date it found was the import noon, so all 9 showed as **2 days old, in the 0–14 group**.
+- **Fix:** fake stamps are skipped. A migrated job with no real date ages from its own `created_at`, AccuLynx's start date. That is an upper bound, so old money is never shown as new. All 9 now sit in 31+.
+- **Also:**
+  - `rptStageDate()` (reports) skips the stamp.
+  - The Community timeline no longer says "Invoiced on 16 Oct" for one.
+  - Non-migrated jobs and sent invoices are unchanged (gate B).
+- **Gate:** `gate_1371.mjs` GREEN 4/4; control 1370 RED 2, the 2-day age and the report date.
+- **Other gates:** gate_1370 GREEN; gate_1316 GREEN 8/8; types 1530; stack clean; a11y GREEN.

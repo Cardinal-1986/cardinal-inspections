@@ -10076,3 +10076,6 @@ Home → Activity Count → **Money Collected** = `cacheCollections` rows dated 
 
 ## Build 1370: migration noon stamps are not dates
 `crRealStamp(ck, v)` (main block, beside `parseCkAll`) returns null for a stage stamp equal to `acculynx_import` + `T12:00:00` — what `push_acculynx.py` wrote where AccuLynx had no history. Activity Count and Owner Console Sales Numbers (`snSoldAt`, stamps and `stage_since`) read through it. Data untouched. **Gate:** `gate_1370.mjs`.
+
+## Build 1371: the invoiced dates too
+Invoices & Payments `ageDays` (1316 clock), `rptStageDate` (reports) and the Community timeline read stamps through `crRealStamp`. A migrated job with no real invoice date ages from its own `created_at` (upper bound). **Gate:** `gate_1371.mjs`.
