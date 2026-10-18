@@ -36741,3 +36741,29 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **The other five tiles were checked, not changed.** `spark/push_acculynx.py` writes AccuLynx's own milestone dates (`t_<Stage>`), so the migration did not inflate them. That is not yet verified against live rows: Supabase was disconnected.
 - **Gate:** `gate_1369.mjs` GREEN 5/5. On the 1368 control it goes RED 3: the same seed showed $1,299, the worksheet log only.
 - **Other gates:** types at the inherited 1530; stack clean; a11y GREEN; scroll roster unchanged. Two type errors were fixed on the way: an expando flag on the element, then on the function. The fix was `el.dataset`.
+
+## Build 1370 — migration dates (Theo: "Fix the migration dates. 1")
+- **Measured on production:**
+  - All 164 migrated jobs carry `acculynx_import: '2026-10-16'`.
+  - Every stage stamp the import wrote without AccuLynx history is `2026-10-16T12:00:00Z`: t_Approved 31, t_Closed 17, t_Invoiced 9, t_Completed 5, t_Prospect 52, t_Lead 7, plus stage_since 161.
+  - 3 closings moved in the app later that day are real.
+  - **The real dates are stored nowhere**, so nothing was "restored". Inventing dates was not an option.
+- **Fix:** `crRealStamp()` treats an import-noon stamp as no date.
+  - Activity Count ignores it. A lead falls back to `created_at`, which is AccuLynx's own date.
+  - Sales Numbers dates a sale from its earliest real stamp, else `created_at`. That is a lower bound, so a sale counts in a period only when it must have happened in it.
+  - The database is untouched.
+- **Live expected, computed in SQL with the same rule:** Activity Count 85/46/8/14/23 → **79 leads, 15 approved, 3 completed, 5 invoiced, 6 closed**.
+- **Not changed, recorded:** A/R aging also reads `t_Invoiced`. The 9 migrated invoiced jobs age from 16 Oct there. Left alone; that is a different screen and wants Theo's call.
+- **Gate:** `gate_1370.mjs` GREEN 6/6; control 1369 RED 6.
+  - The first cut had an informational check that could not fail. It was replaced with a real one (BUG_CLASSES: a check that cannot fail is worse than none).
+- **Other gates:** gate_1369 and gate_1362 GREEN; types 1530; stack clean; a11y GREEN.
+
+## Build 1371 — the invoiced dates too (Theo: "Fix the invoiced dates too")
+- **Measured:** the 9 migrated jobs with an import-noon `t_Invoiced` have **no invoice document**, and were created 96–163 days ago. The 1316 aging clock read sent_at → t_Invoiced → stage_since → invoice created_at. Every date it found was the import noon, so all 9 showed as **2 days old, in the 0–14 group**.
+- **Fix:** fake stamps are skipped. A migrated job with no real date ages from its own `created_at`, AccuLynx's start date. That is an upper bound, so old money is never shown as new. All 9 now sit in 31+.
+- **Also:**
+  - `rptStageDate()` (reports) skips the stamp.
+  - The Community timeline no longer says "Invoiced on 16 Oct" for one.
+  - Non-migrated jobs and sent invoices are unchanged (gate B).
+- **Gate:** `gate_1371.mjs` GREEN 4/4; control 1370 RED 2, the 2-day age and the report date.
+- **Other gates:** gate_1370 GREEN; gate_1316 GREEN 8/8; types 1530; stack clean; a11y GREEN.

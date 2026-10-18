@@ -4201,7 +4201,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1369<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1371<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12127,11 +12127,12 @@ function renderActivityCount(){
   var leads = 0, approved = 0, completed = 0, invoiced = 0, closed = 0, collected = 0;
   cacheProjects.forEach(function(p){
     var ck = parseCkAll(p);
-    if(inWin(ck.t_Lead || p.created_at)) leads++;
-    if(inWin(ck.t_Approved)) approved++;
-    if(inWin(ck.t_Completed)) completed++;
-    if(inWin(ck.t_Invoiced)) invoiced++;
-    if(inWin(ck.t_Closed)) closed++;
+    /* 1370: a migration noon stamp is not this month's work */
+    if(inWin(crRealStamp(ck, ck.t_Lead) || p.created_at)) leads++;
+    if(inWin(crRealStamp(ck, ck.t_Approved))) approved++;
+    if(inWin(crRealStamp(ck, ck.t_Completed))) completed++;
+    if(inWin(crRealStamp(ck, ck.t_Invoiced))) invoiced++;
+    if(inWin(crRealStamp(ck, ck.t_Closed))) closed++;
     /* 1369: the old worksheet log counts only on a job with no collections (jobFinance's rule, 721) */
     if(collPaid[p.id] !== undefined) return;
     var ws = ck.ws || {};
@@ -14133,8 +14134,9 @@ var RPT_PALETTE = ['#C8202E','#c8202e','#7CB342','#29A3DC','#8E6BC1','#607D8B','
 function rptCk(pr){ return parseCkAll(pr); }
 function rptStageDate(pr, stg){
   var ck = rptCk(pr);
-  if(ck['t_' + stg]) return new Date(ck['t_' + stg]);
-  if(normStage(pr.stage) === stg && ck.stage_since) return new Date(ck.stage_since);
+  /* 1371: an AccuLynx import noon stamp is no date */
+  if(crRealStamp(ck, ck['t_' + stg])) return new Date(ck['t_' + stg]);
+  if(normStage(pr.stage) === stg && crRealStamp(ck, ck.stage_since)) return new Date(ck.stage_since);
   if(stg === 'Lead' && pr.created_at) return new Date(pr.created_at);
   return null;
 }
@@ -22495,6 +22497,15 @@ document.querySelectorAll('.gcsel').forEach(function(sel){
   sel.innerHTML = '<option value="">\u2014 select \u2014</option>' +
     GC_OPTS.map(function(o){ return '<option>' + o + '</option>'; }).join('');
 });
+/* 1370: the AccuLynx migration stamped every stage it had no history for with the import day at noon UTC
+   (acculynx_import '2026-10-16' → 'T12:00:00Z'). That is when the row arrived, not when the job was approved
+   or closed, so a reader of "when did this happen" treats it as no date. */
+function crRealStamp(ck, v){
+  if(!v) return null;
+  var imp = ck && ck.acculynx_import;
+  if(typeof imp === 'string' && imp && String(v).indexOf(imp + 'T12:00:00') === 0) return null;
+  return v;
+}
 var __ckCache = new Map();
 function parseCkAll(pr){
   if(!pr) return {};
@@ -45007,6 +45018,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1371, d:'2026-10-18', t:'Old invoices from AccuLynx show their real age', s:'Invoiced jobs brought over from AccuLynx had no invoice date, so Invoices & Payments showed them as invoiced two days ago. They now age from when the job started, which puts that old money in the 31+ days group where it belongs. Reports and the Community job timeline no longer show 16 October for those jobs either.' },
+  { b: 1370, d:'2026-10-18', t:'Moved-over jobs stop counting as this month', s:'Jobs brought over from AccuLynx were stamped with the day they arrived, 16 October, wherever AccuLynx had no date for when they were approved, invoiced or closed. That made the home screen count 32 approvals and 20 closings in one day. Those arrival stamps no longer count in Activity Count or Sales Numbers. Real changes made in the app still count.' },
   { b: 1369, d:'2026-10-18', t:'Money Collected counts your payments', s:'The Money Collected box on the home screen showed $0 because it only read the old worksheet notes, not the payments you record. It now adds up every payment from the last 30 days, with refunds taken off. Tap it to open Invoices & Payments.' },
   { b: 1368, d:'2026-10-18', t:'Refunds take the commission back', s:'When you log a collection there is now a box for a refund. Tick it and the amount comes off the job, the note says Refund, and 10% comes back off the commission of the rep who earned the job, even if the job has been reassigned since. It shows up against their next payout. Tick Don’t take it out of the rep’s commission to leave their commission alone. Stripe refunds are not connected, so log those here too.' },
   { b: 1367, d:'2026-10-18', t:'Two invoice messages say the right thing', s:'Making an invoice now shows a green message that clears itself, instead of a red one that looked like something went wrong. On Community, tapping Partner A/R or a pipeline bucket opens the list titled by what it shows, such as Invoiced jobs, with that count, instead of All estimates.' },
@@ -65540,7 +65553,7 @@ acts: sched972
 }else if(st === 'Invoiced'){
 out.push({ now:true, title:'Invoiced \u2014 waiting on the partner', when:'now',
 txt:(money972(b972.awarded_amount) ? money972(b972.awarded_amount) + ' invoiced' : 'Invoiced')
-  + (c972.t_Invoiced ? ' on ' + fmtDay(c972.t_Invoiced) : '') + '.',
+  + ((typeof crRealStamp === 'function' ? crRealStamp(c972, c972.t_Invoiced) : c972.t_Invoiced) ? ' on ' + fmtDay(c972.t_Invoiced) : '') + '.',   /* 1371 */
 acts:[{ label:'Payment Information', how:'pay' }] });
 }else if(st === 'Closed'){
 out.push({ title:'Closed', when: ago(c972.t_Closed || c972.stage_since || pr.created_at),
@@ -87695,11 +87708,13 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   function snSoldAt(p, ck){
     var best = NaN;
     function snTake(v){ var t = snTime(v); if(!isNaN(t) && (isNaN(best) || t < best)) best = t; }
-    ['t_Approved','t_Scheduled','t_Completed','t_Invoiced','t_Closed'].forEach(function(k){ snTake(ck[k]); });
+    /* 1370: a migration noon stamp is not a sale date */
+    var snReal = (typeof crRealStamp === 'function') ? crRealStamp : function(_c, v){ return v; };
+    ['t_Approved','t_Scheduled','t_Completed','t_Invoiced','t_Closed'].forEach(function(k){ snTake(snReal(ck, ck[k])); });
     ((typeof cacheRows !== 'undefined' && cacheRows) || []).forEach(function(r){
       if(r.project_id === p.id && /^contract/i.test(String(r.title || '').trim()) && r.signed_at) snTake(r.signed_at);
     });
-    return isNaN(best) ? (ck.stage_since || p.created_at || null) : new Date(best).toISOString();
+    return isNaN(best) ? (snReal(ck, ck.stage_since) || p.created_at || null) : new Date(best).toISOString();
   }
   function snRows(per){
     var from = snStart(per), by = {}, repOf = {}, undated = 0;
@@ -91920,7 +91935,11 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
      and never pr.stage_since, which is not a column (it lives in the checklist). */
   function ageDays(pr, inv){
     var ck = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
-    var iso = (inv && inv.sent_at) || ck.t_Invoiced || ck.stage_since || (inv && inv.created_at) || null;
+    /* 1371: the AccuLynx import's noon stamps are not dates (crRealStamp, 1370). A migrated job with no real date
+       ages from its own start — an upper bound, so old money is never shown as new. */
+    var real = (typeof crRealStamp === 'function') ? crRealStamp : function(_c, v){ return v || null; };
+    var iso = (inv && inv.sent_at) || real(ck, ck.t_Invoiced) || real(ck, ck.stage_since) || (inv && inv.created_at)
+              || (ck.acculynx_import ? pr.created_at : null) || null;
     if(!iso) return 0;
     var d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
     return d > 0 ? d : 0;
