@@ -10061,3 +10061,6 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 
 ## Build 1364: agreement header
 Agreements and the Service Contract print Prepared For / Date / Property Address / Prepared By / Client Contact (no Estimate #, no Valid Through), titled "— Agreement". `buildEstimate()` isDeal branch. **Gate:** `gate_1364.mjs`.
+
+## Build 1365: phone bottom bar (installed app)
+`#pwaNav` at ≤760px under `body.standalone`: ‹ Back · Home · Jobs · + · Schedule · Menu (`cr-pwatab-script`, `window.CardinalTabBar`). Header + / ☰ hidden there; Forward and Library off the phone bar (iPad keeps them). Field user: Back, Home, Menu. Same ~64px height every clearance uses. **Gate:** `gate_1365.mjs`.

@@ -36683,3 +36683,25 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **Gates:**
   - `gate_1364` GREEN 12; 1363 RED 5.
   - Also green: 1015, 1141, 723, 1313, 1324, 1271, 1253, 1139, 1123, 1050, 1362, 1363, harness/render estdoc1099, check_build, repro cmp. types 1530 / dupes 11 (inherited).
+
+## Build 1365 — the installed app's phone bar: ‹ Back · Home · Jobs · + · Schedule · Menu (Theo: "2", "1", "1")
+- **Why:** Theo looked at a rep's five-month-old demo CRM and picked its bottom bar.
+  - Option 2 was the five tabs; he approved a preview on the real app.
+  - Then, told the installed app ALREADY has a bottom bar (`#pwaNav`, ‹ Back / › Forward), he picked option 1: extend it and keep Back. The installed app has no browser back button.
+- **Why extend, not add:** every bottom-of-screen control already clears `#pwaNav` by its ~64px constant. That covers the estimate phone bar (1269), signature pad, pay sheets, landing tiles (877) and the 961/962 sheets. A second bar would have broken all of them.
+  - The tabs are 50px with 6px padding, so the bar stays 63px. `render_navclear` stays GREEN 9/9.
+- **What:**
+  - **Scope:** installed app, ≤760px only. A browser tab and the iPad are unchanged; `gate_1365` F asserts both.
+  - **Tabs:** `#pwaHome` `#pwaJobs` `#pwaNew` `#pwaSched` `#pwaMenu` (`.pwatab`) sit after `#pwaBack`.
+  - **Moved and dropped:** the header's `#navBtn` / `#addProjectBtn` are hidden there. `#pwaFwd` and `#pwaLib` leave the phone bar but stay in the markup, so every reader of them still resolves.
+  - **Each tab calls the existing entrance:** `CardinalHeader.goHome()`, `openLeadsView()`, `openScheduleBoard()`, and `.click()` on the header's own + / menu.
+    - The New menu then rises from the bar.
+    - ⚠ `goHome` is private to cr-hd2-script, and `window.goHome` is undefined. The gate caught my first Home tab doing nothing.
+  - **Lit tab:** Home / Jobs (the list or a client page) / Schedule. It is recomputed after a tap and on popstate, and written only when it changes. No observer.
+  - **Field user (1317):** Back, Home and Menu only.
+  - **Ask:** the floating ✦ Ask steps aside while the bar's New menu is open. The menu lives in the header's z 90 stacking layer, so no z-index lifts it over Ask's 9400; a z-index fix was tried and the gate stayed red.
+  - **Self Check** probes `#addProjectBtn, #pwaNew` / `#navBtn, #pwaMenu` / `#pwaFwd, #pwaHome`, whichever is on screen.
+- **Gates:**
+  - `gate_1365` GREEN 17; 1364 RED 12. The control first crashed on a missing selector (BUG_CLASSES 37); its tap helper is now guarded.
+  - Also green: render_navclear 9/9, sweep_navclear, 1269, 1273, 1161, 1187, 1188, 1195, 1213, 1215, 1257, 1270, 1026, 957, 969, 1317, 1321, 1206, 1363, 1364, check_build, stack (2 declared `--cr-stack`), a11y, scroll-lock, repro cmp. types 1530 / dupes 11 (inherited).
+  - Dupes caught `paint` / `shown` / `off` as names taken elsewhere; renamed to `tbPaint` / `tbShown` / `tbOff`.
