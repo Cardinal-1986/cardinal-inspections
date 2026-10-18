@@ -4196,7 +4196,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1366<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1367<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -17750,7 +17750,7 @@ async function createInvoiceFor1315(pr){
     try{ if(window.CardinalInvLines) await window.CardinalInvLines.seed(pr, id); }catch(_sl){}
     await reload();
     await openEditor(id);
-    crTell('Invoice ' + num + ' is ready. Send it from the job\u2019s invoice card or the editor \u2014 the job moves to Invoiced when it goes out.');   /* 1318 */
+    crTell('Invoice ' + num + ' is ready. Send it from the job\u2019s invoice card or the editor \u2014 the job moves to Invoiced when it goes out.', 'ok');   /* 1318; 1367: a success, so the green kind */
   }catch(err){ showError('Could not create invoice: ' + (err.message || err)); }
 }
 document.getElementById('wsMount').addEventListener('click', function(e){
@@ -44972,6 +44972,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1367, d:'2026-10-18', t:'Two invoice messages say the right thing', s:'Making an invoice now shows a green message that clears itself, instead of a red one that looked like something went wrong. On Community, tapping Partner A/R or a pipeline bucket opens the list titled by what it shows, such as Invoiced jobs, with that count, instead of All estimates.' },
   { b: 1366, d:'2026-10-18', t:'Payments can cover invoice extra lines', s:'When an invoice has extra lines added, the job total now includes them everywhere, including the check that stops a payment being recorded for more than a job is owed. Before, a rep recording the payment for those extra lines would have been told it was too much. Nobody had hit it yet.' },
   { b: 1365, d:'2026-10-18', t:'A bottom bar on the phone', s:'In the installed app on a phone, the bar along the bottom now has Back, Home, Jobs, a red + for something new, Schedule and Menu, all under your thumb. The + and the menu moved down from the top. The button for the screen you are on lights up. Back still works the way it always did. On an iPad or in a browser nothing changes.' },
   { b: 1364, d:'2026-10-17', t:'Contracts stop saying Estimate', s:'The top of a new Roofing, Siding or Gutter agreement (and a Service Contract) still carried the estimate header: an empty Estimate number, Estimate Date and a Valid Through date 30 days out. A signed agreement does not expire. The header now reads Prepared For, Date, Property Address, Prepared By and Client Contact, filled in as before. Contracts you already made keep the header they were saved with.' },
@@ -63976,6 +63977,13 @@ var mine1311 = (role === 'sales') ? '<div class="cc-mine">Your pipeline \u2014 y
    Clients tab keep their own orders on purpose - a filter that silently
    emptied the due-soon list would hide overdue bids. */
 var chRows = chSorted(d.all.filter(chMatches));
+/* 1367: a door that filters by stage (Partner A/R, the pipeline buckets) lands on a table that says what it holds */
+function bidsTitle1367(){
+var sets = chState.sets || {};
+var keys = Object.keys(sets).filter(function(k){ return (sets[k] || []).length; });
+if(keys.length === 1 && keys[0] === 'stage') return esc(sets.stage.join(' \u00b7 ')) + ' jobs';
+return '';
+}
 var allBidsBody = d.all.length
 ? chBar(chRows.length, d.all.length) +
 (chRows.length
@@ -64007,7 +64015,7 @@ esc(LABEL[st] || st) + '</span></td>' +
 
 var bidsPane = '<div data-pane="bids" class="' + (pane === 'bids' ? 'on' : '') + '">' +
 mine1311 +
-fold('allbids', 'All estimates', d.all.length, allBidsBody) +   /* 1311: the whole pane now, so open */
+fold('allbids', bidsTitle1367() || 'All estimates', bidsTitle1367() ? chRows.length : d.all.length, allBidsBody) +   /* 1311: the whole pane now, so open; 1367: titled by its filter */
 '<div data-cc-punch></div>' +
 '</div>';
 

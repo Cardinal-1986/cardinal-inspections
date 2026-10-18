@@ -36715,3 +36715,8 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - A rolled-back test invoice with $123.45 of extras raised its job's total by exactly $123.45, and left no row behind.
 - `collections_guards.sql` carries a SUPERSEDED note so a re-run doesn't drop the extras again. The audit doc now marks M11, R9 and W8.
 - **index.html:** stamp and changelog only. check_build GREEN.
+
+## Build 1367 — invoicing audit D6 + D11 (Theo: "keep going to what's next")
+- **D6, checked before building:** two of its three halves were already fixed. The Worksheet wording went at 1318, and the editor's button has read "Text pay link" on an invoice since 1313. Still broken: "Invoice … is ready" used `crTell`'s default kind, `'err'`, which is red and stays until dismissed. It now passes `'ok'`.
+- **D11:** Partner A/R and every pipeline bucket land on the bids table, which said "All estimates 3" over a list of 1. When only a stage filter is set, `bidsTitle1367()` titles it by the stage ("Invoiced jobs") with the shown count. Clear brings back "All estimates".
+- **Gate:** `gate_1367.mjs` GREEN 5/5; control 1366 RED 4, no crash. check_build GREEN; stack clean; a11y GREEN; scroll roster unchanged. Types and dupes show the inherited 1530 / 11, identical on the control.
