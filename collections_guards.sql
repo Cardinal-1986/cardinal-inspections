@@ -20,6 +20,8 @@
 --      rows (type 'other', external_ref 'refund:<id>' / 'dispute:<id>'). Nothing here blocks
 --      them: the guard only applies to signed-in non-full-access callers.
 
+-- ⚠ 1366: SUPERSEDED by job_total_extras.sql (adds invoice extra lines, 1357). Re-running this file
+--   alone would drop them again; run job_total_extras.sql after it.
 create or replace function public.job_total_for(pid uuid)
 returns numeric
 language sql

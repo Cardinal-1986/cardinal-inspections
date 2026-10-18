@@ -4196,7 +4196,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1365<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1366<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44972,6 +44972,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1366, d:'2026-10-18', t:'Payments can cover invoice extra lines', s:'When an invoice has extra lines added, the job total now includes them everywhere, including the check that stops a payment being recorded for more than a job is owed. Before, a rep recording the payment for those extra lines would have been told it was too much. Nobody had hit it yet.' },
   { b: 1365, d:'2026-10-18', t:'A bottom bar on the phone', s:'In the installed app on a phone, the bar along the bottom now has Back, Home, Jobs, a red + for something new, Schedule and Menu, all under your thumb. The + and the menu moved down from the top. The button for the screen you are on lights up. Back still works the way it always did. On an iPad or in a browser nothing changes.' },
   { b: 1364, d:'2026-10-17', t:'Contracts stop saying Estimate', s:'The top of a new Roofing, Siding or Gutter agreement (and a Service Contract) still carried the estimate header: an empty Estimate number, Estimate Date and a Valid Through date 30 days out. A signed agreement does not expire. The header now reads Prepared For, Date, Property Address, Prepared By and Client Contact, filled in as before. Contracts you already made keep the header they were saved with.' },
   { b: 1363, d:'2026-10-17', t:'Delete never looks like Save', s:'Delete Client was a solid red button, the same look as Save, on the one button you cannot undo. It is now red words with no fill, like every other Delete in the app. The Delete button on the bar that appears when you select several clients is the same now too.' },

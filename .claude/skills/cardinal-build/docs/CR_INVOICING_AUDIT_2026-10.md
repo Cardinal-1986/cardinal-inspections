@@ -38,7 +38,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 | M8 | Overpayment invisible — `paid` clamped to `value`; no cap in the pay modal; commission booked on the full amount | `jobFinance` ~17263, `savePayModal` ~90070 | executed |
 | M9 | ✅ **FIXED 1316** — Community bid-only jobs: clamp makes paid = 0 when value = 0. Habitat $12k awarded, $6k collected → tile $12k, cc2 page $12k, profile $0, Invoices & AR omits it. True answer $6k | `jobFinance` clamp; `cr-ch2` ~63364; `cc2Page` ~65274 | executed |
 | M10 | ✅ **FIXED 1314** — A failed collections read becomes an empty ledger in the app (`.catch(()=>[])`) — every Balance Due shows full contract. Server already fixed this at 1199 | ~11652 | traced |
-| M11 | Reps can record unbounded payments that create their own 10% commission and can't correct them (update = full access, delete = admin) | `collections_rep_insert.sql`, `commission_system.sql:175–206` | traced |
+| M11 | ✅ *LIVE (verified 18 Oct; 1339 SQL, trigger + policies on production). 1366: its job total now counts invoice extras.* Reps can record unbounded payments that create their own 10% commission and can't correct them (update = full access, delete = admin) | `collections_rep_insert.sql`, `commission_system.sql:175–206` | traced |
 
 ## A/R reporting wrong
 
@@ -52,7 +52,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 | R6 | ✅ **FIXED 1316** — Closed with a balance: on Invoices & AR only if an invoice doc exists; with none, on no A/R surface at all | executed |
 | R7 | ✅ **FIXED 1316** — A finished job (Completed, signed contract, no invoice) is not on Invoices & AR, so its "Create invoice" button never appears for the commonest case | `arList` |
 | R8 | Insurance: AR marks depreciation-pending jobs OVERDUE at 31 days; Claims hub "owed depreciation" ignores collections; deductibles summed on Closed/paid claims | `cr-cth` ~61178 |
-| R9 | Rep sees a different balance from admin when they can see a job but aren't its `sales_rep` (23/86 projects have no `sales_rep`; 2 differ from the assigned rep) — `collections` RLS keys on `sales_rep` only | `commission_system.sql:71` |
+| R9 | ✅ *LIVE (verified 18 Oct): collections read/insert accept the assigned rep.* Rep sees a different balance from admin when they can see a job but aren't its `sales_rep` (23/86 projects have no `sales_rep`; 2 differ from the assigned rep) — `collections` RLS keys on `sales_rep` only | `commission_system.sql:71` |
 
 ## Workflow gaps
 
@@ -63,7 +63,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 - **W5** ✅ *FIXED 1315* — Second offline payment in one session: the Save button stays "Saving…" disabled (~90087 / ~90051).
 - **W6** ✅ *FIXED 1315* — Token mint failure is swallowed (`catch(_it){}` ~17437) → invoice with no token, `total` null.
 - **W7** Community and insurance jobs get the retail invoice; Company SMS would text the occupant, not the partner; insurance invoice can bill the homeowner for carrier money.
-- **W8** `api/sms-link.js` texts any `https?://` URL from the company number — not limited to the app's own share links.
+- **W8** ✅ *FIXED 1338 — `ownPayLink()`.* `api/sms-link.js` texts any `https?://` URL from the company number — not limited to the app's own share links.
 - **W9** ✅ *Settled + done 1317/1321: only Curtis sees money; Scottie is Production only, in the app and the database.* Production (Curtis, Scottie) see Billed/Collected/Balance on the client profile and can generate invoices and record payments. Whether "no money on Production" covers the profile is **Theo's call**.
 
 ## Design & ease of use

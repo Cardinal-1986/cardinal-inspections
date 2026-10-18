@@ -36705,3 +36705,13 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
   - `gate_1365` GREEN 17; 1364 RED 12. The control first crashed on a missing selector (BUG_CLASSES 37); its tap helper is now guarded.
   - Also green: render_navclear 9/9, sweep_navclear, 1269, 1273, 1161, 1187, 1188, 1195, 1213, 1215, 1257, 1270, 1026, 957, 969, 1317, 1321, 1206, 1363, 1364, check_build, stack (2 declared `--cr-stack`), a11y, scroll-lock, repro cmp. types 1530 / dupes 11 (inherited).
   - Dupes caught `paint` / `shown` / `off` as names taken elsewhere; renamed to `tbPaint` / `tbShown` / `tbOff`.
+
+## Build 1366 — the payment guard's job total counts invoice extra lines (Theo: "keep going to what's next")
+- **Found while picking up audit task M11/R9/W8.**
+  - W8 was already fixed at 1338. M11/R9 are LIVE: the trigger and all four policies were verified on production 18 Oct, and the 1340 note "guard not active" is stale.
+  - But `job_total_for()` (collections_guards.sql, 1339) predates 1357. It never counted invoice `extra_total`, which the other four job-value readers do (jobFinance, owedOn ×2, remind.js). A rep recording the payment for invoice extras would have been refused "more than this job is owed". 0 invoices carry extras today, so nobody hit it.
+- **SQL (APPLIED before the code):** `job_total_extras.sql` replaces `job_total_for()`. It adds invoice extras, and a change-order-only job totals its change orders, as jobFinance does.
+  - **Measured:** the md5 of every priced job's total (16 jobs) is identical before and after.
+  - A rolled-back test invoice with $123.45 of extras raised its job's total by exactly $123.45, and left no row behind.
+- `collections_guards.sql` carries a SUPERSEDED note so a re-run doesn't drop the extras again. The audit doc now marks M11, R9 and W8.
+- **index.html:** stamp and changelog only. check_build GREEN.
