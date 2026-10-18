@@ -36731,3 +36731,13 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **Gate:** `gate_1368.mjs` GREEN 8/8; control 1367 RED 5. `gate_734` has 1 inherited red (it counts 6 commission queries against its pinned 5), identical on the control.
 - **Other gates:** check_build GREEN; types / dupes at the inherited 1530 / 11; stack clean; a11y GREEN; scroll roster unchanged.
 - **Not built:** the webhook still ignores `charge.refunded` / `charge.dispute.*`. That waits for Theo to turn the events on.
+
+## Build 1369 — Activity Count's Money Collected was always $0 (Theo, screenshot: "Is this even accurately working? The money received should be able to be clicked on")
+- **Root cause:** `renderActivityCount()` summed only `checklist.ws[*].log`, the pre-1314 worksheet log. Payments have lived in `collections` since 721/1314, so the tile said $0 whatever came in.
+- **Fix:**
+  - The tile sums `cacheCollections` (already loaded by `reload()`) by `collected_at` (else `created_at`) over the last 30 days, with refunds netted.
+  - The old log still counts on a job with no collections, which is jobFinance's rule, so nothing is counted twice.
+- **Tap:** for an admin, the tile is a `<button data-actmoney>` that opens Invoices & Payments. A rep gets a plain tile, because AR is admin-only.
+- **The other five tiles were checked, not changed.** `spark/push_acculynx.py` writes AccuLynx's own milestone dates (`t_<Stage>`), so the migration did not inflate them. That is not yet verified against live rows: Supabase was disconnected.
+- **Gate:** `gate_1369.mjs` GREEN 5/5. On the 1368 control it goes RED 3: the same seed showed $1,299, the worksheet log only.
+- **Other gates:** types at the inherited 1530; stack clean; a11y GREEN; scroll roster unchanged. Two type errors were fixed on the way: an expando flag on the element, then on the function. The fix was `el.dataset`.
