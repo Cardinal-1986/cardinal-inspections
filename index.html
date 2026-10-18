@@ -4196,7 +4196,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1367<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1370<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -44972,6 +44972,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1370, d:'2026-10-18', t:'My Files in the Owner Console', s:'The Owner Console has a new My Files card for the reports, reviews and plans made for you, sorted into Sales & numbers, Team reviews, Coaching & training, Billing & collections and Partner jobs. Only your login can see it: Joan and the rest of the team do not see the card, and the database and file storage both refuse anyone else. Tap a file to open it, or remove it. The Vault is unchanged and still shows only its own company documents.' },
   { b: 1367, d:'2026-10-18', t:'Two invoice messages say the right thing', s:'Making an invoice now shows a green message that clears itself, instead of a red one that looked like something went wrong. On Community, tapping Partner A/R or a pipeline bucket opens the list titled by what it shows, such as Invoiced jobs, with that count, instead of All estimates.' },
   { b: 1366, d:'2026-10-18', t:'Payments can cover invoice extra lines', s:'When an invoice has extra lines added, the job total now includes them everywhere, including the check that stops a payment being recorded for more than a job is owed. Before, a rep recording the payment for those extra lines would have been told it was too much. Nobody had hit it yet.' },
   { b: 1365, d:'2026-10-18', t:'A bottom bar on the phone', s:'In the installed app on a phone, the bar along the bottom now has Back, Home, Jobs, a red + for something new, Schedule and Menu, all under your thumb. The + and the menu moved down from the top. The button for the screen you are on lights up. Back still works the way it always did. On an iPad or in a browser nothing changes.' },
@@ -87553,6 +87554,17 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   }
   var CAT_LBL = { formation:'Formation', insurance:'Insurance', license:'Licenses', tax:'Tax', banking:'Banking', other:'Other' };
   var CAT_ORDER = ['formation','insurance','license','tax','banking','other'];
+  /* 1370: My Files - the owner's own reports, reviews and plans. Same table and the
+     same open/remove code as the Vault, but five categories RLS lets only theo@ read
+     (owner_files.sql), stored under photos/private/<email>/owner-files/, which the
+     studio_private_* storage policies already fence to that one login. */
+  var FILE_LBL = { sales:'Sales & numbers', team:'Team reviews', coaching:'Coaching & training', billing:'Billing & collections', partners:'Partner jobs' };
+  var FILE_ORDER = ['sales','team','coaching','billing','partners'];
+  var FILES_OWNER = 'theo@cardinalrenovations.net';
+  var filesBusy = false;
+  function isFilesOwner(){ return String(me() || '').toLowerCase() === FILES_OWNER; }
+  function vaultDocs(){ return VAULT.filter(function(d){ return CAT_ORDER.indexOf(d.category || 'other') !== -1; }); }
+  function fileDocs(){ return VAULT.filter(function(d){ return FILE_ORDER.indexOf(d.category) !== -1; }); }
   function fmtSize(b){ b = Number(b) || 0; if(b < 1024) return b + ' B'; if(b < 1048576) return (b / 1024).toFixed(0) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
   function docRowHTML(d){
     var exp = parseDate(d.expires_on), n = exp ? daysTo(exp) : null;
@@ -87568,8 +87580,8 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     '</div>';
   }
   function vaultHTML(){
-    var h = '<div class="ow-sec"><div class="ow-sl">The Vault<span class="ow-ct">' + VAULT.length + '</span></div>';
-    if(!VAULT.length){
+    var h = '<div class="ow-sec"><div class="ow-sl">The Vault<span class="ow-ct">' + vaultDocs().length + '</span></div>';
+    if(!vaultDocs().length){
       h += '<div class="ow-empty">Nothing filed yet. Keep your EIN letter, insurance, licenses and formation papers here — admin only.</div>';
     }
     CAT_ORDER.forEach(function(cat){
@@ -87586,6 +87598,29 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
       '<button type="button" data-act="vault-add"' + (vaultBusy ? ' disabled' : '') + '>' + (vaultBusy ? 'Uploading…' : 'Add') + '</button>' +
     '</div>';
     h += '<div class="ow-note">Files are stored privately and are visible to admins only — nothing here is on the customer side.</div>';
+    h += '</div>';
+    return h;
+  }
+  function filesHTML(){
+    if(!isFilesOwner()) return '<div class="ow-sec"><div class="ow-empty">My Files is for the owner\u2019s login only.</div></div>';
+    var docs = fileDocs();
+    var h = '<div class="ow-sec"><div class="ow-sl">My Files<span class="ow-ct">' + docs.length + '</span></div>';
+    if(!docs.length){
+      h += '<div class="ow-empty">Nothing filed yet. Reports, reviews and plans go here, sorted by category. Only your login can see them.</div>';
+    }
+    FILE_ORDER.forEach(function(cat){
+      var ds = docs.filter(function(d){ return d.category === cat; });
+      if(!ds.length) return;
+      h += '<div class="ow-ref">' + esc(FILE_LBL[cat]) + '</div>';
+      ds.forEach(function(d){ h += docRowHTML(d); });
+    });
+    h += '<div class="ow-add ow-vaultadd">' +
+      '<input type="file" id="ow-files-file" class="ow-file">' +
+      '<input type="text" id="ow-files-label" placeholder="Label (e.g. Sales full year 2026)" maxlength="120">' +
+      '<select id="ow-files-cat">' + FILE_ORDER.map(function(k){ return '<option value="' + k + '">' + esc(FILE_LBL[k]) + '</option>'; }).join('') + '</select>' +
+      '<button type="button" data-act="files-add"' + (filesBusy ? ' disabled' : '') + '>' + (filesBusy ? 'Uploading\u2026' : 'Add') + '</button>' +
+    '</div>';
+    h += '<div class="ow-note">Only your login can see these. Joan and the rest of the team cannot, and nothing here is on the customer side.</div>';
     h += '</div>';
     return h;
   }
@@ -87790,7 +87825,12 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     { k:'vault', t:'The Vault', d:'Company documents, admin only',
       fn:function(){ return vaultHTML(); },
       stat:function(){
-        return { n:String(VAULT.length), w:(VAULT.length === 1 ? 'document filed' : 'documents filed') }; } },
+        var vn = vaultDocs().length;
+        return { n:String(vn), w:(vn === 1 ? 'document filed' : 'documents filed') }; } },
+    /* 1370 */
+    { k:'files', t:'My Files', d:'Reports, reviews and plans, owner only', owner:true,
+      fn:function(){ return filesHTML(); },
+      stat:function(){ var n = fileDocs().length; return { n:String(n), w:(n === 1 ? 'file' : 'files') }; } },
     { k:'strategy', t:'Strategy', d:'The business plan and the market',
       fn:function(){ return strategyHTML(); },
       stat:function(){
@@ -87950,6 +87990,29 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
         await c.from('owner_reminders').delete().eq('id', id);
         REMINDERS = REMINDERS.filter(function(x){ return String(x.id) !== String(id); });
         render();
+      } else if(act === 'files-add'){
+        if(filesBusy || !isFilesOwner()) return;
+        var ffi = view.querySelector('#ow-files-file'), ff = ffi && ffi.files && ffi.files[0];
+        if(!ff){ crTell('Choose a file first.'); return; }
+        if(ff.size > 26214400){ crTell('That file is over 25 MB, too large to file here.'); return; }
+        var fli = view.querySelector('#ow-files-label'), flbl = (fli && fli.value || '').trim() || ff.name.replace(/\.[^.]+$/, '');
+        var fcat = (view.querySelector('#ow-files-cat') || {}).value || 'sales';
+        if(FILE_ORDER.indexOf(fcat) === -1) fcat = 'sales';
+        var fsafe = ff.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+        var fpath = 'private/' + me() + '/owner-files/' + Date.now() + '_' + fsafe;
+        filesBusy = true; render();
+        try{
+          var fup = await c.storage.from('photos').upload(fpath, ff, { cacheControl:'3600', upsert:false, contentType:ff.type || undefined });
+          if(fup.error) throw fup.error;
+          var fins = await c.from('owner_docs').insert({ label:flbl, category:fcat, storage_path:fpath, file_name:ff.name, mime:ff.type || null, size_bytes:ff.size, created_by:me() }).select().single();
+          if(fins && fins.error) throw fins.error;
+          if(fins && fins.data) VAULT.push(fins.data);
+          filesBusy = false; render();
+        }catch(ferr){
+          filesBusy = false; render();
+          try{ await c.storage.from('photos').remove([fpath]); }catch(_){ }
+          crTell('Upload failed: ' + (ferr && ferr.message ? ferr.message : 'try again'));
+        }
       } else if(act === 'vault-add'){
         if(vaultBusy) return;
         var fin = view.querySelector('#ow-vault-file'), f = fin && fin.files && fin.files[0];
@@ -88080,6 +88143,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     else if(id === 'ow-rem-in'){ e.preventDefault(); var br = view.querySelector('[data-act="rem-add"]'); if(br) br.click(); }
     else if(id === 'ow-led-name' || id === 'ow-led-amt'){ e.preventDefault(); var bl = view.querySelector('[data-act="led-add"]'); if(bl) bl.click(); }
     else if(id === 'ow-pay-amt'){ e.preventDefault(); var bp = view.querySelector('[data-act="led-pay"]'); if(bp) bp.click(); }
+    else if(id === 'ow-files-label'){ e.preventDefault(); var bf = view.querySelector('[data-act="files-add"]'); if(bf && !bf.disabled) bf.click(); }
     else if(id === 'ow-vault-label'){ e.preventDefault(); var bv = view.querySelector('[data-act="vault-add"]'); if(bv && !bv.disabled) bv.click(); }
     else if(id === 'ow-obl-in'){ e.preventDefault(); var b2 = view.querySelector('[data-act="obl-add"]'); if(b2) b2.click(); }
     else if(id === 'ow-ren-in'){ e.preventDefault(); var b3 = view.querySelector('[data-act="ren-add"]'); if(b3) b3.click(); }

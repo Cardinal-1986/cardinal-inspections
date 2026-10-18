@@ -10067,3 +10067,6 @@ Agreements and the Service Contract print Prepared For / Date / Property Address
 
 ## Build 1367: invoice messages (audit D6 + D11)
 "Invoice … is ready" is the green `crTell(…, 'ok')` toast. Community's bids table is titled by its filter when only a stage is set (`bidsTitle1367()` in `cr-ch2`): Partner A/R → "Invoiced jobs", with the shown count; otherwise "All estimates". **Gate:** `gate_1367.mjs`.
+
+## Build 1370: My Files (Owner Console, owner only)
+Owner Console → **My Files** (`cr-owner-script`, `filesHTML`, area `files`, `owner:true`): the reports, reviews and plans made for Theo, in five categories — Sales & numbers · Team reviews · Coaching & training · Billing & collections · Partner jobs (`FILE_ORDER`/`FILE_LBL`). Same `owner_docs` table and the same open/remove rows (`docRowHTML`) as the Vault; upload is `files-add`, to `photos/private/<owner email>/owner-files/`, which the existing `studio_private_*` storage policies fence to that login. RLS (`owner_files.sql`): `owner_docs_admin` now covers only the Vault's six categories, `owner_docs_owner` (theo@) covers all. The Vault counts and lists only its own six (`vaultDocs()`). Joan: no card, `open('files')` refuses. **SQL first.** **Gate:** `gate_1370.mjs`.
