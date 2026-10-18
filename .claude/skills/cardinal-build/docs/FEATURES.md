@@ -10079,3 +10079,6 @@ Home → Activity Count → **Money Collected** = `cacheCollections` rows dated 
 
 ## Build 1371: the invoiced dates too
 Invoices & Payments `ageDays` (1316 clock), `rptStageDate` (reports) and the Community timeline read stamps through `crRealStamp`. A migrated job with no real invoice date ages from its own `created_at` (upper bound). **Gate:** `gate_1371.mjs`.
+
+## Build 1372: New job for this client
+Stage banner ⋮ → **New job for this client** (`pfNewJobFor`) opens the Add project form filled with name / address / phone / email and Lead Source = Repeat customer. The new job stores `checklist.prior_job`; each job's ⋮ offers **Open earlier job** / **Open newer job**. Only contact details carry over. **Gate:** `gate_1372.mjs`.

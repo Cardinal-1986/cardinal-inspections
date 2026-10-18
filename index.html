@@ -4201,7 +4201,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1371<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1372<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12608,6 +12608,10 @@ function renderAcxOverview(){
       (nx ? '<button class="estopt" data-act="adv">Advance to ' + esc(nx) + '</button>' : '') +
       (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
       (stg === 'Lost' || stg === 'Closed' ? '<button class="estopt" data-act="reopen">Reopen as Lead</button>' : '') +
+      /* 1372: a second sale for the same client is a second job */
+      '<button class="estopt" data-act="newjob">New job for this client</button>' +
+      (ck.prior_job && cacheProjects.some(function(x){ return x.id === ck.prior_job; }) ? '<button class="estopt" data-act="priorjob">Open earlier job</button>' : '') +
+      (cacheProjects.some(function(x){ return x.id !== pr.id && parseCkAll(x).prior_job === pr.id; }) ? '<button class="estopt" data-act="laterjob">Open newer job</button>' : '') +
     '</div></span>' +
   '</div>';
   /* 1351: retail no longer shows the strip, the old Payment Information row, or the invoice + Payments cards
@@ -12991,6 +12995,13 @@ function acxBindOnce(mount){
       if(act === 'adv') acxAdvance(pr);
       else if(act === 'dead') acxDead(pr);
       else if(act === 'reopen') setStage(pr.id, 'Lead').then(function(){ renderOverview(); renderPipeline(); });
+      else if(act === 'newjob') pfNewJobFor(pr);   /* 1372 */
+      else if(act === 'priorjob' && ck.prior_job) openProject(ck.prior_job);
+      else if(act === 'laterjob'){
+        var _nx = cacheProjects.filter(function(x){ return x.id !== pr.id && parseCkAll(x).prior_job === pr.id; })
+          .sort(function(a, b){ return String(b.created_at || '').localeCompare(String(a.created_at || '')); })[0];
+        if(_nx) openProject(_nx.id);
+      }
       return;
     }
     if(hit('#acxAdvBtn')){ acxAdvance(pr); return; }
@@ -16745,6 +16756,7 @@ async function transferPhotosToReport(docId, photos){
    ========================================================================= */
 var projModal = document.getElementById('projModal');
 var pfEditing = null; /* null = adding, else project id */
+var pfFromJob = null;  /* 1372: the earlier job a "New job for this client" was started from */
 var pfLastSource = null; /* 999: remembered lead source for the session, so a
    canvasser doing twenty doors taps once, not twenty times. */
 /* 1361: the Claim type chips on the client form */
@@ -16795,8 +16807,21 @@ function pfSyncSourceChips(){
   });
 })();
 
+/* 1372: the Add project form, started from an existing job — same client, new job. Only the contact details
+   carry over; Lead Source is Repeat customer; everything else is a fresh lead. */
+function pfNewJobFor(pr){
+  if(!pr) return;
+  openProjModal(null);
+  pfFromJob = pr.id;
+  document.getElementById('projModalTitle').textContent = 'New job for ' + (pr.name || 'this client');
+  var put = function(id, v){ var el = /** @type {HTMLInputElement|null} */ (document.getElementById(id)); if(el) el.value = v; };
+  put('pfName', pr.name || ''); put('pfAddress', pr.address || ''); put('pfPhone', pr.phone || ''); put('pfEmail', pr.email || '');
+  put('pfSource', 'Repeat customer');
+  try{ pfSyncSourceChips(); }catch(_s){}
+}
 function openProjModal(pr){
   pfEditing = pr ? pr.id : null;
+  pfFromJob = null;   /* 1372: only pfNewJobFor sets it, after this */
   document.getElementById('projModalTitle').textContent = pr ? 'Edit client info' : 'Add project';
   document.getElementById('pfName').value    = pr ? (pr.name || '')    : '';
   document.getElementById('pfAddress').value = pr ? (pr.address || '') : '';
@@ -19603,6 +19628,8 @@ document.getElementById('pfSave').addEventListener('click', async function(){
         t_Lead: new Date().toISOString(), lead_source: _srcVal, job_cost: _jcVal,
         job_category: _catVal, work_type: _wtVal, trades: _trVal };
       if(_clVal === 'insurance' || _clVal === 'retail') _newCk.lead = { claim_type: _clVal, retail: _clVal === 'retail' };   /* 1361 */
+      if(pfFromJob) _newCk.prior_job = pfFromJob;   /* 1372: the client's earlier job */
+      pfFromJob = null;
       fields.checklist = JSON.stringify(_newCk);
       fields.stage = 'Lead';
       var id = await pdb.create(fields);
@@ -45018,6 +45045,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1372, d:'2026-10-18', t:'New job for the same client', s:'When a client comes back for more work, open their job, tap ⋮ on the stage bar and choose New job for this client. The new-lead form opens with their name, address, phone and email filled in and Repeat customer picked. It becomes its own job with its own price and invoice, so the old job’s balance is never mixed with the new one. Each job’s ⋮ menu can then open the earlier or newer job.' },
   { b: 1371, d:'2026-10-18', t:'Old invoices from AccuLynx show their real age', s:'Invoiced jobs brought over from AccuLynx had no invoice date, so Invoices & Payments showed them as invoiced two days ago. They now age from when the job started, which puts that old money in the 31+ days group where it belongs. Reports and the Community job timeline no longer show 16 October for those jobs either.' },
   { b: 1370, d:'2026-10-18', t:'Moved-over jobs stop counting as this month', s:'Jobs brought over from AccuLynx were stamped with the day they arrived, 16 October, wherever AccuLynx had no date for when they were approved, invoiced or closed. That made the home screen count 32 approvals and 20 closings in one day. Those arrival stamps no longer count in Activity Count or Sales Numbers. Real changes made in the app still count.' },
   { b: 1369, d:'2026-10-18', t:'Money Collected counts your payments', s:'The Money Collected box on the home screen showed $0 because it only read the old worksheet notes, not the payments you record. It now adds up every payment from the last 30 days, with refunds taken off. Tap it to open Invoices & Payments.' },
