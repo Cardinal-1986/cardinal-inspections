@@ -4196,7 +4196,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1367<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-18 build 1369<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -17562,7 +17562,7 @@ function jobFinance(pr){
 function crBillable(fin){
   return !!fin && Number(fin.value) > 0 && (fin.source !== 'estimate' || !!fin.estAccepted);
 }
-var STAGE_COLORS = { Lead:'#FFE600', Prospect:'#F08A24', OnHold:'#0F9B8E', Approved:'#7CB342', Scheduled:'#7CB342',
+var STAGE_COLORS = { JobNimbus:'#4E5D94', Lead:'#FFE600', Prospect:'#F08A24', OnHold:'#0F9B8E', Approved:'#7CB342', Scheduled:'#7CB342',
   Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d8d8d' };
 /* STAGE_INK — the same stages, darkened for a light ground.
    Stage colours are chosen to sit on iron (#202329) or matte black (#141517) and
@@ -17571,7 +17571,7 @@ var STAGE_COLORS = { Lead:'#FFE600', Prospect:'#F08A24', OnHold:'#0F9B8E', Appro
    4.5:1 floor for body text. Anything drawing a stage colour as text in rb-light
    reads from here; bars, spines and dots keep the bright originals, because a
    3px glowing rule is not text and the glow is the point. */
-var STAGE_INK = { Lead:'#756A00', Prospect:'#9A4E06', OnHold:'#0B5F57', Approved:'#3F6B23', Scheduled:'#3F6B23',
+var STAGE_INK = { JobNimbus:'#3E4A78', Lead:'#756A00', Prospect:'#9A4E06', OnHold:'#0B5F57', Approved:'#3F6B23', Scheduled:'#3F6B23',
   Completed:'#15607F', Invoiced:'#5B4080', Closed:'#455A64', Lost:'#5E5E5E' };
 function stageInk(stg){ return STAGE_INK[stg] || '#5E5E5E'; }
 /* 1235 (Theo: "Fix mustard"): the stage band's ground and ink. 1052 grounded EVERY band on
@@ -20798,7 +20798,7 @@ function renderFavBtn(){
 }
 
 /* ---------- pipeline stages ---------- */
-var STAGES = ['Lead','Prospect','OnHold','Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
+var STAGES = ['JobNimbus','Lead','Prospect','OnHold','Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
 var LOSS_REASONS = ['Price too high','Went with competitor','Not ready / postponed','Insurance denied','No response','Other'];
 var LEGACY_STAGE = { 'Inspected':'Prospect', 'Estimate Sent':'Prospect', 'Signed':'Approved', 'Complete':'Completed' };
 function normStage(s){
@@ -29350,7 +29350,7 @@ function renderInsuranceClientsList(){
   if(stgWrap){
     /* Lead and Prospect are pre-claim stages — a record that far back
        isn't a claim yet, so filtering the claims list by them is noise. */
-    var IC_SKIP = { 'Lead':1, 'Prospect':1, 'OnHold':1 };
+    var IC_SKIP = { 'JobNimbus':1, 'Lead':1, 'Prospect':1, 'OnHold':1 };
     /* And the chips were printing raw stage names. 655: the vocabulary now
        IS the shared map — one source, no drift. */
     var IC_LABEL = INS_STAGE_LABEL;
@@ -44972,6 +44972,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1369, d:'2026-10-18', t:'A JobNimbus holding bucket for imported clients', s:'Added a new pipeline stage, JobNimbus, that sits before Leads. It is a holding bucket for clients imported from JobNimbus so they do not land in the live sales pipeline as leads or prospects. You sort each one into its real stage from there, and the column empties as you go. Only shows on Retail; hidden from the Insurance claim filters.' },
   { b: 1367, d:'2026-10-18', t:'Two invoice messages say the right thing', s:'Making an invoice now shows a green message that clears itself, instead of a red one that looked like something went wrong. On Community, tapping Partner A/R or a pipeline bucket opens the list titled by what it shows, such as Invoiced jobs, with that count, instead of All estimates.' },
   { b: 1366, d:'2026-10-18', t:'Payments can cover invoice extra lines', s:'When an invoice has extra lines added, the job total now includes them everywhere, including the check that stops a payment being recorded for more than a job is owed. Before, a rep recording the payment for those extra lines would have been told it was too much. Nobody had hit it yet.' },
   { b: 1365, d:'2026-10-18', t:'A bottom bar on the phone', s:'In the installed app on a phone, the bar along the bottom now has Back, Home, Jobs, a red + for something new, Schedule and Menu, all under your thumb. The + and the menu moved down from the top. The button for the screen you are on lights up. Back still works the way it always did. On an iPad or in a browser nothing changes.' },
