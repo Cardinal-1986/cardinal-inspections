@@ -23077,7 +23077,10 @@ async function renderCommissions(){
         '<label style="display:block;margin-top:8px">Notes<input type="text" id="miNotes" ' + inp + ' value="' + woEsc((editing && editing.notes) || '') + '"></label>' +
         /* 1368: a refund is a minus collection; its commission comes back from the rep who earned it */
         (editing ? '' : '<label class="mi-refund" style="display:flex;align-items:center;gap:10px;margin-top:10px;min-height:44px">' +
-          '<input type="checkbox" id="miRefund" style="width:22px;height:22px;margin:0"> This is a refund (money back to the client)</label>') +
+          '<input type="checkbox" id="miRefund" style="width:22px;height:22px;margin:0"> This is a refund (money back to the client)</label>' +
+          /* Theo, 18 Oct: "a checkbox where the refund may not take out of commission" */
+          '<label class="mi-refund" style="display:flex;align-items:center;gap:10px;margin:2px 0 0 32px;min-height:44px">' +
+          '<input type="checkbox" id="miKeepComm" style="width:22px;height:22px;margin:0"> Don’t take it out of the rep’s commission</label>') +
         '<button class="btn" style="margin-top:12px" id="miSave">' + (editing ? 'Save changes' : 'Save collection') + '</button>' +
         '<span class="subnote" id="miMsg" style="margin-left:10px"></span></div>';
     }
@@ -23255,6 +23258,7 @@ async function miSaveColl(){
   if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
   var _rf = /** @type {HTMLInputElement|null} */ (document.getElementById('miRefund')), refund1368 = !!(_rf && _rf.checked);   /* 1368 */
   if(refund1368) amt = -Math.abs(amt);
+  var _kc = /** @type {HTMLInputElement|null} */ (document.getElementById('miKeepComm')), keep1368 = refund1368 && !!(_kc && _kc.checked);
   var row = {
     collected_at: document.getElementById('miDate').value || commToday(),
     amount: amt,
@@ -23265,6 +23269,7 @@ async function miSaveColl(){
     notes: document.getElementById('miNotes').value.trim() || null,
   };
   if(refund1368) row.notes = 'Refund' + (row.notes ? ' \u2014 ' + row.notes : '');
+  if(keep1368) row.keep_commission = true;   /* make_commission() books no take-back for this row */
   if(msg) msg.textContent = 'Saving…';
   /* 734: what commissions existed BEFORE the insert. The trigger writes the new
      one server-side, so this is the only way to tell it apart afterwards. */
@@ -23302,7 +23307,7 @@ async function miSaveColl(){
       }
     }
   }catch(_){}
-  try{ if(window.crToastOk) window.crToastOk((amt < 0 ? 'Refund logged \u2014 ' + fmtMoney(-amt, true) : 'Collection logged \u2014 ' + fmtMoney(amt, true)) + _extra); }catch(_){}
+  try{ if(window.crToastOk) window.crToastOk((amt < 0 ? 'Refund logged \u2014 ' + fmtMoney(-amt, true) : 'Collection logged \u2014 ' + fmtMoney(amt, true)) + (keep1368 ? ' \u00b7 the rep\u2019s commission is left as it was' : _extra)); }catch(_){}
   } finally { _busy(); }
 }
 function miEditColl(id){
@@ -44979,7 +44984,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b: 1368, d:'2026-10-18', t:'Refunds take the commission back', s:'When you log a collection there is now a box for a refund. Tick it and the amount comes off the job, the note says Refund, and 10% comes back off the commission of the rep who earned the job, even if the job has been reassigned since. It shows up against their next payout. Stripe refunds are not connected, so log those here too.' },
+  { b: 1368, d:'2026-10-18', t:'Refunds take the commission back', s:'When you log a collection there is now a box for a refund. Tick it and the amount comes off the job, the note says Refund, and 10% comes back off the commission of the rep who earned the job, even if the job has been reassigned since. It shows up against their next payout. Tick Don’t take it out of the rep’s commission to leave their commission alone. Stripe refunds are not connected, so log those here too.' },
   { b: 1367, d:'2026-10-18', t:'Two invoice messages say the right thing', s:'Making an invoice now shows a green message that clears itself, instead of a red one that looked like something went wrong. On Community, tapping Partner A/R or a pipeline bucket opens the list titled by what it shows, such as Invoiced jobs, with that count, instead of All estimates.' },
   { b: 1366, d:'2026-10-18', t:'Payments can cover invoice extra lines', s:'When an invoice has extra lines added, the job total now includes them everywhere, including the check that stops a payment being recorded for more than a job is owed. Before, a rep recording the payment for those extra lines would have been told it was too much. Nobody had hit it yet.' },
   { b: 1365, d:'2026-10-18', t:'A bottom bar on the phone', s:'In the installed app on a phone, the bar along the bottom now has Back, Home, Jobs, a red + for something new, Schedule and Menu, all under your thumb. The + and the menu moved down from the top. The button for the screen you are on lights up. Back still works the way it always did. On an iPad or in a browser nothing changes.' },

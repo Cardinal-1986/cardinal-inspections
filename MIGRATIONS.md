@@ -113,7 +113,7 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 89 | 1357 | `invoice_lines.sql` | 6 | ✅ | — | build log only |
 | 90 | 1359 | `job_files_bucket.sql` | 7 | ✅ | — | build log only |
 | 91 | 1366 | `job_total_extras.sql` | 1 | ✅ | — | build log only |
-| 92 | 1368 | `commission_clawback.sql` | 2 | ✅ | — | FEATURES.md |
+| 92 | 1368 | `commission_clawback.sql` | 3 | ✅ | — | FEATURES.md |
 | 93 | — | `collections_payment_provider.sql` | 5 | ✅ | — | **NOTHING** |
 | 94 | — | `companycam_caption_sample.sql` | 8 | ✅ | — | **NOTHING** |
 | 95 | — | `companycam_projects.sql` | 10 | ✅ | — | FEATURES.md, HANDOFF.md |

@@ -4,6 +4,7 @@
    C  the commission is -$100 and goes to the rep who EARNED the job, though the job now has no rep
    D  the toast says "Refund logged — $1,000.00 · $100.00 commission taken back from <rep name>"
    E  unticked, a payment is unchanged: +amount, "Collection logged", commission for the job's rep
+   F  "Don't take it out of the rep's commission" (Theo): the refund saves, no commission comes back; ignored on a payment
    Usage: node gate_1368.mjs [index.html]   (1367 = RED) */
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -65,19 +66,20 @@ const open = (edit) => async (page) => page.evaluate((edit) => {
   if (window.commUi) { window.commUi.collForm = true; window.commUi.editColl = edit || null; }
   try { renderCommissions(); } catch (e) {}
 }, edit);
-const save = (amount, refund) => async (page) => {
+const save = (amount, refund, keep) => async (page) => {
   await open(null)(page); await page.waitForTimeout(800);
-  const box = await page.evaluate(() => { const b = document.getElementById('miRefund'); if (!b) return null; const r = b.closest('label').getBoundingClientRect(); return { h: Math.round(r.height) }; });
+  const box = await page.evaluate(() => { const b = document.getElementById('miRefund'); if (!b) return null; const r = b.closest('label').getBoundingClientRect(); const k = document.getElementById('miKeepComm'); return { h: Math.round(r.height), keepH: k ? Math.round(k.closest('label').getBoundingClientRect().height) : 0 }; });
   await page.evaluate(() => { window.__WRITES__ = []; });
   await page.fill('#miAmt', String(amount));
   if (refund) await page.evaluate(() => { const b = document.getElementById('miRefund'); if (b) b.checked = true; });
+  if (keep) await page.evaluate(() => { const b = document.getElementById('miKeepComm'); if (b) b.checked = true; });
   await page.evaluate(() => { const b = document.getElementById('miSave'); if (b) b.click(); });
   await page.waitForFunction(() => document.querySelectorAll('#crToasts .crt').length > 0, null, { timeout: 8000 }).catch(() => {});
   await page.waitForTimeout(400);
   return page.evaluate((box) => {
     const w = (window.__WRITES__ || []).filter(x => x.table === 'collections' && x.op === 'insert')[0];
     const row = w && (Array.isArray(w.payload) ? w.payload[0] : w.payload);
-    return { box, row: row ? { amount: row.amount, notes: row.notes } : null,
+    return { box, row: row ? { amount: row.amount, notes: row.notes, keep: row.keep_commission } : null,
       toast: [...document.querySelectorAll('#crToasts .crt')].map(e => e.innerText.replace(/\s*×\s*$/, '').replace(/\s+/g, ' ').trim()).join(' | '),
       comms: ((window.__SEED__ && window.__SEED__.commissions) || []).filter(c => c.id !== 'K0').map(c => ({ amt: Number(c.amount), rep: c.rep_email })),
       name: (function(){ try { return rptRepName('rep@cardinalrenovations.net'); } catch (e) { return null; } })() };
@@ -101,6 +103,17 @@ function seed(rep, earned) {
   chk('B: its note starts "Refund"', r.row && /^Refund/.test(r.row.notes || ''), JSON.stringify(r.row));
   chk('C: -$100 commission, to the rep who earned the job (job has no rep now)', r.comms.length === 1 && r.comms[0].amt === -100 && r.comms[0].rep === 'rep@cardinalrenovations.net', JSON.stringify(r.comms));
   chk('D: toast says Refund logged and names the take-back', /Refund logged/.test(r.toast) && /1,000\.00/.test(r.toast) && /100\.00 commission taken back from/.test(r.toast) && !!r.name && r.toast.indexOf(r.name) !== -1 && !/-\$/.test(r.toast), r.toast);
+}
+{ /* Theo: a refund that does NOT come out of the commission */
+  const r = await run(seed(null, 'rep@cardinalrenovations.net'), save(1000, true, true));
+  chk('F: the form has a "Don\u2019t take it out of the rep\u2019s commission" box, a 44px row', r.box && r.box.keepH >= 44, JSON.stringify(r.box));
+  chk('F: ticked, the refund still saves as -1000 and is marked keep_commission', r.row && Number(r.row.amount) === -1000 && r.row.keep === true, JSON.stringify(r.row));
+  chk('F: no commission is taken back', r.comms.length === 0, JSON.stringify(r.comms));
+  chk('F: the toast says the commission is left alone', /Refund logged/.test(r.toast) && /commission is left as it was/.test(r.toast) && !/taken back/.test(r.toast), r.toast);
+}
+{ /* the keep box does nothing on an ordinary payment */
+  const r = await run(seed('rep@cardinalrenovations.net', null), save(2000, false, true));
+  chk('F: on a payment (not a refund) the keep box is ignored', r.row && Number(r.row.amount) === 2000 && !r.row.keep && r.comms.length === 1 && r.comms[0].amt === 200, JSON.stringify({ row: r.row, c: r.comms }));
 }
 { /* an ordinary payment is unchanged */
   const r = await run(seed('rep@cardinalrenovations.net', null), save(5000, false));

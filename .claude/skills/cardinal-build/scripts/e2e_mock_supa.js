@@ -197,6 +197,7 @@
       var pr = projects.filter(function (p) { return String(p.id) === String(row.project_id); })[0];
       var rep = pr && pr.sales_rep;
       /* 1368 (commission_clawback.sql): a refund goes to the rep on the job's latest positive commission */
+      if (Number(row.amount) < 0 && row.keep_commission) return;   /* the office chose not to charge it back */
       if (Number(row.amount) < 0) {
         var earned = (STORE.commissions || []).filter(function (c) { return String(c.project_id) === String(row.project_id) && Number(c.amount) > 0; })
           .sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); })[0];
