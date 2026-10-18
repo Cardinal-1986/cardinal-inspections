@@ -10067,3 +10067,6 @@ Agreements and the Service Contract print Prepared For / Date / Property Address
 
 ## Build 1367: invoice messages (audit D6 + D11)
 "Invoice … is ready" is the green `crTell(…, 'ok')` toast. Community's bids table is titled by its filter when only a stage is set (`bidsTitle1367()` in `cr-ch2`): Partner A/R → "Invoiced jobs", with the shown count; otherwise "All estimates". **Gate:** `gate_1367.mjs`.
+
+## Build 1368: refunds take the commission back (audit M7)
+Office collection form → **This is a refund** (new entries only): saves a minus `collections` row, note "Refund …". `make_commission()` (`commission_clawback.sql`) books −10% to the rep on the job's latest positive commission (else `sales_rep`), basis "Taken back: 10% of a refund"; it nets against the next payout (`commissions-digest` sums pending + approved). Stripe refund/dispute events are NOT wired (Theo "2b"). **Gate:** `gate_1368.mjs`.
