@@ -105,12 +105,21 @@ export default async function handler(req, res){
 
     // read the phone SERVER-SIDE with the caller's token — RLS scopes this to a
     // job they can see, so no arbitrary number can be texted through this route.
-    var pq = SUPA_URL + '/rest/v1/projects?select=id,name,phone&id=eq.' +
+    var pq = SUPA_URL + '/rest/v1/projects?select=id,name,phone,checklist&id=eq.' +
       encodeURIComponent(projectId) + '&limit=1';
     var pr = await fetch(pq, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + caller._token } });
     var rows = await pr.json();
     if(!Array.isArray(rows) || !rows.length){
       res.status(403).json({ ok:false, error:'That job is not visible to you, or does not exist.' }); return;
+    }
+    // 1376 (audit W7): on a Community job projects.phone is the OCCUPANT, and the funding partner is billed.
+    // Never text a Community invoice from the company number; the app sends those by email to the partner.
+    var ck = {}; try{ ck = typeof rows[0].checklist === 'string' ? JSON.parse(rows[0].checklist || '{}') : (rows[0].checklist || {}); }catch(_c){}
+    var ct = String((ck.lead && ck.lead.claim_type) || ck.claim_type || '').toLowerCase();
+    if(ct === 'community'){
+      res.status(200).json({ ok:false, reason:'community',
+        error:'A Community invoice goes to the funding partner, not the homeowner. Send it by email.' });
+      return;
     }
     var to = normPhone(rows[0].phone);
     if(!to){

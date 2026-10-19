@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-19 build 1375<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-19 build 1376<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -17785,7 +17785,10 @@ async function createInvoiceFor1315(pr){
   if(invCount > 0 && !await crAsk('This job already has ' + (invCount === 1 ? 'an invoice' : invCount + ' invoices') +
       '. Make another one for the ' + fmtMoney(fin.balance, true) + ' still owed?')) return;
   var num = '#' + (poOf(pr) || 'INV') + '-' + (invCount + 1);
-  var tpl = prefillUserInfo(prefillClientInfo(INVOICE_TEMPLATE, pr));
+  /* 1376 (W7): on a Community job the partner is billed; pr.phone / pr.email are the occupant's, and would print
+     under the partner's name. Leave the contact row empty; it is dropped at print like any empty placeholder. */
+  var _billPr = (typeof projClaimType === 'function' && projClaimType(pr) === 'community') ? Object.assign({}, pr, { phone:'', email:'' }) : pr;
+  var tpl = prefillUserInfo(prefillClientInfo(INVOICE_TEMPLATE, _billPr));
   tpl = tpl.replace('[INV_NUM]', esc(num));
   tpl = tpl.replace('[INV_DATE]', new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }));
   /* 745: exact cents on the invoice. These rounded, so an invoice for $1,702.50
@@ -45055,6 +45058,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1376, d:'2026-10-19', t:'Community invoices go to the partner', s:'On a Community job the invoice is for the funding partner, never the person living in the house. Company text is gone from a Community invoice, because it texted the homeowner’s phone. My phone and Email open with Hello instead of the homeowner’s first name, and the invoice no longer prints the homeowner’s phone and email under the partner’s name. Retail invoices are unchanged.' },
   { b: 1375, d:'2026-10-19', t:'A shorter client page on the phone', s:'On a phone, Location, Assigned To and Google Reviews on a client’s page are now one line each, showing the street and the rep’s name. Tap a line to open it and tap again to close it. Job Details stays open. The address is still at the top of the page, one tap from directions.' },
   { b: 1374, d:'2026-10-19', t:'The address at the top of the client page', s:'On a phone, the band at the top of a client’s page now shows the address under the name, beside the Email, Text and Call buttons. Tap it and directions open, the same as the map in the Location card, so you no longer scroll down to find it.' },
   { b: 1373, d:'2026-10-18', t:'A calmer phone screen', s:'On a client’s page the Job Menu no longer shows a 0 on every tile with nothing in it. On a phone the extra Work Orders button under the header is gone, because Work Orders is already a tile in the menu. The Roof Pre-Install Guide row now sits below the Job Menu instead of above it. The Ask button is a small round star that no longer covers the tiles. On Home, the pipeline and Accounts Receivable show $0 instead of two dashes.' },
@@ -92361,6 +92365,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   }
   function payUrl(tok){ return location.origin + '/api/share?t=' + tok; }
   function firstName(pr){ return String((pr && pr.name) || '').trim().split(/\s+/)[0] || 'there'; }
+  /* 1376 (W7): a Community invoice is for the funding partner; pr.name is the occupant */
+  function isComm(pr){ try{ return typeof projClaimType === 'function' && projClaimType(pr) === 'community'; }catch(_c){ return false; } }
+  function hello(pr){ return isComm(pr) ? 'Hello' : 'Hi ' + firstName(pr); }
   function linkFor(pid, send){
     var inv = invoiceFor(pid);
     if(!inv) return Promise.reject(new Error('This job has no invoice yet — create one first.'));
@@ -92517,7 +92524,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     }
     if(inv) more += B('', 'data-inv-lines', IC_DOC + 'Line items');   /* 1357 */
     var sendRow = inv ? '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden>'
-        + B('', 'data-inv-sms', 'Company text') + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')
+        + (isComm(pr) ? '' : B('', 'data-inv-sms', 'Company text'))   /* 1376: it texts the occupant's phone */
+        + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')
         + '</div>' : '';
     /* 1351: status and actions only. The balance, the bar and "$x paid of $y" live in the Payments card
        right below — this card printed the same balance a third time (and "--" for $0). */
@@ -92699,9 +92707,11 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if((t = e.target.closest('[data-inv-gen]'))){ var pg = prById(t.getAttribute('data-inv-gen')); if(pg && typeof createInvoiceFor === 'function') createInvoiceFor(pg); return; }
     if(_et && (t = _et.closest('[data-inv-lines]'))){ var pli = prById(t.getAttribute('data-inv-lines')); var ivl = invoiceFor(t.getAttribute('data-inv-lines')); if(pli && ivl && window.CardinalInvLines) window.CardinalInvLines.open(pli, ivl.id); return; }   /* 1357 */
     if((t = e.target.closest('[data-inv-open]'))){ var iv = invoiceFor(t.getAttribute('data-inv-open')); if(iv && typeof openEditor === 'function') openEditor(iv.id); return; }
-    if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms')); if(ps) companySms(ps); return; }
-    if((t = e.target.closest('[data-inv-text]'))){ var px = prById(t.getAttribute('data-inv-text')); if(px) linkFor(px.id, true).then(function(url){ location.href = 'sms:?&body=' + encodeURIComponent('Hi ' + firstName(px) + ', here’s your invoice from Cardinal Roofing — review and pay securely here: ' + url); }).catch(fail); return; }
-    if((t = e.target.closest('[data-inv-email]'))){ var pe = prById(t.getAttribute('data-inv-email')); if(pe) linkFor(pe.id, true).then(function(url){ location.href = 'mailto:?subject=' + encodeURIComponent('Your invoice from Cardinal Roofing & Renovations') + '&body=' + encodeURIComponent('Hi ' + firstName(pe) + ',\n\nHere is your invoice — review and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations'); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms'));
+      if(ps && isComm(ps)){ crTell('A Community invoice goes to the funding partner \u2014 send it with Email or My phone.'); return; }   /* 1376 */
+      if(ps) companySms(ps); return; }
+    if((t = e.target.closest('[data-inv-text]'))){ var px = prById(t.getAttribute('data-inv-text')); if(px) linkFor(px.id, true).then(function(url){ location.href = 'sms:?&body=' + encodeURIComponent(hello(px) + ', here’s your invoice from Cardinal Roofing — review and pay securely here: ' + url); }).catch(fail); return; }
+    if((t = e.target.closest('[data-inv-email]'))){ var pe = prById(t.getAttribute('data-inv-email')); if(pe) linkFor(pe.id, true).then(function(url){ location.href = 'mailto:?subject=' + encodeURIComponent('Your invoice from Cardinal Roofing & Renovations') + '&body=' + encodeURIComponent(hello(pe) + ',\n\nHere is your invoice — review and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations'); }).catch(fail); return; }
     if((t = e.target.closest('[data-inv-pay]'))){ var pp = prById(t.getAttribute('data-inv-pay')); if(pp) openPayModal(pp); return; }
     if((t = e.target.closest('[data-arpay]'))){ var pa = prById(t.getAttribute('data-arpay')); if(pa) openPayModal(pa); return; }
     if((t = e.target.closest('#crpay-cancel')) || (t = e.target.closest('#crpay-backdrop'))){ closePayModal(); return; }
