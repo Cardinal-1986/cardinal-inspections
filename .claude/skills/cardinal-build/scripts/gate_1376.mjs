@@ -97,11 +97,11 @@ try {
 } catch (e) { ok(false, 'browser part ran', String(e && e.message || e)); }
 await browser.close();
 
-// D: the shipped module — both client-side sends greet through hello(), which is Hello on Community
+// D: the shipped module — both client-side sends greet through invHello(), which is Hello on Community
 {
   const i = APP_HTML.indexOf("'data-inv-text'"), blk = i > 0 ? APP_HTML.slice(i, i + 4000) : '';
-  ok(/function hello\(pr\)\{ return isComm\(pr\) \? 'Hello' : 'Hi ' \+ firstName\(pr\); \}/.test(APP_HTML), 'D: hello() says Hello on Community, Hi <first> otherwise');
-  ok(/encodeURIComponent\(hello\(px\)/.test(APP_HTML) && /encodeURIComponent\(hello\(pe\)/.test(APP_HTML) && !/encodeURIComponent\('Hi ' \+ firstName\(p[xe]\)/.test(APP_HTML), 'D: My phone and Email both greet through hello()');
+  ok(/function invHello\(pr\)\{ return invIsComm\(pr\) \? 'Hello' : 'Hi ' \+ firstName\(pr\); \}/.test(APP_HTML), 'D: invHello() says Hello on Community, Hi <first> otherwise');
+  ok(/encodeURIComponent\(invHello\(px\)/.test(APP_HTML) && /encodeURIComponent\(invHello\(pe\)/.test(APP_HTML) && !/encodeURIComponent\('Hi ' \+ firstName\(p[xe]\)/.test(APP_HTML), 'D: My phone and Email both greet through invHello()');
   void blk;
 }
 

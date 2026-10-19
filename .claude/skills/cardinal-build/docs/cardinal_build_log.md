@@ -36812,3 +36812,4 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - The partner's own contact is NOT filled in: `community_partners.contact_email` is Theo's to send to (bids already enforce "Reps don't send bids I do"), and this build writes no address anywhere.
 - Insurance half of W7 is held for Theo's pick (who the insurance invoice bills).
 - **Gate:** `gate_1376.mjs` GREEN 9/9 (browser + the server route executed with a stubbed fetch); control 1375 RED 6.
+- Standing gates: check_build GREEN; gate_types 1530 = control; gate_stack clean; gate_1206, gate_a11y GREEN; scroll-lock 17. **gate_dupes caught two names this build reused** (`isComm` already at ~68730, `hello` at ~95971): renamed `invIsComm` / `invHello`, back to the control's count. Invoice-area gates (1216, 1286–1291, 1315, 1318, 1335, 1338, 1346–1357, 1367, 745, harness_ar1107) match the control; harness_inv1108's one red and gate_1225's eight are red on the control too.

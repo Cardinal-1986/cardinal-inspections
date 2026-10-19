@@ -31,22 +31,22 @@ one("""  function firstName(pr){ return String((pr && pr.name) || '').trim().spl
   function linkFor(pid, send){""",
 """  function firstName(pr){ return String((pr && pr.name) || '').trim().split(/\\s+/)[0] || 'there'; }
   /* 1376 (W7): a Community invoice is for the funding partner; pr.name is the occupant */
-  function isComm(pr){ try{ return typeof projClaimType === 'function' && projClaimType(pr) === 'community'; }catch(_c){ return false; } }
-  function hello(pr){ return isComm(pr) ? 'Hello' : 'Hi ' + firstName(pr); }
+  function invIsComm(pr){ try{ return typeof projClaimType === 'function' && projClaimType(pr) === 'community'; }catch(_c){ return false; } }
+  function invHello(pr){ return invIsComm(pr) ? 'Hello' : 'Hi ' + firstName(pr); }
   function linkFor(pid, send){""")
 
 one("""        + B('', 'data-inv-sms', 'Company text') + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')""",
-    """        + (isComm(pr) ? '' : B('', 'data-inv-sms', 'Company text'))   /* 1376: it texts the occupant's phone */
+    """        + (invIsComm(pr) ? '' : B('', 'data-inv-sms', 'Company text'))   /* 1376: it texts the occupant's phone */
         + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')""")
 
 one("""location.href = 'sms:?&body=' + encodeURIComponent('Hi ' + firstName(px) + ', here’s your invoice""",
-    """location.href = 'sms:?&body=' + encodeURIComponent(hello(px) + ', here’s your invoice""")
+    """location.href = 'sms:?&body=' + encodeURIComponent(invHello(px) + ', here’s your invoice""")
 one("""encodeURIComponent('Hi ' + firstName(pe) + ',\\n\\nHere is your invoice""",
-    """encodeURIComponent(hello(pe) + ',\\n\\nHere is your invoice""")
+    """encodeURIComponent(invHello(pe) + ',\\n\\nHere is your invoice""")
 # and a stale page's Company text says why, rather than texting
 one("""    if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms')); if(ps) companySms(ps); return; }""",
     """    if((t = e.target.closest('[data-inv-sms]'))){ var ps = prById(t.getAttribute('data-inv-sms'));
-      if(ps && isComm(ps)){ crTell('A Community invoice goes to the funding partner \\u2014 send it with Email or My phone.'); return; }   /* 1376 */
+      if(ps && invIsComm(ps)){ crTell('A Community invoice goes to the funding partner \\u2014 send it with Email or My phone.'); return; }   /* 1376 */
       if(ps) companySms(ps); return; }""")
 
 one(">v2026-10-19 build 1375<button", ">v2026-10-19 build 1376<button")
