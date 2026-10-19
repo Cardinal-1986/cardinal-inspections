@@ -36789,3 +36789,10 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - **Also:** 1372's `put` helper renamed `pfPut`. gate_dupes caught it as a ninth definition of a shared name.
 - **Gate:** `gate_1373.mjs` GREEN 9/9; control 1372 RED 7.
 - **Other gates:** wide screens keep the header button and the Ask word. gate_1206 (44px) GREEN; gate_1365, gate_1372 GREEN; navclear OK. Types 1530 and dupes 11 (both inherited); stack clean; a11y GREEN.
+
+## Build 1374 — the address in the client band (Theo, 19 Oct: "see the address and tap it without having to scroll")
+- The phone band (`#cr-namebar`, 791) had Email / Text / Call but no address; the address lived in the Location card, below the stage bar, the Job Menu and the money.
+- Now a full-width `a.nb-addr` under the name: pin icon (`ICONS.pin`), address on one line, `href = mapsUrl(pr.address)`, `target=_blank`. Drawn only when there is an address. It is a direct link, not the 792 panel: directions cannot dial anyone by accident.
+- Attribute is `data-cr-nbaddr`, not `data-cr-addr`: the Google map block (`cr-gmap-script`) already uses `data-cr-addr` as its address key.
+- Inks: `--rbe-head` text (12.71:1 dark, 18.10:1 light on `--rbe-bg1`), `--rbe-acclt` pin (8.22 / 4.97).
+- **Gate:** `gate_1374.mjs` GREEN 12/12; control 1373 RED 8. check_build GREEN; gate_types 1530 and gate_dupes 11-over both identical to the control (inherited); gate_stack clean; gate_1206, gate_a11y GREEN; scroll-lock roster unchanged at 17; gate_1124 / 791 / 752 / 1355 / 1373 GREEN. gate_794's one red ("heading keeps its red rule") is red on the control too.
