@@ -121,6 +121,12 @@ export default async function handler(req, res){
         error:'A Community invoice goes to the funding partner, not the homeowner. Send it by email.' });
       return;
     }
+    // 1377 (W7): an insurance invoice bills the whole job, most of it the carrier's money — no pay link texted
+    if(ct === 'insurance' || (!(ck.lead && ck.lead.claim_type) && ck.lead && ck.lead.insurance)){
+      res.status(200).json({ ok:false, reason:'insurance',
+        error:'An insurance invoice goes out by hand for now: open it, Download it, then Mark sent.' });
+      return;
+    }
     var to = normPhone(rows[0].phone);
     if(!to){
       res.status(200).json({ ok:false, reason:'no_phone',

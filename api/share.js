@@ -105,6 +105,21 @@ function signUi(token) {
    did not confirm. A failed read is never an empty ledger.
    KEEP IN SYNC: this class, readRows and owedOn are byte-identical in
    api/pay.js and api/share.js, and gate_1199 asserts it. */
+/* 1377 (W7): is this job an insurance job? An insurance invoice bills the whole job, most of it the carrier's money,
+   so it carries no pay link until it bills only the homeowner's part. A failed read answers true: the safe side is
+   no pay button, never one that may ask the homeowner for the carrier's money. */
+async function isInsuranceJob(sbHeaders, projectId) {
+  if (!projectId) return false;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/projects?id=eq.${projectId}&select=checklist&limit=1`, { headers: sbHeaders });
+    if (!r.ok) return true;
+    const row = (await r.json())[0];
+    if (!row) return false;
+    let ck = {}; try { ck = typeof row.checklist === 'string' ? JSON.parse(row.checklist || '{}') : (row.checklist || {}); } catch (_) {}
+    const L = ck.lead || {};
+    return String(L.claim_type || '').toLowerCase() === 'insurance' || (!L.claim_type && !!L.insurance);
+  } catch (_) { return true; }
+}
 class LookupFailed extends Error {
   constructor(what) { super('lookup failed: ' + what); this.code = 'LOOKUP_FAILED'; }
 }
@@ -394,7 +409,8 @@ export default async function handler(req, res) {
         const owed = await owedOn(sbHeaders, rows[0]);
         const { cents, label } = owed;
         if (isInvoiceDoc) html = liveInvoiceSummary(html, owed);   /* 1320 */
-        if (cents >= 50 && cents <= 10000000) {
+        const insNoPay = isInvoiceDoc && await isInsuranceJob(sbHeaders, rows[0].project_id);   /* 1377 */
+        if (!insNoPay && cents >= 50 && cents <= 10000000) {
           const ui = payUi(t, cents, label, rows[0].project || rows[0].title);
           html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
         }

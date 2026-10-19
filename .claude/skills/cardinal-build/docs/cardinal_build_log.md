@@ -36813,3 +36813,10 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - Insurance half of W7 is held for Theo's pick (who the insurance invoice bills).
 - **Gate:** `gate_1376.mjs` GREEN 9/9 (browser + the server route executed with a stubbed fetch); control 1375 RED 6.
 - Standing gates: check_build GREEN; gate_types 1530 = control; gate_stack clean; gate_1206, gate_a11y GREEN; scroll-lock 17. **gate_dupes caught two names this build reused** (`isComm` already at ~68730, `hello` at ~95971): renamed `invIsComm` / `invHello`, back to the control's count. Invoice-area gates (1216, 1286–1291, 1315, 1318, 1335, 1338, 1346–1357, 1367, 745, harness_ar1107) match the control; harness_inv1108's one red and gate_1225's eight are red on the control too.
+
+## Build 1377 — an insurance invoice carries no pay link for now (audit W7, insurance half; Theo: "2 then 1")
+- The control proves every path was live on 1376: the card offered three sends, `linkFor` minted a pay link, the editor's Share link prompted one, the share page showed a Pay button, the pay route made a checkout, and Company text texted it — for a balance that is mostly the carrier's money.
+- One app choke point (`linkFor`, in the Invoices module) plus the editor guard 1324 already put on all four ways out; three server refusals behind them (`isInsuranceJob()` in share.js and pay.js, outside the byte-identical `owedOn` block — gate_1199 still GREEN 39/39). A failed project read answers "insurance": no pay button is the safe side.
+- 1376 gap closed: the editor's Text pay link on a Community invoice pre-filled the occupant's number.
+- Rides PR #706 with 1376 (the stop hook required the commit before #706 merged).
+- **Gate:** `gate_1377.mjs` GREEN 12/12 (browser + share/pay/sms-link executed against a fake PostgREST); control 1376 RED 7.
