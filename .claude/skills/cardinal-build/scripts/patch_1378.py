@@ -55,7 +55,8 @@ async function crInsPart(pr){
     var src = String(c.source || '').toLowerCase();
     if(src !== 'insurance' && src !== 'partner') paid += Number(c.amount) || 0;
   });
-  return { value: part, paid: paid, balance: Math.round((part - paid) * 100) / 100 };
+  var pv = /** @type {number} */ (part);
+  return { value: pv, paid: paid, balance: Math.round((pv - paid) * 100) / 100 };
 }
 async function createInvoiceFor(pr){""")
 
@@ -69,7 +70,7 @@ one("""async function createInvoiceFor1315(pr){
   if(_insJob){
     try{ _part = await crInsPart(pr); }catch(_ip){ _part = null; }
     if(_part && !(_part.balance > 0.005)){ crTell('The homeowner\\u2019s part (' + fmtMoney(_part.value, true) + ') is paid \\u2014 there is nothing to invoice them.'); return; }
-    if(_part) fin = { value: _part.value, paid: _part.paid, balance: _part.balance, source: fin.source, estAccepted: fin.estAccepted };
+    if(_part) fin = Object.assign({}, fin, { value: _part.value, paid: _part.paid, balance: _part.balance });
   }""")
 
 one("""  tpl = tpl.replace('[INV_TOTAL]', fmtMoney(fin.value, true));""",
@@ -86,13 +87,13 @@ one("""    crTell('Invoice ' + num + ' is ready. Send it from the job\\u2019s in
 # the Invoices module's link maker: an insurance invoice needs the figure, no longer refused outright
 one("""    if(invIsIns(prById(pid))) return Promise.reject(new Error('An insurance invoice goes out by hand for now: most of its balance is the carrier\\u2019s money. Open it, Download it, then Mark sent.'));
     return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); });""",
-"""    var go = function(){ return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); }); };
+"""    var invMintLink = function(){ return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); }); };
     /* 1378: an insurance invoice's link bills the homeowner's part; with no part on the signed contract it goes by hand */
     if(invIsIns(prById(pid))) return Promise.resolve(window.crInsPart ? window.crInsPart(prById(pid)) : null).then(function(p){
       if(!p) throw new Error('""" + NOBOX + """');
-      return go();
+      return invMintLink();
     });
-    return go();""")
+    return invMintLink();""")
 
 one("""    var sendRow = !inv ? '' : invIsIns(pr)
       ? '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden><span class="crji-insnote">' + 'An insurance invoice goes out by hand for now: most of its balance is the carrier\\u2019s money. Open it, Download it, then Mark sent.' + '</span></div>'   /* 1377 */

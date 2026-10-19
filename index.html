@@ -17797,7 +17797,8 @@ async function crInsPart(pr){
     var src = String(c.source || '').toLowerCase();
     if(src !== 'insurance' && src !== 'partner') paid += Number(c.amount) || 0;
   });
-  return { value: part, paid: paid, balance: Math.round((part - paid) * 100) / 100 };
+  var pv = /** @type {number} */ (part);
+  return { value: pv, paid: paid, balance: Math.round((pv - paid) * 100) / 100 };
 }
 async function createInvoiceFor(pr){
   if(__invBusy) return;
@@ -17812,7 +17813,7 @@ async function createInvoiceFor1315(pr){
   if(_insJob){
     try{ _part = await crInsPart(pr); }catch(_ip){ _part = null; }
     if(_part && !(_part.balance > 0.005)){ crTell('The homeowner\u2019s part (' + fmtMoney(_part.value, true) + ') is paid \u2014 there is nothing to invoice them.'); return; }
-    if(_part) fin = { value: _part.value, paid: _part.paid, balance: _part.balance, source: fin.source, estAccepted: fin.estAccepted };
+    if(_part) fin = Object.assign({}, fin, { value: _part.value, paid: _part.paid, balance: _part.balance });
   }
   if(!crBillable(fin)){ crTell('Create an invoice after a contract is signed or the estimate is accepted \u2014 the totals come from that document.'); return; }   /* 1335 */
   /* 1315: a paid job has nothing to bill, and a second invoice should be on purpose */
@@ -92431,13 +92432,13 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function linkFor(pid, send){
     var inv = invoiceFor(pid);
     if(!inv) return Promise.reject(new Error('This job has no invoice yet — create one first.'));
-    var go = function(){ return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); }); };
+    var invMintLink = function(){ return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); }); };
     /* 1378: an insurance invoice's link bills the homeowner's part; with no part on the signed contract it goes by hand */
     if(invIsIns(prById(pid))) return Promise.resolve(window.crInsPart ? window.crInsPart(prById(pid)) : null).then(function(p){
       if(!p) throw new Error('This insurance job\u2019s signed contract has no INSURANCE & YOUR PART figure, so its invoice goes out by hand: open it, Download it, then Mark sent.');
-      return go();
+      return invMintLink();
     });
-    return go();
+    return invMintLink();
   }
   /* 1315: sending is sending, whichever button did it. Before, only the editor's Email to
      client and Mark sent wrote status:'sent' and moved the stage, so an invoice texted from

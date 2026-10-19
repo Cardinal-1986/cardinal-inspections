@@ -36828,3 +36828,4 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - gate_1377's card assertion updated: 1378 moved the insurance decision from the card to the link maker by Theo's choice; its B–F (no box → nothing goes out) still hold and still pass.
 - The checks session: no branch or PR of it moved since 15 Oct; this build reads `collections.source` and writes nothing to collections.
 - **Gate:** `gate_1378.mjs` GREEN 16/16; control 1377 RED 11.
+- The sweep caught two of my own slips before any PR: two TS errors (a closure-assigned `part` needed a cast; the insurance `fin` dropped `contracts`/`pct` — now `Object.assign({}, fin, …)`) and a reused local name `go` (gate_dupes) — renamed `invMintLink`. Both gates back to the control's counts.
