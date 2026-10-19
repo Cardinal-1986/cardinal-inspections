@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-19 build 1374<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-19 build 1375<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -45055,6 +45055,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1375, d:'2026-10-19', t:'A shorter client page on the phone', s:'On a phone, Location, Assigned To and Google Reviews on a client’s page are now one line each, showing the street and the rep’s name. Tap a line to open it and tap again to close it. Job Details stays open. The address is still at the top of the page, one tap from directions.' },
   { b: 1374, d:'2026-10-19', t:'The address at the top of the client page', s:'On a phone, the band at the top of a client’s page now shows the address under the name, beside the Email, Text and Call buttons. Tap it and directions open, the same as the map in the Location card, so you no longer scroll down to find it.' },
   { b: 1373, d:'2026-10-18', t:'A calmer phone screen', s:'On a client’s page the Job Menu no longer shows a 0 on every tile with nothing in it. On a phone the extra Work Orders button under the header is gone, because Work Orders is already a tile in the menu. The Roof Pre-Install Guide row now sits below the Job Menu instead of above it. The Ask button is a small round star that no longer covers the tiles. On Home, the pipeline and Accounts Receivable show $0 instead of two dashes.' },
   { b: 1372, d:'2026-10-18', t:'New job for the same client', s:'When a client comes back for more work, open their job, tap ⋮ on the stage bar and choose New job for this client. The new-lead form opens with their name, address, phone and email filled in and Repeat customer picked. It becomes its own job with its own price and invoice, so the old job’s balance is never mixed with the new one. Each job’s ⋮ menu can then open the earlier or newer job.' },
@@ -84596,6 +84597,7 @@ select{min-height:44px;}
    ========================================================================== */
 #cr-namebar{ display:none; }
 #cr-namebar .nb-pop[hidden]{ display:none; }
+#projectView .cr-fold{ display:none; }   /* 1375: the phone folds; see the max-width:560px block */
 
 @media (max-width:560px){
   body:not(.claim-insurance):not(.claim-community) #projectView .projhead{ display:block; margin:0; }
@@ -84757,6 +84759,25 @@ select{min-height:44px;}
   body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #acxMount > #dbConvertIns,
   body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #solCard,
   body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #dangerZone{ display:none !important; }
+  /* 1375 (Theo's pick, "1 3 4"): Location, Assigned To and Google Reviews fold to their heading. The heading is the
+     row; the button's ::before spans all of it, so a tap anywhere on the row opens it. Hidden in place, never moved,
+     the Admin row's rule. Job Details stays open. */
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount [data-cr-fold]{ position:relative; display:flex; align-items:center; min-height:44px; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .cr-fold{
+    display:flex; align-items:center; gap:8px; margin-left:auto; min-width:0; max-width:62%; min-height:44px;
+    padding:0 0 0 10px; background:none; border:0; cursor:pointer;
+    font:600 13px 'Segoe UI',Arial,sans-serif; color:var(--rbe-mute,#b8bec6);
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .cr-fold::before{ content:''; position:absolute; inset:0; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .cr-fold-s{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .cr-fold::after{ content:"\203A"; flex:none; font-size:22px; line-height:1; transition:transform .15s; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .cr-fold[aria-expanded="true"]::after{ transform:rotate(90deg); }
+  /* the Location pencil sits above the row's tap area when open, and goes with the card when folded */
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount [data-cr-fold] .rt2{ position:relative; z-index:1; }
+  body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-open-loc) #acxMount > [data-cr-ord="loch"] .rt2{ display:none; }
+  body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-open-loc) #acxMount > [data-cr-ord="loc"],
+  body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-open-asg) #acxMount > .acxassignsec,
+  body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-open-rv) #acxMount > .rvcard > .rvbody{ --cr-stack:"1375 folded on a phone until its row is tapped (Theo: 1 3 4)"; display:none !important; }
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="jdh"]{
     margin:20px calc(-1 * var(--cr-wrap-pad, 18px)) 10px !important;
     padding-left:var(--cr-wrap-pad, 18px); padding-right:var(--cr-wrap-pad, 18px);
@@ -85122,6 +85143,7 @@ select{min-height:44px;}
     /* 1225: the Admin row. Open state is per job: a different job opens closed. */
     var pv = document.getElementById('projectView');
     var pid = window.currentProject && window.currentProject.id;
+    tagFolds(mount, pv, pid);
     if(pv && adminOpenFor !== pid){ pv.classList.remove('cr-admin-open'); adminOpenFor = null; }
     var tog = mount.querySelector(':scope > .cr-admin-tog');
     if(!tog){
@@ -85138,6 +85160,53 @@ select{min-height:44px;}
     if(tog.getAttribute('aria-expanded') !== String(open)) tog.setAttribute('aria-expanded', String(open));
   }
   var adminOpenFor = null;
+  /* 1375: Location, Assigned To and Google Reviews fold on a phone (Theo: "1 3 4"). The CSS hides them unless
+     #projectView carries cr-open-<key>; this only writes the buttons, and only when one is missing or its text moved
+     (a write that changes nothing still wakes every body observer). */
+  var foldOpenFor = null;
+  function tagFolds(mount, pv, pid){
+    if(pv && foldOpenFor !== pid){ pv.classList.remove('cr-open-loc', 'cr-open-asg', 'cr-open-rv'); foldOpenFor = pid; }
+    var pr = window.currentProject || {};
+    var asg = mount.querySelector(':scope > .acxassignsec');
+    var rep = asg && asg.querySelector('.dbrep b');
+    var rows = [
+      { key:'loc', title:'Location', head: mount.querySelector(':scope > [data-cr-ord="loch"]'),
+        sum: pr.address ? String(pr.address).split(',')[0] : 'No address yet' },
+      { key:'asg', title:'Assigned To', head: asg && asg.previousElementSibling && asg.previousElementSibling.classList.contains('projsec') ? asg.previousElementSibling : null,
+        sum: rep ? rep.textContent.trim() : 'Nobody yet' },
+      { key:'rv', title:'Google Reviews', head: mount.querySelector(':scope > .rvcard > .rvtop'), sum: '' }
+    ];
+    rows.forEach(function(r){
+      if(!r.head) return;
+      if(r.head.getAttribute('data-cr-fold') !== r.key) r.head.setAttribute('data-cr-fold', r.key);
+      var btn = r.head.querySelector(':scope > .cr-fold');
+      if(!btn){
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cr-fold';
+        btn.setAttribute('data-cr-fold-key', r.key);
+        btn.innerHTML = '<span class="cr-fold-s"></span>';
+        r.head.appendChild(btn);
+      }
+      var s = btn.querySelector('.cr-fold-s');
+      if(s && s.textContent !== r.sum) s.textContent = r.sum;
+      var lbl = r.title + (r.sum ? ': ' + r.sum : '');
+      if(btn.getAttribute('aria-label') !== lbl) btn.setAttribute('aria-label', lbl);
+      var open = String(!!(pv && pv.classList.contains('cr-open-' + r.key)));
+      if(btn.getAttribute('aria-expanded') !== open) btn.setAttribute('aria-expanded', open);
+    });
+  }
+  document.addEventListener('click', function(e){
+    var t = /** @type {Element} */ (e.target);
+    var b = t && t.closest && t.closest('#acxMount .cr-fold');
+    if(!b) return;
+    var pv = document.getElementById('projectView');
+    if(!pv) return;
+    var cls = 'cr-open-' + b.getAttribute('data-cr-fold-key');
+    var open = !pv.classList.contains(cls);
+    pv.classList.toggle(cls, open);
+    b.setAttribute('aria-expanded', String(open));
+  });
   document.addEventListener('click', function(e){
     var tog = e.target.closest && e.target.closest('#acxMount > .cr-admin-tog');
     if(!tog) return;

@@ -36796,3 +36796,11 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - Attribute is `data-cr-nbaddr`, not `data-cr-addr`: the Google map block (`cr-gmap-script`) already uses `data-cr-addr` as its address key.
 - Inks: `--rbe-head` text (12.71:1 dark, 18.10:1 light on `--rbe-bg1`), `--rbe-acclt` pin (8.22 / 4.97).
 - **Gate:** `gate_1374.mjs` GREEN 12/12; control 1373 RED 8. check_build GREEN; gate_types 1530 and gate_dupes 11-over both identical to the control (inherited); gate_stack clean; gate_1206, gate_a11y GREEN; scroll-lock roster unchanged at 17; gate_1124 / 791 / 752 / 1355 / 1373 GREEN. gate_794's one red ("heading keeps its red rule") is red on the control too.
+
+## Build 1375 — Location, Assigned To and Google Reviews fold on a phone (Theo, 19 Oct: "1 3 4", from the Client Page Folds preview)
+- Each folds to its heading plus a summary and a chevron: Location shows the street ("No address yet" with none), Assigned To the rep's name, Reviews just its title. One tap opens, a second closes. Job Details stays open (Theo took the recommendation to keep it).
+- Hidden in place, never moved, the 1225 Admin-row rule. The state is a class on `#projectView`, reset when a different job opens. `tagFolds()` writes a button only when one is missing or its text changed; the gate measures 0 mutations on a settled page.
+- The button's `::before` spans the row, so the title itself is the tap target (50px tall; Reviews' bar 73px). Location's pencil gets `z-index:1` so it keeps its own tap when open.
+- The folded page is 2,829 → 2,592px at 390px. Open, every heading is 44px rather than 34px, so fully open it is 2,885px.
+- Summary inks: 10.09–10.62:1 dark, 6.64–6.82:1 light (ancestor-background walk; the band grounds are flat colours).
+- **Gate:** `gate_1375.mjs` GREEN 12/12; control 1374 RED 8. The gate taps only buttons that exist, so the control reports red instead of crashing (class 37). check_build GREEN. gate_types 1530 = control: a first pass added two TS2339 (`e.target.closest`), fixed with a JSDoc cast. gate_dupes unchanged; gate_stack clean (the hide rule carries `--cr-stack`); gate_1206, gate_a11y GREEN; scroll-lock roster 17.
