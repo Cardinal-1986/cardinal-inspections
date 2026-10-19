@@ -10109,3 +10109,6 @@ The homeowner's part = "Your total out of pocket" (`data-ip="oop"`) in the INSUR
 
 ## Build 1379: the Claims hub's "owed" counts the carrier's checks (audit R8b)
 `cr-cth-script` `carrierLeft(pr, c)`: a job's carrier payments (`collections.source === 'insurance'`, in `cacheCollections` since 1378) pay `approved_acv` first, then `approved_depreciation`, then `supplement_approved`; the hub's Depreciation / Supplement owed and the Invoiced rail tile show what is left. No carrier payment recorded → identical to before. **Gate:** `gate_1379.mjs`.
+
+## Build 1380: Email / Text / Call always at the top of a retail client (Theo: "add a phone logo at the top like it was even if they don't have a number")
+`#cr-namebar` draws all three `.nb-ico` buttons on every retail client. The number and email come from `nbContact(pr)`: `projPhone()` (job, then lead) and the same order for email. With nothing on file, a tap opens **Edit client info** (`openProjModal`) to add it. Reverses 791's "only draw a channel that exists". **Gate:** `gate_1380.mjs`.

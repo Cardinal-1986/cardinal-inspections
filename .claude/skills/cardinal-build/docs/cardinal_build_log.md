@@ -36835,3 +36835,10 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - R2 needed nothing: 1369 already made Money Collected count collections. Marked fixed in the audit after reading the code, not assumed.
 - The gate first read $0 on BOTH trees — the hub loads its claims only while its screen is open; the gate now opens it. A fixture fault, caught by the control matching the new build.
 - **Gate:** `gate_1379.mjs` GREEN 4/4 ($7,000 / $3,500 / $10,500); control 1378 RED 3 (reads $12,000 / $4,000 / $16,000).
+
+## Build 1380 — Email / Text / Call always at the top of a retail client (Theo, 19 Oct, with a screenshot)
+- The screenshot's client has no phone and no email saved anywhere (checked: both fields empty on the job and in the lead), and 791's rule hid any button with nothing behind it — so the band showed no way to contact them. Measured (counts only): 36 of 232 retail jobs have no phone, 34 neither. 12 jobs keep the phone only in the lead; the band never read it.
+- Theo reports clients WITH numbers also missing the icons. Not reproduced: real-shaped production rows rendered on main show Text/Call (and Email where saved). Left open and said so; this build covers it either way, because the buttons are now always drawn.
+- My errors on the way: tests used fixtures that always had a phone, so the hiding never showed; then I over-built (dimmed buttons, messages) before doing the simple thing asked. Shipped the simple thing.
+- gate_791's "draws no dead contact buttons" and gate_1374's channel list updated to Theo's rule.
+- **Gate:** `gate_1380.mjs` GREEN 6/6; control 1379 RED 4. gate_1374, 791, 1124, 752 GREEN; types 1530 and dupes = control.
