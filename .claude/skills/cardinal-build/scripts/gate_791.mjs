@@ -170,7 +170,8 @@ const none = await P.page.evaluate(() => {
   return { icons: b ? b.querySelectorAll('.nb-ico').length : -1,
            name: b && b.querySelector('.nb-nm') ? b.querySelector('.nb-nm').textContent : null };
 });
-ok('draws no dead contact buttons', none.icons === 0 && none.name === 'No Contact Ltd', JSON.stringify(none));
+/* 1380 (Theo): the three buttons are always drawn; with nothing on file a tap opens Edit client info. Before: none. */
+ok(/function nbContact\(pr\)/.test(APP) ? (none.icons === 3 && none.name === 'No Contact Ltd') : (none.icons === 0 && none.name === 'No Contact Ltd'), 'contact buttons with nothing on file (1380+: all three)', JSON.stringify(none));
 await P.browser.close();
 
 console.log('\n--- F. insurance keeps its own card ---');

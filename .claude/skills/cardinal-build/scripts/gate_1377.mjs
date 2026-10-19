@@ -64,7 +64,10 @@ try {
   }, id);
   const rr = await row('r1'), nr = await row('n1');
   ok(rr && rr.btns === 3 && !rr.note, 'A: retail invoice keeps its three sends', JSON.stringify(rr));
-  ok(nr && nr.btns === 0 && /by hand/i.test(nr.note), 'A: insurance invoice: no send buttons, a line saying it goes out by hand', JSON.stringify(nr));
+  /* 1378 (Theo "then 1") moved the decision to the link maker: an insurance invoice shows its sends again, and B-F
+     prove that one with no homeowner's part on its contract still sends nothing. Before 1378 this was "no buttons". */
+  const _post1378 = /async function crInsPart\(pr\)/.test(APP_HTML);
+  ok(nr && (_post1378 ? nr.btns === 3 : (nr.btns === 0 && /by hand/i.test(nr.note))), 'A: insurance invoice Send row (1377: a note; 1378+: the sends, checked by the link maker)', JSON.stringify(nr));
 
   const link = id => page.evaluate(id => window.CardinalAR.payLink(id).then(u => ({ url: u }), e => ({ err: String(e && e.message || e) })), id);
   const lr = await link('r1'), ln = await link('n1');

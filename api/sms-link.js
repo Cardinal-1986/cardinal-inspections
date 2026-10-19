@@ -121,11 +121,26 @@ export default async function handler(req, res){
         error:'A Community invoice goes to the funding partner, not the homeowner. Send it by email.' });
       return;
     }
-    // 1377 (W7): an insurance invoice bills the whole job, most of it the carrier's money — no pay link texted
+    // 1377/1378 (W7): an insurance invoice's link bills the homeowner's part, which must be on the signed contract
+    // (the INSURANCE & YOUR PART box, 1324). With none, nothing is texted — it goes out by hand.
     if(ct === 'insurance' || (!(ck.lead && ck.lead.claim_type) && ck.lead && ck.lead.insurance)){
-      res.status(200).json({ ok:false, reason:'insurance',
-        error:'An insurance invoice goes out by hand for now: open it, Download it, then Mark sent.' });
-      return;
+      var hasPart = false;
+      try{
+        var dq = await fetch(SUPA_URL + '/rest/v1/inspection_reports?select=title,html,signed_at&project_id=eq.' + encodeURIComponent(projectId),
+          { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + caller._token } });
+        var docs = dq.ok ? await dq.json() : [];
+        hasPart = (Array.isArray(docs) ? docs : []).some(function(d){
+          if(!/^contract/i.test(String(d.title || '').trim()) || !d.signed_at) return false;
+          var m = /data-ip="oop"[^>]*>\s*([^<]*)</.exec(String(d.html || ''));
+          var t2 = m ? m[1].trim() : '';
+          return !!t2 && t2.charAt(0) !== '[' && Number(t2.replace(/[^0-9.\-]/g, '')) > 0;
+        });
+      }catch(_d){ hasPart = false; }
+      if(!hasPart){
+        res.status(200).json({ ok:false, reason:'insurance',
+          error:'This insurance job’s signed contract has no INSURANCE & YOUR PART figure, so its invoice goes out by hand: open it, Download it, then Mark sent.' });
+        return;
+      }
     }
     var to = normPhone(rows[0].phone);
     if(!to){

@@ -36820,3 +36820,25 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - 1376 gap closed: the editor's Text pay link on a Community invoice pre-filled the occupant's number.
 - Rides PR #706 with 1376 (the stop hook required the commit before #706 merged).
 - **Gate:** `gate_1377.mjs` GREEN 12/12 (browser + share/pay/sms-link executed against a fake PostgREST); control 1376 RED 7.
+
+## Build 1378 — an insurance invoice bills only the homeowner's part (audit W7 option 1; Theo: "2 then 1", then "1 they 2")
+- Fixture that the gate runs end to end: a $9,000 insurance job, contract box $1,500 out of pocket; the carrier paid $8,000, a partner $100, the homeowner $500 cash + $200 financing → the homeowner owes **$800**. Share page bar, checkout and printed invoice all say $800; the retail job beside it still charges the job balance.
+- `homeOwedOn()` sits outside the byte-identical `owedOn` block, so 1199's sync guarantee is untouched; gate_1378 asserts the new pair is byte-identical in pay.js and share.js too. `export { owedOn, homeOwedOn }` — receipt.js uses it for insurance jobs (no box → no balance line, never a wrong one).
+- First run caught a real conflict: 1357's line seeder rewrites the invoice's stored total to the job's value and prints the job's priced lines. Kept the job total (A/R reads it as the job's), and a homeowner's-part invoice is not seeded — $9,000 of line items beside "Your part $1,500" would read as the bill.
+- gate_1377's card assertion updated: 1378 moved the insurance decision from the card to the link maker by Theo's choice; its B–F (no box → nothing goes out) still hold and still pass.
+- The checks session: no branch or PR of it moved since 15 Oct; this build reads `collections.source` and writes nothing to collections.
+- **Gate:** `gate_1378.mjs` GREEN 16/16; control 1377 RED 11.
+- The sweep caught two of my own slips before any PR: two TS errors (a closure-assigned `part` needed a cast; the insurance `fin` dropped `contracts`/`pct` — now `Object.assign({}, fin, …)`) and a reused local name `go` (gate_dupes) — renamed `invMintLink`. Both gates back to the control's counts.
+
+## Build 1379 — the Claims hub's "owed" counts the carrier's checks already in (audit R8b; Theo "1 they 2")
+- 1338 left R8b open because the hub had no way to see payments by source. 1378 put `source` in the payment cache, so the hub now subtracts the carrier's recorded checks: ACV first, then depreciation, then the approved supplement. A homeowner payment never reduces what the carrier owes.
+- R2 needed nothing: 1369 already made Money Collected count collections. Marked fixed in the audit after reading the code, not assumed.
+- The gate first read $0 on BOTH trees — the hub loads its claims only while its screen is open; the gate now opens it. A fixture fault, caught by the control matching the new build.
+- **Gate:** `gate_1379.mjs` GREEN 4/4 ($7,000 / $3,500 / $10,500); control 1378 RED 3 (reads $12,000 / $4,000 / $16,000).
+
+## Build 1380 — Email / Text / Call always at the top of a retail client (Theo, 19 Oct, with a screenshot)
+- The screenshot's client has no phone and no email saved anywhere (checked: both fields empty on the job and in the lead), and 791's rule hid any button with nothing behind it — so the band showed no way to contact them. Measured (counts only): 36 of 232 retail jobs have no phone, 34 neither. 12 jobs keep the phone only in the lead; the band never read it.
+- Theo reports clients WITH numbers also missing the icons. Not reproduced: real-shaped production rows rendered on main show Text/Call (and Email where saved). Left open and said so; this build covers it either way, because the buttons are now always drawn.
+- My errors on the way: tests used fixtures that always had a phone, so the hiding never showed; then I over-built (dimmed buttons, messages) before doing the simple thing asked. Shipped the simple thing.
+- gate_791's "draws no dead contact buttons" and gate_1374's channel list updated to Theo's rule.
+- **Gate:** `gate_1380.mjs` GREEN 6/6; control 1379 RED 4. gate_1374, 791, 1124, 752 GREEN; types 1530 and dupes = control.

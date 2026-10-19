@@ -55,7 +55,7 @@ const READ = `(() => {
   ok(r.has && r.text === pr.address, '2: it reads the job\'s address', r.text);
   ok(r.has && r.href === pr.maps && r.target === '_blank', '2: one tap opens directions in a new tab', r.href);
   ok(r.has && r.h >= 44 && r.hitOk, '3: a 44px target nothing paints over', JSON.stringify({ h: r.h, hit: r.hitOk }));
-  const want = [pr.email && 'email', pr.tel && 'text', pr.tel && 'call'].filter(Boolean);
+  const want = /function nbContact\(pr\)/.test(APP) ? ['email', 'text', 'call'] : [pr.email && 'email', pr.tel && 'text', pr.tel && 'call'].filter(Boolean);   /* 1380: always all three */
   ok(r.has && JSON.stringify(r.icos) === JSON.stringify(want), '4: Email / Text / Call unchanged', JSON.stringify(r.icos));
   ok(r.has && r.ink >= 4.5 && r.pin >= 3, '5: dark: address ink clears 4.5:1, pin 3:1', r.has && r.ink.toFixed(2) + ' / ' + r.pin.toFixed(2));
   await p.evaluate(() => { currentProject.address = ''; openProject(currentProject.id); }); await p.waitForTimeout(1500);

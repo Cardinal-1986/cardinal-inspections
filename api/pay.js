@@ -132,6 +132,38 @@ async function owedOn(sbHeaders, rep) {
   return { cents: Math.round((deposit - collected) * 100), label: 'Deposit' };
 }
 
+/* 1378 (W7 option 1): what the HOMEOWNER owes on an insurance invoice — "Your total out of pocket" from the
+   INSURANCE & YOUR PART box (1324) on the newest signed contract, less what the homeowner has paid (carrier and
+   partner money is not theirs). null when no signed contract carries the figure: that invoice goes out by hand
+   (1377). A failed read throws LookupFailed. KEEP IN SYNC: byte-identical in api/pay.js and api/share.js, and the
+   same rule as crInsPart() in index.html. */
+function oopFromHtml(html) {
+  const m = /data-ip="oop"[^>]*>\s*([^<]*)</.exec(String(html || ''));
+  if (!m) return null;
+  const t = m[1].trim();
+  if (!t || t.charAt(0) === '[') return null;
+  const v = Number(t.replace(/[^0-9.\-]/g, ''));
+  return isFinite(v) && v > 0 ? v : null;
+}
+async function homeOwedOn(sbHeaders, rep) {
+  let part = null, at = '';
+  for (const r of await readRows(sbHeaders, 'inspection_reports',
+      `${SUPABASE_URL}/rest/v1/inspection_reports?project_id=eq.${rep.project_id}&select=title,html,signed_at`)) {
+    if (!/^contract/i.test(String(r.title || '').trim()) || !r.signed_at) continue;
+    const v = oopFromHtml(r.html);
+    if (v !== null && String(r.signed_at) > at) { part = v; at = String(r.signed_at); }
+  }
+  if (part === null) return null;
+  let paid = 0;
+  for (const c of await readRows(sbHeaders, 'collections',
+      `${SUPABASE_URL}/rest/v1/collections?project_id=eq.${rep.project_id}&select=amount,source`)) {
+    const src = String(c.source || '').toLowerCase();
+    if (src !== 'insurance' && src !== 'partner') paid += Number(c.amount) || 0;
+  }
+  return { cents: Math.round((part - paid) * 100), label: 'Your part',
+           totalCents: Math.round(part * 100), paidCents: Math.round(paid * 100) };
+}
+
 export default async function handler(req, res) {
   const srk = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const sk  = process.env.STRIPE_SECRET_KEY;
@@ -148,14 +180,11 @@ export default async function handler(req, res) {
     if (!r.ok) throw new Error('lookup failed');
     const rep = (await r.json())[0];
     if (!rep) { res.status(404).send('This link is no longer available.'); return; }
-    // 1377 (W7): an insurance invoice is not paid online for now — its balance is mostly the carrier's money
-    if (/^invoice/i.test(String(rep.title || '').trim()) && await isInsuranceJob(sbHeaders, rep.project_id)) {
-      res.status(400).send('This invoice is not paid online. Please call Cardinal Roofing & Renovations about your part of the insurance job.');
-      return;
-    }
+    // 1377/1378 (W7): an insurance invoice bills the homeowner's part only
+    const insInv = /^invoice/i.test(String(rep.title || '').trim()) && await isInsuranceJob(sbHeaders, rep.project_id);
 
     let owed;
-    try { owed = await owedOn(sbHeaders, rep); }
+    try { owed = insInv ? await homeOwedOn(sbHeaders, rep) : await owedOn(sbHeaders, rep); }
     catch (e) {
       if (e && e.code === 'LOOKUP_FAILED') {
         /* 1199: the balance could not be verified. Say so and stop — never
@@ -166,6 +195,10 @@ export default async function handler(req, res) {
         return;
       }
       throw e;
+    }
+    if (!owed) {   /* 1378: no homeowner's part on the signed contract — not paid online */
+      res.status(400).send('This invoice is not paid online. Please call Cardinal Roofing & Renovations about your part of the insurance job.');
+      return;
     }
     const { cents, label } = owed;
     if (!(cents >= MIN_CENTS && cents <= MAX_CENTS)) {
@@ -238,4 +271,4 @@ export default async function handler(req, res) {
     res.status(500).send('Could not start the payment: ' + ((err && err.message) || String(err)));
   }
 }
-export { owedOn };   /* 1336: api/receipt.js reads the same balance the pay link shows */
+export { owedOn, homeOwedOn };   /* 1336: api/receipt.js reads the same balance the pay link shows */

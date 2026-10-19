@@ -45,13 +45,13 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 | # | Finding | Where |
 |---|---|---|
 | R1 | ✅ **FIXED 1314** — "Paid this month" is always $0 — `paidThisMonth()` reads `collected_at`, the cache selects only `project_id,amount` | ✅ ~89690 vs ~11316 |
-| R2 | Home "Money Collected (30d)" sums `ws[].log`, whose only writer (`#acxPayBtn`) is no longer rendered | ~12005 / ~12876 |
+| R2 | ✅ **FIXED 1369** (verified 19 Oct: it sums collections; the ws log counts only on a job with none) — Home "Money Collected (30d)" sums `ws[].log`, whose only writer (`#acxPayBtn`) is no longer rendered | ~12005 / ~12876 |
 | R3 | ✅ **FIXED 1316** — Three "who owes me" totals: Invoices & AR (any CRM, Invoiced **or** has invoice, Closed included), Home chart (Invoiced only, current board's CRM), Partner A/R (Community, bid fallback). Partner money is missing from Invoices & AR | ~89677, ~12071, ~63364 |
 | R4 | ✅ **FIXED 1316** — Three aging clocks: `sent_at` → `t_Invoiced` → `pr.stage_since` (column does not exist; lives in checklist) → `updated_at` (resets on any edit) / home `t_Invoiced` / digest `stage_since` | ~89665, ~12071, `api/digest.js:115` |
 | R5 | ✅ **FIXED 1316** — Three bucket sets: 0–14 / 15–30 / "30+" (actually 31+) · ≤30 / 31–60 / 61–90 / >90 · over-30 | |
 | R6 | ✅ **FIXED 1316** — Closed with a balance: on Invoices & AR only if an invoice doc exists; with none, on no A/R surface at all | executed |
 | R7 | ✅ **FIXED 1316** — A finished job (Completed, signed contract, no invoice) is not on Invoices & AR, so its "Create invoice" button never appears for the commonest case | `arList` |
-| R8 | Insurance: AR marks depreciation-pending jobs OVERDUE at 31 days; Claims hub "owed depreciation" ignores collections; deductibles summed on Closed/paid claims | `cr-cth` ~61178 |
+| R8 | ✅ *R8a + R8c 1338; R8b 1379 — the hub's owed depreciation/supplement subtracts the carrier's recorded checks (ACV first).* Insurance: AR marks depreciation-pending jobs OVERDUE at 31 days; Claims hub "owed depreciation" ignores collections; deductibles summed on Closed/paid claims | `cr-cth` ~61178 |
 | R9 | ✅ *LIVE (verified 18 Oct): collections read/insert accept the assigned rep.* Rep sees a different balance from admin when they can see a job but aren't its `sales_rep` (23/86 projects have no `sales_rep`; 2 differ from the assigned rep) — `collections` RLS keys on `sales_rep` only | `commission_system.sql:71` |
 
 ## Workflow gaps
@@ -62,7 +62,7 @@ Items marked ✅ were re-checked by hand after the passes reported. Nothing was 
 - **W4** ✅ *FIXED 1315* — Double tap on Generate makes two invoices, both `#PO-1`; deleted numbers are reused; a $0-due invoice can be made on a paid job.
 - **W5** ✅ *FIXED 1315* — Second offline payment in one session: the Save button stays "Saving…" disabled (~90087 / ~90051).
 - **W6** ✅ *FIXED 1315* — Token mint failure is swallowed (`catch(_it){}` ~17437) → invoice with no token, `total` null.
-- **W7** ◐ *1376: Community done — no Company text (server refuses too), "Hello" not the occupant's name, no occupant phone/email on the invoice. 1377 (Theo "2 then 1"): an insurance invoice carries no pay link — app, share page, pay route and company text all refuse; it goes out by hand. Still open: option 1, the invoice billing only the homeowner's part (after the checks work lands).* Community and insurance jobs get the retail invoice; Company SMS would text the occupant, not the partner; insurance invoice can bill the homeowner for carrier money.
+- **W7** ✅ *1376: Community done — no Company text (server refuses too), "Hello" not the occupant's name, no occupant phone/email on the invoice. 1377 (Theo "2 then 1"): an insurance invoice carries no pay link — app, share page, pay route and company text all refuse; it goes out by hand. 1378 (option 1): the insurance invoice bills only the homeowner's part (the signed contract's INSURANCE & YOUR PART out-of-pocket, less the homeowner's own payments); no box on the contract → 1377's by-hand path. W7 ✅.* Community and insurance jobs get the retail invoice; Company SMS would text the occupant, not the partner; insurance invoice can bill the homeowner for carrier money.
 - **W8** ✅ *FIXED 1338 — `ownPayLink()`.* `api/sms-link.js` texts any `https?://` URL from the company number — not limited to the app's own share links.
 - **W9** ✅ *Settled + done 1317/1321: only Curtis sees money; Scottie is Production only, in the app and the database.* Production (Curtis, Scottie) see Billed/Collected/Balance on the client profile and can generate invoices and record payments. Whether "no money on Production" covers the profile is **Theo's call**.
 

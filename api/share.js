@@ -237,6 +237,38 @@ const LETTER_UI = `<script id="crLetterUi">(function(){
   addEventListener('resize', fit); addEventListener('orientationchange', fit);
 })();</script>`;
 
+/* 1378 (W7 option 1): what the HOMEOWNER owes on an insurance invoice — "Your total out of pocket" from the
+   INSURANCE & YOUR PART box (1324) on the newest signed contract, less what the homeowner has paid (carrier and
+   partner money is not theirs). null when no signed contract carries the figure: that invoice goes out by hand
+   (1377). A failed read throws LookupFailed. KEEP IN SYNC: byte-identical in api/pay.js and api/share.js, and the
+   same rule as crInsPart() in index.html. */
+function oopFromHtml(html) {
+  const m = /data-ip="oop"[^>]*>\s*([^<]*)</.exec(String(html || ''));
+  if (!m) return null;
+  const t = m[1].trim();
+  if (!t || t.charAt(0) === '[') return null;
+  const v = Number(t.replace(/[^0-9.\-]/g, ''));
+  return isFinite(v) && v > 0 ? v : null;
+}
+async function homeOwedOn(sbHeaders, rep) {
+  let part = null, at = '';
+  for (const r of await readRows(sbHeaders, 'inspection_reports',
+      `${SUPABASE_URL}/rest/v1/inspection_reports?project_id=eq.${rep.project_id}&select=title,html,signed_at`)) {
+    if (!/^contract/i.test(String(r.title || '').trim()) || !r.signed_at) continue;
+    const v = oopFromHtml(r.html);
+    if (v !== null && String(r.signed_at) > at) { part = v; at = String(r.signed_at); }
+  }
+  if (part === null) return null;
+  let paid = 0;
+  for (const c of await readRows(sbHeaders, 'collections',
+      `${SUPABASE_URL}/rest/v1/collections?project_id=eq.${rep.project_id}&select=amount,source`)) {
+    const src = String(c.source || '').toLowerCase();
+    if (src !== 'insurance' && src !== 'partner') paid += Number(c.amount) || 0;
+  }
+  return { cents: Math.round((part - paid) * 100), label: 'Your part',
+           totalCents: Math.round(part * 100), paidCents: Math.round(paid * 100) };
+}
+
 // payUi: a polished, trustworthy pay bar. It links to /api/pay?t=… (which does
 // the server-side charge); the amount shown here is display only.
 function payUi(token, cents, label, name) {
@@ -406,13 +438,16 @@ export default async function handler(req, res) {
       // a deposit on an estimate/contract, or a live balance on an invoice. The
       // bar is best-effort; a lookup hiccup must never block the document itself.
       try {
-        const owed = await owedOn(sbHeaders, rows[0]);
-        const { cents, label } = owed;
-        if (isInvoiceDoc) html = liveInvoiceSummary(html, owed);   /* 1320 */
-        const insNoPay = isInvoiceDoc && await isInsuranceJob(sbHeaders, rows[0].project_id);   /* 1377 */
-        if (!insNoPay && cents >= 50 && cents <= 10000000) {
-          const ui = payUi(t, cents, label, rows[0].project || rows[0].title);
-          html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
+        // 1377/1378: an insurance invoice bills the homeowner's part; with none on the signed contract, no pay bar
+        const insInv = isInvoiceDoc && await isInsuranceJob(sbHeaders, rows[0].project_id);
+        const owed = insInv ? await homeOwedOn(sbHeaders, rows[0]) : await owedOn(sbHeaders, rows[0]);
+        if (owed) {
+          const { cents, label } = owed;
+          if (isInvoiceDoc) html = liveInvoiceSummary(html, owed);   /* 1320 */
+          if (cents >= 50 && cents <= 10000000) {
+            const ui = payUi(t, cents, label, rows[0].project || rows[0].title);
+            html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
+          }
         }
       } catch (e) {
         /* leave the document unblocked. 1199: but when the ledger could not be
