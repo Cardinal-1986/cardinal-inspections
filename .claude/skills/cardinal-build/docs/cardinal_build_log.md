@@ -36842,3 +36842,9 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - My errors on the way: tests used fixtures that always had a phone, so the hiding never showed; then I over-built (dimmed buttons, messages) before doing the simple thing asked. Shipped the simple thing.
 - gate_791's "draws no dead contact buttons" and gate_1374's channel list updated to Theo's rule.
 - **Gate:** `gate_1380.mjs` GREEN 6/6; control 1379 RED 4. gate_1374, 791, 1124, 752 GREEN; types 1530 and dupes = control.
+
+## Build 1381 — My Files in the Owner Console (Theo: "create a section in owner console and organize them within their own categories")
+- **Buried-not-missing first:** the Vault (900) already stored private documents with categories, but it is `is_cardinal_admin()` — Joan sees it. Theo picked owner-only, so My Files reuses the Vault's table and row code with five new categories that only theo@ can read, instead of a second pipeline.
+- **No storage policy change:** files go under `photos/private/<email>/owner-files/`, already fenced to the one login by `studio_private_*`. `owner_files.sql` widens the category check and splits the RLS (admins: Vault six; owner: all). Run it before the HTML.
+- **Gate:** `gate_1381.mjs` GREEN 10/10; control 1380 RED 8, no crash. check_build GREEN. Dupes shows the inherited 11, identical on the control. `gate_types` not run here (no tsc on this machine); a11y not run (UI reuses the Vault's classes).
+- **Renumbered from 1370**, which never merged (PR could not be opened from the session) while main moved to 1380. `owner_files.sql` was applied 19 Oct before this HTML.
