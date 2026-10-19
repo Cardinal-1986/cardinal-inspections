@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-19 build 1377<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-19 build 1378<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -11449,7 +11449,7 @@ var moneyDb = {
   collections: async function(){
     if(!TEAM) return [];
     /* 1314: collected_at too \u2014 Paid this month (cr-ar-script) reads it, and without it the KPI was always $0 */
-    var r = await sb.from('collections').select('project_id,amount,collected_at,created_at');
+    var r = await sb.from('collections').select('project_id,amount,collected_at,created_at,source');   /* 1378: who paid (insurance / partner / the homeowner) */
     if(r.error) throw r.error;
     return r.data || [];
   }
@@ -17769,6 +17769,36 @@ function renderWorksheet(pr, fin){
   }).join('') + wsFoot;
 }
 var __invBusy = false;   /* 1315: one Create invoice at a time */
+/* 1378 (W7 option 1): what the HOMEOWNER owes on an insurance job — "Your total out of pocket" from the INSURANCE &
+   YOUR PART box (1324) on the newest signed contract, less what the homeowner has paid (carrier and partner money is
+   not theirs). null when no signed contract carries the figure. Same rule as homeOwedOn() in api/pay.js. */
+function crOopFromHtml(html){
+  var m = /data-ip="oop"[^>]*>\s*([^<]*)</.exec(String(html || ''));
+  if(!m) return null;
+  var t = m[1].trim();
+  if(!t || t.charAt(0) === '[') return null;
+  var v = Number(t.replace(/[^0-9.\-]/g, ''));
+  return isFinite(v) && v > 0 ? v : null;
+}
+async function crInsPart(pr){
+  if(!pr || !sb) return null;
+  var r = await sb.from('inspection_reports').select('title,html,signed_at').eq('project_id', pr.id);
+  if(r.error) throw r.error;
+  var part = null, at = '';
+  (r.data || []).forEach(function(d){
+    if(!/^contract/i.test(String(d.title || '').trim()) || !d.signed_at) return;
+    var v = crOopFromHtml(d.html);
+    if(v !== null && String(d.signed_at) > at){ part = v; at = String(d.signed_at); }
+  });
+  if(part === null) return null;
+  var paid = 0;
+  (cacheCollections || []).forEach(function(c){
+    if(c.project_id !== pr.id) return;
+    var src = String(c.source || '').toLowerCase();
+    if(src !== 'insurance' && src !== 'partner') paid += Number(c.amount) || 0;
+  });
+  return { value: part, paid: paid, balance: Math.round((part - paid) * 100) / 100 };
+}
 async function createInvoiceFor(pr){
   if(__invBusy) return;
   __invBusy = true;
@@ -17776,6 +17806,14 @@ async function createInvoiceFor(pr){
 }
 async function createInvoiceFor1315(pr){
   var fin = jobFinance(pr);
+  /* 1378: an insurance invoice bills the homeowner's part, not the job */
+  var _insJob = false, _part = null;
+  try{ _insJob = projClaimType(pr) === 'insurance'; }catch(_){}
+  if(_insJob){
+    try{ _part = await crInsPart(pr); }catch(_ip){ _part = null; }
+    if(_part && !(_part.balance > 0.005)){ crTell('The homeowner\u2019s part (' + fmtMoney(_part.value, true) + ') is paid \u2014 there is nothing to invoice them.'); return; }
+    if(_part) fin = { value: _part.value, paid: _part.paid, balance: _part.balance, source: fin.source, estAccepted: fin.estAccepted };
+  }
   if(!crBillable(fin)){ crTell('Create an invoice after a contract is signed or the estimate is accepted \u2014 the totals come from that document.'); return; }   /* 1335 */
   /* 1315: a paid job has nothing to bill, and a second invoice should be on purpose */
   if(!(fin.balance > 0.005)){ crTell('This job is paid in full \u2014 there is nothing to invoice.'); return; }
@@ -17794,6 +17832,10 @@ async function createInvoiceFor1315(pr){
   /* 745: exact cents on the invoice. These rounded, so an invoice for $1,702.50
      printed $1,703 — and [INV_PAID] printed "--" when nothing had been paid yet,
      where a client reading it needs $0.00. */
+  if(_part){   /* 1378: say what the figures are */
+    tpl = tpl.replace('border-bottom:1px solid #ddd;">Total</td>', 'border-bottom:1px solid #ddd;">Your part (deductible + upgrades)</td>');
+    tpl = tpl.replace('border-bottom:1px solid #ddd;">Paid</td>', 'border-bottom:1px solid #ddd;">You have paid</td>');
+  }
   tpl = tpl.replace('[INV_TOTAL]', fmtMoney(fin.value, true));
   tpl = tpl.replace('[INV_PAID]', fmtMoney(fin.paid, true));
   tpl = tpl.replace('[INV_DUE]', fmtMoney(fin.balance, true));
@@ -17804,16 +17846,17 @@ async function createInvoiceFor1315(pr){
     try{
       var _itok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
                 : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
-      await db.update(id, { share_token: _itok, total: fin.value });
+      await db.update(id, { share_token: _itok, total: _part ? (Number(jobFinance(pr).value) || 0) : fin.value });   /* 1378: the job's total, as every invoice */
     }catch(_it){
       /* 1315: say so — every Send button makes the link again, but the reminder texts skip an invoice without one */
       try{ crTell('Invoice saved, but its pay link could not be set up yet \u2014 it will be made when you send it.'); }catch(_){}
     }
     /* 1357: start the invoice with the job's own lines (never blocks the invoice) */
-    try{ if(window.CardinalInvLines) await window.CardinalInvLines.seed(pr, id); }catch(_sl){}
+    try{ if(window.CardinalInvLines && !_part) await window.CardinalInvLines.seed(pr, id); }catch(_sl){}   /* 1378: not on a homeowner's-part invoice */
     await reload();
     await openEditor(id);
-    crTell('Invoice ' + num + ' is ready. Send it from the job\u2019s invoice card or the editor \u2014 the job moves to Invoiced when it goes out.', 'ok');   /* 1318; 1367: a success, so the green kind */
+    if(_insJob && !_part) crTell('Invoice ' + num + ' is ready. This insurance job\u2019s signed contract has no INSURANCE & YOUR PART figure, so its invoice goes out by hand: open it, Download it, then Mark sent.', 'ok');   /* 1378 */
+    else crTell('Invoice ' + num + ' is ready' + (_part ? ' for the homeowner\u2019s part, ' + fmtMoney(_part.balance, true) : '') + '. Send it from the job\u2019s invoice card or the editor \u2014 the job moves to Invoiced when it goes out.', 'ok');   /* 1318; 1367: a success, so the green kind */
   }catch(err){ showError('Could not create invoice: ' + (err.message || err)); }
 }
 document.getElementById('wsMount').addEventListener('click', function(e){
@@ -27986,7 +28029,10 @@ async function insPartOkToSend(){
   if(/^invoice/i.test(t)){
     var _ip = currentDocProject(), _ict = '';
     try{ _ict = _ip ? projClaimType(_ip) : ''; }catch(_){}
-    if(_ict === 'insurance'){ crTell('An insurance invoice goes out by hand for now: most of its balance is the carrier\u2019s money. Open it, Download it, then Mark sent.'); return false; }
+    if(_ict === 'insurance'){   /* 1378: it may go once its contract carries the homeowner's part */
+      var _pp = null; try{ _pp = await crInsPart(_ip); }catch(_e){ _pp = null; }
+      if(!_pp){ crTell('This insurance job\u2019s signed contract has no INSURANCE & YOUR PART figure, so its invoice goes out by hand: open it, Download it, then Mark sent.'); return false; }
+    }
     return true;
   }
   if(!isContractTitle(t)) return true;
@@ -45067,6 +45113,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1378, d:'2026-10-19', t:'Insurance invoices ask for the homeowner’s part', s:'An invoice on an insurance job now asks the homeowner only for their part: the deductible plus any upgrades, from the INSURANCE & YOUR PART box on the signed contract, less what they have already paid. Insurance-company checks are not counted against it. The invoice reads Your part, You have paid and Balance due, and the pay link, the text and the receipt all use the same figure. A contract signed before that box existed has no figure, so its invoice still goes out by hand, and the app says so.' },
   { b: 1377, d:'2026-10-19', t:'Insurance invoices go out by hand for now', s:'An invoice asks for the whole job, and on an insurance job most of that is the insurance company’s money. Until the invoice can ask only for the homeowner’s part, an insurance invoice no longer carries a pay link: the app will not text, email or share one, and the link page shows no Pay button. Open the invoice, Download it, then Mark sent. Also, texting a Community invoice from the editor no longer fills in the homeowner’s number.' },
   { b: 1376, d:'2026-10-19', t:'Community invoices go to the partner', s:'On a Community job the invoice is for the funding partner, never the person living in the house. Company text is gone from a Community invoice, because it texted the homeowner’s phone. My phone and Email open with Hello instead of the homeowner’s first name, and the invoice no longer prints the homeowner’s phone and email under the partner’s name. Retail invoices are unchanged.' },
   { b: 1375, d:'2026-10-19', t:'A shorter client page on the phone', s:'On a phone, Location, Assigned To and Google Reviews on a client’s page are now one line each, showing the street and the rep’s name. Tap a line to open it and tap again to close it. Job Details stays open. The address is still at the top of the page, one tap from directions.' },
@@ -84610,7 +84657,6 @@ select{min-height:44px;}
    with and without the change and comparing the images (same md5).
    ========================================================================== */
 #cr-namebar{ display:none; }
-.crji-sendrow .crji-insnote{ display:block; font:600 13px 'Segoe UI',Arial,sans-serif; line-height:1.4; color:var(--rbe-mute,#b8bec6); padding:6px 2px; }   /* 1377 */
 #cr-namebar .nb-pop[hidden]{ display:none; }
 #projectView .cr-fold{ display:none; }   /* 1375: the phone folds; see the max-width:560px block */
 
@@ -92385,8 +92431,13 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function linkFor(pid, send){
     var inv = invoiceFor(pid);
     if(!inv) return Promise.reject(new Error('This job has no invoice yet — create one first.'));
-    if(invIsIns(prById(pid))) return Promise.reject(new Error('An insurance invoice goes out by hand for now: most of its balance is the carrier\u2019s money. Open it, Download it, then Mark sent.'));
-    return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); });
+    var go = function(){ return ensureTokenForRow(inv).then(function(tok){ if(send) markInvoiceSent(pid, inv); return payUrl(tok); }); };
+    /* 1378: an insurance invoice's link bills the homeowner's part; with no part on the signed contract it goes by hand */
+    if(invIsIns(prById(pid))) return Promise.resolve(window.crInsPart ? window.crInsPart(prById(pid)) : null).then(function(p){
+      if(!p) throw new Error('This insurance job\u2019s signed contract has no INSURANCE & YOUR PART figure, so its invoice goes out by hand: open it, Download it, then Mark sent.');
+      return go();
+    });
+    return go();
   }
   /* 1315: sending is sending, whichever button did it. Before, only the editor's Email to
      client and Mark sent wrote status:'sent' and moved the stage, so an invoice texted from
@@ -92538,9 +92589,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       more = B('', 'data-inv-gen', IC_DOC + 'Create invoice');
     }
     if(inv) more += B('', 'data-inv-lines', IC_DOC + 'Line items');   /* 1357 */
-    var sendRow = !inv ? '' : invIsIns(pr)
-      ? '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden><span class="crji-insnote">' + 'An insurance invoice goes out by hand for now: most of its balance is the carrier\u2019s money. Open it, Download it, then Mark sent.' + '</span></div>'   /* 1377 */
-      : '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden>'
+    var sendRow = !inv ? '' : '<div class="crji-sendrow" data-sendrow="' + pid + '" hidden>'   /* 1378: insurance sends again; linkFor checks the part */
         + (invIsComm(pr) ? '' : B('', 'data-inv-sms', 'Company text'))   /* 1376: it texts the occupant's phone */
         + B('', 'data-inv-text', 'My phone') + B('', 'data-inv-email', IC_MAIL + 'Email')
         + '</div>';

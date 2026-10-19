@@ -16,7 +16,7 @@
 // Needs SUPABASE_SERVICE_ROLE_KEY. TWILIO_* for the text and RESEND_API_KEY for the email are each
 // optional — a missing one skips that channel and says so.
 import { isStaff } from './_staff.js';
-import { owedOn } from './pay.js';
+import { owedOn, homeOwedOn } from './pay.js';
 
 const SUPA_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -101,7 +101,9 @@ export async function sendReceipt(opts){
       // the job's newest invoice (its stored total is owedOn's fallback for a job with no signed contract)
       const inv = (await svcGet(srk, 'inspection_reports?select=id,title,total,project_id&project_id=eq.' + c.project_id
         + '&title=ilike.invoice*&order=created_at.desc&limit=1'))[0];
-      const o = await owedOn(sbH, inv || { title:'Invoice', project_id:c.project_id, total:0 });
+      // 1378: on an insurance job the homeowner's balance is their part (null when the contract has none: no balance line)
+      const o = ct === 'insurance' ? (inv ? await homeOwedOn(sbH, inv) : null)
+              : await owedOn(sbH, inv || { title:'Invoice', project_id:c.project_id, total:0 });
       if(o && o.totalCents > 0) money = { total:o.totalCents / 100, paid:o.paidCents / 100, balance:o.cents / 100 };
     }catch(_m){ money = null; }   // a failed read leaves the balance OFF the receipt, never wrong on it
     const first = String(pr.name || '').trim().split(/\s+/)[0] || 'there';

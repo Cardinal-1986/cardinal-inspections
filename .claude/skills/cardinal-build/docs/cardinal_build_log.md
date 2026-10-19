@@ -36820,3 +36820,11 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - 1376 gap closed: the editor's Text pay link on a Community invoice pre-filled the occupant's number.
 - Rides PR #706 with 1376 (the stop hook required the commit before #706 merged).
 - **Gate:** `gate_1377.mjs` GREEN 12/12 (browser + share/pay/sms-link executed against a fake PostgREST); control 1376 RED 7.
+
+## Build 1378 — an insurance invoice bills only the homeowner's part (audit W7 option 1; Theo: "2 then 1", then "1 they 2")
+- Fixture that the gate runs end to end: a $9,000 insurance job, contract box $1,500 out of pocket; the carrier paid $8,000, a partner $100, the homeowner $500 cash + $200 financing → the homeowner owes **$800**. Share page bar, checkout and printed invoice all say $800; the retail job beside it still charges the job balance.
+- `homeOwedOn()` sits outside the byte-identical `owedOn` block, so 1199's sync guarantee is untouched; gate_1378 asserts the new pair is byte-identical in pay.js and share.js too. `export { owedOn, homeOwedOn }` — receipt.js uses it for insurance jobs (no box → no balance line, never a wrong one).
+- First run caught a real conflict: 1357's line seeder rewrites the invoice's stored total to the job's value and prints the job's priced lines. Kept the job total (A/R reads it as the job's), and a homeowner's-part invoice is not seeded — $9,000 of line items beside "Your part $1,500" would read as the bill.
+- gate_1377's card assertion updated: 1378 moved the insurance decision from the card to the link maker by Theo's choice; its B–F (no box → nothing goes out) still hold and still pass.
+- The checks session: no branch or PR of it moved since 15 Oct; this build reads `collections.source` and writes nothing to collections.
+- **Gate:** `gate_1378.mjs` GREEN 16/16; control 1377 RED 11.
