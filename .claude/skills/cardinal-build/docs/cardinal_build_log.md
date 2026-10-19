@@ -36829,3 +36829,9 @@ script errors; 0 sideways-scrolling screens; Back left every screen. Five confir
 - The checks session: no branch or PR of it moved since 15 Oct; this build reads `collections.source` and writes nothing to collections.
 - **Gate:** `gate_1378.mjs` GREEN 16/16; control 1377 RED 11.
 - The sweep caught two of my own slips before any PR: two TS errors (a closure-assigned `part` needed a cast; the insurance `fin` dropped `contracts`/`pct` — now `Object.assign({}, fin, …)`) and a reused local name `go` (gate_dupes) — renamed `invMintLink`. Both gates back to the control's counts.
+
+## Build 1379 — the Claims hub's "owed" counts the carrier's checks already in (audit R8b; Theo "1 they 2")
+- 1338 left R8b open because the hub had no way to see payments by source. 1378 put `source` in the payment cache, so the hub now subtracts the carrier's recorded checks: ACV first, then depreciation, then the approved supplement. A homeowner payment never reduces what the carrier owes.
+- R2 needed nothing: 1369 already made Money Collected count collections. Marked fixed in the audit after reading the code, not assumed.
+- The gate first read $0 on BOTH trees — the hub loads its claims only while its screen is open; the gate now opens it. A fixture fault, caught by the control matching the new build.
+- **Gate:** `gate_1379.mjs` GREEN 4/4 ($7,000 / $3,500 / $10,500); control 1378 RED 3 (reads $12,000 / $4,000 / $16,000).

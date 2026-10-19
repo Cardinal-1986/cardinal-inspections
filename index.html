@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-19 build 1378<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-19 build 1379<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -45114,6 +45114,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1379, d:'2026-10-19', t:'Owed by the insurance company counts their checks', s:'On the Claims hub, what the insurance company still owes on an invoiced job now takes off the checks they have already sent. Their money pays the first (ACV) check, then the depreciation, then any approved supplement, and the Depreciation and Supplement figures show what is left. A job with no insurance checks recorded reads the same as before.' },
   { b: 1378, d:'2026-10-19', t:'Insurance invoices ask for the homeowner’s part', s:'An invoice on an insurance job now asks the homeowner only for their part: the deductible plus any upgrades, from the INSURANCE & YOUR PART box on the signed contract, less what they have already paid. Insurance-company checks are not counted against it. The invoice reads Your part, You have paid and Balance due, and the pay link, the text and the receipt all use the same figure. A contract signed before that box existed has no figure, so its invoice still goes out by hand, and the app says so.' },
   { b: 1377, d:'2026-10-19', t:'Insurance invoices go out by hand for now', s:'An invoice asks for the whole job, and on an insurance job most of that is the insurance company’s money. Until the invoice can ask only for the homeowner’s part, an insurance invoice no longer carries a pay link: the app will not text, email or share one, and the link page shows no Pay button. Open the invoice, Download it, then Mark sent. Also, texting a Community invoice from the editor no longer fills in the homeowner’s number.' },
   { b: 1376, d:'2026-10-19', t:'Community invoices go to the partner', s:'On a Community job the invoice is for the funding partner, never the person living in the house. Company text is gone from a Community invoice, because it texted the homeowner’s phone. My phone and Email open with Hello instead of the homeowner’s first name, and the invoice no longer prints the homeowner’s phone and email under the partner’s name. Retail invoices are unchanged.' },
@@ -62138,7 +62139,26 @@ return 'supplement';
 }
 return st;
 }
+/* 1379 (audit R8b): what the carrier still owes on a job. Its recorded checks (collections.source 'insurance',
+   in the app's payment cache since 1378) pay the ACV first, then the depreciation, then the approved supplement. */
+var carrierPaidBy = null;
+function carrierLeft(pr, c){
+if(!carrierPaidBy){
+carrierPaidBy = {};
+(window.cacheCollections || []).forEach(function(k){
+if(String(k.source || '').toLowerCase() !== 'insurance' || !k.project_id) return;
+carrierPaidBy[k.project_id] = (carrierPaidBy[k.project_id] || 0) + (Number(k.amount) || 0);
+});
+}
+var paid = carrierPaidBy[pr.id] || 0;
+var acv = Number(c.approved_acv) || 0, dep = Number(c.approved_depreciation) || 0, sup = Number(c.supplement_approved) || 0;
+var past = Math.max(0, paid - acv);
+var depLeft = Math.max(0, dep - past);
+var supLeft = Math.max(0, sup - Math.max(0, past - dep));
+return { dep: depLeft, sup: supLeft };
+}
 function compute(){
+carrierPaidBy = null;   /* 1379: the payment cache may have changed since the last paint */
 var projects = insuranceProjects();
 var byKey = {};
 RAIL.forEach(function(r){ byKey[r.key] = { n:0, amt:0 }; });
@@ -62152,13 +62172,14 @@ var bucket = byKey[key];
 var c = claimsByProject[pr.id] || {};
 var amt = 0;
 if(key === 'supplement')      amt = Number(c.supplement_filed) || 0;
-else if(st === 'Invoiced')    amt = (Number(c.approved_depreciation) || 0) +
-(Number(c.supplement_approved) || 0);
+else if(st === 'Invoiced'){   /* 1379: what is left, not what was approved */
+var _lf = carrierLeft(pr, c); amt = _lf.dep + _lf.sup; }
 else                           amt = Number(c.approved_rcv) || 0;
 if(bucket){ bucket.n++; bucket.amt += amt; }
 if(st === 'Invoiced'){
-owedDep  += Number(c.approved_depreciation) || 0;
-owedSupp += Number(c.supplement_approved) || 0;
+var _lf2 = carrierLeft(pr, c);   /* 1379 (R8b) */
+owedDep  += _lf2.dep;
+owedSupp += _lf2.sup;
 }
 if(c.supplement_status === 'filed'){
 owedSupp += Number(c.supplement_filed) || 0;
