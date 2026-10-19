@@ -183,6 +183,8 @@ need('list: sort control', await probe('.ljsortchip'), 0, 1);
 /* ── PROFILE ── */
 await page.evaluate(() => openProject('p1'));
 await page.waitForTimeout(1100);
+/* 1375: Location, Assigned To and Reviews fold on a phone; open them, as a user would, so the controls inside are measured */
+await page.evaluate(() => { document.querySelectorAll('#acxMount .cr-fold[aria-expanded="false"]').forEach(function(b){ b.click(); }); });
 /* Builds 788–791 rebuilt the retail client profile phone-first: the cover
    photo was retired (788, #projCoverBtn), and the card became the #cr-namebar
    band (791) — Switch Primary and Add contact are gone, email/text/call are

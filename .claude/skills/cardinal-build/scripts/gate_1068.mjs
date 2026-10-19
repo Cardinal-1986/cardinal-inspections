@@ -92,7 +92,8 @@ async function run(theme, width) {
   const names = await page.evaluate(`(window.__sentinelStates||[]).map(s=>s.name)`);
   names.push('(1299) a Completed client, Admin row open');
   const REVEAL = `(function(){ var t=document.querySelector('#acxMount > .cr-admin-tog'); var pv=document.getElementById('projectView');
-    if(t && pv && !pv.classList.contains('cr-admin-open') && t.getBoundingClientRect().width > 1) t.click(); })()`;
+    if(t && pv && !pv.classList.contains('cr-admin-open') && t.getBoundingClientRect().width > 1) t.click();
+    document.querySelectorAll('#acxMount .cr-fold[aria-expanded="false"]').forEach(function(b){ b.click(); }); /* 1375: the phone folds */ })()`;
   const COMPLETED = `(function(){ try{ hideAllViews(); }catch(e){}
     var pr=(window.cacheProjects||[])[0]; if(!pr) return; pr.stage='Completed'; try{ openProject(pr.id); }catch(e){} })()`;
   const got = {};
