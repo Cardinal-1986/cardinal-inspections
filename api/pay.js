@@ -42,6 +42,21 @@ const cardFeeCents = (cents) => Math.round(cents * CARD_FEE_PCT / 100);
    did not confirm. A failed read is never an empty ledger.
    KEEP IN SYNC: this class, readRows and owedOn are byte-identical in
    api/pay.js and api/share.js, and gate_1199 asserts it. */
+/* 1377 (W7): is this job an insurance job? An insurance invoice bills the whole job, most of it the carrier's money,
+   so it carries no pay link until it bills only the homeowner's part. A failed read answers true: the safe side is
+   no pay button, never one that may ask the homeowner for the carrier's money. */
+async function isInsuranceJob(sbHeaders, projectId) {
+  if (!projectId) return false;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/projects?id=eq.${projectId}&select=checklist&limit=1`, { headers: sbHeaders });
+    if (!r.ok) return true;
+    const row = (await r.json())[0];
+    if (!row) return false;
+    let ck = {}; try { ck = typeof row.checklist === 'string' ? JSON.parse(row.checklist || '{}') : (row.checklist || {}); } catch (_) {}
+    const L = ck.lead || {};
+    return String(L.claim_type || '').toLowerCase() === 'insurance' || (!L.claim_type && !!L.insurance);
+  } catch (_) { return true; }
+}
 class LookupFailed extends Error {
   constructor(what) { super('lookup failed: ' + what); this.code = 'LOOKUP_FAILED'; }
 }
@@ -133,6 +148,11 @@ export default async function handler(req, res) {
     if (!r.ok) throw new Error('lookup failed');
     const rep = (await r.json())[0];
     if (!rep) { res.status(404).send('This link is no longer available.'); return; }
+    // 1377 (W7): an insurance invoice is not paid online for now — its balance is mostly the carrier's money
+    if (/^invoice/i.test(String(rep.title || '').trim()) && await isInsuranceJob(sbHeaders, rep.project_id)) {
+      res.status(400).send('This invoice is not paid online. Please call Cardinal Roofing & Renovations about your part of the insurance job.');
+      return;
+    }
 
     let owed;
     try { owed = await owedOn(sbHeaders, rep); }
