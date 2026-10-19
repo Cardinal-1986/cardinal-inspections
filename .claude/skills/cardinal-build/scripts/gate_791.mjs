@@ -76,7 +76,9 @@ async function boot(html, width, kind) {
   });
   return { browser, page };
 }
-const open = (page, id) => page.evaluate(i => { if (typeof openProject === 'function') openProject(i); }, id)
+/* 1375: the phone folds Location, Assigned To and Reviews; the card is measured OPEN, as a user sees it after one tap */
+const open = (page, id) => page.evaluate(i => { if (typeof openProject === 'function') openProject(i);
+  document.querySelectorAll('#acxMount .cr-fold[aria-expanded="false"]').forEach(function(b){ b.click(); }); }, id)
   .then(() => page.waitForTimeout(1700));
 const shot = async (page, w) => {
   const cdp = await page.context().newCDPSession(page);

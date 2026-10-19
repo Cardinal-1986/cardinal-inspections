@@ -10094,3 +10094,6 @@ Stage banner ⋮ → **New job for this client** (`pfNewJobFor`) opens the Add p
 
 ## Build 1374: the address in the client band
 Phone (≤560px, retail): `#cr-namebar` draws `a.nb-addr[data-cr-nbaddr]` across the band under the name when the job has an address: pin + one-line address (ellipsis), 44px tall, `href = mapsUrl(address)` (Apple Maps on iOS, Google elsewhere — the Location card's own link), new tab. Email / Text / Call unchanged. Desktop unchanged (the band is `display:none` above 560px). **Gate:** `gate_1374.mjs`.
+
+## Build 1375: three client-page sections fold on a phone (Theo: "1 3 4")
+Phone (≤560px, retail): **Location**, **Assigned To** and **Google Reviews** fold to their heading. Each heading carries `[data-cr-fold]` and a `button.cr-fold[data-cr-fold-key=loc|asg|rv]` with a summary (`.cr-fold-s`: the street / the rep's name) and a chevron. The button's `::before` covers the whole row, so a tap anywhere opens it. Open state is a class on `#projectView` (`cr-open-loc|asg|rv`) and resets per job, the Admin row's (1225) pattern. Sections are hidden in place, never moved. The Location pencil (`.rt2`) sits above the tap area when open and hides when folded. **Job Details stays open.** Written by `tagFolds()` in the namebar module's `tagOrder()`. Desktop and Insurance/Community unchanged. **Gate:** `gate_1375.mjs`.
