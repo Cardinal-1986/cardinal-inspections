@@ -10091,3 +10091,6 @@ Stage banner ⋮ → **New job for this client** (`pfNewJobFor`) opens the Add p
 5. Home pipeline `.pmoney` and A/R `.arbig` print `$0`, not fmtMoney(0)'s "--".
 
 **Gate:** `gate_1373.mjs`. Preview Theo picked from: the "Phone Declutter Preview" artifact.
+
+## Build 1374: the address in the client band
+Phone (≤560px, retail): `#cr-namebar` draws `a.nb-addr[data-cr-nbaddr]` across the band under the name when the job has an address: pin + one-line address (ellipsis), 44px tall, `href = mapsUrl(address)` (Apple Maps on iOS, Google elsewhere — the Location card's own link), new tab. Email / Text / Call unchanged. Desktop unchanged (the band is `display:none` above 560px). **Gate:** `gate_1374.mjs`.
