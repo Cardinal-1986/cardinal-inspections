@@ -10118,3 +10118,6 @@ Owner Console → **My Files** (`cr-owner-script`, `filesHTML`, area `files`, `o
 
 ## Build 1382: Appointment reminders by text
 Booking an appointment (`adb.create`) or moving its day/time (`adb.update`) calls `__apptNotifyBooked()`: "Appointment booked/moved — <title>, <day> at <time>" to the booker, `projects.sales_rep` and `checklist.lead.assigned` via `notifyTeam` (push + email + text); a build day's Production buzz stays `__apptNotifyProduction()`'s. `api/appt-remind.js` (cron `0 * * * *`, CRON_SECRET, Twilio Messaging Service): the 8:00am Dayton run texts each person their day's list (one per morning, `audit_events` type `appt_day_text`); every run texts appointments 10–70 min out with a directions link, claimed first via `appointments.reminded_for` = `'date time'`. Staff only, Team Directory numbers only, quiet 9pm–6am. `?dry=1` (and `?now=ISO` with it) previews without sending. **SQL first** (`appointment_reminders.sql`, applied). **Gate:** `gate_1382.mjs`.
+
+## Build 1383: What's New opens only from the menu
+`cr-cl-script` `autoShow()` no longer calls `show()` after a build; it records the new build as seen. What's New opens only via `CardinalChangelog.show` (menu item `data-go="whatsnew"`). **Gate:** `gate_1383.mjs`.

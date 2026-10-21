@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-21 build 1382<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-21 build 1383<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -45163,6 +45163,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1383, d:'2026-10-21', t:'No more update pop-up', s:'The What\u2019s New box no longer pops up by itself after the app updates. To see what changed, open the menu and tap What\u2019s New.' },
   { b: 1382, d:'2026-10-21', t:'Appointment reminders by text', s:'Setting an appointment now tells the people who have to be there. When you book one, or move it to a new day or time, you and the job\u2019s rep get a text (plus the usual notification and email) saying what it is, when, and where. On the day, everyone with an appointment gets a text at 8am listing their day, and another about an hour before each appointment starts, with a link for directions. Build days still go to Production as before. Texts only go to the team, never to the client, and none are sent between 9pm and 6am. To get them, your mobile number needs to be in the Team Directory.' },
   { b: 1381, d:'2026-10-19', t:'My Files in the Owner Console', s:'The Owner Console has a new My Files card for the reports, reviews and plans made for you, sorted into Sales & numbers, Team reviews, Coaching & training, Billing & collections and Partner jobs. Only your login can see it: Joan and the rest of the team do not see the card, and the database and file storage both refuse anyone else. Tap a file to open it, or remove it. The Vault is unchanged and still shows only its own company documents.' },
   { b: 1380, d:'2026-10-19', t:'Email, Text and Call are back at the top of every client', s:'On a phone, the band at the top of a client’s page showed Email, Text and Call only when the number and email were saved in one particular place. Some clients have them saved with the lead instead, so the buttons were missing. The band now finds the number and email wherever the job keeps them. And the buttons are always there now. If a client has no number or email saved, tapping the button opens Edit client info so you can add it.' },
@@ -46673,11 +46674,9 @@ if(!window.currentUser) return;   /* 684: any signed-in user, as before 600 */
 var cur = currentBuild();
 var lastSeen = getLastSeen();
 if(!cur) return;
-if(lastSeen === 0){
-setLastSeen(cur);
-return;
-}
-if(cur > lastSeen) show();
+/* 1383 (Theo: "cancel the banner updates for builds"): no pop-up after a build. The build is recorded
+   as seen and What's New opens only from the menu. */
+if(cur > lastSeen) setLastSeen(cur);
 })();
 }, 3000);
 }
