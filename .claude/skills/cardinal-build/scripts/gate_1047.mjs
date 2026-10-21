@@ -70,8 +70,13 @@ async function sweep(html) {
     var afterJob = window.__SENT__.length;
     await window.adb.create({ title:'Adjuster visit', appt_date:'2026-09-02',
       appt_time:null, project_id:'p1', notes:null, kind:'appt' });
-    return { afterJob: afterJob, afterAppt: window.__SENT__.length,
-             first: window.__SENT__[0] || null };
+    /* 1382: booking now also tells the booker and the job's rep ("Appointment booked"), so W1 judges
+       the PRODUCTION buzz by its own subject rather than by a raw count of every alert. */
+    var all = window.__SENT__.slice();
+    var bd = all.filter(function(x){ return /^Build day set/.test(x.subject || ''); });
+    return { afterJob: all.slice(0, afterJob).filter(function(x){ return /^Build day set/.test(x.subject || ''); }).length,
+             afterAppt: bd.length, first: bd[0] || null,
+             apptToProd: all.slice(afterJob).some(function(x){ return (x.to || []).some(function(e){ return /curtis|scottie/.test(String(e)); }); }) };
   })()`);
   /* W2 — the board's Mark ordered on the injected rep-carrying job */
   out.w2 = await page.evaluate(`(async function(){
@@ -120,6 +125,7 @@ function judge(r) {
     if (JSON.stringify(to) !== JSON.stringify(PROD)) fails.push(`W1 recipients ${to.join(',')}`);
   }
   if (r.w1.afterAppt !== r.w1.afterJob) fails.push('W1: a NON-job appointment also notified — over-wired');
+  if (r.w1.apptToProd) fails.push('W1: a NON-job appointment reached Production — over-wired');
   if (r.w2.fault) fails.push('W2 rig fault: ' + r.w2.fault + ' (proves nothing)');
   else if (!r.w2.sent.length) fails.push('W2: Mark ordered sent nothing to the rep');
   else {
