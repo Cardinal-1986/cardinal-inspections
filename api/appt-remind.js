@@ -1,13 +1,13 @@
 // api/appt-remind.js — appointment reminder TEXTS to the team (build 1382).
 // Theo, 21 Oct 2026: "I need all the help remembering I can get." Vercel Cron runs this
-// every hour at :50 (vercel.json). Two jobs, both SMS through the company Twilio number —
+// every hour on the hour (vercel.json). Two jobs, both SMS through the company Twilio number —
 // the same Messaging Service as api/notify.js / api/remind.js:
 //
-//   1. THE MORNING TEXT — on the run that lands at 6:50am in Dayton, everyone with an
-//      appointment today gets one text listing their day, next to the 7am digest email.
+//   1. THE MORNING TEXT — on the 8:00am run in Dayton (Theo's pick, 21 Oct), everyone with an
+//      appointment today gets one text listing their day.
 //      One per morning: an audit_events row (type appt_day_text) marks the day as done.
 //   2. THE HOUR-AHEAD TEXT — every run texts the appointments that start 10–70 minutes
-//      from now, so a 2:00 appointment is reminded at 12:50. Each appointment is CLAIMED
+//      from now, so a 2:00 appointment is reminded at 1:00. Each appointment is CLAIMED
 //      before it is texted (appointments.reminded_for set to its own 'date time', only
 //      where it still differs), so overlapping runs never double-text, and moving an
 //      appointment to a new time earns the new time its own reminder.
@@ -30,7 +30,7 @@ const APP_ORIGIN = 'https://app.cardinalroster.com';
 const TZ = 'America/New_York';
 // MIRROR of PRODUCTION_EMAILS in index.html — a build day also reminds Production.
 const PRODUCTION = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
-const MORNING_HOUR = 6;       // the 6:50am run sends the day's list
+const MORNING_HOUR = 8;       // the 8:00am run sends the day's list (Theo: "send the text at 8am")
 const QUIET_FROM = 21, QUIET_TO = 6;
 const AHEAD_MIN = 10, AHEAD_MAX = 70;   // minutes ahead the hour-ahead window covers
 const MAX_LIST = 6;           // a morning text names at most this many, then "+N more"

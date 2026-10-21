@@ -11675,7 +11675,7 @@ function __apptNotifyProduction(f){
    so the booker is told too, deliberately; the text in their phone is the record. A build day's
    Production buzz stays __apptNotifyProduction's, so Curtis and Scottie are not told twice.
    Fire-and-forget like 1047: an alert can never fail a save. api/appt-remind.js does the rest
-   (the 6:50am day list and the hour-ahead text). */
+   (the 8am day list and the hour-ahead text). */
 function __apptTime12(t){
   var m = /^(\d{1,2}):(\d{2})/.exec(String(t || ''));
   if(!m) return '';
@@ -45163,7 +45163,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b: 1382, d:'2026-10-21', t:'Appointment reminders by text', s:'Setting an appointment now tells the people who have to be there. When you book one, or move it to a new day or time, you and the job\u2019s rep get a text (plus the usual notification and email) saying what it is, when, and where. On the day, everyone with an appointment gets a text at 6:50am listing their day, and another about an hour before each appointment starts, with a link for directions. Build days still go to Production as before. Texts only go to the team, never to the client, and none are sent between 9pm and 6am. To get them, your mobile number needs to be in the Team Directory.' },
+  { b: 1382, d:'2026-10-21', t:'Appointment reminders by text', s:'Setting an appointment now tells the people who have to be there. When you book one, or move it to a new day or time, you and the job\u2019s rep get a text (plus the usual notification and email) saying what it is, when, and where. On the day, everyone with an appointment gets a text at 8am listing their day, and another about an hour before each appointment starts, with a link for directions. Build days still go to Production as before. Texts only go to the team, never to the client, and none are sent between 9pm and 6am. To get them, your mobile number needs to be in the Team Directory.' },
   { b: 1381, d:'2026-10-19', t:'My Files in the Owner Console', s:'The Owner Console has a new My Files card for the reports, reviews and plans made for you, sorted into Sales & numbers, Team reviews, Coaching & training, Billing & collections and Partner jobs. Only your login can see it: Joan and the rest of the team do not see the card, and the database and file storage both refuse anyone else. Tap a file to open it, or remove it. The Vault is unchanged and still shows only its own company documents.' },
   { b: 1380, d:'2026-10-19', t:'Email, Text and Call are back at the top of every client', s:'On a phone, the band at the top of a client’s page showed Email, Text and Call only when the number and email were saved in one particular place. Some clients have them saved with the lead instead, so the buttons were missing. The band now finds the number and email wherever the job keeps them. And the buttons are always there now. If a client has no number or email saved, tapping the button opens Edit client info so you can add it.' },
   { b: 1379, d:'2026-10-19', t:'Owed by the insurance company counts their checks', s:'On the Claims hub, what the insurance company still owes on an invoiced job now takes off the checks they have already sent. Their money pays the first (ACV) check, then the depreciation, then any approved supplement, and the Depreciation and Supplement figures show what is left. A job with no insurance checks recorded reads the same as before.' },

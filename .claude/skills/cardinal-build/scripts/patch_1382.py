@@ -3,7 +3,7 @@ Before this, booking an appointment told nobody unless it was a build day, and t
 Three reminders now, all to the team, never to a client:
   1. BOOKED / MOVED — the moment an appointment is booked, or its day or time changes, whoever booked
      it and the job's rep get a push, an email and a text (notifyTeam, the one route every alert uses).
-  2. MORNING — api/appt-remind.js texts each person their day at 6:50am (new; vercel.json cron).
+  2. MORNING — api/appt-remind.js texts each person their day at 8am (new; vercel.json cron).
   3. HOUR AHEAD — the same route texts each appointment 10–70 minutes before it starts.
 This file is the app half (1); the route and the cron are files of their own.
 Nothing about saving an appointment changes: the alert is fire-and-forget and can never fail a save."""
@@ -23,7 +23,7 @@ one("""var adb = {
    so the booker is told too, deliberately; the text in their phone is the record. A build day's
    Production buzz stays __apptNotifyProduction's, so Curtis and Scottie are not told twice.
    Fire-and-forget like 1047: an alert can never fail a save. api/appt-remind.js does the rest
-   (the 6:50am day list and the hour-ahead text). */
+   (the 8am day list and the hour-ahead text). */
 function __apptTime12(t){
   var m = /^(\\d{1,2}):(\\d{2})/.exec(String(t || ''));
   if(!m) return '';
@@ -78,7 +78,7 @@ one("""    if(fields.project_id) __apptNotifyProduction(merged);""",
 
 one(">v2026-10-19 build 1381<button", ">v2026-10-21 build 1382<button")
 one("""  { b: 1381, d:'2026-10-19',""",
-"""  { b: 1382, d:'2026-10-21', t:'Appointment reminders by text', s:'Setting an appointment now tells the people who have to be there. When you book one, or move it to a new day or time, you and the job\\u2019s rep get a text (plus the usual notification and email) saying what it is, when, and where. On the day, everyone with an appointment gets a text at 6:50am listing their day, and another about an hour before each appointment starts, with a link for directions. Build days still go to Production as before. Texts only go to the team, never to the client, and none are sent between 9pm and 6am. To get them, your mobile number needs to be in the Team Directory.' },
+"""  { b: 1382, d:'2026-10-21', t:'Appointment reminders by text', s:'Setting an appointment now tells the people who have to be there. When you book one, or move it to a new day or time, you and the job\\u2019s rep get a text (plus the usual notification and email) saying what it is, when, and where. On the day, everyone with an appointment gets a text at 8am listing their day, and another about an hour before each appointment starts, with a link for directions. Build days still go to Production as before. Texts only go to the team, never to the client, and none are sent between 9pm and 6am. To get them, your mobile number needs to be in the Team Directory.' },
   { b: 1381, d:'2026-10-19',""")
 pl.write_atomic(path, s)
 print('ok 1382')

@@ -1,9 +1,9 @@
 /* gate_1382 — appointment reminders by text.
  * A (route, api/appt-remind.js, stubbed fetch, a fake Twilio and a fake database):
- *   A1 the 6:50am run texts each person ONE list of their day — booker, the job's rep (sales_rep and
+ *   A1 the 8:00am run texts each person ONE list of their day — booker, the job's rep (sales_rep and
  *      lead.assigned) and, on a build day, Production; never the client; nobody without a number
  *   A2 the same morning run again sends no second list (the audit_events mark)
- *   A3 the 12:50 run texts the 2:00 appointment to its people, with directions, and claims it
+ *   A3 the 1:00pm run texts the 2:00 appointment to its people, with directions, and claims it
  *   A4 a claimed appointment is not texted again; a MOVED one (new time) is
  *   A5 quiet hours: the 10pm run texts nobody; a bad cron secret is refused
  * B (app, Chromium): booking an appointment sends one alert to the booker and the job's rep; moving it
@@ -72,21 +72,21 @@ if (!fs.existsSync(ROUTE) || process.argv[3] === '--no-route') {
     finally { globalThis.Date = RealDate; }
   };
   const db = mkDb();
-  // 6:50am EDT on the 22nd = 10:50 UTC
-  const r1 = await runAt(db, DAY + 'T10:50:00Z');
+  // 8:00am EDT on the 22nd = 12:00 UTC
+  const r1 = await runAt(db, DAY + 'T12:00:00Z');
   const byTo = {}; db.texts.forEach(t => { (byTo[t.to] = byTo[t.to] || []).push(t.body); });
-  ok(r1.code === 200 && r1.body.morning.due === true, 'A1: the 6:50am run sends the morning list', JSON.stringify(r1.body && r1.body.morning));
+  ok(r1.code === 200 && r1.body.morning.due === true, 'A1: the 8:00am run sends the morning list', JSON.stringify(r1.body && r1.body.morning));
   ok(byTo['+19375550001'] && byTo['+19375550001'].length === 1 && /2:00 PM Inspection — Sample Client, 1 Main St/.test(byTo['+19375550001'][0]),
     'A1: the booker gets ONE text naming their appointment', JSON.stringify(byTo['+19375550001']));
   ok(byTo['+19375550002'] && byTo['+19375550003'], 'A1: the job\'s rep (sales_rep) and the assigned rep get it too', Object.keys(byTo).join(','));
   ok(byTo['+19375550005'] && byTo['+19375550006'] && /8:00 AM Build day/.test(byTo['+19375550005'][0]), 'A1: Production gets the build day');
   ok(!byTo['+19375550101'] && Object.keys(byTo).length === 6, 'A1: six team phones, no client, nobody without a number', Object.keys(byTo).length);
   const n1 = db.texts.length;
-  const r2 = await runAt(db, DAY + 'T10:50:30Z');
+  const r2 = await runAt(db, DAY + 'T12:00:30Z');
   ok(db.texts.length === n1 && r2.body.morning.due === false, 'A2: a second morning run sends no second list', (db.texts.length - n1) + ' new');
-  // 12:50pm EDT = 16:50 UTC: the 2:00 inspection is 70 minutes out
+  // 1:00pm EDT = 17:00 UTC: the 2:00 inspection is 60 minutes out
   db.texts.length = 0;
-  const r3 = await runAt(db, DAY + 'T16:50:00Z');
+  const r3 = await runAt(db, DAY + 'T17:00:00Z');
   const to3 = db.texts.map(t => t.to).sort();
   ok(r3.body.ahead.texted === 3 && JSON.stringify(to3) === JSON.stringify(['+19375550001', '+19375550002', '+19375550003']),
     'A3: the hour-ahead text goes to the booker and both reps', JSON.stringify(to3));
@@ -94,15 +94,15 @@ if (!fs.existsSync(ROUTE) || process.argv[3] === '--no-route') {
     'A3: it names the time, the client and a directions link', db.texts[0] && db.texts[0].body);
   ok(db.appointments[0].reminded_for === DAY + ' 14:00', 'A3: and claims the appointment', db.appointments[0].reminded_for);
   db.texts.length = 0;
-  await runAt(db, DAY + 'T16:55:00Z');
+  await runAt(db, DAY + 'T17:05:00Z');
   ok(db.texts.length === 0, 'A4: a claimed appointment is not texted twice', db.texts.length + ' texts');
   db.appointments[0].appt_time = '15:00';   // moved
-  await runAt(db, DAY + 'T17:50:00Z');
+  await runAt(db, DAY + 'T18:00:00Z');
   ok(db.texts.length === 3 && /3:00 PM/.test(db.texts[0].body), 'A4: moved to 3:00, it is reminded again for the new time', db.texts.length + ' texts');
   db.texts.length = 0;
   const r5 = await runAt(db, DAY + 'T02:10:00Z');   // 10:10pm the night before
   ok(db.texts.length === 0 && r5.body.quiet === true, 'A5: quiet hours text nobody', JSON.stringify({ quiet: r5.body.quiet, texts: db.texts.length }));
-  const r6 = await runAt(db, DAY + 'T16:50:00Z', 'Bearer wrong');
+  const r6 = await runAt(db, DAY + 'T17:00:00Z', 'Bearer wrong');
   ok(r6.code === 401 && db.texts.length === 0, 'A5: a bad cron secret is refused', 'http ' + r6.code);
 }
 

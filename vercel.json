@@ -26,7 +26,7 @@
     },
     {
       "path": "/api/appt-remind",
-      "schedule": "50 * * * *"
+      "schedule": "0 * * * *"
     }
   ],
   "redirects": [
