@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-22 build 1385<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-22 build 1386<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -14962,6 +14962,8 @@ document.getElementById('inspDocsMount').addEventListener('click', handleDocActi
 document.getElementById('estDocsMount').addEventListener('click', handleDocAction);
 
 function downloadReport(r){
+  /* 1386: Save as PDF, not a .html file (see cr-dl-script) */
+  if(window.CardinalDownload && window.CardinalDownload.html){ window.CardinalDownload.html(r.html, r.title || 'Cardinal document'); return; }
   var blob = new Blob([r.html], {type:'text/html'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -45174,6 +45176,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1386, d:'2026-10-22', t:'Download saves a PDF', s:'Download on a contract, estimate or report used to save a web-page (.html) file, which a Mac opens as code. It now opens the print screen for that document with Save as PDF ready, named after the document. On an iPhone or iPad, tap the share button on that screen and choose Save to Files. Print works exactly as before.' },
   { b: 1385, d:'2026-10-22', t:'Tidier construction agreements', s:'The roofing agreement no longer asks for the number of existing layers twice: it is picked once, in Decking (\u201cRemove existing roofing \u2026 layers to roof deck\u201d), and Roof Pitch is now section 12. The roofing, siding and gutter agreements also no longer print a separate Terms page repeating where the printed Terms and Conditions live; that line is still in the agreement beside the cancellation notice. Agreements already saved are unchanged.' },
   { b: 1384, d:'2026-10-22', t:'Cards, buttons and headings match', s:'The main screens now use one shape for each thing. Every card has the same rounded corners and the same space inside, every button has the same corners, and card titles are the same weight. Before, the home screen alone had six different card styles and five button shapes. Colors and sizes are unchanged.' },
   { b: 1383, d:'2026-10-21', t:'No more update pop-up', s:'The What\u2019s New box no longer pops up by itself after the app updates. To see what changed, open the menu and tap What\u2019s New.' },
@@ -71309,31 +71312,54 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(window.rend
 function safe(name){
   return String(name || 'Cardinal document').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 90);
 }
-/* Save the rendered document as a standalone .html file — opens in any browser,
-   prints to PDF from there, and keeps working offline. */
-function downloadHtml(html, title){
-  try{
-    var doc = '<!doctype html><html><head><meta charset="utf-8">' +
-      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<title>' + safe(title) + '</title></head><body>' + html + '</body></html>';
-    var blob = new Blob([doc], { type:'text/html;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url; a.download = safe(title) + '.html';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
-    return true;
-  }catch(e){
-    crTell('Could not download: ' + (e.message || e));
-    return false;
-  }
+/* 1386 (Theo: "The contract is saving in html. not pdf"): Download used to write a .html file,
+   and a Mac opens that as source code — in front of the client. Download is now "Save as PDF":
+   the document goes to the print sheet (printDoc, the path Print already uses and the print gates
+   measure), named after the document, so a computer offers Save as PDF and an iPhone/iPad's share
+   sheet does too. The title is lent to the page while the sheet is open, because that is the name
+   the browser gives the PDF. */
+function withTitle(title, fn){
+  var keep = document.title, name = safe(title);
+  document.title = name;
+  var titleBack = function(){ document.title = keep; window.removeEventListener('afterprint', titleBack); };
+  window.addEventListener('afterprint', titleBack);
+  setTimeout(titleBack, 10 * 60 * 1000);
+  try{ return fn(name); }catch(e){ titleBack(); throw e; }
 }
 function downloadFrame(frame, title){
   try{
     var d = frame && (frame.contentDocument || (frame.contentWindow && frame.contentWindow.document));
     if(!d) return false;
-    return downloadHtml(d.documentElement ? d.documentElement.outerHTML : d.body.innerHTML, title);
-  }catch(e){ crTell('Could not download: ' + (e.message || e)); return false; }
+    return withTitle(title, function(name){
+      try{ d.title = name; }catch(_){}
+      return printDoc(d, frame.contentWindow);
+    });
+  }catch(e){ crTell('Could not save the PDF: ' + (e.message || e)); return false; }
+}
+function downloadHtml(html, title){
+  try{
+    var src = String(html || '');
+    var doc = /^\s*<(!doctype|html)/i.test(src) ? src :
+      '<!doctype html><html><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + safe(title) + '</title></head><body>' + src + '</body></html>';
+    var old = document.getElementById('crPdfFrame'); if(old) old.remove();
+    var f = document.createElement('iframe');
+    f.id = 'crPdfFrame';
+    f.setAttribute('aria-hidden', 'true');
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:8.5in;height:11in;border:0;opacity:0;pointer-events:none;z-index:-1;';
+    f.onload = function(){
+      f.onload = null;
+      setTimeout(function(){ downloadFrame(f, title); }, 250);
+      setTimeout(function(){ if(f.parentNode) f.remove(); }, 10 * 60 * 1000);
+    };
+    document.body.appendChild(f);
+    f.srcdoc = doc;
+    return true;
+  }catch(e){
+    crTell('Could not save the PDF: ' + (e.message || e));
+    return false;
+  }
 }
 function downloadUrl(url, title){
   var a = document.createElement('a');

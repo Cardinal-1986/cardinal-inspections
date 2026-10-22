@@ -10127,3 +10127,6 @@ On Home, Jobs, the client page, Schedule and Invoices & Payments (dark and light
 
 ## Build 1385: construction agreements — layers once, no Terms page
 Roofing agreement: number of layers is picked once, in Decking 1A, pre-selected from the inspection; the old "12. Existing Layers" line is gone and Roof Pitch is 12. Roofing, siding and gutter agreements no longer print the separate Terms page (the pointer to the printed T&C master stays in the body). **Gate:** `gate_1385.mjs`.
+
+## Build 1386: Download = Save as PDF
+Download on a contract, estimate or report opens the print sheet for that document, named after it, instead of saving a .html file. **Gate:** `gate_1386.mjs`.
