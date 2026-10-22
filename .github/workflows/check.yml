@@ -369,7 +369,11 @@ jobs:
   # would only be somewhere for a future failure to hide.
   # ═══════════════════════════════════════════════════════════
   chromium:
-    runs-on: ubuntu-latest
+    # 22 Oct 2026: ubuntu-latest moved to Ubuntu 26.04 (from 19 Oct), and Playwright 1.56.1 refuses it —
+    # "Playwright does not support chromium on ubuntu26.04-x64" — so `install --with-deps` failed in 7s,
+    # before any gate ran (run 39776186283, twice). Pinned to the image this job has always passed on.
+    # Lift the pin only together with a Playwright bump that lists ubuntu26.04 as supported.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 

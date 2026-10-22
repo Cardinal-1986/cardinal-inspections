@@ -77,7 +77,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
    included, and it is the control someone reaches for BECAUSE they are
    having trouble hitting things. */
 #navMenu .cr-ts button{min-width:44px;min-height:44px;padding:0 9px;cursor:pointer;
-  border:1px solid rgba(255,255,255,.16);border-radius:8px;
+  border:1px solid rgba(255,255,255,.16);border-radius:10px;
   background:rgba(255,255,255,.05);color:#cfd6df;
   font-family:'Segoe UI',Arial,sans-serif;font-weight:700;line-height:1;}
 #navMenu .cr-ts button[data-cr-text-set="md"]{font-size:13px;}
@@ -157,7 +157,7 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
      filter or tab. One corner per kind, one red. Measured first: 266 in-scope
      controls carried 27 looks for the red button alone, in two reds and seven
      corner radii. */
-  --btn-rad:12px;
+  --btn-rad:10px;
   --chip-rad:999px;
   --btn-ink:#e8edf3;
   --btn-line:rgba(232,237,243,.28);
@@ -199,7 +199,7 @@ body{padding-top:110px;} /* refined at runtime to the real header height */
 
 .btn{
   display:inline-block;border:0;cursor:pointer;font:inherit;
-  font-weight:700;font-size:15px;padding:11px 20px;border-radius:var(--btn-rad,12px);
+  font-weight:700;font-size:15px;padding:11px 20px;border-radius:var(--btn-rad,10px);
   background:var(--red);color:#fff;letter-spacing:.02em;
 }
 .btn:hover{background:var(--red-dk);}
@@ -295,7 +295,7 @@ td.status small{display:block;color:var(--muted);font-size:13px;margin-top:3px;w
 .chipbtn{
   font:inherit;font-size:13px;font-weight:700;cursor:pointer;
   border:1px solid var(--line);background:transparent;color:var(--ink);
-  padding:5px 10px;border-radius:5px;margin:2px 3px 2px 0;
+  padding:5px 10px;border-radius:10px;margin:2px 3px 2px 0;
 }
 .chipbtn:hover{border-color:var(--red);color:var(--red-dk);}
 .chipbtn.danger{--cr-stack:"1292 Delete is red words (Buttons A)";color:var(--red);border-color:transparent;background:transparent;}
@@ -543,7 +543,7 @@ footer.site{
   --rbe-monobg:rgba(200,32,46,.07);--rbe-monobd:#e7c2ba;
 }
 .pcard{
-  position:relative;border-radius:13px;overflow:hidden;cursor:pointer;
+  position:relative;border-radius:12px;overflow:hidden;cursor:pointer;
   /* 689: the obsidian recipe, named once above rather than copied a third
      time. Theo: "make them the obsidian style, like the activity count is"
      — .actbox is the variant WITH a light twin (557), not the #cr-est-view /
@@ -554,7 +554,7 @@ footer.site{
   transition:box-shadow .15s, transform .15s;
 }
 /* Badge card (build 370) \u2014 monogram + aligned text column, no cover image */
-.pcard.pcbadge{display:flex;align-items:flex-start;gap:11px;padding:12px;aspect-ratio:auto;}
+.pcard.pcbadge{display:flex;align-items:flex-start;gap:11px;padding:14px;aspect-ratio:auto;}
 .pcard.pcbadge::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stgc,#8a93a1);}
 .pcbadge .pcini{width:46px;height:46px;border-radius:12px;background:var(--rbe-monobg);border:1px solid var(--rbe-monobd);
   display:flex;align-items:center;justify-content:center;font:800 18px Georgia,'Times New Roman',serif;
@@ -1162,7 +1162,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 #brandLogo{background:#fff;border-radius:8px;padding:3px;height:40px !important;width:56px !important;object-fit:contain;flex:0 0 auto;cursor:pointer;}
 @media (max-width:640px){ #brandLogo{height:38px !important;width:52px !important;} }
 /* ---- pipeline widget ---- */
-.pipecard{border:1px solid var(--rbe-line2);border-top:2px solid var(--rbe-ridge-t);border-bottom:2px solid var(--rbe-ridge-b);border-radius:12px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));color:var(--rbe-ink);padding:14px 16px;margin:14px 0;box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
+.pipecard{border:1px solid var(--rbe-line2);border-top:2px solid var(--rbe-ridge-t);border-bottom:2px solid var(--rbe-ridge-b);border-radius:12px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));color:var(--rbe-ink);padding:14px;margin:14px 0;box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
 /* 537: the clip is GONE. It was clipping a gradient whose two stops are the SAME
    colour - var(--rbe-head) twice - so it rendered identically to a flat fill while
    stripping the colour out of every emoji in a card title. That is the whole reason
@@ -1257,7 +1257,7 @@ body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rathe
 .homeside{flex:0 0 320px;display:flex;flex-direction:column;gap:14px;}
 @media (max-width:900px){ .homecols{flex-direction:column;} .homeside{flex-basis:auto;width:100%;} }
 /* ---- activity feed ---- */
-.actcard{border:1px solid var(--rbe-line2);border-top:2px solid var(--rbe-ridge-t);border-bottom:2px solid var(--rbe-ridge-b);border-radius:12px;background:var(--rbe-panel);padding:12px 14px;box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
+.actcard{border:1px solid var(--rbe-line2);border-top:2px solid var(--rbe-ridge-t);border-bottom:2px solid var(--rbe-ridge-b);border-radius:12px;background:var(--rbe-panel);padding:14px;box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);}
 .acthead{font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);margin-bottom:6px;}
 .actitem{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--rbe-hair);font:13px 'Segoe UI',Arial,sans-serif;}
 .actitem:last-child{border-bottom:0;}
@@ -1540,7 +1540,7 @@ body.standalone #solModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   .projgrid.swipe .pcard .ad{font-size:11px;}
   .projgrid.swipe .pcard .ft{font-size:11px;}
   .projgrid.swipe.loop{scroll-snap-type:none;}
-  .rowlab{text-align:center;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.05em;
+  .rowlab{text-align:center;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:normal;
     color:var(--rbe-head);margin:8px 0 6px;}
   .rowdiv{height:1px;margin:14px 8px;
     background:linear-gradient(90deg,transparent,var(--rbe-accdk) 30%,var(--rbe-acclt) 50%,var(--rbe-accdk) 70%,transparent);}
@@ -1584,7 +1584,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 .agechip.late{background:var(--red);color:#fff;}
 .clirow .agechip{position:static;margin-left:6px;}
 
-.bday{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 14px;margin:9px 0;cursor:pointer;}
+.bday{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px;margin:9px 0;cursor:pointer;}
 .bday:hover{box-shadow:0 4px 12px rgba(0,0,0,.12);}
 .bday.bempty{background:#fbfaf9;}
 .bhead{font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--red-dk);border-bottom:1px solid #eee;padding-bottom:5px;margin-bottom:6px;}
@@ -1851,10 +1851,10 @@ html, body{overflow-x:hidden;max-width:100%;}
    deleting the whole rule would have resized it. Dark now falls back to
    .pipetitle{color:var(--rbe-head)} and matches its neighbours. */
 .pipecard.teamcal .pipetitle span:first-child{
-  font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.03em;}
+  font:800 15px Georgia,'Times New Roman',serif;letter-spacing:normal;}
 .teamcal .minical .calhead b{
-  font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.05em;color:#b8860b;/* 685: was gradient-clipped text */}
-.teamcal .minical .calnav{background:var(--red);border:1px solid var(--red-dk);color:#fff;border-radius:8px;
+  font:800 15px Georgia,'Times New Roman',serif;letter-spacing:normal;color:#b8860b;/* 685: was gradient-clipped text */}
+.teamcal .minical .calnav{background:var(--red);border:1px solid var(--red-dk);color:#fff;border-radius:10px;
   box-shadow:0 2px 5px rgba(0,0,0,.22);}
 .teamcal .minical .calnav:hover{background:#a5121f;}
 .teamcal .minical .calgrid .dow{color:#b8860b;letter-spacing:.08em;}
@@ -2050,7 +2050,7 @@ button.actbox:active{transform:scale(.97);}
 .viewhead{
   text-align:center;
   font:800 22px Georgia,'Times New Roman',serif;
-  letter-spacing:.02em;
+  letter-spacing:normal;
   /* 681: was #1c1416 — a near-black ink for a white page, printed on this
      app's near-black default ground at 1.10:1. Theo: "can't read this page."
      --rbe-head is the app's own heading token (#ffffff dark / #161616 light),
@@ -2344,7 +2344,7 @@ body.restoring #restoreVeil{display:flex;}
    at 390 and still fits at 1.3x text zoom with the 12px clamp floor. */
 .jabox{display:grid;grid-template-columns:auto minmax(0,1fr) auto;
   grid-template-areas:"ic . n" "l l l";align-items:center;gap:8px;background:#fff;border:1px solid #ddd6cf;border-radius:6px;
-  padding:14px 11px;cursor:pointer;font:700 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
+  padding:14px;cursor:pointer;font:700 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;
   min-width:0;-webkit-user-select:none;user-select:none;}
 /* 1203: this was white-space:nowrap + ellipsis, and at 390px it cut SEVEN of
    the fourteen labels: "Commu…", "Notificat…", "Measure…", "Docume…",
@@ -2382,7 +2382,7 @@ body.restoring #restoreVeil{display:flex;}
 /* client dashboard */
 .dbstage{display:flex;align-items:center;gap:4px;border-radius:8px;padding:12px 6px;margin:0 0 12px;}
 .dbstgmid{flex:1;text-align:center;min-width:0;}
-.dbstgmid b{display:block;font:800 18px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;}
+.dbstgmid b{display:block;font:800 18px 'Segoe UI',Arial,sans-serif;letter-spacing:normal;}
 .dbstgmid small{display:block;font:600 11px 'Segoe UI',Arial,sans-serif;opacity:.9;margin-top:1px;}
 .dbstgarr{flex:0 0 auto;width:34px;height:44px;background:none;border:none;color:inherit;
   font:800 30px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;opacity:.92;padding:0;}
@@ -2679,7 +2679,7 @@ body[data-rltheme="siren"].claim-insurance #delClientBtn{color:#ff7b82;}
 :root[data-theme="rb-light"] .ljchip.on{background:#e8f0fb;border-color:#1d4f91;color:#14243a;}
 .ljrhead{font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-acclt);margin-bottom:8px;}
 .ljcard{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);
-  border-radius:13px;margin-bottom:12px;display:flex;align-items:stretch;cursor:pointer;position:relative;
+  border-radius:12px;margin-bottom:12px;display:flex;align-items:stretch;cursor:pointer;position:relative;
   box-shadow:0 7px 18px rgba(0,0,0,.45),0 2px 5px rgba(0,0,0,.35);}
 .ljcard::before{content:'';position:absolute;left:0;top:8%;height:84%;width:3px;border-radius:3px;
   background:var(--spn,#dbe7f7);box-shadow:0 0 6px var(--spn,#dbe7f7),0 0 14px var(--spn,#dbe7f7);}
@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-21 build 1383<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-22 build 1385<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -10459,7 +10459,13 @@ function buildEstimate(titleHtml, body, terms){
      was view-only. Strip the footer only when the body carries its own slots;
      the three agreements (which do) keep 781's single-block fix unchanged. */
   if(isDeal){
-    if(body && String(body).indexOf('data-sig') !== -1) out = out.replace(SIGN_FOOTER, '');
+    if(body && String(body).indexOf('data-sig') !== -1){
+      out = out.replace(SIGN_FOOTER, '');
+      /* 1385 (Theo: "The terms shouldn't be there it's messy"): the three construction agreements
+         already point at the printed T&C master beside the cancellation notice, so the separate
+         Terms page only said it again. Drop its heading and bullets; keep the Acceptance note. */
+      out = out.replace(/<h2 class="sec page-break">Terms<\/h2>\s*[\s\S]*?(?=<[d]iv class="note"><b>Acceptance\.<\/b>)/, '');
+    }
     /* ...and it is an Agreement, not an estimate, once it is one. */
     out = out.replace('<b>Acceptance.</b> This estimate is valid through the date shown above. Signature below',
                       '<b>Acceptance.</b> Signature below');
@@ -10659,11 +10665,7 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <div class="soptrow indent"><span class="sopt"><span class="cbx" data-group="rrc">&#9744;</span> 1. Pro Edge</span><span class="sopt"><span class="cbx" data-group="rrc">&#9744;</span> 2. Decoridge</span></div>
 </div>
 
-<div class="specsec"><h3>12. Existing Layers</h3>
-<div class="specline">Number / type of layers <span class="opts" data-opts="layers">&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;</span></div>
-</div>
-
-<div class="specsec"><h3>13. Roof Pitch</h3>
+<div class="specsec"><h3>12. Roof Pitch</h3>
 <div class="specline">Pitch <span class="opts" data-opts="pitch">&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;</span></div>
 </div>
 
@@ -25544,6 +25546,15 @@ function prefillClientInfo(tpl, pr){
   }
   var _ck = parseCkAll(pr);
   collapse('layers', _ck.layers);
+  /* 1385: the roofing agreement asks for layers once now — the Decking 1A dropdown — so the
+     inspection's count pre-selects it ("2 Layers" -> 2, "3+ Layers (Code Violation)" -> 3).
+     data-crsel-value is the existing pre-select hook (891); a saved choice still wins. */
+  (function(lay){
+    var m = /^\s*(\d+)/.exec(String(lay || ''));
+    if(!m) return;
+    tpl = tpl.replace('<select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Layers to remove">',
+      '<select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Layers to remove" data-crsel-value="' + m[1] + '">');
+  })(_ck.layers);
   collapse('pitch', _ck.pitch);
   /* 779: decking is a CHECKBOX ROW now, so its prefill ticks the matching box
      instead of collapsing a text span — same intent as 750's collapse(), which
@@ -45163,6 +45174,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1385, d:'2026-10-22', t:'Tidier construction agreements', s:'The roofing agreement no longer asks for the number of existing layers twice: it is picked once, in Decking (\u201cRemove existing roofing \u2026 layers to roof deck\u201d), and Roof Pitch is now section 12. The roofing, siding and gutter agreements also no longer print a separate Terms page repeating where the printed Terms and Conditions live; that line is still in the agreement beside the cancellation notice. Agreements already saved are unchanged.' },
+  { b: 1384, d:'2026-10-22', t:'Cards, buttons and headings match', s:'The main screens now use one shape for each thing. Every card has the same rounded corners and the same space inside, every button has the same corners, and card titles are the same weight. Before, the home screen alone had six different card styles and five button shapes. Colors and sizes are unchanged.' },
   { b: 1383, d:'2026-10-21', t:'No more update pop-up', s:'The What\u2019s New box no longer pops up by itself after the app updates. To see what changed, open the menu and tap What\u2019s New.' },
   { b: 1382, d:'2026-10-21', t:'Appointment reminders by text', s:'Setting an appointment now tells the people who have to be there. When you book one, or move it to a new day or time, you and the job\u2019s rep get a text (plus the usual notification and email) saying what it is, when, and where. On the day, everyone with an appointment gets a text at 8am listing their day, and another about an hour before each appointment starts, with a link for directions. Build days still go to Production as before. Texts only go to the team, never to the client, and none are sent between 9pm and 6am. To get them, your mobile number needs to be in the Team Directory.' },
   { b: 1381, d:'2026-10-19', t:'My Files in the Owner Console', s:'The Owner Console has a new My Files card for the reports, reviews and plans made for you, sorted into Sales & numbers, Team reviews, Coaching & training, Billing & collections and Partner jobs. Only your login can see it: Joan and the rest of the team do not see the card, and the database and file storage both refuse anyone else. Tap a file to open it, or remove it. The Vault is unchanged and still shows only its own company documents.' },
@@ -66658,7 +66671,7 @@ resume  : resumeFromTab,
 })();
 </script>
 
-<style id="cr-hd2-styles">header.site .wrap.masthead{display:none}header.site{position:fixed;top:0;left:0;right:0;z-index:90;background:var(--hbg,#fbfaf7);border-bottom:none;box-shadow:0 2px 10px rgba(0,0,0,.22);padding:0}#cr-hd2-bar{display:flex;align-items:center;gap:10px;max-width:960px;margin:0 auto;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px));min-height:56px;border-bottom:1px solid var(--hln,#ddd6cf)}#cr-hd2-bar .cr-ib{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:transparent;border:1px solid var(--hln,#ddd6cf);color:var(--hmt,#6b6357);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;-webkit-tap-highlight-color:transparent}
+<style id="cr-hd2-styles">header.site .wrap.masthead{display:none}header.site{position:fixed;top:0;left:0;right:0;z-index:90;background:var(--hbg,#fbfaf7);border-bottom:none;box-shadow:0 2px 10px rgba(0,0,0,.22);padding:0}#cr-hd2-bar{display:flex;align-items:center;gap:10px;max-width:960px;margin:0 auto;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px));min-height:56px;border-bottom:1px solid var(--hln,#ddd6cf)}#cr-hd2-bar .cr-ib{flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:transparent;border:1px solid var(--hln,#ddd6cf);color:var(--hmt,#6b6357);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;-webkit-tap-highlight-color:transparent}
 body[data-crm-head="retail"] #cr-hd2-bar .cr-ib,body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-home{
   background:linear-gradient(180deg,#33414f 0%,#242f3b 45%,#1a232c 100%);
   border:1px solid #3d4b5a;border-top-color:#55677a;border-bottom-color:#111820;
@@ -66674,7 +66687,7 @@ body[data-crm-head="retail"] #cr-hd2-bar .cr-ib.primary{
      Pre-existing since before 1144, which carried it as measured debt. */
   background:linear-gradient(180deg,#b9d3ec,#8fb4d8 52%,#5981a8);
   border-color:#5981a8;border-top-color:#b9d3ec;color:#0b1218;
-  box-shadow:0 2px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.3)}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:18px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#c8202e);color:var(--hac,#c8202e)}#cr-hd2-bar .cr-ib.primary{background:var(--hac,#c8202e);border-color:var(--hac,#c8202e);color:var(--hoc,#1a1a1a);font-size:18px;font-weight:400}#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:40px;letter-spacing:.01em;line-height:1.15;color:var(--hac,#c8202e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--hac,#c8202e)}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}/* 1116: the box was never the limit - cr-hd4-styles already sets max-width:100% on a THREE-id selector that outranks this one. The real limit is #cr-hd2-mid itself: 150px at Normal, 99px at Large and 60px at Larger, because the Text size control (939) is a real :root zoom and the CSS viewport shrinks with it - so a screen name that fitted at Normal ellipsised at the two sizes nobody had measured. Theo caught that. 86% plus the clamp below fits the longest name at all three. */body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:clamp(12px,4.4vw,20px) !important;letter-spacing:0}html[data-cr-text="xl"] body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}/* 1116: at Larger the middle slot is 60 CSS px - the controls eat a 300px viewport - and the shortest useful name still needs 91. The only way to widen it is shrinking tap targets below the 44px floor, so the name is HIDDEN at that one size, which is exactly what the retail slogan already does below 438px and for the same recorded reason: a truncated name reads as a broken app, an absent one reads as a clean toolbar. Normal and Large keep the name. *//* --cr-stack:"beats the 3-id !important font-size:20px in cr-hd3-styles ON PURPOSE, and only for the shared-screen head. Two !important rules are settled by specificity, so 2 ids + an attribute LOST to 3 ids and the clamp never applied - the names measured identical at all three zooms, which is what a silently-losing rule looks like." */#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#c8202e)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font-weight:400;font-size:15px;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#c8202e);box-shadow:0 0 0 3px rgba(200,32,46,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}
+  box-shadow:0 2px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.3)}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:18px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#c8202e);color:var(--hac,#c8202e)}#cr-hd2-bar .cr-ib.primary{background:var(--hac,#c8202e);border-color:var(--hac,#c8202e);color:var(--hoc,#1a1a1a);font-size:18px;font-weight:400}#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:800;font-size:40px;letter-spacing:normal;line-height:1.15;color:var(--hac,#c8202e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--hac,#c8202e)}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}/* 1116: the box was never the limit - cr-hd4-styles already sets max-width:100% on a THREE-id selector that outranks this one. The real limit is #cr-hd2-mid itself: 150px at Normal, 99px at Large and 60px at Larger, because the Text size control (939) is a real :root zoom and the CSS viewport shrinks with it - so a screen name that fitted at Normal ellipsised at the two sizes nobody had measured. Theo caught that. 86% plus the clamp below fits the longest name at all three. */body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:clamp(12px,4.4vw,20px) !important;letter-spacing:0}html[data-cr-text="xl"] body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}/* 1116: at Larger the middle slot is 60 CSS px - the controls eat a 300px viewport - and the shortest useful name still needs 91. The only way to widen it is shrinking tap targets below the 44px floor, so the name is HIDDEN at that one size, which is exactly what the retail slogan already does below 438px and for the same recorded reason: a truncated name reads as a broken app, an absent one reads as a clean toolbar. Normal and Large keep the name. *//* --cr-stack:"beats the 3-id !important font-size:20px in cr-hd3-styles ON PURPOSE, and only for the shared-screen head. Two !important rules are settled by specificity, so 2 ids + an attribute LOST to 3 ids and the clamp never applied - the names measured identical at all three zooms, which is what a silently-losing rule looks like." */#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#c8202e)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font-weight:400;font-size:15px;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#c8202e);box-shadow:0 0 0 3px rgba(200,32,46,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}
 /* Build 372: search lives on the banner — the header copy is retired everywhere. */
 #cr-hd2-bar #headSearch,#cr-hd2-bar .cr-ib.searchbtn{display:none !important}
 #cr-hd2-bar.searching #headSearch{display:none !important}}#cr-hd2-bar.searching #headSearch{display:block;flex:1 1 100%;order:9;margin-top:8px}#cr-hd2-bar{flex-wrap:nowrap}#cr-hd2-bar.searching{flex-wrap:wrap}header.site #cr-hd2-bar #navBtn{display:flex !important}#cr-hd2-util{display:flex;align-items:center;gap:6px;flex:0 0 auto}#cr-hd2-util>*{flex:0 0 auto}@media (max-width:560px){#cr-hd2-util #crPortalChip{display:none}}header.site #cr-search-btn{display:none}header.site #whoami,header.site #jobMenuSel,header.site #brandLogo{display:none}body .site{--htint:#1a1215;--hbg:#1a1215;--hln:#3a2f22;--hin:#c8202e;--hmt:#d8c9a8;--hdm:#9a917f;--hac:#c8202e;--hoc:#1a1a1a;--hsf:#241c1a;--tgrad:linear-gradient(100deg,var(--red),#c8202e 55%,#e35c63)}body[data-crm-head="insurance"] .site{--htint:var(--ct-crmhead-bg,var(--ct-head-bg));--hbg:var(--ct-crmhead-bg,var(--ct-head-bg));--hln:var(--ct-crmhead-line,var(--ct-head-line));--hin:var(--ct-crmhead-ink,var(--ct-head-ink));--hmt:var(--ct-crmhead-ink,var(--ct-head-ink));--hdm:var(--ct-crmhead-dim,var(--ct-head-dim));--hac:var(--ct-crmhead-kick,var(--ct-head-kick));--hoc:var(--ct-crmhead-bg,var(--ct-head-bg));--hsf:var(--ct-crmhead-surface,var(--ct-surface));--tgrad:linear-gradient(100deg,var(--ct-head-kick),var(--ct-head-ink))}body[data-crm-head="retail"] .site{--htint:#243342;--hbg:linear-gradient(180deg,#243342,#16202b);--hln:#2f3f4f;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.72);--hac:#8fb4d8;--hoc:#141c24;--hsf:#243342;--tgrad:linear-gradient(100deg,#8fb4d8,#fff)}
@@ -69245,7 +69258,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .stagebanner{borde
 body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-radius:12px;}
 body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow small{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--rbe-mute);}
 body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow b{font:800 22px ui-monospace,Menlo,monospace;color:var(--rbe-money);}
-body:not(.claim-insurance):not(.claim-community) #projectView .jabox{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);border-radius:11px;color:var(--rbe-ink);box-shadow:var(--rbe-cardshadow);}
+body:not(.claim-insurance):not(.claim-community) #projectView .jabox{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);border-radius:12px;color:var(--rbe-ink);box-shadow:var(--rbe-cardshadow);}
 body:not(.claim-insurance):not(.claim-community) #projectView .jabox .jbl{color:var(--rbe-ink);}
 body:not(.claim-insurance):not(.claim-community) #projectView .jan{font:700 11px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:1px 8px;}
 body:not(.claim-insurance):not(.claim-community) #projectView .jan.zero{opacity:.55;}
@@ -70186,7 +70199,7 @@ body.cr-prod #punchView{ position:fixed; inset:0; z-index:9400; overflow-y:auto;
 .pu-lay{display:block;}
 .pu-rail{display:none;}
 .pu-card{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);
-  border-radius:12px;margin-bottom:10px;padding:11px 13px;display:flex;gap:11px;align-items:flex-start;
+  border-radius:12px;margin-bottom:10px;padding:14px;display:flex;gap:11px;align-items:flex-start;
   position:relative;overflow:hidden;cursor:pointer;}
 .pu-card::before{content:'';position:absolute;left:0;top:10%;height:80%;width:3px;border-radius:3px;background:var(--pc,#8a93a1);}
 .pu-card.urgent::before{background:#e2574a;box-shadow:0 0 7px rgba(226,87,74,.6);}
@@ -75450,11 +75463,11 @@ font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif
 font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipetitle{
 --cr-stack:"1283 white sentence-case card heading";
-font-size:15px;font-weight:700;letter-spacing:0;color:var(--rbe-head,#ffffff);}
+font-size:15px;font-weight:800;letter-spacing:0;color:var(--rbe-head,#ffffff);}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipecard{
 --cr-stack:"1283 flat drawer panel (was gloss gradient + drop shadow)";
 background:#0F1521;border:1px solid #223047;border-left:3px solid #c8202e;
-box-shadow:none;border-radius:10px;}
+box-shadow:none;border-radius:12px;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipecard::after{
 --cr-stack:"1283 no glint line";display:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .rowfil{
@@ -75488,7 +75501,7 @@ background:#0F1521;border:1px solid #223047;box-shadow:none;color:#c2cbd8;}
 background:#141C29;color:#ffffff;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .actcard{
 --cr-stack:"1285 flat Activity panel (was slab + drop shadow + ridge)";
-background:#0F1521;border:1px solid #223047;border-left:3px solid #c8202e;box-shadow:none;border-radius:10px;}
+background:#0F1521;border:1px solid #223047;border-left:3px solid #c8202e;box-shadow:none;border-radius:12px;}
 
 /* ── Build 1286 · the client page in the drawer's style (Theo: option B) ───
    Measured: Georgia on the client name and History heading, ui-monospace on the
@@ -75558,12 +75571,12 @@ font-family:'Segoe UI',Arial,sans-serif !important;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pipecard,
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .actcard{
 --cr-stack:"1290 flat white card with the red edge (light twin of 1283/1285)";
-background:#ffffff;border:1px solid #dcdee2;box-shadow:none;border-left:3px solid #c8202e;border-radius:10px;}
+background:#ffffff;border:1px solid #dcdee2;box-shadow:none;border-left:3px solid #c8202e;border-radius:12px;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pipecard::after{--cr-stack:"1290 no glint";display:none;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .rowfil{--cr-stack:"1290 no glint divider";display:none;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pipetitle{
 --cr-stack:"1290 sentence-case card heading, light";
-font-size:15px;font-weight:700;letter-spacing:0;color:#161616;}
+font-size:15px;font-weight:800;letter-spacing:0;color:#161616;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #mainView .pu-card{
 --cr-stack:"1290 flat punch card; its priority edge stays";
 background:#ffffff;box-shadow:none;border-top:1px solid #dcdee2;border-bottom:1px solid #dcdee2;border-right:1px solid #dcdee2;}
@@ -84709,7 +84722,7 @@ select{min-height:44px;}
 .cr-admin-tog{ display:none; width:100%; min-height:48px; margin:18px 0 8px; padding:0 16px;
   align-items:center; gap:10px; cursor:pointer; text-align:left;
   background:var(--rbe-panel2,#101015); border:1px solid var(--rbe-line2,#2b2b33);
-  border-radius:var(--btn-rad,12px); color:var(--rbe-head,#ffffff);
+  border-radius:var(--btn-rad,10px); color:var(--rbe-head,#ffffff);
   font:700 15px 'Segoe UI',Arial,sans-serif; }
 .cr-admin-tog small{ margin-left:auto; font-weight:600; font-size:13px; color:var(--rbe-mute,#b8bec6); }
 .cr-admin-tog::after{ content:"\203A"; font-size:22px; line-height:1; color:var(--rbe-mute,#b8bec6); transition:transform .15s; }
@@ -84786,7 +84799,7 @@ select{min-height:44px;}
     color:var(--rbe-po2,#dce3ec);
   }
   #cr-namebar .nb-pen{
-    width:32px; height:28px; border-radius:8px; cursor:pointer;
+    width:32px; height:28px; border-radius:10px; cursor:pointer;
     display:inline-flex; align-items:center; justify-content:center;
     background:var(--rbe-panel2,#101015);
     border:1px solid var(--rbe-line2,#2b2b33);
@@ -84794,7 +84807,7 @@ select{min-height:44px;}
   }
   #cr-namebar .nb-r{ display:flex; gap:8px; flex:none; }
   #cr-namebar .nb-ico{
-    width:40px; height:40px; border-radius:11px; display:flex;
+    width:40px; height:40px; border-radius:10px; display:flex;
     align-items:center; justify-content:center;
     background:var(--rbe-panel2,#101015);
     border:1px solid var(--rbe-line2,#2b2b33);
@@ -89686,7 +89699,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu [data-cr-footer]{
   color:#5A6472 !important;border-top:1px solid rgba(0,0,0,.08) !important;}
 #navMenu .cr-df-out{margin-left:auto;flex:none;width:44px;height:44px;padding:13px;
-  box-sizing:border-box;background:none;border:0;border-radius:12px;cursor:pointer;
+  box-sizing:border-box;background:none;border:0;border-radius:10px;cursor:pointer;
   color:#e35c63;/* an icon, floor 3.0:1 — measured by gate_1115.mjs */}
 #navMenu .cr-df-out:hover,#navMenu .cr-df-out:active{background:rgba(227,92,99,.16);}
 #navMenu .cr-df-out:focus-visible{outline:2px solid #e35c63;outline-offset:-2px;}
@@ -90517,7 +90530,7 @@ document.addEventListener('click', function(e){
 #crMorning{margin-top:12px;}
 #crMorning .mrow{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;}
 #crMorning .mchip{display:flex;align-items:center;gap:9px;cursor:pointer;min-height:44px;
-  padding:8px 13px;border-radius:11px;background:transparent;
+  padding:8px 13px;border-radius:10px;background:transparent;
   border:1px solid var(--rbe-line2,#2b2b33);color:var(--rbe-ink,#eceef0);
   font:700 13px 'Segoe UI',Arial,sans-serif;}
 #crMorning .mchip:hover{border-color:var(--rbe-acc,#c8202e);}
@@ -90879,7 +90892,7 @@ body.cr-landing-on footer.site{display:none !important;}
 }
 .cr-mhd{ display:flex; align-items:center; gap:12px; min-height:44px; }
 .cr-mhd-back, .cr-mhd-act{
-  flex:none; min-width:44px; height:44px; box-sizing:border-box; border-radius:11px; cursor:pointer;
+  flex:none; min-width:44px; height:44px; box-sizing:border-box; border-radius:10px; cursor:pointer;
   --cr-stack:"box-sizing restates a module's * rule on purpose: the shared header lands on screens that have no * rule, and must be 44px on all of them";
   border:1px solid var(--mhd-line); background:transparent; color:var(--mhd-mut);
   display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:0;
@@ -90950,7 +90963,7 @@ body.cr-landing-on footer.site{display:none !important;}
 /* KPI tray — neumorphic inset porcelain tiles */
 #cr-ar-view .crar-kpis{margin-bottom:8px;}   /* 1319: one line, not three tiles */
 #cr-ar-view .crar-kpi{
-  background:var(--est-numbg); border-radius:14px; padding:15px 17px;
+  background:var(--est-numbg); border-radius:12px; padding:14px;
   box-shadow:var(--est-inset); display:flex; flex-direction:column; gap:5px;
 }
 #cr-ar-view .crar-k{font-size:13px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--est-dim);}
@@ -91020,7 +91033,7 @@ body.cr-landing-on footer.site{display:none !important;}
 #cr-ar-view .crar-btn.primary{background:var(--est-red); border-color:var(--est-red); color:#fff; box-shadow:none;}
 
 #cr-ar-view .crar-empty{
-  background:var(--est-panel); border:1px dashed var(--est-line); border-radius:16px;
+  background:var(--est-panel); border:1px dashed var(--est-line); border-radius:12px;
   padding:40px 20px; text-align:center; color:var(--est-dim); font-size:15px; box-shadow:var(--est-lift);
 }
 #cr-ar-view .crar-empty b{color:var(--est-ink); font-size:18px;}
@@ -91056,13 +91069,13 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   --crji-sh1:rgba(15,23,42,.06); --crji-sh2:rgba(15,23,42,.16);
 }
 .crji-card{
-  background:var(--crji-card,#141619); border:1px solid var(--crji-line,#262a30); border-radius:16px;
+  background:var(--crji-card,#141619); border:1px solid var(--crji-line,#262a30); border-radius:12px;
   box-shadow:0 1px 2px var(--crji-sh1,rgba(0,0,0,.45)),0 8px 22px var(--crji-sh2,rgba(0,0,0,.55));
-  padding:15px 16px; margin:12px 0 4px; color:var(--crji-ink,#f2f4f7);
+  padding:14px; margin:12px 0 4px; color:var(--crji-ink,#f2f4f7);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
 }
 .crji-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;}
-.crji-ttl{font-weight:800;font-size:15px;letter-spacing:-.01em;color:var(--crji-ink,#f2f4f7);}
+.crji-ttl{font-weight:800;font-size:15px;letter-spacing:normal;color:var(--crji-ink,#f2f4f7);}
 .crji-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px;}
 .crji-nums>span{display:flex;flex-direction:column;gap:2px;background:var(--crji-tile,#1b1f24);border-radius:10px;padding:9px 11px;border:1px solid var(--crji-tile-lo,#0d0f12);box-shadow:none;} /* 1291: flat, the drawer's style */
 .crji-nums small{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--crji-sub,#a8b0ba);}
@@ -91146,9 +91159,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 
 /* ── 1157: the reminders master switch (admin header row). Inks computed:
       on #166534 7.13:1, off #8a6420 5.35:1 on white — floor 4.5. ── */
-#cr-ar-view .crar-master{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:2px 0 14px; padding:12px 16px; background:var(--est-panel,#141619); border:1px solid var(--est-line,#262a30); border-radius:14px; box-shadow:var(--crar-mastersh,0 1px 2px rgba(0,0,0,.45));}
+#cr-ar-view .crar-master{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:2px 0 14px; padding:14px; background:var(--est-panel,#141619); border:1px solid var(--est-line,#262a30); border-radius:12px; box-shadow:var(--crar-mastersh,0 1px 2px rgba(0,0,0,.45));}
 #cr-ar-view .crar-mtxt{display:flex; flex-direction:column; gap:2px; min-width:0;}
-#cr-ar-view .crar-mlab{font:700 15px/1.3 'Segoe UI',Arial,sans-serif; color:var(--est-ink,#0F172A);}
+#cr-ar-view .crar-mlab{font:800 15px/1.3 'Segoe UI',Arial,sans-serif; color:var(--est-ink,#0F172A);}
 #cr-ar-view .crar-mstate{font:600 13px/1.35 'Segoe UI',Arial,sans-serif; color:var(--est-dim,#475569);}
 #cr-ar-view .crar-mstate.on{color:var(--crar-on,#34d399);}
 #cr-ar-view .crar-mstate.off{color:var(--est-warn,#8a6420);}
@@ -97652,7 +97665,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 .crjp-card .crjp-sum hr{grid-column:1/-1;border:0;border-top:1px solid var(--crji-line,#262a30);margin:4px 0;}
 .crjp-card .crjp-note{font-size:13px;color:var(--crji-sub,#a8b0ba);margin:6px 0 0;}
 .crjp-card .crjp-seg{display:grid;grid-template-columns:repeat(var(--crjp-n,3),1fr);gap:6px;background:var(--crjp-seg,#1b1f24);border-radius:12px;padding:4px;margin:12px 0 4px;}
-.crjp-card .crjp-seg button{min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--crji-sub,#a8b0ba);font:600 13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;padding:2px;}
+.crjp-card .crjp-seg button{min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--crji-sub,#a8b0ba);font:600 13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;padding:2px;}
 .crjp-card .crjp-seg button small{font-size:11px;font-weight:600;opacity:.9;}
 .crjp-card .crjp-seg button[aria-pressed="true"]{background:var(--crjp-seg-on,#2a3038);color:var(--crji-ink,#f2f4f7);}
 .crjp-card .crjp-row{display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--crji-line,#262a30);}

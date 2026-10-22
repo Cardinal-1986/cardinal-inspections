@@ -10121,3 +10121,9 @@ Booking an appointment (`adb.create`) or moving its day/time (`adb.update`) call
 
 ## Build 1383: What's New opens only from the menu
 `cr-cl-script` `autoShow()` no longer calls `show()` after a build; it records the new build as seen. What's New opens only via `CardinalChangelog.show` (menu item `data-go="whatsnew"`). **Gate:** `gate_1383.mjs`.
+
+## Build 1384: card / button / heading shapes unified (Option A)
+On Home, Jobs, the client page, Schedule and Invoices & Payments (dark and light): cards 12px corners + 14px padding, rounded buttons 10px (`--btn-rad` token now 10px), card titles and the header title weight 800, heading letter-spacing normal. Exceptions kept: `.actbox` obsidian tiles, `.pipebtn`, tabs, pills, Georgia titles, big money figures. Edits are at the winning declarations (found with `scripts/_cons_find.mjs`), no override layer. **Gate:** `gate_1384.mjs`.
+
+## Build 1385: construction agreements — layers once, no Terms page
+Roofing agreement: number of layers is picked once, in Decking 1A, pre-selected from the inspection; the old "12. Existing Layers" line is gone and Roof Pitch is 12. Roofing, siding and gutter agreements no longer print the separate Terms page (the pointer to the printed T&C master stays in the body). **Gate:** `gate_1385.mjs`.
