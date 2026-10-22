@@ -6,7 +6,7 @@
 python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 ```
 
-`123` `.sql` files at the repo root. **All are applied by hand against Supabase** — nothing in the app or the deploy ever runs one, and `.vercelignore` blanket-excludes `*.sql` so none is ever served.
+`124` `.sql` files at the repo root. **All are applied by hand against Supabase** — nothing in the app or the deploy ever runs one, and `.vercelignore` blanket-excludes `*.sql` so none is ever served.
 
 ## Read this before trusting the order
 
@@ -116,35 +116,36 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 92 | 1368 | `commission_clawback.sql` | 3 | ✅ | — | FEATURES.md |
 | 93 | 1381 | `owner_files.sql` | 6 | ✅ | **⚠ YES** | FEATURES.md |
 | 94 | 1382 | `appointment_reminders.sql` | 2 | ✅ | — | FEATURES.md |
-| 95 | — | `collections_payment_provider.sql` | 5 | ✅ | — | **NOTHING** |
-| 96 | — | `companycam_caption_sample.sql` | 8 | ✅ | — | **NOTHING** |
-| 97 | — | `companycam_projects.sql` | 10 | ✅ | — | FEATURES.md, HANDOFF.md |
-| 98 | — | `delete_empty_test_claims.sql` | 2 | — | **⚠ YES** | **NOTHING** |
-| 99 | — | `design_jobs_achieved.sql` | 2 | ✅ | — | **NOTHING** |
-| 100 | — | `dhrn_partner_name.sql` | 1 | — | — | OPEN_ITEMS.md |
-| 101 | — | `is_staff_policies.sql` | 18 | ✅ | **⚠ YES** | **NOTHING** |
-| 102 | — | `library_counties_entry.sql` | 1 | — | — | **NOTHING** |
-| 103 | — | `materials_cardinal_brands.sql` | 1 | ✅ | — | **NOTHING** |
-| 104 | — | `materials_carvedwood_from_matrix.sql` | 5 | ✅ | **⚠ YES** | **NOTHING** |
-| 105 | — | `materials_mastic_carvedwood.sql` | 1 | — | — | **NOTHING** |
-| 106 | — | `materials_pgpm_trim_coil_gutters.sql` | 3 | ✅ | — | **NOTHING** |
-| 107 | — | `oc_color_wall_fix.sql` | 3 | ✅ | — | **NOTHING** |
-| 108 | — | `oc_colors.sql` | 24 | ✅ | — | **NOTHING** |
-| 109 | — | `oc_colors_from_designer_datasheet.sql` | 2 | — | — | **NOTHING** |
-| 110 | — | `oc_colors_from_duration_datasheet.sql` | 2 | — | — | **NOTHING** |
-| 111 | — | `oc_colors_from_style_board_guide.sql` | 1 | — | — | **NOTHING** |
-| 112 | — | `oc_colors_last_three_from_style_boards.sql` | 1 | — | — | **NOTHING** |
-| 113 | — | `oc_colors_swatch_path.sql` | 3 | ✅ | — | **NOTHING** |
-| 114 | — | `oc_evergreen_mist_from_coty_sheet.sql` | 1 | — | — | **NOTHING** |
-| 115 | — | `revoke_anon_objection_rpcs.sql` | 4 | — | — | **NOTHING** |
-| 116 | — | `showcase_pairs.sql` | 21 | ✅ | — | CLAUDE.md |
-| 117 | — | `studio_findings.sql` | 14 | ✅ | — | BUG_CLASSES.md, OPEN_ITEMS.md |
-| 118 | — | `studio_media.sql` | 42 | ✅ | **⚠ YES** | **NOTHING** |
-| 119 | — | `studio_photos.sql` | 5 | ✅ | — | CLAUDE.md, OPEN_ITEMS.md |
-| 120 | — | `studio_private_objects_rls.sql` | 20 | ✅ | — | CLAUDE.md |
-| 121 | — | `visualizer_materials_seed.sql` | 1 | ✅ | — | **NOTHING** |
-| 122 | — | `visualizer_schema.sql` | 49 | ✅ | **⚠ YES** | **NOTHING** |
-| 123 | — | `workmanship_pairs.sql` | 20 | ✅ | — | CLAUDE.md |
+| 95 | 1387 | `drop_appointments_clear_reminder.sql` | 1 | ✅ | — | build log only |
+| 96 | — | `collections_payment_provider.sql` | 5 | ✅ | — | **NOTHING** |
+| 97 | — | `companycam_caption_sample.sql` | 8 | ✅ | — | **NOTHING** |
+| 98 | — | `companycam_projects.sql` | 10 | ✅ | — | FEATURES.md, HANDOFF.md |
+| 99 | — | `delete_empty_test_claims.sql` | 2 | — | **⚠ YES** | **NOTHING** |
+| 100 | — | `design_jobs_achieved.sql` | 2 | ✅ | — | **NOTHING** |
+| 101 | — | `dhrn_partner_name.sql` | 1 | — | — | OPEN_ITEMS.md |
+| 102 | — | `is_staff_policies.sql` | 18 | ✅ | **⚠ YES** | **NOTHING** |
+| 103 | — | `library_counties_entry.sql` | 1 | — | — | **NOTHING** |
+| 104 | — | `materials_cardinal_brands.sql` | 1 | ✅ | — | **NOTHING** |
+| 105 | — | `materials_carvedwood_from_matrix.sql` | 5 | ✅ | **⚠ YES** | **NOTHING** |
+| 106 | — | `materials_mastic_carvedwood.sql` | 1 | — | — | **NOTHING** |
+| 107 | — | `materials_pgpm_trim_coil_gutters.sql` | 3 | ✅ | — | **NOTHING** |
+| 108 | — | `oc_color_wall_fix.sql` | 3 | ✅ | — | **NOTHING** |
+| 109 | — | `oc_colors.sql` | 24 | ✅ | — | **NOTHING** |
+| 110 | — | `oc_colors_from_designer_datasheet.sql` | 2 | — | — | **NOTHING** |
+| 111 | — | `oc_colors_from_duration_datasheet.sql` | 2 | — | — | **NOTHING** |
+| 112 | — | `oc_colors_from_style_board_guide.sql` | 1 | — | — | **NOTHING** |
+| 113 | — | `oc_colors_last_three_from_style_boards.sql` | 1 | — | — | **NOTHING** |
+| 114 | — | `oc_colors_swatch_path.sql` | 3 | ✅ | — | **NOTHING** |
+| 115 | — | `oc_evergreen_mist_from_coty_sheet.sql` | 1 | — | — | **NOTHING** |
+| 116 | — | `revoke_anon_objection_rpcs.sql` | 4 | — | — | **NOTHING** |
+| 117 | — | `showcase_pairs.sql` | 21 | ✅ | — | CLAUDE.md |
+| 118 | — | `studio_findings.sql` | 14 | ✅ | — | BUG_CLASSES.md, OPEN_ITEMS.md |
+| 119 | — | `studio_media.sql` | 42 | ✅ | **⚠ YES** | **NOTHING** |
+| 120 | — | `studio_photos.sql` | 5 | ✅ | — | CLAUDE.md, OPEN_ITEMS.md |
+| 121 | — | `studio_private_objects_rls.sql` | 20 | ✅ | — | CLAUDE.md |
+| 122 | — | `visualizer_materials_seed.sql` | 1 | ✅ | — | **NOTHING** |
+| 123 | — | `visualizer_schema.sql` | 49 | ✅ | **⚠ YES** | **NOTHING** |
+| 124 | — | `workmanship_pairs.sql` | 20 | ✅ | — | CLAUDE.md |
 
 ## Rebuilding from empty
 

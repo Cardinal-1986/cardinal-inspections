@@ -10130,3 +10130,6 @@ Roofing agreement: number of layers is picked once, in Decking 1A, pre-selected 
 
 ## Build 1386: Download = Save as PDF
 Download on a contract, estimate or report opens the print sheet for that document, named after it, instead of saving a .html file. **Gate:** `gate_1386.mjs`.
+
+## Build 1387: consistency pass on Production, estimate builder, Community
+Cards 12px / 14px padding, buttons 10px (tile buttons 12px), 15px headings 800 — the 1384 rule on three more screens. **Gate:** `gate_1387.mjs`.
