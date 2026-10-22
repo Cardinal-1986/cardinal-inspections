@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-22 build 1384<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-22 build 1385<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -10459,7 +10459,13 @@ function buildEstimate(titleHtml, body, terms){
      was view-only. Strip the footer only when the body carries its own slots;
      the three agreements (which do) keep 781's single-block fix unchanged. */
   if(isDeal){
-    if(body && String(body).indexOf('data-sig') !== -1) out = out.replace(SIGN_FOOTER, '');
+    if(body && String(body).indexOf('data-sig') !== -1){
+      out = out.replace(SIGN_FOOTER, '');
+      /* 1385 (Theo: "The terms shouldn't be there it's messy"): the three construction agreements
+         already point at the printed T&C master beside the cancellation notice, so the separate
+         Terms page only said it again. Drop its heading and bullets; keep the Acceptance note. */
+      out = out.replace(/<h2 class="sec page-break">Terms<\/h2>\s*[\s\S]*?(?=<[d]iv class="note"><b>Acceptance\.<\/b>)/, '');
+    }
     /* ...and it is an Agreement, not an estimate, once it is one. */
     out = out.replace('<b>Acceptance.</b> This estimate is valid through the date shown above. Signature below',
                       '<b>Acceptance.</b> Signature below');
@@ -10659,11 +10665,7 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <div class="soptrow indent"><span class="sopt"><span class="cbx" data-group="rrc">&#9744;</span> 1. Pro Edge</span><span class="sopt"><span class="cbx" data-group="rrc">&#9744;</span> 2. Decoridge</span></div>
 </div>
 
-<div class="specsec"><h3>12. Existing Layers</h3>
-<div class="specline">Number / type of layers <span class="opts" data-opts="layers">&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;</span></div>
-</div>
-
-<div class="specsec"><h3>13. Roof Pitch</h3>
+<div class="specsec"><h3>12. Roof Pitch</h3>
 <div class="specline">Pitch <span class="opts" data-opts="pitch">&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;</span></div>
 </div>
 
@@ -25544,6 +25546,15 @@ function prefillClientInfo(tpl, pr){
   }
   var _ck = parseCkAll(pr);
   collapse('layers', _ck.layers);
+  /* 1385: the roofing agreement asks for layers once now — the Decking 1A dropdown — so the
+     inspection's count pre-selects it ("2 Layers" -> 2, "3+ Layers (Code Violation)" -> 3).
+     data-crsel-value is the existing pre-select hook (891); a saved choice still wins. */
+  (function(lay){
+    var m = /^\s*(\d+)/.exec(String(lay || ''));
+    if(!m) return;
+    tpl = tpl.replace('<select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Layers to remove">',
+      '<select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Layers to remove" data-crsel-value="' + m[1] + '">');
+  })(_ck.layers);
   collapse('pitch', _ck.pitch);
   /* 779: decking is a CHECKBOX ROW now, so its prefill ticks the matching box
      instead of collapsing a text span — same intent as 750's collapse(), which
@@ -45163,6 +45174,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1385, d:'2026-10-22', t:'Tidier construction agreements', s:'The roofing agreement no longer asks for the number of existing layers twice: it is picked once, in Decking (\u201cRemove existing roofing \u2026 layers to roof deck\u201d), and Roof Pitch is now section 12. The roofing, siding and gutter agreements also no longer print a separate Terms page repeating where the printed Terms and Conditions live; that line is still in the agreement beside the cancellation notice. Agreements already saved are unchanged.' },
   { b: 1384, d:'2026-10-22', t:'Cards, buttons and headings match', s:'The main screens now use one shape for each thing. Every card has the same rounded corners and the same space inside, every button has the same corners, and card titles are the same weight. Before, the home screen alone had six different card styles and five button shapes. Colors and sizes are unchanged.' },
   { b: 1383, d:'2026-10-21', t:'No more update pop-up', s:'The What\u2019s New box no longer pops up by itself after the app updates. To see what changed, open the menu and tap What\u2019s New.' },
   { b: 1382, d:'2026-10-21', t:'Appointment reminders by text', s:'Setting an appointment now tells the people who have to be there. When you book one, or move it to a new day or time, you and the job\u2019s rep get a text (plus the usual notification and email) saying what it is, when, and where. On the day, everyone with an appointment gets a text at 8am listing their day, and another about an hour before each appointment starts, with a link for directions. Build days still go to Production as before. Texts only go to the team, never to the client, and none are sent between 9pm and 6am. To get them, your mobile number needs to be in the Team Directory.' },

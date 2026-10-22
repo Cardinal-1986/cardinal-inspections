@@ -300,9 +300,12 @@ chk('no css was added — the .cbx rule is untouched',
    collapse() span on purpose: collapse()'s regex stops at the first </span> and
    cannot survive nested checkbox markup, so decking became data-val tick boxes
    (data-group="rdk") pre-ticked from the inspection. Layers and pitch keep
-   collapse(). 5 spans -> 4. */
-chk('the .opts collapse spans are untouched (4 since 779 — decking became data-val boxes)',
-    (src.match(/data-opts=/g) || []).length === 4);
+   collapse(). 5 spans -> 4.
+   Build 1385 (Theo: "Redundancy on tear off") removed the roofing agreement's
+   "12. Existing Layers" span — layers are picked once in Decking 1A, pre-selected
+   from the inspection. Siding keeps its layers span. 4 -> 3. */
+chk('the .opts collapse spans are untouched (3 since 1385 — roofing layers moved to Decking 1A)',
+    (src.match(/data-opts=/g) || []).length === 3);
 for (const k of ['layers', 'pitch'])
   chk(`collapse() still matches data-opts="${k}"`,
       new RegExp('<span class="opts" data-opts="' + k + '">[^<]*(?:<(?!/span>)[^<]*)*</span>').test(src));
