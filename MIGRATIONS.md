@@ -12,7 +12,7 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 
 **The `shipped at` column is the ordering signal, not the git date.** It is the lowest build number in `cardinal_build_log.md` that names the file. Git cannot answer this: PRs on this repo are **squash-merged**, so a file written across five builds lands in one commit, and dozens of early migrations share a single commit date that has nothing to do with when they ran.
 
-⚠️ **30 file(s) are named by no build-log heading**, so their order is unknown and they are listed last. That is not a grep artifact — checked, only one of them appears anywhere in the log's text. Most are documented in `CLAUDE.md` or `FEATURES.md` instead; the `documented in` column says where. **A file marked `NOTHING` is named by no doc at all** — read it before running it.
+⚠️ **29 file(s) are named by no build-log heading**, so their order is unknown and they are listed last. That is not a grep artifact — checked, only one of them appears anywhere in the log's text. Most are documented in `CLAUDE.md` or `FEATURES.md` instead; the `documented in` column says where. **A file marked `NOTHING` is named by no doc at all** — read it before running it.
 
 ⚠️ **16 file(s) drop, delete or truncate something.** They are marked **DESTRUCTIVE** below. Most are one-off repairs against production data that has since been fixed — **replaying one on a live database destroys current rows.** A fresh-database bootstrap must skip every one of them.
 
@@ -116,13 +116,13 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 92 | 1368 | `commission_clawback.sql` | 3 | ✅ | — | FEATURES.md |
 | 93 | 1381 | `owner_files.sql` | 6 | ✅ | **⚠ YES** | FEATURES.md |
 | 94 | 1382 | `appointment_reminders.sql` | 2 | ✅ | — | FEATURES.md |
-| 95 | — | `collections_payment_provider.sql` | 5 | ✅ | — | **NOTHING** |
-| 96 | — | `companycam_caption_sample.sql` | 8 | ✅ | — | **NOTHING** |
-| 97 | — | `companycam_projects.sql` | 10 | ✅ | — | FEATURES.md, HANDOFF.md |
-| 98 | — | `delete_empty_test_claims.sql` | 2 | — | **⚠ YES** | **NOTHING** |
-| 99 | — | `design_jobs_achieved.sql` | 2 | ✅ | — | **NOTHING** |
-| 100 | — | `dhrn_partner_name.sql` | 1 | — | — | OPEN_ITEMS.md |
-| 101 | — | `drop_appointments_clear_reminder.sql` | 1 | ✅ | — | **NOTHING** |
+| 95 | 1387 | `drop_appointments_clear_reminder.sql` | 1 | ✅ | — | build log only |
+| 96 | — | `collections_payment_provider.sql` | 5 | ✅ | — | **NOTHING** |
+| 97 | — | `companycam_caption_sample.sql` | 8 | ✅ | — | **NOTHING** |
+| 98 | — | `companycam_projects.sql` | 10 | ✅ | — | FEATURES.md, HANDOFF.md |
+| 99 | — | `delete_empty_test_claims.sql` | 2 | — | **⚠ YES** | **NOTHING** |
+| 100 | — | `design_jobs_achieved.sql` | 2 | ✅ | — | **NOTHING** |
+| 101 | — | `dhrn_partner_name.sql` | 1 | — | — | OPEN_ITEMS.md |
 | 102 | — | `is_staff_policies.sql` | 18 | ✅ | **⚠ YES** | **NOTHING** |
 | 103 | — | `library_counties_entry.sql` | 1 | — | — | **NOTHING** |
 | 104 | — | `materials_cardinal_brands.sql` | 1 | ✅ | — | **NOTHING** |
