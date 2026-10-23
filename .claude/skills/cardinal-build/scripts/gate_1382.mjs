@@ -34,7 +34,7 @@ if (!fs.existsSync(ROUTE) || process.argv[3] === '--no-route') {
   const DAY = '2026-10-22';
   const mkDb = () => ({
     appointments: [
-      { id: 'a1', title: 'Inspection', appt_date: DAY, appt_time: '14:00', project_id: 'p1', kind: 'appt', created_by: 'theo@cardinalrenovations.net', reminded_for: null },
+      { id: 'a1', title: 'Inspection', appt_date: DAY, appt_time: '14:00', project_id: 'p1', kind: 'drop',   /* 1403: a personal 'appt' no longer reaches the reps (Theo, pick 1) — gate_1403 B covers it */ created_by: 'theo@cardinalrenovations.net', reminded_for: null },
       { id: 'a2', title: 'Build day', appt_date: DAY, appt_time: '08:00', project_id: 'p2', kind: 'job', created_by: 'joan@cardinalrenovations.net', reminded_for: null },
       { id: 'a3', title: 'Call back', appt_date: DAY, appt_time: null, project_id: null, kind: 'appt', created_by: 'nick@cardinalrenovations.net', reminded_for: null }],
     projects: [
@@ -135,7 +135,7 @@ try {
   const has = await page.evaluate(() => typeof adb === 'object' && typeof adb.create === 'function');
   ok(has, 'fixture: the appointment data layer is reachable');
   if (has) {
-    await page.evaluate(async () => { await adb.create({ title: 'Inspection', appt_date: '2026-10-22', appt_time: '14:00', project_id: 'p1', notes: null, kind: 'appt' }); });
+    await page.evaluate(async () => { await adb.create({ title: 'Inspection', appt_date: '2026-10-22', appt_time: '14:00', project_id: 'p1', notes: null, kind: 'drop' });   /* 1403: see a1 */ });
     await page.waitForTimeout(1200);
     const booked = notes.filter(n => /Appointment booked/.test(n.title || ''));
     const to = booked[0] ? (booked[0].emails || []).slice().sort() : [];

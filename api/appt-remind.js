@@ -76,7 +76,9 @@ function lc(e) { return String(e || '').trim().toLowerCase(); }
 // everyone an appointment belongs to: booker, the job's rep(s), Production on a build day
 function recipientsOf(a, pr) {
   var out = [lc(a.created_by)];
-  if (pr) {
+  // 1403 (Theo, pick 1): texts follow the calendar — a personal 'appt' / 'team' row is private to its creator,
+  // so only job / drop appointments reach the job's reps
+  if (pr && (a.kind === 'job' || a.kind === 'drop')) {
     out.push(lc(pr.sales_rep));
     var asg = (parseCk(pr.checklist).lead || {}).assigned;
     if (Array.isArray(asg)) asg.forEach(function (e) { out.push(lc(e)); });

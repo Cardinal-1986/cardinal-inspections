@@ -1,10 +1,12 @@
 /* gate_1403 — scheduling, notifications, offline.
  *   A  an offline job edit, synced, keeps a teammate's change to another key of the same job
- *   C  the booking alert still reaches the job's rep; an all-day booking promises no hour-before text
+ *   B  appt-remind texts the job's rep about job / drop appointments, never a personal one (Theo, pick 1)
+ *   C  the booking alert reaches the rep for a job appointment, not a personal one; all-day promises no hour-before text
  *   D  booking with no signal says so, not "run the migration"
  *   E  the calendar's Next line skips an appointment already over today; local-day helpers
- * Arg: [index.html] -> negative control (1402 must go RED). */
+ * Args: [index.html] [api/appt-remind.js] -> negative control (1402 must go RED). */
 process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const AR = process.argv[3] || '/home/user/cardinal-inspections/api/appt-remind.js';
 import fs from 'fs';
 const SRC = fs.readFileSync(process.env.APPFILE, 'utf8');
 const { boot } = await import('./gate_1403_lib.mjs');
@@ -40,7 +42,7 @@ const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (
       return { rep: String(pr.sales_rep || '').toLowerCase(), sent };
     });
     const priv = c.sent[0] || { to: [] }, job = c.sent[1] || { to: [], html: '' };
-    ok(c.rep && job.to.includes(c.rep), 'C1 the rep still hears about a booking on their job', JSON.stringify(c.sent.map(x => x.to)));
+    ok(c.rep && !priv.to.includes(c.rep) && job.to.includes(c.rep), 'C1 the rep hears about the job appointment, not the personal one', JSON.stringify(c.sent.map(x => x.to)));
     ok(!/hour before/.test(job.html), 'C2 an all-day booking promises no hour-before text', (job.html.match(/You will[^<]*/) || [''])[0]);
 
     const e = await page.evaluate(() => {
@@ -51,6 +53,34 @@ const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (
     });
     ok(/Tomorrow/.test(e) && !/Already over/.test(e), 'E1 the Next line skips one already over today', e);
   } finally { await browser.close(); }
+}
+
+/* B — the cron route, stubbed */
+{
+  process.env.CRON_SECRET = 'x'; process.env.SUPABASE_SERVICE_ROLE_KEY = 'stub'; process.env.TWILIO_ACCOUNT_SID = 'ACtest'; process.env.TWILIO_AUTH_TOKEN = 't'; process.env.TWILIO_FROM = '+19375550000';
+  const mod = await import(AR);
+  const run = (nowISO, appts) => {
+    const sms = [];
+    globalThis.fetch = async (url, o = {}) => {
+      const u = String(url); const J = x => ({ ok: true, status: 200, json: async () => x, text: async () => JSON.stringify(x) });
+      if (u.includes('/rest/v1/appointments?appt_date')) return J(appts);
+      if (u.includes('/rest/v1/appointments?id=eq.')) return J([{ id: 1 }]);
+      if (u.includes('/rest/v1/projects')) return J([{ id: 'P1', name: 'Sample Client', address: '1 Main St', sales_rep: 'rep@cardinalrenovations.net', checklist: '{}' }]);
+      if (u.includes('/rest/v1/team_profiles')) return J([{ email: 'theo@cardinalrenovations.net', phone: '9375550101' }, { email: 'rep@cardinalrenovations.net', phone: '9375550102' }]);
+      if (u.includes('twilio')) { const p = new URLSearchParams(o.body); sms.push(p.get('To')); return J({}); }
+      return J([]);
+    };
+    const RD = Date, fixed = new RD(nowISO).getTime();
+    globalThis.Date = class extends RD { constructor(...a) { if (a.length === 0) super(fixed); else super(...a); } static now() { return fixed; } };
+    return new Promise(res => { const ro = { code: 0, status(c) { this.code = c; return this; }, json(b) { globalThis.Date = RD; res(sms); } };
+      mod.default({ headers: { authorization: 'Bearer x' }, query: {} }, ro); });
+  };
+  const mk = kind => [{ id: 1, title: 'Sample', appt_date: '2026-10-23', appt_time: '14:00:00', project_id: 'P1', kind, created_by: 'theo@cardinalrenovations.net', reminded_for: null }];
+  const REP = '+19375550102';
+  const privAm = await run('2026-10-23T12:00:00Z', mk('appt')), privPm = await run('2026-10-23T17:00:00Z', mk('appt'));
+  const dropAm = await run('2026-10-23T12:00:00Z', mk('drop'));
+  ok(!privAm.includes(REP) && !privPm.includes(REP), 'B1 no morning or hour-ahead text to the rep for a personal appointment', JSON.stringify([privAm, privPm]));
+  ok(dropAm.includes(REP), 'B2 the rep is still texted about a drop appointment on their job', JSON.stringify(dropAm));
 }
 
 /* D, E2 — source */
