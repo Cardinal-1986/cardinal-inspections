@@ -10133,3 +10133,9 @@ Download on a contract, estimate or report opens the print sheet for that docume
 
 ## Build 1387: consistency pass on Production, estimate builder, Community
 Cards 12px / 14px padding, buttons 10px (tile buttons 12px), 15px headings 800 — the 1384 rule on three more screens. **Gate:** `gate_1387.mjs`.
+
+## Build 1388: deposit pre-fill, PDF names, honest contract note
+Record payment opened as a deposit starts at the job's deposit; Download names the PDF after the document; "→ Contract" no longer claims the 3-Day Notice. **Gate:** `gate_1388.mjs`.
+
+## Build 1389: → Contract picks the trade agreement
+From an estimate, "→ Contract" makes the Roofing / Siding / Gutter Construction Agreement for the estimate's trade, asking when it is mixed or unclear; the general service contract stays a choice. **Gate:** `gate_1389.mjs`.
