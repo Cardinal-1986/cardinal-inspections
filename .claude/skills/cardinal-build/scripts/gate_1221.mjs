@@ -114,7 +114,7 @@ const R = await page.evaluate(async () => {
         auth: { getUser: async () => ({ data: { user: { email: 'theo@cardinalrenovations.net' } } }) },
         from: () => ({ insert: async () => ({ data: null, error: null }),
                        select: () => ({ eq: () => ({ single: async () => ({ data: { storage_path: 'projects/p9/1-aaaaaaa.jpg' }, error: null }) }) }),
-                       delete: () => ({ eq: async () => ({ error: null }) }) })
+                       delete: () => ({ eq: () => { const p = Promise.resolve({ error: null }); p.select = async () => ({ data: [{ id: 'x' }], error: null }); return p; } }) })   /* 1404: like supabase-js, .delete().eq().select() returns the removed rows */
       });
       const cam = await cameraJpeg(1600, 1200);
       const d = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(cam); });

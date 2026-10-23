@@ -10181,3 +10181,6 @@ Full-size Pay / Sign bars on every estimate-style document on a phone; no "Loadi
 
 ## Build 1403: offline edits merge; honest offline booking; local-day dates
 Offline checklist edits replay only their own keys onto the server's copy; reps are told only about job / drop appointments on their jobs, not personal ones (Theo, pick 1); no-signal booking says so; all-day bookings promise no hour-before text; punch map Today, crew expiry, calendar Next and N-day reminders count local calendar days. **Gate:** `gate_1403.mjs`.
+
+## Build 1404: photo saves and deletes that can't leave dead tiles; labelled quick-inspection shots; estimate cents
+Photo insert retries keep their file; deletes remove the row first; album batches skip a bad file and say so; quick-inspection shots carry their label and lost shots are named on resume; estimate lines are cents, discounts clamped, photo edits copied, Valid through local. **Gate:** `gate_1404.mjs`.

@@ -4212,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1403<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1404<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -11586,13 +11586,16 @@ var photoDb = {
         created_by: user ? user.email : null
       }, extra || {}));
       if(r.error){
-        if(spath){ try{ await sb.storage.from('photos').remove([spath]); }catch(e3){} }
-        /* storage_path column may not exist yet: retry without it */
+        /* storage_path column may not exist yet: retry without it. 1404: the retry's `data` IS the uploaded file,
+           so the file stays until the retry has failed too — removing it first left a row pointing at nothing. */
         var r2 = await sb.from('project_photos').insert(Object.assign({
           project_id: projectId, data: store,
           created_by: user ? user.email : null
         }, extra || {}));
-        if(r2.error) throw r2.error;
+        if(r2.error){
+          if(spath){ try{ await sb.storage.from('photos').remove([spath, photoThumbPathOf(spath)]); }catch(e3){} }
+          throw r2.error;
+        }
       }
       return;
     }
@@ -11603,15 +11606,20 @@ var photoDb = {
   },
   remove: async function(id){
     if(TEAM){
+      /* 1404: the ROW goes first. Removing the file first left a row pointing at nothing whenever the delete
+         was refused. */
+      var sp = null;
       try{
         var row = await sb.from('project_photos').select('storage_path').eq('id', id).single();
-        if(row.data && row.data.storage_path){
-          /* 1221: the twin goes with it; removing a twin that was never made is a no-op */
-          await sb.storage.from('photos').remove([row.data.storage_path, photoThumbPathOf(row.data.storage_path)].filter(Boolean));
-        }
+        sp = row.data && row.data.storage_path || null;
       }catch(e4){}
-      var r = await sb.from('project_photos').delete().eq('id', id);
+      var r = await sb.from('project_photos').delete().eq('id', id).select('id');
       if(r.error) throw r.error;
+      if(Array.isArray(r.data) && !r.data.length) throw new Error('This photo could not be deleted \u2014 you may not have permission.');
+      if(sp){
+        /* 1221: the twin goes with it; removing a twin that was never made is a no-op */
+        try{ await sb.storage.from('photos').remove([sp, photoThumbPathOf(sp)].filter(Boolean)); }catch(e5){}
+      }
       return;
     }
     glsSave(glsLoad().filter(function(x){ return x.id !== id; }));
@@ -15223,16 +15231,22 @@ async function addGalleryFiles(files, metas){
   }
   var take = Array.prototype.slice.call(files, 0, room);
   var skipped = files.length - take.length;
+  /* 1404: one unreadable file no longer stops the batch — each is tried, and the status says what happened */
+  var added = 0, failed = [];
   for(var i = 0; i < take.length; i++){
     status.textContent = 'Adding photo ' + (i+1) + ' of ' + take.length + '\u2026';
     try{
       var dataUrl = await resizeImageFile(take[i], 1600, 0.82);
       await photoDb.add(currentProject.id, dataUrl, metas && metas[i]);
+      added++;
     }catch(err){
-      status.textContent = 'Upload failed: ' + (err.message || err);
-      await loadGallery();
-      return;
+      failed.push((take[i] && take[i].name ? take[i].name + ': ' : '') + (err.message || err));
     }
+  }
+  if(failed.length){
+    status.textContent = 'Added ' + added + ' of ' + take.length + '. ' + failed.length + ' could not be added \u2014 ' + failed.join(' \u00b7 ');
+    await loadGallery();
+    return;
   }
   status.textContent = skipped > 0
     ? ('Added ' + take.length + ' \u2014 ' + skipped + ' skipped (' + GAL_MAX + '-photo limit).')
@@ -21989,6 +22003,7 @@ function qiSave(){
     localStorage.setItem('qi_session', JSON.stringify({
       projectId: qi.projectId, projectName: qi.projectName, addr: qiAddr,
       startedAt: qi.startedAt, up: qi.photos.filter(function(p){ return p.data && p.uploaded; }).length,
+      lost: qi.photos.filter(function(p){ return p.data && !p.uploaded; }).length,   /* 1404: shots not yet saved */
       labels: qi.photos.filter(function(p){ return p.data; }).map(function(p){ return p.label || ''; }),
       notes: qi.photos.filter(function(p){ return p.note; }).map(function(p){ return p.note; })
     }));
@@ -22002,6 +22017,7 @@ function qiRestore(){
     qi.startedAt = s.startedAt; qiAddr = s.addr || '';
     (s.notes || []).forEach(function(n2){ qi.photos.push({ note: n2, at: qi.startedAt, restored: true }); });
     qi._restoredUp = s.up || 0;
+    qi._restoredLost = s.lost || 0;
     qi._restoredLabels = s.labels || [];
     return true;
   }catch(e){ return false; }
@@ -22028,6 +22044,7 @@ function openQuickInsp(allowResume){
       (qiAddr ? ' &nbsp;\u00b7&nbsp; ' + esc(qiAddr) : '');
     qiBubble('ai', '\u21BB Resumed your inspection for <b>' + esc(qi.projectName) + '</b>' +
       (qi._restoredUp ? ' \u2014 ' + qi._restoredUp + ' photo(s) already uploaded and safe in the gallery.' : '.') +
+      (qi._restoredLost ? ' <b>' + qi._restoredLost + ' photo(s) had not uploaded when the app closed and were not kept \u2014 retake them.</b>' : '') +   /* 1404 */
       ' Keep shooting, or hit \u2713 Finish to wrap up.');
     renderQiChips();
     return;
@@ -22331,7 +22348,7 @@ async function qiUpload(idx){
   p.uploading = true;
   var tag = document.getElementById('qiup' + idx);
   try{
-    await photoDb.add(qi.projectId, p.data);
+    await photoDb.add(qi.projectId, p.data, p.label ? { caption: p.label } : undefined);   /* 1404: the shot label */
     p.uploaded = true;
     if(tag){ tag.textContent = '\u2713'; tag.style.color = '#2e7d32'; }
     qiSave();
@@ -22412,7 +22429,7 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
     var pending = qi.photos.map(function(p, i2){ return p.data && !p.uploaded && !p.uploading ? i2 : -1; }).filter(function(i2){ return i2 >= 0; });
     for(var i = 0; i < pending.length; i++){
       qiBubble('ai', 'Saving remaining photo ' + (i+1) + ' of ' + pending.length + '\u2026');
-      await photoDb.add(pid, qi.photos[pending[i]].data);
+      await photoDb.add(pid, qi.photos[pending[i]].data, qi.photos[pending[i]].label ? { caption: qi.photos[pending[i]].label } : undefined);   /* 1404 */
       qi.photos[pending[i]].uploaded = true;
     }
     var noteLines = qi.photos.filter(function(p){ return p.note; })
@@ -45269,6 +45286,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1404, d:'2026-10-23', t:'Photos, quick inspections and estimates', s:'A photo whose save hiccuped no longer turns into a broken tile while saying it was added, and deleting a photo can no longer leave an empty tile behind. Adding several photos to the album keeps going past one bad file and says which failed. Quick-inspection photos carry their shot label, and if the app closes before some photos upload, it tells you to retake them. On estimates, the line amounts add up exactly to the subtotal, a discount can\u2019t be negative or larger than the subtotal, editing a copy no longer changes the original\u2019s photo captions, and Valid through no longer runs a day late in the evening.' },
   { b: 1403, d:'2026-10-23', t:'Offline edits, appointment texts and dates', s:'A change made to a job with no signal no longer wipes out a teammate\u2019s changes to the same job when your phone syncs. Reps are told about the job and drop-off appointments on their jobs, not your personal ones (the texts now follow the calendar). Booking an appointment with no signal says so instead of asking for a database fix. All-day appointments no longer promise an hour-before text. The punch map\u2019s Today, crew document expiry, the calendar\u2019s Next line and reminders set across the clock change now count days correctly.' },
   { b: 1402, d:'2026-10-23', t:'What the client sees', s:'On a phone, the Pay and Accept & Sign buttons on invoices and estimates are full size again (they could shrink to a sliver). Invoices no longer print a stray \u201cLoading\u2026\u201d. A Community invoice or agreement no longer prints an empty contact line or the occupant\u2019s email and phone under the partner\u2019s name. Printing from the client\u2019s link keeps the Terms heading and leaves the pay bar off the paper. Invoice numbers lose the doubled \u201c#\u201d. A client coming back from paying sees a thank-you instead of the Pay button. Share links made on older iPhones open again.' },
   { b: 1401, d:'2026-10-23', t:'Insurance and partner money adds up', s:'The claim card, claim list and claim page now count the checks you record on the job with Record payment, so a paid claim no longer reads $0 received. Deductibles due and Owner Review count a deductible the homeowner paid. Owed by carriers no longer counts the deductible as the carrier\u2019s money, and the carrier chase list shows what is actually left. Money In & Commissions is readable on insurance jobs. Invoices & AR greets the partner, not the occupant, on a Community invoice. Community Partners shows what each partner still owes after payments, with Habitat first.' },
@@ -51629,7 +51647,7 @@ return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
 function todayISO(offsetDays){
 var d = new Date();
 if(offsetDays) d.setDate(d.getDate() + offsetDays);
-return d.toISOString().slice(0, 10);
+return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);   /* 1404: the local day */
 }
 function fmtDateShort(iso){
 if(!iso) return '';
@@ -51977,10 +51995,12 @@ var subtotal = 0;
 var amt = l.flat === true
 ? (Number(l.amount) || 0)
 : (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
+amt = Math.round(amt * 100) / 100;   /* 1404: each line is cents, so the printed lines add up to the printed subtotal */
 l.amount = amt;
 subtotal += amt;
 });
-var discount = Number(s.discount) || 0;
+subtotal = Math.round(subtotal * 100) / 100;
+var discount = Math.max(0, Math.min(subtotal, Number(s.discount) || 0));   /* 1404: never negative, never past the subtotal */
 var total = Math.max(0, subtotal - discount);
 var pct = Math.max(0, Math.min(100, Number(s.deposit_pct) || 0));
 var deposit = total * pct / 100;
@@ -52058,7 +52078,7 @@ var o = Object.assign({ _lid: newLineId() }, l);
 if(existing.itemized === false && o.flat == null) o.flat = true;
 return o;
 }),
-photos         : (existing.photos || []).slice(),
+photos         : (existing.photos || []).map(function(p){ return Object.assign({}, p); }),   /* 1404: copies, so an edit never reaches the saved row's objects */
 itemized       : existing.itemized !== false,
 discount       : Number(existing.discount) || 0,
 deposit_pct    : existing.deposit_pct != null ? Math.max(0, Math.min(100, Number(existing.deposit_pct) || 0)) : 30,
@@ -52969,7 +52989,7 @@ function duplicateEstimate(){
     line_items     : (s.lines || []).map(function(l){
       var o = {}; Object.keys(l).forEach(function(k){ if(k !== '_lid') o[k] = l[k]; }); return o;
     }),
-    photos         : (s.photos || []).slice(),
+    photos         : (s.photos || []).map(function(p){ return Object.assign({}, p); }),   /* 1404: the duplicate's own photos */
     itemized       : s.itemized !== false,
     discount       : s.discount,
     deposit_pct    : s.deposit_pct,
