@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-22 build 1390<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1391<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -18899,7 +18899,7 @@ function pickAndUploadInsDoc(typeKey){
          money sat unextracted for a day. Two controls on one page mention
          the scope; only the Scope of Loss card reads one. Offer the read
          right here rather than leaving the wrong button silently wrong. */
-      if(typeKey === 'scope_of_loss' && typeof routeScopeToReader === 'async function'){
+      if(typeKey === 'scope_of_loss' && typeof routeScopeToReader === 'function'){
         if(await crAsk('Filed.\n\nRead it now and fill in the carrier, claim number and the RCV/ACV figures?\n\nFiling alone does not update the claim.')){
           await routeScopeToReader(f, null);
         }
@@ -43865,7 +43865,7 @@ return LAST;
 };
 function integrate(){
 var A = window.CardinalAdminHealth;
-if(!A || typeof A.check !== 'async function') return false;
+if(!A || typeof A.check !== 'function') return false;
 if(A.__crRosterHooked) return true;
 A.__crRosterHooked = true;
 var origCheck = A.check;
@@ -44128,7 +44128,7 @@ window.CardinalDupeLeads = { run: runDupeLeads, results: function(){ return DUPE
 print: printer('Dupe Leads', function(){ return DUPES_LAST; }) };
 function integrate(){
 var A = window.CardinalAdminHealth;
-if(!A || typeof A.check !== 'async function') return false;
+if(!A || typeof A.check !== 'function') return false;
 if(A.__crExtraHooked) return true;
 A.__crExtraHooked = true;
 var origCheck = A.check;
@@ -45183,6 +45183,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1391, d:'2026-10-23', t:'Thirteen switches that were stuck off', s:'A check used in thirteen places could never come out true, so each thing behind it quietly never ran. Fixed: uploading a photo to OC Colors (it always said image tools were unavailable); the \u201cRead it now?\u201d offer after filing a Scope of Loss; the photo gallery and the client list redrawing after you add photos, save a caption, reassign or archive; the \u2b07 Device button in the photo editor on CompanyCam photos; and ticking a punch item on Production, which now goes through the same save as everywhere else \u2014 including holding it when there is no signal. On the Supplement Desk, Draft letter and the photo list no longer fail with \u201cnot defined\u201d.' },
   { b: 1390, d:'2026-10-22', t:'Scan documents', s:'Scan document on a job\u2019s Documents page is a real scanner now. After the photo, the app finds the page\u2019s edges (drag any red corner to fix them), straightens the page flat, and cleans it up \u2014 Document whitens the paper and lifts shadows, or pick Gray or Color. Tap Add page for the next page, then Save PDF: every page goes into one PDF on the job. The original photos are not kept.' },
   { b: 1389, d:'2026-10-22', t:'\u2192 Contract makes the right agreement', s:'Making a contract from an estimate now makes the Roofing, Siding or Gutter Construction Agreement \u2014 the one with the specifications page, the signature boxes and the Right to Cancel \u2014 instead of the general service contract. It reads the trade off the estimate; if the estimate covers more than one trade, or none, it asks which. The estimate\u2019s scope goes into the Notes box, and the price and deposit are filled in. The general service contract is still one of the choices.' },
   { b: 1388, d:'2026-10-22', t:'Deposit amount, PDF names, contract note', s:'Recording a deposit now starts at the job\u2019s deposit (from its estimate) instead of the whole balance; tap Final to switch to the balance. A PDF saved with Download is named after the document instead of \u201cCardinal document\u201d. And making a contract from an estimate no longer says the 3-Day Notice is included \u2014 that general contract does not carry it.' },
@@ -46854,7 +46855,7 @@ if(r.error) fail++; else ok++;
 }
 crTell('Reassigned ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
 exitMode();
-if(typeof window.reload === 'async function') window.reload();
+if(typeof window.reload === 'function') window.reload();
 };
 bar.querySelector('[data-act="archive"]').onclick = async function(){
 if(!await crAsk('Archive ' + selected.size + ' client(s)? They\'ll be hidden from the main list.')) return;
@@ -46870,7 +46871,7 @@ if(r.error) fail++; else ok++;
 }
 crTell('Archived ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
 exitMode();
-if(typeof window.reload === 'async function') window.reload();
+if(typeof window.reload === 'function') window.reload();
 };
 var delBtn = bar.querySelector('[data-act="delete"]');
 if(delBtn) delBtn.onclick = async function(){
@@ -49961,7 +49962,7 @@ window.galChecked[p.id] = true;
 added = true;
 }
 });
-if(added && typeof window.renderGallery === 'async function') window.renderGallery();
+if(added && typeof window.renderGallery === 'function') window.renderGallery();
 }
 /* 708: api/caption REJECTS anything that is not a base64 data: URL — so for
    storage-backed photos the AI caption has answered 400 since the bucket went
@@ -50389,7 +50390,7 @@ crTell('Save failed: ' + (e.message || e));
 return;
 }
 closeCapModal();
-if(typeof window.renderGallery === 'async function') window.renderGallery();
+if(typeof window.renderGallery === 'function') window.renderGallery();
 };
 capModal.querySelector('[data-act="ai"]').onclick = async function(){
 var aiBtn = capModal.querySelector('[data-act="ai"]');
@@ -51075,7 +51076,7 @@ function saveLabel(){ return opts.saveLabel || 'Save'; }
    closing after the first would make it two trips. */
 async function extra(){
 if(!photo || !baseImg) return;
-if(!opts.extra || typeof opts.extra.run !== 'async function') return;
+if(!opts.extra || typeof opts.extra.run !== 'function') return;
 var b = el.querySelector('[data-act="extra"]');
 var was = b.textContent;
 b.disabled = true; b.textContent = 'Working\u2026';
@@ -52438,7 +52439,7 @@ var r = await fetch(url);
 if(!r.ok) throw new Error('photo read failed (' + r.status + ')');
 var blob = await r.blob();
 var bmp, objUrl = null;
-if(typeof createImageBitmap === 'async function'){
+if(typeof createImageBitmap === 'function'){
 bmp = await createImageBitmap(blob);
 }else{
 objUrl = URL.createObjectURL(blob);
@@ -57896,7 +57897,7 @@ async function toggle(it){
      losing who actually finished the work.
      The shared layer owns the flip. Do not pre-mutate before delegating. */
   var P = window.CardinalPunch;
-  if(P && typeof P.toggle === 'async function'){
+  if(P && typeof P.toggle === 'function'){
     try{
       var res = await P.toggle(it.id);
       if(res && res.ok === false) throw new Error(res.error || 'write refused');
@@ -61004,7 +61005,7 @@ if(th){
 var d = document.createElement('div');
 d.className = 'pp-none';
 /* 612: the same outcome sentence the Communications thread uses. */
-d.textContent = (typeof window.notifyOutcomeText === 'async function')
+d.textContent = (typeof window.notifyOutcomeText === 'function')
   ? window.notifyOutcomeText(_r, to)
   : ('\uD83D\uDD14 Notified ' + to.join(', '));
 if(!(_r && (_r.sent > 0 || _r.mailed > 0))) d.style.color = '#C8202E';
@@ -61216,7 +61217,10 @@ img.src = url;
 });
 }
 function wrap(){
-if(typeof window.readScopeOfLoss !== 'async function') return false;
+/* 1391: RETIRED. This guard compared typeof against the string async-function, which typeof never returns, so
+   the wrapper below has never once been installed. 657's routeScopeToReader() now runs prepare() and
+   the storage route itself; installing this would prepare every scope twice. Returning true ends the retry. */
+return true;
 if(window.readScopeOfLoss.__crFixed) return true;
 var orig = window.readScopeOfLoss;
 var wrapped = async function(file){
@@ -83142,7 +83146,7 @@ function closeShot(){
    caller treats null as "fail loudly rather than upload raw". */
 async function shrinkOne(file, name){
   var S = window.CardinalShowcase;
-  if(!S || typeof S.shrink !== 'async function' || !S.renditions || !S.renditions[name]) return null;
+  if(!S || typeof S.shrink !== 'function' || !S.renditions || !S.renditions[name]) return null;
   return await S.shrink(file, S.renditions[name].max, S.renditions[name].q);
 }
 async function shrinkFor(file){

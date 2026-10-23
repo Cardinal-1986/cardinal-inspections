@@ -10142,3 +10142,6 @@ From an estimate, "→ Contract" makes the Roofing / Siding / Gutter Constructio
 
 ## Build 1390: Scan document — crop, flatten, clean, multi-page PDF
 Job Documents ▸ Scan document opens an in-app scanner (`window.CardinalScan.open(file, onPdf)`): auto edges + draggable corners, perspective flatten, Document/Gray/Color, rotate, Add page, Save PDF → one PDF filed through `addJobFiles`. **Gate:** `gate_1390.mjs`.
+
+## Build 1391: stuck-off switches fixed
+Thirteen `typeof … === 'async function'` guards (always false) fixed or retired; OC Colors upload, Scope-of-Loss read offer, gallery/list redraws, photo-editor Device button, Production punch tick and Admin Health extensions work again. Supplement Desk photo mode and Draft letter no longer 500. **Gate:** `gate_1391.mjs`.

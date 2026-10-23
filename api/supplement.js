@@ -457,7 +457,7 @@ export default async function handler(req, res) {
           'Name what these photographs show that a supplement would have to ask for. ' +
           'Work ONLY from what is visible. If you cannot see it, do not list it.\n\n' +
           'Measurements on file: ' + measLine + '\n\n' +
-          'Recognized items, and the ONLY things you may cite:\n' + packLines + '\n\n' +
+          'Recognized items, and the ONLY things you may cite:\n' + packMenu + '\n\n' +
           'HARD RULES:\n' +
           '- pack_id must be an id from the list above or null. NEVER write a code section, ' +
           'a statute or a standard of your own — the citation is attached server-side from ' +
@@ -654,7 +654,9 @@ export default async function handler(req, res) {
          letter and the flag would be ignored inside a week. */
       const norm = t => String(t).toUpperCase().replace(/^(RCO|OBC|OAC|ORC)\s+/, '').replace(/[\s]+/g, '');
       const allowed = new Set();
-      items.forEach(i => {
+      /* 1391: `items` is a const inside the draft branch above and is out of scope here — this was a
+         ReferenceError on every letter, after the model had already been paid for. */
+      (Array.isArray(body.items) ? body.items.filter(i => i && i.item) : []).forEach(i => {
         const e = i.pack_id ? PACK_BY_ID[i.pack_id] : null;
         if (e && e.citation) allowed.add(norm(e.citation));
       });
