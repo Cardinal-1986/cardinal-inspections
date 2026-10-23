@@ -4212,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1398<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1399<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -16597,7 +16597,9 @@ document.getElementById('jdScanInput').addEventListener('change', function(){
   addJobFiles(named);
 });
 document.getElementById('jdFileInput').addEventListener('change', function(){
-  addJobFiles(this.files); this.value = '';
+  /* 1399: addJobFiles loops across awaits; clearing the input emptied the live FileList after file one */
+  var fl = Array.prototype.slice.call(this.files || []); this.value = '';
+  if(fl.length) addJobFiles(fl);
 });
 document.getElementById('jdMount').addEventListener('click', async function(e){
   var op = e.target.closest('[data-jdopen]');
@@ -28612,7 +28614,8 @@ function refreshSigBtn(){
   var doc = frame && frame.contentDocument;
   var b = document.getElementById('sigBtn');
   if(!b) return;
-  b.style.display = (doc && (doc.querySelector('.sign') || doc.querySelector('[data-sig]'))) ? 'inline-block' : 'none';
+  /* 1399: a builder estimate's block is .ac-sign */
+  b.style.display = (doc && (doc.querySelector('.sign') || doc.querySelector('.ac-sign') || doc.querySelector('[data-sig]'))) ? 'inline-block' : 'none';
 }
 /* 1134: a published estimate document is a rendering of a live estimates row —
    the builder is one tap away instead of back-out-and-hunt. Shown only for
@@ -28889,9 +28892,10 @@ document.getElementById('sigApply').addEventListener('click', async function(){
       return;
     }
   }
-  var cols = doc ? doc.querySelectorAll('.sign .col') : [];
+  var cols = doc ? doc.querySelectorAll('.sign .col, .ac-sign .col') : [];
   if(!cols.length){ sigModal.style.display = 'none'; return; }
-  var col = cols[cols.length - 1];
+  /* 1399: the CLIENT's column — on an estimate the last one is Cardinal's representative */
+  var col = Array.prototype.filter.call(cols, function(c){ var l = c.querySelector('.lbl'); return l && /^\s*client acceptance/i.test(l.textContent || ''); })[0] || cols[cols.length - 1];
   var line = col.querySelector('.line');
   if(line){
     line.innerHTML = '';
@@ -45209,6 +45213,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1399, d:'2026-10-23', t:'Fixes from a day as a rep', s:'Uploading several files at once to a job\u2019s Documents keeps all of them (it kept only the first). Emailing an estimate marks it Sent however you send it. A builder estimate can be signed in person, on the client\u2019s line. Admin-only menu items no longer show to reps on a phone. Home\u2019s Gone quiet lists jobs that have sat too long, and the home cards fill in on first load. Publishing an estimate or making a contract opens the document in front of the builder instead of behind it.' },
   { b: 1398, d:'2026-10-23', t:'Messages that say what happened', s:'Signing an estimate in person only says \u201caccepted \u2014 it can be invoiced\u201d when it really was; when the office has to accept it, it says that instead. A tag notification sent at night says the email goes out at 7:00 am. The Team Directory\u2019s emails, \u201cno number\u201d and head count are easier to read, and its edit buttons are bigger.' },
   { b: 1397, d:'2026-10-23', t:'Polish across the app', s:'The Payments page\u2019s Paid / Balance due line is readable in dark mode (it was nearly invisible). Client names next to page titles and the Appointments and Tasks intros are brighter. System Health\u2019s heading reads, and it says \u201c1 row\u201d. The Settings rows line their arrows up on the right. The Inspections list no longer lists contracts and invoices. On a phone, the Company Documents guide rows, Quick Inspection\u2019s address search and an estimate\u2019s line prices fit. The \u2726 Ask button steps aside on screens with their own buttons at the bottom \u2014 estimates, documents, messages, Quick Inspection, the Library and the scanner.' },
   { b: 1396, d:'2026-10-23', t:'Three fixes from the audit', s:'The Supplement Desk reads Scope of Loss documents filed since early October again \u2014 it said the document had no stored file. Advancing a job to Completed when its install photos are missing no longer offers to text the homeowner a Google review request. Sales Numbers counts payments collected on the 1st of the month in This month.' },
@@ -46996,7 +47001,8 @@ return '';
 function isAdmin(){ return ADMIN_EMAILS.indexOf(currentEmail()) !== -1; }
 function hideOpt(dataNav){
 var el = document.querySelector('#navMenu .navopt[data-nav="' + dataNav + '"]');
-if(el) el.style.display = 'none';
+/* 1399: the phone drawer's display:flex !important beat this inline none — the attribute carries it */
+if(el){ el.style.display = 'none'; el.setAttribute('data-cradmin', '1'); }
 }
 function findSec(labelText){
 var found = null;
@@ -53821,8 +53827,15 @@ try{ window.auditLog('estimate_publish',
 }
 return docId;
 }
+/* 1399: the builder (z 9500) sat over the document editor (z 150) — close it first, and confirm */
+function crCloseEstBuilder(){
+try{ if(window.CardinalEstimates && typeof window.CardinalEstimates.close === 'function') window.CardinalEstimates.close(); }catch(_){}
+var v = document.getElementById('cr-est-view'); if(v && v.classList.contains('open')) v.classList.remove('open');
+}
+/** @type {any} */ (window).crCloseEstBuilder = crCloseEstBuilder;
 function openDoc(docId){
 if(typeof window.openEditor === 'function'){
+crCloseEstBuilder();
 try{ window.openEditor(docId); return true; }
 catch(e){ console.warn('[epub] openEditor threw:', e); }
 }
@@ -54384,6 +54397,7 @@ if(!docId){ return; }
 try{
 document.dispatchEvent(new CustomEvent('cr-est-published', { detail: {
 id: est.id, docId: docId, prevStatus: est.status || 'draft', project: projectBefore,
+emailNext: !!_emailNext,   /* 1399: the email sheet is already opening — no second "send it?" over it */
 } }));
 }catch(_){ }
 if(openDoc(docId)){ if(_emailNext) emailWhenOpen(docId); }
@@ -54649,6 +54663,7 @@ if(typeof window.reload === 'function'){
 try{ await window.reload(); }catch(_){}
 }
 if(typeof window.openEditor === 'function'){
+try{ var _wc = /** @type {any} */ (window); if(typeof _wc.crCloseEstBuilder === 'function') _wc.crCloseEstBuilder(); }catch(_){}   /* 1399 */
 try{ await window.openEditor(docId); }catch(_){}
 }
 var _tr = _lastKind && _lastKind !== 'service' ? (window.CONTRACT_TYPES || {})[_lastKind] : null;
@@ -54657,7 +54672,7 @@ crTell((_tr ? _tr.label + ' Construction Agreement' : 'Contract') + ' created fr
 'client sign \u2014 in person or by share link.' +
 (_tr ? ' The Right to Cancel and the printed Notice of Cancellation go with this agreement.'
      : '\n\nThis is the general Service Contract and it does not carry the Notice of Cancellation. ' +
-       'For a sale made at the home, use the Roofing, Siding or Gutter Construction Agreement.'));
+       'For a sale made at the home, use the Roofing, Siding or Gutter Construction Agreement.'), 'ok');   /* 1399: a success, not a red error */
 }catch(e){
 crTell('Could not generate contract: ' + (e.message || e));
 }finally{
@@ -54801,7 +54816,33 @@ var d = ev.detail || {};
 if(!d.project || !d.project.id || !d.id) return;
 /* same gate the old publish hook had: only a draft gets the Sent offer */
 if(d.prevStatus !== 'draft') return;
+if(d.emailNext) return;   /* 1399: the standing cr-doc-sent listener below records that send */
 setTimeout(function(){ markSentAfterPublish(d); }, 900);
+});
+/* 1399: ONE standing listener. However a published estimate's document goes out — Email to client from the
+   document, Publish-with-Email, a send days later — the estimate it came from becomes Sent. Draft only, and
+   .select() so a refused UPDATE reads as a refusal. The chooser path (markSentAfterPublish) does its own
+   write and toast, so this stands down for a document it is waiting on. */
+var _essAwaiting = {};
+document.addEventListener('cr-doc-sent', function(ev){
+var _evd = /** @type {any} */ (ev);
+var docId = _evd && _evd.detail && _evd.detail.docId;
+if(docId == null || _essAwaiting[String(docId)] || !window.supa) return;
+/* only a document that IS an estimate's — an invoice or contract going out is not this */
+var _w = /** @type {any} */ (window);
+var _row = (_w.cacheRows || []).filter(function(/** @type {any} */ x){ return String(x.id) === String(docId); })[0];
+if(!_row || !(typeof _w.isEstimateDoc === 'function' ? _w.isEstimateDoc(_row) : (typeof _w.isEstimateTitle === 'function' && _w.isEstimateTitle(_row.title)))) return;
+Promise.resolve(window.supa.from('estimates').update({ status:'sent' })
+  .eq('doc_id', docId).eq('status', 'draft').select('id,project_id')).then(function(r){
+  if(!r || r.error || !r.data || !r.data.length) return;
+  var row = r.data[0];
+  toast('Estimate marked Sent');
+  try{ document.dispatchEvent(new CustomEvent('cr-est-status', { detail: { id: row.id, status: 'sent' } })); }catch(_){ }
+  var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(row.project_id); })[0];
+  try{ if(pr && window.CardinalEstimates && typeof window.CardinalEstimates.refreshSavedList === 'function') window.CardinalEstimates.refreshSavedList(pr.id); }catch(_){}
+  try{ if(typeof window.renderOverview === 'function') window.renderOverview(); }catch(_){}
+  if(pr) syncStageFor(pr, 'sent');
+}, function(){});
 });
 /* 1201: only the delivery buttons that exist are offered, so the sheet can
    never show a dead choice. They are looked up rather than duplicated — the
@@ -54827,11 +54868,13 @@ function crSendDoc(pick){
    marked sent. A rep who backs out of the email prompt, or whose send fails,
    resolves false on the timeout and the estimate stays the draft it is. */
 function crAwaitDocSent(docId, ms){
+  _essAwaiting[String(docId)] = 1;   /* 1399: the standing listener stands down for this one */
   return new Promise(function(resolve){
     var done = false, t = null;
     function off(v){
       if(done) return;
       done = true;
+      delete _essAwaiting[String(docId)];
       document.removeEventListener('cr-doc-sent', onSent);
       if(t) clearTimeout(t);
       resolve(v);
@@ -70128,8 +70171,10 @@ window.renderKpHomeRow = function(){
       var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(p) : 'unknown';
       if(ct === 'insurance') return;
       var c = crmOfSafe(p);
-      if(!p.stage_since) return;
-      var days = Math.floor((nowMs - new Date(p.stage_since).getTime()) / 86400000);
+      /* 1399: stage_since lives in the checklist, not on the row */
+      var _ss = p.stage_since || ((typeof parseCkAll === 'function' ? (parseCkAll(p) || {}) : {}).stage_since);
+      if(!_ss) return;
+      var days = Math.floor((nowMs - new Date(_ss).getTime()) / 86400000);
       if(days >= QUIET_FLOOR[st]) quiet.push({ p:p, st:st, days:days, crm:c });
     });
     quiet.sort(function(a, b){ return b.days - a.days; });
@@ -70149,6 +70194,8 @@ document.addEventListener('click', function(e){
   if(!r) return;
   if(typeof openProject === 'function') openProject(r.getAttribute('data-proj'));
 });
+/* 1399: the first home render can run before this module parses — paint once now if the data is in */
+try{ if(typeof cacheLoaded !== 'undefined' && cacheLoaded) window.renderKpHomeRow(); }catch(_){}
 })();
 </script>
 <script id="cr-scopelead-script">
@@ -89761,6 +89808,7 @@ body:not(.cr-lnav-on) #navMenu .navsec::after{
    cr-lnav's own threshold; the two must not drift apart. */
 @media (max-width:1099.98px){
   body:not(.cr-lnav-on) #navMenu .navopt[data-crhide="1"]{display:none !important;}
+  body:not(.cr-lnav-on) #navMenu .navopt[data-cradmin="1"]{display:none !important;}   /* 1399: hideOpt's admin-only rows */
   /* 953: Sell hides per portal. Same mechanism as data-crhide directly above,
      and for the same reason: this block's display:flex !important on .navsec
      and .navopt beats any NORMAL inline style, so syncPortalSections()'s inline hide is
@@ -93144,7 +93192,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if((t = e.target.closest('#crpay-cancel')) || (t = e.target.closest('#crpay-backdrop'))){ closePayModal(); return; }
     if((t = e.target.closest('#crpay-save'))){ savePayModal(); return; }
     if((t = e.target.closest('#crpay-method [data-m]'))){ setSeg('crpay-method', t.getAttribute('data-m')); return; }
-    if((t = e.target.closest('#crpay-payer [data-p]'))){ setSeg('crpay-payer', t.getAttribute('data-p')); payerReceipt(); return; }   /* 1394 */
+    if(_et && (t = _et.closest('#crpay-payer [data-p]'))){ setSeg('crpay-payer', t.getAttribute('data-p')); payerReceipt(); return; }   /* 1394 */
     if((t = e.target.closest('#crpay-type [data-t]'))){
       setSeg('crpay-type', t.getAttribute('data-t'));
       /* 1388: swap between the deposit and the balance — only an amount the box filled in itself */

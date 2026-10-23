@@ -10166,3 +10166,6 @@ Payments footer, page-title client names, System Health, Settings rows, Inspecti
 
 ## Build 1398: honest signing and quiet-hours messages; readable Team page
 **Gate:** `gate_1398.mjs`.
+
+## Build 1399: a rep's day — uploads, sent estimates, in-person estimate signing, drawer, home
+**Gate:** `gate_1399.mjs`.
