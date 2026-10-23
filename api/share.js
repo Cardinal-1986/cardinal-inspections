@@ -331,6 +331,22 @@ function payUi(token, cents, label, name) {
 </div>`;
 }
 
+// 1402: the client is back from checkout. A bank payment takes days to clear, so the balance has not moved
+// yet — say thank you rather than offer Pay again. Same shell as payUi.
+function paidUi() {
+  return `
+<div id="crPayBar" data-cr-paid="1" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;
+  padding:0 12px calc(12px + env(safe-area-inset-bottom,0px));pointer-events:none;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+  <div style="pointer-events:auto;max-width:520px;margin:0 auto;background:#ffffff;
+    border:1px solid #ece7e3;border-radius:18px 18px 14px 14px;
+    box-shadow:0 -1px 8px rgba(20,10,8,.05),0 16px 44px rgba(20,10,8,.20);padding:15px 18px 13px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#2f6b3a;">Thank you</div>
+    <div style="font-size:14px;color:#231b18;margin-top:6px;line-height:1.4;">Your payment was received. A bank payment can take a few days to clear, so the balance here may not change right away.</div>
+  </div>
+</div>`;
+}
+
 // 1199: the honest state when the balance cannot be verified — no amount, no
 // button, and the reason. Same shell as payUi so it reads as the same bar.
 function unavailableUi() {
@@ -367,9 +383,10 @@ export default async function handler(req, res) {
     // 1274: the estimate's price table stacks on a phone. Injected here so every
     // estimate already sent reads properly; new ones carry it in their template.
     const ITEMS_PHONE = '@media screen and (max-width:560px){table.items thead{display:none}table.items,table.items tbody,table.items tfoot{display:block;width:100%}table.items tr{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:9px 4px;border-bottom:1px solid var(--hair,#e5e2dc)}table.items td{display:block;width:auto !important;padding:0 !important;border:0 !important}table.items tbody tr>td:first-child{flex:1 1 100%;margin-bottom:3px}table.items td.qty,table.items td.unit,table.items td.rate{font-size:10.5pt;color:#555;text-align:left}table.items td:empty{display:none}table.items td.unit+td.rate:not(:empty):not(:last-child)::before{content:"\\00d7  "}table.items tr>td.rate:last-child{margin-left:auto;font-size:11pt;font-weight:700;color:var(--ink,#1d1d1f)}table.items tr.zeb{background:#f7f6f3}table.items tr.sec-banner{padding:0;border:0}table.items tr.sec-banner>td{flex:1 1 100%;padding:10px 9px 8px !important}table.items tr.sec-sub>td:first-child{flex:1 1 auto;margin:0}table.items tr.sec-sub td.val{margin-left:auto}table.items tfoot tr{border:0;justify-content:flex-end;padding:4px}table.items tfoot td:empty{display:none}table.items tfoot td.val{margin-left:14px}table.items tfoot tr.grand{border-top:2px solid var(--ink,#1d1d1f);padding-top:8px;margin-top:4px}}';
-    const FIX = '<style id="shareFix">.howto{display:none !important}' + ITEMS_PHONE +
+    const FIX = '<style id="shareFix">.howto{display:none !important}#restoreVeil{display:none !important}' + ITEMS_PHONE +   /* 1402: the editor's veil */
       '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important}' +
-      '@media print{.page-break{display:none !important}h2.sec{break-after:avoid}' +
+      '@media print{.page-break:not(h2){display:none !important}h2.sec{break-after:avoid}' +   /* 1402: the Terms heading is h2.sec.page-break */
+      '#crPayBar,#crPaySheet,#csBar,#csOverlay{display:none !important}' +
       '.figrow,.fig,tr{break-inside:avoid}' +
       '@page{@bottom-center{content:"5735 Webster St, Dayton OH 45414  \u00b7  937.576.6753  \u00b7  Admin@cardinalrenovations.net";' +
       'font-family:\'Segoe UI\',Arial,sans-serif;font-size:8pt;color:#8a8a8a}}}</style>' +
@@ -378,6 +395,13 @@ export default async function handler(req, res) {
       'var fr=f.classList.contains("cover-photo")?f:f.querySelector(".frame");' +
       'if(fr&&!fr.querySelector("img"))f.setAttribute("data-emptyfig","1");});' +
       'd.querySelectorAll(".figrow").forEach(function(r){if(!r.querySelector(".frame img"))r.setAttribute("data-emptyrow","1");});' +
+      /* 1402: on an estimate / contract / invoice, a header row that is only an unfilled placeholder is dropped */
+      /* a row of nothing but placeholders goes; a placeholder beside a real pair blanks its own label and cell */
+      'd.querySelectorAll("table.meta tr").forEach(function(tr){var v=tr.querySelectorAll("td:not(.k)");if(!v.length)return;' +
+      'var bl=[],full=0;for(var i=0;i<v.length;i++){var c=v[i].cloneNode(true),ph=0;c.querySelectorAll(".ph").forEach(function(p){if((p.textContent||"").trim().charAt(0)==="["){p.remove();ph=1;}});' +
+      'if(c.textContent.replace(/\u00a0/g," ").trim())full=1;else if(ph)bl.push(v[i]);}' +
+      'if(!bl.length)return;if(!full){tr.setAttribute("data-emptyblock","1");return;}' +
+      'bl.forEach(function(td){var k=td.previousElementSibling;td.textContent="";if(k&&k.classList.contains("k"))k.textContent="";});});' +
       'if(!d.querySelector("[data-cardinal-summary-heading]"))return;' +
       'd.querySelectorAll(".ph").forEach(function(el){if((el.textContent||"").trim().charAt(0)==="[")el.setAttribute("data-emptyph","1");});' +
       'function blank(el){var c=el.cloneNode(true);' +
@@ -422,9 +446,14 @@ export default async function handler(req, res) {
     // at Letter width too, so a client's phone never restacks them — and never
     // enlarges one paragraph of it on its own (text autosizing).
     let letterView = false;   // 1279: LETTER_UI zooms the bars back up on this page
-    if (/class="est-head"/.test(html) && /<table class="items">/.test(html)) {
+    /* 1402: any est-head document — invoices (no table.items) and templates whose table carries an id were
+       missed, and with no viewport meta a phone laid them out at 980px: a 17px Pay button. */
+    if (/class="est-head"/.test(html)) {
       letterView = true;
-      html = html.replace(/<meta name="viewport" content="[^"]*">/, '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>');
+      const LV = '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>';
+      if (/<meta name="viewport" content="[^"]*">/.test(html)) html = html.replace(/<meta name="viewport" content="[^"]*">/, LV);
+      else if (/<head[^>]*>/i.test(html)) html = html.replace(/<head[^>]*>/i, m => m + LV);
+      else html = LV + html;
     }
     // 1313: an invoice is paid, never signed — even one made before invoices lost their
     // signature line. Without this, Accept & Sign took the place of the pay bar.
@@ -444,7 +473,10 @@ export default async function handler(req, res) {
         if (owed) {
           const { cents, label } = owed;
           if (isInvoiceDoc) html = liveInvoiceSummary(html, owed);   /* 1320 */
-          if (cents >= 50 && cents <= 10000000) {
+          if (req.query && req.query.paid === '1') {   /* 1402: back from checkout — the payment is still clearing */
+            const ui = paidUi();
+            html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
+          } else if (cents >= 50 && cents <= 10000000) {
             const ui = payUi(t, cents, label, rows[0].project || rows[0].title);
             html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
           }

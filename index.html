@@ -4212,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1401<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1402<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -17889,7 +17889,7 @@ async function createInvoiceFor1315(pr){
   }).length;
   if(invCount > 0 && !await crAsk('This job already has ' + (invCount === 1 ? 'an invoice' : invCount + ' invoices') +
       '. Make another one for the ' + fmtMoney(fin.balance, true) + ' still owed?')) return;
-  var num = '#' + (poOf(pr) || 'INV') + '-' + (invCount + 1);
+  var num = (poOf(pr) || 'INV') + '-' + (invCount + 1);   /* 1402: the label already says "Invoice #" */
   /* 1376 (W7): on a Community job the partner is billed; pr.phone / pr.email are the occupant's, and would print
      under the partner's name. Leave the contact row empty; it is dropped at print like any empty placeholder. */
   var _billPr = (typeof projClaimType === 'function' && projClaimType(pr) === 'community') ? Object.assign({}, pr, { phone:'', email:'' }) : pr;
@@ -17912,7 +17912,7 @@ async function createInvoiceFor1315(pr){
        invoice is sendable immediately and AR reads its total without recomputing. */
     try{
       var _itok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-                : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+                : window.crUuid4();
       await db.update(id, { share_token: _itok, total: _part ? (Number(jobFinance(pr).value) || 0) : fin.value });   /* 1378: the job's total, as every invoice */
     }catch(_it){
       /* 1315: say so — every Send button makes the link again, but the reminder texts skip an invoice without one */
@@ -25440,6 +25440,17 @@ document.getElementById('delClientBtn').addEventListener('click', function(){
 function fmtLongDate(d){
   return d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
 }
+/* 1402: a share token must read as a UUID (api/share.js checks [a-f0-9-]{20,60}); the old 't…' base36
+   fallback, used where crypto.randomUUID is missing (iOS before 15.4), minted links that said "Invalid link". */
+function crUuid4(){
+  try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(_u){}
+  var b = new Uint8Array(16);
+  try{ crypto.getRandomValues(b); }catch(_g){ for(var i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256); }
+  b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  var h = Array.prototype.map.call(b, function(x){ return (x + 256).toString(16).slice(1); }).join('');
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+}
+window.crUuid4 = crUuid4;
 function prefillClientInfo(tpl, pr){
   function put(placeholder, value){
     if(!value) return;
@@ -25458,9 +25469,10 @@ function prefillClientInfo(tpl, pr){
   /* Community jobs have two parties: the partner requested the inspection and
      receives the report, and the homeowner lives at the property. On retail and
      insurance work they are the same person, so those reports are unchanged. */
-  var recipient = pr.name, homeowner = '';
+  var recipient = pr.name, homeowner = '', _comm = false;
   try{
     if(typeof projClaimType === 'function' && projClaimType(pr) === 'community'){
+      _comm = true;   /* 1402: pr.phone / pr.email are the occupant's */
       var _cl = parseCkAll(pr).lead || {};
       if(_cl.partner_name) recipient = _cl.partner_name;
       var _hn = (typeof projHomeowner === 'function')
@@ -25483,15 +25495,14 @@ function prefillClientInfo(tpl, pr){
   /* estimates */
   put('[Client name]', recipient);
   put('[Street, City, State ZIP]', pr.address);
-  /* shared contact row */
-  put('[Phone \u00b7 Email]', contact);
+  /* shared contact row — 1402: never the occupant's under the partner's name (1376 did this for invoices) */
+  if(!_comm) put('[Phone \u00b7 Email]', contact);
 
   /* ── 542: the roofing Construction Agreement ─────────────────────────────
      The lead stores the address as SEPARATE fields, so each one lands in its
      own box on the form rather than as a single mashed line. */
   put('[BUYER]', recipient);
-  put('[EMAIL]', pr.email);
-  put('[PHONE NUMBER]', pr.phone);
+  if(!_comm){ put('[EMAIL]', pr.email); put('[PHONE NUMBER]', pr.phone); }
   /* 1004: one source of truth for the address. Creation stores it twice — the
      flat pr.address column AND these structured parts — but only the flat column
      is updated when the address is edited on the profile (pfSave writes address,
@@ -28195,7 +28206,7 @@ async function ensureShareToken(){
   if(!row) throw new Error('Document not loaded');
   if(row.share_token) return row.share_token;
   var tok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-          : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+          : window.crUuid4();
   /* 731: db.update(id, fields) does .eq('id', id) — this passed the `current`
      OBJECT, so the freshly minted token was never persisted. The in-memory row
      below got it, which is why one share seemed to work per editor session and
@@ -45245,6 +45256,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1402, d:'2026-10-23', t:'What the client sees', s:'On a phone, the Pay and Accept & Sign buttons on invoices and estimates are full size again (they could shrink to a sliver). Invoices no longer print a stray \u201cLoading\u2026\u201d. A Community invoice or agreement no longer prints an empty contact line or the occupant\u2019s email and phone under the partner\u2019s name. Printing from the client\u2019s link keeps the Terms heading and leaves the pay bar off the paper. Invoice numbers lose the doubled \u201c#\u201d. A client coming back from paying sees a thank-you instead of the Pay button. Share links made on older iPhones open again.' },
   { b: 1401, d:'2026-10-23', t:'Insurance and partner money adds up', s:'The claim card, claim list and claim page now count the checks you record on the job with Record payment, so a paid claim no longer reads $0 received. Deductibles due and Owner Review count a deductible the homeowner paid. Owed by carriers no longer counts the deductible as the carrier\u2019s money, and the carrier chase list shows what is actually left. Money In & Commissions is readable on insurance jobs. Invoices & AR greets the partner, not the occupant, on a Community invoice. Community Partners shows what each partner still owes after payments, with Habitat first.' },
   { b: 1400, d:'2026-10-23', t:'Fixes from a day on Production', s:'Production opens on the Production board again when the app reopens (it could land on the sales home). For the crew, Open job no longer leaves them on a blank screen, and the punch card\u2019s Call button dials the client. Back closes the board\u2019s day sheet, + Add sheet and the install-photos sheet instead of leaving them on screen. Closing a punch-out while checked in checks you out. After telling Curtis a job is finished, checking out no longer asks whether it needs another day. A blocked move to Completed is no longer logged as done. Work orders from Production say labor pricing is handled by the office.' },
   { b: 1399, d:'2026-10-23', t:'Fixes from a day as a rep', s:'Uploading several files at once to a job\u2019s Documents keeps all of them (it kept only the first). Emailing an estimate marks it Sent however you send it. A builder estimate can be signed in person, on the client\u2019s line. Admin-only menu items no longer show to reps on a phone. Home\u2019s Gone quiet lists jobs that have sat too long, and the home cards fill in on first load. Publishing an estimate or making a contract opens the document in front of the builder instead of behind it.' },
@@ -92842,7 +92854,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if(!row) return Promise.reject(new Error('No invoice document'));
     if(row.share_token) return Promise.resolve(row.share_token);
     var tok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-            : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+            : window.crUuid4();
     return db.update(row.id, { share_token: tok }).then(function(){ row.share_token = tok; return tok; });
   }
   function payUrl(tok){ return location.origin + '/api/share?t=' + tok; }
@@ -95658,7 +95670,7 @@ async function loadDocs(){
 async function docToken(row){
   if(row.share_token) return row.share_token;
   var tok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-          : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+          : window.crUuid4();
   if(!window.db || typeof window.db.update !== 'function') return null;
   await window.db.update(row.id, { share_token: tok });
   row.share_token = tok;
