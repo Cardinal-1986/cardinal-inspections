@@ -4212,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1405<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1406<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12115,11 +12115,11 @@ function unsortedProjects(){
   return cacheProjects.filter(function(pr){ return projClaimType(pr) === 'unknown'; });
 }
 function renderHome(){
-  var q = searchText.trim().toLowerCase();
+  var q = searchText.trim() ? crSearchQ(searchText) : '';   /* 1406 */
   var _base = q ? cacheProjects : boardProjects();
   var projs = _base.filter(function(pr){
     if(!q) return ['Closed','Lost'].indexOf(normStage(pr.stage)) === -1; /* archived/lost: off the board */
-    var hay = [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
+    var hay = crFold([pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' '));
     return hay.indexOf(q) !== -1;
   });
   var _scopeWord = q ? '' : boardCrm() + ' ';
@@ -13775,10 +13775,11 @@ function ljActiveCount(){
   return n;
 }
 function ljMatches(p){
-  var q = document.getElementById('ljSearch').value.trim().toLowerCase();
+  var q = document.getElementById('ljSearch').value.trim();
+  q = q ? crSearchQ(q) : '';   /* 1406 */
   if(q){
     var ck = parseCkAll(p);
-    var hay = [p.name, p.address, p.phone, phoneHay(p), p.email, ck.po ? '#'+ck.po : ''].join(' ').toLowerCase();
+    var hay = crFold([p.name, p.address, p.phone, phoneHay(p), p.email, ck.po ? '#'+ck.po+' '+ck.po : ''].join(' '));
     if(hay.indexOf(q) === -1) return false;
   }
   for(var i=0;i<LJ_GROUPS.length;i++){
@@ -21164,6 +21165,24 @@ async function patchProjectCk(pr, patch){
 
    Digit extraction is delegated to crValid.phone (739) — including its leading-1
    country-code rule — rather than re-deciding here what a phone number is. */
+/* 1406: one fold for every search box — lower case, accents off (José → jose), apostrophes off (a phone types
+   O’Brien with a curly one; "obrien" finds it too). crSearchQ also reads a phone number typed with its leading
+   1 / +1 as its ten digits, and "PO 3001" as 3001. */
+function crFold(v){
+  return String(v == null ? '' : v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\u2018\u2019\u02bc'`]/g, '');
+}
+function crSearchQ(v){
+  var raw = String(v == null ? '' : v).trim();
+  if(/^[\d\s().+\-]+$/.test(raw)){
+    var dg = raw.replace(/\D/g, '');
+    if(dg.length === 11 && dg.charAt(0) === '1') return dg.slice(1);
+    if(dg.length === 10) return dg;
+  }
+  var po = /^p\.?\s*o\.?\s*#?\s*(\d+)$/i.exec(raw);
+  if(po) return po[1];
+  return crFold(raw);
+}
+window.crFold = crFold; window.crSearchQ = crSearchQ;
 function phoneForms(v){
   var raw = String(v == null ? '' : v).trim();
   if(!raw) return [];
@@ -21452,7 +21471,8 @@ function cdMatch(pr){
   if(rs.length && rs.indexOf(rptRepName(pr.created_by || '')) === -1) return false;
   var ts = cdState.sets.trade || [];
   if(ts.length && !ljTrades(pr).some(function(t){ return ts.indexOf(t) !== -1; })) return false;
-  var q = (document.getElementById('cliFilter').value || '').trim().toLowerCase();
+  var q = (document.getElementById('cliFilter').value || '').trim();
+  q = q ? crSearchQ(q) : '';   /* 1406 */
   if(q && crClientHay(pr).indexOf(q) === -1) return false;
   return true;
 }
@@ -21466,8 +21486,8 @@ function cdMatch(pr){
    matching the Home board on a rep's email address — a behaviour change nobody
    asked for. Known, not missed. */
 function crClientHay(pr){
-  return [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
-    poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
+  return crFold([pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
+    poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' '));   /* 1406: folded */
 }
 function cdSorted(list){
   var s = cdState.sort, d = cdState.dir;
@@ -25239,8 +25259,9 @@ function crHsClose(){
   if(p) p.classList.remove('open');
 }
 function crHsMatches(q){
-  q = String(q || '').trim().toLowerCase();
+  q = String(q || '').trim();
   if(q.length < 2) return { hits: [], total: 0 };
+  q = crSearchQ(q);   /* 1406 */
   var all = (typeof cacheProjects !== 'undefined' && cacheProjects) ? cacheProjects : [];
   var hit = all.filter(function(pr){ return crClientHay(pr).indexOf(q) !== -1; });
   /* a name that STARTS with what you typed is what you meant; everything else
@@ -28386,6 +28407,12 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
                 'Save the bid and let him know it is ready.');
           return;
         }
+        /* 1406: no partner attached — the default was the OCCUPANT's address. A Community bid goes to the funder. */
+        if(!_pid){
+          crTell('This Community job has no funding partner attached. Attach the partner on the job first \u2014 the bid goes to them, not the homeowner.');
+          return;
+        }
+        toDflt = '';   /* 1406: never the occupant, even when the partner has no address on file */
         if(_pid && sb){
           var _pq = await sb.from('community_partners')
                              .select('name,contact_email').eq('id', _pid).single();
@@ -29654,7 +29681,8 @@ function renderInsuranceClientsList(){
   }
 
   /* apply search + stage filter */
-  var q = (filterInput && filterInput.value || '').trim().toLowerCase();
+  var q = (filterInput && filterInput.value || '').trim();
+  q = q ? crSearchQ(q) : '';   /* 1406 */
   var list = insClients.slice().sort(function(a, b){ return (a.name || '').localeCompare(b.name || ''); });
   /* favorites first, matching main directory sort */
   if(typeof favSort === 'function') list = favSort(list);
@@ -29667,8 +29695,7 @@ function renderInsuranceClientsList(){
        Clients directory and the header search use; only the five insurance ones
        are local. Byte-for-byte the same haystack as before, from one source. */
     var hay = crClientHay(pr) + ' ' +
-      [I.carrier, I.claim_number, I.policy_number, adj.name, adj.phone]
-        .join(' ').toLowerCase();
+      crFold([I.carrier, I.claim_number, I.policy_number, adj.name, adj.phone].join(' '));   /* 1406 */
     return hay.indexOf(q) !== -1;
   });
 
@@ -39174,6 +39201,10 @@ renderDirectory(host);
 function renderDirectory(host){
 /* Prospects are shown by openProspects(), not here. */
 var listRows = list().filter(function(p){ return !p.prospective; });
+/* 1406: Habitat sorts first in every partner list (stable — the rest keep their order) */
+listRows = listRows.map(function(p, i){ return { p:p, i:i }; }).sort(function(x, y){
+var hx = /habitat/i.test(x.p.name || ''), hy = /habitat/i.test(y.p.name || '');
+return hx === hy ? x.i - y.i : (hx ? -1 : 1); }).map(function(x){ return x.p; });
 var non = listRows.filter(function(p){ return p.partner_type === 'nonprofit'; });
 var pm  = listRows.filter(function(p){ return p.partner_type === 'property_manager'; });
 var gc  = listRows.filter(function(p){ return p.partner_type === 'general_contractor'; });
@@ -40949,8 +40980,10 @@ return ct === 'insurance' ? 'INS'
 :                      '';
 }
 function search(q){
-q = String(q || '').toLowerCase().trim();
+q = String(q || '').trim();
 if(!q) return { clients:[], docs:[], partners:[] };
+var _fold = window.crFold || function(x){ return String(x || '').toLowerCase(); };   /* 1406 */
+q = window.crSearchQ ? window.crSearchQ(q) : q.toLowerCase();
 var clients = [];
 (window.cacheProjects || []).forEach(function(p){
 var s = ((p.name || '') + ' ' +
@@ -40969,7 +41002,8 @@ var ins = ck.lead && ck.lead.insurance;
 return (ck.po ? '#' + ck.po + ' ' + ck.po : '') + ' ' +
 ((ins && ins.claim_number) || '') + ' ' + ((ins && ins.policy_number) || '');
 }catch(_e){ return ''; } })() + ' ' +
-((p.location && p.location.street) || '')).toLowerCase();
+((p.location && p.location.street) || ''));
+s = _fold(s);   /* 1406 */
 if(s.indexOf(q) !== -1){
 var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(p) : 'unknown';
 clients.push({ id:p.id, name:p.name || 'Unnamed',
@@ -40979,7 +41013,7 @@ address:p.address || '', ct:ct });
 clients = clients.slice(0, 12);
 var docs = [];
 (window.cacheRows || []).forEach(function(r){
-if(String(r.title || '').toLowerCase().indexOf(q) !== -1){
+if(_fold(r.title).indexOf(q) !== -1){
 docs.push({ id:r.id, title:r.title || 'Untitled',
 project_id:r.project_id });
 }
@@ -40990,10 +41024,12 @@ try{
 if(window.CardinalCommunityPartners && window.CardinalCommunityPartners.list){
 var all = window.CardinalCommunityPartners.list() || [];
 all.forEach(function(p){
-if(String(p.name || '').toLowerCase().indexOf(q) !== -1){
+if(_fold(p.name).indexOf(q) !== -1){
 partners.push(p);
 }
 });
+/* 1406: Habitat sorts first in every partner list */
+partners.sort(function(a, b){ var ha = /habitat/i.test(a.name || ''), hb = /habitat/i.test(b.name || ''); return ha === hb ? 0 : (ha ? -1 : 1); });
 partners = partners.slice(0, 5);
 }
 }catch(e){}
@@ -41003,7 +41039,7 @@ try{
 if(window.CardinalPunch && typeof window.CardinalPunch.rows === 'function'){
 window.CardinalPunch.rows().forEach(function(it){
 var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(it.project_id); })[0];
-var hay = ((it.title || '') + ' ' + ((pr && pr.name) || '')).toLowerCase();
+var hay = _fold((it.title || '') + ' ' + ((pr && pr.name) || ''));
 if(hay.indexOf(q) !== -1){
 punch.push({ id:it.id, title:it.title || 'Punch-out', who:(pr && pr.name) || '', done:it.status === 'done' });
 }
@@ -41095,7 +41131,7 @@ html += '<div class="cr-srch-grp"><h5>Community Partners \u00b7 ' + r.partners.l
 r.partners.forEach(function(p){
 html += '<div class="cr-srch-row" data-t="p" data-id="' + esc(p.id) + '">' +
 '<div class="n">' + esc(p.name) + '</div>' +
-'<div class="m">' + esc(p.partner_type === 'nonprofit' ? 'Non-profit' : 'Property manager') + '</div>' +
+'<div class="m">' + esc(p.partner_type === 'nonprofit' ? 'Non-profit' : (p.partner_type === 'general_contractor' ? 'General contractor' : 'Property manager')) + '</div>' +   /* 1406 */
 '</div>';
 });
 html += '</div>';
@@ -45297,6 +45333,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1406, d:'2026-10-23', t:'Search, Crews and Community bids', s:'Search now finds names typed without accents or with a phone\u2019s curly apostrophe (O\u2019Brien, Jose), phone numbers typed with a leading 1, and \u201cPO 3001\u201d. Crews is shown only to the office and Production, who can use it. A Community bid on a job with no funding partner attached is refused instead of defaulting to the homeowner. Habitat is first in the partner directory, and general contractors are labelled correctly in search. Behind the scenes, the ABC Supply connection now answers Cardinal staff only.' },
   { b: 1405, d:'2026-10-23', t:'Reports on paper and the Supplement Desk', s:'Opening a report from a list no longer fills it with the checklist of the last client you looked at. Printed section numbers match the Contents page, the cover page fits on one Letter page, and Save as PDF hides the empty sections and placeholders the way Print does. On the Supplement Desk, switching claims no longer mixes in the previous claim\u2019s photos or documents, only photos the letter can carry can be attached as evidence, printing waits for the photos, and the analyst falls back to its backup when the main model is busy.' },
   { b: 1404, d:'2026-10-23', t:'Photos, quick inspections and estimates', s:'A photo whose save hiccuped no longer turns into a broken tile while saying it was added, and deleting a photo can no longer leave an empty tile behind. Adding several photos to the album keeps going past one bad file and says which failed. Quick-inspection photos carry their shot label, and if the app closes before some photos upload, it tells you to retake them. On estimates, the line amounts add up exactly to the subtotal, a discount can\u2019t be negative or larger than the subtotal, editing a copy no longer changes the original\u2019s photo captions, and Valid through no longer runs a day late in the evening.' },
   { b: 1403, d:'2026-10-23', t:'Offline edits, appointment texts and dates', s:'A change made to a job with no signal no longer wipes out a teammate\u2019s changes to the same job when your phone syncs. Reps are told about the job and drop-off appointments on their jobs, not your personal ones (the texts now follow the calendar). Booking an appointment with no signal says so instead of asking for a database fix. All-day appointments no longer promise an hour-before text. The punch map\u2019s Today, crew document expiry, the calendar\u2019s Next line and reminders set across the clock change now count days correctly.' },
@@ -47215,6 +47252,8 @@ hideOpt('settings');
 hideOpt('ar');
 hideOpt('ownerreview');   /* 1322: admins only */
 hideOpt('laborrates');
+/* 1406: Crews is full-access in the database (theo, joan, curtis) — a rep saw an empty list and a dead "+ New crew" */
+if(!(typeof isProductionUser === 'function' && isProductionUser() && !(typeof isFieldUser === 'function' && isFieldUser()))) hideOpt('crews');
 var acct = findSec('account');
 if(acct) acct.style.display = 'none';
 }
@@ -78176,6 +78215,13 @@ function close(){
 async function open(){
   var v = view();
   if(!v) return;
+  /* 1406: the crew tables are full access only — anyone else is refused here, not shown an empty, dead screen */
+  try{
+    var _adm = typeof window.isAdminUser === 'function' ? window.isAdminUser() : (typeof isAdminUser === 'function' && isAdminUser());
+    var _prd = typeof window.isProductionUser === 'function' ? window.isProductionUser() : (typeof isProductionUser === 'function' && isProductionUser());
+    var _fld = typeof window.isFieldUser === 'function' && window.isFieldUser();
+    if(!_adm && !(_prd && !_fld)){ if(typeof window.crTell === 'function') window.crTell('Crews are managed by the office and Production.'); return; }
+  }catch(_cg){}
   /* 570: every other full-screen opener in this app clears the decks first —
      openCompanyDocs(), crOpenPricing() and crOpenClaims() all call hideAllViews().
      Crews never did, so opening it on top of one of the mounts left two overlays

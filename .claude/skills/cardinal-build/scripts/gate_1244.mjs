@@ -14,7 +14,7 @@
 import { pathToFileURL } from 'node:url';
 import { copyFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 const FILE = resolve(process.argv[2] || '/home/user/cardinal-inspections/api/abc.js');
 let pass = 0, fail = 0;
 const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (d ? '  -> ' + d : '')); c ? pass++ : fail++; };
@@ -33,6 +33,8 @@ globalThis.fetch = async (url, opts = {}) => {
 // fresh module copy per scenario so the per-target token cache never leaks between runs
 async function load() {
   const d = mkdtempSync(join(tmpdir(), 'g1244-')); const f = join(d, 'abc.mjs'); copyFileSync(FILE, f);
+  /* 1406: abc.js imports ./_staff.js — it travels with it */
+  try{ copyFileSync(join(dirname(FILE), '_staff.js'), join(d, '_staff.js')); }catch(_s){}
   return (await import(pathToFileURL(f).href)).default;
 }
 async function call(h, body) {
