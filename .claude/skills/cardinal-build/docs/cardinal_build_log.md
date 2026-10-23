@@ -36964,3 +36964,12 @@ A second rendered sweep covered 29 more screens × p/d × dark/light (rig: scrat
 - **✦ Ask** stands aside (`.tucked2`) while the estimate builder, document editor, scanner, Communications, Quick Inspection start or Resource Library is up — repainted on the 3 s timer and 350 ms after any tap.
 - Not done (design or data): Email-to-client on an insurance contract with no INSURANCE & YOUR PART box shows two "Saved" toasts before its instruction (the flow is 1324's, by design); Team Directory cream page in dark; Library floating controls; emoji survivors in headings; header "+" colour per screen.
 - **Gates:** `gate_1397.mjs` 15/15, control 1396 RED 13. gate_1341, 1373, 1206, 1081 GREEN; gate_stack CLEAN.
+
+## Build 1398 — messages that say what happened (23 Oct 2026)
+Audit follow-ups (the second code review's "suspected" list, verified).
+- **In-person estimate signing** always said "accepted — it can be invoiced now". `crAcceptEstimateForDoc` returns false when estimates RLS refuses (a rep signing an estimate someone else created: `est_update` = `is_full_access() OR created_by = my_email()`), and the message now follows the result. Admin "needs approval" email unchanged.
+- **Quiet hours (1352):** "Notified X — email" for an email that was only scheduled for 7:00 am → "email at 7:00 am" (`quiet_detail.mail_scheduled`).
+- **Team Directory** (a light page in both themes, left so): `.tmem` 3.45 → `#5f6670` 5.80, "no number" 2.26 → `#6b6b6b` 5.33, `.tmsub` → `#5a5a5a`; edit buttons 40 → 44px.
+- Estimate title placeholder "Estimate — Jane Smith" → "Estimate title".
+- **Looked at and left:** 1342 `crKeepDocKind` keeps a document's kind on rename by design (renaming is not a conversion); 1365 `#newMenu` inline position after rotation; 1386 iOS print after await (needs a real iPhone).
+- **Gates:** `gate_1398.mjs` 5/5, control 1397 RED 4. gate_1340 regex widened for the kept result (it pinned the exact statement), GREEN; gate_771, gate_1206 GREEN.

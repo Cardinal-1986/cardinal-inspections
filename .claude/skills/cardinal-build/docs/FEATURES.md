@@ -10163,3 +10163,6 @@ Supplement Desk reads storage-backed scopes (post-1359); Advance to Completed re
 
 ## Build 1397: polish across the app
 Payments footer, page-title client names, System Health, Settings rows, Inspections list, phone layouts (guide rows, QI address, estimate prices), Ask button steps aside on screens with bottom actions. **Gate:** `gate_1397.mjs`.
+
+## Build 1398: honest signing and quiet-hours messages; readable Team page
+**Gate:** `gate_1398.mjs`.
