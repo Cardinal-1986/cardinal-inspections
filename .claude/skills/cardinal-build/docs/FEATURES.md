@@ -10148,3 +10148,6 @@ Thirteen `typeof … === 'async function'` guards (always false) fixed or retire
 
 ## Build 1392: audit fixes — profit is admin-only, honest AR/feed/guide/drawer
 Payments card profit/margin admin-only ("None entered" with no costs); guide email really saves; drawer shows your name; error reports keep line numbers; home AR names money owed on other boards; feed names invoices/contracts; signed docs hide Mark sent. **Gate:** `gate_1392.mjs`.
+
+## Build 1393: readable on every job
+Insurance jobs in dark mode: Back / Upload files / Email to client / Work Orders readable on the cream ground. Job Documents intro, empty note, client name brighter in dark. Left rail's selected-CRM label carries its own ink. Scanner Add page opens the camera on the first tap; empty scanner explains itself. **Gate:** `gate_1393.mjs`.
