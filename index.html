@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1391<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1392<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12283,8 +12283,9 @@ function renderOps(){
   var _onBoard = {}; (_arBoard || []).forEach(function(p){ _onBoard[p.id] = 1; });
   var _arRows = [];
   var _arAll = (window.CardinalAR && typeof window.CardinalAR.list === 'function') ? window.CardinalAR.list() : [];
+  var _arElse = 0;   /* 1392: owed on the other boards, so "every invoice is collected" stays true */
   _arAll.forEach(function(x){
-    if(!_onBoard[x.pr.id]) return;
+    if(!_onBoard[x.pr.id]){ var ve = Number(x.fin.balance) || 0; if(ve > 0) _arElse += ve; return; }
     var v = Number(x.fin.balance) || 0;
     if(v <= 0) return;
     total += v;
@@ -12312,7 +12313,8 @@ function renderOps(){
       '<div class="arbig">' + (total ? fmtMoney(total) : '$0') +   /* 1373 */
         '<span class="arbigl">' + (total
           ? 'outstanding across ' + _arRows.length + ' invoice' + (_arRows.length === 1 ? '' : 's')
-          : 'nothing outstanding \u2014 every invoice is collected') + '</span></div>' +
+          : (_arElse > 0 ? 'nothing outstanding on this board \u2014 ' + fmtMoney(_arElse) + ' on the others, in Invoices & Payments'
+                         : 'nothing outstanding \u2014 every invoice is collected')) + '</span></div>' +
       (_arRows.length ? '<div class="arcli">' + _arRows.slice(0, 3).map(function(r){
         return '<span>' + _esc(r.name) + ' \u00b7 ' + fmtMoney(r.v) + '</span>';
       }).join('') + '</div>' : '') +
@@ -24303,7 +24305,11 @@ function buildActivityEvents(){
     var cli = pr ? pr.name : (r.project || '');
     var a = actor(r.created_by);
     var isEst = isEstimateTitle(r.title);
-    ev.push({ t:r.created_at, ini:a.ini, email:a.email, label:(isEst ? 'New Estimate:' : 'New Inspection:'), who:a.nm,
+    /* 1392: invoices, contracts and files were all "new inspection" */
+    var _tt = String(r.title || '').trim();
+    var _lbl = isEst ? 'New Estimate:' : isContractTitle(_tt) ? 'New Contract:' : /^invoice\b/i.test(_tt) ? 'New Invoice:'
+             : isWorkOrderTitle(_tt) ? 'New Work Order:' : /^file:/i.test(_tt) ? 'File added:' : 'New Inspection:';
+    ev.push({ t:r.created_at, ini:a.ini, email:a.email, label:_lbl, who:a.nm,
       cli:cli, pid: pr ? pr.id : null, detail:r.title });
     if(r.sent_at) ev.push({ t:r.sent_at, ini:'\uD83D\uDCE7', label:'Document Sent:', who:a.nm,
       cli:cli, pid: pr ? pr.id : null, detail:r.title });
@@ -25782,6 +25788,7 @@ function setEditorStatus(status, sentAt, signedAt){
     sentDateEl.textContent = (status === 'sent' && sentAt) ? 'Sent ' + fmtDay(sentAt) : '';
   }
   toggleBtn.textContent = status === 'sent' ? 'Mark unsent' : 'Mark sent';
+  toggleBtn.style.display = signedAt ? 'none' : '';   /* 1392: a signed document is past sent */
 }
 
 /* ---------- photo upload + auto-caption (inside the report iframe) ---------- */
@@ -43049,8 +43056,10 @@ var flushing        = false;
 var reporting       = false; /* re-entrancy guard: a failure inside report() must never report */
 
 function stripQuery(s){
-  return String(s || '').replace(/(\?[^\s'"]*)/g, '')
-                        .replace(/(#[^\s'"]*)/g, '');
+  /* 1392: keep a trailing :line:col (and its ')') — the query or hash went, and so did the location */
+  var keep = function(q){ var m = q.match(/(:\d+:\d+\)?|:\d+\)?|\))$/); return m ? m[1] : ''; };
+  return String(s || '').replace(/(\?[^\s'"]*)/g, keep)
+                        .replace(/(#[^\s'"]*)/g, keep);
 }
 function shortenStack(stack){
   if(!stack) return '';
@@ -45183,6 +45192,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1392, d:'2026-10-23', t:'Fixes from the audit', s:'Gross profit and margin on a job\u2019s Payments card are for the office only now \u2014 production no longer sees them (and the figure they saw left out labor). With no costs entered, the card says so instead of showing a 100% margin. The Pre-Install Guide\u2019s email prompt really saves the address now. The phone menu shows your name instead of \u201cCardinal\u201d. The home Accounts Receivable card says when money is owed on the other boards instead of \u201cevery invoice is collected\u201d. The activity feed names invoices, contracts and files for what they are. A signed document no longer offers Mark sent.' },
   { b: 1391, d:'2026-10-23', t:'Thirteen switches that were stuck off', s:'A check used in thirteen places could never come out true, so each thing behind it quietly never ran. Fixed: uploading a photo to OC Colors (it always said image tools were unavailable); the \u201cRead it now?\u201d offer after filing a Scope of Loss; the photo gallery and the client list redrawing after you add photos, save a caption, reassign or archive; the \u2b07 Device button in the photo editor on CompanyCam photos; and ticking a punch item on Production, which now goes through the same save as everywhere else \u2014 including holding it when there is no signal. On the Supplement Desk, Draft letter and the photo list no longer fail with \u201cnot defined\u201d.' },
   { b: 1390, d:'2026-10-22', t:'Scan documents', s:'Scan document on a job\u2019s Documents page is a real scanner now. After the photo, the app finds the page\u2019s edges (drag any red corner to fix them), straightens the page flat, and cleans it up \u2014 Document whitens the paper and lifts shadows, or pick Gray or Color. Tap Add page for the next page, then Save PDF: every page goes into one PDF on the job. The original photos are not kept.' },
   { b: 1389, d:'2026-10-22', t:'\u2192 Contract makes the right agreement', s:'Making a contract from an estimate now makes the Roofing, Siding or Gutter Construction Agreement \u2014 the one with the specifications page, the signature boxes and the Right to Cancel \u2014 instead of the general service contract. It reads the trade off the estimate; if the estimate covers more than one trade, or none, it asks which. The estimate\u2019s scope goes into the Notes box, and the price and deposit are filled in. The general service contract is still one of the choices.' },
@@ -89816,7 +89826,8 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     function isDrawer(){ return !document.body.classList.contains('cr-lnav-on'); }
     function fillUser(){
       var el = document.getElementById('crDrawerUser'); if(!el) return;
-      var nm = ''; try{ if(typeof meName === 'function') nm = meName(); }catch(_){}
+      /* 1392: meName() is local to cr-pp-script, so this always fell to 'Cardinal' */
+      var nm = ''; try{ if(typeof window.displayNameFor === 'function' && window.currentUser) nm = window.displayNameFor(window.currentUser); }catch(_){}
       var want = nm || 'Cardinal';
       /* 930: compare before writing. Assigning textContent emits a childList
          mutation record even when the string is IDENTICAL (the old text node is
@@ -93974,14 +93985,17 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       to = String(to).trim();
       if(!to) return;
       if(!validEmail(to)){ tell('That does not look like a valid email — nothing was sent.'); return; }
-      var saved = Promise.resolve();
-      try{ if(typeof patchProject === 'function') saved = patchProject(pr.id, { email:to }); }catch(_){}
+      /* 1392: was patchProject(), which exists nowhere — the toast said "Email saved" and nothing was. */
+      var stored = false;
+      var saved = (window.pdb && typeof window.pdb.update === 'function')
+        ? Promise.resolve(window.pdb.update(pr.id, { email:to })).then(function(){ stored = true; }, function(){ stored = false; })
+        : Promise.resolve();
       Promise.resolve(saved).then(function(){
         pr.email = to;
         return sendFor(pr, fields, { force:true, slug:slug });
       }).then(function(r){
-        if(r && r.ok) okToast('Email saved — ' + G(slug).label + ' sent to ' + (pr.name || 'the client'));
-      }).catch(function(e){ tell('Saved the email, but the guide could not be sent: ' + ((e && e.message) || e)); });
+        if(r && r.ok) okToast((stored ? 'Email saved — ' : 'Sent (the address was not saved to the client) — ') + G(slug).label + ' sent to ' + (pr.name || 'the client'));
+      }).catch(function(e){ tell((stored ? 'Saved the email, but the guide could not be sent: ' : 'The guide could not be sent: ') + ((e && e.message) || e)); });
     }catch(_){}
   }
 
@@ -98179,6 +98193,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
     fin = fin || (typeof jobFinance === 'function' ? jobFinance(pr) : { value:0, paid:0, balance:0 });
     var total = Number(fin.value) || 0, paid = Number(fin.paid) || 0, bal = Number(fin.balance) || 0;
     var office = isOffice();
+    /* 1392: profit is the admin's. isOffice() includes Production, who must see no money here — and
+       crew_payments is admin-only RLS, so their "profit" also left labor out and read too high. */
+    var money = jpAdmin();
     var h = '<div class="crji-row"><span class="crji-ttl">Payments</span></div>';
     if(!d){
       return h + '<div class="crjp-empty">Loading payments…</div>';
@@ -98199,11 +98216,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
     h += '<div class="crjp-sum">' +
       '<span>Job total</span><b>' + M(total) + '</b>' +
       '<span>Received</span><b>' + M(paid) + '</b>';
-    if(office){
+    if(money){
       var gp = total - costT;
-      h += '<span>Costs</span><b>' + M(costT) + '</b>' +
-        '<span class="crjp-bal">Gross profit</span><b class="crjp-gp' + (gp < 0 ? ' neg' : '') + '">' + M(gp) + '</b>' +
-        '<span>Margin</span><b class="crjp-gp' + (gp < 0 ? ' neg' : '') + '">' + (total > 0 ? (Math.round(gp / total * 1000) / 10).toFixed(1) + '%' : '—') + '</b>';
+      /* 1392: with no costs entered, "Margin 100.0%" is a claim nobody made */
+      var noCost = !(costT > 0);
+      h += '<span>Costs</span><b>' + (noCost ? 'None entered' : M(costT)) + '</b>' +
+        '<span class="crjp-bal">Gross profit</span><b class="crjp-gp' + (gp < 0 ? ' neg' : '') + '">' + (noCost ? '—' : M(gp)) + '</b>' +
+        '<span>Margin</span><b class="crjp-gp' + (gp < 0 ? ' neg' : '') + '">' + (total > 0 && !noCost ? (Math.round(gp / total * 1000) / 10).toFixed(1) + '%' : '—') + '</b>';
     }
     h += '<hr><span class="crjp-bal">Balance due</span><b class="crjp-bal' + (total > 0 && bal <= 0.005 ? ' paid' : '') + '">' + M(bal) + '</b>' +
     '</div>';
@@ -98212,7 +98231,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
       h += '<div class="crjp-pbar" role="img" aria-label="' + pp + '% paid"><i style="width:' + pp + '%"></i></div>' +
         '<div class="crjp-note" style="margin:0">' + pp + '% paid</div>';
     }
-    if(office && (costT > 0 || total > 0)){
+    if(money && costT > 0){
       var byM = 0, byL = 0, byO = 0;
       costs.forEach(function(r){ var v = Number(r.amt) || 0; if(r.kind === 'material') byM += v; else if(r.kind === 'labor') byL += v; else byO += v; });
       var base = Math.max(total, costT) || 1, prof = Math.max(0, total - costT);

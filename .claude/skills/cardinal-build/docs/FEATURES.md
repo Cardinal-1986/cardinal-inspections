@@ -10145,3 +10145,6 @@ Job Documents ▸ Scan document opens an in-app scanner (`window.CardinalScan.op
 
 ## Build 1391: stuck-off switches fixed
 Thirteen `typeof … === 'async function'` guards (always false) fixed or retired; OC Colors upload, Scope-of-Loss read offer, gallery/list redraws, photo-editor Device button, Production punch tick and Admin Health extensions work again. Supplement Desk photo mode and Draft letter no longer 500. **Gate:** `gate_1391.mjs`.
+
+## Build 1392: audit fixes — profit is admin-only, honest AR/feed/guide/drawer
+Payments card profit/margin admin-only ("None entered" with no costs); guide email really saves; drawer shows your name; error reports keep line numbers; home AR names money owed on other boards; feed names invoices/contracts; signed docs hide Mark sent. **Gate:** `gate_1392.mjs`.
