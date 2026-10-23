@@ -36932,3 +36932,11 @@ The polish sweep's measured failures that needed no design call. Every ink is an
 - Polish rig before/after on docs/rdocs/client/community × 3 combos: ~40 sub-floor hits → 0 new, 0 remaining except the light-theme pipeline sphere letters (sphere design — left).
 - **Gates:** `gate_1393.mjs` 21/21 (worst-ground scoring, both themes, phone + desktop; scanner order via a click spy), control 1392 RED. gate_1390 GREEN. Sentinel not run (cannot finish in this container) — this is a colour build, so **Theo's eyes are the gate** on an insurance job in dark mode.
 - **Not done, needs a look first:** desktop client header's stray second row (Overview select + Work Orders), Community header truncating at 390px, the ✦ Ask button covering card actions, tap targets under 44px (gate_1206 baseline), activity avatars white-on-green.
+
+## Build 1394 — Record payment asks who paid (23 Oct 2026)
+Theo: *"Honestly just fix it please. At your discretion."* (the audit's open question 1).
+- `savePayModal()` hard-coded `source:'homeowner'`; since 1378 the source decides whose money it is. A carrier check recorded from the job page marked the homeowner's part paid, left the Claims hub's carrier-owed high, and texted the homeowner a receipt for the carrier's money.
+- **Insurance job:** Paid by Insurance / Homeowner, opens on Insurance at the balance (1388's deposit pre-fill skipped — it is the homeowner's deposit). **Community job:** Partner / Homeowner, opens on Partner. **Retail:** unchanged, no question. The receipt row shows (and is checked) only for Homeowner; `wantReceipt` also requires it.
+- Method row: four buttons in a 3-column grid left Card alone on a second row → 4 columns.
+- **Question 2 (may Production mark costs reimbursed)** — decided at discretion: **left as it is.** The database already allows it (`job_costs` update is `is_full_access()`), Production records receipts on jobs, and hiding the button would only send them to the office for a click.
+- **Gates:** `gate_1394.mjs` 7/7, control 1393 RED 5. gate_1388, 1318, 1315 GREEN.

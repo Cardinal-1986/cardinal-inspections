@@ -10151,3 +10151,6 @@ Payments card profit/margin admin-only ("None entered" with no costs); guide ema
 
 ## Build 1393: readable on every job
 Insurance jobs in dark mode: Back / Upload files / Email to client / Work Orders readable on the cream ground. Job Documents intro, empty note, client name brighter in dark. Left rail's selected-CRM label carries its own ink. Scanner Add page opens the camera on the first tap; empty scanner explains itself. **Gate:** `gate_1393.mjs`.
+
+## Build 1394: Record payment — Paid by
+Insurance jobs ask Insurance / Homeowner (opens on Insurance); Community asks Partner / Homeowner; retail unchanged. Receipts only when the homeowner paid. **Gate:** `gate_1394.mjs`.

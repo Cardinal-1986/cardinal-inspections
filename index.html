@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1393<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1394<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -45199,6 +45199,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1394, d:'2026-10-23', t:'Record payment asks who paid', s:'On an insurance job, Record payment now asks whether the insurance company or the homeowner paid, and starts on Insurance. A carrier check no longer counts as the homeowner\u2019s money or texts the homeowner a receipt for it. On a Community job it asks Partner or Homeowner. Retail jobs are unchanged. The four payment methods fit on one row.' },
   { b: 1393, d:'2026-10-23', t:'Readable on every job', s:'On an insurance job in dark mode, Back to client profile, Upload files, Email to client and the Work Orders button were nearly invisible \u2014 light text on the cream page. They read now. The Job Documents page\u2019s intro, empty message and client name are brighter in dark mode. The selected Community button in the left rail has dark text on its mint instead of white, and the section counts are easier to read. In the scanner, Add page opens the camera on the first tap on an iPhone, and an empty scanner says what to do.' },
   { b: 1392, d:'2026-10-23', t:'Fixes from the audit', s:'Gross profit and margin on a job\u2019s Payments card are for the office only now \u2014 production no longer sees them (and the figure they saw left out labor). With no costs entered, the card says so instead of showing a 100% margin. The Pre-Install Guide\u2019s email prompt really saves the address now. The phone menu shows your name instead of \u201cCardinal\u201d. The home Accounts Receivable card says when money is owed on the other boards instead of \u201cevery invoice is collected\u201d. The activity feed names invoices, contracts and files for what they are. A signed document no longer offers Mark sent.' },
   { b: 1391, d:'2026-10-23', t:'Thirteen switches that were stuck off', s:'A check used in thirteen places could never come out true, so each thing behind it quietly never ran. Fixed: uploading a photo to OC Colors (it always said image tools were unavailable); the \u201cRead it now?\u201d offer after filing a Scope of Loss; the photo gallery and the client list redrawing after you add photos, save a caption, reassign or archive; the \u2b07 Device button in the photo editor on CompanyCam photos; and ticking a punch item on Production, which now goes through the same save as everywhere else \u2014 including holding it when there is no signal. On the Supplement Desk, Draft letter and the photo list no longer fail with \u201cnot defined\u201d.' },
@@ -91253,6 +91254,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 #cr-pay-modal .crpay-in{width:100%;min-height:44px;background:var(--crpay-field,#1b1f24);border:1px solid var(--crpay-line,#262a30);border-radius:10px;padding:11px 12px;font-size:15px;color:var(--crpay-ink,#f2f4f7);outline:none;}
 #cr-pay-modal .crpay-in:focus{border-color:#C8202E;box-shadow:0 0 0 3px rgba(200,32,46,.22);}
 #cr-pay-modal .crpay-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--crpay-well,#1b1f24);border-radius:12px;padding:4px;}
+#cr-pay-modal #crpay-method{grid-template-columns:repeat(4,1fr);}   /* 1394: four methods, one row — Card sat alone */
+#cr-pay-modal .crpay-seg2{grid-template-columns:repeat(2,1fr);}
 #cr-pay-modal .crpay-seg button{border:0;background:transparent;color:var(--crpay-sub,#a8b0ba);font-size:13px;font-weight:600;padding:10px 6px;min-height:44px;border-radius:9px;cursor:pointer;}
 #cr-pay-modal .crpay-seg button.on{background:var(--crpay-on,#262a30);color:var(--crpay-ink,#f2f4f7);box-shadow:var(--crpay-on-sh,0 1px 2px rgba(0,0,0,.45),0 4px 10px rgba(0,0,0,.5));}
 #cr-pay-modal .crpay-rcpt{display:flex;align-items:center;gap:10px;margin:14px 0 4px;font-size:13px;min-height:44px;cursor:pointer}
@@ -92938,6 +92941,12 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
           '<button type="button" data-m="card">Card</button>' +
         '</div>' +
         '<input type="text" id="crpay-ref" class="crpay-in" placeholder="Check # (optional)">' +
+        /* 1394: whose money — shown on insurance and Community jobs only */
+        '<div id="crpay-paywrap" hidden><label class="crpay-l">Paid by</label>' +
+        '<div class="crpay-seg crpay-seg2" id="crpay-payer" data-v="homeowner">' +
+          '<button type="button" data-p="insurance">Insurance</button>' +
+          '<button type="button" data-p="homeowner" class="on">Homeowner</button>' +
+        '</div></div>' +
         '<label class="crpay-l">Type</label>' +
         '<div class="crpay-seg" id="crpay-type" data-v="deposit">' +
           '<button type="button" data-t="deposit" class="on">Deposit</button>' +
@@ -92960,7 +92969,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function setSeg(id, v){
     var seg = q(id); if(!seg) return; seg.setAttribute('data-v', v);
     Array.prototype.forEach.call(seg.children, function(b){
-      b.classList.toggle('on', b.getAttribute('data-m') === v || b.getAttribute('data-t') === v);
+      b.classList.toggle('on', b.getAttribute('data-m') === v || b.getAttribute('data-t') === v || b.getAttribute('data-p') === v);
     });
   }
   function openPayModal(pr){
@@ -92982,7 +92991,17 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     /* 1388: a deposit is not the whole balance. Opened as a deposit with nothing paid yet, the box
        fills in the job's deposit instead (estimate deposit_amount > deposit_pct > the house rate). */
     _payAuto = { bal: /** @type {any} */ (q('crpay-amt')).value, dep: null, pid: String(pr.id) };
-    if(q('crpay-type').getAttribute('data-v') === 'deposit' && !(Number(fin.paid) > 0) && Number(fin.value) > 0) payDeposit(pr, fin);
+    /* 1394: on an insurance or Community job, ask who paid; it opens on the carrier / the partner */
+    var _ct = (typeof projClaimType === 'function') ? projClaimType(pr) : 'retail';
+    var _pw = q('crpay-paywrap'), _other = _ct === 'insurance' ? 'insurance' : _ct === 'community' ? 'partner' : null;
+    if(_pw){
+      _pw.hidden = !_other;
+      var _ob = _pw.querySelector('[data-p]:not([data-p="homeowner"])');
+      if(_ob && _other){ _ob.setAttribute('data-p', _other); _ob.textContent = _other === 'insurance' ? 'Insurance' : 'Partner'; }
+    }
+    setSeg('crpay-payer', _other || 'homeowner');
+    payerReceipt();
+    if(!_other && q('crpay-type').getAttribute('data-v') === 'deposit' && !(Number(fin.paid) > 0) && Number(fin.value) > 0) payDeposit(pr, fin);
     /* 1318: today in Dayton \u2014 toISOString() is UTC, so after 8 pm it recorded tomorrow */
     var _d = new Date(); q('crpay-date').value = _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0') + '-' + String(_d.getDate()).padStart(2, '0');
     m.classList.add('open');
@@ -93016,6 +93035,13 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     _payAuto.dep = (Math.round(down * 100) / 100).toFixed(2);
     if(q('crpay-type').getAttribute('data-v') === 'deposit') amt.value = _payAuto.dep;
   }
+  /* 1394: a receipt is the homeowner's; the carrier and the partner get none */
+  function payerReceipt(){
+    var who = (q('crpay-payer') && q('crpay-payer').getAttribute('data-v')) || 'homeowner';
+    var rc = q('crpay-receipt'), lb = rc && rc.closest ? rc.closest('label') : null;
+    if(rc instanceof HTMLInputElement) rc.checked = who === 'homeowner';
+    if(lb instanceof HTMLElement) lb.style.display = who === 'homeowner' ? '' : 'none';   /* .crpay-rcpt is display:flex, which beats [hidden] */
+  }
   function closePayModal(){ var m = q('cr-pay-modal'); if(m) m.classList.remove('open'); _payFor = null; _payAuto = null; }
   function collectionsInsert(row){
     var cx = window.sb || window.supa;
@@ -93048,13 +93074,14 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var ref = String(q('crpay-ref').value || '').trim();
     var date = q('crpay-date').value || new Date().toISOString().slice(0, 10);
     var typeMap = { deposit:'deposit', progress:'other', final:'final' };
+    var payer = (q('crpay-paywrap') && !q('crpay-paywrap').hidden && q('crpay-payer').getAttribute('data-v')) || 'homeowner';   /* 1394 */
     var me = (window.currentUser && currentUser.email) || '';
     var notes = 'Offline ' + (method === 'ach' ? 'bank transfer' : method === 'card' ? 'card' : method) + (ref ? ' #' + ref : '') + ' (recorded on-site)';
     var row = { project_id: pr.id, collected_at: date, amount: amt,
-                type: typeMap[ptype] || 'other', source: 'homeowner', method: method,
+                type: typeMap[ptype] || 'other', source: payer, method: method,
                 notes: notes, created_by: me };
     var btn = q('crpay-save'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
-    var _rcpt = q('crpay-receipt'), wantReceipt = !(_rcpt instanceof HTMLInputElement) || _rcpt.checked;   /* 1336 */
+    var _rcpt = q('crpay-receipt'), wantReceipt = payer === 'homeowner' && (!(_rcpt instanceof HTMLInputElement) || _rcpt.checked);   /* 1336; 1394 */
     collectionsInsert(row).then(function(r){
       closePayModal();
       crTell('Recorded ' + money(amt) + '. Status updated.' + (wantReceipt ? ' Sending the receipt\u2026' : ''));
@@ -93087,6 +93114,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if((t = e.target.closest('#crpay-cancel')) || (t = e.target.closest('#crpay-backdrop'))){ closePayModal(); return; }
     if((t = e.target.closest('#crpay-save'))){ savePayModal(); return; }
     if((t = e.target.closest('#crpay-method [data-m]'))){ setSeg('crpay-method', t.getAttribute('data-m')); return; }
+    if((t = e.target.closest('#crpay-payer [data-p]'))){ setSeg('crpay-payer', t.getAttribute('data-p')); payerReceipt(); return; }   /* 1394 */
     if((t = e.target.closest('#crpay-type [data-t]'))){
       setSeg('crpay-type', t.getAttribute('data-t'));
       /* 1388: swap between the deposit and the balance — only an amount the box filled in itself */
