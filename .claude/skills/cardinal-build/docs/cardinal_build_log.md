@@ -36973,3 +36973,16 @@ Audit follow-ups (the second code review's "suspected" list, verified).
 - Estimate title placeholder "Estimate — Jane Smith" → "Estimate title".
 - **Looked at and left:** 1342 `crKeepDocKind` keeps a document's kind on rename by design (renaming is not a conversion); 1365 `#newMenu` inline position after rotation; 1386 iOS print after await (needs a real iPhone).
 - **Gates:** `gate_1398.mjs` 5/5, control 1397 RED 4. gate_1340 regex widened for the kept result (it pinned the exact statement), GREEN; gate_771, gate_1206 GREEN.
+
+## Build 1399 — a sales rep's day, driven tap by tap (23 Oct 2026)
+A third audit agent signed in as a rep (not admin, not production) and drove a full day through the real UI on a phone (~35 runs; zero page errors). Its verified bugs, fixed:
+- **Multi-file upload kept only the first file** on Job Documents ("✓ Added 1 file."): `addJobFiles()` loops a live FileList across awaits and the handler cleared the input right after calling it. Copied first, as `jdScanInput` already does.
+- **An emailed estimate stayed Draft.** Publish-with-Email opened the email sheet and, 900 ms later, the "send it?" chooser on top; "Not now" then Send marked the document sent, never the estimate — nor did any later send from the document. One standing `cr-doc-sent` listener (in `cr-ess`) marks the estimate whose `doc_id` it is Sent (draft only, only for an estimate document per `isEstimateDoc`, `.select()`), and the chooser is skipped when `emailNext`. The chooser path keeps its own write; the listener stands down for a doc `crAwaitDocSent` is waiting on (gate_1201's "another document" check holds).
+- **A builder estimate could not be signed in person:** `refreshSigBtn` looked for `.sign`/`[data-sig]` (estimate uses `.ac-sign`) and the pad filled the LAST column (Cardinal's). Now offered, and the pad fills the column labelled Client Acceptance. Remote share-link signing untouched.
+- **Admin-only drawer rows showed to reps on a phone** (Invoices & AR, Owner Review, Labor Rate Schedule, Graphs & Reports): `hideOpt()`'s inline none lost to the drawer's `display:flex !important`. `data-cradmin` + an `!important` rule, the `data-crhide` mechanism.
+- **Home Gone quiet never listed anything:** read `p.stage_since` (not a column — it is in the checklist).
+- **Home cards blank on first load:** the first render ran before `cr-kphome-script` parsed; it paints once on arrival when `cacheLoaded`.
+- **Publish / → Contract opened the document under the builder** (z 150 vs 9500): `crCloseEstBuilder()` closes and confirms first.
+- "…Construction Agreement created" was a red error toast → `'ok'`. gate_types: two new TS2339 from these edits cast away (back to the carried +7).
+- **Recorded, not fixed:** toasts over bottom bars (#crToasts bottom 16px, push nudge over the More sheet); the client profile's Admin row shown to reps (it refuses with a toast); punch-out notify names the email local-part; nudge on the login screen; URL hash after sign-out; client-side `nextPo()` on open (trigger fires only on INSERT).
+- **Gates:** `gate_1399.mjs` 7/7 (as a rep: two-file upload, doc-sent → estimate Sent, Client signature offered, drawer admin rows hidden, Gone quiet on first load), control 1398 RED 7. gate_1201 (estimate send semantics), 1394, 1390, 1392, 1386, 1388, 1389, 1045 GREEN; harness gate GREEN.
