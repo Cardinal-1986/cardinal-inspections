@@ -37,6 +37,8 @@ const SCOPE = 'location.read product.read account.read pricing.read allOrder.rea
    ship; nothing else here is. */
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
+import { isStaff } from './_staff.js';   // 1406
+
 /* Hardcoded full-access set, same as is_full_access() in SQL — used only as a
    fallback when the service key is absent so the DB role cannot be read. */
 const FALLBACK_FULL = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net', 'curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
@@ -62,6 +64,9 @@ async function requireAccess(req, res, action) {
     email = ((caller && caller.email) || '').toLowerCase();
   } catch (_) { res.status(401).json({ error: 'Invalid session' }); return false; }
   if (!email) { res.status(401).json({ error: 'Invalid session' }); return false; }
+  /* 1406: a session is not staff — public signup is on, so a self-registered account reached Cardinal's
+     ABC pricing. The same check 1016 put on the AI routes and senddoc. */
+  if (!isStaff(email)) { res.status(403).json({ error: 'Cardinal staff only' }); return false; }
   if (!FULL_ONLY.has(action)) return true;               // any signed-in staff
   let ok = FALLBACK_FULL.includes(email);
   if (!ok) {

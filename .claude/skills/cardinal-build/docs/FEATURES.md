@@ -10187,3 +10187,6 @@ Photo insert retries keep their file; deletes remove the row first; album batche
 
 ## Build 1405: reports fill from their own job; print numbering, cover and Save as PDF; Desk claim isolation and letter safety
 Reports opened from a list fill only from their own job's checklist; printed section numbers match Contents; the cover fits one Letter page; Save as PDF compacts like Print. Supplement Desk (SD_BUILD 1405): no cross-claim data, filtered letter HTML, stored photos only as evidence, print waits for photos; the route falls back to OpenAI on an all-503 ladder. **Gate:** `gate_1405.mjs`.
+
+## Build 1406: staff-only ABC route; Crews for the office and Production; partner-less Community bids refused; folded search
+`api/abc.js` requires Cardinal staff; Crews hidden and refused for reps; a Community bid with no partner is refused; every search folds accents and apostrophes and reads +1 phones and "PO n"; Habitat first in partner lists; general contractors labelled. **Gate:** `gate_1406.mjs`.
