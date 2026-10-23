@@ -36986,3 +36986,16 @@ A third audit agent signed in as a rep (not admin, not production) and drove a f
 - "…Construction Agreement created" was a red error toast → `'ok'`. gate_types: two new TS2339 from these edits cast away (back to the carried +7).
 - **Recorded, not fixed:** toasts over bottom bars (#crToasts bottom 16px, push nudge over the More sheet); the client profile's Admin row shown to reps (it refuses with a toast); punch-out notify names the email local-part; nudge on the login screen; URL hash after sign-out; client-side `nextPo()` on open (trigger fires only on INSERT).
 - **Gates:** `gate_1399.mjs` 7/7 (as a rep: two-file upload, doc-sent → estimate Sent, Client signature offered, drawer admin rows hidden, Gone quiet on first load), control 1398 RED 7. gate_1201 (estimate send semantics), 1394, 1390, 1392, 1386, 1388, 1389, 1045 GREEN; harness gate GREEN.
+
+## Build 1400 — a production day, driven tap by tap (23 Oct 2026)
+A fourth audit agent signed in as production (Curtis) and as the field user (Scottie) and drove a day on the board, the punch card, crews and the client page (sentinel personas). Fixed:
+- **Warm start landed production on the retail home** (pipeline dollars, A/R): `showMain()` reached `CardinalProduction.open()` ~250 ms before `cr-pb` parsed. `showMain` / `showLanding` / `goToLanding` leave `window.__crProdPending`; `cr-pb` opens the board when it is defined (unless a client page is already up).
+- **Field user stranded** by "Open job" / a build-day row: the board or card closed itself, then `openProject` refused him. Not closed for a field user now.
+- **Punch card Call dialled `tel:`**: `projPhone()` returns `{digits, pretty}`.
+- **Back left the board's day / + Add sheet up** over the next screen: `close()` and the popstate path close both. **Back left the install-photos sheet up**: a popstate closes it.
+- **Closing a punch-out while checked in left the visit open** and counting: `doToggle()` stamps the open visit's `out` first.
+- **Check out after "Tell Curtis it's finished"** asked "needs another day?": skipped when the latest flagged comment is `askclose`.
+- **A refused move to Completed was audit-logged** as done: the setStage audit wrapper returns on `false`.
+- **Production work orders printed "No labor rates recorded"** (RLS returns `[]`, not an error): the `crew_rates` read is admin-only, so production gets 555's "Labor pricing is handled by the office".
+- **Recorded, not fixed:** field users cannot reach the install-photos sheet (its only door is the client page's Job Menu, which refuses them) while `setStage` needs those photos to complete — a design call on where the crew attaches them; work-order document `<title>` reads "Estimate"; Tarp notify says "New punch-out"; field Back adds a landing history entry each tap. Curtis seeing Job total / Balance due is per 1392.
+- **Gates:** `gate_1400.mjs` 6/6 (warm start as production, refused Completed not logged, + Add sheet closed by Back, Call digits, field Open job keeps the card, admin-only rate read), control 1399 RED 6. Helpers `gate_1400_lib.mjs` / `gate_1400_seed.js` (the audit rig, on the sentinel setups).

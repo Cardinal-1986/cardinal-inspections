@@ -10169,3 +10169,6 @@ Payments footer, page-title client names, System Health, Settings rows, Inspecti
 
 ## Build 1399: a rep's day — uploads, sent estimates, in-person estimate signing, drawer, home
 **Gate:** `gate_1399.mjs`.
+
+## Build 1400: a production day — warm-start board, field-user dead ends, Call, sheets on Back, visits, work-order labor line
+**Gate:** `gate_1400.mjs`.
