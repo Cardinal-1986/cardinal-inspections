@@ -4210,7 +4210,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-22 build 1387<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-22 build 1388<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -29066,8 +29066,10 @@ function restorePrintMarks(d){
 }
 document.getElementById('dlBtn').addEventListener('click', async function(){
   await saveCurrent();
-  var t = (document.getElementById('docTitle') && document.getElementById('docTitle').value) ||
-          (window.currentDoc && window.currentDoc.title) || 'Cardinal document';
+  /* 1388: #docTitle and window.currentDoc never existed, so every PDF was "Cardinal document".
+     The editor's title is #reportTitle (titleInput). */
+  var _ti = /** @type {any} */ (titleInput);
+  var t = (_ti && String(_ti.value || '').trim()) || 'Cardinal document';
   /* 1050: the downloaded .html is what a client is emailed and prints at home.
      It must carry the same page furniture as the copy we print from here. */
   try{ ensurePrintFix(frame.contentDocument); }catch(_){}
@@ -45176,6 +45178,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1388, d:'2026-10-22', t:'Deposit amount, PDF names, contract note', s:'Recording a deposit now starts at the job\u2019s deposit (from its estimate) instead of the whole balance; tap Final to switch to the balance. A PDF saved with Download is named after the document instead of \u201cCardinal document\u201d. And making a contract from an estimate no longer says the 3-Day Notice is included \u2014 that general contract does not carry it.' },
   { b: 1387, d:'2026-10-22', t:'Production, estimates and Community match too', s:'The same shapes as the main screens now on Production, the estimate builder and the Community page: cards with the same rounded corners and space inside, buttons with the same corners, and the same heading weight. Colors, sizes and the Production calendar are unchanged.' },
   { b: 1386, d:'2026-10-22', t:'Download saves a PDF', s:'Download on a contract, estimate or report used to save a web-page (.html) file, which a Mac opens as code. It now opens the print screen for that document with Save as PDF ready, named after the document. On an iPhone or iPad, tap the share button on that screen and choose Save to Files. Print works exactly as before.' },
   { b: 1385, d:'2026-10-22', t:'Tidier construction agreements', s:'The roofing agreement no longer asks for the number of existing layers twice: it is picked once, in Decking (\u201cRemove existing roofing \u2026 layers to roof deck\u201d), and Roof Pitch is now section 12. The roofing, siding and gutter agreements also no longer print a separate Terms page repeating where the printed Terms and Conditions live; that line is still in the agreement beside the cancellation notice. Agreements already saved are unchanged.' },
@@ -54563,7 +54566,9 @@ try{ await window.openEditor(docId); }catch(_){}
 }
 crTell('Contract created from ' + (est.estimate_number || 'the estimate') + '.\n\n' +
 'Scope and payment schedule are prefilled. Review the terms, then have the ' +
-'client sign \u2014 in person or by share link. The 3-Day Notice is included.');
+'client sign \u2014 in person or by share link.\n\n' +
+'This is the general Service Contract and it does not carry the Notice of Cancellation. ' +
+'For a sale made at the home, use the Roofing, Siding or Gutter Construction Agreement.');
 }catch(e){
 crTell('Could not generate contract: ' + (e.message || e));
 }finally{
@@ -92896,12 +92901,44 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var _inv = invoiceFor(pr.id), _s = stg(pr);
     setSeg('crpay-method', 'check');
     setSeg('crpay-type', (_s === 'Invoiced' || _s === 'Closed' || (_inv && _inv.status === 'sent')) ? 'final' : 'deposit');
+    /* 1388: a deposit is not the whole balance. Opened as a deposit with nothing paid yet, the box
+       fills in the job's deposit instead (estimate deposit_amount > deposit_pct > the house rate). */
+    _payAuto = { bal: /** @type {any} */ (q('crpay-amt')).value, dep: null, pid: String(pr.id) };
+    if(q('crpay-type').getAttribute('data-v') === 'deposit' && !(Number(fin.paid) > 0) && Number(fin.value) > 0) payDeposit(pr, fin);
     /* 1318: today in Dayton \u2014 toISOString() is UTC, so after 8 pm it recorded tomorrow */
     var _d = new Date(); q('crpay-date').value = _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0') + '-' + String(_d.getDate()).padStart(2, '0');
     m.classList.add('open');
     setTimeout(function(){ try{ q('crpay-amt').focus(); }catch(e){} }, 40);
   }
-  function closePayModal(){ var m = q('cr-pay-modal'); if(m) m.classList.remove('open'); _payFor = null; }
+  /* 1388: what the box itself filled in, so a tap on Deposit / Final can swap it — never a typed amount */
+  var _payAuto = null;
+  async function payDeposit(pr, fin){
+    var W = /** @type {any} */ (window);
+    var pid = String(pr.id), value = Number(fin.value) || 0, pct = Number(W.DEPOSIT_PCT_DEFAULT) || 30, down = null;
+    try{
+      var rows = (W.CardinalEstimates && typeof W.CardinalEstimates.loadForProject === 'function')
+        ? await W.CardinalEstimates.loadForProject(pr.id) : [];
+      var depRank = function(e){ var st = String((e && e.status) || '').toLowerCase();
+        return /accept|sign|approv|won/.test(st) ? 2 : (/sent|publish/.test(st) ? 1 : 0); };
+      var best = /** @type {any} */ (null);
+      (rows || []).forEach(function(e){
+        if(!e || (e.deposit_pct == null && !(Number(e.deposit_amount) > 0))) return;
+        if(!best || depRank(e) > depRank(best)) best = e;
+      });
+      if(best){
+        if(best.deposit_pct != null) pct = Math.max(0, Math.min(100, Number(best.deposit_pct) || 0));
+        if(Number(best.deposit_amount) > 0) down = Number(best.deposit_amount);
+      }
+    }catch(_e){}
+    if(down === null) down = value * pct / 100;
+    down = Math.min(down, Number(fin.balance) || down);
+    if(!(down > 0) || !_payAuto || _payAuto.pid !== pid || _payFor !== pr) return;
+    var amt = q('crpay-amt');
+    if(!(amt instanceof HTMLInputElement) || amt.value !== _payAuto.bal) return;   /* they already typed */
+    _payAuto.dep = (Math.round(down * 100) / 100).toFixed(2);
+    if(q('crpay-type').getAttribute('data-v') === 'deposit') amt.value = _payAuto.dep;
+  }
+  function closePayModal(){ var m = q('cr-pay-modal'); if(m) m.classList.remove('open'); _payFor = null; _payAuto = null; }
   function collectionsInsert(row){
     var cx = window.sb || window.supa;
     if(cx && cx.from){
@@ -92972,7 +93009,16 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if((t = e.target.closest('#crpay-cancel')) || (t = e.target.closest('#crpay-backdrop'))){ closePayModal(); return; }
     if((t = e.target.closest('#crpay-save'))){ savePayModal(); return; }
     if((t = e.target.closest('#crpay-method [data-m]'))){ setSeg('crpay-method', t.getAttribute('data-m')); return; }
-    if((t = e.target.closest('#crpay-type [data-t]'))){ setSeg('crpay-type', t.getAttribute('data-t')); return; }
+    if((t = e.target.closest('#crpay-type [data-t]'))){
+      setSeg('crpay-type', t.getAttribute('data-t'));
+      /* 1388: swap between the deposit and the balance — only an amount the box filled in itself */
+      var _a = q('crpay-amt');
+      if(_payAuto && _a instanceof HTMLInputElement && (_a.value === _payAuto.bal || _a.value === _payAuto.dep)){
+        var _v = t.getAttribute('data-t') === 'deposit' ? _payAuto.dep : _payAuto.bal;
+        if(_v) _a.value = _v;
+      }
+      return;
+    }
   });
   window.openAR = open;
   window.renderAR = render;
