@@ -31,7 +31,7 @@ if (i > 0) {
 
 console.log('B · the in-person signing paths call it');
 ok(/else if\(isEstimateTitle\(_t\)\)\{ await crAcceptEstimateForDoc\(current\.id\); \}/.test(html), 'buyer signature slot: an estimate is accepted');
-ok(/\}else if\(isEstimateTitle\(t\)\)\{\s*await crAcceptEstimateForDoc\(current\.id\);/.test(html), 'single signature line: an estimate is accepted');
+ok(/\}else if\(isEstimateTitle\(t\)\)\{\s*(?:var _acc = )?await crAcceptEstimateForDoc\(current\.id\);/.test(html), 'single signature line: an estimate is accepted');   /* 1398 keeps the result */
 ok(/if\(\/\^contract\/i\.test\(_t\) && current\.project_id\)\{ await setStage\(current\.project_id, 'Approved'\); \}/.test(html), 'contracts still move the job to Approved (unchanged)');
 ok(/Estimate signed and accepted/.test(html), 'the message says it was accepted');
 
