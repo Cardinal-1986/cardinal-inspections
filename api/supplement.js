@@ -580,7 +580,7 @@ export default async function handler(req, res) {
     /* 1072: the model NAME, not the vendor. 'gemini' cannot tell 3.6 from
        3.5, and those are different model tiers — exactly the distinction
        somebody asking "why did it miss that" needs. */
-    let ans = null, via = GEMINI_MODELS[0], lastBody = null, lastText = '';
+    let ans = null, via = GEMINI_MODELS[0], lastBody = null, lastText = '', triedOA = false;
     outer:
     for (const model of GEMINI_MODELS) {
       for (const jsonMode of [true, false]) {
@@ -599,8 +599,10 @@ export default async function handler(req, res) {
           await new Promise(s => setTimeout(s, 1200));
           continue;   /* same model, no-json attempt; then next model */
         }
-        if (!r.ok) r = await aiFallback(parts, r);
-        const j = await r.json();
+        if (!r.ok) { triedOA = true; r = await aiFallback(parts, r); }
+        /* 1405: a non-JSON error body is a failed rung, not a parser message for the Desk */
+        let j = {};
+        try { j = await r.json(); } catch (_pj) { j = {}; if (r.ok) continue; }
         lastBody = j;
         if (!r.ok) continue;
         via = r._via === 'openai' ? 'gpt-4o-mini' : model;
@@ -610,6 +612,20 @@ export default async function handler(req, res) {
         const parsed = parseObj(lastText);
         if (parsed) { ans = parsed; break outer; }
       }
+    }
+
+    /* 1405: every Gemini rung answered 503 / 429 (the commonest failure) — the backup was never asked */
+    if (!ans && !triedOA && elapsed() <= TIME_BUDGET_MS) {
+      try {
+        const r2 = await aiFallback(parts, null);
+        if (r2 && r2.ok) {
+          const j2 = await r2.json();
+          const cand2 = (j2.candidates || [])[0] || {};
+          lastText = ((cand2.content || {}).parts || []).map(p => p.text || '').join('').replace(/```json|```/g, '').trim();
+          const p2 = parseObj(lastText);
+          if (p2) { ans = p2; via = 'gpt-4o-mini'; }
+        }
+      } catch (_oa) {}
     }
 
     if (!ans) {

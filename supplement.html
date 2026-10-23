@@ -307,7 +307,7 @@
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
-    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1396</span>
+    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1405</span>
     <span class="sp"></span>
     <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
@@ -467,7 +467,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
-var SD_BUILD = 1396; window.SD_BUILD = SD_BUILD;
+var SD_BUILD = 1405; window.SD_BUILD = SD_BUILD;
 /* Same publishable anon key api/*.js falls back to — public by design. */
 var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -624,10 +624,12 @@ function step(n){
 async function loadNotes(){
   S.notes = []; S.noteOn = {};
   if(!S.claim){ renderNotes(); return; }
+  var _ncid = S.claim.id;   /* 1405 */
   var r = await sb.from('claim_notes')
     .select('id, body, created_at, created_by')
     .eq('claim_id', S.claim.id)
     .order('created_at', { ascending: false }).limit(50);
+  if(!sdStillClaim(_ncid)) return;   /* 1405: another claim was opened meanwhile */
   if(r.error){
     el('noteList').innerHTML = '<div class="sd-empty">Could not load notes: ' + esc(r.error.message) + '</div>';
     return;
@@ -749,6 +751,9 @@ async function openDesk(claimId){
   el('sendBtn').onclick = null; el('sendBtn').textContent = 'Send to the carrier';
   syncSend();
 }
+/* 1405: a loader's reply that lands after another claim was opened is dropped, not painted onto it */
+function sdStillClaim(claimId){ return !!(S.claim && String(S.claim.id) === String(claimId)); }
+function sdStillProject(pid){ return !!(S.claim && String(S.claim.project_id) === String(pid)); }
 function kv(label, val){ return '<div class="cell"><b>' + esc(label) + '</b><span>' + val + '</span></div>'; }
 
 /* 669: the claim's iTel lab report — repairability and no-match supplements
@@ -760,6 +765,7 @@ async function loadItel(claimId){
     var r = await sb.from('itel_lab_reports')
       .select('control_number, verdict, match_product, mismatch_notes, report_date')
       .eq('claim_id', claimId).order('report_date', { ascending: false }).limit(1);
+    if(!sdStillClaim(claimId)) return;   /* 1405: another claim was opened meanwhile */
     if(!r.error && r.data && r.data.length){
       S.itel = r.data[0];
       el('deskKv').innerHTML += kv('iTel on file',
@@ -911,6 +917,7 @@ el('clSaveBtn').addEventListener('click', async function(){
 async function loadScopeDocs(pid){
   var r = await sb.from('inspection_reports').select('id, title, created_at')
     .eq('project_id', pid).ilike('title', 'Insurance Doc%').order('created_at', { ascending: false }).limit(20);
+  if(!sdStillProject(pid)) return;   /* 1405 */
   S.scopeDocs = r.data || [];
   if(r.error || !S.scopeDocs.length){
     el('scopeList').innerHTML = '<div class="sd-empty">No insurance documents filed on this job. File the scope from the client profile first.</div>';
@@ -930,6 +937,7 @@ async function loadFilings(claimId){
   var r = await sb.from('insurance_supplements')
     .select('id, filing_type, reason, filed_at, status, amount_requested, amount_approved, responded_at, created_at, sent_at, sent_to')
     .eq('claim_id', claimId).order('created_at', { ascending: false }).limit(30);
+  if(!sdStillClaim(claimId)) return;   /* 1405 */
   S.filings = r.data || [];
   el('filingList').innerHTML = S.filings.length ? S.filings.map(function(f){
     var ft = { partial_denial: 'Partial denial', backend: 'Backend', pwi_coc: 'PWI / COC' }[f.filing_type] || 'Manual';
@@ -947,16 +955,19 @@ async function loadFilings(claimId){
 async function loadPhotos(pid){
   var r = await sb.from('project_photos').select('id, storage_path, data, created_at')
     .eq('project_id', pid).order('created_at', { ascending: true }).limit(200);
-  S.photos = r.data || [];
-  var paths = S.photos.filter(function(p){ return p.storage_path; }).map(function(p){ return p.storage_path; });
+  /* 1405: built on a local list and published only if this job is still the one open */
+  var list = r.data || [];
+  var paths = list.filter(function(p){ return p.storage_path; }).map(function(p){ return p.storage_path; });
   if(paths.length){
     var su = await sb.storage.from('photos').createSignedUrls(paths, 3600);
     var byPath = {};
     (su.data || []).forEach(function(d, i){ if(d && d.signedUrl) byPath[paths[i]] = d.signedUrl; });
-    S.photos.forEach(function(p){ p._src = p.storage_path ? byPath[p.storage_path] : (String(p.data || '').indexOf('data:') === 0 ? p.data : null); });
+    list.forEach(function(p){ p._src = p.storage_path ? byPath[p.storage_path] : (String(p.data || '').indexOf('data:') === 0 ? p.data : null); });
   } else {
-    S.photos.forEach(function(p){ p._src = String(p.data || '').indexOf('data:') === 0 ? p.data : null; });
+    list.forEach(function(p){ p._src = String(p.data || '').indexOf('data:') === 0 ? p.data : null; });
   }
+  if(!sdStillProject(pid)) return;
+  S.photos = list;
 }
 
 /* ── analyze ──────────────────────────────────────────────────────────────── */
@@ -1317,7 +1328,8 @@ function openPhotoModal(g){
   el('phFor').textContent = g.item;
   var chosen = {};
   (g.photos || []).forEach(function(p){ chosen[p.path] = true; });
-  el('photoGrid').innerHTML = S.photos.filter(function(p){ return p._src; }).map(function(p){
+  /* 1405: the letter carries only stored photos (print and send skip 'row:' keys) — offer nothing else */
+  el('photoGrid').innerHTML = S.photos.filter(function(p){ return p._src && p.storage_path; }).map(function(p){
     var key = p.storage_path || ('row:' + p.id);
     return '<div class="ph' + (chosen[key] ? ' on' : '') + '" data-key="' + esc(key) + '">' +
       '<img src="' + esc(p._src) + '" loading="lazy"><span class="tick">✓</span></div>';
@@ -1398,7 +1410,21 @@ async function draft(){
 }
 /* show tokens as visible pills while editing; the STORED letter keeps the raw
    tokens (letterRaw strips the decoration back off) */
+/* 1405: the letter is model-written and can be steered by claim notes — nothing in it may run in this page */
+function sdSafeHtml(html){
+  var t = document.createElement('template');
+  t.innerHTML = String(html || '');
+  t.content.querySelectorAll('script,iframe,object,embed,link,meta,style,base,form').forEach(function(n){ n.remove(); });
+  t.content.querySelectorAll('*').forEach(function(n){
+    Array.prototype.slice.call(n.attributes).forEach(function(at){
+      var nm = at.name.toLowerCase(), v = String(at.value || '').replace(/[\s\u0000-\u001f]/g, '').toLowerCase();
+      if(nm.indexOf('on') === 0 || ((nm === 'href' || nm === 'src' || nm === 'xlink:href' || nm === 'action') && /^(javascript|vbscript|data:text)/.test(v))) n.removeAttribute(at.name);
+    });
+  });
+  return t.innerHTML;
+}
 function decorateTokens(html){
+  html = sdSafeHtml(html);
   return html.replace(/\[\[PHOTOS:([a-z0-9_]+)\]\]/gi, function(_, id){
     return '<span class="ph-token" data-phtoken="' + esc(id) + '" contenteditable="false">📷 photos: ' + esc(id) + '</span>';
   });
@@ -1515,11 +1541,19 @@ el('printBtn').addEventListener('click', async function(){
       return src ? '<img src="' + esc(src) + '" style="max-width:46%;margin:4px 2%;border:1px solid #ccc;">' : '';
     }).join('') + '</div>';
   });
+  html = sdSafeHtml(html);   /* 1405 */
   el('printArea').innerHTML =
     '<div style="font:14px/1.6 Georgia,serif;max-width:7.5in;margin:0 auto;padding:24px;">' +
     '<h2 style="font-size:16px;">' + esc(el('subjEdit').value) + '</h2>' + html +
     codeAppendix(html) + '</div>';
   el('printArea').style.display = 'block';
+  /* 1405: print only once the photographs have loaded (or 8 s), or they print blank */
+  await Promise.race([
+    Promise.all(Array.prototype.map.call(el('printArea').querySelectorAll('img'), function(im){
+      return im.complete ? null : new Promise(function(ok){ im.onload = im.onerror = ok; });
+    })),
+    new Promise(function(ok){ setTimeout(ok, 8000); })
+  ]);
   window.print();
   el('printArea').style.display = 'none';
 });

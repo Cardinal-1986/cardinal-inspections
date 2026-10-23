@@ -53,6 +53,6 @@ ok(out[0] && out[1] && out[2], 'B  a payment collected on the 1st counts in This
 /* C — Supplement Desk reads a storage-backed scope */
 const SH = fs.readFileSync(SUP, 'utf8');
 ok(/!\(pay\.data \|\| pay\.path\)/.test(SH) && /storage\.from\(pay\.bucket \|\| 'job-files'\)\.download\(pay\.path\)/.test(SH), 'C  Desk accepts {bucket,path} documents and downloads them');
-ok(/var SD_BUILD = 1396;/.test(SH) && />build 1396</.test(SH), 'C  Desk stamp bumped');
+{ const _b = Number((/var SD_BUILD = (\d+);/.exec(SH) || [])[1]); ok(_b >= 1396 && new RegExp('>build ' + _b + '<').test(SH), 'C  Desk stamp bumped (1396 or later, one stamp in both places)'); }   /* 1405: was pinned to 1396 */
 console.log((fail ? 'RED' : 'GREEN') + '  ' + pass + ' pass / ' + fail + ' fail');
 process.exit(fail ? 1 : 0);

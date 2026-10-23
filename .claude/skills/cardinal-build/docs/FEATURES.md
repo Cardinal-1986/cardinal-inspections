@@ -10184,3 +10184,6 @@ Offline checklist edits replay only their own keys onto the server's copy; reps 
 
 ## Build 1404: photo saves and deletes that can't leave dead tiles; labelled quick-inspection shots; estimate cents
 Photo insert retries keep their file; deletes remove the row first; album batches skip a bad file and say so; quick-inspection shots carry their label and lost shots are named on resume; estimate lines are cents, discounts clamped, photo edits copied, Valid through local. **Gate:** `gate_1404.mjs`.
+
+## Build 1405: reports fill from their own job; print numbering, cover and Save as PDF; Desk claim isolation and letter safety
+Reports opened from a list fill only from their own job's checklist; printed section numbers match Contents; the cover fits one Letter page; Save as PDF compacts like Print. Supplement Desk (SD_BUILD 1405): no cross-claim data, filtered letter HTML, stored photos only as evidence, print waits for photos; the route falls back to OpenAI on an all-503 ladder. **Gate:** `gate_1405.mjs`.
