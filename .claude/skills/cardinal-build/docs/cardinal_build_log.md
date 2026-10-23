@@ -37009,6 +37009,6 @@ Admin drive across the claim screens, Claims hub, Owner Review, Invoices & AR an
 - **Money In & Commissions on an insurance job** was 1.06:1 (dark `--rbe-*` inks on the claim ground); remapped to the `--ct-*` pair under `body.claim-insurance`.
 - **Invoices & AR text/email** said "Hi <occupant>" on Community invoices; `invHello()` as 1376.
 - **Community Partners** "Owed" was the whole estimate and sorted by it; now the `CardinalAR.list()` balance, Habitat first.
-- Mock: `e2e_mock_supa.js`'s commission trigger writes `'pending'` like the real one (`commission_system.sql`), not `'unpaid'`.
+- Mock: `e2e_mock_supa.js`'s commission trigger writes `'pending'` like the real database trigger, not `'unpaid'`.
 - **Recorded, not fixed:** Community pipeline amounts read only estimates/bids (a contract-only Invoiced job shows $0); insurance A/R files the homeowner's part under "Waiting on the carrier".
 - **Gates:** `gate_1401.mjs` 9/9, control 1400 RED 9 (helpers `gate_1401_lib.mjs` / `gate_1401_seed.js`).
