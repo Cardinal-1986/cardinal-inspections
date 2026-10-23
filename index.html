@@ -4212,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1404<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1405<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -9029,7 +9029,7 @@ p{margin:0 0 10px;}
 .howto ul{margin:6px 0 0 18px;padding:0;}
 
 /* ---------- cover ---------- */
-.cover{min-height:246mm;display:flex;flex-direction:column;}
+.cover{min-height:230mm;display:flex;flex-direction:column;}
 .cover-logo{width:230px;height:auto;margin:4mm 0 8mm;}
 .cover-band{height:6px;background:var(--red);width:100%;margin-bottom:10mm;}
 .cover-photo{
@@ -9467,7 +9467,7 @@ p{margin:0 0 10px;}
 .howto ul{margin:6px 0 0 18px;padding:0;}
 
 /* ---------- cover ---------- */
-.cover{min-height:246mm;display:flex;flex-direction:column;}
+.cover{min-height:230mm;display:flex;flex-direction:column;}
 .cover-logo{width:230px;height:auto;margin:4mm 0 8mm;}
 .cover-band{height:6px;background:var(--red);width:100%;margin-bottom:10mm;}
 .cover-photo{
@@ -27676,8 +27676,13 @@ async function openEditor(id){
          Blanks only, so a value Theo typed is never touched. Announced in the
          flash rather than applied silently. */
       try{
-        var _ck = (typeof getChecklist === 'function' && window.currentProject)
-                    ? getChecklist(window.currentProject) : null;
+        /* 1405: the REPORT's own job — currentProject is whichever client was open last, so a report opened
+           from a list was filled (and saved) with another job's checklist */
+        var _rpid = r && r.project_id;
+        var _rpr = _rpid ? ((window.currentProject && String(window.currentProject.id) === String(_rpid))
+                    ? window.currentProject
+                    : (cacheProjects || []).find(function(p){ return String(p.id) === String(_rpid); })) : null;
+        var _ck = (typeof getChecklist === 'function' && _rpr) ? getChecklist(_rpr) : null;
         if(_ck){
           var _n = resyncChecklist(doc, _ck);
           if(_n && savedFlash) savedFlash.textContent =
@@ -29099,6 +29104,8 @@ function compactForPrint(d){
   secs.forEach(function(h){
     var sp = h.querySelector('.num');
     if(!sp || h.getAttribute('data-emptysec')) return;
+    /* 1405: the Contents heading carries a glyph, not a number — counting it put every section one ahead */
+    if(!/^\s*\d+\s*$/.test(sp.getAttribute('data-orignum') || sp.textContent)) return;
     num++;
     if(!sp.getAttribute('data-orignum')) sp.setAttribute('data-orignum', sp.textContent);
     sp.textContent = String(num);
@@ -29141,7 +29148,10 @@ document.getElementById('dlBtn').addEventListener('click', async function(){
   /* 1050: the downloaded .html is what a client is emailed and prints at home.
      It must carry the same page furniture as the copy we print from here. */
   try{ ensurePrintFix(frame.contentDocument); }catch(_){}
-  if(window.CardinalDownload) window.CardinalDownload.frame(frame, t);
+  /* 1405: the same compaction Print applies — the PDF a client is sent carried every placeholder and empty section */
+  var _dd = null; try{ _dd = /** @type {any} */ (frame).contentDocument; if(_dd) compactForPrint(_dd); }catch(_cp){}
+  try{ if(window.CardinalDownload) window.CardinalDownload.frame(frame, t); }
+  finally{ try{ if(_dd) restorePrintMarks(_dd); }catch(_rp){} }
 });
 /* 1050: the running header used to be a position:fixed .runhead element. On paper
    that repeats correctly on every page \u2014 and paints its white background over
@@ -29175,7 +29185,8 @@ function ensurePrintFix(d){
   st.id = 'printFix';
   st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}' +
     '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important;}' +
-    '.page-break{display:none !important;}' +
+    '.page-break:not(h2){display:none !important;}' +   /* 1405: the Terms heading is h2.sec.page-break */
+    '.cover{min-height:226mm !important;}' +   /* 1405: 246mm overflowed Letter under these margins */
     'h2.sec{break-after:avoid;}' +
     '.figrow,.fig,tr{break-inside:avoid;}' +
     '.runhead{display:none !important;}' +
@@ -45286,6 +45297,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1405, d:'2026-10-23', t:'Reports on paper and the Supplement Desk', s:'Opening a report from a list no longer fills it with the checklist of the last client you looked at. Printed section numbers match the Contents page, the cover page fits on one Letter page, and Save as PDF hides the empty sections and placeholders the way Print does. On the Supplement Desk, switching claims no longer mixes in the previous claim\u2019s photos or documents, only photos the letter can carry can be attached as evidence, printing waits for the photos, and the analyst falls back to its backup when the main model is busy.' },
   { b: 1404, d:'2026-10-23', t:'Photos, quick inspections and estimates', s:'A photo whose save hiccuped no longer turns into a broken tile while saying it was added, and deleting a photo can no longer leave an empty tile behind. Adding several photos to the album keeps going past one bad file and says which failed. Quick-inspection photos carry their shot label, and if the app closes before some photos upload, it tells you to retake them. On estimates, the line amounts add up exactly to the subtotal, a discount can\u2019t be negative or larger than the subtotal, editing a copy no longer changes the original\u2019s photo captions, and Valid through no longer runs a day late in the evening.' },
   { b: 1403, d:'2026-10-23', t:'Offline edits, appointment texts and dates', s:'A change made to a job with no signal no longer wipes out a teammate\u2019s changes to the same job when your phone syncs. Reps are told about the job and drop-off appointments on their jobs, not your personal ones (the texts now follow the calendar). Booking an appointment with no signal says so instead of asking for a database fix. All-day appointments no longer promise an hour-before text. The punch map\u2019s Today, crew document expiry, the calendar\u2019s Next line and reminders set across the clock change now count days correctly.' },
   { b: 1402, d:'2026-10-23', t:'What the client sees', s:'On a phone, the Pay and Accept & Sign buttons on invoices and estimates are full size again (they could shrink to a sliver). Invoices no longer print a stray \u201cLoading\u2026\u201d. A Community invoice or agreement no longer prints an empty contact line or the occupant\u2019s email and phone under the partner\u2019s name. Printing from the client\u2019s link keeps the Terms heading and leaves the pay bar off the paper. Invoice numbers lose the doubled \u201c#\u201d. A client coming back from paying sees a thank-you instead of the Pay button. Share links made on older iPhones open again.' },
