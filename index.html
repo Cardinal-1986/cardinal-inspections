@@ -4212,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1399<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1400<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -24054,7 +24054,9 @@ async function createWorkOrder(pr, crew, opts){
     /* crew_rates is admin-only by RLS. Production gets an error or an empty
        set, and the document says so rather than printing a blank money table. */
     var rates = null, catalog = {};
-    try{
+    /* 1400: RLS answers production with [] (not an error), which printed "No labor rates recorded" on the
+       crew's copy. Only the admin reads rates; everyone else gets 555's "handled by the office". */
+    if(typeof isAdminUser === 'function' && isAdminUser()) try{
       var rr = await sb.from('crew_rates').select('*').eq('crew_id', crew.id);
       if(!rr.error && rr.data){
         rates = rr.data;
@@ -29491,6 +29493,7 @@ window.addEventListener('visibilitychange', function(){
 });
 
 function showLanding(userEmail){
+  if((typeof isFieldUser === 'function' && isFieldUser()) && !window.CardinalProduction) window.__crProdPending = 1;   /* 1400 */
   if((typeof isFieldUser === 'function' && isFieldUser()) && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }   /* 1317: field users live in Production */
   /* 1190 — the vision branch is gone with the hostname it served. Since the
      Showroom cutover (31 Aug) showroom.cardinalroster.com is served by the
@@ -29709,6 +29712,7 @@ function backToLanding(){
 /* Same as backToLanding, but called from the app menu — also clears main-app views
    so the transition is clean. */
 function goToLanding(){
+  if((typeof isFieldUser === 'function' && isFieldUser()) && !window.CardinalProduction) window.__crProdPending = 1;   /* 1400 */
   if((typeof isFieldUser === 'function' && isFieldUser()) && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }   /* 1317: field users live in Production */
   /* 1188 — THE HOSTNAME IS GONE FROM THIS DECISION. There is one path now.
 
@@ -29738,6 +29742,7 @@ function goToLanding(){
   try{ document.getElementById('resourceLibraryView').style.display = 'none'; }catch(_e3){}
   var _ic0 = document.getElementById('insClientsView'); if(_ic0) _ic0.style.display = 'none';
   var _landed = false;
+  if(typeof isProductionUser === 'function' && isProductionUser() && !window.CardinalProduction) window.__crProdPending = 1;   /* 1400 */
   if(typeof isProductionUser === 'function' && isProductionUser() &&
      window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
     try{ window.CardinalProduction.open(); _landed = true; }catch(_pe){}
@@ -30169,6 +30174,8 @@ var hd = document.querySelector('header.site');
      re-login must clear it. */
   try{ document.body.classList.toggle('cr-prod', typeof isProductionUser === 'function' && !!isProductionUser()); }catch(_cp){}
   try{ document.body.classList.toggle('cr-field', (typeof isFieldUser === 'function' && isFieldUser())); }catch(_cf){}   /* 1317 */
+  /* 1400: cr-pb parses after this runs on a warm start — leave a note it picks up when it is defined */
+  if(typeof isProductionUser === 'function' && isProductionUser() && !window.CardinalProduction) window.__crProdPending = 1;
   if(typeof isProductionUser === 'function' && isProductionUser() &&
      window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
     try{ var _plv = document.getElementById('landingView'); if(_plv) _plv.style.display = 'none'; }catch(_pl){}
@@ -30764,6 +30771,7 @@ var AUDIT_TYPES = {
     var pr = cacheProjects.find(function(p){ return p.id === id; });
     var from = pr ? normStage(pr.stage) : '';
     var out = await _ss.apply(this, arguments);
+    if(out === false) return out;   /* 1400: a refused move (install photos missing) is not a stage change */
     try{
       var nm = pr ? pr.name : '';
       if(v === 'Lost'){
@@ -45213,6 +45221,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1400, d:'2026-10-23', t:'Fixes from a day on Production', s:'Production opens on the Production board again when the app reopens (it could land on the sales home). For the crew, Open job no longer leaves them on a blank screen, and the punch card\u2019s Call button dials the client. Back closes the board\u2019s day sheet, + Add sheet and the install-photos sheet instead of leaving them on screen. Closing a punch-out while checked in checks you out. After telling Curtis a job is finished, checking out no longer asks whether it needs another day. A blocked move to Completed is no longer logged as done. Work orders from Production say labor pricing is handled by the office.' },
   { b: 1399, d:'2026-10-23', t:'Fixes from a day as a rep', s:'Uploading several files at once to a job\u2019s Documents keeps all of them (it kept only the first). Emailing an estimate marks it Sent however you send it. A builder estimate can be signed in person, on the client\u2019s line. Admin-only menu items no longer show to reps on a phone. Home\u2019s Gone quiet lists jobs that have sat too long, and the home cards fill in on first load. Publishing an estimate or making a contract opens the document in front of the builder instead of behind it.' },
   { b: 1398, d:'2026-10-23', t:'Messages that say what happened', s:'Signing an estimate in person only says \u201caccepted \u2014 it can be invoiced\u201d when it really was; when the office has to accept it, it says that instead. A tag notification sent at night says the email goes out at 7:00 am. The Team Directory\u2019s emails, \u201cno number\u201d and head count are easier to read, and its edit buttons are bigger.' },
   { b: 1397, d:'2026-10-23', t:'Polish across the app', s:'The Payments page\u2019s Paid / Balance due line is readable in dark mode (it was nearly invisible). Client names next to page titles and the Appointments and Tasks intros are brighter. System Health\u2019s heading reads, and it says \u201c1 row\u201d. The Settings rows line their arrows up on the right. The Inspections list no longer lists contracts and invoices. On a phone, the Company Documents guide rows, Quick Inspection\u2019s address search and an estimate\u2019s line prices fit. The \u2726 Ask button steps aside on screens with their own buttons at the bottom \u2014 estimates, documents, messages, Quick Inspection, the Library and the scanner.' },
@@ -57893,7 +57902,8 @@ function wire(){
       ev.stopPropagation();
       var id = b.getAttribute('data-job');
       if(!id) return;
-      close(false);
+      /* 1400: a field user's openProject refuses — closing first stranded him on a blank shell */
+      if(!(window.isFieldUser && window.isFieldUser())) close(false);
       if(typeof window.openProject === 'function') window.openProject(id);
     };
   });
@@ -58349,6 +58359,7 @@ async function open(){
   render();
 }
 function close(goHome){
+  try{ closeDay(); }catch(_){} try{ closeAdd(); }catch(_){}   /* 1400 */
   if(el) el.classList.remove('open');
   document.body.style.overflow = '';
   if(goHome === false) return;
@@ -58412,6 +58423,7 @@ window.addEventListener('popstate', function(ev){
   if(v !== 'production' && el && el.classList.contains('open')){
     el.classList.remove('open');
     document.body.style.overflow = '';
+    try{ closeDay(); }catch(_){} try{ closeAdd(); }catch(_){}   /* 1400: the sheets went on showing over the next screen */
   }
 });
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
@@ -58453,6 +58465,11 @@ window.CardinalProduction = {
   refresh   : async function(){ await load(); lastSig = ''; render(); },
   openCount : function(){ return punchRows().filter(function(i){ return i.status === 'open'; }).length; },
 };
+/* 1400: showMain() ran before this module existed — open the board now, unless something else is already up */
+if(window.__crProdPending){
+  window.__crProdPending = 0;
+  try{ if(!(window.currentProject && document.getElementById('projectView') && getComputedStyle(document.getElementById('projectView')).display !== 'none')) open(); }catch(_){}
+}
 })();
 </script>
 <style id="cr-pk-styles">
@@ -59200,7 +59217,10 @@ async function checkOut(){
      may be checking out because he is waiting on a part, and then tomorrow is
      the wrong date and nobody was consulted. */
   var needDay = false;
-  if(it.status !== 'done'){
+  /* 1400: the crew already said it is finished (askclose) — do not ask whether it needs another day */
+  var _flags = comments().filter(function(c){ return c && c.flag; });
+  var _askedClose = !!(_flags.length && _flags[_flags.length - 1].flag === 'askclose');
+  if(it.status !== 'done' && !_askedClose){
     if(isManager()){
       var back = await crAsk('Not finished yet.\n\nBack on this tomorrow?');
       if(back) patch.scheduled_at = nextWorkDay(now);
@@ -59588,7 +59608,8 @@ function dispatchLine(){
 function jobHtml(pr){
   var addr = pr ? (pr.address || '') : '';
   var phone = '';
-  if(pr && typeof window.projPhone === 'function'){ try{ phone = window.projPhone(pr) || ''; }catch(_){} }
+  /* 1400: projPhone() returns { digits, pretty } — String() of it was "[object Object]", so tel: dialled nothing */
+  if(pr && typeof window.projPhone === 'function'){ try{ var _ph = window.projPhone(pr); phone = (_ph && typeof _ph === 'object') ? (_ph.digits || '') : (_ph || ''); }catch(_){} }
   return '<div class="pksec">' +
     '<div class="jn"><span class="dot ' + portalOf(pr) + '"></span>' + esc(pr ? (pr.name || 'Unnamed') : 'Unknown job') + '</div>' +
     '<span class="ja">' + esc(addr || 'No address on file') +
@@ -60104,6 +60125,9 @@ function _queuedNote(){
 }
 async function doToggle(){
   try{
+    /* 1400: closing while checked in left the visit open and counting — stamp the check-out first */
+    var _ov = it.status !== 'done' ? openVisit() : null;
+    if(_ov){ var _vv = visits().slice(); _vv[_ov.i] = Object.assign({}, _ov.v, { out: new Date().toISOString() }); await save({ visits: _vv }); }
     var P = window.CardinalPunch;
     if(P && typeof P.toggle === 'function'){
       var r = await P.toggle(it.id);
@@ -60314,7 +60338,7 @@ function wire(){
   q('[data-act="back"]', function(b){ b.onclick = function(){ close(true); }; });
   q('[data-act="job"]', function(b){ b.onclick = function(){
     var pid = it.project_id;
-    close(false);                                   /* openProject does the navigating */
+    if(!(window.isFieldUser && window.isFieldUser())) close(false);   /* openProject does the navigating; 1400: not for a field user, whom it refuses */
     if(typeof window.openProject === 'function') window.openProject(pid);
   }; });
   q('[data-step]', function(b){ b.onclick = function(){ tickStep(Number(b.getAttribute('data-step'))); }; });
@@ -97440,6 +97464,8 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     inRender();
   }
   function inClose(){ var m = inQ('cr-inst-sheet'); if(m) m.classList.remove('open'); inPending = null; }
+  /* 1400: Back moved the page underneath and left the sheet up */
+  window.addEventListener('popstate', function(){ var m = inQ('cr-inst-sheet'); if(m && m.classList.contains('open')) inClose(); });
 
   /* the setStage() rule. Resolves true when the job may be marked Completed. */
   async function inGuard(pr){
