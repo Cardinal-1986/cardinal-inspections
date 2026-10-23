@@ -127,8 +127,8 @@ ok('showMain ran without throwing', !a.err, a.err);
 ok('site header shown',        a.header === '', JSON.stringify(a.header));
 ok('Add-project button shown', a.addProj === 'inline-block', a.addProj);
 ok('nav strip shown',          a.navWrap === 'inline-block', a.navWrap);
-ok('backup nav shown for an admin', a.backup === 'block', a.backup);
-ok('audit nav shown for Theo',      a.audit === 'block', a.audit);
+ok('backup nav shown for an admin', a.backup === 'flex', a.backup);   /* 1397: .setrow is a flex row — shown as flex, not block */
+ok('audit nav shown for Theo',      a.audit === 'flex', a.audit);
 ok('team nav mirrors audit',        a.team === a.audit, a.team);
 
 console.log('\n── the iOS font-boost fix ──');
