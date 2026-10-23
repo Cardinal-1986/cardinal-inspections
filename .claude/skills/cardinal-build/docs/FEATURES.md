@@ -10172,3 +10172,6 @@ Payments footer, page-title client names, System Health, Settings rows, Inspecti
 
 ## Build 1400: a production day — warm-start board, field-user dead ends, Call, sheets on Back, visits, work-order labor line
 **Gate:** `gate_1400.mjs`.
+
+## Build 1401: claim money counts the job's payments; deductible and carrier math; partner owed
+Claim screens add Record-payment checks (`window.crJobMoneyIn`); deductibles net homeowner payments; carrier's first check = ACV − deductible; chase list shows what is left; insurance Money In readable; Community invoice greeting; Partners owed after payments, Habitat first. **Gate:** `gate_1401.mjs`.

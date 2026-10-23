@@ -207,7 +207,7 @@
       tbl('commissions').push({
         id: uuid(), project_id: row.project_id, rep_email: rep,
         amount: Math.round((Number(row.amount) || 0) * COMMISSION_RATE * 100) / 100,
-        basis: 'collection', status: 'unpaid', rate_pct: COMMISSION_RATE * 100,
+        basis: 'collection', status: 'pending', rate_pct: COMMISSION_RATE * 100,
         collection_id: row.id, project_name: pr && pr.name,
         created_at: new Date().toISOString(), created_by: null
       });

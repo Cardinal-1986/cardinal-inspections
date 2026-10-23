@@ -36999,3 +36999,16 @@ A fourth audit agent signed in as production (Curtis) and as the field user (Sco
 - **Production work orders printed "No labor rates recorded"** (RLS returns `[]`, not an error): the `crew_rates` read is admin-only, so production gets 555's "Labor pricing is handled by the office".
 - **Recorded, not fixed:** field users cannot reach the install-photos sheet (its only door is the client page's Job Menu, which refuses them) while `setStage` needs those photos to complete — a design call on where the crew attaches them; work-order document `<title>` reads "Estimate"; Tarp notify says "New punch-out"; field Back adds a landing history entry each tap. Curtis seeing Job total / Balance due is per 1392.
 - **Gates:** `gate_1400.mjs` 6/6 (warm start as production, refused Completed not logged, + Add sheet closed by Back, Call digits, field Open job keeps the card, admin-only rate read), control 1399 RED 6. Helpers `gate_1400_lib.mjs` / `gate_1400_seed.js` (the audit rig, on the sentinel setups).
+
+## Build 1401 — an office day: insurance, Community and money (23 Oct 2026, audit round 5)
+Admin drive across the claim screens, Claims hub, Owner Review, Invoices & AR and Community Partners on a sample seed.
+- **Two ledgers.** Every claim screen (strip, claim list, claim page, linked claim card, hub tile) summed only `insurance_payments` — **0 rows in production** (counted 23 Oct); every real check is a `collections` row from Record payment. A paid claim read "Received $0 · Outstanding $12,000". New `window.crJobMoneyIn(pids)` (cr-claims-script) adds the job's payments; the claim page lists them as "Recorded on the job". The strip's "ACV Paid" (it showed the approved ACV) is "ACV". ⚠ Add Payment on the claim still writes `insurance_payments`; if both ever hold the same check it counts twice — none do today.
+- **Deductibles due / Owner Review `ded_uncollected`** ignored homeowner payments; both net `collections.source='homeowner'` now.
+- **Owed by carriers** treated the deductible as carrier money. `carrierLeft()` takes the carrier's first check as **ACV − deductible** (industry convention, and the Library's own wording; the scope reader stores gross ACV). `gate_1379` expectations moved with it ($7,000/$3,500/$10,500 → $5,000/$3,000/$8,000) and say why.
+- **Chase list** showed full depreciation + supplement; it uses `carrierLeft()` and drops a finished carrier.
+- **Money In & Commissions on an insurance job** was 1.06:1 (dark `--rbe-*` inks on the claim ground); remapped to the `--ct-*` pair under `body.claim-insurance`.
+- **Invoices & AR text/email** said "Hi <occupant>" on Community invoices; `invHello()` as 1376.
+- **Community Partners** "Owed" was the whole estimate and sorted by it; now the `CardinalAR.list()` balance, Habitat first.
+- Mock: `e2e_mock_supa.js`'s commission trigger writes `'pending'` like the real one (`commission_system.sql`), not `'unpaid'`.
+- **Recorded, not fixed:** Community pipeline amounts read only estimates/bids (a contract-only Invoiced job shows $0); insurance A/R files the homeowner's part under "Waiting on the carrier".
+- **Gates:** `gate_1401.mjs` 9/9, control 1400 RED 9 (helpers `gate_1401_lib.mjs` / `gate_1401_seed.js`).
