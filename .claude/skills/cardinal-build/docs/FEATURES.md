@@ -10175,3 +10175,6 @@ Payments footer, page-title client names, System Health, Settings rows, Inspecti
 
 ## Build 1401: claim money counts the job's payments; deductible and carrier math; partner owed
 Claim screens add Record-payment checks (`window.crJobMoneyIn`); deductibles net homeowner payments; carrier's first check = ACV − deductible; chase list shows what is left; insurance Money In readable; Community invoice greeting; Partners owed after payments, Habitat first. **Gate:** `gate_1401.mjs`.
+
+## Build 1402: what the client sees
+Full-size Pay / Sign bars on every estimate-style document on a phone; no "Loading…" veil; Community documents carry no occupant contact or empty contact row; print keeps Terms, drops the bar; thank-you after checkout; UUID share tokens everywhere. **Gate:** `gate_1402.mjs`.

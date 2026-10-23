@@ -37012,3 +37012,16 @@ Admin drive across the claim screens, Claims hub, Owner Review, Invoices & AR an
 - Mock: `e2e_mock_supa.js`'s commission trigger writes `'pending'` like the real database trigger, not `'unpaid'`.
 - **Recorded, not fixed:** Community pipeline amounts read only estimates/bids (a contract-only Invoiced job shows $0); insurance A/R files the homeowner's part under "Waiting on the carrier".
 - **Gates:** `gate_1401.mjs` 9/9, control 1400 RED 9 (helpers `gate_1401_lib.mjs` / `gate_1401_seed.js`).
+
+## Build 1402 — what the client sees: share links, documents, pay (23 Oct 2026, audit round 6)
+Documents built by the app's own template code, served through the real `api/share.js` handler (stubbed fetch), rendered at 390px and printed to Letter.
+- **Pay / Accept & Sign ~17px tall on a phone** for invoices and template estimates: `share.js` zoomed the bars (1279 `LETTER_UI`) only on the literal `<table class="items">`; invoices have none, template tables carry an `id`, and with no viewport meta a phone laid them out at 980px (scale 0.398). Every `est-head` document now gets the Letter viewport (inserted when missing) and the zoom: Pay measured 17.5px → 101px on screen.
+- **"Loading…" printed on invoices** sent without opening the editor (`#restoreVeil` is only hidden by the editor). Hidden by `shareFix`.
+- **Empty "[Phone · Email]" row** on Community invoices (1376 blanked it, but share's placeholder pass ran only for inspection reports). A `table.meta` row of nothing but placeholders is dropped; a placeholder beside a real pair blanks its own label and cell.
+- **Community agreement printed the occupant's email / phone** under the partner's name: `prefillClientInfo` no longer fills `[Phone · Email]`, `[EMAIL]`, `[PHONE NUMBER]` from the occupant on a Community job.
+- **Print dropped "Terms"** (`.page-break` hid `h2.sec.page-break` too) and printed the pay bar: dividers only (`.page-break:not(h2)`), bars off the paper.
+- **"Invoice # #2005-2"**: the number no longer carries a `#`.
+- **Back from checkout (`?paid=1`)** showed the full balance and a live Pay button while ACH cleared: that load shows a thank-you bar (`paidUi`) instead.
+- **Share tokens minted without `crypto.randomUUID`** (iOS < 15.4) were `t…` base36 and `share.js` answered "Invalid link": `crUuid4()` gives a v4 UUID at all four sites.
+- **Recorded, not fixed:** `receipt.js` / `remind.js` read insurance from `claim_type` only, not the older `lead.insurance` flag — 0 production rows carry the old flag alone (counted 23 Oct), so not worth the code. `pay-webhook.js` dates `collected_at` in UTC, so a payment after ~8pm Dayton is dated the next day — a collections write, left for the payments session.
+- **Gates:** `gate_1402.mjs` 8/8 (args `[index.html] [api/share.js]`), control 1401 RED 8. Share gates 1015/1141/1162/1199/1274/1278/1280/1313/1314/1320/1323/1344/1357/1377/1378 green; 1279/1336 need the `stripe` package (red identically on main locally, CI has it).
