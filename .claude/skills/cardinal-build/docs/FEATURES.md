@@ -10178,3 +10178,6 @@ Claim screens add Record-payment checks (`window.crJobMoneyIn`); deductibles net
 
 ## Build 1402: what the client sees
 Full-size Pay / Sign bars on every estimate-style document on a phone; no "Loading…" veil; Community documents carry no occupant contact or empty contact row; print keeps Terms, drops the bar; thank-you after checkout; UUID share tokens everywhere. **Gate:** `gate_1402.mjs`.
+
+## Build 1403: offline edits merge; honest offline booking; local-day dates
+Offline checklist edits replay only their own keys onto the server's copy; no-signal booking says so; all-day bookings promise no hour-before text; punch map Today, crew expiry, calendar Next and N-day reminders count local calendar days. **Gate:** `gate_1403.mjs`.

@@ -4212,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1402<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1403<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -11468,9 +11468,12 @@ function pdbApplyLocal(id, fields){
     if(currentProject && String(currentProject.id) === String(id)) Object.assign(currentProject, fields);
   }catch(_){}
 }
-function pdbQueueOffline(id, fields){
+function pdbQueueOffline(id, fields, ck){
   pdbApplyLocal(id, fields);
-  try{ if(window.CardinalOutbox) window.CardinalOutbox.queue({ table:'projects', match:{ col:'id', val:id }, patch: fields }); }catch(_pq){}
+  /* 1403: ck = the checklist keys this edit changed; the flush merges them onto the server's copy */
+  var _e = { table:'projects', match:{ col:'id', val:id }, patch: fields };
+  if(ck && fields && fields.checklist != null) _e.ck = ck;
+  try{ if(window.CardinalOutbox) window.CardinalOutbox.queue(_e); }catch(_pq){}
 }
 var pdb = {
   list: async function(){
@@ -11497,23 +11500,23 @@ var pdb = {
     l.push(fields); plsSave(l);
     return id;
   },
-  update: async function(id, fields){
+  update: async function(id, fields, ck){   /* 1403: ck — see pdbQueueOffline */
     fields.updated_at = new Date().toISOString();
     if(TEAM){
       /* 868: no signal — hold the change in the outbox and apply it locally now,
          then sync when we're back. A real RLS refusal (returned r.error, not a
          thrown network error) still throws so the caller can react. */
       if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
-        pdbQueueOffline(id, fields); return;
+        pdbQueueOffline(id, fields, ck); return;
       }
       var r;
       try{ r = await sb.from('projects').update(fields).eq('id', id); }
       catch(e){
-        if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e)){ pdbQueueOffline(id, fields); return; }
+        if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e)){ pdbQueueOffline(id, fields, ck); return; }
         throw e;
       }
       if(r.error){
-        if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(r.error)){ pdbQueueOffline(id, fields); return; }
+        if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(r.error)){ pdbQueueOffline(id, fields, ck); return; }
         throw r.error;
       }
       return;
@@ -11715,7 +11718,7 @@ function __apptNotifyBooked(f, moved){
       (moved ? 'Appointment moved \u2014 ' : 'Appointment booked \u2014 ') + what + ', ' + when,
       '<p><b>' + esc1(what) + '</b> \u2014 ' + esc1(when) + '.</p>' +
       (pr ? '<p>' + esc1(pr.name || '') + (pr.address ? ', ' + esc1(pr.address) : '') + '</p>' : '') +
-      '<p>You will get a text that morning and again about an hour before.</p>',
+      '<p>You will get a text that morning' + (f.appt_time ? ' and again about an hour before' : '') + '.</p>',   /* 1403: all-day has no hour-before */
       clientLink(f.project_id))
       .catch(function(){});
   }catch(_e){}
@@ -17030,7 +17033,7 @@ newMenu.addEventListener('click', function(e){
     var days = prompt('In how many days?', '1');
     if(days === null) return;
     var n = parseInt(days, 10); if(isNaN(n) || n < 0) n = 1;
-    var d = new Date(Date.now() + n * 86400000);
+    var d = (function(){ var _x = new Date(); _x.setDate(_x.getDate() + n); return _x; })();
     adb.create({ title: '\u23F0 ' + title.trim(),
       appt_date: dateStr(d.getFullYear(), d.getMonth(), d.getDate()),
       appt_time: '09:00', project_id: null, notes: null
@@ -21125,7 +21128,7 @@ async function patchProjectCk(pr, patch){
   }
   Object.keys(patch).forEach(function(k){ all[k] = patch[k]; });
   var s = JSON.stringify(all);
-  await pdb.update(pr.id, { checklist: s });
+  await pdb.update(pr.id, { checklist: s }, patch);   /* 1403: offline, only these keys are replayed */
   pr.checklist = s;
   if(currentProject && currentProject.id === pr.id) currentProject.checklist = s;
   var cp = cacheProjects.find(function(x){ return x.id === pr.id; });
@@ -21322,7 +21325,7 @@ async function openFollowUp(){
   if(days === null) return;
   var n = parseInt(days, 10);
   if(isNaN(n) || n < 0 || n > 365){ showError('Enter a number of days (0\u2013365).'); return; }
-  var d = new Date(Date.now() + n * 86400000);
+  var d = (function(){ var _x = new Date(); _x.setDate(_x.getDate() + n); return _x; })();
   try{
     await adb.create({
       title: 'Follow up \u2014 ' + (currentProject.name || 'client'),
@@ -24802,7 +24805,10 @@ function renderUpcoming(){
   if(!el) return;
   var now = new Date();
   var todayS = dateStr(now.getFullYear(), now.getMonth(), now.getDate());
-  var up = cacheAppts.filter(function(a){ return a.appt_date >= todayS; });
+  var nowT = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+  var up = cacheAppts.filter(function(a){   /* 1403: one that started earlier today is over */
+    return a.appt_date > todayS || (a.appt_date === todayS && (!a.appt_time || String(a.appt_time).slice(0, 5) >= nowT));
+  });
   if(!up.length){ el.textContent = ''; return; }
   var a = up[0];
   var parts = a.appt_date.split('-');
@@ -25156,7 +25162,12 @@ document.getElementById('apptSave').addEventListener('click', async function(){
     document.getElementById('apptError').textContent = '';
     renderApptList(); renderCalendar();
   }catch(err){
-    document.getElementById('apptError').textContent = 'Could not save \u2014 if this persists, run the appointments migration in Supabase. (' + (err.message || err) + ')';
+    /* 1403: no signal is not a missing migration */
+    var _off = (typeof navigator !== 'undefined' && navigator.onLine === false) ||
+      (window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(err));
+    document.getElementById('apptError').textContent = _off
+      ? 'No signal \u2014 this appointment was not saved. Add it again when you have service.'
+      : 'Could not save \u2014 if this persists, run the appointments migration in Supabase. (' + (err.message || err) + ')';
   }
 });
 
@@ -28437,7 +28448,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     _bl.textContent = '\u2713 Sent';
     setTimeout(function(){ _bl.textContent = (btn.dataset.lbl || 'Email to client'); btn.disabled = false; }, 2500);
     if(pr && await crAsk('Sent. Schedule a follow-up reminder in 3 days?')){
-      var d = new Date(Date.now() + 3 * 86400000);
+      var d = (function(){ var _x = new Date(); _x.setDate(_x.getDate() + 3); return _x; })();
       await adb.create({
         title: 'Follow up \u2014 ' + (pr.name || 'client'),
         appt_date: dateStr(d.getFullYear(), d.getMonth(), d.getDate()),
@@ -45256,6 +45267,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1403, d:'2026-10-23', t:'Offline edits, appointment texts and dates', s:'A change made to a job with no signal no longer wipes out a teammate\u2019s changes to the same job when your phone syncs. Booking an appointment with no signal says so instead of asking for a database fix. All-day appointments no longer promise an hour-before text. The punch map\u2019s Today, crew document expiry, the calendar\u2019s Next line and reminders set across the clock change now count days correctly.' },
   { b: 1402, d:'2026-10-23', t:'What the client sees', s:'On a phone, the Pay and Accept & Sign buttons on invoices and estimates are full size again (they could shrink to a sliver). Invoices no longer print a stray \u201cLoading\u2026\u201d. A Community invoice or agreement no longer prints an empty contact line or the occupant\u2019s email and phone under the partner\u2019s name. Printing from the client\u2019s link keeps the Terms heading and leaves the pay bar off the paper. Invoice numbers lose the doubled \u201c#\u201d. A client coming back from paying sees a thank-you instead of the Pay button. Share links made on older iPhones open again.' },
   { b: 1401, d:'2026-10-23', t:'Insurance and partner money adds up', s:'The claim card, claim list and claim page now count the checks you record on the job with Record payment, so a paid claim no longer reads $0 received. Deductibles due and Owner Review count a deductible the homeowner paid. Owed by carriers no longer counts the deductible as the carrier\u2019s money, and the carrier chase list shows what is actually left. Money In & Commissions is readable on insurance jobs. Invoices & AR greets the partner, not the occupant, on a Community invoice. Community Partners shows what each partner still owes after payments, with Habitat first.' },
   { b: 1400, d:'2026-10-23', t:'Fixes from a day on Production', s:'Production opens on the Production board again when the app reopens (it could land on the sales home). For the crew, Open job no longer leaves them on a blank screen, and the punch card\u2019s Call button dials the client. Back closes the board\u2019s day sheet, + Add sheet and the install-photos sheet instead of leaving them on screen. Closing a punch-out while checked in checks you out. After telling Curtis a job is finished, checking out no longer asks whether it needs another day. A blocked move to Completed is no longer logged as done. Work orders from Production say labor pricing is handled by the office.' },
@@ -77351,7 +77363,8 @@ function daysLeft(iso){
   if(!iso) return null;
   var d = new Date(iso + 'T00:00:00');
   if(isNaN(d.getTime())) return null;
-  return Math.floor((d.getTime() - Date.now()) / 86400000);
+  var t0 = new Date(); t0.setHours(0, 0, 0, 0);   /* 1403: whole days from today — the last valid day is 0, not -1 */
+  return Math.round((d.getTime() - t0.getTime()) / 86400000);
 }
 function docState(kind, row){
   if(!row) return { cls:'bad', label:'\u2715 Missing', note:'nothing on file' };
@@ -87299,6 +87312,21 @@ function flush(){
            onConflict (Team Directory, etc); default -> the 865 field patch. Both
            are idempotent, so a replay after a partial flush can't duplicate. */
         var attempt = function(retried){
+          /* 1403: a checklist edit made offline carries the keys it changed — merge them onto the server's
+             CURRENT checklist, so a teammate's edits to other keys of the job survive the replay (655, offline) */
+          if(row.ck && row.op !== 'upsert' && row.patch && row.patch.checklist != null && !row._merged){
+            return Promise.resolve(cx.from(row.table).select('checklist').eq(row.match.col, row.match.val).single()).then(function(fr){
+              if(fr && fr.error){
+                if(networkish(fr.error)) return true;
+                if(authish(fr.error) && !retried) return refreshAuth().then(function(){ return attempt(true); });
+              } else if(fr && fr.data && fr.data.checklist){
+                var cur = {}; try{ cur = JSON.parse(fr.data.checklist) || {}; }catch(_c){ cur = null; }
+                if(cur){ Object.keys(row.ck).forEach(function(k){ cur[k] = row.ck[k]; }); row.patch = Object.assign({}, row.patch, { checklist: JSON.stringify(cur) }); }
+              }
+              row._merged = 1;
+              return attempt(retried);
+            }, function(e){ if(networkish(e)) return true; row._merged = 1; return attempt(retried); });
+          }
           var qq = (row.op === 'upsert')
             ? cx.from(row.table).upsert(row.row, row.onConflict ? { onConflict: row.onConflict } : undefined)
             : cx.from(row.table).update(row.patch).eq(row.match.col, row.match.val);
@@ -87352,7 +87380,15 @@ function queue(entry){
         for(var i=0;i<rows.length;i++){ if(entryKey(rows[i]) === key){ hit = rows[i]; break; } }
         if(hit){
           if(entry.op === 'upsert') hit.row = Object.assign({}, hit.row, entry.row);
-          else hit.patch = Object.assign({}, hit.patch, entry.patch);
+          else {
+            /* 1403: checklist keys fold together; a whole-checklist write (no ck) replaces whole, as before */
+            var _hadCk = !!hit.ck || !(hit.patch && hit.patch.checklist != null);
+            if(entry.patch && entry.patch.checklist != null){
+              if(entry.ck && _hadCk) hit.ck = Object.assign({}, hit.ck || {}, entry.ck);
+              else delete hit.ck;
+            }
+            hit.patch = Object.assign({}, hit.patch, entry.patch);
+          }
           hit.at = entry.at;
           /* 967: editing the same target again is the person answering the
              refusal — let it try once more instead of staying buried. */
@@ -88878,7 +88914,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     if(/theo@/i.test(email)) return '#f5a623'; return '#c98fe0'; }
   function itColor(it){ return mode==='crew' ? crewColor(it.assigned_to) : (URG[it.priority]||URG[it.urgency]||'#8b95a1'); }
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function todayISO(){ try{ return new Date().toISOString().slice(0,10); }catch(e){ return ''; } }
+  function todayISO(){ try{ var t = new Date(); return t.getFullYear() + '-' + ('0' + (t.getMonth() + 1)).slice(-2) + '-' + ('0' + t.getDate()).slice(-2); }catch(e){ return ''; } }   /* 1403: the local day, not UTC */
 
   /* geocode with the same 'geo:'+addr cache the rest of the app uses; Nominatim on a miss, throttled */
   function cachedGeo(addr){ try{ return JSON.parse(localStorage.getItem('geo:'+addr)||'null'); }catch(e){ return null; } }
