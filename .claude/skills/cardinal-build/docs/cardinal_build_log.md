@@ -36940,3 +36940,15 @@ Theo: *"Honestly just fix it please. At your discretion."* (the audit's open que
 - Method row: four buttons in a 3-column grid left Card alone on a second row → 4 columns.
 - **Question 2 (may Production mark costs reimbursed)** — decided at discretion: **left as it is.** The database already allows it (`job_costs` update is `is_full_access()`), Production records receipts on jobs, and hiding the button would only send them to the office for a click.
 - **Gates:** `gate_1394.mjs` 7/7, control 1393 RED 5. gate_1388, 1318, 1315 GREEN.
+
+## Build 1395 — the Community header fits a phone (23 Oct 2026)
+At 390px the header truncated "Community" to "Communi…" and the pills (Partners/Estimates are wider than Contacts/Leads) wrapped Tools onto a second row, so the taller header sat over the page top. ≤420px: pill side padding 9 → 6px; the Community title 22 → 19px. Measured: pill row 79 → 42px, title 130px in its 150px slot.
+- **Gates:** `gate_1395.mjs` 6/6 (community + retail × both themes), control 1394 RED 4. gate_1206 GREEN, gate_stack CLEAN.
+
+## Build 1396 — three bugs from the second code audit (23 Oct 2026)
+A second review agent read the 40 builds the first pass had not (1329–1387 minus those already covered).
+- **Supplement Desk could not read any scope filed since 1359.** 1359 moved filed insurance documents to the `job-files` bucket (`{file, bucket, path}`, no inline `data`); `index.html`'s readers were updated, `supplement.html` was not, and every such scope said "That document has no stored file." It downloads by path now (admins pass `job_files_read`), staging over 3 MB as before. `SD_BUILD` 1072 → 1396 (`supplement.html` carries its own stamp — the build is in both files).
+- **Advance to Completed offered a review text for unfinished work.** Since 1331 `setStage()` returns false when install photos are missing; `acxAdvance()` ignored it and 300 ms later asked "Job completed! Send … a Google review request?". It stops on a refusal.
+- **Sales Numbers dropped payments collected on the 1st.** `snTime('2026-10-01')` is UTC midnight = 8 pm on 30 Sep in Dayton, before `snStart` (local midnight). A bare date reads as local noon.
+- **Gates:** `gate_1396.mjs` 4/4 (Chromium for the advance path, `snTime` extracted and run under `TZ=America/New_York`, Desk structure), control RED 4. gate_1331, gate_1362 GREEN. Both `supplement.html` inline scripts pass `node --check`. **Not exercised end to end:** the Desk reading a real storage-backed scope — one Analyze on a recent claim is the check.
+- **Suspected, not fixed (recorded):** 1386 Download → print() after an await on iOS; 1340 accepting someone else's estimate updates 0 rows but toasts success; 1342 renaming Estimate→Contract keeps the Estimate prefix; 1360 nightly sync under 60 s after a big top-up; 1352 "Notified — email" toast counts scheduled sends.

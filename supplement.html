@@ -307,7 +307,7 @@
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
-    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1072</span>
+    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1396</span>
     <span class="sp"></span>
     <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
@@ -467,7 +467,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
-var SD_BUILD = 1072; window.SD_BUILD = SD_BUILD;
+var SD_BUILD = 1396; window.SD_BUILD = SD_BUILD;
 /* Same publishable anon key api/*.js falls back to — public by design. */
 var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -971,16 +971,22 @@ async function analyze(){
     if(row.error || !row.data) throw new Error('Could not open that document.');
     var pay = null;
     try{ pay = JSON.parse(row.data.html || '{}'); }catch(_){}
-    if(!pay || !pay.file || !pay.data) throw new Error('That document has no stored file.');
+    /* 1396: since 1359 a filed document keeps its bytes in storage ({bucket, path}), not inline data */
+    if(!pay || !pay.file || !(pay.data || pay.path)) throw new Error('That document has no stored file.');
     S.scopeDoc = { id: row.data.id, name: pay.name || 'Scope of Loss', size: pay.size || 0 };
 
-    var scope;
-    var b64 = String(pay.data).split(',')[1] || '';
-    var rawBytes = Math.floor(b64.replace(/=+$/, '').length * 3 / 4);
+    var scope, stored = null;
+    if(!pay.data && pay.path){
+      var dl = await sb.storage.from(pay.bucket || 'job-files').download(pay.path);
+      if(dl.error || !dl.data) throw new Error('Could not open the stored file' + (dl.error && dl.error.message ? ': ' + dl.error.message : '.'));
+      stored = dl.data;
+    }
+    var b64 = stored ? '' : (String(pay.data).split(',')[1] || '');
+    var rawBytes = stored ? stored.size : Math.floor(b64.replace(/=+$/, '').length * 3 / 4);
     if(rawBytes > 3 * 1024 * 1024){
       /* the 643 path: storage first, send the bounded URL */
       el('analyzeNote').textContent = 'Large scope — staging it (' + (rawBytes / 1048576).toFixed(1) + ' MB)…';
-      var blob = await (await fetch(pay.data)).blob();
+      var blob = stored || await (await fetch(pay.data)).blob();
       var spath = 'scopes/desk-' + S.claim.id.slice(0, 8) + '-' + Date.now() + '.pdf';
       var up = await sb.storage.from('photos').upload(spath, blob, { contentType: pay.mime || 'application/pdf' });
       if(up.error) throw new Error('Could not stage the scope: ' + up.error.message);
@@ -988,7 +994,11 @@ async function analyze(){
       if(surl.error || !surl.data) throw new Error('Could not sign the staged scope.');
       scope = { url: surl.data.signedUrl };
     } else {
-      scope = { file: b64, mime: pay.mime || 'application/pdf' };
+      if(stored){
+        var du = await new Promise(function(res, rej){ var fr = new FileReader(); fr.onload = function(){ res(String(fr.result)); }; fr.onerror = function(){ rej(new Error('Could not read the stored file.')); }; fr.readAsDataURL(stored); });
+        b64 = du.split(',')[1] || '';
+      }
+      scope = { file: b64, mime: pay.mime || stored && stored.type || 'application/pdf' };
     }
 
     el('analyzeNote').textContent = 'Reading the scope against the Ohio pack… usually 20–40 seconds.';

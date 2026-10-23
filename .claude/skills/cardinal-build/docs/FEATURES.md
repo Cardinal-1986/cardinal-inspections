@@ -10154,3 +10154,9 @@ Insurance jobs in dark mode: Back / Upload files / Email to client / Work Orders
 
 ## Build 1394: Record payment — Paid by
 Insurance jobs ask Insurance / Homeowner (opens on Insurance); Community asks Partner / Homeowner; retail unchanged. Receipts only when the homeowner paid. **Gate:** `gate_1394.mjs`.
+
+## Build 1395: Community header fits a phone
+No "Communi…", one pill row at 390px. **Gate:** `gate_1395.mjs`.
+
+## Build 1396: Desk reads stored scopes; no review text on a refused Complete; the 1st counts
+Supplement Desk reads storage-backed scopes (post-1359); Advance to Completed refused for photos offers no review request; Sales Numbers counts payments dated the 1st. **Gate:** `gate_1396.mjs`.

@@ -3814,6 +3814,8 @@ body[data-crm-head="retail"]   {--bnbg:#101620;--bnbd:#243040;--bnac:#8fb4d8}
 /* .titlecard h1 carries font-size:17px !important, so this needs it too */
 #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:22px !important;line-height:1.15;
   color:var(--hin,#fff);-webkit-text-fill-color:var(--hin,#fff)}
+/* 1395: "Community" truncated to "Communi…" at 390px — the longest portal name steps down on a phone */
+@media (max-width:420px){ body[data-crm-head="community"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{--cr-stack:"1395 phone-only step-down for the longest portal name";font-size:19px !important;} }
 /* 1114: "Retail" in the same face and size as the other four portal names.
    Deleted here with the slogan they styled: 1065's @media (max-width:437px)
    hide (a six-letter word fits at every width — keeping the hide would blank
@@ -4210,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1394<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1396<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12463,7 +12465,9 @@ async function acxAdvance(pr){
   var nx = acxNext(normStage(pr.stage));
   if(!nx) return;
   try{
-    await setStage(pr.id, nx);
+    /* 1396: setStage refuses (false) when install photos are missing (1331) — no "Job completed!" review offer then */
+    var _moved = await setStage(pr.id, nx);
+    if(_moved === false) return;
     renderOverview(); renderPipeline();
     if(nx === 'Completed' && !parseCkAll(pr).review_requested_at && (pr.phone || pr.email)){
       setTimeout(async function(){
@@ -45199,6 +45203,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1396, d:'2026-10-23', t:'Three fixes from the audit', s:'The Supplement Desk reads Scope of Loss documents filed since early October again \u2014 it said the document had no stored file. Advancing a job to Completed when its install photos are missing no longer offers to text the homeowner a Google review request. Sales Numbers counts payments collected on the 1st of the month in This month.' },
+  { b: 1395, d:'2026-10-23', t:'Community header fits a phone', s:'On a phone the Community header no longer cuts its name to \u201cCommuni\u2026\u201d, and the Partners / Estimates / Photos / Production / Tools row fits on one line instead of wrapping and covering the top of the page.' },
   { b: 1394, d:'2026-10-23', t:'Record payment asks who paid', s:'On an insurance job, Record payment now asks whether the insurance company or the homeowner paid, and starts on Insurance. A carrier check no longer counts as the homeowner\u2019s money or texts the homeowner a receipt for it. On a Community job it asks Partner or Homeowner. Retail jobs are unchanged. The four payment methods fit on one row.' },
   { b: 1393, d:'2026-10-23', t:'Readable on every job', s:'On an insurance job in dark mode, Back to client profile, Upload files, Email to client and the Work Orders button were nearly invisible \u2014 light text on the cream page. They read now. The Job Documents page\u2019s intro, empty message and client name are brighter in dark mode. The selected Community button in the left rail has dark text on its mint instead of white, and the section counts are easier to read. In the scanner, Add page opens the camera on the first tap on an iPhone, and an empty scanner says what to do.' },
   { b: 1392, d:'2026-10-23', t:'Fixes from the audit', s:'Gross profit and margin on a job\u2019s Payments card are for the office only now \u2014 production no longer sees them (and the figure they saw left out labor). With no costs entered, the card says so instead of showing a 100% margin. The Pre-Install Guide\u2019s email prompt really saves the address now. The phone menu shows your name instead of \u201cCardinal\u201d. The home Accounts Receivable card says when money is owed on the other boards instead of \u201cevery invoice is collected\u201d. The activity feed names invoices, contracts and files for what they are. A signed document no longer offers Mark sent.' },
@@ -69459,6 +69465,9 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
   #crBanner .cbn{padding:9px 9px;font-size:13px;}
   #crBanner .cbsrch{flex:1 1 100%;order:9;margin:4px 4px 8px;}
 }
+/* 1395: Community's pills (Partners, Estimates) are wider than Contacts/Leads, so at a phone's 390px the row
+   wrapped Tools onto a second line and the taller header covered the top of the page. */
+@media (max-width:420px){ #crBanner .cbn{--cr-stack:"1395 a narrower step for phones; the 900px and base rules serve wider screens";padding-left:6px;padding-right:6px;} }
 @media print{ #crBanner{display:none !important;} }
 </style>
 <script id="cr-banner-script">
@@ -88115,7 +88124,8 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
     if(per === 'all') return null;
     return per === 'month' ? new Date(d.getFullYear(), d.getMonth(), 1) : new Date(d.getFullYear(), 0, 1);
   }
-  function snTime(v){ if(!v) return NaN; return new Date(String(v).replace(' ', 'T')).getTime(); }
+  /* 1396: a bare YYYY-MM-DD parses as UTC midnight (8 pm the day before in Dayton) — read it as local noon */
+  function snTime(v){ if(!v) return NaN; var sv = String(v).replace(' ', 'T'); if(/^\d{4}-\d\d-\d\d$/.test(sv)) sv += 'T12:00:00'; return new Date(sv).getTime(); }
   function snIn(v, from){ var t = snTime(v); return !isNaN(t) && (!from || t >= from.getTime()); }
   function snCk(p){ try{ return (typeof parseCkAll === 'function' ? parseCkAll(p) : null) || {}; }catch(_){ return {}; } }
   function snRoster(){ return (typeof TEAM_ROSTER !== 'undefined' && TEAM_ROSTER) || []; }
