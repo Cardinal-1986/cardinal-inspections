@@ -1,10 +1,11 @@
 /* gate_1379 — the Claims hub's "owed" counts the carrier's checks already in (audit R8b).
- * Four insurance jobs at Invoiced, each ACV $6,000 · depreciation $3,000 · approved supplement $1,000:
- *   A carrier paid $6,000 (+ a $1,000 HOMEOWNER payment, which must not count) → dep $3,000 · sup $1,000
- *   B carrier paid $8,000                                                       → dep $1,000 · sup $1,000
- *   C carrier paid $9,500                                                       → dep $0     · sup $500
+ * Four insurance jobs at Invoiced, each ACV $6,000 · depreciation $3,000 · approved supplement $1,000 · deductible $1,000.
+ * 1401: the carrier's first check is ACV LESS the deductible ($5,000) — the homeowner pays the deductible.
+ *   A carrier paid $6,000 (+ a $1,000 HOMEOWNER payment, which must not count) → dep $2,000 · sup $1,000
+ *   B carrier paid $8,000                                                       → dep $0     · sup $1,000
+ *   C carrier paid $9,500                                                       → dep $0     · sup $0
  *   D nothing recorded                                                          → dep $3,000 · sup $1,000 (as before)
- * Totals: Depreciation $7,000, Supplement $3,500; the Invoiced rail tile $10,500. 1378 reads $12,000 / $4,000.
+ * Totals: Depreciation $5,000, Supplement $3,000; the Invoiced rail tile $8,000. 1378 reads $12,000 / $4,000.
  * Arg: [index.html] -> negative control (1378: must go RED). */
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import fs from 'fs';
@@ -51,9 +52,9 @@ try {
       cache: (window.cacheCollections || []).length, src: (window.cacheCollections || []).filter(k => k.source === 'insurance').length };
   });
   ok(d.cache === 5 && d.src === 4, 'fixture: the app\'s payment cache holds the five payments with their source', JSON.stringify(d));
-  ok(d.dep === 7000, 'Depreciation owed counts the carrier\'s checks: $7,000 (was $12,000)', JSON.stringify(d));
-  ok(d.sup === 3500, 'Supplement owed: $3,500 (C\'s overpay past depreciation reaches the supplement)', JSON.stringify(d));
-  ok(d.inv === 10500, 'the Invoiced rail tile shows what is left: $10,500', JSON.stringify(d));
+  ok(d.dep === 5000, 'Depreciation owed counts the carrier\'s checks: $5,000 (was $12,000)', JSON.stringify(d));
+  ok(d.sup === 3000, 'Supplement owed: $3,000 (C\'s overpay past depreciation reaches the supplement)', JSON.stringify(d));
+  ok(d.inv === 8000, 'the Invoiced rail tile shows what is left: $8,000', JSON.stringify(d));
   await ctx.close();
 } catch (e) { ok(false, 'browser part ran', String(e && e.message || e)); }
 await browser.close();

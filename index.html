@@ -4212,7 +4212,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1400<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-23 build 1401<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -34843,10 +34843,24 @@ function showList() {
         .in('claim_id', ids);
       const byClaim = {};
       (pays || []).forEach(p => { byClaim[p.claim_id] = (byClaim[p.claim_id] || 0) + Number(p.amount); });
-      data.forEach(async c => c._paid = byClaim[c.id] || 0);
+      const jobIn = await window.crJobMoneyIn(data.map(c => c.project_id));   /* 1401 */
+      data.forEach(c => { c._paid = (byClaim[c.id] || 0) + (jobIn[c.project_id] || 0); });
     }
     return data;
   }
+
+  /* 1401: money received on a claim's JOB. Every real check is recorded with Record payment (collections);
+     insurance_payments held no rows in production, so the claim screens read $0 on paid jobs. */
+  window.crJobMoneyIn = async function(pids){
+    var out = {};
+    pids = (pids || []).filter(Boolean);
+    if (!pids.length || !window.supa) return out;
+    try {
+      var r = await window.supa.from('collections').select('project_id,amount').in('project_id', pids);
+      (r && r.data || []).forEach(function(k){ out[k.project_id] = (out[k.project_id] || 0) + (Number(k.amount) || 0); });
+    } catch (e) {}
+    return out;
+  };
 
   async function loadClaim(id) {
     const [claimRes, paysRes, supsRes] = await Promise.all([
@@ -34858,6 +34872,7 @@ function showList() {
     state.claim = claimRes.data;
     state.payments = paysRes.data || [];
     state.supplements = supsRes.data || [];
+    state.jobIn = (await window.crJobMoneyIn([state.claim.project_id]))[state.claim.project_id] || 0;   /* 1401 */
     state.linked = await loadLinkedRecords(state.claim);
     state.upgrades = await softSelect('claim_upgrades',
       q => q.eq('claim_id', id).order('sort_order', { ascending: true }));
@@ -35053,7 +35068,7 @@ function showList() {
     var acv = Number(c.approved_acv) || 0;
     var depreciation = c.approved_depreciation != null ? Number(c.approved_depreciation) : (rcv - acv);
     var deductible = Number(c.deductible) || 0;
-    var received = pays.reduce(function(s, p){ return s + (Number(p.amount) || 0); }, 0);
+    var received = pays.reduce(function(s, p){ return s + (Number(p.amount) || 0); }, 0) + (Number(c._jobIn) || 0);   /* 1401: + the job's payments */
     var approvedSupp = supps.reduce(function(s, sp){
       return s + (CLAIM_SUPP_DECIDED[sp.status] ? (Number(sp.amount_approved) || 0) : 0);
     }, 0);
@@ -35069,7 +35084,7 @@ function showList() {
   }
   function renderDetail() {
     const c = state.claim;
-    const _cm = claimMoney(c, state.payments, state.supplements);
+    const _cm = claimMoney(Object.assign({}, c, { _jobIn: state.jobIn }), state.payments, state.supplements);
     const paidTotal = _cm.received;
     const suppTotal = _cm.approvedSupp;
     const rcv = _cm.rcv;
@@ -35389,8 +35404,11 @@ function showList() {
   function cap(s) { return String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1); }
 
   function renderPayments() {
+    /* 1401: checks recorded on the job (Record payment) count toward this claim too */
+    const jobLine = state.jobIn > 0
+      ? `<div class="cr-c-empty">Recorded on the job: <b>$${fmt(state.jobIn)}</b><small>Payments from the job's Record payment count toward this claim.</small></div>` : '';
     if (!state.payments.length) {
-      return `<div class="cr-c-empty">No payments logged yet.<small>Tap "+ Add Payment" when a check comes in.</small></div>`;
+      return jobLine || `<div class="cr-c-empty">No payments logged yet.<small>Record checks on the job with Record payment.</small></div>`;
     }
     const total = state.payments.reduce((s, p) => s + Number(p.amount), 0);
     return `
@@ -35408,7 +35426,7 @@ function showList() {
           <tr class="total"><td colspan="3">Total Received</td><td class="amt">$${fmt(total)}</td></tr>
         </tbody>
       </table></div>
-    `;
+    ` + jobLine;
   }
 
   function renderSupplements() {
@@ -36184,7 +36202,7 @@ function showList() {
   async function renderLinkedClaimCard(mountEl, claimId) {
     const { data: claim } = await window.supa
       .from('insurance_claims')
-      .select('id, carrier, claim_number, homeowner_name, property_address, status, approved_rcv')
+      .select('id, project_id, carrier, claim_number, homeowner_name, property_address, status, approved_rcv')
       .eq('id', claimId)
       .single();
     if (!claim) { mountEl.innerHTML = ''; return; }
@@ -36194,7 +36212,8 @@ function showList() {
       .from('insurance_payments')
       .select('amount')
       .eq('claim_id', claim.id);
-    const paid = (pays || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+    const _xin = window.crJobMoneyIn ? (await window.crJobMoneyIn([claim.project_id]))[claim.project_id] || 0 : 0;   /* 1401 */
+    const paid = (pays || []).reduce((s, p) => s + Number(p.amount || 0), 0) + _xin;
     const rcv = Number(claim.approved_rcv || 0);
     const pct = rcv > 0 ? Math.min(100, Math.round(paid / rcv * 100)) : 0;
 
@@ -36641,13 +36660,17 @@ function showList() {
     try {
       var res = await window.supa
         .from('insurance_claims')
-        .select('id, status, approved_rcv')
+        .select('id, project_id, status, approved_rcv')
         .limit(500);
       if (res.error) throw res.error;
       var rows = res.data || [];
 
       var pay = await window.supa.from('insurance_payments').select('amount').limit(2000);
       var received = (pay.data || []).reduce(function(s,p){ return s + Number(p.amount||0); }, 0);
+      if (window.crJobMoneyIn) {   /* 1401: + what the claims' jobs were paid */
+        var _hin = await window.crJobMoneyIn(rows.map(function(r){ return r.project_id; }));
+        Object.keys(_hin).forEach(function(k){ received += _hin[k]; });
+      }
       var approved = rows.reduce(function(s,r){ return s + Number(r.approved_rcv||0); }, 0);
       var openStatuses = ['filed','adjuster_pending','adjuster_met','approved','in_progress','completed','awaiting_rcv'];
       var openCount = rows.filter(function(r){ return openStatuses.indexOf(r.status) !== -1; }).length;
@@ -38644,6 +38667,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
     try{
       var pr2 = await window.supa.from('insurance_payments').select('amount').eq('claim_id', claim.id);
       paid = (pr2.data || []).reduce(function(s,p){ return s + Number(p.amount || 0); }, 0);
+      if(window.crJobMoneyIn) paid += (await window.crJobMoneyIn([pid]))[pid] || 0;   /* 1401: the job's own payments */
     }catch(e){}
 
     if(host.dataset.pid !== pid || !host.isConnected) return;
@@ -38664,7 +38688,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
       '</div>' +
       '<div class="grid">' +
         '<div class="cell"><div class="k">Approved RCV</div><div class="v">' + money(rcv) + '</div></div>' +
-        '<div class="cell"><div class="k">ACV Paid</div><div class="v">' + money(acv) + '</div></div>' +
+        '<div class="cell"><div class="k">ACV</div><div class="v">' + money(acv) + '</div></div>' +
         '<div class="cell"><div class="k">Depreciation</div><div class="v warn">' + money(dep) + '</div></div>' +
         '<div class="cell"><div class="k">Deductible</div><div class="v neg">' + money(ded) +
           (claim.deductible_waived ? ' <small class="wv">WAIVED</small>' : '') + '</div></div>' +
@@ -45221,6 +45245,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1401, d:'2026-10-23', t:'Insurance and partner money adds up', s:'The claim card, claim list and claim page now count the checks you record on the job with Record payment, so a paid claim no longer reads $0 received. Deductibles due and Owner Review count a deductible the homeowner paid. Owed by carriers no longer counts the deductible as the carrier\u2019s money, and the carrier chase list shows what is actually left. Money In & Commissions is readable on insurance jobs. Invoices & AR greets the partner, not the occupant, on a Community invoice. Community Partners shows what each partner still owes after payments, with Habitat first.' },
   { b: 1400, d:'2026-10-23', t:'Fixes from a day on Production', s:'Production opens on the Production board again when the app reopens (it could land on the sales home). For the crew, Open job no longer leaves them on a blank screen, and the punch card\u2019s Call button dials the client. Back closes the board\u2019s day sheet, + Add sheet and the install-photos sheet instead of leaving them on screen. Closing a punch-out while checked in checks you out. After telling Curtis a job is finished, checking out no longer asks whether it needs another day. A blocked move to Completed is no longer logged as done. Work orders from Production say labor pricing is handled by the office.' },
   { b: 1399, d:'2026-10-23', t:'Fixes from a day as a rep', s:'Uploading several files at once to a job\u2019s Documents keeps all of them (it kept only the first). Emailing an estimate marks it Sent however you send it. A builder estimate can be signed in person, on the client\u2019s line. Admin-only menu items no longer show to reps on a phone. Home\u2019s Gone quiet lists jobs that have sat too long, and the home cards fill in on first load. Publishing an estimate or making a contract opens the document in front of the builder instead of behind it.' },
   { b: 1398, d:'2026-10-23', t:'Messages that say what happened', s:'Signing an estimate in person only says \u201caccepted \u2014 it can be invoiced\u201d when it really was; when the office has to accept it, it says that instead. A tag notification sent at night says the email goes out at 7:00 am. The Team Directory\u2019s emails, \u201cno number\u201d and head count are easier to read, and its edit buttons are bigger.' },
@@ -62373,24 +62398,30 @@ return st;
 }
 /* 1379 (audit R8b): what the carrier still owes on a job. Its recorded checks (collections.source 'insurance',
    in the app's payment cache since 1378) pay the ACV first, then the depreciation, then the approved supplement. */
-var carrierPaidBy = null;
-function carrierLeft(pr, c){
-if(!carrierPaidBy){
-carrierPaidBy = {};
+var carrierPaidBy = null, homePaidBy = null;
+function paidMaps(){
+if(carrierPaidBy) return;
+carrierPaidBy = {}; homePaidBy = {};
 (window.cacheCollections || []).forEach(function(k){
-if(String(k.source || '').toLowerCase() !== 'insurance' || !k.project_id) return;
-carrierPaidBy[k.project_id] = (carrierPaidBy[k.project_id] || 0) + (Number(k.amount) || 0);
+var src = String(k.source || '').toLowerCase();
+if(!k.project_id) return;
+if(src === 'insurance') carrierPaidBy[k.project_id] = (carrierPaidBy[k.project_id] || 0) + (Number(k.amount) || 0);
+if(src === 'homeowner') homePaidBy[k.project_id] = (homePaidBy[k.project_id] || 0) + (Number(k.amount) || 0);   /* 1401 */
 });
 }
+function carrierLeft(pr, c){
+paidMaps();
 var paid = carrierPaidBy[pr.id] || 0;
 var acv = Number(c.approved_acv) || 0, dep = Number(c.approved_depreciation) || 0, sup = Number(c.supplement_approved) || 0;
-var past = Math.max(0, paid - acv);
+/* 1401: the carrier's first check is the ACV LESS the deductible — the homeowner pays that part, waived or not */
+var ded = Number(c.deductible) || 0;
+var past = Math.max(0, paid - Math.max(0, acv - ded));
 var depLeft = Math.max(0, dep - past);
 var supLeft = Math.max(0, sup - Math.max(0, past - dep));
 return { dep: depLeft, sup: supLeft };
 }
 function compute(){
-carrierPaidBy = null;   /* 1379: the payment cache may have changed since the last paint */
+carrierPaidBy = null; homePaidBy = null;   /* 1379: the payment cache may have changed since the last paint */
 var projects = insuranceProjects();
 var byKey = {};
 RAIL.forEach(function(r){ byKey[r.key] = { n:0, amt:0 }; });
@@ -62418,7 +62449,9 @@ owedSupp += Number(c.supplement_filed) || 0;
 }
 acvReleased += Number(c.approved_acv) || 0;
 if(st !== 'Closed' && !c.deductible_waived && Number(c.deductible) > 0){   /* 1338 (audit R8): Closed is settled */
-dedDue += Number(c.deductible); dedCount++;
+paidMaps();   /* 1401: what the homeowner has paid counts toward it */
+var _dl = Math.max(0, Number(c.deductible) - (homePaidBy[pr.id] || 0));
+if(_dl > 0){ dedDue += _dl; dedCount++; }
 }
 });
 var carriers = {};
@@ -62541,14 +62574,14 @@ claimId:c.id || null, chasedAt:c.last_chased_at || null,
 chasedBy:c.last_chased_by || null,
 amt:Number(c.supplement_filed) || 0 });
 }
-if(st === 'Invoiced'){
+var _cl = st === 'Invoiced' ? carrierLeft(pr, c) : null;   /* 1401: what is LEFT, as the hub counts it */
+if(_cl && _cl.dep + _cl.sup > 0){
 out.push({ pr:pr, carrier:c.carrier || 'carrier not recorded',
 why:'awaiting release',
 days:daysSince(ck2.stage_since || pr.updated_at),
 claimId:c.id || null, chasedAt:c.last_chased_at || null,
 chasedBy:c.last_chased_by || null,
-amt:(Number(c.approved_depreciation) || 0) +
-(Number(c.supplement_approved) || 0) });
+amt:_cl.dep + _cl.sup });
 }
 });
 out.sort(function(a, b){
@@ -64159,6 +64192,9 @@ return metaByName[String(name || '').toLowerCase().trim()] || { type:'program', 
 }
 function partners(){
 var byName = {};
+var arBal = {};   /* 1401: owed = the A/R balance (payments count), the same number the Partner A/R card shows */
+try{ ((window.CardinalAR && typeof window.CardinalAR.list === 'function') ? window.CardinalAR.list() : []).forEach(function(x){
+if(x && x.pr) arBal[x.pr.id] = Number(x.fin && x.fin.balance) || 0; }); }catch(_){}
 projects().forEach(function(pr){
 var n = partnerOf(pr), st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
 var p = byName[n] || (byName[n] = {
@@ -64178,8 +64214,9 @@ p.jobs.push({ pr:pr, tag:'awarded', amt:amt, d:null });
 }
 if(st === 'Completed'){ p.awarded += amt; }
 if(st === 'Invoiced'){
-p.awarded += amt; p.owed += amt;
-p.jobs.push({ pr:pr, tag:'invoiced', amt:amt, d:null });
+var _ow = Object.prototype.hasOwnProperty.call(arBal, pr.id) ? arBal[pr.id] : amt;
+p.awarded += amt; p.owed += _ow;
+p.jobs.push({ pr:pr, tag:'invoiced', amt:_ow, d:null });
 }
 if(st === 'Closed') p.awarded += amt;
 /* 710 (CR-COM-005): a parked grant job used to hit NO amount branch — no
@@ -64203,7 +64240,10 @@ p.type = metaOf(p.name).type;
 p.terms = metaOf(p.name).terms;
 return p;
 });
-list.sort(function(a,b){ return b.owed - a.owed || b.out - a.out; });
+list.sort(function(a,b){
+var ha = /habitat/i.test(a.name), hb = /habitat/i.test(b.name);   /* 1401: Habitat sorts first in every partner list */
+if(ha !== hb) return ha ? -1 : 1;
+return b.owed - a.owed || b.out - a.out; });
 return list;
 }
 function isClosed(p){
@@ -84154,6 +84194,11 @@ window.CardinalItelLab = { open: open, close: close };
 #tab-commissions .empty{background:transparent;border-color:var(--rbe-empty-bd,#4a4f58);
   color:var(--rbe-mute,#9aa0a8);}
 #tab-commissions .empty b{color:var(--rbe-head,#ffffff);}
+/* 1401: an insurance job paints the claim page's ground, so the tab takes that page's ink pair */
+body.claim-insurance #tab-commissions{--cr-stack:"1401 insurance ground";
+  --rbe-ink:var(--ct-ink,#17181B);--rbe-head:var(--ct-ink,#17181B);--rbe-mute:var(--ct-ink-2,#6E6663);
+  --rbe-panel2:var(--ct-surface,#FFFFFF);--rbe-line:var(--ct-line,#EAE5E3);--rbe-empty-bd:var(--ct-line-strong,#DED8D6);
+  --btn-ink:var(--ct-ink,#17181B);}
 </style>
 <style id="cr-toast-styles">
 /* 733: the app-wide toast. FIVE module-level toast helpers already existed, one
@@ -92350,6 +92395,9 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     try{ var a = await c.from('estimates').select('project_id,total,created_at').order('created_at', { ascending:true }); ests = (a && a.data) || []; }catch(e){}
     try{ var b = await c.from('insurance_claims').select('id,project_id,approved_rcv,deductible,deductible_waived'); claims = (b && b.data) || []; }catch(e){}
     try{ var d = await c.from('insurance_payments').select('claim_id,kind,amount'); ipay = (d && d.data) || []; }catch(e){}
+    var homeIn = {};   /* 1401: a deductible paid through Record payment (Homeowner) is collected */
+    try{ var dc = await c.from('collections').select('project_id,amount,source').eq('source', 'homeowner');
+      ((dc && dc.data) || []).forEach(function(k){ if(k.project_id) homeIn[k.project_id] = (homeIn[k.project_id] || 0) + (Number(k.amount) || 0); }); }catch(e){}
     try{ var f = await c.from('punch_items').select('project_id,title,detail,comments'); punch = (f && f.data) || []; }catch(e){}
     try{ var g = await c.from('owner_reviews').select('project_id,rule').not('rule', 'is', null); have = ((g && g.data) || []).filter(function(h){ return h && h.rule; }); }catch(e){ return 0; }
     var seen = {}; have.forEach(function(h){ seen[h.project_id + '|' + h.rule] = 1; });
@@ -92382,7 +92430,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       var ded = cl ? Number(cl.deductible) || 0 : 0;
       if(ins && FIN[stg] && ded > 0){
         if(cl.deductible_waived) orvHit('ded_uncollected', 'Deductible marked waived');
-        else if(Number(fin.balance) > 0 && (dedPaid[cl.id] || 0) < ded) orvHit('ded_uncollected', 'Deductible not collected · ' + orvUsd(ded));
+        else if(Number(fin.balance) > 0 && (dedPaid[cl.id] || 0) + (homeIn[pr.id] || 0) < ded) orvHit('ded_uncollected', 'Deductible not collected · ' + orvUsd(ded));
       }
       if(extraOn[pr.id] && !hasCO) orvHit('extra_no_co', 'Extra work, no change order');
       if(FIN[stg] && paid <= 0 && now - since >= 14 * DAY) orvHit('done_unpaid', 'Done ' + Math.floor((now - since) / DAY) + ' days, nothing paid');
@@ -92898,7 +92946,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     if((t = e.target.closest('[data-artext]'))){
       var prT = prById(t.getAttribute('data-artext'));
       linkFor(t.getAttribute('data-artext'), true).then(function(url){
-        var body = 'Hi ' + firstName(prT) + ', here’s your invoice from Cardinal Roofing — you can review it and pay securely here: ' + url;
+        var body = invHello(prT) + ', here’s your invoice from Cardinal Roofing — you can review it and pay securely here: ' + url;
         location.href = 'sms:?&body=' + encodeURIComponent(body);
       }).catch(fail);
       return;
@@ -92907,7 +92955,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       var prE = prById(t.getAttribute('data-aremail'));
       linkFor(t.getAttribute('data-aremail'), true).then(function(url){
         var subj = 'Your invoice from Cardinal Roofing & Renovations';
-        var body = 'Hi ' + firstName(prE) + ',\n\nHere is your invoice — you can review it and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations';
+        var body = invHello(prE) + ',\n\nHere is your invoice — you can review it and pay securely from this link:\n' + url + '\n\nThank you,\nCardinal Roofing & Renovations';
         location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
       }).catch(fail);
       return;
