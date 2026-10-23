@@ -36905,3 +36905,62 @@ Theo: *"please allow us to actually scan documents also. Right now its the same 
 - **No body scroll-lock writer, no body observer** (rosters unchanged). All helpers `scn*`-prefixed (gate_dupes).
 - **Gates:** `gate_1390.mjs` 8/8 (synthetic tilted page on a dark table; corners within 0.5%; 2-page PDF validated by `pdfinfo`, rasterised by `pdftoppm`: paper 254, ink 7), control 1389 RED. gate_1081, gate_1206, gate_stack CLEAN, gate_chromium selftest, check_build GREEN; gate_types/dupes unchanged.
 - **Not verified:** a real iPhone camera photo of a real document (Theo's eyes are the gate), very low light, a white page on a white counter (edge-finding needs contrast — drag the corners).
+
+## Build 1391 — thirteen checks that could never pass (23 Oct 2026)
+Theo: *"full polish pass … also a technical pass … before its found by jacob"*, then *"Fix everything that doesn't require a choice from me."* First build of the audit. Three parallel audits (gates, code review 1329–1390, rendered polish sweep) on 1390.
+- **`typeof X === 'async function'` at 13 sites.** `typeof` never returns that string (an async function is `'function'`), so each guard was permanently false. Effects: OC Colors photo upload always "Image tools unavailable" (`shrinkOne`); Scope of Loss filed in Insurance Docs never offered "Read it now?" (657's fix, undone); gallery and bulk-reassign/archive never redrew; the photo editor's ⬇ Device extra was drawn and dead; Production's punch tick took the fallback direct write and skipped `CardinalPunch.toggle` (and its 1049 offline outbox); both Admin Health extensions (roster, extra checks) never hooked. Twelve → `'function'`.
+- **The thirteenth, cr-suf's `readScopeOfLoss` wrapper, is RETIRED, not switched on** — `routeScopeToReader()` (657) already runs `prepare()` and the storage route; installing it would prepare every scope twice.
+- **`api/supplement.js`:** photo mode referenced `packLines` (never defined; the menu is `packMenu`) and Draft letter's citation guard read `items` from an out-of-scope block const — both ReferenceErrors → 500, the second after the model call was paid for.
+- tsc had been reporting the typeof class all along as **TS2367 (13 → 0 now)**; gate_types only prints TS2304. Baseline not tightened (the ratchet edit was refused by the session's permission layer) — do it with a reason.
+- **Gates:** `gate_1391.mjs` 8/8 (static typeof-literal scan; Chromium: Admin Health hooked, Production tick → one `CardinalPunch.toggle` write; `api/supplement.js` driven with a stubbed transport, both modes 200), control 1390 + old supplement.js RED 7. check_build GREEN. gate_types TS2339 +7 (was +9, carried).
+
+## Build 1392 — the audit's no-decision technical fixes (23 Oct 2026)
+- **Payments card money is the admin's.** `inner()` gated Gross profit / Margin / the cost bar on `isOffice()` = `commFullAccess()`, which includes `PRODUCTION_EMAILS`; and because `crew_payments` is admin-only RLS, Production's "profit" left labor out and read high. Now `jpAdmin()`. With no costs entered: "None entered" / "—" instead of "Margin 100.0%". **Mark reimbursed for Production is left as it is — Theo's call (open).**
+- **Pre-Install Guide prompt** called `patchProject()`, which exists nowhere; the toast said "Email saved". It writes through `pdb.update(id, {email})` and says "Email saved" only when it did.
+- **Phone drawer header** called `meName()`, local to `cr-pp-script` → always "Cardinal". Uses `displayNameFor(currentUser)`.
+- **Error reports kept no line numbers.** `stripQuery()` cut from `?` to the next whitespace, so a frame on `/?…` lost `:line:col)` — which is why the 22 Oct "Failed to fetch at HTMLImageElement.onload" reports point nowhere. The query still goes; the location stays.
+- **Home AR card** counts the current board; with nothing there it said "every invoice is collected" while Invoices & AR showed money owed on other boards. It now names that.
+- **Activity feed** labelled every `inspection_reports` row "new inspection"; invoices, contracts, work orders and filed files are named. **A signed document hides Mark sent.**
+- **Gates:** `gate_1392.mjs` 11/11 (admin + a production stand-in on the Payments card, drawer, AR, feed, Mark sent; `stripQuery` extracted and run), control 1391 RED 8. gate_1350, 1388, 1386, 1318, 1204, 722, 723, 738, 1391 GREEN. (gate_1069 cannot import playwright from scripts/ — stale, not run.)
+
+## Build 1393 — readable on every job (23 Oct 2026)
+The polish sweep's measured failures that needed no design call. Every ink is an existing token pair; both themes measured.
+- **Insurance job, dark mode.** The insurance views paint Docket cream (`--ct-bg`) whatever the app theme, and four controls kept the dark theme's light ink: Job Documents Back (1.11:1) and Upload files (1.15:1), the guide row's Email to client (1.11:1) and label (1.77:1). They take `--ct-ink` / `--ct-ink-2` (follow docket and siren). Desktop **Work Orders** (`#woQuick`) was white on the white insurance header (1.00:1) — it takes the header's per-CRM `--hmt`.
+- **Job Documents, retail dark:** intro 2.97, `.axnote` 2.38 (`#5c4a42` at source → `--rbe-mute`), client name inline `#8a6f66` 4.31 → `--rbe-mute`.
+- **Left rail:** the selected CRM's label was white on its accent — community mint 1.92, production 2.03, sales 3.61 — each accent now sets `--lnav-on`. Section counts/chevrons 3.72 dark / 4.27 light → the section label's ink / `--rbe-mute`.
+- **Scanner:** Add page called `camInput.click()` only after `scnKeep()` — whose flatten runs synchronously before its first await, so on iOS the click fell outside the tap. Camera first, keep in parallel (`pendingKeep`, awaited before the next photo and in Save PDF). Empty scanner: note says what to do, Rotate disabled; Retake re-lays out.
+- Polish rig before/after on docs/rdocs/client/community × 3 combos: ~40 sub-floor hits → 0 new, 0 remaining except the light-theme pipeline sphere letters (sphere design — left).
+- **Gates:** `gate_1393.mjs` 21/21 (worst-ground scoring, both themes, phone + desktop; scanner order via a click spy), control 1392 RED. gate_1390 GREEN. Sentinel not run (cannot finish in this container) — this is a colour build, so **Theo's eyes are the gate** on an insurance job in dark mode.
+- **Not done, needs a look first:** desktop client header's stray second row (Overview select + Work Orders), Community header truncating at 390px, the ✦ Ask button covering card actions, tap targets under 44px (gate_1206 baseline), activity avatars white-on-green.
+
+## Build 1394 — Record payment asks who paid (23 Oct 2026)
+Theo: *"Honestly just fix it please. At your discretion."* (the audit's open question 1).
+- `savePayModal()` hard-coded `source:'homeowner'`; since 1378 the source decides whose money it is. A carrier check recorded from the job page marked the homeowner's part paid, left the Claims hub's carrier-owed high, and texted the homeowner a receipt for the carrier's money.
+- **Insurance job:** Paid by Insurance / Homeowner, opens on Insurance at the balance (1388's deposit pre-fill skipped — it is the homeowner's deposit). **Community job:** Partner / Homeowner, opens on Partner. **Retail:** unchanged, no question. The receipt row shows (and is checked) only for Homeowner; `wantReceipt` also requires it.
+- Method row: four buttons in a 3-column grid left Card alone on a second row → 4 columns.
+- **Question 2 (may Production mark costs reimbursed)** — decided at discretion: **left as it is.** The database already allows it (`job_costs` update is `is_full_access()`), Production records receipts on jobs, and hiding the button would only send them to the office for a click.
+- **Gates:** `gate_1394.mjs` 7/7, control 1393 RED 5. gate_1388, 1318, 1315 GREEN.
+
+## Build 1395 — the Community header fits a phone (23 Oct 2026)
+At 390px the header truncated "Community" to "Communi…" and the pills (Partners/Estimates are wider than Contacts/Leads) wrapped Tools onto a second row, so the taller header sat over the page top. ≤420px: pill side padding 9 → 6px; the Community title 22 → 19px. Measured: pill row 79 → 42px, title 130px in its 150px slot.
+- **Gates:** `gate_1395.mjs` 6/6 (community + retail × both themes), control 1394 RED 4. gate_1206 GREEN, gate_stack CLEAN.
+
+## Build 1396 — three bugs from the second code audit (23 Oct 2026)
+A second review agent read the 40 builds the first pass had not (1329–1387 minus those already covered).
+- **Supplement Desk could not read any scope filed since 1359.** 1359 moved filed insurance documents to the `job-files` bucket (`{file, bucket, path}`, no inline `data`); `index.html`'s readers were updated, `supplement.html` was not, and every such scope said "That document has no stored file." It downloads by path now (admins pass `job_files_read`), staging over 3 MB as before. `SD_BUILD` 1072 → 1396 (`supplement.html` carries its own stamp — the build is in both files).
+- **Advance to Completed offered a review text for unfinished work.** Since 1331 `setStage()` returns false when install photos are missing; `acxAdvance()` ignored it and 300 ms later asked "Job completed! Send … a Google review request?". It stops on a refusal.
+- **Sales Numbers dropped payments collected on the 1st.** `snTime('2026-10-01')` is UTC midnight = 8 pm on 30 Sep in Dayton, before `snStart` (local midnight). A bare date reads as local noon.
+- **Gates:** `gate_1396.mjs` 4/4 (Chromium for the advance path, `snTime` extracted and run under `TZ=America/New_York`, Desk structure), control RED 4. gate_1331, gate_1362 GREEN. Both `supplement.html` inline scripts pass `node --check`. **Not exercised end to end:** the Desk reading a real storage-backed scope — one Analyze on a recent claim is the check.
+- **Suspected, not fixed (recorded):** 1386 Download → print() after an await on iOS; 1340 accepting someone else's estimate updates 0 rows but toasts success; 1342 renaming Estimate→Contract keeps the Estimate prefix; 1360 nightly sync under 60 s after a big top-up; 1352 "Notified — email" toast counts scheduled sends.
+
+## Build 1397 — the second polish sweep (23 Oct 2026)
+A second rendered sweep covered 29 more screens × p/d × dark/light (rig: scratchpad `audit_polish2/audit3.mjs`). The fixes needing no design call:
+- **Payments worksheet footer** "Paid · Balance due" 1.20:1 — 2268 darkened `.wsrow` and set no ink; it takes `--rbe-ink`.
+- **Client-name subtitles** Payments/Tasks/Appointments (inline `#8a6f66`, 4.31) and Communications (inline `#9c1822`, 2.43) → `--rbe-mute` (insurance keeps its `!important` red). Appointments/Tasks `.subnote` (2.97) join the `--rbe-mute` list.
+- **System Health** heading/× `#c8202e` on `#241512` 3.11 → `#e35c63` 5.02; × 44px; "1 rows" → "1 row".
+- **Settings** Team/Audit/Backup shown `display:block` on a flex `.setrow` → `flex` (chevron right).
+- **Inspections list** excluded only estimates and files; contracts, invoices, work orders are out too.
+- **Phone layouts:** `.cd-guiderow` wraps (name had ~70px); Quick Inspection address row wraps (Search clipped, My location off-card); estimate line item ≤560px: price grid 3 columns with the amount on its own row, `padding-top:40px` so the name clears move/✕.
+- **✦ Ask** stands aside (`.tucked2`) while the estimate builder, document editor, scanner, Communications, Quick Inspection start or Resource Library is up — repainted on the 3 s timer and 350 ms after any tap.
+- Not done (design or data): Email-to-client on an insurance contract with no INSURANCE & YOUR PART box shows two "Saved" toasts before its instruction (the flow is 1324's, by design); Team Directory cream page in dark; Library floating controls; emoji survivors in headings; header "+" colour per screen.
+- **Gates:** `gate_1397.mjs` 15/15, control 1396 RED 13. gate_1341, 1373, 1206, 1081 GREEN; gate_stack CLEAN.

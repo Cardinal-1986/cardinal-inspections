@@ -196,7 +196,9 @@ console.log('gate_1197\n  app: ' + APP + '\n');
     const seen = {};
     const canned = {
       team_profiles: (sel) => {
-        seen.team_profiles = sel;
+        /* 1391: the roster extension now really hooks Admin Health and reads team_profiles(email, name, title)
+           AFTER the base check — keep the FIRST read, which is the requirement check this assertion is about. */
+        if (!seen.team_profiles) seen.team_profiles = sel;
         /* the 1196 request (select=id, HEAD) 400s with an empty body; anything else is fine */
         if (sel.cols === 'id' && sel.head) return { data: null, error: { message: '', code: '' }, status: 400, count: null };
         return { data: [{ email: 'theo@cardinalrenovations.net' }], error: null, status: 200, count: 5 };

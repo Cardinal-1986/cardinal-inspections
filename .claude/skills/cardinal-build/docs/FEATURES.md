@@ -10142,3 +10142,24 @@ From an estimate, "→ Contract" makes the Roofing / Siding / Gutter Constructio
 
 ## Build 1390: Scan document — crop, flatten, clean, multi-page PDF
 Job Documents ▸ Scan document opens an in-app scanner (`window.CardinalScan.open(file, onPdf)`): auto edges + draggable corners, perspective flatten, Document/Gray/Color, rotate, Add page, Save PDF → one PDF filed through `addJobFiles`. **Gate:** `gate_1390.mjs`.
+
+## Build 1391: stuck-off switches fixed
+Thirteen `typeof … === 'async function'` guards (always false) fixed or retired; OC Colors upload, Scope-of-Loss read offer, gallery/list redraws, photo-editor Device button, Production punch tick and Admin Health extensions work again. Supplement Desk photo mode and Draft letter no longer 500. **Gate:** `gate_1391.mjs`.
+
+## Build 1392: audit fixes — profit is admin-only, honest AR/feed/guide/drawer
+Payments card profit/margin admin-only ("None entered" with no costs); guide email really saves; drawer shows your name; error reports keep line numbers; home AR names money owed on other boards; feed names invoices/contracts; signed docs hide Mark sent. **Gate:** `gate_1392.mjs`.
+
+## Build 1393: readable on every job
+Insurance jobs in dark mode: Back / Upload files / Email to client / Work Orders readable on the cream ground. Job Documents intro, empty note, client name brighter in dark. Left rail's selected-CRM label carries its own ink. Scanner Add page opens the camera on the first tap; empty scanner explains itself. **Gate:** `gate_1393.mjs`.
+
+## Build 1394: Record payment — Paid by
+Insurance jobs ask Insurance / Homeowner (opens on Insurance); Community asks Partner / Homeowner; retail unchanged. Receipts only when the homeowner paid. **Gate:** `gate_1394.mjs`.
+
+## Build 1395: Community header fits a phone
+No "Communi…", one pill row at 390px. **Gate:** `gate_1395.mjs`.
+
+## Build 1396: Desk reads stored scopes; no review text on a refused Complete; the 1st counts
+Supplement Desk reads storage-backed scopes (post-1359); Advance to Completed refused for photos offers no review request; Sales Numbers counts payments dated the 1st. **Gate:** `gate_1396.mjs`.
+
+## Build 1397: polish across the app
+Payments footer, page-title client names, System Health, Settings rows, Inspections list, phone layouts (guide rows, QI address, estimate prices), Ask button steps aside on screens with bottom actions. **Gate:** `gate_1397.mjs`.
