@@ -36952,3 +36952,15 @@ A second review agent read the 40 builds the first pass had not (1329–1387 min
 - **Sales Numbers dropped payments collected on the 1st.** `snTime('2026-10-01')` is UTC midnight = 8 pm on 30 Sep in Dayton, before `snStart` (local midnight). A bare date reads as local noon.
 - **Gates:** `gate_1396.mjs` 4/4 (Chromium for the advance path, `snTime` extracted and run under `TZ=America/New_York`, Desk structure), control RED 4. gate_1331, gate_1362 GREEN. Both `supplement.html` inline scripts pass `node --check`. **Not exercised end to end:** the Desk reading a real storage-backed scope — one Analyze on a recent claim is the check.
 - **Suspected, not fixed (recorded):** 1386 Download → print() after an await on iOS; 1340 accepting someone else's estimate updates 0 rows but toasts success; 1342 renaming Estimate→Contract keeps the Estimate prefix; 1360 nightly sync under 60 s after a big top-up; 1352 "Notified — email" toast counts scheduled sends.
+
+## Build 1397 — the second polish sweep (23 Oct 2026)
+A second rendered sweep covered 29 more screens × p/d × dark/light (rig: scratchpad `audit_polish2/audit3.mjs`). The fixes needing no design call:
+- **Payments worksheet footer** "Paid · Balance due" 1.20:1 — 2268 darkened `.wsrow` and set no ink; it takes `--rbe-ink`.
+- **Client-name subtitles** Payments/Tasks/Appointments (inline `#8a6f66`, 4.31) and Communications (inline `#9c1822`, 2.43) → `--rbe-mute` (insurance keeps its `!important` red). Appointments/Tasks `.subnote` (2.97) join the `--rbe-mute` list.
+- **System Health** heading/× `#c8202e` on `#241512` 3.11 → `#e35c63` 5.02; × 44px; "1 rows" → "1 row".
+- **Settings** Team/Audit/Backup shown `display:block` on a flex `.setrow` → `flex` (chevron right).
+- **Inspections list** excluded only estimates and files; contracts, invoices, work orders are out too.
+- **Phone layouts:** `.cd-guiderow` wraps (name had ~70px); Quick Inspection address row wraps (Search clipped, My location off-card); estimate line item ≤560px: price grid 3 columns with the amount on its own row, `padding-top:40px` so the name clears move/✕.
+- **✦ Ask** stands aside (`.tucked2`) while the estimate builder, document editor, scanner, Communications, Quick Inspection start or Resource Library is up — repainted on the 3 s timer and 350 ms after any tap.
+- Not done (design or data): Email-to-client on an insurance contract with no INSURANCE & YOUR PART box shows two "Saved" toasts before its instruction (the flow is 1324's, by design); Team Directory cream page in dark; Library floating controls; emoji survivors in headings; header "+" colour per screen.
+- **Gates:** `gate_1397.mjs` 15/15, control 1396 RED 13. gate_1341, 1373, 1206, 1081 GREEN; gate_stack CLEAN.

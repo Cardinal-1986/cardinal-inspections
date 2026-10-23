@@ -10160,3 +10160,6 @@ No "Communi…", one pill row at 390px. **Gate:** `gate_1395.mjs`.
 
 ## Build 1396: Desk reads stored scopes; no review text on a refused Complete; the 1st counts
 Supplement Desk reads storage-backed scopes (post-1359); Advance to Completed refused for photos offers no review request; Sales Numbers counts payments dated the 1st. **Gate:** `gate_1396.mjs`.
+
+## Build 1397: polish across the app
+Payments footer, page-title client names, System Health, Settings rows, Inspections list, phone layouts (guide rows, QI address, estimate prices), Ask button steps aside on screens with bottom actions. **Gate:** `gate_1397.mjs`.
