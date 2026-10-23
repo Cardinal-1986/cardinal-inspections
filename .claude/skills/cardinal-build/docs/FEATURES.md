@@ -10139,3 +10139,6 @@ Record payment opened as a deposit starts at the job's deposit; Download names t
 
 ## Build 1389: → Contract picks the trade agreement
 From an estimate, "→ Contract" makes the Roofing / Siding / Gutter Construction Agreement for the estimate's trade, asking when it is mixed or unclear; the general service contract stays a choice. **Gate:** `gate_1389.mjs`.
+
+## Build 1390: Scan document — crop, flatten, clean, multi-page PDF
+Job Documents ▸ Scan document opens an in-app scanner (`window.CardinalScan.open(file, onPdf)`): auto edges + draggable corners, perspective flatten, Document/Gray/Color, rotate, Add page, Save PDF → one PDF filed through `addJobFiles`. **Gate:** `gate_1390.mjs`.
