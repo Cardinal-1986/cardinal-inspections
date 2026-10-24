@@ -6,13 +6,13 @@
 python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 ```
 
-`124` `.sql` files at the repo root. **All are applied by hand against Supabase** — nothing in the app or the deploy ever runs one, and `.vercelignore` blanket-excludes `*.sql` so none is ever served.
+`125` `.sql` files at the repo root. **All are applied by hand against Supabase** — nothing in the app or the deploy ever runs one, and `.vercelignore` blanket-excludes `*.sql` so none is ever served.
 
 ## Read this before trusting the order
 
 **The `shipped at` column is the ordering signal, not the git date.** It is the lowest build number in `cardinal_build_log.md` that names the file. Git cannot answer this: PRs on this repo are **squash-merged**, so a file written across five builds lands in one commit, and dozens of early migrations share a single commit date that has nothing to do with when they ran.
 
-⚠️ **29 file(s) are named by no build-log heading**, so their order is unknown and they are listed last. That is not a grep artifact — checked, only one of them appears anywhere in the log's text. Most are documented in `CLAUDE.md` or `FEATURES.md` instead; the `documented in` column says where. **A file marked `NOTHING` is named by no doc at all** — read it before running it.
+⚠️ **30 file(s) are named by no build-log heading**, so their order is unknown and they are listed last. That is not a grep artifact — checked, only one of them appears anywhere in the log's text. Most are documented in `CLAUDE.md` or `FEATURES.md` instead; the `documented in` column says where. **A file marked `NOTHING` is named by no doc at all** — read it before running it.
 
 ⚠️ **16 file(s) drop, delete or truncate something.** They are marked **DESTRUCTIVE** below. Most are one-off repairs against production data that has since been fixed — **replaying one on a live database destroys current rows.** A fresh-database bootstrap must skip every one of them.
 
@@ -139,13 +139,14 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 115 | — | `oc_evergreen_mist_from_coty_sheet.sql` | 1 | — | — | **NOTHING** |
 | 116 | — | `revoke_anon_objection_rpcs.sql` | 4 | — | — | **NOTHING** |
 | 117 | — | `showcase_pairs.sql` | 21 | ✅ | — | CLAUDE.md |
-| 118 | — | `studio_findings.sql` | 14 | ✅ | — | BUG_CLASSES.md, OPEN_ITEMS.md |
-| 119 | — | `studio_media.sql` | 42 | ✅ | **⚠ YES** | **NOTHING** |
-| 120 | — | `studio_photos.sql` | 5 | ✅ | — | CLAUDE.md, OPEN_ITEMS.md |
-| 121 | — | `studio_private_objects_rls.sql` | 20 | ✅ | — | CLAUDE.md |
-| 122 | — | `visualizer_materials_seed.sql` | 1 | ✅ | — | **NOTHING** |
-| 123 | — | `visualizer_schema.sql` | 49 | ✅ | **⚠ YES** | **NOTHING** |
-| 124 | — | `workmanship_pairs.sql` | 20 | ✅ | — | CLAUDE.md |
+| 118 | — | `staff_only_rls.sql` | 1 | ✅ | — | **NOTHING** |
+| 119 | — | `studio_findings.sql` | 14 | ✅ | — | BUG_CLASSES.md, OPEN_ITEMS.md |
+| 120 | — | `studio_media.sql` | 42 | ✅ | **⚠ YES** | **NOTHING** |
+| 121 | — | `studio_photos.sql` | 5 | ✅ | — | CLAUDE.md, OPEN_ITEMS.md |
+| 122 | — | `studio_private_objects_rls.sql` | 20 | ✅ | — | CLAUDE.md |
+| 123 | — | `visualizer_materials_seed.sql` | 1 | ✅ | — | **NOTHING** |
+| 124 | — | `visualizer_schema.sql` | 49 | ✅ | **⚠ YES** | **NOTHING** |
+| 125 | — | `workmanship_pairs.sql` | 20 | ✅ | — | CLAUDE.md |
 
 ## Rebuilding from empty
 
