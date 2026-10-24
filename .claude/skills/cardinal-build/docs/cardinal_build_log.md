@@ -37074,5 +37074,5 @@ Documents built by the app's own template code, served through the real `api/sha
 - Supabase's security advisor after 1407: of 12 anon-callable and 19 signed-in-callable SECURITY DEFINER functions, all but two are trigger / event-trigger functions (not callable over RPC) or guard themselves (`trash_document` / `restore_document` by owner, `objection_*` by domain, `studio_refresh_damage_tags` by admin, the `is_*` booleans).
 - **`snapshot_document()`**: its "can see the project" test ran with RLS off, so it was true for any document — any signed-in account could add version rows to any sent/signed document. Now also requires `is_staff()`.
 - **`job_total_for(pid)`** was executable by anon (a contract total for anyone holding a job id). Anon loses EXECUTE; only SQL calls it.
-- Both in one new migration (listed in MIGRATIONS.md); the app is unchanged.
+- Both in one new migration (listed in MIGRATIONS.md), **applied 24 Oct and verified** (anon EXECUTE false, authenticated true, guard present); the app is unchanged.
 - **Theo's dashboard toggles, recorded:** leaked-password protection (Auth → Passwords) is off; 22 functions lack a fixed `search_path` (advisory, none is SECURITY DEFINER-exploitable as written).
