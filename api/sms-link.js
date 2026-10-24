@@ -13,6 +13,7 @@
 // missing TWILIO_* keys answer { ok:false, reason:'sms_not_configured' }, never a
 // crash. Needs TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + (TWILIO_MESSAGING_SERVICE_SID
 // or TWILIO_FROM).
+import { isStaff } from './_staff.js';   // 1407
 const SUPA_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
 
@@ -50,6 +51,7 @@ async function requireSession(req, res){
     if(!who.ok){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
     const user = await who.json();
     if(!user || !user.email){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
+    if(!isStaff(user.email)){ res.status(403).json({ ok:false, error:'Cardinal staff only' }); return null; }   // 1407
     user._token = token;
     return user;
   }catch(e){

@@ -23,6 +23,7 @@
 // either. Thumbnails are CompanyCam's own static URLs; no bytes pass through
 // this route, so it cannot be used as a proxy.
 
+import { isStaff } from './_staff.js';   // 1407
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
 const FALLBACK_ADMINS = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
@@ -69,6 +70,7 @@ export default async function handler(req, res) {
     const caller = await who.json();
     const email = ((caller && caller.email) || '').toLowerCase();
     if (!email) { res.status(401).json({ error: 'Invalid session' }); return; }
+    if (!isStaff(email)) { res.status(403).json({ error: 'Cardinal staff only' }); return; }   // 1407
 
     // ---- 2) Admin? (only widens WHICH job may be linked, never which client) ----
     let isAdmin = FALLBACK_ADMINS.includes(email);

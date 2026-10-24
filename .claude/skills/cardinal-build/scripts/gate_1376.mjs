@@ -108,6 +108,7 @@ await browser.close();
 // E: the server route, executed with a stubbed fetch
 {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'g1376-')); const f = path.join(tmp, 'sms-link.mjs'); fs.copyFileSync(API, f);
+  try { fs.copyFileSync(path.join(path.dirname(API), '_staff.js'), path.join(tmp, '_staff.js')); } catch (_) {}   // 1407 imports it
   const mod = await import('file://' + f);
   process.env.TWILIO_ACCOUNT_SID = 'ACgate0000000000000000000000000000'; process.env.TWILIO_AUTH_TOKEN = 'gate-token'; process.env.TWILIO_FROM = '+19375550000';
   const run = async (ct) => {

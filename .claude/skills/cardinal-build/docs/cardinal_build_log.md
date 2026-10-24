@@ -37061,3 +37061,10 @@ Documents built by the app's own template code, served through the real `api/sha
 - **Partners**: the directory and header search put Habitat first; the header search labelled general contractors "Property manager".
 - **Recorded, not fixed:** searching a partner's name does not find its jobs (none of the haystacks carry `lead.partner_name`) — Theo's call; Theo's gmail login is staff in `_staff.js` but in none of the app's admin lists, so signed in that way the app treats him as a rep; the Pricing Catalog shows "+ Add item" / "Import" to reps that answer "Admins only".
 - **Gates:** `gate_1406.mjs` 13/13 (args `[index.html] [api/abc.js]`, seed `gate_1406_seed.js`), control 1405 RED 11 (A2 / B2 are the "still works" checks).
+
+## Build 1407 — staff only, end to end (24 Oct 2026, audit round 11)
+- **Public signup is on**, so a session is not staff. `api/companycam-job.js` (CompanyCam photos by address) and `api/sms-link.js` (texts from the company number) checked only for a session; both now call `isStaff()` first and answer 403 otherwise.
+- **`api/clientsign.js`** returned the database's raw error text to a public signer; it now gives a plain sentence and logs the detail.
+- **Database half, written and NOT yet applied** (needs Theo's approval): a RESTRICTIVE `staff_only_1407` policy on every RLS table for `authenticated`, `(select is_staff())`. It ANDs with every existing policy, so nothing staff can do changes; anon is untouched. Today all accounts are staff, so the apply is safe in either order relative to this deploy. The migration is listed in MIGRATIONS.md.
+- **Still Theo's:** turn off public signup in Supabase → Authentication.
+- **Gates:** `gate_1407.mjs` 4/4 (arg `[api dir]`), control 1406 RED 3. `gate_1376` now copies `_staff.js` beside its temp route. `gate_types` / `gate_1228` red identically on the 1406 control (carried).

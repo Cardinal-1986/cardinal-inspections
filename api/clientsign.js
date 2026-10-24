@@ -162,6 +162,8 @@ export default async function handler(req, res) {
 
     res.status(200).json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
+    // 1407: a public signer sees a plain sentence; the database's own text stays in the server log
+    console.error('clientsign', err && err.message || err);
+    res.status(500).json({ error: 'We could not save your signature. Please try again, or call Cardinal at the number on the document.' });
   }
 }
