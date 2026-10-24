@@ -37076,3 +37076,8 @@ Documents built by the app's own template code, served through the real `api/sha
 - **`job_total_for(pid)`** was executable by anon (a contract total for anyone holding a job id). Anon loses EXECUTE; only SQL calls it.
 - Both in one new migration (listed in MIGRATIONS.md), **applied 24 Oct and verified** (anon EXECUTE false, authenticated true, guard present); the app is unchanged.
 - **Theo's dashboard toggles, recorded:** leaked-password protection (Auth → Passwords) is off; 22 functions lack a fixed `search_path` (advisory, none is SECURITY DEFINER-exploitable as written).
+
+## Storage, staff only (24 Oct 2026, SQL only)
+- 1407's restrictive policy covered public tables, not `storage.objects`: any self-registered account could still read every customer photo (61,953 objects in `photos/`), the showcase / walks / workmanship / designer folders and the library bucket, and upload into `photos/` and `library/`. A RESTRICTIVE `staff_only_storage` policy for `authenticated` closes it; staff permissions are unchanged; clients reach files only by signed URL or service key.
+- `job_files_read` compared `storage.foldername(p.name)` (the project's name) and could never match; it now reads the object's own folder like `job_files_write`. 0 files in that bucket.
+- New migration listed in MIGRATIONS.md.
