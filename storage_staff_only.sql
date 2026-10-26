@@ -13,9 +13,10 @@
 -- the service key, which bypasses RLS. Measured before writing: every uploader in the last 60 days
 -- is staff; the visual-workspace owner is staff.
 --
--- Also: job_files_read compared storage.foldername(p.name) — the PROJECT's name — so it could never
--- match an object (0 files today, so nothing was ever refused that should have been read). It now
--- reads the object's own folder, which is what its twin job_files_write already does.
+-- Also: job_files_read AND job_files_write compared storage.foldername(p.name) — the PROJECT's (client's)
+-- name — instead of the object's own name, so neither could ever match. Every Job Files upload since build
+-- 1359 was refused with "new row violates row-level security policy" (reported 26 Oct; the bucket holds 0
+-- files). Both now read the object's own folder (<project id>/...), which is the key crJobFileUp() writes.
 --
 -- REVERT: drop policy "staff_only_storage" on storage.objects;
 
@@ -28,3 +29,7 @@ create policy staff_only_storage on storage.objects as restrictive for all to au
 drop policy if exists job_files_read on storage.objects;
 create policy job_files_read on storage.objects for select to authenticated
   using (bucket_id = 'job-files' and exists (select 1 from public.projects p where (p.id)::text = (storage.foldername(objects.name))[1]));
+
+drop policy if exists job_files_write on storage.objects;
+create policy job_files_write on storage.objects for insert to authenticated
+  with check (bucket_id = 'job-files' and public.is_staff() and exists (select 1 from public.projects p where (p.id)::text = (storage.foldername(objects.name))[1]));

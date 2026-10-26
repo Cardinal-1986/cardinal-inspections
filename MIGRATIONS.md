@@ -141,7 +141,7 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 117 | — | `revoke_anon_objection_rpcs.sql` | 4 | — | — | **NOTHING** |
 | 118 | — | `showcase_pairs.sql` | 21 | ✅ | — | CLAUDE.md |
 | 119 | — | `staff_only_rls.sql` | 1 | ✅ | — | **NOTHING** |
-| 120 | — | `storage_staff_only.sql` | 4 | ✅ | — | **NOTHING** |
+| 120 | — | `storage_staff_only.sql` | 6 | ✅ | — | **NOTHING** |
 | 121 | — | `studio_findings.sql` | 14 | ✅ | — | BUG_CLASSES.md, OPEN_ITEMS.md |
 | 122 | — | `studio_media.sql` | 42 | ✅ | **⚠ YES** | **NOTHING** |
 | 123 | — | `studio_photos.sql` | 5 | ✅ | — | CLAUDE.md, OPEN_ITEMS.md |

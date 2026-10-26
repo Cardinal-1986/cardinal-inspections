@@ -37079,5 +37079,5 @@ Documents built by the app's own template code, served through the real `api/sha
 
 ## Storage, staff only (24 Oct 2026, SQL only)
 - 1407's restrictive policy covered public tables, not `storage.objects`: any self-registered account could still read every customer photo (61,953 objects in `photos/`), the showcase / walks / workmanship / designer folders and the library bucket, and upload into `photos/` and `library/`. A RESTRICTIVE `staff_only_storage` policy for `authenticated` closes it; staff permissions are unchanged; clients reach files only by signed URL or service key.
-- `job_files_read` compared `storage.foldername(p.name)` (the project's name) and could never match; it now reads the object's own folder like `job_files_write`. 0 files in that bucket.
+- **`job_files_read` and `job_files_write` both compared `storage.foldername(p.name)` (the client's name) and could never match** — every Job Files upload since 1359 failed with "new row violates row-level security policy" (a rep reported it 26 Oct; the bucket holds 0 files). Both now read the object's own `<project id>/` folder, the key `crJobFileUp()` writes.
 - New migration listed in MIGRATIONS.md.
