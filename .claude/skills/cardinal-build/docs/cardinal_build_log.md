@@ -37092,3 +37092,9 @@ Documents built by the app's own template code, served through the real `api/sha
 - Every inline script in all six HTML artifacts and every `api/*.js` parses.
 
 - **APPLIED 27 Oct by Theo in the SQL editor, with the unused `appointments_clear_reminder()` dropped in the same paste. Verified as each role (rolled back):** Job Files upload OK for admin / production / sales, refused for an outsider; `photos/projects`, `punch`, `visualizer`, `library` staff OK / outsider refused; owner vault, showcase, walks admin only; an outsider reads 0 customer photos, staff read them as before.
+
+## Build 1409 — a lead card opens the client (27 Oct 2026)
+- **Theo, photo of the Leads screen on his desktop:** *"Clicking doesn't take me inside the profile."* Above 900px a card click only **selected** the lead and previewed it in `#ljPane`; the profile opened from the pane's "Open profile" button. On his monitor the right side was empty, so a click did nothing he could see. (The pane renders in the rig at 1080×1920, 1280×900 and 1920×1080, and real checklists are all well-formed, so the empty side is not reproduced here — the fix does not depend on it.)
+- **Now:** a click opens the profile at every width, as on a phone. On a mouse (`hover: hover`, >900px) pointing at a card selects it and fills the pane, so the preview survives.
+- **Gates:** `gate_1409.mjs` 3/3, control 1407 RED 2 (the phone check passes on both, by design). 1256 / 1288 / 1290 / 1307 / 1308 GREEN; 1226 red identically on the control. `gate_types` back to the control's count after an `any` cast.
+- Build 1408 is claimed by `claude/second-rep` (another session), hence 1409.
