@@ -2449,6 +2449,10 @@ body[data-rltheme="siren"].claim-insurance #delClientBtn{color:#ff7b82;}
 .dbmap{height:172px;border-radius:8px;overflow:hidden;background:#ece7e2;position:relative;z-index:0;}
 .dbassign{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .dbrep{font:700 15px 'Segoe UI',Arial,sans-serif;}
+/* 1408: the second rep's line on the Assigned To card; ink inherits from .dbassign in every theme */
+.dbrep2row{flex-basis:100%;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.dbrep2{font:600 14px 'Segoe UI',Arial,sans-serif;}
+.dbrep2.none{opacity:.75;}
 .dbmore .dbmrow{padding:9px 0 0;margin-top:9px;border-top:1px solid #eee7e0;font:600 15px 'Segoe UI',Arial,sans-serif;}
 .payhead{display:flex;justify-content:space-between;background:#eef1f4;padding:12px 14px;
   font:800 18px 'Segoe UI',Arial,sans-serif;color:#23405e;border-radius:6px;margin:10px 0 6px;}
@@ -2711,6 +2715,8 @@ body[data-rltheme="siren"].claim-insurance #delClientBtn{color:#ff7b82;}
 #ljAsk .yes{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
 #ljAsk .no{background:transparent;border:1px solid var(--rbe-panelbd,#24242c);color:var(--rbe-ink,#eceef0);}
 .ljrep{font-size:11px;font-weight:800;color:var(--rbe-rep,#dce3ec);}
+/* 1408: the second rep, a chip beside the primary's name (same ink, outlined) */
+.ljrep2{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid currentColor;border-radius:8px;font-size:11px;font-weight:700;line-height:15px;}
 .ljcta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;align-self:center;margin-right:11px;}
 .ljbtn{width:36px;height:36px;border:1px solid var(--rbe-ctamiss);border-radius:10px;background:var(--rbe-ctabg);
   display:flex;align-items:center;justify-content:center;text-decoration:none;}
@@ -4212,7 +4218,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-27 build 1409<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-27 build 1410<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12893,6 +12899,25 @@ function renderAcxOverview(){
       '<option value="">reassign\u2026</option>' +
       TEAM_ROSTER.map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
     '</select>' : '') +
+    /* 1408: the second rep (checklist.lead.assigned[1]). Only offered once a primary is actually assigned at
+       index 0 — a second rep with no first would leave index 0 empty. The picker never lists the primary. */
+    (function(){
+      var r2 = secondRepOf(pr);
+      var a0 = ((parseCkAll(pr).lead || {}).assigned || [])[0];
+      var adm = isAdminUser();
+      if(!r2 && !adm) return '';
+      var line = '<span class="dbrep2' + (r2 ? '' : ' none') + '">Second rep: <b>' + esc(r2 ? (rptRepName(r2) || r2) : 'none') + '</b></span>';
+      if(!adm) return '<div class="dbrep2row">' + line + '</div>';
+      if(!a0) return '<div class="dbrep2row">' + line + '<span class="dbrep2 none">Assign a rep first</span></div>';
+      var p0 = String(a0).toLowerCase();
+      return '<div class="dbrep2row">' + line +
+        '<select id="dbAssign2Sel" class="acxsel" aria-label="Set or clear the second rep on this job" style="margin-left:auto;">' +
+          '<option value="">second rep\u2026</option>' +
+          TEAM_ROSTER.filter(function(m){ return String(m.email).toLowerCase() !== p0; })
+            .map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
+          (r2 ? '<option value="__clear">Remove second rep</option>' : '') +
+        '</select></div>';
+    })() +
   '</div></div>';
   /* 420: Convert to Insurance, all the way at the bottom (Theo's words) */
   html += _cvHtml;
@@ -13006,7 +13031,7 @@ function renderAcxOverview(){
   if(asg) asg.addEventListener('change', async function(){
     if(!asg.value) return;
     var L = parseCkAll(pr).lead || {};
-    L.assigned = [asg.value];
+    L.assigned = crWithPrimary(L.assigned, asg.value);   /* 1408: keeps the second rep */
     try{
       await patchProjectCk(pr, { lead: L });
       auditLog('assign', 'Job reassigned to ' + (rptRepName(asg.value) || asg.value) + ' \u2014 ' + (pr.name || ''), pr.id);
@@ -13035,6 +13060,26 @@ function renderAcxOverview(){
       }catch(_){}
       renderOverview();
     }catch(err){ showError('Could not reassign: ' + (err.message || err)); }
+  });
+  /* 1408: set or clear the second rep. Deliberately NO notifyTeam (Theo: no notifications) and no
+     sales_rep write — commission follows the primary only. */
+  var asg2 = /** @type {HTMLSelectElement|null} */ (document.getElementById('dbAssign2Sel'));
+  if(asg2) asg2.addEventListener('change', async function(){
+    var v2 = asg2.value;
+    if(!v2) return;
+    var L2 = parseCkAll(pr).lead || {};
+    var cur = Array.isArray(L2.assigned) ? L2.assigned : [];
+    var p0 = cur[0] ? String(cur[0]) : '';
+    var was = cur[1] ? String(cur[1]) : '';
+    if(!p0 || (v2 !== '__clear' && v2.toLowerCase() === p0.toLowerCase())){ asg2.value = ''; return; }
+    L2.assigned = (v2 === '__clear') ? [p0] : [p0, v2];
+    try{
+      await patchProjectCk(pr, { lead: L2 });
+      auditLog('assign', (v2 === '__clear'
+        ? 'Second rep removed' + (was ? ' (' + (rptRepName(was) || was) + ')' : '')
+        : 'Second rep set to ' + (rptRepName(v2) || v2)) + ' \u2014 ' + (pr.name || ''), pr.id);
+      renderOverview();
+    }catch(err){ showError('Could not set the second rep: ' + (err.message || err)); }
   });
   acxBindOnce(mount);
 }
@@ -13893,7 +13938,10 @@ function ljCardHtml(p){
       (stg === 'Lead' ? '<div><span class="ljunc">Uncontacted · ' + esc(ljAge(p.created_at)) + '</span></div>' : '') +
       /* 931: the same resolver as the chip, or a card sitting in the
          Unassigned bucket would print the name of whoever typed it in. */
-      '<div class="ljrep">' + esc(ljRepLabel(p)) + '</div>' +
+      '<div class="ljrep">' + esc(ljRepLabel(p)) +
+        /* 1408: the second rep as a chip; the card still groups and sorts under the primary */
+        (function(){ var r2 = secondRepOf(p); return r2 ? '<span class="ljrep2" title="Second rep">2nd: ' + esc(rptRepName(r2) || r2) + '</span>' : ''; })() +
+      '</div>' +
     '</div>' +
     ((tel || eml) ? '<div class="ljcta">' +
       (tel ? '<a class="ljbtn" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' : '') +
@@ -16184,7 +16232,9 @@ async function payMigrateLegacyIn(){
   if(!legacy.length) return;
   var sum = legacy.reduce(function(a, x){ return a + (Number(x.p.amt) || 0); }, 0);
   var rep = currentProject.sales_rep || null;
-  var pays = rep && rep !== 'theo@cardinalrenovations.net';
+  /* 1408: who earns comes from the one mirror of make_commission(); Theo never does */
+  var _earn = crCommissionRep(currentProject);
+  var pays = !!_earn;
   if(!await crAsk('Move ' + legacy.length + ' payment' + (legacy.length === 1 ? '' : 's') +
       ' totalling ' + fmtMoney(sum, true) + ' into Money In?\n\n' +
       legacy.map(function(x){
@@ -16200,7 +16250,9 @@ async function payMigrateLegacyIn(){
           fmtMoney(d, true) + ' recorded as contract worksheet payments will stop counting — ' +
           'Balance Due will RISE by that amount unless those payments are also logged in Money In.'
         : '\n\nBalance Due does not change.'; })()) +
-      (pays ? '\n\nThis job is assigned to ' + rep + ', so a 10% commission will be created.' : ''))) return;
+      (pays ? (_earn.second
+        ? '\n\nThis job is held by ' + (rptRepName(rep || '') || rep || 'the office') + ', so a 10% commission will be created for ' + (rptRepName(_earn.email) || _earn.email) + ' (second rep).'
+        : '\n\nThis job is assigned to ' + rep + ', so a 10% commission will be created for ' + (rptRepName(_earn.email) || _earn.email) + '.') : ''))) return;
   var rows = legacy.map(function(x){
     return {
       project_id  : currentProject.id,
@@ -21240,6 +21292,49 @@ function assignedRepOf(pr){
   if(L && L.assigned && L.assigned.length) return L.assigned[0];
   return pr.created_by || null;
 }
+/* 1408: the SECOND rep is checklist.lead.assigned[1]. Index 0 stays the primary everywhere (assignedRepOf,
+   ljAssignedEmail, project_assigned_rep) and alone carries commission. Null when there is no primary at
+   index 0 or the second repeats it. */
+function secondRepOf(pr){
+  try{
+    var L = parseCkAll(pr).lead;
+    var a = (L && Array.isArray(L.assigned)) ? L.assigned : [];
+    var p0 = a[0] ? String(a[0]) : '', s1 = a[1] ? String(a[1]) : '';
+    return (p0 && s1 && s1.toLowerCase() !== p0.toLowerCase()) ? s1 : null;
+  }catch(_){ return null; }
+}
+/* 1408: the array a primary reassign writes — the new primary first, the existing second rep kept unless it
+   IS the new primary (then the second slot clears, so primary == second is never written). */
+function crWithPrimary(assigned, email){
+  var a = Array.isArray(assigned) ? assigned : (assigned ? [assigned] : []);
+  var s1 = a[1] ? String(a[1]) : '';
+  return (s1 && s1.toLowerCase() !== String(email || '').toLowerCase()) ? [email, s1] : [email];
+}
+/* 1408: WHO EARNS THE 10% — the app's mirror of make_commission() (second_rep_commission.sql), which alone
+   books the row. The job's sales_rep earns, as always; when that is Theo (or nobody) and the primary is not a
+   commissioned rep, the SECOND rep earns (Theo, 26 Oct 2026: "I'm paying Jacob 10% of total cost during the
+   training."). Theo never earns in any slot: "I will never pay myself a commission." Returns
+   { email, second } or null. Display only — the trigger is the authority. */
+var CR_NO_COMMISSION = 'theo@cardinalrenovations.net';
+function crCommissionRep(pr){
+  if(!pr) return null;
+  var rep = pr.sales_rep ? String(pr.sales_rep) : '';
+  if(rep && rep.toLowerCase() !== CR_NO_COMMISSION) return { email: rep, second: false };
+  var L = (parseCkAll(pr) || {}).lead || {};
+  var a = Array.isArray(L.assigned) ? L.assigned : [];
+  var a0 = a[0] ? String(a[0]) : '';
+  var s2 = secondRepOf(pr);
+  var isRep = function(em){ return !!em && em.toLowerCase() !== CR_NO_COMMISSION &&
+    (typeof tmRoleOf !== 'function' || tmRoleOf(em) === 'Sales'); };
+  if(s2 && isRep(s2) && !isRep(a0)) return { email: s2, second: true };
+  return null;
+}
+/* 1408: "is this one of mine" for a rep — primary OR second. */
+function repIsOnJob(pr, em){
+  em = String(em || '').toLowerCase();
+  if(!pr || !em) return false;
+  return String(assignedRepOf(pr) || '').toLowerCase() === em || String(secondRepOf(pr) || '').toLowerCase() === em;
+}
 /* 1021: send the Approved/Completed team email, and if it could not go out because
    there was no signal (the stage moved offline — pdb.update queued the row, but the
    /api/notify fetch failed and was silently dropped), hand it to the offline outbox
@@ -23234,7 +23329,10 @@ async function renderCommissions(){
   var html = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;">' +
     '<span>&#128100; Sales rep: <b>' + (rep ? woEsc(rptRepName(rep) || rep) : 'None assigned') + '</b>' +
     (locked ? ' <span title="Locked after the first collection">&#128274;</span>' : '') + '</span>' +
-    (rep === COMM_OWNER
+    /* 1408: an owner project with a second rep pays the second rep (Theo, 26 Oct 2026) */
+    ((function(){ var e = crCommissionRep(currentProject); return e && e.second; })()
+      ? '<span class="subnote" data-cr-comm2="1">' + woEsc(rptRepName(crCommissionRep(currentProject).email) || crCommissionRep(currentProject).email) + ' (second rep) earns 10% of every dollar collected.</span>'
+      : rep === COMM_OWNER
       ? '<span class="subnote">No commission &#8212; owner project.</span>'
       : (rep ? '<span class="subnote">earns 10% of every dollar collected</span>'
              : '<span class="subnote">collections create no commission until a rep is set</span>')) +
@@ -25402,7 +25500,7 @@ function prodVisibleAppt(a){
   var me = (currentUser && currentUser.email) || '';
   if(ADMIN_EMAILS.indexOf(me) !== -1 || PRODUCTION_EMAILS.indexOf(me) !== -1) return true;
   var pr = cacheProjects.find(function(p){ return p.id === a.project_id; });
-  return !!pr && assignedRepOf(pr) === me;
+  return !!pr && (assignedRepOf(pr) === me || repIsOnJob(pr, me));   /* 1408: the second rep too */
 }
 function kindsFor(y, m, filter){
   var map = {};
@@ -45341,6 +45439,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1410, d:'2026-10-27', t:'A second rep on a job', s:'A job can now have two reps. On the job page, Assigned To shows the second rep under the first, and an admin can set or clear it from the Second rep picker. Reassigning the main rep keeps the second one. The second rep sees the job in their own list (Assigned: Me), on their calendar, and its contracts, claims, payments and scope reads, and on Leads & Jobs the card shows a small 2nd chip. Setting a second rep sends no message. On a job you hold, the second rep earns the 10% commission (Jacob, during his training); on a rep\u2019s own job the commission still goes to that rep only, and Theo never earns one.' },
   { b: 1409, d:'2026-10-27', t:'Leads open when you tap them', s:'On the Leads screen, tapping or clicking a lead now opens the client on every screen size. On a computer, pointing at a lead still shows its preview on the right.' },
   { b: 1407, d:'2026-10-24', t:'Staff-only, behind the scenes', s:'No change on screen. The CompanyCam job link and texting a client from the company number now answer Cardinal staff only, and a client who hits a problem signing a document sees a plain message instead of a technical one.' },
   { b: 1406, d:'2026-10-23', t:'Search, Crews and Community bids', s:'Search now finds names typed without accents or with a phone\u2019s curly apostrophe (O\u2019Brien, Jose), phone numbers typed with a leading 1, and \u201cPO 3001\u201d. Crews is shown only to the office and Production, who can use it. A Community bid on a job with no funding partner attached is refused instead of defaulting to the homeowner. Habitat is first in the partner directory, and general contractors are labelled correctly in search. Behind the scenes, the ABC Supply connection now answers Cardinal staff only.' },
@@ -47023,7 +47122,7 @@ var pr = (window.cacheProjects || []).find(function(p){ return p.id === ids[i]; 
 if(!pr){ fail++; continue; }
 var ck = Object.assign({}, pr.checklist || {});
 ck.lead = Object.assign({}, ck.lead || {});
-ck.lead.assigned = [email];
+ck.lead.assigned = (typeof window.crWithPrimary === 'function') ? window.crWithPrimary(ck.lead.assigned, email) : [email];   /* 1408 */
 var r = await window.supa.from('projects').update({ checklist: ck }).eq('id', ids[i]);
 if(r.error) fail++; else ok++;
 }catch(e){ fail++; }
@@ -55256,7 +55355,7 @@ return String(pr.created_by || '').toLowerCase();
 function matches(pr){
 if(!filter) return true;
 var rep = repOf(pr);
-if(filter === '__me')   return rep === myEmail();
+if(filter === '__me')   return rep === myEmail() || (typeof window.repIsOnJob === 'function' && window.repIsOnJob(pr, myEmail()));   /* 1408 */
 if(filter === '__none') return !rep;
 return rep === filter;
 }
@@ -66770,7 +66869,7 @@ else if(f === 'wt'){ await cc2Write(pr, { work_type: v || null, lead: mergeCk(pr
 else if(f === 'due'){ await cc2Write(pr, { lead: mergeCk(pr, 'lead', { bid_due_at: v }) }, 'Estimate due date set to ' + (v || 'none')); }
 else if(f === 'rep'){
 if(!v) return;
-var L = Object.assign({}, lead(pr)); L.assigned = [v];
+var L = Object.assign({}, lead(pr)); L.assigned = (typeof window.crWithPrimary === 'function') ? window.crWithPrimary(L.assigned, v) : [v];   /* 1408 */
 if(!await cc2Write(pr, { lead: L }, null)) return;
 try{ if(typeof window.auditLog === 'function') window.auditLog('assign', 'Job reassigned to ' + ((window.rptRepName && window.rptRepName(v)) || v) + ' \u2014 ' + (pr.name || ''), pr.id); }catch(_){}
 try{
@@ -85693,7 +85792,7 @@ select{min-height:44px;}
       { key:'loc', title:'Location', head: mount.querySelector(':scope > [data-cr-ord="loch"]'),
         sum: pr.address ? String(pr.address).split(',')[0] : 'No address yet' },
       { key:'asg', title:'Assigned To', head: asg && asg.previousElementSibling && asg.previousElementSibling.classList.contains('projsec') ? asg.previousElementSibling : null,
-        sum: rep ? rep.textContent.trim() : 'Nobody yet' },
+        sum: rep ? rep.textContent.trim() + (function(){ var r2 = asg && asg.querySelector('.dbrep2:not(.none) b'); return r2 ? ' + ' + r2.textContent.trim() : ''; })() : 'Nobody yet' },   /* 1408 */
       { key:'rv', title:'Google Reviews', head: mount.querySelector(':scope > .rvcard > .rvtop'), sum: '' }
     ];
     rows.forEach(function(r){
