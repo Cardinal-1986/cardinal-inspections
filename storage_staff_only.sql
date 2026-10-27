@@ -18,7 +18,16 @@
 -- 1359 was refused with "new row violates row-level security policy" (reported 26 Oct; the bucket holds 0
 -- files). Both now read the object's own folder (<project id>/...), which is the key crJobFileUp() writes.
 --
+-- And: photos_write (staff, everything except private/) overlapped photos_upload (everything except
+-- private/, showcase/, walks/, workmanship/, owner-vault/, materials/, visualizer/). Permissive policies
+-- OR together, so photos_write let ANY staff account add files to the owner vault and to the admin-only,
+-- client-facing showcase / walks / workmanship folders (measured 27 Oct as a sales and a production
+-- account; neither could read or overwrite there). photos_write is dropped: photos_upload ANDed with
+-- staff_only_storage is exactly "staff, outside the fenced folders", and each fenced folder keeps its own
+-- admin (or, for visualizer/, staff) write policy.
+--
 -- REVERT: drop policy "staff_only_storage" on storage.objects;
+--         create policy photos_write on storage.objects for insert to public with check ((bucket_id = 'photos') and (auth.role() = 'authenticated') and is_staff() and (name !~~ 'private/%'));
 
 set lock_timeout = '3s';
 
@@ -33,3 +42,5 @@ create policy job_files_read on storage.objects for select to authenticated
 drop policy if exists job_files_write on storage.objects;
 create policy job_files_write on storage.objects for insert to authenticated
   with check (bucket_id = 'job-files' and public.is_staff() and exists (select 1 from public.projects p where (p.id)::text = (storage.foldername(objects.name))[1]));
+
+drop policy if exists photos_write on storage.objects;
