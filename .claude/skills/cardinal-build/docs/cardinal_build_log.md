@@ -37098,3 +37098,11 @@ Documents built by the app's own template code, served through the real `api/sha
 - **Now:** a click opens the profile at every width, as on a phone. On a mouse (`hover: hover`, >900px) pointing at a card selects it and fills the pane, so the preview survives.
 - **Gates:** `gate_1409.mjs` 3/3, control 1407 RED 2 (the phone check passes on both, by design). 1256 / 1288 / 1290 / 1307 / 1308 GREEN; 1226 red identically on the control. `gate_types` back to the control's count after an `any` cast.
 - Build 1408 is claimed by `claude/second-rep` (another session), hence 1409.
+
+## Data, not a build — CRM stages put right (26–27 Oct 2026)
+- **Theo:** *"Clients aren't in the right stages … a lot of it is from AccuLynx or JobNimbus."* No code changed. Rows were moved by SQL the way `setStage` does it: `stage`, plus `checklist.stage_since` and `t_<Stage>`; Lost also gets `lost_at` and `loss_reason`.
+- **Theo's own picks (8 jobs):** six Completed or Lead jobs → Closed, one → Approved and one → Closed, each with a contract note filed as a Job File.
+- **AccuLynx sync (53 jobs):** each job's imported notes file records *"stage in AccuLynx: X"*. 38 OnHold that AccuLynx marks Cancelled → Lost (`loss_reason` "Cancelled in AccuLynx"); 2 more → Lost; 6 → Prospect; 1 → Approved; 2 → Invoiced; 4 → Closed. Jobs with new documents since the import were left alone (5), as was 1 that didn't match cleanly.
+- **Leads went from 51 to 29.** 19 of those have no AccuLynx source and are waiting on a JobNimbus export.
+- ⚠ **A move made by SQL sends no alerts.** The app's Approved → Production notice never went out for the one job moved to Approved, so Theo is telling production himself.
+- **Collections were not touched.** Payment discrepancies found along the way went to Theo, not into the table.
