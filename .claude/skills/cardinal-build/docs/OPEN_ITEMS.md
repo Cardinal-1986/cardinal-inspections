@@ -4096,6 +4096,18 @@ insert an empty row in the first place. Both are real, neither was asked for.
    build it if asked again without a new instruction from Theo.** (The
    collapsed "Manual entry…" form on the tab can still add a second
    commission row by hand for a one-off exception, same as it always could.)
+   ⚠ **EXCEPTION, Theo 26 Oct 2026 (build 1410):** *"I'm paying Jacob 10% of
+   total cost during the training."* and *"I will never pay myself a
+   commission."* On a job the owner holds (sales_rep Theo or none, and the
+   primary `lead.assigned[0]` not a commissioned rep), the **second rep**
+   (`lead.assigned[1]`, role sales, never Theo) earns the 10% —
+   `second_rep_commission.sql`. Still ONE recipient per collection, so this is
+   not a split. A rep-primary job is unchanged (primary only); **a rep primary
+   + rep second split is not a real case — ✅ SETTLED 27 Oct (Theo): *"The
+   secondary gets paid, I'm primary when there's 2 I train."* Two-rep jobs
+   are always Theo (training) as primary + a rep second, and the second rep is
+   paid — exactly what the trigger does. Do not build a rep + rep split.** Theo is
+   excluded by email in every slot.
 4. **Weekly owed-reminder email — BUILT, build 651.** Theo: "Weekly
    reminder once email trigger." `api/commissions-digest.js` (new,
    mirrors `api/digest.js`'s Resend pattern) emails Theo and Joan every
@@ -6451,3 +6463,10 @@ Theo, verbatim: "I don't know on calander put it on hold."
   desktop doc Save 42); the remaining modals (estimate picker, photo editor, walkthrough, What's New, AccuLynx
   import) do not close on Back. Audit coverage gaps: non-admin roles, the inspection checklist modal,
   Insurance/Production/Community-only menu sections.
+
+## 26 Oct 2026 (build 1410, built as 1408) — second rep
+- ✅ **APPLIED 27 Oct by Theo:** `second_rep_rls.sql` and `second_rep_commission.sql` (12 policies on `project_has_rep`, 0 on `project_assigned_rep`; `make_commission()` and `can_see_claim()` updated).
+- ✅ **SETTLED 27 Oct (Theo):** *"The secondary gets paid, I'm primary when there's 2 I train."* Two-rep jobs = Theo trains as primary, the second rep is paid; rep primary + rep second is not a real case (if it ever happens, the primary alone earns, as before).
+- ✅ **ANSWERED, Theo 26 Oct:** the 1403 appointment text keeps going to every `assigned` entry — the second rep gets "Appointment booked/moved" texts for job/drop days. No change.
+- ✅ **ANSWERED, Theo 26 Oct: YES** — the second rep sees the job's contracts, claims, payments (collections), supplements, objection logs and scope reads. `second_rep_rls.sql` swaps the one clause in all 12 policies and in `can_see_claim()` (claim notes / upgrades / iTel follow it).
+- The Community job page (cc2) keeps a second rep on reassign but does not show it.
