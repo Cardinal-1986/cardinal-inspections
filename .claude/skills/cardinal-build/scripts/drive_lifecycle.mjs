@@ -170,14 +170,24 @@ await clearWrites();
     await page.fill('#ldCity', 'Dayton');
     await page.selectOption('#ldState', 'OH').catch(() => {});
     await page.fill('#ldZip', '45414');
+    /* 27 Oct 2026: the form has since gained a required claim type (retail / insurance / community)
+       and the trade boxes (1253). Without them Create Lead correctly refuses, and every later step
+       cascaded into a false FAIL. Fill them the way gate_1253 does. */
+    await page.evaluate(() => {
+      const ct = document.querySelector('input[name="ldClaimType"][value="retail"]'); if (ct) { ct.checked = true; ct.dispatchEvent(new Event('change', { bubbles: true })); }
+      document.querySelectorAll('#ldTrades input').forEach(cb => { cb.checked = (cb.value === 'Roofing'); });
+      const src = document.getElementById('ldSource');   /* required since the lead-source work */
+      if (src && src.options) { const o = [...src.options].find(x => x.value); if (o) { src.value = o.value; src.dispatchEvent(new Event('change', { bubbles: true })); } }
+    });
     await page.click('#ldSave', { force: true });
     await page.waitForTimeout(1500);
     const w = await writes();
     const ins = w.find(x => x.table === 'projects' && (x.op === 'insert' || x.op === 'upsert'));
+    const ldErr = await page.evaluate(() => ((document.getElementById('ldError') || {}).textContent || '') + ' ' + (window.__TELL || '')).catch(() => '');
     await shot('L01-intake');
     record('S1 Intake — New ▸ Lead', ins ? 'PASS' : 'NO-WRITE',
       `Lead modal: ${formCensus.total} visible fields, ${formCensus.required} marked required. 8 filled by driver. ` +
-      `projects insert=${!!ins}${ins ? `, stage=${ins.payload.stage}` : ''}. Fields: ${formCensus.names.join(', ')}`,
+      `projects insert=${!!ins}${ins ? `, stage=${ins.payload.stage}` : ''}. Form said: "${String(ldErr).trim().slice(0, 160)}". Fields: ${formCensus.names.join(', ')}`,
       { writes: w, fieldCensus: formCensus });
   } else {
     record('S1 Intake', 'FORM-DID-NOT-OPEN', 'leadFormModal not visible', { writes: await writes() });
@@ -224,6 +234,15 @@ await clearWrites();
   await page.evaluate(() => { if (typeof showTab === 'function') showTab('inspections'); });
   await page.waitForTimeout(500);
   await page.evaluate(() => { const b = document.getElementById('pNewReportBtn'); if (b) b.click(); });
+  await page.waitForTimeout(600);
+  /* 27 Oct 2026: since 1265 the button opens the inspection guide first; its "plain" path is the
+     same createReportFrom() this step always measured. */
+  for (const step of ['next', 'skip', 'plain']) {   /* guide: types → checklist (skipped) → start without AI */
+    await page.evaluate(st => { const g = document.querySelector('#insgSheet [data-ig="' + st + '"]'); if (g) g.click(); }, step);
+    await page.waitForTimeout(500);
+  }
+  /* the "no checklist on file" question is the app's own sheet (crAsk), not a browser confirm() */
+  await page.evaluate(() => { const a = document.querySelector('#crAsk.open .askgo'); if (a) a.click(); });
   await page.waitForTimeout(2200);
   const w = await writes();
   const ins = w.find(x => x.table === 'inspection_reports' && x.op === 'insert');

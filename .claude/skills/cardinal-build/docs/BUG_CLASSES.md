@@ -5000,3 +5000,46 @@ RLS policies `TO authenticated` answer an empty list, not an error, to a read ma
 the session. A module that loads once on a timer (`setTimeout(load, 800)`) therefore caches "nothing" on a slow
 phone and a fast desktop never sees it. **Rule:** a consumer that finds such a cache empty must AWAIT the reload and
 redraw; firing `load()` and rendering the empty state is the bug. **Gate shape:** make the first read answer `[]`.
+
+## 101 — a policy subquery names the WRONG TABLE's column, so it can never be true (or always is)
+`job_files_read` / `job_files_write` (1359) tested `storage.foldername(p.name)` inside
+`exists (select 1 from projects p where p.id::text = …)`. `p.name` is the CLIENT's name; the file's key is
+`objects.name`. It parses, it reads correctly at a glance, and it refuses every upload for every role, admin
+included — ten days of "new row violates row-level security policy" before a rep texted a screenshot.
+**Inside a correlated subquery an unqualified-looking column binds to the INNER table when both have it.**
+Always qualify the outer row by its table name (`objects.name`, `appointments.project_id`). **Gate shape:** do the
+real write (as below), not "can this role SEE the parent row" — 1359 verified the latter and shipped the bug.
+
+## 102 — tests run against a mock with NO row-level security, so no RLS bug can ever go red
+`e2e_mock_supa.js` records writes and enforces nothing. Every Chromium gate built on it is blind to a policy
+that refuses a legitimate write (101) or admits an illegitimate one (103). **The instrument for RLS is the live
+database inside a ROLLED-BACK transaction:** `set local role authenticated` + `request.jwt.claims` for a real
+sales / production / admin email and an outsider, then the app's actual insert / update / `storage.objects` insert,
+each in its own `begin … exception` block, `rollback` at the end. First confirm no trigger calls out (pg_net,
+webhooks) so a rolled-back write has no side effect. Copy a real row (`to_jsonb`, drop `id`, re-own it) so NOT NULL
+and FKs are satisfied. Classify the error: `row-level security` text = policy; any other text (including 42501
+raised by a trigger guard) = a business rule, usually deliberate. Done for the first time 27 Oct (build log).
+
+## 103 — permissive policies OR together, so one loose policy silently defeats every fence beside it
+`photos_upload` fenced off `showcase/ walks/ workmanship/ owner-vault/ materials/ visualizer/`; `photos_write`,
+added later for a staff check, fenced off only `private/`. Permissive policies are ORed, so the looser one won:
+any staff login could add files to the owner vault and the client-facing admin folders. Reading either policy alone
+says "fenced". **Rule:** when adding a permissive policy, read every other permissive policy for the same
+table + command and confirm the union is what you mean; a cross-cutting requirement (staff only) belongs in ONE
+RESTRICTIVE policy (`staff_only_1407`, `staff_only_storage`), which ANDs with everything.
+
+## 104 — a SECURITY DEFINER function's "can the caller see it?" test runs with RLS OFF
+`snapshot_document()` guarded with `exists (select 1 from projects p where p.id = r.project_id)`, meaning "the
+caller can see the job". Inside SECURITY DEFINER the query runs as the owner, RLS does not apply, and the test is
+true for every row. **Rule:** a definer function must test identity explicitly (`is_staff()`, `is_full_access()`,
+`created_by = my_email()`), never visibility. Supabase's security advisor lists every definer function callable by
+`anon` / `authenticated` — read each body against this rule.
+
+## 105 — an end-to-end drive rots silently, and a rotted drive reports FAILs that look like app bugs
+`drive_lifecycle.mjs` (773) was not maintained as the New Lead form gained required fields (claim type, trade,
+lead source) and New Report gained the inspection guide (1265). From S1 on, every step cascaded into NO-WRITE /
+PARTIAL — eight "failures", none of them the app's. Two traps inside it: an app-drawn question sheet (`crAsk`) is
+invisible to `page.on('dialog')`, so the drive waits forever with no error; and a gate that copies ONE route file
+into a temp dir crashes the day that route gains an `import` (1407's `_staff.js` broke 1377 / 1378). **Rule:** when
+a drive's step fails, reproduce that step in the current rig before believing it; when a form gains a required
+field, grep the drives that fill it; a temp-dir gate copies the route's local imports too.

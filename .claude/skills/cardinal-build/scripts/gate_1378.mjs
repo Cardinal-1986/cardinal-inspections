@@ -90,7 +90,7 @@ const TOK = 'abcdef0123456789abcdef01';
 }
 /* ---------- D: sms-link ---------- */
 {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'g1378-')); const f = path.join(tmp, 'sms.mjs'); fs.copyFileSync(path.join(APIDIR, 'sms-link.js'), f);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'g1378-')); const f = path.join(tmp, 'sms.mjs'); fs.copyFileSync(path.join(APIDIR, 'sms-link.js'), f); try { fs.copyFileSync(path.join(APIDIR, '_staff.js'), path.join(tmp, '_staff.js')); } catch (_) {}   /* 1407: sms-link imports it */
   const mod = await import('file://' + f);
   process.env.TWILIO_ACCOUNT_SID = 'ACgate0000000000000000000000000000'; process.env.TWILIO_AUTH_TOKEN = 'gate-token'; process.env.TWILIO_FROM = '+19375550000';
   const run = async html => { let tw = 0; const real = global.fetch;
