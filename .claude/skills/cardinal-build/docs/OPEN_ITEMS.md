@@ -5,7 +5,7 @@
 ## 🔴 OPEN — security and the end-to-end audit, 23–27 Oct 2026 (builds 1407 + SQL)
 
 **Theo's (dashboard / SQL editor — nothing in the code can do these):**
-1. **Run `storage_staff_only.sql`** (PR #730). Fixes Job Files uploads (refused for everyone since 1359),
+1. ✅ **DONE 27 Oct — `storage_staff_only.sql` applied and verified as each role.** ~~Run it (PR #730).~~ Fixes Job Files uploads (refused for everyone since 1359),
    locks photo storage to staff, and stops staff adding files to the owner vault / client-facing folders.
    The MCP approval prompt has timed out on every attempt; paste it in the SQL editor.
 2. **Turn OFF public signup** — Supabase → Authentication → Sign In / Providers. The table and storage locks make
