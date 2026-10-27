@@ -117,7 +117,7 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 93 | 1381 | `owner_files.sql` | 6 | ✅ | **⚠ YES** | FEATURES.md |
 | 94 | 1382 | `appointment_reminders.sql` | 2 | ✅ | — | FEATURES.md |
 | 95 | 1387 | `drop_appointments_clear_reminder.sql` | 1 | ✅ | — | build log only |
-| 96 | 1407 | `storage_staff_only.sql` | 7 | ✅ | — | build log only |
+| 96 | 1407 | `storage_staff_only.sql` | 7 | ✅ | — | OPEN_ITEMS.md |
 | 97 | — | `collections_payment_provider.sql` | 5 | ✅ | — | **NOTHING** |
 | 98 | — | `companycam_caption_sample.sql` | 8 | ✅ | — | **NOTHING** |
 | 99 | — | `companycam_projects.sql` | 10 | ✅ | — | FEATURES.md, HANDOFF.md |

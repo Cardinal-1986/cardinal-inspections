@@ -2,6 +2,29 @@
 
 ---
 
+## 🔴 OPEN — security and the end-to-end audit, 23–27 Oct 2026 (builds 1407 + SQL)
+
+**Theo's (dashboard / SQL editor — nothing in the code can do these):**
+1. **Run `storage_staff_only.sql`** (PR #730). Fixes Job Files uploads (refused for everyone since 1359),
+   locks photo storage to staff, and stops staff adding files to the owner vault / client-facing folders.
+   The MCP approval prompt has timed out on every attempt; paste it in the SQL editor.
+2. **Turn OFF public signup** — Supabase → Authentication → Sign In / Providers. The table and storage locks make
+   a self-registered account see nothing; this stops the account existing at all.
+3. **Turn ON leaked-password protection** — Authentication → Passwords.
+4. **Restrict the Google Maps key to the app's referrers** — Google Cloud console.
+5. **Decide the `audit@` row**: role `admin` in `team_profiles`, absent from `is_full_access()`, never signed in.
+   Keep, fix, or delete.
+
+**Mine, open:**
+6. **Rebuild `drive_lifecycle.mjs` S4–S9 on the estimate builder (1330+).** S1–S3 repaired 27 Oct; S4 onward still
+   drives the retired fill-in form. The per-step gates (1387–1407) cover those steps and are green meanwhile.
+7. **Make the live-RLS write audit a saved script** so it is re-run whenever a policy changes (BUG_CLASSES 102).
+
+**Done:** staff_only_1407 on all 93 tables (applied, verified 304 / 52 / 0); definer guards (applied);
+`isStaff` on companycam-job / sms-link; clientsign plain error.
+
+---
+
 ## 🟠 OPEN — from the full gate sweep, build 1299 (11 Oct 2026)
 
 1. ✅ **DONE at 1306** (Theo: "You choose" → 2W, wrap to two rows; `gate_1114` green 58/58). ~~**The seven pipeline cards scroll sideways on the iPad width with the rail** (`gate_1114`,
