@@ -4309,7 +4309,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1427<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1428<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -46118,6 +46118,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1428, d:'2026-10-29', t:'Uploading a signed contract asks to move the job to Approved', s:'After you upload a signed contract for a job that is not Approved yet, the app asks: Move to Approved? Tap Move to Approved and the job goes on the production schedule and Curtis gets the usual schedule and order materials alert. Tap Not yet and the job stays where it is, and Curtis and the office are told a signed contract is on file.' },
   { b: 1427, d:'2026-10-29', t:'Contracts sent by link: notices, a signed copy, initials and a co-buyer', s:'A contract sent by link now reads at normal size on a phone instead of tiny print. It links straight to the Terms and Conditions and both Notice of Cancellation copies, on the page, in the signing box and in the email, instead of pointing at a staff menu the homeowner cannot open. When the homeowner signs they type their initials, which go into every Initials box, and a named co-buyer can sign in the same box or later from the same link. The homeowner can have the signed copy emailed to them with the Terms and Notices attached, and the rep\u2019s email says whether it went. Answers show as plain text and blank fields as blank lines. On a contract with blanks, Text to sign, Share link, Email to client and signing in person now ask once and list the blanks: Fill them, or send anyway. Uploading a signed contract now tells Curtis and the office; it does not move the stage. Inspection report links read on a phone, and their section numbers match the Contents again.' },
   { b: 1426, d:'2026-10-29', t:'Client names show in full', s:'Client names were cut to a few letters on the Clients list and to a single letter on the home screen\u2019s Recent leads, and disappeared at the largest text size. The name now gets its own line on a client card, and Recent leads keeps room for it, moving the stage and rep down a line when space runs out.' },
   { b: 1425, d:'2026-10-29', t:'Insurance and community job pages stop working your phone while you read', s:'An insurance or community job left open kept the phone busy redrawing the same words over and over \u2014 up to three-quarters of its effort with nobody touching it, which drains the battery and heats the phone on a roof. Those pages now sit as still as a retail job.' },
@@ -98373,13 +98374,33 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
          paths alert Curtis. The STAGE IS NOT MOVED here: whether an upload approves the job is Theo's
          call. So Curtis and the office hear that a signed contract is on file while the job is still
          short of Approved. Forward-only, like setStage: a job already Approved or beyond had its alert. */
-      var _upTold = false, _upStage = '';
+      /* 1428 (Theo, 29 Oct, "yes"): the upload now ASKS to move the job to Approved. Yes goes through
+         setStage, which sends the usual APPROVED alert; Not yet sends the 1427 notice below instead. */
+      var _upTold = false, _upStage = '', _upFwd = false, _upMoved = false;
       if(!isEst){
         try{
           _upStage = (typeof normStage === 'function') ? normStage(pr.stage) : String(pr.stage || '');
-          var _upFwd = (typeof crStageIsForward === 'function') ? crStageIsForward(_upStage, 'Approved')
+          _upFwd = (typeof crStageIsForward === 'function') ? crStageIsForward(_upStage, 'Approved')
                      : (['Approved','Scheduled','Completed','Invoiced','Closed'].indexOf(_upStage) === -1);
-          if(_upFwd && typeof _notifyOrQueue === 'function'){
+        }catch(_n){ _upFwd = false; }
+      }
+      try{ await reload(); }catch(_r){}
+      try{ if(typeof renderProjectDocs === 'function') renderProjectDocs(); }catch(_d){}
+      ctuClose();
+      if(_upFwd){
+        var _upYes = false;
+        try{
+          _upYes = (typeof window.crAsk === 'function') && !!(await window.crAsk(
+            'Move ' + (pr.name || 'this job') + ' to Approved?\n\nThe signed contract is on file. Approved puts the job on the production schedule and sends Curtis the schedule + order materials alert.',
+            { verb: 'Move to Approved', cancel: 'Not yet', tone: 'plain' }));
+        }catch(_a){ _upYes = false; }
+        if(_upYes && typeof setStage === 'function'){
+          try{ _upMoved = (await setStage(pr.id, 'Approved')) !== false; }catch(_s){ _upMoved = false; }
+        }
+      }
+      if(_upFwd && !_upMoved){
+        try{
+          if(typeof _notifyOrQueue === 'function'){
             var _upAdm = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS)) ? ADMIN_EMAILS
                        : ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
             _notifyOrQueue(['curtis@cardinalrenovations.net'].concat(_upAdm),
@@ -98392,14 +98413,12 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
               (typeof clientLink === 'function') ? clientLink(pr.id) : '/');
             _upTold = true;
           }
-        }catch(_n){}
+        }catch(_n2){}
       }
-      try{ await reload(); }catch(_r){}
-      try{ if(typeof renderProjectDocs === 'function') renderProjectDocs(); }catch(_d){}
-      ctuClose();
       if(window.crToastOk) window.crToastOk(isEst ? (label + ' estimate saved — ' + money + '. It is under Estimates.')
         : ('Signed ' + label + ' contract saved — ' + money + '. Invoices & Payments can open now.' +
-           (_upTold ? ' Curtis and the office were told; the job stays ' + _upStage + ' until someone moves it to Approved.' : '')));
+           (_upMoved ? ' The job is Approved and Curtis has the schedule + order materials alert.'
+            : (_upTold ? ' Curtis and the office were told; the job stays ' + _upStage + ' until someone moves it to Approved.' : ''))));
     }catch(err){
       st.textContent = (err && err.message) || String(err);
       go.disabled = false; go.textContent = K.go;

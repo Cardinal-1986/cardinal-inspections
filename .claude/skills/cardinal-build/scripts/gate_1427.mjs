@@ -131,13 +131,17 @@ let AGR = '', REPORT = '', blanks0 = 0;
     }, 'A6  (fill and save Upload signed contract)');
     if (up) {
       await sleep(3500);
+      /* 1428: the upload now asks "Move <name> to Approved?". This check is the "Not yet" answer, which
+         keeps 1427's guarantee; gate_1428 covers the "Move to Approved" answer. */
+      try { if (await page.evaluate(() => { const a = document.getElementById('crAsk'); return !!(a && a.classList.contains('open')); })) {
+        await page.click('#crAsk .askno', { timeout: 3000 }); await sleep(2500); } } catch (_e) {}
       const notes = log.slice(n0).filter(l => /^API POST \/api\/notify/.test(l));
       ok(notes.some(l => /curtis@cardinalrenovations\.net/.test(l) && /Signed contract uploaded/.test(l)),
         'A6  Upload signed contract tells Curtis and the office through notifyTeam', notes.join(' | ') || 'no /api/notify');
       const st = await page.evaluate(() => { const p = cacheProjects.find(x => x.id === 'R7');
         const w = (window.__WRITES__ || []).filter(x => x.table === 'projects' && x.payload && x.payload.stage);
         return { stage: p && p.stage, stageWrites: w.length, saved: (window.__WRITES__ || []).some(x => x.table === 'inspection_reports' && x.payload && x.payload.signed_at) }; });
-      ok(st.saved && st.stage === 'Prospect' && st.stageWrites === 0, 'A6  ...and the stage is NOT moved (Theo\'s call) — still Prospect, no stage write', JSON.stringify(st));
+      ok(st.saved && st.stage === 'Prospect' && st.stageWrites === 0, 'A6  ...and on "Not yet" the stage is NOT moved — still Prospect, no stage write', JSON.stringify(st));
     }
     const errs = log.filter(l => /PAGEERROR/.test(l));
     ok(errs.length === 0, 'A7  no page errors in the app run', errs.slice(0, 3).join(' | '));

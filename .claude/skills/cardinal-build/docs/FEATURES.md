@@ -10447,3 +10447,19 @@ Source: the contracts judge (#3) and the client-documents judge (#11). The meta-
 **Gates:**
 - `gate_1427.mjs`: Chromium. It builds a real agreement, serves it through the shipped `share.js`, and signs end to end through the shipped `clientsign.js`.
 - `test_api_1427.mjs`: node, stubbed fetch; its fixture is `scripts/fixtures/roof_agreement_1427.html`.
+
+## Build 1428: a signed-contract upload asks to move the job to Approved
+Theo answered "yes" on 29 Oct.
+
+**When it asks:** a contract (not an estimate) is uploaded for a job still short of Approved. The forward check is `crStageIsForward`. A job already Approved or later gets no question.
+
+**What it asks:** after the save, the upload ends on `crAsk`: "Move <name> to Approved?", with **Move to Approved** / **Not yet**.
+
+**Move to Approved:**
+- Calls `setStage(pr.id, 'Approved')`, the same path as the stage dropdown.
+- That sends the APPROVED schedule + order materials alert once.
+- The 1427 notice is not sent as well.
+
+**Not yet:** sends the 1427 "Signed contract uploaded — not yet Approved" notice to Curtis and the office, unchanged.
+
+**Gate:** `gate_1428.mjs`, 11 checks; RED 7/11 on the 1427 control. `gate_1427` A6 now answers "Not yet".

@@ -2,6 +2,21 @@
 
 ---
 
+## ✅ SETTLED 29 Oct 2026 (Theo, "3 yes 2 yes 1 yes") — contracts sent by link (builds 1427–1428)
+
+These are the answers to the three questions at the end of the round-1 audit list. Do not re-litigate them.
+1. **Delivering the Notice of Cancellation to a remote signer.**
+   - The question was: is a link to the trade's master PDF, plus that PDF attached to the signed-copy email, enough (ORC 1345.23)? **Answer: yes.**
+   - So 1427's delivery stands as built. Nothing computes the three-business-day date. No e-sign consent line was added, and none is invented.
+2. **Contracts reflow on a phone** (`api/share.js`, `isContractDoc` → `CONTRACT_PHONE`). **Keep it.**
+   - Estimates, invoices and Roof Options keep 1278's Letter page. That ruling was about estimates, and it still governs them.
+3. **Uploading a signed contract asks "Move <name> to Approved?"** **Yes, built at 1428.**
+   - **Move to Approved** goes through `setStage`, so it sends the usual APPROVED alert once.
+   - **Not yet** keeps 1427's "not yet Approved" notice.
+   - Nothing moves the stage without that answer.
+
+---
+
 ## 🔴 OPEN — security and the end-to-end audit, 23–27 Oct 2026 (builds 1407 + SQL)
 
 **Theo's (dashboard / SQL editor — nothing in the code can do these):**
