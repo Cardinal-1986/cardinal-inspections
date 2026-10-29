@@ -83,7 +83,7 @@ async function boot(w,h,wxMode){          /* wxMode: 'fixture' | 'abort' */
       wx1:!!wx1, wx1wet:wx1?wx1.classList.contains('wet'):false,
       wx1pct:wx1&&wx1.querySelector('i')?wx1.querySelector('i').textContent:'',
       wx1ink:wx1?getComputedStyle(wx1).color:'',
-      nCf:cfs.length, cfShape:cfs.every(t=>/^free |^booked all 7$/i.test(t)), betosCf };
+      nCf:cfs.length, cfShape:cfs.every(t=>/^free |^none booked |^booked all 7$/i.test(t))   /* 1416: "None booked" — bookings, not availability */, betosCf };
   });
   need('board open', !!f);
   if(f){
@@ -104,7 +104,10 @@ async function boot(w,h,wxMode){          /* wxMode: 'fixture' | 'abort' */
         if (d.getDay() === 0 || i === 1 || i === 5) continue;
         return i === 0 ? 'free today' : 'free ' + D[d.getDay()] + ' ' + d.getDate(); }
       return 'booked all 7'; })();
-    need('Betos (booked +1d/+5d) reads its first free working day ("' + betosWant + '")', f.betosCf===betosWant, String(f.betosCf));
+    /* 1416 (judge 14 minor 10): the same day, worded "None booked …" — the board's own
+       footer says an empty cell is not a free crew. Either wording passes; the DAY is the assertion. */
+    need('Betos (booked +1d/+5d) reads its first free working day ("' + betosWant + '")',
+      f.betosCf===betosWant || f.betosCf===betosWant.replace(/^free /, 'None booked '), String(f.betosCf));
   }
   await page.close();
 }

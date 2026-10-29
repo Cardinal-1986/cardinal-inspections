@@ -4224,7 +4224,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1415<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1416<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4535,7 +4535,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <!-- ============ PUNCH & REPAIRS (build 361) ============ -->
 <div id="punchView" style="display:none;">
   <div class="pu-wrap">
-    <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2><button class="pu-new" id="puNewBtn" type="button">&#65291; New</button></div>
+    <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">Punch &amp; Repairs</h2><button class="pu-new" id="puNewBtn" type="button">&#65291; New</button></div>
     <p class="pu-sub" id="puSub">&mdash;</p>
     <div id="puQueue"></div>
     <div class="pu-ctl"><div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Client, address, PO # or item" aria-label="Search punch items"></div>
@@ -24155,6 +24155,10 @@ async function createWorkOrder(pr, crew, opts){
     if(typeof prefillUserInfo === 'function') tpl = prefillUserInfo(tpl);
 
     var title = 'Work Order — ' + crew.trade + ' — ' + (crew.name || 'Crew');
+    /* 1416 (judge 14 polish 13): the document is built in buildEstimate()'s shell,
+       so its <title> — a browser tab, a print header, a shared link — still said
+       "— Estimate". It carries the row's own title now. */
+    tpl = tpl.replace(/<title>[^<]*<\/title>/, '<title>' + woEsc(title) + '</title>');
     var id = await db.create(title, tpl, pr.name, pr.id);
 
     /* the document is the deliverable; the row is the record of it. A failure
@@ -27697,7 +27701,10 @@ async function openEditor(id){
     var rc = document.getElementById('edRepChip');
     if(rc){
       var em = (currentUser && currentUser.email) || '';
-      if(em){ rc.innerHTML = 'REP \u00b7 <b>' + esc(rptRepName(em).split(' ')[0]) + '</b>'; rc.style.display = 'inline-flex'; }
+      /* 1416 (judge 14 polish 13): Curtis is Production, not a sales rep — the chip
+         on his work orders said REP. Production accounts read PRODUCTION. */
+      var _rl1416 = (typeof isProductionUser === 'function' && isProductionUser()) ? 'PRODUCTION' : 'REP';
+      if(em){ rc.innerHTML = _rl1416 + ' \u00b7 <b>' + esc(rptRepName(em).split(' ')[0]) + '</b>'; rc.style.display = 'inline-flex'; }
       else{ rc.style.display = 'none'; }
     }
   })();
@@ -45372,6 +45379,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1416, d:'2026-10-29', t:'Production: the calendar fills the screen, today up top, Dispatch read-only for the field', s:'On your phone the Schedule button opens the Production calendar with every build and punch-out on it, and today\u2019s work sits right under the title. On a laptop the full calendar fills the screen instead of hiding in a corner. Scottie sees Crew Dispatch read-only \u2014 booking is Curtis\u2019s. A message tells you when nobody was notified, step notes are typed right in the card, and Mark ordered can be undone.' },
   { b: 1415, d:'2026-10-29', t:'Calmer cards, full stage names, one typeface', s:'Home and Reports cards lose the red stripe \u2014 red is kept for buttons, today and money owed. The pipeline spells its stages (Leads, Prospects, Approved\u2026) instead of single letters. iPhones, iPads and Macs now show their own system font instead of Arial; Windows looks the same.' },
   { b: 1414, d:'2026-10-29', t:'Drawn icons instead of emoji', s:'The emoji still left on the Clients screen, the Activity panel, the client page (address, rep, Punch List, Delete), and the insurance claim and document rows are now the same drawn icons as the menu.' },
   { b: 1413, d:'2026-10-29', t:'Messages no longer erase each other', s:'If two people posted on the same job or punch-out close together, the second post could erase the first, and saving a job could undo another device\u2019s changes made since it was opened. Every post and save now reads the latest copy first and keeps everyone\u2019s messages.' },
@@ -56928,29 +56936,35 @@ objections : OBJECTIONS,
    already had — the four boxes, Closed repairs, the hubs and Today's work
    all sit beside the month instead of below the fold. Values are the
    previewed ones verbatim; the >=1600 block below is byte-identical. */
+/* 1416 (judge 14, MAJOR 1): HOME PANE ONLY. These rules used to name .pbwrap,
+   which the calendar and list panes wear too — so the full calendar's split was
+   auto-placed into column 2 and the month started 573px (1366) to 864px (1920)
+   from the board's left edge with its day agenda squeezed to 147-245px. The
+   grid now names the pane it was designed for; the other two panes are plain
+   columns again. The values are 1043's, verbatim. */
 @media (min-width:1100px) and (max-width:1599px){
-  #cr-pb .pbwrap{ max-width:1560px; display:grid;
+  #cr-pb .pbwrap.pbhome{ --cr-stack:"1416: 1043's grid, renamed to the pane it serves; the 1180 base column stays for the list pane"; max-width:1560px; display:grid;
     grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
     column-gap:28px; row-gap:14px; align-items:start; }
-  #cr-pb .pbwrap > *{ grid-column:2; }
-  #cr-pb .pbwrap > .pbtop{ grid-column:1 / -1; }
-  #cr-pb .pbwrap > .pbsub{ grid-column:1 / -1; }
-  #cr-pb .pbwrap > .pbmonth{ grid-column:1; grid-row:3 / span 6; align-self:start; }
+  #cr-pb .pbwrap.pbhome > *{ grid-column:2; }
+  #cr-pb .pbwrap.pbhome > .pbtop{ grid-column:1 / -1; }
+  #cr-pb .pbwrap.pbhome > .pbsub{ grid-column:1 / -1; }
+  #cr-pb .pbwrap.pbhome > .pbmonth{ grid-column:1; grid-row:3 / span 6; align-self:start; }
 }
 @media (min-width:1600px){
-  #cr-pb .pbwrap{ max-width:2160px; display:grid;
+  #cr-pb .pbwrap.pbhome{ --cr-stack:"1416: 904's ultrawide grid, renamed to the pane it serves"; max-width:2160px; display:grid;
     grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
     column-gap:36px; row-gap:14px; align-items:start; }
-  #cr-pb .pbwrap > *{ grid-column:2; }
-  #cr-pb .pbwrap > .pbtop{ grid-column:1 / -1; }
-  #cr-pb .pbwrap > .pbsub{ grid-column:1 / -1; }
-  #cr-pb .pbwrap > .pbmonth{ grid-column:1; grid-row:3 / span 6; align-self:start; }
+  #cr-pb .pbwrap.pbhome > *{ grid-column:2; }
+  #cr-pb .pbwrap.pbhome > .pbtop{ grid-column:1 / -1; }
+  #cr-pb .pbwrap.pbhome > .pbsub{ grid-column:1 / -1; }
+  #cr-pb .pbwrap.pbhome > .pbmonth{ grid-column:1; grid-row:3 / span 6; align-self:start; }
 }
 
 /* ---- header ------------------------------------------------------------- */
 #cr-pb .pbtop{ display:flex; align-items:center; gap:10px; margin-bottom:3px; }
 #cr-pb .pbback{
-  flex:none; width:34px; height:34px; border-radius:10px; cursor:pointer;
+  flex:none; width:44px; height:44px; border-radius:12px; cursor:pointer;   /* 1416: was 34 + a pad */
   border:1px solid var(--pb-line,rgba(230,235,240,.11)); background:transparent;
   color:var(--pb-mut,#9aa3ab); display:flex; align-items:center; justify-content:center;
 }
@@ -56958,19 +56972,19 @@ objections : OBJECTIONS,
 /* 1040 (audit tap targets): 34px chevron, 30px chips, 30px month arrows and
    32px list buttons all grow their HIT area to 44 with ::after pads — the
    418/944/947 pattern; nothing about the look moves. */
-#cr-pb .pbback{ position:relative; }
-#cr-pb .pbback::after{ content:""; position:absolute; inset:-6px; }
-:is(#cr-pb,#cr-pb-modal) .pbchip{ position:relative; }
-:is(#cr-pb,#cr-pb-modal) .pbchip::after{ content:""; position:absolute; left:0; right:0; top:-8px; bottom:-8px; }
+/* 1416 (judge 16 minor 15): the chevron and the chips measured 34x34 and 58x30 as
+   DRAWN — the pads made them hittable but not findable. Both are a visible 44 now,
+   so their two pads are deleted rather than left to overlap the next row. */
 #cr-pb .pbmon button{ position:relative; }
 #cr-pb .pbmon button::after{ content:""; position:absolute; inset:-7px; }
 #cr-pb .pbact{ position:relative; }
 #cr-pb .pbact::after{ content:""; position:absolute; left:0; right:0; top:-7px; bottom:-7px; }
 #cr-pb h1{
-  margin:0; font:700 26px Georgia,'Times New Roman',serif; letter-spacing:.2px;
+  /* 1416 (judge 14 polish 14, judge 16 minor 16): sans, one colour — the serif
+     "Pro" + red "duction" was the only heading of its kind on a production screen */
+  margin:0; font:800 26px -apple-system,'Segoe UI',Roboto,sans-serif; letter-spacing:-.01em;
   color:var(--pb-ink,#eceef0);
 }
-#cr-pb h1 span{ color:var(--pb-acc,#e35c63); }
 #cr-pb .pbmon{
   margin-left:auto; display:flex; align-items:center; gap:2px;
   font:600 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.12em; color:var(--pb-mut,#9aa3ab);
@@ -57006,7 +57020,8 @@ objections : OBJECTIONS,
 #cr-pb .pbtile .l svg{ width:12px; height:12px; color:var(--pb-dim,#848c94); flex:none; }
 #cr-pb .pbtile .s{
   font:500 11px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pb-dim,#848c94);
-  margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  /* 1416 (judge 14 minor 6): two lines before an ellipsis — "Dena Whitmore +4" lost its count in a desktop box */
+  margin-top:3px; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:anywhere;
 }
 #cr-pb .pbtile .s em{ color:var(--pb-hot,#e07a5f); font-style:normal; font-weight:700; }
 #cr-pb .pbclosed{
@@ -57070,7 +57085,7 @@ objections : OBJECTIONS,
 :is(#cr-pb,#cr-pb-modal) .pbchip{
   cursor:pointer; background:transparent; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
   color:var(--pb-acc,#e35c63); border:1px solid var(--pb-acc,#e35c63); border-radius:7px;
-  padding:5px 9px; text-transform:uppercase; min-height:30px;
+  padding:0 13px; text-transform:uppercase; min-height:44px;   /* 1416: a visible 44 */
 }
 :is(#cr-pb,#cr-pb-modal) .pbev{
   display:flex; gap:11px; align-items:center; width:100%; text-align:left; cursor:pointer;
@@ -57084,12 +57099,14 @@ objections : OBJECTIONS,
 :is(#cr-pb,#cr-pb-modal) .pbev.punch .eic{ background:rgba(224,122,95,.14); color:var(--pb-hot,#e07a5f); }
 :is(#cr-pb,#cr-pb-modal) .pbev.drop  .eic{ background:rgba(154,163,171,.14); color:var(--pb-mut,#9aa3ab); }
 :is(#cr-pb,#cr-pb-modal) .pbev.done  .eic{ background:rgba(108,185,143,.13); color:var(--pb-ok,#6cb98f); }
-:is(#cr-pb,#cr-pb-modal) .pbev .tx{ min-width:0; }
+:is(#cr-pb,#cr-pb-modal) .pbev .tx{ min-width:0; flex:1 1 auto; }
 /* 758: a <span> cannot ellipsis — text-overflow is inert on an inline box and
    the span measures 0. Every truncating element in this module is block. */
 :is(#cr-pb,#cr-pb-modal) .pbev .tx b{
-  display:block; font:600 15px -apple-system,'Segoe UI',Roboto,sans-serif;
-  color:var(--pb-ink,#eceef0); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  /* 1416 (judge 14 minor 9): two lines, not one ellipsis — "Sample Insurance Job — Ta…"
+     cut the task off a phone row. The clamp lives on a block box (the 758 rule). */
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; font:600 15px/1.3 -apple-system,'Segoe UI',Roboto,sans-serif;
+  color:var(--pb-ink,#eceef0); overflow:hidden; overflow-wrap:anywhere;
 }
 :is(#cr-pb,#cr-pb-modal) .pbev .tx small{
   display:block; font:400 11px -apple-system,'Segoe UI',Roboto,sans-serif;
@@ -57321,7 +57338,7 @@ body.standalone #cr-pb-modal .sheet{
   padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));
 }
 :root[data-theme="rb-light"] #cr-pb-modal .sheet{ background:#fff; border-color:#e2e4e8; color:#17191c; }
-#cr-pb-modal h3{ margin:0 0 14px; font:700 18px Georgia,serif; }
+#cr-pb-modal h3{ margin:0 0 14px; font:800 18px -apple-system,'Segoe UI',Roboto,sans-serif; }   /* 1416: sans */
 #cr-pb-modal label{
   display:block; font:600 11px ui-monospace,Menlo,monospace; letter-spacing:.14em;
   color:#9aa3ab; text-transform:uppercase; margin:0 0 5px;
@@ -57357,7 +57374,9 @@ body.standalone #cr-pb-modal .sheet{
   .cr-when2 > input[type="time"]{ flex:none; }
 }
 #cr-pb-modal .btns{ display:flex; gap:10px; margin-top:4px; }
-#cr-pb-modal button{
+/* 1416: the Add form's two buttons, not every button in the modal — the 1090 day
+   sheet's rows and chips inherited uppercase mono and flex:1 from this */
+#cr-pb-modal .btns button{
   flex:1; padding:13px; border-radius:11px; font:700 13px ui-monospace,Menlo,monospace;
   letter-spacing:.08em; text-transform:uppercase; cursor:pointer; min-height:44px;
 }
@@ -57370,8 +57389,8 @@ body.standalone #cr-pb-modal .sheet{
    The gate is body.cr-lnav-on (the 572 left-nav signal), not a media query —
    grep-the-convention. BUG_CLASSES 41: never hang a phone-needed declaration
    (top, z-index, inset) on this class; it is desktop-only by construction. */
-body.cr-lnav-on #cr-pb .pbtiles{ grid-template-columns:repeat(5,minmax(0,1fr)); }
-body.cr-lnav-on #cr-pb .pbsplit{ display:grid; grid-template-columns:minmax(0,1.7fr) minmax(0,1fr); gap:22px; align-items:start; }
+body.cr-lnav-on #cr-pb .pbtiles{ --cr-stack:"desktop twin of the 2-up phone grid, which stays"; grid-template-columns:repeat(4,minmax(0,1fr)); }
+body.cr-lnav-on #cr-pb .pbsplit{ display:grid; grid-template-columns:minmax(0,1fr) minmax(360px,30%); gap:22px; align-items:start; }
 body.cr-lnav-on #cr-pb .pbday{ min-height:78px; }
 body.cr-lnav-on #cr-pb .pbday .cch{ font-size:11px; padding:2px 4px; }
 body.cr-lnav-on #cr-pb .pbsheet{ margin-top:0; }
@@ -57383,13 +57402,44 @@ body.cr-lnav-on #cr-pb h1{ font-size:30px; }
    actual viewport at the same 1100px breakpoint the left nav uses, so the
    desktop layout no longer depends on a second module having run. */
 @media (min-width:1100px){
-  #cr-pb .pbtiles{ grid-template-columns:repeat(5,minmax(0,1fr)); }
-  #cr-pb .pbsplit{ display:grid; grid-template-columns:minmax(0,1.7fr) minmax(0,1fr); gap:22px; align-items:start; }
+  #cr-pb .pbtiles{ --cr-stack:"desktop twin of the 2-up phone grid, which stays"; grid-template-columns:repeat(4,minmax(0,1fr)); }
+  #cr-pb .pbsplit{ display:grid; grid-template-columns:minmax(0,1fr) minmax(360px,30%); gap:22px; align-items:start; }
   #cr-pb .pbday{ min-height:78px; }
   #cr-pb .pbday .cch{ font-size:11px; padding:2px 4px; }
   #cr-pb .pbsheet{ margin-top:0; }
   #cr-pb h1{ font-size:30px; }
+  #cr-pb .pbwrap.pbcalw{ --cr-stack:"1416: the calendar pane is wider than a list; the 1180 base stays for the list"; max-width:1560px; }
 }
+
+/* ── 1416 · judge 14 (Production) ───────────────────────────────────────
+   MINOR 9 — today, above the fold. On a phone the day's agenda sat ~760px
+   down, under the month and the boxes. The month stays first (853, Theo's
+   concept 2); this one row under the title says what today holds and opens
+   the 1090 day sheet — the same sheet a tap on today's date opens. Desktop
+   already shows the day beside the month, so it keeps its subtitle there.
+   Inks are the board's own tokens: acc 5.11:1 / ink 15.44:1 / hot 6.09:1 on
+   --pb-c (dark); 9.12 / 17.61 / 6.17:1 on white. */
+#cr-pb .pbtoday{
+  display:flex; align-items:center; gap:10px; width:100%; min-height:44px;
+  margin:4px 0 2px; padding:0 13px; cursor:pointer; text-align:left;
+  background:var(--pb-c,#15171a); border:1px solid var(--pb-line,rgba(230,235,240,.11)); border-radius:12px;
+  color:var(--pb-ink,#eceef0); font:600 13px -apple-system,'Segoe UI',Roboto,sans-serif;
+}
+#cr-pb .pbtoday .k{ flex:none; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.16em;
+  text-transform:uppercase; color:var(--pb-acc,#e35c63); }
+#cr-pb .pbtoday .t{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#cr-pb .pbtoday .t em{ color:var(--pb-hot,#e07a5f); font-style:normal; font-weight:700; }
+#cr-pb .pbtoday .go{ margin-left:auto; flex:none; color:var(--pb-dim,#848c94); font:700 15px var(--pb-mono,ui-monospace,Menlo,monospace); }
+@media (max-width:1099px){ #cr-pb .pbhome > .pbsub{ display:none; } }
+@media (min-width:1100px){ #cr-pb .pbtoday{ display:none; } }
+/* MINOR 11 — "Ordered — Undo". The app's one undo toast (CardinalUndo), sized
+   for a thumb: its button is 44px here, its ink #ff8a90 7.70:1 on the toast's
+   #1a1a1a (the shared red measures 3.07:1 there), and on the installed phone
+   it rides above the tab bar instead of on it. Tagged .pbundo by the board,
+   so the other undo site is untouched. */
+.cr-undo-toast.pbundo{ --cr-stack:"1416: Production's undo only; the shared toast stays for its other caller"; width:max-content; max-width:calc(100vw - 32px); }   /* left:50% alone shrink-wrapped it to half the screen */
+.cr-undo-toast.pbundo .btn{ --cr-stack:"1416: Production's undo only"; min-height:44px; min-width:64px; color:#ff8a90; border-color:#e35c63; }
+body.standalone .cr-undo-toast.pbundo{ --cr-stack:"1416: clears the installed tab bar"; bottom:calc(76px + env(safe-area-inset-bottom,0px)); }
 </style>
 <script id="cr-pb-script">
 (function(){
@@ -57663,8 +57713,11 @@ function eventsFor(d){
     out.push({
       cls  : i.status === 'done' ? 'done' : 'punch',
       icon : i.status === 'done' ? 'check' : 'tool',
-      title: (pr && pr.name ? pr.name + ' — ' : '') + (i.title || 'Punch-out'),
-      sub  : (i.status === 'done' ? 'closed by ' + shortName(i.done_by) : shortName(i.assigned_to)),
+      /* 1416 (judge 14 minor 9): the TASK first. "Sample Insurance Job — Tarp over rear
+         slope" ellipsised before it reached the work; the job rides on the second line. */
+      title: i.title || 'Punch-out',
+      sub  : (pr && pr.name ? pr.name + ' \u00b7 ' : '') +
+             (i.status === 'done' ? 'closed by ' + shortName(i.done_by) : shortName(i.assigned_to)),
       tag  : i.status === 'done' ? 'DONE' : (i.priority === 'high' ? 'URGENT' : 'PUNCH'),
       pid  : i.project_id || null,
       item : i.id,
@@ -57723,6 +57776,7 @@ function head(title, backTo){
       ? '<div class="pbmon"><button data-mon="-1" type="button" aria-label="Previous month">‹</button>' +
         esc(calMonth.toLocaleDateString('en-US', { month:'long', year:'numeric' })) +
         '<button data-mon="1" type="button" aria-label="Next month">›</button></div>'
+      : pane === 'list' ? ''   /* 1416: a list's title gets the whole row */
       : '<div class="pbmon">' + esc(pbFull(today())) + '</div>') +
     '</div>';
 }
@@ -57824,13 +57878,32 @@ function homeMonthHtml(){
     '<div class="pbdow"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div>' +
     '<div class="pbgrid">' + cells + '</div></div>';
 }
+/* 1416 (judge 14 minor 9): what today holds, in one row under the title — the
+   agenda itself is ~760px down a phone, under the month (853's order stands).
+   Counts come from eventsFor(), the agenda's own list, so the two can never
+   disagree; the tap opens the 1090 day sheet for today. */
+function todayHtml(){
+  var evs = eventsFor(today()), n = { build:0, drop:0, punch:0, done:0 }, urg = 0, bits = [];
+  evs.forEach(function(e){ n[e.cls] = (n[e.cls] || 0) + 1; if(e.tag === 'URGENT') urg++; });
+  if(n.build) bits.push(n.build + ' build' + (n.build === 1 ? '' : 's'));
+  if(n.drop)  bits.push(n.drop + ' drop' + (n.drop === 1 ? '' : 's'));
+  if(n.punch) bits.push(n.punch + ' punch-out' + (n.punch === 1 ? '' : 's'));
+  if(n.done)  bits.push(n.done + ' closed');
+  /* no aria-label: the visible words ARE the name (axe label-content-name-mismatch) */
+  return '<button class="pbtoday" data-today="1" type="button">' +
+    '<span class="k">Today</span>' +
+    '<span class="t">' + (bits.length ? esc(bits.join(' · ')) : 'Nothing booked') +
+      (urg ? ' · <em>' + urg + ' urgent</em>' : '') + '</span>' +
+    '<span class="go">›</span></button>';
+}
 function homeHtml(){
   var d = selDay || today();
   /* 853: month calendar first (concept 2), then the command tiles, then the
      day's agenda — tapping a day up top swaps the agenda at the bottom. */
-  return '<div class="pbwrap">' +
-    head('Pro<span>duction</span>', 'home') +
+  return '<div class="pbwrap pbhome">' +   /* 1416: the dashboard grid names this pane only */
+    head('Production', 'home') +             /* 1416: one heading, one colour */
     '<div class="pbsub">Schedule · Jobs · Punch</div>' +
+    todayHtml() +
     homeMonthHtml() +
     tilesHtml() +
     crewNavHtml() +
@@ -57862,7 +57935,7 @@ function calHtml(){
       '" data-day="' + keyOf(day) + '" type="button">' +
       '<span class="dn">' + day.getDate() + wxc(keyOf(day)) + '</span>' + chips + '</button>';
   }
-  return '<div class="pbwrap">' +
+  return '<div class="pbwrap pbcalw">' +   /* 1416: month | day, not the home grid */
     head('Calendar', 'home') +
     '<div class="pbsplit"><div class="pbcal">' +
     '<div class="pbdow"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div>' +
@@ -57942,6 +58015,17 @@ var BOX_TITLE = {
   needs:'Needs ordered', ordered:'Ordered', sched:'Scheduled',
   punch:'Punch-outs', closed:'Closed repairs',
 };
+/* 1416 (judge 14 polish 14): the list's subtitle repeated its title. It says
+   what is in the list now, from the same boxes() the tiles count. */
+function listSub(k, b){
+  function pbPlural(x, one, many){ return x + ' ' + (x === 1 ? one : many); }
+  if(k === 'needs')   return pbPlural(b.needs.length, 'job', 'jobs') + ' waiting on materials';
+  if(k === 'ordered') return pbPlural(b.ordered.length, 'job', 'jobs') + ' with materials on the way';
+  if(k === 'sched')   return pbPlural(b.sched.length, 'job', 'jobs') + ' with a build day';
+  if(k === 'punch')   return pbPlural(b.open.length, 'open item', 'open items');
+  if(k === 'closed')  return 'Closed repairs stay on the client’s history';
+  return '';
+}
 function listPaneHtml(){
   var b = boxes(), body = '';
   if(listKey === 'punch'){
@@ -57967,7 +58051,7 @@ function listPaneHtml(){
   }
   return '<div class="pbwrap">' +
     head(esc(BOX_TITLE[listKey] || 'Production'), 'home') +
-    '<div class="pbsub">' + esc(BOX_TITLE[listKey] || '') + '</div>' +
+    '<div class="pbsub">' + esc(listSub(listKey, b)) + '</div>' +
     (listKey === 'punch' ? '<div class="pbrule">Open<span class="sp">' +
       '<button class="pbchip" data-add="1" type="button">+ Add</button></span></div>' : '') +
     body + '</div>';
@@ -58065,6 +58149,10 @@ function wire(){
   qAll('[data-add]').forEach(function(b){
     b.onclick = function(){ openAdd(null); };
   });
+  /* 1416: the today row opens today's sheet — exactly what tapping today's date does */
+  qAll('[data-today]').forEach(function(b){
+    b.onclick = function(){ selDay = today(); render(); openDay(selDay); };
+  });
   qAll('[data-job]').forEach(function(b){
     b.onclick = function(ev){
       ev.stopPropagation();
@@ -58141,6 +58229,32 @@ async function markOrdered(pid){
   }catch(_e){}
   lastSig = '';                                  /* the checklist changed */
   render();
+  /* 1416 (judge 14 minor 11): one tap wrote "ordered" with no confirm and no way
+     back short of the client profile. The app's one undo toast (CardinalUndo, the
+     pipeline's) offers it for six seconds. The rep's notice above has already
+     gone and is not recalled: an undo is for a mis-tap, not a second message. */
+  if(window.CardinalUndo && typeof window.CardinalUndo.enqueue === 'function'){
+    try{
+      window.CardinalUndo.enqueue('Ordered — ' + (pr.name || 'this job'), function(){ unmarkOrdered(pid); }, 6000);
+      var _ut = document.querySelector('.cr-undo-toast');
+      if(_ut) _ut.classList.add('pbundo');
+    }catch(_u){}
+  }
+}
+/* 1416: the Undo. Writes the client profile toggle's own "not ordered" ('' and
+   '', 20706), so the two places that set this flag still agree on its shape. */
+async function unmarkOrdered(pid){
+  var pr = projectFor(pid);
+  if(!pr) return;
+  try{
+    if(typeof window.patchProjectCk === 'function'){
+      await window.patchProjectCk(pr, { materials_ordered_at:'', materials_ordered_by:'' });
+    }
+    if(typeof window.auditLog === 'function'){
+      try{ window.auditLog('materials', 'Undid marked ordered', pid); }catch(_){}
+    }
+  }catch(e){ crTell('Could not undo: ' + (e.message || e)); }
+  lastSig = ''; render();
 }
 async function toggle(it){
   /* 771 — THE DOUBLE FLIP. This used to apply its own optimistic patch to `it`
@@ -58616,6 +58730,17 @@ window.CardinalProduction = {
      one resolver rather than growing a second copy of the filter. */
   schedFor  : schedFor,
   close     : close,
+  /* 1416 (judge 14 MAJOR 3): Production's Schedule. The phone bar's Schedule tab
+     opened the retail Schedule Board for Curtis — build days only (one of his
+     three items today) under a "Retail" header with Contacts / Leads / Photos.
+     His schedule is this calendar: builds, drops and punch-outs, landing on
+     today. Opens the board if it is not up; records the pane like the chip does. */
+  calendar  : function(){
+    if(!el || !el.classList.contains('open')) open();
+    try{ if(modal) modal.classList.remove('open'); }catch(_){}
+    selDay = today(); calMonth = monthOf(selDay); pane = 'cal'; lastSig = ''; render(); scrollTop();
+    if(typeof window.navSetView === 'function'){ try{ window.navSetView('production', { pane:'cal' }); }catch(_){} }
+  },
   addFor    : function(projectId){ openAdd(projectId); },
   /* 978: addFor() is the IN-CONTEXT door — a job is already on screen, so its
      row is in the list by construction. newPunch() is the door from anywhere
@@ -58796,9 +58921,11 @@ if(window.__crProdPending){
 }
 #cr-pk .pkck .hnd{ color:var(--pk-dim,#848c94); font:700 13px var(--pk-mono,ui-monospace,Menlo,monospace); cursor:default; }
 #cr-pk .pkadd{
+  /* 1416 (judge 14 polish 12): border-top alone left the button's default 2px
+     outset border on the other three sides, and 0 side padding */
   display:flex; gap:8px; align-items:center; width:100%; cursor:pointer; margin-top:4px;
-  border-top:1px dashed var(--pk-line,rgba(230,235,240,.11)); background:transparent;
-  padding:11px 0 2px; color:var(--pk-dim,#848c94); min-height:40px;
+  border:0; border-top:1px dashed var(--pk-line,rgba(230,235,240,.11)); background:transparent;
+  padding:11px 14px; color:var(--pk-dim,#848c94); min-height:40px;
   font:600 11px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em; text-align:left;
 }
 #cr-pk .pksup{
@@ -59124,6 +59251,22 @@ if(window.__crProdPending){
 #cr-pk .pkvb.out{ background:transparent; color:var(--pk-ink,#eceef0);
   border-color:var(--pk-line2,#3a424c); }
 #cr-pk .pkchip.day2{ background:rgba(240,162,74,.16); color:#f0a24a; margin-left:6px; }
+
+/* ── 1416 · judge 14 (the punch card) ───────────────────────────────────
+   MINOR 8 — the step × (and the truck list's) measured 32px wide. 44 square. */
+#cr-pk .pkck .pkbtn[data-delstep],
+#cr-pk .pkck .pkbtn[data-deltruck]{ --cr-stack:"1416: the two row-delete crosses; .pkbtn stays for every other card button"; min-width:44px; min-height:44px; padding:0; justify-content:center; font-size:18px; }
+/* MINOR 8 — the step note field, on the card's own tokens (ink 15.44:1 on
+   --pk-c2 dark, 17+:1 light; the hot rule is the step's own "note required" ink). */
+#cr-pk .pkstepnote{ margin:0 0 10px; padding:10px 11px; border-radius:10px;
+  background:var(--pk-c2,#1b1e22); border:1px solid var(--pk-hot,#e07a5f); }
+#cr-pk .pkstepnote label{ display:block; margin:0 0 6px; font:600 13px -apple-system,'Segoe UI',Roboto,sans-serif;
+  color:var(--pk-ink,#eceef0); }
+#cr-pk .pkstepnote textarea{ display:block; width:100%; min-height:72px; padding:9px 10px;
+  font:400 15px/1.4 -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-ink,#eceef0); resize:vertical;
+  background:var(--pk-g,#0c0d0f); border:1px solid var(--pk-line,rgba(230,235,240,.11)); border-radius:8px; }
+:root[data-theme="rb-light"] #cr-pk .pkstepnote textarea{ background:var(--pk-c,#ffffff); }
+#cr-pk .pkstepnote .pkbtns{ margin-top:8px; }
 </style>
 <script id="cr-pk-script">
 (function(){
@@ -59143,6 +59286,7 @@ if(window.__crProdPending){
 var it = null;              /* the row on screen */
 var el = null, back = null; /* back = where close() should return to */
 var lastSig = '', busy = false, outMsg = '';
+var noteFor = -1, noteDraft = '';   /* 1416: the step whose note field is open, and what is typed in it */
 var galleryOpen = false;
 /* 947: per-open UI state — the dispatch fold and the header menu */
 var dispOpen = false, menuOpen = false;
@@ -59786,7 +59930,9 @@ function jobHtml(pr){
       (addr ? '<a class="pkbtn" target="_blank" rel="noopener" href="https://maps.google.com/?q=' +
         encodeURIComponent(addr) + '">' + svg('pin') + 'Directions</a>' : '') +
       (phone ? '<a class="pkbtn" href="tel:' + esc(String(phone).replace(/[^0-9+]/g, '')) + '">' + svg('ph') + 'Call</a>' : '') +
-      (pr ? '<button class="pkbtn" data-act="job" type="button">Open job</button>' : '') +
+      /* 1416 (judge 14 minor 7): not drawn for a field user — openProject refuses him
+         (1317) and the button only ever toasted. His job details are this card. */
+      (pr && !(window.isFieldUser && window.isFieldUser()) ? '<button class="pkbtn" data-act="job" type="button">Open job</button>' : '') +
     '</div></div>';
 }
 function metaHtml(){
@@ -59844,7 +59990,7 @@ function checklistHtml(){
         (s.note ? '<span class="note">' + esc(s.note) + '</span>' : '') +
       '</span>' +
       (mgr ? '<button class="pkbtn" data-delstep="' + i + '" type="button" aria-label="Remove step">×</button>' : '') +
-      '</div>';
+      '</div>' + (noteFor === i && !s.d ? stepNoteHtml(i, s) : '');
   }).join('');
   var pick = '';
   if(!st.length && mgr){
@@ -60052,17 +60198,44 @@ function refreshOthers(){
   /* 945: The Line's ACTIVE/ASSIGNED buckets read the row this card just wrote */
   try{ if(typeof window.renderPunchView === 'function') window.renderPunchView(); }catch(_){}
 }
-async function tickStep(i){
+/* 1416 (judge 14 minor 8): the note field, under its own step. */
+function stepNoteHtml(i, s){
+  return '<div class="pkstepnote" data-stepnote="' + i + '">' +
+    '<label for="pkStepNote">This step needs a note before it can be ticked</label>' +
+    '<textarea id="pkStepNote" data-f="stepnote" rows="3" placeholder="What did you find? e.g. soft decking about a foot in at the gable end">' +
+      esc(noteDraft) + '</textarea>' +
+    '<div class="pkbtns">' +
+      '<button class="pkbtn hot" data-notesave="' + i + '" type="button">Save note &amp; tick</button>' +
+      '<button class="pkbtn" data-act="notex" type="button">Cancel</button>' +
+    '</div></div>';
+}
+function focusStepNote(){
+  setTimeout(function(){
+    var t = el && el.querySelector('[data-f="stepnote"]');
+    if(!t) return;
+    try{ t.focus(); t.scrollIntoView({ block:'center' }); }catch(_){}
+  }, 60);
+}
+async function tickStep(i, noteText){
   var st = steps().slice();
   var s = st[i];
   if(!s) return;
   if(!s.d && s.req && !String(s.note || '').trim()){
     /* The note gate: "found more damage" gets written down at the moment, not
-       remembered at the truck. */
-    var note = prompt('This step needs a note before it can be ticked:\n\n' + s.t);
-    if(note === null) return;
-    if(!String(note).trim()){ crTell('A note is required to tick this step.'); return; }
-    s = Object.assign({}, s, { note: String(note).trim() });
+       remembered at the truck.
+       1416 (judge 14 minor 8): written IN the card, under its step — not in a
+       window.prompt(), which a phone draws as a system dialog over the job and
+       which one stray tap dismisses. The box opens the field; its Save writes
+       the note and ticks the step in one save. The gate itself is unchanged:
+       an empty note still ticks nothing. */
+    if(noteText == null){
+      if(noteFor !== i){ noteFor = i; noteDraft = ''; lastSig = ''; render(); }
+      focusStepNote();
+      return;
+    }
+    if(!String(noteText).trim()){ crTell('A note is required to tick this step.'); focusStepNote(); return; }
+    s = Object.assign({}, s, { note: String(noteText).trim() });
+    noteFor = -1; noteDraft = '';
   }
   st[i] = Object.assign({}, s, {
     d: !s.d,
@@ -60226,6 +60399,7 @@ async function send(){
   if(inp) inp.value = '';
   await save({ comments: list });
   /* Theo's rule, unchanged: only the people a comment TAGS are notified. */
+  var told = false;   /* 1416 */
   if(names.length && typeof window.notifyTeam === 'function'){
     var to = [];
     try{
@@ -60239,8 +60413,17 @@ async function send(){
         '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>',
         punchLink(it.project_id));
       outMsg = outcomeText(res, to);
+      told = true;
       lastSig = ''; render();
     }
+  }
+  /* 1416 (judge 14 minor 4): a message with no @tag reached nobody — the rule above,
+     correctly — and said nothing, so it read as sent to the crew. Words only: who
+     is notified does not change. */
+  if(!told){
+    outMsg = 'Saved on the job \u2014 nobody was notified. ' +
+      (me === 'curtis@cardinalrenovations.net' ? 'Tag someone with @ to buzz them.' : 'Tag @Curtis to buzz him.');
+    lastSig = ''; render();
   }
 }
 /* 1252: the crew's "it's finished" — a message on the job and a buzz to the
@@ -60511,6 +60694,13 @@ function wire(){
   }; });
   q('[data-step]', function(b){ b.onclick = function(){ tickStep(Number(b.getAttribute('data-step'))); }; });
   q('[data-delstep]', function(b){ b.onclick = function(){ delStep(Number(b.getAttribute('data-delstep'))); }; });
+  /* 1416: the step note field — the draft survives a repaint, Save ticks, Cancel closes */
+  q('[data-f="stepnote"]', function(t){ t.addEventListener('input', function(){ noteDraft = t.value; }); });
+  q('[data-notesave]', function(b){ b.onclick = function(){
+    var t = el.querySelector('[data-f="stepnote"]');
+    tickStep(Number(b.getAttribute('data-notesave')), t ? t.value : '');
+  }; });
+  q('[data-act="notex"]', function(b){ b.onclick = function(){ noteFor = -1; noteDraft = ''; lastSig = ''; render(); }; });
   q('[data-act="cin"]',  function(b){ b.onclick = function(){ checkIn();  }; });
   q('[data-act="cout"]', function(b){ b.onclick = function(){ checkOut(); }; });
   q('[data-tpl]', function(b){ b.onclick = function(){ useTemplate(b.getAttribute('data-tpl')); }; });
@@ -60657,6 +60847,7 @@ async function open(itemId, opts){
   window.__crPunchCardBack = back;
   dispOpen = false; menuOpen = false;
   outMsg = '';
+  noteFor = -1; noteDraft = '';   /* 1416 */
   var row = rowFor(itemId);
   if(!row && window.CardinalPunch && typeof window.CardinalPunch.reload === 'function'){
     try{ await window.CardinalPunch.reload(); row = rowFor(itemId); }catch(_){}
@@ -67956,7 +68147,24 @@ probe  : probe,
     if(!e || e.style.display === 'none') return false;
     try{ return getComputedStyle(e).display !== 'none'; }catch(_){ return false; }
   }
+  /* 1416 (judge 14 MAJOR 3): a production account's Schedule is Production's own
+     calendar (CardinalProduction.calendar) — the retail Schedule Board showed one
+     of Curtis's three items today and repainted the header Retail. Admins and reps
+     keep the Schedule Board; a field user has no Schedule tab at all (1317). The
+     role test is isProductionUser(), the one body.cr-prod mirrors (1042). */
+  function tbProd(){
+    try{ var w = /** @type {any} */ (window);
+      return typeof w.isProductionUser === 'function' ? !!w.isProductionUser() : document.body.classList.contains('cr-prod'); }
+    catch(_){ return false; }
+  }
+  function tbProdCal(w){
+    var P = w.CardinalProduction;
+    if(!tbProd() || !P || typeof P.calendar !== 'function') return false;
+    P.calendar();
+    return true;
+  }
   function tbWhich(){
+    if(tbProd() && document.querySelector('#cr-pb.open .pbcalw')) return 'sched';
     if(tbShown('boardView')) return 'sched';
     if(tbShown('leadsView') || tbShown('projectView') || tbShown('clientsView')) return 'jobs';
     if(tbShown('mainView')) return 'home';
@@ -67998,7 +68206,7 @@ probe  : probe,
     try{
       if(k === 'home'){ var H = w.CardinalHeader; if(H && typeof H.goHome === 'function') H.goHome(); else if(typeof w.showHome === 'function') w.showHome(); }   /* goHome lives inside the header module */
       else if(k === 'jobs'){ if(typeof w.openLeadsView === 'function') w.openLeadsView(); }
-      else if(k === 'sched'){ if(typeof w.openScheduleBoard === 'function') w.openScheduleBoard(); }
+      else if(k === 'sched'){ if(!tbProdCal(w) && typeof w.openScheduleBoard === 'function') w.openScheduleBoard(); }
       else if(k === 'new'){ var a = document.getElementById('addProjectBtn'); if(a){ a.click(); rise(document.getElementById('newMenu')); } }
       else if(k === 'menu'){ var m = document.getElementById('navBtn'); if(m) m.click(); }
     }catch(err){ try{ if(w.report) w.report(err, 'Navigation', 'bottom bar'); }catch(_){} }
@@ -70548,7 +70756,7 @@ body.cr-prod #punchView{ position:fixed; inset:0; z-index:9400; overflow-y:auto;
 .pu-new{flex:none;min-height:44px;padding:0 15px;border-radius:var(--btn-rad,12px);cursor:pointer;border:0;background:#c8202e;color:#fff;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.2px;}
 .pu-new:hover{background:#a8121f;}
 .pu-new:focus-visible{outline:2px solid #fff;outline-offset:2px;}
-.pu-title{margin:0;flex:1;font:800 22px Georgia,'Times New Roman',serif;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
+.pu-title{margin:0;flex:1;font:800 22px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;/* 1416: was Georgia */color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
 .pu-sub{margin:1px 0 11px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-mute);}
 .pu-srch{display:flex;align-items:center;gap:8px;background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:10px;
   padding:0 12px;min-height:44px;flex:1;min-width:0;color:var(--rbe-mute);font-size:13px;}
@@ -70707,6 +70915,7 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-wh.late small{color:var(--pl-late,#f08a90);font-weight:600;}
 .pl-wh.live small{color:var(--pl-live,#6fd39b);font-weight:600;}
 .pl-wh.warn small{color:var(--pl-late,#f08a90);}
+.pl-wh .pl-nw{white-space:nowrap;}/* 1416: "On site since 6:52 AM" and "1h 00m so far" each stay whole */
 .pl-cr{grid-area:cr;display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;}
 .pl-av{width:26px;height:26px;border-radius:50%;background:var(--pl-chip,#22262c);color:var(--rbe-ink);display:grid;place-items:center;
   font:700 11px ui-monospace,Menlo,monospace;flex:0 0 auto;}
@@ -70735,7 +70944,7 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
   .pl-cl b,.pl-cl small{display:block;}
   .pl-pb{font-size:15px;color:var(--rbe-ink);}
   .pl-age{text-align:left;}
-  .pl-wh{flex-direction:column;align-items:flex-start;gap:0;}
+  .pl-wh{flex-direction:column;align-items:stretch;gap:0;white-space:normal;}/* 1416 (judge 14 minor 5): "On site since 6:00 AM · 1h 00m so far" ran 52px over the CREW avatar at 1280-1536 — it wraps in its own column now */
   .pl-cr .pl-nm{display:inline;}
 }
 @media (min-width:901px){
@@ -71179,7 +71388,7 @@ function plRow(it){
       '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
     '<span class="pl-pb">' + (ping ? esc('\u201C' + (it.ping_note || '') + '\u201D \u2014 ' + plName(it.ping_by)) : esc(it.title || 'Untitled item')) + '</span>' +
     '<span class="pl-age">' + (age != null ? age + 'd' : '') + '</span>' +
-    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + esc([w.sub, plOnSite(it)].filter(Boolean).join(' \u00b7 ')) + '</small></span>' +
+    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + [w.sub, plOnSite(it)].filter(Boolean).map(function(x){ return '<span class="pl-nw">' + esc(x) + '</span>'; }).join(' \u00b7 ') + '</small></span>' +   /* 1416: wraps at the dot */
     '<span class="pl-cr">' + (who ? '<span class="pl-av">' + esc(plName(who).slice(0, 2).toUpperCase()) + '</span><span class="pl-nm">' + esc(plName(who)) + '</span>'
                               : '<span class="pl-nm">No one</span>') + '</span>' +
   '</div>';
@@ -77307,6 +77516,19 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 }
 :root[data-theme="rb-light"] #crewsView .crw-h{ color:#161616; }
 :root[data-theme="rb-light"] #crewsView .crw-x{ color:var(--crw-mut,#5f666e); }
+
+/* 1416 (judge 14 MAJOR 3): Crews opened from the Production board kept the
+   retail chrome — a "Retail" header and the Contacts / Leads / Photos row —
+   over a screen that belongs to no CRM. For production accounts it joins the
+   full-screen family the Punch page joined at 1042 (body.cr-prod #punchView):
+   over the chrome, its own scroll, below the board (9500) and the punch card
+   (9550). The shared header rule pins #crewsView under the header with
+   top/z-index !important (cr-hd2's "#cardinalTruthView, …, #crewsView") and the
+   left nav offsets it !important (74961) — hence !important here. The safe-area
+   and tab-bar clearances are #punchView's own. Admins keep Crews as it was. */
+html body.cr-prod #crewsView{ --cr-stack:"1416 production: Crews over the retail chrome, as #punchView (1042)";
+  top:0 !important; left:0 !important; z-index:9400 !important; overscroll-behavior:contain;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:calc(96px + env(safe-area-inset-bottom,0px)); }
 </style>
 <style id="cr-qi-yellow">
 /* ══ Build 559 · Quick Inspection — the yellow panel ════════════════════════
@@ -78272,6 +78494,13 @@ function close(){
   if(v) v.style.display = 'none';
   /* This module took no scroll lock, so it releases none — the one global lock
      has 13 writers already and does not need a 14th. */
+  /* 1416 (judge 14 MAJOR 3): a production account came here from the Production
+     board and goes back to it — showHome() is the RETAIL home for Curtis (the 1038
+     exit-room rule). Admins keep showHome() exactly. */
+  try{
+    var _prd = typeof window.isProductionUser === 'function' ? !!window.isProductionUser() : document.body.classList.contains('cr-prod');
+    if(_prd && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }
+  }catch(_p){}
   try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
 }
 
@@ -86693,6 +86922,30 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .dmap-pop .chip{ font:800 11px ui-monospace,Menlo,monospace; letter-spacing:.05em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
 #cr-disp .dmap-pop .dpop-go{ background:var(--disp-repair,#ff3b46); color:#fff; border:0; border-radius:8px; padding:6px 13px; font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; cursor:pointer; font-family:inherit; white-space:nowrap; }
 #cr-disp .dmap-pop .dpop-go.need{ background:#f5a623; color:#1a1204; }
+
+/* ── 1416 · judge 14 (Dispatch) ─────────────────────────────────────────
+   MINOR 10 — the day strip. Seven buttons, 48px, on the board's own tokens
+   (ink 18+:1, dim 6.70:1 on --disp-card dark; 15+ / 5.9:1 light). Hidden at
+   >=1100px, where all seven columns already fit. */
+#cr-disp .dspdays{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; margin:0 0 10px; }
+#cr-disp .dspdays .dd{ min-height:48px; padding:4px 0; border-radius:9px; cursor:pointer; min-width:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-ink,#ffffff);
+  font:700 11px var(--disp-mono,monospace); letter-spacing:.04em; }
+#cr-disp .dspdays .dd b{ font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; line-height:1.1; }
+#cr-disp .dspdays .dd i{ font-style:normal; font-weight:600; color:var(--disp-dim,#9aa1ac); white-space:nowrap; }
+#cr-disp .dspdays .dd.has i{ color:var(--disp-ink,#ffffff); }
+#cr-disp .dspdays .dd.today{ border-color:var(--disp-ink,#ffffff); }
+@media (min-width:1100px){ #cr-disp .dspdays{ display:none; } }
+/* The strip PANS the board, so what names a row has to hold still while the
+   days slide under it — the crew tags have done this since 990; the Needs-a-crew
+   tray, the trade strips and a folded trade's summary now do too. 46px is the
+   frame's own inset (14 + 1 + 8 a side); 50 leaves the rows' 2px margins. */
+@media (max-width:1099px){
+  #cr-disp .drail, #cr-disp .dband, #cr-disp .dsum{ position:sticky; left:0; max-width:calc(100vw - 50px); }
+}
+/* MAJOR 2 — a field user's tray chips are information, not controls */
+#cr-disp .uch.ro{ --cr-stack:"1416: field user only"; cursor:default; }
 </style>
 <script id="cr-disp-script">
 /* Crew Dispatch (build 841; 949 adds the workflow layer). Week grid over
@@ -86711,6 +86964,16 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   var CPAL=['#5f9fd8','#7ec99a','#c98fe0','#e0913a','#e2574a','#5bc0be','#c9a227','#9aa0f5','#e08fb0','#6fd0c0'];
 
   function two(n){ return (n<10?'0':'') + n; }
+  /* 1416 (judge 14 MAJOR 2): the board is READ-ONLY for a field user. Scottie's
+     database role holds SELECT only on crew_work_orders (field_role.sql), yet the
+     board armed a Needs-a-crew chip for him, and the day he tapped closed Dispatch,
+     reopened the Production board and opened the work-order form UNDER it —
+     nothing written, nothing said. He sees every booking; booking is Curtis's. */
+  function ro(){ try{ return !!(window.isFieldUser && window.isFieldUser()); }catch(_){ return false; } }
+  function roTell(){
+    var m = 'Booking is Curtis’s — he puts a crew on each job. This board is yours to read.';
+    try{ if(typeof window.crToast === 'function') window.crToast(m); else if(typeof window.crTell === 'function') window.crTell(m, 'ok'); }catch(_){}
+  }
   function who(e){ var x = String(e||'').split('@')[0]; return x ? x.charAt(0).toUpperCase() + x.slice(1) : String(e||''); }
   function ymd(d){ return d.getFullYear() + '-' + two(d.getMonth()+1) + '-' + two(d.getDate()); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){
@@ -86785,7 +87048,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var ad = p ? firstLine(p.address) : '';
     /* 958: the grip picks the job up. A finished job keeps none \u2014 there is
        nothing left to move, and rescheduleWorkOrder would refuse it anyway. */
-    var grip = statusPip(w) === 'done' ? '' :
+    var grip = (statusPip(w) === 'done' || ro()) ? '' :   /* 1416: a field user moves nothing */
       '<button class="mv" type="button" data-dmove="' + esc(w.id) + '" aria-label="Move this job">' +
       '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" '+
       'stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M19 9l3 3-3 3M9 5l3-3 3 3M9 19l3 3 3-3"/>'+
@@ -86851,7 +87114,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     el.classList.toggle('armmv', !!mvWo);
     var railInner = needCrew.length
       ? needCrew.map(function(p){
-          return '<div class="uch' + (String(p.id) === String(armed) ? ' armed' : '') + '" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
+          return '<div class="uch' + (String(p.id) === String(armed) ? ' armed' : '') + (ro() ? ' ro' : '') + '" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
             '</div><div class="a">' + esc(firstLine(p.address)) + '</div></div>';
         }).join('')
       : '<span class="none">every scheduled job has a crew</span>';
@@ -86860,6 +87123,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       'Needs a crew (' + needCrew.length + ')</div>' +
       '<div class="s">' + (armed ? 'now tap a day on a crew\u2019s row to book it \u2014 tap the job again for the full picker'
         : mvWo ? 'holding a job \u2014 tap any outlined day to move it (page the week to move it further out), or tap the grip again to put it down'
+        : ro() ? 'Booking is Curtis\u2019s \u2014 he puts a crew on each of these'
         : 'tap to assign') + '</div></div><div class="runrow">' + railInner + '</div></div>';
 
     var bandsH = trades.map(function(tr){
@@ -86898,7 +87162,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           if(!((byCrewDay[c.id] || {})[fi] || []).length){ free = fi; break; }
         }
         var cf = free < 0 ? '<div class="cf full">booked all 7</div>'
-          : '<div class="cf">free ' + (dayStr[free] === todayStr ? 'today'
+          : '<div class="cf">None booked ' + (dayStr[free] === todayStr ? 'today'   /* 1416: bookings, not availability */
               : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][days[free].getDay()] + ' ' + days[free].getDate()) + '</div>';
         return '<div class="drow dlane"><div class="crewc"><div><div class="cn">' + esc(_main) +
           '</div>' + sub + cf + '</div></div>' + cells + '</div>';
@@ -86924,7 +87188,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         var names = inTrade.map(function(c){ return c.legal_name || c.name || 'Crew'; }).slice(0, 4).join(' \u00b7 ');
         var booked = active.length;
         return strip + '<div class="dsum"><b>' + esc(names) + (nAll > 4 ? ' \u00b7 \u2026' : '') + '</b> \u2014 ' +
-          (booked ? booked + ' booked this week' : 'free next 7 days') + '</div>';
+          (booked ? booked + ' booked this week' : 'none booked next 7 days') + '</div>';
       }
       return strip + lanes + idleRow;
     }).join('');
@@ -86973,11 +87237,12 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     }
     var repsH = repairsBand();
 
-    wrap.querySelector('.dspbody').innerHTML =
+    wrap.querySelector('.dspbody').innerHTML = dayStripHtml(days, dayStr, todayStr, sunSet) +
       '<div class="dspframe"><div class="dspscroll"><div class="dspgrid" style="--dcols:' + nDays + '">' +
       railH + colH + bandsH + repsH + '</div></div></div>' +
       '<p class="dspnote">Shows <b>bookings, not availability</b> — an empty cell means no job is booked that day, not that the crew is free. ' +
-      'Tap a job to open its client. Tap a <b>Needs-a-crew</b> job, then a day on a crew\u2019s row, to book that crew \u2014 the work order opens with both filled in. No dollar figures appear on this board.</p>';
+      (ro() ? 'This board is read-only for you \u2014 <b>booking a crew is Curtis\u2019s</b>. A job\u2019s address, phone and directions are on its punch card. No dollar figures appear on this board.</p>'
+        : 'Tap a job to open its client. Tap a <b>Needs-a-crew</b> job, then a day on a crew\u2019s row, to book that crew \u2014 the work order opens with both filled in. No dollar figures appear on this board.</p>');
 
     /* week label + filter active state */
     var lab = el.querySelector('.dspwklab');
@@ -86990,6 +87255,48 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     });
   }
 
+  /* 1416 (judge 14 minor 10): a phone shows ~2½ of the seven days. Theo's
+     "phone was fine non compressed" (948) stands — the magnets keep their size
+     and the board still pans — so this strip names all seven with what is booked
+     on each, and a tap pans the board to that day. Hidden where all seven fit. */
+  function dayStripHtml(days, dayStr, todayStr, sunSet){
+    var D = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    return '<div class="dspdays" role="group" aria-label="Jump to a day">' + days.map(function(d, i){
+      var s = dayStr[i], n = 0;
+      wos.forEach(function(w){
+        if(w.scheduled_on !== s) return;
+        var c = crewById(w.crew_id);
+        if(filter !== 'All' && (!c || (c.trade || 'General') !== filter)) return;
+        n++;
+      });
+      var lab = n ? n + (n === 1 ? ' job' : ' jobs') : 'none';
+      return '<button class="dd' + (s === todayStr ? ' today' : (sunSet[i] ? ' sun' : '')) + (n ? ' has' : '') +
+        '" data-dday="' + i + '" type="button">' +   /* the visible day and count are its name */
+        '<span class="w">' + D[d.getDay()] + '</span><b>' + d.getDate() + '</b><i>' + lab + '</i></button>';
+    }).join('') + '</div>';
+  }
+  function dayJump(i){
+    var sc = el.querySelector('.dspscroll'), hd = el.querySelectorAll('.dcol .c')[i + 1], rail = el.querySelector('.dcol .c.rail');
+    if(!sc || !hd) return;
+    var off = hd.getBoundingClientRect().left - sc.getBoundingClientRect().left - (rail ? rail.getBoundingClientRect().width : 0);
+    try{ sc.scrollTo({ left: Math.max(0, sc.scrollLeft + off), behavior:'smooth' }); }catch(_){ sc.scrollLeft += off; }
+  }
+  /* 1416 (judge 14 MAJOR 3): Back from Dispatch returns a production account to
+     the Production board it came from. close() ends in showHome(), which for
+     Curtis is the RETAIL home — stage counts and the receivables figure, the
+     1038 exit-room rule. A field user's showHome() already lands on the board
+     (1317); admins and reps keep close() exactly. */
+  function dspBack(){
+    var prod = false;
+    try{ prod = typeof window.isProductionUser === 'function' ? !!window.isProductionUser() : document.body.classList.contains('cr-prod'); }catch(_){}
+    if(prod && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
+      if(el) el.classList.remove('open');
+      armed = null; armedMove = null;
+      window.CardinalProduction.open();
+      return;
+    }
+    close();
+  }
   function buildShell(){
     el = document.createElement('div');
     el.id = 'cr-disp';
@@ -87018,7 +87325,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       '</div>';
     document.body.appendChild(el);
 
-    el.querySelector('.dspback').addEventListener('click', close);
+    el.querySelector('.dspback').addEventListener('click', dspBack);   /* 1416 */
     el.querySelector('.dspprev').addEventListener('click', function(){ weekOffset--; render(); if(mapOn) syncMap(); });
     el.querySelector('.dspnext').addEventListener('click', function(){ weekOffset++; render(); if(mapOn) syncMap(); });
     el.addEventListener('click', function(e){
@@ -87027,10 +87334,13 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       var band = e.target.closest('.dband[data-band]');
       if(band){ var bk = band.getAttribute('data-band');
         foldTrade[bk] = !foldTrade[bk]; render(); return; }
+      var ddy = (/** @type {Element} */ (e.target)).closest('[data-dday]');   /* 1416: the day strip */
+      if(ddy){ dayJump(+ddy.getAttribute('data-dday')); return; }
       var idle = e.target.closest('.idle[data-idle]');
       if(idle){ showIdle[idle.getAttribute('data-idle')] = 1; render(); return; }
       var uch = e.target.closest('.uch[data-pid]');
       if(uch){
+        if(ro()){ roTell(); return; }   /* 1416: nothing arms for a field user */
         var upid = uch.getAttribute('data-pid');
         if(String(armed) === String(upid)){
           /* 949: second tap on the armed chip = the classic flow, unchanged */
@@ -87061,8 +87371,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       var rr = e.target.closest('[data-dsprain]');
       if(rr){ toggleDRadar(); return; }
       var dop = e.target.closest('[data-dopen]');
-      if(dop){ close(); if(typeof window.openProject === 'function') window.openProject(dop.getAttribute('data-dopen')); return; }
+      if(dop){ if(!ro()) close(); if(typeof window.openProject === 'function') window.openProject(dop.getAttribute('data-dopen')); return; }
       var dnd = e.target.closest('[data-dneed]');
+      if(dnd && ro()){ roTell(); return; }   /* 1416 */
       if(dnd){ var npid = dnd.getAttribute('data-dneed'), nproj = projById(npid); close();
         if(nproj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(nproj);
         else if(typeof window.openProject === 'function') window.openProject(npid); return; }
@@ -87126,7 +87437,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         }
       }
       var pel = e.target.closest('[data-pid]');
-      if(pel && typeof window.openProject === 'function'){ close(); window.openProject(pel.getAttribute('data-pid')); }
+      /* 1416: a field user's openProject refuses and says why (1317) — closing first stranded him (the 1400 rule) */
+      if(pel && typeof window.openProject === 'function'){ if(!ro()) close(); window.openProject(pel.getAttribute('data-pid')); }
     });
   }
 

@@ -218,6 +218,18 @@ ok('cancelling the note leaves the step UNTICKED (the gate holds)', await page.e
 await page.evaluate(() => { window.prompt = () => 'Soft decking ~1ft at the gable end'; });
 await page.evaluate((i) => document.querySelectorAll('#cr-pk .pkck')[i].querySelector('.bx').click(), reqIdx);
 await page.waitForTimeout(800);
+/* 1416 (judge 14 minor 8): the note is written IN the card now — the box opens a
+   field under its step and its Save ticks. When the build draws that field, answer
+   it there; on a pre-1416 build the prompt stub above already answered. The two
+   assertions below are unchanged: the step ticks, and the note is on it. */
+await page.evaluate(() => {
+  const t = document.querySelector('#cr-pk [data-f="stepnote"]');
+  if (!t) return;
+  t.value = 'Soft decking ~1ft at the gable end';
+  t.dispatchEvent(new Event('input', { bubbles: true }));
+  const sv = document.querySelector('#cr-pk [data-notesave]'); if (sv) sv.click();
+});
+await page.waitForTimeout(800);
 const noted = await page.evaluate(() => ({
   done: document.querySelectorAll('#cr-pk .pkck.d').length,
   note: (document.querySelector('#cr-pk .pkck .note') || {}).textContent,
