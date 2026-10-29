@@ -37513,3 +37513,23 @@ The name was the only flexible item, so it was the one that gave way.
 - Initials are typed, not drawn.
 - Homeowners cannot change the options on the link.
 - `COMPANY_DOCS` lists `docs/Cardinal_Window_Contract.pdf` and `docs/Cardinal_Gutter_Contract_Fillable.pdf`, which are not in the repo.
+
+## Build 1428 — a signed-contract upload asks to move the job to Approved (29 Oct 2026)
+
+**Source:** Theo answered "3 yes 2 yes 1 yes" to the three questions at the end of the round-1 audit list.
+- Answers 1 and 2 are recorded as SETTLED in `OPEN_ITEMS.md`: notice delivery by PDF link plus attachment is enough, and contracts keep the phone reflow.
+- Answer 3 is this build.
+
+**Change:**
+- The upload works out whether the job is short of Approved (`crStageIsForward`).
+- It reloads, closes the sheet, then asks on `crAsk`: "Move <name> to Approved?", with Move to Approved / Not yet.
+- **Yes** calls `setStage`, so the alert is the dropdown's own APPROVED alert, sent once.
+- **Not yet** sends 1427's notice.
+- An estimate, or a job already Approved, asks nothing.
+- The toast says which happened.
+
+**Gates:**
+- `gate_1428.mjs` 11/0. The control (1427) is RED 7/11.
+- `gate_1427` 54/0. Its A6 now answers "Not yet".
+- `gate_1262`, `gate_1271` and `gate_1412` are identical on both trees. `gate_1426` and `gate_1200` are green.
+- `check_build` GREEN. `gate_types` 1505 and `gate_dupes` are identical to the control.
