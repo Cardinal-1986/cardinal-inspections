@@ -10298,3 +10298,6 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
   - 1217 (estimate builder "dark chrome, paper document").
   - The Library's own theme buttons still write only `cardinalRLTheme`.
 - **Gate:** `gate_1418.mjs`, 86 checks; red 59 on 1417. `gate_1181`, `gate_1035`, `gate_952` and `gate_1299` were updated (marked `J16 — DELIBERATELY CHANGED`).
+
+## Build 1419: a draft stays on its own job
+`#chatText` is one input that every job's thread shares. `chatDraftSwap(pid)` (called by `openCommunications`) files the box under the job being left and restores the draft for the job being opened. `sendChat()` captures the job at the start: the tag alert names and links that job, and the save never clears the box of a job opened while it was in flight. **Gate:** `gate_1419.mjs`, 9 checks; red 5 on 1418.

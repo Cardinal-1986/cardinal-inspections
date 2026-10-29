@@ -37293,3 +37293,18 @@ This build covers judge 16's colour/button/text audit (round 1: harmony 5, restr
   - `gate_1415`, `gate_1416`, `gate_1417`, `gate_1181`, `gate_1035` and 27 others are green.
   - `gate_952`'s "light keyline icons" check fails identically on the 1417 control with the unedited gate (3 of 3 runs), so it is pre-existing.
   - REPRO byte-identical.
+
+## Build 1419 — a half-typed note stays on its own job (29 Oct 2026)
+The 1417 builder found this and left it unfixed.
+- **The bug:** `#chatText` is one shared input. A note half-typed on job A was still in the box when job B's thread opened, so Send posted it on B and buzzed the tagged person about the wrong client.
+- **A second bug in the same path.** `sendChat()` read `currentProject` again *after* `await saveCkPatch()`. If the thread changed while a save was in flight:
+  - the tag alert named and linked the newly opened job;
+  - `inp.value = ''` wiped that job's draft.
+  - The save itself was already right, because `saveCkPatch` captures the project at call time.
+- **The fix:** one draft per job (`chatDraftSwap`), and `sendChat` uses the job it started on.
+- **Gates:**
+  - `gate_1419.mjs` 9/0. The control (1418) is RED 5/4, reproducing all three bugs: the wrong-job post, the wrong-job alert ("tagged you — Sample Insured One" for a note sent on Sample Occupant One), and the wiped box.
+  - `check_build` GREEN.
+  - `gate_types` and `gate_dupes` are identical to the control.
+  - `gate_1417` and `gate_1413` are green.
+- **1418 follow-up recorded here:** `gate_1198` went red in CI's chromium job on 1418. It pinned `background:var(--hac`, and 1418 deliberately moved that to `var(--crm-id, var(--hac,…))`. The gate now accepts both forms, and a poisoned copy that loses the fill still fails.
