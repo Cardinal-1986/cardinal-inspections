@@ -4274,7 +4274,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1420<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1421<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4651,10 +4651,17 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ TASK MODAL ============ -->
+<style id="cr-tsk-paper-styles">
+/* 1421: #tskModal is a white paper card in both themes (Forms 1), so what it borrows from the app takes paper inks:
+   in dark theme .chipbtn (Cancel) was light ink on white, 1.22:1, and .subnote/.loading inherited the light --muted. */
+#tskModal .subnote, #tskModal .loading, #tskModal p{color:#5c534c;}
+#tskModal .chipbtn{--cr-stack:"1421 paper card: an outline button with ink, the Buttons A secondary";
+  background:#ffffff;color:#2a2224;border:1px solid #cfc6bf;min-height:44px;padding:0 16px;}
+</style>
 <div id="tskModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:210;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px;">
   <div style="background:#fff;border-radius:8px;max-width:620px;width:100%;padding:22px 26px;position:relative;">
-    <span id="tskModalX" style="position:absolute;top:12px;right:16px;font:400 22px Arial;color:#9a8c85;cursor:pointer;">&#10005;</span>
-    <h2 id="tskModalTitle" style="margin:0 0 18px;text-align:center;font:800 22px Georgia,'Times New Roman',serif;letter-spacing:.02em;color:#1c1416;"></h2>
+    <span id="tskModalX" role="button" aria-label="Close" style="position:absolute;top:4px;right:6px;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;font:400 22px Arial;color:#5c534c;cursor:pointer;">&#10005;</span>
+    <h2 id="tskModalTitle" style="margin:0 0 18px;text-align:center;font:800 22px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.02em;color:#1c1416;"></h2>
     <div id="tskModalBody"></div>
   </div>
 </div>
@@ -13302,7 +13309,7 @@ function openMeasModal(pr){
   var ms = parseCkAll(pr).meas || {};
   var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;padding:9px 11px;font:600 15px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;"';
   function fld(lbl, id, val, ph){
-    return '<div><label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;margin-bottom:3px;">' + lbl + '</label>' +
+    return '<div><label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5d56;margin-bottom:3px;">' + lbl + '</label>' +
       '<input type="text" id="' + id + '" value="' + esc(val || '') + '" placeholder="' + (ph || '') + '" ' + inp + '></div>';
   }
   body.innerHTML =
@@ -24343,15 +24350,15 @@ async function openWorkOrderPicker(project, preset){
             'padding:9px 11px;font:600 15px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;"';
   body.innerHTML =
     '<p class="subnote">One work order per trade. Pick the crew this one is for.</p>' +
-    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;margin-bottom:3px;">Crew</label>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5d56;margin-bottom:3px;">Crew</label>' +
     '<select id="woCrew" ' + inp + '>' + opts + '</select>' +
-    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Scheduled for</label>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5d56;margin:12px 0 3px;">Scheduled for</label>' +
     '<input type="date" id="woWhen" ' + inp + '>' +
-    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Scope &#8212; what this crew is to do</label>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5d56;margin:12px 0 3px;">Scope &#8212; what this crew is to do</label>' +
     '<textarea id="woScope" rows="4" ' + inp + ' placeholder="Tear off to deck, replace rotten sheathing, ice &amp; water at eaves and valleys, OC Duration in Estate Gray…"></textarea>' +
-    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Shingle color <span style="font-weight:600;color:#b0a49b;">&#8212; carried from the signed contract, edit if needed</span></label>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5d56;margin:12px 0 3px;">Shingle color <span style="font-weight:600;color:#6b5d56;">&#8212; carried from the signed contract, edit if needed</span></label>' +
     '<input type="text" id="woShingle" ' + inp + ' placeholder="e.g. Estate Gray">' +
-    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Drip edge color</label>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5d56;margin:12px 0 3px;">Drip edge color</label>' +
     '<input type="text" id="woDrip" ' + inp + ' placeholder="e.g. White">' +
     '<label style="display:flex;align-items:center;gap:8px;margin:14px 0 3px;font:600 13px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#5c534c;">' +
       '<input type="checkbox" id="woCloseCk" style="width:16px;height:16px;"> Include a post-job closeout checklist (leftover materials)</label>' +
@@ -45731,6 +45738,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1421, d:'2026-10-29', t:'The work order and Measurements boxes are readable in dark mode', s:'In dark mode the Cancel button on the New work order and Measurements boxes was almost invisible, and the field labels and hints were faint. Every label now reads clearly in both themes, the close \u00d7 is easy to tap, and the heading uses the app\u2019s own font.' },
   { b: 1420, d:'2026-10-29', t:'Home takes Production back to the board', s:'For Curtis and Scottie, the Home button at the bottom of the phone and the gold house in the header now open the Production board. They used to land on the retail home, which shows pipeline counts and money owed. Everyone else\u2019s Home is unchanged.' },
   { b: 1419, d:'2026-10-29', t:'A half-typed note stays on its own job', s:'A note you started on one job used to still be sitting in the message box when you opened another job\u2019s thread, so Send could post it on the wrong job. Each job now keeps its own draft, and a tag alert always names the job the note was sent on.' },
   { b: 1418, d:'2026-10-29', t:'One colour per portal, and Insurance follows your light/dark setting', s:'Insurance now follows your light/dark setting like the rest of the app, and the one switch changes both \u2014 no more white Insurance pages in dark mode. Each portal has one colour \u2014 red Retail, teal Insurance, green Community \u2014 on the + button, the portal switch and client names. The last white boxes, hard-to-read labels and tiny text on the dark screens are fixed, and the light pipeline is a flat strip instead of glossy balls.' },

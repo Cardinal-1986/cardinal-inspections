@@ -10309,3 +10309,11 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
   - That covers the phone bar's Home, the header house and the module-mount Home fallbacks (756).
 - The phone bar lights Home while the board is up, and lights Jobs on a job's thread (`commsView`).
 - **Gate:** `gate_1420.mjs`, 19 checks; red 8 on 1419. Admin control unchanged.
+
+## Build 1421: the shared task sheet reads on its white card
+`#tskModal` (New work order, Measurements) stays a white paper card in both themes, per Forms 1.
+- A scoped `cr-tsk-paper-styles` block gives the borrowed `.chipbtn`, `.subnote` and `.loading` paper inks.
+- The inline label inks are deepened.
+- The close × is a 44px `role=button`.
+- The heading uses the app sans.
+**Gate:** `gate_1421.mjs`, 10 checks in both themes; red 10 on 1420.

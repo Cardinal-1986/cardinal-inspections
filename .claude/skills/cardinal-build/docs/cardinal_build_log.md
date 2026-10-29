@@ -37329,3 +37329,17 @@ The 1416 builder found this and left it unfixed.
   - `check_build` GREEN.
   - `gate_types` and `gate_dupes` are identical to the control.
   - `gate_754`, `756`, `757`, `979`, `1365`, `1369`–`1373`, `1384`, `1400` and `1416` are green on both trees.
+
+## Build 1421 — the work order and Measurements boxes read in dark mode (29 Oct 2026)
+The 1416 builder found this ("#tskModal carries light inline inks"). Measured in Chromium at 1420:
+- **Dark theme:** the Cancel button was **1.22:1** on the card. A dark-theme `.chipbtn` (light ink, no ground) was drawn on a white sheet. `.subnote` and `.loading` inherited the dark `--muted` the same way.
+- **Both themes:**
+  - field labels `#8a7a72` 4.11:1;
+  - the "carried from the signed contract" hint `#b0a49b` 2.43:1;
+  - the close × an 18×26 glyph at 3.25:1;
+  - the heading in Georgia.
+- **Fix:** the card stays white (Forms 1), so its inks are paper inks in both themes. A scoped rule handles the borrowed classes, and the inline literals are deepened in place: labels 6.32, × 7.51 at 44×44, worst text 5.67.
+- **Gates:**
+  - `gate_1421.mjs` 10/0. The control (1420) is RED 10/0.
+  - `check_build` GREEN.
+  - `gate_types` and `gate_dupes` are identical to the control.
