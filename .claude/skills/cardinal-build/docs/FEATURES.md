@@ -10203,3 +10203,9 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 
 ## Build 1412: bottom sheets above the installed nav
 `#ctUpSheet` (Upload signed contract), `#apptCalSheet` (Add to calendar) and `#ljAsk` (the Leads question) are z-index 9995, above `body.standalone #pwaNav` (9990), the 1273 rule `#crEmailSheet` already followed. **Gate:** `gate_1412.mjs`.
+
+## Build 1413: messages merge instead of overwrite
+- **Job thread, call log, saves:** posting in a job's thread, logging a call and every `saveCkPatch` save go through `patchProjectCk`. It re-reads the job before writing and unions `comments` using `crMergeComments`.
+- **Punch-out messages:** these go through `CardinalPunch.update` or `postComment`, which merge with the server's list.
+- **Open:** offline outbox replay does not merge yet.
+- **Gate:** `gate_1413.mjs`.

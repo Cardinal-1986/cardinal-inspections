@@ -37125,3 +37125,23 @@ Documents built by the app's own template code, served through the real `api/sha
 - **Cause:** `#ctUpSheet` sat at z-index 9600, below the nav's 9990. **1273 had fixed this exact bug for `#crEmailSheet` (9995), and its two siblings `#apptCalSheet` and `#ljAsk` were never brought along**, so all three had it. All three are now at 9995, edited in place with no new rule.
 - **Gate:** `gate_1412.mjs` 4/4. The control (1411) is RED 4 and reproduces the screenshot exactly: a tap on Save lands on `pwaHome` and a tap on Cancel on `pwaMenu`.
 - ⚠ **The same bug fixed for one sheet out of four.** BUG_CLASSES' "partial pass" again: when a stacking fix lands, grep the siblings that share its shape (`position:fixed;left:0;right:0;bottom:0;z-index:`).
+
+## Build 1413 — a message no longer erases a teammate's (29 Oct 2026)
+- **Found by judge #13 of Theo's audit panel and reproduced before fixing.** `sendChat()` saved through `saveCkPatch()`, which wrote the WHOLE checklist from the copy loaded when the job was opened.
+  - **Effect:** a note Curtis posted from the roof after Theo opened the job was erased, along with every other checklist change made since then (payments, tasks, worksheet). Nothing said so, because the thread never refreshes.
+  - **The fix already existed and was never used.** The 655 fix (`patchProjectCk`: re-read, then merge keys) was never called by the chat. Even `patchProjectCk` replaced the `comments` key wholesale.
+  - **Two more writers had the same read-change-write shape:**
+    - the call log;
+    - every punch-out message (tag, needs-a-day, finished, follow-up, handled, and the punch page's `postComment`).
+- **Fix:**
+  - `saveCkPatch` now delegates to `patchProjectCk`.
+  - A new `crMergeComments(server, mine)` unions comment lists by who + when + text, oldest first; the caller's copy wins on a tie. The lists are **append-only**: nothing in the app edits or deletes a comment (grepped).
+  - `patchProjectCk` and the one punch write path, `CardinalPunch.update`, merge a `comments` patch with the server's copy.
+  - The call log goes through `patchProjectCk`.
+  - `postComment` re-reads before it writes.
+- ⚠ **Still open — offline replay.** A comment written offline is replayed by the outbox with its own list (1403 replays only the patched keys), so a teammate's note posted while this phone had no signal can still be replaced on replay. That needs the outbox to merge, which is its own build.
+- **Gates:**
+  - `gate_1413.mjs`: 6/6 on this build; the control (1412) is RED 6/6, losing both the note and the other device's field.
+  - `gate_types` is at the control's 1506.
+  - `gate_dupes` has 14 failures, identical to the control.
+  - Re-running the patch reproduces the file byte for byte (REPRO).
