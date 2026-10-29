@@ -105,6 +105,9 @@
     },
     "api/supplement.js": {
       "maxDuration": 60
+    },
+    "api/clientsign.js": {
+      "maxDuration": 30
     }
   }
 }

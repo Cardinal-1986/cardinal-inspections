@@ -7,6 +7,49 @@ const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
 
 import { isStaff } from './_staff.js';
+const APP_ORIGIN = 'https://app.cardinalroster.com';
+/* D (contracts + client documents judges): a Construction Agreement tells the buyer its Terms and
+   Conditions and both Notice of Cancellation copies are "attached" and are "the printed master", then
+   names a STAFF menu path (Menu > Company Documents > ...) a homeowner cannot open. The statutory text
+   is deliberately never retyped (ORC 1345.23), so what reaches the buyer is the printed master itself:
+   the trade's PDF that already ships publicly in docs/ (pages = its Terms and both notices).
+   KEEP IN SYNC: this block is byte-identical in api/share.js, api/clientsign.js and api/senddoc.js. */
+const MASTERS = {
+  roof:   { href: '/docs/Cardinal_Roofing_Contract.pdf', page: 3, pages: '3\u20135', name: 'Roofing Construction Agreement' },
+  siding: { href: '/docs/Cardinal_Siding_Contract.pdf', page: 2, pages: '2\u20134', name: 'Siding Construction Agreement' },
+  gutter: { href: '/docs/Cardinal_Gutter_Contract.pdf', page: 3, pages: '3\u20135', name: 'Gutter Construction Agreement' }
+};
+function masterFor(html) {
+  const h = String(html || '');
+  if (!/Notice of Cancellation/i.test(h)) return null;
+  const m = /class="est-title">\s*(ROOFING|SIDING|GUTTER)\s+CONSTRUCTION/i.exec(h) ||
+            /Company Documents\s*(?:&#8594;|\u2192)\s*(Roofing|Siding|Gutter)s?\b/i.exec(h);
+  if (!m) return null;
+  const k = m[1].toLowerCase();
+  return MASTERS[k === 'roofing' ? 'roof' : k] || null;
+}
+const MENU_RX = /<b>\s*(?:&#9776;|\u2630)\s*Menu\s*(?:&#8594;|\u2192)\s*Company Documents\s*(?:&#8594;|\u2192)\s*(?:Roofing|Siding|Gutters)\s*(?:&#8594;|\u2192)\s*([^<]*?\(Master\))\s*<\/b>/g;
+function masterLinked(html, master, origin) {
+  if (!master) return html;
+  const href = (origin || '') + master.href + '#page=' + master.page;
+  return String(html).replace(MENU_RX, (all, name) => '<a href="' + href + '" target="_blank" rel="noopener" data-cr-master="1"><b>' +
+    name.replace(/\s+/g, ' ') + '</b> (PDF, pages ' + master.pages + ')</a>');
+}
+/* the agreement's OWN right-to-cancel sentence, quoted as written — never paraphrased */
+function cancelLine(html) {
+  const m = /<b>\s*(You, the buyer, may cancel this transaction[^<]*?)\s*<\/b>/i.exec(String(html || ''));
+  return m ? m[1].replace(/\s+/g, ' ').trim() : '';
+}
+/* one value cell of the agreement's Customer Information table; a [placeholder] reads as empty */
+function cellText(html, label) {
+  const m = new RegExp('<td class="k">' + label + '<\\/td>\\s*<td[^>]*>([\\s\\S]*?)<\\/td>').exec(String(html || ''));
+  if (!m) return '';
+  const t = m[1].replace(/<[^>]*>/g, ' ').replace(/&nbsp;|\u00a0/g, ' ').replace(/&amp;/g, '&')
+    .replace(/&#39;|&#x27;/g, "'").replace(/\s+/g, ' ').trim();
+  return t.charAt(0) === '[' ? '' : t.slice(0, 80);
+}
+const EMAIL_RX = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[A-Za-z]{2,}$/;
+const INIT_RX = /(Initials(?:\s|&nbsp;|\u00a0)*)<span class="ph">\[_*\]<\/span>/g;
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
   const resendKey = process.env.RESEND_API_KEY;
@@ -56,7 +99,8 @@ export default async function handler(req, res) {
     }
 
     const from = process.env.DIGEST_FROM || 'Cardinal Client Resources <onboarding@resend.dev>';
-    const safeName = String(title).replace(/[^\w\- ]+/g, '').slice(0, 60) || 'Cardinal Document';
+    /* D: 'Contract — Roofing — X' lost its dashes and left 'Contract  Roofing  X' (double spaces) */
+    const safeName = String(title).replace(/[^\w\- ]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 60) || 'Cardinal Document';
     const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
     // 672: a BRANCH, never a replacement. Everything below this line in the
@@ -102,6 +146,27 @@ export default async function handler(req, res) {
       Cardinal Roofing and Renovations, LLC · 5735 Webster Street, Dayton, OH 45414</p>
     </div>`;
 
+    /* D: an emailed Construction Agreement carries its printed master — the Terms and both Notice of
+       Cancellation copies it says are attached — and its menu-path sentence links to it. Homeowner
+       path only; best-effort: a failed fetch sends the agreement with the link alone. */
+    const master = isCarrier ? null : masterFor(html);
+    const sendHtml = master ? masterLinked(html, master, APP_ORIGIN) : html;
+    const extra = [];
+    if (master) {
+      try {
+        const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 4000);
+        const pr = await fetch(APP_ORIGIN + master.href, { signal: ctl.signal });
+        clearTimeout(tm);
+        if (pr.ok) {
+          const buf = Buffer.from(await pr.arrayBuffer());
+          if (buf.length > 1000 && buf.length < 8000000 && buf.slice(0, 4).toString('latin1') === '%PDF') {
+            extra.push({ filename: master.name + ' - Terms and Notice of Cancellation.pdf', content: buf.toString('base64') });
+          }
+        }
+      } catch (_p) {}
+    }
+    const masterP = master ? `<p><b>Your Terms and Conditions and both Notice of Cancellation copies</b> ${extra.length ? 'are attached as a PDF, and are' : 'are'} online here:
+      <a href="${esc(APP_ORIGIN + master.href + '#page=' + master.page)}">${esc(master.name)} (PDF, pages ${master.pages})</a></p>` : '';
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}` },
@@ -124,9 +189,9 @@ export default async function handler(req, res) {
         // 1273: now there is one — Email to client lets the rep edit it. It is
         // `subj` (one line, 200 chars); From and reply_to are unchanged.
         subject: (isCarrier && subject) || subj || `${title} — Cardinal Roofing & Renovations`,
-        html: isCarrier ? carrierBody : (msgHtml ? editedBody : body),
+        html: isCarrier ? carrierBody : (msgHtml ? editedBody : body).replace(/(\s*)<\/div>\s*$/, (m, sp) => (masterP ? sp + masterP : '') + m),
         attachments: [{ filename: safeName + '.html',
-                        content: Buffer.from(html, 'utf8').toString('base64') }]
+                        content: Buffer.from(sendHtml, 'utf8').toString('base64') }].concat(extra)
       })
     });
     if (!r.ok) { res.status(502).json({ error: 'Email send failed', detail: (await r.text()).slice(0, 300) }); return; }

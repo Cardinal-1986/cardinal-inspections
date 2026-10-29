@@ -14,77 +14,252 @@ const SIGN_RX = /(<div class="line">)(<\/div>\s*<div class="lbl">\s*Client Accep
    buyer slot is exactly class="sigslot" (the in-person pad rewrites it to
    class="sigslot signed" when filled), so this cannot double-offer signing. */
 const SLOT_RX = /class="sigslot" data-sig="buyer"/;
+/* D: an agreement whose buyer has signed (in person or here) but whose NAMED co-buyer has not */
+const COSLOT_RX = /class="sigslot" data-sig="cobuyer"/;
+const BUYER_SIGNED_RX = /class="sigslot signed" data-sig="buyer"/;
+/* D (contracts + client documents judges): a Construction Agreement tells the buyer its Terms and
+   Conditions and both Notice of Cancellation copies are "attached" and are "the printed master", then
+   names a STAFF menu path (Menu > Company Documents > ...) a homeowner cannot open. The statutory text
+   is deliberately never retyped (ORC 1345.23), so what reaches the buyer is the printed master itself:
+   the trade's PDF that already ships publicly in docs/ (pages = its Terms and both notices).
+   KEEP IN SYNC: this block is byte-identical in api/share.js, api/clientsign.js and api/senddoc.js. */
+const MASTERS = {
+  roof:   { href: '/docs/Cardinal_Roofing_Contract.pdf', page: 3, pages: '3\u20135', name: 'Roofing Construction Agreement' },
+  siding: { href: '/docs/Cardinal_Siding_Contract.pdf', page: 2, pages: '2\u20134', name: 'Siding Construction Agreement' },
+  gutter: { href: '/docs/Cardinal_Gutter_Contract.pdf', page: 3, pages: '3\u20135', name: 'Gutter Construction Agreement' }
+};
+function masterFor(html) {
+  const h = String(html || '');
+  if (!/Notice of Cancellation/i.test(h)) return null;
+  const m = /class="est-title">\s*(ROOFING|SIDING|GUTTER)\s+CONSTRUCTION/i.exec(h) ||
+            /Company Documents\s*(?:&#8594;|\u2192)\s*(Roofing|Siding|Gutter)s?\b/i.exec(h);
+  if (!m) return null;
+  const k = m[1].toLowerCase();
+  return MASTERS[k === 'roofing' ? 'roof' : k] || null;
+}
+const MENU_RX = /<b>\s*(?:&#9776;|\u2630)\s*Menu\s*(?:&#8594;|\u2192)\s*Company Documents\s*(?:&#8594;|\u2192)\s*(?:Roofing|Siding|Gutters)\s*(?:&#8594;|\u2192)\s*([^<]*?\(Master\))\s*<\/b>/g;
+function masterLinked(html, master, origin) {
+  if (!master) return html;
+  const href = (origin || '') + master.href + '#page=' + master.page;
+  return String(html).replace(MENU_RX, (all, name) => '<a href="' + href + '" target="_blank" rel="noopener" data-cr-master="1"><b>' +
+    name.replace(/\s+/g, ' ') + '</b> (PDF, pages ' + master.pages + ')</a>');
+}
+/* the agreement's OWN right-to-cancel sentence, quoted as written — never paraphrased */
+function cancelLine(html) {
+  const m = /<b>\s*(You, the buyer, may cancel this transaction[^<]*?)\s*<\/b>/i.exec(String(html || ''));
+  return m ? m[1].replace(/\s+/g, ' ').trim() : '';
+}
+/* one value cell of the agreement's Customer Information table; a [placeholder] reads as empty */
+function cellText(html, label) {
+  const m = new RegExp('<td class="k">' + label + '<\\/td>\\s*<td[^>]*>([\\s\\S]*?)<\\/td>').exec(String(html || ''));
+  if (!m) return '';
+  const t = m[1].replace(/<[^>]*>/g, ' ').replace(/&nbsp;|\u00a0/g, ' ').replace(/&amp;/g, '&')
+    .replace(/&#39;|&#x27;/g, "'").replace(/\s+/g, ' ').trim();
+  return t.charAt(0) === '[' ? '' : t.slice(0, 80);
+}
+const EMAIL_RX = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[A-Za-z]{2,}$/;
+const INIT_RX = /(Initials(?:\s|&nbsp;|\u00a0)*)<span class="ph">\[_*\]<\/span>/g;
 
-function signUi(token) {
+/* D: a contract on a phone. 1402 served every est-head document at a 900px Letter viewport, so a
+   homeowner signing an agreement on a phone read it at ~6px on the glass while the sign bar was zoomed
+   2.3x over it. Estimates and invoices keep 1278's Letter page (Theo's ruling for estimates); a
+   CONTRACT is served at the phone's own width with the agreement's existing 640px rules switched on,
+   and this sheet takes the Letter-only sizes (8.5in body, 10pt type, a two-column spec grid) down to a
+   readable phone (and upright-iPad) page. Screen only: print is untouched, and so is anything wider. */
+const CONTRACT_PHONE = '<meta name="viewport" content="width=device-width, initial-scale=1"><style id="crContractPhone">' +
+  'html{-webkit-text-size-adjust:100%;text-size-adjust:100%}' +
+  /* 860, not 640: the Letter body is 8.5in (816px), so an iPad held upright (768) would scroll sideways */
+  '@media screen and (max-width:860px){' +
+  'body{width:auto !important;max-width:none !important;margin:0 !important;padding:18px 14px 132px !important;font-size:16px !important;line-height:1.55 !important}' +
+  '.est-logo{width:190px !important;max-width:62% !important}.est-title{font-size:23px !important;line-height:1.2 !important}.est-sub{font-size:14px !important}' +
+  'h2.sec{font-size:19px !important;margin:24px 0 8px !important}' +
+  'p,li,.specline,.sopt,.descbox,.note,table.meta,table.facts,table.items,.crsel-ro{font-size:16px !important;line-height:1.55 !important}' +
+  '.specnote,.specsub,.dim,.roofdiag figcaption,p[style*="9.5pt"],p[style*="9pt"]{font-size:14px !important}' +
+  '.specsec h3{font-size:16px !important}.specgrid{display:block !important}.soptrow{grid-template-columns:1fr !important}' +
+  'table.meta,table.meta>tbody{display:block !important;width:100% !important}' +
+  'table.meta tr:not([data-emptyblock]){display:grid !important;grid-template-columns:minmax(96px,36%) minmax(0,1fr)}' +
+  'table.meta td:not([data-emptyph]):not([data-crspacer]){display:block !important;width:auto !important;padding:8px 10px !important;overflow-wrap:anywhere}' +
+  'table.meta td[data-crspacer]{display:none !important}' +
+  '.sigslot{min-width:0 !important;max-width:100%}.sigslot img{max-width:100%;height:auto;max-height:56px}' +
+  '#crMasterCard{font-size:16px !important}}</style>';
+const CONTRACT_FIX = '<style id="crContractFix">' +
+  '.ph[data-blankph],.crsel-ro[data-blankph]{background:none !important;border-bottom:1px solid #1b1b1b;border-radius:0 !important;padding:0 !important;display:inline-block;min-width:3.2em}' +
+  '.crsel-ro{border-bottom:1px solid #555;padding:0 2px}.cbx{cursor:default}a[data-cr-master]{color:#9c1822}@media print{#crMasterCard{display:none !important}}</style>' +
+  '<script id="crContractFixJs">(function(){function run(){var d=document;' +
+  /* the signature stamps the STORED document, so an answer the client changed here would never reach it:
+     each dropdown shows its chosen answer as text, a blank one as a blank line */
+  'd.querySelectorAll("select").forEach(function(s){var o=s.options[s.selectedIndex];var v=(o&&o.value)?(o.textContent||"").trim():"";' +
+  'var sp=d.createElement("span");sp.className="crsel-ro";if(v)sp.textContent=v;else{sp.setAttribute("data-blankph","1");sp.textContent="\\u2003\\u2003";}' +
+  's.parentNode.replaceChild(sp,s);});' +
+  'd.querySelectorAll("[contenteditable]").forEach(function(e){e.removeAttribute("contenteditable");});' +
+  /* a field the rep left unfilled is a blank on the form, not the editor's yellow [hint] */
+  'd.querySelectorAll(".ph").forEach(function(el){var t=(el.textContent||"").trim();if(t.charAt(0)!=="[")return;' +
+  'if(/^(P|DIV|LI)$/.test(el.tagName)){el.setAttribute("data-emptyblock","1");return;}' +
+  'el.setAttribute("data-blankph","1");el.textContent="\\u2003\\u2003";});' +
+  /* a heading left over nothing (the editor's Notes line) goes; a .note box carries its own bold label */
+  'd.querySelectorAll("h2.sec").forEach(function(h){var el=h.nextElementSibling,gone=0,keep=0;' +
+  'while(el&&!(el.tagName==="H2"&&el.classList.contains("sec"))){if(el.getAttribute("data-emptyblock"))gone++;' +
+  'else if(!(el.classList.contains("note")||/^(restoreVeil|cs|crPay)/.test(el.id||"")||el.tagName==="SCRIPT"||el.tagName==="STYLE")){keep=1;break;}' +
+  'el=el.nextElementSibling;}if(gone&&!keep)h.setAttribute("data-emptyblock","1");});' +
+  /* 1364's spacer pair in the header (an empty label beside an empty value) is dropped on a phone only */
+  'd.querySelectorAll("table.meta td.k").forEach(function(k){var v=k.nextElementSibling;' +
+  'if(!(k.textContent||"").replace(/\\u00a0/g," ").trim()&&v&&!(v.textContent||"").replace(/\\u00a0/g," ").trim()){k.setAttribute("data-crspacer","1");v.setAttribute("data-crspacer","1");}});' +
+  '}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",run);else run();})();</scr' + 'ipt>';
+/* D (Builder F's note): an inspection report printed from its link gets the print rules the editor's
+   ensurePrintFix carries from 1423 -- the cover ends its own page, a signature keeps its label, the findings
+   header stays with its rows -- and MODERATE reads dark on amber (white was 2.17:1) on screen and paper.
+   Reports saved before 1423 carry none of it. KEEP IN SYNC with ensurePrintFix() in index.html. */
+const REPORT_PRINT = '<style id="crReportPrint">.chip.mod{color:#1b1b1b !important}@media print{' +
+  '.cover{min-height:0 !important;break-after:page}' +
+  '.cover-logo{width:190px !important;margin:0 0 5mm !important}.cover-band{margin-bottom:6mm !important}' +
+  '.cover-photo{height:85mm !important}.cover-title{margin:6mm 0 1mm !important}.cover-sub{margin-bottom:5mm !important}' +
+  '.cover-meta{padding-top:4mm !important}.cover-meta td{padding:2px 0 !important}' +
+  '[data-cardinal-summary-heading] ~ .sign,[data-cardinal-summary-heading] ~ .sign .col{break-inside:avoid}' +
+  '[data-cardinal-summary-heading] ~ table.concerns tr:first-child{break-after:avoid}}</style>';
+/* D: the printed master, on the page, right above the signatures */
+function masterCard(master) {
+  const href = master.href + '#page=' + master.page;
+  return '<div id="crMasterCard" style="border:1.5px solid #C8202E;border-radius:10px;padding:12px 14px;margin:16px 0;background:#fff7f7;' +
+    'font-family:\'Segoe UI\',Arial,sans-serif;color:#1b1b1b;">' +
+    '<div style="font-weight:800;font-size:1.05em;">Terms and Conditions &amp; Notice of Cancellation</div>' +
+    '<div style="margin-top:4px;line-height:1.45;">Your agreement includes the Terms and Conditions and both Notice of Cancellation copies. Please read them before you sign.</div>' +
+    '<a id="crMasterOpen" href="' + href + '" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;min-height:44px;line-height:44px;' +
+    'padding:0 16px;border-radius:8px;background:#C8202E;color:#ffffff;font-weight:800;text-decoration:none;">Open the Terms &amp; Notice (PDF)</a></div>';
+}
+function withMasterCard(html, master) {
+  const at = html.indexOf('data-sig="buyer"', Math.max(0, html.search(/<body[^>]*>/i)));
+  const tbl = at === -1 ? -1 : html.lastIndexOf('<table', at);
+  if (tbl === -1) return html;
+  return html.slice(0, tbl) + masterCard(master) + '\n' + html.slice(tbl);
+}
+
+const escH = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/* D: the signing sheet. The remote signer used to get ONE box: the agreement's three "Initials [__]"
+   stayed blank, a named co-buyer had no way to sign, nothing said a copy was coming, and the
+   right-to-cancel notice was nowhere on it. cfg (all optional, so an estimate's sheet is unchanged
+   apart from the copy field): mode 'buyer'|'cobuyer', initials (how many slots), coName, email
+   (the address the agreement itself carries), master, cancel. */
+function signUi(token, cfg) {
+  const c = cfg || {};
+  const co = c.mode === 'cobuyer';
+  const nInit = co ? 0 : Math.max(0, Number(c.initials) || 0);
+  const coName = String(c.coName || '');
+  const FONT = "'Segoe UI',Arial,sans-serif";
+  const inBox = `display:block;width:100%;box-sizing:border-box;margin:4px 0 12px;padding:10px 12px;border:1px solid #c9c2bf;border-radius:8px;font:16px ${FONT};`;
+  const lab = `display:block;font:700 13px ${FONT};color:#444;`;
+  const note = `margin:-6px 0 12px;color:#5c5c5c;font:13px/1.45 ${FONT};`;
+  const btn2 = `border:1px solid #c9c2bf;background:#fff;border-radius:8px;min-height:44px;padding:8px 14px;font:600 13px ${FONT};cursor:pointer;`;
+  const pad = (id) => `<canvas id="${id}" width="500" height="160" style="width:100%;border:2px dashed #c9c2bf;border-radius:10px;
+      background:#fff;touch-action:none;display:block;"></canvas>`;
+  const href = c.master ? c.master.href + '#page=' + c.master.page : '';
+  const notice = !c.master ? '' : `
+    <div id="csNotice" style="margin:0 0 12px;padding:10px 12px;border:1px solid #efc6ca;border-radius:10px;background:#fff7f7;
+      color:#2b2b2b;font:13.5px/1.45 ${FONT};">${c.cancel ? '<b>' + escH(c.cancel) + '</b> ' : ''}<a id="csNoticeLink" href="${escH(href)}"
+      target="_blank" rel="noopener" style="color:#9c1822;font-weight:700;">Read the Terms and Conditions and the Notice of Cancellation (PDF)</a></div>`;
+  const initials = !nInit ? '' : `
+    <label style="${lab}">Your initials
+      <input id="csInit" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" style="${inBox}max-width:9em;">
+    </label>
+    <div style="${note}">This agreement asks for your initials in ${nInit} ${nInit === 1 ? 'place' : 'places'}. They are added to each one.</div>`;
+  const coBlock = (co || !coName) ? '' : `
+    <div id="csCoWrap" style="margin-top:16px;padding-top:12px;border-top:1px solid #ece7e3;">
+      <div style="font:700 14px ${FONT};color:#2b2b2b;margin-bottom:6px;">Co-buyer: ${escH(coName)}</div>
+      <label style="display:flex;align-items:center;gap:10px;min-height:44px;font:600 13.5px ${FONT};color:#444;">
+        <input id="csCoLater" type="checkbox" style="width:22px;height:22px;flex:none;"> The co-buyer will sign later from this same link</label>
+      <div id="csCoBox">
+        <label style="${lab}">Co-buyer&#8217;s full name
+          <input id="csCoName" type="text" autocomplete="off" value="${escH(coName)}" style="${inBox}">
+        </label>
+        ${pad('csCoPad')}
+        <div style="margin-top:8px;"><button id="csCoClear" type="button" style="${btn2}">Clear</button></div>
+      </div>
+    </div>`;
   return `
 <div id="csBar" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#C8202E;color:#fff;
-  padding:12px 16px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
-  font:600 15px 'Segoe UI',Arial,sans-serif;box-shadow:0 -4px 14px rgba(0,0,0,.25);">
-  <span>Review complete?</span>
-  <button id="csOpen" style="border:0;border-radius:8px;background:#fff;color:#C8202E;
-    font:800 15px 'Segoe UI',Arial,sans-serif;padding:10px 22px;cursor:pointer;">Accept &amp; Sign</button>
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+  font:600 15px ${FONT};box-shadow:0 -4px 14px rgba(0,0,0,.25);">
+  <span>${co ? 'Co-buyer: review complete?' : 'Review complete?'}</span>
+  <button id="csOpen" style="border:0;border-radius:8px;background:#fff;color:#C8202E;min-height:44px;
+    font:800 15px ${FONT};padding:10px 22px;cursor:pointer;">Accept &amp; Sign</button>
 </div>
 <div id="csOverlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(20,10,8,.65);overflow:auto;">
-  <div style="max-width:540px;background:#fff;border-radius:14px;margin:8vh auto;padding:20px 22px;
-    font-family:'Segoe UI',Arial,sans-serif;">
-    <h3 style="margin:0 0 4px;color:#2b2b2b;">Accept &amp; Sign</h3>
-    <p style="margin:0 0 12px;color:#666;font-size:13.5px;">By signing you accept this document as presented.
-    Sign below with your finger or mouse.</p>
-    <label style="display:block;font:700 13px 'Segoe UI',Arial,sans-serif;color:#444;">Your full name
-      <input id="csName" type="text" autocomplete="name" style="display:block;width:100%;box-sizing:border-box;
-        margin:4px 0 12px;padding:10px 12px;border:1px solid #c9c2bf;border-radius:8px;font:15px 'Segoe UI',Arial,sans-serif;">
+  <div style="max-width:540px;background:#fff;border-radius:14px;margin:6vh auto;padding:20px 22px;
+    font-family:${FONT};">
+    <h3 style="margin:0 0 4px;color:#2b2b2b;">${co ? 'Co-buyer: Accept &amp; Sign' : 'Accept &amp; Sign'}</h3>
+    <div style="margin:0 0 12px;color:#5c5c5c;font-size:13.5px;line-height:1.45;">By signing you accept this document as presented.
+    Sign below with your finger or mouse.</div>${notice}
+    <label style="${lab}">Your full name
+      <input id="csName" type="text" autocomplete="name" value="${co ? escH(coName) : ''}" style="${inBox}">
+    </label>${initials}
+    ${pad('csPad')}
+    <div style="margin-top:8px;"><button id="csClear" type="button" style="${btn2}">Clear</button></div>${coBlock}
+    <label style="${lab}margin-top:14px;">Email my signed copy to
+      <input id="csEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" value="${escH(c.email || '')}" style="${inBox}">
     </label>
-    <canvas id="csPad" width="500" height="160" style="width:100%;border:2px dashed #c9c2bf;border-radius:10px;
-      background:#fff;touch-action:none;display:block;"></canvas>
-    <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">
-      <button id="csClear" style="border:1px solid #c9c2bf;background:#fff;border-radius:8px;padding:8px 14px;
-        font:600 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;">Clear</button>
-      <span>
-        <button id="csCancel" style="border:1px solid #c9c2bf;background:#fff;border-radius:8px;padding:8px 14px;
-          font:600 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;">Cancel</button>
-        <button id="csApply" style="border:0;background:#C8202E;color:#fff;border-radius:8px;padding:10px 20px;
-          font:800 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;">Apply Signature</button>
-      </span>
+    <div style="${note}">Leave it blank and this page is your copy &#8212; open this link again any time.</div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button id="csCancel" type="button" style="${btn2}">Cancel</button>
+      <button id="csApply" type="button" style="border:0;background:#C8202E;color:#fff;border-radius:8px;min-height:44px;padding:10px 20px;
+        font:800 14px ${FONT};cursor:pointer;">Apply Signature</button>
     </div>
-    <div id="csErr" style="color:#C8202E;font:600 13px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
+    <div id="csErr" role="alert" style="color:#b01b28;font:600 13px ${FONT};margin-top:8px;"></div>
   </div>
 </div>
 <script>
 (function(){
-  var TOKEN=${JSON.stringify(token)};
-  var pad=document.getElementById('csPad'),ctx=pad.getContext('2d'),drawn=false,down=false;
-  function reset(){ctx.fillStyle='#fff';ctx.fillRect(0,0,pad.width,pad.height);
-    ctx.strokeStyle='#1b1b6e';ctx.lineWidth=2.4;ctx.lineCap='round';ctx.lineJoin='round';drawn=false;}
-  function pos(e){var r=pad.getBoundingClientRect();var t=e.touches?e.touches[0]:e;
-    return {x:(t.clientX-r.left)*(pad.width/r.width),y:(t.clientY-r.top)*(pad.height/r.height)};}
-  function start(e){e.preventDefault();down=true;var p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);}
-  function move(e){if(!down)return;e.preventDefault();var p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();drawn=true;}
-  pad.addEventListener('mousedown',start);pad.addEventListener('mousemove',move);
-  document.addEventListener('mouseup',function(){down=false;});
-  pad.addEventListener('touchstart',start,{passive:false});
-  pad.addEventListener('touchmove',move,{passive:false});
-  pad.addEventListener('touchend',function(){down=false;});
-  var ov=document.getElementById('csOverlay');
-  document.getElementById('csOpen').addEventListener('click',function(){reset();ov.style.display='block';});
-  document.getElementById('csCancel').addEventListener('click',function(){ov.style.display='none';});
-  document.getElementById('csClear').addEventListener('click',reset);
-  document.getElementById('csApply').addEventListener('click',function(){
-    var err=document.getElementById('csErr');
-    var name=document.getElementById('csName').value.trim();
+  var TOKEN=${JSON.stringify(token)},CO=${co ? 'true' : 'false'};
+  function $(id){return document.getElementById(id);}
+  function mk(id){var c=$(id);if(!c)return null;var x=c.getContext('2d'),dr=false,dn=false;
+    function reset(){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+      x.strokeStyle='#1b1b6e';x.lineWidth=2.4;x.lineCap='round';x.lineJoin='round';dr=false;}
+    function pos(e){var r=c.getBoundingClientRect();var t=e.touches?e.touches[0]:e;
+      return {x:(t.clientX-r.left)*(c.width/r.width),y:(t.clientY-r.top)*(c.height/r.height)};}
+    function start(e){e.preventDefault();dn=true;var p=pos(e);x.beginPath();x.moveTo(p.x,p.y);}
+    function move(e){if(!dn)return;e.preventDefault();var p=pos(e);x.lineTo(p.x,p.y);x.stroke();dr=true;}
+    c.addEventListener('mousedown',start);c.addEventListener('mousemove',move);
+    document.addEventListener('mouseup',function(){dn=false;});
+    c.addEventListener('touchstart',start,{passive:false});
+    c.addEventListener('touchmove',move,{passive:false});
+    c.addEventListener('touchend',function(){dn=false;});
+    return {reset:reset,drawn:function(){return dr;},png:function(){return c.toDataURL('image/png');}};}
+  var pad=mk('csPad'),cop=mk('csCoPad'),ov=$('csOverlay');
+  $('csOpen').addEventListener('click',function(){pad.reset();if(cop)cop.reset();ov.style.display='block';});
+  $('csCancel').addEventListener('click',function(){ov.style.display='none';});
+  $('csClear').addEventListener('click',function(){pad.reset();});
+  if($('csCoClear'))$('csCoClear').addEventListener('click',function(){cop.reset();});
+  if($('csCoLater'))$('csCoLater').addEventListener('change',function(){$('csCoBox').style.display=this.checked?'none':'block';});
+  $('csApply').addEventListener('click',function(){
+    var err=$('csErr');
+    var name=$('csName').value.trim();
     if(!name){err.textContent='Please enter your full name.';return;}
-    if(!drawn){err.textContent='Please sign in the box above.';return;}
+    var ini=$('csInit')?$('csInit').value.trim():'';
+    if($('csInit')&&!/[A-Za-z]/.test(ini)){err.textContent='Please type your initials.';return;}
+    if(!pad.drawn()){err.textContent='Please sign in the box above.';return;}
+    var cob=null;
+    if(cop&&!($('csCoLater')&&$('csCoLater').checked)){
+      var cn=$('csCoName').value.trim();
+      if(!cn){err.textContent='Please enter the co-buyer\\u2019s full name, or tick \\u201cwill sign later\\u201d.';return;}
+      if(!cop.drawn()){err.textContent='The co-buyer signs in the second box, or tick \\u201cwill sign later\\u201d.';return;}
+      cob={sig:cop.png(),name:cn};
+    }
+    var em=$('csEmail')?$('csEmail').value.trim():'';
+    if(em&&!/^[^\\s@]+@[^\\s@]+\\.[A-Za-z]{2,}$/.test(em)){err.textContent='Please check the email address, or leave it blank.';return;}
     var btn=this;btn.disabled=true;btn.textContent='Signing\\u2026';err.textContent='';
     fetch('/api/clientsign',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({t:TOKEN,sig:pad.toDataURL('image/png'),name:name})})
+      body:JSON.stringify({t:TOKEN,role:CO?'cobuyer':'buyer',sig:pad.png(),name:name,initials:ini,email:em,cobuyer:cob})})
     .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d};});})
     .then(function(x){
       if(!x.ok){throw new Error((x.d&&x.d.error)||'Could not sign');}
-      ov.innerHTML='<div style="max-width:420px;background:#fff;border-radius:14px;margin:16vh auto;padding:30px;'+
-        'text-align:center;font-family:\\'Segoe UI\\',Arial,sans-serif;">'+
-        '<div style="font-size:44px;color:#1d6b34;">\\u2713</div>'+
+      var sent=!!(x.d&&x.d.copy==='sent');
+      var card=document.createElement('div');card.id='csDone';
+      card.setAttribute('style','max-width:420px;background:#fff;border-radius:14px;margin:16vh auto;padding:30px;text-align:center;font-family:\\'Segoe UI\\',Arial,sans-serif;');
+      card.innerHTML='<div style="font-size:44px;color:#1d6b34;">\\u2713</div>'+
         '<h3 style="margin:6px 0;color:#2b2b2b;">Signed \\u2014 thank you!</h3>'+
-        '<p style="color:#666;font-size:14px;">Cardinal Roofing &amp; Renovations has been notified.</p></div>';
-      setTimeout(function(){location.reload();},1600);
+        '<div id="csDoneCopy" style="color:#444;font-size:15px;line-height:1.45;margin:10px 0;"></div>'+
+        '<div style="color:#5c5c5c;font-size:14px;">Cardinal Roofing &amp; Renovations has been notified.</div>';
+      ov.innerHTML='';ov.appendChild(card);
+      $('csDoneCopy').textContent=sent?('A signed copy is on its way to '+em+'.'):'This page is your signed copy \\u2014 open this link again any time, or print it.';
+      setTimeout(function(){location.reload();},sent?2600:3400);
     })
     .catch(function(e){btn.disabled=false;btn.textContent='Apply Signature';err.textContent=e.message;});
   });
@@ -383,9 +558,9 @@ export default async function handler(req, res) {
     // 1274: the estimate's price table stacks on a phone. Injected here so every
     // estimate already sent reads properly; new ones carry it in their template.
     const ITEMS_PHONE = '@media screen and (max-width:560px){table.items thead{display:none}table.items,table.items tbody,table.items tfoot{display:block;width:100%}table.items tr{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:9px 4px;border-bottom:1px solid var(--hair,#e5e2dc)}table.items td{display:block;width:auto !important;padding:0 !important;border:0 !important}table.items tbody tr>td:first-child{flex:1 1 100%;margin-bottom:3px}table.items td.qty,table.items td.unit,table.items td.rate{font-size:10.5pt;color:#555;text-align:left}table.items td:empty{display:none}table.items td.unit+td.rate:not(:empty):not(:last-child)::before{content:"\\00d7  "}table.items tr>td.rate:last-child{margin-left:auto;font-size:11pt;font-weight:700;color:var(--ink,#1d1d1f)}table.items tr.zeb{background:#f7f6f3}table.items tr.sec-banner{padding:0;border:0}table.items tr.sec-banner>td{flex:1 1 100%;padding:10px 9px 8px !important}table.items tr.sec-sub>td:first-child{flex:1 1 auto;margin:0}table.items tr.sec-sub td.val{margin-left:auto}table.items tfoot tr{border:0;justify-content:flex-end;padding:4px}table.items tfoot td:empty{display:none}table.items tfoot td.val{margin-left:14px}table.items tfoot tr.grand{border-top:2px solid var(--ink,#1d1d1f);padding-top:8px;margin-top:4px}}';
-    const FIX = '<style id="shareFix">.howto{display:none !important}#restoreVeil{display:none !important}' + ITEMS_PHONE +   /* 1402: the editor's veil */
+    const FIX = '<style id="shareFix">.howto{display:none !important}#restoreVeil{display:none !important}.items-hint{display:none !important}' + ITEMS_PHONE +   /* 1402: the editor's veil */
       '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important}' +
-      '@media print{.page-break:not(h2){display:none !important}h2.sec{break-after:avoid}' +   /* 1402: the Terms heading is h2.sec.page-break */
+      '@media print{.page-break:not(h2){display:none !important}h2.sec{break-after:avoid}table.items tfoot{display:table-row-group}' +   /* 1402: the Terms heading is h2.sec.page-break */
       '#crPayBar,#crPaySheet,#csBar,#csOverlay{display:none !important}' +
       '.figrow,.fig,tr{break-inside:avoid}' +
       '@page{@bottom-center{content:"5735 Webster St, Dayton OH 45414  \u00b7  937.576.6753  \u00b7  Admin@cardinalrenovations.net";' +
@@ -409,6 +584,11 @@ export default async function handler(req, res) {
       'return !c.textContent.replace(/\\u00a0/g," ").trim();}' +
       'd.querySelectorAll("p, li").forEach(function(el){if(el.closest(".fig"))return;' +
       'if(blank(el))el.setAttribute("data-emptyblock","1");});' +
+      /* D: an h3 whose whole block was hidden as empty is not left standing alone */
+      'd.querySelectorAll("h3").forEach(function(h){if(h.closest(".fig"))return;var el=h.nextElementSibling,saw=0,keep=0;' +
+      'while(el&&!/^H[23]$/.test(el.tagName)&&!(el.classList&&el.classList.contains("page-break"))){saw=1;' +
+      'if(!(el.getAttribute("data-emptyblock")||el.getAttribute("data-emptyph")||el.getAttribute("data-emptyrow")||el.getAttribute("data-emptyfig"))){keep=1;break;}' +
+      'el=el.nextElementSibling;}if(saw&&!keep)h.setAttribute("data-emptyblock","1");});' +
       'd.querySelectorAll("tr").forEach(function(tr){if(!tr.querySelector("[data-emptyph]"))return;' +
       'var cells=Array.prototype.filter.call(tr.querySelectorAll("td"),function(td){' +
       'return !td.classList.contains("k")&&!td.classList.contains("n")&&!td.classList.contains("pr");});' +
@@ -431,7 +611,9 @@ export default async function handler(req, res) {
       'if(prev&&prev.classList&&prev.classList.contains("page-break"))prev.setAttribute("data-emptysec","1");' +
       'hiddenTitles.push(hc.textContent.replace(/\\u00a0/g," ").trim());}});' +
       'var num=0;secs.forEach(function(h){var sp=h.querySelector(".num");' +
-      'if(!sp||h.getAttribute("data-emptysec"))return;num++;sp.textContent=String(num);});' +
+      'if(!sp||h.getAttribute("data-emptysec"))return;' +
+      'if(!/^\\s*\\d+\\s*$/.test(sp.textContent||""))return;' +   /* D: the Contents mark is not a number */
+      'num++;sp.textContent=String(num);});' +
       'var tocNum=0;d.querySelectorAll(".toc-row").forEach(function(row){' +
       'var t=row.querySelector(".t");if(!t)return;' +
       'var title=t.textContent.replace(/\\u00a0/g," ").replace(/^\\s*\\d+\\s*/,"").trim();' +
@@ -446,21 +628,51 @@ export default async function handler(req, res) {
     // at Letter width too, so a client's phone never restacks them — and never
     // enlarges one paragraph of it on its own (text autosizing).
     let letterView = false;   // 1279: LETTER_UI zooms the bars back up on this page
+    const isInvoiceDoc = /^invoice/i.test(String(rows[0].title || '').trim());   // 1313 (moved up for D)
+    /* D: a contract — a Construction Agreement, the Service Contract, an uploaded signed one */
+    const src0 = String(rows[0].html || '');
+    const isContractDoc = !isInvoiceDoc && (/^contract/i.test(String(rows[0].title || '').trim()) || /data-sig="buyer"/.test(src0));
+    const master = isContractDoc ? masterFor(src0) : null;
     /* 1402: any est-head document — invoices (no table.items) and templates whose table carries an id were
        missed, and with no viewport meta a phone laid them out at 980px: a 17px Pay button. */
-    if (/class="est-head"/.test(html)) {
+    if (/class="est-head"/.test(html) && !isContractDoc) {
       letterView = true;
       const LV = '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>';
       if (/<meta name="viewport" content="[^"]*">/.test(html)) html = html.replace(/<meta name="viewport" content="[^"]*">/, LV);
       else if (/<head[^>]*>/i.test(html)) html = html.replace(/<head[^>]*>/i, m => m + LV);
       else html = LV + html;
+    } else if (isContractDoc) {
+      /* D: the contract at the phone's width (CONTRACT_PHONE), the menu path replaced by the printed
+         master, the master card above the signatures, and every answer frozen (CONTRACT_FIX) */
+      if (/<meta name="viewport" content="[^"]*">/.test(html)) html = html.replace(/<meta name="viewport" content="[^"]*">/, CONTRACT_PHONE);
+      else if (/<head[^>]*>/i.test(html)) html = html.replace(/<head[^>]*>/i, m => m + CONTRACT_PHONE);
+      else html = CONTRACT_PHONE + html;
+      html = masterLinked(html, master, '');
+      if (master) html = withMasterCard(html, master);
+      html = html.includes('</head>') ? html.replace('</head>', CONTRACT_FIX + '\n</head>') : CONTRACT_FIX + html;
+    } else if (!/<meta name="viewport"/i.test(html)) {
+      /* D: an inspection report carries no viewport meta, so a phone laid it out at 980px and
+         autosized its paragraphs to ~20px over ~6px tables; its own 640px rules never fired. */
+      const RV = '<meta name="viewport" content="width=device-width, initial-scale=1"><style id="crReportPhone">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}@media screen and (max-width:640px){table{max-width:100%}img{max-width:100%;height:auto}.toc-row .t{white-space:normal !important;min-width:0}}</style>';
+      if (/<head[^>]*>/i.test(html)) html = html.replace(/<head[^>]*>/i, m => m + RV);
+      else html = RV + html;
+    }
+    if (!isContractDoc && /data-cardinal-summary-heading/.test(src0)) {   // D: a report's print rules (REPORT_PRINT)
+      html = html.includes('</head>') ? html.replace('</head>', REPORT_PRINT + '\n</head>') : REPORT_PRINT + html;
     }
     // 1313: an invoice is paid, never signed — even one made before invoices lost their
     // signature line. Without this, Accept & Sign took the place of the pay bar.
-    const isInvoiceDoc = /^invoice/i.test(String(rows[0].title || '').trim());
-    const signable = !isInvoiceDoc && (SIGN_RX.test(html) || SLOT_RX.test(html)) && !html.includes('data-clientsigned');
+    const buyerOpen = !isInvoiceDoc && (SIGN_RX.test(html) || SLOT_RX.test(html)) && !html.includes('data-clientsigned');
+    /* D: a co-buyer named on the agreement who has not signed yet signs from the same link */
+    const coName = cellText(src0, 'Co-buyer');
+    const coOpen = !isInvoiceDoc && !buyerOpen && !!coName && COSLOT_RX.test(src0) && BUYER_SIGNED_RX.test(src0);
+    const signable = buyerOpen || coOpen;
     if (signable) {
-      const ui = signUi(t);
+      const cellEmail = cellText(src0, 'Email');
+      const ui = signUi(t, { mode: coOpen ? 'cobuyer' : 'buyer',
+        initials: buyerOpen ? (src0.match(INIT_RX) || []).length : 0,
+        coName: (coOpen || COSLOT_RX.test(src0)) ? coName : '',
+        email: EMAIL_RX.test(cellEmail) ? cellEmail : '', master, cancel: cancelLine(src0) });
       html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;
     } else {
       // Not awaiting a signature — offer payment if this document owes something:
