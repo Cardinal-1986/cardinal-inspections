@@ -307,7 +307,7 @@
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
-    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1405</span>
+    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1429</span>
     <span class="sp"></span>
     <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
@@ -467,7 +467,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
-var SD_BUILD = 1405; window.SD_BUILD = SD_BUILD;
+var SD_BUILD = 1429; window.SD_BUILD = SD_BUILD;
 /* Same publishable anon key api/*.js falls back to — public by design. */
 var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -1542,8 +1542,17 @@ el('printBtn').addEventListener('click', async function(){
     }).join('') + '</div>';
   });
   html = sdSafeHtml(html);   /* 1405 */
+  /* H (#30): the letter goes to an adjuster on Cardinal's letterhead -- the invoice's own company line,
+     the report logo (index.html's CARDINAL_LOGO_SRC), the date it was printed and the claim number.
+     The logo is an <img> inside #printArea, so the photo wait below waits for it too. */
+  var _lh = '<div style="display:flex;align-items:center;gap:14px;border-bottom:2px solid #c8202e;padding-bottom:10px;margin-bottom:14px;">' +
+    '<img src="/cardinal-report-logo.png" alt="Cardinal Roofing &amp; Renovations" style="height:54px;width:auto;">' +
+    '<div style="font:12px/1.5 Georgia,serif;color:#000;">Cardinal Roofing &amp; Renovations, LLC<br>5735 Webster Street, Dayton, Ohio 45414 &middot; ' +
+    '(937) 576-6753 &middot; www.cardinalrenovations.net</div></div>' +
+    '<div style="font:13px Georgia,serif;margin:0 0 12px;">' + esc(new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })) +
+    (S.claim && S.claim.claim_number ? ' &middot; Claim #' + esc(S.claim.claim_number) : '') + '</div>';
   el('printArea').innerHTML =
-    '<div style="font:14px/1.6 Georgia,serif;max-width:7.5in;margin:0 auto;padding:24px;">' +
+    '<div style="font:14px/1.6 Georgia,serif;max-width:7.5in;margin:0 auto;padding:24px;">' + _lh +
     '<h2 style="font-size:16px;">' + esc(el('subjEdit').value) + '</h2>' + html +
     codeAppendix(html) + '</div>';
   el('printArea').style.display = 'block';

@@ -4309,7 +4309,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1428<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1429<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8224,7 +8224,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
         <input type="text" id="qiAddrInp" placeholder="Type an address&#8230;" style="flex:1 1 220px;min-width:0;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;">
         <button class="chipbtn" id="qiAddrGo">Search</button>
-        <button class="chipbtn" id="qiLocBtn">&#128205; My location</button>
+        <button class="chipbtn" id="qiLocBtn" data-cri="pin crico">My location</button>
       </div>
       <div id="qiMap" style="height:340px;border:1px solid var(--line);border-radius:12px;background:#eee;position:relative;z-index:1;isolation:isolate;overflow:hidden;"></div>
       <div style="text-align:right;margin-top:12px;">
@@ -8257,8 +8257,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <h3 class="projsec" style="margin:0 0 4px;border:none;padding:0;" data-cri="person lg">Who is this inspection for?</h3>
     <p class="subnote" id="qiWhoAddr" style="margin:0 0 12px;"></p>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <button class="chipbtn" id="qiTabExist">&#128101; Existing client</button>
-      <button class="chipbtn" id="qiTabNew">&#128681; New prospect</button>
+      <button class="chipbtn" id="qiTabExist" data-cri="people crico">Existing client</button>
+      <button class="chipbtn" id="qiTabNew" data-cri="flag crico">New prospect</button>
     </div>
     <div id="qiExistPane">
       <input type="text" id="qiCliSearch" placeholder="Search clients&#8230;" style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-bottom:8px;">
@@ -8743,13 +8743,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <label class="tradeopt"><input type="checkbox" class="cbx" value="Misc"> Misc</label>
         </div>
         <label class="ldmore">Lead Source <span class="ldreq">*</span>
-          <select id="ldSource"><option value="">&#8212; select &#8212;</option>
-            <option>Canvasser</option><option>Commercial</option><option>Direct Mailings</option>
-            <option>Door hanger</option><option>Door Knocking</option><option>Habitat - Dayton</option>
-            <option>Internet</option><option>Internet: Google</option><option>Internet: Website</option>
-            <option>Non Profit</option><option>Other</option><option>Previous Customer</option>
-            <option>Real-estate</option><option>Real-estate: Kitty Hawk</option><option>Referral</option>
-            <option>Roofle</option><option>Telemarketing</option><option>Truck</option><option>Yard Sign</option></select></label>
+          <select id="ldSource"><option value="">&#8212; select &#8212;</option></select></label>
+          <!-- H (#18): its options are CR_LEAD_SOURCES, filled by the main block -- the same list the client page offers -->
 
         <label style="margin-top:12px;font-weight:700;">Claim Type <span style="color:var(--red);">*</span></label>
         <div class="ldctgrp" style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
@@ -12756,6 +12751,33 @@ async function acxDead(pr){
   try{ await setStage(pr.id, 'Lost'); renderOverview(); renderPipeline(); }
   catch(err){ showError('Could not update: ' + (err.message || err)); }
 }
+/* H (#18): the ONE lead-source vocabulary (see patch note above acxSrcOpts) */
+var CR_LEAD_SOURCES = ['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social',
+  'Canvasser','Commercial','Direct Mailings','Door hanger','Habitat - Dayton','Internet','Internet: Google','Internet: Website',
+  'Non Profit','Real-estate','Real-estate: Kitty Hawk','Roofle','Telemarketing','Truck','Other'];
+/* the New Lead form's old spellings of three of the same sources (case is matched separately) */
+var CR_LEAD_SOURCE_ALIAS = { 'door knocking':'Door knock', 'previous customer':'Repeat customer' };
+/* a stored lead_source as the vocabulary spells it; anything it does not know comes back as stored */
+function crLeadSource(v){
+  var s = String(v == null ? '' : v).trim();
+  if(!s) return '';
+  var k = s.toLowerCase();
+  if(Object.prototype.hasOwnProperty.call(CR_LEAD_SOURCE_ALIAS, k)) return CR_LEAD_SOURCE_ALIAS[k];
+  for(var i = 0; i < CR_LEAD_SOURCES.length; i++){ if(CR_LEAD_SOURCES[i].toLowerCase() === k) return CR_LEAD_SOURCES[i]; }
+  return s;
+}
+/* H (#18): the client page's Lead Source options. A value the list does not carry is shown as it is
+   stored (escaped) and selected, so a real source never renders as the blank dash. Display only:
+   the field is written when the select CHANGES, never by drawing it. */
+function acxSrcOpts(cur){
+  var c = crLeadSource(cur);
+  return acxOpts(CR_LEAD_SOURCES, c) + (c && CR_LEAD_SOURCES.indexOf(c) === -1 ? '<option selected>' + esc(c) + '</option>' : '');
+}
+(function(){
+  var sel = document.getElementById('ldSource');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">\u2014 select \u2014</option>' + CR_LEAD_SOURCES.map(function(o){ return '<option>' + esc(o) + '</option>'; }).join('');
+})();
 function acxOpts(list, cur){
   return '<option value="">\u2014</option>' + list.map(function(o){
     return '<option' + (cur === o ? ' selected' : '') + '>' + o + '</option>';
@@ -13028,7 +13050,7 @@ function renderAcxOverview(){
     '<div class="acxtrs" id="acxTrPanel"' + (acxTrOpen ? '' : ' hidden') + '>' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
       return '<label><input type="checkbox" class="cbx acxTr" value="' + t + '"' + (_acxTr.indexOf(t) !== -1 ? ' checked' : '') + '><span>' + t + '</span></label>';
     }).join('') + '</div>' +
-    '<span>Lead Source</span><div class="acxsl"><select class="acxsel" id="acxSrc" aria-label="Lead Source">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
+    '<span>Lead Source</span><div class="acxsl"><select class="acxsel" id="acxSrc" aria-label="Lead Source">' + acxSrcOpts(ck.lead_source) + '</select></div>' +
   '</div></div></div>';
   /* ---- google review (dark card) ---- */
   var rvAt = ck.review_requested_at, rvVia = ck.review_via;
@@ -14451,7 +14473,7 @@ function rptFilteredProjects(){
   return cacheProjects.filter(function(pr){
     if(rep && (pr.created_by || '') !== rep) return false;
     if(stg && normStage(pr.stage) !== stg) return false;
-    if(srcF && (rptCk(pr).lead_source || '') !== srcF) return false;
+    if(srcF && crLeadSource(rptCk(pr).lead_source) !== srcF) return false;   /* H (#18) */
     var v = projectValue(pr);
     if(!isNaN(mn) && v < mn) return false;
     if(!isNaN(mx) && v > mx) return false;
@@ -14572,7 +14594,7 @@ function openReportsView(){
     return '<option>' + s + '</option>'; }).join('');
   sSel.value = keepS;
   var sources = {};
-  cacheProjects.forEach(function(pr){ var s = rptCk(pr).lead_source; if(s) sources[s] = 1; });
+  cacheProjects.forEach(function(pr){ var s = crLeadSource(rptCk(pr).lead_source); if(s) sources[s] = 1; });
   var srcSel = document.getElementById('rptSource');
   var keepSrc = srcSel.value;
   srcSel.innerHTML = '<option value="">All sources</option>' + Object.keys(sources).sort().map(function(s){
@@ -14658,7 +14680,7 @@ function renderRptCompany(projs, from, to, pfrom, pto){
     options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ ticks:{ precision:0 } } } } });
 
   var srcCounts = {};
-  projs.forEach(function(p){ var s = rptCk(p).lead_source; if(s) srcCounts[s] = (srcCounts[s]||0)+1; });
+  projs.forEach(function(p){ var s = crLeadSource(rptCk(p).lead_source); if(s) srcCounts[s] = (srcCounts[s]||0)+1; });
   var srcKeys = Object.keys(srcCounts);
   document.getElementById('rptSourceCard').style.display = srcKeys.length ? 'block' : 'none';
   if(srcKeys.length){
@@ -17014,8 +17036,10 @@ galXferMenu.addEventListener('click', async function(e){
     if(docId === '__new__'){
       var cl2 = getChecklist(currentProject);
       if(!cl2){
+        /* H (#32): the sheet's buttons say what happens (the 1423 wording for this same question) */
         if(!await crAsk('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
-                    'OK = create the report anyway (blank specs, fill by hand)\nCancel = go complete the checklist first')){
+                    'Create the report anyway and fill the specs by hand, or do the checklist first.',
+                    { verb: 'Create it anyway', cancel: 'Do the checklist first', tone: 'plain' })){
           galleryView.style.display = 'none';
           projectView.style.display = 'block';
           setHeaderJobMenu(true);
@@ -17703,7 +17727,10 @@ document.getElementById('ldSave').addEventListener('click', async function(){
     return;
   }
   var suite = document.getElementById('ldSuite').value.trim();
-  var addr = street + (suite ? ', ' + suite : '') + ', ' + city + ', ' + state + ' ' + zip;
+  /* H (#26): only the parts there are -- no address at all is '', never ', , OH ' */
+  var addr = (street || suite || city || zip)
+    ? [street + (street && suite ? ', ' : '') + suite, city, (state + ' ' + zip).trim()].filter(Boolean).join(', ')
+    : '';
   var assigned;
   if(isAdminUser()){
     /* ⚠ [] and never ['']. project_assigned_rep() is
@@ -22666,7 +22693,7 @@ document.getElementById('qiAddrInp').addEventListener('keydown', function(e){ if
 document.getElementById('qiLocBtn').addEventListener('click', qiGeolocate);
 document.getElementById('qiMapNext').addEventListener('click', function(){
   qiAddr = (document.getElementById('qiAddrInp').value || '').trim() || qiAddr;
-  document.getElementById('qiWhoAddr').textContent = qiAddr ? ('\uD83D\uDCCD ' + qiAddr) : '';
+  document.getElementById('qiWhoAddr').innerHTML = qiAddr ? ((window.crIco ? crIco('pin') : '') + esc(qiAddr)) : '';   /* H (#34) */
   document.getElementById('qiNpAddr').value = qiAddr;
   document.getElementById('qiWhoModal').style.display = 'block';
   /* prefill the client search with the pinned address's street portion so
@@ -24925,7 +24952,7 @@ function buildActivityEvents(){
     var a = actor(ap.created_by);
     ev.push({ t:ap.created_at, ini:'\uD83D\uDCC5', ico:'calendar', label:'Appointment:', who:a.nm,
       cli: pr ? pr.name : '', pid: pr ? pr.id : null,
-      detail: ap.title + ' \u2014 ' + ap.appt_date + (ap.appt_time ? ' ' + fmtApptTime(ap.appt_time) : '') });
+      detail: ap.title + ' \u2014 ' + (fmtDay(ap.appt_date) || ap.appt_date || '') + (ap.appt_time ? ' ' + fmtApptTime(ap.appt_time) : '') });   /* H (#33) */
   });
   cacheProjects.forEach(function(pr2){
     var a = actor(pr2.created_by);
@@ -42943,7 +42970,7 @@ setTimeout(function(){ window.openProject(pid); }, 60);
 </script>
 
 <style id="cr-ce-styles">#cr-ce-view{display:none;position:fixed;inset:0;z-index:210;background:#f7f2ea;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#2c2c2c}
-body.standalone #cr-ce-view{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* the client editor */#cr-ce-view.open{display:block}#cr-ce-view .ce-header{background:linear-gradient(135deg,#1a0f0c,#241512 55%,#1a0f0c);color:#f7f2ea;padding:16px 20px;border-bottom:4px solid #c8202e;position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.35)}#cr-ce-view .ce-header .ce-back{background:transparent;color:#f7f2ea;border:1px solid rgba(200,32,46,.6);border-radius:8px;padding:6px 10px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto}#cr-ce-view .ce-header .ce-back:hover{background:rgba(200,32,46,.15)}#cr-ce-view .ce-header .ce-titlebox{flex:1;min-width:0}#cr-ce-view .ce-header .ce-eyebrow{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#c8202e;opacity:.9}#cr-ce-view .ce-header h1{margin:2px 0 0;font:700 22px Georgia,'Times New Roman',serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#cr-ce-view .ce-header h1 small{font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#a89a8a;-webkit-text-fill-color:#a89a8a;margin-left:8px;letter-spacing:.02em}#cr-ce-view .ce-status{display:inline-block;padding:3px 9px;border-radius:5px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;flex:0 0 auto}#cr-ce-view .ce-status.draft{background:rgba(200,32,46,.18);color:#e35c63;border:1px solid #c8202e}#cr-ce-view .ce-status.sent{background:rgba(74,111,165,.2);color:#7fa6d6;border:1px solid #4a6fa5}#cr-ce-view .ce-status.signed{background:rgba(46,125,50,.24);color:#8bc38e;border:1px solid #2e7d32}#cr-ce-view .ce-status.other{background:rgba(255,255,255,.08);color:#c8c0b0;border:1px solid #56463a}#cr-ce-view .ce-wrap{max-width:760px;margin:0 auto;padding:20px 18px 120px}#cr-ce-view .ce-card{background:#fffdf7;border:1px solid #ded3bf;border-radius:10px;padding:16px 18px;margin:0 0 14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}#cr-ce-view .ce-card h2{margin:0 0 12px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8f1620;border-bottom:1px solid #ded3bf;padding-bottom:8px}#cr-ce-view .ce-kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;align-items:baseline}@media (max-width:520px){#cr-ce-view .ce-kv{grid-template-columns:110px 1fr;gap:6px 10px;font-size:13px}}#cr-ce-view .ce-kv .k{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}#cr-ce-view .ce-kv .v{color:#2c2c2c;overflow-wrap:break-word;min-width:0}#cr-ce-view .ce-kv .v.num{font-variant-numeric:tabular-nums;font-weight:700;color:#8f1620}#cr-ce-view .ce-kv .v.novalue{color:#a89a8a;font-style:italic}#cr-ce-view .ce-prose{font:600 13px Georgia,'Times New Roman',serif;color:#2c2c2c;line-height:1.6;white-space:pre-wrap}#cr-ce-view .ce-list{margin:0;padding-left:20px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;line-height:1.6}#cr-ce-view .ce-list li{margin-bottom:4px}#cr-ce-view .ce-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:2px solid #c8202e;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}#cr-ce-view .ce-total .amt{color:#8f1620;font-variant-numeric:tabular-nums}#cr-ce-view .ce-actions{position:fixed;left:0;right:0;bottom:0;z-index:3;background:rgba(26,15,12,.96);backdrop-filter:blur(8px);border-top:2px solid #c8202e;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center;flex-wrap:wrap;box-shadow:0 -4px 18px rgba(0,0,0,.35)}#cr-ce-view .ce-actions button{background:transparent;color:#c8202e;border:1px solid #c8202e;border-radius:8px;padding:8px 13px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:background .12s,transform .1s}#cr-ce-view .ce-actions button:hover{background:rgba(200,32,46,.15)}#cr-ce-view .ce-actions button:active{transform:scale(.96)}#cr-ce-view .ce-actions button.primary{background:#c8202e;color:#fff;border-color:#c8202e}#cr-ce-view .ce-actions button.primary:hover{background:#e35c63;border-color:#e35c63}#cr-ce-view .ce-actions button:disabled{opacity:.4;cursor:not-allowed}@media print{body>*:not(#cr-ce-view){display:none !important}#cr-ce-view{position:static !important}#cr-ce-view .ce-header,#cr-ce-view .ce-actions{display:none !important}#cr-ce-view .ce-wrap{max-width:100%;padding:0}#cr-ce-view .ce-card{box-shadow:none;border-color:#ccc;page-break-inside:avoid}}</style>
+body.standalone #cr-ce-view{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* the client editor */#cr-ce-view.open{display:block}#cr-ce-view .ce-header{background:linear-gradient(135deg,#1a0f0c,#241512 55%,#1a0f0c);color:#f7f2ea;padding:16px 20px;border-bottom:4px solid #c8202e;position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.35)}#cr-ce-view .ce-header .ce-back{background:transparent;color:#f7f2ea;border:1px solid rgba(200,32,46,.6);border-radius:8px;padding:6px 10px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto}#cr-ce-view .ce-header .ce-back:hover{background:rgba(200,32,46,.15)}#cr-ce-view .ce-header .ce-titlebox{flex:1;min-width:0}#cr-ce-view .ce-header .ce-eyebrow{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#e35c63}#cr-ce-view .ce-header h1{margin:2px 0 0;font:700 22px Georgia,'Times New Roman',serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ffffff;/* 685: was gradient-clipped text. H (#13): the header is dark in BOTH themes, so its ink is pinned too; --rbe-head flips to #161616 in light and read 1.04:1 here */}#cr-ce-view .ce-header h1 small{font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#a89a8a;-webkit-text-fill-color:#a89a8a;margin-left:8px;letter-spacing:.02em}#cr-ce-view .ce-status{display:inline-block;padding:3px 9px;border-radius:5px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;flex:0 0 auto}#cr-ce-view .ce-status.draft{background:rgba(200,32,46,.18);color:#e35c63;border:1px solid #c8202e}#cr-ce-view .ce-status.sent{background:rgba(74,111,165,.2);color:#7fa6d6;border:1px solid #4a6fa5}#cr-ce-view .ce-status.signed{background:rgba(46,125,50,.24);color:#8bc38e;border:1px solid #2e7d32}#cr-ce-view .ce-status.other{background:rgba(255,255,255,.08);color:#c8c0b0;border:1px solid #56463a}#cr-ce-view .ce-wrap{max-width:760px;margin:0 auto;padding:20px 18px 120px}#cr-ce-view .ce-card{background:#fffdf7;border:1px solid #ded3bf;border-radius:10px;padding:16px 18px;margin:0 0 14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}#cr-ce-view .ce-card h2{margin:0 0 12px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8f1620;border-bottom:1px solid #ded3bf;padding-bottom:8px}#cr-ce-view .ce-kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;align-items:baseline}@media (max-width:520px){#cr-ce-view .ce-kv{grid-template-columns:110px 1fr;gap:6px 10px;font-size:13px}}#cr-ce-view .ce-kv .k{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}#cr-ce-view .ce-kv .v{color:#2c2c2c;overflow-wrap:break-word;min-width:0}#cr-ce-view .ce-kv .v.num{font-variant-numeric:tabular-nums;font-weight:700;color:#8f1620}#cr-ce-view .ce-kv .v.novalue{color:#a89a8a;font-style:italic}#cr-ce-view .ce-prose{font:600 13px Georgia,'Times New Roman',serif;color:#2c2c2c;line-height:1.6;white-space:pre-wrap}#cr-ce-view .ce-list{margin:0;padding-left:20px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;line-height:1.6}#cr-ce-view .ce-list li{margin-bottom:4px}#cr-ce-view .ce-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:2px solid #c8202e;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}#cr-ce-view .ce-total .amt{color:#8f1620;font-variant-numeric:tabular-nums}#cr-ce-view .ce-actions{position:fixed;left:0;right:0;bottom:0;z-index:3;background:rgba(26,15,12,.96);backdrop-filter:blur(8px);border-top:2px solid #c8202e;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center;flex-wrap:wrap;box-shadow:0 -4px 18px rgba(0,0,0,.35)}#cr-ce-view .ce-actions button{background:transparent;color:#e35c63;border:1px solid #c8202e;border-radius:8px;padding:8px 10px;min-height:44px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:0;font-family:inherit;transition:background .12s,transform .1s}#cr-ce-view .ce-actions button:hover{background:rgba(200,32,46,.15)}#cr-ce-view .ce-actions button:active{transform:scale(.96)}#cr-ce-view .ce-actions button.primary{background:#c8202e;color:#fff;border-color:#c8202e}#cr-ce-view .ce-actions button.primary:hover{background:#e35c63;border-color:#e35c63}#cr-ce-view .ce-actions button:disabled{opacity:.4;cursor:not-allowed}@media print{body>*:not(#cr-ce-view){display:none !important}#cr-ce-view{position:static !important}#cr-ce-view .ce-header,#cr-ce-view .ce-actions{display:none !important}#cr-ce-view .ce-wrap{max-width:100%;padding:0}#cr-ce-view .ce-card{box-shadow:none;border-color:#ccc;page-break-inside:avoid}}</style>
 <script id="cr-ce-script">
 (function () {
 'use strict';
@@ -43196,15 +43223,17 @@ var _canSend = (_s === 'draft');
 var _canSign = (_s === 'draft' || _s === 'sent') &&
                (typeof window.openSigner === 'function' || document.getElementById('sigModal'));
 var _canVoid = (_s !== 'signed' && _s !== 'executed' && _s !== 'void');   /* 1015: writer writes 'void' (732), not 'voided' — an already-voided contract kept offering Void */
+/* H (#34): drawn glyphs, not emoji -- the editor toolbar's own choices for the same actions */
+var _ceIco = function(n){ return window.crIco ? window.crIco(n) : ''; };
 return '<div class="ce-actions">' +
-'<button data-act="print">\uD83D\uDDA8 Print</button>' +
-'<button data-act="download">\u2B07 Download</button>' +
+'<button data-act="print">' + _ceIco('page') + 'Print</button>' +
+'<button data-act="download">' + _ceIco('save') + 'Download</button>' +
 (contract.share_token
-? '<button data-act="copy">\uD83D\uDD17 Copy Link</button>' +
-'<button data-act="mail" class="primary">\u2709 Send by Email</button>'
+? '<button data-act="copy">' + _ceIco('paperclip') + 'Copy Link</button>' +
+'<button data-act="mail" class="primary">' + _ceIco('mail') + 'Send by Email</button>'
 : '') +
-(_canSend ? '<button data-act="send">\u2709 Mark sent</button>' : '') +
-(_canSign ? '<button data-act="sign" class="primary">\u270D Sign</button>' : '') +
+(_canSend ? '<button data-act="send">' + _ceIco('mail') + 'Mark sent</button>' : '') +
+(_canSign ? '<button data-act="sign" class="primary">' + _ceIco('pencil') + 'Sign</button>' : '') +
 (_canVoid ? '<button data-act="void">Void</button>' : '') +
 '<button data-act="close">Close</button>' +
 '</div>';
@@ -46118,6 +46147,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1429, d:'2026-10-29', t:'Readable contract viewer, lead source, the inspection checklist and small fixes', s:'The contract viewer\u2019s title is readable in light mode and its buttons are full size. Lead source now shows on the client page whatever the New Lead form saved. The inspection checklist marks every required field, and Save and start report takes you to the first one you missed instead of looking dead. A lead saved with no address no longer shows \u201c, , OH\u201d. A punch-out from the home screen asks which job instead of picking the first one. Two questions that said \u201cOK =\u201d now name their real buttons, the Activity feed shows dates like Oct 29, 2026, and the last emoji on Quick Inspection, the contract bar and the Supplement card are drawn icons. A printed supplement letter carries Cardinal\u2019s letterhead, the date and the claim number.' },
   { b: 1428, d:'2026-10-29', t:'Uploading a signed contract asks to move the job to Approved', s:'After you upload a signed contract for a job that is not Approved yet, the app asks: Move to Approved? Tap Move to Approved and the job goes on the production schedule and Curtis gets the usual schedule and order materials alert. Tap Not yet and the job stays where it is, and Curtis and the office are told a signed contract is on file.' },
   { b: 1427, d:'2026-10-29', t:'Contracts sent by link: notices, a signed copy, initials and a co-buyer', s:'A contract sent by link now reads at normal size on a phone instead of tiny print. It links straight to the Terms and Conditions and both Notice of Cancellation copies, on the page, in the signing box and in the email, instead of pointing at a staff menu the homeowner cannot open. When the homeowner signs they type their initials, which go into every Initials box, and a named co-buyer can sign in the same box or later from the same link. The homeowner can have the signed copy emailed to them with the Terms and Notices attached, and the rep\u2019s email says whether it went. Answers show as plain text and blank fields as blank lines. On a contract with blanks, Text to sign, Share link, Email to client and signing in person now ask once and list the blanks: Fill them, or send anyway. Uploading a signed contract now tells Curtis and the office; it does not move the stage. Inspection report links read on a phone, and their section numbers match the Contents again.' },
   { b: 1426, d:'2026-10-29', t:'Client names show in full', s:'Client names were cut to a few letters on the Clients list and to a single letter on the home screen\u2019s Recent leads, and disappeared at the largest text size. The name now gets its own line on a client card, and Recent leads keeps room for it, moving the stage and rep down a line when space runs out.' },
@@ -59264,7 +59294,9 @@ function openAdd(presetProjectId){
     '<label>What needs doing</label>' +
     '<input type="text" data-f="title" placeholder="Reattach gutter on the north side">' +
     '<label>Job</label>' +
-    '<select data-f="project">' + (opts || '<option value="">No jobs yet</option>') + '</select>' +
+    /* H (#27): no job given = the rep picks one; the first in the list is not a default */
+    '<select data-f="project">' + (opts ? ((presetProjectId && seen[String(presetProjectId)]) ? '' : '<option value="" selected>\u2014 pick a job \u2014</option>') + opts
+                                         : '<option value="">No jobs yet</option>') + '</select>' +
     '<div class="row">' +
     '<div><label>Kind</label><select data-f="kind">' +
     '<option value="punch">Punch-out</option><option value="ticket">Repair</option>' +
@@ -59662,6 +59694,13 @@ window.CardinalProduction = {
   newPunch  : async function(presetProjectId){
     if(window.CardinalPunch && typeof window.CardinalPunch.reload === 'function'){
       try{ await window.CardinalPunch.reload(); items = punchRows(); }catch(_){}
+    }
+    /* H (#27): from + New while a client page is on screen, the punch-out is for THAT job */
+    if(!presetProjectId){
+      try{
+        var _pv = document.getElementById('projectView'), _cp = window.currentProject;
+        if(_pv && _cp && _cp.id && getComputedStyle(_pv).display !== 'none') presetProjectId = _cp.id;
+      }catch(_){}
     }
     openAdd(presetProjectId || null);
   },
@@ -61210,7 +61249,8 @@ function truckHtml(){
 async function addStep(){
   var t = prompt('What is the step?');
   if(!t || !String(t).trim()) return;
-  var req = await crAsk('Require a written note before this step can be ticked?\n\nOK = note required, Cancel = no note needed.');
+  var req = await crAsk('Require a written note before this step can be ticked?',
+    { verb: 'Require a note', cancel: 'No note needed', tone: 'plain' });   /* H (#32): was "OK = ... Cancel = ..." */
   var st = steps().slice();
   st.push({ t:String(t).trim(), d:false, req:!!req, note:'' });
   await save({ steps: st });
@@ -63356,7 +63396,7 @@ body =
 var _html =
 '<div class="cr-sp-card">' +
 '<div class="cr-sp-hd">' +
-'<span class="t">\uD83D\uDCC8 Supplement</span>' +
+'<span class="t">' + (window.crIco ? window.crIco('chart') : '') + 'Supplement</span>' +   /* H (#34) */
 '<span class="pill ' + esc(st) + '">' + (STATUS_LABEL[st] || st) + '</span>' +
 '</div>' +
 '<div class="cr-sp-bd">' + body + '</div>' +
@@ -93055,7 +93095,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function aiBusyScreen(){
     var shown = function(id){ var e = document.getElementById(id); return !!(e && e.getClientRects().length && getComputedStyle(e).display !== 'none'); };
     var open = function(id){ var e = document.getElementById(id); return !!(e && e.classList.contains('open')); };
-    return open('cr-est-view') || open('editorView') || open('cr-scan') || shown('commsView') || shown('qiStartView') || shown('resourceLibraryView');
+    return open('cr-est-view') || open('editorView') || open('cr-scan') || open('cr-ce-view') || shown('commsView') || shown('qiStartView') || shown('resourceLibraryView');   /* H (#13): + the contract viewer */
   }
   function aiPaintFab(){
     var f = aiQ('cr-ai-fab'); if(!f) return;
@@ -98442,7 +98482,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:#ffffff;border-bottom:1px solid #d9dbe1;}
 #insgSheet .ig-top b{flex:1;font:700 18px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#161616;}
 #insgSheet .ig-x{min-width:44px;min-height:44px;border:0;background:transparent;color:#5c6070;font:400 26px Arial,sans-serif;cursor:pointer;}
-#insgSheet .ig-body{max-width:620px;margin:0 auto;padding:14px 16px 120px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px;}
+#insgSheet .ig-body{max-width:620px;margin:0 auto;padding:14px 16px 150px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px;}
 /* F (judge 4): an auto grid column took its widest card's min-content — 10px wider than a 390px phone */
 #insgSheet .ig-who{margin:0;font:400 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#5c6070;}
 #insgSheet .ig-card{background:#ffffff;border:1px solid #d9dbe1;border-radius:14px;padding:14px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0;}
@@ -98464,8 +98504,10 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 #insgSheet .ig-life b{font:700 18px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#161616;}
 #insgSheet .ig-life span{font:400 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#5c6070;}
 #insgSheet .ig-err{min-height:20px;margin:0;font:600 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b01b28;}
-#insgSheet .ig-foot{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;justify-content:center;
+#insgSheet .ig-foot{position:fixed;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
   padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:#ffffff;border-top:1px solid #d9dbe1;}
+#insgSheet .ig-foot .ig-err{flex:1 0 100%;text-align:center;}   /* H (#19) */
+#insgSheet .ig-foot .ig-err:empty{display:none;}
 #insgSheet .ig-foot button{flex:1;max-width:300px;min-height:50px;border-radius:12px;font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}
 #insgSheet .ig-go{border:0;background:#c8202e;color:#ffffff;}
 #insgSheet .ig-go[disabled]{opacity:.6;}
@@ -98536,6 +98578,8 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   };
   var BASE = { 'Asphalt shingle':25, 'Metal':45, 'Low slope':18, 'Flat':18 };
   var FACT = { 'Excellent':1.1, 'Good':1, 'Fair':0.85, 'Poor':0.65, 'Critical':0.4 };
+  /* H (#19): the general-inspection parts a save requires -- one list for the marks and the check */
+  var IG_GEN_REQ = ['roof','siding','soffit','fascia','gutters','windows'];
 
   function igEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
@@ -98566,11 +98610,12 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     window.addEventListener('popstate', igClose);
     return sheet;
   }
-  function igSel(path, label, opts, val){
+  function igSel(path, label, opts, val, req){
+    var ar = req ? ' aria-required="true"' : '';   /* H (#19) */
     var id = 'insg_' + path.replace('.', '_');
     var inner;
     if(opts === 'num'){
-      inner = '<input type="number" inputmode="numeric" min="0" max="200" id="' + id + '" value="' + igEsc(val) + '">';
+      inner = '<input type="number" inputmode="numeric" min="0" max="200" id="' + id + '"' + ar + ' value="' + igEsc(val) + '">';
     } else if(typeof opts === 'string' && opts.indexOf('multi:') === 0){
       var have = String(val || '').split(/,\s*/);
       inner = '<select multiple id="' + id + '" size="' + opts.slice(6).split('|').length + '">' + opts.slice(6).split('|').map(function(o){
@@ -98579,9 +98624,11 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     } else {
       var list = opts.map(function(o){ return Array.isArray(o) ? o : [o, o]; });
       if(val && !list.some(function(o){ return o[0] === val; })) list.push([val, val]);   /* keep an older answer */
-      inner = '<select id="' + id + '"><option value="">— select —</option>' + list.map(function(o){
+      inner = '<select id="' + id + '"' + ar + '><option value="">— select —</option>' + list.map(function(o){
         return '<option value="' + igEsc(o[0]) + '"' + (o[0] === val ? ' selected' : '') + '>' + igEsc(o[1]) + '</option>'; }).join('') + '</select>';
     }
+    /* the label is a grid: the text and its mark share ONE item, or the mark would take a row of its own */
+    if(req) label = '<span>' + label + '<span class="cr-req" aria-hidden="true">*</span></span>';
     return '<label class="ig-f" data-f="' + igEsc(path) + '">' + label + inner + '</label>';
   }
   function igTop(title, back){
@@ -98603,7 +98650,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     var a = S.all, h = '';
     if(S.general){
       h += '<div class="ig-card"><h3>General inspection</h3>' + ['Roof'].concat(TYPES.slice(1)).map(function(t){
-        var k = t.toLowerCase(); return igSel('general.' + k, t, GC, (a.general || {})[k] || ''); }).join('') + '</div>';
+        var k = t.toLowerCase(); return igSel('general.' + k, t, GC, (a.general || {})[k] || '', IG_GEN_REQ.indexOf(k) !== -1); }).join('') + '</div>';
     }
     if(S.types.Roof){
       var res = a.residential || '';
@@ -98611,7 +98658,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       h += '<div class="ig-card"><h3>Roof</h3>' + ROOF.map(function(f){
         var v = f[0] === 'residential' ? res : f[0] === 'life_by' ? (a.life_by || 'rule') : (a[f[0]] == null ? '' : String(a[f[0]]));
         if(f[0] === 'pitch' && v && /^\d+$/.test(v)) v = v + '/12';
-        return igSel(f[0], f[1] + (f[0] === 'residential' && !a.residential && res ? ' <i>· from the job category</i>' : ''), f[2], v);
+        return igSel(f[0], f[1] + (f[0] === 'residential' && !a.residential && res ? ' <i>· from the job category</i>' : ''), f[2], v, !!f[3]);
       }).join('') + '<div class="ig-life" id="insgLife"></div></div>';
     }
     TYPES.slice(1).forEach(function(t){
@@ -98621,8 +98668,9 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
         (S.general ? '' : igSel('general.' + k, 'Condition', GC, (a.general || {})[k] || '')) +
         (EXTRA[t] || []).map(function(f){ return igSel(f[0], f[1], f[2], igGet(a, f[0]) || ''); }).join('') + '</div>';
     });
-    sheet.innerHTML = igTop('Checklist', true) + '<div class="ig-body">' + h + '<p class="ig-err" id="insgErr"></p></div>' +
-      '<div class="ig-foot"><button type="button" class="ig-alt" data-ig="skip">Skip checklist</button><button type="button" class="ig-go" data-ig="save">Save and start report</button></div>';
+    /* H (#19): this step's message lives in the fixed footer, above the buttons it answers */
+    sheet.innerHTML = igTop('Checklist', true) + '<div class="ig-body">' + h + '</div>' +
+      '<div class="ig-foot"><p class="ig-err" id="insgErr" role="alert"></p><button type="button" class="ig-alt" data-ig="skip">Skip checklist</button><button type="button" class="ig-go" data-ig="save">Save and start report</button></div>';
     igRefresh();
     sheet.scrollTop = 0;
   }
@@ -98652,14 +98700,37 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       }
       t.__noneWas = !!(none && none.selected);
     }
+    /* H (#19): an answered field loses its outline; the last one clears the message */
+    if(t.classList && t.classList.contains('cr-bad') && String(t.value || '').trim() && window.crValid){
+      window.crValid.mark(t, true);
+      if(!sheet.querySelector('.cr-bad')){ var er = igEl('insgErr'); if(er) er.textContent = ''; }
+    }
     igRefresh();
+  }
+  /* H (#19): a refused save names the fields AND shows them -- every missing one outlined, the first
+     brought to the middle of the sheet (clear of the sticky top and the fixed footer) and focused. */
+  function igMiss(paths, msg){
+    var err = igEl('insgErr'); if(err) err.textContent = msg;
+    var V = window.crValid, first = /** @type {any} */ (null);   /* typed: assigned inside the loop below */
+    paths.forEach(function(p){
+      var el = igEl('insg_' + p.replace('.', '_')); if(!el) return;
+      if(V) V.mark(el, false, 'Required'); if(!first) first = el;
+    });
+    if(!first) return;
+    try{ first.scrollIntoView({ block:'center' }); }catch(_){ try{ first.scrollIntoView(); }catch(_e){} }
+    if(V) V.shake(first);
+    try{ first.focus({ preventScroll:true }); }catch(_){ try{ first.focus(); }catch(_e){} }
   }
   async function igSave(){
     var pr = igProj(); if(!pr) return;
     var err = igEl('insgErr'), all = S.all, now = new Date().toISOString(), missing = [];
     if(S.types.Roof){
-      ROOF.forEach(function(f){ var v = igVal(f[0]); if(v === null) return; if(f[3] && !v) missing.push(f[1]); all[f[0]] = v; });
-      if(missing.length){ err.textContent = 'Still needed for the roof: ' + missing.join(', ') + '.'; return; }
+      var missP = [];
+      ROOF.forEach(function(f){ var v = igVal(f[0]); if(v === null) return; if(f[3] && !v){ missing.push(f[1]); missP.push(f[0]); } all[f[0]] = v; });
+      if(missing.length){
+        igMiss(missP, 'Still needed for the roof: ' + (missing.length > 3 ? missing[0] + ' and ' + (missing.length - 1) + ' more, marked in red' : missing.join(', ')) + '.');
+        return;
+      }
       var it = all.intake_types;
       if(it) all.soffit = (it === 'None') ? 'No' : 'Yes';
       if(it === 'None') all.baffles = '';
@@ -98672,8 +98743,8 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     ['roof'].concat(TYPES.slice(1).map(function(t){ return t.toLowerCase(); })).forEach(function(k){
       var v = igVal('general.' + k); if(v === null) return; g[k] = v; touched = true; });
     if(S.general){
-      var gm = ['roof','siding','soffit','fascia','gutters','windows'].filter(function(k){ return !g[k]; });
-      if(gm.length){ err.textContent = 'Rate every part of the general inspection (' + gm.length + ' left).'; return; }
+      var gm = IG_GEN_REQ.filter(function(k){ return !g[k]; });
+      if(gm.length){ igMiss(gm.map(function(k){ return 'general.' + k; }), 'Rate every part of the general inspection (' + gm.length + ' left).'); return; }
       if(!g.completed_at) g.completed_at = now;
       g.updated_at = now;
     }

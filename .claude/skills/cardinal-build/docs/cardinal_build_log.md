@@ -37533,3 +37533,44 @@ The name was the only flexible item, so it was the one that gave way.
 - `gate_1427` 54/0. Its A6 now answers "Not yet".
 - `gate_1262`, `gate_1271` and `gate_1412` are identical on both trees. `gate_1426` and `gate_1200` are green.
 - `check_build` GREEN. `gate_types` 1505 and `gate_dupes` are identical to the control.
+
+## Build 1429 — forms, documents and small fixes (29 Oct 2026)
+
+**Source:** Theo, "Do 1 first": fix everything on the round-1 list that needs no choice from him. Builder H built it on 1428 and reproduced each item first.
+
+**Before → after (390×844, light set through localStorage):**
+
+| Item | Before | After |
+|---|---|---|
+| Contract viewer title, light | 1.03:1 | 17.63:1 |
+| Contract viewer eyebrow | 2.74:1 | 5.02:1 |
+| Contract viewer action labels | 3.05:1 | 4.93:1 |
+| Contract viewer buttons | 32px | 44px |
+| Lead source "Door Knocking" on the client page | "—" | "Door knock" (display only, stored value kept) |
+| Required checklist fields marked | 0 of 9 | 9 of 9 |
+| "Still needed" message position | y=1817 on an 844px screen | the fixed footer, focus on the first missing field |
+| No-address lead | ", , OH " | empty address |
+| Punch-out from Home | filed on the first job | asks which job |
+| "OK =" prompts | 2 | 0 |
+| Activity dates | raw ISO | "Oct 29, 2026" |
+| Emoji on Quick Inspection, contract bar, Supplement card | present | drawn icons |
+| Supplement Desk letter | no letterhead | letterhead, date, claim number |
+
+**Skipped, because they no longer reproduce on 1428:**
+- #25 Estimates tab: already Buttons A since 1424.
+- #28 Invoices under Inspections: split since 1423.
+
+**Files:**
+- `patch_1429_forms.py` (`index.html`)
+- `patch_1429_supp.py` (`supplement.html`); its SD_BUILD and header chip are 1405 → 1429
+- `patch_1429_gates.py` (`gate_1005` S3 picks 'Door knock', the shared spelling)
+- `patch_1429.py` (stamp and CHANGELOG)
+
+**Gates:**
+- `gate_1429.mjs` 58/0. The control (1428) is RED, 39 fail.
+- 38 related gates are identical on both trees, apart from `gate_1005`, which was updated.
+- `check_build` GREEN. `gate_types` 1505 and `gate_dupes` are identical. `gate_stack` is clean at 390. `gate_1206` 13/13.
+
+**Needs Theo:**
+1. **The Supplement card on the insurance client page has never been visible.** `#cr-sp-mount` sits directly in `#tab-overview` and is not on its allow-list. Exempt it, or retire it?
+2. **The merged lead-source list has overlaps.** Door knock / Canvasser / Storm canvass, and five Google / Internet variants. Prune it?

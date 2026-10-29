@@ -10463,3 +10463,25 @@ Theo answered "yes" on 29 Oct.
 **Not yet:** sends the 1427 "Signed contract uploaded — not yet Approved" notice to Curtis and the office, unchanged.
 
 **Gate:** `gate_1428.mjs`, 11 checks; RED 7/11 on the 1427 control. `gate_1427` A6 now answers "Not yet".
+
+## Build 1429: forms, documents and small fixes (round-1 audit, Builder H)
+- **Contract viewer.**
+  - The title is pinned white on its dark-brown header in both themes. It had used `--rbe-head`, a flipping token on a ground that never flips: 1.03:1 in light, now 17.63:1.
+  - Eyebrow and action labels use `#e35c63` (5.02 and 4.93:1).
+  - Every action button is 44px.
+  - Ask hides while the viewer is open (1397's list).
+- **Lead source.**
+  - One 22-item list is shared by the New Lead form and the client page.
+  - Old stored spellings are mapped for display only ("Door Knocking" shows as "Door knock"; nothing is rewritten).
+  - Reports count both spellings as one source.
+- **Inspection checklist.**
+  - Every required field carries `.cr-req` plus `aria-required`.
+  - "Save and start report" focuses and outlines the first missing field and shows its message in the fixed footer.
+- **Small fixes.**
+  - A no-address lead saves an empty address, not ", , OH".
+  - + New → Punch-out from Home opens on "— pick a job —". From a client page it opens on that job.
+  - The two remaining "OK =" prompts name their real buttons.
+  - The Activity feed formats dates ("Oct 29, 2026").
+  - Quick Inspection, the contract action bar and the Supplement card heading use drawn icons instead of emoji.
+- **Supplement Desk (`supplement.html`, stamp 1429).** The printed letter carries the letterhead: the report logo, the company line and phone the invoice already prints, the date, and the claim number.
+- **Gate:** `gate_1429.mjs`, 58 checks; RED 39 on the 1428 control. `gate_1005` S3 now uses the shared spelling.
