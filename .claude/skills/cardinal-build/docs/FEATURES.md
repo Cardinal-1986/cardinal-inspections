@@ -10347,3 +10347,27 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 - **Shared report on a phone:** new reports carry their own viewport. Old reports need the `api/share.js` half (Builder D).
 - **Gate:** `gate_1423.mjs`, 47 checks; red 39 on 1422. It uses the synthetic `fixtures/roof_synth_1423_*.jpg`.
 - `gate_1405` B2 now checks the new cover rule.
+
+## Build 1424: estimates and invoicing after judges 2 and 5
+**Estimates**
+- `jobMeas` reads `checklist.meas`, so template, Library and assembly lines start from the job's squares, eaves and ridges. Each line notes where its number came from.
+- The unsaved-changes sheet reads Save and close / Discard changes / Keep editing. `crAsk` choices take a `tone`.
+- The dirty flag now covers remove, reorder, add and photo changes.
+- Line controls ▲ ▼ ✕ and the qty/unit/price inputs are 44px, and the inputs are labelled.
+- Remove offers Undo via `CardinalUndo`. The shared toast's Undo is now 44px at 7.70:1, for every caller.
+- A published estimate shows once on the Estimates tab, as its document card. Mark sent sets the estimate to Sent through `crDocSent`.
+- Print totals sit in the tfoot once, at the end, not on every page.
+- Four success toasts were red error toasts.
+
+**Invoicing (display only; how payments are written is unchanged)**
+- The invoice status pill reads Paid in full / Overdue / Partly paid / Sent / Draft. It used to read "Deposit Paid" for everything.
+- "Remove this payment" stays behind ⋯.
+- Recording a payment shows a green toast that clears.
+- Community job value falls back to the signed contract.
+- The invoice carries the estimate proposal's company line and "Mail checks to …".
+
+**Gate:** `gate_1424.mjs`, 55 checks; red 52 on 1423. `gate_1029`, `gate_1135`, `gate_1201`, `harness_ar1107`, `harness_estasm1098` and `harness_inv1108` were updated to the new contract (`patch_1424_gates.py`).
+
+**Open:**
+- Publish still opens the document editor; that is the editor's send path.
+- The insurance homeowner/carrier AR split needs Theo.

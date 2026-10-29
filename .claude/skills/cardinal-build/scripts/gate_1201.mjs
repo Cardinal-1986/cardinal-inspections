@@ -46,8 +46,9 @@ ok(/\{\s*b:\s*1201\s*,/.test(html), 'CHANGELOG carries a build-1201 entry');
 ok(html.indexOf("crAsk('Estimate published.\\n\\nMark it as Sent?") === -1,
    'the "Mark it as Sent?" question is no longer ASKED');
 ok(html.includes("function crDocSent(docId){"), 'crDocSent is defined');
-ok((html.match(/crDocSent\(/g) || []).length === 3,
-   'crDocSent: one definition and exactly two write sites',
+/* Builder E: the document list's Mark sent is the third write site -- the same claim as the editor's */
+ok((html.match(/crDocSent\(/g) || []).length === 4,
+   'crDocSent: one definition and its write sites (email send, the editor\'s Mark sent, the list\'s Mark sent)',
    'found ' + (html.match(/crDocSent\(/g) || []).length);
 ok(html.includes("function crAwaitDocSent(docId, ms){"), 'crAwaitDocSent is defined');
 ok(html.includes('crAwaitDocSent(d.docId)'), 'the publish sheet waits on the published document');

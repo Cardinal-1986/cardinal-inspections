@@ -37385,3 +37385,31 @@ Judge 4 (Inspections, round 1: 6/6/5/6/6) and judge 11's inspection-report items
   - `gate_1405` (B2 updated for the new cover rule), `1201`, `1204` and `966` are green. Builder F also ran `1023`, `1029`, `1069`, `1083`, `1265`–`1268` and `730`, all green on both trees.
   - `gate_1050` needs pymupdf, which is absent here.
   - REPRO byte-identical.
+
+## Build 1424 — estimates and invoicing after judges 2 and 5 (29 Oct 2026)
+Builder E re-checked every finding on 1422 first, and all of them reproduced. Before → after:
+- **Estimates:**
+  - Template roofing line: 1 SQ → 24.3 SQ from Roofr, with a note. Ridge vent 30 → 42, drip edge 150 → the eave length.
+  - Qty `26.730000000000004` → 26.73.
+  - The unsaved-changes sheet's blue "Continue" discarded the work → "Save and close" is the filled button.
+  - Line controls 26×26 → 44×44. Remove → an Undo toast.
+  - One estimate showed as two cards whose statuses drifted → one card.
+  - SUBTOTAL printed on pages 1, 2 and 3 → once (checked with pdftotext).
+- **Invoicing:**
+  - "Deposit Paid" on everything → the real state.
+  - The remove link showed at 44px under every payment → behind ⋯.
+  - "Recorded $1,000" as a red toast that never cleared → green.
+  - Community C2 $0/0%/$0 → $6,000/33%/$4,000.
+  - The invoice had no address → the company line the estimate already uses (nothing invented).
+- **Six gates pinned the old mechanism and were moved to their contract** (`patch_1424_gates.py`): `gate_1201` counts 4 `crDocSent(` sites, `gate_1135` measures overlap rather than padding, `gate_1029`'s crAsk stub answers choices, and three harnesses.
+- **Gates:**
+  - `gate_1424.mjs` 55/0. The control (1423) is RED 52.
+  - `gate_1423` is still 47/0 on top.
+  - `check_build` GREEN. `gate_types` and `gate_dupes` are identical to the control.
+  - `gate_harnesses` GREEN.
+  - `harness_inv1108` is red 2 identically on the control: "modal closes on save" and "createInvoiceFor mints token + total", both pre-existing.
+- **Needs Theo:**
+  - The Community header uses bid-then-contract while AR uses contract-then-bid. Which should win?
+  - The assembly measurement rules (drip/starter = eaves + rakes, I&W = eaves + valleys, ridge vent = ridges, cap = ridges + hips, gutters = eaves, hangers every 24").
+  - Remove-with-Undo instead of a confirm.
+  - "Invoices & AR" naming on the home strings.

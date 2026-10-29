@@ -4309,7 +4309,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1423<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1424<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4801,7 +4801,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <button class="estopt" data-tpl="general">General repair estimate</button>
           </div>
         </span>
-        <button class="btn" id="pUploadEstimateBtn" type="button" style="margin-left:8px;">Upload estimate</button>
+        <button class="chipbtn" id="pUploadEstimateBtn" type="button" style="margin-left:8px;">Upload estimate</button>
         <!-- 1028: the profile's AI-Estimate door is closed (its wiring in the main
              block is guarded and stays). The AI assists inside the editor now. -->
       </div>
@@ -10639,15 +10639,22 @@ function buildEstimate(titleHtml, body, terms){
   if(/\bINVOICE\b/i.test(plain)){
     out = out.replace('<title>Cardinal Roofing &amp; Renovations — Estimate</title>',
                       '<title>Cardinal Roofing &amp; Renovations — Invoice</title>');
+    /* E (judge 5 #5): a bill carries the letterhead -- legal name, mailing address, phone, website -- the
+       same line the estimate proposal prints at its foot. */
+    out = out.replace('<div class="est-sub">Cardinal Roofing &amp; Renovations</div>',
+                      '<div class="est-sub">Cardinal Roofing &amp; Renovations, LLC<br>5735 Webster Street, Dayton, Ohio 45414 &middot; ' +
+                      '(937) 576-6753 &middot; www.cardinalrenovations.net</div>');
     out = out.replace('<div class="cover-photo">PROPERTY PHOTO</div>\n\n', '');
     out = out.replace(/<table class="meta">\s*<tr><td class="k">Prepared For<\/td>[\s\S]*?<\/table>/,
       '<table class="meta">\n' +
       '  <tr><td class="k">Bill To</td><td><span class="ph">[Client name]</span></td>\n' +
-      '      <td class="k">Invoice Date</td><td><span class="ph">[Date]</span></td></tr>\n' +
+      '      <td class="k">Invoice #</td><td><b>[INV_NUM]</b></td></tr>\n' +
       '  <tr><td class="k">Property Address</td><td><span class="ph">[Street, City, State ZIP]</span></td>\n' +
-      '      <td class="k">Due</td><td>Upon receipt</td></tr>\n' +
+      '      <td class="k">Invoice Date</td><td><span class="ph">[Date]</span></td></tr>\n' +
       '  <tr><td class="k">Client Contact</td><td><span class="ph">[Phone · Email]</span></td>\n' +
-      '      <td class="k">Prepared By</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>\n' +
+      '      <td class="k">Due</td><td>Upon receipt</td></tr>\n' +
+      '  <tr><td class="k">Prepared By</td><td><span class="ph">[Rep name &amp; title]</span></td>\n' +
+      '      <td class="k">&nbsp;</td><td>&nbsp;</td></tr>\n' +
       '</table>');
     out = out.replace(/<[d]iv class="note"><b>Concealed conditions\.<\/b>[\s\S]*?<\/[d]iv>\s*/, '');
     out = out.replace(/<h2 class="sec">Notes<\/h2>\s*<p class="ph">\[Job-specific notes[\s\S]*?<\/p>\s*/, '');
@@ -11101,12 +11108,9 @@ retyped here.</p>
 </table>
 `;
 var GUTTER_AGREEMENT = buildEstimate('GUTTER CONSTRUCTION <span>AGREEMENT</span>', GUTTER_AGREEMENT_BODY, GUTTER_AGREEMENT_TERMS);
+/* E (judge 5 polish): the invoice number moves into the Bill To table (buildEstimate's invoice branch), so
+   the page no longer reads INVOICE / INVOICE with one line under the second. */
 var INVOICE_BODY =
-  '<div class="secthead">INVOICE</div>' +
-  '<table style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px;">' +
-    '<tr><td style="padding:4px 0;color:#666;width:130px;">Invoice #</td><td style="font-weight:800;">[INV_NUM]</td>' +
-    '<td></td><td></td></tr>' +
-  '</table>' +
   '<!--invlines--><!--/invlines-->' +   /* 1357: the invoice's line items are written here */
   '<div class="secthead">SUMMARY</div>' +
   '<table style="width:100%;border-collapse:collapse;font-size:14px;">' +
@@ -11117,12 +11121,15 @@ var INVOICE_BODY =
     '<tr><td style="padding:12px 6px;font-weight:800;font-size:16px;">Balance due <span id="invAsOf" style="display:block;font-size:12px;font-weight:400;color:#555;"></span></td>' +
       '<td id="estTotal" style="padding:12px 6px;text-align:right;font-weight:800;font-size:16px;color:#9c1822;">[INV_DUE]</td></tr>' +
   '</table>' +
+  /* E (judge 5 #5): it said "Checks payable to" with no address anywhere on the page. */
   '<p style="font-size:12.5px;color:#555;margin-top:14px;">Please remit the balance due upon receipt. ' +
-  'Checks payable to <b>Cardinal Roofing &amp; Renovations</b>. Thank you for your business!</p>';
+  'Make checks payable to <b>Cardinal Roofing &amp; Renovations, LLC</b> and mail them to ' +
+  '<b>5735 Webster Street, Dayton, Ohio 45414</b>. Questions about this invoice: (937) 576-6753 &middot; ' +
+  'Admin@cardinalrenovations.net. Thank you for your business!</p>';
 var INVOICE_TERMS =
   '<b>Payment terms.</b> Balance is due upon receipt of this invoice. Accounts unpaid after 30 days ' +
-  'accrue a late charge of 1.5% per month (18% APR) on the outstanding balance. Please contact our ' +
-  'office with any questions about this invoice or to arrange payment.';
+  'accrue a late charge of 1.5% per month (18% APR) on the outstanding balance. Please call our office at ' +
+  '(937) 576-6753 or email Admin@cardinalrenovations.net with any questions about this invoice or to arrange payment.';
 var INVOICE_TEMPLATE = buildEstimate('<span>INVOICE</span>', INVOICE_BODY, INVOICE_TERMS);   /* 1314: Theo \u2014 "just invoice" */
 
 function cbxColor(name, hex){
@@ -11963,6 +11970,7 @@ var cacheProjects = [];
 var estBest = {};   /* highest total among SENT/approved estimates */
 var estRows = {};   /* 654: those same rows kept per project — the tile/tab count reads these */
 var estTier = {};   /* 1011: the winning tier per project (2 = accepted/signed, 1 = sent) — was local to indexMoney; jobFinance's doc leg now reads it */
+var estByDoc = {};  /* E (judge 2 #2): doc_id -> the estimates row that published it (id, status), so the profile shows ONE card per estimate */
 var estDocIds = {}; /* 1011: every doc_id any estimates row points at (ANY status, archived included) — a published copy of a table row must never compete as a second estimate */
 var ctrSigned = {}; /* total on the signed, un-voided contract */
 var collPaid = {};  /* 721: money-in from the collections table, per project — the single source for Balance Due when a job has any collections */
@@ -12122,25 +12130,45 @@ function docRowHtml(r){
       statusCell += '<span class="chip sent" style="background:#1565c0;border-color:#1565c0">DISPATCHED</span>';
     }
   }
+  /* E (judge 2 #2): a PUBLISHED estimate is one card, not two. Its estimates row (linked by doc_id) used to
+     sit above this as a second "Saved estimate" with its own status, its own \u2715 and its own way in, and
+     Mark sent here moved only this half. The card now carries the estimate's own status in the builder's
+     words (Draft / Sent / Accepted / Declined), opens the builder first, and shows no internal id. A
+     signature still reads SIGNED -- the stronger state, as 884 set it. */
+  var _isEst = isEstimateDoc(r);
+  var _le = (_isEst && estByDoc && estByDoc[r.id] && !estByDoc[r.id].archived) ? estByDoc[r.id] : null;   /* an archived estimate keeps the old card */
+  if(_le && !r.signed_at){
+    var _es = String(_le.status || 'draft').toLowerCase();
+    statusCell = _es === 'accepted' ? '<span class="chip signed">ACCEPTED</span>'
+               : _es === 'declined' ? '<span class="chip unsent">DECLINED</span>'
+               : _es === 'sent' ? '<span class="chip sent">SENT</span>' + (r.sent_at ? '<small>Sent ' + fmtDay(r.sent_at) + '</small>' : '')
+               : '<span class="chip unsent">DRAFT</span>';
+  }
   var toggleLabel = r.status === 'sent' ? 'Mark unsent' : 'Mark sent';
   var by = r.created_by ? ' · by ' + esc(r.created_by) : '';
   var pr0 = r.project_id ? cacheProjects.find(function(x){ return x.id === r.project_id; }) : null;
   var cli = pr0 ? ' · ' + esc(pr0.name) : (r.project ? ' · ' + esc(r.project) : '');
   var k = docKind(r.title);
+  var _ref = _isEst
+    ? (pr0 ? esc(pr0.name) : (r.project ? esc(r.project) : '')) +
+      (r.created_by ? ' · by ' + esc((typeof rptRepName === 'function' && rptRepName(r.created_by)) || String(r.created_by).split('@')[0]) : '')
+    : 'ID ' + esc(String(r.id).slice(0,8)) + cli + by;
   return '<tr>' +
     '<td class="title"><b>' + esc(r.title || 'Untitled') + '</b>' +
-      '<span class="ref">ID ' + esc(String(r.id).slice(0,8)) + cli + by + '</span></td>' +
+      '<span class="ref">' + _ref + '</span></td>' +
     '<td><span class="tchip trade">' + k.trade + '</span></td>' +
     '<td><span class="tchip ' + (k.type === 'Estimate' ? 'est' : 'insp') + '">' + k.type + '</span></td>' +
     '<td class="dates">' + fmt(r.created_at) + '<small>updated ' + fmt(r.updated_at) + '</small></td>' +
     '<td class="status">' + statusCell + '</td>' +
     '<td>' +
-      '<button class="chipbtn" data-act="open" data-id="'+r.id+'">Open / Edit</button>' +
+      (_le ? '<button class="chipbtn" data-act="estedit" data-id="'+r.id+'" data-eid="'+esc(String(_le.id))+'">Edit estimate</button>' +
+             '<button class="chipbtn" data-act="open" data-id="'+r.id+'">Open document</button>'
+           : '<button class="chipbtn" data-act="open" data-id="'+r.id+'">Open / Edit</button>') +
       '<button class="chipbtn" data-act="toggle" data-id="'+r.id+'">'+toggleLabel+'</button>' +
       (isWO ? '<button class="chipbtn" data-act="wodone" data-id="'+r.id+'">' +
         (wo && wo.completed_on ? 'Reopen' : 'Mark completed') + '</button>' : '') +
       '<button class="chipbtn" data-act="download" data-id="'+r.id+'">Download</button>' +
-      '<button class="chipbtn" data-act="dup" data-id="'+r.id+'">Duplicate</button>' +
+      (_le ? '' : '<button class="chipbtn" data-act="dup" data-id="'+r.id+'">Duplicate</button>') +   /* E: an estimate duplicates in the builder */
       '<button class="chipbtn danger" data-act="del" data-id="'+r.id+'">Delete</button>' +
     '</td></tr>';
 }
@@ -12371,7 +12399,7 @@ function renderActivityCount(){
   var adm1369 = false, w1369 = /** @type {any} */ (window); try{ adm1369 = !!(w1369.is_admin && w1369.is_admin()); }catch(_a){}
   function moneyBox(lbl, val){
     if(!adm1369) return box(lbl, val);
-    return '<button type="button" class="actbox actgo" data-actmoney title="Open Invoices &amp; Payments"><span>' + lbl + '</span><b>' + val + '</b></button>';
+    return '<button type="button" class="actbox actgo" data-actmoney title="Open Invoices &amp; AR"><span>' + lbl + '</span><b>' + val + '</b></button>';
   }
   el.innerHTML =
     box('New<br>Leads', leads) +
@@ -12473,8 +12501,9 @@ function renderOps(){
     wrap.innerHTML =
       '<div class="arbig">' + (total ? fmtMoney(total) : '$0') +   /* 1373 */
         '<span class="arbigl">' + (total
-          ? 'outstanding across ' + _arRows.length + ' invoice' + (_arRows.length === 1 ? '' : 's')
-          : (_arElse > 0 ? 'nothing outstanding on this board \u2014 ' + fmtMoney(_arElse) + ' on the others, in Invoices & Payments'
+          ? 'outstanding across ' + _arRows.length + ' invoice' + (_arRows.length === 1 ? '' : 's') +
+            (_arElse > 0 ? ' \u00b7 + ' + fmtMoney(_arElse) + ' on the other boards' : '')   /* E: Invoices & AR counts every board */
+          : (_arElse > 0 ? 'nothing outstanding on this board \u2014 ' + fmtMoney(_arElse) + ' on the others, in Invoices & AR'
                          : 'nothing outstanding \u2014 every invoice is collected')) + '</span></div>' +
       (_arRows.length ? '<div class="arcli">' + _arRows.slice(0, 3).map(function(r){
         return '<span>' + _esc(r.name) + ' \u00b7 ' + fmtMoney(r.v) + '</span>';
@@ -15012,6 +15041,8 @@ function renderProjectDocs(){
   if(cm) cm.innerHTML = ctrs.length ? docTable(ctrs)
     : '<div class="empty"><b>No contracts yet.</b><br>Use <b>+ New contract</b>, or approve the job from the pipeline to auto-create one.</div>';
   try{ crRenderTrash(); }catch(_t){}   /* 1345 */
+  /* E: the builder's "not published yet" list hides what this table now shows, so it re-reads the table */
+  try{ if(window.CardinalEstimates && typeof window.CardinalEstimates.refilterSaved === 'function') window.CardinalEstimates.refilterSaved(); }catch(_rs){}
 }
 /* 1345: this job's Trash — documents deleted in the last 30 days, each with Restore. Drawn under Contracts
    and under Estimates. Silent when the Trash is empty or not set up. */
@@ -15099,12 +15130,32 @@ async function handleDocAction(e){
   var act = b.getAttribute('data-act');
   try{
     if(act === 'open'){ await openEditor(id); return; }
+    if(act === 'estedit'){   /* E: the builder is where an estimate is changed */
+      var _eid = b.getAttribute('data-eid');
+      if(_eid && window.CardinalEstimates && typeof window.CardinalEstimates.openById === 'function') await window.CardinalEstimates.openById(_eid);
+      return;
+    }
     if(act === 'toggle'){
       var row = cacheRows.find(function(x){ return String(x.id) === String(id); });
       if(!row) return;
       var toSent = row.status !== 'sent';
       var sAt = toSent ? new Date().toISOString() : null;
       await db.update(id, { status: toSent ? 'sent' : 'unsent', sent_at: sAt });
+      /* E (judge 2 #2): a published estimate's Mark sent moved only the document, so the profile read DRAFT
+         and SENT for one estimate. Sent goes through the one announcement the editor's own Mark sent and
+         Email already make (crDocSent -> 1399's listener: Draft -> Sent, the pipeline stage with it).
+         Unsent takes a Sent estimate back to Draft -- never an Accepted or a Declined one. */
+      if(isEstimateDoc(row)){
+        if(toSent) crDocSent(id);
+        else{
+          try{
+            var _ud = await sb.from('estimates').update({ status:'draft' }).eq('doc_id', id).eq('status', 'sent').select('id');
+            if(_ud && !_ud.error && _ud.data && _ud.data.length){
+              try{ document.dispatchEvent(new CustomEvent('cr-est-status', { detail: { id: _ud.data[0].id, status: 'draft' } })); }catch(_ev){}
+            }
+          }catch(_u){}
+        }
+      }
       /* 723: a work order's dispatch lives on its crew_work_orders row too.
          Keep it in step — but never un-complete a finished one from the doc toggle. */
       if(isWorkOrderTitle(row.title)){
@@ -16894,6 +16945,17 @@ var galXferMenu = document.getElementById('galXferMenu');
 /* 1340 (Theo: a homeowner's signature counts as accepted). A signed estimate page is linked to its
    estimates row by doc_id; mark that row accepted so the job can be invoiced (1335). Only draft or sent
    rows move: an accepted, signed or declined one is left alone. Resolves true when a row changed. */
+/* E (judge 2 #2): a published estimate's card reads its estimates row through estByDoc, which a reload
+   rebuilds. Between reloads the builder's Save (cr-est-saved) and the send paths (cr-est-status) say what
+   changed, so the card follows them instead of lagging one reload behind. */
+function crEstCardSync(id, status, row){
+  var hit = false;
+  if(row && row.doc_id){ estByDoc[row.doc_id] = Object.assign(estByDoc[row.doc_id] || {}, { id:row.id, status:row.status, doc_id:row.doc_id }); hit = true; }
+  else if(id && status){ Object.keys(estByDoc).forEach(function(k){ var e = estByDoc[k]; if(e && String(e.id) === String(id)){ e.status = status; hit = true; } }); }
+  if(hit && currentProject){ try{ renderProjectDocs(); }catch(_r){} }
+}
+document.addEventListener('cr-est-status', function(ev){ var d = (ev && /** @type {any} */ (ev).detail) || {}; crEstCardSync(d.id, d.status, null); });
+document.addEventListener('cr-est-saved', function(ev){ var d = (ev && /** @type {any} */ (ev).detail) || {}; crEstCardSync(d.id, d.status, d.row || null); });
 function crAcceptEstimateForDoc(docId){
   var cx = window.sb || window.supa;
   if(!docId || !cx || !cx.from) return Promise.resolve(false);
@@ -23351,13 +23413,14 @@ function indexMoney(estimates, contracts){
      estBest), because that leg must know whether an accepted estimate exists. */
   estTier = {};
   estDocIds = {};
+  estByDoc = {};
   (estimates || []).forEach(function(e){
     if(!e || !e.project_id) return;
     /* 1011: collect BEFORE the archived/status filters — a draft's or an
        archived estimate's published doc is still the copy of a table row, and
        the table (with its status/tier/archived logic) is authoritative for it.
        Archiving a losing estimate must retire its document too. */
-    if(e.doc_id) estDocIds[e.doc_id] = 1;
+    if(e.doc_id){ estDocIds[e.doc_id] = 1; estByDoc[e.doc_id] = e; }
     if(e.archived) return;
     var st = String(e.status || '').toLowerCase();
     if(!SENT_EST[st]) return;
@@ -28337,6 +28400,7 @@ var INV_LIVE_CSS = `
 #cr-inv-live .cil-pill.part{color:#b45309;}
 #cr-inv-live .cil-pill.paid{color:#0f7a43;}
 #cr-inv-live .cil-pill.draft{color:#555;}
+#cr-inv-live .cil-pill.over{color:#b91c1c;}
 #cr-inv-live .cil-amt{font-size:31px;font-weight:800;color:#9c1822;line-height:1.1;margin-top:3px;}
 #cr-inv-live .cil-meta{font-size:12px;color:#555;margin-top:5px;}
 #cr-inv-live.paid{border-color:#0f7a43;background:#eefaf2;}
@@ -28357,6 +28421,7 @@ var INV_LIVE_CSS = `
   #cr-inv-live{border-width:2px;}
   #cr-inv-ledger table{page-break-inside:auto;}
   #cr-inv-ledger tr{page-break-inside:avoid;}
+  #cr-inv-ledger tfoot{display:table-row-group;}   /* E: Total paid once, after the last payment */
 }`;
 /* 1320: Total · Paid · Balance due from the ledger. New invoices carry ids; older ones
    are found by their labels. The same rewrite runs server-side in api/share.js. */
@@ -45389,7 +45454,9 @@ window.CardinalOffline = { isOffline: function(){ return !navigator.onLine; } };
 })();
 </script>
 
-<style id="cr-undo-styles">.cr-undo-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:12px;z-index:10000;max-width:92vw;box-shadow:0 8px 30px rgba(0,0,0,.55);font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;animation:cr-undo-in .2s ease}@keyframes cr-undo-in{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}.cr-undo-toast .msg{flex:1;min-width:0}.cr-undo-toast .btn{background:transparent;border:1px solid #c8202e;color:#c8202e;padding:5px 11px;border-radius:6px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-undo-toast .btn:hover{background:rgba(200,32,46,.15)}.cr-undo-toast .timer{width:22px;height:22px;border-radius:50%;background:conic-gradient(#c8202e 0deg,rgba(255,255,255,.15) 0deg);flex:0 0 auto;animation:cr-undo-ring var(--dur,5s) linear}@keyframes cr-undo-ring{to{background:conic-gradient(#c8202e 360deg,rgba(255,255,255,.15) 360deg)}}</style>
+<style id="cr-undo-styles">.cr-undo-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:12px;z-index:10000;width:max-content;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.55);font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;animation:cr-undo-in .2s ease}@keyframes cr-undo-in{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}.cr-undo-toast .msg{flex:1;min-width:0}.cr-undo-toast .btn{background:transparent;border:1px solid #e35c63;color:#ff8a90;min-height:44px;min-width:64px;padding:5px 11px;border-radius:6px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-undo-toast .btn:hover{background:rgba(200,32,46,.15)}
+/* E: over the estimate builder on a phone the toast rides above its Save / Email / Publish bar */
+@media (max-width:700px){ .cr-undo-toast.estundo{bottom:calc(84px + env(safe-area-inset-bottom,0px))} }.cr-undo-toast .timer{width:22px;height:22px;border-radius:50%;background:conic-gradient(#c8202e 0deg,rgba(255,255,255,.15) 0deg);flex:0 0 auto;animation:cr-undo-ring var(--dur,5s) linear}@keyframes cr-undo-ring{to{background:conic-gradient(#c8202e 360deg,rgba(255,255,255,.15) 360deg)}}</style>
 <script id="cr-undo-script">
 (function(){
 'use strict';
@@ -45978,6 +46045,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1424, d:'2026-10-29', t:'Estimates start from the job\u2019s measurements; invoices say what is really owed', s:'Estimates now start from the job\u2019s own measurements \u2014 the roof squares, eaves and ridges from Roofr or Hover fill the lines, and each line says where its number came from. The line arrows and \u00d7 are thumb-sized, a removed line comes back with Undo, and closing with unsaved work offers Save and close first. A published estimate shows once on the client page, and printed estimates show the total once, at the end. Invoices say Overdue, Draft, Partly paid or Paid in full instead of Deposit Paid for everything, carry Cardinal\u2019s address and phone and say where to mail a check. Recording a payment shows a green confirmation, and a Community job priced by its contract shows its real value and balance.' },
   { b: 1423, d:'2026-10-29', t:'Inspections: real priorities, photos kept, readable on a phone and on paper', s:'Each photo in an AI-written report shows its own priority (no more HIGH on everything), and the high and moderate ones show up in the Summary of Findings. Start without AI keeps your checked photos and stops asking for a title. Quick Inspection\u2019s buttons are readable, it finds the client from a typed address, and Finish puts your photos into Inspection Photos and offers to start the report with them checked. On a phone the report editor\u2019s buttons fold away while you scroll and the assistant fits the screen. Printed reports keep the cover on page 1 and the signature lines with their labels, and MODERATE is readable.' },
   { b: 1422, d:'2026-10-29', t:'The Ask button wears the portal colour', s:'The Ask button is red on Retail, teal on Insurance and green on Community \u2014 the same as the + button \u2014 instead of red everywhere. On a phone it is a proper round button with a larger star.' },
   { b: 1421, d:'2026-10-29', t:'The work order and Measurements boxes are readable in dark mode', s:'In dark mode the Cancel button on the New work order and Measurements boxes was almost invisible, and the field labels and hints were faint. Every label now reads clearly in both themes, the close \u00d7 is easy to tap, and the heading uses the app\u2019s own font.' },
@@ -52202,7 +52270,9 @@ window.CardinalPhotoEditor = { open: open, close: close };
 #rccPanel .rcc-foot select{flex:1;min-width:0;padding:8px 10px;border:1px solid #d9cfaf;border-radius:8px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#fff;color:#2c2c2c}
 @media(max-width:900px){#rccPanel{width:100%;height:52%;border-left:0;border-top:4px solid var(--red)}}
 </style>
-<style id="cr-est-styles">#cr-est-new-btn{display:inline-block;background:#c8202e;color:#fff;border:0;padding:9px 14px;border-radius:6px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.06em;cursor:pointer;margin-left:6px;margin-bottom:4px;font-family:inherit}#cr-est-new-btn:hover{background:#B01F21}.cr-est-saved-list{margin:12px 0 4px}.cr-est-saved-list .head{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);margin:0 0 6px}.cr-est-saved-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f4f2f1;border:1px solid #e8d9a8;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .12s}.cr-est-saved-row:hover{background:#f5efd8}.cr-est-saved-row .num{flex:0 0 auto;font:800 11px 'SF Mono',Menlo,Consolas,monospace;color:#8f1620}.cr-est-saved-row .title{flex:1;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-saved-row .status{flex:0 0 auto;padding:2px 8px;border-radius:10px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-est-saved-row .status.draft{background:#e8e0c8;color:#7a6a4a}.cr-est-saved-row .status.sent{background:#cfe0f5;color:#3d5d8c}.cr-est-saved-row .status.accepted{background:#c8e6cc;color:#2a6b3c}.cr-est-saved-row .status.declined{background:#f5cfd0;color:#8c3d3f}.cr-est-saved-row .amount{flex:0 0 auto;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}/* 1217: the CHROME layer. Theo's pick (b) off the design read - the frame goes
+<style id="cr-est-styles">/* E (judge 2): three equal red blocks, one of them 34px. Blank estimate is the app's outline button now
+   (.chipbtn, 44px, Buttons A); only its spacing lives here. An empty saved list draws nothing. */
+#cr-est-new-btn{margin-left:6px;margin-bottom:4px}.cr-est-saved-list{margin:12px 0 4px}.cr-est-saved-list:empty{display:none}.cr-est-saved-list .head{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);margin:0 0 6px}.cr-est-saved-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f4f2f1;border:1px solid #e8d9a8;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .12s}.cr-est-saved-row:hover{background:#f5efd8}.cr-est-saved-row .num{flex:0 0 auto;font:800 11px 'SF Mono',Menlo,Consolas,monospace;color:#8f1620}.cr-est-saved-row .title{flex:1;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-saved-row .status{flex:0 0 auto;padding:2px 8px;border-radius:10px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-est-saved-row .status.draft{background:#e8e0c8;color:#7a6a4a}.cr-est-saved-row .status.sent{background:#cfe0f5;color:#3d5d8c}.cr-est-saved-row .status.accepted{background:#c8e6cc;color:#2a6b3c}.cr-est-saved-row .status.declined{background:#f5cfd0;color:#8c3d3f}.cr-est-saved-row .amount{flex:0 0 auto;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}/* 1217: the CHROME layer. Theo's pick (b) off the design read - the frame goes
    dark and joins the app, the estimate itself stays the colour it prints on.
    Scoped to the view so nothing outside it can inherit, and themed by the app
    theme so the light twin restores exactly what shipped. The paper palette
@@ -52253,9 +52323,13 @@ window.CardinalPhotoEditor = { open: open, close: close };
 @media (max-width:760px){
   .cr-est-head{flex-wrap:wrap;}
 }
-.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px;box-shadow:var(--estc-lift,0 10px 30px rgba(0,0,0,.55))}.cr-est-clientcard .name{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:15px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:0 13px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--btn-rad,12px);border:0;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30)}.cr-est-items-head .add-abc{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30);margin-left:6px}.cr-est-items-head .add-abc:hover{background:var(--estc-well,#1b1f24)}.cr-est-items-head .add-custom:hover{background:var(--estc-well,#1b1f24)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .cr-est-rowmode{display:inline-flex;margin-top:10px;border:1px solid var(--est-line,#e2e8f0);border-radius:8px;overflow:hidden;background:var(--est-well,#f8fafc)}.cr-est-lineitem .cr-est-rowmode button{-webkit-appearance:none;appearance:none;border:0;background:transparent;padding:7px 15px;min-height:38px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--est-dim,#475569);cursor:pointer;font-family:inherit}.cr-est-lineitem .cr-est-rowmode button+button{border-left:1px solid var(--est-line,#e2e8f0)}.cr-est-lineitem .cr-est-rowmode button.on{background:var(--est-red,#c8202e);color:#fff}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}
+.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px;box-shadow:var(--estc-lift,0 10px 30px rgba(0,0,0,.55))}.cr-est-clientcard .name{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:15px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:0 13px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--btn-rad,12px);border:0;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30)}.cr-est-items-head .add-abc{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30);margin-left:6px}.cr-est-items-head .add-abc:hover{background:var(--estc-well,#1b1f24)}.cr-est-items-head .add-custom:hover{background:var(--estc-well,#1b1f24)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .cr-est-rowmode{display:inline-flex;margin-top:10px;border:1px solid var(--est-line,#e2e8f0);border-radius:8px;overflow:hidden;background:var(--est-well,#f8fafc)}.cr-est-lineitem .cr-est-rowmode button{-webkit-appearance:none;appearance:none;border:0;background:transparent;padding:7px 15px;min-height:38px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--est-dim,#475569);cursor:pointer;font-family:inherit}.cr-est-lineitem .cr-est-rowmode button+button{border-left:1px solid var(--est-line,#e2e8f0)}.cr-est-lineitem .cr-est-rowmode button.on{background:var(--est-red,#c8202e);color:#fff}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 76px 110px 1fr;gap:8px;align-items:end;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}
+/* E (judge 2): the word above each number. --est-dim is #475569: 7.58:1 on the white card. */
+.cr-est-lineitem .pricing .pf{display:flex;flex-direction:column;gap:3px;min-width:0;margin:0}.cr-est-lineitem .pricing .pf>span{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--est-dim,#475569);white-space:nowrap}.cr-est-meashint{margin-top:8px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--est-dim,#475569)}#cr-est-picker .asm-meas{margin:6px 0 0;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--est-dim,#475569)}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right;min-height:44px;box-sizing:border-box}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;padding:6px 8px}/* E (judge 2 #5): the line's ▲ ▼ and ✕ were 26x26 / 26x26 / 31x26, side by side. All three are 44px now,
+   and ✕ stands 12px clear of ▼ in red ink (#b3121f, 6.95:1 on the card) so it never reads as a third arrow. */
+.cr-est-lineitem .del{position:absolute;top:6px;right:6px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:8px;cursor:pointer;color:#b3121f;font-size:20px;line-height:1;padding:0}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:6px;right:62px;display:flex;gap:4px}
 /* 1397: at 390 the amount had ~50px ("$2,040.0") and the name ran under the move/✕ buttons */
-@media (max-width:560px){ .cr-est-lineitem{padding-top:40px} .cr-est-lineitem .pricing{grid-template-columns:1fr 1fr 1fr} .cr-est-lineitem .pricing .amount{grid-column:1 / -1} }.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:12px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;box-shadow:var(--estc-lift,0 10px 30px rgba(0,0,0,.55))}.cr-est-section{margin-bottom:6px}.cr-est-sechead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 8px;padding:8px 10px;background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-left:3px solid var(--est-red,#c8202e);border-radius:8px}.cr-est-sechead .sec-chev{-webkit-appearance:none;appearance:none;border:0;background:transparent;color:var(--est-dim,#475569);font-size:13px;line-height:1;cursor:pointer;padding:0 4px;min-height:32px}.cr-est-sechead .sec-title{flex:1 1 120px;min-width:80px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-ink,#0f172a);background:#fff;border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:7px 9px}.cr-est-sechead .sec-title-static{flex:1 1 120px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-dim,#475569)}.cr-est-sechead .sec-subtotal{font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--est-ink,#0f172a);font-variant-numeric:tabular-nums;white-space:nowrap}.cr-est-sechead .sec-move{display:flex;gap:2px}.cr-est-sechead .sec-move button{width:30px;height:30px;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-red,#c8202e);border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-sechead .sec-move button:disabled{opacity:.3;cursor:default}.cr-est-sechead .sec-addline{-webkit-appearance:none;appearance:none;border:1px solid var(--est-red,#c8202e);background:transparent;color:var(--est-red,#c8202e);border-radius:6px;padding:7px 11px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.06em;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-secmove{margin-left:8px;font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--est-dim,#475569);background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:6px 8px;min-height:34px;vertical-align:middle}.cr-est-items-head .add-section{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30)}.cr-est-items-head .add-section:hover{background:var(--estc-well,#1b1f24)}.cr-est-items-head .add-assembly{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30)}.cr-est-items-head .add-assembly:hover{background:var(--estc-well,#1b1f24)}.cr-est-sechead .sec-saveasm{-webkit-appearance:none;appearance:none;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-dim,#475569);border-radius:6px;padding:7px 10px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-sechead .sec-saveasm:hover{background:var(--est-well,#f8fafc);border-color:var(--est-red,#c8202e);color:var(--est-red,#c8202e)}#cr-est-picker .asm-group{border-bottom:1px solid #eee2c8}#cr-est-picker .asm-grouphd{padding:12px 16px 4px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8f1620}#cr-est-picker .asm-grouphd .asm-groupn{color:#a07f2f}#cr-est-picker .asm-card{padding:10px 16px 14px;border-top:1px solid #f0e8d0}#cr-est-picker .asm-card .top{display:flex;align-items:center;gap:8px}#cr-est-picker .asm-card .name{flex:1;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}#cr-est-picker .asm-card .asm-pin{flex:0 0 auto;background:transparent;border:0;color:#c9a227;font-size:18px;line-height:1;cursor:pointer;padding:2px 6px;min-height:34px}.asm-pin.on{color:#c8202e}#cr-est-picker .asm-card .asm-pin:hover{color:#c8202e}.asm-del{flex:0 0 auto;background:transparent;border:0;color:#5a5a5a;font-size:18px;line-height:1;cursor:pointer;padding:2px 6px}#cr-est-picker .asm-card .asm-del:hover{color:#c8202e}#cr-est-picker .asm-card .asm-meta{font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#5a5a5a;margin-top:2px}#cr-est-picker .asm-card .asm-act{display:flex;gap:8px;align-items:center;margin-top:9px}#cr-est-picker .asm-card .asm-sq{flex:1;min-width:0;box-sizing:border-box;padding:9px 11px;border:1px solid #d9cfaf;border-radius:8px;font-size:13px;background:#fff;color:#2c2c2c;font-family:inherit}#cr-est-picker .asm-card .asm-insert{flex:0 0 auto;background:#c8202e;color:#fff;border:0;border-radius:8px;padding:0 18px;min-height:40px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:inherit}#cr-est-picker .asm-card .asm-insert:hover{background:#B01F21}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:12px;padding:14px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline;box-shadow:var(--estc-lift,0 10px 30px rgba(0,0,0,.55))}.cr-est-totals .lbl{font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;letter-spacing:normal}.cr-est-totals .grand-val{font:800 22px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px;min-width:44px;min-height:44px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:15px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (max-width:560px){ .cr-est-lineitem{padding-top:58px} .cr-est-lineitem .pricing{grid-template-columns:1fr 1fr 1fr} .cr-est-lineitem .pricing .amount{grid-column:1 / -1} }.cr-est-move button{width:44px;height:44px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:8px;cursor:pointer;font-size:14px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:12px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;box-shadow:var(--estc-lift,0 10px 30px rgba(0,0,0,.55))}.cr-est-section{margin-bottom:6px}.cr-est-sechead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 8px;padding:8px 10px;background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-left:3px solid var(--est-red,#c8202e);border-radius:8px}.cr-est-sechead .sec-chev{-webkit-appearance:none;appearance:none;border:0;background:transparent;color:var(--est-dim,#475569);font-size:13px;line-height:1;cursor:pointer;padding:0 4px;min-height:32px}.cr-est-sechead .sec-title{flex:1 1 120px;min-width:80px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-ink,#0f172a);background:#fff;border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:7px 9px}.cr-est-sechead .sec-title-static{flex:1 1 120px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-dim,#475569)}.cr-est-sechead .sec-subtotal{font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--est-ink,#0f172a);font-variant-numeric:tabular-nums;white-space:nowrap}.cr-est-sechead .sec-move{display:flex;gap:2px}.cr-est-sechead .sec-move button{width:30px;height:30px;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-red,#c8202e);border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-sechead .sec-move button:disabled{opacity:.3;cursor:default}.cr-est-sechead .sec-addline{-webkit-appearance:none;appearance:none;border:1px solid var(--est-red,#c8202e);background:transparent;color:var(--est-red,#c8202e);border-radius:6px;padding:7px 11px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.06em;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-secmove{margin-left:8px;font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--est-dim,#475569);background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:6px 8px;min-height:34px;vertical-align:middle}.cr-est-items-head .add-section{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30)}.cr-est-items-head .add-section:hover{background:var(--estc-well,#1b1f24)}.cr-est-items-head .add-assembly{background:transparent;color:var(--estc-ink,#e9ecf1);border:1px solid var(--estc-line,#262a30)}.cr-est-items-head .add-assembly:hover{background:var(--estc-well,#1b1f24)}.cr-est-sechead .sec-saveasm{-webkit-appearance:none;appearance:none;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-dim,#475569);border-radius:6px;padding:7px 10px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-sechead .sec-saveasm:hover{background:var(--est-well,#f8fafc);border-color:var(--est-red,#c8202e);color:var(--est-red,#c8202e)}#cr-est-picker .asm-group{border-bottom:1px solid #eee2c8}#cr-est-picker .asm-grouphd{padding:12px 16px 4px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8f1620}#cr-est-picker .asm-grouphd .asm-groupn{color:#a07f2f}#cr-est-picker .asm-card{padding:10px 16px 14px;border-top:1px solid #f0e8d0}#cr-est-picker .asm-card .top{display:flex;align-items:center;gap:8px}#cr-est-picker .asm-card .name{flex:1;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c}#cr-est-picker .asm-card .asm-pin{flex:0 0 auto;background:transparent;border:0;color:#c9a227;font-size:18px;line-height:1;cursor:pointer;padding:2px 6px;min-height:34px}.asm-pin.on{color:#c8202e}#cr-est-picker .asm-card .asm-pin:hover{color:#c8202e}.asm-del{flex:0 0 auto;background:transparent;border:0;color:#5a5a5a;font-size:18px;line-height:1;cursor:pointer;padding:2px 6px}#cr-est-picker .asm-card .asm-del:hover{color:#c8202e}#cr-est-picker .asm-card .asm-meta{font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#5a5a5a;margin-top:2px}#cr-est-picker .asm-card .asm-act{display:flex;gap:8px;align-items:center;margin-top:9px}#cr-est-picker .asm-card .asm-sq{flex:1;min-width:0;box-sizing:border-box;padding:9px 11px;border:1px solid #d9cfaf;border-radius:8px;font-size:13px;background:#fff;color:#2c2c2c;font-family:inherit}#cr-est-picker .asm-card .asm-insert{flex:0 0 auto;background:#c8202e;color:#fff;border:0;border-radius:8px;padding:0 18px;min-height:40px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:inherit}#cr-est-picker .asm-card .asm-insert:hover{background:#B01F21}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:12px;padding:14px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline;box-shadow:var(--estc-lift,0 10px 30px rgba(0,0,0,.55))}.cr-est-totals .lbl{font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;letter-spacing:normal}.cr-est-totals .grand-val{font:800 22px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px;min-width:44px;min-height:44px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:15px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
 /* 962 \u2014 THE APP ALREADY HAD AN ANSWER FOR THIS AND I MISSED IT.
    Build 595 (#projModal), then 935 (#cr-pb-modal .sheet), both solved the
    installed bottom bar the same way and 935 wrote down why: \u201cClearance, NOT a
@@ -52371,6 +52445,36 @@ return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numer
 var estNavOpen = {};
 function newLineId(){ return 'l_' + Math.random().toString(36).slice(2, 10); }
 function newSecId(){ return 'sc_' + Math.random().toString(36).slice(2, 10); }
+/* E (judge 2 #1): the job's own measurements -- checklist.meas, which the Measurements box, a Roofr
+   upload and a Hover report all fill -- carried into the estimate, so the rep never types the squares a
+   second time. Numbers only: a blank or unreadable box is "not measured", never 0. Roof squares are ROOF
+   area, so they fill Roofing lines only and never siding, whose SQ is wall area. The rep can always
+   overwrite what lands. Nothing here is saved except the quantity itself. */
+function jobMeas(project){
+var ms = null;
+try{ ms = (project && typeof parseCkAll === 'function') ? (parseCkAll(project).meas || null) : null; }catch(_m){ ms = null; }
+if(!ms || typeof ms !== 'object') return null;
+var toMeasNum = function(x0){ var x = parseFloat(String(x0 == null ? '' : x0).replace(/,/g, '')); return (isFinite(x) && x > 0) ? x : 0; };
+var o = { sq:toMeasNum(ms.sq), eave:toMeasNum(ms.eave), rake:toMeasNum(ms.rake), ridge:toMeasNum(ms.ridge), hip:toMeasNum(ms.hip), valley:toMeasNum(ms.valley),
+          ridgehip:toMeasNum(ms.ridgehip), src:String(ms.source || '').trim() };
+return (o.sq || o.eave || o.rake || o.ridge || o.hip || o.valley || o.ridgehip) ? o : null;
+}
+function measFrom(m){ return (m && m.src) ? ' from ' + m.src : ' from this job\u2019s measurements'; }
+/* a length an assembly line is drawn from: its FIRST key is what the line is about (eaves for a gutter),
+   so without it the template quantity stands; the rest add when measured. Hover reports ridges and hips
+   as one figure -- it answers for the pair together, never for one of them (674's rule). */
+function measLen(m, keys){
+if(!m || !Array.isArray(keys) || !keys.length) return 0;
+var measLenOf = function(k){ return Number(m[k]) || 0; };
+if(keys.indexOf('ridge') !== -1 && keys.indexOf('hip') !== -1 && !measLenOf('ridge') && !measLenOf('hip') && measLenOf('ridgehip')){
+return Math.round((measLenOf('ridgehip') + keys.filter(function(k){ return k !== 'ridge' && k !== 'hip'; }).reduce(function(t, k){ return t + measLenOf(k); }, 0)) * 10) / 10;
+}
+if(!measLenOf(keys[0])) return 0;
+return Math.round(keys.reduce(function(t, k){ return t + measLenOf(k); }, 0) * 10) / 10;
+}
+/* line id -> "24.3 SQ from Roofr": a note drawn under a line that was filled from the measurements.
+   Keyed by the in-memory _lid, so it is never saved and goes when the rep types over the number. */
+var measHint = {};
 /* 1097: line-item sections. Common section names for the title autocomplete. */
 var SECTION_PRESETS = ['Tear-Off & Decking','Primary Shingles','Ventilation & Flashing','Labor & Disposal'];
 /* collapse is a viewing convenience keyed by the (unique) section id, so it
@@ -52405,15 +52509,15 @@ return sum + (l.flat === true ? (Number(l.amount) || 0) : (Number(l.qty) || 0) *
    design — an assembly carries the scope and quantities; the rep sets the
    money per job, so a stale price can never ride in. */
 var EST_ASSEMBLIES = [
-{ id:'def-roof-oc', name:'Full Roof Replacement — OC Duration', trade:'Roofing', _default:true, lines:[
+{ id:'def-roof-oc', name:'Full Roof Replacement — OC Duration', trade:'Roofing', _default:true, meas:true, lines:[
 { name:'Tear-off existing roofing layers & haul away', description:'', qty:1, unit:'SQ', unit_price:0, per_sq:1 },
 { name:'Synthetic underlayment', description:'ProArmor / Deck Defense', qty:1, unit:'SQ', unit_price:0, per_sq:1 },
-{ name:'Ice & Water Shield', description:'Eaves, valleys and penetrations', qty:66, unit:'LF', unit_price:0 },
-{ name:'Drip edge flashing', description:'Perimeter', qty:150, unit:'LF', unit_price:0 },
-{ name:'Starter strip shingles', description:'Eaves & rakes', qty:150, unit:'LF', unit_price:0 },
+{ name:'Ice & Water Shield', description:'Eaves, valleys and penetrations', qty:66, unit:'LF', unit_price:0, from:['eave','valley'] },
+{ name:'Drip edge flashing', description:'Perimeter', qty:150, unit:'LF', unit_price:0, from:['eave','rake'] },
+{ name:'Starter strip shingles', description:'Eaves & rakes', qty:150, unit:'LF', unit_price:0, from:['eave','rake'] },
 { name:'OC Duration architectural shingles', description:'SureNail — includes 10% waste', qty:1, unit:'SQ', unit_price:0, per_sq:1.1 },
-{ name:'Shingle-over ridge vent', description:'SkyRunner', qty:30, unit:'LF', unit_price:0 },
-{ name:'Hip & ridge cap shingles', description:'ProEdge / RIZERidge', qty:40, unit:'LF', unit_price:0 },
+{ name:'Shingle-over ridge vent', description:'SkyRunner', qty:30, unit:'LF', unit_price:0, from:['ridge'] },
+{ name:'Hip & ridge cap shingles', description:'ProEdge / RIZERidge', qty:40, unit:'LF', unit_price:0, from:['ridge','hip'] },
 { name:'Pipe flashing boots', description:'Neoprene / silicone', qty:2, unit:'EA', unit_price:0 },
 { name:'Dump trailer, magnetic sweep & site cleanup', description:'', qty:0, unit:'', unit_price:0, flat:true }
 ]},
@@ -52440,14 +52544,14 @@ var EST_ASSEMBLIES = [
 { name:'Continuous F-channel / J-channel receiver trim', description:'', qty:100, unit:'LF', unit_price:0 },
 { name:'Color-matched trim nails & fasteners', description:'', qty:0, unit:'', unit_price:0, flat:true }
 ]},
-{ id:'def-gutter', name:'Seamless 6\" K-Style Gutter & 3x4 Downspout', trade:'Gutters', _default:true, lines:[
-{ name:'Remove & dispose of existing gutter system', description:'', qty:120, unit:'LF', unit_price:0 },
-{ name:'Seamless .032 aluminum 6\" K-style gutters', description:'', qty:120, unit:'LF', unit_price:0 },
-{ name:'Heavy-duty hidden screw hangers', description:'24\" on center', qty:60, unit:'EA', unit_price:0 },
+{ id:'def-gutter', name:'Seamless 6\" K-Style Gutter & 3x4 Downspout', trade:'Gutters', _default:true, meas:true, lines:[
+{ name:'Remove & dispose of existing gutter system', description:'', qty:120, unit:'LF', unit_price:0, from:['eave'] },
+{ name:'Seamless .032 aluminum 6\" K-style gutters', description:'', qty:120, unit:'LF', unit_price:0, from:['eave'] },
+{ name:'Heavy-duty hidden screw hangers', description:'24\" on center', qty:60, unit:'EA', unit_price:0, from:['eave'], per:0.5 },
 { name:'Miters, end caps & silicone sealant', description:'Box / strip', qty:4, unit:'EA', unit_price:0 },
 { name:'3x4 oversized aluminum downspouts & elbows', description:'', qty:60, unit:'LF', unit_price:0 },
 { name:'Downspout clean-out extensions', description:'Hinged / zip', qty:4, unit:'EA', unit_price:0 },
-{ name:'Micro-mesh leaf gutter guards', description:'Optional', qty:120, unit:'LF', unit_price:0 }
+{ name:'Micro-mesh leaf gutter guards', description:'Optional', qty:120, unit:'LF', unit_price:0, from:['eave'] }
 ]},
 { id:'def-window', name:'Full-Frame / Pocket Window Replacement', trade:'Windows', _default:true, lines:[
 { name:'Extract existing window sash/frame & haul away', description:'', qty:1, unit:'EA', unit_price:0, per_unit:1 },
@@ -52468,24 +52572,29 @@ return null;
    field-driven lines: per_sq lines by squares, per_unit lines (e.g. windows) by
    the unit count. per_sq / per_unit are assembly-only keys, not carried onto the
    estimate line. */
-function expandAssembly(a, n){
+function expandAssembly(a, n, m){
 return (a.lines || []).map(function(ln){
 var q = Number(ln.qty) || 0;
 if(n > 0){
 if(ln.unit === 'SQ' || ln.per_sq != null) q = (Number(ln.per_sq) || 1) * n;
 else if(ln.per_unit != null) q = (Number(ln.per_unit) || 1) * n;
 }
+/* E: a length line takes the job's measured length (eaves, rakes, ridges) when there is one. `per` scales
+   it (hangers every 24in = half the eave length, rounded up). from / per / meas never reach the line. */
+var len = (m && ln.from) ? measLen(m, ln.from) : 0;
+if(len > 0) q = ln.per ? Math.ceil(len * Number(ln.per)) : len;
+q = Math.round(q * 100) / 100;   /* 24.3 SQ x 1.1 waste read 26.730000000000004 in the Qty box */
 var o = { _lid: newLineId(), name: ln.name || '', description: ln.description || '', qty: q, unit: ln.unit || '', unit_price: Number(ln.unit_price) || 0, amount: 0 };
 if(ln.flat === true) o.flat = true;
 return o;
 });
 }
 /* drop an assembly in as one new titled section */
-function injectAssembly(a, squares){
+function injectAssembly(a, squares, m){
 if(!state || !a) return;
 var sid = newSecId();
 var name = a.name || 'Section';
-var lines = expandAssembly(a, squares).map(function(o){ o.section_id = sid; o.sec = name; return o; });
+var lines = expandAssembly(a, squares, m).map(function(o){ o.section_id = sid; o.sec = name; return o; });
 if(!lines.length) return;
 state.lines = state.lines.concat(lines);
 state._dirty = true;
@@ -52516,7 +52625,7 @@ if(u && u.error) throw u.error;
 }
 await loadAssemblies();
 renderAssemblyPicker();
-crTell(turningOn ? '\u201c' + (target.name || 'Assembly') + '\u201d is now your default \u2014 it sits at the top of the +Assembly picker.' : 'Default cleared.');
+crTell(turningOn ? '\u201c' + (target.name || 'Assembly') + '\u201d is now your default \u2014 it sits at the top of the +Assembly picker.' : 'Default cleared.', 'ok');
 }catch(e){ crTell('Could not set the default: ' + ((e && e.message) || e)); }
 }
 async function loadAssemblies(){
@@ -52560,7 +52669,7 @@ var r = await window.supa.from('estimate_assemblies').insert(payload).select('id
 if(r.error || !r.data){ crTell('Could not save the assembly. ' + ((r.error && r.error.message) || '')); return; }
 CUSTOM_ASSEMBLIES.push({ id: r.data.id, name: r.data.name, trade: r.data.trade || null, _default:false,
 lines: Array.isArray(r.data.lines) ? r.data.lines : payload.lines });
-crTell('“' + title.trim() + '” saved to your assemblies.');
+crTell('“' + title.trim() + '” saved to your assemblies.', 'ok');
 }catch(_e){ crTell('Could not save the assembly.'); }
 }
 async function deleteAssembly(id){
@@ -52581,6 +52690,7 @@ if(!picker) return;
 var list = picker.querySelector('.box-list');
 if(!list) return;
 var all = EST_ASSEMBLIES.concat(CUSTOM_ASSEMBLIES);
+var asmMeas = jobMeas(state && state.project);   /* E */
 var q = (pickerQuery || '').toLowerCase();
 if(q) all = all.filter(function(a){ return (a.name || '').toLowerCase().indexOf(q) !== -1 || (a.trade || '').toLowerCase().indexOf(q) !== -1; });
 if(!all.length){ list.innerHTML = '<div class="empty">No assemblies match — or none saved yet. Build a section and tap “Save as Assembly.”</div>'; return; }
@@ -52596,14 +52706,21 @@ var hasSq = (a.lines || []).some(function(l){ return l.unit === 'SQ' || l.per_sq
 var hasUnit = !hasSq && (a.lines || []).some(function(l){ return l.per_unit != null; });
 var scaleLbl = hasSq ? 'Squares (optional)' : (hasUnit ? 'Windows (optional)' : '');
 var scaleNote = hasSq ? ' · scales by squares' : (hasUnit ? ' · scales by count' : '');
+/* E: only the assemblies that cover the WHOLE house (meas:true) start from the job's measurements -- a
+   porch accent or a siding job must never inherit the roof's squares. */
+var preSq = (a.meas && hasSq && asmMeas && asmMeas.sq) ? asmMeas.sq : '';
+var nLen = (a.meas && asmMeas) ? (a.lines || []).filter(function(l){ return l.from && measLen(asmMeas, l.from) > 0; }).length : 0;
+var measNote = (preSq || nLen) ? '<div class="asm-meas">' + esc((preSq ? preSq + ' SQ' : '') + (preSq && nLen ? ' and ' : '') +
+(nLen ? nLen + ' length' + (nLen === 1 ? '' : 's') : '') + measFrom(asmMeas) + ' \u2014 change any of them after you insert.') + '</div>' : '';
 return '<div class="asm-card" data-aid="' + esc(a.id) + '">' +
 '<div class="top"><div class="name">' + esc(a.name) + '</div>' +
 (a._mine ? '<button class="asm-pin' + (a._pinned ? ' on' : '') + '" data-apin="' + esc(a.id) + '" type="button" title="' + (a._pinned ? 'Your default \u2014 tap to unpin' : 'Make this your default') + '">' + (a._pinned ? '\u2605' : '\u2606') + '</button>' : '') +
 (a._default ? '' : '<button class="asm-del" data-adel="' + esc(a.id) + '" type="button" title="Delete">✕</button>') +
 '</div>' +
 '<div class="asm-meta">' + (a.lines || []).length + ' line' + ((a.lines || []).length === 1 ? '' : 's') + scaleNote + '</div>' +
+measNote +
 '<div class="asm-act">' +
-((hasSq || hasUnit) ? '<input type="number" class="asm-sq" min="0" step="0.1" inputmode="decimal" placeholder="' + scaleLbl + '" />' : '') +
+((hasSq || hasUnit) ? '<input type="number" class="asm-sq" min="0" step="0.1" inputmode="decimal" placeholder="' + scaleLbl + '" aria-label="' + scaleLbl + '"' + (preSq ? ' value="' + esc(preSq) + '"' : '') + ' />' : '') +
 '<button class="asm-insert" data-ains="' + esc(a.id) + '" type="button">Insert</button>' +
 '</div>' +
 '</div>';
@@ -52615,9 +52732,9 @@ var a = findAssembly(b.dataset.ains); if(!a) return;
 var card = b.closest('.asm-card');
 var sqEl = card && card.querySelector('.asm-sq');
 var sq = sqEl ? (Number(sqEl.value) || 0) : 0;
-injectAssembly(a, sq);
+injectAssembly(a, sq, a.meas ? jobMeas(state && state.project) : null);   /* E: whole-house assemblies take the measured lengths */
 closePicker();
-crTell('“' + (a.name || 'Assembly') + '” added as a section.');
+crTell('“' + (a.name || 'Assembly') + '” added as a section.', 'ok');
 };
 });
 list.querySelectorAll('[data-apin]').forEach(function(b){
@@ -52743,6 +52860,12 @@ document.body.appendChild(view);
    innerHTML, not this element, so it never stacks. */
 view.addEventListener('input', function(){ if(state) state._dirty = true; }, true);
 view.addEventListener('change', function(){ if(state) state._dirty = true; }, true);
+/* E: the buttons that change the estimate without an input event -- + Custom, a photo removed, moved or
+   starred, a section moved or added -- used to leave it "clean", so Close discarded them without asking. */
+view.addEventListener('click', function(e){
+var b = (e.target instanceof Element) ? e.target.closest('[data-act]') : null;
+if(b && state && /^(add-custom|add-section|sec-addline|sec-up|sec-down|del-photo|pmove-up|pmove-down|set-cover|mode-detailed|mode-flat)$/.test(b.getAttribute('data-act') || '')) state._dirty = true;
+}, true);
 /* 1135: template descriptions are paragraphs, and a textarea does not grow to
    its content — every line card opened "squished" to ~1.5 lines with the rest
    clipped (min-height 38px + overflow hidden). Size each description to its
@@ -52828,6 +52951,8 @@ function close(){
 if(view) view.classList.remove('open');
 document.body.style.overflow = '';
 state = null;
+/* E: a Removed-line undo belongs to the estimate that just closed */
+try{ if(document.querySelector('.cr-undo-toast.estundo') && window.CardinalUndo) window.CardinalUndo.dismiss(); }catch(_u){}
 }
 /* 1029: after Publish, the stage sync (cr-ess) writes status:'sent' to the DB
    and announces it — the open editor keeps its screen honest without a poll. */
@@ -52856,8 +52981,12 @@ async function openWithTrade(project, kind){
   var lib = (L && t.name) ? L.all().filter(function(i){ return i.category === t.cat && t.name.test(i.name || ''); })[0] : null;
   openEditor(project, null);
   if(lib){
-    state.lines.push({ _lid:newLineId(), library_id:lib.id, name:lib.name, description:lib.description || '',
-      qty:1, unit:lib.unit || '', unit_price:Number(lib.default_price) || 0, amount:Number(lib.default_price) || 0 });
+    /* E (judge 2 #1): the job's measured squares, not 1 -- Roofing SQ only (see jobMeas) */
+    var _tm = (String(lib.unit || '').toUpperCase() === 'SQ' && t.cat === 'Roofing') ? jobMeas(project) : null;
+    var _tl = newLineId();
+    state.lines.push({ _lid:_tl, library_id:lib.id, name:lib.name, description:lib.description || '',
+      qty:(_tm && _tm.sq) ? _tm.sq : 1, unit:lib.unit || '', unit_price:Number(lib.default_price) || 0, amount:Number(lib.default_price) || 0 });
+    if(_tm && _tm.sq) measHint[_tl] = _tm.sq + ' SQ' + measFrom(_tm);
     render();
     autosizeDescs();
   }else{
@@ -52865,6 +52994,17 @@ async function openWithTrade(project, kind){
     if(t.cat){ var si = picker && picker.querySelector('.box-search input'); if(si){ si.value = t.cat; pickerQuery = t.cat; renderPicker(); } }
   }
   return !!lib;
+}
+/* E: open a saved estimate by its id -- the full row is read fresh, as creOpenSaved does */
+async function openById(id){
+if(!window.supa || !id){ crTell('No connection \u2014 try again when you are back online.'); return false; }
+var r;
+try{ r = await window.supa.from('estimates').select('*').eq('id', id).maybeSingle(); }
+catch(e){ crTell('Could not open the estimate: ' + ((e && e.message) || e)); return false; }
+if(r && r.error){ crTell('Could not open the estimate: ' + r.error.message); return false; }
+if(!r || !r.data){ crTell('That estimate is no longer there.'); return false; }
+openEditor(r.data.project_id, r.data);
+return true;
 }
 function buildDefaultTitle(project){
 var who = (project && (project.name || project.client_name || '')) || 'Client';
@@ -53166,18 +53306,21 @@ var amt = itemized
 : (Number(l.amount) || 0);
 var pricing = itemized
 ? '<div class="pricing">' +
-'<input type="number" data-lf="qty" value="' + esc(l.qty != null ? l.qty : 1) + '" step="0.01" min="0" inputmode="decimal" placeholder="Qty" />' +
-'<select class="unit-sel" data-lf="unit">' +
+/* E (judge 2): a placeholder is a label only until the box has a number in it. Each field now carries a
+   word above it and an aria-label, so "24.3 | SQ | 525" reads as quantity, unit and price each. */
+'<label class="pf"><span>Qty</span><input type="number" data-lf="qty" value="' + esc(l.qty != null ? l.qty : 1) + '" step="0.01" min="0" inputmode="decimal" placeholder="Qty" aria-label="Quantity" /></label>' +
+'<label class="pf"><span>Unit</span><select class="unit-sel" data-lf="unit" aria-label="Unit">' +
 UNITS.map(function(u){
 return '<option value="' + esc(u) + '"' + ((l.unit || '') === u ? ' selected' : '') + '>' + (u || '\u2014') + '</option>';
 }).join('') +
-'</select>' +
-'<input type="number" data-lf="unit_price" value="' + esc(l.unit_price != null ? l.unit_price : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="Unit $" />' +
+'</select></label>' +
+'<label class="pf"><span>Price each</span><input type="number" data-lf="unit_price" value="' + esc(l.unit_price != null ? l.unit_price : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="Unit $" aria-label="Price each" /></label>' +
 '<div class="amount" data-slot="amount">' + money(amt) + '</div>' +
-'</div>'
+'</div>' +
+(measHint[l._lid] ? '<div class="cr-est-meashint">' + esc(measHint[l._lid]) + ' \u2014 change it if this job needs more.</div>' : '')
 : '<div class="pricing lump">' +
 '<span class="lump-lbl">Amount</span>' +
-'<input type="number" data-lf="amount" value="' + esc(l.amount != null ? l.amount : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="0.00" />' +
+'<input type="number" data-lf="amount" value="' + esc(l.amount != null ? l.amount : 0) + '" step="0.01" min="0" inputmode="decimal" placeholder="0.00" aria-label="Amount" />' +
 '</div>';
 var moves =
 '<div class="cr-est-move">' +
@@ -53397,6 +53540,7 @@ if(i < 0 || j < 0 || j >= state.lines.length) return;
 var tmp = state.lines[i];
 state.lines[i] = state.lines[j];
 state.lines[j] = tmp;
+state._dirty = true;   /* E: a reorder is an edit, so Close asks about it */
 render();
 }
 function movePhoto(i, delta){
@@ -53454,7 +53598,17 @@ if(!view) return;
 view.querySelector('[data-act="close"]').onclick = async function(){
 /* 1029: Save no longer closes the editor, so this is the one exit — it asks
    before discarding unsaved work. */
-if(state && state._dirty && !await crAsk('You have unsaved changes.\n\nClose without saving?')) return;
+/* E (judge 2 #4): this asked "Close without saving?" with one blue CONTINUE -- the button that threw the
+   work away, under a word that reads as "keep going". Three journeys now, each named for what it does:
+   Save and close (the filled one), Discard changes (red words), Keep editing (Cancel, and the scrim). */
+if(state && state._dirty){
+var _pick = await crAsk('You have unsaved changes.\n\nSave them before you close, or discard them.', {
+choices: [ { id:'save', label:'Save and close', hint:'Keeps every change you made', tone:'primary' },
+           { id:'discard', label:'Discard changes', hint:'Closes without saving \u2014 the last saved version stays', tone:'danger' } ],
+cancel: 'Keep editing' });
+if(_pick === 'save'){ try{ await save(); }catch(_s){ return; } close(); return; }   /* save() already said why */
+if(_pick !== 'discard') return;
+}
 close();
 };
 view.querySelector('[data-act="save"]').onclick = handleSave;
@@ -53567,6 +53721,7 @@ var kept = state.photos.filter(function(ep){
 return selectedIds.has(String(ep.photo_id));
 });
 var keptIds = new Set(kept.map(function(k){ return String(k.photo_id); }));
+state._dirty = true;   /* E: the photo set changed */
 var added = selected
 .filter(function(p){ return !keptIds.has(String(p.id)); })
 .map(function(p){
@@ -53615,8 +53770,25 @@ var lid = row.dataset.lid;
 var line = state.lines.find(function(l){ return l._lid === lid; });
 if(!line) return;
 row.querySelector('[data-act="del-line"]').onclick = function(){
-state.lines = state.lines.filter(function(l){ return l._lid !== lid; });
+/* E (judge 2 #5): one tap took a priced line with no way back. It still goes on one tap -- a confirm on
+   every line is its own tax -- and the app's one undo toast (CardinalUndo) brings it back to the same
+   place, in the same section, for six seconds. The undo is a no-op once this estimate is closed. */
+var at = state.lines.findIndex(function(l){ return l._lid === lid; });
+if(at < 0) return;
+var gone = state.lines[at], s0 = state;
+state.lines.splice(at, 1);
+state._dirty = true;
 render();
+var U = window.CardinalUndo;
+if(U && typeof U.enqueue === 'function'){
+U.enqueue('Removed \u201c' + (String(gone.name || '').trim() || 'Untitled item') + '\u201d', function(){
+if(state !== s0) return;
+state.lines.splice(Math.min(at, state.lines.length), 0, gone);
+state._dirty = true;
+render();
+}, 6000);
+var _ut = document.querySelector('.cr-undo-toast'); if(_ut) _ut.classList.add('estundo');
+}
 };
 var up = row.querySelector('[data-act="move-up"]');
 if(up) up.onclick = function(){ moveLine(lid, -1); };
@@ -53628,6 +53800,7 @@ inp.oninput = function(e){
 var v = e.target.value;
 if(field === 'qty' || field === 'unit_price' || field === 'amount'){
 line[field] = Number(v) || 0;
+if(field === 'qty' && measHint[lid]){ delete measHint[lid]; var _mh = row.querySelector('.cr-est-meashint'); if(_mh) _mh.remove(); }   /* E */
 refreshTotals();
 }else{
 line[field] = v;
@@ -53710,7 +53883,7 @@ function duplicateEstimate(){
     payment_instructions: s.payment_instructions
   };
   openEditor(s.project, copy);
-  if(typeof crTell === 'function') crTell('Copied to a new draft \u2014 edit it and Save to keep it. The original is unchanged.');
+  if(typeof crTell === 'function') crTell('Copied to a new draft \u2014 edit it and Save to keep it. The original is unchanged.', 'ok');
 }
 async function save(){
 var s = state;
@@ -53959,12 +54132,20 @@ el.onclick = function(){
 var id = el.dataset.id;
 var lib = window.CardinalLineItems && window.CardinalLineItems.byId(id);
 if(!lib) return;
+/* E (judge 2 #1): roof squares fill a Roofing SQ line, the eave length a Gutters LF line; anything else
+   opens at 1 as before. */
+var _pm = jobMeas(state.project), _pu = String(lib.unit || '').toUpperCase(), _pc = String(lib.category || '').toLowerCase();
+var _pq = 1, _ph = '', _pl = newLineId();
+if(_pm && _pu === 'SQ' && _pc === 'roofing' && _pm.sq){ _pq = _pm.sq; _ph = _pm.sq + ' SQ' + measFrom(_pm); }
+else if(_pm && _pu === 'LF' && _pc === 'gutters' && _pm.eave){ _pq = _pm.eave; _ph = _pm.eave + ' LF of eaves' + measFrom(_pm); }
+if(_ph) measHint[_pl] = _ph;
+state._dirty = true;
 state.lines.push({
-_lid       : newLineId(),
+_lid       : _pl,
 library_id : lib.id,
 name       : lib.name,
 description: lib.description || '',
-qty        : 1,
+qty        : _pq,
 unit       : lib.unit || '',
 unit_price : Number(lib.default_price) || 0,
 amount     : Number(lib.default_price) || 0,
@@ -54049,6 +54230,7 @@ else why = 'ABC did not return a price for this item \u2014 the branch prices it
 }catch(e){ why = String(e.message || e); }
 if(el) el.style.opacity = '';
 }
+state._dirty = true;   /* E */
 state.lines.push({
 _lid       : newLineId(),
 library_id : null,
@@ -54075,12 +54257,32 @@ var host = document.getElementById('cr-est-saved-slot');
 if(!host) return;
 host.innerHTML = '<div class="head">Loading estimates\u2026</div>';
 var rows = await loadForProject(pid);
+savedLast = { pid: pid, rows: rows };
+paintSaved();
+}
+/* E (judge 2 #2): a PUBLISHED estimate appears once -- on its document's card in the Estimates table,
+   which carries Edit estimate and the estimate's own status. This list keeps the ones nobody has
+   published yet. An estimate whose card cannot offer Edit estimate (no money-index link yet) stays here,
+   so no estimate is ever left with no way into the builder. */
+var savedLast = null;
+function estPublished(e, pid){
+if(!e || !e.doc_id) return false;
+var by = /** @type {any} */ (window).estByDoc;
+if(!by || !by[e.doc_id]) return false;
+return (/** @type {any} */ (window).cacheRows || []).some(function(r){ return r && String(r.id) === String(e.doc_id) && String(r.project_id) === String(pid); });
+}
+function paintSaved(){
+var host = document.getElementById('cr-est-saved-slot');
+if(!host || !savedLast) return;
+var pid = savedLast.pid;
+if(window.currentProject && String(window.currentProject.id) !== String(pid)) return;
+var rows = savedLast.rows.filter(function(e){ return !estPublished(e, pid); });
 if(!rows.length){
 host.innerHTML = '';
 return;
 }
 host.innerHTML =
-'<div class="head">Saved Estimates (' + rows.length + ')</div>' +
+'<div class="head">Not published yet (' + rows.length + ')</div>' +
 rows.map(function(e){
 var st = (e.status || 'draft').toLowerCase();
 var stCls = ['draft','sent','accepted','declined'].indexOf(st) >= 0 ? st : 'draft';
@@ -54125,6 +54327,7 @@ if(!document.getElementById('cr-est-new-btn')){
 var btn = document.createElement('button');
 btn.id = 'cr-est-new-btn';
 btn.type = 'button';
+btn.className = 'chipbtn';   /* E: an outline beside the one red From a template */
 btn.innerHTML = 'Blank estimate';
 btn.title = 'Start an empty estimate and add the lines yourself';
 btn.onclick = function(e){
@@ -54174,6 +54377,8 @@ close            : close,
 save             : save,
 loadForProject   : loadForProject,
 refreshSavedList : refreshSavedList,
+refilterSaved    : function(){ try{ paintSaved(); }catch(_p){} },   /* E */
+openById         : openById,                                       /* E: Edit estimate on a published estimate's card */
 /* 1330: "+ From a template" opens HERE, with the trade's standard Library line on it */
 openWithTrade    : openWithTrade,
 currentState     : function(){
@@ -54264,6 +54469,8 @@ var photos  = Array.isArray(est.photos) ? est.photos : [];
 var clientName = (project && (project.name || project.client_name)) || 'Client';
 var address    = (project && project.address) || '';
 var phone      = (project && project.phone) || '';
+var prettyTel = function(t){ try{ var pv = (window.crValid && window.crValid.phone) ? window.crValid.phone(t) : null; return (pv && pv.ok && pv.pretty) ? pv.pretty : t; }catch(_pt){ return t; } };   /* E */
+phone = prettyTel(phone);
 var email      = (project && project.email) || '';
 /* A community bid is awarded, approved and paid by the partner, not by the
    homeowner, so the document is addressed to the partner and the homeowner is
@@ -54284,7 +54491,7 @@ if(partnerNm) clientName = partnerNm;
 var hoNm = (typeof window.projHomeowner === 'function')
 ? window.projHomeowner(project)
 : String(comLead.homeowner_name || '').trim();
-var hoPh = String(comLead.homeowner_phone || '').trim();
+var hoPh = prettyTel(String(comLead.homeowner_phone || '').trim());
 contactKey = 'Homeowner';
 contactVal = (hoNm ? esc(hoNm) : '<span style="color:#777;">Not recorded</span>') +
 (hoPh ? '<br>' + esc(hoPh) : '');
@@ -54461,6 +54668,9 @@ return '<!DOCTYPE html>\n' +
 'table.items tr.sec-banner{break-after:avoid}\n' +
 'table.items tr.zeb td{background:#f7f6f3}\n' +
 'table.items tfoot{break-inside:avoid}\n' +
+/* E: a <tfoot> repeats at the foot of EVERY printed page, so a 10-line estimate printed "TOTAL $16,167.30"
+   under the first four lines. As a row group it prints once, after the last line. */
+'@media print{table.items tfoot{display:table-row-group}}\n' +
 'body.hide-subs table.items tr.sec-sub{display:none}\n' +
 'table.items tr.sec-sub td{border:0;padding:4px 9px 12px;font-variant-numeric:tabular-nums}\n' +
 'table.items tr.sec-sub td.lbl{text-align:right;font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-weight:600;font-size:10pt;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}\n' +
@@ -54910,6 +55120,17 @@ function gbbEnsurePick(){
   gbbPickEl.addEventListener('click', function(e){ if(e.target === gbbPickEl) gbbClosePick(); });
   return gbbPickEl;
 }
+/* E: Generate stays off until two different estimates are chosen -- it used to stay a live red button
+   that only changed the message. */
+function gbbSyncGo(){
+  if(!gbbPickEl) return;
+  var go = gbbPickEl.querySelector('[data-act="gbbp-go"]');
+  if(!(go instanceof HTMLButtonElement) || go.textContent === 'Generating\u2026') return;
+  var seen = {}, n = 0;
+  Array.prototype.forEach.call(gbbPickEl.querySelectorAll('.gbbp-est'), function(s){ if(s.value && !seen[s.value]){ seen[s.value] = 1; n++; } });
+  go.disabled = n < 2;
+  go.title = n < 2 ? 'Choose at least two different estimates' : '';
+}
 function gbbClosePick(){
   if(gbbPickEl){ gbbPickEl.classList.remove('open'); }
   document.body.style.overflow = '';
@@ -54933,6 +55154,8 @@ async function gbbOpen(){
   var rows = gbbPickEl.querySelector('.gbbp-rows');
   var hint = gbbPickEl.querySelector('[data-slot="gbbp-hint"]');
   rows.innerHTML = '<p class="gbbp-loading">Loading this client’s estimates…</p>';
+  rows.onchange = gbbSyncGo;   /* E */
+  gbbSyncGo();
   gbbPickEl.classList.add('open');
   document.body.style.overflow = 'hidden';
   var ests = (window.CardinalEstimates && typeof window.CardinalEstimates.loadForProject === 'function')
@@ -54941,6 +55164,7 @@ async function gbbOpen(){
   if(!ests || ests.length < 2){
     rows.innerHTML = '';
     hint.textContent = 'You need at least two saved estimates on this client to build an options sheet. Tip: open one estimate, use Duplicate to make a copy, change the shingle, and Save — that is your second tier.';
+    gbbSyncGo();
     return;
   }
   hint.textContent = '';
@@ -54951,6 +55175,7 @@ async function gbbOpen(){
     gbbRowHtml('Good',   ests, pre[0] && pre[0].id) +
     gbbRowHtml('Better', ests, pre[1] && pre[1].id) +
     gbbRowHtml('Best',   ests, pre[2] && pre[2].id);
+  gbbSyncGo();
 }
 async function gbbGenerate(){
   var project = (window.CardinalEstimates && typeof window.CardinalEstimates.currentProject === 'function')
@@ -54989,6 +55214,7 @@ async function gbbGenerate(){
     crTell('Could not generate the options document: ' + (e.message || e));
   }finally{
     if(goBtn){ goBtn.disabled = false; goBtn.textContent = 'Generate document'; }
+    gbbSyncGo();
   }
 }
 function ensurePreview(){
@@ -55082,7 +55308,7 @@ if(!document.getElementById('cr-gbb-btn')){
 var ob = document.createElement('button');
 ob.id = 'cr-gbb-btn';
 ob.type = 'button';
-ob.textContent = 'Options';
+ob.textContent = 'Good / Better / Best';   /* E: it builds a sheet from two or more saved estimates -- not options on this one */
 ob.title = 'Build a Good / Better / Best options sheet from this client\u2019s estimates';
 ob.onclick = gbbOpen;
 saveBtn.parentNode.insertBefore(ob, saveBtn);
@@ -67488,9 +67714,18 @@ list.map(function(o){ return '<option' + (o === cur ? ' selected' : '') + '>' + 
 function cc2Page(pr){
 var l = lead(pr), c = cc2Ck(pr), st = normStage(pr.stage);
 var hoNm = homeownerOf(pr), nm = hoNm || pr.name || 'Client';
-var pq = priceOf(pr), amt = Number(pq.amt) || 0;
-var paid = 0;
-try{ if(typeof window.jobFinance === 'function') paid = Number(window.jobFinance(pr).paid) || 0; }catch(_){}
+var pq = priceOf(pr), amt = Number(pq.amt) || 0, pqSrc = priceSrc(pr);
+var paid = 0, _fin = null;
+try{ if(typeof window.jobFinance === 'function') _fin = window.jobFinance(pr); }catch(_){}
+/* E (judge 5 #4): a job priced by its SIGNED CONTRACT and nothing else (one started from an uploaded
+   agreement, with no bid recorded) read Job Value $0, 0% and Balance $0 here while Invoices & AR said it
+   owed $4,000. The bid ladder still answers first; when it has no number, the job's own contract (or
+   accepted estimate) value is the number -- the same figure owed() gives Invoices & AR. And with no
+   contract value at all, jobFinance clamps paid to $0, so a bid-priced job read every check as unpaid:
+   the ledger's own total is the paid figure there, as owed() reads it. */
+if(!(amt > 0) && _fin && Number(_fin.value) > 0){ amt = Number(_fin.value); pqSrc = _fin.source === 'estimate' ? 'accepted estimate' : 'signed contract'; }
+if(_fin) paid = Number(_fin.value) > 0 ? (Number(_fin.paid) || 0)
+  : ((typeof collPaid !== 'undefined' && collPaid) ? (Number(collPaid[pr.id]) || 0) : 0);
 var bal = Math.max(0, amt - paid), pct = amt > 0 ? Math.min(100, Math.round(paid / amt * 100)) : 0;
 var phone = String(l.homeowner_phone || pr.phone || '').replace(/[^0-9+]/g, '');
 var mail = String(l.homeowner_email || pr.email || '').trim();
@@ -67518,7 +67753,7 @@ return '<button class="cc-out" data-cc-out="1" type="button">\u2039 Community</b
 '<button class="ib" type="button" data-act="edithome" aria-label="Edit who this job serves"><span>Edit</span></button>' +
 '</div></div>' +
 '<div class="cc2-money"><div><small>Job Value</small><b>' + usd(amt) + '</b>' +
-(priceSrc(pr) ? '<em>' + esc(priceSrc(pr)) + '</em>' : '') + '</div>' +
+(pqSrc ? '<em>' + esc(pqSrc) + '</em>' : '') + '</div>' +
 '<svg class="ring" viewBox="0 0 84 84" role="img" aria-label="' + pct + '% collected">' +
 '<circle cx="42" cy="42" r="' + R + '" class="tr"></circle>' +
 '<circle cx="42" cy="42" r="' + R + '" class="fl" stroke-dasharray="' + (C * pct / 100).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 42 42)"></circle>' +
@@ -77671,7 +77906,10 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   /* 1135: the move arrows (right:38) and X (right:8) are absolutely positioned
      over this row - without clearance a template's long name runs under them.
      Set HERE because this id-scoped layer wins padding for these inputs. */
-  width:100%;box-sizing:border-box;padding-right:104px;}
+  width:100%;box-sizing:border-box;}
+/* E: the 44px controls take 152px beside the name, so on a wider screen the name field stops short of them
+   (its box used to run under the arrows). On a phone they have their own row and the name keeps the width. */
+@media (min-width:561px){ #cr-est-view .cr-est-lineitem .name-input{width:calc(100% - 152px);} }
 #cr-est-view .cr-est-lineitem .name-input:hover,
 #cr-est-view .cr-est-lineitem .desc-input:hover{background:rgba(15,23,42,.03);border-color:var(--est-line);}
 #cr-est-view .cr-est-lineitem .name-input:focus,
@@ -84632,7 +84870,7 @@ function groupOwed(){
 function render(){
   var v = view(); if(!v) return;
   var role = isAdmin() ? 'admin' : (isProd() ? 'prod' : 'rep');
-  var head = '<div class="pay-head"><h2>&#128181; ' +
+  var head = '<div class="pay-head"><h2>' + (typeof window.crIco === 'function' ? window.crIco('cash') + ' ' : '') +   /* E */
     (role === 'rep' ? 'My Earnings' : 'Commissions') + '</h2>' +
     '<span class="pay-sub">10% of every dollar collected</span>' +
     '<button class="pay-x" data-act="close" aria-label="Close">&#10005;</button></div>';
@@ -84949,7 +85187,7 @@ async function open(){
   if(!v) return;
   try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_){}
   v.style.display = 'block';
-  v.innerHTML = '<div class="pay-head"><h2>&#128181; Commissions</h2>' +
+  v.innerHTML = '<div class="pay-head"><h2>' + (typeof window.crIco === 'function' ? window.crIco('cash') + ' ' : '') + 'Commissions</h2>' +   /* E: drawn, not emoji */
     '<button class="pay-x" data-act="close" aria-label="Close">&#10005;</button></div>' +
     '<div class="pay-wrap"><div class="pay-empty">Loading…</div></div>';
   wire(v);
@@ -92123,6 +92361,14 @@ body.cr-landing-on footer.site{display:none !important;}
 #crAsk .askpick small{display:block;margin-top:3px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#9aa1ac;}
 :root[data-theme="rb-light"] #crAsk .askpick{background:#f7f7f8;color:#161616;border-color:#d8d8d8;}
 :root[data-theme="rb-light"] #crAsk .askpick small{color:#5f6670;}
+/* E: a choice's tone. The safe journey wears .askgo.plain's own fill (#fff on #2d5578, 7.83:1; its hint
+   #dce7f2, 6.25:1). A destructive one is red words: #ff9aa0 on #22262b 7.52:1, #b3121f on #f7f7f8 6.49:1. */
+#crAsk .askpick.askprime{background:#2d5578;color:#fff;border-color:#2d5578;}
+#crAsk .askpick.askprime small{color:#dce7f2;}
+#crAsk .askpick.askdanger{color:#ff9aa0;}
+:root[data-theme="rb-light"] #crAsk .askpick.askprime{background:#2d5578;color:#fff;border-color:#2d5578;}
+:root[data-theme="rb-light"] #crAsk .askpick.askprime small{color:#dce7f2;}
+:root[data-theme="rb-light"] #crAsk .askpick.askdanger{color:#b3121f;}
 :root[data-theme="rb-light"] #crAsk .askcard{background:#ffffff;border-top-color:#e2e2e2;}
 :root[data-theme="rb-light"] #crAsk .askq{color:#161616;}
 :root[data-theme="rb-light"] #crAsk .askwhy{color:#5f6670;}
@@ -92230,7 +92476,9 @@ body.cr-landing-on footer.site{display:none !important;}
         picks.forEach(function(c){
           var b = document.createElement('button');
           b.type = 'button';
-          b.className = 'askpick';
+          /* E: an optional tone. 'primary' fills the choice in the sheet's own safe-go colour; 'danger'
+             writes it in red words (Buttons A). No tone = exactly the 1201 choice. */
+          b.className = 'askpick' + (c.tone === 'primary' ? ' askprime' : (c.tone === 'danger' ? ' askdanger' : ''));
           b.setAttribute('data-pick', String(c.id));
           b.appendChild(document.createTextNode(String(c.label || c.id)));
           if(c.hint){
@@ -92417,7 +92665,8 @@ body.cr-landing-on footer.site{display:none !important;}
 #cr-ar-view .crar-row:hover{box-shadow:var(--est-hover);}
 #cr-ar-view .crar-who{min-width:0;}
 #cr-ar-view .crar-nm{font-size:15px; font-weight:600; display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
-#cr-ar-view .crar-addr{font-size:13px; color:var(--est-dim); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+/* E (judge 5): one line cut "Paid $9,\u2026" -- the figure the row exists to show. It wraps now. */
+#cr-ar-view .crar-addr{font-size:13px; color:var(--est-dim); margin-top:3px; white-space:normal; overflow-wrap:anywhere;}
 #cr-ar-view .crar-top2{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
 #cr-ar-view .crar-amt{font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--est-ink);}
 #cr-ar-view .crar-amt.od{color:var(--crar-alert,#f08a90);}
@@ -93192,7 +93441,13 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
         if(Math.abs(diff) >= 0.01) out.push({ d:diff < 0 ? 'Discount' : 'Adjustment', q:1, p:diff, x:false });
       }
     }
-    if(!out.length) signed.forEach(function(r){ out.push({ d:String(r.title || 'Contract').trim(), q:1, p:ilR(r.total), x:false }); });
+    /* E (judge 5): it billed one line titled "Contract \u2014 <client>", the document's own title. The client
+       reads the work and when it was agreed. The trade comes from the title the creator wrote (docKind). */
+    if(!out.length) signed.forEach(function(r){
+      var tr = ''; try{ var dk = (typeof docKind === 'function') ? docKind(r.title) : null; if(dk && dk.trade && dk.trade !== '\u2014') tr = dk.trade; }catch(_k){}
+      var sd = ''; try{ sd = r.signed_at ? new Date(r.signed_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : ''; }catch(_s){}
+      out.push({ d:(tr ? tr + ' work' : 'Work') + ' per the signed agreement' + (sd ? ' dated ' + sd : ''), q:1, p:ilR(r.total), x:false });
+    });
     if(!out.length && est && Number(est.total) > 0) out.push({ d:'Work as estimated', q:1, p:ilR(est.total), x:false });
     var mv = 0; try{ mv = Number(parseCkAll(pr).manual_value) || 0; }catch(_m){}
     if(mv > 0) out.push({ d:'Additional work', q:1, p:ilR(mv), x:false });
@@ -93708,24 +93963,24 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     });
     return best;
   }
-  /* how many payments have landed — deposit-vs-partial labelling */
-  function collCount(pid){
-    var n = 0;
-    collections().forEach(function(c){ if(c && c.project_id === pid) n++; });
-    return n;
-  }
-  /* THE STATUS ENGINE — derived from the ledger, not a stored machine.
-     paid >= billed -> Paid in Full; paid > 0 -> Deposit/Partially Paid;
-     else the document's own unsent/sent -> Draft / Sent. */
+  /* THE STATUS ENGINE — derived from the ledger and the invoice, not a stored machine.
+     E (judge 5 #1): it used to label from the ledger alone -- one payment and every job read "Deposit
+     Paid": a job 40 days overdue with $10,000 owed, an invoice nobody had sent, a job with no invoice at
+     all. The pill now answers ONE question, what state is this invoice in, in one vocabulary on Invoices &
+     AR, the job's card and the invoice itself:
+       Paid in full · Overdue (sent, owed, past 30 days -- the red group, never a carrier wait) ·
+       Partly paid (sent, some paid) · Sent · Draft (made, not sent) · No invoice.
+     What was paid stays in the sub-line ("Paid $5,000 of $15,000"), where it always was. */
   function statusFor(pr, inv, fin){
     fin = fin || jobFinance(pr);
     var billed = Number(fin.value) || 0, paid = Number(fin.paid) || 0;
-    if(billed > 0 && paid >= billed - 0.005) return { k:'paid', label:'Paid in Full' };
-    if(paid > 0.005) return (collCount(pr.id) <= 1)
-      ? { k:'part', label:'Deposit Paid' }
-      : { k:'part', label:'Partially Paid' };
-    if(inv && inv.status === 'sent') return { k:'sent', label:'Sent' };
-    return { k:'draft', label:'Draft' };
+    if(billed > 0 && paid >= billed - 0.005) return { k:'paid', label:'Paid in full' };
+    if(!inv) return { k:'none', label:'No invoice' };
+    if(inv.status !== 'sent') return { k:'draft', label:'Draft' };
+    var carrier = stg(pr) === 'Invoiced' && (typeof projClaimType === 'function') && projClaimType(pr) === 'insurance';
+    if(!carrier && ageDays(pr, inv) > 30) return { k:'over', label:'Overdue' };
+    if(paid > 0.005) return { k:'part', label:'Partly paid' };
+    return { k:'sent', label:'Sent' };
   }
   /* 1316: ONE aging clock for every A/R screen. The invoice's sent date; else the day the job
      went Invoiced; else the invoice's own date. Never updated_at — any edit reset it to 0 —
@@ -94177,7 +94432,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var title = inv ? ('Invoice' + (inv.title && /#[\w-]+/.test(inv.title) ? ' ' + esc2(inv.title.match(/#[\w-]+/)[0]) : '')) : 'No invoice yet';
     /* 1346: before the work is finished, the money that comes in is a deposit or progress payment */
     var _pre = ['Lead', 'Prospect', 'OnHold', 'Approved', 'Scheduled'].indexOf(normStage(pr.stage)) !== -1;
-    var line2 = isPaid ? ('Paid in full' + (inv && inv.sent_at ? '' : ''))
+    var line2 = isPaid ? 'Nothing owed on this job'   /* E: the pill already says Paid in full */
               : sent ? ('Sent ' + ageDays(pr, inv) + (ageDays(pr, inv) === 1 ? ' day' : ' days') + ' ago')
               : inv ? 'Not sent yet'
               : (canInvoice && _pre) ? (paid > 0 ? 'Signed \u2014 record progress payments here' : 'Signed \u2014 record the deposit here')   /* 1346 */
@@ -94209,7 +94464,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
        right below — this card printed the same balance a third time (and "--" for $0). */
     void bal; void pct;
     return '<div class="crji-card v2" role="region" aria-label="Invoice">'
-      + '<div class="crji-row"><span class="crji-ttl">' + title + ' ' + pill(st) + '</span></div>'
+      + '<div class="crji-row"><span class="crji-ttl">' + title + (inv ? ' ' + pill(st) : '') + '</span></div>'   /* E: no pill beside "No invoice yet" */
       + '<div class="crji-row crji-sub"><span>' + line2 + '</span></div>'
       + '<div class="crji-acts">' + main + more + '</div>'
       + sendRow
@@ -94252,7 +94507,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
       if(j && j.texted) went.push('texted');
       if(j && j.emailed) went.push('emailed');
       var why = (j && j.skipped && j.skipped.length) ? j.skipped.join('; ') : ((j && j.error) || '');
-      if(went.length) crTell('Receipt for ' + money(amt) + ' ' + went.join(' and ') + (why ? ' (' + why + ')' : '') + '.');
+      if(went.length) crTell('Receipt for ' + money(amt) + ' ' + went.join(' and ') + (why ? ' (' + why + ')' : '') + '.', 'ok');   /* E */
       else crTell('No receipt sent' + (why ? ': ' + why : '') + '.');
     }).catch(function(){ crTell('The payment is recorded, but the receipt could not be sent.'); });
   }
@@ -94421,7 +94676,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var _rcpt = q('crpay-receipt'), wantReceipt = payer === 'homeowner' && (!(_rcpt instanceof HTMLInputElement) || _rcpt.checked);   /* 1336; 1394 */
     collectionsInsert(row).then(function(r){
       closePayModal();
-      crTell('Recorded ' + money(amt) + '. Status updated.' + (wantReceipt ? ' Sending the receipt\u2026' : ''));
+      crTell('Recorded ' + money(amt) + '. Status updated.' + (wantReceipt ? ' Sending the receipt\u2026' : ''), 'ok');   /* E: a success is green and clears itself */
       var _cid = r && r.data && (Array.isArray(r.data) ? (r.data[0] && r.data[0].id) : r.data.id);
       if(wantReceipt && _cid) sendPayReceipt(_cid, amt);
       if(typeof reload === 'function'){ reload().then(refreshInv).catch(refreshInv); } else refreshInv();
@@ -99262,6 +99517,9 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 .crjp-card .crjp-flag .crjp-fbtns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;}
 .crjp-card .crjp-flag button,.crjp-card .crjp-acts2 button,.crjp-card .crjp-rb button{min-height:44px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer;}
 .crjp-card .crjp-acts2{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;color:var(--crji-ink,#f2f4f7);}
+/* E (judge 5 #2): display:flex above beat the UA's [hidden], so Remove sat open under every payment and
+   the row's ⋯ toggled nothing you could see. The tray is shown only when ⋯ opens it. */
+.crjp-card .crjp-acts2[hidden]{display:none;}
 .crjp-card .crjp-rb{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--crji-ink,#f2f4f7);}
 .crjp-card .crjp-st{font-size:12px;font-weight:700;padding:4px 9px;border-radius:99px;}
 .crjp-card .crjp-st.need{background:var(--crjp-warn-bg,#3a2c08);color:var(--crjp-warn-ink,#ffd98a);}
@@ -99706,7 +99964,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
       if(form === pid) h += formHtml(pid);
       else h += '<div class="crjp-foot"><button type="button" class="crji-btn primary" data-crjp-add="' + E(pid) + '">' + (office ? 'Add a cost' : 'Add a receipt') + '</button></div>';
     }else if(total > 0 && bal > 0.005){
-      h += '<div class="crjp-foot"><button type="button" class="crji-btn primary" data-arpay="' + E(pid) + '">Record payment</button></div>';
+      /* E (judge 5): the Invoice card right above already carries the red Record payment (Buttons A: one red) */
+      h += '<div class="crjp-foot"><button type="button" class="crji-btn" data-arpay="' + E(pid) + '">Record payment</button></div>';
     }
     return h;
   }

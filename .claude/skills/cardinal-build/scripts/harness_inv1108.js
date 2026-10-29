@@ -121,7 +121,7 @@ catch(e){ console.log('module threw: ' + e.message); process.exit(1); }
   ok(col && col.row.amount === 500 && col.row.project_id === 'P2', 'row carries the amount + project');
   ok(col && col.row.type === 'deposit' && col.row.method === 'check' && col.row.source === 'homeowner', 'row shape: type deposit, method check, source homeowner');
   ok(col && col.row.created_by === 'rep@cardinalrenovations.net', 'row records who took it');
-  ok(AR.status(p2).label === 'Deposit Paid', 'after the $500 check, P2 steps Sent -> Deposit Paid');
+  ok(AR.status(p2).label === 'Partly paid', 'after the $500 check, P2 steps Sent -> Partly paid');
   ok(w.document.getElementById('cr-pay-modal').classList.contains('open') === false, 'modal closes on save');
 
   // 4. type mapping: progress -> other, final -> final

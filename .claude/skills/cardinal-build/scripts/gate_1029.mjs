@@ -64,7 +64,12 @@ async function sweep(html) {
    * the dirty guard is drivable; the native-dialog handler stays as a belt. */
   await page.evaluate(`(function(){
     window.__askAnswer = true; window.__asks = [];
-    window.crAsk = function(m){ window.__asks.push(String(m || '')); return Promise.resolve(window.__askAnswer); };
+    /* Builder E: a question with named choices resolves a choice id. "Accept" on the unsaved-changes
+       sheet is its discard choice; a plain yes/no question still gets the boolean. */
+    window.crAsk = function(m, o){ window.__asks.push(String(m || ''));
+      var ch = o && Array.isArray(o.choices) ? o.choices : null;
+      if(ch && window.__askAnswer === true){ var d = ch.filter(function(c){ return /discard/i.test(String(c.id)); })[0]; return Promise.resolve(d ? d.id : true); }
+      return Promise.resolve(window.__askAnswer); };
   })()`);
 
   const out = { dialogs };
