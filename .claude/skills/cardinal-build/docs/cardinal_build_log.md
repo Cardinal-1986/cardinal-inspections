@@ -37413,3 +37413,30 @@ Builder E re-checked every finding on 1422 first, and all of them reproduced. Be
   - The assembly measurement rules (drip/starter = eaves + rakes, I&W = eaves + valleys, ridge vent = ridges, cap = ridges + hips, gutters = eaves, hangers every 24").
   - Remove-with-Undo instead of a confirm.
   - "Invoices & AR" naming on the home strings.
+
+## Build 1425 — insurance and community job pages stop working the phone while you read (29 Oct 2026)
+The chair's and the judge of judges' #2 "fix first" item. Both measured an idle insurance job at 51–77% busy and a community job at 45–67%, against retail at 1.7–5%.
+
+Three writers caused it, all the 567/569 class: an identical `title` / `textContent` / `classList` / `setAttribute` write still queues a mutation, and each ran from a body observer.
+- **The relabellers:** `cr-insstage` and `cr-comstage` renamed "Advance to Scheduled" to the same words on every pass.
+- **The Supplement card:** it rebuilt its whole `innerHTML` on every body change.
+- **The health badge:** it re-set its classes and title on every pass.
+
+Every write is now guarded.
+
+Measured idle, mutation records in 2s:
+
+| Job | Before (1424) | After |
+|---|---:|---:|
+| I1 | 545 | 15 |
+| I2 | 498 | 15 |
+| C1 | 460 | 8 |
+| R1 (retail) | 22 | 14 |
+
+What is left is the clocks.
+
+**Gates:**
+- `gate_1425.mjs` 8/0. The control (1424) is RED on idle: I1 560, I2 540, C1 472.
+- It also asserts that the labels still relabel ("Advance to Build Complete"), that File a supplement still opens its sheet, and that the card still repaints when the claim changes.
+- `check_build` GREEN. `gate_types` 1505 (a first draft's `host.__crSpSig` expando was +2 TS2339 and became a closure variable). `gate_dupes` identical.
+- `gate_1301` GREEN on both trees. `harness_655` is red 4 identically on the control.

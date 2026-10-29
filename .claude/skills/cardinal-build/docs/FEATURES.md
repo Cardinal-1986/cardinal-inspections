@@ -10371,3 +10371,13 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 **Open:**
 - Publish still opens the document editor; that is the editor's send path.
 - The insurance homeowner/carrier AR split needs Theo.
+
+## Build 1425: insurance and community job pages sit still
+These writers now only write when the value differs (the 567/569 class):
+- the insurance relabeller (`dbStgBack` / `dbStgFwd` titles, `#msDrop .estopt` text) and its community twin;
+- the Supplement card (`cr-sp`; `__spSig`, and the buttons are re-bound every pass);
+- the system-health badge (`cr-ahc` `updateBadge`).
+
+Idle mutation records in 2s went from 460–545 to 8–15 (retail: 14).
+
+**Gate:** `gate_1425.mjs`, 8 checks; red on the 1424 control's idle check.
