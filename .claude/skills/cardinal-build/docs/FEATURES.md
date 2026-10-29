@@ -10218,3 +10218,27 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 - **Pipeline labels:** `PIPE_BUCKETS.short` now spells each stage (supersedes 1114). The phone view scrolls; with the rail open the rows wrap 4 + 3 via `@container pipecard`.
 - **Type stack:** every Segoe→Arial stack carries `-apple-system,BlinkMacSystemFont,Roboto`.
 - **Gate:** `gate_1415.mjs`.
+
+## Build 1416: Production after judge 14
+- **Full calendar on a laptop:** the 1043/904 grid now names `.pbwrap.pbhome`; the calendar pane is `.pbcalw` with `.pbsplit` = `minmax(0,1fr) minmax(360px,30%)`. The month sits flush left and the day sheet is at least 360px.
+- **Schedule tab for a production account:** opens `CardinalProduction.calendar()` (on today, every build and punch-out). Admins and reps still get the Schedule Board.
+- **Today row:** `.pbtoday` under the title, e.g. "1 build · 2 punch-outs · 1 urgent". Opens today's day sheet.
+- **Crews and Dispatch from the board** cover the retail chrome for production accounts (the `#punchView` treatment from 1042). × / Back return to the board.
+- **Dispatch is read-only for a field user** (`isFieldUser()`): nothing arms, no work-order form opens, no grips. It says booking is Curtis's.
+  - It has a 7-day strip that pans the board.
+  - Tags read "None booked today", not "free".
+- **Punch card:**
+  - The note gate is a field in the card (`stepNoteHtml`; no `window.prompt`).
+  - Step and truck × are 44×44.
+  - + Add step is a dashed row.
+- **Smaller fixes:**
+  - An untagged message says nobody was notified.
+  - Mark ordered offers Undo through `CardinalUndo`.
+  - A crew work order's `<title>` is "Work Order — trade — crew", and the editor chip says PRODUCTION for production accounts.
+  - Headings are one sans colour with no emoji.
+  - The chips and the back chevron are a visible 44.
+- **Gate:** `gate_1416.mjs`, 54 checks; red 48 on 1415. `gate_768`, `gate_949` and `gate_1040` accept the new behaviour.
+- **Open:**
+  - Curtis's bottom-bar Home still goes to the retail home.
+  - `#tskModal` (the work-order picker) carries light inline inks.
+  - Recalling the rep's "materials ordered" notice on Undo would be a new notify rule, so it is not done.

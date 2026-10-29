@@ -37185,3 +37185,43 @@ Documents built by the app's own template code, served through the real `api/sha
   - `gate_types` at the control's 1506, so no `-apple-system` was left in JS code where it would read as a subtraction.
   - REPRO byte-identical.
   - `gate_1114`, `gate_1233` and `gate_1235` are **red identically on the control**. They are rotted against the current rig, not caused by this build.
+
+## Build 1416 — Production after judge 14 (29 Oct 2026)
+Theo: "Do your suggestions on all as long as the rating comes to a 9/10 minimum." This build works through judge 14's Production audit (round-1 scores 7/7/5/7/7) and judge 16's Production rows.
+
+- **M1 — the full calendar on a laptop hid in a corner.**
+  - Before: the month started 558px (1366) / 849px (1920) from the board's edge, and the day sheet was 173/271px wide.
+  - Cause: the 1043/904 two-column grid sat on `.pbwrap`, which all three panes share.
+  - Fix: the grid now names `.pbwrap.pbhome`, and the calendar pane gets its own `.pbcalw` split. This was changed at source, not out-specified. The month is now flush left and the sheet is 360/459px.
+- **M2 — Scottie's Dispatch.** A day tap closed Dispatch and opened the work-order form under the board. A field user now sees it read-only, and the board says that booking is Curtis's.
+- **M3 — Curtis's Schedule tab** opened the retail Schedule Board, which showed 0 of his 3 items. It now opens Production's own calendar.
+  - Crews and Dispatch opened under the retail header, and × went to the retail home with stage counts and receivables.
+  - For production accounts they now cover the chrome and return to the board.
+- **Minor and polish fixes:**
+  - An untagged message now says nobody was notified.
+  - The WHEN cell no longer prints over CREW.
+  - The count boxes use 4 columns, with nothing clipped.
+  - Scottie's dead "Open job" button is not drawn.
+  - The note is typed in the card, with no `window.prompt`.
+  - A Today row sits above the fold.
+  - Punch rows lead with the task.
+  - Phone Dispatch has a 7-day strip, and tags say "None booked".
+  - Mark ordered has an Undo.
+  - + Add step has no outset border.
+  - The work-order `<title>` names the crew.
+  - Headings are sans with no emoji.
+  - The 44px chips are visible.
+- **Unchanged (settled decisions):**
+  - No money on Production.
+  - `crew_rates` and `crew_payments` untouched.
+  - Scottie's five menu rows.
+  - Only @tagged people are notified.
+  - Install photos are still required before Completed (`gate_1400` green).
+- **Gates:**
+  - `gate_1416.mjs` 54/0. The control (1415) is RED 48/6, with every failure named and no crash.
+  - `check_build` GREEN.
+  - `gate_types` and `gate_dupes` give the control's results exactly (line numbers shift only).
+  - 43 existing production, punch and dispatch gates are green.
+  - `gate_768`, `gate_949` and `gate_1040` were updated for the new behaviour and pass on both trees.
+  - `gate_947`, `gate_1297` and `gate_1116` are red identically on the control.
+  - REPRO byte-identical (`patch_1416_production.py` + `patch_1416.py`).

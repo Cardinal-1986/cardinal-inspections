@@ -39,9 +39,12 @@ const PNG1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQV
 /* state, selector, expected visual h (±2), grown?, free side, probe offset px
    outside the visual box (past the PREVIOUS build's pad where one existed) */
 const TARGETS = [
-  ['prodhome', '#cr-pb .pbchip',        30, true,  'down', 4],
+  /* 1416 (judge 16 minor 15): the chips and the chevron became a VISIBLE 44 and their
+     ::after pads were deleted — so each row accepts its 1040 look OR 44, and a box that
+     is itself >=44 needs no pad to hit-test (judge() below). */
+  ['prodhome', '#cr-pb .pbchip',        [30, 44], true,  'down', 4],
   ['prodcal',  '#cr-pb .pbmon button',  30, true,  'up',   4],
-  ['prodbox',  '#cr-pb .pbback',        34, true,  'up',   4],
+  ['prodbox',  '#cr-pb .pbback',        [34, 44], true,  'up',   4],
   ['prodbox',  '#cr-pb .pbact',         32, true,  'down', 4],
   ['dispatch', '#cr-disp .dspback',     34, true,  'up',   4],
   ['dispatch', '#cr-disp .dspwk button',26, true,  'down', 4],
@@ -122,9 +125,11 @@ function judge(r) {
   for (const [, sel, wantH, grown, side, off] of TARGETS) {
     const p = r[sel];
     if (!p || p.missing) { fails.push(`${sel} not rendered (rig fault — proves nothing)`); continue; }
-    if (Math.abs(p.h - wantH) > 2) fails.push(`${sel} visual height ${p.h} (want ~${wantH} — the look must not move)`);
+    const wants = Array.isArray(wantH) ? wantH : [wantH];   /* 1416 */
+    if (!wants.some(w => Math.abs(p.h - w) <= 2)) fails.push(`${sel} visual height ${p.h} (want ~${wants.join(' or ')} — the look must not move)`);
     if (p.claimW < 44 || p.claimH < 44) fails.push(`${sel} tap claim ${p.claimW}x${p.claimH} (floor 44)${grown ? '' : ' (LEGACY pad regressed!)'}`);
-    if (off > 0 && !p.hit) fails.push(`${sel} hit-test missed ${off}px ${side} of the visual box — the pad does not participate`);
+    /* 1416: a control whose own box is >=44 both ways has no pad to probe */
+    if (off > 0 && !p.hit && !(p.w >= 44 && p.h >= 44)) fails.push(`${sel} hit-test missed ${off}px ${side} of the visual box — the pad does not participate`);
   }
   return fails;
 }
