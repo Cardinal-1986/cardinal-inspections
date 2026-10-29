@@ -41,11 +41,14 @@ async function boot({ w = 390, hash = '', light = false } = {}) {
   ok(r.proj === 'Mark Diamond' && r.tab === 'overview', 'B  a cold client link lands on Overview', JSON.stringify(r)); await ctx.close(); }
 
 /* C */
-for (const [light, want] of [[false, 'rgb(240, 198, 81)'], [true, 'rgb(138, 97, 0)']]) {
+/* J16 (judge 16 polish) — DELIBERATELY CHANGED: the row's 539 yellow / 1035 amber is
+   deleted at source, so it must now wear the same ink as a normal rail row (Clients),
+   and must not be the old yellow / amber. */
+for (const [light, old] of [[false, 'rgb(240, 198, 81)'], [true, 'rgb(138, 97, 0)']]) {
   const { ctx, p } = await boot({ w: 1194, light });
   try { await p.evaluate(async () => { await window.__sentinelStates[0].run(); }); await p.waitForTimeout(700); } catch (e) {}
-  const c = await p.evaluate(() => { const e = document.querySelector('#cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx'); return e ? getComputedStyle(e).color : 'MISSING'; }).catch(() => 'ERR');
-  ok(c === want, 'C  Switch portal row ' + (light ? 'light: 538’s amber' : 'dark: the true yellow'), c); await ctx.close();
+  const c = await p.evaluate(() => { const g = k => { const e = document.querySelector('#cr-lnav .lnav-item[data-k="' + k + '"] .lnav-tx'); return e ? getComputedStyle(e).color : 'MISSING'; }; return [g('switchportal'), g('clients')]; }).catch(() => ['ERR', 'ERR']);
+  ok(c[0] !== 'MISSING' && c[0] === c[1] && c[0] !== old, 'C  Switch portal row ' + (light ? 'light' : 'dark') + ': the normal rail ink (J16)', c.join(' vs ')); await ctx.close();
 }
 
 /* D */
