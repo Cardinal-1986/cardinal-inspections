@@ -37308,3 +37308,24 @@ The 1417 builder found this and left it unfixed.
   - `gate_types` and `gate_dupes` are identical to the control.
   - `gate_1417` and `gate_1413` are green.
 - **1418 follow-up recorded here:** `gate_1198` went red in CI's chromium job on 1418. It pinned `background:var(--hac`, and 1418 deliberately moved that to `var(--crm-id, var(--hac,…))`. The gate now accepts both forms, and a poisoned copy that loses the fill still fails.
+
+## Build 1420 — Home takes Production back to the board (29 Oct 2026)
+The 1416 builder found this and left it unfixed.
+- **The bug:** Curtis's bottom-bar Home and the header's gold house both ran `goHome()`.
+  - From a retail job that ended in `showHome()`, the retail home with stage counts and the AR dollar figure.
+  - From an insurance job it ended in Cardinal Truth.
+  - 1038, 1165 and 1188 each state the doctrine: a production account backs out to its own hub, never to the retail home. Production's own `close()` already obeyed it.
+- **The fix:** `goHome()` checks `isProductionUser()` first, so the fix lives in one place for every caller.
+- **The phone bar:**
+  - It lights Home on the board.
+  - It lights Jobs on a job's thread, which used to light nothing.
+- **gate_1365 D had been red since 1417, and it was the TEST.**
+  - Its "neutral" `mouse.click(200, 400)` lands on 1417's new full-width Communication tile and opens the thread.
+  - It is now a click dispatched on the page's own ground: the same wake for the bar, with no control under it.
+  - Measured: GREEN on 1416, 1419 and 1420 after the change.
+  - ⚠ The change was caught only because 1420 ran 1365 against its control. It had been red on 1417/1418 and nobody noticed, because 1365 is not in CI's chromium list.
+- **Gates:**
+  - `gate_1420.mjs` 19/0. The control (1419) is RED 8.
+  - `check_build` GREEN.
+  - `gate_types` and `gate_dupes` are identical to the control.
+  - `gate_754`, `756`, `757`, `979`, `1365`, `1369`–`1373`, `1384`, `1400` and `1416` are green on both trees.

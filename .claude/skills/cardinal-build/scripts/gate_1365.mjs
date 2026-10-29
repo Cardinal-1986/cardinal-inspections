@@ -79,7 +79,11 @@ const viewOn = (p, id) => p.evaluate(i => { const e = document.getElementById(i)
   ok(mn, 'C: Menu opens the menu');
   await p.evaluate(() => { const m = document.getElementById('navMenu'), bd = document.getElementById('navBackdrop'); if (m) m.style.display = 'none'; if (bd) bd.style.display = 'none'; });
   await p.evaluate(() => { try { window.openProject(window.cacheProjects[0].id); } catch (_) {} }); await p.waitForTimeout(1500);
-  await p.mouse.click(200, 400); await p.waitForTimeout(300);
+  /* 1420: this was p.mouse.click(200, 400) — a "neutral" tap at a fixed point, which since 1417 lands on the
+     job menu's full-width Communication tile and opens the thread. The tap is only there to wake the bar's
+     repaint, so it is now a click on the page's own ground, which is the same wake with no control under it. */
+  await p.evaluate(() => { const v = document.getElementById('projectView'); if (v) v.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+  await p.waitForTimeout(300);
   s = await p.evaluate(STATE);
   ok(s.lit === 'jobs', 'D: a client page lights Jobs', s.lit);
   const sc = await p.evaluate(async () => { try { window.CardinalHeader.goHome(); } catch (_) {} await new Promise(r => setTimeout(r, 500));
