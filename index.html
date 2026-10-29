@@ -1025,7 +1025,8 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
    sits over the appointment modal's own dark wash in both themes) */
 .apptrow .apptcal{flex:none;min-height:44px;padding:0 12px;border-radius:8px;cursor:pointer;
   border:1px solid #9aa4b2;background:#ffffff;color:#1e2b4a;font:700 13px 'Segoe UI',Arial,sans-serif;}
-#apptCalSheet{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;
+/* 1412: 9995, above body.standalone #pwaNav (9990) — the 1273 rule; at 9600 the nav covered the buttons */
+#apptCalSheet{position:fixed;left:0;right:0;bottom:0;z-index:9995;display:none;
   padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#16161b;color:#eceef0;
   border-top:1px solid #2a2d33;box-shadow:0 -8px 30px rgba(0,0,0,.4);}
 #apptCalSheet.open{display:block;}
@@ -1058,7 +1059,8 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 #crEmailSheet .pri{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
 #crEmailSheet .no{background:transparent;border:1px solid #3a3e46;color:#eceef0;}
 /* 1262: Upload signed contract — the same fixed dark sheet as 1258 */
-#ctUpSheet{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;max-height:92vh;overflow:auto;
+/* 1412: 9995 — Jacob could not reach Save under the installed app's nav */
+#ctUpSheet{position:fixed;left:0;right:0;bottom:0;z-index:9995;display:none;max-height:92vh;overflow:auto;
   padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#16161b;color:#eceef0;
   border-top:1px solid #2a2d33;box-shadow:0 -8px 30px rgba(0,0,0,.4);}
 #ctUpSheet.open{display:block;}
@@ -2699,7 +2701,8 @@ body[data-rltheme="siren"].claim-insurance #delClientBtn{color:#ff7b82;}
 /* 1256: the Uncontacted chip — a fixed amber ground, so a fixed ink (both themes) */
 .ljunc{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:999px;background:#f5a623;color:#1a1306;
   font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;}
-#ljAsk{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
+/* 1412: 9995, above body.standalone #pwaNav (9990) */
+#ljAsk{position:fixed;left:0;right:0;bottom:0;z-index:9995;display:none;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
   background:var(--rbe-panel,#16161B);color:var(--rbe-ink,#eceef0);border-top:1px solid var(--rbe-panelbd,#24242c);
   box-shadow:0 -8px 30px rgba(0,0,0,.35);}
 #ljAsk.open{display:block;}
@@ -4214,7 +4217,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1411<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1412<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -45346,6 +45349,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1412, d:'2026-10-29', t:'Save is no longer under the menu bar', s:'In the installed app, the Upload signed contract panel\u2019s Save button was hidden behind the bottom menu bar. That panel, the Add to calendar prompt and the Leads question now sit above the bar.' },
   { b: 1411, d:'2026-10-29', t:'Team Feedback', s:'There is now a Team Feedback box in the menu (under Account) and in Tools. Use it when something breaks, isn\u2019t working right, or you have an idea. It notes which screen and job you were on, Theo gets an alert, and you see the status and his reply on the same page.' },
   { b: 1409, d:'2026-10-27', t:'Leads open when you tap them', s:'On the Leads screen, tapping or clicking a lead now opens the client on every screen size. On a computer, pointing at a lead still shows its preview on the right.' },
   { b: 1407, d:'2026-10-24', t:'Staff-only, behind the scenes', s:'No change on screen. The CompanyCam job link and texting a client from the company number now answer Cardinal staff only, and a client who hits a problem signing a document sees a plain message instead of a technical one.' },

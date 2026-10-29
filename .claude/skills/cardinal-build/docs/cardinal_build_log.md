@@ -37119,3 +37119,9 @@ Documents built by the app's own template code, served through the real `api/sha
   - `gate_a11y` identical to the control.
 - ⚠ **The first run of A was the TEST's fault.** On a phone the drawer opens with every section folded, so no row is visible until its heading is tapped. The gate now opens Menu, then Account, the way a person does.
 - **`team_feedback.sql` APPLIED 29 Oct (migration `team_feedback_1411`), and verified as each role in a rolled-back transaction.** A rep inserts their own report; they are refused when posing as Theo, and refused when inserting as `done` with a reply. A rep sees 1 row and updates 0. Theo sees 2 rows and updates 2. An outsider sees 0 rows and cannot insert.
+
+## Build 1412 — Save under the installed app's menu bar (29 Oct 2026)
+- **Jacob, via Theo (screenshot):** *"Can't scroll or click the save button as it's covered by the menu bar."* In the installed app, Contracts → Upload signed contract had its Save and Cancel buttons drawn under `body.standalone #pwaNav`.
+- **Cause:** `#ctUpSheet` sat at z-index 9600, below the nav's 9990. **1273 had fixed this exact bug for `#crEmailSheet` (9995), and its two siblings `#apptCalSheet` and `#ljAsk` were never brought along**, so all three had it. All three are now at 9995, edited in place with no new rule.
+- **Gate:** `gate_1412.mjs` 4/4. The control (1411) is RED 4 and reproduces the screenshot exactly: a tap on Save lands on `pwaHome` and a tap on Cancel on `pwaMenu`.
+- ⚠ **The same bug fixed for one sheet out of four.** BUG_CLASSES' "partial pass" again: when a stacking fix lands, grep the siblings that share its shape (`position:fixed;left:0;right:0;bottom:0;z-index:`).
