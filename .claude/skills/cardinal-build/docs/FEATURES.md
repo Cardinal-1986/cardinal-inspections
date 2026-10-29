@@ -10323,3 +10323,27 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 - 1373's phone rule (a 52×52 round star) moved from line ~2432 to just after its base rule in `cr-ai-styles`. It sat earlier in the file at equal specificity, so it had been losing height, padding and font-size.
 - **Gate:** `gate_1422.mjs`, 14 checks; red 5 on 1421.
 - The same PR carries the `gate_1191` rig fix: jsdom has no pointer-event handler properties.
+
+## Build 1423: inspections after judge 4
+- **AI-written report:**
+  - Each AI-placed photo wears its own severity chip. Before, the template's sample chip won, so every photo read HIGH.
+  - HIGH and MODERATE photos become Summary of Findings rows.
+- **Start without AI:** no native prompt; it keeps the checked photos.
+- **Quick Inspection:**
+  - The Who sheet buttons read (they were 1.22:1).
+  - The client search finds a typed address.
+  - Finish files the walk's photos into Inspection Photos and offers "Start the report" with them checked. There is no red toast.
+- **Phone editor:**
+  - The toolbar folds to one row while scrolling or while the assistant is open.
+  - The assistant fits the screen.
+  - The how-to folds after its first showing.
+  - "N to fill" skips Contents page numbers and empty photo boxes.
+- **Inspections tab:** invoices and change orders sit under their own heading.
+- **Print (`ensurePrintFix`, injected at print time so old reports get it too):**
+  - The cover is page 1.
+  - Signature lines stay with their labels, and the findings header stays with its first row.
+  - The MODERATE chip is 7.94:1.
+  - An empty Overall Condition heading does not print.
+- **Shared report on a phone:** new reports carry their own viewport. Old reports need the `api/share.js` half (Builder D).
+- **Gate:** `gate_1423.mjs`, 47 checks; red 39 on 1422. It uses the synthetic `fixtures/roof_synth_1423_*.jpg`.
+- `gate_1405` B2 now checks the new cover rule.

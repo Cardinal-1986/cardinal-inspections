@@ -46,7 +46,8 @@ const tryDo = async (why, f) => { try { return await f(); } catch (e) { ok(false
   } finally { await browser.close(); }
 }
 {
-  ok(/'\.cover\{min-height:226mm !important;\}'/.test(SRC), 'B2 print caps the cover so it fits one Letter page');
+  /* 1423: the cap became a page end plus a cover sized to fit (gate_1423 PR-0/PR-1/PR-4 measure it in real PDFs) */
+  ok(/'\.cover\{min-height:0 !important;break-after:page;\}'/.test(SRC), 'B2 print ends the cover on its own page so it fits one Letter sheet');
   const i = SRC.indexOf("document.getElementById('dlBtn').addEventListener('click'"), blk = SRC.slice(i, i + 1400);
   ok(/compactForPrint\(_dd\)/.test(blk) && /restorePrintMarks\(_dd\)/.test(blk), 'B3 Save as PDF compacts like Print');
 }

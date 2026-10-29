@@ -37358,3 +37358,30 @@ The 1416 builder found this ("#tskModal carries light inline inks"). Measured in
   - `gate_1422.mjs` 14/0. The control (1421) is RED 5.
   - `check_build` GREEN.
   - `gate_types` and `gate_dupes` are identical to the control.
+
+## Build 1423 — inspections after judge 4 (29 Oct 2026)
+Judge 4 (Inspections, round 1: 6/6/5/6/6) and judge 11's inspection-report items. Before → after, measured in Chromium:
+- **AI severity chips:** HIGH everywhere → each photo's own rating (mon/high/mod).
+- **Summary of Findings:** template sample rows → HIGH/MODERATE photo rows.
+- **Start without AI:** a native "Report title:" prompt and 0 photos → the guide's title and the 3 checked photos.
+- **Quick Inspection:**
+  - Who-sheet buttons: 1.22:1 → 5.7–18.8:1.
+  - Finish: a red "Photo Gallery" toast over a gallery reading 0 → the photos filed (2), and a "Start the report" sheet.
+- **Phone editor:**
+  - Toolbar: 363px → 60px folded while reading; the document frame grows 481 → 784px.
+  - The assistant's send button was off-screen at y 866 of 844 → fully visible.
+  - "N to fill": 31 → 10.
+- **Print:** the cover moved off page 1 → the cover is page 1. Split signature and findings-header positions found on 1422 → none.
+- **Found and fixed:** a summary blanked once at print time stayed hidden for every later print that session. `compactForPrint` now clears the mark.
+- **Needs Theo (kept as is):**
+  - Finish now adds the walk's photos to Inspection Photos automatically.
+  - The printed cover is slightly tighter: logo 230 → 190px, photo 110 → 85mm.
+  - The folded phone toolbar hides Email/Text/Share until you scroll up.
+  - Invoices on the Inspections tab sit under their own heading; the Contracts tab or Payments may be the better home.
+- **Gates:**
+  - `gate_1423.mjs` 47/0. The control (1422) is RED 39.
+  - `check_build` GREEN.
+  - `gate_types` 1505 = control. `gate_dupes` identical. Scroll-lock 17.
+  - `gate_1405` (B2 updated for the new cover rule), `1201`, `1204` and `966` are green. Builder F also ran `1023`, `1029`, `1069`, `1083`, `1265`–`1268` and `730`, all green on both trees.
+  - `gate_1050` needs pymupdf, which is absent here.
+  - REPRO byte-identical.

@@ -507,7 +507,41 @@ td.status small{display:block;color:var(--muted);font-size:13px;margin-top:3px;w
   border:1px solid #c9ccd4;background:#fff;color:#161616;cursor:pointer;}
 @media (max-width:820px){
   .editor-body{flex-direction:column;}
-  #assistantPanel{width:100%;height:46%;border-left:0;border-top:4px solid var(--red);}
+  /* F (judge 4): a fixed 46% made the panel 221px tall around 227px of controls — the input and its button
+     were cut off under the screen edge and the messages got 24px. It now sizes to its content up to 55%,
+     the messages scroll, and tapping its header folds it to that one line. */
+  #assistantPanel{width:100%;height:auto;max-height:55%;border-left:0;border-top:4px solid var(--red);}
+  #assistantPanel .assist-msgs{--cr-stack:"F phone layout of the assistant; the desktop side panel keeps the base";flex:1 1 auto;min-height:64px;}
+  #assistantPanel > :not(.assist-msgs){flex:none;}
+  #assistantPanel .assist-inputrow{--cr-stack:"F phone layout of the assistant; the desktop side panel keeps the base";padding:8px 12px 10px;}
+  #assistantPanel .assist-inputrow textarea{min-width:0;}
+  #assistantPanel .assist-inputrow button{min-width:76px;min-height:44px;}
+  #assistantPanel .assist-head{--cr-stack:"F phone layout of the assistant; the desktop side panel keeps the base";cursor:pointer;min-height:44px;box-sizing:border-box;justify-content:flex-start;padding:0 4px 0 14px;}
+  #assistantPanel .assist-head button{margin-left:auto;min-width:44px;min-height:44px;}
+  #assistantPanel .assist-head::before{content:"\25BE";margin-right:8px;}
+  #assistantPanel.min .assist-head::before{content:"\25B8";}
+  #assistantPanel.min > :not(.assist-head){display:none;}
+}
+@media (max-width:760px){
+  /* F (judge 4): the folded phone toolbar — one row: the title, Save, More. On while the document is
+     scrolled down (the edcompact class) and while the assistant is open, so the panel does not have to
+     share the screen with 363px of buttons. Scrolling up, or closing the assistant, opens it again. The
+     !important beats the inline display JS writes on each button (1069's reason for its wrapper). */
+  #editorView.edcompact .toolbar,
+  #editorView:has(#assistantPanel.open) .toolbar{--cr-stack:"F the folded phone toolbar is a state of the editor, not a restyle";
+    flex-wrap:nowrap;padding:6px 10px;gap:6px;}
+  #editorView.edcompact .toolbar > :not(.grow):not(.edbtns),
+  #editorView:has(#assistantPanel.open) .toolbar > :not(.grow):not(.edbtns){--cr-stack:"F phone fold state";display:none !important;}
+  #editorView.edcompact .toolbar .grow,
+  #editorView:has(#assistantPanel.open) .toolbar .grow{--cr-stack:"F phone fold state";order:0;flex:1 1 0;min-width:0;}
+  #editorView.edcompact .toolbar .edbtns,
+  #editorView:has(#assistantPanel.open) .toolbar .edbtns{--cr-stack:"F phone fold state";order:1;flex:0 0 auto;width:auto;display:flex;margin:0;gap:6px;}
+  #editorView.edcompact .toolbar .edbtns > .btn:not(#saveBtn):not(#edMoreBtn),
+  #editorView:has(#assistantPanel.open) .toolbar .edbtns > .btn:not(#saveBtn):not(#edMoreBtn){--cr-stack:"F phone fold state";display:none !important;}
+  #editorView.edcompact .toolbar .edbtns .btn,
+  #editorView:has(#assistantPanel.open) .toolbar .edbtns .btn{--cr-stack:"F phone fold state";width:auto;}
+  #editorView.edcompact .toolbar #reportTitle,
+  #editorView:has(#assistantPanel.open) .toolbar #reportTitle{--cr-stack:"F phone fold state";font-size:15px;padding:8px 10px;}
 }
 
 footer.site{
@@ -2083,8 +2117,11 @@ button.actbox:active{transform:scale(.97);}
 .qibub.me{background:var(--red);color:#fff;margin-left:auto;border-bottom-right-radius:4px;}
 .qibub.ph{background:#fff;border:1px solid var(--line);margin-left:auto;padding:6px;border-bottom-right-radius:4px;}
 .qibub.ph img{display:block;width:100%;max-width:300px;border-radius:9px;}
-.qibub .qicap{display:flex;justify-content:space-between;gap:10px;padding:6px 4px 2px;
-  font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6d5e56;}
+.qibub .qicap{display:flex;flex-direction:column;gap:6px;padding:6px 4px 2px;
+  font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6d5e56;}
+/* F (judge 4): one row per thing — label + upload mark, then Analyze + time — instead of a wrapped jumble */
+.qibub .qicap > span{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.qibub .qicap time{white-space:nowrap;font-weight:600;}
 .qichips{display:flex;gap:7px;flex-wrap:wrap;max-width:680px;margin:0 auto 12px;}
 .qichip{border:1px solid #d9c9b4;background:#fff;border-radius:18px;padding:7px 13px;cursor:pointer;
   font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#5a5049;}
@@ -4272,7 +4309,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1422<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1423<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -9010,6 +9047,7 @@ var REPORT_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cardinal Roofing &amp; Renovations — Roof Inspection Report</title>
 <style>
 /* ============================================================
@@ -9031,6 +9069,7 @@ var REPORT_TEMPLATE = `<!DOCTYPE html>
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}   /* F: no phone autosizing */
 body{
   font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,Helvetica,sans-serif;
   color:var(--ink);
@@ -9149,7 +9188,7 @@ table.concerns td.pr{text-align:center;width:96px;white-space:nowrap;}
 /* ---------- priority chips ---------- */
 .chip{display:inline-block;padding:2px 9px;border-radius:11px;color:#fff;font-size:8.5pt;font-weight:700;letter-spacing:.4px;}
 .chip.high{background:var(--hi);}
-.chip.mod{background:var(--amber);}
+.chip.mod{background:var(--amber);color:#1b1b1b;}   /* F: white on amber was 2.17:1 */
 .chip.mon{background:var(--slate);}
 .legend{font-size:9.5pt;color:var(--muted);margin:6px 0 0;}
 .legend .chip{margin-right:4px;}
@@ -9177,6 +9216,24 @@ table.concerns td.pr{text-align:center;width:96px;white-space:nowrap;}
 
 .note{background:#f6f6f6;border-left:3px solid var(--red);padding:10px 14px;font-size:10pt;margin:12px 0;}
 small.hint{color:#b06a00;font-size:8.5pt;}
+/* F: on paper the cover ends its own page and fits on it (logo, photo and all seven detail rows measured
+   ~266mm against a 237mm page); signature lines keep their labels; the findings header keeps its first row.
+   LAST in this sheet on purpose, so it outranks the base .cover / .cover-photo rules above it. */
+@media print{
+  .cover{min-height:0;break-after:page;}
+  .cover-logo{width:190px;margin:0 0 5mm;}
+  .cover-band{margin-bottom:6mm;}
+  .cover-photo{height:85mm;}
+  .cover-title{margin:6mm 0 1mm;}
+  .cover-sub{margin-bottom:5mm;}
+  .cover-meta{padding-top:4mm;}
+  .cover-meta td{padding:2px 0;}
+  .sign,.sign .col{break-inside:avoid;}
+  table.concerns tr:first-child{break-after:avoid;}
+}
+/* F: on a phone the Contents rows (nowrap) were the one thing wider than the screen — 472px at 390 —
+   which widens the whole layout and shrinks the page again. Last in the sheet so it beats .toc-row .t. */
+@media screen and (max-width:640px){ .toc-row .t{white-space:normal;} }
 </style>
 </head>
 <body>
@@ -9450,6 +9507,7 @@ var EXTERIOR_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cardinal Roofing &amp; Renovations — Exterior Inspection Report</title>
 <style>
 /* ============================================================
@@ -9471,6 +9529,7 @@ var EXTERIOR_TEMPLATE = `<!DOCTYPE html>
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}   /* F: no phone autosizing */
 body{
   font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,Helvetica,sans-serif;
   color:var(--ink);
@@ -9587,7 +9646,7 @@ table.concerns td.pr{text-align:center;width:96px;white-space:nowrap;}
 /* ---------- priority chips ---------- */
 .chip{display:inline-block;padding:2px 9px;border-radius:11px;color:#fff;font-size:8.5pt;font-weight:700;letter-spacing:.4px;}
 .chip.high{background:var(--hi);}
-.chip.mod{background:var(--amber);}
+.chip.mod{background:var(--amber);color:#1b1b1b;}   /* F: white on amber was 2.17:1 */
 .chip.mon{background:var(--slate);}
 .legend{font-size:9.5pt;color:var(--muted);margin:6px 0 0;}
 .legend .chip{margin-right:4px;}
@@ -9615,6 +9674,24 @@ table.concerns td.pr{text-align:center;width:96px;white-space:nowrap;}
 
 .note{background:#f6f6f6;border-left:3px solid var(--red);padding:10px 14px;font-size:10pt;margin:12px 0;}
 small.hint{color:#b06a00;font-size:8.5pt;}
+/* F: on paper the cover ends its own page and fits on it (logo, photo and all seven detail rows measured
+   ~266mm against a 237mm page); signature lines keep their labels; the findings header keeps its first row.
+   LAST in this sheet on purpose, so it outranks the base .cover / .cover-photo rules above it. */
+@media print{
+  .cover{min-height:0;break-after:page;}
+  .cover-logo{width:190px;margin:0 0 5mm;}
+  .cover-band{margin-bottom:6mm;}
+  .cover-photo{height:85mm;}
+  .cover-title{margin:6mm 0 1mm;}
+  .cover-sub{margin-bottom:5mm;}
+  .cover-meta{padding-top:4mm;}
+  .cover-meta td{padding:2px 0;}
+  .sign,.sign .col{break-inside:avoid;}
+  table.concerns tr:first-child{break-after:avoid;}
+}
+/* F: on a phone the Contents rows (nowrap) were the one thing wider than the screen — 472px at 390 —
+   which widens the whole layout and shrinks the page again. Last in the sheet so it beats .toc-row .t. */
+@media screen and (max-width:640px){ .toc-row .t{white-space:normal;} }
 </style>
 </head>
 <body>
@@ -14902,9 +14979,15 @@ function renderProjectDocs(){
      estimate stays under Estimates instead of drifting into Inspections. */
   var ests = docs.filter(function(r){ return isEstimateDoc(r); });
   var wos  = docs.filter(function(r){ return isWorkOrderTitle(r.title); });
-  var insp = docs.filter(function(r){ return !isEstimateDoc(r) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !isFileDoc(r.title); });
-  document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
-    : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
+  /* F (judge 4): 1397 took invoices out of the GLOBAL Inspections list only — this one still filed every
+     invoice (and change order) as an inspection report, with Open / Mark unsent / Delete beside it. They keep
+     a heading of their own here, so none becomes unreachable (the overview's Invoice card opens only the
+     newest invoice). The overview's own count (inspN) has excluded both since it was written. */
+  var bill = docs.filter(function(r){ return !isEstimateDoc(r) && /^\s*(invoice|change order)\b/i.test(r.title || ''); });
+  var insp = docs.filter(function(r){ return !isEstimateDoc(r) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !isFileDoc(r.title) && bill.indexOf(r) === -1; });
+  document.getElementById('inspDocsMount').innerHTML = (insp.length ? docTable(insp)
+    : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>') +
+    (bill.length ? '<h3 class="projsec" data-insp-bill="1" style="margin:18px 0 6px;">Invoices &amp; change orders</h3>' + docTable(bill) : '');
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
     : '<div class="empty"><b>No estimates yet.</b><br>Use <b>\uFF0B From a template</b> to start from a trade template, or <b>Upload estimate</b> for one written on paper or in another program.</div>';
   /* 654 (CR-AUD-013): sent estimates living only in the estimates TABLE
@@ -22527,27 +22610,44 @@ document.getElementById('qiMapNext').addEventListener('click', function(){
   /* prefill the client search with the pinned address's street portion so
      the list is scoped to nearby matches -- user can edit or clear to widen */
   var streetPart = qiAddr ? qiAddr.split(',')[0] : '';
+  /* F (judge 4): typed "5 Pine St Dayton OH" has no comma, so the WHOLE line went into the search and found
+     nobody. The house number and the first word of the street find the client; the rest only narrows. */
+  var _qiHn = /^\s*(\d+[A-Za-z]?\s+[^\s,]+)/.exec(streetPart);
+  if(_qiHn) streetPart = _qiHn[1];
   document.getElementById('qiCliSearch').value = streetPart;
   qiRenderCliList(streetPart);
+  qiWhoTab('exist');
 });
 document.getElementById('qiFinClose').addEventListener('click', function(){ document.getElementById('qiWhoModal').style.display = 'none'; });
-document.getElementById('qiTabExist').addEventListener('click', function(){
-  document.getElementById('qiExistPane').style.display = 'block';
-  document.getElementById('qiNewPane').style.display = 'none';
-});
-document.getElementById('qiTabNew').addEventListener('click', function(){
-  document.getElementById('qiExistPane').style.display = 'none';
-  document.getElementById('qiNewPane').style.display = 'block';
-});
+/* F (judge 4): the two tabs had no selected state at all; aria-pressed carries it and the CSS reads it */
+function qiWhoTab(which){
+  var ex = which !== 'new';
+  document.getElementById('qiExistPane').style.display = ex ? 'block' : 'none';
+  document.getElementById('qiNewPane').style.display = ex ? 'none' : 'block';
+  document.getElementById('qiTabExist').setAttribute('aria-pressed', String(ex));
+  document.getElementById('qiTabNew').setAttribute('aria-pressed', String(!ex));
+}
+document.getElementById('qiTabExist').addEventListener('click', function(){ qiWhoTab('exist'); });
+document.getElementById('qiTabNew').addEventListener('click', function(){ qiWhoTab('new'); });
 function qiRenderCliList(q){
-  var qq = (q || '').toLowerCase();
-  var list = cacheProjects.filter(function(p){
-    return !qq || (p.name || '').toLowerCase().indexOf(qq) >= 0 || (p.address || '').toLowerCase().indexOf(qq) >= 0;
-  }).slice(0, 30);
-  document.getElementById('qiCliList').innerHTML = list.map(function(p){
+  /* F (judge 4): one substring of the whole query found nobody for "5 Pine St Dayton OH". Now every word must
+     START a word of the name, address, city, state or zip — "5 pine st dayton" finds 5 Pine St, and "5" does
+     not find 15 Pine St. Finding nobody shows everyone, with a line saying so, instead of a dead end. */
+  var words = String(q || '').toLowerCase().split(/[\s,]+/).map(function(w){ return w.replace(/[^a-z0-9]+/g, ''); }).filter(Boolean);
+  function qiCliHit(p){
+    var hay = ' ' + [p.name, p.address, p.city, p.state, p.zip].filter(Boolean).join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
+    return words.every(function(w){ return hay.indexOf(' ' + w) !== -1; });
+  }
+  var list = cacheProjects.filter(function(p){ return !words.length || qiCliHit(p); });
+  var none = !list.length && words.length > 0;
+  if(none) list = cacheProjects.slice();
+  list = list.slice(0, 30);
+  document.getElementById('qiCliList').innerHTML =
+    (none ? '<div class="subnote" data-qi-nomatch="1" style="color:#5c5c5c;margin:0 0 8px;">No client matches \u201c' + esc(q) + '\u201d \u2014 here is everyone. Or use New prospect.</div>' : '') +
+    (list.map(function(p){
     return '<button class="estopt" data-qicli="' + p.id + '" style="display:block;width:100%;text-align:left;">' +
       esc(p.name || 'Unnamed') + (p.address ? ' <small style="color:#9a8c85;">\u00b7 ' + esc(p.address) + '</small>' : '') + '</button>';
-  }).join('') || '<div class="subnote">No matches.</div>';
+  }).join('') || '<div class="subnote" style="color:#5c5c5c;">No clients yet \u2014 use New prospect.</div>');
 }
 document.getElementById('qiCliSearch').addEventListener('input', function(){ qiRenderCliList(this.value); });
 document.getElementById('qiCliList').addEventListener('click', function(e){
@@ -22654,10 +22754,12 @@ async function qiAddFiles(files){
       var at = new Date();
       var pidx = qi.photos.length;
       qi.photos.push({ data: du, label: qi.label, at: at.toISOString(), uploaded: false });
+      /* F (judge 4): two rows — the label and its upload mark, then Analyze (13px, was 11) and the time,
+         which no longer wraps "3:04 / AM" onto two lines */
       qiBubble('ph', '<img src="' + du + '" alt=""><div class="qicap"><span>' + esc(qi.label || 'Photo') +
         ' <em id="qiup' + pidx + '" style="font-style:normal;color:#b3924a;">\u23F3</em></span>' +
-        '<span><button class="chipbtn" data-qiai="' + pidx + '" style="padding:3px 10px;font-size:11px;">&#128269; Analyze</button> ' +
-        at.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) + '</span></div>');
+        '<span><button class="chipbtn" data-qiai="' + pidx + '" style="padding:3px 12px;font-size:13px;">&#128269; Analyze</button> ' +
+        '<time>' + at.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) + '</time></span></div>');
       qiUpload(pidx);
       if(qi.ai) qiAnalyze(pidx);
     }catch(err){ qiBubble('ai', 'That photo failed to load \u2014 try again. (' + esc(err.message || err) + ')'); }
@@ -22767,15 +22869,53 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
       }catch(e2){}
     }
     auditLog('doc', 'Quick Inspection \u2014 ' + total + ' photo(s) attached', pid);
+    /* F (judge 4): Finish used to end on a RED toast that sent the rep to a "Photo Gallery" reading 0 (the
+       photos are in the Photo Album; the gallery on Inspections is the curated Inspection Photos set), and
+       nothing the walk captured became part of an inspection. Now the walk's photos join Inspection Photos,
+       and a plain question says where they went and offers the report with them checked. */
+    var _qiStarted = qi.startedAt, _qiIds = [];
+    try{ _qiIds = await qiMarkInspPhotos(pid, total, _qiStarted); }catch(_mk){}
     localStorage.removeItem('qi_session');
     qi = { projectId:null, projectName:'', photos:[], label:null, stamp:false, startedAt:null, ai:false };
     await reload();
     openProject(pid);
-    setTimeout(function(){
-      crTell('Photos are in this client\u2019s Photo Gallery.\n\nSame rules as a regular inspection: complete the Roofing Inspection Checklist, then transfer the gallery photos into a new inspection report.');
-    }, 600);
+    setTimeout(function(){ qiOfferReport(pid, total, _qiIds, noteLines); }, 600);
   }catch(err){ qiBubble('ai', 'Upload failed: ' + esc(err.message || err) + ' \u2014 your photos are still here; try Finish again.'); }
 });
+
+/* F (judge 4): the Quick Inspection's photos, found by who took them and when — photoDb.add returns no id.
+   The newest `n` this user added to the job since the walk began (2 minutes' grace for a phone clock) join
+   the job's Inspection Photos set (INSP_MAX), through patchProjectCk like the gallery's own "To Inspection".
+   Returns the ids, oldest first. A failure leaves the set as it was. */
+async function qiMarkInspPhotos(pid, n, since){
+  var me = (currentUser && currentUser.email) || '';
+  var t0 = since ? (Date.parse(since) - 120000) : 0;
+  var rows = (await photoDb.listByProject(pid)) || [];
+  var ids = rows.filter(function(p){
+    return (!me || !p.created_by || p.created_by === me) && (!t0 || !(Date.parse(p.created_at || '') < t0));
+  }).sort(function(a, b){ return String(b.created_at || '').localeCompare(String(a.created_at || '')); })
+    .slice(0, Math.max(0, n)).map(function(p){ return String(p.id); }).reverse();
+  if(!ids.length) return [];
+  var pr = cacheProjects.find(function(x){ return x.id === pid; });
+  if(!pr) return ids;
+  var cur = getInspPhotoIds(pr);
+  var add = ids.filter(function(x){ return cur.indexOf(x) === -1; }).slice(0, Math.max(0, INSP_MAX - cur.length));
+  if(add.length) await patchProjectCk(pr, { insp_photos: cur.concat(add) });
+  return ids;
+}
+/* F (judge 4): the end of a Quick Inspection, said plainly — where the photos went, and the report one tap away */
+async function qiOfferReport(pid, n, ids, notes){
+  var where = 'in this client\u2019s Photo Album' + (ids && ids.length ? ' and in Inspection Photos' : '');
+  var go = await crAsk('Inspection saved \u2014 ' + n + ' photo' + (n === 1 ? ' is ' : 's are ') + where + '.\n\n' +
+    'Start the inspection report now? The guide opens with these photos checked' + (notes ? ' and your notes in its chat' : '') +
+    '. Nothing is written until you tap Write report or Start without AI.',
+    { verb: 'Start the report', cancel: 'Not now', tone: 'plain' });
+  if(!go) return;
+  if(!currentProject || currentProject.id !== pid) openProject(pid);
+  try{ showTab('inspections'); }catch(_t){}
+  try{ refreshInspGalN(); }catch(_g){}
+  if(window.CardinalInspGuide && window.CardinalInspGuide.open) window.CardinalInspGuide.open({ pick: ids || [], note: notes || '' });
+}
 
 /* ---------- 682: the metallic emoji wrapper is GONE ----------------------
    Theo: "We don't need to use metallic anymore." It walked the whole document
@@ -26111,8 +26251,10 @@ async function createReportFrom(tpl, kindLabel, roofy, opts){
   if(!currentProject) return;
   var cl = roofy ? getChecklist(currentProject) : null;
   if(roofy && !cl){
+    /* F (judge 4): the words said "OK = … / Cancel = …" over buttons that read Continue / Cancel */
     if(!await crAsk('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
-                'OK = create the report anyway (blank specs, fill by hand)\nCancel = go complete the checklist first')){
+                'Create the report anyway and fill the specs by hand, or do the checklist first.',
+                { verb: 'Create it anyway', cancel: 'Do the checklist first', tone: 'plain' })){
       showTab('checklists');
       openChecklist();
       return;
@@ -27349,7 +27491,17 @@ async function sendAssistEdit(note){
   aeSend.disabled = false;
 }
 /* the guided report (cr-insg-script) opens the editor on a fresh AI draft */
+/* F (judge 4): tapping the panel's header (not its close button) folds it to that line and back */
+(function(){
+  var h = document.querySelector('#assistantPanel .assist-head');
+  if(h) h.addEventListener('click', function(e){
+    var t = /** @type {any} */ (e.target);
+    if(t && t.closest && t.closest('button')) return;
+    assistantPanel.classList.toggle('min');
+  });
+})();
 function openAssistEdit(){
+  assistantPanel.classList.remove('min');
   assistantPanel.classList.add('open');
   setAssistMode('edit');
   assistMsg('bot', 'Your draft is written. Tell me what to change — “shorter summary”, “the porch was outside this inspection” — or close this and edit by hand: tap any line in the report.');
@@ -28082,6 +28234,13 @@ async function openEditor(id){
           '.cover-photo{height:auto;aspect-ratio:4/3;}table{font-size:10.5pt;}body{font-size:11.5pt;line-height:1.65;}}' +
           '@media screen{body{background:#fff;}table.facts td,table.concerns td,table.meta td,table.items td,.cover-meta td{border-color:#1b1b1b !important;}}' +
           '@media screen{.howto{display:block !important;}}' +
+          /* F (judge 4): folded, the how-to panel is its heading line; tap the heading to open it */
+          '@media screen{.howto.crfold{box-sizing:content-box;max-height:1.6em;overflow:hidden;padding:10px 14px !important;margin-bottom:16px !important;}' +
+          '.howto h4{cursor:pointer;}.howto.crfold h4{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+          '.howto.crfold h4::before{content:"\\25B8  ";}}' +
+          /* F (docs judge): MODERATE was white on amber, 2.17:1 */
+          '@media screen{.chip.mod{color:#1b1b1b;}}' +
+          '@media screen and (max-width:640px){.toc-row .t{white-space:normal;}}' +   /* F: Contents rows ran past a phone */
           '@media screen{html,body{overscroll-behavior:contain;}}';
         doc.head.appendChild(sfx);
       }
@@ -28101,8 +28260,26 @@ async function openEditor(id){
       hint.className = 'no-print';
       hint.style.cssText = 'position:sticky;top:0;z-index:99;background:#1b1b1b;color:#FFD54A;font-weight:600;' +
         'font:13px "Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;padding:8px 14px;text-align:center;';
-      hint.textContent = 'Editing mode — click any text to type over it. Yellow highlights are fill-in fields. Use the toolbar above to Save or Print/PDF.';
+      /* F (judge 4): on a phone this sticky banner was three lines (64px) over every screen of the document */
+      hint.textContent = (window.innerWidth <= 760)
+        ? 'Editing mode \u2014 tap any text to type. Yellow = fill in.'
+        : 'Editing mode — click any text to type over it. Yellow highlights are fill-in fields. Use the toolbar above to Save or Print/PDF.';
       doc.body.insertBefore(hint, doc.body.firstChild);
+      /* F (judge 4): the report opened on 510px of instructions. The how-to panel shows open the first time this
+         device opens a document that has one, and folded to its heading after that; its heading toggles it. */
+      try{
+        var _ho = doc.querySelector('.howto');
+        if(_ho){
+          var _seen = false;
+          try{ _seen = localStorage.getItem('cr-howto-seen') === '1'; localStorage.setItem('cr-howto-seen', '1'); }catch(_ls){}
+          _ho.classList.toggle('crfold', _seen);
+          var _h4 = /** @type {any} */ (_ho.querySelector('h4'));
+          if(_h4 && !_h4.__crFold){
+            _h4.__crFold = 1; _h4.setAttribute('role', 'button'); _h4.setAttribute('tabindex', '0');
+            _h4.addEventListener('click', function(){ _ho.classList.toggle('crfold'); });
+          }
+        }
+      }catch(_hf){}
       wirePhotoFrames(doc);
       wireReanalyzeButtons(doc);
       wireSummaryDraftButton(doc);
@@ -28975,6 +29152,11 @@ function fillBlanks(doc){
   var out = [];
   Array.prototype.forEach.call(doc.querySelectorAll('.ph'), function(el){
     if(el.closest('[data-sig]')) return;                 /* signing is its own step */
+    /* F (judge 4): a Contents page number and the caption of an EMPTY photo box are optional — neither prints
+       when left blank (compactForPrint) — and together they made a blank report read "51 to fill" */
+    if(el.closest('.toc-row')) return;
+    var _fig = el.closest('.fig');
+    if(_fig && !_fig.querySelector('.frame img')) return;
     var t = (el.textContent || '').trim();
     if(/^\[[^\]]*\]$/.test(t)) out.push(el);
   });
@@ -29270,6 +29452,35 @@ document.getElementById('sigBtn').addEventListener('click', async function(){
 var __sigWho = null;
 document.getElementById('addFieldBtn').addEventListener('click', openFieldMenu);
 document.getElementById('fillChipBtn').addEventListener('click', jumpNextBlank);
+/* F (judge 4): on a 390x844 phone the editor toolbar is 363px — 43% of the screen — and it stayed while you
+   worked, leaving the document a 481px window. Scrolling DOWN the document folds it to one row (title, Save,
+   More); scrolling back up 48px, or reaching the top, opens it again. The three sends stay primary (1204) in
+   the open toolbar. Phones only (760px, the toolbar's own breakpoint); wider screens never fold. A short
+   quiet spell after each change stops the frame's own resize from flipping it straight back. */
+(function(){
+  var ev = document.getElementById('editorView'), fr = /** @type {any} */ (document.getElementById('reportFrame'));
+  if(!ev || !fr) return;
+  var mq = window.matchMedia ? window.matchMedia('(max-width:760px)') : null;
+  var lastY = 0, acc = 0, quiet = 0;
+  function edFold(on){
+    if(ev.classList.contains('edcompact') === on) return;
+    ev.classList.toggle('edcompact', on);
+    quiet = Date.now() + 400;
+  }
+  function onScroll(){
+    var w = fr.contentWindow; if(!w) return;
+    var y = w.scrollY || 0, d = y - lastY; lastY = y;
+    if(!mq || !mq.matches){ edFold(false); return; }
+    if(Date.now() < quiet) return;
+    if(y < 40){ acc = 0; edFold(false); return; }
+    acc = ((d > 0) === (acc > 0)) ? acc + d : d;
+    if(acc > 48) edFold(true); else if(acc < -48) edFold(false);
+  }
+  fr.addEventListener('load', function(){
+    lastY = 0; acc = 0; ev.classList.remove('edcompact');
+    try{ fr.contentWindow.addEventListener('scroll', onScroll, { passive: true }); }catch(_){}
+  });
+})();
 document.getElementById('sigClear').addEventListener('click', sigReset);
 document.getElementById('sigCancel').addEventListener('click', function(){ window.__ceSigner = null; window.__ceSignerId = null; sigModal.style.display = 'none'; });
 document.getElementById('sigApply').addEventListener('click', async function(){
@@ -29426,6 +29637,9 @@ function compactForPrint(d){
   /* the deep cleanup below is for inspection reports only \u2014 contracts and
      estimates keep every line so reps can print blanks to hand-fill */
   if(!d.querySelector('[data-cardinal-summary-heading]')) return;
+  /* F: a mark left by an EARLIER print on something since filled (typed, or drafted ph -> fill) hid it from
+     every later print in the session — this pass only visits .ph, so it never cleared the stale mark */
+  d.querySelectorAll('[data-emptyph]').forEach(function(el){ if(!el.classList.contains('ph')) el.removeAttribute('data-emptyph'); });
   /* unfilled yellow placeholders never print */
   d.querySelectorAll('.ph').forEach(function(el){
     var t = (el.textContent || '').trim();
@@ -29452,6 +29666,20 @@ function compactForPrint(d){
     var allBlank = true;
     for(var i = 0; i < cells.length; i++){ if(!blank(cells[i])){ allBlank = false; break; } }
     if(allBlank) tr.setAttribute('data-emptyblock','1');
+  });
+  /* F (docs judge): a sub-heading whose only content was left blank printed alone — "Overall Condition
+     Assessment" in red over nothing, whenever the summary was still its [prompt]. A heading is hidden when
+     everything after it, up to the next heading, is hidden. */
+  d.querySelectorAll('h3').forEach(function(h){
+    h.removeAttribute('data-emptyblock');
+    var any = false;
+    for(var el = h.nextElementSibling; el && !/^H[23]$/.test(el.tagName); el = el.nextElementSibling){
+      if(el.tagName === 'BUTTON' || (el.classList && el.classList.contains('page-break'))) continue;
+      if(el.getAttribute('data-emptyblock') || el.getAttribute('data-emptyrow') ||
+         el.getAttribute('data-emptyfig') || el.getAttribute('data-emptyph')) continue;
+      any = true; break;
+    }
+    if(!any) h.setAttribute('data-emptyblock','1');
   });
   /* collapse sections with nothing left to show, then renumber body + contents */
   var secs = Array.prototype.slice.call(d.querySelectorAll('h2.sec'));
@@ -29569,7 +29797,21 @@ function ensurePrintFix(d){
   st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}' +
     '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important;}' +
     '.page-break:not(h2){display:none !important;}' +   /* 1405: the Terms heading is h2.sec.page-break */
-    '.cover{min-height:226mm !important;}' +   /* 1405: 246mm overflowed Letter under these margins */
+    /* F (docs judge): min-height alone could not hold the cover to one sheet — with the logo, its photo and all
+       seven detail rows it is ~266mm against a 237mm page, so Client Contact, Inspector and Report No. printed on
+       page 2 above Contents (and on the iPhone path Contents began at the foot of the cover). The cover now ends
+       its own page and is sized to fit with room for a wrapped address: logo 190px, photo 85mm (was 110), the
+       gaps and the detail rows a little tighter. The rules name report-only classes; contracts and estimates
+       have no .cover. */
+    '.cover{min-height:0 !important;break-after:page;}' +
+    '.cover-logo{width:190px !important;margin:0 0 5mm !important;}.cover-band{margin-bottom:6mm !important;}' +
+    '.cover-photo{height:85mm !important;}.cover-title{margin:6mm 0 1mm !important;}.cover-sub{margin-bottom:5mm !important;}' +
+    '.cover-meta{padding-top:4mm !important;}.cover-meta td{padding:2px 0 !important;}' +
+    /* F: signature lines printed on one page and their labels on the next; the findings header sat alone at the
+       foot of a page. Scoped to inspection reports (the summary heading's siblings) — .sign is shared. */
+    '[data-cardinal-summary-heading] ~ .sign,[data-cardinal-summary-heading] ~ .sign .col{break-inside:avoid;}' +
+    '[data-cardinal-summary-heading] ~ table.concerns tr:first-child{break-after:avoid;}' +
+    '.chip.mod{color:#1b1b1b !important;}' +   /* F: MODERATE, white on amber, was 2.17:1 */
     'h2.sec{break-after:avoid;}' +
     '.figrow,.fig,tr{break-inside:avoid;}' +
     '.runhead{display:none !important;}' +
@@ -45736,6 +45978,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1423, d:'2026-10-29', t:'Inspections: real priorities, photos kept, readable on a phone and on paper', s:'Each photo in an AI-written report shows its own priority (no more HIGH on everything), and the high and moderate ones show up in the Summary of Findings. Start without AI keeps your checked photos and stops asking for a title. Quick Inspection\u2019s buttons are readable, it finds the client from a typed address, and Finish puts your photos into Inspection Photos and offers to start the report with them checked. On a phone the report editor\u2019s buttons fold away while you scroll and the assistant fits the screen. Printed reports keep the cover on page 1 and the signature lines with their labels, and MODERATE is readable.' },
   { b: 1422, d:'2026-10-29', t:'The Ask button wears the portal colour', s:'The Ask button is red on Retail, teal on Insurance and green on Community \u2014 the same as the + button \u2014 instead of red everywhere. On a phone it is a proper round button with a larger star.' },
   { b: 1421, d:'2026-10-29', t:'The work order and Measurements boxes are readable in dark mode', s:'In dark mode the Cancel button on the New work order and Measurements boxes was almost invisible, and the field labels and hints were faint. Every label now reads clearly in both themes, the close \u00d7 is easy to tap, and the heading uses the app\u2019s own font.' },
   { b: 1420, d:'2026-10-29', t:'Home takes Production back to the board', s:'For Curtis and Scottie, the Home button at the bottom of the phone and the gold house in the header now open the Production board. They used to land on the retail home, which shows pipeline counts and money owed. Everyone else\u2019s Home is unchanged.' },
@@ -78058,6 +78301,13 @@ html body.cr-prod #crewsView{ --cr-stack:"1416 production: Crews over the retail
   box-shadow:0 11px 24px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.16);
   transform:translateY(-2px);
 }
+/* F (judge 4): the "Who is this inspection for?" sheet is a WHITE card, and its three buttons kept the dark
+   theme's light chip ink — rgb(230,233,238) on #fff, 1.2:1, so "New prospect" (the only way to start for
+   someone not in the system) read as an empty box. They take the start step's black chip; the open tab is
+   the module's red, the same as the active shot chip. Both themes: the card is white in both. */
+#qiWhoModal .chipbtn{--cr-stack:"F the Who sheet is a white card in both themes; the app's chip ink was 1.2:1 on it";
+  background:#14110c;color:#ffffff;-webkit-text-fill-color:#ffffff;border:0;min-height:44px;}
+#qiWhoModal .chipbtn[aria-pressed="true"]{--cr-stack:"F the open tab of the Who sheet";background:#c8202e;}
 </style>
 
 <script id="cr-crew-script">
@@ -97804,9 +98054,10 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:#ffffff;border-bottom:1px solid #d9dbe1;}
 #insgSheet .ig-top b{flex:1;font:700 18px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#161616;}
 #insgSheet .ig-x{min-width:44px;min-height:44px;border:0;background:transparent;color:#5c6070;font:400 26px Arial,sans-serif;cursor:pointer;}
-#insgSheet .ig-body{max-width:620px;margin:0 auto;padding:14px 16px 120px;display:grid;gap:14px;}
+#insgSheet .ig-body{max-width:620px;margin:0 auto;padding:14px 16px 120px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px;}
+/* F (judge 4): an auto grid column took its widest card's min-content — 10px wider than a 390px phone */
 #insgSheet .ig-who{margin:0;font:400 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#5c6070;}
-#insgSheet .ig-card{background:#ffffff;border:1px solid #d9dbe1;border-radius:14px;padding:14px;display:grid;gap:12px;}
+#insgSheet .ig-card{background:#ffffff;border:1px solid #d9dbe1;border-radius:14px;padding:14px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0;}
 #insgSheet .ig-card h3{margin:0;font:700 17px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#161616;}
 #insgSheet .ig-lab{font:700 12px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5c6070;}
 #insgSheet .ig-types{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -98062,14 +98313,19 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   }
   function igStart(){
     /* the roof template when the roof was inspected (or nothing was picked);
-       otherwise the exterior one, which covers the whole outside */
-    var roof = !!S.types.Roof || (!S.general && !TYPES.some(function(t){ return S.types[t]; }));
+       otherwise the exterior one, which covers the whole outside (igSections decides it the same way) */
+    var secs = igSections(), pr = igProj();
     igClose();
-    if(roof) createReportFrom(REPORT_TEMPLATE, 'Report', true);
-    else createReportFrom(EXTERIOR_TEMPLATE, 'Exterior report', false);
+    /* F (judge 4): "Start without AI" named the report through the browser's own prompt() and dropped every
+       photo just checked. It takes the same title Write report uses, and the checked photos go into the report
+       with no caption and no chip — igFill with an empty draft places them and writes nothing else. */
+    var title = (pr && pr.name || 'Inspection') + (pr && pr.address ? ' — ' + pr.address : '');
+    var opts = /** @type {any} */ ({ title: title });
+    if(igPickedList().length) opts.fill = function(id){ return igFill(id, {}, secs.list); };
+    return createReportFrom(secs.roof ? REPORT_TEMPLATE : EXTERIOR_TEMPLATE, secs.roof ? 'Report' : 'Exterior report', secs.roof, opts);
   }
   /* ---- 1266: step 2 — pick photos, talk to the assistant, write the report ---- */
-  var P = { list: [], picked: {}, chat: [], busy: false, loaded: false };
+  var P = /** @type {any} */ ({ list: [], picked: {}, chat: [], busy: false, loaded: false, seedPick: null, seedNote: '' });
   var PIC_MAX = 16;
   function igPhotoSrc(p){ return p._thumb || p._src || p.data || ''; }
   function igPickedList(){ return P.list.filter(function(p){ return P.picked[p.id]; }); }
@@ -98083,6 +98339,8 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       '<p class="ig-err" id="insgErr"></p></div>' +
       '<div class="ig-foot"><button type="button" class="ig-alt" data-ig="plain">Start without AI</button><button type="button" class="ig-go" data-ig="write">Write report</button></div>';
     if(!P.chat.length) P.chat.push({ role: 'ai', text: 'I have your checklist. Check the photos you want in the report, and tell me anything they don’t show — a reported leak, how long, what the homeowner wants. Tap Write report when you’re ready.' });
+    /* F: a Quick Inspection's notes arrive as the rep's own first message — shown, and sent only with Send or Write report */
+    if(P.seedNote){ P.chat.push({ role: 'me', text: 'From the Quick Inspection:\n' + P.seedNote }); P.seedNote = ''; }
     igChatPaint();
     sheet.scrollTop = 0;
     igLoadPhotos();
@@ -98093,6 +98351,8 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       try{ P.list = (await photoDb.listByProject(pr.id)) || []; }catch(e){ P.list = []; var er = igEl('insgErr'); if(er) er.textContent = 'Could not load the photos: ' + ((e && e.message) || e); }
       P.loaded = true;
       var ids = []; try{ ids = getInspPhotoIds(pr) || []; }catch(_){}
+      /* F: opened from a finished Quick Inspection, the walk's own photos are the ones checked */
+      if(P.seedPick && P.seedPick.length) ids = P.seedPick;
       ids.slice(0, PIC_MAX).forEach(function(id){ if(P.list.some(function(p){ return String(p.id) === String(id); })) P.picked[id] = true; });
     }
     igGridPaint();
@@ -98192,24 +98452,32 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     picked.forEach(function(p){ byId[String(p.id)] = p; });
     var urls = await signedPhotoMap(picked.map(photoPathOf).filter(Boolean), PHOTO_DOC_URL_TTL);
     function srcOf(p){ var k = photoPathOf(p); return (k && urls[k]) || p.data; }
-    var done = {};
+    var done = {}, found = [];
     function igPut(p, num, cap, sev){
       var src = srcOf(p); if(!src) return;
-      if(!placePhotoInSection(doc, nums.indexOf(num) !== -1 ? num : dflt, src, cap || '', true)) return;
+      var at = nums.indexOf(num) !== -1 ? num : dflt;
+      if(!placePhotoInSection(doc, at, src, cap || '', true)) return;
       done[String(p.id)] = true;
       var imgs = doc.querySelectorAll('.fig .frame img'), img = imgs[imgs.length - 1];
       for(var i = imgs.length - 1; i >= 0; i--){ if(imgs[i].getAttribute('src') === src){ img = imgs[i]; break; } }
       var fr = img && img.parentElement;
-      if(fr && CK_PR[sev] && !fr.querySelector('.tag')){
+      /* F (judge 4): the template's empty photo boxes carry a SAMPLE chip (HIGH in 3, 5 and 6, MODERATE in 8),
+         and this used to add the photo's own chip only when no .tag was there — so the sample won and every
+         photo the assistant placed read HIGH, a "monitor" granule-loss photo included. The photo's severity
+         replaces whatever was there; a photo with no severity gets no chip. */
+      if(fr) Array.prototype.forEach.call(fr.querySelectorAll('.tag'), function(t){ t.remove(); });
+      if(fr && CK_PR[sev]){
         var tag = doc.createElement('span'); tag.className = 'tag';
         tag.innerHTML = '<span class="chip ' + CK_PR[sev][0] + '">' + CK_PR[sev][1] + '</span>';
         fr.insertBefore(tag, fr.firstChild);
       }
+      if(cap && (sev === 'high' || sev === 'mod')) found.push({ num: at, cap: cap, sev: sev });
       var cp = fr && fr.parentElement && fr.parentElement.querySelector('.cap .ph');
       if(cp && cap){ cp.classList.remove('ph'); cp.classList.add('fill'); }
     }
     (j.photos || []).forEach(function(x){ var p = byId[x.id]; if(p && !done[x.id]) igPut(p, x.section, x.caption, x.severity); });
     picked.forEach(function(p){ if(!done[String(p.id)]) igPut(p, dflt, '', 'none'); });
+    igFindingRows(doc, found);
     function fillAfter(head, text, attr){
       if(!head || !text) return null;
       var el = head.nextElementSibling;
@@ -98233,6 +98501,42 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     var pr = igProj();
     if(pr && picked.length){ try{ await pdb.update(pr.id, { photos_transferred: true }); }catch(_){} }
   }
+  /* F (judge 4): the Summary of Findings table never heard about the photos — the cracked boots the photos
+     were tagged for, and that Recommendation 1 said to replace now, were missing from it, so the table and
+     the rest of the report disagreed. Each photo the assistant rated HIGH or MODERATE becomes a row: its
+     section, its caption, its chip. Rows the checklist wrote and rows typed by hand stay; the template's
+     [Area] sample rows go, and one blank row is kept at the end for adding by hand, as
+     injectChecklistFindings() leaves it. No new call: these are the ratings the assistant already returned. */
+  /** @param {any} doc @param {any} list */
+  function igFindingRows(doc, list){
+    var table = /** @type {any} */ (doc.querySelector('table.concerns'));
+    if(!table || !list.length) return;
+    var rank = { high: 0, mod: 1 };
+    list = list.slice().sort(function(a, b){ return rank[a.sev] - rank[b.sev]; });
+    var rows = Array.prototype.filter.call(table.querySelectorAll('tr'), function(tr){ return !tr.querySelector('th'); });
+    var body = rows.length ? rows[rows.length - 1].parentNode : (table.tBodies[table.tBodies.length - 1] || table);
+    rows.forEach(function(tr){
+      var cells = Array.prototype.filter.call(tr.querySelectorAll('td'), function(td){ return !td.classList.contains('n') && !td.classList.contains('pr'); });
+      var sample = cells.length && cells.every(function(td){ var t = (td.textContent || '').trim(); return !t || t.charAt(0) === '['; });
+      if(sample) tr.remove();
+    });
+    var have = String(table.textContent || '').toLowerCase();
+    list.forEach(function(f){
+      if(have.indexOf(String(f.cap).toLowerCase()) !== -1) return;
+      var pr = CK_PR[f.sev], tr = doc.createElement('tr');
+      tr.setAttribute('data-ai-finding', '1');
+      tr.innerHTML = '<td class="n"></td><td><b class="fill">' + igEsc(sectionName(doc, f.num)) + '</b></td>' +
+        '<td><span class="fill">' + igEsc(f.cap) + '</span></td>' +
+        '<td class="pr"><span class="chip ' + pr[0] + '">' + pr[1] + '</span></td>';
+      body.appendChild(tr);
+    });
+    var blank = doc.createElement('tr');
+    blank.innerHTML = '<td class="n"></td><td><b class="ph">[Area]</b></td><td><span class="ph">[Finding.]</span></td>' +
+      '<td class="pr"><span class="chip mon">MONITOR</span></td>';
+    body.appendChild(blank);
+    var n = 0;
+    Array.prototype.forEach.call(table.querySelectorAll('td.n'), function(td){ td.textContent = String(++n); });
+  }
   function igClick(e){
     var ph = e.target.closest('[data-ph]');
     if(ph){
@@ -98255,7 +98559,8 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       igStep2();
     }
   }
-  function igOpen(){
+  /** @param {any} [o] */
+  function igOpen(o){
     var pr = igProj();
     if(!pr){ if(window.crToastErr) window.crToastErr('Open a client first — a report needs a job to belong to.'); return; }
     try{ S.all = JSON.parse(JSON.stringify(parseCkAll(pr) || {})); }catch(_){ S.all = {}; }
@@ -98263,6 +98568,9 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     S.types = {}; TYPES.forEach(function(t){ S.types[t] = was.length ? was.indexOf(t) !== -1 : t === 'Roof'; });
     S.general = !!(S.all.insp && S.all.insp.general);
     P.list = []; P.picked = {}; P.chat = []; P.busy = false; P.loaded = false;
+    /* F: from Quick Inspection's Finish — { pick: [photo ids], note: 'the walk\'s notes' } (qiOfferReport) */
+    P.seedPick = (o && Array.isArray(o.pick) && o.pick.length) ? o.pick.map(String) : null;
+    P.seedNote = (o && o.note) ? String(o.note) : '';
     igBuild(); igStep1();
     sheet.classList.add('open');
     sheet.scrollTop = 0;
