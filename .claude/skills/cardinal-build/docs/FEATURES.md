@@ -10200,3 +10200,6 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 - **`#feedback` link:** stashed at boot as `window.__crFbLink` beside 1255's `#punch` (the next boot line rewrites unknown fragments to `#h`).
 - **Not in v1:** a screenshot or photo attachment.
 - **Gate:** `gate_1411.mjs`. `gate_1317` now expects the field drawer's fifth row.
+
+## Build 1412: bottom sheets above the installed nav
+`#ctUpSheet` (Upload signed contract), `#apptCalSheet` (Add to calendar) and `#ljAsk` (the Leads question) are z-index 9995, above `body.standalone #pwaNav` (9990), the 1273 rule `#crEmailSheet` already followed. **Gate:** `gate_1412.mjs`.
