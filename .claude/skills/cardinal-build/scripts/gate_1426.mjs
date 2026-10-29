@@ -3,6 +3,7 @@
  *   B  Clients list at 1600 and 1280 desktop: the same
  *   C  the largest text size (data-cr-text="xl") on a phone: no name is 0px, every name shown whole
  *   D  desktop home Recent leads at 1280: the name has at least 150px and is shown whole for these sample names
+ *   F  the phone client page header (#cr-namebar) shows the whole name
  *   E  the card still carries its PO / star / portal tag, and the star still toggles (no control lost)
  * Arg: [index.html] -> negative control (1425 must go RED). */
 process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
@@ -26,6 +27,10 @@ try {
         ok(tags.star && tags.tag, 'E  the card keeps its star and portal tag', JSON.stringify(tags));
         const fav = await page.evaluate(async () => { const s = document.querySelector('#clientsView .cd-star'); const a = s.classList.contains('on'); s.click(); await new Promise(r => setTimeout(r, 500)); const s2 = document.querySelector('#clientsView .cd-star[data-fav="' + s.dataset.fav + '"]'); return { a, b: s2 && s2.classList.contains('on') }; });
         ok(fav.a !== fav.b, 'E  the star still toggles', JSON.stringify(fav));
+        await page.evaluate(() => openProject('R1')); await page.waitForTimeout(1500);
+        const hb = await names(page, '#cr-namebar .nb-nm');
+        ok(whole(hb), 'F  phone client page header: the name shown whole', JSON.stringify(hb));
+        await page.evaluate(() => openClientsDirectory()); await page.waitForTimeout(1200);
         await page.evaluate(() => document.documentElement.setAttribute('data-cr-text', 'xl')); await page.waitForTimeout(500);
         const x = await names(page, '#clientsView .cd-name');
         ok(whole(x), 'C  largest text size: every name shown whole, none 0px', JSON.stringify(x.slice(0, 3)));

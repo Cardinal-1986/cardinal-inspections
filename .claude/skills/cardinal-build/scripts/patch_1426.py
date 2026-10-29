@@ -29,6 +29,14 @@ s = one(s, """.kplrow{display:flex;align-items:center;gap:9px;background:linear-
 s = one(s, """.kplrow .nm{flex:1;min-width:0;font:800 13px""",
 """.kplrow .nm{flex:1 1 150px;min-width:150px;font:800 13px""")   # 1426: 11 of 122px showed at 1280
 
+s = one(s, """  #cr-namebar .nb-nm{
+    font:800 18px Georgia,'Times New Roman',serif; color:var(--rbe-head,#fff);
+    line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }""", """  #cr-namebar .nb-nm{
+    font:800 18px Georgia,'Times New Roman',serif; color:var(--rbe-head,#fff);
+    line-height:1.15; overflow-wrap:anywhere;   /* 1426: wraps instead of cutting — 119 of 161px showed */
+  }""")
+
 s = one(s, ">v2026-10-29 build 1425<", ">v2026-10-29 build 1426<")
 s = one(s, """  { b: 1425, d:'2026-10-29',""",
 """  { b: 1426, d:'2026-10-29', t:'Client names show in full', s:'Client names were cut to a few letters on the Clients list and to a single letter on the home screen\\u2019s Recent leads, and disappeared at the largest text size. The name now gets its own line on a client card, and Recent leads keeps room for it, moving the stage and rep down a line when space runs out.' },

@@ -10385,6 +10385,7 @@ Idle mutation records in 2s went from 460–545 to 8–15 (retail: 14).
 ## Build 1426: client names show in full
 - **Clients list:** the name on a client card (`.cd-name`) gets its own full line and wraps. The PO, the star and the portal tag sit on the line below it.
 - **Desktop home, Recent leads:** a row (`.kplrow .nm`) keeps at least 150px for the name. The stage chip and rep drop to a second line when the card is narrow.
+- **Phone client page header:** the name (`#cr-namebar .nb-nm`) wraps instead of being cut. Before, 119 of 161px of it showed.
 - Both fixes edit the original rules; there is no override layer.
 
 Measured in Chromium at 1425:
@@ -10395,4 +10396,4 @@ Measured in Chromium at 1425:
 
 At 1426 every name shows whole at 390, 1280, 1600 and at the largest text size.
 
-**Gate:** `gate_1426.mjs`, 7 checks. It also checks that the card keeps its star and portal tag and that the star still toggles. Red on the 1425 control (4 of 7).
+**Gate:** `gate_1426.mjs`, 8 checks. It also checks that the card keeps its star and portal tag and that the star still toggles. Red on the 1425 control (5 of 8).

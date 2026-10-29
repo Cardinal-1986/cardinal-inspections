@@ -86330,7 +86330,7 @@ select{min-height:44px;}
   #cr-namebar .nb-top{ display:flex; align-items:center; gap:7px; min-width:0; }
   #cr-namebar .nb-nm{
     font:800 18px Georgia,'Times New Roman',serif; color:var(--rbe-head,#fff);
-    line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    line-height:1.15; overflow-wrap:anywhere;   /* 1426: wraps instead of cutting — 119 of 161px showed */
   }
   #cr-namebar .nb-star{
     font-size:18px; line-height:1; flex:none; cursor:pointer;

@@ -37458,14 +37458,16 @@ The name was the only flexible item, so it was the one that gave way.
 | Phone Clients list | 87/149 |
 | Clients at 1600 | 69/149 |
 | Recent leads at 1280 | 11/122 |
+| Phone client page header | 119/161 |
 | Largest text size | 0px on every card |
 
 **The fix**, edited in place with no new rule:
 - `.cd-card .nmrow` wraps. `.cd-name` is `flex:1 1 100%; order:-1`, so it is the first line, and `overflow-wrap:anywhere`.
 - `.kplrow` wraps. `.kplrow .nm` is `flex:1 1 150px; min-width:150px`.
+- `#cr-namebar .nb-nm` drops `nowrap`/ellipsis and wraps. The 1124 star hit pad is unchanged: `.nb-row2` still comes later in the DOM, so its taps still win.
 
 **Gates:**
-- `gate_1426.mjs` 7/0; the control (1425) is RED 4/7.
+- `gate_1426.mjs` 8/0; the control (1425) is RED 5/8.
 - `check_build` GREEN.
 - `gate_types` 1505 and `gate_dupes` are identical to the control.
 - `gate_1418` 86/0 on both trees.
