@@ -33,9 +33,11 @@ ok('Winning rule sets the button border', !!rule && /border-color\s*:/.test(rule
 ok('Menu and search use currentColor SVGs',
    html.includes("window.CardinalIcons.get('menu')") && html.includes("window.CardinalIcons.get('search')") &&
    html.includes('stroke="currentColor"'));
-/* 1290: retail's light + went solid red (Theo's drawer style); the accent override still serves Insurance and Community. */
+/* 1290: retail's light + went solid red (Theo's drawer style); the accent override still serves Insurance and Community.
+   1418 (judge 16): that override now wears the CRM's identity hue, var(--crm-id, var(--hac,…)) — the head accent
+   is still its fallback, so either form passes; a rule that lost the fill entirely still fails. */
 ok('Filled + button keeps its later explicit override (non-retail since 1290)',
-   /:root\[data-theme="rb-light"\] (?:body:not\(\[data-crm-head="retail"\]\) )?#cr-hd2-bar #addProjectBtn[\s\S]{0,260}background:var\(--hac/.test(html));
+   /:root\[data-theme="rb-light"\] (?:body:not\(\[data-crm-head="retail"\]\) )?#cr-hd2-bar #addProjectBtn[\s\S]{0,260}background:var\((?:--crm-id,\s*var\()?--hac/.test(html));
 ok('Abandoned Retail restyle is absent', !html.includes('cr-retail-hub-1198-styles'));
 
 /* Let Chromium resolve the real cascade. Scripts are removed before loading so
