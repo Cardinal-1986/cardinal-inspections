@@ -1287,11 +1287,29 @@ body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rathe
   display:flex;align-items:center;justify-content:center;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
 .chatmsg.mine .av{background:#2b2b2b;}
 .chatmsg .bub{background:#fff;border:1px solid #e6ddd9;border-radius:4px 12px 12px 12px;padding:8px 12px;
-  font:15px/1.45 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#333;min-width:0;max-width:85%;}
+  font:15px/1.45 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#333;min-width:0;max-width:85%;
+  overflow-wrap:anywhere;}
 .chatmsg .who{font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--red-dk);}
-.chatmsg .when{font-size:11px;color:#9a8c85;margin-left:6px;font-weight:600;}
+.chatmsg .when{font-size:11px;color:#6e6663;margin-left:6px;font-weight:600;}
 .chatmsg .mention{background:#fdecea;color:var(--red-dk);font-weight:700;border-radius:4px;padding:0 3px;}
 .chatinput{display:flex;gap:8px;margin-top:10px;}
+/* 1417 (judge 13): the chat box is a cream/white card in every CRM and both themes, so these inks are the
+   box's, not the page's. #6e6663 is the insurance twin's own --ct-ink-2: 5.61:1 on the white bubble, 5.24:1
+   on the #faf7f5 box. (The thread's status line, .chatempty, is Builder A's J16 ink and is not touched here.) */
+/* #6: a link in a note — the note's own ink, underlined, and it breaks anywhere. Unscoped on purpose:
+   fmtChatText also draws the Leads job panel's copy of the thread (.ljcmsg, a dark panel), where the
+   browser's default link blue would be the failure. */
+.chatlink{--cr-stack:"1417 a link in a note takes the note's ink, not the browser link colour";
+  color:inherit;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere;}
+/* #4: the claim's read-only notes (carrier chases) — a dashed bubble and a label, never a reply target */
+.chatmsg.sys .bub{--cr-stack:"1417 a read-only claim note is drawn dashed so it never reads as a message";border-style:dashed;}
+.chatmsg .chattag{display:inline-block;margin-right:6px;padding:0 6px;border:1px solid #8a7c76;border-radius:4px;
+  font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.04em;
+  text-transform:uppercase;color:#5c4a42;}
+/* #5: who the message will reach, said before Send */
+.chatwill{padding:7px 2px 0;font:600 13px/1.4 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6e6663;}
+.chatwill:empty{display:none;}
+.chatwill.warn{color:#9c1822;}
 .chatinput input{flex:1;min-width:0;padding:11px 13px;border:1px solid #c9c2bf;border-radius:9px;
   font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#fff;text-overflow:ellipsis;}
 .chatempty{font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#9a8c85;padding:8px 2px;}
@@ -2381,6 +2399,10 @@ body.restoring #restoreVeil{display:flex;}
 .jabox .jan.zero{color:#c9c9c9;}
 /* 1373 (Theo's pick): a zero count is not news. The space stays, so a count arriving does not shift the tile. */
 #acxMount .jabox .jan.zero{visibility:hidden;}
+/* 1417 #8: the tag count rides the Communication tile. A grid item with no area lands in the tile's
+   one empty cell ("ic . n"), between the icon and the count. White on #c8202e is 5.88:1. */
+.jabox .jatag{justify-self:start;padding:2px 8px;border-radius:20px;background:#c8202e;color:#fff;
+  font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;white-space:nowrap;}
 @media (max-width:760px){
   /* the job's Work Orders tab is already a Job Menu tile; on a phone this button wrapped onto its own line */
   header.site #woQuick{--cr-stack:"1373 on a phone the Job Menu's Work Orders tile replaces this header shortcut";display:none !important;}
@@ -4224,7 +4246,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1416<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1417<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8314,6 +8336,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <button class="cr-snipbtn" type="button" aria-label="Saved snippets" title="Saved snippets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6zM19 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6z"/></svg></button>
         <button class="btn" id="chatSend">Send</button>
       </div>
+      <div class="chatwill" id="chatWill" role="status" aria-live="polite"></div>
     </div>
   </div>
 </div>
@@ -12663,8 +12686,10 @@ function renderAcxOverview(){
   var openTasks = tasks.filter(function(t){ return !t.done; }).length;
   var me = (currentUser && currentUser.email) || '';
   var myFirst = String(rptRepName(me) || '').split(' ')[0] || '';
+  /* 1417 #8: counted through the ONE mention rule (mentionEmailsFor) rather than a second private
+     substring test, which counted "@joanne" — or any word starting with your first name — as a tag. */
   var mentions = (ck.comments || []).filter(function(m){
-    return myFirst && String(m.text || '').toLowerCase().indexOf('@' + myFirst.toLowerCase()) !== -1;
+    return !!me && mentionEmailsFor(mentionNamesIn(m.text), m.by).indexOf(me) !== -1;
   }).length;
   var html = '';
   /* ---- Convert to Insurance ----------------------------------------------
@@ -12730,10 +12755,10 @@ function renderAcxOverview(){
   html += (_rt1351 ? '' : '<div class="dbrow" id="dbPayRow"><span class="dbic1">$</span> Payment Information<span class="dbgo">&#8250;</span></div>') +
     '<div class="dbrow" id="dbMoneyRow"><span class="dbic1">%</span> Money In &amp; Commissions<span class="dbgo">&#8250;</span></div>';
   /* ---- job menu ---- */
-  function jt(ic, label, n, act, idn){
+  function jt(ic, label, n, act, idn, extra){
     var zero = (n === 0 || n === '0' || n === '');
     return '<div class="jabox" data-jm="' + act + '">' + ic + '<span class="jbl">' + label + '</span>' +
-      '<b class="jan' + (zero ? ' zero' : '') + '"' + (idn ? ' id="' + idn + '"' : '') + '>' + n + '</b></div>';
+      '<b class="jan' + (zero ? ' zero' : '') + '"' + (idn ? ' id="' + idn + '"' : '') + '>' + n + '</b>' + (extra || '') + '</div>';
   }
   /* ---- location (Keeper: above the Job Menu, live Map/Satellite) ---- */
   /* 636: an old build may have left a floating .cr-gmap-block in this view.
@@ -12754,9 +12779,12 @@ function renderAcxOverview(){
       : '<span class="axnote">No address on file \u2014 tap the pencil to add one.</span>') + '</div>' +
   '</div></div>';
   html += '<div class="ja-menu" role="region" aria-label="Job menu"><h3 class="projsec" style="margin:18px 0 10px;">' + ICO('menu') + 'Job Menu</h3>' +
-    '<div class="jaboxrow">' +
-      jt(dbIc('comms'), 'Communication', commsCount(pr), 'comms') +
-      jt(dbIc('bell'), 'Notifications', mentions, 'notifs') +
+    /* 1417 #8: "Communication" and "Notifications" were two tiles that called the same
+       openCommunications(). One tile now, full width like Work Orders, with the count of messages that
+       tag you as a badge on it. The router keeps its 'notifs' case so a cached page still works. */
+    '<div class="jaboxrow" style="grid-template-columns:1fr">' +
+      jt(dbIc('comms'), 'Communication', commsCount(pr), 'comms', null,
+         mentions ? '<span class="jatag">' + mentions + (mentions === 1 ? ' tag for you' : ' tags for you') + '</span>' : '') +
     '</div><div class="jaboxrow">' +
       jt(dbIc('camera'), 'Photos', '\u2026', 'album', 'dbPhotoN') +
       jt(dbIc('tasks'), 'Tasks', openTasks, 'tasks') +
@@ -14914,6 +14942,10 @@ document.addEventListener('click', async function(e){
   }
 });
 function showTab(name){
+  /* 1417 #7: '#p/<id>/comms' (the tag alert's link) reached here as a TAB through the hash restore
+     and popstate, matched none of the panes below, and painted every one of them out — the job opened
+     blank. Communications is a view of its own; open it. Both callers hold __histLock, so no entry moves. */
+  if(name === 'comms'){ if(currentProject && typeof openCommunications === 'function') openCommunications(); return; }
   /* 556: commissions are fetched per-tab rather than cached with the project —
      the row set depends on who is asking (a rep sees only their own), so it must
      not be served from a cache filled for somebody else. */
@@ -18034,7 +18066,9 @@ function openCommunications(){
     return '<button class="chipbtn" data-tag="' + esc(first.toLowerCase()) + '" style="padding:4px 11px;font-size:11px;">@' + esc(first) + '</button>';
   }).join('');
   renderChat();
+  chatWillPaint();
   window.scrollTo(0, 0);
+  commsPollStart();   /* 1417 #2: not awaited — this function stays synchronous */
 }
 document.getElementById('commsView').addEventListener('click', function(e){
   var b = e.target.closest('[data-tag]');
@@ -19838,26 +19872,56 @@ document.getElementById('projCoverInput').addEventListener('change', async funct
 
 /* notes */
 /* ---------- team notes chat ---------- */
+/* 1417 #6: a pasted link was plain text, and a long one ran out of its bubble (771px of text in a
+   243px bubble). ESCAPE FIRST, then promote — lbRich's order: by the time either rule runs every < is
+   &lt;, so nothing typed can open a tag. ONE pass with two alternatives, so an @ inside a link stays
+   part of the link and can never become a mention span inside its href. A link is http(s) only, it
+   stops at any escaped quote or bracket, and trailing sentence punctuation stays text. A tag is an @
+   that does not follow a letter (bob@curtis.com is an address), the same rule mentionNamesIn reads. */
 function fmtChatText(t){
-  return esc(t).replace(/@([A-Za-z][\w.-]*)/g, '<span class="mention">@$1</span>');
+  return esc(t).replace(/(https?:\/\/(?:[^\s&<>"']|&amp;)+)|(^|[^\w])@([A-Za-z][\w.-]*)/g, function(all, url, pre, nm){
+    if(nm){
+      var tail = (/[.-]+$/.exec(nm) || [''])[0];
+      return pre + '<span class="mention">@' + nm.slice(0, nm.length - tail.length) + '</span>' + tail;
+    }
+    var trail = (/[.,;:!?)\]]+$/.exec(url) || [''])[0];
+    var u = url.slice(0, url.length - trail.length);
+    if(!/^https?:\/\/[^\/]/.test(u)) return all;
+    return '<a class="chatlink" href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>' + trail;
+  });
 }
-function renderChat(){
+/* 1417 #2: renderChat({ quiet:true }) is the poll's call. It writes NOTHING when the thread's data
+   is unchanged (an identical innerHTML still emits mutation records — 567's lesson — and every body
+   observer would wake every 25 s for nothing), and when it does write it keeps your place if you had
+   scrolled up to read; at the bottom it follows the new message. Every other caller is unchanged. */
+var __chatSig = '';
+function renderChat(opt){
   if(!currentProject) return;
   /* 649: the promotion of the legacy notes column moved into commsMessages(),
      so the job-menu tile counts exactly what this thread shows. */
   var msgs = commsMessages(currentProject);
+  /* 1417 #4: an insurance job's claim notes, read-only, merged by time. NOT added to commsMessages():
+     they are not the job's messages, the job-menu count is not theirs, and nothing may write them back. */
+  var _cn = commsClaimNotes(currentProject);
+  if(_cn.length) msgs = msgs.concat(_cn).sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); });
   var me = TEAM && currentUser ? currentUser.email : '';
   var thread = document.getElementById('chatThread');
+  var sig = String(currentProject.id) + '\u0002' + msgs.map(function(m){ return [m.at || '', m.by || '', m.name || '', m.text || '', m.sys || ''].join('\u0001'); }).join('\u0002');
+  var quiet = !!(opt && opt.quiet);
+  if(quiet && sig === __chatSig) return;
+  var fromEnd = thread.scrollHeight - thread.scrollTop - thread.clientHeight, top0 = thread.scrollTop;
   thread.innerHTML = msgs.length ? msgs.map(function(m){
     var initials = (m.name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(0); }).join('').slice(0,2).toUpperCase();
     var mine = m.by && m.by === me;
-    return '<div class="chatmsg' + (mine ? ' mine' : '') + '">' +
+    return '<div class="chatmsg' + (mine ? ' mine' : '') + (m.sys ? ' sys' : '') + '"' + (m.sys ? ' data-src="claim_notes"' : '') + '>' +
       '<span class="av">' + esc(initials) + '</span>' +
-      '<span class="bub"><span class="who">' + esc(m.name || m.by || '') + '</span>' +
+      '<span class="bub">' + (m.sys ? '<span class="chattag">' + (m.sys === 'chase' ? 'Carrier chase' : 'Claim note') + '</span>' : '') +
+      '<span class="who">' + esc(m.name || m.by || '') + '</span>' +
       '<span class="when">' + (m.at ? timeAgo(m.at) : '') + '</span><br>' +
       fmtChatText(m.text || '') + '</span></div>';
   }).join('') : '<div class="chatempty">No notes yet \u2014 start the thread.</div>';
-  thread.scrollTop = thread.scrollHeight;
+  __chatSig = sig;
+  thread.scrollTop = (quiet && fromEnd > 48) ? top0 : thread.scrollHeight;
 }
 async function sendChat(){
   if(!currentProject) return;
@@ -19875,10 +19939,14 @@ async function sendChat(){
   if(mentions.length) msg.mentions = mentions;
   try{
     var all = parseCkAll(currentProject);
-    var msgs = all.comments || [];
+    /* 1417 #2: a COPY. parseCkAll() hands back its cached object, so pushing onto it put the message
+       in the cache before the save — a failed post then showed as sent on the next repaint, which the
+       25 s refresh now makes certain to happen. The 1413 merge is still the write. */
+    var msgs = (all.comments || []).slice();
     msgs.push(msg);
     await saveCkPatch({ comments: msgs });
     inp.value = '';
+    chatWillPaint();
     renderChat();
     if(mentions.length){
       var to = mentionEmailsFor(mentions, msg.by);
@@ -19888,7 +19956,7 @@ async function sendChat(){
           msg.name + ' tagged you \u2014 ' + (currentProject.name || 'a client'),
           '<p><b>' + esc(msg.name) + '</b> tagged you on <b>' + esc(currentProject.name || '') + '</b>:</p>' +
           '<blockquote>' + esc(text) + '</blockquote>' +
-          '<p>Open the client\u2019s Communications page in Cardinal Resource to reply.</p>', clientLink(currentProject.id));
+          '<p>Tap to open the job\u2019s thread and reply.</p>', commsLink(currentProject.id));   /* 1417 #7 */
         qcNotified(to, _r);
       }
     }
@@ -19899,24 +19967,74 @@ async function sendChat(){
    pipeline bug this project keeps paying for. Extracted verbatim from
    sendChat() — matches on first name OR email prefix, never returns the author.
    Exported so cr-pp-script can use it without reaching into this block. */
+/* 1417 #5: a tag is an @ that does not follow a letter or digit — "bob@curtis.com" is an address,
+   not a tag for Curtis — and a sentence's full stop is not part of the name ("thanks @curtis." used to
+   be the name "curtis." and reached nobody). */
 function mentionNamesIn(text){
-  return (String(text || '').match(/@([A-Za-z][\w.-]*)/g) || [])
-    .map(function(s){ return s.slice(1).toLowerCase(); });
+  var out = [], re = /(^|[^\w])@([A-Za-z][\w.-]*)/g, m, src = String(text || '');
+  while((m = re.exec(src))){
+    var nm = m[2].toLowerCase().replace(/[.-]+$/, '');
+    if(nm) out.push(nm);
+  }
+  return out;
+}
+/* 1417 #5: who ONE tag reaches. The rule was `first.indexOf(mn) === 0` — any PREFIX of a first name —
+   so "@J" buzzed Joan, Joey, Jacob and Jerry and "@Jo" buzzed Joan and Joey. Theo's rule is that only
+   the people a message tags are notified, and four people on one letter breaks it. A tag now reaches
+   the exact first name, or the exact email prefix ("@joey" — his roster name is Joseph), or a prefix
+   of 3+ letters that fits exactly ONE person ("@curt", "@scott"). Anything else reaches nobody, and
+   the line under the box says so before Send (mentionPreview). One rule, three composers: the job
+   thread, the punch card and the punch page all call CardinalMentions. */
+function mentionMatch(mn){
+  mn = String(mn || '').toLowerCase();
+  if(!mn) return [];
+  var roster = (typeof TEAM_ROSTER !== 'undefined' ? TEAM_ROSTER : []);
+  function keys(mbr){ return [(mbr.name || '').trim().split(/\s+/)[0].toLowerCase(), (mbr.email || '').split('@')[0].toLowerCase()]; }
+  var exact = roster.filter(function(mbr){ return keys(mbr).indexOf(mn) !== -1; });
+  if(exact.length || mn.length < 3) return exact;
+  var pre = roster.filter(function(mbr){ return keys(mbr).some(function(k){ return !!k && k.indexOf(mn) === 0; }); });
+  return pre.length === 1 ? pre : [];
 }
 function mentionEmailsFor(names, byEmail){
   var to = [];
-  (typeof TEAM_ROSTER !== 'undefined' ? TEAM_ROSTER : []).forEach(function(mbr){
-    var first = (mbr.name || '').trim().split(/\s+/)[0].toLowerCase();
-    var pre = (mbr.email || '').split('@')[0].toLowerCase();
-    if(names.some(function(mn){ return mn === first || mn === pre || first.indexOf(mn) === 0; })){
+  (Array.isArray(names) ? names : []).forEach(function(mn){
+    mentionMatch(mn).forEach(function(mbr){
       if(mbr.email && to.indexOf(mbr.email) < 0 && mbr.email !== byEmail) to.push(mbr.email);
-    }
+    });
   });
   return to;
+}
+/* 1417 #5: the sentence under the composer, BEFORE Send — "Will notify: Curtis", or which tag reaches
+   nobody and why. Built from mentionNamesIn + mentionEmailsFor, so it can never promise a different
+   list from the one the send will notify. { text, warn } — warn when a tag reaches nobody. */
+function mentionPreview(text, byEmail){
+  var names = mentionNamesIn(text);
+  if(!names.length){
+    return { text: String(text || '').trim() ? 'Nobody will be notified \u2014 add @name to buzz someone.' : '', warn: false };
+  }
+  var roster = (typeof TEAM_ROSTER !== 'undefined' ? TEAM_ROSTER : []);
+  function mentionWho(em){ return (typeof rptRepName === 'function' ? rptRepName(em) : '') || String(em || '').split('@')[0]; }
+  function firstOf(mbr){ return (mbr.name || '').trim().split(/\s+/)[0]; }
+  var to = mentionEmailsFor(names, byEmail), miss = [], parts = [];
+  names.forEach(function(mn){ if(!mentionMatch(mn).length && miss.indexOf(mn) === -1) miss.push(mn); });
+  if(to.length) parts.push('Will notify: ' + to.map(mentionWho).join(', '));
+  miss.forEach(function(mn){
+    var could = roster.filter(function(mbr){
+      var f = firstOf(mbr).toLowerCase(), p = (mbr.email || '').split('@')[0].toLowerCase();
+      return (!!f && f.indexOf(mn) === 0) || (!!p && p.indexOf(mn) === 0);
+    }).map(firstOf);
+    parts.push('@' + mn + (could.length > 1 ? ' fits ' + could.length + ' people \u2014 type more: ' + could.join(', ')
+                         : could.length === 1 ? ' \u2014 type more of the name: ' + could[0]
+                         : ' matches nobody on the team'));
+  });
+  if(!parts.length) parts.push('Nobody else will be notified.');
+  return { text: parts.join(' \u00b7 '), warn: miss.length > 0 };
 }
 window.CardinalMentions = Object.assign(window.CardinalMentions || {}, {
   names  : mentionNamesIn,
   emails : mentionEmailsFor,
+  /* 1417: the Will-notify sentence for any composer — CardinalMentions.preview(text, myEmail) */
+  preview: function(text, byEmail){ return mentionPreview(text, byEmail).text; },
 });
 function qcNotified(to, res){
   var th = document.getElementById('chatThread');
@@ -19932,6 +20050,109 @@ function qcNotified(to, res){
 document.getElementById('chatSend').addEventListener('click', sendChat);
 document.getElementById('chatText').addEventListener('keydown', function(e){
   if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
+});
+/* 1417 #5: the Will-notify line follows the box as you type. A chip tap sets the value without an
+   input event, so the chip row repaints too — after the commsView handler has appended the tag. */
+function chatWillPaint(){
+  var el = document.getElementById('chatWill');
+  var inp = /** @type {HTMLInputElement} */ (document.getElementById('chatText'));
+  if(!el || !inp) return;
+  var p = mentionPreview(inp.value, TEAM && currentUser ? currentUser.email : '');
+  if(el.textContent !== p.text) el.textContent = p.text;
+  el.classList.toggle('warn', !!p.warn);
+}
+document.getElementById('chatText').addEventListener('input', chatWillPaint);
+document.getElementById('chatTagRow').addEventListener('click', function(){ setTimeout(chatWillPaint, 0); });
+
+/* 1417 #2: the job thread was read ONCE — when the job opened — so a note Curtis posted from the roof
+   was invisible to the office until somebody left and came back (judge 13: 20 s+, no reload, nothing).
+   Now opening Communications re-reads the row, and while the thread is the screen AND the app is in
+   front it re-reads every 25 s. Cheap by construction: one narrow select (the checklist column, plus
+   the claim's notes on an insurance job), no observer (the 46 body observers stay 46), no realtime
+   channel, and nothing is queried once the thread is closed or the phone is put away — the pending
+   tick sees that and stops without a query, and a hidden tab clears the timer outright.
+   Only the MESSAGES are taken from the fresh row, unioned with ours (crMergeComments, the 1413 rule):
+   every other key stays the local copy, so a refresh can never overwrite an edit still on its way out,
+   and every write still re-reads through patchProjectCk as before. Offline it does not run at all. */
+var COMMS_POLL_MS = 25000;
+var __commsPoll = { t: 0, busy: '' };
+var __claimNotes = { pid: null, ids: null, rows: [] };
+function commsIsOpen(){ return !!(currentProject && commsView && commsView.style.display !== 'none'); }
+function commsLink(pid){ return pid ? clientLink(pid) + '/comms' : '/'; }
+window.commsLink = commsLink;
+/* 1417 #4: "I chased the carrier" (recordChase) writes claim_notes, and no screen in this app read them —
+   only the admin Supplement Desk. RLS (claim_notes_select = can_see_claim: full access, the claim's
+   creator, or the job's rep; staff only) already lets the job's people read them, so this adds no SQL.
+   Read-only: drawn in the thread, never written back, never counted as the job's messages. */
+function commsClaimNotes(pr){
+  if(!pr || __claimNotes.pid !== pr.id) return [];
+  return __claimNotes.rows.map(function(n){
+    var em = String(n.created_by || '');
+    return { sys: /^chased\b/i.test(String(n.body || '')) ? 'chase' : 'claim', at: n.created_at, by: em,
+             name: (em.indexOf('@') > 0 && typeof rptRepName === 'function') ? rptRepName(em) : (em || 'Claim'),
+             text: String(n.body || '') };
+  });
+}
+async function commsLoadClaimNotes(pr){
+  if(!pr || !TEAM || projClaimType(pr) !== 'insurance') return;
+  var pid = pr.id;
+  if(__claimNotes.pid !== pid || !__claimNotes.ids){
+    var c = await sb.from('insurance_claims').select('id').eq('project_id', pid);
+    if(c.error) return;
+    __claimNotes = { pid: pid, ids: (c.data || []).map(function(x){ return x.id; }),
+                     rows: (__claimNotes.pid === pid ? __claimNotes.rows : []) };
+  }
+  if(!__claimNotes.ids || !__claimNotes.ids.length){ __claimNotes.rows = []; return; }
+  var n = await sb.from('claim_notes').select('id,claim_id,body,created_at,created_by')
+    .in('claim_id', __claimNotes.ids).order('created_at', { ascending: false }).limit(50);
+  if(n.error || __claimNotes.pid !== pid) return;
+  __claimNotes.rows = (n.data || []).slice().reverse();
+}
+async function commsRefresh(){
+  if(!commsIsOpen() || !TEAM) return;
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  var pid = currentProject.id;
+  if(__commsPoll.busy === String(pid)) return;
+  __commsPoll.busy = String(pid);
+  try{
+    var r = await sb.from('projects').select('checklist').eq('id', pid).single();
+    if(!r.error && r.data && currentProject && currentProject.id === pid){
+      var srv = /** @type {any} */ ({}), loc = /** @type {any} */ ({});
+      try{ srv = JSON.parse(r.data.checklist || '{}') || {}; }catch(_e1){ srv = {}; }
+      try{ loc = JSON.parse(currentProject.checklist || '{}') || {}; }catch(_e2){ loc = {}; }
+      if(Array.isArray(srv.comments) && srv.comments.length){
+        var merged = crMergeComments(srv.comments, loc.comments);
+        if(JSON.stringify(merged) !== JSON.stringify(loc.comments || [])){
+          loc.comments = merged;
+          var s = JSON.stringify(loc);
+          currentProject.checklist = s;
+          var cp = cacheProjects.find(function(x){ return x.id === pid; });
+          if(cp) cp.checklist = s;
+        }
+      }
+    }
+    if(currentProject && currentProject.id === pid){ try{ await commsLoadClaimNotes(currentProject); }catch(_c){} }
+  }catch(_r){}
+  finally{ __commsPoll.busy = ''; }
+  if(commsIsOpen() && currentProject.id === pid) renderChat({ quiet: true });
+}
+function commsPollStop(){ if(__commsPoll.t){ clearTimeout(__commsPoll.t); __commsPoll.t = 0; } }
+function commsPollArm(){
+  commsPollStop();
+  if(!commsIsOpen() || document.visibilityState === 'hidden') return;
+  __commsPoll.t = setTimeout(function(){
+    __commsPoll.t = 0;
+    if(!commsIsOpen() || document.visibilityState === 'hidden') return;   /* closed or put away: stop, no query */
+    commsRefresh().then(commsPollArm, commsPollArm);
+  }, COMMS_POLL_MS);
+}
+function commsPollStart(){
+  if(__claimNotes.pid === (currentProject && currentProject.id)) __claimNotes.ids = null;   /* a claim may have been filed since */
+  commsRefresh().then(commsPollArm, commsPollArm);
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'hidden'){ commsPollStop(); return; }
+  if(commsIsOpen() && !__commsPoll.t) commsPollStart();   /* back in front: catch up at once, then resume */
 });
 
 /* =========================================================================
@@ -24429,6 +24650,23 @@ function buildActivityEvents(){
         cli: pr3 ? pr3.name : '', pid: pr3 ? pr3.id : null, detail: it.title || '' });
     });
   }catch(_){}
+  /* 1417 #11: a punch-out's messages never reached the feed — "found rotted decking, 3 sheets" was
+     visible only inside the card. The same one punch cache as the block above, every item open or
+     closed, and the row opens that card. */
+  try{
+    var _pkc = window.CardinalPunch;
+    ((_pkc && typeof _pkc.rows === 'function') ? (_pkc.rows() || []) : []).forEach(function(it){
+      if(!it || !Array.isArray(it.comments)) return;
+      var pr4 = it.project_id ? cacheProjects.find(function(x){ return x.id === it.project_id; }) : null;
+      it.comments.forEach(function(c){
+        if(!c || !c.at) return;
+        var ac4 = actor(c.by);
+        ev.push({ t:c.at, ini:ac4.ini, email:ac4.email, label:'Punch-out message:', who:c.name || ac4.nm,
+          cli: pr4 ? pr4.name : '', pid: pr4 ? pr4.id : null, go:'punch', pk: it.id,
+          detail: (it.title ? it.title + ' \u2014 ' : '') + (c.text || '') });
+      });
+    });
+  }catch(_){}
   cacheAppts.forEach(function(ap){
     if(!ap.created_at) return;
     var pr = ap.project_id ? cacheProjects.find(function(x){ return x.id === ap.project_id; }) : null;
@@ -24445,7 +24683,7 @@ function buildActivityEvents(){
     (all.comments || []).forEach(function(c){
       var ini = (c.name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(0); }).join('').slice(0,2).toUpperCase();
       ev.push({ t:c.at, ini:ini, label:'Comment by:', who:c.name || '',
-        cli:pr2.name || '', pid:pr2.id, detail:c.text || '' });
+        cli:pr2.name || '', pid:pr2.id, detail:c.text || '', go:'comms' });   /* 1417 #11 */
     });
   });
   return ev.filter(function(x){ return x.t; })
@@ -24466,12 +24704,13 @@ function renderActivity(){
   if(typeof window.renderMorningStrip === 'function') window.renderMorningStrip();  /* 1048 */
 }
 var activityView = document.getElementById('activityView');
-function openActivityFeed(){
-  hideAllViews();
-  activityView.style.display = 'block';
+/* 1417 #11: the feed's paint, split out so the punch-cache warm below can repaint it once. A message row
+   (a job comment, a punch-out message) carries where it goes and the whole row is the tap target. */
+function paintActivityFull(){
   var ev = buildActivityEvents().slice(0, 60);
   document.getElementById('actFeedFull').innerHTML = ev.length ? ev.map(function(x){
-    return '<div class="afrow">' +
+    return '<div class="afrow"' + (x.go && x.pid ? ' data-proj="' + esc(String(x.pid)) + '" data-go="' + esc(x.go) + '"' +
+        (x.pk ? ' data-pk="' + esc(String(x.pk)) + '"' : '') + ' style="cursor:pointer;"' : '') + '>' +
       '<span class="afav"><span class="circ circav">' + (x.email ? avatarHtml(x.email, 38) : (x.ico && window.crIco ? window.crIco(x.ico) : esc(x.ini))) + '</span><span class="tm">' + timeAgo(x.t) + '</span></span>' +
       '<span class="afbd">' +
         '<span class="aflabel">' + esc(x.label) + '</span> <span class="afwho">' + esc(x.who) + '</span>' +
@@ -24480,7 +24719,22 @@ function openActivityFeed(){
       '</span></div>';
   }).join('') : '<div class="empty"><b>No activity yet.</b><br>'
       + 'This fills in as the team creates clients, sends estimates and logs payments.</div>';
+}
+function openActivityFeed(){
+  hideAllViews();
+  activityView.style.display = 'block';
+  paintActivityFull();
   window.scrollTo(0,0);
+  /* 1417 #11: punch-out messages come from the punch cache, which is empty until a punch surface has
+     loaded (the 1044 idiom warms it the same way). Repaint ONCE, and only if the feed is still the screen. */
+  try{
+    var _pk = window.CardinalPunch;
+    if(_pk && typeof _pk.rows === 'function' && !_pk.rows().length && typeof _pk.reload === 'function'){
+      Promise.resolve(_pk.reload()).then(function(){
+        if(activityView.style.display !== 'none' && _pk.rows().length) paintActivityFull();
+      }).catch(function(){});
+    }
+  }catch(_){}
 }
 var boardView = document.getElementById('boardView');
 /* ── 681 · CardinalIcons — the one icon set ────────────────────────────────
@@ -24777,8 +25031,18 @@ document.getElementById('qSearchBtn').innerHTML='&#128269;<i>Search clients\u202
   });
 })();
 document.getElementById('actFeedFull').addEventListener('click', function(e){
-  var c = e.target.closest('.afcli[data-proj]');
-  if(c) openProject(c.getAttribute('data-proj'));
+  var t = /** @type {HTMLElement} */ (e.target);
+  /* 1417 #11: a comment row opened the client's profile and left you to find the thread; a punch-out
+     message had no row at all. A message row now opens the message. Other rows: the client name, as before. */
+  var row = t.closest('.afrow[data-go]'), c = row || t.closest('.afcli[data-proj]');
+  if(!c) return;
+  var go = row ? row.getAttribute('data-go') : '', pk = row ? row.getAttribute('data-pk') : '';
+  if(go === 'punch' && pk && window.CardinalPunchCard && typeof window.CardinalPunchCard.open === 'function'){
+    window.CardinalPunchCard.open(pk); return;
+  }
+  openProject(c.getAttribute('data-proj'));
+  if(go === 'comms') openCommunications();
+  else if(go === 'punch') showTab('punch');
 });
 
 var QUOTES = [
@@ -45379,6 +45643,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1417, d:'2026-10-29', t:'Job messages update by themselves, and tags buzz only the person you mean', s:'A job\u2019s message thread now updates on its own while it is open, so a note sent from the roof shows up without leaving the screen. On insurance jobs your \u201cI chased the carrier\u201d notes appear in the thread. @J no longer buzzes four people \u2014 the box tells you who will be notified before you hit Send. Pasted links can be tapped, and a tag alert opens straight to the thread.' },
   { b: 1416, d:'2026-10-29', t:'Production: the calendar fills the screen, today up top, Dispatch read-only for the field', s:'On your phone the Schedule button opens the Production calendar with every build and punch-out on it, and today\u2019s work sits right under the title. On a laptop the full calendar fills the screen instead of hiding in a corner. Scottie sees Crew Dispatch read-only \u2014 booking is Curtis\u2019s. A message tells you when nobody was notified, step notes are typed right in the card, and Mark ordered can be undone.' },
   { b: 1415, d:'2026-10-29', t:'Calmer cards, full stage names, one typeface', s:'Home and Reports cards lose the red stripe \u2014 red is kept for buttons, today and money owed. The pipeline spells its stages (Leads, Prospects, Approved\u2026) instead of single letters. iPhones, iPads and Macs now show their own system font instead of Arial; Windows looks the same.' },
   { b: 1414, d:'2026-10-29', t:'Drawn icons instead of emoji', s:'The emoji still left on the Clients screen, the Activity panel, the client page (address, rep, Punch List, Delete), and the insurance claim and document rows are now the same drawn icons as the menu.' },
@@ -61461,7 +61726,8 @@ var to = M.emails(names, by);
 if(!to.length || typeof window.notifyTeam !== 'function') return;
 var pr = window.currentProject;
 var _r = await window.notifyTeam(to,
-'🔨 ' + msg.name + ' tagged you — ' + ((pr && pr.name) || 'a job'),
+/* 1417 #12: no emoji on a phone's lock screen — the job thread's alert never had one */
+msg.name + ' tagged you — ' + ((pr && pr.name) || 'a job'),
 '<p><b>' + esc(msg.name) + '</b> tagged you on the punch out <b>' + esc(it.title) + '</b>' +
 ((pr && pr.name) ? ' at <b>' + esc(pr.name) + '</b>' : '') + ':</p>' +
 '<blockquote>' + esc(text) + '</blockquote>' +
@@ -65352,6 +65618,9 @@ background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A2
   #cr-cc .pin .t .nm b{font-size:22px}
   #cr-cc .cts{grid-template-columns:1fr 1fr;gap:12px}
 }
+/* 1417 #9: the card is mounted straight into #projectView, outside every .wrap, so at 390px the back chip,
+   the headings, "Messages & notes" and every card ran from x=0 to the glass edge. The gutter is the card's own. */
+#cr-cc{padding-left:16px;padding-right:16px}
 #cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}
 /* 981 (Theo's B1): the mirror now carries the same drawn icon the rest of the
    app uses, instead of the pre-686 emoji it used to copy out of the retired
@@ -67064,6 +67333,14 @@ return;
 }
 /* 1264: the Retail-order page, or one of its two sub-views. */
 mount.innerHTML = (tab === 'thread' || tab === 'bid') ? cc2Sub(pr) : cc2Page(pr);
+/* 1417 #9: Delete Client (the one button nobody can undo) sat directly under the job thread. It belongs to
+   the Overview: the two sub-views hide it, the Overview restores exactly what openProject decided (admins). */
+(function(){
+var dz = document.getElementById('dangerZone');
+if(!dz) return;
+var want = (tab === 'thread' || tab === 'bid') ? 'none' : ((typeof isAdminUser === 'function' && isAdminUser()) ? 'block' : 'none');
+if(dz.style.display !== want) dz.style.display = want;
+})();
 wire(mount, pr);
 /* 679: BUG_CLASSES 16 — a control that renders and is never wired. The Studio
    Archive button was drawn and dead from 614 to 632 for exactly this reason,
@@ -99701,7 +99978,7 @@ function fbRender(){
     if(c.screen) bits.push(c.screen);
     if(c.project) bits.push(c.project.name || 'this job');
     if(c.build) bits.push(c.build);
-    h += '<p class="fb-lead">Tell Theo when something breaks, isn’t working right, or you have an idea. Every one gets read.</p>' +
+    h += '<p class="fb-lead">Tell the office when something breaks, isn’t working right, or you have an idea. Every one gets read.</p>' +
       '<div class="fb-kinds" role="group" aria-label="What kind">' + Object.keys(KIND).map(function(k){
         return '<button type="button" class="fb-kind" data-fb="kind" data-v="' + k + '" aria-pressed="' + (kind === k) + '">' + KIND[k] + '</button>';
       }).join('') + '</div>' +

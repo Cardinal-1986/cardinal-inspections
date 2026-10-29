@@ -10242,3 +10242,26 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
   - Curtis's bottom-bar Home still goes to the retail home.
   - `#tskModal` (the work-order picker) carries light inline inks.
   - Recalling the rep's "materials ordered" notice on Undo would be a new notify rule, so it is not done.
+
+## Build 1417: team messages after judge 13
+- **The job thread refreshes itself.**
+  - Opening Communications re-reads the job, then re-reads every 25s while the thread is on screen and the app is in front (`commsPollArm` / `commsRefresh`).
+  - Only `comments` are taken from the fresh copy, merged through `crMergeComments`.
+  - If you have scrolled up, your place is kept.
+  - It adds no observer, no realtime channel and no scroll-lock writer.
+  - `sendChat` posts a copy of the list, because the parse cache is shared.
+- **Carrier chase notes:** an insurance job's thread shows `claim_notes` read-only, dashed, and labelled "Carrier chase" / "Claim note". RLS `can_see_claim` already lets the job's people read them, so no SQL was needed.
+- **@mentions** (`CardinalMentions.preview`):
+  - A tag reaches someone only on an exact first name, an exact email prefix, or a unique prefix of 3+ letters. "@J" reaches nobody.
+  - An @ right after a letter is an email address, not a tag.
+  - A "Will notify: …" line sits under the box.
+- **Smaller fixes:**
+  - Links wrap and are tappable (escape first, then promote).
+  - The tag alert links `#p/<id>/comms`, and that link opens the thread.
+  - One Communication tile in the job menu, with a "tags for you" badge.
+  - Community card gets a 16px gutter.
+  - Time stamps at 5.61:1.
+  - Activity Feed message rows open the thread, and punch-out messages appear in the feed.
+  - "Tell the office".
+- **Gate:** `gate_1417.mjs`, 51 checks; red 37 on 1416.
+- **Open:** a draft typed in one job's box stays when you open another job's thread.
