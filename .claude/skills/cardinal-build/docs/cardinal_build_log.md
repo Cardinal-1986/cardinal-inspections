@@ -37254,3 +37254,42 @@ This build covers judge 14's chat and team-communications audit (round 1: works 
   - `gate_1411`, `gate_1413`, `gate_1416` and `gate_1046` are green.
   - REPRO byte-identical.
 - **Found, not fixed:** a draft typed in one job's box survives into another job's thread (the same in 1415). It wants its own small build.
+
+## Build 1418 — colour after judge 16 (29 Oct 2026)
+This build covers judge 16's colour/button/text audit (round 1: harmony 5, restraint 4, contrast 7, parity 4, buttons 4, text 6). Theo, 29 Oct: "Do your suggestions on all as long as the rating comes to a 9/10 minimum."
+
+- **MAJOR 1 — Insurance opened WHITE in a dark app.** `cardinalRLTheme` unset read as docket.
+  - Measured: "‹ Overview" 1.15:1, empty states 1.06, `#commsBackBtn` 1.11, document rows at 1366 1.38/2.49.
+  - Insurance now derives its theme from the app theme, and one toggle writes both keys.
+  - ⚠ The Library's 600ms body re-stamp had to read the same answer, or it would have written docket back every 600ms.
+- **Islands in dark:**
+  - Reports chips: cream → `#22262d`, 9.27.
+  - Contract/Invoice/Estimate tags and the Deposit Paid pill: 8.0–9.5.
+  - `.chatempty`: 3.05 → 5.52.
+- **Sub-floor inks:**
+  - CSV 2.18 → 5.66, avatar SO 2.50 → ≥4.82, light other-month days 1.63 → 4.71, `.cd-stchip` Closed 3.86 → 6.44.
+  - Found by the sweep, not on the list: pipeline initial 4.48, filter counts 3.13, build stamp 2.31.
+- **One identity hue per CRM** on the + button, portal pill, rail segment and client names.
+  - Retail client names use `#ef6b6b`, because `#c8202e` as text on the dark card is about 3.2:1.
+  - Side effect: Punch & Repairs' + is red instead of orange (the Production board keeps orange).
+- **Other fixes:**
+  - Desktop menu popover is dark.
+  - The light pipeline is flat.
+  - Georgia is off screen headings.
+  - `.cre-del` and the Community chart button are 44.
+  - The "Switch portal" gold row is gone.
+- **⚠ Superseded Theo picks:**
+  - 952 rail segment (slate retail / red insurance).
+  - 539 "Switch portal" gold.
+  - The client-list CRM badge colours.
+  - All under his 29 Oct instruction. Each is a labelled edit, so any one can come back on request.
+- **Left alone (settled):** Forms 1, 1217 "dark chrome, paper document", the `--rbe-link` days-waiting chip.
+- **Sweeps:** 390 on 1417, dark 24 failing sets → 0 and light 15 → 0. 1366, dark and light → 0.
+- **Gates:**
+  - `gate_1418.mjs` 86/0. The control (1417) is RED 59/27.
+  - `check_build` GREEN.
+  - `gate_types` 1505 = control, with the same TS2304 set. `gate_dupes` is identical to the control.
+  - `gate_stack` CLEAN, dark and light, at 390 and 1366.
+  - `gate_1415`, `gate_1416`, `gate_1417`, `gate_1181`, `gate_1035` and 27 others are green.
+  - `gate_952`'s "light keyline icons" check fails identically on the 1417 control with the unedited gate (3 of 3 runs), so it is pre-existing.
+  - REPRO byte-identical.

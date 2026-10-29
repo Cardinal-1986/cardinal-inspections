@@ -396,7 +396,7 @@ td.status small{display:block;color:var(--muted);font-size:13px;margin-top:3px;w
 }
 .toolbar .btn{padding:9px 16px;font-size:15px;}
 .toolbar .statuswrap{display:flex;align-items:center;gap:8px;font-size:13px;}
-.toolbar .statuswrap small{color:#bbb;}
+.toolbar .statuswrap small{color:#bbb;font-size:11px;}/* J16: was the UA's `smaller`, 10.83px */
 #savedFlash{font-size:13px;color:#9fdcb4;min-width:70px;}
 /* 850: the editor action buttons as one aligned set — a wrapped row on desktop,
    an even 2-up grid on the phone, so they stop reading as a scattered pile. The
@@ -607,6 +607,7 @@ footer.site{
   border:1px solid #d5d8dd;
   box-shadow:0 1px 2px rgba(16,18,24,.10), 0 1px 0 rgba(255,255,255,.9) inset;
 }
+:root[data-theme="rb-light"] .pcbadge .pcini{color:#46688a;--cr-stack:"light twin: --rbe-acclt is 4.48:1 on this tile at 18px; dark keeps the token";}
 .pcbadge .pcacts a svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
 /* 683: in light the label was --rbe-acclt (#4f7396) over the pink wash on a
    white card — 4.26:1, just under the 4.5 floor. The darker accent of the
@@ -802,7 +803,7 @@ body.claim-insurance .dbmoney{
   border:1px solid var(--ct-line);border-left:3px solid var(--ct-red);color:var(--ct-ink);}
 body.claim-insurance .dbmoney small{color:var(--ct-ink-2);}
 body.claim-insurance .dbmoney b{color:var(--ct-ink);}
-body.claim-insurance .dbmoney .dbringin{color:var(--ct-warn);}
+body.claim-insurance .dbmoney .dbringin{color:var(--ct-warn);background:var(--ct-surface,#ffffff);}  /* J16: the hole follows the card (Siren 1.63 -> 11.06) */
 
 /* Payment Information row */
 body.claim-insurance .dbrow{
@@ -885,6 +886,8 @@ body.claim-insurance #projectView .projmeta .mlbl{white-space:nowrap;}
    is a declared pair rather than a token: 5.51 on docket, 7.94 on siren. */
 body.claim-insurance #projectView .dbmoney b.db-paid{color:#46701E;}
 body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color:#7CB342;}
+/* J16: and its twin — Cardinal red is 3.18:1 on Siren's card; the app's lighter cardinal is 5.13. */
+body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-due{color:#e35c63;--cr-stack:"siren twin of the base db-due red; Docket keeps #C8202E";}
 
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
@@ -931,9 +934,15 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 .ptab.active{background:var(--red);color:#fff;border-color:var(--red);}
 
 .tchip{display:inline-block;font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;padding:3px 10px;border-radius:10px;white-space:nowrap;}
-.tchip.trade{background:#f3ecea;color:#7a4a3e;border:1px solid #e0d2cc;}
-.tchip.insp{background:#e8f0fb;color:#1d4f91;border:1px solid #c9dbf2;}
-.tchip.est{background:#e9f5ec;color:#1d6b34;border:1px solid #c8e5cf;}
+.tchip.trade{background:rgba(240,138,144,.12);color:#f0b8b3;border:1px solid rgba(240,138,144,.35);}
+.tchip.insp{background:rgba(91,140,200,.16);color:#9cc3f0;border:1px solid rgba(91,140,200,.40);}
+.tchip.est{background:rgba(52,168,83,.16);color:#8fd6a5;border:1px solid rgba(52,168,83,.40);}
+/* J16: the Contract / Invoice / Estimate / trade chips were pastel cards on the
+   dark document rows. Dark: the hue at a low alpha, the ink lightened (8.0-8.8:1
+   on #15151b). Light: exactly what shipped. */
+:root[data-theme="rb-light"] .tchip.trade{background:#f3ecea;color:#7a4a3e;border-color:#e0d2cc;}
+:root[data-theme="rb-light"] .tchip.insp{background:#e8f0fb;color:#1d4f91;border-color:#c9dbf2;}
+:root[data-theme="rb-light"] .tchip.est{background:#e9f5ec;color:#1d6b34;border-color:#c8e5cf;}
 
 .ckcard{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
   border:1px solid var(--line);border-radius:10px;background:#fff;padding:14px 16px;margin:8px 0;}
@@ -957,14 +966,21 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 #newMenu .navopt + .navopt{border-top:1px solid #eee;}
 #navMenu{
   position:fixed;right:10px;z-index:120;
-  background:#fff;border:1px solid #c9c2bf;border-radius:10px;
+  background:color-mix(in srgb,var(--hac,#8fb4d8) 9%,#0e1014);border:1px solid rgba(255,255,255,.12);border-radius:10px;
   min-width:230px;max-width:calc(100vw - 20px);
-  box-shadow:0 10px 28px rgba(0,0,0,.22);overflow:hidden;
+  box-shadow:0 14px 34px rgba(0,0,0,.55);overflow:hidden;
 }
-#navMenu .navopt{display:block;width:100%;text-align:left;padding:11px 16px;border:0;background:#fff;
-  font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
-#navMenu .navopt:hover{background:#f7efec;color:var(--red-dk);}
-#navMenu .navopt + .navopt{border-top:1px solid #eee;}
+#navMenu .navopt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 16px;border:0;background:transparent;
+  font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#e8ebf0;cursor:pointer;}
+#navMenu .navopt svg{width:19px;height:19px;flex:none;color:var(--hac,#b9d3ec);}
+#navMenu .navopt:hover{background:color-mix(in srgb,var(--hac,#8fb4d8) 14%,transparent);color:#ffffff;}
+#navMenu .navopt + .navopt{border-top:1px solid color-mix(in srgb,var(--hac,#8fb4d8) 12%,transparent);}
+/* J16 (judge 15): light restores exactly what shipped for the desktop popover. */
+:root[data-theme="rb-light"] #navMenu{background:#ffffff;border-color:#c9c2bf;box-shadow:0 10px 28px rgba(0,0,0,.22);}
+:root[data-theme="rb-light"] #navMenu .navopt{color:#2b2b2b;}
+:root[data-theme="rb-light"] #navMenu .navopt svg{color:var(--hac,#376CA0);}
+:root[data-theme="rb-light"] #navMenu .navopt:hover{background:#f7efec;color:var(--red-dk);}
+:root[data-theme="rb-light"] #navMenu .navopt + .navopt{border-top-color:#eee;}
 /* ---- hero ---- */
 .hero{display:flex;gap:20px;align-items:stretch;flex-wrap:wrap;margin:18px 0 4px;}
 .hero-left{flex:1;min-width:250px;display:flex;flex-direction:column;justify-content:center;gap:6px;}
@@ -973,10 +989,16 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color
 .qauthor{font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a6f66;margin-top:4px;font-style:normal;}
 .hero-clock{font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a6f66;}
 .hero-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-.hstat{font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#f3ecea;color:#7a4a3e;
-  border:1px solid #e0d2cc;border-radius:12px;padding:5px 12px;cursor:pointer;}
-.hstat:hover{background:#eaddd8;}
-.hstat b{color:var(--red-dk);}
+.hstat{font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#22262d;color:#c2cbd8;
+  border:1px solid #3a3f47;border-radius:12px;padding:5px 12px;cursor:pointer;}
+.hstat:hover{background:#2a2f37;}
+.hstat b{color:#f08a90;}
+/* J16 (judge 16, MAJOR 2): these chips were cream (#f3ecea / #7a4a3e) on the dark
+   Reports card and the dark profile. Dark first, the shipped light values back
+   under rb-light. Dark: label 9.27, count 6.32 on #22262d. */
+:root[data-theme="rb-light"] .hstat{background:#f3ecea;color:#7a4a3e;border-color:#e0d2cc;}
+:root[data-theme="rb-light"] .hstat:hover{background:#eaddd8;}
+:root[data-theme="rb-light"] .hstat b{color:var(--red-dk);}
 /* ---- calendar ---- */
 .calcard{flex:0 0 320px;border:1px solid #3d434c;border-radius:12px;background:linear-gradient(180deg,#2b2f36,#24282e);color:#dfe3e8;padding:12px 14px;}
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;
@@ -1278,9 +1300,9 @@ body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rathe
 /* 1326: the @name chips sit on the chat box's cream (white on insurance) in every CRM and both
    themes, so they take its dark ink. The dark theme's .chipbtn ink (cr-darkleak-fix) is for dark
    grounds and measured 1.14:1 here. #5c4a42 7.83:1, border #8a7c76 3.77:1. */
-#commsView #chatTagRow .chipbtn{--cr-stack:"1326 chips on the cream chat box need its dark ink in both themes";
+body:not(.claim-insurance) #commsView #chatTagRow .chipbtn{--cr-stack:"1326 chips on the cream chat box need its dark ink in both themes";
   color:#5c4a42;border-color:#8a7c76;background:transparent;}
-#commsView #chatTagRow .chipbtn:hover{color:#9c1822;border-color:#C8202E;}
+body:not(.claim-insurance) #commsView #chatTagRow .chipbtn:hover{color:#9c1822;border-color:#C8202E;}
 .chatthread{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px;}
 .chatmsg{display:flex;gap:9px;align-items:flex-start;}
 .chatmsg .av{flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:var(--red);color:#fff;
@@ -1312,7 +1334,7 @@ body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rathe
 .chatwill.warn{color:#9c1822;}
 .chatinput input{flex:1;min-width:0;padding:11px 13px;border:1px solid #c9c2bf;border-radius:9px;
   font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#fff;text-overflow:ellipsis;}
-.chatempty{font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#9a8c85;padding:8px 2px;}
+.chatempty{font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6e625c;padding:8px 2px;}/* J16: was #9a8c85, 3.05:1 on the cream box; 5.52 */
 
 .subnote{max-width:820px;}
 @media (min-width:1400px){
@@ -1926,7 +1948,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 :root[data-theme="rb-light"] .teamcal .minical .calgrid .day{
   border-color:#ecd9d6;background:#fff;color:#2a1c1c;}
 :root[data-theme="rb-light"] .teamcal .minical .calgrid .day.other{
-  border-color:#f6ebea;background:#fdf9f9;color:#d3c3c1;}
+  border-color:#f6ebea;background:#fdf9f9;color:#7a6e69;}/* J16: was #d3c3c1, 1.63:1 -> 4.71 (still visibly quieter than #2a1c1c) */
 :root[data-theme="rb-light"] .teamcal .minical .calgrid .day.today{
   background:#c8202e;color:#fff;box-shadow:0 0 0 2px #e7c2ba, 0 2px 8px rgba(200,32,46,.30);}
 :root[data-theme="rb-light"] .teamcal .callegend{color:#6b0f18;}
@@ -1987,7 +2009,7 @@ html, body{overflow-x:hidden;max-width:100%;}
    needs a theme-independent label. #9aa0a8 is 7.22:1 on this ground. */
 .actbox span{display:block;font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
   color:#9aa0a8;line-height:1.3;}
-.actbox b{display:block;font:800 22px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#E8722A;margin-top:3px;}
+.actbox b{display:block;font:800 22px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#EC7A33;margin-top:3px;}/* J16: was #E8722A, 4.47:1 at the phone's 18px -> 4.82 */
 /* ── 557: the light twin 545 said would be one added rule ──────────────────
    DESIGNED, not recoloured. Dark is highlight-led — a white sheen inset riding a
    black radial. In light an inset highlight is invisible against a white card, so
@@ -2012,7 +2034,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   box-shadow:0 6px 14px rgba(16,18,24,.10), 0 1px 2px rgba(16,18,24,.06),
              0 1px 0 rgba(255,255,255,.9) inset;}
 :root[data-theme="rb-light"] .actbox span{color:#5f6670;}
-:root[data-theme="rb-light"] .actbox b{color:#C25A18;}
+:root[data-theme="rb-light"] .actbox b{color:#a64a10;}/* J16: was #C25A18, 3.79:1 at 18px -> 5.01; the same orange, deeper (the 557 rule) */
 /* 1369: Money Collected is a door to Invoices & Payments (admins) */
 button.actbox{width:100%;margin:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 button.actbox:active{transform:scale(.97);}
@@ -2076,7 +2098,7 @@ button.actbox:active{transform:scale(.97);}
 /* ---- unified page headers: centered, serif, brand rule ---- */
 .viewhead{
   text-align:center;
-  font:800 22px Georgia,'Times New Roman',serif;
+  font:800 22px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;/* J16: was Georgia (Communications, Payments, Tasks... in Insurance and light) */
   letter-spacing:normal;
   /* 681: was #1c1416 — a near-black ink for a white page, printed on this
      app's near-black default ground at 1.10:1. Theo: "can't read this page."
@@ -2164,7 +2186,7 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
   body.standalone #pwaNav .pwatab:active{transform:scale(.94);background:rgba(255,255,255,.06)}
   body.standalone #pwaNav .pwaplus{color:#ffffff}
   body.standalone #pwaNav .pwaplus b{display:flex;align-items:center;justify-content:center;width:44px;height:30px;border-radius:10px;
-    background:#c8202e;color:#fff;font:400 24px/1 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
+    background:var(--crm-id,#c8202e);color:var(--crm-id-ink,#fff);font:400 24px/1 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}/* J16: the installed-phone + wears the CRM hue too */
   body.standalone #pwaNav #pwaBack{--cr-stack:"1365 Back shrinks to make room for five tabs";flex:0 0 40px;width:40px;height:40px;font-size:24px}
   body.standalone #pwaNav #pwaFwd,body.standalone #pwaNav #pwaLib{--cr-stack:"1365 Forward and the Library leave the phone bar (the Library is in the menu); an iPad keeps both";display:none !important}
   /* the header's + and menu live in the bar now */
@@ -2477,7 +2499,10 @@ body[data-rltheme="siren"].claim-insurance #delClientBtn{color:#ff7b82;}
   padding:10px 6px;font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;text-decoration:none;}
 .dbcb .dbic2{width:17px;height:17px;color:inherit;}
 .dbcb.off{opacity:.35;border-color:#bbb;color:#888;}
-.dbmap{height:172px;border-radius:8px;overflow:hidden;background:#ece7e2;position:relative;z-index:0;}
+.dbmap{height:172px;border-radius:8px;overflow:hidden;background:var(--dbmap-bg,#ece7e2);position:relative;z-index:0;}
+/* J16: the placeholder ground follows a dark card (Siren insurance; Community in the dark app). */
+body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
+:root:not([data-theme="rb-light"]) body.claim-community{--dbmap-bg:#101312;}
 .dbassign{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .dbrep{font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
 .dbmore .dbmrow{padding:9px 0 0;margin-top:9px;border-top:1px solid #eee7e0;font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
@@ -2599,7 +2624,7 @@ body[data-rltheme="siren"].claim-insurance #delClientBtn{color:#ff7b82;}
   border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);
   font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#f3e9dc;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;flex:0 1 auto;}
-.edchip small{color:#e8b7ba;font-weight:800;}
+.edchip small{color:#e8b7ba;font-weight:800;font-size:11px;}/* J16: was the UA's `smaller`, 9.17px */
 .edchip.edlink{border-color:rgba(200,32,46,.65);cursor:pointer;}
 .edchip.edlink:active{transform:scale(.96);}
 /* 1204 -- the way OUT of the document editor was unlabelled. This chip and
@@ -2885,6 +2910,9 @@ body[data-rltheme="siren"].claim-insurance #delClientBtn{color:#ff7b82;}
 /* ---- graphs & reports ---- */
 .rptchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 .rptchips .hstat{cursor:pointer;}
+/* J16: the selected range / tab never looked selected (Month and Company carry .on). */
+.rptchips .hstat.on,.rptchips .hstat.on:hover{background:#c8202e;color:#ffffff;border-color:#c8202e;}
+.rptchips .hstat.on b{color:#ffffff;}
 .rptfilters{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 .rptfilters select,.rptfilters input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;
   font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#fff;color:#2b2b2b;}
@@ -4246,7 +4274,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1417<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1418<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4291,7 +4319,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <span class="cbcrm" id="cbCrm" aria-label="Switch CRM">
     <b data-crm-go="retail" class="on"><i style="background:#c8202e"></i>Retail</b>
     <b data-crm-go="insurance"><i style="background:#2dd4bf"></i>Insurance</b>
-    <b data-crm-go="community"><i style="background:#8ad0f5"></i>Community</b>
+    <b data-crm-go="community"><i style="background:#34d399"></i>Community</b>
   </span>
   <span class="cbsrch"><input id="cbSearch" type="search" placeholder="Client, PO # or address"><b class="go"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></b></span>
 </nav>
@@ -21637,9 +21665,12 @@ var CD_CRMS = [
   /* color = the matte-black brass palette (7.5:1+ on #141517).
      colorLight = the same hue darkened for a light ground; the bright values
      collapse to ~2.2-2.4:1 on white, well under the 4.5:1 body-text floor. */
-  { key:'retail',    label:'Retail',    color:'#c9a227', colorLight:'#8a6a12' },
-  { key:'insurance', label:'Claims',    color:'#4db8a8', colorLight:'#1f7a6b' },
-  { key:'community', label:'Community', color:'#8fb4d8', colorLight:'#2f6491' }
+  /* J16: one identity hue per CRM (was gold / a second teal / light blue). As TEXT
+     on the dark card: #ef6b6b 5.62 (the rail's own text-safe cardinal), #2dd4bf
+     9.07, #34d399 8.79. On white: #c8202e 5.67, #0f766e 5.47, #047857 5.48. */
+  { key:'retail',    label:'Retail',    color:'#ef6b6b', colorLight:'#c8202e' },
+  { key:'insurance', label:'Claims',    color:'#2dd4bf', colorLight:'#0f766e' },
+  { key:'community', label:'Community', color:'#34d399', colorLight:'#047857' }
 ];
 /* Render-time label maps mirror cr-insstage / cr-comstage — stored values never change. */
 /* 655 (CR-AUD-014): ONE insurance stage vocabulary. Four maps used to
@@ -21762,7 +21793,7 @@ function cdCardHtml(pr){
   var tel = (pr.phone || '').replace(/[^+\d]/g, '');
   var on = cdState.sel.indexOf(pr.id) !== -1;
   var po = poOf(pr);
-  return '<div class="cd-card' + (on ? ' selon' : '') + '" data-proj="' + pr.id + '" style="--cc:' + meta.color + ';--ccl:' + (meta.colorLight || meta.color) + ';--sc:' + sc + ';--scl:' + stageInk(stg) + '">' +
+  return '<div class="cd-card' + (on ? ' selon' : '') + '" data-proj="' + pr.id + '" style="--cc:' + meta.color + ';--ccl:' + (meta.colorLight || meta.color) + ';--sc:' + sc + ';--scd:' + (({ Invoiced:'#a98bec', Closed:'#8fa3ad' })[stg] || sc) + ';--scl:' + stageInk(stg) + '">' +
     '<span class="cd-selck">' + (on ? '\u2713' : '') + '</span>' +
     '<div class="bd">' +
       '<div class="nmrow">' + (po ? '<span class="cd-po">' + esc(String(po)) + ':</span>' : '') +
@@ -29677,7 +29708,9 @@ async function loadTeamProfiles(){
     }
   }catch(e){}
 }
-var AV_COLORS = ['#C8202E','#E8B10F','#7CB342','#29A3DC','#8E6BC1','#F08A24','#607D8B'];
+/* J16: deepened so white initials clear 4.5:1 — was #E8B10F 2.0, #7CB342 2.50, #29A3DC 2.9,
+   #F08A24 2.6, #8E6BC1 4.2, #607D8B 4.4. Same order, so nobody changes colour family. */
+var AV_COLORS = ['#C8202E','#8a6a00','#4e7d23','#1a6f9a','#7451a8','#b4500d','#546e7a'];
 function avColor(email){
   var h = 0; email = String(email || '');
   for(var i=0;i<email.length;i++) h = (h*31 + email.charCodeAt(i)) >>> 0;
@@ -31947,6 +31980,9 @@ body.claim-insurance #commsView .chatmsg .bub{
 body.claim-insurance #commsView .chatmsg .who{ color:var(--ct-red-deep,#7E1410); }
 body.claim-insurance #commsView .chatmsg .when,
 body.claim-insurance #commsView .chatempty{ color:var(--ct-ink-2,#6E6663); }
+body.claim-insurance #commsView .chatmsg .chattag{ color:var(--ct-ink-2,#6E6663); border-color:var(--ct-line-strong,#DED8D6); --cr-stack:"J16 insurance twin of 1417's cream-box ink: 2.31 -> 7.51 in Siren, 5.30 in Docket"; }
+body.claim-insurance #commsView .chatwill{ color:var(--ct-ink-2,#6E6663); --cr-stack:"J16 insurance twin: 3.21 -> 7.03 in Siren"; }
+body.claim-insurance #commsView .chatwill.warn{ color:var(--ct-red-deep,#7E1410); --cr-stack:"J16 insurance twin: 2.20 -> 5.08 in Siren, 10.5 in Docket"; }
 body.claim-insurance #commsView .chatmsg .mention{
   background:var(--ct-red-wash,#FDF4F3); color:var(--ct-red-deep,#7E1410); }
 body.claim-insurance #commsView .chatmsg.mine .av{ background:var(--ct-ink,#17181B); color:var(--ct-bg,#FAF8F7); }
@@ -32059,9 +32095,11 @@ body.claim-insurance #brandLogo{
   display:block; padding:9px 16px 5px;
   font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
   letter-spacing:.16em; text-transform:uppercase;
-  color:#a9968e; background:#faf7f6;
-  border-top:1px solid #eee;
+  color:var(--hac,#8fb4d8); background:transparent;
+  border-top:1px solid rgba(255,255,255,.08);
 }
+/* J16: light section heads, and the shipped #a9968e was 2.65:1 on #faf7f6 — 4.85 now. */
+:root[data-theme="rb-light"] #navMenu .navsec{color:#7a6a62;background:#faf7f6;border-top-color:#eee;}
 #navMenu .navsec:first-child{ border-top:0; }
 #navMenu .navsec + .navopt{ border-top:0 !important; }
 </style>
@@ -33184,7 +33222,7 @@ function showList() {
       /* 565: Discard. Admin-only, and it reuses the SAME soft delete the AI review
          screen has always used — status:'discarded' — which no lane matches, so the
          row leaves the list without anything being destroyed. */
-      (creCanDiscard() ? `<button class="cre-del" data-cre-discard="${r.id}" title="Discard this estimate">&times;</button>` : '') +
+      (creCanDiscard() ? `<button type="button" class="cre-del" data-cre-discard="${r.id}" title="Discard this estimate" aria-label="Discard this estimate">&times;</button>` : '') +
       `</div></div>`;
   }
   function renderEst(){
@@ -36321,22 +36359,22 @@ function showList() {
 <style id="cr-xlinks-styles">
   .cr-xl-card {
     display: block;
-    background: #fff;
-    border: 1px solid #e5e5e5;
+    background: var(--xl-card, #fff);
+    border: 1px solid var(--xl-bd, #e5e5e5);
     border-left: 4px solid #D9282A;
     border-radius: 4px;
     padding: 14px 16px;
     margin: 16px 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     text-decoration: none;
-    color: #2a2a2a;
+    color: var(--xl-ink, #2a2a2a);
     cursor: pointer;
     transition: box-shadow .12s, transform .1s;
   }
   .cr-xl-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); transform: translateY(-1px); }
-  .cr-xl-card.suggest { border-left-color: #C87A00; background: #FEF9F0; }
-  .cr-xl-card.linked-est { border-left-color: #1976D2; background: #F5FAFE; }
-  .cr-xl-card.linked-contract { border-left-color: #2E7D32; background: #F5FAF5; }
+  .cr-xl-card.suggest { border-left-color: #C87A00; background: var(--xl-suggest, #FEF9F0); }
+  .cr-xl-card.linked-est { border-left-color: #1976D2; background: var(--xl-est, #F5FAFE); }
+  .cr-xl-card.linked-contract { border-left-color: #2E7D32; background: var(--xl-ct, #F5FAF5); }
 
   .cr-xl-head {
     display: flex;
@@ -36351,11 +36389,12 @@ function showList() {
     font-weight: 700;
     letter-spacing: 1.8px;
     text-transform: uppercase;
-    color: #D9282A;
+    color: var(--xl-red, #D9282A);
   }
-  .cr-xl-card.suggest .cr-xl-eyebrow { color: #C87A00; }
-  .cr-xl-card.linked-est .cr-xl-eyebrow { color: #1976D2; }
-  .cr-xl-card.linked-contract .cr-xl-eyebrow { color: #2E7D32; }
+  /* J16: #C87A00 was 3.21:1 and #1976D2 4.38:1 on their own tinted cards (11px) */
+  .cr-xl-card.suggest .cr-xl-eyebrow { color: var(--xl-warn, #8a5a00); }
+  .cr-xl-card.linked-est .cr-xl-eyebrow { color: var(--xl-info, #1565c0); }
+  .cr-xl-card.linked-contract .cr-xl-eyebrow { color: var(--xl-ok, #256b29); }
 
   .cr-xl-status {
     font-size: 11px;
@@ -36364,31 +36403,34 @@ function showList() {
     text-transform: uppercase;
     padding: 3px 8px;
     border-radius: 8px;
-    background: #f5f5f5;
-    color: #666;
+    background: var(--xl-mute-bg, #f5f5f5);
+    color: var(--xl-mute, #666);
   }
+  /* J16: four of these five inks sat under 4.5:1 on their own chip at 11px —
+     approved 4.46, sent 3.97, awaiting 2.96, denied 4.29. Same hues, deepened:
+     5.68 / 4.96 / 5.21 / 5.78. Siren repaints them through the tokens below. */
   .cr-xl-status.approved,
   .cr-xl-status.completed,
-  .cr-xl-status.signed { background: #E7F2E7; color: #2E7D32; }
+  .cr-xl-status.signed { background: var(--xl-ok-bg, #E7F2E7); color: var(--xl-ok, #256b29); }
   .cr-xl-status.in_progress,
-  .cr-xl-status.sent { background: #E3F0FB; color: #1976D2; }
+  .cr-xl-status.sent { background: var(--xl-info-bg, #E3F0FB); color: var(--xl-info, #1565c0); }
   .cr-xl-status.filed,
-  .cr-xl-status.draft { background: #f5f5f5; color: #666; }
+  .cr-xl-status.draft { background: var(--xl-mute-bg, #f5f5f5); color: var(--xl-mute, #666); }
   .cr-xl-status.awaiting_rcv,
-  .cr-xl-status.adjuster_pending { background: #FBEFDA; color: #C87A00; }
+  .cr-xl-status.adjuster_pending { background: var(--xl-warn-bg, #FBEFDA); color: var(--xl-warn, #8a5a00); }
   .cr-xl-status.denied,
-  .cr-xl-status.void { background: #FDECEC; color: #D9282A; }
+  .cr-xl-status.void { background: var(--xl-bad-bg, #FDECEC); color: var(--xl-bad, #b71c1c); }
 
   .cr-xl-title {
     font-size: 18px;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--xl-title, #1a1a1a);
     letter-spacing: -0.3px;
     margin-bottom: 4px;
   }
   .cr-xl-sub {
     font-size: 13px;
-    color: #6b6b6b;
+    color: var(--xl-sub, #6b6b6b);
     line-height: 1.4;
   }
 
@@ -36398,22 +36440,22 @@ function showList() {
     margin-top: 10px;
     flex-wrap: wrap;
     font-size: 13px;
-    color: #6b6b6b;
+    color: var(--xl-sub, #6b6b6b);
     letter-spacing: 0.3px;
   }
   .cr-xl-financials .num {
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--xl-title, #1a1a1a);
     font-variant-numeric: tabular-nums;
   }
   .cr-xl-financials .pct {
     font-weight: 700;
-    color: #2E7D32;
+    color: var(--xl-pct, #2E7D32);
   }
 
   .cr-xl-progress-bar {
     height: 3px;
-    background: #efefef;
+    background: var(--xl-track, #efefef);
     border-radius: 2px;
     overflow: hidden;
     margin-top: 8px;
@@ -36432,7 +36474,7 @@ function showList() {
     font-weight: 700;
     letter-spacing: 1.2px;
     text-transform: uppercase;
-    color: #D9282A;
+    color: var(--xl-red, #D9282A);
     margin-top: 8px;
   }
 
@@ -36456,7 +36498,7 @@ function showList() {
 
   .cr-xl-link-existing {
     display: inline-block;
-    color: #6b6b6b;
+    color: var(--xl-sub, #6b6b6b);
     font-size: 11px;
     font-weight: 600;
     margin-left: 12px;
@@ -36479,6 +36521,23 @@ function showList() {
   .cr-xl-picker-empty { text-align: center; padding: 30px 20px; color: #a8a8a8; font-size: 13px; }
   .cr-xl-picker-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
   .cr-xl-picker-btn { padding: 10px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; font-family: inherit; border: 1px solid #e5e5e5; background: white; color: #2a2a2a; }
+
+  /* J16 (judge 16, MAJOR 2): the claim card was #ffffff in Siren too — a white
+     island on the dark insurance profile. Siren now supplies the card's tokens;
+     Docket supplies none, so light is the fallbacks above, untouched. Every ink
+     was computed on the card's own ground (#1E1E24): title 14.77, sub 6.46,
+     eyebrow/cta 4.72, pct 9.55; chips on their 22% tints 7.0-7.7. */
+  body[data-rltheme="siren"] .cr-xl-card {
+    --xl-card: #1E1E24; --xl-bd: #34343B; --xl-ink: #F4F1F1; --xl-title: #F4F1F1; --xl-sub: #A8A09E;
+    --xl-red: #e35c63; --xl-pct: #7FD79A; --xl-track: #34343B;
+    --xl-suggest: #1E1E24; --xl-est: #1E1E24; --xl-ct: #1E1E24;
+    --xl-ok: #7FD79A; --xl-ok-bg: rgba(46,125,50,.22);
+    --xl-info: #8cc2f5; --xl-info-bg: rgba(25,118,210,.22);
+    --xl-mute: #c9c4c2; --xl-mute-bg: rgba(255,255,255,.08);
+    --xl-warn: #f5c46b; --xl-warn-bg: rgba(200,122,0,.22);
+    --xl-bad: #ff9e9e; --xl-bad-bg: rgba(217,40,42,.22);
+  }
+  body[data-rltheme="siren"] .cr-xl-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.45); }
 </style>
 
 <script id="cr-xlinks-script">
@@ -42295,13 +42354,18 @@ else start();
 <style id="cr-eaf-styles">/* 565: the Discard control on an estimate card. Muted until hovered so it never
    competes with the money, and cardinal red only on approach. */
 #cr-estimates-mount .cre-card .cre-del{
-  background:none;border:0;cursor:pointer;padding:2px 6px;margin-left:8px;
-  font:700 18px/1 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-mute,#9aa0a8);
-  opacity:.55;border-radius:6px;transition:opacity .14s,color .14s,background .14s;
+  /* J16: was a 24x22 grey x at 55% opacity. 44x44, the danger ink (Buttons A:
+     red words, no fill), and creDiscard() still asks before it acts. */
+  background:none;border:1px solid transparent;cursor:pointer;padding:0;margin-left:4px;
+  width:44px;height:44px;min-width:44px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+  font:700 22px/1 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#e35c63;
+  border-radius:10px;transition:color .14s,background .14s,border-color .14s;
 }
-#cr-estimates-mount .cre-card .cre-del:hover{
-  opacity:1;color:#fff;background:#c8202e;
-}
+#cr-estimates-mount .cre-card .cre-del:hover,
+#cr-estimates-mount .cre-card .cre-del:focus-visible{border-color:currentColor;background:rgba(227,92,99,.12);}
+:root[data-theme="rb-light"] #cr-estimates-mount .cre-card .cre-del{color:#8f1620;}
+:root[data-theme="rb-light"] #cr-estimates-mount .cre-card .cre-del:hover,
+:root[data-theme="rb-light"] #cr-estimates-mount .cre-card .cre-del:focus-visible{background:rgba(143,22,32,.08);}
 #cr-estimates-mount .cr-stat[data-cr-clickable="1"]{cursor:pointer;transition:background .1s,transform .08s}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:hover{background:#f7f7f7}#cr-estimates-mount .cr-stat[data-cr-clickable="1"]:active{transform:scale(.97)}
 /* .cr-back (build 395) — the AI Estimate and Output views always carried a
    "Back to Estimates" control, wired to showList(), but it had no CSS rule
@@ -45247,7 +45311,9 @@ window.CardinalPalette = { open: open, close: close };
 })();
 </script>
 
-<style id="cr-csv-styles">.cr-csv-btn{min-height:44px;background:transparent;border:1px solid #c8202e;color:#8f1620;padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}.cr-csv-btn:hover{background:rgba(200,32,46,.14)}</style>
+<style id="cr-csv-styles">.cr-csv-btn{min-height:44px;background:transparent;border:1px solid var(--csv-bd,#e35c63);color:var(--csv-ink,#e35c63);padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}.cr-csv-btn:hover{background:rgba(200,32,46,.14)}
+/* J16: #8f1620 was 2.18:1 on the dark page; dark #e35c63 5.66, light keeps #8f1620 / #c8202e. */
+:root[data-theme="rb-light"]{--csv-bd:#c8202e;--csv-ink:#8f1620;}</style>
 <script id="cr-csv-script">
 (function(){
 'use strict';
@@ -45417,6 +45483,8 @@ window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportCl
 :root:not([data-theme="rb-light"]) .listctl select,
 :root:not([data-theme="rb-light"]) .filterbtn:not(.active){background:#15151b;border-color:#2a2a32;color:#cfd6df;}
 :root:not([data-theme="rb-light"]) .listctl{color:#c7b3ac;}
+/* J16: "1 retail project" reads .count's light-era --muted, #5c5c5c — 2.97:1 here. */
+:root:not([data-theme="rb-light"]) .controls #countLabel{color:#9aa0a8;--cr-stack:"dark twin of .count (--muted is a light-era ink); light keeps it";}
 
 /* Settings rows */
 :root:not([data-theme="rb-light"]) .setrow{background:#15151b;border-color:#2a2a32;border-left-color:var(--red);color:#e6e9ee;}
@@ -45525,11 +45593,18 @@ function toggle(){
        a tap that visibly did nothing. The two modules that share
        [data-rltheme] (this and the Resource Library) both key off this name. */
     try{ localStorage.setItem('cardinalRLTheme', next); }catch(e){}
+    /* J16: ONE toggle, BOTH keys — the app theme follows the insurance flip, so
+       walking back to Retail does not land on the other theme. */
+    try{ localStorage.setItem(KEY, next === 'docket' ? '1' : '0'); }catch(e){}
     window.CardinalInsTheme.apply(next);
     apply();
     return;
   }
   setLight(!isLight());
+  /* J16: and the insurance palette follows the app flip (both keys written). */
+  var insNext = isLight() ? 'docket' : 'siren';
+  try{ localStorage.setItem('cardinalRLTheme', insNext); }catch(e){}
+  try{ if(window.CardinalInsTheme && window.CardinalInsTheme.apply) window.CardinalInsTheme.apply(insNext); }catch(e){}
 }
 function ensureButton(){
 if(document.getElementById('cr-dark-toggle')) return;
@@ -45643,6 +45718,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1418, d:'2026-10-29', t:'One colour per portal, and Insurance follows your light/dark setting', s:'Insurance now follows your light/dark setting like the rest of the app, and the one switch changes both \u2014 no more white Insurance pages in dark mode. Each portal has one colour \u2014 red Retail, teal Insurance, green Community \u2014 on the + button, the portal switch and client names. The last white boxes, hard-to-read labels and tiny text on the dark screens are fixed, and the light pipeline is a flat strip instead of glossy balls.' },
   { b: 1417, d:'2026-10-29', t:'Job messages update by themselves, and tags buzz only the person you mean', s:'A job\u2019s message thread now updates on its own while it is open, so a note sent from the roof shows up without leaving the screen. On insurance jobs your \u201cI chased the carrier\u201d notes appear in the thread. @J no longer buzzes four people \u2014 the box tells you who will be notified before you hit Send. Pasted links can be tapped, and a tag alert opens straight to the thread.' },
   { b: 1416, d:'2026-10-29', t:'Production: the calendar fills the screen, today up top, Dispatch read-only for the field', s:'On your phone the Schedule button opens the Production calendar with every build and punch-out on it, and today\u2019s work sits right under the title. On a laptop the full calendar fills the screen instead of hiding in a corner. Scottie sees Crew Dispatch read-only \u2014 booking is Curtis\u2019s. A message tells you when nobody was notified, step notes are typed right in the card, and Mark ordered can be undone.' },
   { b: 1415, d:'2026-10-29', t:'Calmer cards, full stage names, one typeface', s:'Home and Reports cards lose the red stripe \u2014 red is kept for buttons, today and money owed. The pipeline spells its stages (Leads, Prospects, Approved\u2026) instead of single letters. iPhones, iPads and Macs now show their own system font instead of Arial; Windows looks the same.' },
@@ -47198,7 +47274,7 @@ else autoShow();
 })();
 </script>
 
-<style id="cr-bulk-styles">#cr-bulk-toggle{min-height:44px;background:transparent;border:1px solid #4a6fa5;color:#4a6fa5;padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}#cr-bulk-toggle:hover{background:rgba(74,111,165,.12)}body.cr-bulk-mode #cr-bulk-toggle{background:#4a6fa5;color:#fff}.cr-bulk-checkbox{display:none;margin-right:8px;transform:scale(1.3);cursor:pointer;vertical-align:middle;accent-color:#c8202e}body.cr-bulk-mode .cr-bulk-checkbox{display:inline-block}.cr-bulk-bar{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:14px 20px 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));display:none;align-items:center;gap:10px;z-index:9500;box-shadow:0 -4px 16px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-bulk-bar.show{display:flex}.cr-bulk-bar button.destroy{background:transparent !important;border-color:transparent !important;color:#ff7b82 !important}   /* 1363: Delete is red words */.cr-bulk-bar button.destroy:hover:not(:disabled){background:transparent !important;border-color:#ff7b82 !important}.cr-bulk-count{font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;flex:1;min-width:0}.cr-bulk-bar button{background:transparent;border:1px solid #c8202e;color:#c8202e;padding:7px 12px;border-radius:5px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap}.cr-bulk-bar button:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button.danger{border-color:var(--red);color:var(--red)}.cr-bulk-bar button.danger:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button:disabled{opacity:.5;cursor:wait}</style>
+<style id="cr-bulk-styles">#cr-bulk-toggle{min-height:44px;background:transparent;border:1px solid var(--blk-ink,#8ab4e0);color:var(--blk-ink,#8ab4e0);padding:5px 10px;border-radius:5px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-left:8px;font-family:inherit}#cr-bulk-toggle:hover{background:rgba(74,111,165,.12)}:root[data-theme="rb-light"]{--blk-ink:#4a6fa5;}/* J16: #4a6fa5 was 3.89:1 on the dark page; dark #8ab4e0 9.17 */body.cr-bulk-mode #cr-bulk-toggle{background:#4a6fa5;color:#fff}.cr-bulk-checkbox{display:none;margin-right:8px;transform:scale(1.3);cursor:pointer;vertical-align:middle;accent-color:#c8202e}body.cr-bulk-mode .cr-bulk-checkbox{display:inline-block}.cr-bulk-bar{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:14px 20px 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));display:none;align-items:center;gap:10px;z-index:9500;box-shadow:0 -4px 16px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-bulk-bar.show{display:flex}.cr-bulk-bar button.destroy{background:transparent !important;border-color:transparent !important;color:#ff7b82 !important}   /* 1363: Delete is red words */.cr-bulk-bar button.destroy:hover:not(:disabled){background:transparent !important;border-color:#ff7b82 !important}.cr-bulk-count{font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;flex:1;min-width:0}.cr-bulk-bar button{background:transparent;border:1px solid #c8202e;color:#c8202e;padding:7px 12px;border-radius:5px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap}.cr-bulk-bar button:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button.danger{border-color:var(--red);color:var(--red)}.cr-bulk-bar button.danger:hover{background:rgba(200,32,46,.15)}.cr-bulk-bar button:disabled{opacity:.5;cursor:wait}</style>
 <script id="cr-bulk-script">
 (function(){
 'use strict';
@@ -47429,7 +47505,7 @@ window.CardinalBulk = { enterMode:enterMode, exitMode:exitMode, toggleMode:toggl
 })();
 </script>
 
-<style id="cr-menu-styles">#navMenu{/* 753: the left/right pins are GONE. They pinned the menu to the viewport right edge with !important, beating the click handler’s inline position — written when the Menu button lived on the right of the old masthead; cr-hd2 (416) moved it left. The handler owns the position now. Do not re-pin. */width:min(300px,calc(100vw - 20px)) !important;max-width:none !important;min-width:0 !important;overflow-y:auto !important;overflow-x:hidden !important;-webkit-overflow-scrolling:touch !important;overscroll-behavior:contain !important;touch-action:pan-y !important;max-height:72vh !important;max-height:calc(100dvh - 150px - env(safe-area-inset-bottom,0px)) !important;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px)) !important;-webkit-transform:translateZ(0);transform:translateZ(0)}#navMenu .navopt{padding:9px 14px !important;font-size:13px !important}#navMenu .navsec{padding:8px 14px 4px !important}#navMenu #cr-nav-sec-admin{border-top:1px dashed #e6d9c8;color:#8f1620 !important;background:#f4f2f1}#cr-nav-palette-hint{display:flex;align-items:center;gap:8px;padding:9px 14px;min-height:44px;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#5a5a5a;background:#faf7f6;border-top:1px solid #f0e8e2;cursor:pointer;-webkit-tap-highlight-color:rgba(200,32,46,.2);font-family:inherit;width:100%;text-align:left;border-left:0;border-right:0;border-bottom:0}#cr-nav-palette-hint:hover{background:#f5efe0}#cr-nav-palette-hint .lbl{flex:1;min-width:0}#cr-nav-palette-hint kbd{background:#eee;padding:2px 6px;border-radius:4px;font:800 11px 'SF Mono',Menlo,Consolas,monospace;color:#666;letter-spacing:.06em}</style>
+<style id="cr-menu-styles">#navMenu{/* 753: the left/right pins are GONE. They pinned the menu to the viewport right edge with !important, beating the click handler’s inline position — written when the Menu button lived on the right of the old masthead; cr-hd2 (416) moved it left. The handler owns the position now. Do not re-pin. */width:min(300px,calc(100vw - 20px)) !important;max-width:none !important;min-width:0 !important;overflow-y:auto !important;overflow-x:hidden !important;-webkit-overflow-scrolling:touch !important;overscroll-behavior:contain !important;touch-action:pan-y !important;max-height:72vh !important;max-height:calc(100dvh - 150px - env(safe-area-inset-bottom,0px)) !important;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px)) !important;-webkit-transform:translateZ(0);transform:translateZ(0)}#navMenu .navopt{padding:9px 14px !important;font-size:15px !important}/* J16: 13px -> 15px, the drawer's size */#navMenu .navsec{padding:8px 14px 4px !important}#navMenu #cr-nav-sec-admin{border-top:1px dashed rgba(255,255,255,.14);color:#e35c63 !important;background:transparent}:root[data-theme="rb-light"] #navMenu #cr-nav-sec-admin{border-top-color:#e6d9c8;background:#f4f2f1}#cr-nav-palette-hint{display:flex;align-items:center;gap:8px;padding:9px 14px;min-height:44px;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#9aa0a8;background:transparent;border-top:1px solid rgba(255,255,255,.07);cursor:pointer;-webkit-tap-highlight-color:rgba(200,32,46,.2);font-family:inherit;width:100%;text-align:left;border-left:0;border-right:0;border-bottom:0}#cr-nav-palette-hint:hover{background:rgba(255,255,255,.05)}:root[data-theme="rb-light"] #cr-nav-palette-hint{color:#5a5a5a;background:#faf7f6;border-top-color:#f0e8e2}:root[data-theme="rb-light"] #cr-nav-palette-hint:hover{background:#f5efe0}#cr-nav-palette-hint .lbl{flex:1;min-width:0}#cr-nav-palette-hint kbd{background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;font:800 11px 'SF Mono',Menlo,Consolas,monospace;color:#cfd6df;letter-spacing:.06em}:root[data-theme="rb-light"] #cr-nav-palette-hint kbd{background:#eee;color:#666}</style>
 <script id="cr-menu-script">
 (function(){
 'use strict';
@@ -55529,7 +55605,7 @@ window.CardinalLeadAddress = { apply: scan };
 })();
 </script>
 
-<style id="cr-rf-styles">#cr-rf-wrap{display:inline-flex;align-items:center;gap:6px;margin-left:8px;vertical-align:middle}#cr-rf-wrap label{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;white-space:nowrap}#cr-rf-sel{padding:7px 10px;border:1px solid #d9cfaf;border-radius:7px;background:#fff;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;cursor:pointer;max-width:170px;font-family:inherit}#cr-rf-sel:focus{outline:none;border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}#cr-rf-sel.active{background:#f4f2f1;border-color:#c8202e;color:#8f1620}#cr-rf-count{font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8f1620;white-space:nowrap}@media (max-width:560px){#cr-rf-wrap{display:flex;margin:8px 0 0;width:100%}#cr-rf-sel{flex:1;max-width:none}}</style>
+<style id="cr-rf-styles">#cr-rf-wrap{display:inline-flex;align-items:center;gap:6px;margin-left:8px;vertical-align:middle}#cr-rf-wrap label{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--rf-lbl,#9aa0a8);white-space:nowrap}#cr-rf-sel{padding:7px 10px;border:1px solid #d9cfaf;border-radius:7px;background:#fff;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;cursor:pointer;max-width:170px;font-family:inherit}#cr-rf-sel:focus{outline:none;border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}#cr-rf-sel.active{background:#f4f2f1;border-color:#c8202e;color:#8f1620}#cr-rf-count{font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rf-cnt,#e35c63);white-space:nowrap}:root[data-theme="rb-light"]{--rf-lbl:#6b6b6b;--rf-cnt:#8f1620;}/* J16: "Assigned" #6b6b6b was 3.73:1 dark -> #9aa0a8 7.55; its count #8f1620 -> #e35c63 */@media (max-width:560px){#cr-rf-wrap{display:flex;margin:8px 0 0;width:100%}#cr-rf-sel{flex:1;max-width:none}}</style>
 <script id="cr-rf-script">
 (function(){
 'use strict';
@@ -65574,7 +65650,7 @@ dueBids  : chDueBidsCount,
 --a1:var(--ccm-ac);--a2:var(--ccm-ac2);--accent:var(--ccm-ac);--warn:var(--ccm-warn,#ffcf6b);--warnsolid:var(--ccm-warnsolid,#ffcf6b);
 --good:var(--ccm-ac);--bad:var(--ccm-rd);
 --heroA:var(--ccm-raise);--urgent:var(--ccm-rdw);--nowfill:var(--ccm-nowfill,#321a1c);--line:var(--ccm-line);
---glow:var(--ccm-glow);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 22px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:11px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#c8d3cd}
+--glow:var(--ccm-glow);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:inherit;font-weight:700;font-size:18px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 22px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:11px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#c8d3cd}
 /* 982: #c8d3cd is 10.46:1 dark and 1.44:1 light. Light twin only. */
 [data-theme="rb-light"] #cr-cc .pin .facts .k{color:var(--ccm-chipink,#4a5350)}#cr-cc .pin .facts .v{font:800 18px var(--mono);margin-top:5px;color:var(--ink)}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--nowfill),var(--nowfill)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}
 #cr-cc .ev.now .eh b{color:var(--ink)}
@@ -65592,7 +65668,7 @@ dueBids  : chDueBidsCount,
 /* 971: this rule used to sit ABOVE the two above it at equal specificity, so the
    later one re-set background/border/color and the secondary button rendered
    identical to the primary. Moved last and scoped into .ev so it can win. */
-#cr-cc .ev .doit.alt{background:none;border:1px solid var(--line);color:var(--mute)}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:13px;color:var(--accent)}
+#cr-cc .ev .doit.alt{background:none;border:1px solid var(--line);color:var(--mute)}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:inherit;font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:13px;color:var(--accent)}
 #cr-cc .pin .t .nm .rl{display:block;font:800 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
 /* .ct paints its border with a gradient in border-box and its fill in
    padding-box, so the fill has to be swapped in the same two-layer form or the
@@ -65687,7 +65763,7 @@ background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A2
    its literal (both themes are declared by cr-cc-styles' own token blocks). */
 #cr-cc .cc2-name{display:flex;align-items:flex-start;gap:10px;padding:14px 2px 10px;flex-wrap:wrap}
 #cr-cc .cc2-name .nm{flex:1 1 180px;min-width:0}
-#cr-cc .cc2-name .nm b{display:block;font:700 22px Georgia,'Times New Roman',serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-cc .cc2-name .nm b{display:block;font:700 22px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
 #cr-cc .cc2-name .nm small{display:block;margin-top:4px;font:400 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--ccm-mute,#9aa39e)}
 #cr-cc .cc2-name .po{display:inline-block;margin-top:6px;padding:3px 8px;border-radius:6px;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:var(--ccm-chip,#242927);color:var(--ccm-chipink,#b8c1bd)}
 #cr-cc .cc2-name .acts{display:flex;gap:8px;flex-wrap:wrap}
@@ -67511,7 +67587,7 @@ body[data-crm-head="retail"] #cr-hd2-bar .cr-ib.primary{
      Pre-existing since before 1144, which carried it as measured debt. */
   background:linear-gradient(180deg,#b9d3ec,#8fb4d8 52%,#5981a8);
   border-color:#5981a8;border-top-color:#b9d3ec;color:#0b1218;
-  box-shadow:0 2px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.3)}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:18px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#c8202e);color:var(--hac,#c8202e)}#cr-hd2-bar .cr-ib.primary{background:var(--hac,#c8202e);border-color:var(--hac,#c8202e);color:var(--hoc,#1a1a1a);font-size:18px;font-weight:400}#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:800;font-size:40px;letter-spacing:normal;line-height:1.15;color:var(--hac,#c8202e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--hac,#c8202e)}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}/* 1116: the box was never the limit - cr-hd4-styles already sets max-width:100% on a THREE-id selector that outranks this one. The real limit is #cr-hd2-mid itself: 150px at Normal, 99px at Large and 60px at Larger, because the Text size control (939) is a real :root zoom and the CSS viewport shrinks with it - so a screen name that fitted at Normal ellipsised at the two sizes nobody had measured. Theo caught that. 86% plus the clamp below fits the longest name at all three. */body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:clamp(12px,4.4vw,20px) !important;letter-spacing:0}html[data-cr-text="xl"] body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}/* 1116: at Larger the middle slot is 60 CSS px - the controls eat a 300px viewport - and the shortest useful name still needs 91. The only way to widen it is shrinking tap targets below the 44px floor, so the name is HIDDEN at that one size, which is exactly what the retail slogan already does below 438px and for the same recorded reason: a truncated name reads as a broken app, an absent one reads as a clean toolbar. Normal and Large keep the name. *//* --cr-stack:"beats the 3-id !important font-size:20px in cr-hd3-styles ON PURPOSE, and only for the shared-screen head. Two !important rules are settled by specificity, so 2 ids + an attribute LOST to 3 ids and the clamp never applied - the names measured identical at all three zooms, which is what a silently-losing rule looks like." */#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#c8202e)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font-weight:400;font-size:15px;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#c8202e);box-shadow:0 0 0 3px rgba(200,32,46,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}
+  box-shadow:0 2px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.3)}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:18px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#c8202e);color:var(--hac,#c8202e)}#cr-hd2-bar .cr-ib.primary{--cr-stack:"J16 edited in place (the + reads the CRM identity hue); it already won these";background:var(--crm-id,var(--hac,#c8202e));border-color:var(--crm-id,var(--hac,#c8202e));color:var(--crm-id-ink,var(--hoc,#1a1a1a));font-size:18px;font-weight:400}body[data-crm="retail"]{--crm-id:#c8202e;--crm-id-ink:#ffffff}body[data-crm="insurance"]{--crm-id:#2dd4bf;--crm-id-ink:#04201c}body[data-crm="community"]{--crm-id:#34d399;--crm-id-ink:#062b1f}:root[data-theme="rb-light"] body[data-crm="insurance"]{--crm-id:#0f766e;--crm-id-ink:#ffffff}:root[data-theme="rb-light"] body[data-crm="community"]{--crm-id:#047857;--crm-id-ink:#ffffff}/* J16: + is the CRM's identity hue (was red / coral / mint / Reports orange). White on #c8202e 5.67, ink on teal 9.18, on emerald 7.96; light white on #0f766e 5.47, #047857 5.48 */#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{--cr-stack:"J16 edited in place (font family only); this rule already won every property it declares";margin:0;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-weight:800;font-size:40px;letter-spacing:normal;line-height:1.15;color:var(--hac,#c8202e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--hac,#c8202e)}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}/* 1116: the box was never the limit - cr-hd4-styles already sets max-width:100% on a THREE-id selector that outranks this one. The real limit is #cr-hd2-mid itself: 150px at Normal, 99px at Large and 60px at Larger, because the Text size control (939) is a real :root zoom and the CSS viewport shrinks with it - so a screen name that fitted at Normal ellipsised at the two sizes nobody had measured. Theo caught that. 86% plus the clamp below fits the longest name at all three. */body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:clamp(12px,4.4vw,20px) !important;letter-spacing:0}html[data-cr-text="xl"] body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}/* 1116: at Larger the middle slot is 60 CSS px - the controls eat a 300px viewport - and the shortest useful name still needs 91. The only way to widen it is shrinking tap targets below the 44px floor, so the name is HIDDEN at that one size, which is exactly what the retail slogan already does below 438px and for the same recorded reason: a truncated name reads as a broken app, an absent one reads as a clean toolbar. Normal and Large keep the name. *//* --cr-stack:"beats the 3-id !important font-size:20px in cr-hd3-styles ON PURPOSE, and only for the shared-screen head. Two !important rules are settled by specificity, so 2 ids + an attribute LOST to 3 ids and the clamp never applied - the names measured identical at all three zooms, which is what a silently-losing rule looks like." */#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#c8202e)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{--cr-stack:"J16 edited in place (font family only); this rule already won every property it declares";font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font-weight:400;font-size:15px;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#c8202e);box-shadow:0 0 0 3px rgba(200,32,46,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}
 /* Build 372: search lives on the banner — the header copy is retired everywhere. */
 #cr-hd2-bar #headSearch,#cr-hd2-bar .cr-ib.searchbtn{display:none !important}
 #cr-hd2-bar.searching #headSearch{display:none !important}}#cr-hd2-bar.searching #headSearch{display:block;flex:1 1 100%;order:9;margin-top:8px}#cr-hd2-bar{flex-wrap:nowrap}#cr-hd2-bar.searching{flex-wrap:wrap}header.site #cr-hd2-bar #navBtn{display:flex !important}#cr-hd2-util{display:flex;align-items:center;gap:6px;flex:0 0 auto}#cr-hd2-util>*{flex:0 0 auto}@media (max-width:560px){#cr-hd2-util #crPortalChip{display:none}}header.site #cr-search-btn{display:none}header.site #whoami,header.site #jobMenuSel,header.site #brandLogo{display:none}body .site{--htint:#1a1215;--hbg:#1a1215;--hln:#3a2f22;--hin:#c8202e;--hmt:#d8c9a8;--hdm:#9a917f;--hac:#c8202e;--hoc:#1a1a1a;--hsf:#241c1a;--tgrad:linear-gradient(100deg,var(--red),#c8202e 55%,#e35c63)}body[data-crm-head="insurance"] .site{--htint:var(--ct-crmhead-bg,var(--ct-head-bg));--hbg:var(--ct-crmhead-bg,var(--ct-head-bg));--hln:var(--ct-crmhead-line,var(--ct-head-line));--hin:var(--ct-crmhead-ink,var(--ct-head-ink));--hmt:var(--ct-crmhead-ink,var(--ct-head-ink));--hdm:var(--ct-crmhead-dim,var(--ct-head-dim));--hac:var(--ct-crmhead-kick,var(--ct-head-kick));--hoc:var(--ct-crmhead-bg,var(--ct-head-bg));--hsf:var(--ct-crmhead-surface,var(--ct-surface));--tgrad:linear-gradient(100deg,var(--ct-head-kick),var(--ct-head-ink))}body[data-crm-head="retail"] .site{--htint:#243342;--hbg:linear-gradient(180deg,#243342,#16202b);--hln:#2f3f4f;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.72);--hac:#8fb4d8;--hoc:#141c24;--hsf:#243342;--tgrad:linear-gradient(100deg,#8fb4d8,#fff)}
@@ -69701,7 +69777,7 @@ body.standalone #cr-can{padding-bottom:calc(88px + env(safe-area-inset-bottom,0p
 #cr-can .agepill.hot{background:rgba(255,107,120,.16);color:var(--ccm-rd,#ff6b78)}
 #cr-can .tarppill{background:rgba(91,155,213,.16);color:#8fc0f0}
 /* the door in the hub's tab strip */
-#cr-ch2 .tabbar .cc-analytics{margin-left:auto;flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:transparent;border:1px solid rgba(4,120,87,.30);color:var(--ccm-ac,#34D399);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+#cr-ch2 .tabbar .cc-analytics{margin-left:auto;flex:0 0 auto;width:44px;height:44px;/* J16: was 34x34 */border-radius:10px;background:transparent;border:1px solid rgba(4,120,87,.30);color:var(--ccm-ac,#34D399);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 #cr-ch2 .tabbar .cc-analytics svg{width:17px;height:17px}
 </style>
 <script id="cr-can-script">
@@ -69939,7 +70015,7 @@ OPEN: OPEN, WON: WON };
 .cd-crmtag{margin-left:auto;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--cc,#c9a227);}
 .cd-addr{font-size:11px;color:#98928a;/* 943: was #77726a, 3.54:1 dark */}
 .cd-meta{display:flex;gap:7px;align-items:center;margin-top:5px;flex-wrap:wrap;}
-.cd-stchip{display:inline-block;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;padding:2.5px 9px;border-radius:999px;background:transparent;border:1px solid var(--sc,#4a4d52);color:var(--sc,#b5ad9e);}
+.cd-stchip{display:inline-block;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;padding:2.5px 9px;border-radius:999px;background:transparent;border:1px solid var(--sc,#4a4d52);color:var(--scd,var(--sc,#b5ad9e));}
 .cd-tch{font-size:11px;color:#8f8a80;}
 .cd-rep{font-size:11px;font-weight:800;color:#e2574a;margin-left:auto;}
 .cd-cta{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;align-self:center;margin-right:11px;}
@@ -69979,7 +70055,7 @@ OPEN: OPEN, WON: WON };
 .cd-frow{display:flex;align-items:center;gap:8px;padding:5px 2px;color:#c9c3b6;font-size:13px;cursor:pointer;}
 .cd-frow .bx{width:15px;height:15px;border:1.4px solid #4a4d52;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#15171b;flex:0 0 auto;}
 .cd-frow.on .bx{background:#3fae6a;border-color:#3fae6a;font-weight:800;}
-.cd-frow .c{margin-left:auto;font:700 11px ui-monospace,Menlo,monospace;color:#6d6a63;}
+.cd-frow .c{margin-left:auto;font:700 11px ui-monospace,Menlo,monospace;color:#908b83;}/* J16: was #6d6a63, 3.50:1 -> 5.58 */
 .cd-sheet{position:fixed;inset:0;background:rgba(8,9,11,.7);display:none;z-index:9997;}
 .cd-sheet.open{display:flex;align-items:flex-start;justify-content:center;}
 .cd-sheet .panel{background:#17181b;border:1px solid #2e3136;border-top:0;border-radius:0 0 16px 16px;width:100%;max-width:560px;max-height:86%;overflow:auto;overscroll-behavior-x:contain;}
@@ -70071,7 +70147,7 @@ OPEN: OPEN, WON: WON };
 :root[data-theme="rb-light"] .cd-grp .ft .n{background:#f2efe6;color:#6b5a2e;}
 :root[data-theme="rb-light"] .cd-frow{color:#3d3d3d;}
 :root[data-theme="rb-light"] .cd-frow .bx{border-color:#cfcfcf;color:#ffffff;}
-:root[data-theme="rb-light"] .cd-frow .c{color:#8f8f8f;}
+:root[data-theme="rb-light"] .cd-frow .c{color:#6b6b6b;}/* J16: was #8f8f8f, 3.13:1 -> 5.24 */
 :root[data-theme="rb-light"] .cd-sheet .panel{background:#ffffff;border-color:#e6e6e6;}
 :root[data-theme="rb-light"] .cd-sheet .ph{border-bottom-color:#efefef;background:#ffffff;}
 :root[data-theme="rb-light"] .cd-sheet .ph .t{color:#141414;}
@@ -70103,7 +70179,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .jabox{background:
 body:not(.claim-insurance):not(.claim-community) #projectView .jabox .jbl{color:var(--rbe-ink);}
 body:not(.claim-insurance):not(.claim-community) #projectView .jan{font:700 11px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:1px 8px;}
 body:not(.claim-insurance):not(.claim-community) #projectView .jan.zero{opacity:.55;}
-.heroNm{font:800 18px Georgia,'Times New Roman',serif;min-width:0;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}
+.heroNm{font:800 18px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;min-width:0;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}
 #projectView .poPfx{font-weight:800;opacity:.9;color:var(--rbe-po2,#dce3ec);/* 685: was gradient-clipped text */}
 .hcontact{margin-left:auto;text-align:right;flex:0 0 auto;line-height:1.35;display:flex;flex-direction:column;align-items:flex-end;}
 .hcontact .hph{font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-acclt);text-decoration:none;}
@@ -70168,8 +70244,8 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
    per CRM: 5.20 / 5.24 / 5.21 / 5.36:1. */
 :root[data-theme="rb-light"] body:not([data-crm-head="retail"]) #cr-hd2-bar #addProjectBtn,
 :root[data-theme="rb-light"] body:not([data-crm-head="retail"]) header.site #addProjectBtn{
-  background:var(--hac,#376CA0) !important;color:#ffffff !important;
-  border-color:var(--hac,#376CA0) !important;}
+  background:var(--crm-id,var(--hac,#376CA0)) !important;color:var(--crm-id-ink,#ffffff) !important;
+  border-color:var(--crm-id,var(--hac,#376CA0)) !important;}   /* J16: the CRM hue, not the head's accent */
 #crBanner .cbmenu{display:none;position:absolute;top:100%;left:0;min-width:215px;background:var(--bink);
   border:1px solid var(--bline);border-radius:0 0 12px 12px;box-shadow:0 18px 40px rgba(0,0,0,.55);z-index:210;padding:6px 0;}
 #crBanner .cbdd.open .cbmenu{display:block;}
@@ -70486,7 +70562,7 @@ var phCrm = '';
 var PH_CRMS = [
   { k:'retail',    label:'Retail',    dot:'#c8202e' },
   { k:'insurance', label:'Insurance', dot:'#2dd4bf' },
-  { k:'community', label:'Community', dot:'#8ad0f5' }
+  { k:'community', label:'Community', dot:'#34d399' }   /* J16: the one Community hue (was a light blue) */
 ];
 /* An untyped job counts as retail — the same default crmNow() and crmHead()
    apply everywhere else, so the buckets add up to the whole. */
@@ -72374,8 +72450,13 @@ window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
       b.setAttribute('title', dark ? 'Switch to light' : 'Switch to dark');
     }
   }
+  /* J16: the library and Insurance share <body data-rltheme>, so they must read
+     ONE answer. Delegates to cr-instheme's cur() (parsed before this boots, at
+     DOMContentLoaded); the fallback is the same two-key rule. */
   function saved(){
-    try{ return localStorage.getItem(KEY)||'docket'; }catch(e){ return 'docket'; }
+    try{ if(window.CardinalInsTheme && typeof window.CardinalInsTheme.get === 'function') return window.CardinalInsTheme.get(); }catch(e){}
+    try{ var v = localStorage.getItem(KEY); if(v === 'siren' || v === 'docket') return v;
+         return localStorage.getItem('cardinal.theme.rb') === '1' ? 'docket' : 'siren'; }catch(e){ return 'siren'; }
   }
   function boot(){
     apply(saved());
@@ -72481,9 +72562,18 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
      ever moving this again — the question is not "which row looks tidier", it
      is "is that row displayed". */
 
+  /* 1418 J16 (judge 16, MAJOR 1): with the key UNSET this read 'docket' — white paper
+     — while the app around it was dark, so Insurance was the one portal that did
+     not follow the theme. An explicit choice still wins; with none, the app
+     theme decides (cardinal.theme.rb '1' = light = docket, else siren). The
+     catch mirrors the app's own: if storage throws the app is dark, so siren. */
   function cur(){
-    try { return localStorage.getItem(KEY) === 'siren' ? 'siren' : 'docket'; }
-    catch(e){ return 'docket'; }
+    try {
+      var v = localStorage.getItem(KEY);
+      if (v === 'siren' || v === 'docket') return v;
+      return localStorage.getItem('cardinal.theme.rb') === '1' ? 'docket' : 'siren';
+    }
+    catch(e){ return 'siren'; }
   }
   function paint(btn, t){
     var dark = t === 'siren';
@@ -73032,7 +73122,7 @@ body.standalone .cr-cadj-bd{padding-bottom:calc(88px + env(safe-area-inset-botto
 #rlLibPanel .lb-photos-stat{display:block;margin-top:6px;font-size:11px;color:var(--lb-dim,#6B615D);}
 #rlLibPanel .lb-ccp-v{cursor:zoom-in;}
 #rlLibPanel .lb-ccp-v input{display:none;}
-#rlLibPanel .lb-ccfile button{width:100%;margin-top:7px;border-radius:10px;padding:12px 10px;cursor:pointer;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;border:0;background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);}
+#rlLibPanel .lb-ccfile button{width:100%;margin-top:7px;border-radius:10px;padding:12px 10px;cursor:pointer;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;border:0;background:var(--lb-accent-bg,var(--lb-accent,#C4180F));color:var(--lb-accent-ink,#fff);}
 #rlLibPanel .lb-ccfile button.ghost{background:transparent;border:1px solid var(--lb-line,#EAE5E3);color:var(--lb-ink,#17181B);}
 #rlLibPanel .lb-ccfile button:disabled{opacity:.55;cursor:default;}
 #rlLibPanel .lb-cc label:not(.lb-ccp){display:block;margin:9px 0 4px;}
@@ -73084,10 +73174,10 @@ body[data-rltheme="docket"] #rlAskBtn,body[data-rltheme="docket"] #rlLibPanel{
 body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
   --lb-surface:#16161B;--lb-surface2:#0E0E12;--lb-surface3:#1C1C22;
   --lb-ink:#F4F1F1;--lb-ink2:#9A9AA3;--lb-line:#26262E;--lb-line2:#33333C;
-  --lb-accent:#E5484D;--lb-accent-ink:#FFFFFF;--lb-warn-bg:#2A1416;--lb-warn-ink:#FFB4B4}
+  --lb-accent:#E5484D;--lb-accent-bg:#C8202E;--lb-accent-ink:#FFFFFF;--lb-warn-bg:#2A1416;--lb-warn-ink:#FFB4B4}
 #rlAskBtn{position:fixed;right:16px;bottom:calc(104px + env(safe-area-inset-bottom,0px));
   z-index:9995;display:none;align-items:center;gap:8px;
-  background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0;border-radius:999px;
+  background:var(--lb-accent-bg,var(--lb-accent,#C4180F));color:var(--lb-accent-ink,#fff);border:0;border-radius:999px;
   padding:13px 18px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.06em;
   text-transform:uppercase;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.42)}
 #resourceLibraryView.rl-open ~ #rlAskBtn,body.rl-showing #rlAskBtn{display:flex}
@@ -73118,7 +73208,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 #rlLibPanel .lb-m{max-width:88%;padding:10px 13px;border-radius:12px;font-size:15px;line-height:1.5}
 #rlLibPanel .lb-m.bot{align-self:flex-start;background:var(--lb-surface3,#F3EFEE);
   color:var(--lb-ink,#17181B);border:1px solid var(--lb-line,#EAE5E3)}
-#rlLibPanel .lb-m.me{align-self:flex-end;background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff)}
+#rlLibPanel .lb-m.me{align-self:flex-end;background:var(--lb-accent-bg,var(--lb-accent,#C4180F));color:var(--lb-accent-ink,#fff)}
 #rlLibPanel .lb-m.err{background:var(--lb-warn-bg,#FBE3E1);color:var(--lb-warn-ink,#A11020);
   border-color:var(--lb-accent,#C4180F)}
 #rlLibPanel .lb-m .filed{display:block;margin-top:6px;font:800 11px ui-monospace,Menlo,monospace;
@@ -73139,7 +73229,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 #rlLibPanel .lb-ask input{flex:1;min-width:0;padding:11px 12px;border-radius:10px;
   border:1px solid var(--lb-line2,#DED8D6);background:var(--lb-surface,#fff);
   color:var(--lb-ink,#17181B);font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif}
-#rlLibPanel .lb-ask button{background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0;
+#rlLibPanel .lb-ask button{background:var(--lb-accent-bg,var(--lb-accent,#C4180F));color:var(--lb-accent-ink,#fff);border:0;
   border-radius:10px;padding:11px 16px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer}
 #rlLibPanel .lb-note{padding:0 16px 12px;font-size:11px;color:var(--lb-ink2,#6E6663);line-height:1.5}
 #rlLibPanel .lb-form{display:none;padding:12px 16px;border-top:1px solid var(--lb-line,#EAE5E3);gap:9px;
@@ -73156,7 +73246,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
 #rlLibPanel .lb-form .row button,#rlLibPanel .lb-cc .row button{flex:1;border-radius:10px;padding:12px 10px;cursor:pointer;
   font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;border:1px solid var(--lb-line2,#DED8D6);
   background:var(--lb-surface2,#FAF8F7);color:var(--lb-ink,#17181B)}
-#rlLibPanel .lb-form .row button.go,#rlLibPanel .lb-cc .row button.go{background:var(--lb-accent,#C4180F);color:var(--lb-accent-ink,#fff);border:0}
+#rlLibPanel .lb-form .row button.go,#rlLibPanel .lb-cc .row button.go{background:var(--lb-accent-bg,var(--lb-accent,#C4180F));color:var(--lb-accent-ink,#fff);border:0}
 #rlLibPanel .lb-chosen{font-size:13px;color:var(--lb-ink2,#6E6663)}
 #rlPageTeam .lb-add{margin:0 0 10px;background:none;border:1px dashed var(--ct-line-strong,#DED8D6);
   color:var(--ct-ink-2,#6E6663);border-radius:9px;padding:9px 12px;
@@ -74847,8 +74937,12 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
          the client list transparent, and the retail home ghosted through the
          fixed overlay. Re-stamp the stored theme instead: same key instheme
          uses, self-healing if its delayed mount ever loses the boot race. */
+      /* J16: the same answer cr-instheme gives (it derives from the app theme
+         when the key is unset); re-reading only the key here would re-stamp
+         docket every 600ms and undo it. */
       var appTh = 'docket';
-      try{ if(localStorage.getItem('cardinalRLTheme') === 'siren') appTh = 'siren'; }catch(e){}
+      try{ appTh = (window.CardinalInsTheme && window.CardinalInsTheme.get) ? window.CardinalInsTheme.get()
+                 : (localStorage.getItem('cardinalRLTheme') === 'siren' ? 'siren' : 'docket'); }catch(e){}
       if(document.body.getAttribute('data-rltheme') !== appTh){
         document.body.setAttribute('data-rltheme', appTh);
       }
@@ -75549,7 +75643,8 @@ body.cr-lnav-on .wrap:not(.masthead){max-width:var(--lnav-cap)}
   font-weight:700;font-size:11px;letter-spacing:-.01em;color:var(--rbe-mute,#9aa0a8);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #cr-lnav .lnav-crm button:last-child{border-right:0}
-#cr-lnav .lnav-crm button.on{color:var(--lnav-on,#fff);background:var(--lnav-crmc,#c8202e)}
+#cr-lnav .lnav-crm button.on{color:var(--lnav-seg-on,var(--lnav-on,#fff));background:var(--lnav-seg,var(--lnav-crmc,#c8202e))}
+:root[data-theme="rb-light"] #cr-lnav .lnav-crm button.on{color:var(--lnav-seg-on-lt,var(--lnav-on,#fff));background:var(--lnav-seg-lt,var(--lnav-crmc,#c8202e))}
 
 /* 952: the Card Stack. Each section is one of the app's own cards - the
    heading is the card's top with a 3.5px portal strip (--lnav-strip, set per
@@ -75987,6 +76082,17 @@ var crm = activeCrm();
 h.style.setProperty('--lnav-crmc', CRM_COLOR[crm] || CRM_COLOR.retail);
 /* 1393: white on community's mint was 1.92:1, on production's orange 2.03 — each accent names its ink */
 h.style.setProperty('--lnav-on', ({ community:'#062b1f', production:'#1a1205', sales:'#1a1205' })[crm] || '#fff');
+/* J16: the Retail | Insurance | Community SEGMENT wears the active CRM's identity
+   hue (dark: fill, ink; light: fill, ink). Portals with no identity hue keep
+   exactly what they had (--lnav-crmc / --lnav-on). White on #c8202e 5.67, ink on
+   #2dd4bf 9.18, on #34d399 7.96; light white on #0f766e 5.47, on #047857 5.48. */
+var SEG16 = ({ retail:['#c8202e','#ffffff','#c8202e','#ffffff'],
+               insurance:['#2dd4bf','#04201c','#0f766e','#ffffff'],
+               community:['#34D399','#062b1f','#047857','#ffffff'] })[crm] || null;
+h.style.setProperty('--lnav-seg', SEG16 ? SEG16[0] : (CRM_COLOR[crm] || CRM_COLOR.retail));
+h.style.setProperty('--lnav-seg-on', SEG16 ? SEG16[1] : (({ production:'#1a1205', sales:'#1a1205' })[crm] || '#fff'));
+h.style.setProperty('--lnav-seg-lt', SEG16 ? SEG16[2] : (CRM_COLOR[crm] || CRM_COLOR.retail));
+h.style.setProperty('--lnav-seg-on-lt', SEG16 ? SEG16[3] : (({ production:'#1a1205', sales:'#1a1205' })[crm] || '#fff'));
 h.style.setProperty('--lnav-wash', CRM_WASH[crm] || CRM_WASH.retail);
     h.style.setProperty('--lnav-ink-dk', CRM_INK[crm]    || CRM_INK.retail);
     h.style.setProperty('--lnav-ink-lt', CRM_INK_LT[crm] || CRM_INK_LT.retail);
@@ -76632,29 +76738,40 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    The whole strip is the height the 52px circle alone used to be. .pcirc
    keeps carrying the stage colour — it is only reshaped from a sphere into
    the cell's top edge, so the semantic colour mapping never leaves JS.     */
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow{
+:root body:not(.claim-insurance):not(.claim-community) .piperow{
+  --cr-stack:"J16 the dark strip rule, widened to light: dark already beat the base here; light now does too, and the base sphere rules stay for Claims/Community bodies";
   background:var(--nv-well,#0A0E16);border-radius:5px;padding:1px;gap:1px;
   box-shadow:var(--nv-sink,inset 0 1px 2px rgba(0,0,0,.5));
 }
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn{
+:root body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn{
+  --cr-stack:"J16 the dark strip rule, widened to light: dark already beat the base here; light now does too, and the base sphere rules stay for Claims/Community bodies";
   flex:1;background:var(--nv-cell,#0D1220);border:0;border-radius:0;
   padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;gap:1px;
 }
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:first-child{border-radius:4px 0 0 4px}
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:last-child{border-radius:0 4px 4px 0}
+:root body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:first-child{border-radius:4px 0 0 4px}
+:root body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:last-child{border-radius:0 4px 4px 0}
 /* the sphere flattens into the top edge — same colour, no gloss */
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pcirc{
+:root body:not(.claim-insurance):not(.claim-community) .piperow .pcirc{
+  --cr-stack:"J16 the dark strip rule, widened to light: dark already beat the base here; light now does too, and the base sphere rules stay for Claims/Community bodies";
   width:100%;height:3px;border-radius:0;margin:-8px 0 6px;
   font-size:0;line-height:0;color:transparent;box-shadow:none;
   background-image:none;
 }
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pcount{
+:root body:not(.claim-insurance):not(.claim-community) .piperow .pcount{
   font:800 18px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--nv-ink,#dfe5ee);order:2}
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .plabel{
+:root body:not(.claim-insurance):not(.claim-community) .piperow .plabel{
   font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;
   color:var(--nv-ink2,#8d97a6);order:3}
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pmoney{
+:root body:not(.claim-insurance):not(.claim-community) .piperow .pmoney{
   font:700 11px ui-monospace,Menlo,monospace;color:var(--nv-ink2,#8d97a6);order:4}
+/* J16: the same strip in LIGHT — white card, a pale recessed well, near-white
+   cells. Count #1b1f27 on #f7f8fa 15.6:1, label/money #535c69 6.4:1. These are
+   the only light values; the eight rules above are shared with dark verbatim.
+   (The light glossy-sphere rules stay in the file: Claims and Community bodies
+   are still outside this strip, exactly as in dark.) */
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) .piperow{
+  --nv-well:#dde1e7;--nv-cell:#f7f8fa;--nv-ink:#1b1f27;--nv-ink2:#535c69;
+  --nv-sink:inset 0 1px 2px rgba(15,23,42,.10);}
 
 /* ── client rows: sunk, at Theo's pick ─────────────────────────────────── */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .kplrow{
@@ -76887,15 +77004,13 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* ── DARK ────────────────────────────────────────────────────────────────── */
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#ef6b6b}
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#34D399}
-:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx{color:#f0c651}  /* 1299: was data-k="landing"; 1165 renamed the row's label to "Switch portal" and data-k follows the label, so this matched nothing for 130 builds */
+/* J16 (judge 16 polish): "Switch portal" is a row, not a portal door — the gold it
+   carried (539's literal-yellow LANDING, re-matched at 1299 after 1165 renamed the
+   row) is DELETED in both themes, so it takes the rail's normal ink like Clients. */
 
 /* ── LIGHT ───────────────────────────────────────────────────────────────── */
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#c8202e}
 :root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#047857}
-:root[data-theme="rb-light"] #cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx{color:#8a6100}  /* 539 chose literal yellow here (1.47:1, with the number in front of him); 1035 asked, and
-     the call came back "I trust you would do it best" (24 Aug). Best = the obsidian-tiles
-     precedent (545/557): the SAME hue deepened, never a swap — dark keeps the true yellow,
-     light gets 538's amber, computed for this exact rail (4.99 / 5.54 / 4.55). */
 </style>
 <style id="cr-nvl-styles">
 /* ══ Build 546 · lift, two navigators, navy leads, obsidian estimates+reports ══
@@ -90669,7 +90784,7 @@ body:not(.cr-lnav-on) #navMenu .navsec::after{
 body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{background:transparent !important;color:#e35c63 !important;border-top:1px dashed rgba(255,255,255,.12) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint{background:transparent !important;color:#9aa0a8 !important;border-top:1px solid rgba(255,255,255,.07) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,255,.1) !important;color:#cfd6df !important;}
-body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !important;color:#9aa2ae !important;border-top:1px solid rgba(255,255,255,.06) !important;margin-top:4px;}
+#navMenu [data-cr-footer]{background:transparent !important;color:#9aa2ae !important;border-top:1px solid rgba(255,255,255,.06) !important;margin-top:4px;}/* J16: every width (the desktop popover too) */
 /* 1115 · the drawer's bottom bar: the build stamp on the left, a small
    sign-out on the right. NOT scoped to body:not(.cr-lnav-on) like the rule
    above it — that one is a colour override for the drawer, this is the
@@ -90723,7 +90838,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
   color:#5A6472 !important;border-top:1px solid rgba(0,0,0,.09) !important;}
 :root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{
   background:rgba(0,0,0,.07) !important;color:#3B4450 !important;}
-:root[data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu [data-cr-footer]{
+:root[data-theme="rb-light"] #navMenu [data-cr-footer]{
   color:#5A6472 !important;border-top:1px solid rgba(0,0,0,.08) !important;}
 #navMenu .cr-df-out{margin-left:auto;flex:none;width:44px;height:44px;padding:13px;
   box-sizing:border-box;background:none;border:0;border-radius:10px;cursor:pointer;
@@ -92135,11 +92250,19 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
    AR view's #cr-ar-view .crar-pill rules; those stay and win inside the dashboard). */
 .crar-pill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600;line-height:1.35;}
 .crar-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;}
-.crar-pill.draft{color:#475569;background:#EEF2F7;}
-.crar-pill.sent{color:#1D4ED8;background:#E7EFFD;}
-.crar-pill.part{color:#B45309;background:#FDF1E2;}
-.crar-pill.paid{color:#047857;background:#E4F5EE;}
-.crar-pill.over{color:#B91C1C;background:#FCEAEA;}
+.crar-pill.draft{color:#c2cbd8;background:rgba(148,163,184,.14);}
+.crar-pill.sent{color:#a5c0ff;background:rgba(29,78,216,.24);}
+.crar-pill.part{color:#f5b971;background:rgba(180,83,9,.24);}
+.crar-pill.paid{color:#6ee7b7;background:rgba(4,120,87,.24);}
+.crar-pill.over{color:#fca5a5;background:rgba(185,28,28,.24);}
+/* J16: the cream "Deposit Paid" pill on the dark job card. Status hue at a low
+   alpha, the ink lightened: 8.3-9.5:1 on the card (#141619). Light: as shipped.
+   The AR dashboard's own #cr-ar-view .crar-pill rules are untouched and still win there. */
+:root[data-theme="rb-light"] .crar-pill.draft{color:#475569;background:#EEF2F7;}
+:root[data-theme="rb-light"] .crar-pill.sent{color:#1D4ED8;background:#E7EFFD;}
+:root[data-theme="rb-light"] .crar-pill.part{color:#B45309;background:#FDF1E2;}
+:root[data-theme="rb-light"] .crar-pill.paid{color:#047857;background:#E4F5EE;}
+:root[data-theme="rb-light"] .crar-pill.over{color:#B91C1C;background:#FCEAEA;}
 
 /* the offline payment modal — porcelain sheet, above everything */
 /* 1218: tokenised. The sheet is reached from the AR dashboard and from the

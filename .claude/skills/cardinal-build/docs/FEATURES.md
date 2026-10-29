@@ -10265,3 +10265,36 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
   - "Tell the office".
 - **Gate:** `gate_1417.mjs`, 51 checks; red 37 on 1416.
 - **Open:** a draft typed in one job's box stays when you open another job's thread.
+
+## Build 1418: colour after judge 16 — one identity hue per CRM, Insurance follows the app theme
+- **Insurance follows the app theme.**
+  - With no stored `cardinalRLTheme`, `cr-instheme`'s `cur()` derives from the app theme (light → docket, else siren).
+  - The Library's `saved()` and its 600ms re-stamp read the same answer.
+  - `CardinalRBTheme.toggle()` writes BOTH keys from any portal.
+  - A stored choice still wins, so a phone that ever pressed the old insurance toggle keeps it until the switch is flipped once.
+- **Siren is now the default Insurance surface.**
+  - `.cr-xl-card` is tokenised.
+  - Claim status chips pass in both themes.
+  - `.dbringin` / `b.db-due` / `#commsBackBtn` / mention chips / map note / Library Ask-File are fixed.
+- **Islands in dark** (dark base, light under rb-light): Reports `.hstat`, `.tchip`, `.crar-pill`, `.chatempty`.
+- **Other ink and size fixes:**
+  - Sub-floor inks and sub-11px text fixed: history controls, editor `<small>`, avatar initial hues (all ≥4.82), light other-month days, tile money, `.cd-stchip`.
+  - Desktop menu popover is dark in dark mode, with 15px rows.
+  - Georgia → the app sans on screen (print templates untouched).
+- **One identity hue per CRM:**
+  - Hues: retail `#c8202e`, insurance `#2dd4bf`, community `#34d399`. On light: `#c8202e` / `#0f766e` / `#047857`.
+  - Where it applies: portal pill dot, client-list names, the rail segment, the header + and the installed bottom-bar +.
+  - Production board and Sales Floor keep their own.
+- **Light pipeline:** the glossy spheres are a flat strip with a 3px stage rule.
+- **Taps:** `.cre-del` is 44×44 with an aria-label, and the Community chart button is 44.
+- **"Switch portal"** loses its gold row.
+- **Supersedes:**
+  - 952 (rail segment slate/red).
+  - 539 ("Switch portal" gold).
+  - The client-list "CRM badge" colours.
+  - These were Theo's earlier picks, superseded under his 29 Oct "do your suggestions on all" instruction. Each is a labelled edit in `patch_1418_colour.py` (`S5 rail segment`, the two Switch-portal edits).
+- **Not done (settled decisions, Theo's to reverse):**
+  - Forms 1 (`#projModal` stays as is).
+  - 1217 (estimate builder "dark chrome, paper document").
+  - The Library's own theme buttons still write only `cardinalRLTheme`.
+- **Gate:** `gate_1418.mjs`, 86 checks; red 59 on 1417. `gate_1181`, `gate_1035`, `gate_952` and `gate_1299` were updated (marked `J16 — DELIBERATELY CHANGED`).

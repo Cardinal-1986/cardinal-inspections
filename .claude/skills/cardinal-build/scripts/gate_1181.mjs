@@ -104,7 +104,11 @@ const insBefore = s.insTheme, appBefore = s.appTheme;
 await flip(); await page.waitForTimeout(700);
 let after = await look();
 ok(after.insTheme !== insBefore, `on insurance the row flips the INSURANCE theme (${insBefore} -> ${after.insTheme})`);
-ok(after.appTheme === appBefore, 'and it does NOT touch the app theme there');
+/* J16 (judge 16 MAJOR 1) — DELIBERATELY CHANGED. 1181 kept the two palettes
+   independent; Theo's 9/10 programme made Insurance follow the app theme: with no
+   stored choice it derives from cardinal.theme.rb, and the one toggle writes BOTH
+   keys. So the flip on insurance now moves the app theme WITH it (was: must not). */
+ok(after.appTheme !== appBefore, `and the app theme follows it (J16: one toggle, both keys) ("${appBefore}" -> "${after.appTheme}")`);
 ok(after.pressed !== s.pressed, `the row shows insurance's own state (${s.pressed} -> ${after.pressed})`);
 await flip(); await page.waitForTimeout(700);
 after = await look();
@@ -116,7 +120,8 @@ const rAppBefore = s.appTheme, rInsBefore = s.insTheme;
 await flip(); await page.waitForTimeout(700);
 after = await look();
 ok(after.appTheme !== rAppBefore, `on retail the same row flips the APP theme ("${rAppBefore}" -> "${after.appTheme}")`);
-ok(after.insTheme === rInsBefore, 'and it does NOT touch the insurance theme there');
+/* J16 — DELIBERATELY CHANGED, same reason: the retail flip carries insurance with it. */
+ok(after.insTheme !== rInsBefore, `and the insurance theme follows it (J16) (${rInsBefore} -> ${after.insTheme})`);
 await flip(); await page.waitForTimeout(700);
 
 await browser.close();

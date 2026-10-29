@@ -78,7 +78,11 @@ if(r){
   need('a 3.5px strip crosses the card top', r.stripH==='3.5px', String(r.stripH));
   need('retail strip is the brushed-steel gradient', /linear-gradient/.test(String(r.stripBg)), String(r.stripBg).slice(0,60));
   need('heading band is FLUSH with the card body', Math.abs(r.secW-r.bodyW)<=1, r.secW+' vs '+r.bodyW);
-  need('retail chip is slate blue, not red', r.chipBg==='rgb(62, 108, 168)', String(r.chipBg));
+  /* J16 (judge 16 MINOR 13) — DELIBERATELY CHANGED: the Retail | Insurance | Community
+     SEGMENT now wears the active CRM's one identity hue (retail #c8202e, insurance #2dd4bf,
+     community #34d399), so it agrees with the portal pill and the header +. Only the
+     segment moved; 952's strip and icon palette below are asserted unchanged. */
+  need('retail chip is the retail identity red (J16; was slate blue)', r.chipBg==='rgb(200, 32, 46)', String(r.chipBg));
   need('retail icons are steel', r.iconFill==='rgb(170, 180, 192)', String(r.iconFill));
   const cb=parseRgb(r.chipBg), ci=parseRgb(r.chipInk);
   need('retail chip label clears 4.5:1', cb&&ci&&ratio(cb,ci)>=4.5, cb&&ci?ratio(cb,ci).toFixed(2):'unparsed');
@@ -90,9 +94,9 @@ if(r){
 await chip('insurance');
 r=await probe();
 need('insurance strip is red', !!r && r.stripBg==='rgb(200, 32, 46)', r?String(r.stripBg).slice(0,60):'no rail');
-need('insurance chip is red', !!r && r.chipBg==='rgb(200, 32, 46)', r?String(r.chipBg):'');
+need('insurance chip is the insurance identity teal (J16; was red)', !!r && r.chipBg==='rgb(45, 212, 191)', r?String(r.chipBg):'');
 need('insurance icons are the lighter cardinal', !!r && r.iconFill==='rgb(227, 92, 99)', r?String(r.iconFill):'');
-need('no teal anywhere in the insurance rail', !!r && ![r.stripBg,r.chipBg,r.iconFill].some(v=>/45,\s*212,\s*191/.test(String(v))),
+need('no teal in the insurance rail outside the segment (J16: strip + icons stay red)', !!r && ![r.stripBg,r.iconFill].some(v=>/45,\s*212,\s*191/.test(String(v))),
   r?[r.stripBg,r.chipBg,r.iconFill].join(' | ').slice(0,80):'');
 
 /* ── community ── */

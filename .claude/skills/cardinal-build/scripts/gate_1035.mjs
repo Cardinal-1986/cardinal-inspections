@@ -51,23 +51,31 @@ async function probe(html, light) {
        chose at 539 silently fell off. Read the row by what it does, not by a
        name that moved. */
     var el = document.querySelector('#cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx');
-    return el ? getComputedStyle(el).color : 'MISSING';
+    /* J16: and a NORMAL row beside it, to compare against */
+    var nb = document.querySelector('#cr-lnav .lnav-item[data-k="clients"] .lnav-tx');
+    return (el ? getComputedStyle(el).color : 'MISSING') + '|' + (nb ? getComputedStyle(nb).color : 'MISSING');
   })()`);
   await browser.close();
   return ink;
 }
 
+/* J16 (judge 16 polish) — DELIBERATELY CHANGED. 539 painted the Landing door literal
+   yellow (1035 deepened it to amber in light). "Switch portal" is a row now, not a
+   door, and the judge read the gold as stray; the coordinator's brief sends it to the
+   rail's NORMAL ink in both themes. So the row must match its neighbour (Clients)
+   and must not be the yellow or the amber. */
 function judge(dark, lite) {
   const fails = [];
-  if (dark !== 'rgb(240, 198, 81)') fails.push(`Landing dark ${dark} (want the true yellow rgb(240, 198, 81))`);
-  if (lite !== 'rgb(138, 97, 0)') fails.push(`Landing light ${lite} (want 538's amber rgb(138, 97, 0))`);
+  const [d, dn] = String(dark).split('|'), [l, ln] = String(lite).split('|');
+  if (d === 'MISSING' || d !== dn || d === 'rgb(240, 198, 81)') fails.push(`Switch portal dark ${d} (want the normal rail ink ${dn}, not the yellow)`);
+  if (l === 'MISSING' || l !== ln || l === 'rgb(138, 97, 0)') fails.push(`Switch portal light ${l} (want the normal rail ink ${ln}, not the amber)`);
   return fails;
 }
 
 const html = readFileSync(FILE, 'utf8');
 const fails = judge(await probe(html, false), await probe(html, true));
 for (const f of fails) console.log('  FAIL ' + f);
-console.log(fails.length ? `GATE 1035 RED — ${fails.length} failure(s)` : 'GATE 1035 GREEN — yellow in dark, amber in light');
+console.log(fails.length ? `GATE 1035 RED — ${fails.length} failure(s)` : 'GATE 1035 GREEN — Switch portal wears the normal rail ink in both themes (J16)');
 
 if (CONTROL) {
   const chtml = readFileSync(CONTROL, 'utf8');
