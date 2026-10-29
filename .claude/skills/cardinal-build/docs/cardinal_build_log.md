@@ -37472,3 +37472,44 @@ The name was the only flexible item, so it was the one that gave way.
 - `gate_types` 1505 and `gate_dupes` are identical to the control.
 - `gate_1418` 86/0 on both trees.
 - `gate_1226` is red 4 identically on the control (the rig finds no Lead row; it is not in CI).
+
+## Build 1427 — contracts sent by link: notices, the signer's copy, initials, a co-buyer, a phone page (29 Oct 2026)
+
+**Source:** the audit panel's contracts judge (#3, blocker) and client-documents judge (#11). The meta-judge ranked these fix-first #1 and #4. Builder D built it and reproduced every finding on 1422 first. I rebased it onto 1426.
+
+**Before → after:**
+
+| What | Before | After |
+|---|---|---|
+| Notice of Cancellation | the menu path a homeowner cannot open, with 0 links and 0 attachments | 2 links plus a card on the page; the PDF attached to the signer's copy and to an emailed agreement |
+| Signer's copy | 0 emails | 1 email with 2 attachments, sent only to the address the signer typed |
+| Initials | 0 of 3 filled | 3 of 3 filled |
+| Co-buyer | could not sign | signs now or later |
+| Live selects on the served page | 12 | 0 |
+| Yellow hints | 18 | 0 |
+| Contract on a phone | layout 900px, text 6.1px on the glass | layout 390px, text 16px |
+| Report on a phone | 980px at 0.398 scale | device width at scale 1 |
+| Report section numbers | one high everywhere | match the Contents |
+| Contract with blanks | sent silently | asks once and names them |
+| Signed contract uploaded | nobody told | Curtis and the office told; the stage is not moved |
+
+**Legal text:** none written. The statutory text stays in the master PDFs. The sheet quotes the agreement's own cancel sentence verbatim. The card copy is descriptive only.
+
+**Files:** `patch_1427_contracts.py` (`index.html`), `patch_1427_api.py` (`api/share.js`, `api/clientsign.js`, `api/senddoc.js`, `vercel.json`) and `patch_1427.py` (stamp and CHANGELOG).
+
+**Gates:**
+- `gate_1427.mjs`: 54/0 on 1427. The control (1426 with main's api) is RED, 12 pass / 44 fail.
+- `gate_1200` (in CI) counted every mention of `crStageIsForward` and required exactly 3. The upload notification is a fourth, legitimate reader of that rule. The gate now asserts one definition, and that both setStage notify sites ask it. Green on 1426 and 1427. A copy with the Approved site unhooked goes RED 2.
+- `test_api_1427.mjs`: 16/0. The control api is RED.
+- `check_build` GREEN. `gate_types` 1505 and `gate_dupes` are identical to the control. `gate_stack` is clean at 390.
+- 36 existing contract, share and estimate gates are identical on both trees. Two were already red on both and still are: `gate_1279` crashes because its `pay.js` loader cannot read `receipt.js`'s `import`, and `gate_1336` fails 3 checks.
+
+**Needs Theo:**
+- The notice forms in the master PDFs carry blank "(enter date of transaction)" and deadline fields, and the app does not compute the three-business-day date. Counsel should confirm ORC 1345.23 delivery for remote signing.
+- There is no e-sign consent line; none was invented.
+- Contracts now reflow on a phone. Estimates keep the 1278 Letter page.
+- Upload signed contract → Approved: proposed, not built.
+- A pending co-buyer replaces the deposit Pay bar until they sign.
+- Initials are typed, not drawn.
+- Homeowners cannot change the options on the link.
+- `COMPANY_DOCS` lists `docs/Cardinal_Window_Contract.pdf` and `docs/Cardinal_Gutter_Contract_Fillable.pdf`, which are not in the repo.

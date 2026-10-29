@@ -10397,3 +10397,53 @@ Measured in Chromium at 1425:
 At 1426 every name shows whole at 390, 1280, 1600 and at the largest text size.
 
 **Gate:** `gate_1426.mjs`, 8 checks. It also checks that the card keeps its star and portal tag and that the star still toggles. Red on the 1425 control (5 of 8).
+
+## Build 1427: contracts sent by link
+Source: the contracts judge (#3) and the client-documents judge (#11). The meta-judge ranked this fix-first #1 and #4.
+
+**Notice of Cancellation.**
+- The full statutory text exists only in the trade master PDFs in `docs/`, so it is not retyped (ORC 1345.23).
+- `api/share.js` replaces the staff menu path ("☰ Menu → Company Documents → …") with a link to the trade's PDF and its page range.
+- A "Terms and Conditions & Notice of Cancellation" card (`#crMasterCard`) sits above the signatures.
+- The signing sheet quotes the agreement's own "You, the buyer, may cancel…" sentence and links the PDF.
+- `MASTERS` / `masterFor()` is byte-identical in `share.js`, `clientsign.js` and `senddoc.js` (KEEP IN SYNC).
+
+**The signer's own copy.**
+- The sheet has "Email my signed copy to", prefilled from the agreement's Email line.
+- `clientsign.js` sends only to the address the signer submits.
+- That email carries the signed HTML, the master PDF (fetched, 4s timeout; a link if the fetch fails), the share link and the cancel sentence.
+- The rep's "Signed" email says whether the copy went.
+- `vercel.json` gives `clientsign.js` `maxDuration: 30`.
+
+**Initials and co-buyer.**
+- Typed initials are stamped into every "Initials [__]" box.
+- A named co-buyer signs on a second pad, or ticks "will sign later" and signs from the same link afterwards. That later signature moves only the co-buyer slot: no `signed_at`, no stage, no alert.
+
+**The served page.**
+- Dropdowns are frozen to their chosen answer as text, and contenteditable is removed.
+- Unfilled `[hints]` show as blank lines, and an empty heading is hidden (`CONTRACT_FIX`).
+
+**Phone width.**
+- A contract is served at device width with `CONTRACT_PHONE` rules up to 860px, screen only. Text on the glass goes from 6.1px to 16px, and the sign bar from 2.3× zoom to 1×.
+- ⚠ Estimates, invoices and Roof Options keep 1278's Letter page. Reverting the contract part means removing `share.js`'s `isContractDoc` viewport branch.
+
+**Reports by link.**
+- Reports are served at device width (`crReportPhone`), with print rules (`crReportPrint`) mirroring `ensurePrintFix`. KEEP IN SYNC.
+- The Contents mark (☰) is no longer counted in section numbers.
+
+**Pre-send check (`index.html`).**
+- Text to sign, Share link, Email to client and Client signature ask once on a contract with blanks.
+- The prompt lists where the blanks are (`crBlankWhere`, reading `fillBlanks()`), with two choices: **Fill them**, or **<verb> anyway**. It never blocks.
+
+**Upload signed contract.**
+- Tells Curtis and the office (`_notifyOrQueue` → `notifyTeam`, only for jobs not yet Approved).
+- The stage is **not** moved; stage changes are Theo's call.
+
+**Small fixes.**
+- The phone toast moves to the top while Ask or the Email sheet is open.
+- A report's text button reads "Text link".
+- CONTRACT PRICE prints once.
+
+**Gates:**
+- `gate_1427.mjs`: Chromium. It builds a real agreement, serves it through the shipped `share.js`, and signs end to end through the shipped `clientsign.js`.
+- `test_api_1427.mjs`: node, stubbed fetch; its fixture is `scripts/fixtures/roof_agreement_1427.html`.

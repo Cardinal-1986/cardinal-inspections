@@ -4309,7 +4309,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1426<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1427<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -28360,8 +28360,9 @@ async function openEditor(id){
       (function(){
         var tb = document.getElementById('textSignBtn'); if(!tb) return;
         var inv = /^invoice/i.test(String(r.title || '').trim());
-        var bl = tb.querySelector('.bl'); if(bl) bl.textContent = inv ? 'Text pay link' : 'Text to sign';
-        tb.title = inv ? 'Text the client a link to view and pay this invoice' : 'Text the client a link to review and sign';
+        var sgn = inv ? false : crDocSignable(doc);   /* D: a report is a link, not a signature */
+        var bl = tb.querySelector('.bl'); if(bl) bl.textContent = inv ? 'Text pay link' : (sgn ? 'Text to sign' : 'Text link');
+        tb.title = inv ? 'Text the client a link to view and pay this invoice' : (sgn ? 'Text the client a link to review and sign' : 'Text the client a link to view this document');
       })();
       fitEstimateFrame();   /* 1278 */
       refreshSigBtn();
@@ -28838,6 +28839,66 @@ async function priceOkToSend(what){
   return await crAsk('\u201C' + (what || 'This document') + '\u201D has no total \u2014 it reads $0.00.\n\n' +
                  'Enter a total first, or send it anyway?');
 }
+/* D (contracts judge, 29 Oct): Text to sign, Share link, Email to client and the in-person pad all
+   sent a contract with its "N to fill" chip still red -- 40 blanks on a fresh agreement -- and said
+   nothing; the client got [n] weeks, [rate] and empty dropdowns. fillBlanks() already knows every
+   blank (placeholders, unchosen dropdowns, unticked groups; never a signature), so this asks ONCE,
+   names where they are, and lets the rep go straight to the first one. It never blocks: a field can
+   legitimately be N/A (the chip's own rule), so "<verb> anyway" is always one tap. */
+function crBlankWhere(el){
+  try{
+    var sec = el.closest && el.closest('.specsec');
+    var h3 = sec && sec.querySelector('h3');
+    if(h3){
+      var t3 = (h3.firstChild && h3.firstChild.nodeType === 3) ? h3.firstChild.textContent : h3.textContent;
+      if((t3 || '').trim()) return t3.replace(/\s+/g, ' ').trim();
+    }
+    var tr = el.closest && el.closest('tr');
+    var k = tr && tr.querySelector('td.k');
+    if(k && (k.textContent || '').trim()) return k.textContent.replace(/\s+/g, ' ').trim();
+    for(var n = el; n && n !== el.ownerDocument.body; n = n.parentElement){
+      for(var p = n.previousElementSibling; p; p = p.previousElementSibling){
+        if(p.matches && p.matches('h2.sec')) return p.textContent.replace(/\s+/g, ' ').trim();
+      }
+    }
+  }catch(_){}
+  return 'the top of the page';
+}
+async function crBlanksOkToSend(verb){
+  var t = (/** @type {any} */ (titleInput).value || '').trim();
+  if(!isContractTitle(t)) return true;
+  var doc = frame && /** @type {any} */ (frame).contentDocument;
+  if(!doc || !doc.body) return true;
+  var list = [];
+  try{ list = fillBlanks(doc); }catch(_){ return true; }
+  if(!list.length) return true;
+  var where = [];
+  list.forEach(function(el){ var w = crBlankWhere(el); if(where.indexOf(w) === -1) where.push(w); });
+  var shown = where.slice(0, 6).join(', ') + (where.length > 6 ? ' and ' + (where.length - 6) + ' more' : '');
+  if(typeof window.crAsk !== 'function') return true;
+  var pick = await window.crAsk(list.length + (list.length === 1 ? ' blank is' : ' blanks are') + ' still unfilled on this contract.\n\n' +
+    'They reach the client blank. Still to fill: ' + shown + '.',
+    { choices: [ { id:'fill', label:'Fill them', hint:'Go to the first blank', tone:'primary' }, { id:'go', label: verb + ' anyway' } ], cancel:'Cancel' });
+  if(pick === 'go') return true;
+  if(pick === 'fill'){ __fillIdx = 0; try{ jumpNextBlank(); }catch(_j){} }
+  return false;
+}
+/* D (docs judge; Builder F's note): the editor offered "Text to sign" on every non-invoice, and the SMS
+   promised "review and sign it right here" on an inspection report or Roof Options page that has no
+   signature to take. Mirrors api/share.js's own test: an unfilled Buyer slot, or a Client Acceptance
+   line with nothing on it, and never once data-clientsigned. */
+function crDocSignable(doc){
+  try{
+    if(!doc || !doc.body) return true;
+    if(doc.querySelector('[data-clientsigned]')) return false;
+    var slot = doc.querySelector('[data-sig="buyer"]');
+    if(slot) return !slot.classList.contains('signed');
+    return Array.prototype.some.call(doc.querySelectorAll('.lbl'), function(l){
+      var ln = l.previousElementSibling;
+      return /^\s*Client Acceptance/i.test(l.textContent || '') && !!ln && ln.classList.contains('line') && !ln.querySelector('img');
+    });
+  }catch(_){ return true; }
+}
 function currentDocRow(){
   /* 731: this compared a row id against `current`, which is an OBJECT, so it
      returned null for every document ever opened. `ensureShareToken()` throws
@@ -28874,6 +28935,7 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
   try{
     await saveCurrent();
     if(!await insPartOkToSend()) return;   /* 1324 */
+    if(!await crBlanksOkToSend('Share')) return;   /* D */
     var tok = await ensureShareToken();
     var url = shareUrlFor(tok);
     var copied = false;
@@ -28890,6 +28952,7 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
     try{
       await saveCurrent();
       if(!await insPartOkToSend()) return;   /* 1324 */
+      if(!await crBlanksOkToSend('Text')) return;   /* D */
       var proj = currentDocProject();
       var tok = await ensureShareToken();
       var url = shareUrlFor(tok);
@@ -28897,7 +28960,8 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
       var title = (titleInput.value || '').trim() || 'your document';
       var body = (name ? 'Hi ' + name + ' \u2014 ' : '') + 'here is ' + title +
         ' from Cardinal Roofing & Renovations. ' +
-        (/^invoice/i.test(title) ? 'You can view and pay it right here: ' : 'You can review and sign it right here: ') + url;
+        (/^invoice/i.test(title) ? 'You can view and pay it right here: '
+          : (crDocSignable(frame && /** @type {any} */ (frame).contentDocument) ? 'You can review and sign it right here: ' : 'You can view it right here: ')) + url;
       var tel = (proj && proj.phone) ? String(proj.phone).replace(/[^+\d]/g, '') : '';
       /* 1377: on a Community job proj.phone is the occupant's; the partner is billed, so no number is filled in */
       try{ if(proj && projClaimType(proj) === 'community'){ tel = ''; if(name) body = body.replace('Hi ' + name + ' \u2014 ', ''); } }catch(_){}
@@ -28967,6 +29031,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     /* 738: emailing is the path that reaches the client, so it is guarded first. */
     if(!await priceOkToSend((titleInput.value || '').trim() || 'document')) return;
     if(!await insPartOkToSend()) return;   /* 1324 */
+    if(!await crBlanksOkToSend('Email')) return;   /* D */
     /* 1273: just published (the estimate bar's Email does exactly this) — the
        list has not caught up, so fetch it before reading who this is for. */
     if(!currentDocRow()){ try{ await reload(); }catch(_rl){} }
@@ -29484,6 +29549,7 @@ function pickSigner(doc, cb){
 }
 document.getElementById('sigBtn').addEventListener('click', async function(){
   if(!await insPartOkToSend()) return;   /* 1324: the deductible box first, then the pen */
+  if(!await crBlanksOkToSend('Sign')) return;   /* D: and the blanks, before a pen touches it */
   /* 1149: prove the document in the frame is the record the editor thinks it is
      before a pen ever touches the screen. On the incident both went stale
      together, so this is belt AND braces with the loud miss above: any future
@@ -29878,6 +29944,7 @@ function ensurePrintFix(d){
     '[data-cardinal-summary-heading] ~ table.concerns tr:first-child{break-after:avoid;}' +
     '.chip.mod{color:#1b1b1b !important;}' +   /* F: MODERATE, white on amber, was 2.17:1 */
     'h2.sec{break-after:avoid;}' +
+    'table.items tfoot{display:table-row-group;}' +   /* D: a contract's CONTRACT PRICE printed at every page break (E did estimates at 1424) */
     '.figrow,.fig,tr{break-inside:avoid;}' +
     '.runhead{display:none !important;}' +
     '.reanalyzeBar,.reanalyzeBtn,[data-cardinal-hint],.fig .frame button,.fig .frame input,' +
@@ -46051,6 +46118,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1427, d:'2026-10-29', t:'Contracts sent by link: notices, a signed copy, initials and a co-buyer', s:'A contract sent by link now reads at normal size on a phone instead of tiny print. It links straight to the Terms and Conditions and both Notice of Cancellation copies, on the page, in the signing box and in the email, instead of pointing at a staff menu the homeowner cannot open. When the homeowner signs they type their initials, which go into every Initials box, and a named co-buyer can sign in the same box or later from the same link. The homeowner can have the signed copy emailed to them with the Terms and Notices attached, and the rep\u2019s email says whether it went. Answers show as plain text and blank fields as blank lines. On a contract with blanks, Text to sign, Share link, Email to client and signing in person now ask once and list the blanks: Fill them, or send anyway. Uploading a signed contract now tells Curtis and the office; it does not move the stage. Inspection report links read on a phone, and their section numbers match the Contents again.' },
   { b: 1426, d:'2026-10-29', t:'Client names show in full', s:'Client names were cut to a few letters on the Clients list and to a single letter on the home screen\u2019s Recent leads, and disappeared at the largest text size. The name now gets its own line on a client card, and Recent leads keeps room for it, moving the stage and rep down a line when space runs out.' },
   { b: 1425, d:'2026-10-29', t:'Insurance and community job pages stop working your phone while you read', s:'An insurance or community job left open kept the phone busy redrawing the same words over and over \u2014 up to three-quarters of its effort with nobody touching it, which drains the battery and heats the phone on a roof. Those pages now sit as still as a retail job.' },
   { b: 1424, d:'2026-10-29', t:'Estimates start from the job\u2019s measurements; invoices say what is really owed', s:'Estimates now start from the job\u2019s own measurements \u2014 the roof squares, eaves and ridges from Roofr or Hover fill the lines, and each line says where its number came from. The line arrows and \u00d7 are thumb-sized, a removed line comes back with Undo, and closing with unsaved work offers Save and close first. A published estimate shows once on the client page, and printed estimates show the total once, at the end. Invoices say Overdue, Draft, Partly paid or Paid in full instead of Deposit Paid for everything, carry Cardinal\u2019s address and phone and say where to mail a check. Recording a payment shows a green confirmation, and a Community job priced by its contract shows its real value and balance.' },
@@ -55695,7 +55763,8 @@ var _tr = _lastKind && _lastKind !== 'service' ? (window.CONTRACT_TYPES || {})[_
 crTell((_tr ? _tr.label + ' Construction Agreement' : 'Contract') + ' created from ' + (est.estimate_number || 'the estimate') + '.\n\n' +
 'The scope is in the Notes box and the price and deposit are filled in. Review it, then have the ' +
 'client sign \u2014 in person or by share link.' +
-(_tr ? ' The Right to Cancel and the printed Notice of Cancellation go with this agreement.'
+(_tr ? ' Its Terms and Conditions and both Notice of Cancellation copies are the trade\u2019s printed master: '
+     + 'the share link and the client\u2019s signed-copy email carry them. Signing in person, hand the client the printed master.'
      : '\n\nThis is the general Service Contract and it does not carry the Notice of Cancellation. ' +
        'For a sale made at the home, use the Roofing, Siding or Gutter Construction Agreement.'), 'ok');   /* 1399: a success, not a red error */
 }catch(e){
@@ -85538,6 +85607,13 @@ body.claim-insurance #tab-commissions{--cr-stack:"1401 insurance ground";
   flex-direction:column;gap:8px;align-items:center;
   left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));}
 body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
+/* D (contracts judge): on a phone every send starts with a save, and the green "Saved" toast then sat on
+   the open sheet's own buttons for ~4s: the Email sheet's Send and Cancel, and each crAsk choice (the
+   blanks question included). While either sheet is open the stack moves to the top of the screen. */
+@media (max-width:899px){
+  body:has(#crAsk.open) #crToasts,body:has(#crEmailSheet.open) #crToasts{--cr-stack:"D: toasts clear an open bottom sheet";
+    bottom:auto;top:calc(12px + env(safe-area-inset-top));}
+}
 #crToasts .crt{pointer-events:auto;max-width:min(520px,100%);box-sizing:border-box;
   display:flex;align-items:flex-start;gap:10px;
   padding:12px 14px;border-radius:10px;
@@ -98293,11 +98369,37 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       await db.update(id, isEst ? { total: Math.round(amt * 100) / 100 }
         : { signed_at: new Date(day + 'T12:00:00').toISOString(), total: Math.round(amt * 100) / 100 });
       if(typeof window.auditLog === 'function'){ try{ window.auditLog(isEst ? 'estimate' : 'contract', (isEst ? 'Uploaded estimate (' : 'Uploaded signed contract (') + label + ', ' + money + ')', pr.id); }catch(_){} }
+      /* D (contracts judge): an uploaded signed contract never reached Production -- both other signing
+         paths alert Curtis. The STAGE IS NOT MOVED here: whether an upload approves the job is Theo's
+         call. So Curtis and the office hear that a signed contract is on file while the job is still
+         short of Approved. Forward-only, like setStage: a job already Approved or beyond had its alert. */
+      var _upTold = false, _upStage = '';
+      if(!isEst){
+        try{
+          _upStage = (typeof normStage === 'function') ? normStage(pr.stage) : String(pr.stage || '');
+          var _upFwd = (typeof crStageIsForward === 'function') ? crStageIsForward(_upStage, 'Approved')
+                     : (['Approved','Scheduled','Completed','Invoiced','Closed'].indexOf(_upStage) === -1);
+          if(_upFwd && typeof _notifyOrQueue === 'function'){
+            var _upAdm = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS)) ? ADMIN_EMAILS
+                       : ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
+            _notifyOrQueue(['curtis@cardinalrenovations.net'].concat(_upAdm),
+              'Signed contract uploaded — not yet Approved: ' + (pr.name || ''),
+              '<p><b>' + ctuEsc(pr.name || '') + '</b>' + (pr.address ? ' (' + ctuEsc(pr.address) + ')' : '') +
+              ': a signed ' + ctuEsc(label) + ' contract for <b>' + ctuEsc(money) + '</b>, signed ' + ctuEsc(signedNice) +
+              ', was uploaded' + (me ? ' by ' + ctuEsc(me) : '') + '.</p>' +
+              '<p>The job is still <b>' + ctuEsc(_upStage || 'not Approved') + '</b>, so it is not on the production schedule yet. ' +
+              'Move it to <b>Approved</b> when it is ready to build — that sends the usual schedule + order materials alert.</p>',
+              (typeof clientLink === 'function') ? clientLink(pr.id) : '/');
+            _upTold = true;
+          }
+        }catch(_n){}
+      }
       try{ await reload(); }catch(_r){}
       try{ if(typeof renderProjectDocs === 'function') renderProjectDocs(); }catch(_d){}
       ctuClose();
       if(window.crToastOk) window.crToastOk(isEst ? (label + ' estimate saved — ' + money + '. It is under Estimates.')
-        : ('Signed ' + label + ' contract saved — ' + money + '. Invoices & Payments can open now.'));
+        : ('Signed ' + label + ' contract saved — ' + money + '. Invoices & Payments can open now.' +
+           (_upTold ? ' Curtis and the office were told; the job stays ' + _upStage + ' until someone moves it to Approved.' : '')));
     }catch(err){
       st.textContent = (err && err.message) || String(err);
       go.disabled = false; go.textContent = K.go;
