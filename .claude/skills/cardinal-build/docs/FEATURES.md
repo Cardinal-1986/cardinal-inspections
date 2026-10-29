@@ -10301,3 +10301,11 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 
 ## Build 1419: a draft stays on its own job
 `#chatText` is one input that every job's thread shares. `chatDraftSwap(pid)` (called by `openCommunications`) files the box under the job being left and restores the draft for the job being opened. `sendChat()` captures the job at the start: the tag alert names and links that job, and the save never clears the box of a job opened while it was in flight. **Gate:** `gate_1419.mjs`, 9 checks; red 5 on 1418.
+
+## Build 1420: Home is Production's hub for a production account
+- `CardinalHeader.goHome()` sends a production account (`isProductionUser()`) to `CardinalProduction.open()` before any portal branch.
+  - Before, from a retail job it fell through to `showHome()`: pipeline counts and AR money.
+  - From an insurance job it opened Cardinal Truth.
+  - That covers the phone bar's Home, the header house and the module-mount Home fallbacks (756).
+- The phone bar lights Home while the board is up, and lights Jobs on a job's thread (`commsView`).
+- **Gate:** `gate_1420.mjs`, 19 checks; red 8 on 1419. Admin control unchanged.

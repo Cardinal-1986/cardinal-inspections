@@ -4274,7 +4274,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1419<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1420<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -45731,6 +45731,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1420, d:'2026-10-29', t:'Home takes Production back to the board', s:'For Curtis and Scottie, the Home button at the bottom of the phone and the gold house in the header now open the Production board. They used to land on the retail home, which shows pipeline counts and money owed. Everyone else\u2019s Home is unchanged.' },
   { b: 1419, d:'2026-10-29', t:'A half-typed note stays on its own job', s:'A note you started on one job used to still be sitting in the message box when you opened another job\u2019s thread, so Send could post it on the wrong job. Each job now keeps its own draft, and a tag alert always names the job the note was sent on.' },
   { b: 1418, d:'2026-10-29', t:'One colour per portal, and Insurance follows your light/dark setting', s:'Insurance now follows your light/dark setting like the rest of the app, and the one switch changes both \u2014 no more white Insurance pages in dark mode. Each portal has one colour \u2014 red Retail, teal Insurance, green Community \u2014 on the + button, the portal switch and client names. The last white boxes, hard-to-read labels and tiny text on the dark screens are fixed, and the light pipeline is a flat strip instead of glossy balls.' },
   { b: 1417, d:'2026-10-29', t:'Job messages update by themselves, and tags buzz only the person you mean', s:'A job\u2019s message thread now updates on its own while it is open, so a note sent from the roof shows up without leaving the screen. On insurance jobs your \u201cI chased the carrier\u201d notes appear in the thread. @J no longer buzzes four people \u2014 the box tells you who will be notified before you hit Send. Pasted links can be tapped, and a tag alert opens straight to the thread.' },
@@ -67878,6 +67879,10 @@ var crm = crmHead(); /* 754: from a shared screen, home returns to YOUR CRM */
    because of this line. It repairs the older wart on the board and the floor
    in the same stroke — same concept, one place. */
 if(crm === 'production' || crm === 'sales') crm = stickyCrm();
+/* 1420: a production account's home is its own hub, whatever job it was on (1038/1165/1188: "back out to it,
+   never to the retail home" — pipeline counts and AR money). The portal homes below stay everyone else's. */
+if(typeof window.isProductionUser === 'function' && window.isProductionUser() &&
+   window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }
 if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
 else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
 else if(typeof window.showHome === 'function'){ window.showHome(); }
@@ -68532,8 +68537,9 @@ probe  : probe,
   }
   function tbWhich(){
     if(tbProd() && document.querySelector('#cr-pb.open .pbcalw')) return 'sched';
+    if(tbProd() && document.querySelector('#cr-pb.open')) return 'home';   /* 1420: the board IS a production account's home */
     if(tbShown('boardView')) return 'sched';
-    if(tbShown('leadsView') || tbShown('projectView') || tbShown('clientsView')) return 'jobs';
+    if(tbShown('leadsView') || tbShown('projectView') || tbShown('clientsView') || tbShown('commsView')) return 'jobs';   /* 1420: a job's thread is inside the job */
     if(tbShown('mainView')) return 'home';
     return '';
   }
