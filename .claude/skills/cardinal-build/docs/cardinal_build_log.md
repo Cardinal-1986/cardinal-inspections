@@ -37225,3 +37225,32 @@ Theo: "Do your suggestions on all as long as the rating comes to a 9/10 minimum.
   - `gate_768`, `gate_949` and `gate_1040` were updated for the new behaviour and pass on both trees.
   - `gate_947`, `gate_1297` and `gate_1116` are red identically on the control.
   - REPRO byte-identical (`patch_1416_production.py` + `patch_1416.py`).
+
+## Build 1417 — team messages after judge 13 (29 Oct 2026)
+This build covers judge 14's chat and team-communications audit (round 1: works 4, feels 6, not confusing 5, want 6, pleasing 6).
+- **#2 the thread never refreshed.** A post from another device did not appear within 30s; now it lands in about 24s with no reload.
+  - The poll runs only while the thread is open and the app is visible. It made 0 reads in 27s when closed or backgrounded, and catches up at once on return.
+  - It is one `projects.select('checklist')` per round, plus two reads on insurance jobs for claim notes.
+  - It takes only the comments, through the 1413 union merge.
+  - The poll would have exposed a latent bug: `sendChat` pushed onto `parseCkAll()`'s shared cached object, so a failed post would have shown as sent on the next repaint. It now pushes onto a copy.
+- **#4 carrier chase notes:** no screen read `claim_notes` (only the admin Supplement Desk did). An insurance job's thread now shows them read-only. There are 0 rows in production today.
+- **#5 @mentions:** "@J" reached 4 people and "@Jo" reached 2; both now reach nobody. "@joey", "@Joseph", "@Curt" and "@scott" still reach exactly one person each.
+  - Two deliberate side effects: "bob@curtis" no longer buzzes Curtis, and "thanks @curtis." now does.
+  - "Will notify" is previewed under the box. An ambiguous tag sends 0 `/api/notify` calls.
+- **#6** a long link ran 779px of text in a 243px bubble. It now wraps and is a real link (escape first, then promote; `javascript:` is never a link).
+- **#7–#12:**
+  - #7: the alert opens the thread (a cold open of `#p/R1/comms` was a blank profile).
+  - #8: one Communication tile.
+  - #9: the Community gutter is 16px (was 0).
+  - #10: time stamps 3.25 → 5.61:1.
+  - #11: the Activity Feed opens the message, and punch-out messages appear in it.
+  - #12: "Tell the office", and the punch alert title has no emoji.
+- **Gates:**
+  - `gate_1417.mjs` 51/0. The control (1416) is RED 37/14 with no crash.
+  - `check_build` GREEN.
+  - `gate_types` 1505, below the control's 1506, with the same TS2304 set.
+  - `gate_dupes` identical to the control.
+  - The scroll-lock audit is GREEN at 17 modules.
+  - `gate_1411`, `gate_1413`, `gate_1416` and `gate_1046` are green.
+  - REPRO byte-identical.
+- **Found, not fixed:** a draft typed in one job's box survives into another job's thread (the same in 1415). It wants its own small build.
