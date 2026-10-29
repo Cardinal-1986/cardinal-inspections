@@ -37118,3 +37118,4 @@ Documents built by the app's own template code, served through the real `api/sha
   - `gate_dupes` red identically to the control (pre-existing names from other merged branches); the one new collision (`go`) was renamed `fbLinkGo`.
   - `gate_a11y` identical to the control.
 - ⚠ **The first run of A was the TEST's fault.** On a phone the drawer opens with every section folded, so no row is visible until its heading is tapped. The gate now opens Menu, then Account, the way a person does.
+- **`team_feedback.sql` APPLIED 29 Oct (migration `team_feedback_1411`), and verified as each role in a rolled-back transaction.** A rep inserts their own report; they are refused when posing as Theo, and refused when inserting as `done` with a reply. A rep sees 1 row and updates 0. Theo sees 2 rows and updates 2. An outsider sees 0 rows and cannot insert.
