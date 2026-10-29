@@ -4180,6 +4180,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
                and the nav==='notify' handler existed with NO element pointing at it. This row is
                deliberately NOT in hideAdminItemsForNonAdmin's list, so every desk sees it. -->
           <button class="navopt" data-nav="notify" data-cri="bell lg">Enable Notifications</button>
+          <!-- 1411: the team's way to say "this broke" or "here's an idea" -->
+          <button class="navopt" data-nav="feedback" data-cri="chat lg">Team Feedback</button>
 
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
           <div class="cr-ts" role="group" aria-label="Appearance"><span class="lb">Appearance</span><button type="button" data-cr-appear="dark" aria-pressed="true">Dark</button><button type="button" data-cr-appear="light" aria-pressed="false">Light</button></div>
@@ -4212,7 +4214,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-27 build 1409<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1411<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4247,6 +4249,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <small>App</small>
       <span class="cbi" data-go="selfcheck" data-cri="pulse lg">Self Check</span>
       <span class="cbi" data-go="whatsnew" data-cri="sparkle lg">What's New</span>
+      <span class="cbi" data-go="feedback" data-cri="chat lg">Team Feedback</span>
       <span class="cbi" data-go="walk" data-cri="pin lg">Field Walkthrough</span>
       <span class="cbi" data-go="itellab" data-cri="flask lg">iTel Lab Results</span>
       <span class="cbi" data-go="medmig" data-cri="camera lg">Migrate Legacy Photos</span>
@@ -21916,6 +21919,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'leads'){ openLeadsView(); }
   else if(nav === 'audit'){ openAuditLog(); }
   else if(nav === 'notify'){ enableNotifications(); }
+  else if(nav === 'feedback'){ if(window.CardinalFeedback) window.CardinalFeedback.open(); }
   else if(nav === 'team'){ try{ openTeamView(); }catch(err){ crTell('Team: ' + (err.message || err)); } }
   else if(nav === 'settings'){ openSettingsView(); }
   else if(nav === 'board'){ openScheduleBoard(); }
@@ -31428,6 +31432,7 @@ async function enableNotifications(){
   /* 1255: #punch and #route/<name> are the punch buzzes' links — cr-route-script opens them.
      STASHED here, because showHome() pushes #h before that script has even parsed. */
   try{ if(/^#(punch$|route\/)/.test(location.hash)) window.__crBootLink = location.hash; }catch(e){}
+  try{ if(location.hash === '#feedback') window.__crFbLink = '#feedback'; }catch(e){}   /* 1411: cr-fb-script opens it */
   try{ if(!/^#(p|e|list)\//.test(location.hash) && !/type=recovery/.test(location.hash) && !/^#(leads|reports|clients|feed|audit|board|me|team|settings)/.test(location.hash) && !/^#(punch$|route\/)/.test(location.hash)){ history.replaceState({ v:'home' }, '', '#h'); } }catch(e){}
   var __restored = false, __restoreTries = 0;
   /* 1299: since 1165 sign-in lands on showHome(), and the wrapper above makes
@@ -45341,6 +45346,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1411, d:'2026-10-29', t:'Team Feedback', s:'There is now a Team Feedback box in the menu (under Account) and in Tools. Use it when something breaks, isn\u2019t working right, or you have an idea. It notes which screen and job you were on, Theo gets an alert, and you see the status and his reply on the same page.' },
   { b: 1409, d:'2026-10-27', t:'Leads open when you tap them', s:'On the Leads screen, tapping or clicking a lead now opens the client on every screen size. On a computer, pointing at a lead still shows its preview on the right.' },
   { b: 1407, d:'2026-10-24', t:'Staff-only, behind the scenes', s:'No change on screen. The CompanyCam job link and texting a client from the company number now answer Cardinal staff only, and a client who hits a problem signing a document sees a plain message instead of a technical one.' },
   { b: 1406, d:'2026-10-23', t:'Search, Crews and Community bids', s:'Search now finds names typed without accents or with a phone\u2019s curly apostrophe (O\u2019Brien, Jose), phone numbers typed with a leading 1, and \u201cPO 3001\u201d. Crews is shown only to the office and Production, who can use it. A Community bid on a job with no funding partner attached is refused instead of defaulting to the homeowner. Habitat is first in the partner directory, and general contractors are labelled correctly in search. Behind the scenes, the ABC Supply connection now answers Cardinal staff only.' },
@@ -69729,6 +69735,7 @@ var ROUTES = {
   selfcheck: 'CardinalSelfCheck.open',
   finrates:  'showFinanceRates',
   whatsnew:  'CardinalChangelog.show',
+  feedback:  'CardinalFeedback.open',
   walk:      'CardinalWalk.showRunner',
   itellab:   'CardinalItelLab.open',
   medmig:    'CardinalMediaMigrate.showRunner',
@@ -70486,7 +70493,7 @@ if(typeof _origOLF === 'function'){
 body.cr-field #crBanner, body.cr-field #cbCrm, body.cr-field #cbSearch, body.cr-field #headSearch,
 body.cr-field #newWrap, body.cr-field #cr-lnav, body.cr-field .pbnavbtn[data-hub="crews"],
 body.cr-field #navMenu .navsec{ --cr-stack:"1317 field user: Production only"; display:none !important; }
-body.cr-field #navMenu .navopt:not([data-nav="prodboard"]):not([data-nav="dispatch"]):not([data-nav="punch"]):not([data-nav="notify"]){
+body.cr-field #navMenu .navopt:not([data-nav="prodboard"]):not([data-nav="dispatch"]):not([data-nav="punch"]):not([data-nav="notify"]):not([data-nav="feedback"]){
   --cr-stack:"1317 field user: Production only"; display:none !important; }
 body.cr-field #brandTitle{ --cr-stack:"1317 field user: no portal picker"; pointer-events:none; }
 /* 1042 (audit F4): for production accounts the punch page joins the
@@ -75335,6 +75342,7 @@ supplementtemplates:'<path d="M6 2.5h12A1.5 1.5 0 0 1 19.5 4v16a1.5 1.5 0 0 1-1.
 insuranceresources:'<circle cx="12" cy="12" r="9"/><path d="M15.9 8.1l-2.5 5.3-5.3 2.5 2.5-5.3z" fill="#0d0d10"/>',
 adjusterdirectory:'<rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="9" cy="10.8" r="2.3" fill="#0d0d10"/><path d="M5.7 16.4a3.4 3.4 0 0 1 6.6 0z" fill="#0d0d10"/><rect x="13.8" y="9.2" width="4.8" height="1.7" fill="#0d0d10"/><rect x="13.8" y="12.6" width="4.8" height="1.7" fill="#0d0d10"/>',
 claimstracker:'<path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2z"/><path d="m8 13.4 1.5-1.5 1.8 1.8 3.7-3.7 1.5 1.5-5.2 5.2z" fill="#0d0d10"/>',
+teamfeedback:'<path d="M4 3.5h16a2 2 0 0 1 2 2V15a2 2 0 0 1-2 2h-8.6L6.5 21v-4H4a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2z"/>',
 supplementdesk:'<rect x="5" y="2.5" width="14" height="19" rx="2"/><rect x="7.4" y="5" width="9.2" height="3.2" fill="#0d0d10"/><circle cx="9.2" cy="12" r="1.2" fill="#0d0d10"/><circle cx="12" cy="12" r="1.2" fill="#0d0d10"/><circle cx="14.8" cy="12" r="1.2" fill="#0d0d10"/><circle cx="9.2" cy="15.4" r="1.2" fill="#0d0d10"/><circle cx="12" cy="15.4" r="1.2" fill="#0d0d10"/><circle cx="14.8" cy="15.4" r="1.2" fill="#0d0d10"/><circle cx="9.2" cy="18.8" r="1.2" fill="#0d0d10"/><circle cx="12" cy="18.8" r="1.2" fill="#0d0d10"/><circle cx="14.8" cy="18.8" r="1.2" fill="#0d0d10"/>',
 generic:'<circle cx="12" cy="12" r="4.6"/>'
 };
@@ -75373,6 +75381,7 @@ supplementtemplates:'<path d="M6 3h12v18H6z" class="m"/><path d="M9 8h6M9 12h6M9
 insuranceresources:'<circle cx="12" cy="12" r="7" class="m"/><path d="m15 9-2 4-4 2 2-4z"/>',
 adjusterdirectory:'<rect x="3.5" y="5" width="17" height="14" rx="2" class="m"/><circle cx="9" cy="11" r="2"/><path d="M13.6 10h4M13.6 13.5h4" class="m"/>',
 claimstracker:'<path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2" class="m"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="m8.6 13.2 2.3 2.3 4.5-4.5"/>',
+teamfeedback:'<path d="M4 4.5h16v11H11l-4.5 4v-4H4z" class="m"/><path d="M8 9h8M8 12h5"/>',
 supplementdesk:'<rect x="5.5" y="3" width="13" height="18" rx="2" class="m"/><path d="M8.5 6.8h7"/><circle cx="9" cy="12.4" r="1" class="m"/><circle cx="12" cy="12.4" r="1" class="m"/><circle cx="15" cy="12.4" r="1" class="m"/><circle cx="9" cy="16.4" r="1" class="m"/><circle cx="12" cy="16.4" r="1" class="m"/><circle cx="15" cy="16.4" r="1" class="m"/>',
 generic:'<path d="M6 12h12"/>'
 };
@@ -99152,5 +99161,353 @@ function scnOpen(firstFile, done){
 window.CardinalScan = Object.assign(window.CardinalScan || {}, { open: scnOpen, close: scnClose, _findCorners: scnFindCorners, _render: scnRender, _makePdf: scnMakePdf });
 })();
 </script>
+<style id="cr-fb-styles">
+/* v2026-10-29 build 1411 — Team Feedback (Menu → Account → Team Feedback).
+   Every colour is var(--fb-*,#literal): the fallbacks ARE the dark palette, and
+   the light twin re-declares the names under rb-light. A fixed overlay with its
+   own scroll — it never writes the global scroll lock. */
+#cr-fb{position:fixed;inset:0;z-index:10060;display:none;overflow-y:auto;overscroll-behavior:contain;
+  background:rgba(0,0,0,.62);-webkit-overflow-scrolling:touch;}
+#cr-fb.open{display:block;}
+#cr-fb .fb-sheet{max-width:640px;margin:0 auto;min-height:100%;box-sizing:border-box;
+  background:var(--fb-bg,#141619);color:var(--fb-ink,#f2f2f2);
+  padding:0 16px calc(96px + env(safe-area-inset-bottom,0px));font:400 15px/1.45 'Segoe UI',Arial,sans-serif;}
+@media (min-width:700px){ #cr-fb .fb-sheet{margin:24px auto;min-height:0;border-radius:14px;border:1px solid var(--fb-line,#2a2d32);} }
+#cr-fb .fb-hd{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;
+  padding:calc(12px + env(safe-area-inset-top,0px)) 0 10px;background:var(--fb-bg,#141619);border-bottom:1px solid var(--fb-line,#2a2d32);}
+#cr-fb .fb-hd h2{flex:1;margin:0;font:700 19px 'Segoe UI',Arial,sans-serif;color:var(--fb-ink,#f2f2f2);}
+#cr-fb .fb-x{min-width:44px;min-height:44px;border:0;border-radius:10px;background:transparent;
+  color:var(--fb-ink,#f2f2f2);font:400 26px/1 Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-tabs{display:flex;gap:8px;margin:12px 0 4px;}
+#cr-fb .fb-tab{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--fb-line,#2a2d32);
+  background:transparent;color:var(--fb-mute,#a9adb3);font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-tab[aria-pressed="true"]{background:var(--fb-card,#1d2024);color:var(--fb-ink,#f2f2f2);border-color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-lead{margin:14px 0 10px;color:var(--fb-mute,#a9adb3);font-size:14px;}
+#cr-fb .fb-kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+#cr-fb .fb-kind{min-height:52px;padding:6px 8px;border-radius:10px;border:1px solid var(--fb-line,#2a2d32);
+  background:var(--fb-card,#1d2024);color:var(--fb-ink,#f2f2f2);font:700 14px/1.2 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-kind[aria-pressed="true"]{background:#c8202e;border-color:#c8202e;color:#ffffff;}
+#cr-fb textarea{display:block;width:100%;box-sizing:border-box;margin:12px 0 8px;min-height:130px;padding:12px;
+  border-radius:10px;border:1px solid var(--fb-line,#2a2d32);background:var(--fb-field,#0d0e10);
+  color:var(--fb-ink,#f2f2f2);font:400 16px/1.45 'Segoe UI',Arial,sans-serif;resize:vertical;}
+#cr-fb textarea::placeholder{color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-ctx{display:flex;align-items:flex-start;gap:10px;margin:4px 0 12px;color:var(--fb-mute,#a9adb3);font-size:13px;}
+#cr-fb .fb-ctx input{width:22px;height:22px;margin:0;flex:0 0 auto;accent-color:#c8202e;}
+#cr-fb .fb-send{width:100%;min-height:50px;border:0;border-radius:10px;background:#c8202e;color:#ffffff;
+  font:700 16px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-send[disabled]{opacity:.55;cursor:default;}
+#cr-fb .fb-msg{min-height:20px;margin:10px 0 0;font-size:14px;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-msg.err{color:var(--fb-err,#ff8a8a);}
+#cr-fb .fb-msg.ok{color:var(--fb-done,#5cc98a);}
+#cr-fb .fb-sec{margin:26px 0 8px;font:700 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-filt{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px;}
+#cr-fb .fb-filt button{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--fb-line,#2a2d32);
+  background:transparent;color:var(--fb-mute,#a9adb3);font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-filt button[aria-pressed="true"]{color:var(--fb-ink,#f2f2f2);border-color:var(--fb-mute,#a9adb3);background:var(--fb-card,#1d2024);}
+#cr-fb .fb-item{margin:10px 0;padding:12px 14px;border-radius:12px;border:1px solid var(--fb-line,#2a2d32);background:var(--fb-card,#1d2024);}
+#cr-fb .fb-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-top b{color:var(--fb-ink,#f2f2f2);font-weight:700;}
+#cr-fb .fb-pill{display:inline-block;padding:2px 9px;border-radius:11px;border:1px solid currentColor;font:700 12px 'Segoe UI',Arial,sans-serif;}
+#cr-fb .fb-pill.s-new{color:var(--fb-new,#f0b54a);}
+#cr-fb .fb-pill.s-looking{color:var(--fb-look,#7fb0ff);}
+#cr-fb .fb-pill.s-done{color:var(--fb-done,#5cc98a);}
+#cr-fb .fb-pill.s-wont{color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-body{margin:8px 0 6px;white-space:pre-wrap;word-break:break-word;color:var(--fb-ink,#f2f2f2);}
+#cr-fb .fb-where{font-size:12px;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-where a{color:var(--fb-look,#7fb0ff);}
+#cr-fb .fb-reply{margin:10px 0 0;padding:10px 12px;border-left:3px solid #c8202e;border-radius:6px;background:var(--fb-field,#0d0e10);
+  white-space:pre-wrap;word-break:break-word;color:var(--fb-ink,#f2f2f2);}
+#cr-fb .fb-reply small{display:block;margin-bottom:3px;font-size:12px;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-admin{margin-top:10px;}
+#cr-fb .fb-sts{display:flex;flex-wrap:wrap;gap:6px;}
+#cr-fb .fb-sts button{min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--fb-line,#2a2d32);
+  background:transparent;color:var(--fb-mute,#a9adb3);font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-sts button[aria-pressed="true"]{color:var(--fb-ink,#f2f2f2);border-color:var(--fb-ink,#f2f2f2);}
+#cr-fb .fb-admin textarea{min-height:70px;margin:8px 0 6px;}
+#cr-fb .fb-save{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#c8202e;color:#ffffff;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-none{margin:12px 0;color:var(--fb-mute,#a9adb3);font-size:14px;}
+:root[data-theme="rb-light"] #cr-fb{--fb-bg:#ffffff;--fb-card:#f4f5f7;--fb-field:#ffffff;--fb-ink:#161616;--fb-mute:#5f6670;
+  --fb-line:#d5d9de;--fb-new:#8a5a00;--fb-look:#1f5fbf;--fb-done:#1e7a45;--fb-err:#b3261e;}
+@media print{ #cr-fb{display:none !important;} }
+</style>
+<script id="cr-fb-script">
+/* v2026-10-29 build 1411 — Team Feedback. Theo: "a team suggestions or feedback
+   box somewhere in the app for when things break down or aren't working or
+   features from team members". One table, team_feedback (team_feedback.sql):
+   anyone on staff files a report under their own address; they read their own
+   and Theo's reply; admins read all and set the status. The screen, the open job
+   and the build ride along so "it's broken" arrives with where. Admins get a push
+   (notifyTeam) and the sender gets one back when the status or reply changes.
+   The link in both is #feedback, stashed at boot beside 1255's #punch. */
+(function(){
+'use strict';
+var KIND = { broken:'Something broke', not_right:'Not working right', idea:'Idea' };
+var HINT = {
+  broken:'What were you doing, and what happened? (e.g. "Tapped Save on the estimate and it spun forever")',
+  not_right:'What did you expect, and what did it do instead?',
+  idea:'What would make your day easier?'
+};
+var STATUS = { 'new':'New', looking:'Looking at it', done:'Done', wont:'Won’t do' };
+var el = null, kind = 'broken', tab = 'send', filt = 'open', ctx = null, rows = [], busy = false;
+
+function fbEsc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fbDb(){ return window.supa || window.sb || null; }
+function fbMe(){ var u = /** @type {any} */ (window.currentUser); return (u && u.email) ? String(u.email).toLowerCase() : ''; }
+function fbAdmin(){ try{ return typeof window.isAdminUser === 'function' && !!window.isAdminUser(); }catch(e){ return false; } }
+function fbName(e){ var n = String(e || '').split('@')[0]; return n ? n.charAt(0).toUpperCase() + n.slice(1) : 'Someone'; }
+function fbWhen(t){
+  var d = new Date(t); if(isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric' }) + ' ' +
+         d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+}
+function fbBuild(){
+  try{ var f = document.querySelector('[data-cr-footer]'), m = f && /build\s+(\d+)/i.exec(f.textContent || ''); return m ? 'build ' + m[1] : ''; }catch(e){ return ''; }
+}
+function fbAdmins(){
+  var a = window.ADMIN_EMAILS;
+  return (Array.isArray(a) && a.length) ? a.slice() : ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
+}
+
+/* what the person was looking at when they opened the box — read BEFORE the overlay paints */
+function fbContext(){
+  var screen = '';
+  try{
+    var heads = document.querySelectorAll('.viewhead, h1, h2');
+    for(var i = 0; i < heads.length; i++){
+      var h = /** @type {HTMLElement} */ (heads[i]);
+      if(h.closest('#cr-fb') || h.closest('#navMenu') || !h.offsetParent) continue;
+      var t = String(h.textContent || '').replace(/\s+/g, ' ').trim();
+      if(t){ screen = t.slice(0, 80); break; }
+    }
+  }catch(e){}
+  var hash = String(location.hash || '').slice(0, 80);
+  if(hash && hash !== '#h' && hash !== '#feedback') screen = screen ? screen + ' (' + hash + ')' : hash;
+  var p = window.currentProject || null, pv = false;
+  try{ pv = !!(p && p.id && document.getElementById('projectView') && document.getElementById('projectView').offsetParent); }catch(e){}
+  return { screen: screen, project: pv ? { id: p.id, name: p.name || '' } : null, build: fbBuild() };
+}
+
+function fbEnsure(){
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'cr-fb';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.setAttribute('aria-label', 'Team Feedback');
+  el.innerHTML = '<div class="fb-sheet"><div class="fb-hd"><h2>Team Feedback</h2>' +
+    '<button type="button" class="fb-x" data-fb="close" aria-label="Close">×</button></div><div class="fb-main"></div></div>';
+  document.body.appendChild(el);
+  el.addEventListener('click', fbClick);
+  el.addEventListener('input', function(e){ var tg = /** @type {any} */ (e.target); if(tg && tg.id === 'fbBody') fbSendState(); });
+  return el;
+}
+
+function fbSendState(){
+  var b = el && el.querySelector('[data-fb="send"]'), t = el && el.querySelector('#fbBody');
+  if(b && t) b.disabled = busy || !String(t.value || '').trim();
+}
+
+function fbItem(r, admin){
+  var where = [];
+  if(r.screen) where.push(fbEsc(r.screen));
+  if(r.project_id) where.push('<a href="#p/' + encodeURIComponent(r.project_id) + '" data-fb="job" data-id="' + fbEsc(r.project_id) + '">Open the job</a>');
+  if(r.build) where.push(fbEsc(r.build));
+  var h = '<div class="fb-item" data-id="' + fbEsc(r.id) + '"><div class="fb-top">' +
+    '<span class="fb-pill s-' + fbEsc(r.status) + '">' + fbEsc(STATUS[r.status] || r.status) + '</span>' +
+    '<b>' + fbEsc(KIND[r.kind] || r.kind) + '</b>' +
+    (admin ? '<span>' + fbEsc(fbName(r.created_by)) + '</span>' : '') +
+    '<span>' + fbEsc(fbWhen(r.created_at)) + '</span></div>' +
+    '<div class="fb-body">' + fbEsc(r.body) + '</div>' +
+    (where.length ? '<div class="fb-where">' + where.join(' · ') + '</div>' : '');
+  if(r.reply && !admin) h += '<div class="fb-reply"><small>Reply</small>' + fbEsc(r.reply) + '</div>';
+  if(admin){
+    h += '<div class="fb-admin"><div class="fb-sts" role="group" aria-label="Status">' +
+      Object.keys(STATUS).map(function(k){
+        return '<button type="button" data-fb="status" data-v="' + k + '" aria-pressed="' + (r.status === k) + '">' + STATUS[k] + '</button>';
+      }).join('') + '</div>' +
+      '<textarea data-fb-reply placeholder="Reply to ' + fbEsc(fbName(r.created_by)) + ' (they see this)">' + fbEsc(r.reply || '') + '</textarea>' +
+      '<button type="button" class="fb-save" data-fb="save">Save reply</button></div>';
+  }
+  return h + '</div>';
+}
+
+function fbRender(){
+  var m = el.querySelector('.fb-main'), admin = fbAdmin(), h = '';
+  if(admin){
+    var nNew = rows.filter(function(r){ return r.status === 'new'; }).length;
+    h += '<div class="fb-tabs" role="group" aria-label="View">' +
+      '<button type="button" class="fb-tab" data-fb="tab" data-v="send" aria-pressed="' + (tab === 'send') + '">Send</button>' +
+      '<button type="button" class="fb-tab" data-fb="tab" data-v="inbox" aria-pressed="' + (tab === 'inbox') + '">Inbox' + (nNew ? ' (' + nNew + ' new)' : '') + '</button></div>';
+  }
+  if(!admin || tab === 'send'){
+    var c = ctx || {};
+    var bits = [];
+    if(c.screen) bits.push(c.screen);
+    if(c.project) bits.push(c.project.name || 'this job');
+    if(c.build) bits.push(c.build);
+    h += '<p class="fb-lead">Tell Theo when something breaks, isn’t working right, or you have an idea. Every one gets read.</p>' +
+      '<div class="fb-kinds" role="group" aria-label="What kind">' + Object.keys(KIND).map(function(k){
+        return '<button type="button" class="fb-kind" data-fb="kind" data-v="' + k + '" aria-pressed="' + (kind === k) + '">' + KIND[k] + '</button>';
+      }).join('') + '</div>' +
+      '<textarea id="fbBody" maxlength="4000" aria-label="Your feedback" placeholder="' + fbEsc(HINT[kind]) + '"></textarea>' +
+      (bits.length ? '<label class="fb-ctx"><input type="checkbox" id="fbCtx" checked><span>Include where I was: ' + fbEsc(bits.join(' · ')) + '</span></label>' : '') +
+      '<button type="button" class="fb-send" data-fb="send" disabled>Send</button><div class="fb-msg" id="fbMsg" role="status"></div>';
+  }
+  if(admin && tab === 'inbox'){
+    var F = { open:'Open', all:'All', done:'Done' };
+    h += '<div class="fb-filt" role="group" aria-label="Show">' + Object.keys(F).map(function(k){
+      return '<button type="button" data-fb="filt" data-v="' + k + '" aria-pressed="' + (filt === k) + '">' + F[k] + '</button>';
+    }).join('') + '</div>';
+    var list = rows.filter(function(r){
+      if(filt === 'open') return r.status === 'new' || r.status === 'looking';
+      if(filt === 'done') return r.status === 'done' || r.status === 'wont';
+      return true;
+    });
+    h += list.length ? list.map(function(r){ return fbItem(r, true); }).join('')
+                     : '<p class="fb-none">' + (filt === 'open' ? 'Nothing open. Good.' : 'Nothing here yet.') + '</p>';
+  }else{
+    var mine = rows.filter(function(r){ return String(r.created_by || '').toLowerCase() === fbMe(); });
+    h += '<div class="fb-sec">Your reports</div>' +
+      (mine.length ? mine.map(function(r){ return fbItem(r, false); }).join('') : '<p class="fb-none">You haven’t sent any yet.</p>');
+  }
+  m.innerHTML = h;
+  fbSendState();
+}
+
+function fbLoad(){
+  var db = fbDb();
+  if(!db) return Promise.resolve();
+  return Promise.resolve(db.from('team_feedback').select('*').order('created_at', { ascending:false }).limit(300))
+    .then(function(r){
+      if(r && r.error){ rows = []; fbSay('Couldn’t load reports: ' + (r.error.message || 'unknown error'), true); return; }
+      rows = (r && r.data) || [];
+    }, function(){ rows = []; });
+}
+function fbSay(t, bad, good){
+  var m = el && el.querySelector('#fbMsg');
+  if(!m) return;
+  m.textContent = t;
+  m.className = 'fb-msg' + (bad ? ' err' : good ? ' ok' : '');
+}
+
+function fbSend(){
+  var t = el.querySelector('#fbBody'), body = String((t && t.value) || '').trim();
+  if(!body || busy) return;
+  var db = fbDb();
+  if(!db || !fbMe()){ fbSay('You need to be signed in to send feedback.', true); return; }
+  var useCtx = !!(el.querySelector('#fbCtx') && el.querySelector('#fbCtx').checked), c = ctx || {};
+  var row = { kind: kind, body: body.slice(0, 4000), created_by: fbMe(), status: 'new',
+    screen: useCtx ? (c.screen || null) : null,
+    project_id: (useCtx && c.project) ? c.project.id : null,
+    build: c.build || null };
+  busy = true; fbSendState(); fbSay('Sending…');
+  Promise.resolve(db.from('team_feedback').insert(row).select().single()).then(function(r){
+    busy = false;
+    if(r && r.error){ fbSendState(); fbSay('Didn’t send: ' + (r.error.message || 'unknown error') + '. Your text is still here.', true); return; }
+    if(r && r.data) rows.unshift(r.data);
+    try{
+      if(typeof window.notifyTeam === 'function'){
+        var who = fbName(fbMe());
+        window.notifyTeam(fbAdmins().filter(function(e){ return String(e).toLowerCase() !== fbMe(); }),
+          'Team feedback — ' + KIND[kind] + ' (' + who + ')',
+          '<p><b>' + fbEsc(who) + '</b>: ' + fbEsc(body.slice(0, 300)) + '</p>' +
+          (row.screen ? '<p>Where: ' + fbEsc(row.screen) + '</p>' : ''), '#feedback').catch(function(){});
+      }
+    }catch(_){}
+    kind = 'broken';
+    fbRender();
+    fbSay('Sent. Thank you — you’ll see the status here.', false, true);
+  }, function(e){
+    busy = false; fbSendState();
+    fbSay('Didn’t send: ' + String((e && e.message) || e) + '. Your text is still here.', true);
+  });
+}
+
+function fbUpdate(id, patch, card){
+  var db = fbDb(), r0 = rows.filter(function(r){ return String(r.id) === String(id); })[0];
+  if(!db || !r0) return;
+  patch.updated_at = new Date().toISOString();
+  Promise.resolve(db.from('team_feedback').update(patch).eq('id', id).select().single()).then(function(r){
+    if(r && r.error){ if(card) card.insertAdjacentHTML('beforeend', '<div class="fb-msg err">Didn’t save: ' + fbEsc(r.error.message || '') + '</div>'); return; }
+    var nu = (r && r.data) || Object.assign({}, r0, patch);
+    rows = rows.map(function(x){ return String(x.id) === String(id) ? nu : x; });
+    fbRender();
+    try{
+      var to = String(nu.created_by || '').toLowerCase();
+      if(to && to !== fbMe() && typeof window.notifyTeam === 'function'){
+        window.notifyTeam([to], 'Your feedback: ' + (STATUS[nu.status] || nu.status),
+          '<p>' + fbEsc(String(nu.body || '').slice(0, 160)) + '</p>' +
+          (nu.reply ? '<p><b>Reply:</b> ' + fbEsc(nu.reply) + '</p>' : ''), '#feedback').catch(function(){});
+      }
+    }catch(_){}
+  }, function(){});
+}
+
+function fbClick(e){
+  if(e.target === el){ fbClose(); return; }
+  var b = e.target.closest('[data-fb]');
+  if(!b) return;
+  var k = b.getAttribute('data-fb'), v = b.getAttribute('data-v');
+  if(k === 'close'){ fbClose(); return; }
+  if(k === 'kind'){
+    kind = v;
+    Array.prototype.forEach.call(el.querySelectorAll('.fb-kind'), function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+    var t = el.querySelector('#fbBody'); if(t) t.placeholder = HINT[kind];
+    return;
+  }
+  if(k === 'send'){ fbSend(); return; }
+  if(k === 'tab'){ tab = v; fbRender(); return; }
+  if(k === 'filt'){ filt = v; fbRender(); return; }
+  if(k === 'job'){
+    e.preventDefault();
+    var pid = b.getAttribute('data-id');
+    fbClose();
+    if(pid && typeof window.openProject === 'function'){ try{ window.openProject(pid); }catch(_){} }
+    return;
+  }
+  var card = b.closest('.fb-item'), id = card && card.getAttribute('data-id');
+  if(!id) return;
+  if(k === 'status'){ fbUpdate(id, { status: v }, card); return; }
+  if(k === 'save'){
+    var ta = card.querySelector('[data-fb-reply]');
+    fbUpdate(id, { reply: String((ta && ta.value) || '').trim() || null }, card);
+  }
+}
+
+function fbOpen(view){
+  ctx = fbContext();
+  fbEnsure();
+  tab = (view === 'inbox' && fbAdmin()) ? 'inbox' : 'send';
+  el.classList.add('open');
+  fbRender();
+  fbLoad().then(function(){ if(el.classList.contains('open')) fbRender(); });
+}
+function fbClose(){ if(el) el.classList.remove('open'); }
+function fbIsOpen(){ return !!(el && el.classList.contains('open')); }
+
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && fbIsOpen()) fbClose(); });
+window.addEventListener('popstate', function(){ if(fbIsOpen()) fbClose(); });
+
+/* the alert link: #feedback opens the inbox for an admin, the person's own list otherwise */
+var fbLinkT = null;
+function fbLink(){
+  var h = location.hash || '';
+  if(window.__crFbLink){ h = window.__crFbLink; window.__crFbLink = ''; }
+  if(h !== '#feedback') return;
+  clearTimeout(fbLinkT);
+  var tries = 0;
+  (function fbLinkGo(){
+    if(!window.currentUser){ if(++tries < 300) fbLinkT = setTimeout(fbLinkGo, 400); return; }
+    try{ if(location.hash === '#feedback') history.replaceState(history.state, '', '#h'); }catch(_){}
+    fbOpen('inbox');
+  })();
+}
+window.addEventListener('hashchange', fbLink);
+fbLink();
+
+window.CardinalFeedback = Object.assign(window.CardinalFeedback || {}, { open: fbOpen, close: fbClose, isOpen: fbIsOpen });
+})();
+</script>
+
 </body>
 </html>

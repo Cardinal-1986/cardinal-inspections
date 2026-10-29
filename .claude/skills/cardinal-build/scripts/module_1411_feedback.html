@@ -1,0 +1,347 @@
+<style id="cr-fb-styles">
+/* v2026-10-29 build 1411 — Team Feedback (Menu → Account → Team Feedback).
+   Every colour is var(--fb-*,#literal): the fallbacks ARE the dark palette, and
+   the light twin re-declares the names under rb-light. A fixed overlay with its
+   own scroll — it never writes the global scroll lock. */
+#cr-fb{position:fixed;inset:0;z-index:10060;display:none;overflow-y:auto;overscroll-behavior:contain;
+  background:rgba(0,0,0,.62);-webkit-overflow-scrolling:touch;}
+#cr-fb.open{display:block;}
+#cr-fb .fb-sheet{max-width:640px;margin:0 auto;min-height:100%;box-sizing:border-box;
+  background:var(--fb-bg,#141619);color:var(--fb-ink,#f2f2f2);
+  padding:0 16px calc(96px + env(safe-area-inset-bottom,0px));font:400 15px/1.45 'Segoe UI',Arial,sans-serif;}
+@media (min-width:700px){ #cr-fb .fb-sheet{margin:24px auto;min-height:0;border-radius:14px;border:1px solid var(--fb-line,#2a2d32);} }
+#cr-fb .fb-hd{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;
+  padding:calc(12px + env(safe-area-inset-top,0px)) 0 10px;background:var(--fb-bg,#141619);border-bottom:1px solid var(--fb-line,#2a2d32);}
+#cr-fb .fb-hd h2{flex:1;margin:0;font:700 19px 'Segoe UI',Arial,sans-serif;color:var(--fb-ink,#f2f2f2);}
+#cr-fb .fb-x{min-width:44px;min-height:44px;border:0;border-radius:10px;background:transparent;
+  color:var(--fb-ink,#f2f2f2);font:400 26px/1 Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-tabs{display:flex;gap:8px;margin:12px 0 4px;}
+#cr-fb .fb-tab{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--fb-line,#2a2d32);
+  background:transparent;color:var(--fb-mute,#a9adb3);font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-tab[aria-pressed="true"]{background:var(--fb-card,#1d2024);color:var(--fb-ink,#f2f2f2);border-color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-lead{margin:14px 0 10px;color:var(--fb-mute,#a9adb3);font-size:14px;}
+#cr-fb .fb-kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+#cr-fb .fb-kind{min-height:52px;padding:6px 8px;border-radius:10px;border:1px solid var(--fb-line,#2a2d32);
+  background:var(--fb-card,#1d2024);color:var(--fb-ink,#f2f2f2);font:700 14px/1.2 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-kind[aria-pressed="true"]{background:#c8202e;border-color:#c8202e;color:#ffffff;}
+#cr-fb textarea{display:block;width:100%;box-sizing:border-box;margin:12px 0 8px;min-height:130px;padding:12px;
+  border-radius:10px;border:1px solid var(--fb-line,#2a2d32);background:var(--fb-field,#0d0e10);
+  color:var(--fb-ink,#f2f2f2);font:400 16px/1.45 'Segoe UI',Arial,sans-serif;resize:vertical;}
+#cr-fb textarea::placeholder{color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-ctx{display:flex;align-items:flex-start;gap:10px;margin:4px 0 12px;color:var(--fb-mute,#a9adb3);font-size:13px;}
+#cr-fb .fb-ctx input{width:22px;height:22px;margin:0;flex:0 0 auto;accent-color:#c8202e;}
+#cr-fb .fb-send{width:100%;min-height:50px;border:0;border-radius:10px;background:#c8202e;color:#ffffff;
+  font:700 16px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-send[disabled]{opacity:.55;cursor:default;}
+#cr-fb .fb-msg{min-height:20px;margin:10px 0 0;font-size:14px;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-msg.err{color:var(--fb-err,#ff8a8a);}
+#cr-fb .fb-msg.ok{color:var(--fb-done,#5cc98a);}
+#cr-fb .fb-sec{margin:26px 0 8px;font:700 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-filt{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px;}
+#cr-fb .fb-filt button{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--fb-line,#2a2d32);
+  background:transparent;color:var(--fb-mute,#a9adb3);font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-filt button[aria-pressed="true"]{color:var(--fb-ink,#f2f2f2);border-color:var(--fb-mute,#a9adb3);background:var(--fb-card,#1d2024);}
+#cr-fb .fb-item{margin:10px 0;padding:12px 14px;border-radius:12px;border:1px solid var(--fb-line,#2a2d32);background:var(--fb-card,#1d2024);}
+#cr-fb .fb-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-top b{color:var(--fb-ink,#f2f2f2);font-weight:700;}
+#cr-fb .fb-pill{display:inline-block;padding:2px 9px;border-radius:11px;border:1px solid currentColor;font:700 12px 'Segoe UI',Arial,sans-serif;}
+#cr-fb .fb-pill.s-new{color:var(--fb-new,#f0b54a);}
+#cr-fb .fb-pill.s-looking{color:var(--fb-look,#7fb0ff);}
+#cr-fb .fb-pill.s-done{color:var(--fb-done,#5cc98a);}
+#cr-fb .fb-pill.s-wont{color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-body{margin:8px 0 6px;white-space:pre-wrap;word-break:break-word;color:var(--fb-ink,#f2f2f2);}
+#cr-fb .fb-where{font-size:12px;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-where a{color:var(--fb-look,#7fb0ff);}
+#cr-fb .fb-reply{margin:10px 0 0;padding:10px 12px;border-left:3px solid #c8202e;border-radius:6px;background:var(--fb-field,#0d0e10);
+  white-space:pre-wrap;word-break:break-word;color:var(--fb-ink,#f2f2f2);}
+#cr-fb .fb-reply small{display:block;margin-bottom:3px;font-size:12px;color:var(--fb-mute,#a9adb3);}
+#cr-fb .fb-admin{margin-top:10px;}
+#cr-fb .fb-sts{display:flex;flex-wrap:wrap;gap:6px;}
+#cr-fb .fb-sts button{min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--fb-line,#2a2d32);
+  background:transparent;color:var(--fb-mute,#a9adb3);font:700 13px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-sts button[aria-pressed="true"]{color:var(--fb-ink,#f2f2f2);border-color:var(--fb-ink,#f2f2f2);}
+#cr-fb .fb-admin textarea{min-height:70px;margin:8px 0 6px;}
+#cr-fb .fb-save{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#c8202e;color:#ffffff;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#cr-fb .fb-none{margin:12px 0;color:var(--fb-mute,#a9adb3);font-size:14px;}
+:root[data-theme="rb-light"] #cr-fb{--fb-bg:#ffffff;--fb-card:#f4f5f7;--fb-field:#ffffff;--fb-ink:#161616;--fb-mute:#5f6670;
+  --fb-line:#d5d9de;--fb-new:#8a5a00;--fb-look:#1f5fbf;--fb-done:#1e7a45;--fb-err:#b3261e;}
+@media print{ #cr-fb{display:none !important;} }
+</style>
+<script id="cr-fb-script">
+/* v2026-10-29 build 1411 — Team Feedback. Theo: "a team suggestions or feedback
+   box somewhere in the app for when things break down or aren't working or
+   features from team members". One table, team_feedback (team_feedback.sql):
+   anyone on staff files a report under their own address; they read their own
+   and Theo's reply; admins read all and set the status. The screen, the open job
+   and the build ride along so "it's broken" arrives with where. Admins get a push
+   (notifyTeam) and the sender gets one back when the status or reply changes.
+   The link in both is #feedback, stashed at boot beside 1255's #punch. */
+(function(){
+'use strict';
+var KIND = { broken:'Something broke', not_right:'Not working right', idea:'Idea' };
+var HINT = {
+  broken:'What were you doing, and what happened? (e.g. "Tapped Save on the estimate and it spun forever")',
+  not_right:'What did you expect, and what did it do instead?',
+  idea:'What would make your day easier?'
+};
+var STATUS = { 'new':'New', looking:'Looking at it', done:'Done', wont:'Won’t do' };
+var el = null, kind = 'broken', tab = 'send', filt = 'open', ctx = null, rows = [], busy = false;
+
+function fbEsc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fbDb(){ return window.supa || window.sb || null; }
+function fbMe(){ var u = /** @type {any} */ (window.currentUser); return (u && u.email) ? String(u.email).toLowerCase() : ''; }
+function fbAdmin(){ try{ return typeof window.isAdminUser === 'function' && !!window.isAdminUser(); }catch(e){ return false; } }
+function fbName(e){ var n = String(e || '').split('@')[0]; return n ? n.charAt(0).toUpperCase() + n.slice(1) : 'Someone'; }
+function fbWhen(t){
+  var d = new Date(t); if(isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric' }) + ' ' +
+         d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+}
+function fbBuild(){
+  try{ var f = document.querySelector('[data-cr-footer]'), m = f && /build\s+(\d+)/i.exec(f.textContent || ''); return m ? 'build ' + m[1] : ''; }catch(e){ return ''; }
+}
+function fbAdmins(){
+  var a = window.ADMIN_EMAILS;
+  return (Array.isArray(a) && a.length) ? a.slice() : ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net'];
+}
+
+/* what the person was looking at when they opened the box — read BEFORE the overlay paints */
+function fbContext(){
+  var screen = '';
+  try{
+    var heads = document.querySelectorAll('.viewhead, h1, h2');
+    for(var i = 0; i < heads.length; i++){
+      var h = /** @type {HTMLElement} */ (heads[i]);
+      if(h.closest('#cr-fb') || h.closest('#navMenu') || !h.offsetParent) continue;
+      var t = String(h.textContent || '').replace(/\s+/g, ' ').trim();
+      if(t){ screen = t.slice(0, 80); break; }
+    }
+  }catch(e){}
+  var hash = String(location.hash || '').slice(0, 80);
+  if(hash && hash !== '#h' && hash !== '#feedback') screen = screen ? screen + ' (' + hash + ')' : hash;
+  var p = window.currentProject || null, pv = false;
+  try{ pv = !!(p && p.id && document.getElementById('projectView') && document.getElementById('projectView').offsetParent); }catch(e){}
+  return { screen: screen, project: pv ? { id: p.id, name: p.name || '' } : null, build: fbBuild() };
+}
+
+function fbEnsure(){
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'cr-fb';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.setAttribute('aria-label', 'Team Feedback');
+  el.innerHTML = '<div class="fb-sheet"><div class="fb-hd"><h2>Team Feedback</h2>' +
+    '<button type="button" class="fb-x" data-fb="close" aria-label="Close">×</button></div><div class="fb-main"></div></div>';
+  document.body.appendChild(el);
+  el.addEventListener('click', fbClick);
+  el.addEventListener('input', function(e){ var tg = /** @type {any} */ (e.target); if(tg && tg.id === 'fbBody') fbSendState(); });
+  return el;
+}
+
+function fbSendState(){
+  var b = el && el.querySelector('[data-fb="send"]'), t = el && el.querySelector('#fbBody');
+  if(b && t) b.disabled = busy || !String(t.value || '').trim();
+}
+
+function fbItem(r, admin){
+  var where = [];
+  if(r.screen) where.push(fbEsc(r.screen));
+  if(r.project_id) where.push('<a href="#p/' + encodeURIComponent(r.project_id) + '" data-fb="job" data-id="' + fbEsc(r.project_id) + '">Open the job</a>');
+  if(r.build) where.push(fbEsc(r.build));
+  var h = '<div class="fb-item" data-id="' + fbEsc(r.id) + '"><div class="fb-top">' +
+    '<span class="fb-pill s-' + fbEsc(r.status) + '">' + fbEsc(STATUS[r.status] || r.status) + '</span>' +
+    '<b>' + fbEsc(KIND[r.kind] || r.kind) + '</b>' +
+    (admin ? '<span>' + fbEsc(fbName(r.created_by)) + '</span>' : '') +
+    '<span>' + fbEsc(fbWhen(r.created_at)) + '</span></div>' +
+    '<div class="fb-body">' + fbEsc(r.body) + '</div>' +
+    (where.length ? '<div class="fb-where">' + where.join(' · ') + '</div>' : '');
+  if(r.reply && !admin) h += '<div class="fb-reply"><small>Reply</small>' + fbEsc(r.reply) + '</div>';
+  if(admin){
+    h += '<div class="fb-admin"><div class="fb-sts" role="group" aria-label="Status">' +
+      Object.keys(STATUS).map(function(k){
+        return '<button type="button" data-fb="status" data-v="' + k + '" aria-pressed="' + (r.status === k) + '">' + STATUS[k] + '</button>';
+      }).join('') + '</div>' +
+      '<textarea data-fb-reply placeholder="Reply to ' + fbEsc(fbName(r.created_by)) + ' (they see this)">' + fbEsc(r.reply || '') + '</textarea>' +
+      '<button type="button" class="fb-save" data-fb="save">Save reply</button></div>';
+  }
+  return h + '</div>';
+}
+
+function fbRender(){
+  var m = el.querySelector('.fb-main'), admin = fbAdmin(), h = '';
+  if(admin){
+    var nNew = rows.filter(function(r){ return r.status === 'new'; }).length;
+    h += '<div class="fb-tabs" role="group" aria-label="View">' +
+      '<button type="button" class="fb-tab" data-fb="tab" data-v="send" aria-pressed="' + (tab === 'send') + '">Send</button>' +
+      '<button type="button" class="fb-tab" data-fb="tab" data-v="inbox" aria-pressed="' + (tab === 'inbox') + '">Inbox' + (nNew ? ' (' + nNew + ' new)' : '') + '</button></div>';
+  }
+  if(!admin || tab === 'send'){
+    var c = ctx || {};
+    var bits = [];
+    if(c.screen) bits.push(c.screen);
+    if(c.project) bits.push(c.project.name || 'this job');
+    if(c.build) bits.push(c.build);
+    h += '<p class="fb-lead">Tell Theo when something breaks, isn’t working right, or you have an idea. Every one gets read.</p>' +
+      '<div class="fb-kinds" role="group" aria-label="What kind">' + Object.keys(KIND).map(function(k){
+        return '<button type="button" class="fb-kind" data-fb="kind" data-v="' + k + '" aria-pressed="' + (kind === k) + '">' + KIND[k] + '</button>';
+      }).join('') + '</div>' +
+      '<textarea id="fbBody" maxlength="4000" aria-label="Your feedback" placeholder="' + fbEsc(HINT[kind]) + '"></textarea>' +
+      (bits.length ? '<label class="fb-ctx"><input type="checkbox" id="fbCtx" checked><span>Include where I was: ' + fbEsc(bits.join(' · ')) + '</span></label>' : '') +
+      '<button type="button" class="fb-send" data-fb="send" disabled>Send</button><div class="fb-msg" id="fbMsg" role="status"></div>';
+  }
+  if(admin && tab === 'inbox'){
+    var F = { open:'Open', all:'All', done:'Done' };
+    h += '<div class="fb-filt" role="group" aria-label="Show">' + Object.keys(F).map(function(k){
+      return '<button type="button" data-fb="filt" data-v="' + k + '" aria-pressed="' + (filt === k) + '">' + F[k] + '</button>';
+    }).join('') + '</div>';
+    var list = rows.filter(function(r){
+      if(filt === 'open') return r.status === 'new' || r.status === 'looking';
+      if(filt === 'done') return r.status === 'done' || r.status === 'wont';
+      return true;
+    });
+    h += list.length ? list.map(function(r){ return fbItem(r, true); }).join('')
+                     : '<p class="fb-none">' + (filt === 'open' ? 'Nothing open. Good.' : 'Nothing here yet.') + '</p>';
+  }else{
+    var mine = rows.filter(function(r){ return String(r.created_by || '').toLowerCase() === fbMe(); });
+    h += '<div class="fb-sec">Your reports</div>' +
+      (mine.length ? mine.map(function(r){ return fbItem(r, false); }).join('') : '<p class="fb-none">You haven’t sent any yet.</p>');
+  }
+  m.innerHTML = h;
+  fbSendState();
+}
+
+function fbLoad(){
+  var db = fbDb();
+  if(!db) return Promise.resolve();
+  return Promise.resolve(db.from('team_feedback').select('*').order('created_at', { ascending:false }).limit(300))
+    .then(function(r){
+      if(r && r.error){ rows = []; fbSay('Couldn’t load reports: ' + (r.error.message || 'unknown error'), true); return; }
+      rows = (r && r.data) || [];
+    }, function(){ rows = []; });
+}
+function fbSay(t, bad, good){
+  var m = el && el.querySelector('#fbMsg');
+  if(!m) return;
+  m.textContent = t;
+  m.className = 'fb-msg' + (bad ? ' err' : good ? ' ok' : '');
+}
+
+function fbSend(){
+  var t = el.querySelector('#fbBody'), body = String((t && t.value) || '').trim();
+  if(!body || busy) return;
+  var db = fbDb();
+  if(!db || !fbMe()){ fbSay('You need to be signed in to send feedback.', true); return; }
+  var useCtx = !!(el.querySelector('#fbCtx') && el.querySelector('#fbCtx').checked), c = ctx || {};
+  var row = { kind: kind, body: body.slice(0, 4000), created_by: fbMe(), status: 'new',
+    screen: useCtx ? (c.screen || null) : null,
+    project_id: (useCtx && c.project) ? c.project.id : null,
+    build: c.build || null };
+  busy = true; fbSendState(); fbSay('Sending…');
+  Promise.resolve(db.from('team_feedback').insert(row).select().single()).then(function(r){
+    busy = false;
+    if(r && r.error){ fbSendState(); fbSay('Didn’t send: ' + (r.error.message || 'unknown error') + '. Your text is still here.', true); return; }
+    if(r && r.data) rows.unshift(r.data);
+    try{
+      if(typeof window.notifyTeam === 'function'){
+        var who = fbName(fbMe());
+        window.notifyTeam(fbAdmins().filter(function(e){ return String(e).toLowerCase() !== fbMe(); }),
+          'Team feedback — ' + KIND[kind] + ' (' + who + ')',
+          '<p><b>' + fbEsc(who) + '</b>: ' + fbEsc(body.slice(0, 300)) + '</p>' +
+          (row.screen ? '<p>Where: ' + fbEsc(row.screen) + '</p>' : ''), '#feedback').catch(function(){});
+      }
+    }catch(_){}
+    kind = 'broken';
+    fbRender();
+    fbSay('Sent. Thank you — you’ll see the status here.', false, true);
+  }, function(e){
+    busy = false; fbSendState();
+    fbSay('Didn’t send: ' + String((e && e.message) || e) + '. Your text is still here.', true);
+  });
+}
+
+function fbUpdate(id, patch, card){
+  var db = fbDb(), r0 = rows.filter(function(r){ return String(r.id) === String(id); })[0];
+  if(!db || !r0) return;
+  patch.updated_at = new Date().toISOString();
+  Promise.resolve(db.from('team_feedback').update(patch).eq('id', id).select().single()).then(function(r){
+    if(r && r.error){ if(card) card.insertAdjacentHTML('beforeend', '<div class="fb-msg err">Didn’t save: ' + fbEsc(r.error.message || '') + '</div>'); return; }
+    var nu = (r && r.data) || Object.assign({}, r0, patch);
+    rows = rows.map(function(x){ return String(x.id) === String(id) ? nu : x; });
+    fbRender();
+    try{
+      var to = String(nu.created_by || '').toLowerCase();
+      if(to && to !== fbMe() && typeof window.notifyTeam === 'function'){
+        window.notifyTeam([to], 'Your feedback: ' + (STATUS[nu.status] || nu.status),
+          '<p>' + fbEsc(String(nu.body || '').slice(0, 160)) + '</p>' +
+          (nu.reply ? '<p><b>Reply:</b> ' + fbEsc(nu.reply) + '</p>' : ''), '#feedback').catch(function(){});
+      }
+    }catch(_){}
+  }, function(){});
+}
+
+function fbClick(e){
+  if(e.target === el){ fbClose(); return; }
+  var b = e.target.closest('[data-fb]');
+  if(!b) return;
+  var k = b.getAttribute('data-fb'), v = b.getAttribute('data-v');
+  if(k === 'close'){ fbClose(); return; }
+  if(k === 'kind'){
+    kind = v;
+    Array.prototype.forEach.call(el.querySelectorAll('.fb-kind'), function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+    var t = el.querySelector('#fbBody'); if(t) t.placeholder = HINT[kind];
+    return;
+  }
+  if(k === 'send'){ fbSend(); return; }
+  if(k === 'tab'){ tab = v; fbRender(); return; }
+  if(k === 'filt'){ filt = v; fbRender(); return; }
+  if(k === 'job'){
+    e.preventDefault();
+    var pid = b.getAttribute('data-id');
+    fbClose();
+    if(pid && typeof window.openProject === 'function'){ try{ window.openProject(pid); }catch(_){} }
+    return;
+  }
+  var card = b.closest('.fb-item'), id = card && card.getAttribute('data-id');
+  if(!id) return;
+  if(k === 'status'){ fbUpdate(id, { status: v }, card); return; }
+  if(k === 'save'){
+    var ta = card.querySelector('[data-fb-reply]');
+    fbUpdate(id, { reply: String((ta && ta.value) || '').trim() || null }, card);
+  }
+}
+
+function fbOpen(view){
+  ctx = fbContext();
+  fbEnsure();
+  tab = (view === 'inbox' && fbAdmin()) ? 'inbox' : 'send';
+  el.classList.add('open');
+  fbRender();
+  fbLoad().then(function(){ if(el.classList.contains('open')) fbRender(); });
+}
+function fbClose(){ if(el) el.classList.remove('open'); }
+function fbIsOpen(){ return !!(el && el.classList.contains('open')); }
+
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && fbIsOpen()) fbClose(); });
+window.addEventListener('popstate', function(){ if(fbIsOpen()) fbClose(); });
+
+/* the alert link: #feedback opens the inbox for an admin, the person's own list otherwise */
+var fbLinkT = null;
+function fbLink(){
+  var h = location.hash || '';
+  if(window.__crFbLink){ h = window.__crFbLink; window.__crFbLink = ''; }
+  if(h !== '#feedback') return;
+  clearTimeout(fbLinkT);
+  var tries = 0;
+  (function fbLinkGo(){
+    if(!window.currentUser){ if(++tries < 300) fbLinkT = setTimeout(fbLinkGo, 400); return; }
+    try{ if(location.hash === '#feedback') history.replaceState(history.state, '', '#h'); }catch(_){}
+    fbOpen('inbox');
+  })();
+}
+window.addEventListener('hashchange', fbLink);
+fbLink();
+
+window.CardinalFeedback = Object.assign(window.CardinalFeedback || {}, { open: fbOpen, close: fbClose, isOpen: fbIsOpen });
+})();
+</script>

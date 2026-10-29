@@ -86,13 +86,13 @@ try {
     const left = [...document.querySelectorAll('#navMenu .navopt')].filter(b => !b.matches(rule)).map(b => b.getAttribute('data-nav') || b.id).filter(Boolean).sort();
     return { rule: true, left };
   });
-  ok(m.rule && JSON.stringify(m.left) === JSON.stringify(['dispatch', 'notify', 'prodboard', 'punch']), 'E  Scottie: the menu keeps only Production Board, Dispatch, Punch List, Notifications', JSON.stringify(m));
+  ok(m.rule && JSON.stringify(m.left) === JSON.stringify(['dispatch', 'feedback', 'notify', 'prodboard', 'punch']), 'E  Scottie: the menu keeps only Production Board, Dispatch, Punch List, Notifications, Team Feedback (1411)', JSON.stringify(m));
   /* …and what he actually sees when he opens the drawer (sections are a flat list for him) */
   const real = await page.evaluate(async () => { document.getElementById('navBtn').click(); await new Promise(r => setTimeout(r, 600));
     const rows = [...document.querySelectorAll('#navMenu .navopt')].filter(b => getComputedStyle(b).display !== 'none').map(b => b.getAttribute('data-nav')).sort();
     const ts = !!document.querySelector('#navMenu .cr-ts') && getComputedStyle(document.querySelector('#navMenu .cr-ts')).display !== 'none';
     return { rows, ts }; });
-  ok(JSON.stringify(real.rows) === JSON.stringify(['dispatch', 'notify', 'prodboard', 'punch']) && real.ts, 'E  Scottie opens the menu: those four rows and Text size, nothing folded away', JSON.stringify(real));
+  ok(JSON.stringify(real.rows) === JSON.stringify(['dispatch', 'feedback', 'notify', 'prodboard', 'punch']) && real.ts, 'E  Scottie opens the menu: those five rows and Text size, nothing folded away', JSON.stringify(real));
   await ctx.close();
 
   ({ ctx, page } = await boot('curtis@cardinalrenovations.net', false));
