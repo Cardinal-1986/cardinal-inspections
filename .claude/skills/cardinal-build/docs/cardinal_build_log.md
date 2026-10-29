@@ -37166,3 +37166,22 @@ Documents built by the app's own template code, served through the real `api/sha
   - the L P A C I pipeline letters (1114, *"just put letters"*)
   - the thin red card edge (1283–1290, "option B"). Before/after previews were sent to him.
   - the obsidian Reports panels, which are theme-independent on purpose
+
+## Build 1415 — calmer cards, spelled stages, one typeface (29 Oct 2026)
+- **Theo:** *"Do your suggestions on all as long as the rating comes to a 9/10 minimum. Rerun the audits until it gets there."* This is an explicit go-ahead from the design and colour judges, and it **supersedes three of Theo's own earlier picks**. They are written down here so nobody restores them on the strength of the old notes:
+  1. **No decorative red.** The thin red left edge on every Home card and the Activity panel (1283/1285/1290, "option B") is gone. So is the 5px red cap on every Reports tile, along with the glint under it. The cards now use their own hairline on all four sides. Red stays for actions, today, overdue and money owed.
+  2. **Spelled stages.** 1114 had *"just put letters. L P A C I"*. The pipeline now reads Leads, Prospects, Approved, Completed, Invoiced, Closed, On Hold.
+     - On a phone it is still a one-row scroller, with cells widened to 84px so a word never ellipsizes.
+     - With the rail open, a container query on the card wraps it **4 + 3** instead of 6 + 1 with On Hold stranded.
+     - Measured at 390, 1194, 1366, 1440, 1536 and 1920: no label is clipped at any width.
+  3. **One typeface on every device.** 1,140 font stacks read `'Segoe UI',Arial` (plus the escaped and double-quoted forms). Apple devices have no Segoe, so Theo's iPhone and iPad drew Arial. Every stack now runs Segoe UI → -apple-system → BlinkMacSystemFont → Roboto → Arial. Windows is unchanged. The Georgia print templates are untouched.
+     - ⚠ The first run doubled the backslash on the 52 escaped `\'Segoe UI\'` stacks inside JS strings, which broke 6 script blocks. `node --check` caught it before anything was written to the repo.
+- **1414 follow-up, seen in the render:**
+  - The Activity heading's bolt sat apart from its word. It is now wrapped together with the word.
+  - The mail/calendar avatar glyph was drawn at text size. It is now 22px.
+- **Gates:**
+  - `gate_1415.mjs`: 21/21. The control (1414) is RED 11.
+  - `check_build` GREEN.
+  - `gate_types` at the control's 1506, so no `-apple-system` was left in JS code where it would read as a subtraction.
+  - REPRO byte-identical.
+  - `gate_1114`, `gate_1233` and `gate_1235` are **red identically on the control**. They are rotted against the current rig, not caused by this build.
