@@ -94,7 +94,22 @@ function realm(seed) {
   const dom = new JSDOM('<!doctype html><html><head>' + css + '</style></head><body>' +
     '<div id="cr-show"><button data-tab="work"></button></div>' +
     '<script>' + body + '<\/script></body></html>',
-    { runScripts: 'dangerously', url: 'https://gs.test/' });
+    { runScripts: 'dangerously', url: 'https://gs.test/',
+      /* 1422: jsdom 24 has no pointer-event handler PROPERTIES — `el.onpointerdown = f` is a plain
+         expando that no pointerdown ever calls, so the 600ms hold below could never arm and this
+         check was red with the app correct (Chromium implements them; every browser does). The
+         shim maps the six properties the module uses onto real listeners, so the RIG gains the
+         feature instead of the app being bent to fit the rig. */
+      beforeParse(win) {
+        ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave', 'pointerenter', 'pointermove'].forEach(type => {
+          const key = '__on' + type;
+          Object.defineProperty(win.HTMLElement.prototype, 'on' + type, {
+            configurable: true,
+            get() { return this[key] || null; },
+            set(fn) { if (this[key]) this.removeEventListener(type, this[key]); this[key] = fn || null; if (fn) this.addEventListener(type, fn); }
+          });
+        });
+      } });
   const w = dom.window;
   Object.defineProperty(w, 'supa', { value: { from: t => mk(t),
     storage: { from: () => ({ createSignedUrls: () => Promise.resolve({ data: [] }),
