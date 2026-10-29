@@ -2428,9 +2428,7 @@ body.restoring #restoreVeil{display:flex;}
 @media (max-width:760px){
   /* the job's Work Orders tab is already a Job Menu tile; on a phone this button wrapped onto its own line */
   header.site #woQuick{--cr-stack:"1373 on a phone the Job Menu's Work Orders tile replaces this header shortcut";display:none !important;}
-  /* the Ask button sat over the right-hand tiles: a round button with just the star */
-  #cr-ai-fab{--cr-stack:"1373 a round star on a phone; the pill stays on wider screens";width:52px;height:52px;padding:0;justify-content:center;font-size:22px;}
-  #cr-ai-fab .cr-ai-lbl{display:none;}
+  /* 1422: the round Ask star moved next to its base rule in cr-ai-styles — here it lost every property it shared */
 }
 /* client dashboard */
 .dbstage{display:flex;align-items:center;gap:4px;border-radius:8px;padding:12px 6px;margin:0 0 12px;}
@@ -4274,7 +4272,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1421<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1422<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -45738,6 +45736,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1422, d:'2026-10-29', t:'The Ask button wears the portal colour', s:'The Ask button is red on Retail, teal on Insurance and green on Community \u2014 the same as the + button \u2014 instead of red everywhere. On a phone it is a proper round button with a larger star.' },
   { b: 1421, d:'2026-10-29', t:'The work order and Measurements boxes are readable in dark mode', s:'In dark mode the Cancel button on the New work order and Measurements boxes was almost invisible, and the field labels and hints were faint. Every label now reads clearly in both themes, the close \u00d7 is easy to tap, and the heading uses the app\u2019s own font.' },
   { b: 1420, d:'2026-10-29', t:'Home takes Production back to the board', s:'For Curtis and Scottie, the Home button at the bottom of the phone and the gold house in the header now open the Production board. They used to land on the retail home, which shows pipeline counts and money owed. Everyone else\u2019s Home is unchanged.' },
   { b: 1419, d:'2026-10-29', t:'A half-typed note stays on its own job', s:'A note you started on one job used to still be sitting in the message box when you opened another job\u2019s thread, so Send could post it on the wrong job. Each job now keeps its own draft, and a tag alert always names the job the note was sent on.' },
@@ -92383,8 +92382,15 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 }
 #cr-ai-fab{position:fixed; right:16px; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:9400;
   display:inline-flex; align-items:center; gap:8px;
-  height:48px; padding:0 18px; border-radius:99px; border:0; background:var(--ai-red,#C8202E); color:#fff;
+  height:48px; padding:0 18px; border-radius:99px; border:0; background:var(--crm-id,var(--ai-red,#C8202E)); color:var(--crm-id-ink,#fff);
   font:inherit; font-size:15px; font-weight:800; letter-spacing:.02em; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.35);}
+/* 1422: the CRM's identity hue, the + button's pair (1418) — it was the one red fill left on green Community */
+@media (max-width:760px){
+  /* 1373: the Ask button sat over the right-hand tiles: a round button with just the star. 1422: moved here,
+     after the base rule — ~90,000 lines earlier it lost height, padding and font-size to it (measured 52x48, 15px). */
+  #cr-ai-fab{--cr-stack:"1373 a round star on a phone; the pill stays on wider screens";width:52px;height:52px;padding:0;justify-content:center;font-size:22px;}
+  #cr-ai-fab .cr-ai-lbl{display:none;}
+}
 /* hidden unless the signed-in person is Theo or Joan (.on). Written as :not(.on) so the rule only
    ever MATCHES when it applies — a base display:none beaten by .on reads to the sentinel as a rule
    that never wins. */

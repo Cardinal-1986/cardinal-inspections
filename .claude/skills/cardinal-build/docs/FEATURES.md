@@ -10317,3 +10317,9 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 - The close × is a 44px `role=button`.
 - The heading uses the app sans.
 **Gate:** `gate_1421.mjs`, 10 checks in both themes; red 10 on 1420.
+
+## Build 1422: the Ask button wears the portal colour
+- `#cr-ai-fab` reads `--crm-id` / `--crm-id-ink`, the pair the header + has used since 1418.
+- 1373's phone rule (a 52×52 round star) moved from line ~2432 to just after its base rule in `cr-ai-styles`. It sat earlier in the file at equal specificity, so it had been losing height, padding and font-size.
+- **Gate:** `gate_1422.mjs`, 14 checks; red 5 on 1421.
+- The same PR carries the `gate_1191` rig fix: jsdom has no pointer-event handler properties.

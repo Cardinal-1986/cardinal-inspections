@@ -37343,3 +37343,18 @@ The 1416 builder found this ("#tskModal carries light inline inks"). Measured in
   - `gate_1421.mjs` 10/0. The control (1420) is RED 10/0.
   - `check_build` GREEN.
   - `gate_types` and `gate_dupes` are identical to the control.
+
+## Build 1422 — the Ask button wears the portal colour (29 Oct 2026)
+- **Judges 15/16:** the red Ask button clashed with green Community. It was the last red fill on Community and Insurance after 1418 gave the + the identity hue. It now reads the same `--crm-id` / `--crm-id-ink` pair.
+- **"Covers content" (judge 15 #16) did not reproduce at end of scroll.** It was probed at 390 standalone and at 1536, across Clients, Leads, the profile and Home: 0 controls under the button. While mid-scroll it floats over content, like any floating button.
+- **1373's round star never fully won.** Its media rule sat ~90,000 lines before the base rule at equal specificity, so the base's later `height:48px; padding:0 18px; font-size:15px` beat it. Measured at 52×48 with a 15px star.
+  - It moved to just after the base rule. That is a deletion at the source, not an out-specify.
+  - It now measures 52×52 with a 22px star. The desktop pill is unchanged.
+- **The PR also carries the `gate_1191` rig fix.**
+  - jsdom 24 has no `onpointerdown`-style handler properties, so The Appointment's hold-to-unlock could never arm under test.
+  - A `beforeParse` shim gives the rig the feature. The app is untouched.
+  - 45/0, and a poisoned copy goes RED.
+- **Gates:**
+  - `gate_1422.mjs` 14/0. The control (1421) is RED 5.
+  - `check_build` GREEN.
+  - `gate_types` and `gate_dupes` are identical to the control.
