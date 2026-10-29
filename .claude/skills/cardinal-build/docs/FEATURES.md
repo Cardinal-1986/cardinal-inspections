@@ -10485,3 +10485,38 @@ Theo answered "yes" on 29 Oct.
   - Quick Inspection, the contract action bar and the Supplement card heading use drawn icons instead of emoji.
 - **Supplement Desk (`supplement.html`, stamp 1429).** The printed letter carries the letterhead: the report logo, the company line and phone the invoice already prints, the date, and the claim number.
 - **Gate:** `gate_1429.mjs`, 58 checks; RED 39 on the 1428 control. `gate_1005` S3 now uses the shared spelling.
+
+## Build 1430: navigation and shell fixes (round-1 audit, Builder G)
+
+**Pop-up sheets: Escape, Back and navigation (#11, #22).**
+- One mechanism, grown from 1341's two-form list.
+- A sheet is recognised by what it is: a direct child of `<body>`, `position:fixed`, covering ≥85% of the screen, with a translucent scrim (its own, or a full-size child's).
+  - Opaque full-screen views never match, so they keep `hideAllViews()` / `navRestore()`.
+- The topmost sheet is closed by 1341's named Cancel, else its own Cancel / Close / ✕, else a tap on its scrim.
+- **Escape:** a capture listener notes the sheet before anything else runs. A bubble listener closes it only if it is still open, so `crAsk` and the palette are unchanged.
+- **Back:** closes the sheet and undoes the history step, so the page underneath never moves. This is the first `popstate` listener.
+- **Navigation:** a bottom-tab or drawer-row tap closes open sheets first.
+
+**+ New over Production (#7).**
+- The bar's + New lifts `#newMenu` to `<body>` at z 9700, over the board (9500), Dispatch (9550) and the punch page (9400).
+- Its forms lift above those views too.
+- Task opens in place there.
+
+**Undo toast (#23).** It clears the installed tab bar.
+
+**Navigation (#16).**
+- Switch portal opens the picker over the page you are on.
+- The Front Door has a 44px ✕ and closes on Escape.
+- Drawer counts count only rows the person can see.
+- A heading with no visible row is hidden.
+- Tools doors a non-admin can't use are hidden.
+
+**Field accounts (#17).**
+- Tapping a job on the board or on Dispatch opens its punch card (z 9560 over Dispatch). With no punch-out, it shows a neutral `crTell` `'info'` message.
+- `crmNow()` treats an open Dispatch as Production.
+- Quick jump is hidden for field accounts.
+- Dispatch stays read-only and shows no money.
+
+**Light desktop rail icons (#24).** Clients (people), Estimates (ruled page), Pricing (tag), Community Partners and unnamed rows (ring) get their own keyline icons. Only Leads & Jobs keeps the line stack, as in dark.
+
+**Gate:** `gate_1430.mjs`, 85 checks. It goes RED (40 fail) on the control.

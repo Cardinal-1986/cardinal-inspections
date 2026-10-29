@@ -37574,3 +37574,35 @@ The name was the only flexible item, so it was the one that gave way.
 **Needs Theo:**
 1. **The Supplement card on the insurance client page has never been visible.** `#cr-sp-mount` sits directly in `#tab-overview` and is not on its allow-list. Exempt it, or retire it?
 2. **The merged lead-source list has overlaps.** Door knock / Canvasser / Storm canvass, and five Google / Internet variants. Prune it?
+
+## Build 1430 — navigation and shell fixes (29 Oct 2026)
+
+**Source:** Theo, "Do 1 first". Builder G built this on 1428 and reproduced every item first. All 30 anchors apply unchanged on 1429. Its comments said "1429"; they were relabelled 1430 before shipping.
+
+**Before → after:**
+
+| Item | Before | After |
+|---|---|---|
+| + New menu over Production / Punch / Dispatch | 0 of 4 options on top | 4 of 4 on top; Task keeps the screen |
+| Escape with Record payment open | did nothing | closes it |
+| Back with Record payment open | Home underneath, sheet stayed | sheet closes, page stays |
+| Day sheet after tapping Jobs | still on top | closed |
+| Undo toast | bottom 820 over the tab bar at 781 | above the bar |
+| Switch portal from Community | page underneath went Retail | stays Community |
+| Front Door | no ✕, Escape ignored | 44px ✕ (12.72 / 17.97:1), Escape closes it |
+| Rep drawer counts | Sell 6/5, Resources 10/3, Account 4/3 | correct, empty headings hidden |
+| Rep Tools menu | 3 "Admin only" doors | hidden for non-admins |
+| Scottie, Dispatch header | "Retail" | "Production" |
+| Scottie, job tap | red error | punch card |
+| Light rail icons | three identical line stacks | distinct icons |
+
+**Gates:**
+- `gate_1430.mjs` 85/0. The control is RED, 40 fail.
+- `gate_types` 1505 and `gate_dupes` are identical to the control.
+- `gate_stack` is clean at 390 across 7 states.
+- The scroll-lock roster stays at 17 and the body observers at 44.
+- `gate_chromium` 23/23.
+- 49 related gates are identical on both trees.
+- `gate_1317` C needed `crTell`'s new neutral `'info'` kind in the app; the gate was not changed.
+
+**Not done:** the "<" on a field account's Production home still does nothing, and Crew Dispatch still sits alone in a half-width row.
