@@ -62,6 +62,13 @@ const r = await page.evaluate(`(async function(){
     n: descs.length,
     clipped: descs.map(d => ({ sh: d.scrollHeight, ch: d.clientHeight, clip: d.scrollHeight > d.clientHeight + 2 })),
     namePadRight: name ? getComputedStyle(name).paddingRight : 'none',
+    /* Builder E: what 1135 protects is that the name's TEXT never runs under a control beside it --
+       not how much padding buys that. The text box is the field less its right padding. */
+    nameOverlap: (function(){ if(!name) return null; var row = name.closest('.cr-est-lineitem'); var n = name.getBoundingClientRect();
+      var textR = n.right - (parseFloat(getComputedStyle(name).paddingRight) || 0);
+      return [...row.querySelectorAll('.cr-est-move button, .del')].map(function(b){ var r = b.getBoundingClientRect();
+        var vert = r.bottom > n.top && r.top < n.bottom; return vert ? Math.max(0, Math.round(textR - r.left)) : 0; })
+        .reduce(function(a, b){ return Math.max(a, b); }, 0); })(),
   };
   /* typing keeps it sized: append two more sentences through the real event */
   const d0 = descs[0];
@@ -78,7 +85,7 @@ if (r.n < 2) fails.push('rig fault — proves nothing: line cards did not render
 else {
   if (r.clipped.some(x => x.clip)) fails.push('a description opens clipped: ' + JSON.stringify(r.clipped));
   if (r.afterType.clip) fails.push('typing outgrew the box: ' + JSON.stringify(r.afterType));
-  if (parseFloat(r.namePadRight) < 100) fails.push(`name input clearance ${r.namePadRight} — runs under the move/delete buttons`);
+  if (r.nameOverlap == null || r.nameOverlap > 0) fails.push(`name text runs ${r.nameOverlap}px under the move/delete buttons (padding ${r.namePadRight})`);
 }
 if (errs.length) fails.push('page errors: ' + errs.slice(0, 2).join(' | '));
 for (const f of fails) console.log('  FAIL ' + f);

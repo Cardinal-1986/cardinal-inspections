@@ -119,9 +119,9 @@ catch(e){ console.log('module threw on eval: ' + e.message); process.exit(1); }
   // 3. the status engine
   const byId = {}; list.forEach(x => byId[x.pr.id] = x);
   ok(byId.P1.st.label === 'Sent', 'P1 (nothing collected, doc sent) = Sent');
-  ok(byId.P2.st.label === 'Deposit Paid', 'P2 (one draw) = Deposit Paid');
-  ok(byId.P3.st.label === 'Partially Paid', 'P3 (two draws) = Partially Paid');
-  ok(byId.P4.st.k === 'sent' && byId.P4.age > 30, 'P4 = Sent AND overdue (age ' + byId.P4.age + ')');
+  ok(byId.P2.st.label === 'Draft', 'P2 (one draw, invoice not sent) = Draft -- the pill is the invoice state (Builder E)');
+  ok(byId.P3.st.label === 'Draft', 'P3 (two draws, invoice not sent) = Draft');
+  ok(byId.P4.st.k === 'over' && byId.P4.st.label === 'Overdue' && byId.P4.age > 30, 'P4 = Overdue (sent, age ' + byId.P4.age + ')');
 
   // 4. aging buckets: P4 is 30+, P3 is 15-30, P1/P2 current
   ok(byId.P4.age > 30 && byId.P3.age >= 15 && byId.P3.age <= 30 && byId.P1.age < 15, 'aging buckets place each row correctly');
@@ -133,7 +133,7 @@ catch(e){ console.log('module threw on eval: ' + e.message); process.exit(1); }
   ok(out === '$35,300', 'Total outstanding KPI = $35,300 (9200+7400+9300+9400), got ' + out);
   ok(over === '$9,400', 'Overdue 30+ KPI = $9,400 (P4 only), got ' + over);
   const bodyHtml = w.document.getElementById('crarBody').innerHTML;
-  ok(/Deposit Paid/.test(bodyHtml) && /Partially Paid/.test(bodyHtml), 'rendered rows carry the status pills');
+  ok(/>Draft</.test(bodyHtml) && />Overdue</.test(bodyHtml) && !/Deposit Paid|Partially Paid/.test(bodyHtml), 'rendered rows carry the status pills');
   ok(/crar-row od/.test(bodyHtml), 'overdue row gets the red stripe class');
 
   // 6. VERIFY #1 — a deposit lands on P1 (Sent) -> Deposit Paid, total drops
@@ -141,7 +141,7 @@ catch(e){ console.log('module threw on eval: ' + e.message); process.exit(1); }
   w.cacheCollections.push({ project_id:'P1', amount:4600, collected_at: daysAgo(0) });
   const after = w.CardinalAR.list();
   const p1b = after.find(x => x.pr.id === 'P1');
-  ok(p1b.st.label === 'Deposit Paid', 'after a draw records, P1 moves Sent -> Deposit Paid');
+  ok(p1b.st.label === 'Partly paid', 'after a draw records, P1 moves Sent -> Partly paid');
   w.renderAR();
   const out2 = w.document.getElementById('crarKpiOut').textContent;
   ok(out2 === '$30,700', 'Total outstanding recomputed to $30,700 after the $4,600 draw (35,300 - 4,600), got ' + out2);

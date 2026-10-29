@@ -37358,3 +37358,117 @@ The 1416 builder found this ("#tskModal carries light inline inks"). Measured in
   - `gate_1422.mjs` 14/0. The control (1421) is RED 5.
   - `check_build` GREEN.
   - `gate_types` and `gate_dupes` are identical to the control.
+
+## Build 1423 — inspections after judge 4 (29 Oct 2026)
+Judge 4 (Inspections, round 1: 6/6/5/6/6) and judge 11's inspection-report items. Before → after, measured in Chromium:
+- **AI severity chips:** HIGH everywhere → each photo's own rating (mon/high/mod).
+- **Summary of Findings:** template sample rows → HIGH/MODERATE photo rows.
+- **Start without AI:** a native "Report title:" prompt and 0 photos → the guide's title and the 3 checked photos.
+- **Quick Inspection:**
+  - Who-sheet buttons: 1.22:1 → 5.7–18.8:1.
+  - Finish: a red "Photo Gallery" toast over a gallery reading 0 → the photos filed (2), and a "Start the report" sheet.
+- **Phone editor:**
+  - Toolbar: 363px → 60px folded while reading; the document frame grows 481 → 784px.
+  - The assistant's send button was off-screen at y 866 of 844 → fully visible.
+  - "N to fill": 31 → 10.
+- **Print:** the cover moved off page 1 → the cover is page 1. Split signature and findings-header positions found on 1422 → none.
+- **Found and fixed:** a summary blanked once at print time stayed hidden for every later print that session. `compactForPrint` now clears the mark.
+- **Needs Theo (kept as is):**
+  - Finish now adds the walk's photos to Inspection Photos automatically.
+  - The printed cover is slightly tighter: logo 230 → 190px, photo 110 → 85mm.
+  - The folded phone toolbar hides Email/Text/Share until you scroll up.
+  - Invoices on the Inspections tab sit under their own heading; the Contracts tab or Payments may be the better home.
+- **Gates:**
+  - `gate_1423.mjs` 47/0. The control (1422) is RED 39.
+  - `check_build` GREEN.
+  - `gate_types` 1505 = control. `gate_dupes` identical. Scroll-lock 17.
+  - `gate_1405` (B2 updated for the new cover rule), `1201`, `1204` and `966` are green. Builder F also ran `1023`, `1029`, `1069`, `1083`, `1265`–`1268` and `730`, all green on both trees.
+  - `gate_1050` needs pymupdf, which is absent here.
+  - REPRO byte-identical.
+
+## Build 1424 — estimates and invoicing after judges 2 and 5 (29 Oct 2026)
+Builder E re-checked every finding on 1422 first, and all of them reproduced. Before → after:
+- **Estimates:**
+  - Template roofing line: 1 SQ → 24.3 SQ from Roofr, with a note. Ridge vent 30 → 42, drip edge 150 → the eave length.
+  - Qty `26.730000000000004` → 26.73.
+  - The unsaved-changes sheet's blue "Continue" discarded the work → "Save and close" is the filled button.
+  - Line controls 26×26 → 44×44. Remove → an Undo toast.
+  - One estimate showed as two cards whose statuses drifted → one card.
+  - SUBTOTAL printed on pages 1, 2 and 3 → once (checked with pdftotext).
+- **Invoicing:**
+  - "Deposit Paid" on everything → the real state.
+  - The remove link showed at 44px under every payment → behind ⋯.
+  - "Recorded $1,000" as a red toast that never cleared → green.
+  - Community C2 $0/0%/$0 → $6,000/33%/$4,000.
+  - The invoice had no address → the company line the estimate already uses (nothing invented).
+- **Six gates pinned the old mechanism and were moved to their contract** (`patch_1424_gates.py`): `gate_1201` counts 4 `crDocSent(` sites, `gate_1135` measures overlap rather than padding, `gate_1029`'s crAsk stub answers choices, and three harnesses.
+- **Gates:**
+  - `gate_1424.mjs` 55/0. The control (1423) is RED 52.
+  - `gate_1423` is still 47/0 on top.
+  - `check_build` GREEN. `gate_types` and `gate_dupes` are identical to the control.
+  - `gate_harnesses` GREEN.
+  - `harness_inv1108` is red 2 identically on the control: "modal closes on save" and "createInvoiceFor mints token + total", both pre-existing.
+- **Needs Theo:**
+  - The Community header uses bid-then-contract while AR uses contract-then-bid. Which should win?
+  - The assembly measurement rules (drip/starter = eaves + rakes, I&W = eaves + valleys, ridge vent = ridges, cap = ridges + hips, gutters = eaves, hangers every 24").
+  - Remove-with-Undo instead of a confirm.
+  - "Invoices & AR" naming on the home strings.
+
+## Build 1425 — insurance and community job pages stop working the phone while you read (29 Oct 2026)
+The chair's and the judge of judges' #2 "fix first" item. Both measured an idle insurance job at 51–77% busy and a community job at 45–67%, against retail at 1.7–5%.
+
+Three writers caused it, all the 567/569 class: an identical `title` / `textContent` / `classList` / `setAttribute` write still queues a mutation, and each ran from a body observer.
+- **The relabellers:** `cr-insstage` and `cr-comstage` renamed "Advance to Scheduled" to the same words on every pass.
+- **The Supplement card:** it rebuilt its whole `innerHTML` on every body change.
+- **The health badge:** it re-set its classes and title on every pass.
+
+Every write is now guarded.
+
+Measured idle, mutation records in 2s:
+
+| Job | Before (1424) | After |
+|---|---:|---:|
+| I1 | 545 | 15 |
+| I2 | 498 | 15 |
+| C1 | 460 | 8 |
+| R1 (retail) | 22 | 14 |
+
+What is left is the clocks.
+
+**Gates:**
+- `gate_1425.mjs` 8/0. The control (1424) is RED on idle: I1 560, I2 540, C1 472.
+- It also asserts that the labels still relabel ("Advance to Build Complete"), that File a supplement still opens its sheet, and that the card still repaints when the claim changes.
+- `check_build` GREEN. `gate_types` 1505 (a first draft's `host.__crSpSig` expando was +2 TS2339 and became a closure variable). `gate_dupes` identical.
+- `gate_1301` GREEN on both trees. `harness_655` is red 4 identically on the control.
+
+## Build 1426 — client names show in full (29 Oct 2026)
+
+**Source:** the audit panel's fix-first item #3. Five judges flagged it, and the chair and the meta-judge confirmed it.
+
+**The fault:** both rows were one `nowrap` flex line shared by the name and its neighbours.
+- Client card: PO, star, portal tag.
+- Recent leads: PO, stage chip, rep.
+
+The name was the only flexible item, so it was the one that gave way.
+
+**Measured at 1425** (visible / full width):
+
+| Where | Visible / full |
+|---|---|
+| Phone Clients list | 87/149 |
+| Clients at 1600 | 69/149 |
+| Recent leads at 1280 | 11/122 |
+| Phone client page header | 119/161 |
+| Largest text size | 0px on every card |
+
+**The fix**, edited in place with no new rule:
+- `.cd-card .nmrow` wraps. `.cd-name` is `flex:1 1 100%; order:-1`, so it is the first line, and `overflow-wrap:anywhere`.
+- `.kplrow` wraps. `.kplrow .nm` is `flex:1 1 150px; min-width:150px`.
+- `#cr-namebar .nb-nm` drops `nowrap`/ellipsis and wraps. The 1124 star hit pad is unchanged: `.nb-row2` still comes later in the DOM, so its taps still win.
+
+**Gates:**
+- `gate_1426.mjs` 8/0; the control (1425) is RED 5/8.
+- `check_build` GREEN.
+- `gate_types` 1505 and `gate_dupes` are identical to the control.
+- `gate_1418` 86/0 on both trees.
+- `gate_1226` is red 4 identically on the control (the rig finds no Lead row; it is not in CI).

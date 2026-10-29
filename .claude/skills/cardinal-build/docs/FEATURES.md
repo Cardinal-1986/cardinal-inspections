@@ -10323,3 +10323,77 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 - 1373's phone rule (a 52×52 round star) moved from line ~2432 to just after its base rule in `cr-ai-styles`. It sat earlier in the file at equal specificity, so it had been losing height, padding and font-size.
 - **Gate:** `gate_1422.mjs`, 14 checks; red 5 on 1421.
 - The same PR carries the `gate_1191` rig fix: jsdom has no pointer-event handler properties.
+
+## Build 1423: inspections after judge 4
+- **AI-written report:**
+  - Each AI-placed photo wears its own severity chip. Before, the template's sample chip won, so every photo read HIGH.
+  - HIGH and MODERATE photos become Summary of Findings rows.
+- **Start without AI:** no native prompt; it keeps the checked photos.
+- **Quick Inspection:**
+  - The Who sheet buttons read (they were 1.22:1).
+  - The client search finds a typed address.
+  - Finish files the walk's photos into Inspection Photos and offers "Start the report" with them checked. There is no red toast.
+- **Phone editor:**
+  - The toolbar folds to one row while scrolling or while the assistant is open.
+  - The assistant fits the screen.
+  - The how-to folds after its first showing.
+  - "N to fill" skips Contents page numbers and empty photo boxes.
+- **Inspections tab:** invoices and change orders sit under their own heading.
+- **Print (`ensurePrintFix`, injected at print time so old reports get it too):**
+  - The cover is page 1.
+  - Signature lines stay with their labels, and the findings header stays with its first row.
+  - The MODERATE chip is 7.94:1.
+  - An empty Overall Condition heading does not print.
+- **Shared report on a phone:** new reports carry their own viewport. Old reports need the `api/share.js` half (Builder D).
+- **Gate:** `gate_1423.mjs`, 47 checks; red 39 on 1422. It uses the synthetic `fixtures/roof_synth_1423_*.jpg`.
+- `gate_1405` B2 now checks the new cover rule.
+
+## Build 1424: estimates and invoicing after judges 2 and 5
+**Estimates**
+- `jobMeas` reads `checklist.meas`, so template, Library and assembly lines start from the job's squares, eaves and ridges. Each line notes where its number came from.
+- The unsaved-changes sheet reads Save and close / Discard changes / Keep editing. `crAsk` choices take a `tone`.
+- The dirty flag now covers remove, reorder, add and photo changes.
+- Line controls ▲ ▼ ✕ and the qty/unit/price inputs are 44px, and the inputs are labelled.
+- Remove offers Undo via `CardinalUndo`. The shared toast's Undo is now 44px at 7.70:1, for every caller.
+- A published estimate shows once on the Estimates tab, as its document card. Mark sent sets the estimate to Sent through `crDocSent`.
+- Print totals sit in the tfoot once, at the end, not on every page.
+- Four success toasts were red error toasts.
+
+**Invoicing (display only; how payments are written is unchanged)**
+- The invoice status pill reads Paid in full / Overdue / Partly paid / Sent / Draft. It used to read "Deposit Paid" for everything.
+- "Remove this payment" stays behind ⋯.
+- Recording a payment shows a green toast that clears.
+- Community job value falls back to the signed contract.
+- The invoice carries the estimate proposal's company line and "Mail checks to …".
+
+**Gate:** `gate_1424.mjs`, 55 checks; red 52 on 1423. `gate_1029`, `gate_1135`, `gate_1201`, `harness_ar1107`, `harness_estasm1098` and `harness_inv1108` were updated to the new contract (`patch_1424_gates.py`).
+
+**Open:**
+- Publish still opens the document editor; that is the editor's send path.
+- The insurance homeowner/carrier AR split needs Theo.
+
+## Build 1425: insurance and community job pages sit still
+These writers now only write when the value differs (the 567/569 class):
+- the insurance relabeller (`dbStgBack` / `dbStgFwd` titles, `#msDrop .estopt` text) and its community twin;
+- the Supplement card (`cr-sp`; `__spSig`, and the buttons are re-bound every pass);
+- the system-health badge (`cr-ahc` `updateBadge`).
+
+Idle mutation records in 2s went from 460–545 to 8–15 (retail: 14).
+
+**Gate:** `gate_1425.mjs`, 8 checks; red on the 1424 control's idle check.
+
+## Build 1426: client names show in full
+- **Clients list:** the name on a client card (`.cd-name`) gets its own full line and wraps. The PO, the star and the portal tag sit on the line below it.
+- **Desktop home, Recent leads:** a row (`.kplrow .nm`) keeps at least 150px for the name. The stage chip and rep drop to a second line when the card is narrow.
+- **Phone client page header:** the name (`#cr-namebar .nb-nm`) wraps instead of being cut. Before, 119 of 161px of it showed.
+- Both fixes edit the original rules; there is no override layer.
+
+Measured in Chromium at 1425:
+- phone: 87 of 149px of a name showed;
+- desktop at 1600: 69 of 149px;
+- Recent leads at 1280: 11 of 122px, one letter;
+- largest text size: every name 0px.
+
+At 1426 every name shows whole at 390, 1280, 1600 and at the largest text size.
+
+**Gate:** `gate_1426.mjs`, 8 checks. It also checks that the card keeps its star and portal tag and that the star still toggles. Red on the 1425 control (5 of 8).

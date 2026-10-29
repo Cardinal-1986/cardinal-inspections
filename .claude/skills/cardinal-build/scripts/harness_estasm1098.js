@@ -34,7 +34,7 @@ let expandAssembly;
 guard('expandAssembly extract', function(){
   let idc = 0;
   expandAssembly = new Function('newLineId',
-    braceExtract('function expandAssembly(a, n){') + '\nreturn expandAssembly;')(function(){ return 'l_' + (idc++); });
+    braceExtract('function expandAssembly(a, n, m){') + '\nreturn expandAssembly;')(function(){ return 'l_' + (idc++); });
 });
 guard('expandAssembly', function(){
   const a = { name:'Roof', lines:[
@@ -90,7 +90,7 @@ guard('EST_ASSEMBLIES presets', function(){
 });
 
 /* ── 3. injection + section shape ──────────────────────────────────────────── */
-ok(src.indexOf('function injectAssembly(a, squares){') !== -1, 'injectAssembly defined');
+ok(src.indexOf('function injectAssembly(a, squares, m){') !== -1, 'injectAssembly defined');
 ok(/var sid = newSecId\(\);[\s\S]{0,220}o\.section_id = sid; o\.sec = name;/.test(src),
    'injectAssembly stamps a fresh section_id + title onto every expanded line');
 ok(/state\.lines = state\.lines\.concat\(lines\)/.test(src), 'injectAssembly appends the section to the estimate');
@@ -123,7 +123,7 @@ ok(src.indexOf('function renderAssemblyPicker(){') !== -1, 'renderAssemblyPicker
 ok(/a\._default \? \(a\.trade \|\| 'General'\) : 'Saved'/.test(src), 'picker groups defaults by trade, custom under "Saved"');
 ok(/\(\(hasSq \|\| hasUnit\) \? '<input type="number" class="asm-sq"[\s\S]{0,80}placeholder="' \+ scaleLbl/.test(src), 'a scaling input appears only when the assembly has SQ or per_unit lines');
 ok(/scaleLbl = hasSq \? 'Squares \(optional\)' : \(hasUnit \? 'Windows \(optional\)'/.test(src), 'the input is labelled Squares for roofing/siding, Windows for the window package');
-ok(/injectAssembly\(a, sq\);[\s\S]{0,40}closePicker\(\);/.test(src), 'Insert injects (with the card\'s squares) then closes the picker');
+ok(/injectAssembly\(a, sq(?:, [^;]*)?\);[\s\S]{0,140}closePicker\(\);/.test(src), 'Insert injects (with the card\'s squares) then closes the picker');
 ok(src.indexOf('addAsmBtn.onclick = function(){ openPicker(\'assembly\'); }') !== -1, 'the + Assembly button opens the picker');
 ok(src.indexOf('sSave.onclick = function(){ saveSectionAsAssembly(sid); }') !== -1, 'the section "Save as Assembly" button is wired');
 ok(/\(isGeneral \? '' : '<button type="button" class="sec-saveasm"/.test(src), 'Save as Assembly shows only on a named section (not General Scope)');
