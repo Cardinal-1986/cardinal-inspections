@@ -4217,7 +4217,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1412<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1413<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -18068,11 +18068,10 @@ document.addEventListener('visibilitychange', async function(){
       { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) +
       ' \u00b7 ' + call.num + (note.trim() ? '\n' + note.trim() : '')
   });
-  var s2 = JSON.stringify(all);
   try{
-    await pdb.update(pr.id, { checklist: s2 });
-    pr.checklist = s2;
-    if(currentProject && currentProject.id === pr.id){ currentProject.checklist = s2; renderOverview(); }
+    /* 1413: through patchProjectCk — re-read, merge the message in, keep everyone else's */
+    await patchProjectCk(pr, { comments: all.comments });
+    if(currentProject && currentProject.id === pr.id){ renderOverview(); }
     if(commsView.style.display !== 'none') renderChat();
   }catch(err){}
 });
@@ -20514,13 +20513,10 @@ function num(v){ var n = Number(v); return (isFinite(n) && n > 0) ? n : 0; }
 
 async function saveCkPatch(patch){
   if(!currentProject) return;
-  var all = parseCkAll(currentProject);
-  Object.assign(all, patch);
-  var s = JSON.stringify(all);
-  await pdb.update(currentProject.id, { checklist: s });
-  currentProject.checklist = s;
-  var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
-  if(cp) cp.checklist = s;
+  /* 1413: this wrote the WHOLE checklist from the copy loaded when the job was opened, so a save here
+     erased everything another device had saved since — the job thread above all. patchProjectCk (655)
+     re-reads and merges; it also keeps the cache and currentProject in step, as this did. */
+  await patchProjectCk(currentProject, patch);
 }
 
 async function extractPdfText(file, statusFn){
@@ -21133,6 +21129,17 @@ function notifyOutcomeText(res, to){
   return '\u26A0\uFE0F Could NOT notify ' + names + ' \u2014 ' + why;
 }
 window.notifyOutcomeText = notifyOutcomeText;
+/* 1413: comment lists are APPEND-ONLY (nothing edits or deletes one), so two devices that each
+   added a message must both keep theirs: union by who + when + text, oldest first. Where both
+   copies hold the same message, the caller's wins (it may carry a flag the caller just set). */
+function crMergeComments(server, mine){
+  var out = [], seen = {};
+  function key(c){ return c ? [c.at || '', c.by || '', c.name || '', c.text || '', c.flag || '', c.kind || ''].join('\u0001') : ''; }
+  (Array.isArray(mine) ? mine : []).forEach(function(c){ var k = key(c); if(k && !seen[k]){ seen[k] = 1; out.push(c); } });
+  (Array.isArray(server) ? server : []).forEach(function(c){ var k = key(c); if(k && !seen[k]){ seen[k] = 1; out.push(c); } });
+  return out.sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); });
+}
+window.crMergeComments = crMergeComments;
 async function patchProjectCk(pr, patch){
   /* 655 (CR-AUD-007): merge onto the FRESHEST copy of the row, not the
      local cache — two devices editing different areas of the same job
@@ -21157,7 +21164,11 @@ async function patchProjectCk(pr, patch){
       }
     }catch(_e){}
   }
-  Object.keys(patch).forEach(function(k){ all[k] = patch[k]; });
+  Object.keys(patch).forEach(function(k){
+    /* 1413: a message list is merged, never replaced — a teammate's note posted since this copy was read survives */
+    if(k === 'comments' && Array.isArray(patch[k]) && Array.isArray(all[k])) all[k] = crMergeComments(all[k], patch[k]);
+    else all[k] = patch[k];
+  });
   var s = JSON.stringify(all);
   await pdb.update(pr.id, { checklist: s }, patch);   /* 1403: offline, only these keys are replayed */
   pr.checklist = s;
@@ -45349,6 +45360,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1413, d:'2026-10-29', t:'Messages no longer erase each other', s:'If two people posted on the same job or punch-out close together, the second post could erase the first, and saving a job could undo another device\u2019s changes made since it was opened. Every post and save now reads the latest copy first and keeps everyone\u2019s messages.' },
   { b: 1412, d:'2026-10-29', t:'Save is no longer under the menu bar', s:'In the installed app, the Upload signed contract panel\u2019s Save button was hidden behind the bottom menu bar. That panel, the Add to calendar prompt and the Leads question now sit above the bar.' },
   { b: 1411, d:'2026-10-29', t:'Team Feedback', s:'There is now a Team Feedback box in the menu (under Account) and in Tools. Use it when something breaks, isn\u2019t working right, or you have an idea. It notes which screen and job you were on, Theo gets an alert, and you see the status and his reply on the same page.' },
   { b: 1409, d:'2026-10-27', t:'Leads open when you tap them', s:'On the Leads screen, tapping or clicking a lead now opens the client on every screen size. On a computer, pointing at a lead still shows its preview on the right.' },
@@ -61224,6 +61236,11 @@ var msg = { by: by || null, name: meName(), at: new Date().toISOString(), text: 
 if(names.length) msg.mentions = names;
 var list = (Array.isArray(it.comments) ? it.comments : []).slice();
 list.push(msg);
+/* 1413: re-read and merge first — the card's copy may be missing a message posted since it loaded */
+try{
+  var _fr = await window.supa.from('punch_items').select('comments').eq('id', it.id).single();
+  if(_fr && !_fr.error && _fr.data && Array.isArray(_fr.data.comments) && typeof window.crMergeComments === 'function') list = window.crMergeComments(_fr.data.comments, list);
+}catch(_){}
 var r = await window.supa.from('punch_items').update({ comments: list }).eq('id', it.id).select().single();
 if(r.error){
 if(/comments|column|schema cache/i.test(r.error.message || '')){
@@ -70807,6 +70824,14 @@ function _noSignal(e){
 async function update(id, patch){
   var it = _rows.filter(function(x){ return String(x.id) === String(id); })[0];
   if(!it) return { ok:false };
+  /* 1413: a punch-out's messages are append-only — merge with the server's list so a crew note and an
+     office note sent close together both survive (this replaced the whole list from the card's copy) */
+  if(Array.isArray(patch.comments) && typeof window.crMergeComments === 'function' && !_noSignal(null)){
+    try{
+      var _fr = await window.supa.from('punch_items').select('comments').eq('id', it.id).single();
+      if(_fr && !_fr.error && _fr.data && Array.isArray(_fr.data.comments)) patch.comments = window.crMergeComments(_fr.data.comments, patch.comments);
+    }catch(_){}
+  }
   var before = {};
   Object.keys(patch).forEach(function(k){ before[k] = it[k]; });
   Object.assign(it, patch);
