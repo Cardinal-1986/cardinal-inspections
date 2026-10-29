@@ -127,8 +127,9 @@ const retail = paint('retail');
 ok(retail.length === 7, 'retail renders seven pipeline cards (was five)');
 ok(retail.map(c => c.stg).join('|') === 'Lead|Prospect|Approved|Completed|Invoiced|Closed|OnHold',
    'the cards are in stage order, Closed then On Hold last');
-ok(retail.map(c => c.label).join(' ') === 'L P A C I Closed On Hold',
-   'the printed labels are exactly "L P A C I Closed On Hold"');
+/* 1415: superseded on Theo's go-ahead ("do your suggestions on all") — the cards spell their stages again */
+ok(retail.map(c => c.label).join(' ') === 'Leads Prospects Approved Completed Invoiced Closed On Hold',
+   'the printed labels are exactly "Leads Prospects Approved Completed Invoiced Closed On Hold"');
 ok(retail.every(c => c.stg && c.stg.length > 1),
    'data-stg still carries the full stage key, so the click filter is unchanged');
 ok(retail.map(c => c.aria).join('|') === 'Leads|Prospects|Approved|Completed|Invoiced|Closed|On hold',
