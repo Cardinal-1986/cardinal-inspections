@@ -10212,3 +10212,9 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 
 ## Build 1414: drawn icons on the common screens
 `crIco(name)` is the dynamic-string twin of `data-cri`. It covers the Clients header, the Activity panel, Quick jump, insurance badges, claim strips and doc rows, the address/rep/History/Punch List marks and Delete Client. **Gate:** `gate_1414.mjs`.
+
+## Build 1415: no decorative red, spelled pipeline, system type stack
+- **Red edges and caps removed:** the Home and Activity cards and the Reports tiles lose their red edge/cap (this supersedes 1283–1290).
+- **Pipeline labels:** `PIPE_BUCKETS.short` now spells each stage (supersedes 1114). The phone view scrolls; with the rail open the rows wrap 4 + 3 via `@container pipecard`.
+- **Type stack:** every Segoe→Arial stack carries `-apple-system,BlinkMacSystemFont,Roboto`.
+- **Gate:** `gate_1415.mjs`.

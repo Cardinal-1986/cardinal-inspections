@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* gate_1283 — the home screen in the drawer's style (Theo: option B), dark retail.
      A  dark: no Georgia and no monospace text left on the home screen or the brand title
-     B  dark: every home card is a flat panel — no gradient, no drop shadow, a red left edge
+     B  dark: every home card is a flat panel — no gradient, no drop shadow, no red left edge (1415 superseded the red edge on Theo's go-ahead)
      C  dark: card headings are white, ≥4.5:1 on the panel
      D  light (since 1290): the light twin — Segoe titles, flat cards
    Usage: node gate_1283.mjs [index.html]  — control: the 1282 tree (RED, no crash) */
@@ -36,7 +36,7 @@ const lum = (rgb) => { const m = String(rgb).match(/[\d.]+/g); return m.slice(0,
 const ratio = (a, b) => { const x = lum(a), y = lum(b); return +(((Math.max(x, y) + .05) / (Math.min(x, y) + .05)).toFixed(2)); };
 const d = await probe(false), l = await probe(true);
 ok(d.theme !== 'rb-light' && d.odd.length === 0, 'A  dark: no Georgia or monospace text left on the home screen', d.odd.slice(0, 6).join(', ') || 'none');
-ok(d.cards.length >= 5 && d.cards.every(c => !c.grad && c.sh === 'none' && /rgb\(200, 32, 46\) 3px/.test(c.bl)), 'B  dark: every home card is flat with a red left edge', JSON.stringify(d.cards.slice(0, 2)));
+ok(d.cards.length >= 5 && d.cards.every(c => !c.grad && c.sh === 'none' && !/rgb\(200, 32, 46\)/.test(c.bl)), 'B  dark: every home card is flat, hairline edge, no red stripe (1415)', JSON.stringify(d.cards.slice(0, 2)));
 const tr = d.title && d.cards[0] ? ratio(d.title.c, d.cards[0].bg) : 0;
 ok(tr >= 4.5, 'C  dark: card headings clear 4.5:1 on the panel', d.title && `${d.title.c} on ${d.cards[0] && d.cards[0].bg} → ${tr}:1`);
 ok(l.theme === 'rb-light' && l.title && !/Georgia/.test(l.title.f) && l.cards.length > 0 && l.cards.every(c => !c.grad && c.sh === 'none'), 'D  light (build 1290): Segoe titles and flat cards, like dark', JSON.stringify({ f: l.title && l.title.f, card: l.cards[0] }));
