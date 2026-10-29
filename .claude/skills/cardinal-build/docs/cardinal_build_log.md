@@ -37145,3 +37145,24 @@ Documents built by the app's own template code, served through the real `api/sha
   - `gate_types` is at the control's 1506.
   - `gate_dupes` has 14 failures, identical to the control.
   - Re-running the patch reproduces the file byte for byte (REPRO).
+
+## Build 1414 — drawn icons instead of the leftover emoji (29 Oct 2026)
+- **Design judge #15 of Theo's audit panel:** *"Leftover emoji … replace with the drawn line icons already used in the rail."* The 681 and 686–699 sweeps covered the nav and headings. They never reached these rendered strings:
+  - Clients: Home, search, Select, the filter
+  - the Activity title, plus its document and appointment avatars in both feeds
+  - Quick jump
+  - the INSURANCE badge, the claim strip, the claim card
+  - the address pin and the rep mark
+  - History, and Punch List (the ladder, per 687)
+  - Upload SOL, the Scope of Loss folder, the five insurance document rows, iTel
+  - Delete Client
+- **How:** one helper, `crIco(name)` (`CardinalIcons.get(name,'crico')`), gives a dynamic string the same glyph that static `data-cri` gives the static markup.
+- **Not every emoji in the file.** Only the common screens are covered; the command palette and module internals still carry some.
+- **Gates:**
+  - `gate_1414.mjs`: 20/20 on 1414; the control (1413) goes RED 20/20. It checks every target holds an `svg.cri`, and that no emoji is left in any visible text on those screens.
+  - `check_build` green.
+  - `gate_types` matches the control at 1506.
+- ⚠ **Three of the same judge's findings are Theo's own earlier picks, so they were NOT changed. Each one goes back to him:**
+  - the L P A C I pipeline letters (1114, *"just put letters"*)
+  - the thin red card edge (1283–1290, "option B"). Before/after previews were sent to him.
+  - the obsidian Reports panels, which are theme-independent on purpose

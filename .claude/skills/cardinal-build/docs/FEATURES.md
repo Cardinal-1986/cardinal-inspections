@@ -10209,3 +10209,6 @@ Anyone on staff reports "Something broke", "Not working right" or an "Idea" from
 - **Punch-out messages:** these go through `CardinalPunch.update` or `postComment`, which merge with the server's list.
 - **Open:** offline outbox replay does not merge yet.
 - **Gate:** `gate_1413.mjs`.
+
+## Build 1414: drawn icons on the common screens
+`crIco(name)` is the dynamic-string twin of `data-cri`. It covers the Clients header, the Activity panel, Quick jump, insurance badges, claim strips and doc rows, the address/rep/History/Punch List marks and Delete Client. **Gate:** `gate_1414.mjs`.

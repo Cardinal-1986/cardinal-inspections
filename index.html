@@ -1383,6 +1383,7 @@ body.cr-lnav-on .piperow{--cr-stack:"1306: rail open, the seven cards wrap rathe
 .insdocrow:last-child{margin-bottom:0;}
 .insdocrow.filled{border-color:var(--ct-red);box-shadow:0 1px 3px var(--ct-focus);}
 .insdocic{font-size:22px;flex:0 0 auto;line-height:1;width:26px;text-align:center;}
+.insdocic .cri.crico,.solIcon .cri.crico{width:1em;height:1em;margin:0}
 .insdoctxt{flex:1;min-width:0;}
 .insdoctxt b{display:block;font:700 15px 'Segoe UI',Arial,sans-serif;color:var(--ct-red-deep);}
 .insdoctxt small{display:block;font-size:11px;color:var(--ct-red-deep);margin-top:2px;word-break:break-word;line-height:1.35;}
@@ -4217,7 +4218,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1413<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1414<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4383,7 +4384,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <div id="apptUpcoming" class="calnextup"></div>
         </div>
         <div class="actcard">
-          <div class="acthead collhead open" id="actToggle">&#9889; Activity <span class="collchev">&#9656;</span></div>
+          <div class="acthead collhead open" id="actToggle" data-cri="bolt lg">Activity <span class="collchev">&#9656;</span></div>
           <div id="actFeed"></div>
         </div>
       </aside>
@@ -4893,7 +4894,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   </div>
   <div class="wrap" id="dangerZone" style="display:none;text-align:center;padding:34px 0 44px;">
     <button id="delClientBtn" type="button">
-      &#128465; Delete Client</button>
+      Delete Client</button>
     <div class="danger-note" style="font:12px 'Segoe UI',Arial,sans-serif;margin-top:8px;">Permanently removes this client and everything attached to them. Admins only.</div>
   </div>
 </div>
@@ -8239,16 +8240,16 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="wrap cd-wrap" style="padding-top:18px;">
     <div class="cd-head">
       <h2 class="cd-title">Clients</h2>
-      <button class="btn ghost" id="cliHomeBtn" style="padding:8px 14px;font-size:13px;">&#127968; Home</button>
+      <button class="btn ghost" id="cliHomeBtn" data-cri="home lg" style="padding:8px 14px;font-size:13px;">Home</button>
     </div>
     <p class="cd-sub" id="cdSub"></p>
-    <div class="cd-search">&#128269;&#65039; <input type="search" id="cliFilter" placeholder="Search name, address, PO&#8230;" aria-label="Search clients"></div>
+    <div class="cd-search"><span data-cri="search lg"></span> <input type="search" id="cliFilter" placeholder="Search name, address, PO&#8230;" aria-label="Search clients"></div>
     <div class="cd-ctl"><span class="sl">Sort by</span>
       <button class="cd-chip" id="cdSortChip">Client name</button>
       <div class="right">
-        <button class="cd-selbtn" id="cdSelBtn" style="display:none;">&#9745; Select <span class="cd-admtag">ADMIN</span></button>
+        <button class="cd-selbtn" id="cdSelBtn" style="display:none;">Select <span class="cd-admtag">ADMIN</span></button>
         <div class="cd-ico" id="cdDirBtn" title="Reverse order">&#8645;</div>
-        <div class="cd-ico" id="cdFunnelBtn" title="Filters">&#9923;<span class="bdg" id="cdFBadge">0</span></div>
+        <div class="cd-ico" id="cdFunnelBtn" title="Filters" data-cri="funnel lg"><span class="bdg" id="cdFBadge">0</span></div>
       </div>
     </div>
     <div class="cd-lay">
@@ -12743,7 +12744,7 @@ function renderAcxOverview(){
       (pr.address ? '<a class="dbmdir" target="_blank" href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '">Directions &#8599;</a>' : '') + '</div>' +
     '<div id="dbMap" class="dbmap"></div>' +
     '<div style="margin-top:9px;">' + (pr.address
-      ? '<span class="dbaddr">&#128205; ' + esc(pr.address) + '</span>'
+      ? '<span class="dbaddr">' + (window.crIco ? window.crIco('pin') : '') + esc(pr.address) + '</span>'
       : '<span class="axnote">No address on file \u2014 tap the pencil to add one.</span>') + '</div>' +
   '</div></div>';
   html += '<div class="ja-menu" role="region" aria-label="Job menu"><h3 class="projsec" style="margin:18px 0 10px;">' + ICO('menu') + 'Job Menu</h3>' +
@@ -12827,7 +12828,7 @@ function renderAcxOverview(){
     var _hist = (typeof buildActivityEvents === 'function')
       ? buildActivityEvents().filter(function(x){ return x.pid === pr.id; }).slice(0, 8) : [];
     html += '<div class="kpsec kpred" id="kpHis"><div class="kpsech" data-kps="1">' +
-        '<span class="kpst">\uD83D\uDD58 History</span><span class="kpcnt">' + _hist.length + '</span><span class="kpcar">\u203A</span></div>' +
+        '<span class="kpst">' + (window.crIco ? window.crIco('clock') : '') + 'History</span><span class="kpcnt">' + _hist.length + '</span><span class="kpcar">\u203A</span></div>' +
       '<div class="kpsecb"><div class="kphist">' +
         (_hist.length ? _hist.map(function(x){
           return '<div class="kpev">' + esc(x.label || '') + (x.detail ? ' \u2014 ' + esc(String(x.detail)) : '') +
@@ -12894,7 +12895,7 @@ function renderAcxOverview(){
      .dbassign alone selects a DESCENDANT; the target here is the ancestor
      card, and there is no sibling to key off the way the trade chips could. */
   '<div class="acxsec acxassignsec"><div class="acxbody dbassign">' +
-    '<span class="dbrep">&#128100; <b>' + esc(rptRepName(rep) || rep || 'Unassigned') + '</b></span>' +
+    '<span class="dbrep">' + (window.crIco ? window.crIco('person') : '') + '<b>' + esc(rptRepName(rep) || rep || 'Unassigned') + '</b></span>' +
     (isAdminUser() ? '<select id="dbAssignSel" class="acxsel" aria-label="Reassign this job to another rep" style="margin-left:auto;">' +
       '<option value="">reassign\u2026</option>' +
       TEAM_ROSTER.map(function(m){ return '<option value="' + m.email + '">' + esc(m.name) + '</option>'; }).join('') +
@@ -14702,7 +14703,7 @@ function openProject(id){
     : '<span class="poPfx empty">#\u2014</span>';
   var _heroTel = String(pr.phone || '').replace(/[^0-9+]/g, '');
   document.getElementById('projName').innerHTML =
-    '<span class="insBadge">&#128737;&#65039; INSURANCE</span>' +
+    '<span class="insBadge">' + (window.crIco ? window.crIco('shield') : '') + 'INSURANCE</span>' +
     _poPfx +
     '<span class="heroNm">' + esc(pr.name || 'Unnamed client') + '</span>' +
     '<span id="favStar" class="namestar" title="Favorite / high priority">\u2606</span>' +
@@ -18497,11 +18498,11 @@ function renderLeadCard(){
    silently repaints the wrong mount. */
 var insDocsCtx = { pid: null, mountId: 'insDocsCard', gate: true };
 var INS_DOC_TYPES = [
-  { key: 'authorization',     icon: '\u270D\uFE0F',       label: 'Authorization Form' },
-  { key: 'service_agreement', icon: '\uD83D\uDCC4',       label: 'Insurance Service Agreement' },
-  { key: 'three_day_right',   icon: '\uD83D\uDDD3\uFE0F', label: '3-Day Right' },
-  { key: 'scope_of_loss',     icon: '\uD83C\uDFE0',       label: 'Scope of Loss' },
-  { key: 'policy',            icon: '\uD83D\uDCD1',       label: 'Policy' }
+  { key: 'authorization', ico: 'pencil',     icon: '\u270D\uFE0F',       label: 'Authorization Form' },
+  { key: 'service_agreement', ico: 'page', icon: '\uD83D\uDCC4',       label: 'Insurance Service Agreement' },
+  { key: 'three_day_right', ico: 'calendar',   icon: '\uD83D\uDDD3\uFE0F', label: '3-Day Right' },
+  { key: 'scope_of_loss', ico: 'houses',     icon: '\uD83C\uDFE0',       label: 'Scope of Loss' },
+  { key: 'policy', ico: 'contract',            icon: '\uD83D\uDCD1',       label: 'Policy' }
 ];
 function findInsuranceDoc(projectId, typeKey){
   var patt = new RegExp('^Insurance Doc \\[' + typeKey + '\\]:');
@@ -18540,7 +18541,7 @@ function renderInsuranceDocsCard(){
       var filename = String(doc.title || '').replace(/^Insurance Doc \[\w+\]:\s*/, '');
       var when = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '';
       return '<div class="insdocrow filled">' +
-        '<span class="insdocic">' + dt.icon + '</span>' +
+        '<span class="insdocic">' + ((dt.ico && window.crIco) ? window.crIco(dt.ico) : dt.icon) + '</span>' +
         '<div class="insdoctxt"><b>' + dt.label + '</b>' +
           '<small>\u2713 ' + esc(filename) + (when ? ' &middot; ' + esc(when) : '') + '</small></div>' +
         '<button class="insdocview" data-insdocview="' + esc(doc.id) + '">View</button>' +
@@ -18549,11 +18550,11 @@ function renderInsuranceDocsCard(){
       '</div>';
     }
     return '<div class="insdocrow empty">' +
-      '<span class="insdocic">' + dt.icon + '</span>' +
+      '<span class="insdocic">' + ((dt.ico && window.crIco) ? window.crIco(dt.ico) : dt.icon) + '</span>' +
       '<div class="insdoctxt"><b>' + dt.label + '</b>' +
         '<small class="muted">Not uploaded</small></div>' +
       /* 657: name what this does. It files a copy; it does not read one. */
-      '<button class="insdocupload" data-insdocupload="' + esc(dt.key) + '">&#128228; ' +
+      '<button class="insdocupload" data-insdocupload="' + esc(dt.key) + '">' +
         (dt.key === 'scope_of_loss' ? 'File a copy' : 'Upload') + '</button>' +
     '</div>';
   }).join('');
@@ -18698,7 +18699,7 @@ function paintInsuranceItelCard(){
     /* Theo: "if there is no iTell yet not make it take up too much space." One bar. */
     mount.innerHTML =
       '<div class="cr-itel-bar">' +
-        '<span class="cr-itel-bar-t">📋 iTel</span>' +
+        '<span class="cr-itel-bar-t">' + (window.crIco ? window.crIco('clipboard') : '') + 'iTel</span>' +
         '<span class="cr-itel-bar-s">None requested yet.</span>' +
         '<button class="cr-itel-add" type="button">+ Add iTel</button>' +
       '</div>';
@@ -19062,7 +19063,7 @@ function renderSolCard(){
   var filed = findInsuranceDoc(currentProject.id, 'scope_of_loss');
   mount.innerHTML =
     '<div class="solCard" id="solCardEl">' +
-      '<div class="solIcon">&#128194;</div>' +
+      '<div class="solIcon">' + (window.crIco ? window.crIco('folder') : '') + '</div>' +
       '<div class="solText">' +
         '<div class="solTitle">' + (hasIns ? 'Update from Scope of Loss' : 'Scope of Loss Reader (AI)') + '</div>' +
         '<div class="solSub">' +
@@ -19071,7 +19072,7 @@ function renderSolCard(){
             : 'Upload the adjuster\u2019s SOL (PDF or image) and the AI will fill in carrier, claim #, adjuster contact, and everything else it can read. You approve each field before saving.') +
         '</div>' +
       '</div>' +
-      '<button class="solBtn" id="solBtn">&#128228; Upload SOL</button>' +
+      '<button class="solBtn" id="solBtn">Upload SOL</button>' +
       '<input type="file" id="solFileInput" accept="application/pdf,image/*" style="display:none;">' +
     '</div>' +
     '<div id="solLift"></div>' +
@@ -24390,7 +24391,7 @@ function buildActivityEvents(){
              : isWorkOrderTitle(_tt) ? 'New Work Order:' : /^file:/i.test(_tt) ? 'File added:' : 'New Inspection:';
     ev.push({ t:r.created_at, ini:a.ini, email:a.email, label:_lbl, who:a.nm,
       cli:cli, pid: pr ? pr.id : null, detail:r.title });
-    if(r.sent_at) ev.push({ t:r.sent_at, ini:'\uD83D\uDCE7', label:'Document Sent:', who:a.nm,
+    if(r.sent_at) ev.push({ t:r.sent_at, ini:'\uD83D\uDCE7', ico:'mail', label:'Document Sent:', who:a.nm,
       cli:cli, pid: pr ? pr.id : null, detail:r.title });
   });
   /* 766: a closed punch-out is not deleted — it becomes the client's repair
@@ -24422,7 +24423,7 @@ function buildActivityEvents(){
     if(!ap.created_at) return;
     var pr = ap.project_id ? cacheProjects.find(function(x){ return x.id === ap.project_id; }) : null;
     var a = actor(ap.created_by);
-    ev.push({ t:ap.created_at, ini:'\uD83D\uDCC5', label:'Appointment:', who:a.nm,
+    ev.push({ t:ap.created_at, ini:'\uD83D\uDCC5', ico:'calendar', label:'Appointment:', who:a.nm,
       cli: pr ? pr.name : '', pid: pr ? pr.id : null,
       detail: ap.title + ' \u2014 ' + ap.appt_date + (ap.appt_time ? ' ' + fmtApptTime(ap.appt_time) : '') });
   });
@@ -24445,7 +24446,7 @@ function renderActivity(){
   if(!mount) return;
   var ev = buildActivityEvents().slice(0, 14);
   mount.innerHTML = ev.length ? ev.map(function(x){
-    return '<div class="actitem"><span class="ic icav">' + (x.email ? avatarHtml(x.email, 30) : esc(x.ini)) + '</span>' +
+    return '<div class="actitem"><span class="ic icav">' + (x.email ? avatarHtml(x.email, 30) : (x.ico && window.crIco ? window.crIco(x.ico) : esc(x.ini))) + '</span>' +
       '<span class="tx"><b>' + esc(x.who) + '</b> ' + esc(x.label.replace(':','').toLowerCase()) + ' <b>' + esc(x.detail || x.cli) + '</b>' +
       (x.cli && x.detail ? ' \u00b7 ' + esc(x.cli) : '') +
       '<span class="tm">' + timeAgo(x.t) + '</span></span></div>';
@@ -24461,7 +24462,7 @@ function openActivityFeed(){
   var ev = buildActivityEvents().slice(0, 60);
   document.getElementById('actFeedFull').innerHTML = ev.length ? ev.map(function(x){
     return '<div class="afrow">' +
-      '<span class="afav"><span class="circ circav">' + (x.email ? avatarHtml(x.email, 38) : esc(x.ini)) + '</span><span class="tm">' + timeAgo(x.t) + '</span></span>' +
+      '<span class="afav"><span class="circ circav">' + (x.email ? avatarHtml(x.email, 38) : (x.ico && window.crIco ? window.crIco(x.ico) : esc(x.ini))) + '</span><span class="tm">' + timeAgo(x.t) + '</span></span>' +
       '<span class="afbd">' +
         '<span class="aflabel">' + esc(x.label) + '</span> <span class="afwho">' + esc(x.who) + '</span>' +
         (x.cli ? '<span class="afcli"' + (x.pid ? ' data-proj="' + x.pid + '"' : '') + '>' + esc(x.cli) + '</span>' : '') +
@@ -24584,6 +24585,9 @@ var CardinalIcons = (function(){
   return { get: get, hydrate: hydrate, names: function(){ return Object.keys(P); } };
 })();
 window.CardinalIcons = Object.assign(window.CardinalIcons || {}, CardinalIcons);
+/* 1414: the drawn glyph for a DYNAMIC string (static markup uses data-cri). One size, inline with the text. */
+function crIco(name){ return CardinalIcons.get(name, 'crico'); }
+window.crIco = crIco;
 try{ CardinalIcons.hydrate(document); }catch(_){}
 if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', function(){
@@ -36326,7 +36330,7 @@ function showList() {
     mountEl.innerHTML = `
       <div class="cr-xl-card">
         <div class="cr-xl-head">
-          <div class="cr-xl-eyebrow">🛡 Insurance Claim</div>
+          <div class="cr-xl-eyebrow">${window.crIco ? window.crIco('shield') : ''}Insurance Claim</div>
           <div class="cr-xl-status ${claim.status}">${statusLabel(claim.status)}</div>
         </div>
         <div class="cr-xl-title">${esc(claim.carrier || 'Unknown carrier')}${claim.claim_number ? ` · #${esc(claim.claim_number)}` : ''}</div>
@@ -38073,6 +38077,7 @@ function showList() {
    stroke is currentColor it inherits the text's colour in BOTH themes,
    which is the whole reason to prefer this over an emoji. */
 .cri{width:1em;height:1em;flex:0 0 auto;vertical-align:-.13em;stroke-width:1.75}
+.cri.crico{width:1.05em;height:1.05em;vertical-align:-.16em;margin-right:.35em;display:inline-block}
 .cri.lg{width:.92em;height:.92em;vertical-align:-.09em;margin-right:.12em}
 .cr-portal-chip{
     display:inline-flex; align-items:center; gap:6px;
@@ -38735,7 +38740,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
     var host = document.createElement('div');
     host.className = 'cr-claimstrip';
     host.dataset.pid = pid;
-    host.innerHTML = '<div class="hd"><span class="lbl">\uD83D\uDEE1\uFE0F Claim</span></div>' +
+    host.innerHTML = '<div class="hd"><span class="lbl">' + (window.crIco ? window.crIco('shield') : '') + 'Claim</span></div>' +
                      '<div class="msg" style="color:#8b95a5;font:600 13px \'Segoe UI\';">Loading\u2026</div>';
     bar.insertAdjacentElement('afterend', host);
 
@@ -38757,7 +38762,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
     if(!claim){
       host.classList.add('empty');
       host.innerHTML =
-        '<div class="hd"><span class="lbl">\uD83D\uDEE1\uFE0F Claim</span></div>' +
+        '<div class="hd"><span class="lbl">' + (window.crIco ? window.crIco('shield') : '') + 'Claim</span></div>' +
         '<div class="msg">No claim record yet \u2014 carrier, adjuster, RCV and ACV live here once one exists.</div>' +
         '<button class="newbtn" data-act="new">+ Start Claim Record</button>';
       var nb = host.querySelector('[data-act="new"]');
@@ -38788,7 +38793,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
     host.classList.remove('empty');
     host.innerHTML =
       '<div class="hd">' +
-        '<span class="lbl">\uD83D\uDEE1\uFE0F ' + esc(claim.carrier || 'Claim') +
+        '<span class="lbl">' + (window.crIco ? window.crIco('shield') : '') + esc(claim.carrier || 'Claim') +
           (claim.claim_number ? ' \u00b7 #' + esc(claim.claim_number) : '') + '</span>' +
         (claim.adjuster_name ? '<span class="who">Adj. ' + esc(claim.adjuster_name) + '</span>' : '') +
       '</div>' +
@@ -45360,6 +45365,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1414, d:'2026-10-29', t:'Drawn icons instead of emoji', s:'The emoji still left on the Clients screen, the Activity panel, the client page (address, rep, Punch List, Delete), and the insurance claim and document rows are now the same drawn icons as the menu.' },
   { b: 1413, d:'2026-10-29', t:'Messages no longer erase each other', s:'If two people posted on the same job or punch-out close together, the second post could erase the first, and saving a job could undo another device\u2019s changes made since it was opened. Every post and save now reads the latest copy first and keeps everyone\u2019s messages.' },
   { b: 1412, d:'2026-10-29', t:'Save is no longer under the menu bar', s:'In the installed app, the Upload signed contract panel\u2019s Save button was hidden behind the bottom menu bar. That panel, the Add to calendar prompt and the Leads question now sit above the bar.' },
   { b: 1411, d:'2026-10-29', t:'Team Feedback', s:'There is now a Team Feedback box in the menu (under Account) and in Tools. Use it when something breaks, isn\u2019t working right, or you have an idea. It notes which screen and job you were on, Theo gets an alert, and you see the status and his reply on the same page.' },
@@ -47297,7 +47303,7 @@ var hint = document.createElement('button');
 hint.type = 'button';
 hint.id = 'cr-nav-palette-hint';
 hint.innerHTML =
-'<span>\uD83D\uDD0D</span>' +
+'<span>' + (window.crIco ? window.crIco('search') : '') + '</span>' +
 '<span class="lbl">Quick jump</span>' +
 '<kbd>\u2318K</kbd>';
 hint.onclick = function(e){
@@ -60941,7 +60947,7 @@ var done = rows.filter(function(i){ return i.status === 'done'; });
 var html =
 '<div class="cr-pp-card">' +
 '<div class="cr-pp-hd">' +
-'<span class="t">\uD83D\uDD28 Punch List</span>' +
+'<span class="t">' + (window.crIco ? window.crIco('ladder') : '') + 'Punch List</span>' +
 (open.length
 ? '<span class="n open">' + open.length + ' open</span>'
 : (done.length ? '<span class="n clear">clear</span>' : '')) +
