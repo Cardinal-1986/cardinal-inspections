@@ -37106,3 +37106,15 @@ Documents built by the app's own template code, served through the real `api/sha
 - **Leads went from 51 to 29.** 19 of those have no AccuLynx source and are waiting on a JobNimbus export.
 - ⚠ **A move made by SQL sends no alerts.** The app's Approved → Production notice never went out for the one job moved to Approved, so Theo is telling production himself.
 - **Collections were not touched.** Payment discrepancies found along the way went to Theo, not into the table.
+
+## Build 1411 — Team Feedback (29 Oct 2026)
+- **Theo:** *"Can you make a team suggestions or feedback box somewhere in the app for when things break down or aren't working or features from team members."*
+- **Audited first; nothing like it existed.** Errors are already captured into `audit_events` on their own, but there was no way for a person to say something. One new table, `team_feedback.sql` (**run BEFORE `index.html`**), and one new module, `cr-fb-*`. Doors: Menu → Account (the desktop rail mirrors it), Tools → App in the top bar, and the `#feedback` link in the alerts. Admins get a push for each new report; the sender gets one back when the status or reply changes.
+- **A field account keeps the door.** Per 1317, Production-only accounts see four rows; this is the fifth. Reporting a broken punch card is exactly their use. `gate_1317` updated deliberately; it went red on the change before the update.
+- **Gates:**
+  - `gate_1411.mjs` 20/20; control 1409 RED 9.
+  - check_build green. REPRO byte-identical.
+  - `gate_types` at the control's 1506 after three `any` casts.
+  - `gate_dupes` red identically to the control (pre-existing names from other merged branches); the one new collision (`go`) was renamed `fbLinkGo`.
+  - `gate_a11y` identical to the control.
+- ⚠ **The first run of A was the TEST's fault.** On a phone the drawer opens with every section folded, so no row is visible until its heading is tapped. The gate now opens Menu, then Account, the way a person does.

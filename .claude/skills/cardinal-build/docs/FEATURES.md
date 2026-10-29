@@ -10190,3 +10190,13 @@ Reports opened from a list fill only from their own job's checklist; printed sec
 
 ## Build 1406: staff-only ABC route; Crews for the office and Production; partner-less Community bids refused; folded search
 `api/abc.js` requires Cardinal staff; Crews hidden and refused for reps; a Community bid with no partner is refused; every search folds accents and apostrophes and reads +1 phones and "PO n"; Habitat first in partner lists; general contractors labelled. **Gate:** `gate_1406.mjs`.
+
+## Build 1411: Team Feedback
+Anyone on staff reports "Something broke", "Not working right" or an "Idea" from **Menu → Account → Team Feedback**. The same box is under **Tools → Team Feedback** in the top bar, and on the desktop rail, which mirrors the drawer. A field (Production-only) account keeps the door too.
+- **Context:** the screen they were on, the open job and the build ride along. There is an "Include where I was" tick to drop them.
+- **Admins:** Theo and Joan get a push linking `#feedback`. The Inbox tab is admin-only and has Open / All / Done filters, status buttons (New / Looking at it / Done / Won't do) and a reply box. A status or reply change pushes the sender back.
+- **Table:** `team_feedback` (`team_feedback.sql`). RLS: insert only under your own address with status `new` and no reply. Read your own rows, or all of them as an admin. Update and delete are admin-only. The restrictive `staff_only_1407` policy applies.
+- **Module:** `cr-fb-styles` + `cr-fb-script`, exporting `window.CardinalFeedback` (`open`, `close`, `isOpen`). It is a fixed overlay with its own scroll and **never writes the global scroll lock**. Colours are `var(--fb-*,#literal)` with an `rb-light` twin.
+- **`#feedback` link:** stashed at boot as `window.__crFbLink` beside 1255's `#punch` (the next boot line rewrites unknown fragments to `#h`).
+- **Not in v1:** a screenshot or photo attachment.
+- **Gate:** `gate_1411.mjs`. `gate_1317` now expects the field drawer's fifth row.
