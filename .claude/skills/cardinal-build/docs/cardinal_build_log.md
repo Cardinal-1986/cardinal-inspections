@@ -37499,6 +37499,7 @@ The name was the only flexible item, so it was the one that gave way.
 
 **Gates:**
 - `gate_1427.mjs`: 54/0 on 1427. The control (1426 with main's api) is RED, 12 pass / 44 fail.
+- `gate_1200` (in CI) counted every mention of `crStageIsForward` and required exactly 3. The upload notification is a fourth, legitimate reader of that rule. The gate now asserts one definition, and that both setStage notify sites ask it. Green on 1426 and 1427. A copy with the Approved site unhooked goes RED 2.
 - `test_api_1427.mjs`: 16/0. The control api is RED.
 - `check_build` GREEN. `gate_types` 1505 and `gate_dupes` are identical to the control. `gate_stack` is clean at 390.
 - 36 existing contract, share and estimate gates are identical on both trees. Two were already red on both and still are: `gate_1279` crashes because its `pay.js` loader cannot read `receipt.js`'s `import`, and `gate_1336` fails 3 checks.

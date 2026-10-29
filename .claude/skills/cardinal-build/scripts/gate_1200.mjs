@@ -74,9 +74,15 @@ ok(!!syncSrc && syncSrc.includes("el.classList.contains('zero') !== zero"),
    'the zero class is toggled only when it changes');
 ok(html.includes('function crStageIsForward(prev, to){'),
    'crStageIsForward is defined');
-ok((html.match(/crStageIsForward/g) || []).length === 3,
-   'crStageIsForward: one definition and exactly two call sites',
-   'found ' + (html.match(/crStageIsForward/g) || []).length);
+/* 1427: a whole-file count of 3 broke when the signed-contract upload became a third, legitimate
+   reader of the same forward-only rule. What this gate protects is ONE rule (one definition) that both
+   setStage notify sites ask; other callers asking the same question are the point of having it. */
+ok((html.match(/function crStageIsForward\s*\(/g) || []).length === 1,
+   'crStageIsForward: one definition',
+   'found ' + (html.match(/function crStageIsForward\s*\(/g) || []).length);
+ok(html.includes("if(v === 'Approved' && crStageIsForward(prev, 'Approved')){") &&
+   html.includes("if(v === 'Completed' && crStageIsForward(prev, 'Completed')){"),
+   'both setStage notify sites ask crStageIsForward');
 ok((html.match(/function acxRank\s*\(/g) || []).length === 1,
    'acxRank is still defined exactly once — no second pipeline order');
 
