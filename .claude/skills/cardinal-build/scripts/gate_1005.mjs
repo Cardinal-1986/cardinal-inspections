@@ -95,7 +95,7 @@ need('S2 no source: More detail revealed (ldshow)', s2.ldshow === true, 's2=' + 
 need('S2 no source: pdb.create NOT reached', s2.createdCalled === false);
 
 // S3 — both answered → save proceeds
-const s3 = await attempt('insurance', 'Door Knocking');
+const s3 = await attempt('insurance', 'Door knock');   /* H (#18): the one vocabulary's spelling */
 need('S3 both answered: no refusal error', (s3.error || '') === '', 's3=' + JSON.stringify(s3));
 need('S3 both answered: pdb.create reached', s3.createdCalled === true, 's3=' + JSON.stringify(s3));
 
