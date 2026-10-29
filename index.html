@@ -4309,7 +4309,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1425<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1426<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -46051,6 +46051,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1426, d:'2026-10-29', t:'Client names show in full', s:'Client names were cut to a few letters on the Clients list and to a single letter on the home screen\u2019s Recent leads, and disappeared at the largest text size. The name now gets its own line on a client card, and Recent leads keeps room for it, moving the stage and rep down a line when space runs out.' },
   { b: 1425, d:'2026-10-29', t:'Insurance and community job pages stop working your phone while you read', s:'An insurance or community job left open kept the phone busy redrawing the same words over and over \u2014 up to three-quarters of its effort with nobody touching it, which drains the battery and heats the phone on a roof. Those pages now sit as still as a retail job.' },
   { b: 1424, d:'2026-10-29', t:'Estimates start from the job\u2019s measurements; invoices say what is really owed', s:'Estimates now start from the job\u2019s own measurements \u2014 the roof squares, eaves and ridges from Roofr or Hover fill the lines, and each line says where its number came from. The line arrows and \u00d7 are thumb-sized, a removed line comes back with Undo, and closing with unsaved work offers Save and close first. A published estimate shows once on the client page, and printed estimates show the total once, at the end. Invoices say Overdue, Draft, Partly paid or Paid in full instead of Deposit Paid for everything, carry Cardinal\u2019s address and phone and say where to mail a check. Recording a payment shows a green confirmation, and a Community job priced by its contract shows its real value and balance.' },
   { b: 1423, d:'2026-10-29', t:'Inspections: real priorities, photos kept, readable on a phone and on paper', s:'Each photo in an AI-written report shows its own priority (no more HIGH on everything), and the high and moderate ones show up in the Summary of Findings. Start without AI keeps your checked photos and stops asking for a title. Quick Inspection\u2019s buttons are readable, it finds the client from a typed address, and Finish puts your photos into Inspection Photos and offers to start the report with them checked. On a phone the report editor\u2019s buttons fold away while you scroll and the assistant fits the screen. Printed reports keep the cover on page 1 and the signature lines with their labels, and MODERATE is readable.' },
@@ -70523,9 +70524,9 @@ OPEN: OPEN, WON: WON };
 .cd-card{background:#1b1d20;border:1px solid #2e3136;border-radius:13px;margin-bottom:11px;display:flex;align-items:center;gap:0;cursor:pointer;position:relative;overflow:hidden;box-shadow:none;}
 .cd-card::before{content:'';position:absolute;left:0;top:8%;height:84%;width:2px;border-radius:3px;background:var(--cc,#c9a227);box-shadow:none;}
 .cd-card .bd{flex:1;min-width:0;padding:11px 12px 11px 15px;}
-.cd-card .nmrow{display:flex;align-items:center;gap:8px;}
+.cd-card .nmrow{display:flex;align-items:center;gap:2px 8px;flex-wrap:wrap;}   /* 1426: the name takes its own line */
 .cd-po{font-weight:800;color:#c9a227;}
-.cd-name{font-weight:800;font-size:15px;color:var(--cc,#c9a227);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cd-name{font-weight:800;font-size:15px;color:var(--cc,#c9a227);min-width:0;flex:1 1 100%;order:-1;line-height:1.25;overflow-wrap:anywhere;}   /* 1426: was one nowrap line shared with PO, star and tag — 87 of 149px showed on a phone, 0px at the largest text size */
 .cd-star{cursor:pointer;user-select:none;font-size:15px;line-height:1;color:#5a5145;padding:2px;}
 .cd-star.on{color:#e8a900;}
 .cd-crmtag{margin-left:auto;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--cc,#c9a227);}
@@ -71347,12 +71348,12 @@ document.addEventListener('click', function(e){
 :root[data-theme="rb-light"] .kpqrow .qd{color:#8a5500;}
 :root[data-theme="rb-light"] .kpqrow.qstale .qd{color:#8f1620;}
 :root[data-theme="rb-light"] .kpqrow .qc{color:#047857;}
-.kplrow{display:flex;align-items:center;gap:9px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));
+.kplrow{display:flex;align-items:center;flex-wrap:wrap;gap:4px 9px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));
   border:1px solid var(--rbe-line2);border-radius:10px;padding:8px 10px;margin-top:8px;position:relative;cursor:pointer;overflow:hidden;}
 .kplrow:hover{border-color:var(--rbe-acc);}
 .kplrow::before{content:'';position:absolute;left:0;top:16%;height:68%;width:3px;border-radius:3px;
   background:var(--sc,#dbe7f7);box-shadow:0 0 6px var(--sc,#dbe7f7);}
-.kplrow .nm{flex:1;min-width:0;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;padding-left:6px;
+.kplrow .nm{flex:1 1 150px;min-width:150px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;padding-left:6px;
   
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}
 .kplrow .po{font-weight:800;font-size:11px;

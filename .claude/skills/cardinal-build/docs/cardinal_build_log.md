@@ -37440,3 +37440,33 @@ What is left is the clocks.
 - It also asserts that the labels still relabel ("Advance to Build Complete"), that File a supplement still opens its sheet, and that the card still repaints when the claim changes.
 - `check_build` GREEN. `gate_types` 1505 (a first draft's `host.__crSpSig` expando was +2 TS2339 and became a closure variable). `gate_dupes` identical.
 - `gate_1301` GREEN on both trees. `harness_655` is red 4 identically on the control.
+
+## Build 1426 — client names show in full (29 Oct 2026)
+
+**Source:** the audit panel's fix-first item #3. Five judges flagged it, and the chair and the meta-judge confirmed it.
+
+**The fault:** both rows were one `nowrap` flex line shared by the name and its neighbours.
+- Client card: PO, star, portal tag.
+- Recent leads: PO, stage chip, rep.
+
+The name was the only flexible item, so it was the one that gave way.
+
+**Measured at 1425** (visible / full width):
+
+| Where | Visible / full |
+|---|---|
+| Phone Clients list | 87/149 |
+| Clients at 1600 | 69/149 |
+| Recent leads at 1280 | 11/122 |
+| Largest text size | 0px on every card |
+
+**The fix**, edited in place with no new rule:
+- `.cd-card .nmrow` wraps. `.cd-name` is `flex:1 1 100%; order:-1`, so it is the first line, and `overflow-wrap:anywhere`.
+- `.kplrow` wraps. `.kplrow .nm` is `flex:1 1 150px; min-width:150px`.
+
+**Gates:**
+- `gate_1426.mjs` 7/0; the control (1425) is RED 4/7.
+- `check_build` GREEN.
+- `gate_types` 1505 and `gate_dupes` are identical to the control.
+- `gate_1418` 86/0 on both trees.
+- `gate_1226` is red 4 identically on the control (the rig finds no Lead row; it is not in CI).
