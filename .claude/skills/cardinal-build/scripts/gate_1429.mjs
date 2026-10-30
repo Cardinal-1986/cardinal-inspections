@@ -268,10 +268,9 @@ async function contract(page, theme){
   });
   await tryDo('#34 Supplement', async () => {
     await page.evaluate(() => openProject('I1')); await page.waitForTimeout(1800);
-    const s = await page.evaluate(() => { const t = document.querySelector('#cr-sp-mount .cr-sp-hd .t'); return t ? { t: t.textContent.trim(), emoji: window.__emojiH(t.textContent), svg: !!t.querySelector('svg.cri') } : null; });
-    /* ⚠ the card's mount is a direct child of #tab-overview and is NOT on its allow-list, so it renders hidden
-       on every insurance profile (pre-existing, recorded in the report). This reads the card's markup. */
-    need('#34 the Supplement card heading: no emoji, a drawn glyph', s && !s.emoji && s.svg && s.t === 'Supplement', JSON.stringify(s));
+    /* 1432: the Supplement card is retired (Theo: "Retire card"), so its heading's glyph has nothing to check */
+    const s = await page.evaluate(() => ({ mount: !!document.getElementById('cr-sp-mount') }));
+    need('#34 the Supplement card is retired (1432), so no emoji is left on it', !s.mount, JSON.stringify(s));
   });
 
   /* ── #26 a lead with no address (last: it opens the New Lead form) ───── */

@@ -10538,3 +10538,22 @@ System values ("AccuLynx import", "community-bid", "Scope of Loss (email import)
 **Storm canvass stays.** It is one of the eight Add-project chips (999).
 
 **Gate:** `gate_1431.mjs`, 6 checks; RED 4 on the 1430 control.
+
+## Build 1432: the Supplement card is retired
+Theo, 30 Oct: "Retire card".
+
+**What the card was.** It was meant to sit on an insurance client's Overview. It showed the supplement status and filed vs approved dollars, and had a "File a supplement" sheet that wrote `insurance_claims` directly.
+
+**Why it goes.** It never rendered: `#cr-sp-mount` went straight into `#tab-overview` and was never on its allow-list. The Supplement Desk (`supplement.html`) files supplements, and its mirror trigger keeps the claim's supplement columns current. The status still drives the Insurance lists.
+
+**What was removed:**
+- `cr-sp-styles`
+- the card and its sheet (`#cr-sp-modal`)
+- `window.CardinalSupplement` (it had no consumer)
+- `supplement_notes` from the claim cache's select
+
+**What stays.** `cr-sp-script` keeps its other job, `ensureSolCard()`, which puts the Scope of Loss card on an insurance page, along with its watcher.
+
+**Side effects.** The scroll-lock roster goes from 17 to 16 writers, because the sheet was one.
+
+**Gate:** `gate_1432.mjs`. `gate_1425` C/D and `gate_1429` #34 now assert that the card stays retired.

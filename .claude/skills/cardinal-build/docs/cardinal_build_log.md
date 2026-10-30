@@ -37627,3 +37627,26 @@ The name was the only flexible item, so it was the one that gave way.
 - `gate_1431.mjs` 6/0. The control (1430) is RED, 4 fail.
 - `gate_1429`, `gate_1005`, `gate_999` and `gate_1430` are re-run on both trees.
 - `check_build` GREEN.
+
+## Build 1432 — the Supplement card is retired (30 Oct 2026)
+
+**Source:** Theo, "Retire card", after he was told what it was.
+
+**Why:**
+- The card was hidden on every insurance job from the day it shipped. It was the `#tab-overview` allow-list trap again.
+- Its sheet was a second writer of the claim's supplement columns, beside the Supplement Desk and its mirror trigger.
+- Production, counted on 30 Oct: 25 claims at 'none', 1 at 'filed'.
+
+**What went:**
+- the card and its filing sheet
+- its stylesheet (4,094 characters)
+- `window.CardinalSupplement`
+- `supplement_notes` in the claim cache's select
+
+**What stayed:** the module's Scope of Loss mounting and its body watcher, byte for byte. The observer count does not move.
+
+**Scroll lock:** 17 → 16 writers. `scrolllock_roster.json` re-recorded.
+
+**Gates:**
+- `gate_1432.mjs` checks four things: no card, sheet or API; Scope of Loss still mounts; the page stays idle-quiet; the claim cache is trimmed. The control (1431) is RED.
+- `gate_1425` C/D and `gate_1429` #34 were rewritten to assert the card stays retired (`patch_1432_gates.py`).
