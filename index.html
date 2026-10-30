@@ -1088,7 +1088,7 @@ body.cr-prod:has(#punchView:not([style*="none"])) :is(#projModal,#apptModal,#lea
   padding:9px 11px;margin:6px 0;font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
 .apptrow .tm{font-weight:800;color:var(--red-dk);white-space:nowrap;min-width:64px;}
 .apptrow .bd{flex:1;}
-.apptrow .bd small{display:block;color:#8a8a8a;}
+.apptrow .bd small{display:block;color:#5f6670;}   /* 1433: #8a8a8a was 3.45:1 on the white sheet; 5.80:1 */
 /* 1258: Add to calendar — the row button and its sheet (fixed colours: the sheet
    sits over the appointment modal's own dark wash in both themes) */
 .apptrow .apptcal{flex:none;min-height:44px;padding:0 12px;border-radius:8px;cursor:pointer;
@@ -1147,7 +1147,7 @@ body.cr-prod:has(#punchView:not([style*="none"])) :is(#projModal,#apptModal,#lea
 #ctUpSheet .pri{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
 #ctUpSheet .pri[disabled]{opacity:.6;cursor:default;}
 #ctUpSheet .no{background:transparent;border:1px solid #3a3e46;color:#eceef0;}
-.apptrow .del{border:0;background:none;color:#b3a49d;font-size:15px;cursor:pointer;}
+.apptrow .del{border:0;background:none;color:#5f6670;font-size:15px;cursor:pointer;min-width:44px;min-height:44px;}   /* 1433: #b3a49d was 2.41:1; a 44px tap area */
 .apptrow .del:hover{color:var(--red);}
 /* 1260: Edit, and the row it is editing. The day sheet is the white form sheet
    in both themes (Forms 1), so a fixed ink like 1258's Add to calendar. */
@@ -4321,7 +4321,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-30 build 1432<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-30 build 1433<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -46369,6 +46369,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1433, d:'2026-10-30', t:'The appointment sheet reads, and Ask stops covering form buttons', s:'On the appointment sheet, the grey line under each appointment (who booked it, the notes) and its delete \u2715 are dark enough to read, and the \u2715 is easier to tap. On a phone, the floating Ask button no longer sits on the appointment sheet\u2019s Add button or over the New Lead and Add project forms; it steps aside while one of them is open.' },
   { b: 1432, d:'2026-10-30', t:'The old Supplement card is retired', s:'The Supplement card on an insurance client page is gone. It had never actually appeared on screen, and the Supplement Desk is where supplements are filed and tracked; it keeps each claim\u2019s supplement status up to date, and that status still shows in the Insurance lists. Nothing you could see changes.' },
   { b: 1431, d:'2026-10-30', t:'The lead-source list without duplicates', s:'The lead-source list lost its duplicates: Canvasser is now Door knock, and Google, Website, Internet and its two variants are all Google / website. The list went from 22 choices to 18. Jobs saved under an old name are not changed; they show, and count in Reports, under the source they belong to. The misspelled Non Proffit counts as Non Profit.' },
   { b: 1430, d:'2026-10-29', t:'Escape and Back close pop-ups, + New works over Production, a tidier menu', s:'Escape and the phone\u2019s Back button now close the pop-up on top (Record payment, the day sheet, the lead form, the Front Door) instead of moving the page underneath. Tapping a bottom tab or a menu row closes any open pop-up first. + New works over the Production board, Punch & Repairs and Crew Dispatch. The Undo message after a stage move sits above the bottom tabs. Switch portal keeps you where you are, and the Front Door has a close button. The menu counts only what you can see, hides empty headings, and no longer shows reps doors that only say Admin only. A field account tapping a job on the board or Dispatch opens its punch card instead of an error. In light mode the desktop menu shows a different icon for Clients, Leads & Jobs and Estimates.' },
@@ -93160,7 +93161,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   function aiBusyScreen(){
     var shown = function(id){ var e = document.getElementById(id); return !!(e && e.getClientRects().length && getComputedStyle(e).display !== 'none'); };
     var open = function(id){ var e = document.getElementById(id); return !!(e && e.classList.contains('open')); };
-    return open('cr-est-view') || open('editorView') || open('cr-scan') || open('cr-ce-view') || shown('commsView') || shown('qiStartView') || shown('resourceLibraryView');   /* H (#13): + the contract viewer */
+    return open('cr-est-view') || open('editorView') || open('cr-scan') || open('cr-ce-view') || shown('commsView') || shown('qiStartView') || shown('resourceLibraryView') ||   /* H (#13): + the contract viewer */
+      shown('apptModal') || shown('leadFormModal') || shown('projModal');   /* 1433: the form sheets' own Add / Create / Save sat under it */
   }
   function aiPaintFab(){
     var f = aiQ('cr-ai-fab'); if(!f) return;

@@ -10557,3 +10557,10 @@ Theo, 30 Oct: "Retire card".
 **Side effects.** The scroll-lock roster goes from 17 to 16 writers, because the sheet was one.
 
 **Gate:** `gate_1432.mjs`. `gate_1425` C/D and `gate_1429` #34 now assert that the card stays retired.
+
+## Build 1433: the appointment sheet reads, and Ask stops covering form buttons
+Found while rendering the taste-call previews. It is fixed regardless of the T3 pick.
+- **Appointment row text.** The grey "who / notes" line (`.apptrow .bd small`) and the delete ✕ (`.apptrow .del`) both take `#5f6670`, at 5.80:1 on the white Forms 1 sheet. They were 3.45:1 and 2.41:1. The ✕ gets a 44px hit area.
+- **Ask button.** `aiBusyScreen()` (1397's "screens with their own bottom actions") now includes `apptModal`, `leadFormModal` and `projModal`, so Ask tucks away while one is open.
+
+**Gate:** `gate_1433.mjs`, 9 checks; RED 6 on the 1432 control.

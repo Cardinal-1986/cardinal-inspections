@@ -37650,3 +37650,18 @@ The name was the only flexible item, so it was the one that gave way.
 **Gates:**
 - `gate_1432.mjs` checks four things: no card, sheet or API; Scope of Loss still mounts; the page stays idle-quiet; the claim cache is trimmed. The control (1431) is RED.
 - `gate_1425` C/D and `gate_1429` #34 were rewritten to assert the card stays retired (`patch_1432_gates.py`).
+
+## Build 1433 — the appointment sheet reads, and Ask stops covering form buttons (30 Oct 2026)
+
+**Source:** the taste-preview renders. The T3 notes measured the appointment sheet's "who" line at 3.45:1, confirming the audit, and its delete ✕ at 2.41:1. At 390px, Ask sat over the sheet's Add button and the New Lead form. These are defects, not taste, so they are fixed whatever T3 decides.
+
+**Change:**
+- Both inks become `#5f6670`, the app's grey for text on white, at 5.80:1 in both themes.
+- The ✕ gets a 44×44 hit area.
+- The three form sheets join `aiBusyScreen()`.
+
+**Gates:**
+- `gate_1433.mjs` 9/0. The control (1432) is RED, 6 fail.
+- Light is set through localStorage before boot, because a reload lands on sign-in in this rig (`sw.js`).
+- `gate_1003`, `1127`, `1258`, `1260`, `1241`, `1397` and `1206` are run on both trees.
+- `check_build` GREEN.
