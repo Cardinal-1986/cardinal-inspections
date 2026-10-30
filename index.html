@@ -4321,7 +4321,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-29 build 1430<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-30 build 1431<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12765,10 +12765,15 @@ async function acxDead(pr){
 }
 /* H (#18): the ONE lead-source vocabulary (see patch note above acxSrcOpts) */
 var CR_LEAD_SOURCES = ['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social',
-  'Canvasser','Commercial','Direct Mailings','Door hanger','Habitat - Dayton','Internet','Internet: Google','Internet: Website',
-  'Non Profit','Real-estate','Real-estate: Kitty Hawk','Roofle','Telemarketing','Truck','Other'];
-/* the New Lead form's old spellings of three of the same sources (case is matched separately) */
-var CR_LEAD_SOURCE_ALIAS = { 'door knocking':'Door knock', 'previous customer':'Repeat customer' };
+  'Commercial','Direct Mailings','Door hanger','Habitat - Dayton','Non Profit','Real-estate','Real-estate: Kitty Hawk',
+  'Roofle','Telemarketing','Truck','Other'];
+/* other spellings of the same sources (case is matched separately). 1431 (Theo: "Trim duplicate lead
+   sources"): Canvasser and the four Internet/Google spellings left the picker; jobs stored under them,
+   and under the "Non Proffit" typo, show and count as the source they are. Nothing stored is rewritten. */
+var CR_LEAD_SOURCE_ALIAS = { 'door knocking':'Door knock', 'canvasser':'Door knock', 'previous customer':'Repeat customer',
+  'google':'Google / website', 'website':'Google / website', 'internet':'Google / website',
+  'internet: google':'Google / website', 'internet: website':'Google / website',
+  'non proffit':'Non Profit', 'kitty hawk':'Real-estate: Kitty Hawk' };
 /* a stored lead_source as the vocabulary spells it; anything it does not know comes back as stored */
 function crLeadSource(v){
   var s = String(v == null ? '' : v).trim();
@@ -46364,6 +46369,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1431, d:'2026-10-30', t:'The lead-source list without duplicates', s:'The lead-source list lost its duplicates: Canvasser is now Door knock, and Google, Website, Internet and its two variants are all Google / website. The list went from 22 choices to 18. Jobs saved under an old name are not changed; they show, and count in Reports, under the source they belong to. The misspelled Non Proffit counts as Non Profit.' },
   { b: 1430, d:'2026-10-29', t:'Escape and Back close pop-ups, + New works over Production, a tidier menu', s:'Escape and the phone\u2019s Back button now close the pop-up on top (Record payment, the day sheet, the lead form, the Front Door) instead of moving the page underneath. Tapping a bottom tab or a menu row closes any open pop-up first. + New works over the Production board, Punch & Repairs and Crew Dispatch. The Undo message after a stage move sits above the bottom tabs. Switch portal keeps you where you are, and the Front Door has a close button. The menu counts only what you can see, hides empty headings, and no longer shows reps doors that only say Admin only. A field account tapping a job on the board or Dispatch opens its punch card instead of an error. In light mode the desktop menu shows a different icon for Clients, Leads & Jobs and Estimates.' },
   { b: 1429, d:'2026-10-29', t:'Readable contract viewer, lead source, the inspection checklist and small fixes', s:'The contract viewer\u2019s title is readable in light mode and its buttons are full size. Lead source now shows on the client page whatever the New Lead form saved. The inspection checklist marks every required field, and Save and start report takes you to the first one you missed instead of looking dead. A lead saved with no address no longer shows \u201c, , OH\u201d. A punch-out from the home screen asks which job instead of picking the first one. Two questions that said \u201cOK =\u201d now name their real buttons, the Activity feed shows dates like Oct 29, 2026, and the last emoji on Quick Inspection, the contract bar and the Supplement card are drawn icons. A printed supplement letter carries Cardinal\u2019s letterhead, the date and the claim number.' },
   { b: 1428, d:'2026-10-29', t:'Uploading a signed contract asks to move the job to Approved', s:'After you upload a signed contract for a job that is not Approved yet, the app asks: Move to Approved? Tap Move to Approved and the job goes on the production schedule and Curtis gets the usual schedule and order materials alert. Tap Not yet and the job stays where it is, and Curtis and the office are told a signed contract is on file.' },

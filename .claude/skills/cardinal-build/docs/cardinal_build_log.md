@@ -37606,3 +37606,24 @@ The name was the only flexible item, so it was the one that gave way.
 - `gate_1317` C needed `crTell`'s new neutral `'info'` kind in the app; the gate was not changed.
 
 **Not done:** the "<" on a field account's Production home still does nothing, and Crew Dispatch still sits alone in a half-width row.
+
+## Build 1431 — the lead-source list without duplicates (30 Oct 2026)
+
+**Source:** Theo, "Trim duplicate lead sources", answering the 1429 question.
+
+**Measured in production first** (counts only, grouped by stored value):
+- Five spellings of one web source: Internet 7, Google 5, Internet: Google 3, Google / website 2, Website 1.
+- Three spellings of door knocking: Door knock 1, Door Knocking 1, Canvasser 1.
+- 9 jobs stored as "Non Proffit", next to 3 as "Non Profit".
+- 7 jobs stored as "Kitty Hawk".
+
+**Change:**
+- The picker goes from 22 to 18 sources.
+- The alias map grows from 2 to 10, so old values show and count as their source.
+- Storm canvass is kept: it is an Add-project chip (999) and says the knock followed a storm. Folding it into Door knock is one line if Theo wants it.
+- No data is rewritten. A one-time clean-up of the stored values is Theo's call.
+
+**Gates:**
+- `gate_1431.mjs` 6/0. The control (1430) is RED, 4 fail.
+- `gate_1429`, `gate_1005`, `gate_999` and `gate_1430` are re-run on both trees.
+- `check_build` GREEN.

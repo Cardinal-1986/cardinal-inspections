@@ -10520,3 +10520,21 @@ Theo answered "yes" on 29 Oct.
 **Light desktop rail icons (#24).** Clients (people), Estimates (ruled page), Pricing (tag), Community Partners and unnamed rows (ring) get their own keyline icons. Only Leads & Jobs keeps the line stack, as in dark.
 
 **Gate:** `gate_1430.mjs`, 85 checks. It goes RED (40 fail) on the control.
+
+## Build 1431: the lead-source list without duplicates
+Theo, 30 Oct: "Trim duplicate lead sources."
+
+**The picker.** `CR_LEAD_SOURCES` drops Canvasser, Internet, Internet: Google and Internet: Website, going from 22 to 18. New Lead and the client page still share it.
+
+**Stored values.** `CR_LEAD_SOURCE_ALIAS` maps old spellings for display and for Reports. Nothing stored is rewritten.
+- Canvasser and Door Knocking → Door knock
+- Google, Website, Internet and both Internet variants → Google / website
+- Previous Customer → Repeat customer
+- Non Proffit → Non Profit
+- Kitty Hawk → Real-estate: Kitty Hawk
+
+System values ("AccuLynx import", "community-bid", "Scope of Loss (email import)", "Invoice2go import") show as stored.
+
+**Storm canvass stays.** It is one of the eight Add-project chips (999).
+
+**Gate:** `gate_1431.mjs`, 6 checks; RED 4 on the 1430 control.
