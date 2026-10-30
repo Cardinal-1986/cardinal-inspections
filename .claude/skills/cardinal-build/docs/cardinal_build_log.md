@@ -37606,3 +37606,47 @@ The name was the only flexible item, so it was the one that gave way.
 - `gate_1317` C needed `crTell`'s new neutral `'info'` kind in the app; the gate was not changed.
 
 **Not done:** the "<" on a field account's Production home still does nothing, and Crew Dispatch still sits alone in a half-width row.
+
+## Build 1431 — the lead-source list without duplicates (30 Oct 2026)
+
+**Source:** Theo, "Trim duplicate lead sources", answering the 1429 question.
+
+**Measured in production first** (counts only, grouped by stored value):
+- Five spellings of one web source: Internet 7, Google 5, Internet: Google 3, Google / website 2, Website 1.
+- Three spellings of door knocking: Door knock 1, Door Knocking 1, Canvasser 1.
+- 9 jobs stored as "Non Proffit", next to 3 as "Non Profit".
+- 7 jobs stored as "Kitty Hawk".
+
+**Change:**
+- The picker goes from 22 to 18 sources.
+- The alias map grows from 2 to 10, so old values show and count as their source.
+- Storm canvass is kept: it is an Add-project chip (999) and says the knock followed a storm. Folding it into Door knock is one line if Theo wants it.
+- No data is rewritten. A one-time clean-up of the stored values is Theo's call.
+
+**Gates:**
+- `gate_1431.mjs` 6/0. The control (1430) is RED, 4 fail.
+- `gate_1429`, `gate_1005`, `gate_999` and `gate_1430` are re-run on both trees.
+- `check_build` GREEN.
+
+## Build 1432 — the Supplement card is retired (30 Oct 2026)
+
+**Source:** Theo, "Retire card", after he was told what it was.
+
+**Why:**
+- The card was hidden on every insurance job from the day it shipped. It was the `#tab-overview` allow-list trap again.
+- Its sheet was a second writer of the claim's supplement columns, beside the Supplement Desk and its mirror trigger.
+- Production, counted on 30 Oct: 25 claims at 'none', 1 at 'filed'.
+
+**What went:**
+- the card and its filing sheet
+- its stylesheet (4,094 characters)
+- `window.CardinalSupplement`
+- `supplement_notes` in the claim cache's select
+
+**What stayed:** the module's Scope of Loss mounting and its body watcher, byte for byte. The observer count does not move.
+
+**Scroll lock:** 17 → 16 writers. `scrolllock_roster.json` re-recorded.
+
+**Gates:**
+- `gate_1432.mjs` checks four things: no card, sheet or API; Scope of Loss still mounts; the page stays idle-quiet; the claim cache is trimmed. The control (1431) is RED.
+- `gate_1425` C/D and `gate_1429` #34 were rewritten to assert the card stays retired (`patch_1432_gates.py`).
