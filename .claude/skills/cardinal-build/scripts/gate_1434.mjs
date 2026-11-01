@@ -146,8 +146,10 @@ await group('T2  a field account keeps its flat list (scottie, 390)', async () =
   }
   ok(seen.art.ctl === 0 && seen.art.vis.filter(t => !/^SEC /.test(t)).length >= 5, 'T2 scottie: no section is a fold control and no row is folded away (1317 flat list)', seen.art);
   /* the version line differs by construction (the reference is 1433): compare everything else */
-  const unstamp = v => v.map(t => t.replace(/v\d{4}-\d\d-\d\d build \d+/, 'vSTAMP'));
-  ok(JSON.stringify(unstamp(seen.art.vis)) === JSON.stringify(unstamp(seen.ref.vis)), 'T2 scottie: the drawer shows exactly what it showed on the reference tree (version line aside)', seen.art.vis.join(' | '));
+  /* version line aside, and since 1436 the Appearance row's third button (Sun, T8 C):
+     only an exact "AppearanceDarkLightSun" folds back, so any other drift still fails */
+  const unstamp = v => v.map(t => t.replace(/v\d{4}-\d\d-\d\d build \d+/, 'vSTAMP').replace(/^AppearanceDarkLightSun$/, 'AppearanceDarkLight'));
+  ok(JSON.stringify(unstamp(seen.art.vis)) === JSON.stringify(unstamp(seen.ref.vis)), 'T2 scottie: the drawer shows exactly what it showed on the reference tree (version line and Sun button aside)', seen.art.vis.join(' | '));
 });
 await group('T2  the desktop rail keeps its own folds (theo, 1440)', async () => {
   const { browser, page } = await boot3('theo', { desktop: true, w: 1440 });
