@@ -37721,3 +37721,31 @@ The name was the only flexible item, so it was the one that gave way.
   - **The visible-breakage categories (CLIPPED, COLLAPSE, OVERLAP, OVERFLOW, UNWIRED, FLOOR, CONTAIN) are identical across the three runs except one:** `#cdCrmBar` (the Clients bar's portal chips) hides 23px at 390 in Sun. **Not Sun's:** 1435 in plain Light at Text size Large clips the same 23px, and 42px at Larger. Sun is one size step up, so it inherits it, and makes it the default view for field accounts. Fixed in the next build, not widened into this one.
   - **DEAD / OVERRIDDEN differences are Sun's own overrides or the 20-per-render cap.** Sun-only entries are the light inks and fills Sun deliberately replaces (`.pu-age`, `#puQueue .ph2 b`, `.lnav-sec`, `.pu-new`, the light retail `+` that `#addProjectBtn.cr-ib` darkens to clear 7:1). The three `.pl-*` DEAD in 1436 Light are unchanged rules that were among the 8 the cap hid on 1435 (punch DEAD went 28 → 23).
   - ⚠ **The DEAD detail prints `selectorText.slice(0, 70)`.** A rule that reads as ending at `#cr-hd2-bar` may continue — this one was `… #cr-hd2-bar .cr-ib.primary`. Grep for the first 70 characters, not the whole printed selector.
+
+## Build 1437 — the Clients bar's portal chips wrap instead of running off both edges (1 Nov 2026)
+
+**Source:** the 1436 Sun sentinel sweep (`CLIPPED div#cdCrmBar hides 23px`), traced to a pre-existing defect: no choice involved.
+
+**What was wrong, measured at 390 in Chromium on 1436:** `#cdCrmBar` was `justify-content:center; flex-wrap:nowrap; overflow-x:auto` with a hidden scrollbar. A centred row that overflows spills off **both** edges, and the left spill cannot be scrolled to. The sentinel saw only the right half.
+
+| 1436 | first chip's left edge | last chip's right edge |
+|---|---:|---:|
+| Normal, fixture counts | 12 | 378 (fits) |
+| Normal, three-digit counts | **−7** | 397 |
+| Large / Sun | **−14** (−36) | 404 (426) |
+| Larger | **−41** (−66) | 431 (456) |
+
+(Brackets: three-digit counts.)
+- ⚠ **`scrollWidth` understated the old row.** A centred overflow does not count its left spill, so 1436 reported 362 against 339 at Large while the row was really wider. A first attempt (left-aligned auto margins plus tighter spacing at the enlarged sizes) only reached "fits with the fixture" and still overflowed with real counts. It was dropped for the convention below.
+
+**Change** (`patch_1437_crmbar.py`, then `patch_1437.py`):
+- **E1, `flex-wrap:wrap`:** 984's and 993's fix for the other hidden-scrollbar strips. Every chip is already `white-space:nowrap; flex:0 0 auto`.
+- **E2, `.cd-wrap` bottom padding 120 → 160px:** the bar is fixed over the list, and two rows need about 143px above the 62px tab bar's top edge.
+- Byte-reproducible on 1436.
+
+**After:** every chip lies inside 0..390 at every size and count. Normal with fixture counts is one row with every chip at the same x as 1436. A long list scrolled to the end leaves the last client above the bar, with the footer showing and hidden.
+
+**Gates:** `gate_1437.mjs`, 30/0. It is RED on 1436 with 14 failures and no crash.
+- Its own "Sun is actually on" guard caught the rig's first mistake: a Sun seed placed before `sentinel_setup_cardinal.js` is overwritten with `'1'`, so those boots were plain Light. The seed now runs after the setup.
+- The rest are listed in the PR.
+

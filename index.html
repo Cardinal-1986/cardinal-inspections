@@ -4392,7 +4392,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-01 build 1436<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-01 build 1437<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -46898,6 +46898,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1437, d:'2026-11-01', t:'Clients: the portal chips never run off the screen', s:'On a phone, the All / Retail / Claims / Community chips at the bottom of Clients could run off both edges of the screen once the counts got big or the text was set larger (and in Sun), and the All chip could not be reached. When they do not fit on one line they now wrap onto a second line, and the list leaves room for it.' },
   { b: 1436, d:'2026-11-01', t:'Sun: a third appearance for working outside', s:'Menu \u2192 Appearance now has a third choice, Sun, for reading the screen outside in daylight: a white background, near-black text, heavier letters, one size larger. Production and field accounts start in Sun unless they have already picked Dark or Light, and anyone can change it in Menu \u2192 Appearance. Also fixed for everyone: the Production day sheet is readable again in Light, and at the larger text sizes Crew Dispatch no longer jumps past the day you tap or runs off the edge of the screen.' },
   { b: 1435, d:'2026-11-01', t:'Reports follow light mode, and the form sheets go dark in dark mode', s:'Graphs & Reports now follows the theme. In light mode its panels are light, and the chart labels are dark enough to read; switching theme re-colours charts already on screen. The red stripe down the left of each panel is gone in both themes, along with the red rules under the table headings and above the team total; red stays on the selected buttons and in the numbers. A few labels on Reports that were too faint in dark mode now read. In dark mode the form sheets (the profile, Add project and Edit client info, the roofing and GC checklists, the lead forms, appointments and the signature sheet) are dark with light text instead of white. Light mode is unchanged, and the signature pad stays white to write on.' },
   { b: 1434, d:'2026-11-01', t:'Daily opens with the menu, one New lead, one portal switcher on the desktop', s:'On a phone, the menu now opens with Daily already expanded; the other sections stay folded. When a signed agreement is opened in the editor, a line at the top says so: \u201cYou\u2019re editing a signed agreement. Saving keeps the signed one on file as a version.\u201d That line is never saved, sent or printed. The Production board uses the same typeface as the rest of the app, and its numbers still line up. + New has one way to start a client, New lead, and the lead form gains Job cost for admins. On the desktop, the page title is the one place to switch portal: the pills in the top bar, the switch at the top of the left menu and its Switch portal row are gone.' },
@@ -71170,7 +71171,7 @@ OPEN: OPEN, WON: WON };
 <style id="cr-cdir-styles">
 /* ── Client Directory — Brass (retail-B, build 341). Matte black, thin lines, no gradients, no glow. ── */
 #clientsView{background:#141517;min-height:100vh;}
-.cd-wrap{padding-bottom:120px;}
+.cd-wrap{padding-bottom:160px;}/* 1437: was 120 — room for the CRM bar's second row (62 tab bar + ~81 two rows) */
 .cd-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}
 .cd-title{margin:0;flex:1;font:700 22px Georgia,'Times New Roman',serif;color:#f2ede3;}
 #clientsView .btn.ghost{background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;}
@@ -71212,8 +71213,11 @@ OPEN: OPEN, WON: WON };
 .cd-selmode .cd-selck{display:flex;}
 .cd-card.selon .cd-selck{background:#e2574a;border-color:#e2574a;font-weight:800;}
 .cd-empty{border:1px dashed #3a3d42;border-radius:11px;padding:14px;text-align:center;color:#8f8a80;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-bottom:12px;}
-.cd-crmbar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:center;padding:8px 10px;background:rgba(16,17,19,.95);border-top:1px solid #26282c;backdrop-filter:blur(4px);z-index:9995;}
+.cd-crmbar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:center;padding:8px 10px;background:rgba(16,17,19,.95);border-top:1px solid #26282c;backdrop-filter:blur(4px);z-index:9995;}
 .cd-crmbar::-webkit-scrollbar{display:none;}
+/* 1437: .cd-crmbar WRAPS (it was nowrap). Centred and nowrap, an overflowing row spilled off
+   both edges and the left spill could not be scrolled to: "All" sat 7px off the left at
+   Normal with three-digit counts, 14 at Large and in Sun, 41 at Larger. 984/993's fix. */
 .cd-crmchip{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;white-space:nowrap;background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;border-radius:999px;padding:5px 9px;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}
 .cd-crmchip .cd-dot{margin:0 3px 0 0;}
 .cd-crmchip b{font:800 11px ui-monospace,Menlo,monospace;opacity:.7;}

@@ -10601,3 +10601,11 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
 - ⚠ **Sun shares `data-theme="rb-light"`**, so 1435's dark sheets (`:root:not([data-theme="rb-light"])`) stay paper under Sun, and the Reports charts' `cr-theme` event does not fire on Light ↔ Sun (same ink).
 
 **Gates:** `gate_1436.mjs` (with `rig_1436.mjs` / `probe_1436.js`), 90 checks; RED on the 1435 control. `patch_1436_gates.py`: `gate_1230`, `1176`, `1181` and `804` counted the Appearance row as two buttons; it is three.
+
+## Build 1437: the Clients bar's portal chips wrap (found by the 1436 Sun sweep)
+- **What:** `#cdCrmBar`, the phone's All / Retail / Claims / Community filter at the bottom of Clients (the only way to filter the directory by portal on a phone; hidden ≥1100px by `body.cr-lnav-on`), now `flex-wrap:wrap`. A row that fits is unchanged; one that does not becomes two centred rows.
+- **Why:** it was a centred, nowrap strip with a hidden scrollbar. A centred flex row that overflows spills off **both** edges, and a scroller cannot scroll to a negative offset, so the left spill was unreachable. At 390 on 1436: Normal with three-digit counts put "All" 7px off the left; Large and Sun 14px (36 with three-digit counts); Larger 41px (66). 1435 is identical at Large and Larger. Sun inherits it through its size step.
+- **Convention:** the same one-declaration fix 984 and 993 applied to the app's other hidden-scrollbar strips. 993 recorded this bar as clean because the fixture's single-digit counts were the one case that fitted.
+- **List clearance:** `.cd-wrap` bottom padding 120 → 160px, so the last client still ends above a two-row bar (62px tab bar + ~81px), including where the footer is hidden.
+
+**Gates:** `gate_1437.mjs`, 30 checks across Normal / Large / Larger / Sun × fixture and three-digit counts. It is RED on 1436 with 14 failures.
