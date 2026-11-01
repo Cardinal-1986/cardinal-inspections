@@ -4180,8 +4180,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <button class="btn" id="addProjectBtn" style="display:none;">&#65291; New</button>
         <div id="newMenu" style="display:none;">
           <button class="navopt" data-new="task" data-cri="clipboard lg">Task</button>
-          <button class="navopt" data-new="contact" data-cri="person lg">Contact</button>
-          <button class="navopt" data-new="lead" data-cri="flag lg">Lead</button>
+          <!-- T9 (Theo's pick B): ONE way to start a client. The separate "Contact" entry
+               (#projModal, "Add project") is gone from here; #projModal still EDITS a
+               client and still makes 1372's "New job for" an existing one. -->
+          <button class="navopt" data-new="lead" data-cri="flag lg">New lead</button>
           <button class="navopt" data-new="reminder" data-cri="alarm lg">Reminder</button>
           <button class="navopt" data-new="punch" data-cri="ladder lg">Punch-out</button>
         </div>
@@ -4321,7 +4323,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-10-30 build 1433<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-01 build 1434<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4363,11 +4365,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <span class="cbi" data-go="settings" data-cri="gear lg">Settings</span>
     </span>
   </span>
-  <span class="cbcrm" id="cbCrm" aria-label="Switch CRM">
-    <b data-crm-go="retail" class="on"><i style="background:#c8202e"></i>Retail</b>
-    <b data-crm-go="insurance"><i style="background:#2dd4bf"></i>Insurance</b>
-    <b data-crm-go="community"><i style="background:#34d399"></i>Community</b>
-  </span>
+  <!-- T10 (Theo: keep #1): the Retail / Insurance / Community pill strip is gone. On the
+       desktop the page title is the one portal switcher; it was never shown on a phone. -->
   <span class="cbsrch"><input id="cbSearch" type="search" placeholder="Client, PO # or address"><b class="go"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></b></span>
 </nav>
 </header>
@@ -8744,6 +8743,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
               <option>Inspection</option><option>Insurance</option><option>New</option><option>Repair</option>
               <option>Retail</option><option>Service</option><option>Tarp Only</option><option>Warranty</option></select></label>
         </div>
+        <!-- T9: the one field the Add-project form had and this one lacked. Same words, same
+             input, same key (checklist.job_cost) - and, like 1203 there, admins only. -->
+        <label class="ldmore" id="ldJobCostWrap">Job cost (materials + labor, $)<input type="number" id="ldJobCost" min="0" step="0.01" placeholder="for profit reports"></label>
         <!-- 1253: trades at intake — the same six, saved to checklist.trades like the Edit form -->
         <div class="ldtradehead">Trades</div>
         <div class="tradegrid ldtrades" id="ldTrades">
@@ -17317,10 +17319,10 @@ newMenu.addEventListener('click', function(e){
   e.stopPropagation();
   newMenu.style.display = 'none';
   var kind = opt.getAttribute('data-new');
-  if(kind === 'contact'){ openProjModal(null); }
-  else if(kind === 'lead'){
+  /* T9: 'contact' (#projModal) is no longer a + New entry - New lead is the one way in */
+  if(kind === 'lead'){
     if(isProductionUser()){
-      crTell('Lead creation is for sales and admins \u2014 production accounts can add Contacts, Tasks, and Reminders.');
+      crTell('Lead creation is for sales and admins \u2014 production accounts can add Tasks, Reminders and Punch-outs.');
       return;
     }
     openLeadForm();
@@ -17396,9 +17398,12 @@ function openLeadForm(){
    'ldInsAdjEmail','ldInsDeductible','ldInsNotes'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
-  ['ldCategory','ldWorkType','ldSource','ldPartner','ldInsCoverage'].forEach(function(id){
+  ['ldCategory','ldWorkType','ldSource','ldPartner','ldInsCoverage','ldJobCost'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
+  /* T9: job cost is a profit-report field - admins only, as on the Add-project form (1203) */
+  var _ldJc = document.getElementById('ldJobCostWrap');
+  if(_ldJc) _ldJc.style.display = isAdminUser() ? '' : 'none';
   document.querySelectorAll('#ldTrades input').forEach(function(cb){ (/** @type {HTMLInputElement} */ (cb)).checked = false; });   /* 1253 */
   /* 1208 (audit 7b): Ohio by default. Cardinal works Dayton; the walk filled
      every field it was asked for and was still refused with "Required: State",
@@ -17860,7 +17865,9 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString(), lead_source: document.getElementById('ldSource').value || null,
         job_category: ((/** @type {HTMLSelectElement} */ (document.getElementById('ldCategory'))) || {}).value || null,
         work_type: ((/** @type {HTMLSelectElement} */ (document.getElementById('ldWorkType'))) || {}).value || null,
-        trades: (function(){ var t = []; document.querySelectorAll('#ldTrades input:checked').forEach(function(cb){ t.push((/** @type {HTMLInputElement} */ (cb)).value); }); return t.length ? t : null; })() })
+        trades: (function(){ var t = []; document.querySelectorAll('#ldTrades input:checked').forEach(function(cb){ t.push((/** @type {HTMLInputElement} */ (cb)).value); }); return t.length ? t : null; })(),
+        /* T9: the key the Add-project form writes and Reports reads (rptCk(p).job_cost) */
+        job_cost: (function(){ var j = /** @type {HTMLInputElement|null} */ (document.getElementById('ldJobCost')); var v = j ? j.value : ''; return v === '' ? null : Number(v); })() })
     });
     /* 901: a new lead assigned to a rep pings them (push/email/text via notifyTeam).
        Self-assignment is skipped — a rep creating their own lead needs no alert. */
@@ -26499,6 +26506,32 @@ function setEditorStatus(status, sentAt, signedAt){
   }
   toggleBtn.textContent = status === 'sent' ? 'Mark unsent' : 'Mark sent';
   toggleBtn.style.display = signedAt ? 'none' : '';   /* 1392: a signed document is past sent */
+  /* T5: the page itself says so too, once the frame really holds this document (1328's
+     loadedId) - at open this runs before the new page has loaded, and frame.onload paints it. */
+  try{ if(current && frame.dataset.loadedId === String(current.id)) edSignedNote(/** @type {any} */ (frame).contentDocument, !!signedAt); }catch(_sn){}
+}
+
+/* T5 (Theo's pick B; 1078-1079 unchanged): a signed agreement opened in the editor says so,
+   in the editor's OWN notice bar - a clone of the sticky data-cardinal-hint strip, so it
+   cannot drift from it. It keeps the data-cardinal-hint attribute (value "signed"), which is
+   what 1270's strips key on: serializeFrame() removes every [data-cardinal-hint] from the copy
+   that is saved and emailed, the frame's load resets them, and the print rule hides them.
+   Static, not sticky: it is read on opening and then scrolls away, so a phone keeps the one-
+   line editing bar over the document (judge 4). Shown only while the document is signed. */
+function edSignedNote(doc, signed){
+  try{
+    if(!doc || !doc.body) return;
+    var el = doc.querySelector('[data-cardinal-hint="signed"]');
+    if(!signed){ if(el) el.remove(); return; }
+    var bar = doc.querySelector('[data-cardinal-hint="1"]');
+    if(el || !bar || !bar.parentNode) return;
+    var sn = /** @type {HTMLElement} */ (bar.cloneNode(false));
+    sn.setAttribute('data-cardinal-hint', 'signed');
+    sn.style.position = 'static';
+    sn.style.borderBottom = '1px solid #3a3a3a';
+    sn.textContent = 'You\u2019re editing a signed agreement. Saving keeps the signed one on file as a version.';
+    bar.parentNode.insertBefore(sn, bar);
+  }catch(_){}
 }
 
 /* ---------- photo upload + auto-caption (inside the report iframe) ---------- */
@@ -28407,6 +28440,8 @@ async function openEditor(id){
         ? 'Editing mode \u2014 tap any text to type. Yellow = fill in.'
         : 'Editing mode — click any text to type over it. Yellow highlights are fill-in fields. Use the toolbar above to Save or Print/PDF.';
       doc.body.insertBefore(hint, doc.body.firstChild);
+      /* T5: a signed agreement says so, above this line (r is the row this frame loaded) */
+      edSignedNote(doc, !!(r.signed_at || (current && String(current.id) === String(r.id) && current.signed_at)));
       /* F (judge 4): the report opened on 510px of instructions. The how-to panel shows open the first time this
          device opens a document that has one, and folded to its heading after that; its heading toggles it. */
       try{
@@ -30683,7 +30718,7 @@ function goToLanding(){
   if(icAdd) icAdd.addEventListener('click', function(){
     /* Sales/admin only — production accounts can't create leads */
     if(typeof isProductionUser === 'function' && isProductionUser()){
-      crTell('Lead creation is for sales and admins \u2014 production accounts can add Contacts, Tasks, and Reminders.');
+      crTell('Lead creation is for sales and admins \u2014 production accounts can add Tasks, Reminders and Punch-outs.');
       return;
     }
     openLeadForm();
@@ -46369,6 +46404,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1434, d:'2026-11-01', t:'Daily opens with the menu, one New lead, one portal switcher on the desktop', s:'On a phone, the menu now opens with Daily already expanded; the other sections stay folded. When a signed agreement is opened in the editor, a line at the top says so: \u201cYou\u2019re editing a signed agreement. Saving keeps the signed one on file as a version.\u201d That line is never saved, sent or printed. The Production board uses the same typeface as the rest of the app, and its numbers still line up. + New has one way to start a client, New lead, and the lead form gains Job cost for admins. On the desktop, the page title is the one place to switch portal: the pills in the top bar, the switch at the top of the left menu and its Switch portal row are gone.' },
   { b: 1433, d:'2026-10-30', t:'The appointment sheet reads, and Ask stops covering form buttons', s:'On the appointment sheet, the grey line under each appointment (who booked it, the notes) and its delete \u2715 are dark enough to read, and the \u2715 is easier to tap. On a phone, the floating Ask button no longer sits on the appointment sheet\u2019s Add button or over the New Lead and Add project forms; it steps aside while one of them is open.' },
   { b: 1432, d:'2026-10-30', t:'The old Supplement card is retired', s:'The Supplement card on an insurance client page is gone. It had never actually appeared on screen, and the Supplement Desk is where supplements are filed and tracked; it keeps each claim\u2019s supplement status up to date, and that status still shows in the Insurance lists. Nothing you could see changes.' },
   { b: 1431, d:'2026-10-30', t:'The lead-source list without duplicates', s:'The lead-source list lost its duplicates: Canvasser is now Door knock, and Google, Website, Internet and its two variants are all Google / website. The list went from 22 choices to 18. Jobs saved under an old name are not changed; they show, and count in Reports, under the source they belong to. The misspelled Non Proffit counts as Non Profit.' },
@@ -58058,6 +58094,10 @@ objections : OBJECTIONS,
               hot #a83f24 =  6.17:1
    Floors: 4.5:1 body, 3.0:1 large. Portal dots keep their CRM colours in both
    themes — they are dots, not text.
+   TYPE (T6, Theo's pick B): the board's labels, counts, dates and tags were
+   monospace; they are the app's one sans stack now (--pb-sans, the 1415 order),
+   and every one of them keeps fixed-width digits (tabular-nums) so the columns
+   still line up. Size, weight, spacing, capitals and colour are untouched.
    ========================================================================== */
 #cr-pb{
   --pb-g:#0c0d0f; --pb-c:#15171a; --pb-c2:#1b1e22; --pb-c3:#22262c;
@@ -58068,7 +58108,7 @@ objections : OBJECTIONS,
   /* 959: the wet-day ink. 8.02:1 on the dark day card, and its light twin
      6.64:1 on the white one \u2014 computed, not eyeballed. */
   --pb-wx:#6db3f2;
-  --pb-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --pb-sans:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
   display:none; position:fixed; inset:0; z-index:9500; overflow-y:auto;
   overflow-x:hidden; overscroll-behavior:contain;
   background:var(--pb-g,#0c0d0f); color:var(--pb-ink,#eceef0);
@@ -58153,15 +58193,15 @@ objections : OBJECTIONS,
 }
 #cr-pb .pbmon{
   margin-left:auto; display:flex; align-items:center; gap:2px;
-  font:600 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.12em; color:var(--pb-mut,#9aa3ab);
+  font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.12em; color:var(--pb-mut,#9aa3ab);
   text-transform:uppercase;
 }
 #cr-pb .pbmon button{
   background:transparent; border:0; cursor:pointer; color:var(--pb-dim,#848c94);
-  font:700 15px var(--pb-mono,ui-monospace,Menlo,monospace); padding:4px 8px; min-width:30px; min-height:30px;
+  font:700 15px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; padding:4px 8px; min-width:30px; min-height:30px;
 }
 #cr-pb .pbsub{
-  font:600 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.28em; color:var(--pb-dim,#848c94);
+  font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.28em; color:var(--pb-dim,#848c94);
   text-transform:uppercase; margin:2px 0 14px;
 }
 
@@ -58176,11 +58216,13 @@ objections : OBJECTIONS,
 :root[data-theme="rb-light"] #cr-pb .pbtile{
   background:var(--pb-c,#fff); box-shadow:0 2px 10px rgba(25,28,40,.09);
 }
-#cr-pb .pbtile .v{ font:700 22px/1 var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ink,#eceef0); letter-spacing:-.5px; }
+#cr-pb .pbtile .v{ font:700 22px/1 var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; color:var(--pb-ink,#eceef0); letter-spacing:-.5px; }
 #cr-pb .pbtile.att .v{ color:var(--pb-hot,#e07a5f); }
 #cr-pb .pbtile .l{
   display:flex; align-items:center; gap:6px; margin-top:6px;
-  font:600 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.14em; color:var(--pb-mut,#9aa3ab);
+  /* T6: .14em was the mono's tracking; in the sans "SCHEDULED" ran 8px wider and clipped in the
+     1366 laptop's 4-up row, so the sans is tracked back to the mono's width */
+  font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.06em; color:var(--pb-mut,#9aa3ab);
   text-transform:uppercase;
 }
 #cr-pb .pbtile .l svg{ width:12px; height:12px; color:var(--pb-dim,#848c94); flex:none; }
@@ -58198,15 +58240,15 @@ objections : OBJECTIONS,
 :root[data-theme="rb-light"] #cr-pb .pbclosed{ box-shadow:0 2px 10px rgba(25,28,40,.07); }
 #cr-pb .pbclosed svg{ width:16px; height:16px; color:var(--pb-ok,#6cb98f); flex:none; }
 #cr-pb .pbclosed .t{ font:600 13px -apple-system,'Segoe UI',Roboto,sans-serif; }
-#cr-pb .pbclosed .c{ font:700 13px var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ok,#6cb98f); }
-#cr-pb .pbclosed .go{ margin-left:auto; color:var(--pb-dim,#848c94); font:700 15px var(--pb-mono,ui-monospace,Menlo,monospace); }
+#cr-pb .pbclosed .c{ font:700 13px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; color:var(--pb-ok,#6cb98f); }
+#cr-pb .pbclosed .go{ margin-left:auto; color:var(--pb-dim,#848c94); font:700 15px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; }
 /* 855: Crew Dispatch + Crews, folded into the hub under the command tiles. */
 #cr-pb .pbnav{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:9px; }
 #cr-pb .pbnavbtn{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; background:var(--pb-c,#15171a); border:1px solid var(--pb-line,rgba(230,235,240,.11)); border-radius:10px; padding:12px 13px; cursor:pointer; color:var(--pb-ink,#eceef0); text-align:left; transition:border-color .15s,background .15s; }
 #cr-pb .pbnavbtn:hover{ border-color:var(--pb-acc,#e35c63); background:var(--pb-c2,#1b1e22); }
 #cr-pb .pbnavbtn svg{ width:17px; height:17px; color:var(--pb-acc,#e35c63); margin-bottom:5px; flex:none; }
 #cr-pb .pbnavbtn .t{ font:700 13px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pb-ink,#eceef0); }
-#cr-pb .pbnavbtn .s{ font:600 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.02em; color:var(--pb-dim,#848c94); }
+#cr-pb .pbnavbtn .s{ font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--pb-dim,#848c94); }
 
 /* ---- week strip --------------------------------------------------------- */
 #cr-pb .pbweek{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin:16px 0 2px; }
@@ -58214,8 +58256,8 @@ objections : OBJECTIONS,
   text-align:center; border-radius:10px; padding:7px 0 6px; cursor:pointer;
   border:1px solid transparent; background:transparent; min-width:0;
 }
-#cr-pb .pbwd .dw{ display:block; font:600 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.1em; color:var(--pb-dim,#848c94); }
-#cr-pb .pbwd .dn{ display:block; font:700 15px var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ink,#eceef0); margin-top:1px; }
+#cr-pb .pbwd .dw{ display:block; font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.1em; color:var(--pb-dim,#848c94); }
+#cr-pb .pbwd .dn{ display:block; font:700 15px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; color:var(--pb-ink,#eceef0); margin-top:1px; }
 #cr-pb .pbwd.on{ background:var(--pb-c2,#1b1e22); border-color:var(--pb-acc,#e35c63); }
 #cr-pb .pbwd.on .dn{ color:var(--pb-acc,#e35c63); }
 :root[data-theme="rb-light"] #cr-pb .pbwd.on{ background:var(--pb-c,#fff); box-shadow:0 1px 6px rgba(25,28,40,.1); }
@@ -58230,8 +58272,8 @@ objections : OBJECTIONS,
    calendar, just tighter and pip-marked for the home. */
 #cr-pb .pbmonth{ margin:16px 0 6px; }
 #cr-pb .pbmonth .pbmhd{ display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
-#cr-pb .pbmonth .pbmhd .lbl{ font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.14em; text-transform:uppercase; color:var(--pb-ink,#eceef0); }
-#cr-pb .pbmonth .pbmhd button{ background:transparent; border:0; cursor:pointer; color:var(--pb-dim,#848c94); font:700 18px var(--pb-mono,ui-monospace,Menlo,monospace); padding:2px 10px; min-width:44px; min-height:44px; border-radius:10px; }
+#cr-pb .pbmonth .pbmhd .lbl{ font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.14em; text-transform:uppercase; color:var(--pb-ink,#eceef0); }
+#cr-pb .pbmonth .pbmhd button{ background:transparent; border:0; cursor:pointer; color:var(--pb-dim,#848c94); font:700 18px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; padding:2px 10px; min-width:44px; min-height:44px; border-radius:10px; }
 #cr-pb .pbmonth .pbmhd button:hover{ color:var(--pb-acc,#e35c63); background:var(--pb-c2,#1b1e22); }
 /* 1206: 44px, measured at 47x33 on a phone. The desktop cell is 78px and is
    untouched -- this is the mini month on the Production landing, which is a
@@ -58244,12 +58286,12 @@ objections : OBJECTIONS,
 /* ---- section rule + agenda ---------------------------------------------- */
 #cr-pb .pbrule{
   display:flex; align-items:baseline; gap:10px; margin:14px 0 8px;
-  font:600 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.16em; color:var(--pb-dim,#848c94);
+  font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.16em; color:var(--pb-dim,#848c94);
   text-transform:uppercase;
 }
 #cr-pb .pbrule .sp{ margin-left:auto; display:flex; gap:6px; }
 :is(#cr-pb,#cr-pb-modal) .pbchip{
-  cursor:pointer; background:transparent; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
+  cursor:pointer; background:transparent; font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.08em;
   color:var(--pb-acc,#e35c63); border:1px solid var(--pb-acc,#e35c63); border-radius:7px;
   padding:0 13px; text-transform:uppercase; min-height:44px;   /* 1416: a visible 44 */
 }
@@ -58279,7 +58321,7 @@ objections : OBJECTIONS,
   color:var(--pb-dim,#848c94); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 :is(#cr-pb,#cr-pb-modal) .pbev .tg{
-  margin-left:auto; flex:none; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
+  margin-left:auto; flex:none; font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.08em;
   color:var(--pb-dim,#848c94); border:1px solid var(--pb-line,rgba(230,235,240,.11));
   border-radius:5px; padding:3px 6px; text-transform:uppercase;
 }
@@ -58296,7 +58338,7 @@ objections : OBJECTIONS,
   display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; margin-bottom:4px;
 }
 #cr-pb .pbdow span{
-  font:600 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.12em; color:var(--pb-dim,#848c94); text-align:center;
+  font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.12em; color:var(--pb-dim,#848c94); text-align:center;
 }
 #cr-pb .pbgrid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; }
 #cr-pb .pbday{
@@ -58305,7 +58347,7 @@ objections : OBJECTIONS,
   overflow:hidden; text-align:left; color:var(--pb-ink,#eceef0); display:block;
 }
 :root[data-theme="rb-light"] #cr-pb .pbday{ box-shadow:0 1px 4px rgba(25,28,40,.05); }
-#cr-pb .pbday .dn{ display:block; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ink,#eceef0); }
+#cr-pb .pbday .dn{ display:block; font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; color:var(--pb-ink,#eceef0); }
 /* 959 \u2014 CAUGHT BY THE SENTINEL, not by the gate: this was first written as
    `#cr-pb .pbday .dn{display:flex}`, two classes, and
    `#cr-pb .pbmonth .pbday .dn{display:block;text-align:center}` above is THREE.
@@ -58323,7 +58365,7 @@ objections : OBJECTIONS,
 #cr-pb .pbday .dn .wx{ display:inline-flex; align-items:center; gap:2px; flex:none;
   margin-left:3px; color:var(--pb-dim,#848c94); }
 #cr-pb .pbday .dn .wx svg{ width:11px; height:11px; }
-#cr-pb .pbday .dn .wx i{ font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); font-style:normal; }
+#cr-pb .pbday .dn .wx i{ font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; font-style:normal; }
 #cr-pb .pbday .dn .wx.wet{ color:var(--pb-wx,#6db3f2); }
 #cr-pb .pbrule .wx{ display:inline-flex; align-items:center; gap:3px; color:var(--pb-dim,#848c94); }
 #cr-pb .pbrule .wx svg{ width:13px; height:13px; }
@@ -58334,7 +58376,7 @@ objections : OBJECTIONS,
 #cr-pb .pbday.today .dn{ color:var(--pb-acc,#e35c63); }
 #cr-pb .pbday.sel{ background:var(--pb-c2,#1b1e22); }
 #cr-pb .pbday .cch{
-  display:block; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.02em; border-radius:3px;
+  display:block; font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.02em; border-radius:3px;
   padding:1.5px 3px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 /* 1039: chip inks are scored against the chip's COMPOSITED wash over the day
@@ -58386,7 +58428,7 @@ objections : OBJECTIONS,
 #cr-pb .pbdot.community{ background:#047857; }
 #cr-pb .pbrow2{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }
 #cr-pb .pbtag{
-  font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.1em; border-radius:5px; padding:3px 7px;
+  font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.1em; border-radius:5px; padding:3px 7px;
   text-transform:uppercase;
 }
 /* 945: the Day-N mark had no ink of its own since 940 — the card's amber */
@@ -58396,7 +58438,7 @@ objections : OBJECTIONS,
 #cr-pb .pbtag.clear,#cr-pb .pbtag.done{ background:rgba(108,185,143,.14); color:var(--pb-ok,#6cb98f); }
 #cr-pb .pbtag.mut{ background:rgba(154,163,171,.13); color:var(--pb-mut,#9aa3ab); }
 #cr-pb .pbact{
-  cursor:pointer; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em; text-transform:uppercase;
+  cursor:pointer; font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.06em; text-transform:uppercase;
   border-radius:8px; padding:7px 11px; min-height:32px;
   background:var(--pb-accd,#c8202e); color:var(--pb-accink,#fff); border:1px solid var(--pb-accd,#c8202e);
 }
@@ -58506,7 +58548,7 @@ body.standalone #cr-pb-modal .sheet{
 :root[data-theme="rb-light"] #cr-pb-modal .sheet{ background:#fff; border-color:#e2e4e8; color:#17191c; }
 #cr-pb-modal h3{ margin:0 0 14px; font:800 18px -apple-system,'Segoe UI',Roboto,sans-serif; }   /* 1416: sans */
 #cr-pb-modal label{
-  display:block; font:600 11px ui-monospace,Menlo,monospace; letter-spacing:.14em;
+  display:block; font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; font-variant-numeric:tabular-nums; letter-spacing:.14em;
   color:#9aa3ab; text-transform:uppercase; margin:0 0 5px;
 }
 :root[data-theme="rb-light"] #cr-pb-modal label{ color:#5f6670; }
@@ -58543,7 +58585,7 @@ body.standalone #cr-pb-modal .sheet{
 /* 1416: the Add form's two buttons, not every button in the modal — the 1090 day
    sheet's rows and chips inherited uppercase mono and flex:1 from this */
 #cr-pb-modal .btns button{
-  flex:1; padding:13px; border-radius:11px; font:700 13px ui-monospace,Menlo,monospace;
+  flex:1; padding:13px; border-radius:11px; font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; font-variant-numeric:tabular-nums;
   letter-spacing:.08em; text-transform:uppercase; cursor:pointer; min-height:44px;
 }
 #cr-pb-modal .save{ background:#c8202e; color:#fff; border:1px solid #c8202e; }
@@ -58591,11 +58633,11 @@ body.cr-lnav-on #cr-pb h1{ font-size:30px; }
   background:var(--pb-c,#15171a); border:1px solid var(--pb-line,rgba(230,235,240,.11)); border-radius:12px;
   color:var(--pb-ink,#eceef0); font:600 13px -apple-system,'Segoe UI',Roboto,sans-serif;
 }
-#cr-pb .pbtoday .k{ flex:none; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.16em;
+#cr-pb .pbtoday .k{ flex:none; font:700 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.16em;
   text-transform:uppercase; color:var(--pb-acc,#e35c63); }
 #cr-pb .pbtoday .t{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #cr-pb .pbtoday .t em{ color:var(--pb-hot,#e07a5f); font-style:normal; font-weight:700; }
-#cr-pb .pbtoday .go{ margin-left:auto; flex:none; color:var(--pb-dim,#848c94); font:700 15px var(--pb-mono,ui-monospace,Menlo,monospace); }
+#cr-pb .pbtoday .go{ margin-left:auto; flex:none; color:var(--pb-dim,#848c94); font:700 15px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; }
 @media (max-width:1099px){ #cr-pb .pbhome > .pbsub{ display:none; } }
 @media (min-width:1100px){ #cr-pb .pbtoday{ display:none; } }
 /* MINOR 11 — "Ordered — Undo". The app's one undo toast (CardinalUndo), sized
@@ -70909,31 +70951,8 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
 #crBanner .cbsrch .go{width:33px;height:100%;display:flex;align-items:center;justify-content:center;
   border-left:1px solid var(--bline);cursor:pointer;}
 #crBanner .cbsrch .go svg{width:13px;height:13px;stroke:var(--bacclt);fill:none;stroke-width:2;stroke-linecap:round;}
-#crBanner .cbcrm{margin-left:auto;display:flex;align-items:center;gap:4px;background:var(--bink);
-  border:1px solid var(--bline);border-radius:8px;padding:3px;margin-top:5px;margin-bottom:5px;}
-#crBanner .cbcrm b{display:flex;align-items:center;gap:6px;font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
-  color:#aab1ba;padding:5px 11px;border-radius:6px;cursor:pointer;user-select:none;position:relative;z-index:1;}
-/* 944: the chips are 22px tall inside fixed header chrome that must not grow
-   22px on every screen - so the tap target is a 44px ::after pad, the .pu-box
-   shape. A rect audit cannot see this; gate_touch944 reads the pseudo box. */
-#crBanner .cbcrm b::after{content:"";position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px;}
-#crBanner .cbcrm b:hover{color:var(--bacclt);}
-#crBanner .cbcrm b.on{background:rgba(255,255,255,.07);color:var(--bacclt);}
-/* 938: the selected CRM chip was 3.51:1 on retail (and 3.41 on sales) because
-   a WHITE wash lifts the ground toward the ink. Darkening the chip instead of
-   lightening the ink keeps every CRM colour exactly as it is - the settled
-   rule that CRM colours are semantic - and fixes all of them in one rule:
-   retail 3.51 -> 4.81, insurance 6.74 -> 8.32, community 8.28 -> 10.09.
-
-   ⚠ SCOPED TO DARK, and that is not caution - it is a measured regression.
-   In rb-light this same chip has --bink:#ffffff with a DARK ink (#c8202e),
-   where a black wash runs the wrong way: 5.67 -> 3.18. Light already passes,
-   so light is not touched. This is the "half of these bugs are a dark fix
-   that broke light" rule, caught by computing before writing. */
-:root:not([data-theme="rb-light"]) #crBanner .cbcrm b.on{background:rgba(0,0,0,.24);}
-#crBanner .cbcrm i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+/* T10: the .cbcrm portal pills (369/938/944) are deleted with their markup. */
 @media (max-width:900px){
-  #crBanner .cbcrm{display:none;}
   #crBanner{padding:2px 4px;}
   #crBanner .cbn{padding:9px 9px;font-size:13px;}
   #crBanner .cbsrch{flex:1 1 100%;order:9;margin:4px 4px 8px;}
@@ -71084,11 +71103,6 @@ B.addEventListener('click', function(e){
 document.addEventListener('click', function(e){
   if(!e.target || !e.target.closest || !e.target.closest('#crBanner')) closeMenus();
 });
-var CRM_GO = {
-  retail: function(){ if(typeof window.showHome === 'function') window.showHome(); },
-  insurance: function(){ if(typeof window.showCardinalTruth === 'function') window.showCardinalTruth(); },
-  community: function(){ if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function') window.CardinalCommunityHub.show(); }
-};
 /* 755: the two CRM-shaped pills follow the header's CRM. Retail (and the
    production/sales boards, which cover the banner anyway) keep Contacts/Leads
    byte-for-byte. Every write below is guarded — this runs from the same
@@ -71145,29 +71159,12 @@ function paintCrmPills(k){
     if(el.style.display !== wantDisp) el.style.display = wantDisp;
   });
 }
+/* T10: the CRM pill strip this used to highlight is gone (the page title switches portal);
+   what is left to follow the CRM is 755's Contacts/Leads pair. */
 function cbCrmSync(){
   var k = document.body.dataset.crmHead || document.body.dataset.crm || 'retail';
-  Array.prototype.forEach.call(B.querySelectorAll('[data-crm-go]'), function(x){
-    x.classList.toggle('on', x.getAttribute('data-crm-go') === k);
-  });
   paintCrmPills(k);
 }
-B.addEventListener('click', function(e){
-  var c = e.target && e.target.closest ? e.target.closest('[data-crm-go]') : null;
-  if(!c) return;
-  var k = c.getAttribute('data-crm-go');
-  /* Build 369: mark the choice immediately. cbCrmSync() reads body[data-crm], which the
-     header's skin() only updates a beat later — so the chip used to snap back and the
-     switch looked dead until a second click. Set the truth first, then route. */
-  Array.prototype.forEach.call(B.querySelectorAll('[data-crm-go]'), function(x){
-    x.classList.toggle('on', x === c);
-  });
-  try{ document.body.dataset.crm = k; document.body.dataset.crmHead = k; }catch(_e){}
-  try{
-    if(window.CardinalPortal && typeof window.CardinalPortal.set === 'function') window.CardinalPortal.set(k, false);
-  }catch(err){}
-  if(CRM_GO[k]) CRM_GO[k]();
-});
 var cbCrmPending = false;
 new MutationObserver(function(){
   if(cbCrmPending) return;
@@ -71747,7 +71744,7 @@ if(typeof _origOLF === 'function'){
 /* 1317: a field user (Scottie) works Production and nothing else. Every door out is closed in
    code as well (showHome, openProject, navRestore, the Front Door); these rules take the
    doors off the screen so there is nothing to tap that does nothing. */
-body.cr-field #crBanner, body.cr-field #cbCrm, body.cr-field #cbSearch, body.cr-field #headSearch,
+body.cr-field #crBanner, body.cr-field #cbSearch, body.cr-field #headSearch,
 body.cr-field #newWrap, body.cr-field #cr-lnav, body.cr-field .pbnavbtn[data-hub="crews"],
 body.cr-field #navMenu #cr-nav-palette-hint,   /* 1430 */
 body.cr-field #navMenu .navsec{ --cr-stack:"1317 field user: Production only"; display:none !important; }
@@ -76142,7 +76139,6 @@ body.cr-lnav-on{padding-left:var(--lnav-w)}
    to anywhere, and 58px keeps that while returning 180px to the page. */
 @media (min-width:1100px){ body.cr-lnav-mini{--lnav-w:58px} }
 body.cr-lnav-mini #cr-lnav .lnav-tx,
-body.cr-lnav-mini #cr-lnav .lnav-crm,
 body.cr-lnav-mini #cr-lnav .lnav-sec,
 body.cr-lnav-mini #cr-lnav .lnav-ver{display:none}
 /* a collapsed section would otherwise hide its items with no header to reopen */
@@ -76298,15 +76294,8 @@ body.cr-lnav-on .cr-pb-wrap{ max-width:1180px !important; }
    inside the fixed header and must stay full width. */
 body.cr-lnav-on .wrap:not(.masthead){max-width:var(--lnav-cap)}
 
-#cr-lnav .lnav-crm{display:flex;margin:12px 10px 4px;border-radius:9px;overflow:hidden;
-  border:1px solid var(--rbe-panelbd,#24242c);background:var(--rbe-panel,#16161B)}
-#cr-lnav .lnav-crm button{flex:1;min-width:0;background:none;border:0;
-  border-right:1px solid var(--rbe-panelbd,#24242c);padding:8px 2px;cursor:pointer;
-  font-weight:700;font-size:11px;letter-spacing:-.01em;color:var(--rbe-mute,#9aa0a8);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#cr-lnav .lnav-crm button:last-child{border-right:0}
-#cr-lnav .lnav-crm button.on{color:var(--lnav-seg-on,var(--lnav-on,#fff));background:var(--lnav-seg,var(--lnav-crmc,#c8202e))}
-:root[data-theme="rb-light"] #cr-lnav .lnav-crm button.on{color:var(--lnav-seg-on-lt,var(--lnav-on,#fff));background:var(--lnav-seg-lt,var(--lnav-crmc,#c8202e))}
+/* T10: the rail's Retail | Insurance | Community segment is gone - on the desktop the
+   page title is the one portal switcher (Theo kept #1 of four). */
 
 /* 952: the Card Stack. Each section is one of the app's own cards - the
    heading is the card's top with a 3.5px portal strip (--lnav-strip, set per
@@ -76366,8 +76355,7 @@ body.cr-lnav-mini #cr-lnav .lnav-body{margin:0;border:0;border-radius:0;box-shad
 :root[data-theme="rb-light"] #cr-lnav .lnav-ic .i5{display:block;stroke:var(--lnav-icon-lt,#a3121e)}  /* 952 */
 :root[data-theme="rb-light"] #cr-lnav .lnav-ic .i5 .m{stroke:#9a9a9a}
 :root[data-theme="rb-light"] #cr-lnav .lnav-item.on .lnav-ic .i5{stroke:var(--lnav-crmc,#c8202e)}
-#cr-lnav .lnav-item:focus-visible,#cr-lnav .lnav-sec:focus-visible,
-#cr-lnav .lnav-crm button:focus-visible{outline:2px solid var(--lnav-crmc,#c8202e);outline-offset:-2px}
+#cr-lnav .lnav-item:focus-visible,#cr-lnav .lnav-sec:focus-visible{outline:2px solid var(--lnav-crmc,#c8202e);outline-offset:-2px}
 @media (prefers-reduced-motion:reduce){#cr-lnav .lnav-sec .chev{transition:none}}
 
 /* 1148: Theo — "Why does my screen have a scroll bar, and the second screen
@@ -76534,6 +76522,10 @@ Array.prototype.forEach.call(m.children, function(el){
 if(el.id === 'cr-nav-palette-hint') return;
 if(el.id === 'signOutBtn') return;
 if(el.hasAttribute && el.hasAttribute('data-cr-footer')) return;
+/* T10 (Theo: keep #1): on the desktop the page title is the one portal switcher, so the
+   rail does not mirror the drawer's "Switch portal" row. The row stays in the phone
+   drawer, and the section's count follows (it is the number of rows mirrored). */
+if(el.getAttribute && el.getAttribute('data-nav') === 'landing') return;
 if(el.classList && el.classList.contains('navsec')){
 if(el.style.display === 'none') { cur = null; return; }
 cur = { label:el.textContent.trim(), items:[] };
@@ -76554,16 +76546,9 @@ cur.items.push({ label:label, el:el });
 return out.filter(function(s){ return s.items.length; });
 }
 
-/* The CRM switcher is the banner's, mirrored - not a second one. Clicking a
-   mirrored control clicks the real one, so crmNow()/skin() stay the only
-   things that decide what the active CRM is. */
-function crms(){
-var bar = document.getElementById('cbCrm');
-if(!bar) return [];
-return Array.prototype.slice.call(bar.querySelectorAll('[data-crm-go]')).map(function(b){
-return { key:b.getAttribute('data-crm-go'), label:(b.textContent || '').trim(), el:b };
-});
-}
+/* T10: the rail no longer mirrors a CRM switcher - the banner's is deleted and the page
+   title is the one portal switcher on the desktop. crmNow()/skin() still decide the CRM;
+   activeCrm() below only reads it for the rail's colours. */
 function activeCrm(){
 try{ return document.body.dataset.crmHead || document.body.dataset.crm || 'retail'; }catch(_){ return 'retail'; }
 }
@@ -76575,8 +76560,8 @@ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
 }
 
 var lastSig = '';
-function signature(secs, cs){
-return [activeCrm(), cs.map(function(c){ return c.key; }).join(','),
+function signature(secs){
+return [activeCrm(),
 secs.map(function(s){
 return s.label + ':' + s.items.map(function(i){
 return i.label + (i.el.classList.contains('on') ? '*' : '');
@@ -76725,9 +76710,9 @@ return '<span class="lnav-ic" aria-hidden="true">' +
 '</span><span class="lnav-tx">' + esc(text) + '</span>';
 }
 function build(){
-var secs = scrape(), cs = crms();
+var secs = scrape();
 if(!secs.length) return;
-var sig = signature(secs, cs);
+var sig = signature(secs);
 var h = host();
 if(h && h.dataset.sig === sig) return;
 
@@ -76742,19 +76727,7 @@ h.dataset.sig = sig;
 var st = readState();
 var crm = activeCrm();
 h.style.setProperty('--lnav-crmc', CRM_COLOR[crm] || CRM_COLOR.retail);
-/* 1393: white on community's mint was 1.92:1, on production's orange 2.03 — each accent names its ink */
-h.style.setProperty('--lnav-on', ({ community:'#062b1f', production:'#1a1205', sales:'#1a1205' })[crm] || '#fff');
-/* J16: the Retail | Insurance | Community SEGMENT wears the active CRM's identity
-   hue (dark: fill, ink; light: fill, ink). Portals with no identity hue keep
-   exactly what they had (--lnav-crmc / --lnav-on). White on #c8202e 5.67, ink on
-   #2dd4bf 9.18, on #34d399 7.96; light white on #0f766e 5.47, on #047857 5.48. */
-var SEG16 = ({ retail:['#c8202e','#ffffff','#c8202e','#ffffff'],
-               insurance:['#2dd4bf','#04201c','#0f766e','#ffffff'],
-               community:['#34D399','#062b1f','#047857','#ffffff'] })[crm] || null;
-h.style.setProperty('--lnav-seg', SEG16 ? SEG16[0] : (CRM_COLOR[crm] || CRM_COLOR.retail));
-h.style.setProperty('--lnav-seg-on', SEG16 ? SEG16[1] : (({ production:'#1a1205', sales:'#1a1205' })[crm] || '#fff'));
-h.style.setProperty('--lnav-seg-lt', SEG16 ? SEG16[2] : (CRM_COLOR[crm] || CRM_COLOR.retail));
-h.style.setProperty('--lnav-seg-on-lt', SEG16 ? SEG16[3] : (({ production:'#1a1205', sales:'#1a1205' })[crm] || '#fff'));
+/* T10: 1393's and J16's segment inks are gone with the CRM segment they painted */
 h.style.setProperty('--lnav-wash', CRM_WASH[crm] || CRM_WASH.retail);
     h.style.setProperty('--lnav-ink-dk', CRM_INK[crm]    || CRM_INK.retail);
     h.style.setProperty('--lnav-ink-lt', CRM_INK_LT[crm] || CRM_INK_LT.retail);
@@ -76765,13 +76738,6 @@ h.style.setProperty('--lnav-wash', CRM_WASH[crm] || CRM_WASH.retail);
 h.innerHTML =
 '<button type="button" class="lnav-mini" aria-label="Collapse menu" title="Collapse menu">' +
 '<span class="lnav-mini-ic">\u00AB</span><span class="lnav-tx">Collapse</span></button>' +
-(cs.length
-? '<div class="lnav-crm" role="group" aria-label="Switch CRM">' + cs.map(function(c){
-return '<button type="button" data-crm="' + esc(c.key) + '" class="' +
-(c.key === crm ? 'on' : '') + '"' +
-(c.key === crm ? ' aria-current="true"' : '') + '>' + esc(c.label) + '</button>';
-}).join('') + '</div>'
-: '') +
 secs.map(function(s, si){
 var id = slug(s.label);
 var openState = st[id];
@@ -76800,10 +76766,10 @@ return '<button type="button" class="lnav-item' +
 '<div class="lnav-ver">' + esc(railVersion()) + '</div>' +
 '</div>';
 
-wire(h, secs, cs);
+wire(h, secs);
 }
 
-function wire(h, secs, cs){
+function wire(h, secs){
 /* 926 */
 try{ document.body.classList.toggle('cr-lnav-mini', readMini()); }catch(_){}
 var mb = h.querySelector('.lnav-mini');
@@ -76838,14 +76804,6 @@ var sec = null, id = b.getAttribute('data-sec');
 for(var i = 0; i < secs.length; i++){ if(slug(secs[i].label) === id) sec = secs[i]; }
 var it = sec && sec.items[Number(b.getAttribute('data-i'))];
 if(it && it.el){ try{ it.el.click(); }catch(_){} }
-};
-});
-h.querySelectorAll('[data-crm]').forEach(function(b){
-b.onclick = function(){
-var k = b.getAttribute('data-crm');
-for(var i = 0; i < cs.length; i++){
-if(cs[i].key === k && cs[i].el){ try{ cs[i].el.click(); }catch(_){} return; }
-}
 };
 });
 }
@@ -77568,11 +77526,6 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e),
              0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
 }
-/* the CRM switcher sits in the well too, so it needs the same ground */
-:root:not([data-theme="rb-light"]) #cr-lnav .lnav-crm{
-  background:#0D1220;border-color:#223047;
-}
-:root:not([data-theme="rb-light"]) #cr-lnav .lnav-crm button{border-right-color:#223047}
 </style>
 <style id="cr-stagechip-dark-styles">
 /* ══ Build 544 · retail stage chips finally have a dark variant ════════════
@@ -86092,17 +86045,16 @@ select{min-height:44px;}
    specificity — #payView chips (34px) and inputs (40px), #cr-pk .pkm (36px)
    and #cr-storm .stseg (40px) were all doing exactly that and are raised AT
    SOURCE this build. The sentinel’s FLOOR check now catches recurrences.
-   NOT here on purpose: .cbcrm b (fixed header chrome — 44px ::after pad at
-   source, the .pu-box shape, so the banner does not grow on every screen);
+   NOT here on purpose:
    #projectView .acxjd .acxtrs inputs (34px — the 788–804 job-details card is
    deliberately dense; growing every row is a redesign and Theo’s call).
    ========================================================================== */
 /* was 237×35 (.lnav-item) / 237×25 (.lnav-sec) / 237×34 (.lnav-mini) /
-   237×35 (.lnav-out) / ~43×28 (.lnav-crm button) at 1194×834 — the desktop
+   237×35 (.lnav-out) at 1194×834 — the desktop
    rail; absent from the 752 pass, which measured at 390px where the rail
    never mounts. The rail is its own scroll container, so rows only add
    scroll (the default rail starts scrolling ~160px earlier on the tablet). */
-#cr-lnav .lnav-item,#cr-lnav .lnav-sec,#cr-lnav .lnav-mini,#cr-lnav .lnav-out,#cr-lnav .lnav-crm button{min-height:44px;}
+#cr-lnav .lnav-item,#cr-lnav .lnav-sec,#cr-lnav .lnav-mini,#cr-lnav .lnav-out{min-height:44px;}
 /* was 54–93×27 — Cardinal Truth’s Overview / Active Claims / Supplements /
    Closed tab strip */
 .cr-cth-tabs button{min-height:44px;}
@@ -87387,16 +87339,10 @@ select{min-height:44px;}
 :root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbi{
   color:#2c2c2c;
 }
-/* tuned for a dark dropdown/panel - invisible on the light one .cbmenu and
-   .cbcrm now paint via --bink above */
+/* tuned for a dark dropdown/panel - invisible on the light one .cbmenu
+   now paints via --bink above */
 :root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbi:hover{
   background:rgba(0,0,0,.05);
-}
-:root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbcrm b{
-  color:#5a6470;
-}
-:root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbcrm b.on{
-  background:rgba(0,0,0,.07);
 }
 </style>
 <style id="cr-hd2-lens-styles">
@@ -91566,7 +91512,9 @@ body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,
          calls this, forever. Build 567 paid for this lesson once already. */
       if(el.textContent !== want) el.textContent = want;
     }
-    /* ── 930 · collapsible sections · 1115 · closed on EVERY opening ──────
+    /* ── 930 · collapsible sections · 1115 · reset on EVERY opening ───────
+       T2 (Theo's pick B): the reset now opens DAILY and folds the rest. Still in
+       memory only, still never reading or writing the rail's key - see freshOpen().
        930 defaulted them closed and then remembered your choice, in the SAME
        localStorage record the desktop rail uses ('cardinal.lnav.sections').
        So the drawer only ever opened collapsed ONCE: the first section you
@@ -91590,7 +91538,12 @@ body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,
            collapsed" outranks it — that is this instruction, not an oversight.
        There is no second persisted store here, so nothing can drift out of
        step with the rail: this one does not persist at all. */
-    var secOpen = {};      /* slug -> 1, for this opening of the drawer only */
+    /* T2 (Theo's pick B): every opening starts with Daily expanded and every other
+       section folded. A fresh object each time, so whatever was opened or closed
+       on the last visit is forgotten - 1115's invariant, with Daily as its one
+       open section. Seeded at load too, so the first opening shows no flash. */
+    function freshOpen(){ return { daily: 1 }; }
+    var secOpen = freshOpen();   /* slug -> 1, for this opening of the drawer only */
     var wasOpen = false;   /* previous sync()'s answer, to spot the transition */
     function secSlug(s){ return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
     /* Never bury these in a section: sign-out and the build stamp sit after the
@@ -91721,13 +91674,14 @@ body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,
     }
     function sync(){
       var open = menu.style.display === 'block' && isDrawer();
-      /* 1115: every opening starts collapsed. Fires on the CLOSED→OPEN edge
+      /* 1115 / T2: every opening starts from freshOpen() - Daily open, the
+         rest collapsed. Fires on the CLOSED→OPEN edge
          only — sync() runs on every mutation of #navMenu (nine modules inject
          rows over the first few seconds), and clearing unconditionally would
          snap a section shut under the finger that just opened it. onMutate()
          calls sync() before applySections(), so the reset is always in place
          before the rows are re-tagged. */
-      if(open && !wasOpen) secOpen = {};
+      if(open && !wasOpen) secOpen = freshOpen();
       wasOpen = open;
       if(open) fillUser();
       menu.classList.toggle('cr-drawer-open', open);

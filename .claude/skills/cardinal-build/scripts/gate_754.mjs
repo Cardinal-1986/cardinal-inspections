@@ -152,7 +152,9 @@ chk('home returns to the Community hub', comBack.hub && !comBack.main, JSON.stri
 
 /* ── the explicit switcher still works from a shared screen ── */
 await go(`(() => { document.getElementById('navBtn').click(); document.querySelector('#navMenu [data-nav="leads"]').click(); })()`);
-const switched = await go(`document.querySelector('#cbCrm [data-crm-go="insurance"]').click()`);
+/* T10: the banner pills are gone; the one explicit switcher is the page title's Front Door */
+await go(`document.getElementById('brandTitle').click()`);
+const switched = await go(`document.querySelector('#cr-fd [data-fd="insurance"]').click()`);
 chk('switcher from a shared screen: Insurance opens Cardinal Truth', switched.truth && switched.head === 'insurance', JSON.stringify({ truth: switched.truth, head: switched.head }));
 
 /* ── source guards ── */

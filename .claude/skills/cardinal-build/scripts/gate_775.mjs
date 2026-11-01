@@ -67,11 +67,17 @@ const shot = async n => { try { const r = await cdp.send('Page.captureScreenshot
 await shot('menu');
 
 console.log('\n--- 1. the icon is an icon ---');
+/* T2: Daily opens with the drawer (Theo's pick B); older trees fold every section. Open the
+   Production row's section either way, and measure rows that are on screen. */
+await page.evaluate(() => { const b = document.getElementById('cr-nav-production'); let s = b && b.previousElementSibling;
+  while (s && !s.classList.contains('navsec')) s = s.previousElementSibling;
+  if (s && s.getAttribute('aria-expanded') === 'false') s.click(); });
+await page.waitForTimeout(400);
 const m = await page.evaluate(() => {
   const menu = document.getElementById('navMenu');
   const b = document.getElementById('cr-nav-production');
   const s = b && b.querySelector('svg');
-  const rows = [...menu.querySelectorAll('.navopt')].map(o => Math.round(o.getBoundingClientRect().height));
+  const rows = [...menu.querySelectorAll('.navopt')].map(o => Math.round(o.getBoundingClientRect().height)).filter(h => h > 0);   /* T2: on-screen rows */
   const normal = rows.slice().sort((a, c) => a - c)[Math.floor(rows.length / 2)];   // median row
   return {
     menuOpen: getComputedStyle(menu).display !== 'none',

@@ -10564,3 +10564,13 @@ Found while rendering the taste-call previews. It is fixed regardless of the T3 
 - **Ask button.** `aiBusyScreen()` (1397's "screens with their own bottom actions") now includes `apptModal`, `leadFormModal` and `projModal`, so Ask tucks away while one is open.
 
 **Gate:** `gate_1433.mjs`, 9 checks; RED 6 on the 1432 control.
+
+## Build 1434: five taste picks (T2 B, T5 B, T6 B, T9 B, T10 keep #1)
+Theo's picks of 1 Nov 2026, built by one builder and integrated as one build.
+- **T2, the phone drawer.** It opens with Daily expanded and every other section folded, every time. `freshOpen()` returns `{daily:1}` at the closed→open edge and at load. Nothing is remembered; the rail's `cardinal.lnav.sections` is never read or written by the drawer (1115 holds). Field accounts keep their flat list.
+- **T5, a signed agreement in the editor.** A line in the editor's own notice style (`data-cardinal-hint="signed"`, 12.2:1) reads "You're editing a signed agreement. Saving keeps the signed one on file as a version." It sits above the sticky editing bar and is added or removed by `setEditorStatus` (`edSignedNote()`). `serializeFrame()`, the saved HTML, the shared copy and the `/api/senddoc` attachment carry none of it, and print hides it. It shows on anything with `signed_at`, estimates included.
+- **T6, the Production board's typeface.** `--pb-mono` became `--pb-sans` (the 1415 stack), with `tabular-nums` on every reference; the board's Add form follows. The four box labels' letter-spacing went .14em → .06em so "SCHEDULED" fits its 90px box at 1366px. Crew Dispatch keeps its monospace (`gate_1299` E).
+- **T9, + New.** One way to start a client: "New lead" (the Lead form). The Contact entry is gone, and the production refusal message no longer offers it. The Lead form gains "Job cost (materials + labor, $)" for admins only, behind "+ More detail", saved as a number to `checklist.job_cost` (what Reports reads). `#projModal` still edits existing clients and still takes 1372's "New job for <client>". Production accounts' + New is now Task, Reminder, Punch-out.
+- **T10, desktop portal switching.** The page title ("Retail ▾" → Front Door) is the one switcher. Removed at source: the `#cbCrm` pill strip (markup, CSS, `CRM_GO` handler), the rail's segmented control and its inks, and the rail's copy of "Switch portal" (`scrape()` skips it). The phone keeps its drawer row. At 901–1099px the pills used to show; that width now has the title plus the drawer row, like the phone.
+
+**Gates:** `gate_1434.mjs`, 152 checks; RED on the 1433 control with named failures. 33 edits across 17 existing gates that asserted the old design (`patch_1434_gates.py`).

@@ -114,7 +114,9 @@ need('all seven rows route to their real destinations',
 
 /* ── 3: Sell hides per portal ── */
 async function sellState(){ const s=await secRows('Sell'); return s?{hidden:s.hidden, rows:s.rows}:null; }
-async function chip(k){ await page.evaluate(k=>{const b=document.querySelector('#cr-lnav .lnav-crm button[data-crm="'+k+'"]'); if(b)b.click();},k); await page.waitForTimeout(900); }
+/* T10: the rail segment is retired; switch through the page title's Front Door */
+async function chip(k){ await page.evaluate(()=>{const t=document.getElementById('brandTitle'); if(t)t.click();}); await page.waitForTimeout(700);
+  await page.evaluate(k=>{const b=document.querySelector('#cr-fd [data-fd="'+k+'"]'); if(b)b.click();},k); await page.waitForTimeout(1200); }
 let s=await sellState();
 need('Sell is visible in Retail', !!s && !s.hidden);
 await chip('insurance'); s=await sellState();

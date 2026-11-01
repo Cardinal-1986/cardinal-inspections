@@ -420,8 +420,10 @@ is OFF by design. `app_settings.sql` + `payment_reminders.sql` both run before d
   gates the CHANGELOG entry now, so there is no reason to put prose back.
 - **Sign out is a small icon**, bottom-right of that line, using the same `lock` glyph as the
   desktop rail.
-- **Every drawer section starts collapsed, every time.** Not a default — an invariant. The
-  drawer keeps its open set in memory and clears it on open. It no longer reads or writes
+- ~~**Every drawer section starts collapsed, every time.**~~ ⚠ **SUPERSEDED 1 Nov 2026 (T2 B, built
+  at 1434): the drawer opens with Daily expanded and every other section folded, every time.** The rest
+  of this bullet still holds: nothing is remembered between opens. Not a default — an invariant. The
+  drawer keeps its open set in memory and resets it on open (`freshOpen()`, `{daily:1}`). It no longer reads or writes
   `cardinal.lnav.sections` (the desktop rail owns that key), and 954's insurance-portal
   auto-open no longer reaches the drawer. **Do not restore the persistence.**
 
