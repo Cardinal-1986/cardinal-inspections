@@ -195,6 +195,20 @@
   <span class="st-gb-plain" style="color:rgb(143,22,32)">st-plaingrad-ink MUST still be reported</span>
 </div>
 
+<h2>COLOR-MIX — a computed color(srgb …) ground must be read, in both directions</h2>
+<!-- color-mix() computes to color(srgb r g b), not rgb(). The first is white on
+     a dark red mix (7.9:1) over a WHITE page: unparsed, the walk fell through to
+     the page and scored it 1:1 (Sun's pressed button, 1436). The second is white
+     on a near-white mix over a DARK container: unparsed, it fell through to the
+     dark container and was silently passed. Both are wrong without the parse, so
+     the obvious bad fix ("skip a ground you cannot read") still fails here. -->
+<div style="background:#fff;padding:6px;margin:10px 0">
+  <span class="st-cm-ok" style="display:inline-block;padding:10px;color:#fff;background:color-mix(in srgb,rgb(200,32,46) 80%,#000)">st-colormix-ok must NOT be reported</span>
+</div>
+<div style="background:rgb(20,20,22);padding:6px;margin:10px 0">
+  <span class="st-cm-ink" style="display:inline-block;padding:10px;color:#fff;background:color-mix(in srgb,#fff 94%,rgb(200,32,46))">st-colormix-ink MUST still be reported</span>
+</div>
+
 <h2>OFF-CANVAS — a shut drawer must not be scored, but an OPEN one must</h2>
 <!-- Both carry the SAME unreadable ink on the same ground. The only difference
      is where they sit. Asserted in both directions on purpose: a check that had

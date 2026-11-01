@@ -17,6 +17,15 @@ globalThis.__sentinelProbe = () => {
   /* ── colour ─────────────────────────────────────────────────────────── */
   function parse(c) {
     if (!c) return null;
+    /* color-mix() (Sun's pressed buttons, 1436) and other modern colour syntax
+       compute to color(srgb r g b [/ a]) in 0..1, NOT rgb(). Unparsed, the walk
+       fell past the button to the ground behind it and scored white text on a
+       red button as 1:1 against the white drawer. */
+    const k = String(c).match(/color\(srgb\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)(?:\s*\/\s*([-\d.eE+]+)(%?))?\s*\)/);
+    if (k) {
+      const a = k[4] === undefined ? 1 : parseFloat(k[4]) / (k[5] ? 100 : 1);
+      return { r: parseFloat(k[1]) * 255, g: parseFloat(k[2]) * 255, b: parseFloat(k[3]) * 255, a: a };
+    }
     const m = String(c).match(/rgba?\(([^)]+)\)/);
     if (!m) return null;
     const p = m[1].split(',').map(s => parseFloat(s.trim()));
@@ -88,7 +97,7 @@ globalThis.__sentinelProbe = () => {
       layers.forEach((layer, i) => {
         const clip = (clips[i] !== undefined ? clips[i] : clips[clips.length - 1]) || 'border-box';
         if (someTighter && clip === 'border-box') return;   /* a border ring, not a ground */
-        for (const stop of (layer.match(/rgba?\([^)]+\)/g) || [])) {
+        for (const stop of (layer.match(/rgba?\([^)]+\)|color\(srgb[^)]+\)/g) || [])) {
           const p = parse(stop);
           if (p && p.a > 0.01) list.push(p);
         }

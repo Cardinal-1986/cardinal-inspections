@@ -61,15 +61,18 @@ async function boot3(as, o = {}) {
   if ((th === 'rb-light') !== !!o.light) throw new Error('theme mismatch: wanted ' + (o.light ? 'light' : 'dark') + ', got ' + th);
   return r;
 }
-/* curtis/scottie: gate_1400_lib takes no seed, so light is set the way taste/rig.mjs does it —
-   localStorage, no service worker, then ONE reload (a registered sw.js would land on sign-in) */
+/* curtis/scottie: gate_1400_lib takes no seed, so the theme is set the way taste/rig.mjs does it —
+   localStorage, no service worker, then ONE reload (a registered sw.js would land on sign-in).
+   Since 1436 a production or field account with NOTHING stored opens in Sun (T8 C), so dark
+   is no longer the default for these two and is stored explicitly ('0'), the same as a
+   person who picked Dark in the drawer. */
 async function boot0(L, as, o = {}) {
   const r = await L.boot(as, {});
   const { page } = r;
-  if (o.light) {
+  {
     await page.addInitScript(() => { try { if (navigator.serviceWorker) navigator.serviceWorker.register = function () { return new Promise(function () {}); }; } catch (e) {} });
     await page.evaluate(async () => { try { for (const g of await navigator.serviceWorker.getRegistrations()) await g.unregister(); } catch (e) {} });
-    await page.evaluate(() => { try { localStorage.setItem('cardinal.theme.rb', '1'); } catch (e) {} });
+    await page.evaluate(v => { try { localStorage.setItem('cardinal.theme.rb', v); } catch (e) {} }, o.light ? '1' : '0');
     await page.reload({ waitUntil: 'domcontentloaded' }); await sleep(3200);
   }
   if (o.w) { await page.setViewportSize({ width: o.w, height: o.h || 900 }); await sleep(700); }
@@ -143,8 +146,10 @@ await group('T2  a field account keeps its flat list (scottie, 390)', async () =
   }
   ok(seen.art.ctl === 0 && seen.art.vis.filter(t => !/^SEC /.test(t)).length >= 5, 'T2 scottie: no section is a fold control and no row is folded away (1317 flat list)', seen.art);
   /* the version line differs by construction (the reference is 1433): compare everything else */
-  const unstamp = v => v.map(t => t.replace(/v\d{4}-\d\d-\d\d build \d+/, 'vSTAMP'));
-  ok(JSON.stringify(unstamp(seen.art.vis)) === JSON.stringify(unstamp(seen.ref.vis)), 'T2 scottie: the drawer shows exactly what it showed on the reference tree (version line aside)', seen.art.vis.join(' | '));
+  /* version line aside, and since 1436 the Appearance row's third button (Sun, T8 C):
+     only an exact "AppearanceDarkLightSun" folds back, so any other drift still fails */
+  const unstamp = v => v.map(t => t.replace(/v\d{4}-\d\d-\d\d build \d+/, 'vSTAMP').replace(/^AppearanceDarkLightSun$/, 'AppearanceDarkLight'));
+  ok(JSON.stringify(unstamp(seen.art.vis)) === JSON.stringify(unstamp(seen.ref.vis)), 'T2 scottie: the drawer shows exactly what it showed on the reference tree (version line and Sun button aside)', seen.art.vis.join(' | '));
 });
 await group('T2  the desktop rail keeps its own folds (theo, 1440)', async () => {
   const { browser, page } = await boot3('theo', { desktop: true, w: 1440 });

@@ -28,6 +28,11 @@ document.documentElement.setAttribute('data-mode',t);})();
    rendered line 23.8px -> 30.9 -> 37.5; smallest text 10px -> 11 -> 12. */
 (function(){var z;try{z=localStorage.getItem('cr-textsize');}catch(e){}
 if(z==='lg'||z==='xl')document.documentElement.setAttribute('data-cr-text',z);})();
+/* Sun (T8 C): a STORED Sun is known before first paint, so its Text size step is
+   applied with the user's own step instead of jumping in later. A field account
+   with no stored choice gets Sun at sign-in (cr-rbtheme-toggle-script). */
+(function(){var t;try{t=localStorage.getItem('cardinal.theme.rb');}catch(e){}
+if(t==='sun')document.documentElement.setAttribute('data-cr-sun','1');})();
 function crTextSize(v){var r=document.documentElement;
 if(v==='md')r.removeAttribute('data-cr-text');else r.setAttribute('data-cr-text',v);
 try{localStorage.setItem('cr-textsize',v);}catch(e){}
@@ -65,8 +70,15 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
    because that is the closest thing CSS has to browser zoom: fixed chrome
    keeps its viewport-relative position, which body-level zoom also does but
    with the bottom bar's safe-area calc() living one level further away. */
-:root[data-cr-text="lg"]{zoom:1.15;}
-:root[data-cr-text="xl"]{zoom:1.30;}
+/* Sun (T8 C) moves the ladder one step: Normal 1.15, Large 1.30, Larger 1.45.
+   The user's own Text size still applies ON TOP — Sun never writes data-cr-text,
+   so turning Sun off returns exactly the step they chose. Edited in place rather
+   than out-specified: one ladder, one place.
+   --cr-zoom carries the same factor for the few rules that size with vw: under a :root
+   zoom 100vw is still the unzoomed viewport, so calc(100vw - x) overhangs by the zoom. */
+:root[data-cr-text="lg"]:not([data-cr-sun]),:root[data-cr-sun]:not([data-cr-text]){zoom:1.15;--cr-zoom:1.15;}
+:root[data-cr-text="xl"]:not([data-cr-sun]),:root[data-cr-sun][data-cr-text="lg"]{zoom:1.30;--cr-zoom:1.30;}
+:root[data-cr-sun][data-cr-text="xl"]{zoom:1.45;--cr-zoom:1.45;}
 #navMenu .cr-ts{display:flex;align-items:center;gap:6px;padding:9px 14px;
   border-top:1px solid rgba(255,255,255,.08);}
 #navMenu .cr-ts .lb{font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#9aa2ae;
@@ -4350,7 +4362,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="feedback" data-cri="chat lg">Team Feedback</button>
 
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div class="cr-ts" role="group" aria-label="Appearance"><span class="lb">Appearance</span><button type="button" data-cr-appear="dark" aria-pressed="true">Dark</button><button type="button" data-cr-appear="light" aria-pressed="false">Light</button></div>
+          <div class="cr-ts" role="group" aria-label="Appearance"><span class="lb">Appearance</span><button type="button" data-cr-appear="dark" aria-pressed="true">Dark</button><button type="button" data-cr-appear="light" aria-pressed="false">Light</button><button type="button" data-cr-appear="sun" aria-pressed="false" title="High contrast for daylight: bolder, larger, darker text">Sun</button></div>
           <!-- 1041 (audit O2): ONE build line only. REPLACE this text each build —
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
@@ -4380,7 +4392,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-01 build 1435<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-01 build 1436<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -31187,6 +31199,9 @@ var hd = document.querySelector('header.site');
      re-login must clear it. */
   try{ document.body.classList.toggle('cr-prod', typeof isProductionUser === 'function' && !!isProductionUser()); }catch(_cp){}
   try{ document.body.classList.toggle('cr-field', (typeof isFieldUser === 'function' && isFieldUser())); }catch(_cf){}   /* 1317 */
+  /* Sun: a field/production account with no stored appearance opens in Sun — applied here,
+     before Production opens below, so the board never paints dark first. */
+  try{ if(window.CardinalRBTheme && typeof window.CardinalRBTheme.apply === 'function') window.CardinalRBTheme.apply(); }catch(_ct){}
   /* 1400: cr-pb parses after this runs on a warm start — leave a note it picks up when it is defined */
   if(typeof isProductionUser === 'function' && isProductionUser() && !window.CardinalProduction) window.__crProdPending = 1;
   if(typeof isProductionUser === 'function' && isProductionUser() &&
@@ -46276,30 +46291,61 @@ window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportCl
 (function(){
 'use strict';
 var KEY = 'cardinal.theme.rb';
-function isLight(){
-try{ return localStorage.getItem(KEY) === '1'; }catch(e){ return false; }
+/* SUN (Theo's T8 C pick, for a roof in daylight). ONE key, a third value:
+   '0' Dark · '1' Light · 'sun' Sun. Sun IS the light theme (data-theme="rb-light")
+   plus data-cr-sun on :root — cr-sun-styles reads it for inks at 7:1, one weight
+   heavier, and cr-textsize-styles for one Text size step up.
+   With NO stored choice a production or field account (Curtis, Scottie) opens in
+   Sun; everyone else opens Dark, exactly as before. A stored choice always wins. */
+function stored(){
+try{ var v = localStorage.getItem(KEY); return (v === '0' || v === '1' || v === 'sun') ? v : ''; }catch(e){ return ''; }
 }
+function fieldDefault(){
+try{ return !!((typeof window.isProductionUser === 'function' && window.isProductionUser()) ||
+               (typeof window.isFieldUser === 'function' && window.isFieldUser())); }catch(e){ return false; }
+}
+function mode(){
+var v = stored();
+return v === '1' ? 'light' : v === 'sun' ? 'sun' : v === '0' ? 'dark' : (fieldDefault() ? 'sun' : 'dark');
+}
+function isLight(){ return mode() !== 'dark'; }
+function isSun(){ return mode() === 'sun'; }
 function setLight(v){
 try{ localStorage.setItem(KEY, v ? '1' : '0'); }catch(e){}
 apply();
 }
+/* the drawer's three buttons: write the choice, and keep the insurance palette on
+   the same side (J16: one switch, both keys) — Sun is a light theme there. */
+function setMode(m){
+if(m !== 'dark' && m !== 'light' && m !== 'sun') return;
+try{ localStorage.setItem(KEY, m === 'sun' ? 'sun' : m === 'light' ? '1' : '0'); }catch(e){}
+var ins = m === 'dark' ? 'siren' : 'docket';
+try{ localStorage.setItem('cardinalRLTheme', ins); }catch(e){}
+try{ if(window.CardinalInsTheme && window.CardinalInsTheme.apply) window.CardinalInsTheme.apply(ins); }catch(e){}
+apply();
+}
+/* the header switch flips between Dark and the account's own light appearance */
+function litKey(){ return stored() === '1' ? '1' : (stored() === 'sun' || fieldDefault()) ? 'sun' : '1'; }
 var lastTheme = null;
 function apply(){
-if(isLight()) document.documentElement.setAttribute('data-theme','rb-light');
-else document.documentElement.removeAttribute('data-theme');
-/* T1 C (1 Nov 2026): announce a flip, for what CSS cannot reach - the Reports
-   charts are canvas. Fired on the EDGE only: apply() rides the 1s sweep below,
-   and an event every second would be 567/569's loop in a new coat. */
-var th = document.documentElement.getAttribute('data-theme') || '';
+var root = document.documentElement, m = mode();
+if(m !== 'dark') root.setAttribute('data-theme','rb-light');
+else root.removeAttribute('data-theme');
+/* T1 C (1435): announce a data-theme flip on the EDGE only, for the canvas charts.
+   Sun and Light share data-theme, and the charts' ink with it, so Light <-> Sun fires nothing. */
+var th = root.getAttribute('data-theme') || '';
 if(lastTheme !== null && th !== lastTheme){ try{ document.dispatchEvent(new CustomEvent('cr-theme', { detail:{ theme: th || 'dark' } })); }catch(e){} }
 lastTheme = th;
+/* written only on a change: this rides the 1s sweep (the 567/569 lesson) */
+if(m === 'sun'){ if(root.getAttribute('data-cr-sun') !== '1') root.setAttribute('data-cr-sun','1'); }
+else if(root.hasAttribute('data-cr-sun')) root.removeAttribute('data-cr-sun');
 var btn = document.getElementById('cr-dark-toggle');
 /* 1181: on insurance the glyph reads the INSURANCE theme — a sun that never
    changes while the screen does is exactly the "control that lies" the 694
    note below refuses to ship. */
-var lit = inInsurancePortal() ? insLight() : isLight();
+var lit = inInsurancePortal() ? insLight() : (m !== 'dark');
 paintGlyph(btn, lit);
-paintAppear(lit);
+paintAppear(inInsurancePortal() ? (insLight() ? (m === 'dark' ? 'light' : m) : 'dark') : m);
 }
 /* 1339: drawn icons, like every other header control since 686. The icon shows what a tap WILL
    do (a sun on a dark screen means "go light"), and the label says it in words. Written ONLY when
@@ -46319,10 +46365,11 @@ function paintGlyph(btn, lit){
 }
 /* 1230: the drawer's Appearance row. Same dispatch as the button: retail and
    community flip the app theme, insurance flips its own palette. */
-function paintAppear(lit){
+function paintAppear(m){
 var bs = document.querySelectorAll('[data-cr-appear]');
 for(var i = 0; i < bs.length; i++){
-bs[i].setAttribute('aria-pressed', String((bs[i].getAttribute('data-cr-appear') === 'light') === lit));
+var on = String(bs[i].getAttribute('data-cr-appear') === m);
+if(bs[i].getAttribute('aria-pressed') !== on) bs[i].setAttribute('aria-pressed', on);
 }
 }
 document.addEventListener('click', function(e){
@@ -46330,9 +46377,7 @@ var t = /** @type {Element} */ (e.target);
 var b = t && t.closest && t.closest('[data-cr-appear]');
 if(!b) return;
 e.preventDefault();
-var want = b.getAttribute('data-cr-appear') === 'light';
-var lit = inInsurancePortal() ? insLight() : isLight();
-if(want !== lit) toggle(); else apply();
+setMode(b.getAttribute('data-cr-appear'));
 });
 /* 1181 — Theo: "Just make it just like retail and community, [insurance]
    doesn't have to be the unique one, that's no good." He is right, and the
@@ -46374,12 +46419,14 @@ function toggle(){
     try{ localStorage.setItem('cardinalRLTheme', next); }catch(e){}
     /* J16: ONE toggle, BOTH keys — the app theme follows the insurance flip, so
        walking back to Retail does not land on the other theme. */
-    try{ localStorage.setItem(KEY, next === 'docket' ? '1' : '0'); }catch(e){}
+    try{ localStorage.setItem(KEY, next === 'docket' ? litKey() : '0'); }catch(e){}
     window.CardinalInsTheme.apply(next);
     apply();
     return;
   }
-  setLight(!isLight());
+  /* Sun: from Dark the switch returns to the account's light appearance */
+  try{ localStorage.setItem(KEY, isLight() ? '0' : litKey()); }catch(e){}
+  apply();
   /* J16: and the insurance palette follows the app flip (both keys written). */
   var insNext = isLight() ? 'docket' : 'siren';
   try{ localStorage.setItem('cardinalRLTheme', insNext); }catch(e){}
@@ -46485,11 +46532,365 @@ function refreshAll(){ refreshVisibility(); apply(); }
 refreshAll();
 setInterval(refreshAll, 1000);
 }
+/* Sun: apply once at PARSE time too. On a warm start the sign-in can run before
+   this block parses; the role default must then be on the page before Production
+   paints, not a second later. apply() needs only documentElement and body. */
+apply();
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
-window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
+window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:toggle, isLight:isLight, setLight:setLight,
+  isSun:isSun, mode:mode, setMode:setMode, apply:apply });
 })();
 </script>
+<style id="cr-sun-styles">
+/* ============================================================================
+   SUN  ·  Theo's T8 C pick  ·  a third appearance for a roof in daylight
+   ----------------------------------------------------------------------------
+   Asked: "On a roof in daylight, what should Scottie and Curtis see: the dark
+   default, the existing light mode, or a high-contrast Sun mode?" — Sun.
+
+   Sun is NOT a new theme system. It is the light theme (data-theme="rb-light",
+   every --rbe-* and module light twin) plus data-cr-sun="1" on :root, set by the
+   same apply() in cr-rbtheme-toggle-script from the same key. Three things:
+     1. INKS   every text colour on the covered screens clears 7:1 on its worst
+               ground (light floors are 4.5). Hue kept, darkened by computation
+               (sRGB scale until 7.3:1), not picked: stage, urgency and money
+               colours stay recognisable. Bars, dots and spines keep their brights.
+               Grounds go white.
+     2. WEIGHT one step heavier: 400->600, 600->700, 700->800, 800->900. GENERATED
+               from every covered rule that sets a weight (section 3), so the
+               relative hierarchy is the module's own.
+     3. SIZE   one Text size step up — in cr-textsize-styles, not here.
+   Colour and weight only. NEVER font-family: Production's typeface is changing
+   under this in the same release, and Sun must not care which one it is.
+
+   Covered (complete in Sun at 390 and desktop): the Production board, its day
+   sheet and calendar, a box list, Punch & Repairs, the punch card and its photo
+   slots, Crew Dispatch, the drawer (and the desktop left nav), the bottom tab
+   bar, the desktop header, toasts and the crAsk sheet. Every other screen is
+   plain Light plus the size step (and the weight step where a covered rule
+   reaches it).
+
+   EVERY rule here out-specifies an existing one ON PURPOSE and says so with
+   --cr-stack: each is a Sun twin of a Light rule that must stay for Light.
+   Colour rules start :root[data-cr-sun][data-theme="rb-light"] (0,3,0) — one
+   class above the light twins they replace, so position in the file is moot.
+   ========================================================================== */
+
+/* ── 1. grounds and inks, by token ───────────────────────────────────────── */
+/* Production board + its day sheet (the sheet is #cr-pb-modal, outside #cr-pb) */
+:root[data-cr-sun][data-theme="rb-light"] #cr-pb,:root[data-cr-sun][data-theme="rb-light"] #cr-pb-modal{--pb-g:#ffffff;--pb-c:#ffffff;--pb-ink:#0e1013;--pb-mut:#444951;--pb-dim:#444950;
+  --pb-acc:#78121b;--pb-hot:#792d1a;--pb-ok:#1f5238;--pb-wx:#114b7d;--pb-line:#cdd2d8;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-pb .pbday.out{opacity:1;--cr-stack:"Sun"}
+/* desktop: four 94px tiles is what a 1366 screen leaves after the size step, and
+   "SCHEDULED" in its tracked caps does not fit one (the same clip Text size Large has on
+   1433). In Sun the boxes go 2x2 on desktop, and back to 4-up only where the row holds
+   four readable tiles at that zoom step (a media query sees the unzoomed viewport, so
+   the threshold is per step: 1700px at Sun's 1.15, 1950 with Large, 2200 with Larger). */
+:root[data-cr-sun][data-theme="rb-light"] body.cr-lnav-on #cr-pb .pbtiles{grid-template-columns:repeat(2,minmax(0,1fr));--cr-stack:"Sun"}
+@media (min-width:1100px){:root[data-cr-sun][data-theme="rb-light"] body #cr-pb .pbtiles{grid-template-columns:repeat(2,minmax(0,1fr));--cr-stack:"Sun"}}
+@media (min-width:1700px){:root[data-cr-sun][data-theme="rb-light"]:not([data-cr-text]) body #cr-pb .pbtiles{grid-template-columns:repeat(4,minmax(0,1fr));--cr-stack:"Sun"}}
+@media (min-width:1950px){:root[data-cr-sun][data-theme="rb-light"][data-cr-text="lg"] body #cr-pb .pbtiles{grid-template-columns:repeat(4,minmax(0,1fr));--cr-stack:"Sun"}}
+@media (min-width:2200px){:root[data-cr-sun][data-theme="rb-light"][data-cr-text="xl"] body #cr-pb .pbtiles{grid-template-columns:repeat(4,minmax(0,1fr));--cr-stack:"Sun"}}
+:root[data-cr-sun][data-theme="rb-light"] #cr-pb .pbday.out .dn{color:var(--pb-mut,#444951);--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-pb-modal .sheet{background:#ffffff;color:#0e1013;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-pb-modal label{color:#444951;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-pb-modal .cancel{color:#444951;--cr-stack:"Sun"}
+/* the punch card. .pkvis is a DARK band in both themes and re-declares its own
+   tokens, so it gets a light-on-dark Sun ink of its own */
+:root[data-cr-sun][data-theme="rb-light"] #cr-pk{--pk-g:#ffffff;--pk-c:#ffffff;--pk-ink:#0e1013;--pk-mut:#444951;--pk-dim:#444950;
+  --pk-acc:#78121b;--pk-accl:#78121b;--pk-hot:#792d1a;--pk-ok:#1f5238;--pk-line:#cdd2d8;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-pk .pkvis{--pk-dim:#c3c9d1;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-pk .pkbang{background:#a81b27;--cr-stack:"Sun"}
+/* Crew Dispatch (its light twin exists; the header switch is hidden there, the theme still applies) */
+:root[data-cr-sun][data-theme="rb-light"] #cr-disp{--disp-bg:#ffffff;--disp-ink:#0e1013;--disp-dim:#434951;--disp-mute:#44484f;--disp-band:#414955;
+  --disp-wkend:#454951;--disp-accent:#4a5058;--disp-need:#6d470b;--disp-curtis:#0a515a;--disp-scottie:#523b88;
+  --disp-repair:#99131c;--disp-wx:#114b7d;--disp-line:#cdd2d8;--cr-stack:"Sun"}
+/* Punch & Repairs */
+:root[data-cr-sun][data-theme="rb-light"] #punchView{--bg:#ffffff;--rbe-mute:#454545;--pl-tarp:#1e468c;--pl-ticket:#664103;--pl-callback:#563985;
+  --pl-punch:#185234;--pl-late:#9c141e;--pl-live:#135733;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #puQueue .ph2 b,:root[data-cr-sun][data-theme="rb-light"] .pu-age{color:#714600;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] .pu-age.hot{color:#a01a25;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] .pu-new{background:#a81b27;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] .pl-flag.rain{color:#173f66;--cr-stack:"Sun"}
+/* the drawer: white, near-black, section heads in the portal's own accent taken
+   toward black (45% keeps amber amber and teal teal, both over 7:1). Each ink is
+   written for the phone drawer (body:not(.cr-lnav-on), where the light rules carry
+   that prefix and outrank a bare #navMenu) AND for the desktop popover. */
+:root[data-cr-sun][data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu{background:#ffffff !important;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navsec,:root[data-cr-sun][data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navsec::before,:root[data-cr-sun][data-theme="rb-light"] body.cr-lnav-on #navMenu .navsec,:root[data-cr-sun][data-theme="rb-light"] body.cr-lnav-on #navMenu .navsec::before{color:color-mix(in srgb,var(--hac,#376CA0) 45%,#000) !important;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navsec::after,:root[data-cr-sun][data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .navopt::after,:root[data-cr-sun][data-theme="rb-light"] body.cr-lnav-on #navMenu .navsec::after,:root[data-cr-sun][data-theme="rb-light"] body.cr-lnav-on #navMenu .navopt::after,:root[data-cr-sun][data-theme="rb-light"] #navMenu .cr-ts .lb{color:#3b4450;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu .cr-dh-co{opacity:1;color:#3b4450;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint,:root[data-cr-sun][data-theme="rb-light"] body.cr-lnav-on #navMenu #cr-nav-palette-hint,:root[data-cr-sun][data-theme="rb-light"] #navMenu [data-cr-footer]{color:#3b4450 !important;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-nav-palette-hint kbd{color:#2b3036;--cr-stack:"Sun"}
+/* the build line's weight is an inline style; only !important reaches it */
+:root[data-cr-sun][data-theme="rb-light"] #navMenu [data-cr-footer]{font-weight:700 !important;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #navMenu .cr-ts button[aria-pressed="true"]{background:color-mix(in srgb,var(--lnav-crmc,#c8202e) 80%,#000);border-color:color-mix(in srgb,var(--lnav-crmc,#c8202e) 80%,#000);--cr-stack:"Sun"}
+/* placeholders: the UA grey (#757575) is 4.4:1 — a hint is still text Scottie reads */
+:root[data-cr-sun][data-theme="rb-light"] :is(#cr-pb,#cr-pb-modal,#cr-pk,#cr-disp,#punchView,#navMenu,#crAsk) :is(input,textarea)::placeholder{color:#4a4f57;opacity:1;--cr-stack:"Sun"}
+/* desktop: the left nav (body.cr-lnav-on) is the drawer there. Its grey rail stays —
+   it is what separates the nav from a white page — and every ink on it clears 7:1 */
+:root[data-cr-sun][data-theme="rb-light"] #cr-lnav{--rbe-mute:#454545;--lnav-ink:color-mix(in srgb,var(--lnav-ink-lt,#8f1620) 62%,#000);--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-lnav .lnav-sec{color:#3b4450;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-lnav .lnav-ver{opacity:1;color:#3b4450;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-lnav .lnav-item[data-k="cardinaltruth"] .lnav-tx{color:#901721;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #cr-lnav .lnav-item[data-k="communityhub"] .lnav-tx{color:#03543d;--cr-stack:"Sun"}
+/* the portal colour behind white ink (the tab bar's +, and every --crm-id fill) */
+:root[data-cr-sun][data-theme="rb-light"] body.standalone #pwaNav .pwaplus b{background:color-mix(in srgb,var(--crm-id,#c8202e) 80%,#000);--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] body[data-crm="retail"]{--crm-id:#a81b27;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] body[data-crm="insurance"]{--crm-id:#0c615a;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] body[data-crm="community"]{--crm-id:#036247;--cr-stack:"Sun"}
+/* desktop header's + (Curtis sees it over Production at 1440): the portal fill toward black.
+   .cr-ib is in the selector only to clear the light rule's !important (2,3,1) */
+:root[data-cr-sun][data-theme="rb-light"] #cr-hd2-bar #addProjectBtn.cr-ib{background:color-mix(in srgb,var(--crm-id,var(--hac,#376CA0)) 75%,#000) !important;--cr-stack:"Sun"}
+/* toasts: the green ground deepened to 7:1 under white, and the x at full strength */
+:root[data-cr-sun][data-theme="rb-light"] #crToasts .crt.ok{background:#196331;border-color:#196331;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #crToasts .crt .crtx{opacity:1;--cr-stack:"Sun"}
+/* the crAsk sheet */
+:root[data-cr-sun][data-theme="rb-light"] #crAsk .askwhy,:root[data-cr-sun][data-theme="rb-light"] #crAsk .askpick small{color:#3b4450;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #crAsk .askgo{background:#a81b27;--cr-stack:"Sun"}
+:root[data-cr-sun][data-theme="rb-light"] #crAsk .askpick.askdanger{color:#a3101c;--cr-stack:"Sun"}
+
+/* ── 2. the covered screens' own ground weight (text no rule weighs) ─── */
+:root[data-cr-sun] :where(#cr-pb,#cr-pb-modal,#cr-pk,#cr-disp,#punchView,#navMenu,#pwaNav,#crToasts,#crAsk){font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] :where(#cr-pb,#cr-pb-modal,#cr-pk,#cr-disp,#punchView,#navMenu,#crAsk) :where(input,textarea,select,button){font-weight:600;--cr-stack:"Sun"}
+
+/* ── 3. weights, one step heavier — GENERATED by patch_S.py from the 225 covered
+   rules that set one (font-weight, or the weight inside a font: shorthand).
+   Each twin is its rule's selector under :root[data-cr-sun] (+0,2,0), so twins keep
+   the order their originals had among themselves. Regenerate, never hand-edit. */
+:root[data-cr-sun] #navMenu .cr-ts .lb{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #navMenu .cr-ts button{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #navMenu .navopt{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #pwaNav button{font-weight:700;--cr-stack:"Sun"}
+@media (max-width:760px){
+:root[data-cr-sun] body.standalone #pwaNav .pwatab{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] body.standalone #pwaNav .pwaplus b{font-weight:600;--cr-stack:"Sun"}
+}
+:root[data-cr-sun] #navMenu .navsec{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-nav-palette-hint{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-nav-palette-hint kbd{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb h1{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbmon{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbmon button{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbsub{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtile .v{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtile .l{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtile .s{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtile .s em{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbclosed .t{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbclosed .c{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbclosed .go{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbnavbtn .t{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbnavbtn .s{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbwd .dw{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbwd .dn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbmonth .pbmhd .lbl{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbmonth .pbmhd button{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbrule{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] :is(#cr-pb,#cr-pb-modal) .pbchip{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] :is(#cr-pb,#cr-pb-modal) .pbev .tx b{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] :is(#cr-pb,#cr-pb-modal) .pbev .tx small{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] :is(#cr-pb,#cr-pb-modal) .pbev .tg{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbdow span{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbday .dn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbday .dn .wx i{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbday .cch{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbjob .nm{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtag{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbact{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbitem .tx b{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbitem .tx small{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb-modal .pbdwhen{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb-modal .pbdnow{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb-modal .pbdx{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb-modal h3{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb-modal label{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb-modal .btns button{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtoday{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtoday .k{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtoday .t em{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pb .pbtoday .go{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkey{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkchip{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkurg{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk h1{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkh{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pktpl{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .jn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkbtn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkm .k{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkm .w{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkdesc{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkck .req{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkck .note{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkck .hnd{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkadd{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pksup{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkrm{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkslot .sl{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkbub small{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pktag{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkout{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkclose{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkclose b{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkbang{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkping-h b{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkping-n{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkping-ta{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkping-go{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkhold-d{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkhs-h h2{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkhs-x{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkhs-q{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkhs-t b{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkhs-d b{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkhs-n{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkhs-go{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkfold{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkfold.dim{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkmenu{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkmenu-it{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pksupc{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pknote{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkpnote{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkgalbtn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkgttl{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkgn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkgcap{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkgadd{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkvon,:root[data-cr-sun] #cr-pk .pkvstale,:root[data-cr-sun] #cr-pk .pkvwas,:root[data-cr-sun] #cr-pk .pkvnone{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pktk0{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkcbk{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkcbc{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkcbc.on{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkcbsel{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkcbname{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkrain{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkvl{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkvtot{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkvb{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkqueued{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkstepnote label{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-pk .pkstepnote textarea{font-weight:600;--cr-stack:"Sun"}
+:root[data-cr-sun] body.standalone #pwaNav #crPortalChip{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #puQueue .ph2 b{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #puQueue .ph2 span{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #puQueue .pu-qt{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #puQueue .pu-qa{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-age{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asgbtn{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-note{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-st{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asghead{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asghead b{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asgrow .nm{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asgrow .load{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asgrow .load.warn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asgrow .tick{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-dayb{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asggo{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-asgntf{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-new{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-title{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-sub{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-srch input{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-ico .bdg{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-box{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-t{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-cl{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-tag{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-who{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-empty{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-grp{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-sheet .ph .t{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-sheet .ph button{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-srow{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-srow .ck{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-srow .cnt{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-clr{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-strip .sh b{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-strip .sh .n{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-strip .sh .all{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-tab .n{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pu-tab span{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-grp{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-bang{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-k1{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-flag{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-cl b{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-age{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-wh b{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-wh.late small{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-wh.live small{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-av{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-more,:root[data-cr-sun] .pl-back{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-rtl{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-rtc{font-weight:700;--cr-stack:"Sun"}
+@container pulist (min-width:860px){
+:root[data-cr-sun] .pl-cols{font-weight:800;--cr-stack:"Sun"}
+}
+@media (min-width:901px){
+:root[data-cr-sun] .pl-ri{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-ri.on{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-ri .n{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] .pl-rh{font-weight:800;--cr-stack:"Sun"}
+}
+:root[data-cr-sun] .pu-sched{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-lnav .lnav-mini{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-lnav .lnav-out{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-lnav .lnav-ver{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-lnav .lnav-sec{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-lnav .lnav-sec .cnt{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-lnav .lnav-item{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-lnav .lnav-item.on{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun]:root[data-theme="rb-light"] #cr-lnav .lnav-item.on{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun]:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item.on{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #crToasts .crt{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #crToasts .crt .crtx{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dsptitle{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dspwk{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dspfilt .fc{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .drail .rl .t{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .uch .c{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .runrow .none{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dcol .c{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dcol .c.today::after{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dband .bl{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dband .cnt{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dsum{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .crewc .cn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .crewc .cc{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .idle .il{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .idle .il::before{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .idle .il b{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .job .t{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .more{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .repbdg{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .rep .t{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dcol .c .wx{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .crewc .cf{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dspmapbtn{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dsprain{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dsprainar-ts{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dspleg span{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dspmiss{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dmap-pop .t{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dmap-pop .a{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dmap-pop .chip{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dmap-pop .dpop-go{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dspdays .dd{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dspdays .dd b{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] #cr-disp .dspdays .dd i{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] body:not(.cr-lnav-on) #navMenu .cr-dh-name{font-weight:900;--cr-stack:"Sun"}
+:root[data-cr-sun] body:not(.cr-lnav-on) #navMenu .cr-dh-co{font-weight:700;--cr-stack:"Sun"}
+:root[data-cr-sun] body:not(.cr-lnav-on) #navMenu .navsec{font-weight:900 !important;--cr-stack:"Sun"}
+:root[data-cr-sun] body:not(.cr-lnav-on) #navMenu .navopt{font-weight:700 !important;--cr-stack:"Sun"}
+:root[data-cr-sun] body:not(.cr-lnav-on) #navMenu .navsec::after{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #crAsk .askq{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #crAsk button{font-weight:800;--cr-stack:"Sun"}
+:root[data-cr-sun] #crAsk .askpick small{font-weight:700;--cr-stack:"Sun"}
+</style>
 
 <style id="cr-cl-styles">.cr-cl-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9700;display:flex;align-items:center;justify-content:center;padding:20px}.cr-cl-box{background:#fff;border-radius:14px;max-width:480px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cl-head{padding:16px 20px;background:#c8202e;color:#fff;border-radius:14px 14px 0 0}/* 684: was a gradient with near-black text on red - both against the settled rules; solid red + white measures 5.9:1 */.cr-cl-head h3{margin:0;font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase}.cr-cl-body{padding:16px 20px;overflow-y:auto;flex:1}.cr-cl-entry{padding:10px 0;border-bottom:1px solid #eee}.cr-cl-entry:last-child{border-bottom:0}.cr-cl-build{font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.16em;color:#8f1620;margin-bottom:3px}.cr-cl-desc{font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2c2c2c;line-height:1.45}.cr-cl-acts{padding:12px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end}.cr-cl-acts button{background:#c8202e;color:#fff;border:0;padding:8px 16px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-cl-acts button:hover{background:#b8860b}</style>
 <script id="cr-cl-script">
@@ -46497,6 +46898,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1436, d:'2026-11-01', t:'Sun: a third appearance for working outside', s:'Menu \u2192 Appearance now has a third choice, Sun, for reading the screen outside in daylight: a white background, near-black text, heavier letters, one size larger. Production and field accounts start in Sun unless they have already picked Dark or Light, and anyone can change it in Menu \u2192 Appearance. Also fixed for everyone: the Production day sheet is readable again in Light, and at the larger text sizes Crew Dispatch no longer jumps past the day you tap or runs off the edge of the screen.' },
   { b: 1435, d:'2026-11-01', t:'Reports follow light mode, and the form sheets go dark in dark mode', s:'Graphs & Reports now follows the theme. In light mode its panels are light, and the chart labels are dark enough to read; switching theme re-colours charts already on screen. The red stripe down the left of each panel is gone in both themes, along with the red rules under the table headings and above the team total; red stays on the selected buttons and in the numbers. A few labels on Reports that were too faint in dark mode now read. In dark mode the form sheets (the profile, Add project and Edit client info, the roofing and GC checklists, the lead forms, appointments and the signature sheet) are dark with light text instead of white. Light mode is unchanged, and the signature pad stays white to write on.' },
   { b: 1434, d:'2026-11-01', t:'Daily opens with the menu, one New lead, one portal switcher on the desktop', s:'On a phone, the menu now opens with Daily already expanded; the other sections stay folded. When a signed agreement is opened in the editor, a line at the top says so: \u201cYou\u2019re editing a signed agreement. Saving keeps the signed one on file as a version.\u201d That line is never saved, sent or printed. The Production board uses the same typeface as the rest of the app, and its numbers still line up. + New has one way to start a client, New lead, and the lead form gains Job cost for admins. On the desktop, the page title is the one place to switch portal: the pills in the top bar, the switch at the top of the left menu and its Switch portal row are gone.' },
   { b: 1433, d:'2026-10-30', t:'The appointment sheet reads, and Ask stops covering form buttons', s:'On the appointment sheet, the grey line under each appointment (who booked it, the notes) and its delete \u2715 are dark enough to read, and the \u2715 is easier to tap. On a phone, the floating Ask button no longer sits on the appointment sheet\u2019s Add button or over the New Lead and Add project forms; it steps aside while one of them is open.' },
@@ -58209,7 +58611,9 @@ objections : OBJECTIONS,
   -webkit-overflow-scrolling:touch;
 }
 #cr-pb.open{ display:block; }
-:root[data-theme="rb-light"] #cr-pb{
+:root[data-theme="rb-light"] #cr-pb,
+:root[data-theme="rb-light"] #cr-pb-modal{
+  --cr-stack:"the rb-light twin of #cr-pb's dark tokens, which stay for Dark; #cr-pb-modal joined it because the day sheet sits outside #cr-pb";
   --pb-g:#f4f5f6; --pb-c:#ffffff; --pb-c2:#f4f5f7; --pb-c3:#eceef1;
   /* #6b7280 measured 4.43:1 on this ground — under the 4.5 floor. #666d77 is
      4.79:1 and still reads lighter than --pb-mut, so the hierarchy holds. */
@@ -58585,20 +58989,20 @@ objections : OBJECTIONS,
 #cr-pb-modal .pbdhead{
   display:flex; align-items:center; gap:10px; padding:6px 16px 10px;
   border-bottom:1px solid rgba(230,235,240,.10);
-  position:sticky; top:0; background:#15171a; z-index:2;
+  position:sticky; top:0; background:var(--pb-c,#15171a); z-index:2;
 }
 #cr-pb-modal .pbdwhen{ flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:8px;
   font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; letter-spacing:.01em; }
 #cr-pb-modal .pbdwhen b{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #cr-pb-modal .pbdnow{
   font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase;
-  padding:3px 8px; border-radius:999px; background:rgba(230,90,70,.16); color:#ff8a7a;
+  padding:3px 8px; border-radius:999px; background:rgba(230,90,70,.16); color:var(--pb-hot,#ff8a7a);
 }
 /* 44px, per the 1040 tap-target pass — a close button under the floor on a
    sheet you dismiss constantly is the complaint that pass existed to end. */
 #cr-pb-modal .pbdx{
   flex:0 0 auto; width:44px; height:44px; border-radius:12px; cursor:pointer;
-  background:transparent; border:1px solid rgba(230,235,240,.14); color:#e6ebf0;
+  background:transparent; border:1px solid var(--pb-line,rgba(230,235,240,.14)); color:var(--pb-ink,#e6ebf0);
   font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; display:flex; align-items:center; justify-content:center;
 }
 #cr-pb-modal .pbdbody{ padding:12px 16px 4px; display:flex; flex-direction:column; gap:8px; }
@@ -73209,7 +73613,7 @@ window.CardinalDownload = Object.assign(window.CardinalDownload || {}, {
   function saved(){
     try{ if(window.CardinalInsTheme && typeof window.CardinalInsTheme.get === 'function') return window.CardinalInsTheme.get(); }catch(e){}
     try{ var v = localStorage.getItem(KEY); if(v === 'siren' || v === 'docket') return v;
-         return localStorage.getItem('cardinal.theme.rb') === '1' ? 'docket' : 'siren'; }catch(e){ return 'siren'; }
+         return (window.CardinalRBTheme && window.CardinalRBTheme.isLight ? window.CardinalRBTheme.isLight() : localStorage.getItem('cardinal.theme.rb') === '1') ? 'docket' : 'siren'; }catch(e){ return 'siren'; }   /* Sun is light */
   }
   function boot(){
     apply(saved());
@@ -73324,7 +73728,7 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
     try {
       var v = localStorage.getItem(KEY);
       if (v === 'siren' || v === 'docket') return v;
-      return localStorage.getItem('cardinal.theme.rb') === '1' ? 'docket' : 'siren';
+      return (window.CardinalRBTheme && window.CardinalRBTheme.isLight ? window.CardinalRBTheme.isLight() : localStorage.getItem('cardinal.theme.rb') === '1') ? 'docket' : 'siren';   /* Sun is light */
     }
     catch(e){ return 'siren'; }
   }
@@ -88100,7 +88504,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
    tray, the trade strips and a folded trade's summary now do too. 46px is the
    frame's own inset (14 + 1 + 8 a side); 50 leaves the rows' 2px margins. */
 @media (max-width:1099px){
-  #cr-disp .drail, #cr-disp .dband, #cr-disp .dsum{ position:sticky; left:0; max-width:calc(100vw - 50px); }
+  #cr-disp .drail, #cr-disp .dband, #cr-disp .dsum{ position:sticky; left:0; max-width:calc(100vw / var(--cr-zoom,1) - 50px); }   /* Sun / Text size: vw is unzoomed */
 }
 /* MAJOR 2 — a field user's tray chips are information, not controls */
 #cr-disp .uch.ro{ --cr-stack:"1416: field user only"; cursor:default; }
@@ -88437,6 +88841,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var sc = el.querySelector('.dspscroll'), hd = el.querySelectorAll('.dcol .c')[i + 1], rail = el.querySelector('.dcol .c.rail');
     if(!sc || !hd) return;
     var off = hd.getBoundingClientRect().left - sc.getBoundingClientRect().left - (rail ? rail.getBoundingClientRect().width : 0);
+    /* Sun / Text size: rects are zoomed viewport px, scrollLeft is the scroller's own px */
+    var zr = sc.offsetWidth ? sc.getBoundingClientRect().width / sc.offsetWidth : 1;
+    if(zr > 0.2) off = off / zr;
     try{ sc.scrollTo({ left: Math.max(0, sc.scrollLeft + off), behavior:'smooth' }); }catch(_){ sc.scrollLeft += off; }
   }
   /* 1416 (judge 14 MAJOR 3): Back from Dispatch returns a production account to

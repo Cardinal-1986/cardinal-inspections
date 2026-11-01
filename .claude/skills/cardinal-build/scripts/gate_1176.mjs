@@ -146,7 +146,7 @@ const themeCount = await page.evaluate(() => {
   document.querySelectorAll('.cr-ins-theme').forEach(e => { if (vis(e)) n++; });
   const d = document.getElementById('cr-dark-toggle'); if (vis(d)) n++;
   /* 1230: with no header switch, the drawer's Appearance row is the control (gate_1181) */
-  if (!vis(d) && document.querySelectorAll('#navMenu [data-cr-appear]').length === 2) n++;
+  if (!vis(d) && document.querySelectorAll('#navMenu [data-cr-appear]').length === 3) n++;   /* Sun (T8 C): Dark · Light · Sun is still ONE control */
   return n;
 });
 ok(themeCount === 1, 'exactly ONE light/dark control on the insurance screen (got ' + themeCount + ')');
@@ -167,7 +167,7 @@ await page.waitForTimeout(1100);
 s = await state();
 /* 1230: no longer the floating toggle - the drawer's Appearance row */
 const rowN = await page.evaluate(() => document.querySelectorAll('#navMenu [data-cr-appear]').length);
-ok(s.crm === 'retail' && rowN === 2,
+ok(s.crm === 'retail' && rowN === 3,   /* Sun (T8 C): Dark · Light · Sun */
    'retail still has its light/dark control (crm=' + s.crm + ', Appearance buttons=' + rowN + ')');
 
 await browser.close();

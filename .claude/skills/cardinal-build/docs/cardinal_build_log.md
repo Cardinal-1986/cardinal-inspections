@@ -37699,3 +37699,25 @@ The name was the only flexible item, so it was the one that gave way.
 - `gate_stack` at 390 and 1366, dark and light, 10 states including the three Reports tabs, against 1434.
 - ⚠ Found by the builder: `gate_stack` and `gate_1241` let a module's raw `fetch()` reach production Supabase from `file://` (6 anonymous GET `/rest/v1` per load: `insurance_claims`, `estimate_line_items`, `punch_items`). Anonymous reads only. Measured 1 Nov with `set local role anon` in a rolled-back transaction: all three tables return 0 rows to `anon`, so nothing was exposed. Both gates now abort `*.supabase.co`.
 - Colour build, so the sentinel holds the merge (27 Aug rule).
+- **Sentinel result (recorded at 1436):**
+  - `--selftest` 14/14. 12 states (Reports ×3, the eight sheets, home), both themes, 390 and 1440, `--since` 1434: 48 renders, 5 new findings, zero INK / COLLAPSE / OVERLAP / OVERFLOW / UNWIRED.
+  - The 3 DEAD are the probe's `var()` blind spot: the base `.rpttable tr:nth-child(even) td` stripe rules (both themes) already lost on 1434 to `#reportsView .rpttable …`, which now reads `var(--rpt-stripe, …)`, and `#cr-hd2-bar .cr-ib{background:transparent}` loses to 1198's light header rule.
+  - The 2 OVERRIDDEN (`.pti .i5`, the header rule in dark) are light-twin rules winning as designed. None was authored by 1435. Merged on that basis.
+
+## Build 1436 — Sun, a third appearance for working outside (1 Nov 2026)
+
+**Source:** Theo's pick T8 C (same message as 1434).
+
+**Change** (`patch_1436_sun.py`, with `sun_css.py` and `csswalk.py` beside it, then `patch_1436.py`):
+- E1 head pre-paint sets `data-cr-sun` for a stored `'sun'`; E2 the Text size ladder one step up under Sun, edited in place; E3 the third Appearance button; E4 `cr-rbtheme-toggle` three modes, role default, `setMode()`; E5 the sign-in role mirror re-applies the theme before Production opens; E6 `cr-sun-styles`, generated; E7 the day sheet's missing light tokens; E8 the insurance and Library readers of the app key treat Sun as light.
+- Built on 1433 by a builder. On 1435, E4's anchor collided with 1435's `cr-theme` edge event in the same `apply()`; the merged anchor keeps both (`lastTheme` and the dispatch now sit after Sun's attribute writes). Byte-reproducible on 1435.
+
+**Gates:** listed in the PR. `check_build` GREEN; `gate_types` 1,500 and `gate_dupes` unchanged from 1435; `audit_scrolllock` GREEN (16).
+- **Two gates had to learn the new default, and both changes are to the gate, not the app.** `gate_1434`'s dark boots for Curtis and Scottie threw "wanted dark, got rb-light": with nothing stored those two now open in Sun, so the gate stores `'0'`, the same as choosing Dark. Its Scottie drawer comparison against the 1434 reference now folds an exact `AppearanceDarkLightSun` row back to `AppearanceDarkLight`; any other difference still fails. 152/0 on 1436 and on 1435.
+- **Pre-existing reds, identical on 1435 with the gates as they were on main:** `gate_1230` (6), `gate_804` (2), `gate_1299` (1).
+- **Sentinel — the sweep holds this merge (a theme build).** 14 states (home, production, dispatch, punch, nav, client, checklist, album, photoeditor, leads, newproject, signature, estimates, clientdir) at 390 and 1440.
+  - ⚠ **`--since` cannot compare Sun with the previous tree.** On 1435 a stored `'sun'` is an unknown value and boots DARK, so the first run (59 "new") compared Sun with Dark. Done instead as three `--all` runs: Sun on 1436, Light on 1436, Light on 1435, then diffed.
+  - ⚠ **The one INK it reported was the instrument.** The pressed Sun button is white on `color-mix()`, which Chromium computes as `color(srgb 0.627 0.100 0.144)`; the probe's parser read only `rgb()`, fell through to the white drawer and said 1:1. The real ratio is 7.9:1. `sentinel_probe.js` now reads `color(srgb …)` (colour and gradient stops), and the selftest carries a pair in both directions, both of which FAIL on the previous probe. After the fix: **0 INK** in all three runs.
+  - **The visible-breakage categories (CLIPPED, COLLAPSE, OVERLAP, OVERFLOW, UNWIRED, FLOOR, CONTAIN) are identical across the three runs except one:** `#cdCrmBar` (the Clients bar's portal chips) hides 23px at 390 in Sun. **Not Sun's:** 1435 in plain Light at Text size Large clips the same 23px, and 42px at Larger. Sun is one size step up, so it inherits it, and makes it the default view for field accounts. Fixed in the next build, not widened into this one.
+  - **DEAD / OVERRIDDEN differences are Sun's own overrides or the 20-per-render cap.** Sun-only entries are the light inks and fills Sun deliberately replaces (`.pu-age`, `#puQueue .ph2 b`, `.lnav-sec`, `.pu-new`, the light retail `+` that `#addProjectBtn.cr-ib` darkens to clear 7:1). The three `.pl-*` DEAD in 1436 Light are unchanged rules that were among the 8 the cap hid on 1435 (punch DEAD went 28 → 23).
+  - ⚠ **The DEAD detail prints `selectorText.slice(0, 70)`.** A rule that reads as ending at `#cr-hd2-bar` may continue — this one was `… #cr-hd2-bar .cr-ib.primary`. Grep for the first 70 characters, not the whole printed selector.
