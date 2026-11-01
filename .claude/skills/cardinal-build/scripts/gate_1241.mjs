@@ -1,7 +1,8 @@
 /* gate_1241.mjs — build 1241: every text on the eight shared .projform forms clears its floor, both themes.
    The forms: profile card, Add project, Roofing checklist, the GC form, Lead, New Lead, Appointment,
-   Signature. They are white "paper" cards in BOTH themes — that is the current design and this gate
-   does not judge it; it scores every text-bearing element against its composited ground.
+   Signature. White "paper" cards in light; since T3 B (1 Nov 2026) the dark panel ground in dark
+   mode (6 Oct's "Forms 1", white in both, was reversed by Theo). This gate does not judge the design;
+   it scores every text-bearing element against its composited ground.
    Found at 1241 and fixed: the profile e-mail (3.95), "* Required" (3.12) and the address toggle's
    chevron (2.38). RED on 1240 rather than crash (BUG_CLASSES 37).
    usage:  node gate_1241.mjs [file.html]
@@ -21,7 +22,7 @@ const b = await launchChromium(chromium);
 const report={};
 for (const th of ['dark','rb-light']) for (const id of HOSTS) {
   const p=await b.newPage({viewport:{width:390,height:844}});
-  await p.route(/^https?:/, r=>{const u=r.request().url(); return /fonts\.(googleapis|gstatic)/.test(u)? r.abort(): r.continue();});
+  await p.route(/^https?:/, r=>{const u=r.request().url(); return /fonts\.(googleapis|gstatic)|supabase\.co/.test(u)? r.abort(): r.continue();   /* 1435: never reach production Supabase */});
   await p.addInitScript(t=>{window.__sentinelTheme=t},th);
   for(const f of ['sentinel_setup_cardinal.js','e2e_mock_supa.js']) await p.addInitScript(readFileSync(here+'/'+f,'utf8'));
   await p.goto('file://'+art,{waitUntil:'domcontentloaded'}); await p.waitForTimeout(2600);

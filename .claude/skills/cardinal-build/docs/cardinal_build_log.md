@@ -37683,3 +37683,19 @@ The name was the only flexible item, so it was the one that gave way.
 - `check_build` GREEN. `audit_scrolllock` GREEN (16). `gate_types` 1,500 against 1,502 on 1433 (−2 TS2339, the deleted pill handler; both trees red on the same stale TS2339 baseline). `gate_dupes` unchanged from 1433. `gate_stack` clean at 390 and 1440.
 
 **Left for Theo:** production accounts no longer have a way to start a client from + New (Contact was theirs; leads stay sales/admin). Asked. **Answered 1 Nov, "1": leave it out.** Recorded as settled in OPEN_ITEMS.
+
+## Build 1435 — Reports follow the theme, and the form sheets go dark in dark mode (1 Nov 2026)
+
+**Source:** Theo's picks T1 C and T3 B (same message as 1434).
+
+**Change** (`patch_1435_reports_forms.py`, then `patch_1435.py`):
+- T1 C: `--rpt-*` tokens with one light block; the red left edge and two other decorative red rules gone in both themes; theme-following chart ink with a re-ink on flip (`cr-theme` event); Reports text under the floor 14 → 0 (dark), 8 → 0 (light); 1415 What's New wording corrected.
+- T3 B: `--sheet-*` dark-only block on the eight `.projform` sheets; light byte-for-byte in computed style; signature pad white; 1299's paper-ink chip rules deleted.
+- Built on 1433 by a builder and applied cleanly on 1434 (it edits inline styles in the lead form and Add project markup that 1434 also touched; no anchor collided).
+
+**Gates:**
+- `check_build` GREEN. `gate_1435` on the new tree and RED on 1434. `gate_1434` re-run on this tree (1435 restyles the lead form 1434 edited).
+- `gate_types` 1,500 (same as 1434). `gate_dupes` 12 over baseline (same as 1434; two new names, one definition each). `audit_scrolllock` GREEN.
+- `gate_stack` at 390 and 1366, dark and light, 10 states including the three Reports tabs, against 1434.
+- ⚠ Found by the builder: `gate_stack` and `gate_1241` let a module's raw `fetch()` reach production Supabase from `file://` (6 anonymous GET `/rest/v1` per load: `insurance_claims`, `estimate_line_items`, `punch_items`). Anonymous reads only. Measured 1 Nov with `set local role anon` in a rolled-back transaction: all three tables return 0 rows to `anon`, so nothing was exposed. Both gates now abort `*.supabase.co`.
+- Colour build, so the sentinel holds the merge (27 Aug rule).

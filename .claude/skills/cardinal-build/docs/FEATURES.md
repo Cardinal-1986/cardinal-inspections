@@ -1147,6 +1147,8 @@ Not themed, deliberately: the card is black in both modes, so the ink has to be 
 
 ### Obsidian is black in both modes
 
+⚠ **For `#reportsView`, SUPERSEDED 1 Nov 2026 (T1 C, built at 1435): Graphs & Reports follows the theme**, with 557's light twin in light mode. The estimate page (`#cr-est-view`) is untouched by that pick and is still black in both modes.
+
 545's stated precedent, and Theo's pick there. The estimate page's header was **already**
 `linear-gradient(120deg,#2c2c2c,#1a1a1a)`, so a dark body finishes a shell that was half-built
 rather than inventing a third ground. The corollary 545 wrote down applies too: a theme-independent
@@ -3686,7 +3688,7 @@ dropping only the colour (the rule also carries the title's font).
 
 The client cards (`.pcard`, all of which are also `.pcbadge` — one creator) now
 use the **named** obsidian recipe. ⚠️ Obsidian has two behaviours: `#cr-est-view`
-/ `#reportsView` are black in both modes (545); `.actbox` has a light twin (557).
+/ `#reportsView` are black in both modes (545; ⚠ `#reportsView` follows the theme since 1435, T1 C); `.actbox` has a light twin (557).
 The cards follow `.actbox`, per Theo. `.pcini` and `.pcacts a` are raised keys.
 
 ⚠️ **`#calCard` is dead markup** (`display:none !important`). The live calendars
@@ -10574,3 +10576,15 @@ Theo's picks of 1 Nov 2026, built by one builder and integrated as one build.
 - **T10, desktop portal switching.** The page title ("Retail ▾" → Front Door) is the one switcher. Removed at source: the `#cbCrm` pill strip (markup, CSS, `CRM_GO` handler), the rail's segmented control and its inks, and the rail's copy of "Switch portal" (`scrape()` skips it). The phone keeps its drawer row. At 901–1099px the pills used to show; that width now has the title plus the drawer row, like the phone.
 
 **Gates:** `gate_1434.mjs`, 152 checks; RED on the 1433 control with named failures. 33 edits across 17 existing gates that asserted the old design (`patch_1434_gates.py`).
+
+## Build 1435: Reports follow the theme, and the form sheets go dark in dark mode (T1 C, T3 B)
+Theo's picks of 1 Nov 2026.
+- **T1 C, Graphs & Reports.** Every `#reportsView` card and ink rule reads `var(--rpt-x, <its dark value>)`, and one light-only block on `#reportsView` defines the `--rpt-*` tokens with 557's light twin. Dark draws what 1433 drew, apart from the fixes below.
+  - The 2px `#ff2740` left edge is deleted in both themes; the card's own 1px hairline shows. The 2px red rule under the Reps/Production table headings and the rule above the reviews "Whole team" row went neutral too. Red stays on the selected pills, avatars, the Google mark and the data.
+  - Text under the floor on Reports: dark 14 → 0 (worst 4.90), light 8 → 0 (worst 4.61). Fixed in dark: filter placeholders, review counts, profit/loss inks. In light, money is `#1f6b4a` and new is `#8a5500`.
+  - Chart ink: `#5f6670` light, `#b9bec7` dark, read from `--rpt-chart-ink` / `--rpt-chart-grid` at draw time (`rptChartInk()`). A theme flip re-inks charts already drawn (`rptReink()`, the same chart objects, `update('none')`), announced by a new document `cr-theme` CustomEvent fired from `cr-rbtheme-toggle`'s `apply()` on the edge only.
+  - The 1415 What's New line now says only the Reports stat tiles lost their red cap.
+- **T3 B, the eight `.projform` sheets.** One dark-only token block (`--sheet-*`, from the app's dark panel family) scoped to `:root:not([data-theme="rb-light"])`; every sheet rule reads `var(--sheet-x, <its light value>)`, so light is unchanged (328 elements × 10 properties, zero differences). The signature pad stays white. Red words in the dark sheets are `#ff7b82`. The 1299 paper-ink `.projform .chipbtn` dark rules are deleted. Fixed in passing: "Send a test alert" (1.18:1 in dark) and the insurance scope note in dark (4.19:1).
+- ⚠ **A new `data-theme` value must be added to the sheets' scope**, or they go dark under it.
+
+**Gates:** `gate_1435.mjs`, 259 checks (Chart.js 4.4.3 from `scripts/vendor/`); RED on the 1434 control. `gate_stack` is clean because 18 edited `#reportsView` rules and one theme-twin rule carry `--cr-stack` reasons (edit-in-place). `gate_stack` and `gate_1241` now refuse every `*.supabase.co` request: under `file://` a module's raw `fetch()` had reached production Supabase (anonymous reads, no writes).
