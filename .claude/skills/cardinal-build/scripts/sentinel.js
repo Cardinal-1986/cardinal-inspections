@@ -754,6 +754,18 @@ if (SELFTEST) {
     (trunc ? '  \u2014 ' + trunc.detail : ''));
   if (!trunc) bad++;
 
+  /* ⚠ THE COLOR-MIX PAIR — added 1 Nov 2026 (build 1436): Sun's pressed button
+     paints color-mix(), which computes to color(srgb …); the probe read only
+     rgb(), fell through to the white drawer and reported 1:1 for a real 7.9:1. */
+  const cmWrong = all.some(r => /st-colormix-ok/.test(r.detail));
+  console.log((cmWrong ? '  FAIL  ' : '  PASS  ') +
+    'a color(srgb …) ground is READ, not fallen through (white on dark mix passes)');
+  if (cmWrong) bad++;
+  const cmFired = all.some(r => /st-colormix-ink/.test(r.detail));
+  console.log((cmFired ? '  PASS  ' : '  FAIL  ') +
+    'and a near-white color(srgb …) ground under white text IS reported');
+  if (!cmFired) bad++;
+
   const ocWrong = all.some(r => /st-offcanvas-ink/.test(r.detail));
   console.log((ocWrong ? '  FAIL  ' : '  PASS  ') +
     'a SHUT off-canvas fixed panel is NOT scored');
