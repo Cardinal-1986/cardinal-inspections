@@ -61,15 +61,18 @@ async function boot3(as, o = {}) {
   if ((th === 'rb-light') !== !!o.light) throw new Error('theme mismatch: wanted ' + (o.light ? 'light' : 'dark') + ', got ' + th);
   return r;
 }
-/* curtis/scottie: gate_1400_lib takes no seed, so light is set the way taste/rig.mjs does it —
-   localStorage, no service worker, then ONE reload (a registered sw.js would land on sign-in) */
+/* curtis/scottie: gate_1400_lib takes no seed, so the theme is set the way taste/rig.mjs does it —
+   localStorage, no service worker, then ONE reload (a registered sw.js would land on sign-in).
+   Since 1436 a production or field account with NOTHING stored opens in Sun (T8 C), so dark
+   is no longer the default for these two and is stored explicitly ('0'), the same as a
+   person who picked Dark in the drawer. */
 async function boot0(L, as, o = {}) {
   const r = await L.boot(as, {});
   const { page } = r;
-  if (o.light) {
+  {
     await page.addInitScript(() => { try { if (navigator.serviceWorker) navigator.serviceWorker.register = function () { return new Promise(function () {}); }; } catch (e) {} });
     await page.evaluate(async () => { try { for (const g of await navigator.serviceWorker.getRegistrations()) await g.unregister(); } catch (e) {} });
-    await page.evaluate(() => { try { localStorage.setItem('cardinal.theme.rb', '1'); } catch (e) {} });
+    await page.evaluate(v => { try { localStorage.setItem('cardinal.theme.rb', v); } catch (e) {} }, o.light ? '1' : '0');
     await page.reload({ waitUntil: 'domcontentloaded' }); await sleep(3200);
   }
   if (o.w) { await page.setViewportSize({ width: o.w, height: o.h || 900 }); await sleep(700); }
