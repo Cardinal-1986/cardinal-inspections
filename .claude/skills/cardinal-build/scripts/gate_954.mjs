@@ -40,7 +40,9 @@ await page.evaluate(()=>{['landingView','loginView'].forEach(id=>{const e=docume
   if(typeof window.showHome==='function') try{window.showHome();}catch(_){}});
 await page.waitForTimeout(2600);
 
-async function chip(k){ await page.evaluate(k=>{const b=document.querySelector('#cr-lnav .lnav-crm button[data-crm="'+k+'"]'); if(b)b.click();},k); await page.waitForTimeout(1000); }
+/* T10: the rail segment is retired; switch through the page title's Front Door */
+async function chip(k){ await page.evaluate(()=>{const t=document.getElementById('brandTitle'); if(t)t.click();}); await page.waitForTimeout(700);
+  await page.evaluate(k=>{const b=document.querySelector('#cr-fd [data-fd="'+k+'"]'); if(b)b.click();},k); await page.waitForTimeout(1300); }
 function menuNavs(){ return page.evaluate(()=>[...document.querySelectorAll('#navMenu .navopt')].map(b=>b.getAttribute('data-nav')||b.id)); }
 
 /* ── 1: COVERAGE — the licence for retiring the rail ────────────────────── */

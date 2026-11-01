@@ -13,7 +13,7 @@ const FILE = path.resolve(process.argv[2] || '/home/user/cardinal-inspections/in
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
 const NAV = [
-  ['[data-new="task"]','clipboard'], ['[data-new="contact"]','person'],
+  ['[data-new="task"]','clipboard'],   /* T9: the + New "Contact" row is retired */
   ['[data-new="lead"]','flag'], ['[data-new="reminder"]','alarm'], ['#navBtn','menu'],
   ['[data-nav="landing"]','home'], ['[data-nav="clients"]','people'],
   ['[data-nav="leads"]','clipboard'], ['[data-nav="board"]','calendar'],

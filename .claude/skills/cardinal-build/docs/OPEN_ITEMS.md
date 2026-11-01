@@ -2,6 +2,26 @@
 
 ---
 
+## ✅ SETTLED 1 Nov 2026 (Theo, verbatim: "T1 C · T2 B · T3 B · T5 B · T6 B · T7 A · T8 C · T9 B · T10 Keep #1") — the round-1 taste calls
+
+He picked from the preview page (`taste/manifest.json`, published as the "Cardinal Taste Calls" artifact). Three of these **reverse earlier picks**. The new answer is the settled one; do not restore the old one.
+
+| Call | Pick | What it means | Reverses |
+|---|---|---|---|
+| T1 | C | Reports panels follow the theme, so they are light in light mode. The red pipe-card edge becomes the neutral 1px hairline in both themes. The 1415 changelog wording is corrected. | 545/546 "obsidian is black in both modes" and the "1 Hairline" red edge |
+| T2 | B | The phone drawer opens with Daily expanded and every other section folded, every time. Nothing is remembered between opens. | 1115's "all sections start not expanded" |
+| T3 | B | The eight Forms 1 sheets go dark in dark mode. Light mode is unchanged. The estimate builder's paper (1217) stays paper. | 6 Oct "Forms 1" |
+| T5 | B | A signed agreement open in the editor shows "You're editing a signed agreement. Saving keeps the signed one on file as a version." It is never saved or sent. | — (1078–79 stand) |
+| T6 | B | Production's board uses the app's one sans typeface, with tabular figures for numbers. | the board's monospace |
+| T7 | A | Insurance stays as today: red content, teal chrome. | — |
+| T8 | C | A new "Sun" appearance: white, near-black ink, heavier, one step larger, no grey under 7:1. It is the default for production and field accounts with no stored choice. | — |
+| T9 | B | + New has one way to start a client, "New lead" (the Lead form, plus Job cost). The Contact entry goes. | — |
+| T10 | Keep #1 | On desktop the page title ("Retail ▾" → Front Door) is the only portal switcher. The top-bar pills, the rail segment and the "Switch portal" row go on desktop; the phone is unchanged. | — |
+
+T4 was settled on 29 Oct (contracts reflow on a phone).
+
+---
+
 ## ✅ SETTLED 29 Oct 2026 (Theo, "3 yes 2 yes 1 yes") — contracts sent by link (builds 1427–1428)
 
 These are the answers to the three questions at the end of the round-1 audit list. Do not re-litigate them.
@@ -400,8 +420,10 @@ is OFF by design. `app_settings.sql` + `payment_reminders.sql` both run before d
   gates the CHANGELOG entry now, so there is no reason to put prose back.
 - **Sign out is a small icon**, bottom-right of that line, using the same `lock` glyph as the
   desktop rail.
-- **Every drawer section starts collapsed, every time.** Not a default — an invariant. The
-  drawer keeps its open set in memory and clears it on open. It no longer reads or writes
+- ~~**Every drawer section starts collapsed, every time.**~~ ⚠ **SUPERSEDED 1 Nov 2026 (T2 B, built
+  at 1434): the drawer opens with Daily expanded and every other section folded, every time.** The rest
+  of this bullet still holds: nothing is remembered between opens. Not a default — an invariant. The
+  drawer keeps its open set in memory and resets it on open (`freshOpen()`, `{daily:1}`). It no longer reads or writes
   `cardinal.lnav.sections` (the desktop rail owns that key), and 954's insurance-portal
   auto-open no longer reaches the drawer. **Do not restore the persistence.**
 

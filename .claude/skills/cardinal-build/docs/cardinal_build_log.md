@@ -37665,3 +37665,21 @@ The name was the only flexible item, so it was the one that gave way.
 - Light is set through localStorage before boot, because a reload lands on sign-in in this rig (`sw.js`).
 - `gate_1003`, `1127`, `1258`, `1260`, `1241`, `1397` and `1206` are run on both trees.
 - `check_build` GREEN.
+
+## Build 1434 — five taste picks: Daily open, signed notice, Production sans, one New lead, one desktop switcher (1 Nov 2026)
+
+**Source:** Theo's picks, verbatim: "T1 C · T2 B · T3 B · T5 B · T6 B · T7 A · T8 C · T9 B · T10 Keep #1". This build carries T2, T5, T6, T9 and T10. T1/T3 and T8 follow as their own builds; T7 A is no change.
+
+**Change** (`patch_1434_taste.py`, then `patch_1434.py` for the stamp and What's New):
+- **T2:** `freshOpen()` → `{daily:1}` at the drawer's closed→open edge and at load. Theo: 6 Daily rows showing, 6 sections folded; a rep: 7 rows, 4 folded. Nothing persists, the rail's key is untouched, field accounts keep their flat list.
+- **T5:** `edSignedNote(doc, signed)` adds a `data-cardinal-hint="signed"` line in the editor's existing notice style, 12.2:1. Zero hint elements in `serializeFrame()`, the saved HTML, the shared copy or the captured `/api/senddoc` body; `display:none` in print; `snapshot_document` still called on save.
+- **T6:** `--pb-mono` → `--pb-sans` with `tabular-nums`. Monospace text pieces on the board 67/78 → 0/74 (dark), number pieces with fixed-width digits 0/43 → 39/39. Box-label letter-spacing .14em → .06em, because `gate_1416` D caught "SCHEDULED" at 99px in a 90px box at 1366. Layout compared with 1433 at six widths: same boxes, no new clipping or wrapping.
+- **T9:** + New → Contact removed for every role; Lead relabelled "New lead"; Lead form gains admin-only Job cost (`#ldJobCost` → `checklist.job_cost`, a number). `#projModal` stays as the editor.
+- **T10:** the `#cbCrm` pill strip, the rail's segmented control and the rail's "Switch portal" row are deleted at source. Desktop switchers 4 → 1; the rail's Daily count 6 → 5 and still equals its rows.
+
+**Gates:**
+- `gate_1434.mjs` 152 checks; the control (1433) is RED with named failures, no crash. Its T6 layout comparison reads the 1433 tree from `git show 7b5003c:index.html`.
+- `patch_1434_gates.py`: 33 edits in 17 gates that asserted the old design — `harness_drawer1115`, `gate_1115`, `gate_775` (T2); `gate_1430` (T9); `gate_1287` (T6); `gate_1035`, `1299`, `1418`, `1393`, `754`, `952`–`956`, `944`, `render_navicons` (T10).
+- `check_build` GREEN. `audit_scrolllock` GREEN (16). `gate_types` 1,500 against 1,502 on 1433 (−2 TS2339, the deleted pill handler; both trees red on the same stale TS2339 baseline). `gate_dupes` unchanged from 1433. `gate_stack` clean at 390 and 1440.
+
+**Left for Theo:** production accounts no longer have a way to start a client from + New (Contact was theirs; leads stay sales/admin). Asked.

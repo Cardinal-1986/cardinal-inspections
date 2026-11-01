@@ -212,11 +212,12 @@ await session('dark-1366', { instr: false, desktop: true }, async page => {
   await page.setViewportSize({ width: 1366, height: 768 }); await go(page, 'showHome()', 1500);
   const k = await ev(page, () => ({ csv: __J.ink(__J.q('#cr-csv-clients')), count: __J.ink(__J.q('#countLabel')), asg: __J.ink(__J.text('Assigned', '#cr-rf-wrap')), sel: __J.ink(__J.q('#cr-bulk-toggle')) }));
   for (const [n, x] of Object.entries(k)) ok(R(x, 4.5), 'K  dark home history ' + n + ' ≥ 4.5', fmt(x));
-  const h = await ev(page, () => { const dot = document.querySelector('#cbCrm b[data-crm-go="community"] i'); const seg = __J.q('#cr-lnav .lnav-crm button.on'); return { dot: dot && __J.bg(dot), seg: seg && __J.bg(seg), segInk: __J.ink(seg) }; });
-  ok(h.dot === '#34d399', 'H  Community portal-pill dot is #34d399 (was #8ad0f5)', h.dot);
-  ok(h.seg === '#c8202e' && R(h.segInk, 4.5), 'H  Retail rail segment is #c8202e (was #3e6ca8), white ≥ 4.5', h.seg + ' ' + fmt(h.segInk));
+  /* T10 (Theo kept the page title): the pill strip and the rail segment H coloured are gone on the desktop */
+  const h = await ev(page, () => ({ pills: !!document.querySelector('#cbCrm, #crBanner .cbcrm'), seg: !!document.querySelector('#cr-lnav .lnav-crm'), title: !!document.querySelector('#brandTitle h1') }));
+  ok(!h.pills && h.title, 'H  no portal-pill strip in the top bar; the page title is the switcher (T10)', JSON.stringify(h));
+  ok(!h.seg, 'H  no Retail | Insurance | Community segment in the rail (T10)', JSON.stringify(h));
   const sp = await ev(page, () => { const a = __J.q('#cr-lnav .lnav-item[data-k="switchportal"] .lnav-tx'), b = __J.q('#cr-lnav .lnav-item[data-k="clients"] .lnav-tx') || [...document.querySelectorAll('#cr-lnav .lnav-item .lnav-tx')].find(e => __J.vis(e) && /Clients/.test(e.textContent)); return { a: a && getComputedStyle(a).color, b: b && getComputedStyle(b).color }; });
-  ok(sp.a && sp.a === sp.b, 'X  "Switch portal" wears the normal rail ink (was gold #f0c651)', JSON.stringify(sp));
+  ok(!sp.a && !!sp.b, 'X  no "Switch portal" row in the desktop rail (T10); Clients reads', JSON.stringify(sp));
   await go(page, 'openClientsDirectory()', 1500);
   const fc = await ev(page, () => [...document.querySelectorAll('.cd-frow .c')].filter(__J.vis).map(__J.ink));
   ok(fc.length > 0 && fc.every(x => R(x, 4.5)), 'K  dark client-directory filter counts ≥ 4.5 (were 3.50)', fc.slice(0, 2).map(fmt).join(' | '));
@@ -236,8 +237,8 @@ await session('light-1366', { instr: false, desktop: true, seed: LIGHT }, async 
   for (const n of ['csv', 'count', 'asg', 'sel']) ok(R(k[n], 4.5), 'K  light home history ' + n + ' ≥ 4.5', fmt(k[n]));
   ok(k.csvFg === 'rgb(143, 22, 32)', 'K  light CSV keeps the shipped #8f1620', k.csvFg);
   ok(R(k.other, 4.5), 'K  light other-month calendar days ≥ 4.5 (were 1.63)', fmt(k.other));
-  const h = await ev(page, () => { const seg = __J.q('#cr-lnav .lnav-crm button.on'); return { seg: seg && __J.bg(seg), ink: __J.ink(seg) }; });
-  ok(h.seg === '#c8202e' && R(h.ink, 4.5), 'H  light Retail rail segment #c8202e, white ≥ 4.5', h.seg + ' ' + fmt(h.ink));
+  const h = await ev(page, () => ({ seg: !!document.querySelector('#cr-lnav .lnav-crm'), title: !!document.querySelector('#brandTitle h1') }));
+  ok(!h.seg && h.title, 'H  light: no rail segment; the page title is the switcher (T10)', JSON.stringify(h));
   await go(page, 'openClientsDirectory()', 1500);
   const fc = await ev(page, () => [...document.querySelectorAll('.cd-frow .c')].filter(__J.vis).map(__J.ink));
   ok(fc.length > 0 && fc.every(x => R(x, 4.5)), 'K  light client-directory filter counts ≥ 4.5 (were 3.13)', fc.slice(0, 2).map(fmt).join(' | '));

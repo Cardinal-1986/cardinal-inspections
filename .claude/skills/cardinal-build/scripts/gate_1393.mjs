@@ -88,7 +88,7 @@ try {
     await go(page, "openProject('ji'); await w(1500);");
     chk('A ' + th + ' desktop insurance header', await page.evaluate(SCORE, ['header.site #woQuick']));
     await go(page, "document.body.dataset.crm='community'; try{ window.CardinalCommunityHub.show(); }catch(_){}; await w(1500);");
-    chk('C ' + th + ' desktop rail', await page.evaluate(SCORE, ['#cr-lnav .lnav-crm button.on', '#cr-lnav .lnav-sec .cnt']));
+    chk('C ' + th + ' desktop rail', await page.evaluate(SCORE, ['#cr-lnav .lnav-sec .cnt']));   /* T10: the CRM segment is retired */
     await ctx.close();
   }
   /* D — scanner */

@@ -64,18 +64,22 @@ async function probe(html, light) {
    door, and the judge read the gold as stray; the coordinator's brief sends it to the
    rail's NORMAL ink in both themes. So the row must match its neighbour (Clients)
    and must not be the yellow or the amber. */
+/* T10 (Theo kept the page title as the desktop's one portal switcher): the rail no longer
+   mirrors "Switch portal" at all — the row stays in the phone drawer — so J16's question
+   (normal ink, never the yellow or the amber) is answered by its absence. Its neighbour
+   Clients must still be there and read. */
 function judge(dark, lite) {
   const fails = [];
   const [d, dn] = String(dark).split('|'), [l, ln] = String(lite).split('|');
-  if (d === 'MISSING' || d !== dn || d === 'rgb(240, 198, 81)') fails.push(`Switch portal dark ${d} (want the normal rail ink ${dn}, not the yellow)`);
-  if (l === 'MISSING' || l !== ln || l === 'rgb(138, 97, 0)') fails.push(`Switch portal light ${l} (want the normal rail ink ${ln}, not the amber)`);
+  if (d !== 'MISSING' || dn === 'MISSING') fails.push(`dark: Switch portal ${d} is still a rail row (T10 wants it MISSING; Clients reads ${dn})`);
+  if (l !== 'MISSING' || ln === 'MISSING') fails.push(`light: Switch portal ${l} is still a rail row (T10 wants it MISSING; Clients reads ${ln})`);
   return fails;
 }
 
 const html = readFileSync(FILE, 'utf8');
 const fails = judge(await probe(html, false), await probe(html, true));
 for (const f of fails) console.log('  FAIL ' + f);
-console.log(fails.length ? `GATE 1035 RED — ${fails.length} failure(s)` : 'GATE 1035 GREEN — Switch portal wears the normal rail ink in both themes (J16)');
+console.log(fails.length ? `GATE 1035 RED — ${fails.length} failure(s)` : 'GATE 1035 GREEN — no Switch portal row in the desktop rail, both themes (T10); Clients reads');
 
 if (CONTROL) {
   const chtml = readFileSync(CONTROL, 'utf8');

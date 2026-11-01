@@ -67,7 +67,9 @@ async function probe(){
     };
   });
 }
-async function chip(k){ await page.evaluate(k=>{const b=document.querySelector('#cr-lnav .lnav-crm button[data-crm="'+k+'"]'); if(b)b.click();},k); await page.waitForTimeout(900); }
+/* T10: the rail segment is retired; switch through the page title's Front Door, the one switcher left */
+async function chip(k){ await page.evaluate(()=>{const t=document.getElementById('brandTitle'); if(t)t.click();}); await page.waitForTimeout(700);
+  await page.evaluate(k=>{const b=document.querySelector('#cr-fd [data-fd="'+k+'"]'); if(b)b.click();},k); await page.waitForTimeout(1200); }
 
 /* ── retail (boot state) ── */
 let r=await probe();
@@ -82,10 +84,10 @@ if(r){
      SEGMENT now wears the active CRM's one identity hue (retail #c8202e, insurance #2dd4bf,
      community #34d399), so it agrees with the portal pill and the header +. Only the
      segment moved; 952's strip and icon palette below are asserted unchanged. */
-  need('retail chip is the retail identity red (J16; was slate blue)', r.chipBg==='rgb(200, 32, 46)', String(r.chipBg));
+  need('no CRM segment in the rail (T10: the page title is the desktop switcher)', r.chipBg===null, String(r.chipBg));
   need('retail icons are steel', r.iconFill==='rgb(170, 180, 192)', String(r.iconFill));
   const cb=parseRgb(r.chipBg), ci=parseRgb(r.chipInk);
-  need('retail chip label clears 4.5:1', cb&&ci&&ratio(cb,ci)>=4.5, cb&&ci?ratio(cb,ci).toFixed(2):'unparsed');
+  void cb; void ci;   /* T10: no segment label left to score */
   const ib=parseRgb(r.bodyBg), ii=parseRgb(r.itemInk);
   need('row label clears 4.5:1 on the card body', ib&&ii&&ratio(ib,ii)>=4.5, ib&&ii?ratio(ib,ii).toFixed(2):'unparsed');
 }
@@ -94,7 +96,6 @@ if(r){
 await chip('insurance');
 r=await probe();
 need('insurance strip is red', !!r && r.stripBg==='rgb(200, 32, 46)', r?String(r.stripBg).slice(0,60):'no rail');
-need('insurance chip is the insurance identity teal (J16; was red)', !!r && r.chipBg==='rgb(45, 212, 191)', r?String(r.chipBg):'');
 need('insurance icons are the lighter cardinal', !!r && r.iconFill==='rgb(227, 92, 99)', r?String(r.iconFill):'');
 need('no teal in the insurance rail outside the segment (J16: strip + icons stay red)', !!r && ![r.stripBg,r.iconFill].some(v=>/45,\s*212,\s*191/.test(String(v))),
   r?[r.stripBg,r.chipBg,r.iconFill].join(' | ').slice(0,80):'');
@@ -123,7 +124,7 @@ await page.evaluate(()=>{ delete document.body.dataset.crmHead;
   const m=document.getElementById('navMenu'); if(m){const d=document.createElement('span');m.appendChild(d);d.remove();} });
 await page.waitForTimeout(1000);
 await chip('retail');
-await page.evaluate(()=>{ document.documentElement.setAttribute('data-theme','rb-light'); });
+await page.evaluate(()=>{ const b=document.querySelector('[data-cr-appear="light"]'); if(b) b.click(); else document.documentElement.setAttribute('data-theme','rb-light'); });   /* T10: the real control */
 await page.waitForTimeout(400);
 const lt=await page.evaluate(()=>{
   const i5=document.querySelector('#cr-lnav .lnav-item svg.i5');

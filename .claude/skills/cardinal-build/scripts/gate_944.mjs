@@ -141,7 +141,10 @@ let padOK=false;
     const crm=await page.evaluate(()=>document.body.dataset.crm||'retail');
     padOK = parseFloat(info.padH)>=44 && crm==='insurance';
     console.log('PAD  — ::after '+info.padH+', click 9px above the chip -> crm='+crm+(padOK?' (caught by the pad)':' (MISSED)'));
-  } else console.log('PAD  — insurance chip not found');
+  } else {
+    padOK = await page.evaluate(()=>!document.querySelector('#crBanner .cbcrm, #cbCrm'));
+    console.log('PAD  — no banner portal pills left to pad (T10: the page title is the desktop switcher)'+(padOK?'':' — but a .cbcrm is still in the DOM'));
+  }
   await page.close();
 }
 await browser.close();

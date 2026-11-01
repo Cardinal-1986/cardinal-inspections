@@ -112,7 +112,8 @@ const r = await p.evaluate(() => {
     bodyOver   : document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     menuOver   : menu ? menu.scrollWidth > menu.clientWidth + 1 : null,
     secs       : [...document.querySelectorAll('#navMenu .navsec')]
-                   .map(s => s.getAttribute('aria-expanded')),
+                   .map(s => s.textContent.trim().toLowerCase() + ':' + s.getAttribute('aria-expanded')),
+    dailyCount : +((document.querySelector('#navMenu .navsec[data-crsec="daily"]') || { getAttribute: () => -1 }).getAttribute('data-crcount')),
     hiddenRows : document.querySelectorAll('#navMenu .navopt[data-crhide="1"]').length,
     shownRows  : [...document.querySelectorAll('#navMenu .navopt')]
                    .filter(e => getComputedStyle(e).display !== 'none').length
@@ -163,12 +164,13 @@ else {
   ok(!r.bodyOver, 'the page does not scroll sideways');
   ok(r.menuOver === false, 'the drawer itself does not scroll sideways');
 
-  ok(r.secs.length > 0 && r.secs.every(v => v === 'false'),
-     'every section renders collapsed (' + r.secs.filter(v => v === 'true').length + ' expanded of ' +
+  const exp = r.secs.filter(v => /:true$/.test(v));
+  ok(r.secs.length > 0 && exp.length === 1 && /^daily:/.test(exp[0]),
+     'T2: Daily opens with the drawer and every other section renders collapsed (' + exp.join(',') + ' of ' +
      r.secs.length + ')');
-  ok(r.shownRows === 0,
-     'so no nav row is on screen until you tap a heading (' + r.shownRows + ' shown, ' +
-     r.hiddenRows + ' hidden)');
+  ok(r.shownRows > 0 && r.shownRows === r.dailyCount,
+     'so the rows on screen are Daily\u2019s and no others (' + r.shownRows + ' shown, Daily counts ' +
+     r.dailyCount + ', ' + r.hiddenRows + ' hidden)');
 }
 
 await b.close();

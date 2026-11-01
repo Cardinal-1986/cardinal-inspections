@@ -28,7 +28,7 @@ const raf = () => new Promise(r => setTimeout(r, 24));
 const ST = '<script id="cr-drawer-script">';
 const s0 = html.indexOf(ST);
 const mod = s0 < 0 ? '' : html.slice(s0 + ST.length, html.indexOf('</script>', s0));
-if(!mod || !/var secOpen = \{\}/.test(mod)){
+if(!mod || !/var secOpen = /.test(mod)){   /* T2: freshOpen() since Theo's pick B */
   console.log('  ✗ FAIL the drawer keeps no in-memory section state (negative control)');
   console.log('\nRED — Build 1115 drawer code absent from ' + path.basename(APP));
   process.exit(1);
@@ -95,7 +95,7 @@ const w = dom.window, doc = w.document;
 /* seed the rail's store with Office ALREADY OPEN. On 1114 the drawer read this
    and opened Office; on 1115 it must ignore it entirely. */
 const RAIL_KEY = 'cardinal.lnav.sections';
-w.localStorage.setItem(RAIL_KEY, JSON.stringify({ office:1, daily:1 }));
+w.localStorage.setItem(RAIL_KEY, JSON.stringify({ office:1, daily:0 }));   /* T2: rail says Daily closed */
 
 let threw = '';
 try{ w.eval(mod); }catch(err){ threw = err.message; }
@@ -114,10 +114,11 @@ const expandedCount = () => secs().filter(s => s.getAttribute('aria-expanded') =
 
   ok(secs().length === 3 && secs().every(s => s.hasAttribute('aria-expanded')),
      'every section became a real control (aria-expanded set)');
-  ok(expandedCount() === 0,
-     'FIRST opening: every section is collapsed (' + expandedCount() + ' expanded)');
-  ok(hidden() === rows() && rows() === 4,
-     'every row under a heading is hidden (' + hidden() + '/' + rows() + ')');
+  const dailySec = () => secs().find(s => s.textContent.trim() === 'Daily');
+  ok(expandedCount() === 1 && dailySec().getAttribute('aria-expanded') === 'true',
+     'FIRST opening: Daily is open and every other section is collapsed (T2; ' + expandedCount() + ' expanded)');
+  ok(hidden() === 2 && rows() === 4,
+     'Daily\u2019s two rows show and the others are hidden (' + hidden() + '/' + rows() + ' hidden)');
   ok(secs().every(s => s.getAttribute('data-crcount')),
      'each heading carries its row count');
 
@@ -130,11 +131,15 @@ const expandedCount = () => secs().filter(s => s.getAttribute('aria-expanded') =
   office.dispatchEvent(new w.MouseEvent('click', { bubbles:true }));
   await raf();
   ok(office.getAttribute('aria-expanded') === 'true', 'tapping a heading expands it');
-  ok(hidden() === 3, 'its row is revealed and the others stay hidden (' + hidden() + ' hidden)');
-  ok(expandedCount() === 1, 'only the tapped section opened');
+  ok(hidden() === 1, 'its row is revealed and the others stay hidden (' + hidden() + ' hidden)');
+  ok(expandedCount() === 2, 'only the tapped section opened beside Daily');
+  /* T2: fold Daily too, so the reopen below has to put it back */
+  dailySec().dispatchEvent(new w.MouseEvent('click', { bubbles:true }));
+  await raf();
+  ok(dailySec().getAttribute('aria-expanded') === 'false', 'Daily folds when tapped, like any section');
 
   /* the rail's store must be untouched by that */
-  ok(w.localStorage.getItem(RAIL_KEY) === JSON.stringify({ office:1, daily:1 }),
+  ok(w.localStorage.getItem(RAIL_KEY) === JSON.stringify({ office:1, daily:0 }),
      'expanding in the drawer writes NOTHING to the rail’s fold store');
 
   /* close and reopen — the whole point of the build */
@@ -143,9 +148,9 @@ const expandedCount = () => secs().filter(s => s.getAttribute('aria-expanded') =
   menu.style.display = 'block';
   await raf(); await raf();
 
-  ok(expandedCount() === 0,
-     'SECOND opening: everything is collapsed again (' + expandedCount() + ' expanded)');
-  ok(hidden() === rows(), 'and every row is hidden again (' + hidden() + '/' + rows() + ')');
+  ok(expandedCount() === 1 && dailySec().getAttribute('aria-expanded') === 'true',
+     'SECOND opening: Daily open again, Office folded \u2014 nothing remembered (' + expandedCount() + ' expanded)');
+  ok(hidden() === rows() - 2, 'and only Daily\u2019s rows show again (' + hidden() + '/' + rows() + ' hidden)');
 
   /* a mutation while OPEN must not slam a section shut under the finger */
   const office2 = secs().find(s => s.textContent.trim() === 'Office');
@@ -166,7 +171,7 @@ const expandedCount = () => secs().filter(s => s.getAttribute('aria-expanded') =
      'sign-out is never hidden by a collapsed section');
 
   /* the store is STILL untouched after all of that */
-  ok(w.localStorage.getItem(RAIL_KEY) === JSON.stringify({ office:1, daily:1 }),
+  ok(w.localStorage.getItem(RAIL_KEY) === JSON.stringify({ office:1, daily:0 }),
      'after a full session the rail’s fold store is byte-identical');
   ok(!/writeSecs|readSecs/.test(mod),
      'readSecs/writeSecs are deleted at source, not left unused');

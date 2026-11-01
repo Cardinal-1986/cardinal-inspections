@@ -48,7 +48,9 @@ for (const [light, old] of [[false, 'rgb(240, 198, 81)'], [true, 'rgb(138, 97, 0
   const { ctx, p } = await boot({ w: 1194, light });
   try { await p.evaluate(async () => { await window.__sentinelStates[0].run(); }); await p.waitForTimeout(700); } catch (e) {}
   const c = await p.evaluate(() => { const g = k => { const e = document.querySelector('#cr-lnav .lnav-item[data-k="' + k + '"] .lnav-tx'); return e ? getComputedStyle(e).color : 'MISSING'; }; return [g('switchportal'), g('clients')]; }).catch(() => ['ERR', 'ERR']);
-  ok(c[0] !== 'MISSING' && c[0] === c[1] && c[0] !== old, 'C  Switch portal row ' + (light ? 'light' : 'dark') + ': the normal rail ink (J16)', c.join(' vs ')); await ctx.close();
+  /* T10: the rail no longer mirrors "Switch portal" (the page title is the desktop's one portal
+     switcher), so there is no row left to wear the old yellow / amber; Clients must still be there */
+  ok(c[0] === 'MISSING' && c[1] !== 'MISSING' && c[1] !== 'ERR' && c[1] !== old, 'C  no Switch portal row in the desktop rail ' + (light ? 'light' : 'dark') + ' (T10); Clients reads', c.join(' vs ')); await ctx.close();
 }
 
 /* D */

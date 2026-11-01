@@ -55,11 +55,10 @@ await group('#7  + New on the production screens (curtis, installed app)', async
     const hits = await ev(page, () => { const m = document.getElementById('newMenu'); if (!m || getComputedStyle(m).display === 'none') return null;
       return [...m.querySelectorAll('.navopt')].filter(b => b.getBoundingClientRect().height > 0).map(b => { const q = b.getBoundingClientRect(); const h = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return { t: b.textContent.trim(), ok: !!h && (b === h || b.contains(h)), under: h ? ((h.closest('[id]') || {}).id) : '' }; }); });
     ok(Array.isArray(hits) && hits.length >= 3 && hits.every(h => h.ok), `#7 ${nm}: every + New option is on top of the screen (hit-test)`, JSON.stringify(hits));
-    /* choose Contact: the client form must be the thing on screen, over the view */
-    await ev(page, () => { const b = document.querySelector('#newMenu [data-new="contact"]'); if (b && b.getBoundingClientRect().height) b.click(); }); await pause(page, 600);
-    const pf = await onTop(page, '#projModal .projform, #projModal form, #projModal > div');
-    ok(pf.found && pf.top, `#7 ${nm}: + New → Contact opens the client form ON TOP (hit-test)`, JSON.stringify(pf));
-    await ev(page, () => { const c = document.getElementById('pfCancel'); if (c) c.click(); else document.getElementById('projModal').style.display = 'none'; }); await pause(page, 300);
+    /* T9 (Theo's pick B): + New has no separate Contact form; New lead is the one way to start a
+       client and stays sales/admin, so a production account sees Task, Reminder, Punch-out */
+    ok(Array.isArray(hits) && !hits.some(h => /^contact$/i.test(h.t)) && hits.map(h => h.t).join(',') === 'Task,Reminder,Punch-out', `#7 ${nm}: + New offers no separate Contact form (T9)`, JSON.stringify(hits && hits.map(h => h.t)));
+    await ev(page, () => { document.getElementById('newMenu').style.display = 'none'; }); await pause(page, 200);
     /* choose Task: the day sheet on top, the production screen still open underneath, no retail home */
     await page.tap('#pwaNew', { timeout: 3000 }).catch(() => {}); await pause(page, 400);
     await ev(page, () => { const b = document.querySelector('#newMenu [data-new="task"]'); if (b && b.getBoundingClientRect().height) b.click(); }); await pause(page, 700);
@@ -351,7 +350,7 @@ await group('#24 rail icons, light vs dark (theo, desktop 1280)', async () => {
     await browser.close();
   }
   const D = Array.isArray(sets.dark) ? sets.dark : [], Lt = Array.isArray(sets.light) ? sets.light : [];
-  ok(D.length > 10 && Lt.length === D.length, '#24 rig: the rail rendered in both themes', D.length + ' / ' + Lt.length);
+  ok(D.length >= 10 && Lt.length === D.length, '#24 rig: the rail rendered in both themes', D.length + ' / ' + Lt.length);   /* T10: Daily lost its Switch portal row (11 -> 10) */
   const dk = {}; D.forEach(r => { dk[r.k] = r.g; });
   const clash = [];
   for (let i = 0; i < Lt.length; i++) for (let j = i + 1; j < Lt.length; j++) {

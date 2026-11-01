@@ -96,7 +96,8 @@ const doors=await page.evaluate(()=>({
   productionRow: !!document.querySelector('#navMenu #cr-nav-production') ,
   productionShown: (()=>{const b=document.querySelector('#navMenu #cr-nav-production'); return b?b.style.display!=='none':false;})(),
   cardinalTruth: (()=>{const b=document.querySelector('#navMenu .navopt[data-nav="cardinaltruth"]'); return b?b.style.display!=='none':false;})(),
-  crmSwitcher: !!document.querySelector('#cr-lnav .lnav-crm button[data-crm="community"]'),
+  /* T10: the page title's Front Door is the switcher; read its Community door */
+  crmSwitcher: (()=>{ try{ window.CardinalFrontDoor.open(); }catch(_){} const ok=!!document.getElementById('brandTitle') && !!document.querySelector('#cr-fd [data-fd="community"]'); try{ window.CardinalFrontDoor.close(); }catch(_){} return ok; })(),
 }));
 need('the Production row in Daily is the door into production', doors.productionRow && doors.productionShown, JSON.stringify(doors));
 need('Cardinal Truth stays reachable in retail', doors.cardinalTruth);
