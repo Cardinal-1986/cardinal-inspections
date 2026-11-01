@@ -142,7 +142,9 @@ await group('T2  a field account keeps its flat list (scottie, 390)', async () =
     } finally { await browser.close(); }
   }
   ok(seen.art.ctl === 0 && seen.art.vis.filter(t => !/^SEC /.test(t)).length >= 5, 'T2 scottie: no section is a fold control and no row is folded away (1317 flat list)', seen.art);
-  ok(JSON.stringify(seen.art.vis) === JSON.stringify(seen.ref.vis), 'T2 scottie: the drawer shows exactly what it showed on the reference tree', seen.art.vis.join(' | '));
+  /* the version line differs by construction (the reference is 1433): compare everything else */
+  const unstamp = v => v.map(t => t.replace(/v\d{4}-\d\d-\d\d build \d+/, 'vSTAMP'));
+  ok(JSON.stringify(unstamp(seen.art.vis)) === JSON.stringify(unstamp(seen.ref.vis)), 'T2 scottie: the drawer shows exactly what it showed on the reference tree (version line aside)', seen.art.vis.join(' | '));
 });
 await group('T2  the desktop rail keeps its own folds (theo, 1440)', async () => {
   const { browser, page } = await boot3('theo', { desktop: true, w: 1440 });
@@ -437,6 +439,6 @@ for (const light of [false, true]) {
 
 const errs = [...L3.log, ...L0.log].filter(l => /^PAGEERROR/.test(l));
 ok(errs.length === 0, 'no uncaught page errors across every boot', errs.slice(0, 3).join(' | ') || 'none');
-console.log('\n' + (fails.length ? 'GATE K RED' : 'GATE K GREEN') + ' — ' + passes + ' passed, ' + fails.length + ' failed');
+console.log('\n' + (fails.length ? 'GATE 1434 RED' : 'GATE 1434 GREEN') + ' — ' + passes + ' passed, ' + fails.length + ' failed');
 if (fails.length) { console.log('failed:'); fails.forEach(f => console.log('  - ' + f)); }
 process.exit(fails.length ? 1 : 0);
