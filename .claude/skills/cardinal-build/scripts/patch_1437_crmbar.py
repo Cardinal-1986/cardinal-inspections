@@ -42,7 +42,7 @@ s = one(s, ".cd-crmbar::-webkit-scrollbar{display:none;}\n",
 """)
 # E2
 s = one(s, ".cd-wrap{padding-bottom:120px;}",
-           ".cd-wrap{padding-bottom:160px;}/* 1437: was 120 — room for the CRM bar's second row (62 tab bar + ~81 two rows) */")
+           """.cd-wrap{padding-bottom:160px;--cr-stack:"the Clients list's own clearance over its fixed CRM bar; .wrap is the shared page container"}/* 1437: was 120 — room for the CRM bar's second row (62 tab bar + ~81 two rows) */""")
 assert 'flex-wrap:wrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none' in s and 'flex-wrap:wrap' not in orig.split('.cd-crmbar{',1)[1].split('}',1)[0]
 pl.write_atomic(P, s)
 print('patch_1437_crmbar: 3 edits')

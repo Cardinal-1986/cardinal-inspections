@@ -37740,7 +37740,7 @@ The name was the only flexible item, so it was the one that gave way.
 
 **Change** (`patch_1437_crmbar.py`, then `patch_1437.py`):
 - **E1, `flex-wrap:wrap`:** 984's and 993's fix for the other hidden-scrollbar strips. Every chip is already `white-space:nowrap; flex:0 0 auto`.
-- **E2, `.cd-wrap` bottom padding 120 → 160px:** the bar is fixed over the list, and two rows need about 143px above the 62px tab bar's top edge.
+- **E2, `.cd-wrap` bottom padding 120 → 160px:** the bar is fixed over the list, and two rows need about 143px above the 62px tab bar's top edge. It carries `--cr-stack`: `gate_stack` reads an edited value as a new rule. It was flagged for beating `.wrap{padding-bottom:0}`, the shared page container, which the 120px rule already beat on 1436.
 - Byte-reproducible on 1436.
 
 **After:** every chip lies inside 0..390 at every size and count. Normal with fixture counts is one row with every chip at the same x as 1436. A long list scrolled to the end leaves the last client above the bar, with the footer showing and hidden.
