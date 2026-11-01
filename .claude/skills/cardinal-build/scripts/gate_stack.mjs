@@ -191,6 +191,9 @@ const ANALYSE = (priorSet) => `((PRIOR) => {
 })(${JSON.stringify(priorSet)})`;
 
 async function sweep(page, file, setupSrc, states, evalStr) {
+  /* 1435: under file:// a module's raw fetch() bypasses the mocked client and reached PRODUCTION
+     Supabase (measured by builder J: 6 anonymous GET /rest/v1 per load). Nothing here may leave the box. */
+  await page.route(/^(https?|wss?):\/\/[^/]*supabase\.co(\/|$)/, r => r.abort('blockedbyclient'));
   await page.addInitScript(setupSrc || '');
   await page.goto('file://' + file, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);

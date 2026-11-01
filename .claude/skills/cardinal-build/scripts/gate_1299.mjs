@@ -5,8 +5,9 @@
      B  ...and a plain client link (#p/<id>) still lands on Overview
      C  the desktop rail's Switch portal row wears Theo's yellow in dark and
         538's amber in light (the rules said data-k="landing"; 1165 renamed it)
-     D  the outline Cancel on a WHITE form sheet reads in dark mode (1292 made it
-        light ink on a see-through chip: 1.22:1)
+     D  the outline Cancel on the Add-project sheet reads in dark mode (1292 made it
+        light ink on a see-through chip: 1.22:1 on the then-white sheet; the sheet is
+        the dark panel in dark mode since T3 B, 1 Nov 2026)
      E  the dispatch board's crew tags keep their monospace (1287's one-typeface
         rule reached Production and Dispatch, which are left alone)
      F  no native alert()/confirm() outside crAsk/crTell's own fallbacks (lexer)
@@ -59,7 +60,7 @@ for (const [light, old] of [[false, 'rgb(240, 198, 81)'], [true, 'rgb(138, 97, 0
     const b = document.getElementById('pfCancel'); const f = m.querySelector('.projform'); if (!b || !f) return null;
     return { c: getComputedStyle(b).color, g: getComputedStyle(f).backgroundColor, theme: document.documentElement.getAttribute('data-theme') }; }).catch(() => null);
   const rr = r ? ratio(r.c, r.g) : 0;
-  ok(rr >= 4.5 && !(r && r.theme), 'D  dark: Cancel on the white Add-project sheet clears 4.5:1', rr + ':1 ' + JSON.stringify(r)); await ctx.close(); }
+  ok(rr >= 4.5 && !(r && r.theme), 'D  dark: Cancel on the Add-project sheet clears 4.5:1', rr + ':1 ' + JSON.stringify(r)); await ctx.close(); }
 
 /* E */
 { const { ctx, p } = await boot({ w: 1194 });

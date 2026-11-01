@@ -20,6 +20,8 @@ He picked from the preview page (`taste/manifest.json`, published as the "Cardin
 
 T4 was settled on 29 Oct (contracts reflow on a phone).
 
+**Follow-up, 1 Nov 2026 (Theo, "1"): production accounts do not start clients from + New.** Build 1434 removed Contact, which was their only entry. Asked whether to give production "New lead" instead, Theo chose to leave it out. Their + New stays Task, Reminder, Punch-out; leads stay a sales and admin form. Do not add a client-creation entry for production.
+
 ---
 
 ## ✅ SETTLED 29 Oct 2026 (Theo, "3 yes 2 yes 1 yes") — contracts sent by link (builds 1427–1428)
@@ -6325,10 +6327,11 @@ size). "A11" is read as **Buttons A · Type 1 · Forms 1**.
   Sizes above 26 are display numbers and stay. `pt` sizes are print documents and stay. The app
   stylesheets were done at build 1242; the JS-built sizes are done by hand, because they share
   strings with the document templates.
-- **Forms 1: keep the white sheet.** The eight `.projform` forms stay a white "paper" card in
+- ⚠ **SUPERSEDED 1 Nov 2026 (T3 B, built at 1435): the eight sheets are dark in dark mode; light is unchanged.** The
+  original ruling, kept for the record: ~~**Forms 1: keep the white sheet.** The eight `.projform` forms stay a white "paper" card in
   **both** themes: profile, Add project, Roofing checklist, GC, Lead, New Lead, Appointment and
-  Signature. **Do not "finish the dark theme" on them.** It was offered as option 2 and declined.
-  `gate_1241` holds their readability.
+  Signature. Do not "finish the dark theme" on them. It was offered as option 2 and declined.~~
+  `gate_1241` still holds their readability, in both themes.
 
 
 ## 🟠 Pre-rollout readiness (7 Oct 2026) — punch-outs first, then the extras

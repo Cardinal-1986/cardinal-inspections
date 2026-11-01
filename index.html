@@ -701,20 +701,76 @@ footer.site{
 #projNotes{display:none;width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
   font:15px/1.5 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;box-sizing:border-box;}
 /* ---- modal ---- */
-.projform{max-width:430px;margin:9vh auto 0;background:#fff;border-radius:12px;padding:22px 24px;
-  box-shadow:0 12px 40px rgba(0,0,0,.35);}
-.projform label{display:block;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#555;margin:10px 0 0;}
-.projform select{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#fff;}
-.projform input{width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #c9c2bf;
+.projform{max-width:430px;margin:9vh auto 0;background:var(--sheet-bg,#fff);border-radius:12px;padding:22px 24px;
+  box-shadow:var(--sheet-shadow,0 12px 40px rgba(0,0,0,.35));}
+.projform label{display:block;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-mute,#555);margin:10px 0 0;}
+.projform select{width:100%;margin-top:4px;padding:9px 11px;border:1px solid var(--sheet-fieldbd,#c9c2bf);border-radius:7px;font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:var(--sheet-field,#fff);}
+.projform input{width:100%;margin-top:4px;padding:9px 11px;border:1px solid var(--sheet-fieldbd,#c9c2bf);
   border-radius:7px;font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
+/* T3 B: box-sizing left both rules above — the app's global *{box-sizing:border-box} (line ~172) already sets it */
 /* checkboxes/radios must never inherit the full-width text-field look */
 .projform input[type="checkbox"], .projform input[type="radio"]{
   width:22px;height:22px;min-width:22px;--cr-stack:"the form checkbox rule has always overridden .projform input and .cbx; 1241 only raised 18px to 22px";flex:0 0 auto;
   margin:0;padding:0;box-shadow:none;accent-color:var(--red);
 }
 .projform .ckinline label{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;}
+/* ── T3 B (1 Nov 2026, Theo: "T3 B") — the eight sheets go dark in DARK mode ──
+   Profile, Add project, Roofing checklist, GC, Lead, New Lead, Appointment and
+   Signature. This REVERSES 6 Oct's "Forms 1" (a white paper sheet in both
+   themes); the new answer is the settled one. Light mode is unchanged.
+
+   HOW, so the next person does not add a layer on top: every rule that colours
+   a sheet reads var(--sheet-x, <its light value>), and the --sheet-* tokens are
+   declared ONLY here, on .projform, ONLY in dark. In light — and anywhere that
+   is not inside a sheet — each var() falls back to exactly what shipped. The
+   values are the app's own dark panel family: the sheet is --rbe-panel, its
+   fields the recessed --rbe-panel2, its cream/beige sub-panels and chips
+   --rbe-bg2, lines --rbe-line2/3. Two legacy tokens are re-declared for the
+   sheet's subtree, because rules and inline styles inside it read them by
+   name: --line (hairlines) and --muted (.subnote).
+   Red words are #ff7b82, the dark "red words" ink .chipbtn.danger has carried
+   since 1292: #e35c63 is 4.10:1 on the bg2 chips, under the 4.5 floor.
+
+   NOT here, on purpose: the estimate builder's paper document (1217 "dark
+   chrome, paper document") is not a .projform and stays paper; printed and
+   shared documents do not change. The signature PAD stays white in both themes
+   — it is a writing surface, and the stroke is drawn dark on a light ground.  */
+:root:not([data-theme="rb-light"]) .projform{
+  --sheet-bg:var(--rbe-panel,#16161B);
+  --sheet-field:var(--rbe-panel2,#101015);
+  --sheet-tint:var(--rbe-bg2,#262a31);
+  --sheet-fieldbd:var(--rbe-line3,#3a3a44);
+  --sheet-ink:var(--rbe-ink,#cfd6df);
+  --sheet-head:var(--rbe-head,#ffffff);
+  --sheet-mute:var(--rbe-mute,#b8bec6);
+  --sheet-hint:var(--rbe-mute2,#9aa0a8);
+  --sheet-red:#ff7b82;
+  --sheet-redtint:var(--rbe-redtint,#3a2226);
+  --sheet-redbd:var(--rbe-del-bd,#6e3129);
+  --sheet-good:#4fc98a;
+  --sheet-amber:#f0a24a;
+  --sheet-ambertint:var(--rbe-ambertint,#3a2e1c);
+  --sheet-bluetint:var(--rbe-bluetint,#1c2a3a);
+  --sheet-blue:var(--rbe-acc,#8fb4d8);
+  --sheet-shadow:0 0 0 1px var(--rbe-panelbd,#24242c), 0 12px 40px rgba(0,0,0,.6);
+  --line:var(--rbe-line2,#2b2b33);
+  --muted:var(--rbe-mute,#b8bec6);
+  color:var(--sheet-ink);
+  color-scheme:dark;   /* the browser's own parts follow: the time/date picker icons, select arrows, native checkboxes */
+}
+:root:not([data-theme="rb-light"]) .projform h3{color:var(--sheet-head);}
+/* The fields' ground, ink and placeholder were the browser's own Field /
+   FieldText — no rule set them, so there is nothing to edit; the dark sheet
+   names them. Checkboxes and radios keep their own look. */
+:root:not([data-theme="rb-light"]) .projform input:not([type=checkbox]):not([type=radio]),
+:root:not([data-theme="rb-light"]) .projform textarea{background-color:var(--sheet-field);}
+:root:not([data-theme="rb-light"]) .projform input,
+:root:not([data-theme="rb-light"]) .projform textarea,
+:root:not([data-theme="rb-light"]) .projform select{color:var(--sheet-ink);}
+:root:not([data-theme="rb-light"]) .projform input::placeholder,
+:root:not([data-theme="rb-light"]) .projform textarea::placeholder{color:var(--sheet-hint);}
 .tradegrid label{display:flex;align-items:center;gap:8px;min-width:0;
-  font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+  font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-ink,#2b2b2b);cursor:pointer;}
 .tradegrid label span, .tradegrid label{overflow:hidden;text-overflow:ellipsis;}
 
 @media (max-width:640px){ .projcover{flex:0 0 106px;width:106px;height:auto;align-self:stretch;} .projinfo{padding:12px 13px 13px;} }
@@ -980,13 +1036,13 @@ body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-due{color:
 
 .ckcard{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
   border:1px solid var(--line);border-radius:10px;background:#fff;padding:14px 16px;margin:8px 0;}
-.ckhead{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--red-dk);border-bottom:2px solid var(--red);
+.ckhead{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-red,var(--red-dk));border-bottom:2px solid var(--red);
   padding-bottom:4px;margin:18px 0 6px;}
 .ckrow{display:flex;gap:12px;flex-wrap:wrap;}
 .ckrow > label{flex:1;min-width:150px;}
-.ckinline{display:flex;gap:14px;flex-wrap:wrap;font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#444;margin-top:6px;}
+.ckinline{display:flex;gap:14px;flex-wrap:wrap;font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-ink,#444);margin-top:6px;}
 .ckinline label{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font:inherit;margin:0;min-height:44px;--cr-stack:"the vent row has always overridden .projform label; 1240 only raised it to 44px";}
-.ckclient{font:15px/1.6 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#444;background:#f8f5f4;border:1px solid var(--line);
+.ckclient{font:15px/1.6 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-ink,#444);background:var(--sheet-tint,#f8f5f4);border:1px solid var(--line);
   border-radius:8px;padding:9px 12px;margin:6px 0 2px;}
 
 /* ---- header nav ---- */
@@ -1086,13 +1142,14 @@ body.cr-prod:has(#punchView:not([style*="none"])) :is(#projModal,#apptModal,#lea
 .apptlist{max-height:220px;overflow:auto;overscroll-behavior-x:contain;}
 .apptrow{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:8px;
   padding:9px 11px;margin:6px 0;font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
-.apptrow .tm{font-weight:800;color:var(--red-dk);white-space:nowrap;min-width:64px;}
+.apptrow .tm{font-weight:800;color:var(--sheet-red,var(--red-dk));white-space:nowrap;min-width:64px;}
 .apptrow .bd{flex:1;}
-.apptrow .bd small{display:block;color:#5f6670;}   /* 1433: #8a8a8a was 3.45:1 on the white sheet; 5.80:1 */
-/* 1258: Add to calendar — the row button and its sheet (fixed colours: the sheet
-   sits over the appointment modal's own dark wash in both themes) */
+.apptrow .bd small{display:block;color:var(--sheet-mute,#5f6670);}   /* 1433: #8a8a8a was 3.45:1 on the white sheet; 5.80:1. T3 B: 9.63:1 on the dark sheet */
+/* 1258: Add to calendar — the row button and its sheet (#apptCalSheet keeps fixed
+   colours: it sits over the appointment modal's own dark wash in both themes).
+   T3 B: the ROW button follows the day sheet, which is dark in dark mode now. */
 .apptrow .apptcal{flex:none;min-height:44px;padding:0 12px;border-radius:8px;cursor:pointer;
-  border:1px solid #9aa4b2;background:#ffffff;color:#1e2b4a;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
+  border:1px solid var(--sheet-fieldbd,#9aa4b2);background:var(--sheet-field,#ffffff);color:var(--sheet-ink,#1e2b4a);font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
 /* 1412: 9995, above body.standalone #pwaNav (9990) — the 1273 rule; at 9600 the nav covered the buttons */
 #apptCalSheet{position:fixed;left:0;right:0;bottom:0;z-index:9995;display:none;
   padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:#16161b;color:#eceef0;
@@ -1147,12 +1204,12 @@ body.cr-prod:has(#punchView:not([style*="none"])) :is(#projModal,#apptModal,#lea
 #ctUpSheet .pri{background:#c8202e;border:1px solid #c8202e;color:#ffffff;}
 #ctUpSheet .pri[disabled]{opacity:.6;cursor:default;}
 #ctUpSheet .no{background:transparent;border:1px solid #3a3e46;color:#eceef0;}
-.apptrow .del{border:0;background:none;color:#5f6670;font-size:15px;cursor:pointer;min-width:44px;min-height:44px;}   /* 1433: #b3a49d was 2.41:1; a 44px tap area */
+.apptrow .del{border:0;background:none;color:var(--sheet-mute,#5f6670);font-size:15px;cursor:pointer;min-width:44px;min-height:44px;}   /* 1433: #b3a49d was 2.41:1; a 44px tap area. T3 B: 9.63:1 dark */
 .apptrow .del:hover{color:var(--red);}
-/* 1260: Edit, and the row it is editing. The day sheet is the white form sheet
-   in both themes (Forms 1), so a fixed ink like 1258's Add to calendar. */
+/* 1260: Edit, and the row it is editing. Same ink as 1258's Add to calendar —
+   white paper in light; T3 B: the dark sheet's field and ink in dark. */
 .apptrow .apptedit{flex:none;min-height:44px;padding:0 14px;border-radius:8px;cursor:pointer;
-  border:1px solid #9aa4b2;background:#ffffff;color:#1e2b4a;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
+  border:1px solid var(--sheet-fieldbd,#9aa4b2);background:var(--sheet-field,#ffffff);color:var(--sheet-ink,#1e2b4a);font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
 .apptrow .apptact{flex:none;display:flex;align-items:center;gap:8px;margin-left:auto;}
 .apptrow.editing{border-color:#c8202e;box-shadow:0 0 0 1px #c8202e inset;}
 @media (max-width:520px){
@@ -1387,15 +1444,15 @@ body:not(.claim-insurance) #commsView #chatTagRow .chipbtn:hover{color:#9c1822;b
   .projgrid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));}
 }
 
-.ldbox{border:1px solid var(--line);border-radius:10px;background:#fcfaf9;padding:12px 14px;margin:0 0 12px;}
-.ldhead{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--red-dk);border-bottom:2px solid var(--red);
+.ldbox{border:1px solid var(--line);border-radius:10px;background:var(--sheet-field,#fcfaf9);padding:12px 14px;margin:0 0 12px;}
+.ldhead{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-red,var(--red-dk));border-bottom:2px solid var(--red);
   padding-bottom:4px;margin-bottom:8px;display:flow-root;}   /* 1326: the floated hint wraps on a phone; the rule now runs under it, not through it */
 /* 932: note under Assign to. Cream ground, so dark ink — see the comment in
    the patch. 8.03:1 body, 6.55:1 on the amber the bucket chip uses. */
 .ldnote{margin-top:8px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;line-height:1.55;
-  color:#5c4a42;}
-.ldnote b{color:#7d5200;}
-.ldreq{float:right;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5f59;}
+  color:var(--sheet-mute,#5c4a42);}
+.ldnote b{color:var(--sheet-amber,#7d5200);}
+.ldreq{float:right;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-mute,#6b5f59);}
 /* 782: progressive disclosure on the New Lead form. Mailing/Billing are NOT in
    this set on purpose — cr-lac-script already discloses that pair with its own
    toggle, and tagging them here made ITS control dead: display:none !important
@@ -1406,17 +1463,17 @@ body:not(.claim-insurance) #commsView #chatTagRow .chipbtn:hover{color:#9c1822;b
    over both; expanded returns control to their own logic. */
 #leadFormModal:not(.ldshow) .ldmore{display:none !important;}
 #ldMoreBtn{width:100%;text-align:center;border-style:dashed;}
-#ldNoContactWrap{display:none;margin-top:10px;padding:9px 11px;border:1px solid #e0b4b8;
-  border-radius:8px;background:#fdf4f4;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8f1620;}
+#ldNoContactWrap{display:none;margin-top:10px;padding:9px 11px;border:1px solid var(--sheet-redbd,#e0b4b8);
+  border-radius:8px;background:var(--sheet-redtint,#fdf4f4);font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-red,#8f1620);}
 #ldNoContactWrap input{margin-right:7px;}
 .ldrow{display:flex;gap:8px;margin:4px 0;}
 .ldrow input{flex:1;}
 .ldrow select{flex:0 0 110px;}
 .ldadd{margin-top:4px;font-size:13px;}
-.ldsugg{position:absolute;left:0;right:0;top:100%;z-index:40;background:#fff;border:1px solid #c9c2bf;
+.ldsugg{position:absolute;left:0;right:0;top:100%;z-index:40;background:var(--sheet-field,#fff);border:1px solid var(--sheet-fieldbd,#c9c2bf);
   border-radius:0 0 9px 9px;box-shadow:0 8px 20px rgba(0,0,0,.18);max-height:220px;overflow:auto;overscroll-behavior-x:contain;}
-.ldsugg div{padding:9px 12px;font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#333;cursor:pointer;}
-.ldsugg div:hover{background:#f7efec;}
+.ldsugg div{padding:9px 12px;font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-ink,#333);cursor:pointer;}
+.ldsugg div:hover{background:var(--sheet-tint,#f7efec);}
 #leadCard .llrow{font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#444;padding:3px 0;}
 #leadCard .llrow b{color:#2b2b2b;}
 .priochip{display:inline-block;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;padding:2px 8px;border-radius:8px;}
@@ -1426,11 +1483,11 @@ body:not(.claim-insurance) #commsView #chatTagRow .chipbtn:hover{color:#9c1822;b
 
 /* Claim Type tri-state radio (New Lead modal) */
 .ldctopt{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;
-  border:1px solid var(--line);border-radius:22px;background:#fff;cursor:pointer;
+  border:1px solid var(--line);border-radius:22px;background:var(--sheet-field,#fff);cursor:pointer;
   font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#3b2f2a;transition:all .12s;}
-.ldctopt:hover{border-color:var(--red-dk);}
+.ldctopt:hover{border-color:var(--sheet-red,var(--red-dk));}
 .ldctopt input[type="radio"]{width:16px;height:16px;margin:0;accent-color:var(--red);}
-.ldctopt.ldctselect{background:#fdf1f0;border-color:var(--red);color:var(--red-dk);}
+.ldctopt.ldctselect{background:var(--sheet-redtint,#fdf1f0);border-color:var(--red);color:var(--sheet-red,var(--red-dk));}
 
 /* Insurance panel on client Overview */
 .insPanel{margin:14px 0;padding:14px 16px;border:1px solid var(--ct-line);
@@ -2343,14 +2400,14 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 }
 /* ---- trades checkboxes: aligned everywhere ---- */
 .projform label.tradeopt{display:flex;align-items:center;gap:8px;margin:0;
-  font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2b2b2b;min-height:44px;--cr-stack:"the trade row has always overridden .projform label; 1240 only raised it to 44px";}
+  font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-ink,#2b2b2b);min-height:44px;--cr-stack:"the trade row has always overridden .projform label; 1240 only raised it to 44px";}
 .tradegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:6px 0 12px;}
 /* 999: lead-source chips. One is required at creation; the row is the same
    eight values the client-profile editor (acxSrc) offers, kept identical so
    the vocabulary does not fork. */
 .pf-chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 12px;}
 .pf-chip{flex:0 0 auto;padding:9px 13px;border-radius:18px;cursor:pointer;
-  background:#f0e8d0;border:1px solid #d9cfb2;color:#5a5344;
+  background:var(--sheet-tint,#f0e8d0);border:1px solid var(--sheet-fieldbd,#d9cfb2);color:var(--sheet-ink,#5a5344);
   font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;white-space:nowrap;min-height:44px;
   transition:background .12s,color .12s,border-color .12s;}
 .pf-chip:hover{border-color:#c9a227;}
@@ -2919,7 +2976,7 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
   .ljdetail{display:block;}
 }
 
-.tradeopt{display:flex;align-items:center;gap:7px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+.tradeopt{display:flex;align-items:center;gap:7px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-ink,#2b2b2b);cursor:pointer;}
 /* 1253: the intake's trades read in the lead form's own ink, both themes */
 #leadFormModal .ldtradehead{margin:12px 0 2px;font-weight:700;}
 #leadFormModal .ldtrades .tradeopt{color:inherit;min-height:44px;--cr-stack:"the intake's trade labels inherit the form's ink; the base .tradeopt is a light-era #2b2b2b";}
@@ -4323,7 +4380,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-01 build 1434<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-01 build 1435<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -8319,27 +8376,27 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <label>First name<input type="text" id="upFirst" autocomplete="given-name"></label>
       <label>Last name<input type="text" id="upLast" autocomplete="family-name"></label>
       <label>Phone number<input type="tel" id="upPhone" autocomplete="tel"></label>
-      <label>Email<input type="email" id="upEmail" disabled style="background:#f3f0ee;color:#5f5f5f;"></label>
+      <label>Email<input type="email" id="upEmail" disabled style="background:var(--sheet-tint,#f3f0ee);color:var(--sheet-mute,#5f5f5f);"></label>
       <div style="margin-top:14px;">
         <button class="btn" id="upSave">Save profile</button>
-        <span id="upFlash" style="font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#2e7d32;"></span>
+        <span id="upFlash" style="font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-good,#2e7d32);"></span>
       </div>
-      <div id="upError" style="color:var(--red);font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
+      <div id="upError" style="color:var(--sheet-red,var(--red));font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
     </div>
 
     <h3 class="projsec" style="margin-top:26px;" data-cri="bell lg">Phone Notifications</h3>
     <div class="projform" style="margin:10px 0;max-width:430px;box-shadow:none;border:1px solid var(--line);">
       <p class="subnote" style="margin:0 0 10px;">Get lock-screen alerts on this device when contracts are signed,
       jobs are approved, and jobs complete.</p>
-      <div id="pushIosHint" style="display:none;font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#fff8e1;
+      <div id="pushIosHint" style="display:none;font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:var(--sheet-ambertint,#fff8e1);
         border:1px solid #e0c460;border-radius:8px;padding:9px 11px;margin-bottom:10px;">
         <b>iPhone first step:</b> in Safari tap <b>Share &#8593;</b> &#8594; <b>Add to Home Screen</b>,
         then open Cardinal from that icon and come back here.
       </div>
       <button class="btn" id="pushEnableBtn">&#128276; Enable notifications on this device</button>
-      <span id="pushStatus" style="display:block;font:600 12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:9px;color:#555;"></span>
+      <span id="pushStatus" style="display:block;font:600 12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:9px;color:var(--sheet-mute,#555);"></span>
       <button class="btn ghost" id="testAlertBtn" style="margin-top:12px;">&#128233; Send a test alert to myself</button>
-      <span id="testAlertStatus" style="display:block;font:600 12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:9px;color:#555;white-space:pre-line;line-height:1.5;overflow-wrap:anywhere;word-break:break-word;padding-right:52px;"></span>
+      <span id="testAlertStatus" style="display:block;font:600 12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:9px;color:var(--sheet-mute,#555);white-space:pre-line;line-height:1.5;overflow-wrap:anywhere;word-break:break-word;padding-right:52px;"></span>
     </div>
   </div>
 </div>
@@ -8492,7 +8549,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="chipbtn" id="pfCancel">Cancel</button>
       <button class="btn" id="pfSave">Save</button>
     </div>
-    <div id="pfError" style="color:var(--red);font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
+    <div id="pfError" style="color:var(--sheet-red,var(--red));font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -8627,13 +8684,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="ckhead">&#128221; Notes</div>
     <label>Capture context that doesn&#8217;t fit the checkboxes &#8212; homeowner comments, unusual conditions, follow-up items.
       <textarea id="ck_notes" rows="3" style="width:100%;box-sizing:border-box;margin-top:4px;
-      padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;"></textarea></label>
+      padding:9px 11px;border:1px solid var(--sheet-fieldbd,#c9c2bf);border-radius:7px;font:14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;"></textarea></label>
 
     <div style="margin-top:14px;text-align:right;">
       <button class="chipbtn" id="ckCancel">Cancel</button>
       <button class="btn" id="ckSave">Save checklist</button>
     </div>
-    <div id="ckError" style="color:var(--red);font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
+    <div id="ckError" style="color:var(--sheet-red,var(--red));font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -8666,13 +8723,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="ckhead">&#128221; Notes</div>
     <label>Capture context that doesn&#8217;t fit the checkboxes &#8212; homeowner comments, unusual conditions, follow-up items.
       <textarea id="gc_notes" rows="3" style="width:100%;box-sizing:border-box;margin-top:4px;
-      padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;"></textarea></label>
+      padding:9px 11px;border:1px solid var(--sheet-fieldbd,#c9c2bf);border-radius:7px;font:14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;"></textarea></label>
 
     <div style="margin-top:14px;text-align:right;">
       <button class="chipbtn" id="gcCancel">Cancel</button>
       <button class="btn" id="gcSave">Save checklist</button>
     </div>
-    <div id="gcError" style="color:var(--red);font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
+    <div id="gcError" style="color:var(--sheet-red,var(--red));font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -8760,7 +8817,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <select id="ldSource"><option value="">&#8212; select &#8212;</option></select></label>
           <!-- H (#18): its options are CR_LEAD_SOURCES, filled by the main block -- the same list the client page offers -->
 
-        <label style="margin-top:12px;font-weight:700;">Claim Type <span style="color:var(--red);">*</span></label>
+        <label style="margin-top:12px;font-weight:700;">Claim Type <span style="color:var(--sheet-red,var(--red));">*</span></label>
         <div class="ldctgrp" style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="insurance"> &#128737;&#65039; Insurance</label>
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="retail"> &#127968; Retail</label>
@@ -8778,8 +8835,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       </div>
 
       <!-- Insurance Details: shown only when Claim Type = Insurance -->
-      <div class="ldbox" id="ldInsBox" style="display:none;border-left:3px solid #4a6fa5;background:#f2f4f8;">
-        <div class="ldhead" style="color:#2d4468;">&#128737;&#65039; Insurance Details</div>
+      <div class="ldbox" id="ldInsBox" style="display:none;border-left:3px solid #4a6fa5;background:var(--sheet-bluetint,#f2f4f8);">
+        <div class="ldhead" style="color:var(--sheet-blue,#2d4468);">&#128737;&#65039; Insurance Details</div>
         <div class="ckrow">
           <label>Insurance Carrier<input type="text" id="ldInsCarrier" placeholder="State Farm, Allstate&hellip;"></label>
           <label>Policy Number<input type="text" id="ldInsPolicy"></label>
@@ -8814,7 +8871,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             </select></label>
         </div>
         <label style="margin-top:8px;">Insurance Notes<textarea id="ldInsNotes" rows="2" style="width:100%;box-sizing:border-box;margin-top:4px;
-          padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;"></textarea></label><label style="margin-top:8px;display:block;">&#128209; Scope of Loss (optional)<input type="file" id="ldScopeFile" accept=".pdf,image/*" style="display:block;margin-top:5px;font-size:12.5px;"><small id="ldScopeNote" style="display:block;color:#8a6f66;margin-top:3px;">Attach the carrier scope &mdash; after saving, the reader opens the new claim and fills carrier, claim #, RCV/ACV and the rest automatically.</small></label>
+          padding:9px 11px;border:1px solid var(--sheet-fieldbd,#c9c2bf);border-radius:7px;font:14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;"></textarea></label><label style="margin-top:8px;display:block;">&#128209; Scope of Loss (optional)<input type="file" id="ldScopeFile" accept=".pdf,image/*" style="display:block;margin-top:5px;font-size:12.5px;"><small id="ldScopeNote" style="display:block;color:var(--sheet-mute,#8a6f66);margin-top:3px;">Attach the carrier scope &mdash; after saving, the reader opens the new claim and fills carrier, claim #, RCV/ACV and the rest automatically.</small></label>
       </div>
 
       <div class="ldbox ldmore" id="ldAssignBox">
@@ -8848,7 +8905,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <select id="ldStatus"><option>Not Contacted</option><option>Contacted</option></select></label>
         </div>
         <label>Notes<textarea id="ldNotes" rows="3" style="width:100%;box-sizing:border-box;margin-top:4px;
-          padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;"></textarea></label>
+          padding:9px 11px;border:1px solid var(--sheet-fieldbd,#c9c2bf);border-radius:7px;font:14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;resize:vertical;"></textarea></label>
       </div>
 
       <div style="margin:2px 0 12px;">
@@ -8860,7 +8917,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <button class="chipbtn" id="ldCancel">Cancel</button>
         <button class="btn" id="ldSave">Create Lead</button>
       </div>
-      <div id="ldError" style="color:var(--red);font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
+      <div id="ldError" style="color:var(--sheet-red,var(--red));font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
     </div>
   </div>
 </div>
@@ -8892,7 +8949,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="chipbtn" id="apptClose">Close</button>
       <button class="btn" id="apptSave">Add</button>
     </div>
-    <div id="apptError" style="color:var(--red);font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
+    <div id="apptError" style="color:var(--sheet-red,var(--red));font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -14567,14 +14624,15 @@ function rptChart(id, cfg){
     var el = document.getElementById(id);
     if(!el) return;
     if(rptCharts[id]){ rptCharts[id].destroy(); }
-  /* 546: the reports cards are obsidian now. Chart.js defaults its tick and
-     legend ink to #666, which is 2.5:1 on that ground - and was already failing
-     on 535's navy card before this build. NOT themed, deliberately: the card is
-     black in both modes, so the ink has to be too. Set here rather than per
-     chart because `new Chart(` appears exactly once in this file, which makes
-     this reach the reports charts and nothing else. */
-    Chart.defaults.color = '#b9bec7';
-    Chart.defaults.borderColor = 'rgba(255,255,255,.10)';
+  /* 546: Chart.js defaults its tick and legend ink to #666, which is 2.5:1 on
+     the obsidian card. Set here rather than per chart because `new Chart(`
+     appears exactly once in this file, which makes this reach the reports
+     charts and nothing else.
+     T1 C: the card follows the theme now, so the ink does too - read from the
+     stylesheet by rptChartInk(), never re-decided here. */
+    var _ink = rptChartInk();
+    Chart.defaults.color = _ink.ink;
+    Chart.defaults.borderColor = _ink.grid;
     rptCharts[id] = new Chart(el.getContext('2d'), cfg);
   }).catch(function(){
     /* offline or the CDN is down: the report's cards and numbers still render,
@@ -14582,6 +14640,36 @@ function rptChart(id, cfg){
        === 'undefined'` early return that said nothing either. */
   });
 }
+/* T1 C (1 Nov 2026): the chart ink is a stylesheet token, because a canvas cannot
+   read CSS. --rpt-chart-ink / --rpt-chart-grid are declared ONLY by the light twin
+   on #reportsView, so dark has no token and keeps 546's pinned obsidian values -
+   the palette lives in one place, not in two languages. */
+function rptChartInk(){
+  var v = document.getElementById('reportsView');
+  var cs = v ? getComputedStyle(v) : null;
+  return { ink: (cs && cs.getPropertyValue('--rpt-chart-ink').trim()) || '#b9bec7',
+           grid: (cs && cs.getPropertyValue('--rpt-chart-grid').trim()) || 'rgba(255,255,255,.10)' };
+}
+/* A theme flip RE-INKS the charts already drawn: no renderReports(), and no
+   chart is built again. Chart.js caches each scale's resolved colours, so new defaults reach
+   only the legend (measured in Chromium) - the ticks and grid are written per
+   chart, then one update('none') repaints without animating. The flip arrives
+   as 'cr-theme', which cr-rbtheme-toggle fires on the edge only. */
+function rptReink(){
+  if(typeof Chart === 'undefined' || !Chart.defaults) return;
+  var k = rptChartInk();
+  Chart.defaults.color = k.ink;
+  Chart.defaults.borderColor = k.grid;
+  Object.keys(rptCharts).forEach(function(id){
+    var c = rptCharts[id];
+    try{
+      var o = c.options; o.color = k.ink;
+      Object.keys(o.scales || {}).forEach(function(n){ o.scales[n].ticks.color = k.ink; o.scales[n].grid.color = k.grid; });
+      c.update('none');
+    }catch(e){}
+  });
+}
+document.addEventListener('cr-theme', rptReink);
 function rptRepName(email){
   if(!email) return 'Unknown';
   if(cacheTeam[email] && cacheTeam[email].name) return cacheTeam[email].name;
@@ -14770,12 +14858,12 @@ function renderRptReps(projs, from, to){
     ? '<table class="rpttable"><thead><tr><th>Rep</th><th>Requested</th><th>Reviews ' + GOOGLE_G + '</th><th>Conversion</th></tr></thead><tbody>' +
       rvRows.map(function(r){
         return '<tr><td><b>' + esc(rptRepName(r.e)) + '</b></td><td>' + r.asked + '</td>' +
-          '<td style="color:#a86a00;font-weight:800;">' + r.got + '</td><td>' + rptPct(r.got, r.asked) + '</td></tr>';
+          '<td style="color:var(--rpt-new,#E8C21E);font-weight:800;">' + r.got + '</td><td>' + rptPct(r.got, r.asked) + '</td></tr>';
       }).join('') +
-      '<tr style="border-top:2px solid #C8202E;"><td><b>Whole team</b></td><td><b>' + totAsked + '</b></td>' +
-      '<td style="color:#a86a00;font-weight:800;">' + totGot + '</td><td><b>' + rptPct(totGot, totAsked) + '</b></td></tr>' +
+      '<tr style="border-top:2px solid var(--rpt-bd,#34353f);"><td><b>Whole team</b></td><td><b>' + totAsked + '</b></td>' +
+      '<td style="color:var(--rpt-new,#E8C21E);font-weight:800;">' + totGot + '</td><td><b>' + rptPct(totGot, totAsked) + '</b></td></tr>' +
       '</tbody></table>'
-    : '<div style="font:600 13px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;padding:6px 0;">' +
+    : '<div style="font:600 13px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rpt-mute,#9aa0a8);padding:6px 0;">' +
       'No review requests in this period yet \u2014 complete a job and the ask flows from there.</div>';
 
   var staleCut = Date.now() - 14*86400000;
@@ -14787,7 +14875,7 @@ function renderRptReps(projs, from, to){
       var d = Math.floor((Date.now() - new Date(p.updated_at || p.created_at).getTime())/86400000);
       return '<div class="rptstale">\u26A0\uFE0F <b>' + esc(p.name || '?') + '</b> \u2014 ' +
         esc(rptRepName(p.created_by)) + ' \u00b7 ' + normStage(p.stage) + ' \u00b7 <b>' + d + ' days</b> untouched</div>';
-    }).join('') : '<div style="font:600 13px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#7a8a72;">\u2705 Nothing stale \u2014 pipeline is moving.</div>';
+    }).join('') : '<div style="font:600 13px \'Segoe UI\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rpt-mute,#9aa0a8);">\u2705 Nothing stale \u2014 pipeline is moving.</div>';
 }
 
 function renderRptProd(projs, from, to, pfrom, pto){
@@ -14820,7 +14908,7 @@ function renderRptProd(projs, from, to, pfrom, pto){
         var v = projectValue(p), c = Number(rptCk(p).job_cost), pf = v - c;
         var m = v ? Math.round(100*pf/v) : 0;
         return '<tr><td><b>' + esc(p.name || '?') + '</b></td><td>' + fmtMoney(v) + '</td><td>' + fmtMoney(c) +
-          '</td><td style="color:' + (pf >= 0 ? '#2e7d32' : '#C8202E') + ';font-weight:800;">' + fmtMoney(pf) +
+          '</td><td style="color:' + (pf >= 0 ? 'var(--rpt-money,#4fc98a)' : 'var(--rpt-down,#f0a3a9)') + ';font-weight:800;">' + fmtMoney(pf) +
           '</td><td><b>' + m + '%</b></td></tr>';
       }).join('') + '</tbody></table>';
   }
@@ -20465,7 +20553,7 @@ function openChecklist(){
     '<b>' + esc(currentProject.name || '') + '</b>' +
     (currentProject.address ? ' &#183; ' + esc(currentProject.address) : '') +
     (currentProject.phone ? ' &#183; ' + esc(currentProject.phone) : '') +
-    ' <span style="color:#5c5c5c;">(from client profile)</span>';
+    ' <span style="color:var(--sheet-mute,#5c5c5c);">(from client profile)</span>';
   document.getElementById('ckDate').textContent = cl.completed_at
     ? ('Completed ' + fmtDay(cl.completed_at) + ' \u2014 edits update the saved checklist.')
     : ('For ' + (currentProject.name || 'this client') + ' \u2014 all * fields are required.');
@@ -23350,7 +23438,7 @@ function openGeneralCk(){
     '<b>' + esc(currentProject.name || '') + '</b>' +
     (currentProject.address ? ' &#183; ' + esc(currentProject.address) : '') +
     ' &#183; ' + fmtLongDate(new Date()) +
-    ' <span style="color:#5c5c5c;">(from client profile)</span>';
+    ' <span style="color:var(--sheet-mute,#5c5c5c);">(from client profile)</span>';
   document.getElementById('gcError').textContent = '';
   gcModal.style.display = 'block';
 }
@@ -25257,12 +25345,12 @@ function updatePushUI(){
   }
   if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){
     st.textContent = '\u2705 Notifications are enabled on this device.';
-    st.style.color = '#2e7d32';
+    st.style.color = 'var(--sheet-good,#2e7d32)';
   }
 }
 document.getElementById('pushEnableBtn').addEventListener('click', async function(){
   var st = document.getElementById('pushStatus');
-  st.style.color = '#555';
+  st.style.color = 'var(--sheet-mute,#555)';
   if(isIOS() && !isStandalone()){
     st.textContent = 'On iPhone: add Cardinal to your Home Screen first (Share \u2192 Add to Home Screen), open it from there, then tap this again.';
     return;
@@ -25290,11 +25378,11 @@ document.getElementById('pushEnableBtn').addEventListener('click', async functio
     }, { onConflict: 'endpoint' });
     if(r.error) throw r.error;
     st.textContent = '\u2705 Done \u2014 this device now gets Cardinal alerts.';
-    st.style.color = '#2e7d32';
+    st.style.color = 'var(--sheet-good,#2e7d32)';
     new Notification('Cardinal Client Resources', { body: 'Notifications are on. \uD83C\uDF89', icon: '/icon-192.png' });
   }catch(err){
     st.textContent = 'Could not enable: ' + (err.message || err);
-    st.style.color = '#C8202E';
+    st.style.color = 'var(--sheet-red,#C8202E)';
   }
 });
 /* 875: a one-tap test that fires push + email + text to the CURRENT user ONLY
@@ -25304,9 +25392,9 @@ document.getElementById('testAlertBtn').addEventListener('click', async function
   var st = document.getElementById('testAlertStatus');
   var btn = this;
   var me = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || '';
-  if(!me){ st.style.color = '#C8202E'; st.textContent = 'Sign in first.'; return; }
+  if(!me){ st.style.color = 'var(--sheet-red,#C8202E)'; st.textContent = 'Sign in first.'; return; }
   btn.disabled = true; var _lbl = btn.textContent; btn.textContent = 'Sending\u2026';
-  st.style.color = '#555'; st.textContent = 'Sending a test to ' + me + '\u2026';
+  st.style.color = 'var(--sheet-mute,#555)'; st.textContent = 'Sending a test to ' + me + '\u2026';
   try{
     var j = await notifyTeam([me], 'Cardinal test alert',
       '<p>This is a <b>test alert</b> from Cardinal. If you received this, the channel is working.</p>');
@@ -25335,10 +25423,10 @@ document.getElementById('testAlertBtn').addEventListener('click', async function
     else if(j.sms_error) lines.push('\u26A0\uFE0F Text failed \u2014 ' + j.sms_error);
     else if(!env.sms) lines.push('\uD83D\uDCAC Text: not set up yet \u2014 add the TWILIO_* keys in Vercel');
     else lines.push('\u26A0\uFE0F Text not sent \u2014 add your mobile number in the Team Directory, then retry');
-    st.style.color = (j.ok ? '#2e7d32' : '#8a5a00');
+    st.style.color = (j.ok ? 'var(--sheet-good,#2e7d32)' : 'var(--sheet-amber,#8a5a00)');
     st.textContent = lines.join('\n');
   }catch(err){
-    st.style.color = '#C8202E';
+    st.style.color = 'var(--sheet-red,#C8202E)';
     st.textContent = 'Could not send the test: ' + (err.message || err);
   }
   btn.disabled = false; btn.textContent = _lbl;
@@ -46146,12 +46234,9 @@ window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportCl
 :root:not([data-theme="rb-light"]) .chipbtn{background:transparent;color:#e6e9ee;border-color:#33333d;}
 :root:not([data-theme="rb-light"]) .chipbtn.danger{--cr-stack:"1292 Delete is red words, dark";color:#ff7b82;border-color:transparent;}
 :root:not([data-theme="rb-light"]) .chipbtn:hover{border-color:var(--red);color:#ff7b82;}
-/* 1299: a chip on the WHITE form sheet keeps paper ink. The sheet is white in both
-   themes (Forms 1), so the dark rule above — light ink on a transparent chip since
-   1292 — read 1.22:1 there. Outline style is unchanged: no fill, a hairline, ink. */
-:root:not([data-theme="rb-light"]) .projform .chipbtn{--cr-stack:"1299 the form sheet is white in dark too (Forms 1); 1292's light chip ink is for dark grounds";color:#2b2b2b;border-color:#c9c2b8;background:transparent;}
-:root:not([data-theme="rb-light"]) .projform .chipbtn:hover{border-color:var(--red);color:#9c1822;}
-:root:not([data-theme="rb-light"]) .projform .chipbtn.danger{color:#c8202e;border-color:transparent;}
+/* 1299 kept paper ink on chips inside the WHITE form sheet in dark (Forms 1).
+   T3 B (1 Nov 2026): the sheet is dark in dark mode now, so those three rules are
+   deleted and the dark outline chip above applies inside the sheet as well. */
 
 /* Inspections / Reports document list (listView, and the client-profile doc mounts) */
 :root:not([data-theme="rb-light"]) table.reports{background:transparent;border-color:#2a2a32;}
@@ -46178,6 +46263,7 @@ window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportCl
 /* Graphs & Reports — a whole legacy-light screen */
 :root:not([data-theme="rb-light"]) .rptfilters select,
 :root:not([data-theme="rb-light"]) .rptfilters input{background:#15151b;border-color:#2a2a32;color:#cfd6df;}
+:root:not([data-theme="rb-light"]) .rptfilters input::placeholder{color:#9aa0a8;}   /* T1 C: the browser's #757575 read 3.95:1 here; 6.84:1 */
 :root:not([data-theme="rb-light"]) .rptkpi{background:#15151b;border-color:#2a2a32;}
 :root:not([data-theme="rb-light"]) .rptkpi b{color:#e6e9ee;}
 :root:not([data-theme="rb-light"]) .rpttable td{background:transparent;color:#cfd6df;border-bottom-color:#2a2a32;}
@@ -46197,9 +46283,16 @@ function setLight(v){
 try{ localStorage.setItem(KEY, v ? '1' : '0'); }catch(e){}
 apply();
 }
+var lastTheme = null;
 function apply(){
 if(isLight()) document.documentElement.setAttribute('data-theme','rb-light');
 else document.documentElement.removeAttribute('data-theme');
+/* T1 C (1 Nov 2026): announce a flip, for what CSS cannot reach - the Reports
+   charts are canvas. Fired on the EDGE only: apply() rides the 1s sweep below,
+   and an event every second would be 567/569's loop in a new coat. */
+var th = document.documentElement.getAttribute('data-theme') || '';
+if(lastTheme !== null && th !== lastTheme){ try{ document.dispatchEvent(new CustomEvent('cr-theme', { detail:{ theme: th || 'dark' } })); }catch(e){} }
+lastTheme = th;
 var btn = document.getElementById('cr-dark-toggle');
 /* 1181: on insurance the glyph reads the INSURANCE theme — a sun that never
    changes while the screen does is exactly the "control that lies" the 694
@@ -46404,6 +46497,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1435, d:'2026-11-01', t:'Reports follow light mode, and the form sheets go dark in dark mode', s:'Graphs & Reports now follows the theme. In light mode its panels are light, and the chart labels are dark enough to read; switching theme re-colours charts already on screen. The red stripe down the left of each panel is gone in both themes, along with the red rules under the table headings and above the team total; red stays on the selected buttons and in the numbers. A few labels on Reports that were too faint in dark mode now read. In dark mode the form sheets (the profile, Add project and Edit client info, the roofing and GC checklists, the lead forms, appointments and the signature sheet) are dark with light text instead of white. Light mode is unchanged, and the signature pad stays white to write on.' },
   { b: 1434, d:'2026-11-01', t:'Daily opens with the menu, one New lead, one portal switcher on the desktop', s:'On a phone, the menu now opens with Daily already expanded; the other sections stay folded. When a signed agreement is opened in the editor, a line at the top says so: \u201cYou\u2019re editing a signed agreement. Saving keeps the signed one on file as a version.\u201d That line is never saved, sent or printed. The Production board uses the same typeface as the rest of the app, and its numbers still line up. + New has one way to start a client, New lead, and the lead form gains Job cost for admins. On the desktop, the page title is the one place to switch portal: the pills in the top bar, the switch at the top of the left menu and its Switch portal row are gone.' },
   { b: 1433, d:'2026-10-30', t:'The appointment sheet reads, and Ask stops covering form buttons', s:'On the appointment sheet, the grey line under each appointment (who booked it, the notes) and its delete \u2715 are dark enough to read, and the \u2715 is easier to tap. On a phone, the floating Ask button no longer sits on the appointment sheet\u2019s Add button or over the New Lead and Add project forms; it steps aside while one of them is open.' },
   { b: 1432, d:'2026-10-30', t:'The old Supplement card is retired', s:'The Supplement card on an insurance client page is gone. It had never actually appeared on screen, and the Supplement Desk is where supplements are filed and tracked; it keeps each claim\u2019s supplement status up to date, and that status still shows in the Insurance lists. Nothing you could see changes.' },
@@ -46423,7 +46517,7 @@ var CHANGELOG = [
   { b: 1418, d:'2026-10-29', t:'One colour per portal, and Insurance follows your light/dark setting', s:'Insurance now follows your light/dark setting like the rest of the app, and the one switch changes both \u2014 no more white Insurance pages in dark mode. Each portal has one colour \u2014 red Retail, teal Insurance, green Community \u2014 on the + button, the portal switch and client names. The last white boxes, hard-to-read labels and tiny text on the dark screens are fixed, and the light pipeline is a flat strip instead of glossy balls.' },
   { b: 1417, d:'2026-10-29', t:'Job messages update by themselves, and tags buzz only the person you mean', s:'A job\u2019s message thread now updates on its own while it is open, so a note sent from the roof shows up without leaving the screen. On insurance jobs your \u201cI chased the carrier\u201d notes appear in the thread. @J no longer buzzes four people \u2014 the box tells you who will be notified before you hit Send. Pasted links can be tapped, and a tag alert opens straight to the thread.' },
   { b: 1416, d:'2026-10-29', t:'Production: the calendar fills the screen, today up top, Dispatch read-only for the field', s:'On your phone the Schedule button opens the Production calendar with every build and punch-out on it, and today\u2019s work sits right under the title. On a laptop the full calendar fills the screen instead of hiding in a corner. Scottie sees Crew Dispatch read-only \u2014 booking is Curtis\u2019s. A message tells you when nobody was notified, step notes are typed right in the card, and Mark ordered can be undone.' },
-  { b: 1415, d:'2026-10-29', t:'Calmer cards, full stage names, one typeface', s:'Home and Reports cards lose the red stripe \u2014 red is kept for buttons, today and money owed. The pipeline spells its stages (Leads, Prospects, Approved\u2026) instead of single letters. iPhones, iPads and Macs now show their own system font instead of Arial; Windows looks the same.' },
+  { b: 1415, d:'2026-10-29', t:'Calmer cards, full stage names, one typeface', s:'Home cards and the stat tiles on Reports lose the red stripe \u2014 red is kept for buttons, today and money owed. The pipeline spells its stages (Leads, Prospects, Approved\u2026) instead of single letters. iPhones, iPads and Macs now show their own system font instead of Arial; Windows looks the same.' },
   { b: 1414, d:'2026-10-29', t:'Drawn icons instead of emoji', s:'The emoji still left on the Clients screen, the Activity panel, the client page (address, rep, Punch List, Delete), and the insurance claim and document rows are now the same drawn icons as the menu.' },
   { b: 1413, d:'2026-10-29', t:'Messages no longer erase each other', s:'If two people posted on the same job or punch-out close together, the second post could erase the first, and saving a job could undo another device\u2019s changes made since it was opened. Every post and save now reads the latest copy first and keeps everyone\u2019s messages.' },
   { b: 1412, d:'2026-10-29', t:'Save is no longer under the menu bar', s:'In the installed app, the Upload signed contract panel\u2019s Save button was hidden behind the bottom menu bar. That panel, the Add to calendar prompt and the Leads question now sit above the bar.' },
@@ -56391,7 +56485,7 @@ window.CardinalWorkTypeDedupe = { run: scan, redundant: REDUNDANT };
 })();
 </script>
 
-<style id="cr-lac-styles">#cr-lac-toggle{display:block;width:100%;margin:10px 0 2px;padding:9px 12px;background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:8px;color:#8f1620;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;text-align:left;cursor:pointer;font-family:inherit}#cr-lac-toggle:hover{background:#f5efd8;border-color:#c8202e}#cr-lac-toggle .chev{float:right;color:#6b5f59;font-weight:800}#cr-lac-wrap[hidden]{display:none !important}#cr-lac-wrap{border-left:3px solid #e8d9a8;padding-left:10px;margin-top:6px}#cr-lac-note{font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;margin:2px 0 8px}</style>
+<style id="cr-lac-styles">#cr-lac-toggle{display:block;width:100%;margin:10px 0 2px;padding:9px 12px;background:var(--sheet-tint,#f4f2f1);border:1px dashed var(--sheet-fieldbd,#d9cfaf);border-radius:8px;color:var(--sheet-red,#8f1620);font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;text-align:left;cursor:pointer;font-family:inherit}#cr-lac-toggle:hover{background:var(--sheet-tint,#f5efd8);border-color:#c8202e}#cr-lac-toggle .chev{float:right;color:var(--sheet-mute,#6b5f59);font-weight:800}#cr-lac-wrap[hidden]{display:none !important}#cr-lac-wrap{border-left:3px solid #e8d9a8;padding-left:10px;margin-top:6px}#cr-lac-note{font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-mute,#6b6b6b);margin:2px 0 8px}</style>
 <script id="cr-lac-script">
 (function(){
 'use strict';
@@ -76977,6 +77071,9 @@ body:not(.claim-insurance):not(.claim-community) .ldbox,
 .cr-est-saved-row,
 .cr-est-lineitem,
 .rptkpi{--rbe-ridge-t:#ffffff;--rbe-ridge-b:#d9d9d9;--rbe-ridge-hl:rgba(255,255,255,.9);}
+/* T3 B: the New Lead sheet is dark in dark mode, so its .ldbox takes the dark ridge
+   family (the .cr-sf-today line below) instead of the paper bevel above. */
+:root:not([data-theme="rb-light"]) .projform .ldbox{--cr-stack:"T3 B theme twin: the paper tuning stays for light and every other paper card";--rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);}
 .cr-sf-today,
 .cr-sf-block,
 .cr-pb-job{--rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);}
@@ -78131,33 +78228,45 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-view [data-navsec]{scroll-margin-top:14px;}
 
 
-/* ══ 6 · REPORTS — obsidian pipe cards, hairline neon red ══════════════════
+/* ══ 6 · REPORTS — the obsidian pipe cards, and their light twin ═════════════
    #reportsView ONLY. The 8 .pipecards in #mainView keep 535's navy — "leave the
    home screen alone".
 
-   Theo picked option 1 of two red treatments: "1 Hairline" — a 2px neon edge
-   with NO glow. The glow version read as a highlighter laid on a black card.  */
-#reportsView .pipecard{
-  background:var(--obs-face);
-  border:1px solid var(--obs-bd,#24242c);
-  border-top:1px solid #34353f;
-  border-bottom:1px solid #050507;
-  border-left:2px solid #ff2740;
-  box-shadow:var(--obs-lift);
-  color:var(--obs-ink,#e6e8ec);
+   T1 C (1 Nov 2026, Theo: "T1 C") reverses two of 546's calls; the new answer
+   is the settled one.
+   · THE PANELS FOLLOW THE THEME. "Obsidian is black in both modes" is retired
+     for Reports. Dark is 545's obsidian, untouched. Light is 557's twin — the
+     one .actbox and .pcard already ship: a white-to-#eceef2 radial, a #e2e2e2
+     hairline, and a real drop shadow doing the lift. Every rule below reads
+     var(--rpt-x, <its dark value>) and the --rpt-* tokens are declared ONCE, in
+     the light block at the end of this section — so dark resolves to exactly
+     what shipped and there is no override layer.
+   · NO RED EDGE. 546's "1 Hairline" (a 2px neon-red left border) is deleted
+     in both themes: the left side now takes the card's own 1px hairline from
+     the border shorthand. With the 2px red rule under the table headers and
+     over the reviews total gone too, no decorative red is left on Reports —
+     what 1415 started with the stat-tile caps. Red stays on the selected range
+     and tab pills (buttons) and on the data itself.                         */
+#reportsView .pipecard{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";
+  background:var(--rpt-face,var(--obs-face));
+  border:1px solid var(--rpt-bd,var(--obs-bd,#24242c));
+  border-top:1px solid var(--rpt-bd,#34353f);
+  border-bottom:1px solid var(--rpt-bd,#050507);
+  box-shadow:var(--rpt-lift,var(--obs-lift));
+  color:var(--rpt-ink,var(--obs-ink,#e6e8ec));
 }
-@media (hover:hover){ #reportsView .pipecard:hover{box-shadow:var(--obs-hover);} }
-#reportsView .pipetitle{color:#ffffff;}
+@media (hover:hover){ #reportsView .pipecard:hover{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";box-shadow:var(--rpt-hover,var(--obs-hover));} }
+#reportsView .pipetitle{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rbe-head,#ffffff);}   /* T1 C: the heading pair, #ffffff / #161616 — it flips by itself */
 #reportsView .pipecard .subnote,
-#reportsView .pipecard small{color:var(--obs-mute,#9aa0a8);}
+#reportsView .pipecard small{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-mute,var(--obs-mute,#9aa0a8));}
 /* the tables and the funnel strip ride inside those cards. .rpttable td was
    #2b2b2b with a #faf7f4 even-row stripe — dark ink on a white band, which has
    been unreadable on the dark card since 535 put navy under it. Fixed here
    because this build owns the ground it sits on. */
-#reportsView .rpttable th{color:#9aa0a8;}
-#reportsView .rpttable td{color:#dfe2e8;border-bottom:1px solid #22232b;}
-#reportsView .rpttable tr:nth-child(even) td{background:rgba(255,255,255,.035);}
-#reportsView .rptconv{color:#b9bec7;}
+#reportsView .rpttable th{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-mute,#9aa0a8);border-bottom-color:var(--rpt-bd,#34353f);}   /* T1 C: the 2px header rule was var(--red) — decoration, so neutral */
+#reportsView .rpttable td{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-ink,#dfe2e8);border-bottom:1px solid var(--rpt-bd,#22232b);}
+#reportsView .rpttable tr:nth-child(even) td{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";background:var(--rpt-stripe,rgba(255,255,255,.035));}
+#reportsView .rptconv{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-mute,#b9bec7);}
 
 /* — the KPI tiles —
    Theo assigned five colours against a preview of mine carrying labels this app
@@ -78168,26 +78277,55 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    is the dark green at 3.90:1, against a 3.0 floor for 20px/800.
    Orange is deliberately absent: it is spent on the Activity Count tiles and
    spending it twice would stop it meaning anything.                          */
-#reportsView .rptkpi{
-  background:var(--obs-face);
-  border:1px solid var(--obs-bd,#24242c);
-  border-top:1px solid var(--obs-hair,#2f3038);   /* 1415: was a 5px red cap on every tile */
-  border-bottom:1px solid #050507;
-  box-shadow:var(--obs-lift);
+#reportsView .rptkpi{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";
+  background:var(--rpt-face,var(--obs-face));
+  border:1px solid var(--rpt-bd,var(--obs-bd,#24242c));
+  border-top:1px solid var(--rpt-bd,var(--obs-hair,#2f3038));   /* 1415: was a 5px red cap on every tile */
+  border-bottom:1px solid var(--rpt-bd,#050507);
+  box-shadow:var(--rpt-lift,var(--obs-lift));
 }
 #reportsView .rptkpi::after{
   display:none;   /* 1415: the glint sat under the red cap, which is gone */
   background:linear-gradient(90deg,transparent,#3a2b2b 30%,#5a1a20 50%,#3a2b2b 70%,transparent);
 }
-#reportsView .rptkpi span{color:#ffffff;}          /* the labels, per Theo */
-#reportsView .rptkpi b{color:#b9bec7;}             /* default: grey, 7.33:1 */
-#reportsView .rptkpi b.k-money{color:#4fc98a;}     /* money — 6.55:1 */
-#reportsView .rptkpi b.k-new{color:#E8C21E;}       /* new / upcoming — 7.92:1 */
-#reportsView .rptkpi b.k-won{color:#3d9970;}       /* approved + closed — 3.90:1 */
-#reportsView .rptkpi b.k-rate{color:#b9bec7;}      /* rates + durations — 7.33:1 */
-#reportsView .rptkpi small{color:var(--obs-mute,#9aa0a8);}
-#reportsView .rptkpi small.up{color:#4fc98a;}
-#reportsView .rptkpi small.down{color:#f0a3a9;}
+#reportsView .rptkpi span{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rbe-head,#ffffff);}      /* the labels, per Theo */
+#reportsView .rptkpi b{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-mute,#b9bec7);}         /* default: grey, 7.33:1 */
+#reportsView .rptkpi b.k-money{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-money,#4fc98a);} /* money — 6.55:1 */
+#reportsView .rptkpi b.k-new{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-new,#E8C21E);}     /* new / upcoming — 7.92:1 */
+#reportsView .rptkpi b.k-won{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-won,#3d9970);}     /* approved + closed — 3.90:1 */
+#reportsView .rptkpi b.k-rate{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-mute,#b9bec7);}   /* rates + durations — 7.33:1 */
+#reportsView .rptkpi small{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-mute,var(--obs-mute,#9aa0a8));}
+#reportsView .rptkpi small.up{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-money,#4fc98a);}
+#reportsView .rptkpi small.down{--cr-stack:"T1 C edited in place: out-ranks the shared base, as since 546";color:var(--rpt-down,#f0a3a9);}
+
+/* ── T1 C · the light twin, as tokens ──────────────────────────────────────
+   557's recipe, value for value: the same radial inverted (sheen origin
+   22% -10%), a #e2e2e2 hairline on all four sides, and a drop shadow doing the
+   lift the inset highlight does in dark. The hover shadow keeps dark's ratio
+   (roughly double the lift). Inks are colours the file already uses, each
+   scored against #eceef2 — the twin's DARKEST stop, the worst case for dark
+   ink — and, where a table row is striped, against the stripe laid over it:
+   titles and labels --rbe-head #161616, grey #5f6670 (557's label grey, 4.65:1
+   on a striped row), money #1f6b4a and new #8a5500 (the light twins .jdrc
+   already uses: the preview's #2e7d32 and #8a6100 read 4.11 and 4.45:1 on a
+   striped row of the profit and reviews tables), won #2F7D4A (the 20px tiles
+   only), down #a11020. The chart ink is a token too, because a canvas cannot
+   read CSS: rptChart() reads these two. */
+:root[data-theme="rb-light"] #reportsView{
+  --rpt-face:radial-gradient(120% 90% at 22% -10%,#ffffff 0%,#f7f7f9 45%,#eceef2 100%);
+  --rpt-bd:#e2e2e2;
+  --rpt-lift:0 6px 14px rgba(16,18,24,.10), 0 1px 2px rgba(16,18,24,.06), 0 1px 0 rgba(255,255,255,.9) inset;
+  --rpt-hover:0 12px 26px rgba(16,18,24,.16), 0 2px 4px rgba(16,18,24,.08), 0 1px 0 rgba(255,255,255,.9) inset;
+  --rpt-ink:#161616;
+  --rpt-mute:#5f6670;
+  --rpt-stripe:rgba(16,18,24,.035);
+  --rpt-money:#1f6b4a;
+  --rpt-new:#8a5500;
+  --rpt-won:#2F7D4A;
+  --rpt-down:#a11020;
+  --rpt-chart-ink:#5f6670;
+  --rpt-chart-grid:rgba(16,18,24,.10);
+}
 </style>
 <div id="crewsView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
 <div id="payView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
