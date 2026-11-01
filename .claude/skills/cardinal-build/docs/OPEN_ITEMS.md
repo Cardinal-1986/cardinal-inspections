@@ -20,6 +20,8 @@ He picked from the preview page (`taste/manifest.json`, published as the "Cardin
 
 T4 was settled on 29 Oct (contracts reflow on a phone).
 
+**Follow-up, 1 Nov 2026 (Theo, "1"): production accounts do not start clients from + New.** Build 1434 removed Contact, which was their only entry. Asked whether to give production "New lead" instead, Theo chose to leave it out. Their + New stays Task, Reminder, Punch-out; leads stay a sales and admin form. Do not add a client-creation entry for production.
+
 ---
 
 ## ✅ SETTLED 29 Oct 2026 (Theo, "3 yes 2 yes 1 yes") — contracts sent by link (builds 1427–1428)

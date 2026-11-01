@@ -37682,4 +37682,4 @@ The name was the only flexible item, so it was the one that gave way.
 - `patch_1434_gates.py`: 33 edits in 17 gates that asserted the old design — `harness_drawer1115`, `gate_1115`, `gate_775` (T2); `gate_1430` (T9); `gate_1287` (T6); `gate_1035`, `1299`, `1418`, `1393`, `754`, `952`–`956`, `944`, `render_navicons` (T10).
 - `check_build` GREEN. `audit_scrolllock` GREEN (16). `gate_types` 1,500 against 1,502 on 1433 (−2 TS2339, the deleted pill handler; both trees red on the same stale TS2339 baseline). `gate_dupes` unchanged from 1433. `gate_stack` clean at 390 and 1440.
 
-**Left for Theo:** production accounts no longer have a way to start a client from + New (Contact was theirs; leads stay sales/admin). Asked.
+**Left for Theo:** production accounts no longer have a way to start a client from + New (Contact was theirs; leads stay sales/admin). Asked. **Answered 1 Nov, "1": leave it out.** Recorded as settled in OPEN_ITEMS.
