@@ -60,7 +60,7 @@ console.log('\n── B. Appearance in the drawer ─────────');
   const p = await at('nav');
   const r = await p.evaluate(async () => {
     const bs = [...document.querySelectorAll('#navMenu [data-cr-appear]')];
-    if (bs.length !== 2) return { n: bs.length };
+    if (bs.length !== 3) return { n: bs.length };   /* Sun (T8 C): the row is Dark · Light · Sun */
     const h = bs.map(b => Math.round(Math.min(b.getBoundingClientRect().height, b.getBoundingClientRect().width)));
     const light = bs.find(b => b.dataset.crAppear === 'light'), dark = bs.find(b => b.dataset.crAppear === 'dark');
     light.click(); await new Promise(z => setTimeout(z, 200));
@@ -69,7 +69,7 @@ console.log('\n── B. Appearance in the drawer ─────────');
     const afterDark = { theme: document.documentElement.getAttribute('data-theme'), pressed: dark.getAttribute('aria-pressed') };
     return { n: bs.length, h, afterLight, afterDark };
   }).catch(e => ({ err: String(e) }));
-  ok(r.n === 2 && r.h && Math.min(...r.h) >= 44, 'the drawer has Dark and Light, both ≥44px', JSON.stringify(r.h || r));
+  ok(r.n === 3 && r.h && Math.min(...r.h) >= 44, 'the drawer has Dark, Light and Sun, all ≥44px', JSON.stringify(r.h || r));
   ok(r.afterLight && r.afterLight.theme === 'rb-light' && r.afterLight.pressed === 'true', 'Light turns the app light and shows as chosen', JSON.stringify(r.afterLight));
   ok(r.afterDark && r.afterDark.theme === null && r.afterDark.pressed === 'true', 'Dark turns it back and shows as chosen', JSON.stringify(r.afterDark));
   await p.close();

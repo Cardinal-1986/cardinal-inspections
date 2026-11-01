@@ -157,7 +157,7 @@ const D = await page.evaluate(async () => {
 ok('the moon stepped out to the corner (.afloat on body)', !D.none && D.parent === 'body' && D.afloat, JSON.stringify(D));
 ok('it is not drawn over the page', !D.none && !D.shown, JSON.stringify(D));
 const D2 = await page.evaluate(() => document.querySelectorAll('#navMenu [data-cr-appear]').length);
-ok('and the drawer carries the switch instead (Dark / Light)', D2 === 2, String(D2));
+ok('and the drawer carries the switch instead (Dark / Light / Sun)', D2 === 3, String(D2));   /* Sun (T8 C) */
 
 console.log('\n--- E. insurance keeps its theme switch ---');
 const E = await page.evaluate(async () => {
@@ -178,7 +178,7 @@ const E = await page.evaluate(async () => {
    its theme switch" is asserted on whichever exists: its own (pre-1181) or the
    shared one, reachable while Cardinal Truth is up. gate_1176 owns the count. */
 const E2 = E.none ? await page.evaluate(() => document.querySelectorAll('#navMenu [data-cr-appear]').length) : null;
-ok('the Docket/Siren switch lives in the header now (or the one shared switch, since 1181)', E.none ? E2 === 2 : E.host === 'cr-hd2-bar', JSON.stringify(E.none ? { shared: E2 } : E));
+ok('the Docket/Siren switch lives in the header now (or the one shared switch, since 1181)', E.none ? E2 === 3 : E.host === 'cr-hd2-bar', JSON.stringify(E.none ? { shared: E2 } : E));
 const E3 = E.none ? await page.evaluate(() => { const b = document.getElementById('navBtn'); if (!b) return false; const r = b.getBoundingClientRect();
   const t = document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)); return !!(t && (t === b || b.contains(t))); }) : null;
 ok('and is visible + reachable with the row collapsed (the drawer that holds the shared one takes a tap)',

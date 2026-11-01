@@ -93,7 +93,7 @@ for (const p of ['retail', 'community', 'insurance']) {
   await go(p);
   const s = await look();
   ok(s.crm === p, `on ${p} (crm=${s.crm})`);
-  ok(s.n === 2, `${p}: the drawer's Appearance row is there (Dark / Light)`);
+  ok(s.n === 3, `${p}: the drawer's Appearance row is there (Dark / Light / Sun)`);   /* Sun (T8 C) */
   ok(!s.floating, `${p}: no light/dark button floats over the page`);
   ok(s.insBtnCount === 0, `${p}: no separate insurance button is rendered (found ${s.insBtnCount})`);
 }

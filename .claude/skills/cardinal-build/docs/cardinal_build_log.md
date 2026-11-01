@@ -37699,3 +37699,17 @@ The name was the only flexible item, so it was the one that gave way.
 - `gate_stack` at 390 and 1366, dark and light, 10 states including the three Reports tabs, against 1434.
 - ⚠ Found by the builder: `gate_stack` and `gate_1241` let a module's raw `fetch()` reach production Supabase from `file://` (6 anonymous GET `/rest/v1` per load: `insurance_claims`, `estimate_line_items`, `punch_items`). Anonymous reads only. Measured 1 Nov with `set local role anon` in a rolled-back transaction: all three tables return 0 rows to `anon`, so nothing was exposed. Both gates now abort `*.supabase.co`.
 - Colour build, so the sentinel holds the merge (27 Aug rule).
+- **Sentinel result (recorded at 1436):**
+  - `--selftest` 14/14. 12 states (Reports ×3, the eight sheets, home), both themes, 390 and 1440, `--since` 1434: 48 renders, 5 new findings, zero INK / COLLAPSE / OVERLAP / OVERFLOW / UNWIRED.
+  - The 3 DEAD are the probe's `var()` blind spot: the base `.rpttable tr:nth-child(even) td` stripe rules (both themes) already lost on 1434 to `#reportsView .rpttable …`, which now reads `var(--rpt-stripe, …)`, and `#cr-hd2-bar .cr-ib{background:transparent}` loses to 1198's light header rule.
+  - The 2 OVERRIDDEN (`.pti .i5`, the header rule in dark) are light-twin rules winning as designed. None was authored by 1435. Merged on that basis.
+
+## Build 1436 — Sun, a third appearance for working outside (1 Nov 2026)
+
+**Source:** Theo's pick T8 C (same message as 1434).
+
+**Change** (`patch_1436_sun.py`, with `sun_css.py` and `csswalk.py` beside it, then `patch_1436.py`):
+- E1 head pre-paint sets `data-cr-sun` for a stored `'sun'`; E2 the Text size ladder one step up under Sun, edited in place; E3 the third Appearance button; E4 `cr-rbtheme-toggle` three modes, role default, `setMode()`; E5 the sign-in role mirror re-applies the theme before Production opens; E6 `cr-sun-styles`, generated; E7 the day sheet's missing light tokens; E8 the insurance and Library readers of the app key treat Sun as light.
+- Built on 1433 by a builder. On 1435, E4's anchor collided with 1435's `cr-theme` edge event in the same `apply()`; the merged anchor keeps both (`lastTheme` and the dispatch now sit after Sun's attribute writes). Byte-reproducible on 1435.
+
+**Gates:** listed in the PR. `check_build` GREEN; `gate_types` 1,500 and `gate_dupes` unchanged from 1435; `audit_scrolllock` GREEN (16).
