@@ -10761,3 +10761,24 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
 - **Desktop top bar is 3px taller (42 → 45px).** Above 900px the bar sits flush between 44px controls, so a hit pad would have taken a pixel from each neighbour. The items grew to 44px instead. The phone bar is unchanged.
 
 **Gates:** `gate_1443.mjs`, 108 checks, RED on 1442.
+
+## Build 1444: the insurance side is called Insurance (Theo's pick for question C)
+- **One name.** Before, the insurance side was:
+  - "Cardinal Truth" on the Front Door, in the menu, on its home screen and in the quick-jump list;
+  - "Insurance" in the header;
+  - "Claims" on the Clients directory.
+- **Every visible label now reads Insurance:**
+  - the menu row;
+  - the Brief's row and the portal picker's description;
+  - the hub heading, its section menu's label and its Back buttons;
+  - the quick-jump palette;
+  - Self Check's step and control names;
+  - the Clients directory's chips, columns and filter rail.
+- **Unchanged on purpose:**
+  - the ids, classes, `data-nav` keys and function names (`cardinaltruth`, `showCardinalTruth`, `#cardinalTruthView`, `.cr-cth`, `viewing-cardinal-truth`);
+  - source comments;
+  - the What's New history.
+- **The "Claims" pill that opens the claims list keeps its name.** That is the list, not the department.
+- **Still reads oddly:** on a desktop, the menu's "CRMs" heading holds a single row, now "Insurance". The heading was not part of the question.
+
+**Gates:** `gate_1444.mjs`, 17 checks, RED on 1443. `gate_1401` opens the hub by the menu row's new name.

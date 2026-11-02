@@ -56,7 +56,7 @@ const tryDo = async (why, f) => { try { return await f(); } catch (e) { ok(false
     });
     await page.waitForTimeout(1500);
     await tryDo('B', async () => {
-      await go(page, 'Cardinal Truth');
+      await go(page, 'Insurance');   /* 1444: the menu row is called Insurance (was Cardinal Truth) */
       const t = await txt(page, '#cardinalTruthView');
       const owed = (t.match(/OWED BY CARRIERS ¶ (\$[\d,]+)/i) || [])[1];
       const ded = (t.match(/DEDUCTIBLES DUE ¶ (\$[\d,]+)/i) || [])[1];
