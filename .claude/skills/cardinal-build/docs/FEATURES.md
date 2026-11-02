@@ -10735,3 +10735,29 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
 - **Not done:** sticky rails (P09.03). The Quick Inspection capture bar would sit 63px under the tab bar on a phone, so the bar needs a tab-bar offset first.
 
 **Gates:** `gate_1442.mjs` (with `gate_1442_seed.js`), 149 checks, RED on 1441. `gate_791`, `gate_794` and `gate_1375` were updated for the 1280 line.
+
+## Build 1443: accessibility and sheets (round-1 leftovers, re-checked on 1438)
+- **Tap areas (44px floor, measured on the hit area):**
+  - The document editor's Back chip is a real `<button>`, with a 46px hit area. The pill looks the same.
+  - Open full claim is a button (15 → 47px), and tapping the claim card opens the claim, once.
+  - Partner buttons 31 → 45px; the punch card's + Add 29 → 45px.
+  - Remember me 23 → 47px; Forgot password 17 → 47px.
+  - The punch search 24 → 46px; the document title 34 → 44px.
+  - The stage band's ⋮ is `<button aria-label="More stage actions">`, 44×44. It no longer covers the forward arrow.
+- **Faded numbers are solid muted inks** (opacity removed):
+  - Production out-of-month days use `--pb-mut`.
+  - Community zero counts use `--ccm-dim`.
+  - The Clients bar "All" and portal counts use `--rbe-mute2`.
+  - Every one is ≥5.1:1 in dark, light and Sun.
+- **Keyboard:**
+  - The top bar items, the home Recent leads / Today / Gone quiet rows, the A/R card (admins) and the Clients card bodies are role=button tab stops.
+  - One delegated Enter/Space handler serves every role=button. That also wakes four older role=button controls.
+  - The seven `.projform` modals, the estimate builder and its Preview are role=dialog with aria-modal.
+  - One shared focus trap keeps Tab inside whatever sheet or dialog is on top. New Lead's 45 Tabs went from 21 escapes to 0, and the estimate builder's 40 Tabs from 40 to 0.
+- **Names:** these controls now have accessible names: the Leads search and sort, the Clients sort, the job menu, the Quick Inspection address, the estimate title, the New Lead phone and email, the four calendar arrows and the Estimates sort. axe `select-name` at 1280 goes 5 → 0.
+- **Sheets:**
+  - Escape closes the Ask sheet. Back closes it and the page stays put (`crSheets()` now looks inside `#cr-ai-root`).
+  - Escape closes Self Check, except while a run is in progress.
+- **Desktop top bar is 3px taller (42 → 45px).** Above 900px the bar sits flush between 44px controls, so a hit pad would have taken a pixel from each neighbour. The items grew to 44px instead. The phone bar is unchanged.
+
+**Gates:** `gate_1443.mjs`, 108 checks, RED on 1442.

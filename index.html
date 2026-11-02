@@ -1953,9 +1953,12 @@ html, body{overflow-x:hidden;max-width:100%;}
 
 .authrow{display:flex;justify-content:space-between;align-items:center;margin-top:12px;
   font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#555;}
-.rememberlbl{display:inline-flex;align-items:center;gap:7px;cursor:pointer;}
+.rememberlbl{display:inline-flex;align-items:center;gap:7px;cursor:pointer;position:relative;}
+/* 1443 P07.06: 44px targets without moving the row — the pads sit in the 12px above it */
+.rememberlbl::after{content:'';position:absolute;left:0;right:0;top:-12px;bottom:-12px;}
 .rememberlbl input{width:16px;height:16px;accent-color:var(--red);}
-.forgotlink{color:#1d4f91;text-decoration:none;font-weight:700;}
+.forgotlink{color:#1d4f91;text-decoration:none;font-weight:700;position:relative;}
+.forgotlink::after{content:'';position:absolute;left:0;right:0;top:-15px;bottom:-15px;}
 .forgotlink:hover{text-decoration:underline;}
 
 /* ---- Cardinal calendar theme (sidebar) ---- */
@@ -2353,7 +2356,6 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 
 /* ---- mobile tap-target sizing (44px-friendly) ---- */
 @media (max-width:900px){
-  .msmenu .dots{padding:11px 14px;margin:-9px -8px;}
   .acxpencil{font-size:18px;padding:11px;margin:-11px -11px -11px auto;}
   .acxtab{padding:12px 14px;}
   .tsktabs span{padding:9px 2px;}
@@ -2671,7 +2673,7 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .msstep.hit::before{background:#7CB342;}
 .msstep .mc{position:relative;z-index:1;}
 .msmenu{position:relative;}
-.msmenu .dots{cursor:pointer;font:800 18px/1 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:var(--red);padding:4px 8px;border-radius:6px;}
+.msmenu .dots{cursor:pointer;font:800 18px/1 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:var(--red);padding:4px 8px;border-radius:6px;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;background:none;border:0;}/* 1443 P07.06: a 44x44 button */
 .msmenu .dots:hover{background:#efe7e2;}
 .msdrop{position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #ddd6cf;border-radius:8px;
   box-shadow:0 8px 20px rgba(0,0,0,.18);min-width:190px;z-index:40;display:none;}
@@ -2766,10 +2768,15 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
    costs width -- so it takes its own cap instead of the shared .edchip one,
    and #edRepChip beside it is deliberately left at 150px. */
 #edClientChip{max-width:210px;}
+/* 1443 P07.05: the chip is a <button> now (it was a span the keyboard could not reach). Its tap target is the
+   ::after, 46px tall so a half-pixel position cannot round it under 44, centred on the 22/24px pill.
+   overflow-x:clip still cuts a long name at the pill's edge; -y:visible is what lets the pad out. */
+#edClientChip{overflow-x:clip;overflow-y:visible;position:relative;--cr-stack:"1443 P07.05: the 44px pad must not be clipped; #edRepChip keeps .edchip's overflow";}
+#edClientChip::after{content:'';position:absolute;left:0;right:0;top:50%;height:46px;margin-top:-23px;}
 .edchip .edbk{color:#ffd9dc;font-weight:900;margin-right:1px;}
 .toolbar .grow{order:10;flex:1 1 100%;}
-#reportTitle{height:34px;font-size:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
-  color:#f3e9dc;border-radius:8px;width:100%;padding:0 12px;box-sizing:border-box;}
+#reportTitle{height:44px;font-size:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+  color:#f3e9dc;border-radius:8px;width:100%;padding:0 12px;}/* 1443 P07.06: 34 -> 44px; box-sizing dropped, the global * rule already sets it */
 #reportTitle::placeholder{color:#a89286;}
 #savedFlash{order:11;}
 @media (max-width:760px){
@@ -4286,7 +4293,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <div class="titlecard" id="brandTitle"><h1>CARDINAL <span>RESOURCE</span></h1></div>
       <div class="titlecard" id="brandCtx" style="display:none;"><span id="headCtx"></span></div>
       <span id="navWrap" style="display:none;">
-        <select id="jobMenuSel" class="jobmenu jobmenu-head" style="display:none;">
+        <select id="jobMenuSel" class="jobmenu jobmenu-head" aria-label="Job section" style="display:none;">
           <option value="overview">Overview</option>
           <option value="checklists">Checklists</option>
           <option value="punch">Punch Outs</option>
@@ -4418,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1442<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1443<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4437,10 +4444,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <span class="cbn" data-go="photos">Photos</span>
   <span class="cbn" data-go="track" data-cri="calculator lg">Track</span>
   <span class="cbn" data-go="reports" data-cri="chart lg">Reports</span>
-  <span class="cbn cbdd" data-dd="prod">Production <b class="car">&#9660;</b>
+  <span class="cbn cbdd" data-dd="prod"><span class="cbl" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">Production <b class="car">&#9660;</b></span>
     <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="factory lg">Production Board</span><span class="cbi" data-go="dispatch" data-cri="truck lg">Crew Dispatch</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
   </span>
-  <span class="cbn cbdd" data-dd="tools">Tools <b class="car">&#9660;</b>
+  <span class="cbn cbdd" data-dd="tools"><span class="cbl" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">Tools <b class="car">&#9660;</b></span>
     <span class="cbmenu">
       <small>Selling</small>
       <span class="cbi" data-go="aiest" data-cri="bolt lg">AI Estimates</span>
@@ -4572,9 +4579,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <aside class="homeside" style="margin-top:14px;">
         <div class="calcard" id="calCard" style="flex-basis:auto;">
           <div class="calhead">
-            <button class="calnav" id="calPrev">&#8249;</button>
+            <button class="calnav" id="calPrev" aria-label="Previous month">&#8249;</button>
             <b id="calTitle"></b>
-            <button class="calnav" id="calNext">&#8250;</button>
+            <button class="calnav" id="calNext" aria-label="Next month">&#8250;</button>
           </div>
           <div class="calgrid" id="calGrid"></div>
           <div class="callegend"><span class="ldot doc"></span> documents &nbsp; <span class="ldot appt"></span> appts &nbsp; <span class="ldot" style="background:var(--red);"></span> team &#8212; tap a day to schedule</div>
@@ -4664,7 +4671,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
     <div class="ljsub">All CRMs &middot; <span id="ljShown">&mdash;</span></div>
     <div class="ljtop">
-      <input type="search" id="ljSearch" placeholder="Search Results">
+      <input type="search" id="ljSearch" placeholder="Search Results" aria-label="Search leads and jobs">
     </div>
     <div class="ljctl">
       <span class="sl">Sort by</span>
@@ -4676,7 +4683,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
     <div class="ljcols">
       <aside class="ljrail">
-        <select class="ljsortsel" id="ljSortSel"></select>
+        <select class="ljsortsel" id="ljSortSel" aria-label="Sort leads and jobs"></select>
         <div class="ljselrow">
           <button class="ljselbtn" id="ljSelAll">&#9745; Select all</button>
           <button class="ljclearbtn" id="ljClearBtn">Clear all</button>
@@ -8328,7 +8335,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <p class="subnote">First, pin the property. Drag the pin or type the address, then choose the client.</p>
     <div style="max-width:680px;margin:0 auto;">
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <input type="text" id="qiAddrInp" placeholder="Type an address&#8230;" style="flex:1 1 220px;min-width:0;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;">
+        <input type="text" id="qiAddrInp" placeholder="Type an address&#8230;" aria-label="Property address" style="flex:1 1 220px;min-width:0;border:1px solid #ddd6cf;border-radius:8px;padding:10px 12px;font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;">
         <button class="chipbtn" id="qiAddrGo">Search</button>
         <button class="chipbtn" id="qiLocBtn" data-cri="pin crico">My location</button>
       </div>
@@ -8458,7 +8465,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
     <div class="cd-lay">
       <aside class="cd-rail">
-        <select class="cd-sortsel" id="cdSortSel"></select>
+        <select class="cd-sortsel" id="cdSortSel" aria-label="Sort clients"></select>
         <div class="cd-selrow">
           <button class="cd-selall" id="cdSelAll">&#9745; Select all</button>
           <button class="cd-clr" id="cdClearBtn">Clear all</button>
@@ -8552,7 +8559,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ ADD / EDIT PROJECT MODAL ============ -->
-<div id="projModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:200;overflow:auto;overscroll-behavior:contain;">
+<div id="projModal" role="dialog" aria-modal="true" aria-labelledby="projModalTitle" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:200;overflow:auto;overscroll-behavior:contain;">
   <div class="projform">
     <h3 id="projModalTitle" style="margin:0 0 12px;">Add project</h3>
     <label>Client name *<input type="text" id="pfName" autocomplete="off"></label>
@@ -8592,7 +8599,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ ROOFING CHECKLIST MODAL ============ -->
-<div id="ckModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:210;overflow:auto;">
+<div id="ckModal" role="dialog" aria-modal="true" aria-label="Roofing inspection checklist" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:210;overflow:auto;">
   <div class="projform" style="max-width:600px;margin:4vh auto 4vh;">
     <h3 style="margin:0 0 4px;">&#128203; Roofing Inspection Checklist</h3>
     <div id="ckDate" class="subnote" style="margin:0 0 4px;"></div>
@@ -8733,7 +8740,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ GENERAL INSPECTION CHECKLIST MODAL ============ -->
-<div id="gcModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:210;overflow:auto;">
+<div id="gcModal" role="dialog" aria-modal="true" aria-label="General inspection checklist" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:210;overflow:auto;">
   <div class="projform" style="max-width:520px;margin:6vh auto 6vh;">
     <h3 style="margin:0 0 4px;">&#128269; General Inspection Checklist</h3>
     <div id="gcDate" class="subnote" style="margin:0 0 8px;"></div>
@@ -8772,7 +8779,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ LEADS MODAL ============ -->
-<div id="leadModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:215;overflow:auto;">
+<div id="leadModal" role="dialog" aria-modal="true" aria-label="Leads from this inspection" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:215;overflow:auto;">
   <div class="projform" style="max-width:460px;margin:10vh auto;">
     <h3 style="margin:0 0 4px;">&#128681; Leads from this inspection</h3>
     <p class="subnote" style="margin:0 0 10px;">These assets were rated Poor or Critical &#8212; turn them into
@@ -8785,7 +8792,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ NEW LEAD MODAL ============ -->
-<div id="leadFormModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:225;overflow:auto;">
+<div id="leadFormModal" role="dialog" aria-modal="true" aria-label="New lead" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:225;overflow:auto;">
   <div style="max-width:680px;margin:4vh auto;padding:0 12px 6vh;">
     <div class="projform" style="max-width:none;">
       <h3 style="margin:0 0 10px;">&#128681; New Lead</h3>
@@ -8964,7 +8971,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ APPOINTMENTS MODAL ============ -->
-<div id="apptModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:220;overflow:auto;">
+<div id="apptModal" role="dialog" aria-modal="true" aria-label="Appointments" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:220;overflow:auto;">
   <div class="projform" style="max-width:460px;margin:7vh auto 7vh;">
     <h3 id="apptDayTitle" style="margin:0 0 8px;"></h3>
     <div id="apptList" class="apptlist"></div>
@@ -8995,7 +9002,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ SIGNATURE MODAL ============ -->
-<div id="sigModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.62);z-index:230;">
+<div id="sigModal" role="dialog" aria-modal="true" aria-label="Client signature" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.62);z-index:230;">
   <div class="projform" style="max-width:560px;margin:12vh auto 0;">
     <h3 style="margin:0 0 6px;">&#9997;&#65039; Client signature</h3>
     <p class="subnote" style="margin:0 0 8px;">Have the client sign with a finger or stylus. The signature and
@@ -9021,7 +9028,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="toolbar">
     <img id="editorLogo" alt="Home" title="Save &amp; go home"
          style="display:none;height:40px;width:auto;flex:0 0 auto;cursor:pointer;border-radius:8px;background:#fff;padding:4px;border:2px solid var(--red);">
-    <span class="edchip edlink" id="edClientChip" title="Back to client overview" style="display:none;"></span>
+    <button type="button" class="edchip edlink" id="edClientChip" title="Back to client overview" style="display:none;"></button>
     <span class="edchip" id="edRepChip" style="display:none;"></span>
     <div class="grow">
       <input id="reportTitle" placeholder="Report title / property address" aria-label="Report title">
@@ -13001,8 +13008,8 @@ function renderAcxOverview(){
     (pvStage ? '<button class="dbstgarr" id="dbStgBack" title="Back to ' + esc(pvStage) + '">&#8249;</button>' : '<span class="dbstgarr ghost"></span>') +
     '<span class="dbstgmid"><b>' + esc(stg.toUpperCase()) + '</b><small>' + esc(stageAgo(ck.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
     (nx ? '<button class="dbstgarr" id="dbStgFwd" title="Advance to ' + esc(nx) + '">&#8250;</button>' : '<span class="dbstgarr ghost"></span>') +
-    '<span class="msmenu" style="position:relative;"><span class="dots" id="msDots" style="cursor:pointer;font-size:22px;color:inherit;padding:0 6px;">&#8942;</span>' +
-    '<div id="msDrop" style="display:none;position:absolute;right:0;top:130%;z-index:70;background:#fff;border:1px solid #c9c2bf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);min-width:180px;overflow:hidden;">' +
+    '<span class="msmenu" style="position:relative;"><button type="button" class="dots" id="msDots" aria-label="More stage actions" aria-haspopup="true" style="cursor:pointer;font-size:22px;color:inherit;padding:0 6px;">&#8942;</button>' +
+    '<div id="msDrop" style="display:none;position:absolute;right:0;top:100%;z-index:70;background:#fff;border:1px solid #c9c2bf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);min-width:180px;overflow:hidden;">' +
       (nx ? '<button class="estopt" data-act="adv">Advance to ' + esc(nx) + '</button>' : '') +
       (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
       (stg === 'Lost' || stg === 'Closed' ? '<button class="estopt" data-act="reopen">Reopen as Lead</button>' : '') +
@@ -17512,8 +17519,8 @@ function ldContactRow(kind){
   var div = document.createElement('div');
   div.className = 'ldrow';
   div.innerHTML = '<input type="' + (kind === 'phone' ? 'tel' : 'email') + '" placeholder="' +
-    (kind === 'phone' ? 'Phone number' : 'Email address') + '">' +
-    '<select>' + opts.map(function(o){ return '<option>' + o + '</option>'; }).join('') + '</select>';
+    (kind === 'phone' ? 'Phone number' : 'Email address') + '" aria-label="' + (kind === 'phone' ? 'Phone number' : 'Email address') + '">' +
+    '<select aria-label="' + (kind === 'phone' ? 'Phone type' : 'Email type') + '">' + opts.map(function(o){ return '<option>' + o + '</option>'; }).join('') + '</select>';
   return div;
 }
 function getTeamMembers(){
@@ -22180,7 +22187,7 @@ function cdCardHtml(pr){
   var po = poOf(pr);
   return '<div class="cd-card' + (on ? ' selon' : '') + '" data-proj="' + pr.id + '" style="--cc:' + meta.color + ';--ccl:' + (meta.colorLight || meta.color) + ';--sc:' + sc + ';--scd:' + (({ Invoiced:'#a98bec', Closed:'#8fa3ad' })[stg] || sc) + ';--scl:' + stageInk(stg) + '">' +
     '<span class="cd-selck">' + (on ? '\u2713' : '') + '</span>' +
-    '<div class="bd">' +
+    '<div class="bd" role="button" tabindex="0">' +
       '<div class="nmrow">' + (po ? '<span class="cd-po">' + esc(String(po)) + ':</span>' : '') +
         '<span class="cd-name">' + esc(pr.name || 'Unnamed client') + '</span>' +
         '<span class="favstar cd-star' + (isFav(pr) ? ' on' : '') + '" data-fav="' + pr.id + '">' + (isFav(pr) ? '\u2B50' : '\u2606') + '</span>' +
@@ -26171,8 +26178,8 @@ function makeMiniCal(mountId, dayKinds, onDay){
     var dim = new Date(yr, mo + 1, 0).getDate();
     var prevD = new Date(yr, mo, 0).getDate();
     var today = new Date();
-    var out = '<div class="calhead"><button class="calnav" data-mc="p">&#8249;</button><b>' +
-      MO[mo] + ' ' + yr + '</b><button class="calnav" data-mc="n">&#8250;</button></div><div class="calgrid">';
+    var out = '<div class="calhead"><button class="calnav" data-mc="p" aria-label="Previous month">&#8249;</button><b>' +
+      MO[mo] + ' ' + yr + '</b><button class="calnav" data-mc="n" aria-label="Next month">&#8250;</button></div><div class="calgrid">';
     ['S','M','T','W','T','F','S'].forEach(function(d){ out += '<div class="dow">' + d + '</div>'; });
     for(var i = startDow - 1; i >= 0; i--) out += '<div class="day other">' + (prevD - i) + '</div>';
     for(var d = 1; d <= dim; d++){
@@ -31761,6 +31768,10 @@ function __histPush(st){
      only closed a sheet.
      Navigating (#22): a bottom-tab or drawer-row tap closes every open sheet first. */
   var CR_SHEET_CANCEL = { projModal: 'pfCancel', sigModal: 'sigCancel' };   /* 1341's pair, kept first */
+  /* 1443 P10.03: a sheet may sit one level down, in a body-level wrapper that is not itself laid out over
+     the page. The Ask sheet (#cr-ai-sheet) lives in #cr-ai-root beside its button, so Escape did nothing
+     and Back moved the page under it. */
+  var CR_SHEET_HOSTS = { 'cr-ai-root': 1 };
   var crEntrySheet = null;
   function crAlpha(c){
     c = String(c || '');
@@ -31782,7 +31793,8 @@ function __histPush(st){
     return null;
   }
   function crIsSheet(el){
-    if(!el || el.parentNode !== document.body || el.style.display === 'none') return false;
+    var up = el ? el.parentElement : null;
+    if(!el || !(up === document.body || (up && CR_SHEET_HOSTS[up.id])) || el.style.display === 'none') return false;
     if(el.id === 'navBackdrop'){ var dm = document.getElementById('navMenu'); if(!dm || dm.style.display !== 'block') return false; }   /* it fades a frame late */
     var cs = getComputedStyle(el);
     if(cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden' ||
@@ -31792,7 +31804,11 @@ function __histPush(st){
     return !!crScrimOf(el);
   }
   function crSheets(){
-    var out = [], k = document.body ? document.body.children : [];
+    var out = [], k = document.body ? Array.prototype.slice.call(document.body.children) : [];
+    Object.keys(CR_SHEET_HOSTS).forEach(function(id){
+      var h = document.getElementById(id);
+      if(h && h.parentElement === document.body) k = k.concat(Array.prototype.slice.call(h.children));
+    });
     for(var i = 0; i < k.length; i++){
       var el = k[i];
       if(el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'LINK') continue;
@@ -31916,6 +31932,88 @@ function __histPush(st){
   }, true);
   window.CardinalSheets = Object.assign(window.CardinalSheets || {}, {
     list: crSheets, top: crTopSheet, close: crCloseSheet, closeAll: crCloseAllSheets
+  });
+  /* 1443 P07.11: ONE focus trap, for whatever is on top. The top layer is the highest of the open sheets
+     (the mechanism above) and the visible [aria-modal="true"] dialogs — the .projform family, the
+     estimate builder, crAsk, the Ask box and the rest. Tab past its last control comes back to its
+     first (Shift+Tab the other way), and focus that lands outside it is brought back in. A control in a
+     layer stacked ABOVE it (the installed tab bar) is left alone: the person can see and tap it. Only
+     the keyboard is touched; a program that moves focus is never second-guessed. */
+  var crTabAt = 0, crTabBack = false;
+  function crLayerZ(el){
+    var z = 0;
+    for(var n = el; n && n.nodeType === 1 && n !== document.body; n = n.parentElement){
+      var cs = getComputedStyle(n);
+      if(cs.position !== 'static'){ var v = parseInt(cs.zIndex, 10); if(!isNaN(v) && v > z) z = v; }
+    }
+    return z;
+  }
+  function crShownLayer(el){
+    if(!el.getClientRects().length || getComputedStyle(el).visibility === 'hidden') return false;
+    for(var n = el; n && n.nodeType === 1; n = n.parentElement){ if(parseFloat(getComputedStyle(n).opacity) < 0.05) return false; }
+    return true;
+  }
+  function crTrapBox(){
+    var c = [];
+    try{ c = crSheets().slice(); }catch(_e){}
+    var m = document.querySelectorAll('[aria-modal="true"]');
+    for(var i = 0; i < m.length; i++){ if(c.indexOf(m[i]) === -1 && crShownLayer(m[i])) c.push(m[i]); }
+    var best = null, bz = -1;
+    c.forEach(function(el){
+      var z = crLayerZ(el);
+      if(!best || z > bz || (z === bz && (best.compareDocumentPosition(el) & 4))){ best = el; bz = z; }
+    });
+    return best;
+  }
+  function crTabStops(box){
+    var q = box.querySelectorAll('a[href],button,input,select,textarea,iframe,summary,[tabindex],[contenteditable="true"],[contenteditable=""]');
+    var out = [];
+    for(var i = 0; i < q.length; i++){
+      var n = /** @type {any} */ (q[i]);
+      if(n.tabIndex < 0 || n.disabled || (n.tagName === 'INPUT' && n.type === 'hidden') || n.closest('[inert]')) continue;
+      if(!n.getClientRects().length || getComputedStyle(n).visibility === 'hidden') continue;
+      out.push(n);
+    }
+    return out;
+  }
+  function crAboveLayer(a, box){
+    if(!(a instanceof Element) || a === document.body || box.contains(a)) return false;
+    return crLayerZ(a) > crLayerZ(box);
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Tab' || e.altKey || e.ctrlKey || e.metaKey) return;
+    crTabAt = Date.now(); crTabBack = !!e.shiftKey;
+    if(e.defaultPrevented) return;
+    var box = crTrapBox(); if(!box) return;
+    var f = crTabStops(box); if(!f.length) return;
+    var a = document.activeElement;
+    if(!a || !box.contains(a)){
+      if(crAboveLayer(a, box)) return;
+      e.preventDefault(); (e.shiftKey ? f[f.length - 1] : f[0]).focus(); return;
+    }
+    if(e.shiftKey ? a === f[0] : a === f[f.length - 1]){ e.preventDefault(); (e.shiftKey ? f[f.length - 1] : f[0]).focus(); }
+  });
+  /* the backstop: a radio group or a positive tabindex can carry focus out past the last stop */
+  document.addEventListener('focusin', function(e){
+    if(Date.now() - crTabAt > 600) return;
+    var t = e.target;
+    if(!(t instanceof Element)) return;
+    var box = crTrapBox(); if(!box || box.contains(t) || crAboveLayer(t, box)) return;
+    var f = crTabStops(box); if(!f.length) return;
+    (crTabBack ? f[f.length - 1] : f[0]).focus();
+  }, true);
+  /* 1443 P07.11: Enter / Space on an element that SAYS it is a button (role="button") clicks it, the way a
+     <button> already does. Delegated once, for every one in the file — the top bar, the list cards and
+     the older role=button rows that had a tab stop and no key (the insurance header, Balance due, the
+     convert banner). A module that handles its own keys calls preventDefault and is left alone. */
+  document.addEventListener('keydown', function(e){
+    if(e.defaultPrevented || e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
+    if(e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    var t = /** @type {any} */ (e.target);
+    if(!(t instanceof HTMLElement) || t.getAttribute('role') !== 'button' || t.isContentEditable) return;
+    if(/^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(t.tagName)) return;
+    e.preventDefault();
+    t.click();
   });
   /* Wrap the main navigation functions so every entry to a view records state.
      Runs deferred so all the target functions are defined first. */
@@ -33676,7 +33774,7 @@ body.claim-insurance #brandLogo{
 
     <div class="cre-lay">
       <aside class="cre-rail">
-        <select class="cre-sortsel" data-cre-sortsel></select>
+        <select class="cre-sortsel" data-cre-sortsel aria-label="Sort estimates"></select>
         <div class="cre-selrow">
           <button class="cre-selbtn" data-cre-selall>&#9745; Select all</button>
           <button class="cre-clr" data-cre-clrall>Clear all</button>
@@ -39915,11 +40013,14 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
   }
   .cr-claimstrip .foot b{ color:var(--ct-ink); }
   .cr-claimstrip .go{
-    display:inline-block; margin-top:10px; cursor:pointer;
+    display:inline-block; margin-top:10px; cursor:pointer; position:relative; background:none; border:0; padding:0;
     font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; letter-spacing:.14em;
     text-transform:uppercase; color:var(--ct-red-deep);
   }
   .cr-claimstrip .go:hover{ color:var(--ct-red-deep); }
+  /* 1443 P07.06: the 14px link gets a 46px tap target; the card around it is a tap target too */
+  .cr-claimstrip .go::after{ content:''; position:absolute; left:0; right:0; top:-16px; bottom:-16px; }
+  .cr-claimstrip.tap{ cursor:pointer; }
   .cr-claimstrip.empty{ background:var(--ct-red-wash); }
   .cr-claimstrip.empty .msg{ font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--ct-ink-2); line-height:1.5; }
   .cr-claimstrip .newbtn{
@@ -40110,10 +40211,12 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
         '<span>Received <b>' + money(paid) + '</b> of ' + money(rcv) + ' \u00b7 ' + pct + '%</span>' +
         '<span>Outstanding <b>' + money(out) + '</b></span>' +
       '</div>' +
-      '<span class="go" data-act="open">Open full claim \u203a</span>';
+      '<button type="button" class="go" data-act="open">Open full claim \u203a</button>';
 
-    var go = host.querySelector('[data-act="open"]');
-    if(go) go.onclick = function(){
+    /* 1443 P07.06: the whole card opens the claim (a tap on its body did nothing), and the
+       Open full claim button inside it reaches here by bubbling, so it opens it once. */
+    host.classList.add('tap');
+    host.onclick = function(){
       if(window.CardinalClaims && window.CardinalClaims.openOne) window.CardinalClaims.openOne(claim.id);
     };
   }
@@ -46773,7 +46876,6 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 /* Production board + its day sheet (the sheet is #cr-pb-modal, outside #cr-pb) */
 :root[data-cr-sun][data-theme="rb-light"] #cr-pb,:root[data-cr-sun][data-theme="rb-light"] #cr-pb-modal{--pb-g:#ffffff;--pb-c:#ffffff;--pb-ink:#0e1013;--pb-mut:#444951;--pb-dim:#444950;
   --pb-acc:#78121b;--pb-hot:#792d1a;--pb-ok:#1f5238;--pb-wx:#114b7d;--pb-line:#cdd2d8;--cr-stack:"Sun"}
-:root[data-cr-sun][data-theme="rb-light"] #cr-pb .pbday.out{opacity:1;--cr-stack:"Sun"}
 /* desktop: four 94px tiles is what a 1366 screen leaves after the size step, and
    "SCHEDULED" in its tracked caps does not fit one (the same clip Text size Large has on
    1433). In Sun the boxes go 2x2 on desktop, and back to 4-up only where the row holds
@@ -46784,7 +46886,6 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 @media (min-width:1700px){:root[data-cr-sun][data-theme="rb-light"]:not([data-cr-text]) body #cr-pb .pbtiles{grid-template-columns:repeat(4,minmax(0,1fr));--cr-stack:"Sun"}}
 @media (min-width:1950px){:root[data-cr-sun][data-theme="rb-light"][data-cr-text="lg"] body #cr-pb .pbtiles{grid-template-columns:repeat(4,minmax(0,1fr));--cr-stack:"Sun"}}
 @media (min-width:2200px){:root[data-cr-sun][data-theme="rb-light"][data-cr-text="xl"] body #cr-pb .pbtiles{grid-template-columns:repeat(4,minmax(0,1fr));--cr-stack:"Sun"}}
-:root[data-cr-sun][data-theme="rb-light"] #cr-pb .pbday.out .dn{color:var(--pb-mut,#444951);--cr-stack:"Sun"}
 :root[data-cr-sun][data-theme="rb-light"] #cr-pb-modal .sheet{background:#ffffff;color:#0e1013;--cr-stack:"Sun"}
 :root[data-cr-sun][data-theme="rb-light"] #cr-pb-modal label{color:#444951;--cr-stack:"Sun"}
 :root[data-cr-sun][data-theme="rb-light"] #cr-pb-modal .cancel{color:#444951;--cr-stack:"Sun"}
@@ -47090,6 +47191,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1443, d:'2026-11-02', t:'Easier to tap, easier to read, and the keyboard works', s:'Small controls that were hard to hit on a phone now have a full-size tap area: Open full claim (and tapping the claim card itself opens the claim), the partner buttons, + Add on a punch card, the stage menu, Remember me, Forgot password, the punch search and the document title. The Back chip in the document editor is a real button. Faded numbers that were hard to read, such as out-of-month days on the Production calendar, Community zero counts and the Clients bar counts, are now a solid readable grey. On a desktop with a keyboard, the top bar and the home and Clients cards can be reached with Tab and opened with Enter, and Tab stays inside a form or the estimate builder instead of wandering to the page behind it. Unlabelled search boxes, sort menus and calendar arrows now say what they are for screen readers. Escape closes the Ask sheet and Self Check, and Back closes the Ask sheet without leaving the page. On a desktop the top bar is 3 pixels taller so every item in it is a full 44 pixels.' },
   { b: 1442, d:'2026-11-02', t:'Desktop: wider screens get used', s:'On a laptop or desktop the Clients directory shows its three portal columns from 1280 pixels wide instead of 1600, and a client profile splits into two columns there too, so far less scrolling. Insurance profiles get the same two columns, and the Cardinal Truth hub fills the screen beside the menu instead of sitting in a narrow strip. Invoices & AR and Owner Review now sit beside the left menu instead of covering it, and their row buttons are sized to their labels. The Schedule Board shows its month grid from 1280, and every booking on it names the client. Reports lays its seven numbers out evenly, the Activity card on home folds one person\u2019s same-day bookings into one line, cards lift under the mouse, the Google Reviews card on an insurance profile reads in light mode, and the A/R status pills match the rest of the app in dark mode.' },
   { b: 1441, d:'2026-11-02', t:'Menus: one drawn icon per place, clearer questions, quieter screens', s:'The menu no longer mixes colour emoji with drawn icons, and no two places share the same icon, so Activity Feed, Storm Data and Quick Inspection, or Commissions and Invoices, are told apart at a glance. Leftover emoji are gone from the Resource Library buttons, the + New contract menu, the appointment rows and the day sheet, and day-sheet rows now say whether each is a job, a drop or an appointment. Yes/no questions name what they do (Advance, Delete permanently, Sign out anyway) instead of Continue, and the ones that cannot be undone use the red button. Uploads, imports and texted pay links now show as a success. A rep\u2019s Tools menu no longer offers Reports and Settings, Self Check sits above the drawer footer and leaves Back where it was, the rail and header buttons use the app\u2019s own font, and the pressed Text size and Appearance buttons in the menu follow the Community and Production colours.' },
   { b: 1440, d:'2026-11-02', t:'Phones: Crew Dispatch readable, Lead Source up front, and smaller fixes', s:'On a phone, Crew Dispatch gives the crew name room and stops breaking it mid-word, the open-repairs badge sits inside the crew pill, and the week label fits. Production accounts no longer see a back arrow on Production home that did nothing, and Crew Dispatch spans the row for field accounts. At the larger text sizes the Punch & Repairs tabs wrap instead of cutting off, and a client name keeps its width. New Lead shows Lead Source on the first screen and points at it if it is missing. Punch-out from + New lists every open job. Appointment fields are full size and show readable dates. Tapping an estimate\u2019s \u00d7 no longer opens it behind the question, the Ask button no longer covers the end of the Leads list, and the Resource Library\u2019s buttons stack in one corner.' },
@@ -53920,6 +54022,8 @@ function ensureView(){
 if(view) return view;
 view = document.createElement('div');
 view.id = 'cr-est-view';
+/* 1443 P07.11: a full-screen editor over the app — Tab stays in it (the shared trap reads aria-modal) */
+view.setAttribute('role', 'dialog'); view.setAttribute('aria-modal', 'true'); view.setAttribute('aria-label', 'Estimate builder');
 document.body.appendChild(view);
 /* 1029: one delegated listener marks the draft dirty; the Close button asks
    before discarding, and save() clears it. Wired once — render() replaces
@@ -54109,7 +54213,7 @@ estNavHtml(s) +
 : '') +
 '</div>' +
 '<label>Estimate Title</label>' +
-'<input type="text" data-f="title" value="' + esc(s.title) + '" placeholder="Estimate title" />' +
+'<input type="text" data-f="title" value="' + esc(s.title) + '" placeholder="Estimate title" aria-label="Estimate title" />' +
 '<div class="cr-est-row3">' +
 '<div>' +
 '<label>Status</label>' +
@@ -56292,6 +56396,7 @@ function ensurePreview(){
 if(previewEl) return previewEl;
 previewEl = document.createElement('div');
 previewEl.id = 'cr-epub-preview';
+previewEl.setAttribute('role', 'dialog'); previewEl.setAttribute('aria-modal', 'true'); previewEl.setAttribute('aria-label', 'Estimate preview');   /* 1443 P07.11 */
 previewEl.innerHTML =
 '<div class="pv-head">' +
 '<button data-act="pv-close" type="button">Close</button>' +
@@ -59077,7 +59182,7 @@ objections : OBJECTIONS,
 #cr-pb .pbrule .wx svg{ width:13px; height:13px; }
 #cr-pb .pbrule .wx i{ font-style:normal; font-size:11px; letter-spacing:.06em; }
 #cr-pb .pbrule .wx.wet{ color:var(--pb-wx,#6db3f2); }
-#cr-pb .pbday.out{ opacity:.45; }
+#cr-pb .pbday.out .dn{ color:var(--pb-mut,#9aa3ab); --cr-stack:"1443 P07.10: the out-of-month state of the day number; the base .dn ink stays for in-month days"; }/* 1443 P07.10: was the whole cell at opacity .45 (2.91:1 light, 4.04:1 dark); Sun's pattern, for every theme */
 #cr-pb .pbday.today{ border-color:var(--pb-acc,#e35c63); border-width:1.5px; }
 #cr-pb .pbday.today .dn{ color:var(--pb-acc,#e35c63); }
 #cr-pb .pbday.sel{ background:var(--pb-c2,#1b1e22); }
@@ -62845,7 +62950,7 @@ window.CardinalPunchCard = {
 })();
 </script>
 
-<style id="cr-pp-styles">.cr-pp-card{margin:14px 0;border:1px solid #ddd6cf;border-radius:11px;background:#fff;overflow:hidden}.cr-pp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#fdf8ee,#f8f1e2);border-bottom:1px solid #ece1cc}.cr-pp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#7a4e00}.cr-pp-hd .n{flex:0 0 auto;padding:3px 9px;border-radius:20px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-pp-hd .n.open{background:#f5a623;color:#241a09}.cr-pp-hd .n.clear{background:#e2efe6;color:#2f7048}.cr-pp-hd .add{flex:0 0 auto;background:#f5a623;color:#241a09;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-family:inherit}.cr-pp-hd .add:hover{background:#e0940f}.cr-pp-bd{padding:12px 14px 14px}.cr-pp-none{font:400 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;line-height:1.6;padding:6px 2px}
+<style id="cr-pp-styles">.cr-pp-card{margin:14px 0;border:1px solid #ddd6cf;border-radius:11px;background:#fff;overflow:hidden}.cr-pp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#fdf8ee,#f8f1e2);border-bottom:1px solid #ece1cc}.cr-pp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#7a4e00}.cr-pp-hd .n{flex:0 0 auto;padding:3px 9px;border-radius:20px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-pp-hd .n.open{background:#f5a623;color:#241a09}.cr-pp-hd .n.clear{background:#e2efe6;color:#2f7048}.cr-pp-hd .add{flex:0 0 auto;position:relative;background:#f5a623;color:#241a09;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-family:inherit}.cr-pp-hd .add:hover{background:#e0940f}.cr-pp-hd .add::after{content:'';position:absolute;left:0;right:0;top:-9px;bottom:-9px}.cr-pp-bd{padding:12px 14px 14px}.cr-pp-none{font:400 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;line-height:1.6;padding:6px 2px}
 /* 637, Theo: "Cannot hardly read address on card in dark mode." Retail dark
    measured 1.46:1 against a 4.5:1 floor — var(--rbe-ink) flips
    #161616 -> #cfd6df with the theme, but .acxsec is background:#fff with NO
@@ -67093,7 +67198,7 @@ background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A2
 /* 981 shipped this as a one-rule light twin; 982 promoted the value into
    --ccm-warn, so the override is retired and the badge reads the token like
    every neighbour. Same rendered colour, #805500 / 6.53:1 — a re-pointing,
-   not a change. */#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:13px;color:var(--ccm-dim)}
+   not a change. */#cr-cc .cc-jmb .n.z{color:var(--ccm-dim,#828c86);--cr-stack:"1443 P07.10: the zero state of the count, edited in place; the .n ink stays for live counts"}/* 1443 P07.10: opacity .6 put it at 2.38:1 light / 2.66:1 dark */#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:13px;color:var(--ccm-dim)}
 /* 706: Partner & Property */
 #cr-cc .cc-pp{display:flex;flex-direction:column;padding:4px 6px}
 #cr-cc .cc-pp .pprow{padding:9px 8px;display:flex;flex-direction:column;gap:3px}
@@ -67102,9 +67207,11 @@ background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A2
 #cr-cc .cc-pp .ppv{font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
 #cr-cc .cc-pp .ppv small,#cr-cc .cc-pp .pprow > small{display:block;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--ccm-dim,#828c86);margin-top:2px}
 #cr-cc .cc-pp .ppchip{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:8px;border:1px solid var(--ccm-line,#2a2f2c);font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ccm-dim,#828c86);vertical-align:2px}
-#cr-cc .cc-pp .ppacts{display:flex;gap:7px;margin-top:7px;flex-wrap:wrap}
-#cr-cc .cc-pp .ppacts button{background:transparent;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-ink,#f2f4f3);border-radius:7px;padding:7px 11px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+#cr-cc .cc-pp .ppacts{display:flex;gap:16px 7px;margin-top:7px;flex-wrap:wrap}
+#cr-cc .cc-pp .ppacts button{position:relative;background:transparent;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-ink,#f2f4f3);border-radius:7px;padding:7px 11px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 #cr-cc .cc-pp .ppacts button:active{background:var(--ccm-line,#2a2f2c)}
+/* 1443 P07.06: 30px buttons, 46px targets — the pad sits in the row's 7px margin above and 9px padding below */
+#cr-cc .cc-pp .ppacts button::after{content:'';position:absolute;left:0;right:0;top:-8px;bottom:-8px}
 /* 886: the OUTBOUND crew work order, surfaced on the black card. It lives as an
    inspection_reports doc (isWorkOrderTitle) with dispatch/completion on
    woByReport, and had never rendered here — only the inbound partner-upload
@@ -69890,6 +69997,13 @@ if(panel && panel.classList.contains('open')) close();
 }
 window.addEventListener('hashchange', releaseIfOpen);
 window.addEventListener('popstate', releaseIfOpen);
+/* 1443 P10.03: Escape closes it too, through the same close(). Not while a run has it hidden: the run
+   re-opens it when it finishes, and closing under it would strand the panel without its lock. */
+document.addEventListener('keydown', function(e){
+if((e.key !== 'Escape' && e.key !== 'Esc') || e.defaultPrevented) return;
+if(!panel || !panel.classList.contains('open') || panel.style.visibility === 'hidden') return;
+e.preventDefault(); close();
+});
 
 window.CardinalSelfCheck = {
 run    : run,
@@ -71468,7 +71582,7 @@ OPEN: OPEN, WON: WON };
    Normal with three-digit counts, 14 at Large and in Sun, 41 at Larger. 984/993's fix. */
 .cd-crmchip{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;white-space:nowrap;background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;border-radius:999px;padding:5px 9px;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}
 .cd-crmchip .cd-dot{margin:0 3px 0 0;}
-.cd-crmchip b{font:800 11px ui-monospace,Menlo,monospace;opacity:.7;}
+.cd-crmchip b{font:800 11px ui-monospace,Menlo,monospace;color:var(--rbe-mute2,#9aa0a8);}/* 1443 P07.10: was opacity .7 — All 2.86:1 in light */
 .cd-crmchip.on{border-color:#c9a227;color:#c9a227;background:transparent;}
 .cd-delbar{position:fixed;left:0;right:0;bottom:calc(152px + env(safe-area-inset-bottom,0px));display:none;gap:9px;justify-content:center;align-items:center;padding:9px 12px;background:rgba(20,16,15,.95);border-top:1px solid #4a2c26;z-index:9996;}
 .cd-delbar.has{display:flex;}
@@ -71634,8 +71748,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .jan.zero{opacity:
   display:flex;align-items:center;flex-wrap:wrap;padding:0 8px;background:#15171b;border-bottom:1px solid #262a31;}
 body[data-crm-head="insurance"] #crBanner{--bacc:#c4180f;--bacclt:#ff8a7a;--bink:#2b0b09;--bline:#4a1512;background:#1a0e0d;border-color:#3d1512;}
 body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink:#04150f;--bline:#12463a;background:#08211a;border-color:#12463a;}
-#crBanner .cbn{position:relative;display:flex;align-items:center;gap:5px;padding:11px 12px;color:#c8cdd4;
+#crBanner .cbn{position:relative;display:flex;align-items:center;gap:5px;padding:12px 12px 13px;color:#c8cdd4;
   font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;border-bottom:3px solid transparent;user-select:none;}
+/* 1443 P07.11: the bar's items are role=buttons now, so the 44px floor measures them (padding 12/13 above makes
+   them 44px). A dropdown's button is its label span, because the menu lives inside it and a button may not
+   hold focusable items; laid out exactly as the bare text and caret were, and its pad fills the whole item. */
+#crBanner .cbl{display:inline-flex;align-items:center;gap:5px;}
+#crBanner .cbdd .cbl::after{content:'';position:absolute;left:0;right:0;top:0;bottom:-3px;}
 /* 1144 — the banner is a THIRD chrome system with its own tokens and its own
    per-CRM dark grounds (#15171b, community #08211a, insurance #1a0e0d). Light
    chrome is not one surface: header tokens, header inks, the drawer, the
@@ -71709,6 +71828,9 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
 @media (max-width:900px){
   #crBanner{padding:2px 4px;}
   #crBanner .cbn{padding:9px 9px;font-size:13px;}
+  /* 1443 P07.11: on a phone the items stay 37px (the bar is unchanged) and carry a pad instead: it fills the
+     item and the bar and overhangs 2px into the header's own ground above and the page's padding below. */
+  #crBanner .cbn:not(.cbdd)::after,#crBanner .cbdd .cbl::after{content:'';position:absolute;left:0;right:0;top:-4px;bottom:-8px;}
   #crBanner .cbsrch{flex:1 1 100%;order:9;margin:4px 4px 8px;}
 }
 /* 1395: Community's pills (Partners, Estimates) are wider than Contacts/Leads, so at a phone's 390px the row
@@ -71784,6 +71906,12 @@ function resolveHide(){
 }
 if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', resolveHide); }
 else { resolveHide(); }
+/* 1443 P07.11: every destination on the bar and in its menus is a tab stop that Enter / Space fires (the one
+   delegated handler beside the sheet mechanism). Set once, here, rather than in the markup: relocateNav()
+   and paintCrmPills() move and relabel these same elements, and the 755 pills stay as written. */
+Array.prototype.forEach.call(B.querySelectorAll('.cbn[data-go], .cbi[data-go]'), function(el){
+  if(el.getAttribute('role') !== 'button'){ el.setAttribute('role', 'button'); el.setAttribute('tabindex', '0'); }
+});
 /* 509: the Resource Library button in the always-on-screen bar. Same rule as
    resolveHide() above - an entrance only appears if its destination does, so a
    build that ever drops showResourceLibrary hides the button instead of
@@ -71809,7 +71937,12 @@ else { resolveHide(); }
   }
 })();
 function closeMenus(){
-  Array.prototype.forEach.call(B.querySelectorAll('.cbdd.open'), function(x){ x.classList.remove('open'); });
+  Array.prototype.forEach.call(B.querySelectorAll('.cbdd.open'), function(x){ x.classList.remove('open'); ddExpanded(x, false); });
+}
+/* 1443 P07.11: the dropdown's label says whether its menu is open; written only on a change */
+function ddExpanded(dd, on){
+  var l = dd.querySelector('.cbl');
+  if(l && l.getAttribute('aria-expanded') !== String(on)) l.setAttribute('aria-expanded', String(on));
 }
 /* 1430 (audit #16): three Tools doors answered a rep with nothing but a red "Admin only." — their
    destinations exist, so resolveHide() shows them, and the person is only known after sign-in. The
@@ -71853,7 +71986,7 @@ B.addEventListener('click', function(e){
     e.stopPropagation();
     var was = dd.classList.contains('open');
     closeMenus();
-    if(!was){ dd.classList.add('open'); gateDoors(dd); fitMenu(dd); }
+    if(!was){ dd.classList.add('open'); ddExpanded(dd, true); gateDoors(dd); fitMenu(dd); }
   }
 });
 document.addEventListener('click', function(e){
@@ -72305,7 +72438,7 @@ window.renderKpHomeRow = function(){
     var st = normStage(p.stage);
     var sc = (typeof LJ_SPINE !== 'undefined' && LJ_SPINE[st]) ? LJ_SPINE[st] : '#dbe7f7';
     var po = poOf(p);
-    return '<div class="kplrow" data-proj="' + p.id + '" style="--sc:' + sc + ';--scl:' + stageInk(st) + '">' +
+    return '<div class="kplrow" role="button" tabindex="0" data-proj="' + p.id + '" style="--sc:' + sc + ';--scl:' + stageInk(st) + '">' +
       '<span class="nm">' + esc(p.name || 'Unnamed client') + '</span>' +
       (po ? '<span class="po">' + esc(String(po)) + '</span>' : '') +
       '<span class="stc">' + esc(st === 'Closed' ? 'Archived' : st) + '</span>' +
@@ -72335,7 +72468,7 @@ window.renderKpHomeRow = function(){
     .slice().sort(function(a, b){ return String(a.appt_time || '').localeCompare(String(b.appt_time || '')); });
   tm.innerHTML = appts.length ? appts.map(function(a){
     var pr = a.project_id ? (window.cacheProjects || []).find(function(x){ return x.id === a.project_id; }) : null;
-    return '<div class="kptrow"' + (pr ? ' data-proj="' + pr.id + '"' : '') + '>' +
+    return '<div class="kptrow"' + (pr ? ' role="button" tabindex="0" data-proj="' + pr.id + '"' : '') + '>' +
       '<span class="tm2">' + esc(a.appt_time ? (typeof fmtApptTime === 'function' ? fmtApptTime(a.appt_time) : a.appt_time) : '\u2014') + '</span>' +
       '<span style="flex:1;min-width:0;"><span class="ti2">' + esc(a.title || 'Appointment') + '</span>' +
         (pr ? '<div class="m3">' + esc(pr.name || '') + '</div>' : '') + '</span></div>';
@@ -72368,7 +72501,7 @@ window.renderKpHomeRow = function(){
     quiet.sort(function(a, b){ return b.days - a.days; });
     quiet = quiet.slice(0, 6);
     qm.innerHTML = quiet.length ? quiet.map(function(x){
-      return '<div class="kpqrow' + (x.days >= 30 ? ' qstale' : '') + '" data-proj="' + x.p.id + '">' +
+      return '<div class="kpqrow' + (x.days >= 30 ? ' qstale' : '') + '" role="button" tabindex="0" data-proj="' + x.p.id + '">' +
         '<span class="qd">' + x.days + '<small>days in ' + esc(x.st) + '</small></span>' +
         '<span class="qn">' + esc(x.p.name || 'Unnamed client') + '</span>' +
         (x.crm === 'community' ? '<span class="qc">COM</span>' : '') +
@@ -72530,7 +72663,7 @@ body.cr-prod #punchView{ position:fixed; inset:0; z-index:9400; overflow-y:auto;
 .pu-sub{margin:1px 0 11px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-mute);}
 .pu-srch{display:flex;align-items:center;gap:8px;background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:10px;
   padding:0 12px;min-height:44px;flex:1;min-width:0;color:var(--rbe-mute);font-size:13px;}
-.pu-srch input{flex:1;background:none;border:0;outline:0;color:var(--rbe-ink);font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;min-width:0;}
+.pu-srch input{flex:1;background:none;border:0;outline:0;color:var(--rbe-ink);font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;min-width:0;align-self:stretch;margin:-2px 0;}/* 1443 P07.06: 46px — it has no ground of its own, so it can overhang the box's 1px border */
 .pu-ctl{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .pu-ico{width:44px;height:44px;flex:0 0 auto;padding:0;border:1px solid var(--rbe-line);background:var(--rbe-panel);color:var(--rbe-ink);border-radius:9px;
   display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;position:relative;}
@@ -95474,7 +95607,10 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
   });
 
   /* mark the home dashboard AR card as a doorway for admins (CSS cursor + hover) */
-  function markDoorway(){ try{ if(isAdm()) document.body.classList.add('cr-ar-adm'); }catch(e){} }
+  function markDoorway(){ try{ if(isAdm()){ document.body.classList.add('cr-ar-adm');
+    var c = document.getElementById('arCard');   /* 1443 P07.11: and a keyboard can open it */
+    if(c && c.getAttribute('role') !== 'button'){ c.setAttribute('role', 'button'); c.setAttribute('tabindex', '0');
+      c.setAttribute('data-cr-delegate', 'cr-ar-script'); } } }catch(e){} }   /* its click is this module's document-level delegate */
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', markDoorway);
   else markDoorway();
   try{ setTimeout(markDoorway, 1800); }catch(e){}  /* is_admin resolves after auth boot */

@@ -37967,3 +37967,53 @@ The name was the only flexible item, so it was the one that gave way.
       - `#acxTrBtn`'s nearest listener is now 7 levels up, and the sentinel walks only 6.
       - The rail's Clients button under AR could not be clicked on 1441 at all (`crarKpiOut` covered it), and it can on 1442. That is P09.08's fix.
       - The other four have their own listener on both trees.
+
+## Build 1443 — accessibility and sheets (2 Nov 2026)
+
+**Source:** the round-1 re-check on 1438, builder A5. Items: P07.05, P07.06, P07.10, P07.11, P07.12 and P10.03.
+
+**Before → after (390 unless marked, measured by gate_1443 and the builder):**
+
+| Item | Before | After |
+|---|---|---|
+| Editor Back chip | span, tabIndex -1, 22px hit | `<button>`, 46px hit, Enter goes back |
+| Open full claim | 15px link; the card body did nothing | button 47px; the card opens the claim |
+| Partner buttons / punch + Add | 31 / 29px | 45 / 45px |
+| Remember me / Forgot password | 23 / 17px | 47 / 47px |
+| Punch search / document title | 24 / 34px | 46 / 44px |
+| Stage band ⋮ | 34×26 span, covered 4px of the forward arrow | 44×44 `<button aria-label>` |
+| Production out-of-month days (dark/light/Sun) | 4.04 / 2.91 / 9.06 | 7.01 / 5.80 / 9.06 |
+| Community zero counts | 2.66 / 2.38 / 2.38 | 5.10 in all three |
+| Clients bar "All" | 4.36 / 2.86 / 2.86 | 7.16 / 5.10 / 5.10 |
+| Tab escapes, New Lead 45 Tab | 21 | 0 |
+| Tab escapes, estimate builder 40 Tab | 40 | 0 |
+| axe `select-name` at 1280 | 5 | 0 |
+| Escape on the Ask sheet / Back | nothing / page moved to `#h` under the sheet | closes / closes, page stays |
+
+**Two layout costs of the 44px floor, recorded for Theo:**
+- **The desktop top bar is 3px taller (42 → 45px).** Above 900px it sits flush between 44px controls, so a hit pad would have taken a pixel from each neighbour. The phone bar uses pads and does not change.
+- **The phone editor toolbar is 10px taller on open (363 → 373 of 844px).** The cause is the title field going from 34 to 44px. P03.08 (1439) had asked that this toolbar not grow. `gate_1439` now allows exactly the title's growth, and still fails if anything else adds height. The folded toolbar is unchanged (`gate_1423` AI-9 ≤ 80px, green).
+
+**Files:**
+- `patch_1443_a11y.py`, then `patch_1443.py`. Byte-reproducible on 1442. The patch was built on 1438 and applies unchanged on top of 1441 and 1442.
+- `gate_1443.mjs` (from builder A5), 108 checks.
+- `gate_1439.mjs`: the P03.08 toolbar bound now counts the title field's growth to 44px (see above).
+
+**Gates:**
+- **Build gates:**
+  - `check_build` is GREEN.
+  - `gate_1443` is GREEN, 108/0. On 1442 it is RED, 33 passed and 65 failed, without crashing.
+- **Standing gates:**
+  - `gate_types` is 1,498 (1442: 1,499).
+  - `gate_dupes` adds six uniquely named functions, and no name gained a definition.
+  - `audit_scrolllock` is GREEN, 16. No body observer and no scroll-lock writer were added.
+- **138 related gates, on 1443 and 1442:** every failure line is identical on both trees except two.
+  - `gate_1269` differs only in a random document id.
+  - `gate_1439`'s toolbar bound is the one above. The updated gate is GREEN 74/0 on both trees.
+- **gate_chromium:** GREEN, 23/23.
+- **gate_stack, on the fixed rig:** CLEAN in dark, light and Sun at 390 and 1440, over 14 states, and none of them threw.
+- **Sentinel** (`--since` 1442):
+  - The colour sweep (both themes, 390 and 1440) and Sun on Production are CLEAN.
+  - The layout sweep printed 13 findings. All of them are the cap:
+    - 3 are TRUNCATED notices.
+    - Uncapped, with both themes at 1440 and the five states involved, 1443's list (74) is a strict subset of 1442's (76). Nothing is new, and the six UNWIRED it printed do not appear.

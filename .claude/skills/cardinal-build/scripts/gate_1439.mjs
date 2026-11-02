@@ -135,12 +135,14 @@ try {
       const vis = [...g.children].filter(b => b.tagName === 'BUTTON' && b.getClientRects().length && b.getBoundingClientRect().width > 0);
       const rows = new Set(vis.map(b => Math.round(b.getBoundingClientRect().top))).size;
       return { chip: document.getElementById('editorStatusChip').textContent, tbH: Math.round(tb.getBoundingClientRect().height), rows, n: vis.length, ids: vis.map(b => b.id),
-        sigShown: sr.width > 0 && sr.height > 0, sigH: Math.round(sr.height), sigInRow: sig.parentElement === g, sigInSecondary: !!sig.closest('#edSecondary'), fill: (document.getElementById('fillChipTxt') || {}).textContent }; });
+        sigShown: sr.width > 0 && sr.height > 0, sigH: Math.round(sr.height), titleH: Math.round(document.getElementById('reportTitle').getBoundingClientRect().height), sigInRow: sig.parentElement === g, sigInSecondary: !!sig.closest('#edSecondary'), fill: (document.getElementById('fillChipTxt') || {}).textContent }; });
     ok(r.chip === 'UNSENT', 'P02.03 a contract keeps UNSENT (only estimate documents read DRAFT)', r.chip);
     ok(r.sigShown && r.sigInRow && !r.sigInSecondary, 'P03.08 Client signature is in the main row, visible without More', r);
     ok(r.sigH >= 44, 'P03.08 ... at the 44px floor', r.sigH);
     ok(r.rows <= 4 && r.n <= 8, 'P03.08 the 2-column grid stays at 4 rows', { rows: r.rows, n: r.n, ids: r.ids });
-    ok(r.tbH <= 365, 'P03.08 the open toolbar is no taller than it was (363px on 1438)', r.tbH);
+    /* 1443 (P07.06) grew the title field from 34 to 44px for the tap floor, and the bar grows by exactly
+       that. What this guards is 1439's own move: Client signature in the main row adds no height. */
+    ok(r.tbH <= 365 + Math.max(0, r.titleH - 34), 'P03.08 the open toolbar is no taller than it was (363px on 1438, plus the title field\'s growth to the 44px floor)', { tbH: r.tbH, titleH: r.titleH });
     await E(() => document.getElementById('edMoreBtn').click()); await sleep(400);
     const dr = await E(() => [...document.querySelectorAll('#edDrawer .edrow')].map(x => x.textContent.trim()));
     ok(Array.isArray(dr) && dr.length >= 3 && !dr.some(t => /Client signature/.test(t)), 'P03.08 the More drawer no longer lists it (moved, never copied)', dr);
