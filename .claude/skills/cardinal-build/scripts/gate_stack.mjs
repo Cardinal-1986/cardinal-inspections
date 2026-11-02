@@ -193,7 +193,12 @@ const ANALYSE = (priorSet) => `((PRIOR) => {
 async function sweep(page, file, setupSrc, states, evalStr) {
   /* 1435: under file:// a module's raw fetch() bypasses the mocked client and reached PRODUCTION
      Supabase (measured by builder J: 6 anonymous GET /rest/v1 per load). Nothing here may leave the box. */
-  await page.route(/^(https?|wss?):\/\/[^/]*supabase\.co(\/|$)/, r => r.abort('blockedbyclient'));
+  /* 1441: EVERY remote request, not only *.supabase.co. With only Supabase blocked, the page's
+     supabase-js <script> still loaded from the CDN and replaced the e2e mock's window.supabase,
+     so the store came up empty and data-driven states threw or rendered blank screens — on both
+     trees, so it read as "clean". Found by builder A2 (round-1 re-check). The page is file://,
+     which this pattern does not match. */
+  await page.route(/^(https?|wss?):\/\//, r => r.abort('blockedbyclient'));
   await page.addInitScript(setupSrc || '');
   await page.goto('file://' + file, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);

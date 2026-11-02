@@ -99,6 +99,18 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
 #navMenu .cr-ts button[data-cr-appear]{font-size:13px;padding:0 14px;--cr-stack:"the A/A/A buttons hold one glyph; these hold a word, so they need their own size and side padding";}
 #navMenu .cr-ts button[aria-pressed="true"]{background:var(--lnav-crmc,#c8202e);
   border-color:var(--lnav-crmc,#c8202e);color:#fff;}
+/* A1 (J16.06): --lnav-crmc is set on #cr-lnav only, and #navMenu is not inside it, so the pressed
+   A / Dark / Light fell back to red in every portal. The rail's own CRM_COLOR map, keyed the way the
+   rail keys it (data-crm-head). Community, production and sales are bright accents that white cannot
+   sit on (1.92 / 2.03 / 3.6:1), so they take the rail's own deepened twins (CRM_INK_LT). White on
+   each, computed: retail #3e6ca8 5.36 · insurance #c8202e 5.67 · community #047857 5.48 ·
+   production #96560c 5.78 · sales #b23730 6.03; Sun light darkens each 20% (7.47-8.27).
+   1441: RETAIL is left on the red fallback (#c8202e, 5.67:1) — the rail's slate #3e6ca8 would change
+   Retail's look, which is a colour call held for Theo. */
+body[data-crm-head="insurance"] #navMenu{--lnav-crmc:#c8202e}
+body[data-crm-head="community"] #navMenu{--lnav-crmc:#047857}
+body[data-crm-head="production"] #navMenu{--lnav-crmc:#96560c}
+body[data-crm-head="sales"] #navMenu{--lnav-crmc:#b23730}
 /* ⚠ There was a light twin here scoped on html[data-mode="light"] and it was
    MY OWN bug, caught by the sentinel before this shipped. data-mode is the
    LANDING/LOGIN theme - CLAUDE.md says so in as many words, "not an app-wide
@@ -4305,7 +4317,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="suppliers" data-cri="warehouse lg">Suppliers</button>
 
           <div class="navsec">Sell</div>
-          <button class="navopt" data-nav="quickinsp" data-cri="bolt lg">Quick Inspection</button>
+          <button class="navopt" data-nav="quickinsp" data-cri="camera lg">Quick Inspection</button>
           <button class="navopt" data-nav="inspections" data-cri="search lg">Inspections</button>
           <button class="navopt" data-nav="estimates" data-cri="money lg">Estimates</button>
           <button class="navopt" data-nav="coach" data-cri="target lg">Objection Coach</button>
@@ -4323,8 +4335,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="library" data-cri="books lg">Resource Library</button>
           <button class="navopt" data-nav="supplements" data-cri="paperclip lg">Supplement Templates</button>
           <button class="navopt" data-nav="insresources" data-cri="compass lg">Insurance Resources</button>
-          <button class="navopt" data-nav="adjusters" data-cri="group lg">Adjuster Directory</button>
-          <button class="navopt" data-nav="claimstracker" data-cri="clipboard lg">Claims Tracker</button>
+          <button class="navopt" data-nav="adjusters" data-cri="person lg">Adjuster Directory</button>
+          <button class="navopt" data-nav="claimstracker" data-cri="flag lg">Claims Tracker</button>
           <button class="navopt" data-nav="desk" data-cri="calculator lg">Supplement Desk</button>
 
           <!-- 953: the 951 pattern twice more. Shortcuts - the Production and
@@ -4335,26 +4347,26 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
                static markup. The LAST "Insurance" heading is still the one
                renameSec() turns into "CRMs" - keep these sections above it. -->
           <div class="navsec">Production</div>
-          <button class="navopt" data-nav="prodboard" data-cri="hardhat lg">Production Board</button>
-          <button class="navopt" data-nav="dispatch" data-cri="calendar lg">Crew Dispatch</button>
+          <button class="navopt" data-nav="prodboard" data-cri="factory lg">Production Board</button>
+          <button class="navopt" data-nav="dispatch" data-cri="truck lg">Crew Dispatch</button>
           <button class="navopt" data-nav="punch" data-cri="ladder lg">Punch &amp; Repairs</button>
 
           <div class="navsec">Community</div>
-          <button class="navopt" data-nav="newbid" data-cri="money lg">New Estimate</button>
+          <button class="navopt" data-nav="newbid" data-cri="pencil lg">New Estimate</button>
 
           <div class="navsec">Insurance</div>
           <button class="navopt" data-nav="cardinaltruth" data-cri="shield lg">Cardinal Truth</button>
 
           <div class="navsec">Office</div>
           <button class="navopt" data-nav="reports" data-cri="chart lg">Graphs &amp; Reports</button>
-          <button class="navopt" data-nav="feed" data-cri="bolt lg">Activity Feed</button>
+          <button class="navopt" data-nav="feed" data-cri="cards lg">Activity Feed</button>
           <button class="navopt" data-nav="recents" data-cri="clock lg">Recents</button>
           <button class="navopt" data-nav="pricing" data-cri="tag lg">Pricing Catalog</button>
           <button class="navopt" data-nav="companydocs" data-cri="folder lg">Company Documents</button>
           <button class="navopt" data-nav="crews" data-cri="hardhat lg">Crews</button>
-          <button class="navopt" data-nav="laborrates" data-cri="clipboard lg">Labor Rate Schedule</button>
+          <button class="navopt" data-nav="laborrates" data-cri="ruler lg">Labor Rate Schedule</button>
           <button class="navopt" data-nav="pay" data-cri="cash lg">Commissions</button>
-          <button class="navopt" data-nav="ar" data-cri="cash lg">Invoices &amp; AR</button>
+          <button class="navopt" data-nav="ar" data-cri="contract lg">Invoices &amp; AR</button>
           <button class="navopt" data-nav="ownerreview" data-cri="eye lg">Owner Review</button>
 
           <div class="navsec">Account</div>
@@ -4397,7 +4409,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1440<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1441<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4417,7 +4429,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <span class="cbn" data-go="track" data-cri="calculator lg">Track</span>
   <span class="cbn" data-go="reports" data-cri="chart lg">Reports</span>
   <span class="cbn cbdd" data-dd="prod">Production <b class="car">&#9660;</b>
-    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="hardhat lg">Production Board</span><span class="cbi" data-go="dispatch" data-cri="calendar lg">Crew Dispatch</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
+    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="factory lg">Production Board</span><span class="cbi" data-go="dispatch" data-cri="truck lg">Crew Dispatch</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
   </span>
   <span class="cbn cbdd" data-dd="tools">Tools <b class="car">&#9660;</b>
     <span class="cbmenu">
@@ -4426,7 +4438,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <span class="cbi" data-go="pricing" data-cri="money lg">Pricing Catalog</span>
       <span class="cbi" data-go="coach" data-cri="target lg">Objection Coach</span>
       <span class="cbi" data-go="finrates" data-cri="cash lg">Financing Rates</span>
-      <span class="cbi" data-go="adjusters" data-cri="group lg">Adjuster Directory</span>
+      <span class="cbi" data-go="adjusters" data-cri="person lg">Adjuster Directory</span>
       <small>Supply</small>
       <span class="cbi" data-go="abc" data-cri="warehouse lg">Suppliers</span>
       <small>App</small>
@@ -4708,7 +4720,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">Punch &amp; Repairs</h2><button class="pu-new" id="puNewBtn" type="button">&#65291; New</button></div>
     <p class="pu-sub" id="puSub">&mdash;</p>
     <div id="puQueue"></div>
-    <div class="pu-ctl"><div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Client, address, PO # or item" aria-label="Search punch items"></div>
+    <div class="pu-ctl"><div class="pu-srch" data-cri="search"><input type="search" id="puSearch" placeholder="Client or PO #" aria-label="Search punch items"></div>
       <button class="pu-ico" id="puFunnel" type="button" title="Filters" aria-label="Filters">&#9923;<span class="bdg" id="puBadge">0</span></button>
     </div>
     <div class="pu-tabs" id="puTabs" role="group" aria-label="Kind of work">
@@ -4908,9 +4920,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <div id="pContractMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
                background:#1e2027;border:1px solid #3a3f4a;border-radius:8px;min-width:250px;
                box-shadow:0 8px 22px rgba(0,0,0,.55);overflow:hidden;">
-            <button class="estopt" data-ctpl="roof">&#127968; Roofing agreement</button>
-            <button class="estopt" data-ctpl="siding">&#129521; Siding agreement</button>
-            <button class="estopt" data-ctpl="gutters">&#127783; Gutter agreement</button>
+            <button class="estopt" data-ctpl="roof">Roofing agreement</button>
+            <button class="estopt" data-ctpl="siding">Siding agreement</button>
+            <button class="estopt" data-ctpl="gutters">Gutter agreement</button>
           </div>
         </span>
         <button class="chipbtn" id="pUploadContractBtn" type="button">Upload signed contract</button>
@@ -8954,10 +8966,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="ckrow">
       <label>Type
         <select id="apptKind">
-          <option value="appt">&#128197; Appointment</option>
-          <option value="job">&#128296; Job</option>
-          <option value="drop">&#128666; Material Drop</option>
-          <option value="team">&#127970; Team &#8212; meeting / vacation / PTO</option>
+          <option value="appt">Appointment</option>
+          <option value="job">Job</option>
+          <option value="drop">Material Drop</option>
+          <option value="team">Team &#8212; meeting / vacation / PTO</option>
         </select></label>
       <label>Time<input type="time" id="apptTime"></label>
       <label id="apptClientLbl">Client (optional)
@@ -12748,7 +12760,7 @@ async function acxAdvance(pr){
     renderOverview(); renderPipeline();
     if(nx === 'Completed' && !parseCkAll(pr).review_requested_at && (pr.phone || pr.email)){
       setTimeout(async function(){
-        if(await crAsk('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
+        if(await crAsk('Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?', { verb:'Send request', cancel:'Not now', tone:'plain' })){
           sendReviewRequest(pr, pr.phone ? 'sms' : 'email');
         }
       }, 300);
@@ -12779,7 +12791,7 @@ function _crStageReviewMaybe(pr, from){
     if(from != null && STAGES.indexOf(normStage(from)) >= STAGES.indexOf('Completed')) return;
     if(normStage(pr.stage) === 'Completed' && !parseCkAll(pr).review_requested_at && (pr.phone || pr.email)){
       setTimeout(async function(){
-        if(await crAsk('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
+        if(await crAsk('Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?', { verb:'Send request', cancel:'Not now', tone:'plain' })){
           sendReviewRequest(pr, pr.phone ? 'sms' : 'email');
         }
       }, 300);
@@ -17035,7 +17047,7 @@ function renderApptsPage(){
     });
   if(!aps.length){ mount.innerHTML = '<div class="axnote">Nothing scheduled for this job yet.</div>'; return; }
   mount.innerHTML = aps.map(function(a){
-    var ic = a.kind === 'drop' ? '\uD83D\uDE9A' : (a.kind === 'job' ? '\uD83D\uDD28' : '\uD83D\uDCC5');
+    var ic = (KIND_META[a.kind || 'appt'] || KIND_META.appt).ic;   /* A1 (P06.08): the board's drawn kind glyph, not emoji */
     return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
       '<span style="font-size:18px;">' + ic + '</span>' +
       '<span style="flex:1;"><b>' + esc(a.title || 'Appointment') + '</b>' +
@@ -18340,7 +18352,7 @@ async function createInvoiceFor1315(pr){
     return r.project_id === pr.id && /^invoice/i.test((r.title || '').trim());
   }).length;
   if(invCount > 0 && !await crAsk('This job already has ' + (invCount === 1 ? 'an invoice' : invCount + ' invoices') +
-      '. Make another one for the ' + fmtMoney(fin.balance, true) + ' still owed?')) return;
+      '. Make another one for the ' + fmtMoney(fin.balance, true) + ' still owed?', { verb:'Make another', cancel:'Cancel' })) return;
   var num = (poOf(pr) || 'INV') + '-' + (invCount + 1);   /* 1402: the label already says "Invoice #" */
   /* 1376 (W7): on a Community job the partner is billed; pr.phone / pr.email are the occupant's, and would print
      under the partner's name. Leave the contact row empty; it is dropped at print like any empty placeholder. */
@@ -18417,7 +18429,7 @@ document.getElementById('stageBanner').addEventListener('click', async function(
   var ni = si + dir;
   if(ni < 0 || ni >= STAGES.length) return;
   var next = STAGES[ni];
-  if(!await crAsk((dir > 0 ? 'Advance' : 'Move back') + ' to ' + next.toUpperCase() + '?')) return;
+  if(!await crAsk((dir > 0 ? 'Advance' : 'Move back') + ' to ' + next.toUpperCase() + '?', { verb: dir > 0 ? 'Advance' : 'Move back' })) return;
   try{
     await setStage(currentProject.id, next);
     renderOverview();
@@ -19372,7 +19384,7 @@ function pickAndUploadInsDoc(typeKey){
          the scope; only the Scope of Loss card reads one. Offer the read
          right here rather than leaving the wrong button silently wrong. */
       if(typeKey === 'scope_of_loss' && typeof routeScopeToReader === 'function'){
-        if(await crAsk('Filed.\n\nRead it now and fill in the carrier, claim number and the RCV/ACV figures?\n\nFiling alone does not update the claim.')){
+        if(await crAsk('Filed.\n\nRead it now and fill in the carrier, claim number and the RCV/ACV figures?\n\nFiling alone does not update the claim.', { verb:'Read it now', cancel:'Later' })){
           await routeScopeToReader(f, null);
         }
       }
@@ -23768,7 +23780,7 @@ async function runTotalsBackfill(){
     return (isEstimateTitle(t) || /^(contract|invoice)/i.test(t)) && !(Number(r.total) > 0);
   });
   if(!targets.length){ crTell('Nothing to backfill \u2014 every estimate, contract, and invoice already has a total.'); return; }
-  if(!await crAsk('Scan ' + targets.length + ' document(s) missing a dollar total and fill them in from the document contents?')) return;
+  if(!await crAsk('Scan ' + targets.length + ' document(s) missing a dollar total and fill them in from the document contents?', { verb:'Scan and fill in' })) return;
   var fixed = 0, skipped = 0;
   for(var i = 0; i < targets.length; i++){
     try{
@@ -24153,7 +24165,7 @@ async function renderCommissions(){
 }
 async function miChangeRep(email){
   if(!currentProject || !commAdmin()) return;
-  if(commUi.hasColls && !await crAsk('This job already has money logged. Move the sales rep anyway?\nExisting commissions keep their rep; only future collections follow the new one.')){
+  if(commUi.hasColls && !await crAsk('This job already has money logged. Move the sales rep anyway?\nExisting commissions keep their rep; only future collections follow the new one.', { verb:'Move the rep', cancel:'Keep the rep' })){
     renderCommissions(); return;
   }
   var r = await sb.from('projects').update({ sales_rep: email }).eq('id', currentProject.id).select('id,sales_rep').single();
@@ -25639,9 +25651,9 @@ function openApptDay(ds){
   apptEditReset();   /* 1260 */
   apptDay = ds;
   var parts = ds.split('-');
-  document.getElementById('apptDayTitle').textContent = '\uD83D\uDCC5 ' +
-    new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10))
-      .toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('apptDayTitle').innerHTML = crIco('calendar') +   /* A1 (P08.06): drawn, not emoji */
+    esc(new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10))
+      .toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }));
   var sel = document.getElementById('apptClient');
   sel.innerHTML = '<option value="">\u2014 none \u2014</option>' +
     cacheProjects.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); })
@@ -25677,10 +25689,11 @@ function renderApptList(){
     return '<div class="apptrow' + (apptEditId === String(a.id) ? ' editing' : '') + '" data-aid="' + a.id + '">' +
       '<span class="tm">' + (a.appt_time ? fmtApptTime(a.appt_time) : '\u2014') + '</span>' +
       '<span class="bd"><b>' + esc(a.title) + '</b>' +
-        ((pr || a.notes || a.created_by) ? '<small>' +
-          (pr ? esc(pr.name) : '') +
-          (a.notes ? (pr ? ' \u00b7 ' : '') + esc(a.notes) : '') +
-          (a.created_by ? ' \u00b7 ' + esc(a.created_by.split('@')[0]) : '') + '</small>' : '') +
+        /* A1 (P08.06): the kind leads the line — the board card shows it, this list did not */
+        '<small>' + esc((KIND_META[a.kind || 'appt'] || KIND_META.appt).nm) +
+          (pr ? ' \u00b7 ' + esc(pr.name) : '') +
+          (a.notes ? ' \u00b7 ' + esc(a.notes) : '') +
+          (a.created_by ? ' \u00b7 ' + esc(a.created_by.split('@')[0]) : '') + '</small>' +
       '</span>' +
       '<span class="apptact">' +   /* 1260: one group, so a phone wraps it under the text */
       ((apptCanEdit(a) && !pr && (a.kind === 'job' || a.kind === 'drop'))
@@ -29086,7 +29099,7 @@ async function priceOkToSend(what){
   if(t === null) return true;              /* no total field — not a priced document */
   if(Number(t) > 0) return true;
   return await crAsk('\u201C' + (what || 'This document') + '\u201D has no total \u2014 it reads $0.00.\n\n' +
-                 'Enter a total first, or send it anyway?');
+                 'Enter a total first, or send it anyway?', { verb:'Send anyway', cancel:'Enter a total first' });
 }
 /* D (contracts judge, 29 Oct): Text to sign, Share link, Email to client and the in-person pad all
    sent a contract with its "N to fill" chip still red -- 40 blanks on a fresh agreement -- and said
@@ -29413,7 +29426,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     }
     _bl.textContent = '\u2713 Sent';
     setTimeout(function(){ _bl.textContent = (btn.dataset.lbl || 'Email to client'); btn.disabled = false; }, 2500);
-    if(pr && await crAsk('Sent. Schedule a follow-up reminder in 3 days?')){
+    if(pr && await crAsk('Sent. Schedule a follow-up reminder in 3 days?', { verb:'Remind me in 3 days', cancel:'No reminder' })){
       var d = (function(){ var _x = new Date(); _x.setDate(_x.getDate() + 3); return _x; })();
       await adb.create({
         title: 'Follow up \u2014 ' + (pr.name || 'client'),
@@ -30632,7 +30645,7 @@ async function renderAuditLog(){
     var rz = mount.querySelector('[data-audreset]');
     if(rz) rz.addEventListener('click', async function(){
       if(!await crAsk('Reset the ENTIRE audit log?\n\nThis permanently clears all recorded events and sign-in sessions for the whole team.')) return;
-      if(!await crAsk('Last check \u2014 this cannot be undone. Reset now?')) return;
+      if(!await crAsk('Last check \u2014 this cannot be undone. Reset now?', { verb:'Reset now', cancel:'Keep it', tone:'danger' })) return;
       try{
         await sb.from('audit_events').delete().not('id', 'is', null);
         await sb.from('audit_sessions').delete().not('id', 'is', null);
@@ -31448,7 +31461,7 @@ signOutBtn.addEventListener('click', async function(){
     }
     if((_pw + _pp) > 0){
       var _n = _pw + _pp;
-      if(!await crAsk(_n + ' change' + (_n === 1 ? '' : 's') + ' on this device ' + (_n === 1 ? 'has' : 'have') + ' not synced yet and will be lost if you sign out now.\n\nSign out anyway?')) return;
+      if(!await crAsk(_n + ' change' + (_n === 1 ? '' : 's') + ' on this device ' + (_n === 1 ? 'has' : 'have') + ' not synced yet and will be lost if you sign out now.\n\nSign out anyway?', { verb:'Sign out anyway', cancel:'Stay signed in', tone:'danger' })) return;
     }
   }catch(_){}
   try{ await sb.auth.signOut(); }catch(e){}
@@ -40775,7 +40788,7 @@ if(portal && portal !== 'community' && portal !== 'all') return;
 var btn = document.createElement('button');
 btn.className = 'navopt';
 btn.setAttribute('data-nav', 'community-partners');
-btn.innerHTML = '\uD83E\uDD1D Community Partners';
+btn.innerHTML = (window.CardinalIcons ? window.CardinalIcons.get('group', 'lg') : '') + 'Community Partners';   /* A1: the 953 row's own glyph */
 btn.onclick = function(){ openDirectory(); };
 menu.appendChild(btn);
 }
@@ -41542,7 +41555,7 @@ try{
     catch(eW){ bad.push(list[wi].name + ' (' + ((eW && eW.message) || eW) + ')'); }
   }
   if(bad.length) crTell('Upload failed: ' + bad.join('; '));
-  else if(list.length > 1) crTell('Uploaded ' + list.length + ' work orders.');
+  else if(list.length > 1) crTell('Uploaded ' + list.length + ' work orders.', 'ok');
 }
 catch(e){ crTell('Upload failed: ' + (e.message || e)); }
 finally{
@@ -41758,7 +41771,8 @@ if(already) return;
 var wantAttach = await crAsk(
 'Client set to Community. Attach a partner now?\n\n' +
 'Non-profits: Habitat, ReBuild, DHRN\n' +
-'Property managers: Kitty Hawk Realty'
+'Property managers: Kitty Hawk Realty',
+{ verb:'Attach a partner', cancel:'Not now' }
 );
 if(!wantAttach) return;
 window.CardinalCommunityPartners.pickPartner(function(chosen){
@@ -47041,6 +47055,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1441, d:'2026-11-02', t:'Menus: one drawn icon per place, clearer questions, quieter screens', s:'The menu no longer mixes colour emoji with drawn icons, and no two places share the same icon, so Activity Feed, Storm Data and Quick Inspection, or Commissions and Invoices, are told apart at a glance. Leftover emoji are gone from the Resource Library buttons, the + New contract menu, the appointment rows and the day sheet, and day-sheet rows now say whether each is a job, a drop or an appointment. Yes/no questions name what they do (Advance, Delete permanently, Sign out anyway) instead of Continue, and the ones that cannot be undone use the red button. Uploads, imports and texted pay links now show as a success. A rep\u2019s Tools menu no longer offers Reports and Settings, Self Check sits above the drawer footer and leaves Back where it was, the rail and header buttons use the app\u2019s own font, and the pressed Text size and Appearance buttons in the menu follow the Community and Production colours.' },
   { b: 1440, d:'2026-11-02', t:'Phones: Crew Dispatch readable, Lead Source up front, and smaller fixes', s:'On a phone, Crew Dispatch gives the crew name room and stops breaking it mid-word, the open-repairs badge sits inside the crew pill, and the week label fits. Production accounts no longer see a back arrow on Production home that did nothing, and Crew Dispatch spans the row for field accounts. At the larger text sizes the Punch & Repairs tabs wrap instead of cutting off, and a client name keeps its width. New Lead shows Lead Source on the first screen and points at it if it is missing. Punch-out from + New lists every open job. Appointment fields are full size and show readable dates. Tapping an estimate\u2019s \u00d7 no longer opens it behind the question, the Ask button no longer covers the end of the Leads list, and the Resource Library\u2019s buttons stack in one corner.' },
   { b: 1439, d:'2026-11-02', t:'Documents: cleaner emails and prints, and the Contracts tab tidied', s:'An emailed or printed contract no longer carries the yellow fill-in prompts, empty pick boxes or editing hints. The figure numbers in a shared report match its section numbers. A printed invoice is shorter, without the draft status box, and shows $0.00 rather than \u2212$0.00; Roof Options with up to three choices prints on one page; grey labels on printed documents are darker. After you email a document it shows as Sent. On a phone, Client signature is on the main bar, signing shows one message instead of two, the client document labels have room, and the invoice editor fits the screen. The Contracts tab has one red button, signed contracts no longer offer Mark sent, and Commissions on a phone shows Net instead of Draws. The home Activity Count says it covers all boards.' },
   { b: 1438, d:'2026-11-01', t:'Production: the four boxes stop cutting their labels on a laptop', s:'On a laptop-sized screen the Production board squeezed its four boxes (Needs ordered, Ordered, Scheduled, Punch-outs) into one row and cut their labels off, and at the larger text sizes it did that on most desktop screens. The boxes now sit two by two until the screen is wide enough for all four labels, the way Sun already shows them.' },
@@ -48742,7 +48757,7 @@ email = email.trim().toLowerCase();
    exact string by the sales RLS policy, so a half-typed address hands the
    selected clients to nobody and says it worked. */
 if(!window.crValid.email(email).ok){ crTell('That doesn\'t look like an email.'); return; }
-if(!await crAsk('Reassign ' + selected.size + ' client(s) to ' + email + '?')) return;
+if(!await crAsk('Reassign ' + selected.size + ' client(s) to ' + email + '?', { verb:'Reassign' })) return;
 var ids = Array.from(selected);
 var btns = bar.querySelectorAll('button');
 btns.forEach(function(b){ b.disabled = true; });
@@ -48794,7 +48809,8 @@ if(!await crAsk(
 '  \u2022 ' + preview + '\n\n' +
 'This also removes their photos, estimates, documents and appointments. ' +
 'It cannot be undone.\n\n' +
-'If you only want them out of the way, use Archive instead.'
+'If you only want them out of the way, use Archive instead.',
+{ verb:'Delete permanently', cancel:'Keep them', tone:'danger' }
 )) return;
 var typed = prompt('Type DELETE to confirm removing ' + ids.length + ' client' +
 (ids.length === 1 ? '' : 's') + ' permanently:');
@@ -48867,9 +48883,10 @@ return '';
 }
 function isAdmin(){ return ADMIN_EMAILS.indexOf(currentEmail()) !== -1; }
 function hideOpt(dataNav){
-var el = document.querySelector('#navMenu .navopt[data-nav="' + dataNav + '"]');
+var el = /** @type {HTMLElement} */ (document.querySelector('#navMenu .navopt[data-nav="' + dataNav + '"]'));
 /* 1399: the phone drawer's display:flex !important beat this inline none — the attribute carries it */
-if(el){ el.style.display = 'none'; el.setAttribute('data-cradmin', '1'); }
+/* A1 (P10.07): compared first — this runs on every reorg pass, and an unchanged write still wakes every body observer */
+if(el){ if(el.style.display !== 'none') el.style.display = 'none'; if(el.getAttribute('data-cradmin') !== '1') el.setAttribute('data-cradmin', '1'); }
 }
 function findSec(labelText){
 var found = null;
@@ -48928,21 +48945,21 @@ if(s.textContent.trim().toLowerCase() === 'community') ct = s;
 if(!ct) ct = menu.querySelector('.navopt[data-nav="cardinaltruth"]');
 if(!ct) return;
 var hub = makeOpt('cr-nav-communityhub',
-'\uD83C\uDFD8\uFE0F Community Hub',
+(window.CardinalIcons ? window.CardinalIcons.get('houses', 'lg') : '') + 'Community Hub',   /* A1 (P01.14): drawn, not emoji */
 function(){
 if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){
 window.CardinalCommunityHub.show();
 }
 });
 var partners = makeOpt('cr-nav-communitypartners',
-'\uD83E\uDD1D Community Partners',
+(window.CardinalIcons ? window.CardinalIcons.get('group', 'lg') : '') + 'Community Partners',
 function(){
 if(window.CardinalCommunityPartners && typeof window.CardinalCommunityPartners.openDirectory === 'function'){
 window.CardinalCommunityPartners.openDirectory();
 }
 });
 var prospects = makeOpt('cr-nav-communityprospects',
-'\uD83C\uDF31 Prospective Partners',
+(window.CardinalIcons ? window.CardinalIcons.get('funnel', 'lg') : '') + 'Prospective Partners',
 function(){
 if(window.CardinalCommunityPartners &&
 typeof window.CardinalCommunityPartners.openProspects === 'function'){
@@ -48964,13 +48981,13 @@ var reports = menu.querySelector('.navopt[data-nav="reports"]');
 var feed    = menu.querySelector('.navopt[data-nav="feed"]');
 var settings= menu.querySelector('.navopt[data-nav="settings"]');
 var health  = makeOpt('cr-nav-health',
-'\uD83E\uDE7A Health Check',
+(window.CardinalIcons ? window.CardinalIcons.get('alarm', 'lg') : '') + 'Health Check',
 function(){
 if(window.CardinalAdminHealth && typeof window.CardinalAdminHealth.show === 'function'){
 window.CardinalAdminHealth.show();
 }
 });
-var ownerOpt = makeOpt('cr-nav-owner', '\uD83D\uDCCB Owner Console', function(){ if(window.CardinalOwner && typeof window.CardinalOwner.open === 'function') window.CardinalOwner.open(); });
+var ownerOpt = makeOpt('cr-nav-owner', (window.CardinalIcons ? window.CardinalIcons.get('scales', 'lg') : '') + 'Owner Console', function(){ if(window.CardinalOwner && typeof window.CardinalOwner.open === 'function') window.CardinalOwner.open(); });
 var ownerSec = makeSec('cr-nav-sec-owner', 'Owner');   /* 1113: the Owner Console gets its own drawer section */
 var anchor = acctSec || document.getElementById('signOutBtn');
 if(anchor){
@@ -49569,7 +49586,7 @@ if(document.getElementById('cr-rltoc-btn')) return;
 var b = document.createElement('button');
 b.id = 'cr-rltoc-btn';
 b.type = 'button';
-b.innerHTML = '<span>\uD83D\uDCD6</span> TOC';
+b.innerHTML = '<span>' + (window.CardinalIcons ? window.CardinalIcons.get('books') : '') + '</span> TOC';   /* A1 (P06.08): drawn, not emoji */
 b.title = 'Open Table of Contents';
 b.onclick = open;
 document.body.appendChild(b);
@@ -50304,7 +50321,8 @@ var articleCount = baseline.articles.length;
 if(!await crAsk(
 'Import ' + seriesCount + ' baseline series and ' + articleCount +
 ' articles into the database?\n\n' +
-'Duplicates (matching slug for series, matching title for articles) will be skipped, so it\'s safe to run.'
+'Duplicates (matching slug for series, matching title for articles) will be skipped, so it\'s safe to run.',
+{ verb:'Import' }
 )) return;
 var slugToId = {};
 DB_SERIES.forEach(function(s){ slugToId[s.slug] = s.id; });
@@ -50346,7 +50364,7 @@ newArticles++;
 await loadFromDb();
 render();
 crTell('Imported ' + newSeries + ' new series and ' + newArticles + ' new articles.\n' +
-'The hardcoded copies are now hidden — DB versions take over.');
+'The hardcoded copies are now hidden — DB versions take over.', 'ok');
 }
 var modal = null;
 var view = 'series-list';
@@ -50579,7 +50597,7 @@ if(document.getElementById('cr-nachi-mgr-btn')) return;
 var b = document.createElement('button');
 b.id = 'cr-nachi-mgr-btn';
 b.type = 'button';
-b.innerHTML = '<span>\uD83D\uDEE0</span> Manage';
+b.innerHTML = '<span>' + (window.CardinalIcons ? window.CardinalIcons.get('pencil') : '') + '</span> Manage';   /* A1 (P06.08): drawn, not emoji */
 b.title = 'Manage NACHI content (admin only)';
 b.onclick = open;
 document.body.appendChild(b);
@@ -51641,7 +51659,7 @@ var btn = document.createElement('button');
 btn.id = 'cr-lil-nav';
 btn.className = 'navopt';
 btn.type = 'button';
-btn.innerHTML = '\uD83D\uDCCB Line Item Library';
+btn.innerHTML = (window.CardinalIcons ? window.CardinalIcons.get('box', 'lg') : '') + 'Line Item Library';   /* A1 (P01.14): drawn, not emoji */
 btn.onclick = function(e){
 e.stopPropagation();
 menu.style.display = 'none';
@@ -52780,7 +52798,7 @@ function mcHide(){
 async function mcClose(){
   if(shots.length){
     var ask = typeof window.crAsk === 'function' ? window.crAsk : function(){ return Promise.resolve(false); /* 1299: no sheet, no destructive yes -- crAsk's module owns the browser box */ };
-    if(!await ask('Throw away the ' + shots.length + ' photo' + (shots.length === 1 ? '' : 's') + ' you took? They have not been uploaded.')) return;
+    if(!await ask('Throw away the ' + shots.length + ' photo' + (shots.length === 1 ? '' : 's') + ' you took? They have not been uploaded.', { verb:'Throw away', cancel:'Keep them', tone:'danger' })) return;
   }
   mcDiscard();
   mcHide();
@@ -56674,7 +56692,8 @@ var status = statusSel ? statusSel.value : 'draft';
 if(status !== 'accepted'){
 var go = await crAsk(
 'This estimate is marked "' + status + '", not Accepted.\n\n' +
-'Generate a contract from it anyway?'
+'Generate a contract from it anyway?',
+{ verb:'Generate contract' }
 );
 if(!go) return;
 }
@@ -56812,7 +56831,8 @@ if(current === 'Lost') return;
 var ok = await crAsk(
 'This estimate is marked Declined.\n\n' +
 'Move ' + (project.name || 'this client') + ' to ' +
-displayStage('Lost') + '?'
+displayStage('Lost') + '?',
+{ verb:'Move to ' + displayStage('Lost'), cancel:'Not now' }
 );
 if(!ok) return;
 try{
@@ -59111,7 +59131,7 @@ objections : OBJECTIONS,
    somebody else's container. Bare-class first so the icon is sized wherever
    it is hosted; the #navMenu copy out-specifies any generic svg rule there. */
 .pbnavico,
-#navMenu .pbnavico{ width:17px; height:17px; flex:none; vertical-align:-3px; margin-right:7px; }
+#navMenu .pbnavico{ width:17px; height:17px; flex:none; vertical-align:-3px; margin-right:.12em; }   /* A1 (J15.02): was 7px — the drawer's own .cri.lg spacing, so "Production" starts where its siblings do */
 #cr-pb .pbitem.done .bx{ background:rgba(108,185,143,.2); border-color:var(--pb-ok,#6cb98f); color:var(--pb-ok,#6cb98f); }
 #cr-pb .pbitem .tx{ min-width:0; flex:1; }
 #cr-pb .pbitem .tx b{
@@ -61415,7 +61435,7 @@ async function checkOut(){
   var _askedClose = !!(_flags.length && _flags[_flags.length - 1].flag === 'askclose');
   if(it.status !== 'done' && !_askedClose){
     if(isManager()){
-      var back = await crAsk('Not finished yet.\n\nBack on this tomorrow?');
+      var back = await crAsk('Not finished yet.\n\nBack on this tomorrow?', { verb:'Back on it tomorrow', cancel:'Not now', tone:'plain' });
       if(back) patch.scheduled_at = nextWorkDay(now);
     } else {
       /* 1261: only Theo, Joan and Curtis schedule (punch_schedule_guard.sql).
@@ -62139,7 +62159,7 @@ async function addTruck(){
 }
 async function delTruck(i){
   var tk = truck().slice(); if(!tk[i]) return;
-  if(!await crAsk('Take this off the list?\n\n' + (tk[i].t || ''))) return;
+  if(!await crAsk('Take this off the list?\n\n' + (tk[i].t || ''), { verb:'Take it off', cancel:'Keep it' })) return;
   tk.splice(i, 1);
   await save({ truck: tk });
 }
@@ -64208,7 +64228,7 @@ var btn = document.createElement('button');
 btn.className = 'navopt';
 btn.id = 'cr-nav-import';
 btn.type = 'button';
-btn.innerHTML = ICO('camera') + ' Import from AccuLynx';
+btn.innerHTML = ICO('save') + ' Import from AccuLynx';   /* A1 (P06.03): an arrow into a tray, not a camera — Quick Inspection is the camera */
 btn.onclick = function(ev){
 ev.stopPropagation();
 var m = document.getElementById('navMenu');
@@ -67024,7 +67044,7 @@ background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A2
 /* 1417 #9: the card is mounted straight into #projectView, outside every .wrap, so at 390px the back chip,
    the headings, "Messages & notes" and every card ran from x=0 to the glass edge. The gutter is the card's own. */
 #cr-cc{padding-left:16px;padding-right:16px}
-#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}
+#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{font-family:inherit;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}
 /* 981 (Theo's B1): the mirror now carries the same drawn icon the rest of the
    app uses, instead of the pre-686 emoji it used to copy out of the retired
    grid. .cc-jmb is space-between, so with three children the icon and label
@@ -67033,7 +67053,7 @@ background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A2
    text. ⚠ Deliberately a SEPARATE rule — the neighbouring
    `#cr-cc .cc-jmb .l{...}` was repaired at 980 and is not this build's. */
 #cr-cc .cc-jmb svg{width:17px;height:17px;flex:0 0 auto;fill:currentColor;opacity:.85}
-#cr-cc .cc-jmb .l{flex:1 1 auto}#cr-cc .cc-jmb .l{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:var(--warn,#ffcf6b)}
+#cr-cc .cc-jmb .l{flex:1 1 auto}#cr-cc .cc-jmb .l{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;color:var(--warn,#ffcf6b)}
 /* 981 shipped this as a one-rule light twin; 982 promoted the value into
    --ccm-warn, so the override is retired and the badge reads the token like
    every neighbour. Same rendered colour, #805500 / 6.53:1 — a re-pointing,
@@ -67775,7 +67795,7 @@ render();
 return;
 }
 if(a === 'unwait'){
-if(!await crAsk('Take this job OFF the waitlist? The tarp date stays on the record.')) return;
+if(!await crAsk('Take this job OFF the waitlist? The tarp date stays on the record.', { verb:'Take it off', cancel:'Keep it' })) return;
 var u977 = mergeCk(pr, 'lead', { waitlist_at: '' });
 if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { lead: u977 });
 if(typeof window.auditLog === 'function'){
@@ -67813,7 +67833,7 @@ try{ window.auditLog('lead', 'Estimate info updated', pr.id); }catch(_){ }
    uses — no second stage-move path. The bid patch is awaited FIRST because
    setStage's own checklist patch is fire-and-forget. */
 if(v0 !== '' && normStage(pr.stage) === 'Lead' &&
-await crAsk('Amount saved. Also move this job to ' + (LABEL['Prospect'] || 'Estimate Submitted') + '?')){
+await crAsk('Amount saved. Also move this job to ' + (LABEL['Prospect'] || 'Estimate Submitted') + '?', { verb:'Move it', cancel:'Not now' })){
 await window.setStage(pr.id, 'Prospect');
 if(typeof window.auditLog === 'function'){
 try{ window.auditLog('lead', 'Estimate marked submitted', pr.id); }catch(_){ }
@@ -68923,7 +68943,7 @@ body[data-crm-head="retail"] #cr-hd2-bar .cr-ib.primary{
      Pre-existing since before 1144, which carried it as measured debt. */
   background:linear-gradient(180deg,#b9d3ec,#8fb4d8 52%,#5981a8);
   border-color:#5981a8;border-top-color:#b9d3ec;color:#0b1218;
-  box-shadow:0 2px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.3)}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:18px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#c8202e);color:var(--hac,#c8202e)}#cr-hd2-bar .cr-ib.primary{--cr-stack:"J16 edited in place (the + reads the CRM identity hue); it already won these";background:var(--crm-id,var(--hac,#c8202e));border-color:var(--crm-id,var(--hac,#c8202e));color:var(--crm-id-ink,var(--hoc,#1a1a1a));font-size:18px;font-weight:400}body[data-crm="retail"]{--crm-id:#c8202e;--crm-id-ink:#ffffff}body[data-crm="insurance"]{--crm-id:#2dd4bf;--crm-id-ink:#04201c}body[data-crm="community"]{--crm-id:#34d399;--crm-id-ink:#062b1f}:root[data-theme="rb-light"] body[data-crm="insurance"]{--crm-id:#0f766e;--crm-id-ink:#ffffff}:root[data-theme="rb-light"] body[data-crm="community"]{--crm-id:#047857;--crm-id-ink:#ffffff}/* J16: + is the CRM's identity hue (was red / coral / mint / Reports orange). White on #c8202e 5.67, ink on teal 9.18, on emerald 7.96; light white on #0f766e 5.47, #047857 5.48 */#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{--cr-stack:"J16 edited in place (font family only); this rule already won every property it declares";margin:0;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-weight:800;font-size:40px;letter-spacing:normal;line-height:1.15;color:var(--hac,#c8202e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--hac,#c8202e)}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}/* 1116: the box was never the limit - cr-hd4-styles already sets max-width:100% on a THREE-id selector that outranks this one. The real limit is #cr-hd2-mid itself: 150px at Normal, 99px at Large and 60px at Larger, because the Text size control (939) is a real :root zoom and the CSS viewport shrinks with it - so a screen name that fitted at Normal ellipsised at the two sizes nobody had measured. Theo caught that. 86% plus the clamp below fits the longest name at all three. */body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:clamp(12px,4.4vw,20px) !important;letter-spacing:0}html[data-cr-text="xl"] body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}/* 1116: at Larger the middle slot is 60 CSS px - the controls eat a 300px viewport - and the shortest useful name still needs 91. The only way to widen it is shrinking tap targets below the 44px floor, so the name is HIDDEN at that one size, which is exactly what the retail slogan already does below 438px and for the same recorded reason: a truncated name reads as a broken app, an absent one reads as a clean toolbar. Normal and Large keep the name. *//* --cr-stack:"beats the 3-id !important font-size:20px in cr-hd3-styles ON PURPOSE, and only for the shared-screen head. Two !important rules are settled by specificity, so 2 ids + an attribute LOST to 3 ids and the clamp never applied - the names measured identical at all three zooms, which is what a silently-losing rule looks like." */#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#c8202e)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{--cr-stack:"J16 edited in place (font family only); this rule already won every property it declares";font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font-weight:400;font-size:15px;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#c8202e);box-shadow:0 0 0 3px rgba(200,32,46,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}
+  box-shadow:0 2px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.3)}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:18px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#c8202e);color:var(--hac,#c8202e)}#cr-hd2-bar .cr-ib.primary{--cr-stack:"J16 edited in place (the + reads the CRM identity hue); it already won these";font-family:inherit;background:var(--crm-id,var(--hac,#c8202e));border-color:var(--crm-id,var(--hac,#c8202e));color:var(--crm-id-ink,var(--hoc,#1a1a1a));font-size:18px;font-weight:400}body[data-crm="retail"]{--crm-id:#c8202e;--crm-id-ink:#ffffff}body[data-crm="insurance"]{--crm-id:#2dd4bf;--crm-id-ink:#04201c}body[data-crm="community"]{--crm-id:#34d399;--crm-id-ink:#062b1f}:root[data-theme="rb-light"] body[data-crm="insurance"]{--crm-id:#0f766e;--crm-id-ink:#ffffff}:root[data-theme="rb-light"] body[data-crm="community"]{--crm-id:#047857;--crm-id-ink:#ffffff}/* J16: + is the CRM's identity hue (was red / coral / mint / Reports orange). White on #c8202e 5.67, ink on teal 9.18, on emerald 7.96; light white on #0f766e 5.47, #047857 5.48 */#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{--cr-stack:"J16 edited in place (font family only); this rule already won every property it declares";margin:0;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-weight:800;font-size:40px;letter-spacing:normal;line-height:1.15;color:var(--hac,#c8202e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--hac,#c8202e)}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}/* 1116: the box was never the limit - cr-hd4-styles already sets max-width:100% on a THREE-id selector that outranks this one. The real limit is #cr-hd2-mid itself: 150px at Normal, 99px at Large and 60px at Larger, because the Text size control (939) is a real :root zoom and the CSS viewport shrinks with it - so a screen name that fitted at Normal ellipsised at the two sizes nobody had measured. Theo caught that. 86% plus the clamp below fits the longest name at all three. */body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:clamp(12px,4.4vw,20px) !important;letter-spacing:0}html[data-cr-text="xl"] body[data-crm-head="production"] #cr-hd2-bar #cr-hd2-mid #brandTitle{display:none !important}/* 1116: at Larger the middle slot is 60 CSS px - the controls eat a 300px viewport - and the shortest useful name still needs 91. The only way to widen it is shrinking tap targets below the 44px floor, so the name is HIDDEN at that one size, which is exactly what the retail slogan already does below 438px and for the same recorded reason: a truncated name reads as a broken app, an absent one reads as a clean toolbar. Normal and Large keep the name. *//* --cr-stack:"beats the 3-id !important font-size:20px in cr-hd3-styles ON PURPOSE, and only for the shared-screen head. Two !important rules are settled by specificity, so 2 ids + an attribute LOST to 3 ids and the clamp never applied - the names measured identical at all three zooms, which is what a silently-losing rule looks like." */#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#c8202e)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{--cr-stack:"J16 edited in place (font family only); this rule already won every property it declares";font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font-weight:400;font-size:15px;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#c8202e);box-shadow:0 0 0 3px rgba(200,32,46,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}
 /* Build 372: search lives on the banner — the header copy is retired everywhere. */
 #cr-hd2-bar #headSearch,#cr-hd2-bar .cr-ib.searchbtn{display:none !important}
 #cr-hd2-bar.searching #headSearch{display:none !important}}#cr-hd2-bar.searching #headSearch{display:block;flex:1 1 100%;order:9;margin-top:8px}#cr-hd2-bar{flex-wrap:nowrap}#cr-hd2-bar.searching{flex-wrap:wrap}header.site #cr-hd2-bar #navBtn{display:flex !important}#cr-hd2-util{display:flex;align-items:center;gap:6px;flex:0 0 auto}#cr-hd2-util>*{flex:0 0 auto}@media (max-width:560px){#cr-hd2-util #crPortalChip{display:none}}header.site #cr-search-btn{display:none}header.site #whoami,header.site #jobMenuSel,header.site #brandLogo{display:none}body .site{--htint:#1a1215;--hbg:#1a1215;--hln:#3a2f22;--hin:#c8202e;--hmt:#d8c9a8;--hdm:#9a917f;--hac:#c8202e;--hoc:#1a1a1a;--hsf:#241c1a;--tgrad:linear-gradient(100deg,var(--red),#c8202e 55%,#e35c63)}body[data-crm-head="insurance"] .site{--htint:var(--ct-crmhead-bg,var(--ct-head-bg));--hbg:var(--ct-crmhead-bg,var(--ct-head-bg));--hln:var(--ct-crmhead-line,var(--ct-head-line));--hin:var(--ct-crmhead-ink,var(--ct-head-ink));--hmt:var(--ct-crmhead-ink,var(--ct-head-ink));--hdm:var(--ct-crmhead-dim,var(--ct-head-dim));--hac:var(--ct-crmhead-kick,var(--ct-head-kick));--hoc:var(--ct-crmhead-bg,var(--ct-head-bg));--hsf:var(--ct-crmhead-surface,var(--ct-surface));--tgrad:linear-gradient(100deg,var(--ct-head-kick),var(--ct-head-ink))}body[data-crm-head="retail"] .site{--htint:#243342;--hbg:linear-gradient(180deg,#243342,#16202b);--hln:#2f3f4f;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.72);--hac:#8fb4d8;--hoc:#141c24;--hsf:#243342;--tgrad:linear-gradient(100deg,#8fb4d8,#fff)}
@@ -69720,7 +69740,7 @@ results.forEach(function(r){
 });
 panel.innerHTML =
 '<div class="hd">' +
-'<h3>\uD83E\uDE7A Self Check</h3>' +
+'<h3>' + (window.CardinalIcons ? window.CardinalIcons.get('pulse', 'crico') : '') + 'Self Check</h3>' +
 '<button class="go" data-act="run" type="button">Run again</button>' +
 '<button data-act="close" type="button">Close</button>' +
 '</div>' +
@@ -69761,8 +69781,15 @@ panel.classList.add('open');
 document.body.style.overflow = 'hidden';
 panel.style.visibility = 'hidden';
 var results = [];
+/* A1 (P01.08): collect() opens five screens and each records a history entry — a rep ended a run four
+   entries deep, on 'salesfloor', and one Back walked into Production. For the run, a push replaces the
+   entry it started on and the legacy {v:...} pushes are held (__histLock, the 1037 lock navRestore uses);
+   afterwards that entry is put back exactly as it was, so the run leaves history as it found it. */
+var st0 = history.state, url0 = location.href, push0 = history.pushState, lock0 = false;
+try{ lock0 = __histLock; history.pushState = function(st, t, u){ return history.replaceState(st, t, u); }; __histLock = true; }catch(_h){}
 try{ results = await collect(); }
 finally{
+try{ history.pushState = push0; history.replaceState(st0, '', url0); __histLock = lock0; }catch(_h2){}
 panel.style.visibility = '';
 panel.classList.add('open');
 /* 494: the lock is already set before the await; re-setting it here bought
@@ -69781,7 +69808,7 @@ var btn = document.createElement('button');
 btn.className = 'navopt';
 btn.id = 'cr-nav-selfcheck';
 btn.type = 'button';
-btn.innerHTML = '\uD83E\uDE7A Self Check';
+btn.innerHTML = (window.CardinalIcons ? window.CardinalIcons.get('pulse', 'lg') : '') + 'Self Check';   /* A1: the Tools menu's glyph */
 btn.onclick = function(e){
 e.stopPropagation();
 var m = document.getElementById('navMenu');
@@ -69789,7 +69816,12 @@ if(m) m.style.display = 'none';
 openAndRun();
 };
 if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor.nextSibling);
-else menu.appendChild(btn);
+else {
+/* A1 (P01.08): no Admin rows (a rep, a production account) — append landed it under the build
+   stamp. With the last section's rows instead: before the Text size row, else before the footer. */
+var below = menu.querySelector(':scope > .cr-ts') || menu.querySelector(':scope > [data-cr-footer]');
+if(below) menu.insertBefore(btn, below); else menu.appendChild(btn);
+}
 return true;
 }
 var scheduled = false;
@@ -70231,7 +70263,7 @@ placeChip  : placeChip,
   async function assign(portal){
     var ids=Object.keys(S.sel);
     if(!ids.length) return;
-    if(!await crAsk('Assign '+ids.length+' client'+(ids.length===1?'':'s')+' to the '+portal+' portal?')) return;
+    if(!await crAsk('Assign '+ids.length+' client'+(ids.length===1?'':'s')+' to the '+portal+' portal?', { verb:'Assign' })) return;
 
     var ok=0, fail=0;
     for(var i=0;i<ids.length;i++){
@@ -71741,8 +71773,10 @@ function closeMenus(){
 }
 /* 1430 (audit #16): three Tools doors answered a rep with nothing but a red "Admin only." — their
    destinations exist, so resolveHide() shows them, and the person is only known after sign-in. The
-   role is read as the menu opens, with the same test the three destinations refuse on (isAdminUser). */
-var ADMIN_DOORS = { walk: 1, itellab: 1, medmig: 1 };
+   role is read as the menu opens, with the same test the three destinations refuse on (isAdminUser).
+   A1 (P01.03): Reports and Settings too — the drawer's hideAdminItemsForNonAdmin() hides exactly those
+   two rows from the same person, so Tools was the one door left open (Reports is moved in by relocateNav). */
+var ADMIN_DOORS = { walk: 1, itellab: 1, medmig: 1, reports: 1, settings: 1 };
 function gateDoors(dd){
   var adm = false;
   try{ adm = typeof window.isAdminUser === 'function' && !!window.isAdminUser(); }catch(_){}
@@ -76083,7 +76117,7 @@ body[data-rltheme="siren"] #rlAskBtn,body[data-rltheme="siren"] #rlLibPanel{
       var btn = document.createElement('button');
       btn.id = 'rlAskBtn';
       btn.type = 'button';
-      btn.innerHTML = '&#129302; Ask / File';
+      btn.innerHTML = (window.CardinalIcons ? window.CardinalIcons.get('sparkle') : '') + ' Ask / File';   /* A1 (P06.08): drawn, not emoji */
       document.body.appendChild(btn);
       btn.addEventListener('click', openPanel);
     }
@@ -76681,7 +76715,7 @@ async function sortRun(){
   }
   if(!await crAsk('Sort ' + photos.length + ' photograph' + (photos.length === 1 ? '' : 's') +
               ' into sections and write captions?\n\n' +
-              'This only rearranges the report you are editing. Nothing is sent to the client.')) return;
+              'This only rearranges the report you are editing. Nothing is sent to the client.', { verb:'Sort photos' })) return;
 
   _sortBusy = true;
   var btn = document.getElementById('sortBtn');
@@ -77018,7 +77052,7 @@ body.cr-lnav-on .wrap:not(.masthead){max-width:var(--lnav-cap)}
 /* mini mode is an icon strip - the card chrome comes off, the rows stay */
 body.cr-lnav-mini #cr-lnav .lnav-body{margin:0;border:0;border-radius:0;box-shadow:none;background:transparent;padding:0}
 
-#cr-lnav .lnav-item{display:flex;align-items:center;gap:10px;width:100%;
+#cr-lnav .lnav-item{display:flex;align-items:center;gap:10px;width:100%;font-family:inherit;   /* A1 (J15.03): a <button> keeps the browser's control font otherwise */
   background:none;border:0;border-left:3px solid transparent;cursor:pointer;
   padding:9px 15px;text-align:left;font-weight:600;font-size:15px;
   color:var(--rbe-ink,#cfd6df);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -83180,7 +83214,7 @@ function wireWalk(){
   el.querySelectorAll('[data-act="rdetect"]').forEach(function(b){
     b.onclick = async function(){
       if(review.dirty && !await crAsk('Asking again replaces the AI\u2019s marks — your hand-drawn marks stay — ' +
-        'discard the changes you have not saved?')) return;
+        'discard the changes you have not saved?', { verb:'Discard and ask again', cancel:'Keep my changes', tone:'danger' })) return;
       runDetect();
     };
   });
@@ -95415,7 +95449,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
           headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + tok },
           body: JSON.stringify({ project_id: pr.id, url: url }) });
       }).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(j){
-        if(j && j.ok){ crTell('Texted the pay link to ' + (pr.name || 'the client') + '.'); markInvoiceSent(pr.id); }   /* 1315 */
+        if(j && j.ok){ crTell('Texted the pay link to ' + (pr.name || 'the client') + '.', 'ok'); markInvoiceSent(pr.id); }   /* 1315 */
         else crTell((j && j.error) || 'Could not send the company text.');
       });
     }).catch(fail);
@@ -95582,7 +95616,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
     var _bal = Number(jobFinance(pr).balance) || 0;
     if(amt > _bal + 0.005 && !_payOver){
       var _btnO = q('crpay-save');
-      crAsk('That is ' + money(amt) + ', but the balance is ' + money(Math.max(0, _bal)) + '. Record it anyway?').then(function(yes){
+      crAsk('That is ' + money(amt) + ', but the balance is ' + money(Math.max(0, _bal)) + '. Record it anyway?', { verb:'Record anyway' }).then(function(yes){
         if(!yes) return;
         _payOver = true;
         try{ savePayModal(); } finally { _payOver = false; }
@@ -100048,7 +100082,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     }
     var ask = (typeof window.crAsk === 'function') ? window.crAsk : function(){ return Promise.resolve(false); };
     if(!(await ask(miss.length + ' install photo' + (miss.length === 1 ? ' is' : 's are') + ' missing: ' + miss.join(', ') +
-        '.\n\nComplete the job anyway? You will be asked why, and it goes on the job’s Owner Review.'))){ inOpen(pr); var w2 = inQ('inWhy'); if(w2) w2.textContent = 'Still missing: ' + miss.join(', ') + '.'; return false; }
+        '.\n\nComplete the job anyway? You will be asked why, and it goes on the job’s Owner Review.', { verb:'Complete anyway' }))){ inOpen(pr); var w2 = inQ('inWhy'); if(w2) w2.textContent = 'Still missing: ' + miss.join(', ') + '.'; return false; }
     var why = window.prompt('Why complete it without them?', '');
     if(why === null || !String(why).trim()) return false;
     why = String(why).trim();
