@@ -37835,3 +37835,46 @@ The name was the only flexible item, so it was the one that gave way.
   - Sentinel `--since 1438`: clean at 390 and 1440, in both themes.
   - `gate_types` and `gate_dupes`: identical, plus four new single-definition names.
 - **Re-run at integration:** listed in the PR.
+
+## Build 1440 — phones, field and forms (2 Nov 2026)
+
+**Source:** the round-1 re-check on 1438, builder A4. Items: P08.02, P08.03, P08.12 (tabs), P07.02, P07.07, P07.08, P06.10, P10.04, P12.05, P12.06, P12.12, P12.13 and P12.15.
+
+**Before → after (390px, measured by gate_1440):**
+
+| Item | Before | After |
+|---|---|---|
+| Dispatch crew name width | 39px of 91, breaks mid-word | 73px, breaks at spaces only |
+| Dispatch "1 open" badge | overlaps the first day column | inside the crew pill |
+| Production home "<" for production accounts | did nothing | not drawn (calendar back kept) |
+| Field accounts' Crew Dispatch | 176px | 360px (full row) |
+| Punch tabs at Large / Larger / Sun | 1–3 labels cut | 0 cut |
+| Profile name at Larger | 38px column, 9 lines | 209px, 1 line |
+| Lead Source on New Lead | behind the fold; error at y=3116 | above the fold, focused, error beside it |
+| + New → Punch-out | 2 of 7 jobs | 7 of 7 (Lost excluded) |
+| Appointment inputs | 33–37px, raw "2026-11-03 · 10:30" | 44px, "Nov 3, 2026 · 10:30 AM" |
+| Estimate × | also opened the estimate | opens only the sheet |
+| End of Leads under Ask | 45% of a button covered | clear |
+
+**Left for Theo:**
+- The header title "R…" at Larger (P07.02's second half). The title is also the portal picker.
+- The Punch title wrapping beside "+ New".
+- A day-by-day Dispatch agenda at Larger, which is a redesign.
+
+**Files:**
+- `patch_1440_field.py`, then `patch_1440.py`. Byte-reproducible on 1439; the patch was built on 1438 and applies unchanged.
+- `gate_1440.mjs` (from builder A4).
+- Gate updates:
+  - `gate_1416` and `gate_1434`: the back chevron is measured on the calendar pane.
+  - `gate_782` and `gate_1005`: Lead Source sits above the fold, and a refused save focuses it.
+
+**Gates:**
+- **The builder's own run was cut short by machine load** (five builders at once, load average 60–80). It was finished at integration against 1439.
+- **57 related gates, run on both trees:** 49 identical. The differences:
+  - **Expected:** `gate_1440`, `gate_1005` and `gate_782` (updated for the new behaviour) pass only on 1440.
+  - **One failure fewer:** `gate_1397` has 1 failure on 1440 and 2 on 1439; the remaining one is identical on both.
+  - **Load timing, not regressions:**
+    - `gate_1436` failed one check on 1439: the day sheet scored 6 pieces against a floor of 8, with 0 under 7:1.
+    - `gate_951` failed once on 1440, then went 22/0 on a re-run.
+- **gate_stack:** CLEAN in all 8 configurations (Theo at 390, 430, 1440 and Larger 390; Scottie dark and Sun; Curtis Sun 390 and 1440).
+- **Sentinel:** listed in the PR.

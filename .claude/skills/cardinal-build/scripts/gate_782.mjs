@@ -81,14 +81,17 @@ const census = await page.evaluate(() => {
     hasMoreBtn: !!document.getElementById('ldMoreBtn'),
     collapsed: !m.classList.contains('ldshow'),
     coreVisible: ['ldFirst','ldLast','ldStreet','ldCity','ldState','ldZip'].every(id => { const e = document.getElementById(id); return e && vis(e); }),
-    hiddenNow: ['ldCompany','ldMailing','ldBilling','ldCategory','ldWorkType','ldSource','ldNotes','ldApptDate'].filter(id => { const e = document.getElementById(id); return e && !vis(e); }).length
+    /* 1440 (P12.06): Lead Source left the fold — it is required (1005), so it is an essential */
+    hiddenNow: ['ldCompany','ldMailing','ldBilling','ldCategory','ldWorkType','ldNotes','ldApptDate'].filter(id => { const e = document.getElementById(id); return e && !vis(e); }).length,
+    sourceUp: (e => !!e && vis(e))(document.getElementById('ldSource'))
   };
 });
 await shot('collapsed');
 ok('a More-detail control exists', census.hasMoreBtn);
 ok('the form opens collapsed', census.collapsed);
 ok('the essentials are still on the first screen', census.coreVisible);
-ok('the long half is hidden (8 of 8 sampled)', census.hiddenNow === 8, 'hidden: ' + census.hiddenNow + '/8');
+ok('the long half is hidden (7 of 7 sampled)', census.hiddenNow === 7, 'hidden: ' + census.hiddenNow + '/7');
+ok('1440: Lead Source (required) is on the first screen', census.sourceUp);
 ok('visible field count is well under the old 43', census.visible < 26, 'visible = ' + census.visible);
 
 console.log('\n--- 1b. the OTHER disclosure still works while collapsed ---');

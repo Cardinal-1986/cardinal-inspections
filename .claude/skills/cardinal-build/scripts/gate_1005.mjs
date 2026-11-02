@@ -78,6 +78,7 @@ const attempt = (claimType, source) => page.evaluate(async ([claimType, source])
     await new Promise(r => setTimeout(r, 250));
     out.error = document.getElementById('ldError').textContent || '';
     out.ldshow = M.classList.contains('ldshow');
+    out.focus = document.activeElement && document.activeElement.id;   /* 1440 */
     out.createdCalled = out.created !== null;
     return out;
   } catch (e) { return { ok: false, err: String(e).split('\n')[0] }; }
@@ -91,7 +92,8 @@ need('S1 no claim type: pdb.create NOT reached', s1.createdCalled === false);
 // S2 — claim type set, no source → refused AND More detail revealed
 const s2 = await attempt('retail', '');
 need('S2 no source: save refused', /came from|knocking/i.test(s2.error || ''), 's2=' + JSON.stringify(s2));
-need('S2 no source: More detail revealed (ldshow)', s2.ldshow === true, 's2=' + JSON.stringify(s2));
+/* 1440 (P12.06): Lead Source sits above the fold now, so nothing needs revealing — the refusal focuses it */
+need('S2 no source: Lead Source focused', s2.focus === 'ldSource', 's2=' + JSON.stringify(s2));
 need('S2 no source: pdb.create NOT reached', s2.createdCalled === false);
 
 // S3 — both answered → save proceeds
