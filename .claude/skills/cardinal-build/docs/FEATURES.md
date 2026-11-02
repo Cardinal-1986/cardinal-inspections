@@ -10673,3 +10673,40 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
   - Skip checklist → Start without AI no longer asks again.
 
 **Gates:** `gate_1440.mjs`, 246 checks, RED on 1439. `gate_1416`, `gate_1434`, `gate_782` and `gate_1005` were updated for the removed home-pane back and for Lead Source above the fold.
+
+## Build 1441: menus, icons and questions (round-1 leftovers, re-checked on 1438)
+- **One drawn icon per place:**
+  - The drawer has no emoji rows left (7 → 0):
+    - Community Hub = houses
+    - Partners = group
+    - Prospective = funnel
+    - Owner Console = scales
+    - Line Item Library = box
+    - Health Check = alarm
+    - Self Check = pulse
+  - No two rows share a glyph in Retail, Community, Insurance or for Curtis.
+  - The banner's Production and Tools menus use the same glyph for the same place.
+- **Emoji removed from:**
+  - the Library's table of contents and its Manage / Ask / File buttons;
+  - the "+ New contract" rows;
+  - the profile Appointments rows;
+  - the "Job completed" question;
+  - the day-sheet title and Type options;
+  - the punch search.
+- **Tools for a rep:** Reports and Settings are admin doors, so a rep sees 10 doors, matching the drawer. An admin still sees all 15.
+- **Self Check:**
+  - The rep's row sits with Team Feedback instead of under the build stamp.
+  - A run no longer adds history entries, so Back afterwards lands on home.
+- **Questions:**
+  - Every fixed-text question names its action instead of "Continue" (24 → 0).
+  - The stage arrow offers "Advance".
+  - Five sheets that already said the action cannot be undone use the red danger button: Reset now, Delete permanently, Throw away, Discard and ask again, Sign out anyway.
+- **Smaller fixes:**
+  - The day sheet's rows start with their kind.
+  - The punch search hint reads "Client or PO #" and fits at every text size.
+  - Rail rows, the header + and the Community job-menu tiles use the app font, not Arial.
+  - Three success toasts show as success.
+  - The rep's hidden admin rows stop re-writing themselves while idle (15 writes in 4.5s → 0).
+- **Pressed toggles in the drawer** follow the portal: insurance red, community green, production amber, sales red. **Retail stays red;** the rail's slate blue for Retail is held for Theo.
+
+**Gates:** `gate_1441.mjs`, RED on 1440. `harness_ar1107` accepts any drawn glyph on the Invoices & AR row.

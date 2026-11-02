@@ -37878,3 +37878,40 @@ The name was the only flexible item, so it was the one that gave way.
     - `gate_951` failed once on 1440, then went 22/0 on a re-run.
 - **gate_stack:** CLEAN in all 8 configurations (Theo at 390, 430, 1440 and Larger 390; Scottie dark and Sun; Curtis Sun 390 and 1440).
 - **Sentinel:** listed in the PR.
+
+## Build 1441 — menus, icons and questions (2 Nov 2026)
+
+**Source:** the round-1 re-check on 1438, builder A1. Items: P01.03, P01.08, P01.14 / P06.03, P06.08 / J15.10, J15.02, J15.03 / P06.05, P08.06, P08.12 (search), P10.07, P12.02, P12.09 and J16.06.
+
+**Before → after (measured by gate_1441):**
+
+| Item | Before | After |
+|---|---|---|
+| Emoji rows in the drawer | 7 | 0 |
+| Drawer rows sharing a glyph (Retail, Community, Insurance, Curtis) | several per portal | 0 |
+| A rep's Tools doors | 12, incl. Reports and Settings | 10, matching the drawer |
+| Self Check run, as a rep | history 4 → 8, lands on Sales Floor | 4 → 4, Back lands on home |
+| Fixed-text questions falling back to "Continue" | 24 | 0 |
+| Drawer Production label offset (390 / 1536) | 54 / 53px | 48.8 / 47.8px, like its siblings |
+| Punch search hint | cut at Large, Larger, Sun, Sun + Larger | fits at every step |
+| Idle writes to hidden admin rows (4.5s, rep) | 15 | 0 |
+
+**Held for Theo:**
+- **The Retail pressed-toggle colour.** The builder keyed `--lnav-crmc` per portal and gave Retail the rail's slate `#3e6ca8`. That changes how Retail looks, so it was removed at integration: Retail keeps the red fallback `#c8202e` (5.67:1), and gate_1441 asserts red there. The other portals change as built.
+- Whether Self Check should be admin-only.
+- Wording to confirm: the punch hint "Client or PO #", the new question verbs, and the five sheets that now use the red danger button.
+
+**Files:**
+- `patch_1441_shell.py`, then `patch_1441.py`. Byte-reproducible on 1440; the patch was built on 1438 and applies unchanged.
+- `gate_1441.mjs` (from builder A1), 88 checks.
+- `harness_ar1107.js` accepts any drawn glyph on the Invoices & AR row, which no longer shares `cash` with Commissions.
+- **`gate_stack.mjs` now blocks EVERY remote request, not only `*.supabase.co`.**
+  - With only Supabase blocked, the page's supabase-js `<script>` still loaded from the CDN and replaced the e2e mock's `window.supabase`. The store came up empty, and data-driven states threw ("the store is EMPTY at render time") or rendered blank, on both trees, so the run still printed CLEAN.
+  - Found by builder A2. Shown on 1440 with the same states: the old rig's `home` threw, and the fixed rig's did not. The selftest passes.
+  - ⚠️ **gate_stack runs before this build were partly vacuous on data-driven states**, including the CLEAN results recorded for 1436–1440. States that need no data, such as the drawer, were probably unaffected, but that was not re-measured.
+
+**Gates:**
+- `check_build` is GREEN. `gate_1441` is GREEN, 88/0, and RED on 1440 (44 passed, 44 failed), without crashing.
+- `gate_types` is 1,499 (1440: 1,500). `gate_dupes` matches 1440 except for one block offset. `audit_scrolllock` is GREEN, 16 modules.
+- **gate_stack, on the fixed rig:** CLEAN at 390 and 1440, dark and light, over 12 states (home, nav, navcc, navins, ccclient, punch, client, clientdir, leads, production, dispatch, ar), and none of them threw.
+- **95 related gates on both trees, gate_chromium and the sentinel:** running at the time of this commit; results follow in the PR.

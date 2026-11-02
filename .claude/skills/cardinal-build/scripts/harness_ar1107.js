@@ -176,7 +176,8 @@ catch(e){ console.log('module threw on eval: ' + e.message); process.exit(1); }
   ok(/else if\(nav === 'ar'\)\{ if\(typeof openAR/.test(html), 'nav router has the ar case');
   ok(/case 'ar':\s+if\(typeof openAR/.test(html), 'navRestore has the ar case');
   ok(/var _arv = document\.getElementById\('cr-ar-view'\)/.test(html), 'hideAllViews registers cr-ar-view');
-  ok(/data-nav="ar" data-cri="cash lg">Invoices/.test(html), 'the Invoices & AR nav row exists');
+  /* 1441 (P06.03): the row's glyph moved off 'cash', which it shared with Commissions; the row is what this asserts */
+  ok(/data-nav="ar" data-cri="[a-z]+ lg">Invoices/.test(html), 'the Invoices & AR nav row exists');
   ok(/hideOpt\('ar'\)/.test(html), 'the nav row is admin-gated');
   ok(/cacheCollections = collections \|\| \[\]/.test(html), 'indexCollections populates cacheCollections');
 
