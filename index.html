@@ -4371,7 +4371,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="newbid" data-cri="pencil lg">New Estimate</button>
 
           <div class="navsec">Insurance</div>
-          <button class="navopt" data-nav="cardinaltruth" data-cri="shield lg">Cardinal Truth</button>
+          <button class="navopt" data-nav="cardinaltruth" data-cri="shield lg">Insurance</button>
 
           <div class="navsec">Office</div>
           <button class="navopt" data-nav="reports" data-cri="chart lg">Graphs &amp; Reports</button>
@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1443<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1444<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -5340,7 +5340,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       padding:18px 22px;margin-bottom:12px;box-shadow:0 6px 22px rgba(0,0,0,.4);">
       <div style="font:800 22px Georgia,'Times New Roman',serif;color:#7fa6d6;">&#128737;&#65039; Insurance Claims</div>
       <div style="font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#a5b5c9;margin-top:5px;">
-        Cardinal Truth &#8212; the claims playbook, supplements, adjuster notes, and code cites.</div>
+        The claims playbook, supplements, adjuster notes, and code cites.</div>
     </button>
 
     <button id="landLibrary" style="display:block;width:100%;box-sizing:border-box;text-align:left;cursor:pointer;
@@ -5383,7 +5383,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="ins-hbtn ins-logo-mini" id="ctLogoBtn" aria-label="Home" title="Home">
         <img src="/cardinal-transparent.png" alt="Cardinal">
       </button>
-      <select class="ins-navsel" id="ctSectionSel" aria-label="Cardinal Truth sections">
+      <select class="ins-navsel" id="ctSectionSel" aria-label="Insurance sections">
         <option value="" selected>&#9776; Menu</option>
         <option value="clients">Insurance Clients</option>
         <option value="supplements">Supplement Templates</option>
@@ -5409,8 +5409,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <button class="ins-dropitem">&#128206; Supplement <span style="color:#c8202e;font-style:italic;">&mdash; soon</span></button>
   </div>
   <div class="ins-body">
-    <h1 class="ins-h1">Cardinal Truth</h1>
-    <p class="ins-lede">Every claim tells a story. Cardinal Truth is where the story gets straight &mdash; the code, the regulation, the field evidence, the paper trail. Adjusters read what's in the file. Make sure the file says what you mean.</p>
+    <h1 class="ins-h1">Insurance</h1>
+    <p class="ins-lede">Every claim tells a story. This is where the story gets straight &mdash; the code, the regulation, the field evidence, the paper trail. Adjusters read what's in the file. Make sure the file says what you mean.</p>
     <div class="ins-grid">
       <button class="ins-card" data-ctnav="clients">
         <div class="ins-cardtitle">&#128203; Insurance Clients</div>
@@ -5449,7 +5449,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <!-- ============ INSURANCE CLIENTS LIST ============ -->
 <div id="insClientsView" style="display:none;position:fixed;inset:0;z-index:157;background:var(--ct-bg);overflow-y:auto;color:var(--ct-ink);">
   <div class="ins-header">
-    <button class="ins-hbtn" id="icBackBtn" aria-label="Back to Cardinal Truth" title="Back to Cardinal Truth">&larr;</button>
+    <button class="ins-hbtn" id="icBackBtn" aria-label="Back to Insurance" title="Back to Insurance">&larr;</button>
     <button class="ins-hbtn ins-logo-mini" id="icLogoBtn" aria-label="Go to retail Client Directory" title="Go to retail Client Directory">
       <img src="/cardinal-transparent.png" alt="Cardinal">
     </button>
@@ -22061,7 +22061,7 @@ var CD_CRMS = [
      on the dark card: #ef6b6b 5.62 (the rail's own text-safe cardinal), #2dd4bf
      9.07, #34d399 8.79. On white: #c8202e 5.67, #0f766e 5.47, #047857 5.48. */
   { key:'retail',    label:'Retail',    color:'#ef6b6b', colorLight:'#c8202e' },
-  { key:'insurance', label:'Claims',    color:'#2dd4bf', colorLight:'#0f766e' },
+  { key:'insurance', label:'Insurance', color:'#2dd4bf', colorLight:'#0f766e' },
   { key:'community', label:'Community', color:'#34d399', colorLight:'#047857' }
 ];
 /* Render-time label maps mirror cr-insstage / cr-comstage — stored values never change. */
@@ -22373,7 +22373,7 @@ function openClientsDirectory(keepFilter){
   var brand = document.querySelector('.brand');
   if(brand){
     brand.style.cursor = 'pointer';
-    brand.title = 'Cardinal Truth';
+    brand.title = 'Insurance';
     brand.addEventListener('click', function(){
       if(!(mainView && document.getElementById('navWrap').style.display !== 'none')) return;
       var onInsurance = document.body.classList.contains('claim-insurance');
@@ -38580,7 +38580,7 @@ function showList() {
 
     MOUNT.innerHTML =
       '<div class="cr-a-app">' +
-        '<div class="cr-a-back" data-act="back">← Back to Cardinal Truth</div>' +
+        '<div class="cr-a-back" data-act="back">← Back to Insurance</div>' +
         '<div class="cr-a-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS</div>' +
         '<h1 class="cr-a-title">Adjuster Directory</h1>' +
         '<div class="cr-a-rule"></div>' +
@@ -39624,7 +39624,7 @@ body.standalone .cr-psheet{ padding-bottom:calc(88px + env(safe-area-inset-botto
     retail:    { icon:'<svg class="cr-pmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 9.2 12 3.4l9.2 5.8"/><path d="M2.8 14.4 12 8.6l9.2 5.8"/><path d="M2.8 19.6 12 13.8l9.2 5.8"/></svg>', label:'Retail',    title:'Retail CRM',
                  desc:'Homeowner-paid work \u2014 roofs, siding, windows, gutters. Standard pipeline from lead to invoice.' },
     insurance: { icon:'<svg class="cr-pmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 4.4H6.6c-1 0-1.8.8-1.8 1.8v13c0 1 .8 1.8 1.8 1.8h10.8c1 0 1.8-.8 1.8-1.8v-13c0-1-.8-1.8-1.8-1.8h-2"/><path d="M8.6 2.6h6.8v3.6H8.6Z"/><path d="m8.4 13.2 2.6 2.6 4.6-5.2"/></svg>', label:'Insurance', title:'Insurance CRM',
-                 desc:'Storm and claim work \u2014 carrier, adjuster, ACV and RCV, supplements. Cardinal Truth lives here.' },
+                 desc:'Storm and claim work \u2014 carrier, adjuster, ACV and RCV, supplements.' },
     community: { icon:'<svg class="cr-pmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.1"/><circle cx="6.2" cy="17" r="3.1"/><circle cx="17.8" cy="17" r="3.1"/></svg>', label:'Community', title:'Community Partnership CRM',
                  desc:'Community Action for Dayton \u2014 churches, non-profits, HOAs and referral partners. Putting love into action.' },
   };
@@ -45081,7 +45081,7 @@ return {
 status : 'warn',
 count  : missing.length,
 message: missing.length + ' insurance-type project(s) with no claim row \u2014 e.g. ' + sample,
-fix    : 'Either open the claim (Cardinal Truth \u2192 New Claim) or ' +
+fix    : 'Either open the claim (Insurance \u2192 New Claim) or ' +
 'reclassify the project to retail if it was mis-tagged.',
 };
 }catch(e){
@@ -46254,7 +46254,7 @@ var COMMANDS = [
 { icon:'\uD83D\uDC65', label:'All Clients',             section:'Views',   run:function(){ if(typeof window.showClientsView==='function') window.showClientsView(); else if(typeof window.showClients==='function') window.showClients(); } },
 { icon:'\uD83D\uDCCB', label:'Leads & Jobs',            section:'Views',   run:function(){ if(typeof window.showLeadsView==='function') window.showLeadsView(); else if(typeof window.showLeads==='function') window.showLeads(); } },
 { icon:'\uD83D\uDCC5', label:'Schedule Board',          section:'Views',   run:function(){ if(typeof window.showBoardView==='function') window.showBoardView(); else if(typeof window.showBoard==='function') window.showBoard(); } },
-{ icon:'\uD83D\uDEE1\uFE0F', label:'Cardinal Truth',    section:'Views',   run:function(){ if(typeof window.showCardinalTruth==='function') window.showCardinalTruth(); } },
+{ icon:'\uD83D\uDEE1\uFE0F', label:'Insurance',         section:'Views',   run:function(){ if(typeof window.showCardinalTruth==='function') window.showCardinalTruth(); } },
 { icon:'\uD83C\uDFD8\uFE0F', label:'Community Hub',     section:'Views',   run:function(){ if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show==='function') window.CardinalCommunityHub.show(); } },
 { icon:'\uD83D\uDCC8', label:'Reports',                 section:'Views',   run:function(){ if(typeof window.openReportsView==='function') window.openReportsView(); } },
 { icon:'\u26A1',       label:'Quick Inspection',        section:'Actions', run:function(){ if(typeof window.showQuickInsp==='function') window.showQuickInsp(); else if(typeof window.startQuickInsp==='function') window.startQuickInsp(); } },
@@ -47191,6 +47191,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1444, d:'2026-11-02', t:'The insurance side is called Insurance', s:'The insurance side had three names: Cardinal Truth on the Front Door, in the menu and on its own home screen, Insurance in the header, and Claims on the Clients page. It is Insurance everywhere now: the menu row, the Front Door, the home screen heading, the quick-jump list, Self Check and the Clients page columns and chips. Nothing moved and nothing else changed. The Claims button that opens the list of claims keeps its name, because that is the list, not the department.' },
   { b: 1443, d:'2026-11-02', t:'Easier to tap, easier to read, and the keyboard works', s:'Small controls that were hard to hit on a phone now have a full-size tap area: Open full claim (and tapping the claim card itself opens the claim), the partner buttons, + Add on a punch card, the stage menu, Remember me, Forgot password, the punch search and the document title. The Back chip in the document editor is a real button. Faded numbers that were hard to read, such as out-of-month days on the Production calendar, Community zero counts and the Clients bar counts, are now a solid readable grey. On a desktop with a keyboard, the top bar and the home and Clients cards can be reached with Tab and opened with Enter, and Tab stays inside a form or the estimate builder instead of wandering to the page behind it. Unlabelled search boxes, sort menus and calendar arrows now say what they are for screen readers. Escape closes the Ask sheet and Self Check, and Back closes the Ask sheet without leaving the page. On a desktop the top bar is 3 pixels taller so every item in it is a full 44 pixels.' },
   { b: 1442, d:'2026-11-02', t:'Desktop: wider screens get used', s:'On a laptop or desktop the Clients directory shows its three portal columns from 1280 pixels wide instead of 1600, and a client profile splits into two columns there too, so far less scrolling. Insurance profiles get the same two columns, and the Cardinal Truth hub fills the screen beside the menu instead of sitting in a narrow strip. Invoices & AR and Owner Review now sit beside the left menu instead of covering it, and their row buttons are sized to their labels. The Schedule Board shows its month grid from 1280, and every booking on it names the client. Reports lays its seven numbers out evenly, the Activity card on home folds one person\u2019s same-day bookings into one line, cards lift under the mouse, the Google Reviews card on an insurance profile reads in light mode, and the A/R status pills match the rest of the app in dark mode.' },
   { b: 1441, d:'2026-11-02', t:'Menus: one drawn icon per place, clearer questions, quieter screens', s:'The menu no longer mixes colour emoji with drawn icons, and no two places share the same icon, so Activity Feed, Storm Data and Quick Inspection, or Commissions and Invoices, are told apart at a glance. Leftover emoji are gone from the Resource Library buttons, the + New contract menu, the appointment rows and the day sheet, and day-sheet rows now say whether each is a job, a drop or an appointment. Yes/no questions name what they do (Advance, Delete permanently, Sign out anyway) instead of Continue, and the ones that cannot be undone use the red button. Uploads, imports and texted pay links now show as a success. A rep\u2019s Tools menu no longer offers Reports and Settings, Self Check sits above the drawer footer and leaves Back where it was, the rail and header buttons use the app\u2019s own font, and the pressed Text size and Appearance buttons in the menu follow the Community and Production colours.' },
@@ -57664,7 +57665,7 @@ lv.innerHTML =
 '<button class="cr-lr-course" data-go="insurance" style="--acc:#d9282a;">' +
 '<span class="ic">\uD83D\uDEE1\uFE0F</span>' +
 '<span class="tx">' +
-'<span class="tt"><span class="wm-c">Cardinal</span> <span class="wm-t">Truth</span></span>' +
+'<span class="tt">Insurance</span>' +
 '<span class="sb">Storm and claim work \u2014 carriers, adjusters, supplements.</span>' +
 '<span class="n">' + c.insurance + ' client' + (c.insurance === 1 ? '' : 's') + '</span>' +
 '</span><span class="go">\u2192</span>' +
@@ -69702,12 +69703,12 @@ if(window.CardinalFrontDoor && typeof window.CardinalFrontDoor.open === 'functio
 },
 controls:[
 ['#cr-fd [data-fd="retail"]',     'Retail portal'],
-['#cr-fd [data-fd="insurance"]',  'Cardinal Truth portal'],
+['#cr-fd [data-fd="insurance"]',  'Insurance portal'],
 ['#cr-fd [data-fd="community"]',  'Community portal'],
 ['#cr-fd [data-fd="production"]', 'Production'],
 ['#cr-fd [data-fd="sales"]',      'Sales Floor'],
 ] },
-{ name:'Cardinal Claims', open:function(){
+{ name:'Insurance', open:function(){
 if(typeof window.showCardinalTruth === 'function') window.showCardinalTruth();
 },
 controls:[
@@ -99249,7 +99250,7 @@ function render(){
     rowHtml('retail', '#5590b5', 'Retail',
       line([c && c.appr ? '<span class="warn">' + c.appr + ' awaiting contract</span>' : '',
             bk ? bk.retail + ' client' + (bk.retail === 1 ? '' : 's') : '']) || 'Homeowner work') +
-    rowHtml('insurance', '#d9282a', 'Cardinal Truth',
+    rowHtml('insurance', '#d9282a', 'Insurance',
       line([c && c.chase ? '<span class="hot">' + c.chase + (c.chase === 1 ? ' carrier to chase' : ' carriers to chase') + '</span>' : '',
             bk ? bk.insurance + ' claim' + (bk.insurance === 1 ? '' : 's') : '']) || 'Storm and claim work') +
     rowHtml('community', '#3faa6d', 'Community',

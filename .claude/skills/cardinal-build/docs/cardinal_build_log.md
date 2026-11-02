@@ -38017,3 +38017,39 @@ The name was the only flexible item, so it was the one that gave way.
   - The layout sweep printed 13 findings. All of them are the cap:
     - 3 are TRUNCATED notices.
     - Uncapped, with both themes at 1440 and the five states involved, 1443's list (74) is a strict subset of 1442's (76). Nothing is new, and the six UNWIRED it printed do not appear.
+
+## Build 1444 — the insurance side is called Insurance (2 Nov 2026)
+
+**Source:** Theo, answering question C: "Make it called insurance." The question set out three names for one portal: "Cardinal Truth" on the Front Door and in the menu, "Insurance" in the header, and "Claims" on client cards.
+
+**What changed:** 16 visible labels, by `patch_1444_name.py`. Each one is now "Insurance", or drops the old name:
+- the menu row (`data-nav="cardinaltruth"`);
+- the hub's heading, its lede ("This is where the story gets straight"), the section menu's `aria-label`, the Insurance Clients Back button, the adjusters Back link and the `.brand` tooltip;
+- the Brief's row and the portal picker's description ("Cardinal Truth lives here." is gone);
+- the quick-jump palette entry;
+- Self Check's step name ("Cardinal Claims") and its control name ("Cardinal Truth portal"), plus one fix hint;
+- the Clients directory label table (`CD_CRMS`), so the chips, columns, filter rail and section heads read Insurance instead of Claims;
+- the retired landing's two cards, which are still in the markup.
+
+**Unchanged on purpose:**
+- every id, class, `data-nav` key and function name;
+- source comments;
+- the What's New history;
+- the "Claims" pill (`{ go:'claims', label:'Claims' }`), which opens the claims list.
+
+**Still reads oddly:** on a desktop, the "CRMs" menu heading holds a single row, now "Insurance". The heading was not part of the question.
+
+**Files:**
+- `patch_1444_name.py`, then `patch_1444.py`.
+- `gate_1444.mjs`, 17 checks.
+- `gate_1401`'s `go()` taps the menu row by its new name.
+
+**Gates:**
+- **Build gates:**
+  - `check_build` is GREEN.
+  - `gate_1444` is GREEN, 17/0. On 1443 it is RED, 4 passed and 13 failed.
+- **Standing gates:**
+  - `gate_types` is 1,498, unchanged.
+  - `gate_dupes` is unchanged.
+  - `audit_scrolllock` is GREEN, 16.
+- **37 related gates on both trees and gate_chromium:** running at the time of this commit; the results follow in the PR.
