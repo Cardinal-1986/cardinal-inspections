@@ -72,7 +72,8 @@ for (const s of SENDS) {
   const j = html.indexOf('<span id="edSecondary">');
   const k = html.indexOf('</span>\n      <div id="edDrawer"', j);
   const n = j > 0 && k > j ? html.slice(j, k).split('<button ').length - 1 : -1;
-  ok(n === 8, 'the drawer set holds 8 buttons (11 minus the three sends)', String(n));
+  /* 1439 (P03.08): Client signature moved out too, the same way, so the set is 7 */
+  ok(n === 7, 'the drawer set holds 7 buttons (11 minus the three sends and Client signature)', String(n));
 }
 ok(html.includes('#edClientChip{max-width:210px;}'), 'the client chip has room for its own label');
 ok(html.includes('.toolbar .statuswrap{order:3;}'), 'the phone status row is ordered after the buttons');

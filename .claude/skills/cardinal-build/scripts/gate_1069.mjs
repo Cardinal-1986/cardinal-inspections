@@ -80,7 +80,9 @@ async function at(width) {
      after Publish the prominent button was "Mark sent", which sends nothing.
      So the phone bar is Save, Print, the fill chip, the three sends, More.
      The rule this check guards is unchanged: nothing from #edSecondary shows. */
-  const want = ['saveBtn','printBtn','fillChipBtn','emailDocBtn','textSignBtn','shareBtn','edMoreBtn'];
+  /* 1439 (P03.08): Client signature was MOVED out of #edSecondary onto the bar, like 1204's three sends.
+     The rule this check guards is unchanged: nothing from #edSecondary shows. */
+  const want = ['saveBtn','printBtn','fillChipBtn','emailDocBtn','textSignBtn','shareBtn','sigBtn','edMoreBtn'];
   JSON.stringify(r.shown.slice().sort()) === JSON.stringify(want.slice().sort())
     ? ok('390px — exactly the primaries (incl. 1204\'s three sends) + More', r.shown.join(', '))
     : bad('390px — exactly the primaries (incl. 1204\'s three sends) + More', 'saw ' + r.shown.join(', '));

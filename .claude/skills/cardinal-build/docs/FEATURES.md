@@ -10616,3 +10616,32 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
 - **How:** both twins' `.pbtiles` 4-up declarations are deleted. Three width-gated rules, one per Text size step, replace them. A media query sees the unzoomed viewport, so the threshold is per step, the reasoning Sun's rules already record.
 
 **Gates:** `gate_1438.mjs`, 98 checks. They cover no label cut and the promised column count at 11 widths × Normal / Large / Larger (and Normal light), Sun's columns identical to 1437, and the phone. It is RED on 1437 with 44 failures. `gate_1434`'s font comparison pins the reference's tile grid on both trees, so it keeps measuring only the font.
+
+## Build 1439: documents, contracts and invoices (round-1 leftovers, re-checked on 1438)
+- **Emailed and printed contracts carry no editor hints.**
+  - The yellow [prompts], "— select —" boxes and "Tap a box to check it" become blank lines in the emailed attachment (cleaned in the app before the POST, mirroring share.js's 1427 clean-up; marked KEEP IN SYNC) and in print.
+  - A field the rep filled is never touched, and no agreement row is removed. The saved copy is never changed by a print.
+- **Figure captions renumber with their headings** when empty sections are hidden, on the share page (`api/share.js`) and in the app print. `restorePrintMarks` puts the originals back.
+- **Printed invoice:**
+  - No INVOICE STATUS box; PAID IN FULL and the payment history still print.
+  - $0.00, not −$0.00.
+  - Terms no longer starts its own page, so it prints on 2 pages instead of 3.
+- **Roof Options and estimates:**
+  - Roof Options with up to three choices prints on one page.
+  - The closing company line keeps with the block above it.
+  - `--faint` is #6b6b6b, raised from 3.45:1 to 5.33:1.
+- **Editor:**
+  - After a successful Email to client the chip reads SENT, and estimates read DRAFT instead of UNSENT.
+  - The back chip names the PO above 760px.
+  - On a phone, Client signature moves from More to the main bar.
+  - Signing shows one "Signed — buyer" toast instead of "Saved" plus "Signed".
+- **Contracts tab:** Upload signed contract is the outline button (Buttons A), signed rows no longer offer Mark sent / unsent, and the intro is shorter by cutting repetition only.
+- **Phone fixes:**
+  - The client document's label column is full width.
+  - The invoice editor's Bill To table fits 390px.
+  - Commissions' Owed table shows Net and hides Draws.
+- **Home and Estimates:**
+  - The Activity Count strip reads "All Boards, Last 30 Days".
+  - The empty Estimates tab names Blank estimate.
+
+**Gates:** `gate_1439.mjs` (with `gate_1439_seed.js` and `gate_1439_report.html`), 74 checks; RED on 1438 with 45 failures. `gate_1069`, `gate_781` and `gate_1204` updated for Client signature moving out of More.

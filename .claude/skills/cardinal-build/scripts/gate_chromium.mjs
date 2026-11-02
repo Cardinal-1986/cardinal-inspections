@@ -103,11 +103,13 @@ const GATES = [
      wrapper, which IS the measured 1203 state: emailDocBtn, textSignBtn and
      shareBtn each rendering 0x0 inside a display:none parent, so the only way
      to send was the drawer. Anchor counted in 1203 first: 0 there, 1 here
-     (BUG_CLASSES 86). */
+     (BUG_CLASSES 86).
+     1439 re-anchored: Client signature now sits between Share link and More
+     (P03.08), so the anchor ends at the comment that follows Share link. Same break. */
   { name: 'gate_1204.mjs',
     protects: 'the published document offers Email / Text / Share on the bar itself, above "Mark sent", and the way out says Back',
-    break: { find: '      <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>\n      <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>\n      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>\n      <button class="btn dark" id="edMoreBtn"',
-             repl: '      <span id="edSendsBroken" style="display:none;"><button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button><button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button><button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button></span>\n      <button class="btn dark" id="edMoreBtn"' } },
+    break: { find: '      <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>\n      <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>\n      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>\n      <!-- P03.08:',
+             repl: '      <span id="edSendsBroken" style="display:none;"><button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button><button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button><button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button></span>\n      <!-- P03.08:' } },
   /* 1205: the estimate builder's toolbar must clear the 44px floor. The break
      puts the 26px padding back, which IS the measured 1204 state - Close 72x26,
      Preview 88x26, and "-> Contract" 117x26 sitting at right=463 on a 390px

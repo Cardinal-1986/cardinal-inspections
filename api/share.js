@@ -381,8 +381,9 @@ function liveInvoiceSummary(html, o) {
   const cell = (re, val) => { html = html.replace(re, (all, open) => open + val + '</td>'); };
   cell(/(<td[^>]*id="invTotal"[^>]*>)[\s\S]*?<\/td>/, usd(o.totalCents));
   cell(/(Contract Price<\/td>\s*<td[^>]*>)[\s\S]*?<\/td>/, usd(o.totalCents));
-  cell(/(<td[^>]*id="invPaid"[^>]*>)[\s\S]*?<\/td>/, '&#8722;' + usd(o.paidCents));
-  cell(/(Payments Received<\/td>\s*<td[^>]*>)[\s\S]*?<\/td>/, '&#8722;' + usd(o.paidCents));
+  const paidTxt = (o.paidCents ? '&#8722;' : '') + usd(o.paidCents);   /* P11.07 */
+  cell(/(<td[^>]*id="invPaid"[^>]*>)[\s\S]*?<\/td>/, paidTxt);
+  cell(/(Payments Received<\/td>\s*<td[^>]*>)[\s\S]*?<\/td>/, paidTxt);
   cell(/(<td[^>]*id="estTotal"[^>]*>)[\s\S]*?<\/td>/, due <= 0 ? '$0.00 &middot; Paid in full' : usd(due));
   html = html.replace(/(<span id="invAsOf"[^>]*>)[\s\S]*?<\/span>/, (all, open) => open + 'as of ' + day + '</span>');
   return html;
@@ -564,7 +565,7 @@ export default async function handler(req, res) {
       '#crPayBar,#crPaySheet,#csBar,#csOverlay{display:none !important}' +
       '.figrow,.fig,tr{break-inside:avoid}' +
       '@page{@bottom-center{content:"5735 Webster St, Dayton OH 45414  \u00b7  937.576.6753  \u00b7  Admin@cardinalrenovations.net";' +
-      'font-family:\'Segoe UI\',Arial,sans-serif;font-size:8pt;color:#8a8a8a}}}</style>' +
+      'font-family:\'Segoe UI\',Arial,sans-serif;font-size:8pt;color:#6b6b6b}@bottom-left{color:#6b6b6b}@bottom-right{color:#6b6b6b}}}</style>' +   /* P11.11 */
       '<script>(function(){function run(){var d=document;' +
       'd.querySelectorAll(".fig, .cover-photo").forEach(function(f){' +
       'var fr=f.classList.contains("cover-photo")?f:f.querySelector(".frame");' +
@@ -613,7 +614,11 @@ export default async function handler(req, res) {
       'var num=0;secs.forEach(function(h){var sp=h.querySelector(".num");' +
       'if(!sp||h.getAttribute("data-emptysec"))return;' +
       'if(!/^\\s*\\d+\\s*$/.test(sp.textContent||""))return;' +   /* D: the Contents mark is not a number */
-      'num++;sp.textContent=String(num);});' +
+      'num++;var on=(sp.textContent||"").trim();sp.textContent=String(num);' +
+      /* P04.03: "Fig. 5.1" under the section now numbered 3 reads "Fig. 3.1" (KEEP IN SYNC with compactForPrint) */
+      'for(var el=h.nextElementSibling;el&&!(el.tagName==="H2"&&el.classList.contains("sec"));el=el.nextElementSibling){' +
+      'if(el.querySelectorAll)el.querySelectorAll(".fig .cap > b:first-child").forEach(function(b){' +
+      'var m=/^(\\s*Fig\\.\\s*)(\\d+)(\\.\\d+)/.exec(b.textContent);if(m&&m[2]===on)b.textContent=m[1]+num+m[3]+b.textContent.slice(m[0].length);});}});' +
       'var tocNum=0;d.querySelectorAll(".toc-row").forEach(function(row){' +
       'var t=row.querySelector(".t");if(!t)return;' +
       'var title=t.textContent.replace(/\\u00a0/g," ").replace(/^\\s*\\d+\\s*/,"").trim();' +

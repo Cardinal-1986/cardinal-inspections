@@ -37773,3 +37773,65 @@ The name was the only flexible item, so it was the one that gave way.
 **Gates:** `gate_1438.mjs`, 98/0. It is RED on 1437 with 44 failures and no crash.
 - `gate_1434`'s T6 font comparison (against 1433, at 1100/1194/…) asserted the tile columns and the board height unchanged. 1438 changes both on purpose, so that group now pins the reference's grid on both trees. It keeps judging the font, and `gate_1438` judges the tiles.
 - The rest are listed in the PR.
+
+## Round 1 re-checked on build 1438 (1 Nov 2026, evening)
+
+**Source:** Theo picked "1": re-check what is still open from round 1 against today's build, then fix whatever does not need his call. He then said: "Fix all you can without my decisions that come back around to design ideas."
+
+**How:** five verifiers (V1–V5) re-ran every round-1 finding on 1438. That was 149 panel findings plus judges 13–16, 216 in all. Each one was re-run on 1438 by probe or render, or by re-running the gate that covers it.
+
+**Result:**
+- 129 FIXED.
+- 63 STILL. 62 of them need no choice from Theo; P10.05, the cold start, does.
+- 24 NEEDS_THEO. Some are taste, some are settled decisions, some are design ideas.
+
+**Held for Theo, as questions A–F (asked 1 Nov):**
+- A: the homeowner email and text wording (P02.09, P03.10, P11.12).
+- B: splitting the homeowner's share out on insurance A/R (P05.08).
+- C: the insurance portal's three names (P01.05, P09.11).
+- D: a silent portal switch when a job opens from another CRM (P01.13).
+- E: the client change-order sentence on crew work orders (J14.13).
+- F: the cold start (P10.05).
+
+**Held, not asked:** P10.06, putting gate_types and gate_dupes in CI. Both are red on main against a build-1329 baseline, so CI would block every merge until the baselines are rebuilt with reasons.
+
+**Fixes:** five builders (A1 shell, A2 desktop, A3 documents, A4 phone and field, A5 accessibility) were each handed a slice. Each built on 1438 with its own gate, red on 1438. They ship as 1439+.
+
+## Build 1439 — documents, contracts and invoices (2 Nov 2026)
+
+**Source:** the re-check above, builder A3. Items: P02.03, P02.11, P03.08, P03.09, P03.11 / J15.08, P04.03, P05.07, P05.11, P11.05, P11.07, P11.11, P11.13, P12.14, plus V3's new find (the phone invoice editor's Bill To table was 427px in a 390px frame).
+
+**Before → after:**
+
+| Item | Before | After |
+|---|---|---|
+| Emailed contract | 25 [prompts], 12 "— select —", "Tap a box" | 0 / 0 / none |
+| Printed contract | 12+ prompts, 12 "— select —" | 0 / 0 |
+| Figure captions, sections 3/4/5 | Fig. 5.1 / 6.1 / 8.1 | Fig. 3.1 / 4.1 / 5.1 |
+| Printed invoice | 3 pages, status box, "−$0.00" | 2 pages, no box, "$0.00" |
+| Roof Options, 1–3 options | 2 pages | 1 page |
+| `--faint` grey | 3.45:1 | 5.33:1 |
+| Editor chip after Email to client | UNSENT / Mark sent | SENT / Mark unsent |
+| Toasts after signing | 2 | 1 |
+| Contracts tab red buttons | 2 | 1 |
+| Phone document label cells | 66px, 4 of 6 wrap | 330px, 1 line |
+| Phone invoice Bill To | 427px in 390 | right edge 374 |
+| Commissions at 390 | Net hidden | Net shown, Draws hidden |
+
+**Skipped, needs Theo:**
+- The PO label on the phone back chip: it would cut 11px off the client's name.
+- Shortening the Contracts intro further: that needs rewording.
+- Fenced: the Publish flow, hiding blank Co-buyer / Insurance / Claim rows, the "Invoices & Payments" name, and the homeowner wording (A).
+
+**Files:**
+- `patch_1439_docs.py`, which takes `index.html` and `api/share.js` (`api/senddoc.js` is untouched), then `patch_1439.py`. Byte-reproducible on 1438.
+- `gate_1439.mjs` plus its two fixtures.
+- Gate updates: `gate_1069`, `gate_781` and `gate_1204` (Client signature moved out of More, the way 1204 moved the three send buttons).
+
+**Gates:**
+- **The builder's run on 1438, which is byte-identical to main:**
+  - About 90 existing gates touching these surfaces: green, or identical to 1438.
+  - `gate_stack`: clean at 390 in dark and light, and at 1440.
+  - Sentinel `--since 1438`: clean at 390 and 1440, in both themes.
+  - `gate_types` and `gate_dupes`: identical, plus four new single-definition names.
+- **Re-run at integration:** listed in the PR.
