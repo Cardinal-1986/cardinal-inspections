@@ -38052,4 +38052,14 @@ The name was the only flexible item, so it was the one that gave way.
   - `gate_types` is 1,498, unchanged.
   - `gate_dupes` is unchanged.
   - `audit_scrolllock` is GREEN, 16.
-- **37 related gates on both trees and gate_chromium:** running at the time of this commit; the results follow in the PR.
+- **37 related gates, run on 1444 and 1443:** every failure line is identical on both trees, with two exceptions.
+  - `gate_1401` is RED on 1443 only. That is expected: it now taps the menu row by its new name.
+  - **`gate_1437` C went RED on 1444, and that was a real change.** "Insurance" is wider than "Claims", so at Normal on a 390 phone the four Clients-bar chips no longer fit one row: All, Retail and Insurance sit on the first row and Community on the second. Nothing is hidden (A and B pass), and every other text size already wrapped to two rows. C had pinned the 1436 reference's x positions, which a longer label can never match. It now checks what 1437 promised: when the labels differ from the reference, the bar wraps only where a chip cannot fit on the row before it. Proved both ways: GREEN on 1444 and on 1443, and RED on a poisoned copy that pushes every chip onto its own row.
+  - **Held for Theo:** keep the two-row bar, or tighten the chips so all four fit one row at Normal.
+- **Already red on both trees, unchanged:** `gate_804` (2), `gate_1115`, `gate_1188` (5), `gate_1230`, `gate_1436` and `render_crmbar894` (2; it predates 1437's wrap and still asks for one row).
+- **Harnesses that cannot run, the same on both trees:**
+  - `render_inshub.js` crashes with `activeN is not defined`. Its page-side code names a variable the hub no longer has. It also needs `playwright-core` on `NODE_PATH`.
+  - `render_landing852.mjs` writes its screenshot into another session's scratchpad path and stops on ENOENT.
+- **gate_chromium:** GREEN. All 23 pass on 1444, and all 23 go red when what they protect is broken.
+- The machine restarted partway through the queue (42 of 74 jobs done). The other 32 were run again, along with gate_chromium.
+- **Sentinel** (standard setup, 390 and 1440, dark and light, `--since` 1443): running when this was committed. It does not hold this merge, because this is a naming build. The result goes in the next build's entry.

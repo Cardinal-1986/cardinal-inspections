@@ -11,7 +11,10 @@
  *      fixture counts and three-digit counts (8 boots)
  *   B  nothing is hidden past the edge: scrollWidth <= clientWidth
  *   C  where it already fitted (Normal, fixture counts) the chips sit exactly
- *      where they sat on the reference tree — one row, same x positions
+ *      where they sat on the reference tree — one row, same x positions.
+ *      Since 1444 (the Claims chip is "Insurance") the labels differ from the
+ *      reference and do not fit one row at Normal, so C checks instead that the
+ *      bar wraps only where a chip cannot fit on the row before it
  *   D  with a long list scrolled to the end, the last client ends above the bar —
  *      with the footer showing (Retail) and hidden (the portals that hide it)
  *
@@ -78,7 +81,10 @@ async function open(file, mode, big) {
 const measure = page => page.evaluate(() => {
   const bar = document.getElementById('cdCrmBar');
   const chips = [...bar.children].map(c => { const q = c.getBoundingClientRect(); return { t: c.textContent.trim(), l: Math.round(q.left), r: Math.round(q.right), top: Math.round(q.top) }; });
-  return { iw: window.innerWidth, sw: bar.scrollWidth, cw: bar.clientWidth, chips, rows: new Set(chips.map(c => c.top)).size,
+  const bs = getComputedStyle(bar);
+  const inner = bar.clientWidth - parseFloat(bs.paddingLeft) - parseFloat(bs.paddingRight);
+  const gap = parseFloat(bs.columnGap) || 0;
+  return { iw: window.innerWidth, sw: bar.scrollWidth, cw: bar.clientWidth, inner, gap, chips, rows: new Set(chips.map(c => c.top)).size,
            sun: document.documentElement.getAttribute('data-cr-sun'), text: document.documentElement.getAttribute('data-cr-text') };
 });
 const tail = (page, hideFooter) => page.evaluate(async hide => {
@@ -111,8 +117,26 @@ try {
   {
     const a = await open(FILE, 'normal', false), b = await open(REF, 'normal', false);
     const ma = await measure(a.page), mb = await measure(b.page);
-    ok(ma.rows === 1, 'C Normal, fixture counts: still one row', ma.rows);
-    ok(JSON.stringify(ma.chips.map(c => [c.l, c.r])) === JSON.stringify(mb.chips.map(c => [c.l, c.r])), 'C Normal, fixture counts: chips at the same x as the reference', { now: ma.chips.map(c => [c.l, c.r]), ref: mb.chips.map(c => [c.l, c.r]) });
+    const lbl = m => m.chips.map(c => c.t.replace(/[\d\s]+$/, '')).join('|');
+    if (lbl(ma) === lbl(mb)) {
+      ok(ma.rows === 1, 'C Normal, fixture counts: still one row', ma.rows);
+      ok(JSON.stringify(ma.chips.map(c => [c.l, c.r])) === JSON.stringify(mb.chips.map(c => [c.l, c.r])), 'C Normal, fixture counts: chips at the same x as the reference', { now: ma.chips.map(c => [c.l, c.r]), ref: mb.chips.map(c => [c.l, c.r]) });
+    } else {
+      /* 1444 renamed the Claims chip "Insurance" (Theo's pick), and the four chips no longer
+         fit one row at Normal on a 390 phone. Matching the 1436 reference's x positions is
+         then impossible by construction, so C asserts what 1437 actually promised instead:
+         the bar wraps only when it must. Each row break is checked: the chip that starts a
+         row could not have fitted at the end of the row before it. */
+      const rows = [...new Set(ma.chips.map(c => c.top))].sort((x, y) => x - y).map(t => ma.chips.filter(c => c.top === t));
+      const needless = [];
+      for (let k = 1; k < rows.length; k++) {
+        const prev = rows[k - 1], first = rows[k][0];
+        const used = Math.max(...prev.map(c => c.r)) - Math.min(...prev.map(c => c.l));
+        if (used + ma.gap + (first.r - first.l) <= ma.inner) needless.push(first.t);
+      }
+      ok(rows.length >= 1 && needless.length === 0, 'C Normal, fixture counts: the labels changed since the reference (' + lbl(mb) + ' -> ' + lbl(ma) + '), so the bar wraps only where a chip cannot fit', { rows: rows.map(r => r.map(c => c.t)), inner: ma.inner, gap: ma.gap, needless });
+      ok(ma.chips.length === 4, 'C Normal, fixture counts: still four chips', ma.chips.length);
+    }
     await a.ctx.close(); await b.ctx.close();
   }
 
