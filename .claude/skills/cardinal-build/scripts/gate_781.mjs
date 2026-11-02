@@ -109,7 +109,8 @@ console.log('\n--- D. one signing block, three signable rows ---');
 ok('the three slots exist', JSON.stringify(a.slots) === '["buyer","cobuyer","contractor"]', JSON.stringify(a.slots));
 ok('the duplicate footer is GONE from the agreement', a.footerCols === 0, a.footerCols);
 ok('the acceptance paragraph no longer calls a contract an estimate', a.saysEstimate === false);
-ok('the signature button is still offered', a.sigBtn === 'inline-block', a.sigBtn);
+/* 1439 (P03.08): refreshSigBtn() now clears the inline display ('') so the toolbar's own inline-flex applies; hidden stays 'none' */
+ok('the signature button is still offered', a.sigBtn === '' || a.sigBtn === 'inline-block', a.sigBtn);
 
 console.log('\n--- E. signing the row you named ---');
 /* The "Who is signing?" ask is an in-page picker sheet now ([data-who]

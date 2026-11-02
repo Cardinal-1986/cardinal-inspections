@@ -2761,6 +2761,7 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
   /* 1204: the client chip carries a word the rep tap-targets, so it gets the
      room for it. 30vw truncated "\2039 Back" down to the arrow alone. */
   #edClientChip{max-width:46vw;}
+  #edClientChip .edpo{display:none;}   /* P02.03: no room for the PO label beside the name at phone width */
 }
 
 /* ---- button tap feedback ---- */
@@ -4392,7 +4393,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-01 build 1438<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1439<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4540,7 +4541,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <div class="hero-left" style="margin-top:14px;">
           <div id="heroGreeting" class="hero-hi"></div>
         </div>
-        <div class="acthead"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/></g><g class="i5"><path d="M13 4 6 13h5l-1 7 8-10h-5z"/></g></svg>Activity Count: Last 30 Days</div>
+        <div class="acthead"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/></g><g class="i5"><path d="M13 4 6 13h5l-1 7 8-10h-5z"/></g></svg>Activity Count: All Boards, Last 30 Days</div>
         <div class="actstrip" id="actStrip"></div>
       </div>
       <aside class="homeside" style="margin-top:14px;">
@@ -4892,12 +4893,12 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div id="tab-contracts" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
       <h3 class="projsec" data-cri="contract lg">Contracts</h3>
-      <p class="subnote">Client contracts &#8212; roofing, siding and gutters, each the trade&#8217;s own
-      Construction Agreement, prefilled from this profile. Signed on paper, or a windows job?
-      <b>Upload signed contract</b> keeps a photo or PDF of it and opens the invoice. The Terms &amp; Conditions and both
+      <p class="subnote">Roofing, siding and gutter Construction Agreements, prefilled from this profile.
+      Signed on paper, or a windows job?
+      <b>Upload signed contract</b> keeps a photo or PDF and opens the invoice. The Terms &amp; Conditions and both
       3-Day Notice of Cancellation copies stay the printed master in
       <b>&#9776; Menu &#8594; Company Documents</b>.</p>
-      <div style="margin:6px 0 12px;">
+      <div style="margin:6px 0 12px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;">
         <span id="pContractWrap" style="position:relative;">
           <button class="btn" id="pNewContractBtn" title="Start the trade's own Construction Agreement, prefilled from this profile">+ New contract &#9662;</button>
           <div id="pContractMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
@@ -4908,7 +4909,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <button class="estopt" data-ctpl="gutters">&#127783; Gutter agreement</button>
           </div>
         </span>
-        <button class="btn" id="pUploadContractBtn" type="button" style="margin-left:8px;">Upload signed contract</button>
+        <button class="chipbtn" id="pUploadContractBtn" type="button">Upload signed contract</button>
       </div>
       <div id="contractDocsMount"><div class="loading">Loading…</div></div>
       <div class="cr-trash-mount"></div>
@@ -9015,9 +9016,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
       <button class="btn dark" id="textSignBtn" data-cri="chat" title="Text the client a link to review and sign"><span class="bl">Text to sign</span></button>
       <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
+      <!-- P03.08: in-person signing is a send too; moved here out of #edSecondary like 1204's three -->
+      <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
       <button class="btn dark" id="edMoreBtn" aria-haspopup="true" aria-expanded="false"><span class="bl">&#8943; More</span></button>
       <span id="edSecondary"><button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
-      <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
       <button class="btn dark" id="editEstBtn" style="display:none;" data-cri="pencil" title="Reopen this estimate in the builder — Publish there updates this document"><span class="bl">Edit estimate</span></button>
       <button class="btn dark" id="addFieldBtn" data-cri="plus"><span class="bl">&#65291; Field</span></button>
       <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
@@ -10738,6 +10740,8 @@ function buildEstimate(titleHtml, body, terms){
     out = out.replace(/<h2 class="sec">Notes<\/h2>\s*<p class="ph">\[Job-specific notes[\s\S]*?<\/p>\s*/, '');
     out = out.replace(/<[d]iv class="note"><b>Acceptance\.<\/b>[\s\S]*?<\/[d]iv>/, '');
     out = out.replace(SIGN_FOOTER, '');
+    /* P11.07: a bill's Terms are two sentences; they follow the summary instead of starting page 3 */
+    out = out.replace('<h2 class="sec page-break">Terms</h2>', '<h2 class="sec">Terms</h2>');
   }
   /* 889: a crew WORK ORDER is not an estimate. Strip the estimate cover (Prepared
      For / Estimate # / Valid Through), the property photo, the generic Notes
@@ -12242,7 +12246,7 @@ function docRowHtml(r){
       (_le ? '<button class="chipbtn" data-act="estedit" data-id="'+r.id+'" data-eid="'+esc(String(_le.id))+'">Edit estimate</button>' +
              '<button class="chipbtn" data-act="open" data-id="'+r.id+'">Open document</button>'
            : '<button class="chipbtn" data-act="open" data-id="'+r.id+'">Open / Edit</button>') +
-      '<button class="chipbtn" data-act="toggle" data-id="'+r.id+'">'+toggleLabel+'</button>' +
+      (r.signed_at ? '' : '<button class="chipbtn" data-act="toggle" data-id="'+r.id+'">'+toggleLabel+'</button>') +   /* P03.11: as 1392 does in the editor */
       (isWO ? '<button class="chipbtn" data-act="wodone" data-id="'+r.id+'">' +
         (wo && wo.completed_on ? 'Reopen' : 'Mark completed') + '</button>' : '') +
       '<button class="chipbtn" data-act="download" data-id="'+r.id+'">Download</button>' +
@@ -15177,7 +15181,7 @@ function renderProjectDocs(){
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>') +
     (bill.length ? '<h3 class="projsec" data-insp-bill="1" style="margin:18px 0 6px;">Invoices &amp; change orders</h3>' + docTable(bill) : '');
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
-    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>\uFF0B From a template</b> to start from a trade template, or <b>Upload estimate</b> for one written on paper or in another program.</div>';
+    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>\uFF0B From a template</b> to start from a trade template, <b>Blank estimate</b> to add the lines yourself, or <b>Upload estimate</b> for one written on paper or in another program.</div>';
   /* 654 (CR-AUD-013): sent estimates living only in the estimates TABLE
      have no doc row to list here — say so instead of looking empty while
      the money panes price the job from them. */
@@ -26600,7 +26604,9 @@ function setEditorStatus(status, sentAt, signedAt){
     statusChip.className = 'chip signed';
     sentDateEl.textContent = 'Signed ' + fmtDay(signedAt);
   }else{
-    statusChip.textContent = status.toUpperCase();
+    /* P02.03: an estimate document reads the builder's word for not-sent-yet, as its card does (docRowHtml) */
+    statusChip.textContent = (status !== 'sent' && current && isEstimateDoc({ id: current.id, title: titleInput ? /** @type {any} */ (titleInput).value : '' }))
+      ? 'DRAFT' : status.toUpperCase();
     statusChip.className = 'chip ' + status;
     sentDateEl.textContent = (status === 'sent' && sentAt) ? 'Sent ' + fmtDay(sentAt) : '';
   }
@@ -28432,7 +28438,7 @@ async function openEditor(id){
            a title. The name stays beside it -- it is also how a rep knows
            whose document is open. */
         cc.innerHTML = '<b class="edbk">\u2039 Back</b>'
-          + (po ? '<small>' + esc(String(po)) + ':</small> ' : '')
+          + (po ? '<small><span class="edpo">PO </span>' + esc(String(po)) + ':</small> ' : '')
           + esc(pr.name || 'Client');
         cc.title = 'Back to ' + (pr.name || 'the client') + '\u2019s overview';
         cc.style.display = 'inline-flex';
@@ -28506,6 +28512,7 @@ async function openEditor(id){
         sfx.id = 'screenFix';
         sfx.textContent = '@media screen{body{max-width:900px;width:auto !important;margin:0 auto;padding:22px 16px !important;box-sizing:border-box;}}' +
           '@media screen and (max-width:640px){.figrow{flex-direction:column;}.fig .frame{height:auto;aspect-ratio:4/3;}' +
+          'table.meta{table-layout:fixed;}table.meta td{overflow-wrap:anywhere;}' +   /* V3: the Bill To table ran off the frame */
           '.cover-photo{height:auto;aspect-ratio:4/3;}table{font-size:10.5pt;}body{font-size:11.5pt;line-height:1.65;}}' +
           '@media screen{body{background:#fff;}table.facts td,table.concerns td,table.meta td,table.items td,.cover-meta td{border-color:#1b1b1b !important;}}' +
           '@media screen{.howto{display:block !important;}}' +
@@ -28637,6 +28644,7 @@ var INV_LIVE_CSS = `
   #cr-inv-ledger table{page-break-inside:auto;}
   #cr-inv-ledger tr{page-break-inside:avoid;}
   #cr-inv-ledger tfoot{display:table-row-group;}   /* E: Total paid once, after the last payment */
+  #cr-inv-live:not(.paid){display:none;}   /* P11.07: the status pill is the app's; paper keeps PAID IN FULL and the history */
 }`;
 /* 1320: Total · Paid · Balance due from the ledger. New invoices carry ids; older ones
    are found by their labels. The same rewrite runs server-side in api/share.js. */
@@ -28651,7 +28659,7 @@ function invLiveSummary(doc, billed, paid, bal){
     var p = doc.getElementById('invPaid') || byLabel(/^Payments Received$/i);
     var d = doc.getElementById('estTotal');
     if(t) t.innerHTML = fmtMoney(billed, true);
-    if(p) p.innerHTML = '&#8722;' + fmtMoney(paid, true);
+    if(p) p.innerHTML = (Math.abs(paid) < 0.005 ? '' : '&#8722;') + fmtMoney(paid, true);   /* P11.07: $0.00, not -$0.00 */
     if(d) d.innerHTML = (billed > 0 && bal <= 0.005) ? fmtMoney(0, true) + ' &middot; Paid in full' : fmtMoney(bal, true);
     var a = doc.getElementById('invAsOf');
     if(a) a.textContent = 'as of ' + new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
@@ -28859,6 +28867,11 @@ function serializeFrame(){
     t.textContent = t.getAttribute('data-origtoc');
     t.removeAttribute('data-origtoc');
   });
+  clone.querySelectorAll('.fig .cap b[data-origfig]').forEach(function(b){   /* P04.03 */
+    b.textContent = b.getAttribute('data-origfig');
+    b.removeAttribute('data-origfig');
+  });
+  crContractBlanksRestore(clone);   /* P11.05: a print's blanks are never what is saved */
   var sf = clone.querySelector('#screenFix');
   if(sf) sf.remove();
   var _ef = clone.querySelector('#estFrameFix');   /* 1278 */
@@ -28904,8 +28917,9 @@ function readEstimateTotal(){
     return (isFinite(n) && n > 0) ? n : 0;
   }catch(e){ return null; }
 }
-async function saveCurrent(){
+async function saveCurrent(opts){
   if(!current) return;
+  var _quiet = !!(opts && opts.quiet === true);   /* P03.09 */
   /* 1328: the frame has not finished opening THIS document (closed while still loading).
      Nothing can have been edited, so there is nothing to save — and saving would write the
      previous, blank page over it. */
@@ -28927,7 +28941,7 @@ async function saveCurrent(){
     savedFlash.textContent = 'Saved \u2713';
     /* 733: .toolbar #savedFlash is display:none under 760px, so on a phone this
        save has never once confirmed itself. */
-    try{ if(window.crToastOk) window.crToastOk('Saved \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
+    try{ if(window.crToastOk && !_quiet) window.crToastOk('Saved \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
     setTimeout(function(){ savedFlash.textContent = ''; }, 2500);
     reload();
   }catch(err){ showError('Save failed: ' + (err.message || err)); }
@@ -29358,7 +29372,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
         propertyLine: propLine,
         title: (row && row.title) || 'Cardinal Document',
         subject: em.subject, message: em.message,   /* 1273 */
-        html: await inlineDocImages(serializeFrame()),   /* 1270 */
+        html: await inlineDocImages(crContractAttach(serializeFrame(), (row && row.title) || /** @type {any} */ (titleInput).value || '')),   /* 1270; P11.05 */
         shareUrl: tok ? shareUrlFor(tok) : null
       })
     });
@@ -29366,8 +29380,11 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
     /* 731: same object-as-id bug — the email went out and the document stayed
        UNSENT, because this write never landed on a row. */
-    await db.update(current.id, { status: 'sent', sent_at: new Date().toISOString() });
+    var _sentAt = new Date().toISOString();
+    await db.update(current.id, { status: 'sent', sent_at: _sentAt });
     crDocSent(current.id);
+    /* P02.03: the row is sent, so the open document's chip and its Mark sent button say so */
+    if(current){ current.status = 'sent'; current.sent_at = _sentAt; setEditorStatus('sent', _sentAt, current.signed_at); }
     try{ if(window.crToastOk) window.crToastOk('Sent \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
     /* 1315: forward-only — a re-send never pulls a Closed (or Lost) job back to Invoiced */
     if(pr && row && /^invoice/i.test((row.title || '').trim()) && ['Invoiced', 'Closed', 'Lost'].indexOf(normStage(pr.stage)) === -1){
@@ -29572,7 +29589,7 @@ function refreshSigBtn(){
   var b = document.getElementById('sigBtn');
   if(!b) return;
   /* 1399: a builder estimate's block is .ac-sign */
-  b.style.display = (doc && (doc.querySelector('.sign') || doc.querySelector('.ac-sign') || doc.querySelector('[data-sig]'))) ? 'inline-block' : 'none';
+  b.style.display = (doc && (doc.querySelector('.sign') || doc.querySelector('.ac-sign') || doc.querySelector('[data-sig]'))) ? '' : 'none';   /* P03.08: '' = the row's own inline-flex */
 }
 /* 1134: a published estimate document is a rendering of a live estimates row —
    the builder is one tap away instead of back-out-and-hunt. Shown only for
@@ -29861,7 +29878,7 @@ document.getElementById('sigApply').addEventListener('click', async function(){
       var _who = __sigWho;
       __sigWho = null;
       sigModal.style.display = 'none';
-      await saveCurrent();
+      await saveCurrent({ quiet: true });   /* P03.09: the Signed toast below is the one confirmation */
       try{
         /* Only the BUYER accepting is the deal being struck — a contractor
            countersignature must not advance anyone's pipeline. */
@@ -29967,6 +29984,87 @@ function crMarkUnpriced(root, attr){
   un.forEach(function(r){ r.setAttribute(attr, '1'); });
   return un.length;
 }
+/* P11.05: a contract's unfilled fields, the way api/share.js CONTRACT_FIX (1427) shows them on the client's
+   page: a [prompt] is a blank line, an unchosen dropdown a blank, the editor's leftover Notes line and its
+   heading go. KEEP IN SYNC with CONTRACT_FIX. A field the rep filled never starts with "[", so it is never
+   touched, and no row of the agreement is removed. attach=false (Print / Download): reversible marks, undone
+   by crContractBlanksRestore() from restorePrintMarks() and serializeFrame(). attach=true: done to the COPY
+   that is emailed (crContractAttach), with the dropdowns frozen to text and the screen-only hint removed. */
+function crIsContractDoc(d, title){
+  var t = String(title || '').trim();
+  if(/^invoice/i.test(t)) return false;
+  return /^contract/i.test(t) || !!(d && d.querySelector && d.querySelector('[data-sig="buyer"]'));
+}
+function crContractBlanks(d, attach){
+  if(!d || !d.body) return;
+  var EM = '  ';
+  d.querySelectorAll('.ph').forEach(function(el){
+    if(el.hasAttribute('data-origph')) return;
+    var t = (el.textContent || '').trim();
+    if(t.charAt(0) !== '[') return;
+    if(/^(P|DIV|LI)$/.test(el.tagName)){ el.setAttribute('data-emptyblock', '1'); el.setAttribute('data-crblank', '1'); return; }
+    if(!attach) el.setAttribute('data-origph', el.innerHTML);
+    el.setAttribute('data-blankph', '1');
+    el.textContent = EM;
+  });
+  d.querySelectorAll('select').forEach(function(sel){
+    var o = sel.options[sel.selectedIndex];
+    var v = (o && o.value) ? (o.textContent || '').trim() : '';
+    if(attach){
+      var sp = d.createElement('span');
+      sp.className = 'crsel-ro';
+      if(v) sp.textContent = v; else { sp.setAttribute('data-blankph', '1'); sp.textContent = EM; }
+      sel.parentNode.replaceChild(sp, sel);
+    }else if(o && !o.value && !o.hasAttribute('data-origtxt')){
+      o.setAttribute('data-origtxt', o.textContent || '');
+      o.textContent = EM;
+    }
+  });
+  /* a heading left over nothing (the Notes line); a .note box carries its own bold label */
+  d.querySelectorAll('h2.sec').forEach(function(h){
+    var el = h.nextElementSibling, gone = 0, keep = 0;
+    while(el && !(el.tagName === 'H2' && el.classList.contains('sec'))){
+      if(el.getAttribute('data-crblank')) gone++;
+      else if(!(el.classList.contains('note') || el.tagName === 'SCRIPT' || el.tagName === 'STYLE')){ keep = 1; break; }
+      el = el.nextElementSibling;
+    }
+    if(gone && !keep){ h.setAttribute('data-emptyblock', '1'); h.setAttribute('data-crblank', '1'); }
+  });
+  if(attach){
+    d.querySelectorAll('[data-crblank]').forEach(function(el){ el.remove(); });
+    d.querySelectorAll('.items-hint').forEach(function(el){ el.remove(); });   /* "Tap a box to check it" is the editor's */
+  }
+}
+function crContractBlanksRestore(d){
+  if(!d || !d.querySelectorAll) return;
+  d.querySelectorAll('.ph[data-origph]').forEach(function(el){
+    el.innerHTML = el.getAttribute('data-origph');
+    el.removeAttribute('data-origph');
+    el.removeAttribute('data-blankph');
+  });
+  d.querySelectorAll('option[data-origtxt]').forEach(function(o){
+    o.textContent = o.getAttribute('data-origtxt');
+    o.removeAttribute('data-origtxt');
+  });
+  d.querySelectorAll('[data-crblank]').forEach(function(el){
+    el.removeAttribute('data-crblank');
+    el.removeAttribute('data-emptyblock');
+  });
+}
+/* the emailed copy: parsed (scripts inert), cleaned, serialized. If anything fails it goes as it was. */
+function crContractAttach(html, title){
+  try{
+    var dd = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    if(!crIsContractDoc(dd, title)) return html;
+    crContractBlanks(dd, true);
+    var st = dd.createElement('style');
+    st.id = 'crContractFix';
+    st.textContent = '.ph[data-blankph],.crsel-ro[data-blankph]{background:none !important;border-bottom:1px solid #1b1b1b;border-radius:0 !important;padding:0 !important;display:inline-block;min-width:3.2em}' +
+      '.crsel-ro{border-bottom:1px solid #555;padding:0 2px}.cbx{cursor:default}a[data-cr-master]{color:#9c1822}';
+    (dd.head || dd.documentElement).appendChild(st);
+    return '<!DOCTYPE html>\n' + dd.documentElement.outerHTML;
+  }catch(_e){ return html; }
+}
 function compactForPrint(d){
   try{ crMarkUnpriced(d, 'data-emptyrow'); }catch(_cu){}   /* 1330: printFix hides [data-emptyrow] */
   /* photo boxes: never print an empty frame (all document types) */
@@ -29981,6 +30079,7 @@ function compactForPrint(d){
   });
   /* the deep cleanup below is for inspection reports only \u2014 contracts and
      estimates keep every line so reps can print blanks to hand-fill */
+  try{ if(crIsContractDoc(d, titleInput ? /** @type {any} */ (titleInput).value : '')) crContractBlanks(d, false); }catch(_cb){}   /* P11.05 */
   if(!d.querySelector('[data-cardinal-summary-heading]')) return;
   /* F: a mark left by an EARLIER print on something since filled (typed, or drafted ph -> fill) hid it from
      every later print in the session — this pass only visits .ph, so it never cleared the stale mark */
@@ -30065,6 +30164,18 @@ function compactForPrint(d){
     num++;
     if(!sp.getAttribute('data-orignum')) sp.setAttribute('data-orignum', sp.textContent);
     sp.textContent = String(num);
+    /* P04.03: "Fig. 5.1" under a section that now prints as 3 reads "Fig. 3.1". Only a caption that still
+       carries its section's own number is touched; restorePrintMarks() puts it back. */
+    var _on = String(sp.getAttribute('data-orignum')).trim();
+    for(var _el = h.nextElementSibling; _el && !(_el.tagName === 'H2' && _el.classList.contains('sec')); _el = _el.nextElementSibling){
+      Array.prototype.forEach.call(_el.querySelectorAll ? _el.querySelectorAll('.fig .cap > b:first-child') : [], function(b){
+        var _ot = b.getAttribute('data-origfig') || b.textContent;
+        var _m = /^(\s*Fig\.\s*)(\d+)(\.\d+)/.exec(_ot);
+        if(!_m || _m[2] !== _on) return;
+        if(!b.getAttribute('data-origfig')) b.setAttribute('data-origfig', _ot);
+        b.textContent = _m[1] + num + _m[3] + _ot.slice(_m[0].length);
+      });
+    }
   });
   var tocNum = 0;
   d.querySelectorAll('.toc-row').forEach(function(row){
@@ -30094,6 +30205,11 @@ function restorePrintMarks(d){
     t.textContent = t.getAttribute('data-origtoc');
     t.removeAttribute('data-origtoc');
   });
+  d.querySelectorAll('.fig .cap b[data-origfig]').forEach(function(b){   /* P04.03 */
+    b.textContent = b.getAttribute('data-origfig');
+    b.removeAttribute('data-origfig');
+  });
+  crContractBlanksRestore(d);   /* P11.05 */
 }
 document.getElementById('dlBtn').addEventListener('click', async function(){
   await saveCurrent();
@@ -30140,6 +30256,7 @@ function ensurePrintFix(d){
   var st = d.createElement('style');
   st.id = 'printFix';
   st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}' +
+    '.ph[data-blankph]{background:none !important;border-bottom:1px solid #1b1b1b;border-radius:0 !important;padding:0 !important;display:inline-block;min-width:3.2em;}' +   /* P11.05 */
     '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important;}' +
     '.page-break:not(h2){display:none !important;}' +   /* 1405: the Terms heading is h2.sec.page-break */
     /* F (docs judge): min-height alone could not hold the cover to one sheet — with the logo, its photo and all
@@ -30165,7 +30282,8 @@ function ensurePrintFix(d){
     '.cover-photo button,.cover-photo input{display:none !important;}}' +
     '@page{margin-top:0.88in;' + box +
     '@bottom-center{content:"5735 Webster St, Dayton OH 45414  \u00b7  937.576.6753  \u00b7  Admin@cardinalrenovations.net";' +
-    'font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-size:8pt;color:#8a8a8a;}}';
+    'font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-size:8pt;color:#6b6b6b;}' +
+    '@bottom-left{color:#6b6b6b;}@bottom-right{color:#6b6b6b;}}';   /* P11.11: #8a8a8a was 3.45:1 on paper; 5.33:1 */
   d.head.appendChild(st);
 }
 document.getElementById('printBtn').addEventListener('click', async function(){
@@ -46898,6 +47016,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1439, d:'2026-11-02', t:'Documents: cleaner emails and prints, and the Contracts tab tidied', s:'An emailed or printed contract no longer carries the yellow fill-in prompts, empty pick boxes or editing hints. The figure numbers in a shared report match its section numbers. A printed invoice is shorter, without the draft status box, and shows $0.00 rather than \u2212$0.00; Roof Options with up to three choices prints on one page; grey labels on printed documents are darker. After you email a document it shows as Sent. On a phone, Client signature is on the main bar, signing shows one message instead of two, the client document labels have room, and the invoice editor fits the screen. The Contracts tab has one red button, signed contracts no longer offer Mark sent, and Commissions on a phone shows Net instead of Draws. The home Activity Count says it covers all boards.' },
   { b: 1438, d:'2026-11-01', t:'Production: the four boxes stop cutting their labels on a laptop', s:'On a laptop-sized screen the Production board squeezed its four boxes (Needs ordered, Ordered, Scheduled, Punch-outs) into one row and cut their labels off, and at the larger text sizes it did that on most desktop screens. The boxes now sit two by two until the screen is wide enough for all four labels, the way Sun already shows them.' },
   { b: 1437, d:'2026-11-01', t:'Clients: the portal chips never run off the screen', s:'On a phone, the All / Retail / Claims / Community chips at the bottom of Clients could run off both edges of the screen once the counts got big or the text was set larger (and in Sun), and the All chip could not be reached. When they do not fit on one line they now wrap onto a second line, and the list leaves room for it.' },
   { b: 1436, d:'2026-11-01', t:'Sun: a third appearance for working outside', s:'Menu \u2192 Appearance now has a third choice, Sun, for reading the screen outside in daylight: a white background, near-black text, heavier letters, one size larger. Production and field accounts start in Sun unless they have already picked Dark or Light, and anyone can change it in Menu \u2192 Appearance. Also fixed for everyone: the Production day sheet is readable again in Light, and at the larger text sizes Crew Dispatch no longer jumps past the day you tap or runs off the edge of the screen.' },
@@ -55500,7 +55619,7 @@ return '<!DOCTYPE html>\n' +
 '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>\n' +   /* 1278: the Letter page, shrunk to fit — same as paper */
 '<title>Cardinal Roofing &amp; Renovations \u2014 ' + esc(est.title || 'Estimate') + '</title>\n' +
 '<style>\n' +
-':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#8a8a8a;--hair:#e5e2dc;--wash:#faf8f4;--amber:#E8A33D}\n' +
+':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#6b6b6b;--hair:#e5e2dc;--wash:#faf8f4;--amber:#E8A33D}\n' +
 '*{box-sizing:border-box}\n' +
 'html,body{margin:0;padding:0}\n' +
 'body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:11.5pt;line-height:1.55;width:8.5in;margin:0 auto;padding:0.75in 0.65in 0.9in;background:#fff}\n' +
@@ -55576,7 +55695,7 @@ return '<!DOCTYPE html>\n' +
 '.accept-card .ac-recap.stack .ac-cell:last-child{border-bottom:0}\n' +
 '.avoid-break{break-inside:avoid}\n' +
 '.page-break{break-before:page}\n' +
-'.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--hair);font-size:9.5pt;color:var(--faint);text-align:center;font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.03em}\n' +
+'.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--hair);font-size:9.5pt;color:var(--faint);text-align:center;font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.03em;break-before:avoid;break-inside:avoid}\n' +
 '/* the share-link fix: the document is readable on the phone in the kitchen */\n' +
 '@media screen and (max-width:9in){body{width:auto;max-width:8.5in;padding:28px 22px 40px}}\n' +
 '@media screen and (max-width:560px){\n' +
@@ -55586,7 +55705,7 @@ return '<!DOCTYPE html>\n' +
 '.est-title{text-align:left;font-size:19pt;margin-top:4px}\n' +
 'table.meta,table.meta tbody,table.meta tr,table.meta td{display:block;width:100%}\n' +
 'table.meta td{border:0;padding:1px 0 7px}\n' +
-'table.meta td.k{padding:8px 0 1px;border-top:1px solid var(--hair)}\n' +
+'table.meta td.k{width:100%;padding:8px 0 1px;border-top:1px solid var(--hair)}\n' +
 'table.meta tr:first-child td.k:first-child{border-top:0}\n' +
 'table.items{font-size:10.5pt}\n' +
 'table.items th{font-size:8.5pt;padding:6px 5px}\n' +
@@ -55879,7 +55998,7 @@ function buildGbbHtml(tiers, project, plan){
     '<meta name="viewport" content="width=900"><style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>\n' +   /* 1278 */
     '<title>Cardinal Roofing &amp; Renovations — Roof Options</title>\n' +
     '<style>\n' +
-    ':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#8a8a8a;--hair:#e5e2dc;--wash:#faf8f4}\n' +
+    ':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#6b6b6b;--hair:#e5e2dc;--wash:#faf8f4}\n' +
     '*{box-sizing:border-box}\nhtml,body{margin:0;padding:0}\n' +
     'body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:11.5pt;line-height:1.5;width:8.5in;margin:0 auto;padding:0.7in 0.6in 0.85in;background:#fff}\n' +
     '@page{size:Letter;margin:0.6in}\n' +
@@ -55920,7 +56039,12 @@ function buildGbbHtml(tiers, project, plan){
     '.gbb-sign .line{border-bottom:1.25px solid var(--ink);height:34px}\n' +
     '.gbb-sign .lbl{font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-size:9pt;letter-spacing:.05em;color:var(--muted);margin-top:6px}\n' +
     '.gbb-fine{margin-top:16px;font-size:9.5pt;line-height:1.5;color:var(--muted);max-width:78ch}\n' +
-    '.foot{margin-top:22px;padding-top:9px;border-top:1px solid var(--hair);font-size:9pt;color:var(--faint);text-align:center;font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.03em}\n' +
+    '.foot{margin-top:22px;padding-top:9px;border-top:1px solid var(--hair);font-size:9pt;color:var(--faint);text-align:center;font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.03em;break-before:avoid;break-inside:avoid}\n' +
+    /* P11.13: a three-option sheet overflowed one Letter page by its last few lines (the fine print and the
+       company line printed alone on page 2). Paper only: the same layout, with less air in it. */
+    '@media print{.est-logo{width:1.5in}.est-ocpc{width:1.3in;margin-top:7px}.gbb-title{line-height:1.15}.rule{margin:6px 0 10px}' +
+    '.gbb-intro{max-width:none;margin:4px 0 10px}.gbb-col{padding:12px 14px 10px}.gbb-price{margin-top:4px}.gbb-feat{gap:3px;margin-bottom:8px}' +
+    '.gbb-terms{margin-top:10px;padding:8px 14px;row-gap:4px}.gbb-sign{margin-top:18px}.gbb-fine{margin-top:10px;break-inside:avoid}.foot{margin-top:12px;padding-top:6px}}\n' +
     '@media screen and (max-width:9in){body{width:auto;max-width:8.5in;padding:26px 20px 36px}}\n' +
     '@media screen and (max-width:640px){\n' +
     'body{font-size:11pt;padding:20px 15px 32px}\n' +
@@ -85432,7 +85556,9 @@ window.CardinalColors = Object.assign(window.CardinalColors || {}, {
 #payView .pay-empty{padding:18px 6px;color:var(--pay-mut,#9aa2ab);}
 @media (max-width:560px){
   #payView .pay-wrap{padding:12px 10px;}
-  #payView th:nth-child(4),#payView td:nth-child(4){display:none;}
+  #payView table:not(.pay-owed) th:nth-child(4),#payView table:not(.pay-owed) td:nth-child(4){display:none;}
+  /* P05.11: column 4 of the Owed table is Net, the amount actually paid; it hides Draws instead */
+  #payView .pay-owed th:nth-child(3),#payView .pay-owed td:nth-child(3){display:none;}
 }
 </style>
 <script id="cr-pay-script">
@@ -85573,7 +85699,7 @@ function renderAdmin(){
 
   h += '<div class="pay-card"><h3>Owed</h3>';
   if(reps.length){
-    h += '<table><thead><tr><th>Rep</th><th class="pay-r">Owed</th><th class="pay-r">Draws</th>' +
+    h += '<table class="pay-owed"><thead><tr><th>Rep</th><th class="pay-r">Owed</th><th class="pay-r">Draws</th>' +
       '<th class="pay-r">Net</th><th></th></tr></thead><tbody>' +
       reps.map(function(em){
         var g = by[em], net = g.owed - g.drawSum;
