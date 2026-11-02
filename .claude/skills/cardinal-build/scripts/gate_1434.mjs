@@ -255,10 +255,17 @@ const LAYOUT = `(() => { const out = {}; const all = [...document.querySelectorA
   const pb = document.getElementById('cr-pb'); return { els: out, hscroll: pb.scrollWidth > pb.clientWidth + 1, H: Math.round(pb.scrollHeight) }; })()`;
 /* one boot per tree, every width in turn (the board re-lays itself on resize) */
 const WIDTHS = [390, 1100, 1194, 1366, 1440, 1920];
+/* 1438 changed the tile grid on purpose (four across only where the labels fit; 2-up below
+   1366 at Normal). This group measures 1434's FONT change, so both trees are pinned to the
+   reference's grid — 2-up on a phone, 4-up from 1100 — and the tiles are judged by gate_1438. */
+const PIN_1433_TILES = `(() => { const s = document.createElement('style'); s.id = 'gate1434-pin-tiles';
+  s.textContent = '@media (min-width:1100px){#cr-pb .pbtiles{grid-template-columns:repeat(4,minmax(0,1fr)) !important}}';
+  document.head.appendChild(s); })()`;
 async function prodLayouts(L) {
   const { browser, page } = await boot0(L, 'curtis');
   const out = {};
   try {
+    await page.evaluate(PIN_1433_TILES);
     for (const w of WIDTHS) {
       await page.setViewportSize({ width: w, height: w > 900 ? 900 : 844 }); await sleep(700);
       await page.evaluate(() => { if (!document.querySelector('#cr-pb.open')) window.CardinalProduction.open(); }); await sleep(1200);

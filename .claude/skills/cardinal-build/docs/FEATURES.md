@@ -10609,3 +10609,10 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
 - **List clearance:** `.cd-wrap` bottom padding 120 → 160px, so the last client still ends above a two-row bar (62px tab bar + ~81px), including where the footer is hidden.
 
 **Gates:** `gate_1437.mjs`, 30 checks across Normal / Large / Larger / Sun × fixture and three-digit counts. It is RED on 1436 with 14 failures.
+
+## Build 1438: the Production boxes go four across only where their labels fit
+- **What:** the board's four boxes (Needs ordered / Ordered / Scheduled / Punch-outs) are 2×2 on desktop until the screen holds four readable boxes: **Normal ≥1366px, Large ≥1600, Larger ≥1800**. A phone is 2×2, as before. Sun keeps its own 1700 / 1950 / 2200 rules (1436), which outrank these.
+- **Why:** two desktop twins (`body.cr-lnav-on`, and the 767 `@media (min-width:1100px)` twin) forced 4-up from 1100px at any width. Measured as Curtis on 1437, a label was cut at Normal 1100–1280 (all four labels at 1100), at Large up to 1440, and at Larger up to 1600. Builder S recorded it during Sun and left it alone.
+- **How:** both twins' `.pbtiles` 4-up declarations are deleted. Three width-gated rules, one per Text size step, replace them. A media query sees the unzoomed viewport, so the threshold is per step, the reasoning Sun's rules already record.
+
+**Gates:** `gate_1438.mjs`, 98 checks. They cover no label cut and the promised column count at 11 widths × Normal / Large / Larger (and Normal light), Sun's columns identical to 1437, and the phone. It is RED on 1437 with 44 failures. `gate_1434`'s font comparison pins the reference's tile grid on both trees, so it keeps measuring only the font.

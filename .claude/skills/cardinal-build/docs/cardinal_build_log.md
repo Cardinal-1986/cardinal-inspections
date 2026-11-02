@@ -37749,3 +37749,27 @@ The name was the only flexible item, so it was the one that gave way.
 - Its own "Sun is actually on" guard caught the rig's first mistake: a Sun seed placed before `sentinel_setup_cardinal.js` is overwritten with `'1'`, so those boots were plain Light. The seed now runs after the setup.
 - The rest are listed in the PR.
 
+## Build 1438 — the Production boxes go four across only where their labels fit (1 Nov 2026)
+
+**Source:** Builder S's note during Sun (1436): "Production's boxes already clip at 1100–1280px outside Sun; pre-existing, left alone." No choice is involved. Sun had already fixed it for itself by going 2×2.
+
+**Measured as Curtis in Chromium on 1437** (a label is "cut" when `scrollWidth > clientWidth`):
+
+| Text size | widths where a box label is cut | worst |
+|---|---|---|
+| Normal | 1100, 1194, 1280 | at 1100 all four labels are cut |
+| Large | every width up to 1440 | "Scheduled" 91 > 41 at 1100 |
+| Larger | every width up to 1600 | "Needs ordered" 75 > 28 at 1100 |
+
+**Change** (`patch_1438_tiles.py`, then `patch_1438.py`):
+- **E1:** delete the `body.cr-lnav-on #cr-pb .pbtiles` 4-up twin.
+- **E2:** delete the `.pbtiles` line from the 767 `@media (min-width:1100px)` twin.
+- **E3:** 4-up returns per Text size step: `:root:not([data-cr-text])` ≥1366, `[data-cr-text="lg"]` ≥1600, `[data-cr-text="xl"]` ≥1800. Each carries the twins' `--cr-stack` reason.
+- **Sun:** its higher-specificity 1100/1700/1950/2200 rules are untouched, and it measures identically to 1437 at every width.
+- Byte-reproducible on 1437.
+
+**After:** 0 labels cut at 1100–1920 at every size, dark and light. 4-up at and above each threshold, 2×2 below it. The phone is unchanged.
+
+**Gates:** `gate_1438.mjs`, 98/0. It is RED on 1437 with 44 failures and no crash.
+- `gate_1434`'s T6 font comparison (against 1433, at 1100/1194/…) asserted the tile columns and the board height unchanged. 1438 changes both on purpose, so that group now pins the reference's grid on both trees. It keeps judging the font, and `gate_1438` judges the tiles.
+- The rest are listed in the PR.
