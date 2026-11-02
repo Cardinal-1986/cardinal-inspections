@@ -10645,3 +10645,31 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
   - The empty Estimates tab names Blank estimate.
 
 **Gates:** `gate_1439.mjs` (with `gate_1439_seed.js` and `gate_1439_report.html`), 74 checks; RED on 1438 with 45 failures. `gate_1069`, `gate_781` and `gate_1204` updated for Client signature moving out of More.
+
+## Build 1440: phones, field and forms (round-1 leftovers, re-checked on 1438)
+- **Crew Dispatch at 390:**
+  - The crew name gets 73px of its chip (was 39). It breaks only at spaces.
+  - Below 1100px the grip sits under the name, and its tap area stays 46×46.
+  - The "1 open" badge sits inside the crew pill.
+  - Below 600px the week label reads "Nov 1–7".
+  - At zoomed text the Map button wraps to a second row. Desktop is unchanged.
+- **Production home:**
+  - Production accounts get no "<" on the home pane; it did nothing. The calendar pane keeps its working 44×44 back.
+  - Field accounts get Crew Dispatch across the full row.
+- **At Large, Larger and Sun:**
+  - The Punch & Repairs tabs wrap instead of cutting labels.
+  - The client profile's contact buttons drop to their own row, so the name keeps its width.
+- **New Lead:** Lead Source is above the "More detail" fold. A refused save scrolls to the field, focuses it and prints the error beside it, at 7.6:1 dark and 5.45:1 light.
+- **+ New → Punch-out** lists every job that is not Lost, in-flight first, with nothing preselected.
+- **Appointments:**
+  - Inputs are 44px.
+  - Rows read "Nov 3, 2026 · 10:30 AM".
+  - The Schedule Board names the client once.
+- **Smaller fixes:**
+  - Tapping an estimate's × opens only the discard sheet.
+  - The Leads list pads for the Ask button.
+  - The Resource Library's floating buttons stack in one corner, and the app's Ask hides as the Library opens.
+  - The inspection empty-photos note spans its grid.
+  - Skip checklist → Start without AI no longer asks again.
+
+**Gates:** `gate_1440.mjs`, 246 checks, RED on 1439. `gate_1416`, `gate_1434`, `gate_782` and `gate_1005` were updated for the removed home-pane back and for Lead Source above the fold.

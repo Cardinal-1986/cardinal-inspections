@@ -301,6 +301,9 @@ await group('T6  nothing clips or re-wraps against the reference (curtis, dark, 
   const A = await prodLayouts(R0), B = await prodLayouts(L0);
   for (const w of WIDTHS) {
     const a = A[w], b = B[w];
+      /* 1440 (P08.03): Curtis's home pane deliberately draws no back chevron now — close() reopened this
+         same board for a production account, so the button did nothing. Its boxes are left out of the parity count. */
+      for (const t of [a, b]) for (const k of Object.keys(t.els)) if (/pbback/.test(k)) delete t.els[k];
       /* two boots of one tree can differ by a late chip row (.pbrule), so compare what both drew */
       const keys = Object.keys(a.els).filter(k => b.els[k]);
       const only = Object.keys(a.els).length + Object.keys(b.els).length - 2 * keys.length;

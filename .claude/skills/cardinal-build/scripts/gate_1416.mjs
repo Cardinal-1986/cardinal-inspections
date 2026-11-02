@@ -32,7 +32,7 @@
  */
 const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
 process.env.APPFILE = FILE;
-const LIBDIR = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
+const LIBDIR = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';   
 /* gate_1400_lib always opens a 390 mobile context; for the desktop widths the
    context options are swapped at newContext() time, so every width rides the
    SAME boot (mock, seeds, routes, personas). */
@@ -84,9 +84,16 @@ const shown = (p, id) => p.evaluate(i => { const e = document.getElementById(i);
     await chk('A1', async () => {
       const m = await page.evaluate(() => ({
         chips: [...document.querySelectorAll('#cr-pb .pbchip')].filter(e => e.getClientRects().length).map(e => { const r = e.getBoundingClientRect(); return [e.textContent.trim(), Math.round(r.width), Math.round(r.height)]; }),
-        back: (() => { const r = document.querySelector('#cr-pb .pbback').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })() }));
+        back: (() => { const e = document.querySelector('#cr-pb .pbback'); if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })() }));
+      /* 1440 (P08.03): a production account's HOME pane has no back (close() reopens this same board for
+         them), so the chevron is measured on the calendar pane, where it does real work */
+      if (!m.back) {
+        await click(page, '#cr-pb [data-go="cal"]'); await wait(page, 900);
+        m.back = await page.evaluate(() => { const e = document.querySelector('#cr-pb .pbback'); if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; });
+        await click(page, '#cr-pb .pbback'); await wait(page, 700);
+      }
       ok(m.chips.length >= 2 && m.chips.every(c => c[1] >= 44 && c[2] >= 44), 'A1 the + Add / Full calendar chips are a visible 44', JSON.stringify(m.chips));
-      ok(m.back[0] >= 44 && m.back[1] >= 44, 'A1 the back chevron is a visible 44x44', JSON.stringify(m.back));
+      ok(!!m.back && m.back[0] >= 44 && m.back[1] >= 44, 'A1 the back chevron is a visible 44x44', JSON.stringify(m.back));
     });
     await chk('A2', async () => {
       const h = await page.evaluate(() => { const h = document.querySelector('#cr-pb h1'); return { ff: getComputedStyle(h).fontFamily, spans: h.querySelectorAll('span').length, t: h.textContent }; });
@@ -276,7 +283,11 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) {
       ok(t.n === 4 && t.unused <= 2, `D ${w}: the four boxes fill their row`, JSON.stringify(t));
       ok(t.clip.length === 0, `D ${w}: no box label or sub-line is clipped`, JSON.stringify(t.clip));
       const c = await page.evaluate(() => [...document.querySelectorAll('#cr-pb .pbchip, #cr-pb .pbback')].filter(e => e.getClientRects().length).map(e => Math.round(e.getBoundingClientRect().height)));
-      ok(c.length >= 3 && c.every(x => x >= 44), `D ${w}: chips and chevron are 44 here too`, JSON.stringify(c));
+      /* 1440 (P08.03): Curtis's home pane has no chevron any more — measure it on the calendar pane */
+      await click(page, '#cr-pb [data-go="cal"]'); await wait(page, 900);
+      const cb = await page.evaluate(() => [...document.querySelectorAll('#cr-pb .pbback')].filter(e => e.getClientRects().length).map(e => Math.round(e.getBoundingClientRect().height)));
+      await click(page, '#cr-pb .pbback'); await wait(page, 700);
+      ok(c.length >= 2 && cb.length >= 1 && c.concat(cb).every(x => x >= 44), `D ${w}: chips and chevron are 44 here too`, JSON.stringify({ home: c, cal: cb }));
     });
     await chk('D-crews', async () => {
       await ensureBoard(page);

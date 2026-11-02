@@ -1474,6 +1474,9 @@ body:not(.claim-insurance) #commsView #chatTagRow .chipbtn:hover{color:#9c1822;b
    runtime, and a normal declaration loses to an inline one. Collapsed must win
    over both; expanded returns control to their own logic. */
 #leadFormModal:not(.ldshow) .ldmore{display:none !important;}
+/* A4 (P12.06): the Lead Source refusal, beside the field — #ldError's ink and size */
+#ldSourceErr{color:var(--sheet-red,var(--red));font:600 12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;line-height:1.4;}
+#ldSourceErr:not(:empty){margin-top:5px;}
 #ldMoreBtn{width:100%;text-align:center;border-style:dashed;}
 #ldNoContactWrap{display:none;margin-top:10px;padding:9px 11px;border:1px solid var(--sheet-redbd,#e0b4b8);
   border-radius:8px;background:var(--sheet-redtint,#fdf4f4);font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--sheet-red,#8f1620);}
@@ -2684,6 +2687,7 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .acxpencil{margin-left:auto;cursor:pointer;color:var(--red);font-size:15px;}
 .acxsel{border:1px solid #ddd6cf;border-radius:6px;padding:5px 8px;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
   color:#2b2b2b;background:#fff;max-width:100%;}
+#apptsView input.acxsel{min-height:44px;}   /* A4 (P12.15): the date, time and notes boxes were 33-37px; the select already has the app's 44 */
 
 /* tasks */
 .tsktabs{display:flex;gap:14px;font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;margin:10px 0 6px;}
@@ -4393,7 +4397,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1439<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1440<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -5259,7 +5263,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <input type="date" id="apDate" class="acxsel"></label>
       <label style="font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5f58;">Time<br>
         <input type="time" id="apTime" class="acxsel"></label>
-      <input type="text" id="apNotes" class="acxsel" placeholder="notes (optional)" style="flex:1;min-width:130px;">
+      <input type="text" id="apNotes" class="acxsel" placeholder="notes (optional)" style="flex:1 1 220px;min-width:130px;"><!-- A4 (P12.15): a 220px basis, so on a phone it takes its own row instead of cutting its hint -->
       <button class="btn" id="apAddBtn">Add</button>
     </div></div>
     <span id="apStatus" style="font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#666;"></span>
@@ -8826,8 +8830,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <label class="tradeopt"><input type="checkbox" class="cbx" value="Repairs"> Repairs</label>
           <label class="tradeopt"><input type="checkbox" class="cbx" value="Misc"> Misc</label>
         </div>
-        <label class="ldmore">Lead Source <span class="ldreq">*</span>
+        <!-- A4 (P12.06): out from behind More detail. It is required (1005), so every lead saved
+             without opening the fold bounced, and the reason printed 3,000px below the field. -->
+        <label>Lead Source <span class="ldreq">*</span>
           <select id="ldSource"><option value="">&#8212; select &#8212;</option></select></label>
+        <div id="ldSourceErr" role="alert"></div>
           <!-- H (#18): its options are CR_LEAD_SOURCES, filled by the main block -- the same list the client page offers -->
 
         <label style="margin-top:12px;font-weight:700;">Claim Type <span style="color:var(--sheet-red,var(--red));">*</span></label>
@@ -8923,7 +8930,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
       <div style="margin:2px 0 12px;">
         <button class="chipbtn" id="ldMoreBtn" type="button" aria-expanded="false">&#65291; More detail
-        &#8212; company, job type, source, assignment, appointment, notes</button>
+        &#8212; company, job type, assignment, appointment, notes</button>
       </div>
 
       <div style="margin-top:6px;text-align:right;">
@@ -17032,8 +17039,8 @@ function renderApptsPage(){
     return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
       '<span style="font-size:18px;">' + ic + '</span>' +
       '<span style="flex:1;"><b>' + esc(a.title || 'Appointment') + '</b>' +
-      '<small style="display:block;">' + esc(a.appt_date || '') +
-      (a.appt_time ? ' \u00b7 ' + esc(a.appt_time) : '') +
+      '<small style="display:block;">' + esc(fmtDay(a.appt_date) || a.appt_date || '') +   /* A4 (P12.15): a day, not 2026-11-04 */
+      (a.appt_time ? ' \u00b7 ' + esc(fmtApptTime(a.appt_time)) : '') +
       (a.notes ? ' \u00b7 ' + esc(a.notes) : '') +
       (a.created_by ? ' \u00b7 ' + esc(rptRepName(a.created_by) || '') : '') + '</small></span>' +
       /* 1014: 1003 gated the calendar list's delete behind apptCanEdit but this
@@ -17545,12 +17552,14 @@ function openLeadForm(){
   var _mb = document.getElementById('ldMoreBtn');
   if(_mb){
     _mb.setAttribute('aria-expanded', 'false');
-    _mb.innerHTML = '\uFF0B More detail \u2014 company, job type, source, assignment, appointment, notes';
+    _mb.innerHTML = '\uFF0B More detail \u2014 company, job type, assignment, appointment, notes';
   }
   var _nc = document.getElementById('ldNoContact');
   if(_nc) _nc.checked = false;
   var _ncw = document.getElementById('ldNoContactWrap');
   if(_ncw) _ncw.style.display = 'none';
+  var _lse = document.getElementById('ldSourceErr'); if(_lse) _lse.textContent = '';   /* A4 (P12.06) */
+  var _lsr = document.getElementById('ldSource'); if(_lsr && window.crValid) window.crValid.mark(_lsr, true);
   var ph = document.getElementById('ldPhones'); ph.innerHTML = ''; ph.appendChild(ldContactRow('phone'));
   var em = document.getElementById('ldEmails'); em.innerHTML = ''; em.appendChild(ldContactRow('email'));
   var assignBox = document.getElementById('ldAssignBox');
@@ -17804,7 +17813,15 @@ document.addEventListener('click', function(e){
     var on = m.classList.toggle('ldshow');
     b.setAttribute('aria-expanded', on ? 'true' : 'false');
     b.innerHTML = on ? '\u2212 Less detail'
-      : '\uFF0B More detail \u2014 company, job type, source, assignment, appointment, notes';
+      : '\uFF0B More detail \u2014 company, job type, assignment, appointment, notes';
+  });
+})();
+/* A4 (P12.06): a picked source takes its refusal note and outline away */
+(function(){
+  var ls = document.getElementById('ldSource');
+  if(ls) ls.addEventListener('change', function(){
+    var se = document.getElementById('ldSourceErr'); if(se) se.textContent = '';
+    if(ls instanceof HTMLSelectElement && ls.value && window.crValid) window.crValid.mark(ls, true);
   });
 })();
 document.getElementById('ldSave').addEventListener('click', async function(){
@@ -17870,14 +17887,15 @@ document.getElementById('ldSave').addEventListener('click', async function(){
   document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){ if(r.checked) _ct = r.value; });
   if(!_ct){ err.textContent = 'Pick a claim type.'; return; }
   if(!document.getElementById('ldSource').value){
-    var _lm = document.getElementById('leadFormModal');
-    if(_lm && !_lm.classList.contains('ldshow')){
-      _lm.classList.add('ldshow');
-      var _lmb = document.getElementById('ldMoreBtn');
-      if(_lmb){ _lmb.setAttribute('aria-expanded', 'true'); _lmb.innerHTML = '\u2212 Less detail'; }
-    }
-    err.textContent = 'Pick where this lead came from \u2014 it is the one number that says whether knocking is working.';
-    try{ if(window.crValid && crValid.shake) crValid.shake(document.getElementById('ldSource')); else document.getElementById('ldSource').focus(); }catch(_s){ document.getElementById('ldSource').focus(); }
+    /* A4 (P12.06): Lead Source is above the fold now, so there is nothing to reveal. The reason
+       goes beside the field too (Create Lead is ~3,000px further down on a phone), and the
+       field is marked, brought to the middle of the screen and focused (741's require). */
+    var _src = document.getElementById('ldSource');
+    var _srcMsg = 'Pick where this lead came from \u2014 it is the one number that says whether knocking is working.';
+    err.textContent = _srcMsg;
+    var _sre = document.getElementById('ldSourceErr'); if(_sre) _sre.textContent = _srcMsg;
+    try{ _src.scrollIntoView({ block:'center' }); }catch(_v){}
+    try{ if(window.crValid && crValid.require) crValid.require(_src, _srcMsg); else _src.focus(); }catch(_s){ _src.focus(); }
     return;
   }
   var suite = document.getElementById('ldSuite').value.trim();
@@ -25323,7 +25341,8 @@ function openScheduleBoard(){
         var pr = a.project_id ? cacheProjects.find(function(x){ return x.id === a.project_id; }) : null;
         return '<div class="bitem"><span class="bkind">' + k.ic + '</span>' +
           '<span class="btime">' + (a.appt_time ? fmtApptTime(a.appt_time) : '\u2014') + '</span>' +
-          '<span class="btitle">' + esc(a.title || k.nm) + (pr ? ' <span class="bcli">\u00b7 ' + esc(pr.name) + '</span>' : '') + '</span></div>';
+          /* A4 (P12.15): the profile's add form already writes "Kind \u2014 Client" as the title */
+          '<span class="btitle">' + esc(a.title || k.nm) + (pr && !(pr.name && String(a.title || '').indexOf(pr.name) !== -1) ? ' <span class="bcli">\u00b7 ' + esc(pr.name) + '</span>' : '') + '</span></div>';
       }).join('') : '<div class="bnone">Nothing scheduled</div>') +
       '</div>';
   }
@@ -26503,7 +26522,9 @@ var EST_TYPES = {
 async function createReportFrom(tpl, kindLabel, roofy, opts){
   if(!currentProject) return;
   var cl = roofy ? getChecklist(currentProject) : null;
-  if(roofy && !cl){
+  /* A4 (P12.13): the guide passes skippedChecklist when the person already answered this by tapping
+     Skip checklist; the gallery's own New report (no opts) still asks */
+  if(roofy && !cl && !(opts && opts.skippedChecklist)){
     /* F (judge 4): the words said "OK = … / Cancel = …" over buttons that read Continue / Cancel */
     if(!await crAsk('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
                 'Create the report anyway and fill the specs by hand, or do the checklist first.',
@@ -30696,6 +30717,9 @@ function showResourceLibrary(){
   hideAllViews();
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   document.getElementById('resourceLibraryView').style.display = 'block';
+  /* A4 (P10.04): aiBusyScreen() already names the Library, but the global Ask only re-read it on its
+     3s timer or after a click — a back-button arrival showed it over the Library's own Ask / File */
+  try{ if(window.CardinalAssistant && typeof window.CardinalAssistant.paint === 'function') window.CardinalAssistant.paint(); }catch(_ai){}
   window.scrollTo(0, 0);
 }
 function showInsuranceClients(){
@@ -33927,6 +33951,7 @@ function showList() {
       r.classList.toggle('on', i === -1);
     };
     q('[data-cre-lanes]').onclick = e => {
+      if (e.target.closest('[data-cre-discard]')) return;   /* A4 (P07.07): the x asks to discard; it must not also open the estimate behind the sheet (its own listener is on the mount and runs after this one) */
       const el = e.target.closest('.cre-card');
       if (!el) return;
       /* 568: was `window.openManualEstimate(id)` — defined nowhere, every card
@@ -47016,6 +47041,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1440, d:'2026-11-02', t:'Phones: Crew Dispatch readable, Lead Source up front, and smaller fixes', s:'On a phone, Crew Dispatch gives the crew name room and stops breaking it mid-word, the open-repairs badge sits inside the crew pill, and the week label fits. Production accounts no longer see a back arrow on Production home that did nothing, and Crew Dispatch spans the row for field accounts. At the larger text sizes the Punch & Repairs tabs wrap instead of cutting off, and a client name keeps its width. New Lead shows Lead Source on the first screen and points at it if it is missing. Punch-out from + New lists every open job. Appointment fields are full size and show readable dates. Tapping an estimate\u2019s \u00d7 no longer opens it behind the question, the Ask button no longer covers the end of the Leads list, and the Resource Library\u2019s buttons stack in one corner.' },
   { b: 1439, d:'2026-11-02', t:'Documents: cleaner emails and prints, and the Contracts tab tidied', s:'An emailed or printed contract no longer carries the yellow fill-in prompts, empty pick boxes or editing hints. The figure numbers in a shared report match its section numbers. A printed invoice is shorter, without the draft status box, and shows $0.00 rather than \u2212$0.00; Roof Options with up to three choices prints on one page; grey labels on printed documents are darker. After you email a document it shows as Sent. On a phone, Client signature is on the main bar, signing shows one message instead of two, the client document labels have room, and the invoice editor fits the screen. The Contracts tab has one red button, signed contracts no longer offer Mark sent, and Commissions on a phone shows Net instead of Draws. The home Activity Count says it covers all boards.' },
   { b: 1438, d:'2026-11-01', t:'Production: the four boxes stop cutting their labels on a laptop', s:'On a laptop-sized screen the Production board squeezed its four boxes (Needs ordered, Ordered, Scheduled, Punch-outs) into one row and cut their labels off, and at the larger text sizes it did that on most desktop screens. The boxes now sit two by two until the screen is wide enough for all four labels, the way Sun already shows them.' },
   { b: 1437, d:'2026-11-01', t:'Clients: the portal chips never run off the screen', s:'On a phone, the All / Retail / Claims / Community chips at the bottom of Clients could run off both edges of the screen once the counts got big or the text was set larger (and in Sun), and the All chip could not be reached. When they do not fit on one line they now wrap onto a second line, and the list leaves room for it.' },
@@ -59739,7 +59765,7 @@ function homeHtml(){
   /* 853: month calendar first (concept 2), then the command tiles, then the
      day's agenda — tapping a day up top swaps the agenda at the bottom. */
   return '<div class="pbwrap pbhome">' +   /* 1416: the dashboard grid names this pane only */
-    head('Production', 'home') +             /* 1416: one heading, one colour */
+    head('Production', (typeof window.isProductionUser === 'function' && window.isProductionUser()) ? '' : 'home') +   /* 1416: one heading, one colour. A4 (P08.03): no "<" for a production account — close() reopens this same board for them (1420), so the button did nothing */
     '<div class="pbsub">Schedule · Jobs · Punch</div>' +
     todayHtml() +
     homeMonthHtml() +
@@ -60156,6 +60182,12 @@ function openAdd(presetProjectId){
   var jobs = boardJobs().map(function(j){ return j.pr; });
   var seen = {};
   jobs.forEach(function(p){ seen[String(p.id)] = true; });
+  /* A4 (P12.05): boardJobs() is the active stages plus jobs that already hold punch work, so
+     + New offered 2 of 7 jobs — and callbacks happen on Invoiced and Closed ones. Every other
+     job that is not Lost follows, by name; the renderer below already suffixes its stage. */
+  (window.cacheProjects || []).filter(function(p){ return p && !seen[String(p.id)] && normStage(p.stage) !== 'Lost'; })
+    .sort(function(x, y){ return String(x.name || '').localeCompare(String(y.name || '')); })
+    .forEach(function(p){ jobs.push(p); seen[String(p.id)] = true; });
   if(presetProjectId && !seen[String(presetProjectId)]){
     var pp = projectFor(presetProjectId);
     if(pp){ jobs.unshift(pp); seen[String(pp.id)] = true; }
@@ -69801,7 +69833,24 @@ probe  : probe,
 })();
 </script>
 
-<style id="cr-pnc-styles">body.standalone #cr-rltoc-btn{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-dark-toggle{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-nachi-mgr-btn{bottom:calc(133px + env(safe-area-inset-bottom,0px)) !important}/* 451: #cr-rlhome-btn (447) and #cr-rltheme-btn (this build) had no standalone-mode shift, so #cr-rlhome-btn collided with #cr-nachi-mgr-btn once IT shifted to 133 here. Same +55 shift already used by TOC (24->79) and Manage (78->133) — #pwaNav clearance is a fixed amount, so every stacked button needs the identical shift, not a recomputed gap. Library: 133+55=188. Theme toggle: 187+55=242. */body.standalone #cr-rlhome-btn{bottom:calc(188px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-rltheme-btn{bottom:calc(242px + env(safe-area-inset-bottom,0px)) !important}body.standalone #pwaNav{z-index:9990 !important}body.standalone #pwaNav button{position:relative;z-index:1}body.standalone #pwaNav #crPortalChip{flex:0 1 auto;min-width:0;max-width:calc(100% - 128px);/* never crowd the two 46px arrows */ margin:0 10px;padding:9px 14px;border-radius:22px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(255,255,255,.07);border:1px solid rgba(200,32,46,.55);color:#f3e9dc;cursor:pointer;position:relative;z-index:1}body.standalone #pwaNav #crPortalChip:active{transform:scale(.96)}body.standalone #pwaNav #crPortalChip .sw{margin-left:5px;opacity:.7;font-size:11px}body.standalone #pwaNav #crPortalChip.retail{border-color:rgba(200,32,46,.75);color:#e35c63}body.standalone #pwaNav #crPortalChip.insurance{border-color:rgba(196,24,15,.85);color:#ff8a7a}body.standalone #pwaNav #crPortalChip.community{border-color:rgba(4,120,87,.9);color:#34D399}body.standalone #pwaNav #crPortalChip.all{border-color:rgba(220,220,220,.5);color:#dcdcdc}</style>
+<style id="cr-pnc-styles">body.standalone #cr-rltoc-btn{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-dark-toggle{bottom:calc(79px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-nachi-mgr-btn{bottom:calc(133px + env(safe-area-inset-bottom,0px)) !important}/* 451: #cr-rlhome-btn (447) and #cr-rltheme-btn (this build) had no standalone-mode shift, so #cr-rlhome-btn collided with #cr-nachi-mgr-btn once IT shifted to 133 here. Same +55 shift already used by TOC (24->79) and Manage (78->133) — #pwaNav clearance is a fixed amount, so every stacked button needs the identical shift, not a recomputed gap. Library: 133+55=188. Theme toggle: 187+55=242. */body.standalone #cr-rlhome-btn{bottom:calc(188px + env(safe-area-inset-bottom,0px)) !important}body.standalone #cr-rltheme-btn{bottom:calc(242px + env(safe-area-inset-bottom,0px)) !important}body.standalone #pwaNav{z-index:9990 !important}body.standalone #pwaNav button{position:relative;z-index:1}body.standalone #pwaNav #crPortalChip{flex:0 1 auto;min-width:0;max-width:calc(100% - 128px);/* never crowd the two 46px arrows */ margin:0 10px;padding:9px 14px;border-radius:22px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(255,255,255,.07);border:1px solid rgba(200,32,46,.55);color:#f3e9dc;cursor:pointer;position:relative;z-index:1}body.standalone #pwaNav #crPortalChip:active{transform:scale(.96)}body.standalone #pwaNav #crPortalChip .sw{margin-left:5px;opacity:.7;font-size:11px}body.standalone #pwaNav #crPortalChip.retail{border-color:rgba(200,32,46,.75);color:#e35c63}body.standalone #pwaNav #crPortalChip.insurance{border-color:rgba(196,24,15,.85);color:#ff8a7a}body.standalone #pwaNav #crPortalChip.community{border-color:rgba(4,120,87,.9);color:#34D399}body.standalone #pwaNav #crPortalChip.all{border-color:rgba(220,220,220,.5);color:#dcdcdc}
+/* A4 (P06.10, round-1 re-check on 1438): on a phone the Library's stack had holes - the theme
+   button sat at 187px over the hidden Library pill on the landing, and Manage's slot stayed
+   empty for everyone who is not an admin - and the end of every page sat under it. One
+   stack, filled from the bottom in 54px steps (TOC, Manage, Library, theme), and the page
+   ends clear of it and of Ask / File (146px up) by 16px. --rlk-m / --rlk-h say whether
+   Manage and the Library pill are showing; the classes are the ones that already show them. */
+@media (max-width:760px){
+body.viewing-rl{--rlk-m:0;--rlk-h:1}
+body.viewing-rl.cr-is-admin{--rlk-m:1}
+body.viewing-rl.rl-at-landing{--rlk-h:0}
+body.viewing-rl #cr-rlhome-btn{--cr-stack:"A4: the phone stack has no holes";bottom:calc(24px + 54px * (1 + var(--rlk-m,1)) + env(safe-area-inset-bottom,0px))}
+body.viewing-rl #cr-rltheme-btn{--cr-stack:"A4: the phone stack has no holes";bottom:calc(24px + 54px * (1 + var(--rlk-m,1) + var(--rlk-h,1)) + env(safe-area-inset-bottom,0px))}
+body.standalone.viewing-rl #cr-rlhome-btn{--cr-stack:"A4: the phone stack has no holes, installed";bottom:calc(79px + 54px * (1 + var(--rlk-m,1)) + env(safe-area-inset-bottom,0px)) !important}
+body.standalone.viewing-rl #cr-rltheme-btn{--cr-stack:"A4: the phone stack has no holes, installed";bottom:calc(79px + 54px * (1 + var(--rlk-m,1) + var(--rlk-h,1)) + env(safe-area-inset-bottom,0px)) !important}
+body.viewing-rl:not(.rl-at-book) #resourceLibraryView::after{content:"";display:block;height:calc(max(162px, 84px + 54px * (1 + var(--rlk-m,1) + var(--rlk-h,1))) + env(safe-area-inset-bottom,0px))}
+body.standalone.viewing-rl:not(.rl-at-book) #resourceLibraryView::after{height:calc(max(162px, 139px + 54px * (1 + var(--rlk-m,1) + var(--rlk-h,1))) + env(safe-area-inset-bottom,0px))}
+}</style>
 <script id="cr-pwatab-script">
 /* 1365: the phone tab bar's taps and its lit tab. No observer: the lit tab is recomputed after a tap anywhere and
    on Back/Forward, and is written only when it changes. */
@@ -72384,6 +72433,8 @@ body.cr-field #navMenu .navsec{ --cr-stack:"1317 field user: Production only"; d
 body.cr-field #navMenu .navopt:not([data-nav="prodboard"]):not([data-nav="dispatch"]):not([data-nav="punch"]):not([data-nav="notify"]):not([data-nav="feedback"]){
   --cr-stack:"1317 field user: Production only"; display:none !important; }
 body.cr-field #brandTitle{ --cr-stack:"1317 field user: no portal picker"; pointer-events:none; }
+/* A4 (P08.03): with the Crews tile hidden above, Crew Dispatch sat alone in the left half of a 1fr 1fr row */
+body.cr-field #cr-pb .pbnav{ --cr-stack:"1317 field user: Crew Dispatch is the only button in the row"; grid-template-columns:1fr; }
 /* 1042 (audit F4): for production accounts the punch page joins the
    full-screen family — fixed over the retail chrome (nav row + desktop
    rail), its own scroll, same ground. Everyone else keeps the in-shell
@@ -72516,6 +72567,11 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pu-tab span{font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-mute);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
 .pu-tab.on{background:var(--rbe-ink);color:var(--rbe-panel2,#101015);}
 .pu-tab.on span{color:var(--rbe-panel2,#101015);}
+/* A4 (P08.12): Large, Larger and Sun are a real :root zoom, and five even cells then cut "Callbacks"
+   and "Punch-outs" (45 of 62px at Larger). There the strip wraps instead: even cells while
+   they fit, none narrower than its own label. Normal keeps the grid above, untouched. */
+:root[data-cr-text] .pu-tabs,:root[data-cr-sun] .pu-tabs{display:flex;flex-wrap:wrap;--cr-stack:"A4: zoomed text sizes wrap the kind tabs rather than clip them";}
+:root[data-cr-text] .pu-tab,:root[data-cr-sun] .pu-tab{flex:1 1 0;min-width:max-content;--cr-stack:"A4: zoomed text sizes wrap the kind tabs rather than clip them";}
 /* 1248: the list. ONE row markup, two layouts, chosen by the width of #puList
    itself — not the window — so the 480–560px column beside the ultrawide map
    (pumap) gets the phone rows and a desktop list gets the table. */
@@ -87112,7 +87168,11 @@ select{min-height:44px;}
     background:var(--rbe-bg1,#2e333b);
     border-top:1px solid var(--rbe-line2,#2b2b33);
   }
-  #cr-namebar .nb-l{ min-width:0; flex:1; }
+  /* A4 (P07.02): flex:1 let the three 40px contact buttons keep their row at Larger, where
+     the band is ~264 CSS px, and the name was left a 38px column — 9 lines of 2-3 letters.
+     A 150px floor means the buttons wrap to their own row (the band already wraps) once
+     the name would get less; at Normal and Large the row is unchanged. */
+  #cr-namebar .nb-l{ min-width:0; flex:1 1 150px; }
   #cr-namebar .nb-top{ display:flex; align-items:center; gap:7px; min-width:0; }
   #cr-namebar .nb-nm{
     font:800 18px Georgia,'Times New Roman',serif; color:var(--rbe-head,#fff);
@@ -88423,6 +88483,14 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   color:var(--disp-dim,#9aa1ac); border-radius:7px; width:26px; height:26px; cursor:pointer; font-size:15px; line-height:1; position:relative; }
 /* 1040 (audit tap targets): 26px arrows (21px wide on the phone) — invisible 44px
    pad. Insets anchor to the PADDING box, so the 1px border costs a pixel per side. */
+#cr-disp .dspwklab .ws{ display:none; }   /* A4 (P08.02): the phone's short week label */
+@media (max-width:600px){
+  #cr-disp .dspwklab .wl{ display:none; }
+  #cr-disp .dspwklab .ws{ display:inline; white-space:nowrap; }
+  /* zoomed (Large, Larger, Sun) the bar no longer fits one row: Map takes the next one instead of
+     running off the screen (it reached x=403 of 390 at Larger). At Normal the title still wraps, as before. */
+  :root[data-cr-text] #cr-disp .dsptop,:root[data-cr-sun] #cr-disp .dsptop{ flex-wrap:wrap; }
+}
 #cr-disp .dspwk button::after{ content:""; position:absolute; top:-10px; bottom:-10px; left:-13px; right:-13px; }
 #cr-disp .dspfilt{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
 #cr-disp .dspfilt .fc{ font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; padding:5px 11px; border-radius:8px;
@@ -88536,7 +88604,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
   border:1px solid var(--disp-line,#282c34); border-top:2.5px solid var(--disp-accent,#6b7280); border-left:1px solid var(--disp-line,#282c34);
   box-shadow:var(--disp-sh-mag,0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08)); }
-#cr-disp .job .t .nm{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; min-width:0;/* 991: the clamp lives on .nm, NOT on .t. .t is display:flex so the pip and grip can sit right via margin-left:auto; -webkit-box on .t would throw that away. min-width:0 because a flex item will not shrink below its content without it, which would let a long title widen the track rather than wrap. Same 2-line rule as .rep .t — the two cards measured within 2px of each other at every title length, so clamping only one would have been the partial pass this repo keeps paying for. */}#cr-disp .job .t{ font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--disp-ink,#fff);
+#cr-disp .job .t .nm{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:break-word; min-width:0;/* A4 (P08.02): break-word, was anywhere. 991: the clamp lives on .nm, NOT on .t. .t is display:flex so the pip and grip can sit right via margin-left:auto; -webkit-box on .t would throw that away. min-width:0 because a flex item will not shrink below its content without it, which would let a long title widen the track rather than wrap. Same 2-line rule as .rep .t — the two cards measured within 2px of each other at every title length, so clamping only one would have been the partial pass this repo keeps paying for. */}#cr-disp .job .t{ font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--disp-ink,#fff);
   display:flex; align-items:center; gap:4px; line-height:1.25; }
 #cr-disp .job .t .pip{ margin-left:auto; width:7px; height:7px; border-radius:50%; flex:none; background:var(--disp-mute,#5c636e); }
 #cr-disp .job .t .pip.sent{ background:var(--disp-dim,#9aa1ac); }
@@ -88592,6 +88660,24 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .job .mv:hover{ color:var(--disp-ink,#fff); }
 #cr-disp .job.moving{ box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
 #cr-disp .job.moving .mv{ color:var(--disp-need,#f5c045); }
+/* A4 (P08.02, round-1 re-check on 1438): on a phone a chip is 91px and its name got 39px of
+   it — the pip and the grip shared the name's row — so "Sample" broke as "Samp/le" and the
+   grip's 44px pad (1040) owned the right 40% of the chip, name included. Below 1100px the pip
+   and the grip sit in a row of their own at the chip's foot and the name gets the chip's
+   whole width (73px; a word only breaks when it is wider than that). The pad is unchanged —
+   still 45x45 — it now covers the foot corner instead of the name. A chip with no grip (a
+   field user's, a finished job's) grows nothing: its pip sits at the end of the address line,
+   which keeps 12px for it. The desktop board is untouched. */
+@media (max-width:1099px){
+  #cr-disp .job .t .pip{ position:absolute; right:8px; bottom:9px; margin-left:0; --cr-stack:"phone: the pip leaves the name's row (A4, P08.02)"; }
+  #cr-disp .job .a{ padding-right:12px; }
+  #cr-disp .job:not(:has(.a)){ padding-bottom:16px; --cr-stack:"phone: no address line, so the pip takes a foot row (A4, P08.02)"; }
+  #cr-disp .job.hasmv{ padding-bottom:26px; --cr-stack:"phone: the foot row for the grip (A4, P08.02)"; }
+  #cr-disp .job.hasmv .t .pip{ right:29px; bottom:14px; }
+  /* bottom:10px, not less: the 1040 pad reaches 15px past the grip, and any further than the cell's
+     4px gap the NEXT chip (painted later) takes the bottom of it — measured 46x40 at bottom:5px */
+  #cr-disp .job .t .mv{ position:absolute; right:6px; bottom:10px; margin-left:0; --cr-stack:"phone: the grip leaves the name's row (A4, P08.02)"; }
+}
 #cr-disp.armmv .dlane .dcell{ cursor:pointer; }
 #cr-disp.armmv .dlane .dcell.tgt{ outline:1.5px dashed var(--disp-need,#f5c045); outline-offset:-5px; }
 /* 913: Crew Dispatch map (toggle) */
@@ -88752,7 +88838,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" '+
       'stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M19 9l3 3-3 3M9 5l3-3 3 3M9 19l3 3 3-3"/>'+
       '</svg></button>';
-    return '<div class="job' + (String(armedMove) === String(w.id) ? ' moving' : '') + '" data-pid="' + esc(w.project_id) + '">' +
+    return '<div class="job' + (String(armedMove) === String(w.id) ? ' moving' : '') + (grip ? ' hasmv' : '') + '" data-pid="' + esc(w.project_id) + '">' +
       '<div class="t"><span class="nm">' + esc(nm) + '</span><span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
       (ad ? '<div class="a">' + esc(ad) + '</div>' : '') + '</div>';
   }
@@ -88923,7 +89009,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         var backlog = items.filter(function(pi){ var d = pi.scheduled_at ? String(pi.scheduled_at).slice(0,10) : '';
           return !d || dayStr.indexOf(d) < 0; }).length;
         var bdg = backlog ? '<span class="repbdg">' + backlog + ' open</span>' : '';
-        return '<div class="drow dlane"><div class="crewc' + oc + '"><div class="cn">' + esc(name) + '</div>' + bdg + '</div>' + cells + '</div>';
+        /* A4 (P08.02): the badge sat BESIDE the pill and ran into the first day column on a phone */
+        return '<div class="drow dlane"><div class="crewc' + oc + '"><div><div class="cn">' + esc(name) + '</div>' + bdg + '</div></div>' + cells + '</div>';
       }).join('');
       var strip = '<div class="dband repband" data-band="__rep__"><span class="bl">' +
         '<span class="chev">' + (foldTrade['__rep__'] ? '\u25B8' : '\u25BE') + '</span>Punch-outs &amp; Repairs' +
@@ -88947,8 +89034,13 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var lab = el.querySelector('.dspwklab');
     if(lab){ var a = days[0], b = days[nDays-1];
       var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      lab.textContent = (weekOffset === 0 ? 'Next 7 \u00b7 ' : '') +
-        mo[a.getMonth()] + ' ' + a.getDate() + ' \u2013 ' + mo[b.getMonth()] + ' ' + b.getDate(); }
+      /* A4 (P08.02): the long form ran to 2 lines at Normal and 100px tall at Larger on a
+         phone; below 600px the short one shows (Nov 1\u20137, or Oct 29\u2013Nov 4). Fixed strings
+         and numbers only, so innerHTML is safe here. */
+      var _wl = (weekOffset === 0 ? 'Next 7 \u00b7 ' : '') +
+        mo[a.getMonth()] + ' ' + a.getDate() + ' \u2013 ' + mo[b.getMonth()] + ' ' + b.getDate();
+      var _ws = mo[a.getMonth()] + ' ' + a.getDate() + '\u2013' + (a.getMonth() === b.getMonth() ? '' : mo[b.getMonth()] + ' ') + b.getDate();
+      lab.innerHTML = '<span class="wl">' + _wl + '</span><span class="ws">' + _ws + '</span>'; }
     Array.prototype.forEach.call(el.querySelectorAll('.dspfilt .fc'), function(f){
       f.classList.toggle('on', f.getAttribute('data-f') === filter);
     });
@@ -93727,6 +93819,10 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 #cr-ai-fab:not(.on){display:none;}
 /* 1341 (audit #4): it sat over the client form's Save on a phone */
 #cr-ai-fab.tucked,#cr-ai-fab.tucked2{display:none;}
+/* A4 (P07.08): in a phone's browser the round Ask (52px, 84px up) sat on 45% of the last lead
+   card's button, and the list could not scroll it clear. While it shows, the list ends 68px
+   (its height + 16) further down. */
+@media (max-width:760px){ body:has(#cr-ai-fab.on:not(.tucked):not(.tucked2)) #ljList{padding-bottom:68px;} }
 #cr-ai-sheet{position:fixed; inset:0; z-index:12500; display:none;}
 #cr-ai-sheet.open{display:block;}
 #cr-ai-sheet .ai-scrim{position:absolute; inset:0; background:rgba(0,0,0,.55);}
@@ -99228,6 +99324,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 #insgSheet .ig-alt{border:1px solid #c9ccd4;background:#ffffff;color:#161616;}
 /* 1266: the photo grid and the assistant */
 #insgSheet .ig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;}
+#insgSheet .ig-grid > .ig-who{grid-column:1/-1;}   /* A4 (P12.12): the empty / loading note was a grid child, squeezed into one 104px photo cell */
 #insgSheet .ig-ph{position:relative;aspect-ratio:1;padding:0;border:3px solid transparent;border-radius:10px;overflow:hidden;background:#e7e8ec;cursor:pointer;}
 #insgSheet .ig-ph img{width:100%;height:100%;object-fit:cover;display:block;}
 #insgSheet .ig-ph i{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,.45);border:2px solid #ffffff;}
@@ -99310,7 +99407,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
   }
   function igGet(o, path){ var p = path.split('.'); return p.length > 1 ? ((o[p[0]] || {})[p[1]]) : o[path]; }
 
-  var S = { types: {}, general: false, all: {} };
+  var S = { types: {}, general: false, all: {}, skipCl: false };   /* skipCl — A4 (P12.13): the person tapped Skip checklist */
   var sheet = null;
   function igBuild(){
     if(sheet) return sheet;
@@ -99361,6 +99458,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
       '<div class="ig-foot"><button type="button" class="ig-alt" data-ig="close">Cancel</button><button type="button" class="ig-go" data-ig="next">Next</button></div>';
   }
   function igStep2(){
+    S.skipCl = false;   /* A4 (P12.13): back on the checklist, the skip is undone */
     var a = S.all, h = '';
     if(S.general){
       h += '<div class="ig-card"><h3>General inspection</h3>' + ['Roof'].concat(TYPES.slice(1)).map(function(t){
@@ -99493,7 +99591,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
        photo just checked. It takes the same title Write report uses, and the checked photos go into the report
        with no caption and no chip — igFill with an empty draft places them and writes nothing else. */
     var title = (pr && pr.name || 'Inspection') + (pr && pr.address ? ' — ' + pr.address : '');
-    var opts = /** @type {any} */ ({ title: title });
+    var opts = /** @type {any} */ ({ title: title, skippedChecklist: !!S.skipCl });
     if(igPickedList().length) opts.fill = function(id){ return igFill(id, {}, secs.list); };
     return createReportFrom(secs.roof ? REPORT_TEMPLATE : EXTERIOR_TEMPLATE, secs.roof ? 'Report' : 'Exterior report', secs.roof, opts);
   }
@@ -99612,7 +99710,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     igClose();
     var title = (pr && pr.name || 'Inspection') + (pr && pr.address ? ' — ' + pr.address : '');
     await createReportFrom(secs.roof ? REPORT_TEMPLATE : EXTERIOR_TEMPLATE, secs.roof ? 'Report' : 'Exterior report', secs.roof,
-      { title: title, fill: function(id){ return igFill(id, j, secs.list); } });
+      { title: title, skippedChecklist: !!S.skipCl, fill: function(id){ return igFill(id, j, secs.list); } });
     /* 1267: the draft opens with the assistant ready to change it */
     try{ if(typeof openAssistEdit === 'function') openAssistEdit(); }catch(_){}
   }
@@ -99722,7 +99820,7 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
     var a = b.getAttribute('data-ig');
     if(a === 'close') return igClose();
     if(a === 'back') return igStep1();
-    if(a === 'skip') return igStep3();
+    if(a === 'skip'){ S.skipCl = true; return igStep3(); }   /* A4 (P12.13) */
     if(a === 'plain') return igStart();
     if(a === 'write') return igWrite();
     if(a === 'send') return igSend();
