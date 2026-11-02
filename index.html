@@ -3050,6 +3050,15 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .rptfilters select,.rptfilters input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;
   font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;background:#fff;color:#2b2b2b;}
 .rptkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0;}
+/* P09.15 (1442): seven tiles wrapped 5 + 2 at 1280 and 6 + 1 at 1440. Seven across needs 1040px
+   (7 x 140 + 6 gaps); under that and over a phone, a balanced 4 + 3 on twelve tracks. A container
+   query, so it follows the real width at every Text size, as the home pipeline's does (1415). */
+#reportsView > .wrap{container-type:inline-size;container-name:rptco;}   /* the page column: its 18px top padding means the containment moves no margin */
+@container rptco (min-width:560px) and (max-width:1039px){
+  #rptKpis{--cr-stack:"P09.15 a balanced 4 + 3; the auto-fit base stays for the phone and for seven across";grid-template-columns:repeat(12,minmax(0,1fr));}
+  #rptKpis > .rptkpi{grid-column:span 3;}
+  #rptKpis > .rptkpi:nth-child(n+5){grid-column:span 4;}
+}
 .rptkpi{background:#fff;border:1px solid var(--line);border-top:5px solid var(--red);border-radius:12px;
   padding:10px 12px;position:relative;overflow:hidden;}
 .rptkpi::after{content:'';position:absolute;left:0;right:0;top:5px;height:1px;
@@ -4409,7 +4418,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1441<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1442<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -22259,7 +22268,7 @@ function renderClientDirectory(){
      is gated on innerWidth and re-rendered when the 1600px line is crossed
      (listener below); below 1600 the flat list is byte-for-byte unchanged. */
   var cliEl = document.getElementById('cliList');
-  if(window.innerWidth >= 1600 && list.length){
+  if(cdColsWide() && list.length){
     cliEl.classList.add('cd-crmcols');
     cliEl.innerHTML = CD_CRMS.map(function(c){
       var seg = list.filter(function(pr){ return cdCrmOf(pr) === c.key; });
@@ -22295,9 +22304,16 @@ renderClientDirectory.__crPortal = true; /* opt out of the portal pre-filter —
 /* 905: the CRM-column layout is structural, so a resize across the 1600px
    line needs a re-render (CSS alone cannot regroup the cards). Fires only
    when the boundary is actually crossed AND the directory is open. */
-(function(){ var lastUW = window.innerWidth >= 1600;
+/* P09.01 (1442): the line came in from 1600 to 1280 - the width where the directory's
+   list is ~640px, three ~200px columns, every name still on screen (1426 wraps it).
+   Per Text size the line is 1280 x the root zoom (Large 1472), never later than 1600. */
+function cdColsWide(){
+  var z = 1; try{ z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1; }catch(_z){}
+  return window.innerWidth >= Math.min(1600, 1280 * z);
+}
+(function(){ var lastUW = cdColsWide();
   window.addEventListener('resize', function(){
-    var uw = window.innerWidth >= 1600; if(uw === lastUW) return; lastUW = uw;
+    var uw = cdColsWide(); if(uw === lastUW) return; lastUW = uw;
     var cv = document.getElementById('clientsView');
     if(cv && cv.style.display !== 'none' && typeof renderClientDirectory === 'function') renderClientDirectory();
   }); })();
@@ -25161,10 +25177,29 @@ function buildActivityEvents(){
   return ev.filter(function(x){ return x.t; })
            .sort(function(a,b){ return String(b.t).localeCompare(String(a.t)); });
 }
+/* P09.14 (1442): 13 of the home card's 14 rows were one person's appointment bookings, which
+   pushed new clients, invoices and contracts off it. Two or more bookings by the same person
+   on the same (local) day fold into one row at the newest one's place; a lone booking keeps
+   its own row and its date line. The list is already newest-first. */
+function actGroupBookings(ev){
+  var dayOf = function(t){ var d = new Date(t); return isNaN(d.getTime()) ? String(t).slice(0, 10) : d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+  var groups = {}, out = [];
+  ev.forEach(function(x){ if(x.label !== 'Appointment:') return; var k = (x.who || '') + '|' + dayOf(x.t); (groups[k] = groups[k] || []).push(x); });
+  ev.forEach(function(x){
+    if(x.label !== 'Appointment:'){ out.push(x); return; }
+    var g = groups[(x.who || '') + '|' + dayOf(x.t)];
+    if(g.length < 2){ out.push(x); return; }
+    if(g[0] !== x) return;
+    var one = g.every(function(y){ return y.cli === x.cli; });
+    out.push({ t:x.t, ini:x.ini, ico:x.ico, label:'Booked:', who:x.who, cli: one ? x.cli : '', pid: one ? x.pid : null,
+      detail: g.length + ' appointments' });
+  });
+  return out;
+}
 function renderActivity(){
   var mount = document.getElementById('actFeed');
   if(!mount) return;
-  var ev = buildActivityEvents().slice(0, 14);
+  var ev = actGroupBookings(buildActivityEvents()).slice(0, 14);   /* P09.14 (1442) */
   mount.innerHTML = ev.length ? ev.map(function(x){
     return '<div class="actitem"><span class="ic icav">' + (x.email ? avatarHtml(x.email, 30) : (x.ico && window.crIco ? window.crIco(x.ico) : esc(x.ini))) + '</span>' +
       '<span class="tx"><b>' + esc(x.who) + '</b> ' + esc(x.label.replace(':','').toLowerCase()) + ' <b>' + esc(x.detail || x.cli) + '</b>' +
@@ -47055,6 +47090,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1442, d:'2026-11-02', t:'Desktop: wider screens get used', s:'On a laptop or desktop the Clients directory shows its three portal columns from 1280 pixels wide instead of 1600, and a client profile splits into two columns there too, so far less scrolling. Insurance profiles get the same two columns, and the Cardinal Truth hub fills the screen beside the menu instead of sitting in a narrow strip. Invoices & AR and Owner Review now sit beside the left menu instead of covering it, and their row buttons are sized to their labels. The Schedule Board shows its month grid from 1280, and every booking on it names the client. Reports lays its seven numbers out evenly, the Activity card on home folds one person\u2019s same-day bookings into one line, cards lift under the mouse, the Google Reviews card on an insurance profile reads in light mode, and the A/R status pills match the rest of the app in dark mode.' },
   { b: 1441, d:'2026-11-02', t:'Menus: one drawn icon per place, clearer questions, quieter screens', s:'The menu no longer mixes colour emoji with drawn icons, and no two places share the same icon, so Activity Feed, Storm Data and Quick Inspection, or Commissions and Invoices, are told apart at a glance. Leftover emoji are gone from the Resource Library buttons, the + New contract menu, the appointment rows and the day sheet, and day-sheet rows now say whether each is a job, a drop or an appointment. Yes/no questions name what they do (Advance, Delete permanently, Sign out anyway) instead of Continue, and the ones that cannot be undone use the red button. Uploads, imports and texted pay links now show as a success. A rep\u2019s Tools menu no longer offers Reports and Settings, Self Check sits above the drawer footer and leaves Back where it was, the rail and header buttons use the app\u2019s own font, and the pressed Text size and Appearance buttons in the menu follow the Community and Production colours.' },
   { b: 1440, d:'2026-11-02', t:'Phones: Crew Dispatch readable, Lead Source up front, and smaller fixes', s:'On a phone, Crew Dispatch gives the crew name room and stops breaking it mid-word, the open-repairs badge sits inside the crew pill, and the week label fits. Production accounts no longer see a back arrow on Production home that did nothing, and Crew Dispatch spans the row for field accounts. At the larger text sizes the Punch & Repairs tabs wrap instead of cutting off, and a client name keeps its width. New Lead shows Lead Source on the first screen and points at it if it is missing. Punch-out from + New lists every open job. Appointment fields are full size and show readable dates. Tapping an estimate\u2019s \u00d7 no longer opens it behind the question, the Ask button no longer covers the end of the Leads list, and the Resource Library\u2019s buttons stack in one corner.' },
   { b: 1439, d:'2026-11-02', t:'Documents: cleaner emails and prints, and the Contracts tab tidied', s:'An emailed or printed contract no longer carries the yellow fill-in prompts, empty pick boxes or editing hints. The figure numbers in a shared report match its section numbers. A printed invoice is shorter, without the draft status box, and shows $0.00 rather than \u2212$0.00; Roof Options with up to three choices prints on one page; grey labels on printed documents are darker. After you email a document it shows as Sent. On a phone, Client signature is on the main bar, signing shows one message instead of two, the client document labels have room, and the invoice editor fits the screen. The Contracts tab has one red button, signed contracts no longer offer Mark sent, and Commissions on a phone shows Net instead of Draws. The home Activity Count says it covers all boards.' },
@@ -64330,7 +64366,7 @@ else start();
    Chromium never showed this - it scrolls the pane on wheel input either way,
    which is why the audit had to walk the parsed rules instead. */
 #cardinalTruthView{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-#cardinalTruthView .ins-body.cr-cth{background:var(--ct-bg,#FAF8F7);padding:0}.cr-cth-rail{contain:paint}.cr-cth-wrap{position:relative;max-width:580px;margin:0 auto;padding:22px 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}.cr-cth-wrap{position:relative}.cr-cth-owed{position:relative;background:linear-gradient(160deg,var(--ct-surface-2),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;box-shadow:0 0 0 1px var(--ct-focus),0 0 22px var(--ct-focus);padding:22px 22px 20px;overflow:hidden}.cr-cth-owed::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ct-warn)}.cr-cth-owed .lbl{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-warn)}.cr-cth-owed .fig{font:700 clamp(36px,10.5vw,50px)/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;color:var(--ct-ink);margin:10px 0 8px}.cr-cth-owed .note{font-size:13px;line-height:1.5;color:var(--ct-ink-2)}.cr-cth-owed .note b{color:var(--ct-ink);font-weight:700}.cr-cth-owed .split{display:flex;gap:18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--ct-warn-bg)}.cr-cth-owed .split div{flex:1;min-width:0}.cr-cth-owed .split .k{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-owed .split .v{font:700 18px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn);margin-top:4px}.cr-cth-stats{display:grid;gap:9px;margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.cr-cth-stat{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:14px 15px;min-width:0}.cr-cth-stat .l{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-stat .v{font:700 22px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.02em;margin-top:6px;color:var(--ct-ink)}.cr-cth-stat.up .v{color:var(--ct-red-deep)}.cr-cth-stat .s{font-size:11px;color:var(--ct-ink-2);margin-top:3px;line-height:1.35}.cr-cth-stat .top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}.cr-cth-stat .ic{font-size:15px;color:var(--ct-ink-2);opacity:.55;line-height:1}.cr-cth-tabs{display:flex;gap:20px;/* 984: WRAP, do not clip. gap:20px sets BOTH axes in flexbox, so row-gap is overridden below. flex-wrap only wraps when the content actually overflows, so this needs no media query: measured 2 rows at 360/390/414 and 1 row unchanged at 430+. Before 984 the strip fitted with EXACTLY 0px slack at one-digit counts, so any real count clipped the last tab, and scrollbar-width:none left no affordance that anything was hidden. 983 made it 11px worse by making font-weight:700 actually apply. */flex-wrap:wrap;row-gap:4px;margin-bottom:18px;padding-bottom:2px;border-bottom:1px solid var(--ct-line);overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-cth-tabs::-webkit-scrollbar{display:none}.cr-cth-tabs button{flex:0 0 auto;background:transparent;border:0;border-bottom:2px solid transparent;padding:0 0 10px;margin-bottom:-1px;font-weight:700;font-size:13px;color:var(--ct-ink-2);cursor:pointer;white-space:nowrap}.cr-cth-tabs button.on{color:var(--ct-ink);border-bottom-color:var(--ct-red)}.cr-cth-tabs button b{font-weight:700;margin-left:5px;opacity:.7}.cr-cth-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ct-line-strong),transparent)}.cr-cth-rail{position:relative;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 6px 12px;box-shadow:0 2px 10px rgba(0,0,0,.28)}.cr-cth-stage{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:15px 14px 15px 30px;background:transparent;border:0;text-align:left;cursor:pointer;font-family:inherit;color:var(--ct-ink);border-radius:10px;transition:background .15s}.cr-cth-stage:hover{background:var(--ct-surface-2)}.cr-cth-stage:focus-visible{outline:2px solid var(--ct-red);outline-offset:-2px}.cr-cth-stage::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--ct-bg);border:2px solid var(--ct-red);z-index:1}.cr-cth-stage::after{content:'';position:absolute;left:10px;top:50%;bottom:-50%;width:1px;background:linear-gradient(180deg,var(--ct-red),var(--ct-red-deep));opacity:.45}.cr-cth-stage:last-of-type::after{display:none}.cr-cth-stage .nm{flex:1;min-width:0}.cr-cth-stage .nm b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15px;letter-spacing:.01em;line-height:1.25}.cr-cth-stage .nm small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px;line-height:1.4}.cr-cth-stage .ct{flex:0 0 auto;min-width:26px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-cth-stage .amt{flex:0 0 auto;min-width:88px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);letter-spacing:-.01em}.cr-cth-stage .amt.zero{color:var(--ct-ink-2)}.cr-cth-stage.flag::before{background:var(--ct-warn);border-color:var(--ct-warn);box-shadow:0 0 0 4px var(--ct-line)}.cr-cth-stage.flag{background:var(--ct-surface-3)}.cr-cth-stage.flag .nm b{color:var(--ct-ink)}.cr-cth-stage.flag .amt{color:var(--ct-warn)}.cr-cth-stage.flag.recovered .amt{color:var(--ct-red-deep)}.cr-cth-stage .tag{position:absolute;right:14px;top:8px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-warn);opacity:.8}.cr-cth-term{display:flex;gap:9px;margin-top:14px;padding-left:6px}.cr-cth-term button{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink-2);transition:border-color .15s,color .15s}.cr-cth-term button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink)}.cr-cth-term button b{font-weight:700;font-size:13px;letter-spacing:.02em}.cr-cth-term button span{font:700 15px ui-monospace,'SF Mono',Menlo,monospace}.cr-cth-term button.denied b,.cr-cth-term button.denied span{color:var(--ct-red-deep)}.cr-cth-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}/* 675: the lead button under the stats. Same grid, same button styling — one cell spanning both columns, and its entrance pulled forward because it now sits above the fold instead of at the end of the page. */.cr-cth-tools.lead{margin-top:14px}.cr-cth-tools.lead{animation-delay:.14s}.cr-cth-tools button.wide{grid-column:1/-1}.cr-cth-tools button{display:flex;align-items:center;gap:10px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:15px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:border-color .15s,background .15s}.cr-cth-tools button:hover{border-color:var(--ct-line-strong);background:var(--ct-surface-2)}.cr-cth-tools button.primary{border-color:var(--ct-red);background:var(--ct-surface-2)}.cr-cth-tools button .i{font-size:18px;flex:0 0 auto}.cr-cth-tools button .x{flex:1;min-width:0}.cr-cth-tools button .x b{display:block;font-weight:700;font-size:13px}.cr-cth-tools button .x small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px}@media (prefers-reduced-motion:no-preference){.cr-cth-owed,.cr-cth-stats,.cr-cth-stage,.cr-cth-term,.cr-cth-tools{opacity:0;animation:crCthRise .44s cubic-bezier(.22,.9,.3,1) forwards}.cr-cth-owed{animation-delay:.04s}.cr-cth-stats{animation-delay:.10s}.cr-cth-stage:nth-of-type(1){animation-delay:.20s}.cr-cth-stage:nth-of-type(2){animation-delay:.25s}.cr-cth-stage:nth-of-type(3){animation-delay:.30s}.cr-cth-stage:nth-of-type(4){animation-delay:.35s}.cr-cth-stage:nth-of-type(5){animation-delay:.40s}.cr-cth-stage:nth-of-type(6){animation-delay:.45s}.cr-cth-stage:nth-of-type(7){animation-delay:.50s}.cr-cth-stage:nth-of-type(8){animation-delay:.55s}.cr-cth-term{animation-delay:.62s}.cr-cth-tools{animation-delay:.68s}@keyframes crCthRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}#insClientsView{background:var(--ct-bg) !important;color:var(--ct-ink)}#insClientsView .ins-body{background:var(--ct-bg,#FAF8F7) !important}#insClientsView .ins-search input,#insClientsView input[type="search"],#insClientsView input[type="text"]{background:var(--ct-surface) !important;color:var(--ct-ink) !important;border:1px solid var(--ct-line) !important}#insClientsView input::placeholder{color:var(--ct-ink-2) !important}#insClientsView .ins-count{color:var(--ct-ink-2) !important}#insClientsView .card,#insClientsView .ins-card{background:var(--ct-surface) !important;border-color:var(--ct-line) !important;color:var(--ct-ink) !important}#insClientsView .card small,#insClientsView .ins-cardsub{color:var(--ct-ink-2) !important}@media (min-width:900px){.cr-cth-wrap{max-width:1180px;padding-left:26px;padding-right:26px}.cr-cth-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:26px;align-items:start}.cr-cth-b1{grid-column:1;grid-row:1}.cr-cth-b2{grid-column:2;grid-row:1 / span 2}.cr-cth-b3{grid-column:1;grid-row:2}.cr-cth-tools{grid-template-columns:1fr 1fr}}@media (min-width:1240px){.cr-cth-stats{grid-template-columns:repeat(3,1fr)}}.cr-cth-chase{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 10px;margin-top:10px}.cr-cth-chaserow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:transparent;border:0;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:background .15s}.cr-cth-chaserow:hover{background:var(--ct-surface-2)}.cr-cth-chaserow .days{flex:0 0 auto;min-width:52px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--ct-surface-3)}.cr-cth-chaserow .days b{display:block;font:700 18px ui-monospace,'SF Mono',Menlo,monospace;line-height:1;color:var(--ct-warn)}.cr-cth-chaserow .days small{display:block;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink-2);margin-top:3px}.cr-cth-chasewrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%}.cr-cth-chasewrap>.cr-cth-chaserow{flex:1 1 auto;min-width:0}@media (max-width:560px){.cr-cth-chasewrap>.cr-cth-chasedid{flex:1 0 100%;margin:0 0 2px}.cr-cth-chasewrap{padding-bottom:4px}}.cr-cth-chasewrap.stale .days{background:var(--ct-red-wash)}.cr-cth-chasewrap.stale .days b{color:var(--ct-red-deep)}.cr-cth-chasewrap.stale .duetxt{color:var(--ct-red-deep);font-weight:700}.cr-cth-chaserow .duetxt{display:block;margin-top:1px;color:var(--ct-ink-2)}.cr-cth-chasedid{flex:0 0 auto;min-height:44px;padding:8px 12px;border-radius:9px;border:1px solid var(--ct-line,#E3DCD8);background:var(--ct-surface,#FFFFFF);color:var(--ct-red-deep,#7E1410);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer}.cr-cth-chasedid:disabled{opacity:.6;cursor:default}.cr-cth-chaserow .who{flex:1;min-width:0}.cr-cth-chaserow .who b{display:block;font-weight:700;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .who small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .amt{flex:0 0 auto;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn)}.cr-cth-chaseempty{padding:20px 16px;text-align:center;font-size:13px;line-height:1.55;color:var(--ct-ink-2)}</style>
+#cardinalTruthView .ins-body.cr-cth{background:var(--ct-bg,#FAF8F7);padding:0}@media (min-width:1100px){#cardinalTruthView .ins-body.cr-cth{--cr-stack:"P09.06 (1442): the hub widens beside the rail; the shared 840px .ins-body column stays for the Library";max-width:none}}.cr-cth-rail{contain:paint}.cr-cth-wrap{position:relative;max-width:580px;margin:0 auto;padding:22px 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}.cr-cth-wrap{position:relative}.cr-cth-owed{position:relative;background:linear-gradient(160deg,var(--ct-surface-2),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;box-shadow:0 0 0 1px var(--ct-focus),0 0 22px var(--ct-focus);padding:22px 22px 20px;overflow:hidden}.cr-cth-owed::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ct-warn)}.cr-cth-owed .lbl{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-warn)}.cr-cth-owed .fig{font:700 clamp(36px,10.5vw,50px)/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;color:var(--ct-ink);margin:10px 0 8px}.cr-cth-owed .note{font-size:13px;line-height:1.5;color:var(--ct-ink-2)}.cr-cth-owed .note b{color:var(--ct-ink);font-weight:700}.cr-cth-owed .split{display:flex;gap:18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--ct-warn-bg)}.cr-cth-owed .split div{flex:1;min-width:0}.cr-cth-owed .split .k{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-owed .split .v{font:700 18px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn);margin-top:4px}.cr-cth-stats{display:grid;gap:9px;margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.cr-cth-stat{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:14px 15px;min-width:0}.cr-cth-stat .l{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ct-ink-2);min-width:0;overflow-wrap:anywhere}.cr-cth-stat .v{font:700 22px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.02em;margin-top:6px;color:var(--ct-ink)}.cr-cth-stat.up .v{color:var(--ct-red-deep)}.cr-cth-stat .s{font-size:11px;color:var(--ct-ink-2);margin-top:3px;line-height:1.35}.cr-cth-stat .top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}.cr-cth-stat .ic{font-size:15px;color:var(--ct-ink-2);opacity:.55;line-height:1}.cr-cth-tabs{display:flex;gap:20px;/* 984: WRAP, do not clip. gap:20px sets BOTH axes in flexbox, so row-gap is overridden below. flex-wrap only wraps when the content actually overflows, so this needs no media query: measured 2 rows at 360/390/414 and 1 row unchanged at 430+. Before 984 the strip fitted with EXACTLY 0px slack at one-digit counts, so any real count clipped the last tab, and scrollbar-width:none left no affordance that anything was hidden. 983 made it 11px worse by making font-weight:700 actually apply. */flex-wrap:wrap;row-gap:4px;margin-bottom:18px;padding-bottom:2px;border-bottom:1px solid var(--ct-line);overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-cth-tabs::-webkit-scrollbar{display:none}.cr-cth-tabs button{flex:0 0 auto;background:transparent;border:0;border-bottom:2px solid transparent;padding:0 0 10px;margin-bottom:-1px;font-weight:700;font-size:13px;color:var(--ct-ink-2);cursor:pointer;white-space:nowrap}.cr-cth-tabs button.on{color:var(--ct-ink);border-bottom-color:var(--ct-red)}.cr-cth-tabs button b{font-weight:700;margin-left:5px;opacity:.7}.cr-cth-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ct-line-strong),transparent)}.cr-cth-rail{position:relative;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 6px 12px;box-shadow:0 2px 10px rgba(0,0,0,.28)}.cr-cth-stage{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:15px 14px 15px 30px;background:transparent;border:0;text-align:left;cursor:pointer;font-family:inherit;color:var(--ct-ink);border-radius:10px;transition:background .15s}.cr-cth-stage:hover{background:var(--ct-surface-2)}.cr-cth-stage:focus-visible{outline:2px solid var(--ct-red);outline-offset:-2px}.cr-cth-stage::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--ct-bg);border:2px solid var(--ct-red);z-index:1}.cr-cth-stage::after{content:'';position:absolute;left:10px;top:50%;bottom:-50%;width:1px;background:linear-gradient(180deg,var(--ct-red),var(--ct-red-deep));opacity:.45}.cr-cth-stage:last-of-type::after{display:none}.cr-cth-stage .nm{flex:1;min-width:0}.cr-cth-stage .nm b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15px;letter-spacing:.01em;line-height:1.25}.cr-cth-stage .nm small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px;line-height:1.4}.cr-cth-stage .ct{flex:0 0 auto;min-width:26px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-cth-stage .amt{flex:0 0 auto;min-width:88px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);letter-spacing:-.01em}.cr-cth-stage .amt.zero{color:var(--ct-ink-2)}.cr-cth-stage.flag::before{background:var(--ct-warn);border-color:var(--ct-warn);box-shadow:0 0 0 4px var(--ct-line)}.cr-cth-stage.flag{background:var(--ct-surface-3)}.cr-cth-stage.flag .nm b{color:var(--ct-ink)}.cr-cth-stage.flag .amt{color:var(--ct-warn)}.cr-cth-stage.flag.recovered .amt{color:var(--ct-red-deep)}.cr-cth-stage .tag{position:absolute;right:14px;top:8px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-warn);opacity:.8}.cr-cth-term{display:flex;gap:9px;margin-top:14px;padding-left:6px}.cr-cth-term button{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink-2);transition:border-color .15s,color .15s}.cr-cth-term button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink)}.cr-cth-term button b{font-weight:700;font-size:13px;letter-spacing:.02em}.cr-cth-term button span{font:700 15px ui-monospace,'SF Mono',Menlo,monospace}.cr-cth-term button.denied b,.cr-cth-term button.denied span{color:var(--ct-red-deep)}.cr-cth-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}/* 675: the lead button under the stats. Same grid, same button styling — one cell spanning both columns, and its entrance pulled forward because it now sits above the fold instead of at the end of the page. */.cr-cth-tools.lead{margin-top:14px}.cr-cth-tools.lead{animation-delay:.14s}.cr-cth-tools button.wide{grid-column:1/-1}.cr-cth-tools button{display:flex;align-items:center;gap:10px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:15px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:border-color .15s,background .15s}.cr-cth-tools button:hover{border-color:var(--ct-line-strong);background:var(--ct-surface-2)}.cr-cth-tools button.primary{border-color:var(--ct-red);background:var(--ct-surface-2)}.cr-cth-tools button .i{font-size:18px;flex:0 0 auto}.cr-cth-tools button .x{flex:1;min-width:0}.cr-cth-tools button .x b{display:block;font-weight:700;font-size:13px}.cr-cth-tools button .x small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px}@media (prefers-reduced-motion:no-preference){.cr-cth-owed,.cr-cth-stats,.cr-cth-stage,.cr-cth-term,.cr-cth-tools{opacity:0;animation:crCthRise .44s cubic-bezier(.22,.9,.3,1) forwards}.cr-cth-owed{animation-delay:.04s}.cr-cth-stats{animation-delay:.10s}.cr-cth-stage:nth-of-type(1){animation-delay:.20s}.cr-cth-stage:nth-of-type(2){animation-delay:.25s}.cr-cth-stage:nth-of-type(3){animation-delay:.30s}.cr-cth-stage:nth-of-type(4){animation-delay:.35s}.cr-cth-stage:nth-of-type(5){animation-delay:.40s}.cr-cth-stage:nth-of-type(6){animation-delay:.45s}.cr-cth-stage:nth-of-type(7){animation-delay:.50s}.cr-cth-stage:nth-of-type(8){animation-delay:.55s}.cr-cth-term{animation-delay:.62s}.cr-cth-tools{animation-delay:.68s}@keyframes crCthRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}#insClientsView{background:var(--ct-bg) !important;color:var(--ct-ink)}#insClientsView .ins-body{background:var(--ct-bg,#FAF8F7) !important}#insClientsView .ins-search input,#insClientsView input[type="search"],#insClientsView input[type="text"]{background:var(--ct-surface) !important;color:var(--ct-ink) !important;border:1px solid var(--ct-line) !important}#insClientsView input::placeholder{color:var(--ct-ink-2) !important}#insClientsView .ins-count{color:var(--ct-ink-2) !important}#insClientsView .card,#insClientsView .ins-card{background:var(--ct-surface) !important;border-color:var(--ct-line) !important;color:var(--ct-ink) !important}#insClientsView .card small,#insClientsView .ins-cardsub{color:var(--ct-ink-2) !important}@media (min-width:900px){.cr-cth-wrap{--cr-stack:"P09.06 (1442) edited in place, 1180 to 1400: the hub column on a desktop; the 580px phone column stays";max-width:1400px;padding-left:26px;padding-right:26px}.cr-cth-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:26px;align-items:start}.cr-cth-b1{grid-column:1;grid-row:1}.cr-cth-b2{grid-column:2;grid-row:1 / span 2}.cr-cth-b3{grid-column:1;grid-row:2}.cr-cth-tools{grid-template-columns:1fr 1fr}}.cr-cth-chase{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 10px;margin-top:10px}.cr-cth-chaserow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:transparent;border:0;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:background .15s}.cr-cth-chaserow:hover{background:var(--ct-surface-2)}.cr-cth-chaserow .days{flex:0 0 auto;min-width:52px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--ct-surface-3)}.cr-cth-chaserow .days b{display:block;font:700 18px ui-monospace,'SF Mono',Menlo,monospace;line-height:1;color:var(--ct-warn)}.cr-cth-chaserow .days small{display:block;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink-2);margin-top:3px}.cr-cth-chasewrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%}.cr-cth-chasewrap>.cr-cth-chaserow{flex:1 1 auto;min-width:0}@media (max-width:560px){.cr-cth-chasewrap>.cr-cth-chasedid{flex:1 0 100%;margin:0 0 2px}.cr-cth-chasewrap{padding-bottom:4px}}.cr-cth-chasewrap.stale .days{background:var(--ct-red-wash)}.cr-cth-chasewrap.stale .days b{color:var(--ct-red-deep)}.cr-cth-chasewrap.stale .duetxt{color:var(--ct-red-deep);font-weight:700}.cr-cth-chaserow .duetxt{display:block;margin-top:1px;color:var(--ct-ink-2)}.cr-cth-chasedid{flex:0 0 auto;min-height:44px;padding:8px 12px;border-radius:9px;border:1px solid var(--ct-line,#E3DCD8);background:var(--ct-surface,#FFFFFF);color:var(--ct-red-deep,#7E1410);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer}.cr-cth-chasedid:disabled{opacity:.6;cursor:default}.cr-cth-chaserow .who{flex:1;min-width:0}.cr-cth-chaserow .who b{display:block;font-weight:700;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .who small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .amt{flex:0 0 auto;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn)}.cr-cth-chaseempty{padding:20px 16px;text-align:center;font-size:13px;line-height:1.55;color:var(--ct-ink-2)}</style>
 <script id="cr-cth-script">
 
 (function(){
@@ -71486,7 +71522,11 @@ OPEN: OPEN, WON: WON };
    class and the .cd-crmsec markup only exist in the DOM at >=1600px (see the
    render), and the grid is gated here too as a second safety net for a
    resize that outraces the re-render. Below 1600px: nothing here applies. */
-@media (min-width:1600px){
+/* P09.01 (1442): 1280, the render's own line (cdColsWide); the class still only exists when
+   the render put it there. Inside a CRM column the column header names the CRM, so the
+   card's own CRM tag is dropped there - the flat list below the line keeps it. */
+@media (min-width:1280px){
+  #cliList .cd-crmsec .cd-crmtag{ display:none; }
   #clientsView #cliList.cd-crmcols{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 22px; align-items:start; }
   #cliList .cd-crmsec{ min-width:0; }
   #cliList .cd-crmsec-h{ font:800 11px ui-monospace,Menlo,monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--csc,#c9a227); display:flex; align-items:center; gap:9px; padding:4px 2px 10px; border-bottom:1px solid #26282c; margin-bottom:11px; }
@@ -77001,6 +77041,18 @@ body.cr-lnav-on #cr-adjusters-mount{
   z-index:60 !important;
 }
 
+/* P09.08 (1442): Invoices & AR and Owner Review are the same shape as the five above -
+   position:fixed; inset:0 at z-index 9500 - and covered the rail at x=0 with the rail
+   unclickable under them. The same three lines, gated the same way, so the phone keeps
+   its full-screen page. A rule of their own, so the list above stays byte-identical. */
+body.cr-lnav-on #cr-ar-view,
+body.cr-lnav-on #cr-orv-view{
+  --cr-stack:"P09.08 beside the rail on a desktop; their own inset:0 stays for the phone";
+  top:var(--headh,110px) !important;
+  left:var(--lnav-w) !important;
+  z-index:60 !important;
+}
+
 /* The 640px columns. Desktop-only: below 1100px --lnav-w is 0 and the class is
    never set, so phones keep the column they were designed around.
    The board goes wider than the card screens on purpose — a board earns width,
@@ -78403,7 +78455,9 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-view .cr-est-totals,
 #cr-est-view .cr-est-photo,
 #reportsView .pipecard,
-#reportsView .rptkpi{
+#reportsView .rptkpi,
+#clientsView .cd-card,
+#cr-orv-view button.orv-card{
   transition:transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s cubic-bezier(.2,.7,.3,1);
 }
 @media (hover:hover){
@@ -78414,7 +78468,9 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   #cr-est-view .cr-est-totals:hover,
   #cr-est-view .cr-est-photo:hover,
   #reportsView .pipecard:hover,
-  #reportsView .rptkpi:hover{ transform:translateY(-3px); }
+  #reportsView .rptkpi:hover,
+  #clientsView .cd-card:hover,
+  #cr-orv-view button.orv-card:hover{ transform:translateY(-3px); }
 }
 @media (prefers-reduced-motion:reduce){
   #leadsView .ljcard,
@@ -78424,7 +78480,9 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   #cr-est-view .cr-est-totals,
   #cr-est-view .cr-est-photo,
   #reportsView .pipecard,
-  #reportsView .rptkpi{ transition:none; }
+  #reportsView .rptkpi,
+  #clientsView .cd-card,
+  #cr-orv-view button.orv-card{ transition:none; }
   #leadsView .ljcard:hover,
   #cr-est-view .cr-est-lineitem:hover,
   #cr-est-view .cr-est-clientcard:hover,
@@ -78432,7 +78490,19 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   #cr-est-view .cr-est-totals:hover,
   #cr-est-view .cr-est-photo:hover,
   #reportsView .pipecard:hover,
-  #reportsView .rptkpi:hover{ transform:none; }
+  #reportsView .rptkpi:hover,
+  #clientsView .cd-card:hover,
+  #cr-orv-view button.orv-card:hover{ transform:none; }
+}
+/* P09.12 (1442): the ground/edge step that goes with the lift (and is all a reduced-motion user
+   gets). Existing values only: the cards' own hairline greys, Owner Review's --orv-dim, the
+   Leads card's hover navy (#8d97a6 label 5.28:1 on it) and white in light (6.77:1). */
+@media (hover:hover) and (pointer:fine){
+  #clientsView .cd-card:hover{ border-color:#4a4d52; }
+  :root[data-theme="rb-light"] #clientsView .cd-card:hover{ border-color:#cfcfcf; }
+  #cr-orv-view button.orv-card:hover{ border-color:var(--orv-dim,#a8b0ba); }
+  :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:hover{ background:var(--nv-card1,#1A2434); }
+  :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:hover{ background:#ffffff; box-shadow:inset 0 0 0 1px #c9cdd3; }
 }
 
 /* ══ 2 · THE LEAD CARDS ════════════════════════════════════════════════════
@@ -87488,7 +87558,8 @@ select{min-height:44px;}
      value, payment, commissions) stays full width and everything below it flows
      into two balanced columns — the Job Menu kept whole by its .ja-menu wrapper.
      Retail only, past 1600px; phones, tablets and the claim CRMs are untouched. */
-  @media (min-width:1600px){
+  /* P09.05 (1442): from 1280, not 1600 - two ~440px columns fit beside the rail there */
+  @media (min-width:1280px){
     body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView .wrap:not(.masthead){ max-width:1600px; }
     /* 1227: a GRID, not CSS columns. Columns cannot be ordered (the browser
        balances them by height), so the Job Menu could not be put first; a grid
@@ -87533,7 +87604,7 @@ select{min-height:44px;}
     body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #solCard,
     body:not(.claim-insurance):not(.claim-community) #projectView:not(.cr-admin-open) #dangerZone{ display:none !important; }
   }
-  @media (min-width:1600px){
+  @media (min-width:1280px){
     body:not(.claim-insurance):not(.claim-community) #projectView #acxMount{ display:grid; }
   }
 </style>
@@ -88086,6 +88157,26 @@ select{min-height:44px;}
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvtog{
   background:#d5d5da;
 }
+/* P09.07 (1442): the same card on the INSURANCE profile in light (docket). Its ground is the
+   insurance palette's own card, so it follows that page's theme, not the app's. Inks on
+   white: ink 17.75:1, ink-2 5.61:1, the check #165C2E 8.06:1, copy gold 4.90:1. */
+body[data-rltheme="docket"].claim-insurance #projectView .rvcard{
+  --cr-stack:"P09.07 insurance light twin; the dark base stays for siren";
+  background:var(--ct-surface,#FFFFFF); border:1px solid var(--ct-line,#EAE5E3); box-shadow:none;
+}
+body[data-rltheme="docket"].claim-insurance #projectView .rvcard .rvtop{
+  --cr-stack:"P09.07 insurance light twin"; background:var(--ct-surface-2,#FAF8F7); color:var(--ct-ink,#17181B);
+}
+body[data-rltheme="docket"].claim-insurance #projectView .rvstatus,
+body[data-rltheme="docket"].claim-insurance #projectView .rvstatus.none,
+body[data-rltheme="docket"].claim-insurance #projectView .rvhint{
+  --cr-stack:"P09.07 insurance light twin"; color:var(--ct-ink-2,#6E6663);
+}
+body[data-rltheme="docket"].claim-insurance #projectView .rvstatus .rvchk{ --cr-stack:"P09.07 insurance light twin"; color:var(--ct-do-ink,#165C2E); }
+body[data-rltheme="docket"].claim-insurance #projectView .rvbtn.copy{ --cr-stack:"P09.07 insurance light twin"; color:#8a6d1f; border-color:#c9b98a; }
+body[data-rltheme="docket"].claim-insurance #projectView .rvbtn.copy:active{ background:var(--ct-surface-2,#FAF8F7); }
+body[data-rltheme="docket"].claim-insurance #projectView .rvflip{ --cr-stack:"P09.07 insurance light twin"; color:var(--ct-ink,#17181B); border-top-color:var(--ct-line,#EAE5E3); }
+body[data-rltheme="docket"].claim-insurance #projectView .rvtog{ --cr-stack:"P09.07 insurance light twin"; background:#d5d5da; }
 </style>
 <style id="cr-portalmenu-styles">
 /* the portal switcher moved into the burger menu - v2026-08-14 build 799
@@ -91900,7 +91991,8 @@ window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen,
 </script>
 
 <style id="cr-sbwide-styles">
-/* 917: Schedule Board — ultrawide (>=1600px) two-week grid + day/cockpit rail.
+/* P09.10 (1442): the grid now starts at 1280 (Normal text); below 1600 the rail sits under the calendar.
+   917: Schedule Board — ultrawide (>=1600px) two-week grid + day/cockpit rail.
    Reuses the board's already-themed .bday/.bhead/.bitem/.btime/.btitle/.bcli/.bnone
    so light and dark stay correct; everything added here is layout, plus semantic
    dot colours and white-on-colour chips that are safe in both themes. Below 1600px
@@ -91912,7 +92004,21 @@ window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen,
   #boardView #boardMount{ display:none; }
   #boardWide{ display:block; }
 }
-#boardWide .sbw-lay{ display:grid; grid-template-columns:minmax(0,1fr) 400px; gap:22px; align-items:start; }
+/* P09.10 (1442): the grid from 1280 at Normal text, from 1472 at Large or in Sun (both a 1.15 zoom);
+   Larger keeps the 1600 above. A media query sees the unzoomed viewport (1438's note), so the line
+   is per Text size step: seven day columns keep ~125px at each. */
+@media (min-width:1280px){
+  :root:not([data-cr-text]):not([data-cr-sun]) #boardView .wrap{ --cr-stack:"P09.10 the grid's width from 1280 (Normal)"; max-width:2100px; }
+  :root:not([data-cr-text]):not([data-cr-sun]) #boardView #boardMount{ --cr-stack:"P09.10 the list gives way to the grid from 1280 (Normal)"; display:none; }
+  :root:not([data-cr-text]):not([data-cr-sun]) #boardWide{ --cr-stack:"P09.10 the grid from 1280 (Normal)"; display:block; }
+}
+@media (min-width:1472px){
+  :root:is([data-cr-text="lg"]:not([data-cr-sun]),[data-cr-sun]:not([data-cr-text])) #boardView .wrap{ --cr-stack:"P09.10 the grid's width from 1472 (Large, Sun)"; max-width:2100px; }
+  :root:is([data-cr-text="lg"]:not([data-cr-sun]),[data-cr-sun]:not([data-cr-text])) #boardView #boardMount{ --cr-stack:"P09.10 the list gives way to the grid from 1472 (Large, Sun)"; display:none; }
+  :root:is([data-cr-text="lg"]:not([data-cr-sun]),[data-cr-sun]:not([data-cr-text])) #boardWide{ --cr-stack:"P09.10 the grid from 1472 (Large, Sun)"; display:block; }
+}
+#boardWide .sbw-lay{ display:grid; grid-template-columns:minmax(0,1fr); gap:22px; align-items:start; }
+@media (min-width:1600px){ #boardWide .sbw-lay{ grid-template-columns:minmax(0,1fr) 400px; } }
 #boardWide .sbw-dows{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin:0 0 5px; }
 #boardWide .sbw-dow{ font:700 11px ui-monospace,Menlo,Consolas,monospace; letter-spacing:.12em;
   text-transform:uppercase; color:var(--rbe-mute,#9aa0a8); padding:0 3px; }
@@ -91924,17 +92030,18 @@ window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen,
 #boardWide .sbw-ch b{ font-size:15px; font-variant-numeric:tabular-nums; }
 #boardWide .sbw-todaytag{ margin-left:auto; font:800 11px ui-monospace,Menlo,monospace; letter-spacing:.06em;
   color:#0a0a0d; background:#5f9fd8; border-radius:4px; padding:1px 5px; }
-#boardWide .sbw-ev{ display:flex; align-items:center; gap:6px; min-width:0; font-size:11px; }
+#boardWide .sbw-ev{ display:flex; flex-wrap:wrap; align-items:center; gap:0 6px; min-width:0; font-size:11px; }
 #boardWide .sbw-dot{ width:7px; height:7px; border-radius:50%; flex:0 0 auto; display:inline-block; background:#8b95a1; }
 #boardWide .sbw-dot.job{ background:#5f9fd8; } #boardWide .sbw-dot.drop{ background:#e0913a; }
 #boardWide .sbw-dot.appt{ background:#7ec99a; } #boardWide .sbw-dot.team{ background:#c98fe0; }
 #boardWide .sbw-dot.need{ background:#e2574a; }
 #boardWide .sbw-ev .btime{ flex:0 0 auto; font-size:11px; }
 #boardWide .sbw-ev .btitle{ font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#boardWide .sbw-ev .sbw-evc{ flex:0 0 100%; min-width:0; padding-left:13px; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #boardWide .sbw-more{ font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--rbe-mute,#9aa0a8); padding-left:13px; }
 #boardWide .sbw-grid .bnone{ margin-top:auto; opacity:.7; }
 
-#boardWide .sbw-rail{ display:flex; flex-direction:column; gap:14px; }
+#boardWide .sbw-rail{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:14px; align-items:start; }
 #boardWide .sbw-card{ margin:0; cursor:default; padding:14px 15px; }
 #boardWide .sbw-rh{ font-size:15px; display:flex; align-items:center; gap:8px; margin-bottom:11px; }
 #boardWide .sbw-edit{ display:block; width:100%; background:transparent; border:1px solid var(--rbe-line2,#2b2b33);
@@ -91992,10 +92099,14 @@ window.CardinalRoute = Object.assign(window.CardinalRoute || {}, { open: rtOpen,
     return h;
   }
 
+  /* P09.10 (1442): the chip said what, never whose - the client's name is its second line now,
+     and the whole line is the chip's title (the tooltip), so a cut name is still readable. */
   function evLine(it){
     var k=it.kind||'appt';
-    return '<div class="sbw-ev"><i class="sbw-dot '+k+'"></i><span class="btime">'+tfmt(it.appt_time)+
-      '</span><span class="btitle">'+esc2(it.title||kmName(k))+'</span></div>';
+    var pr=it.project_id?projOf(it.project_id):null, nm=pr&&pr.name?String(pr.name):'';
+    var ttl=it.title||kmName(k), full=tfmt(it.appt_time)+' '+ttl+(nm?' \u00b7 '+nm:'');
+    return '<div class="sbw-ev" title="'+esc2(full)+'"><i class="sbw-dot '+k+'"></i><span class="btime">'+tfmt(it.appt_time)+
+      '</span><span class="btitle">'+esc2(ttl)+'</span>'+(nm?'<span class="bcli sbw-evc">'+esc2(nm)+'</span>':'')+'</div>';
   }
   function rowHTML(it){
     var k=it.kind||'appt'; var pr=it.project_id?projOf(it.project_id):null;
@@ -93631,19 +93742,15 @@ body.cr-landing-on footer.site{display:none !important;}
   font-size:13px; font-weight:600; color:var(--crar-mist); white-space:nowrap;}
 #cr-ar-view .crar-age.od{color:var(--crar-alert,#f08a90);}
 
-/* status pills — semantic hues, dark inks for a 4.5:1 floor on the light tints */
-#cr-ar-view .crar-pill{display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
-  padding:3px 10px; border-radius:999px; font-size:13px; font-weight:600; line-height:1.35;}
-#cr-ar-view .crar-pill::before{content:""; width:7px; height:7px; border-radius:50%; background:currentColor;}
-#cr-ar-view .crar-pill.draft{color:#475569; background:#EEF2F7;}
-#cr-ar-view .crar-pill.sent{color:#1D4ED8; background:#E7EFFD;}
-#cr-ar-view .crar-pill.part{color:#B45309; background:#FDF1E2;}
-#cr-ar-view .crar-pill.paid{color:#047857; background:#E4F5EE;}
-#cr-ar-view .crar-pill.over{color:#B91C1C; background:#FCEAEA;}
+/* status pills: J15.17 (1442) - the dashboard's own pastel copies are gone. They stayed light
+   in dark; the shared .crar-pill set below (dark tints, light twins byte-identical to these)
+   now paints the dashboard too. */
 
 /* actions */
 #cr-ar-view .crar-acts{display:flex; gap:8px; margin-top:12px;}
-#cr-ar-view .crar-acts .crar-go{flex:1 1 auto; justify-content:center;}
+/* P09.08 (1442): the main action fills the row on a phone/tablet only; beside the rail it is a
+   label-sized button (it was a 960px red bar). It stays solid red - Buttons A. */
+@media (max-width:1099px){ #cr-ar-view .crar-acts .crar-go{flex:1 1 auto; justify-content:center;} }
 #cr-ar-view .crar-more{min-width:44px; justify-content:center;}
 #cr-ar-view .crar-menu{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--est-line);}
 #cr-ar-view .crar-menu[hidden]{display:none;}
@@ -93729,8 +93836,8 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 .crji-btn.ghost{background:transparent;color:var(--crji-ghost-ink,#a8b0ba);box-shadow:none;}
 .crji-hint{font-size:13px;color:var(--crji-sub,#a8b0ba);}
 
-/* status pills, UNSCOPED so they render in the job block too (same values as the
-   AR view's #cr-ar-view .crar-pill rules; those stay and win inside the dashboard). */
+/* status pills, UNSCOPED so they render in the job block AND the AR dashboard (J15.17, 1442:
+   the dashboard's own pastel copies were deleted - they never went dark). */
 .crar-pill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600;line-height:1.35;}
 .crar-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;}
 .crar-pill.draft{color:#c2cbd8;background:rgba(148,163,184,.14);}
@@ -93740,7 +93847,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 .crar-pill.over{color:#fca5a5;background:rgba(185,28,28,.24);}
 /* J16: the cream "Deposit Paid" pill on the dark job card. Status hue at a low
    alpha, the ink lightened: 8.3-9.5:1 on the card (#141619). Light: as shipped.
-   The AR dashboard's own #cr-ar-view .crar-pill rules are untouched and still win there. */
+   Since J15.17 (1442) these are the AR dashboard's pills too. */
 :root[data-theme="rb-light"] .crar-pill.draft{color:#475569;background:#EEF2F7;}
 :root[data-theme="rb-light"] .crar-pill.sent{color:#1D4ED8;background:#E7EFFD;}
 :root[data-theme="rb-light"] .crar-pill.part{color:#B45309;background:#FDF1E2;}
@@ -100608,10 +100715,12 @@ body:not(.claim-insurance):not(.claim-community) #projectView .jan, body:not(.cl
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .dbgo, :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView #kpHis .kpcar{ --cr-stack:"1354 the light twin"; color:#475569; }
 body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-stack:"1354 no red rule under every heading (Theo picked the clean look)"; border-bottom-color:transparent; }
 /* ═══ Build 1354 · option B on a wide screen: two real columns ═══ */
+/* P09.05 (1442): from 1280 (cols() uses the same line). P09.06 (1442): Insurance too - only
+   Community stays out, because its client page is its own takeover. */
 .acx-cols{ display:none; }
-@media (min-width:1600px){
-  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .acx-cols{ display:grid; grid-column:1 / -1; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:34px; align-items:start; }
-  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .acx-cols > .acx-colL, body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .acx-cols > .acx-colR{ display:flex; flex-direction:column; min-width:0; }
+@media (min-width:1280px){
+  body:not(.claim-community) #projectView #acxMount > .acx-cols{ --cr-stack:"1354 edited in place (P09.05/P09.06, 1442): the box shows from the line, for Insurance too; its display:none default stays below it"; display:grid; grid-column:1 / -1; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:34px; align-items:start; }
+  body:not(.claim-community) #projectView #acxMount > .acx-cols > .acx-colL, body:not(.claim-community) #projectView #acxMount > .acx-cols > .acx-colR{ display:flex; flex-direction:column; min-width:0; }
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .cr-admin-tog, body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbConvertIns{ grid-column:1 / -1; }
 }
 /* 1351: the % paid bar that used to sit in the money strip */
@@ -100620,7 +100729,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
 /* 1351: retail — the invoice card and the Payments card travel together (one slot in every layout) */
 #projectView #acxMount .crji-stack > .crji-card{margin:12px 0 4px;}
 /* ═══ Build 1355 · the client card is one slim bar on a wide screen (Theo's pick B) ═══ */
-@media (min-width:1600px){
+/* P09.05 (1442): from 1280, with the columns it sits above, so the page is never half-applied */
+@media (min-width:1280px){
   body:not(.claim-insurance):not(.claim-community) #projectView .projinfo{ --cr-stack:"1355 one slim client bar"; display:flex; flex-wrap:wrap; align-items:center; column-gap:22px; row-gap:0; padding:6px 16px; }
   body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .poPfx{ order:1; margin:0; }
   body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .heroNm{ order:2; flex:0 1 auto; min-width:0; }
@@ -100640,7 +100750,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
 
 @media (max-width:560px){ #projectView #acxMount > .crji-stack{ order:3; } }
 @media (min-width:561px){ body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-stack{ order:3; } }
-@media (min-width:1600px){
+@media (min-width:1280px){
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-stack,
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbMoneyRow{ grid-column:1; }
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .crji-stack{ grid-row:span 6; }
@@ -101228,15 +101338,17 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
   /* 1354: option B on a wide screen. Two real stacks instead of a shared-row grid, so a card growing in one
      column can never move a card in the other. Below 1600px (or off retail) everything goes back exactly
      where it was, in its original order, so the phone and tablet orders never see this. */
-  var LEFT = ['.crji-stack', '#dbMoneyRow', '.ja-menu'];
-  var STAY = ['.dbstage', '.cr-admin-tog', '#dbConvertIns'];
+  /* P09.06 (1442): Insurance joins. Its invoice and Payments cards are bare .crji-card (retail
+     wraps them in .crji-stack), and its claim strip is a full-width band under the stage bar. */
+  var LEFT = ['.crji-stack', '.crji-card', '#dbMoneyRow', '.ja-menu'];
+  var STAY = ['.dbstage', '.cr-claimstrip', '.cr-admin-tog', '#dbConvertIns'];
   function matchesAny(el, list){ for(var i = 0; i < list.length; i++){ try{ if(el.matches(list[i])) return true; }catch(_){} } return false; }
   function cols(){
     var mount = document.getElementById('acxMount');
     if(!mount) return;
     var b = document.body;
-    var retail = !(b.classList.contains('claim-insurance') || b.classList.contains('claim-community'));
-    var wide = !!(window.matchMedia && window.matchMedia('(min-width:1600px)').matches);
+    var retail = !b.classList.contains('claim-community');   /* P09.06 (1442): retail AND insurance */
+    var wide = !!(window.matchMedia && window.matchMedia('(min-width:1280px)').matches);   /* P09.05 (1442): was 1600 */
     var box = mount.querySelector(':scope > .acx-cols');
     if(!(retail && wide)){
       if(!box) return;
@@ -101252,7 +101364,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
       box = document.createElement('div');
       box.className = 'acx-cols';
       box.innerHTML = '<div class="acx-colL"></div><div class="acx-colR"></div>';
-      var stage = mount.querySelector(':scope > .dbstage');
+      var stage = mount.querySelector(':scope > .cr-claimstrip') || mount.querySelector(':scope > .dbstage');   /* P09.06 (1442) */
       mount.insertBefore(box, stage ? stage.nextSibling : mount.firstChild);
     }
     var all = [].slice.call(mount.children);

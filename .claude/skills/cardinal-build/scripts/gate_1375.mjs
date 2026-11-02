@@ -35,8 +35,12 @@ const STATE = `(() => {
   const V = e => { if (!e) return false; const r = e.getBoundingClientRect(), c = getComputedStyle(e); return r.width > 0 && r.height > 0 && c.display !== 'none' && c.visibility !== 'hidden'; };
   const m = document.getElementById('acxMount'), q = s => m.querySelector(s);
   const btn = k => q('.cr-fold[data-cr-fold-key="' + k + '"]');
-  const bodies = { loc: q(':scope > [data-cr-ord="loc"]'), asg: q(':scope > .acxassignsec'), rv: q(':scope > .rvcard > .rvbody') };
-  const out = { jd: V(q(':scope > [data-cr-ord="jd"]')) };
+  /* 1442: from 1280 (P09.05) a wide screen holds these cards INSIDE 1354's two columns
+     (.acx-cols > .acx-colL / .acx-colR), so a direct-child lookup finds nothing there. Same
+     cards, looked up in either place; the phone checks are unchanged (no columns on a phone). */
+  const k2 = s => q(':scope > ' + s + ', :scope > .acx-cols > * > ' + s);
+  const bodies = { loc: k2('[data-cr-ord="loc"]'), asg: k2('.acxassignsec'), rv: k2('.rvcard > .rvbody') };
+  const out = { jd: V(k2('[data-cr-ord="jd"]')) };
   for (const k of ['loc', 'asg', 'rv']) { const bt = btn(k), hd = bt && bt.parentElement, r = hd && hd.getBoundingClientRect();
     out[k] = { btn: V(bt), body: V(bodies[k]), exp: bt && bt.getAttribute('aria-expanded'), sum: bt ? (bt.querySelector('.cr-fold-s') || {}).textContent : null, rowH: r ? Math.round(r.height) : 0 }; }
   return out; })()`;
