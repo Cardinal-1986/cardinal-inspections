@@ -187,13 +187,13 @@ ok('an insurance profile keeps its card and shows no band', ins.oldCard === true
 await I.browser.close();
 
 console.log('\n--- E. the desktop is unchanged ---');
-const D = await boot(APP, 1280, 'retail');
+const D = await boot(APP, 1194, 'retail');   /* 1442: 1280 is now ABOVE the two-column line (P09.05: 1600 -> 1280), so the single-column desktop is checked just under it */
 /* NOTE: the old off-profile presence control (the ALL chip visible before a
    client is opened) has no subject left — 799 hides #crPortalChip everywhere.
    #jobMenuSel is the JOB menu and never rendered off-profile; its on-profile
    desktop presence is asserted below. */
 await open(D.page, 'p-1');
-const deskNow = await shot(D.page, 1280);
+const deskNow = await shot(D.page, 1194);
 const dm = await D.page.evaluate(() => {
   const vis = id => { const e = document.getElementById(id);
     return !!(e && e.offsetParent !== null && getComputedStyle(e).display !== 'none'); };
@@ -212,9 +212,9 @@ ok('the old card and Overview dropdown are still there (chip retired at 799)',
 /* 1227 (Theo's pick, 2 Oct): the desktop is reordered too, as a single flex column below 1600px. */
 ok('#acxMount is the 1227 desktop column (flex)', dm.mountDisplay === 'flex', dm.mountDisplay);
 if (PREV) {
-  const P2 = await boot(readFileSync(PREV, 'utf8'), 1280, 'retail');
+  const P2 = await boot(readFileSync(PREV, 'utf8'), 1194, 'retail');
   await open(P2.page, 'p-1');
-  const deskPrev = await shot(P2.page, 1280);
+  const deskPrev = await shot(P2.page, 1194);
   await P2.browser.close();
   ok('the desktop renders IDENTICALLY to the previous build (image md5)',
     deskNow === deskPrev, deskNow.slice(0, 12) + ' vs ' + deskPrev.slice(0, 12));

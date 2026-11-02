@@ -37914,4 +37914,56 @@ The name was the only flexible item, so it was the one that gave way.
 - `check_build` is GREEN. `gate_1441` is GREEN, 88/0, and RED on 1440 (44 passed, 44 failed), without crashing.
 - `gate_types` is 1,499 (1440: 1,500). `gate_dupes` matches 1440 except for one block offset. `audit_scrolllock` is GREEN, 16 modules.
 - **gate_stack, on the fixed rig:** CLEAN at 390 and 1440, dark and light, over 12 states (home, nav, navcc, navins, ccclient, punch, client, clientdir, leads, production, dispatch, ar), and none of them threw.
-- **95 related gates on both trees, gate_chromium and the sentinel:** running at the time of this commit; results follow in the PR.
+- **95 related gates and harnesses on 1441 and 1440:** identical apart from `gate_1441` itself. Old reds stay the same on both, e.g. `gate_1230` has the same 6 failures and `harness_705` the same 9.
+- **gate_chromium:** GREEN, 23/23.
+- **Sentinel** (`--since` 1440, over A1's five states): light 390 and 1440 CLEAN, Sun 390 CLEAN. Dark showed one OVERRIDDEN, `.cr-pp-hd .add` on the Community client at 1440. This build does not touch that rule, and an uncapped re-run on both trees gives the same 23 findings for that state, without this one. Whether it appears depends on whether the card has rendered when the sweep reads it. *(Results recorded at build 1442; they were still running when 1441 was committed.)*
+
+## Build 1442 — desktop layouts (2 Nov 2026)
+
+**Source:** the round-1 re-check on 1438, builder A2. Items: P09.01, P09.05, P09.06, P09.07, P09.08, P09.10, P09.12, P09.14, P09.15 and P06.14, plus V5's sighting J15.17.
+
+**Before → after (measured by gate_1442 and the builder):**
+
+| Item | Before | After |
+|---|---|---|
+| Clients columns start at | 1600 | 1280 (Large and Sun 1472, Larger 1600) |
+| Clients page at 1280 | 5,668px tall, one column | 3,858px, three columns |
+| Retail profile R1 at 1280 | 3,272px, one column | 1,928px, two ~446px columns |
+| Insurance profile I1 at 1920 | 4,807px, one column | 3,654px, two columns |
+| Truth hub at 1920 | 840px wide | the full area, column capped at 1400 |
+| AR and Owner Review at 1920 | x=0, covering the rail | x=288, rail clickable |
+| AR row actions | 960px bars | sized to the label, ≥44px tall |
+| Schedule Board grid starts at | 1600 | 1280 |
+| Board chips naming the client | 0 of 12 | 12 of 12 |
+| Reports KPIs at 1194–1440 | 5 + 2 or 6 + 1 | 4 + 3 |
+| Home Activity booking rows | 13 of 14 single bookings | one row per person per day |
+| Insurance Google Reviews card, light | #171717 (luminance 0.009) | white, text 5.61:1 |
+| A/R pills, dark | pastel (luminance 0.86–0.89) | dark tints, ink 8.3–8.8:1 |
+
+**Not done:** P09.03, sticky rails. Turning on `overflow-x:clip` makes three rails stick as designed, but on a 390 phone it also puts the bottom 63px of the Quick Inspection capture bar (`position:sticky; bottom:0`) under the fixed tab bar. The bar needs a tab-bar offset first, and that is its own change on a field screen.
+
+**Left for Theo:** the duplicate claim summaries on an insurance profile, and the dropdown-to-tabs idea for the profile.
+
+**Files:**
+- `patch_1442_desktop.py`, then `patch_1442.py`. Byte-reproducible on 1441; the patch was built on 1438 and applies unchanged.
+- `gate_1442.mjs` and its seed `gate_1442_seed.js` (36 clients, 18 bookings), from builder A2.
+- Gate updates for the 1280 line:
+  - `gate_791` and `gate_794` check the single-column desktop at 1194, just under the line.
+  - `gate_1375` finds the profile cards inside `.acx-cols` as well as directly under `#acxMount`.
+
+**Gates:**
+- **Build gates:**
+  - `check_build` is GREEN.
+  - `gate_1442` is GREEN, 149/0. On 1441 it is RED, 65 passed and 76 failed, without crashing.
+- **Standing gates:** `gate_types` is 1,499, the same as 1441. `gate_dupes` adds three uniquely named functions (`cdColsWide`, `actGroupBookings` and an inner `dayOf`), and no name gained a definition. `audit_scrolllock` is GREEN, 16.
+- **91 related gates, run on 1442 and 1441:** every failure line is identical on both trees. The only difference is gate_1442 itself; gate_791, 794 and 1375 were run in their updated form on both trees.
+- **gate_stack, on the fixed rig:** CLEAN in all 8 configurations: dark and light at 390, 1280 and 1920, plus Sun at 1280 and 1920. It covered 12 states, and none of them threw.
+- **Sentinel** (it holds this merge; `--since` 1441, selftest GREEN, 12 states, both themes):
+  - **1920:** CLEAN.
+  - **390:** 8 findings. All of them are the 20-per-render cap: uncapped, both trees give the same 82 findings.
+  - **1280 and 1440:** 12–13 findings.
+    - **OVERRIDDEN and DEAD:** an uncapped run at 1280 has 10 entries that 1441 lacks. All 10 are in 1441's own list at 1700. They are the wide layout's existing findings, now showing at the lower line.
+    - **UNWIRED:** I clicked all six flagged controls in Chromium, and all six work on 1442.
+      - `#acxTrBtn`'s nearest listener is now 7 levels up, and the sentinel walks only 6.
+      - The rail's Clients button under AR could not be clicked on 1441 at all (`crarKpiOut` covered it), and it can on 1442. That is P09.08's fix.
+      - The other four have their own listener on both trees.

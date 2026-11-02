@@ -10710,3 +10710,28 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
 - **Pressed toggles in the drawer** follow the portal: insurance red, community green, production amber, sales red. **Retail stays red;** the rail's slate blue for Retail is held for Theo.
 
 **Gates:** `gate_1441.mjs`, RED on 1440. `harness_ar1107` accepts any drawn glyph on the Invoices & AR row.
+
+## Build 1442: desktop layouts (round-1 leftovers, re-checked on 1438)
+- **Clients directory:** the three portal columns start at 1280px wide instead of 1600.
+  - At 1280 the page goes from 5,668px to 3,858px tall.
+  - The per-card portal tag is hidden inside a column; the flat list keeps it.
+  - One helper, `cdColsWide()`, sets the line for the render and the resize listener: 1280 × the root zoom, capped at 1600. So Large and Sun switch at 1472, and Larger stays at 1600.
+- **Client profile:** the two-column layout (923 / 1354 / 1355) and `CardinalJobPay.cols()` switch at 1280.
+  - Insurance profiles get the two columns too: money cards and the Job Menu on the left, the rest on the right, and the claim strip a full-width band above.
+  - At 1920 an insurance profile goes from 4,807px to 3,654px tall.
+- **Cardinal Truth hub:** it fills the space beside the rail. Its column is capped at 1400, where it was held to 840 from 1100 up.
+- **Invoices & AR and Owner Review:** they start beside the rail instead of covering it, and the rail is clickable again. AR row buttons are sized to their label (at least 44px tall) instead of 960px bars.
+- **Schedule Board:**
+  - The month grid starts at 1280 (Large and Sun at 1472; Larger keeps 1600).
+  - Below 1600, the day panel and cockpit sit under the calendar.
+  - Every chip names the client and has a tooltip.
+- **Smaller fixes:**
+  - Reports' seven numbers lay out 4 + 3 instead of 5 + 2 or 6 + 1, and 7 across at 1920.
+  - Home Activity folds one person's same-day bookings into one row. The full feed and History keep every row.
+  - Clients cards and Owner Review rows lift under a mouse; Pipeline cells get the Leads hover ground.
+  - The insurance profile's Google Reviews card is white in light (text 5.61:1).
+  - The A/R status pills use the shared set, so they are dark in dark mode (ink 8.3–8.8:1). Light is unchanged.
+  - Hub stat tiles: two tiles get two tracks, and the label no longer spills out of the card.
+- **Not done:** sticky rails (P09.03). The Quick Inspection capture bar would sit 63px under the tab bar on a phone, so the bar needs a tab-bar offset first.
+
+**Gates:** `gate_1442.mjs` (with `gate_1442_seed.js`), 149 checks, RED on 1441. `gate_791`, `gate_794` and `gate_1375` were updated for the 1280 line.
