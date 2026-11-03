@@ -1,6 +1,10 @@
 __pycache__/
 *.pyc
-node_modules/
+# No trailing slash: `node_modules/` matches directories only, and git does not
+# treat a symlink as one — which is how a session's scratchpad link
+# (.claude/showroom-staging/node_modules -> /tmp/.../scratchpad/node_modules)
+# was committed at 1325 past the old `node_modules/` line. This form catches both.
+node_modules
 
 # Secrets. spark/.env holds the Supabase SERVICE ROLE key, which bypasses
 # every RLS policy in the database — it lives on the Spark box and must never
