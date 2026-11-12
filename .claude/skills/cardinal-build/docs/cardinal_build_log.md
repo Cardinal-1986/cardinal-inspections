@@ -38110,6 +38110,10 @@ The name was the only flexible item, so it was the one that gave way.
   - `check_build` is GREEN.
   - `gate_1445` is GREEN, 34/0, as Scottie in real Chromium with a canvas camera. On 1444 it is RED, 9 passed and 23 failed, without crashing.
   - **Section J proves the album camera is unchanged.** It runs as an admin, because a field user has no album. Two shots with Section "Before" reach `addGalleryFiles` on both trees, and the camera closes. 1444 fails J only on the new `target` field.
+  - **Two old harnesses updated for 1445:**
+    - `render_punchphoto888` keeps 888's rule: the upload is a real File, never the wrapper. It now opens the picker through "Add photos from phone", because a slot tap opens the in-app camera. It expects the picked file's own bytes when the source no longer calls `CardinalSolUpload.prepare`, and the prepared 5000 on an older tree. GREEN 5/0 on both.
+    - `render_pkgallery859` wrote its screenshot into another session's scratchpad and stopped on ENOENT. It now writes to `os.tmpdir()`. GREEN 12/0 on both.
+    - ⚠ Seven more scripts still name that dead scratchpad path, `render_landing852` among them. Not touched here.
   - ⚠ **`gate_1229` and `gate_1246` (the album camera's own gates) are stale on both trees.** Their rig lets the CDN supabase-js replace the mock (the 1441 lesson), so the album never opens: F reports `{"none":true}` and 1246 crashes. Their pass/fail lines are identical on 1444 and 1445. J above is the working check.
   - ⚠ **Chromium cannot reproduce the iPhone dropping a detached input.** On 1444 the fallback photo still arrives in Chromium. The gate asserts what it can, that each chooser's input `isConnected`. **Scottie's phone is the final gate.**
 - **Standing gates:**
