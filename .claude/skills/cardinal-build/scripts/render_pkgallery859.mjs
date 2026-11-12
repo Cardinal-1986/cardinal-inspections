@@ -20,7 +20,8 @@ const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
 const APP_HTML = readFileSync(FILE, 'utf8');
 const MOCK = readFileSync(new URL('./e2e_mock_supa.js', import.meta.url), 'utf8');
 const TAG = FILE.includes('858') ? '858' : '859';
-const OUT = '/tmp/claude-0/-home-user-cardinal-inspections/3b7d9014-74de-597e-b825-c1f5c6f1451c/scratchpad';
+/* 1445: was another session's scratchpad, which no longer exists (ENOENT ended the run) */
+const OUT = process.env.OUT_DIR || (await import('os')).tmpdir();
 
 // 1x1 transparent PNG data URL for the imgs (no network)
 const PX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC';

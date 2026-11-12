@@ -10782,3 +10782,17 @@ Theo's pick of 1 Nov 2026: a daylight appearance for working on a roof.
 - **Still reads oddly:** on a desktop, the menu's "CRMs" heading holds a single row, now "Insurance". The heading was not part of the question.
 
 **Gates:** `gate_1444.mjs`, 17 checks, RED on 1443. `gate_1401` opens the hub by the menu row's new name.
+
+## Build 1445: punch-out photos, several at a time, and they arrive (12 Nov 2026)
+Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up."
+- **A photo slot or Take photos opens the app's own camera.** This is `CardinalMultiCam`, built for the job album at 1229. You shoot several, then tap Upload once. If the phone has no camera API, or the user picks "Use the phone camera instead", the phone camera opens and returns one photo.
+- **Add photos from phone** sits under the slots, and **From phone** sits in the gallery. Both take several photos from the library at once.
+- **Every punch-card file input is in the page now.** The old `pickPhoto` made its input with `createElement` and never attached it, and iPhone Safari can drop a detached input while its camera is up (BUG_CLASSES 106). The card's **Add receipt** camera had the same fault and is fixed too.
+- The card says **"Uploading N photos…"** while it works.
+- **A save in flight no longer drops photos.** `save()` returns early while another write is in flight, so a photo that finished uploading during a step tick was dropped silently. `attachPhotos` now waits for that write to finish.
+- **A batch lands on the punch-out it was taken for.** If the card has moved on, or its save was refused, the photos are appended on the server, the same way the offline flush does it.
+- **Photo prep:** every photo still goes through `photoPrepFile` (1600px, no EXIF/GPS). With no signal it is still held in the offline outbox (866). `CardinalSolUpload.prepare` is off this path: it belongs to the scope reader, and it sent a large photo to `scopes/`.
+- **`CardinalMultiCam.open(opts)` gained a target mode,** `{ key, room, onUpload, native }`. The shots go to the caller, and the album's Section picker is hidden. `open()` with no target is the album, unchanged.
+- **Unchanged:** the five-photo close rule and the slot labels.
+
+**Gate:** `gate_1445.mjs`, 34 checks, RED on 1444. It runs as Scottie in real Chromium with a canvas camera. Section J runs as an admin and proves the job album's camera still runs album mode.

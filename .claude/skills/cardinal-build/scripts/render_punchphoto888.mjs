@@ -68,12 +68,20 @@ try {
   });
   const card = await page.evaluate(() => ({ open: !!document.querySelector('#cr-pk .pkslot'), slots: document.querySelectorAll('#cr-pk [data-slot]').length }));
   ok('punch card open with photo slots', card.open && card.slots > 0, card);
-  await page.click('#cr-pk [data-slot="0"]');
+  /* 1445: a slot tap opens the in-app camera now; the phone's picker is "Add photos
+     from phone". And CardinalSolUpload.prepare is off the punch path, so the body is
+     the picked file itself (these 1234 bytes are not a decodable image, so
+     photoPrepFile passes them through). On an older tree the prepared 5000 stands. */
+  const PK = APP_HTML.slice(APP_HTML.indexOf('<script id="cr-pk-script"'));
+  const viaPrepare = /CardinalSolUpload\.prepare\(/.test(PK.slice(0, PK.indexOf('</script>')));
+  const WANT = viaPrepare ? 5000 : 1234;
+  const lib = await page.evaluate(() => !!document.querySelector('#cr-pk [data-act="phlib"]'));
+  await page.click(lib ? '#cr-pk #pkSecPh [data-act="phlib"]' : '#cr-pk [data-slot="0"]');
   await page.waitForFunction(() => window.__up !== null, { timeout: 8000 }).catch(() => {});
   const up = await page.evaluate(() => window.__up);
   ok('storage.upload was called', !!up, up);
   ok('upload body is a Blob/File (not the wrapper object)', !!(up && up.isBlob), up);
-  ok('upload body carries the prepared bytes (5000), not 11', !!(up && up.size === 5000), up && up.size);
+  ok('upload body carries the ' + (viaPrepare ? 'prepared bytes (5000)' : 'picked file (1234)') + ', not 11', !!(up && up.size === WANT), up && up.size);
   ok('upload body is not a plain Object', !!(up && up.ctor !== 'Object'), up && up.ctor);
   console.log(`\n${fail === 0 ? 'GREEN' : 'RED'} — ${pass} passed, ${fail} failed   ${errs.length ? '(pageerrors: ' + errs.slice(0, 2).join(' | ') + ')' : ''}`);
 } catch (e) { console.log('HARNESS ERROR: ' + String(e).slice(0, 200)); console.log(errs.slice(0, 3).join(' | ')); fail++; } finally { await browser.close(); }

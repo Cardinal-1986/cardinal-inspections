@@ -5043,3 +5043,14 @@ invisible to `page.on('dialog')`, so the drive waits forever with no error; and 
 into a temp dir crashes the day that route gains an `import` (1407's `_staff.js` broke 1377 / 1378). **Rule:** when
 a drive's step fails, reproduce that step in the current rig before believing it; when a form gains a required
 field, grep the drives that fill it; a temp-dir gate copies the route's local imports too.
+
+## 106 — a file input made with `createElement` and never put in the page
+`pickPhoto` on the punch-out card built `document.createElement('input')`, set `type='file'` and
+`capture='environment'`, and called `.click()` without attaching it. Chromium keeps the element alive and fires
+`change`, so every gate passed (888, 1221). iPhone Safari can drop a detached input while its camera or picker is up,
+and then the photo comes back to nothing: no upload, no error, no toast. Measured on 12 Nov 2026: Scottie's session
+read the punch-outs and sent **no upload and no punch-out save**, and no punch-out had a photo saved since August.
+**Rule:** a file input lives in the page (`display:none`, appended to `document.body`), like the album's
+`galFileInput`. A Chromium gate cannot see this fault. What it can assert is `isConnected` on the chooser's element
+(`gate_1445` C, E, I). **Still detached, recorded and not changed:** the payments receipt `rcptAttach` (main block,
+payments side) and the NACHI admin upload (`cr-nachi-cm-script`).

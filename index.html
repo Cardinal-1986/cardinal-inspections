@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-02 build 1444<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-12 build 1445<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47191,6 +47191,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1445, d:'2026-11-12', t:'Punch-out photos: take several at once, and they stick', s:'On a phone, a punch-out photo went one at a time, and often never showed up on the punch-out at all. Tapping a photo box, or Take photos, now opens the app\u2019s own camera, the same one the job photo album uses: take as many as you need, then tap Upload once. Add photos from phone picks several from your library at once. The card says Uploading while it works, and a photo with no signal is still held on the phone until you are back in range. The five-photo rule to finish a punch-out is unchanged.' },
   { b: 1444, d:'2026-11-02', t:'The insurance side is called Insurance', s:'The insurance side had three names: Cardinal Truth on the Front Door, in the menu and on its own home screen, Insurance in the header, and Claims on the Clients page. It is Insurance everywhere now: the menu row, the Front Door, the home screen heading, the quick-jump list, Self Check and the Clients page columns and chips. Nothing moved and nothing else changed. The Claims button that opens the list of claims keeps its name, because that is the list, not the department.' },
   { b: 1443, d:'2026-11-02', t:'Easier to tap, easier to read, and the keyboard works', s:'Small controls that were hard to hit on a phone now have a full-size tap area: Open full claim (and tapping the claim card itself opens the claim), the partner buttons, + Add on a punch card, the stage menu, Remember me, Forgot password, the punch search and the document title. The Back chip in the document editor is a real button. Faded numbers that were hard to read, such as out-of-month days on the Production calendar, Community zero counts and the Clients bar counts, are now a solid readable grey. On a desktop with a keyboard, the top bar and the home and Clients cards can be reached with Tab and opened with Enter, and Tab stays inside a form or the estimate builder instead of wandering to the page behind it. Unlabelled search boxes, sort menus and calendar arrows now say what they are for screen readers. Escape closes the Ask sheet and Self Check, and Back closes the Ask sheet without leaving the page. On a desktop the top bar is 3 pixels taller so every item in it is a full 44 pixels.' },
   { b: 1442, d:'2026-11-02', t:'Desktop: wider screens get used', s:'On a laptop or desktop the Clients directory shows its three portal columns from 1280 pixels wide instead of 1600, and a client profile splits into two columns there too, so far less scrolling. Insurance profiles get the same two columns, and the Cardinal Truth hub fills the screen beside the menu instead of sitting in a narrow strip. Invoices & AR and Owner Review now sit beside the left menu instead of covering it, and their row buttons are sized to their labels. The Schedule Board shows its month grid from 1280, and every booking on it names the client. Reports lays its seven numbers out evenly, the Activity card on home folds one person\u2019s same-day bookings into one line, cards lift under the mouse, the Google Reviews card on an insurance profile reads in light mode, and the A/R status pills match the rest of the app in dark mode.' },
@@ -52742,6 +52743,9 @@ photosFor    : function(){ return (window.currentPhotos || []).slice(); },
 'use strict';
 var SECTIONS = ['Inspection', 'Post-Inspection', 'Before', 'After', 'General'];
 var root = null, video = null, stream = null, shots = [], forPid = null, isOpen = false, stripOn = false;
+/* 1445: target mode. open({ key, room, onUpload, native }) hands the shots to the
+   caller instead of the album: the punch-out card uses it. null = the album, as before. */
+var target = null;
 /* 1246: zoom. hw is the camera's own zoom range when the browser exposes it (Android
    Chrome); otherwise zoom is DIGITAL - the preview is scaled from its centre and the
    shot is cropped to the same centre, never upscaled, so what you saw is what you get.
@@ -52753,6 +52757,7 @@ function mcSupported(){
             window.isSecureContext !== false && typeof HTMLCanvasElement !== 'undefined');
 }
 function mcRoom(){
+  if(target) return Math.max(0, (Number(target.room && target.room()) || 20) - shots.length);
   var max = window.GAL_MAX || 50;
   var have = Array.isArray(window.currentPhotos) ? window.currentPhotos.length : 0;
   return Math.max(0, max - have - shots.length);
@@ -52810,7 +52815,7 @@ function mcPaint(){
   if(up){ up.disabled = !n; up.textContent = n ? 'Upload ' + n : 'Upload'; }
   var sh = /** @type {HTMLButtonElement} */ (mcQ('.mc-shut'));
   if(sh) sh.disabled = !stream || r <= 0;
-  var rm = mcQ('.mc-room'); if(rm) rm.textContent = r <= 5 ? (r ? r + ' left' : 'Album full') : '';
+  var rm = mcQ('.mc-room'); if(rm) rm.textContent = r <= 5 ? (r ? r + ' left' : (target ? 'Upload these first' : 'Album full')) : '';
   var strip = mcQ('.mc-strip');
   if(strip){
     strip.hidden = !(stripOn && n);
@@ -52944,6 +52949,18 @@ async function mcClose(){
 }
 async function mcUpload(){
   if(!shots.length) return;
+  if(target){
+    /* 1445: the caller owns these. They go to what the camera was opened for,
+       even if the screen behind has moved on. */
+    var tg = target, tstamp = Date.now();
+    var tfiles = shots.map(function(s, i){ return new File([s.blob], 'camera-' + tstamp + '-' + (i + 1) + '.jpg', { type:'image/jpeg' }); });
+    var theld = shots;
+    shots = [];
+    mcHide();
+    try{ await tg.onUpload(tfiles); }
+    finally{ theld.forEach(function(s){ try{ URL.revokeObjectURL(s.url); }catch(_){} }); }
+    return;
+  }
   var cp = window.currentProject;
   if(!cp || String(cp.id) !== String(forPid)){
     mcMsg('This camera was opened on a different client. Go back to that client\u2019s album to upload \u2014 your photos are kept.');
@@ -52977,17 +52994,28 @@ function mcOnClick(e){
   }
   if(k === 'native'){
     mcDiscard(); mcHide();
+    if(target && typeof target.native === 'function'){ target.native(); return; }   /* 1445 */
     var inp = document.getElementById('galCamInput');
     if(inp) inp.click();
   }
 }
-function mcOpen(){
+function mcOpen(opts){
+  /* 1445: with { key, onUpload } the shots go to the caller; without, the album as before */
+  var t = (opts && typeof opts.onUpload === 'function' && opts.key) ? opts : null;
+  if(t){
+    mcBuild();
+    var tk = 't:' + t.key;
+    if(String(forPid) !== tk){ mcDiscard(); forPid = tk; }
+  }else{
   if(!window.currentProject) return;
   mcBuild();
   if(!isOpen || String(forPid) !== String(window.currentProject.id)){
     if(String(forPid) !== String(window.currentProject.id)) mcDiscard();
     forPid = window.currentProject.id;
   }
+  }
+  target = t;
+  var secSel = mcQ('.mc-sec'); if(secSel) secSel.hidden = !!t;   /* album sections mean nothing to a caller */
   isOpen = true;
   zoom = 1; pinch = {}; pinchD0 = 0;
   root.classList.add('open');
@@ -53001,7 +53029,7 @@ document.addEventListener('visibilitychange', function(){
 window.addEventListener('pagehide', function(){ mcStop(); });
 window.CardinalMultiCam = Object.assign(window.CardinalMultiCam || {}, {
   open: mcOpen, supported: mcSupported,
-  _state: function(){ return { open: isOpen, shots: shots.length, pid: forPid, live: !!stream, zoom: zoom, lens: !!hw }; }
+  _state: function(){ return { open: isOpen, shots: shots.length, pid: forPid, live: !!stream, zoom: zoom, lens: !!hw, target: !!target }; }
 });
 })();
 </script>
@@ -61403,6 +61431,7 @@ var ICON = {
   chev :'<path d="M15 5l-7 7 7 7"/>',
   tick :'<path d="M5 12.5l4.2 4.2L19 7"/>',
   cam  :'<rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="4"/><path d="M8.5 7l2-3h3l2 3"/>',
+  img  :'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
   pin  :'<path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/>',
   ph   :'<path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
   chat :'<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l2.4-3.2A8.5 8.5 0 1 1 21 11.5z"/>',
@@ -62070,8 +62099,12 @@ function photosHtml(){
   var gal = '<button class="pkgalbtn" data-act="gallery" type="button">' + svg('cam') +
       (ph.length ? ' View all <b>' + ph.length + '</b> photo' + (ph.length === 1 ? '' : 's')
                  : ' Photo gallery') + '</button>';
+  /* 1445: the library takes several at once; the slots and the camera take several too */
+  gal += '<button class="pkgalbtn" data-act="phlib" type="button">' + svg('img') + ' Add photos from phone</button>';
   var _pend = photoPendFor(it && it.id);
   var pnote = _pend ? '<div class="pkpnote">' + svg('cam') + esc(_pend + ' photo' + (_pend === 1 ? '' : 's') + ' saved on your phone \u2014 uploading when you\u2019re back') + '</div>' : '';
+  var _upn = upFor(it && it.id);
+  if(_upn) pnote += '<div class="pkpnote" data-pkup="' + _upn + '">' + svg('cam') + esc('Uploading ' + _upn + ' photo' + (_upn === 1 ? '' : 's') + '\u2026') + '</div>';
   return '<div class="pksec" id="pkSecPh"><div class="pkh">' + svg('cam') + 'Photos' +
     '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + ' to close</span></div>' +
     '<div class="pkslots">' + cells + '</div>' + gal + pnote + '</div>';
@@ -62089,7 +62122,8 @@ function galleryHtml(){
       '<span class="pkgcap' + (cap ? '' : ' dim') + '">' + (cap || 'Added earlier') + '</span>' +
       '</div>';
   }).join('');
-  var add = '<button class="pkgadd" data-act="galadd" type="button">' + svg('cam') + 'Add photo</button>';
+  var add = '<button class="pkgadd" data-act="galadd" type="button">' + svg('cam') + 'Take photos</button>' +
+    '<button class="pkgadd" data-act="phlib" type="button">' + svg('img') + 'From phone</button>';
   return '<div class="pkgal">' +
     '<div class="pkgtop">' +
       '<button class="pkback" data-act="galback" type="button" aria-label="Back">' + svg('chev') + '</button>' +
@@ -62316,8 +62350,14 @@ function rcptHtml(){
 }
 function rcptPick(){
   var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.setAttribute('capture', 'environment');
+  /* 1445: in the page, or iPhone Safari can drop it while the camera is up (the photo fault). One at a time. */
+  var _old = document.getElementById('pkRcptInput'); if(_old && _old.parentNode) _old.parentNode.removeChild(_old);
+  inp.id = 'pkRcptInput'; inp.style.display = 'none'; inp.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(inp);
   inp.onchange = async function(){
-    var f = inp.files && inp.files[0]; if(!f || !it || !window.CardinalReceipts) return;
+    var f = inp.files && inp.files[0];
+    try{ if(inp.parentNode) inp.parentNode.removeChild(inp); }catch(_rm){}
+    if(!f || !it || !window.CardinalReceipts) return;
     var id = it.id;
     try{ await window.CardinalReceipts.add(it.project_id, f, { punch: id }); outMsg = 'Receipt saved to the job’s Files.'; }
     catch(err){ outMsg = 'Could not save the receipt: ' + ((err && err.message) || err); }
@@ -62681,50 +62721,141 @@ window.addEventListener('cr-outbox-flushed', flushPhotos);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) flushPhotos(); });
 setInterval(flushPhotos, 35000);
 refreshPhotoPend();
-function pickPhoto(i){
+/* 1445: Theo, on Scottie's phone: "it's one photo at a time and it doesn't even
+   show up." The old pickPhoto made its file input with createElement and never
+   put it in the page, and iPhone Safari can drop a detached input while its
+   camera is up: the photo came back to nothing, with no upload and no error. It
+   also set capture="environment" (the phone camera, ONE shot, no library).
+   Measured: Scottie's session of 12 Nov sent no upload and no punch-out save.
+   Now:
+   - a slot tap or Take photos opens the app's own camera (CardinalMultiCam,
+     1229): shoot several, then Upload once;
+   - Add from phone picks several from the library;
+   - both inputs live in the page, like the album's.
+   Every photo still takes photoPrepFile (1600px, no EXIF / GPS) and the offline
+   outbox. CardinalSolUpload.prepare is off this path: it is the scope reader's,
+   and it sent a large photo to scopes/. */
+var PK_BATCH = 20;
+var _pkInp = null, _pkUp = {};
+function upFor(id){ return (id && _pkUp[id]) || 0; }
+function pkInput(){
+  if(_pkInp && document.body.contains(_pkInp)) return _pkInp;
   var inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = 'image/*';
-  /* capture asks the phone for the camera first. A browser cannot BLOCK the
-     library — saying otherwise would be a promise this cannot keep. */
+  inp.id = 'pkPhotoInput';
+  inp.tabIndex = -1;
+  inp.setAttribute('aria-hidden', 'true');
+  inp.style.display = 'none';
+  inp.addEventListener('change', function(){
+    var fs = Array.prototype.slice.call(inp.files || []);
+    var id = inp.getAttribute('data-for');
+    inp.value = '';
+    if(fs.length && id) addPhotos(id, fs);
+  });
+  document.body.appendChild(inp);
+  _pkInp = inp;
+  return inp;
+}
+function pickFromPhone(){
+  if(!it) return;
+  var inp = pkInput();
+  inp.removeAttribute('capture');
+  inp.multiple = true;
+  inp.setAttribute('data-for', it.id);
+  inp.click();
+}
+function phoneCamera(id){
+  var inp = pkInput();
+  inp.multiple = false;
+  /* the phone's camera, ONE photo: only when the app's own camera cannot run */
   inp.setAttribute('capture', 'environment');
-  inp.onchange = async function(){
-    var f = inp.files && inp.files[0];
-    if(!f) return;
+  inp.setAttribute('data-for', id);
+  inp.click();
+}
+function pickPhoto(){
+  if(!it) return;
+  var id = it.id;
+  var mc = window.CardinalMultiCam;
+  /* synchronous, so the fallback click is still the tap */
+  if(mc && mc.supported && mc.supported()){
+    mc.open({ key: 'punch:' + id, room: function(){ return PK_BATCH; },
+      onUpload: function(files){ return addPhotos(id, files); },
+      native: function(){ phoneCamera(id); } });
+    return;
+  }
+  phoneCamera(id);
+}
+async function addPhotos(id, files){
+  files = Array.prototype.slice.call(files || []).filter(Boolean);
+  if(!id || !files.length) return { added: 0, held: 0, failed: 0 };
+  var pkMine = function(){ return !!(it && String(it.id) === String(id)); };
+  var pkRepaint = function(){ if(pkMine()){ lastSig = ''; render(); } };
+  var base = pkMine() ? photos().length : 0;
+  var me = myEmail(), nm = nameOf(me);
+  var added = [], held = 0, bad = [];
+  _pkUp[id] = (_pkUp[id] || 0) + files.length;
+  pkRepaint();
+  for(var n = 0; n < files.length; n++){
+    var f = files[n];
     try{
-      if(window.CardinalSolUpload && window.CardinalSolUpload.prepare){
-        /* 888: prepare() returns a WRAPPER { file } (or { url } / null), NOT the
-           file itself. This used to do `f = await prepare(f)` and upload `f`, so
-           it uploaded the wrapper OBJECT \u2014 which serialised to the 11-byte string
-           {"file":{}} \u2014 and every punch photo in the private bucket was an 11-byte
-           non-image. Unwrap to the real File; if prepare returns no file (over the
-           cap / non-image) keep the camera File rather than upload a broken wrapper. */
-        try{ var _pp = await window.CardinalSolUpload.prepare(f); if(_pp && _pp.file) f = _pp.file; }catch(_){}
-      }
-      /* 1221: prepare() only shrinks a file over 3.1 MB, so most punch photos
-         went up as the raw camera file - full resolution, EXIF and GPS. Every
-         one now takes the same 1600px re-encode as a job photo. */
       if(typeof photoPrepFile === 'function'){ try{ f = await photoPrepFile(f); }catch(_){} }
       if(typeof navigator !== 'undefined' && navigator.onLine === false){
-        await queuePhoto(it.id, f); flushPhotos(); return;
+        await queuePhoto(id, f); held++; continue;
       }
-      var path = 'punch/' + it.id + '/' + Date.now() + '-' + (SLOTS[i] ? SLOTS[i].k : 'extra') + '.jpg';
+      var pos = base + added.length;
+      var path = 'punch/' + id + '/' + Date.now() + '-' + n + '-' + (SLOTS[pos] ? SLOTS[pos].k : 'extra') + '.jpg';
       var up = await window.supa.storage.from('photos').upload(path, f, { upsert:true, contentType:'image/jpeg' });
       if(up.error) throw up.error;
       var pub = window.supa.storage.from('photos').getPublicUrl(path);
       var url = (pub && pub.data && pub.data.publicUrl) || '';
       if(!url) throw new Error('no url back from storage');
-      var list = photos().slice();
-      while(list.length < i) list.push(null);
-      var me = myEmail();
-      list[i] = { u:url, by:me, name:nameOf(me), at:new Date().toISOString() };
-      await save({ photos: list.filter(function(x){ return !!pUrl(x); }) });
+      added.push({ u:url, by:me, name:nm, at:new Date().toISOString() });
     }catch(e){
-      if(_pNet(e)){ try{ await queuePhoto(it.id, f); }catch(_){} flushPhotos(); return; }
-      crTell('Could not attach the photo: ' + (e.message || e));
+      if(_pNet(e)){ try{ await queuePhoto(id, f); held++; }catch(_q){ bad.push(e); } }
+      else bad.push(e);
+    }finally{
+      _pkUp[id] = Math.max(0, (_pkUp[id] || 0) - 1);
+      pkRepaint();
     }
-  };
-  inp.click();
+  }
+  if(added.length){
+    try{ await attachPhotos(id, added); }
+    catch(e2){ bad.push(e2); added = []; }
+  }
+  if(held) flushPhotos();
+  if(bad.length){
+    var m = (bad[0] && bad[0].message) || String(bad[0]);
+    crTell((bad.length === 1 ? 'Could not attach a photo: ' : 'Could not attach ' + bad.length + ' photos: ') + m);
+  }
+  pkRepaint();
+  return { added: added.length, held: held, failed: bad.length };
+}
+async function attachPhotos(id, added){
+  var pkAllShown = function(){ return added.every(function(p){ return photos().some(function(q){ return pUrl(q) === p.u; }); }); };
+  if(it && String(it.id) === String(id)){
+    /* save() returns early while another write is in flight, which dropped a
+       photo that finished uploading during a step tick. Wait for it. */
+    for(var w = 0; busy && w < 150; w++) await new Promise(function(r){ setTimeout(r, 100); });
+    if(!busy && it && String(it.id) === String(id)){
+      await save({ photos: photos().filter(function(x){ return !!pUrl(x); }).concat(added) });
+      if(it && String(it.id) === String(id) && pkAllShown()) return;
+    }
+  }
+  /* the card moved on, or its save was refused: append on the server, as the
+     offline flush does (read the current list, add what is missing) */
+  var cx = window.sb || window.supa;
+  var cur = await cx.from('punch_items').select('photos').eq('id', id).single();
+  if(cur && cur.error) throw cur.error;
+  var arr = (cur && cur.data && Array.isArray(cur.data.photos)) ? cur.data.photos.slice() : [];
+  added.forEach(function(p){ if(!arr.some(function(q){ return pUrl(q) === p.u; })) arr.push(p); });
+  var ur = await cx.from('punch_items').update({ photos: arr }).eq('id', id);
+  if(ur && ur.error) throw ur.error;
+  try{ if(window.CardinalPunch && window.CardinalPunch.reload) await window.CardinalPunch.reload(); }catch(_){}
+  if(it && String(it.id) === String(id)){
+    var fresh = (typeof rowFor === 'function') ? rowFor(id) : null;
+    if(fresh) it = fresh;
+  }
 }
 
 /* -------------------------------------------------------------------- wire */
@@ -62803,7 +62934,7 @@ function wire(){
     if(u && window.CardinalResourceImages && window.CardinalResourceImages.open){
       try{ window.CardinalResourceImages.open(u, it.title || ''); return; }catch(_){}
     }
-    pickPhoto(i);
+    pickPhoto();
   }; });
   q('[data-tag]', function(b){ b.onclick = function(){
     var inp = el.querySelector('[data-f="msg"]');
@@ -62814,7 +62945,8 @@ function wire(){
   q('[data-act="send"]', function(b){ b.onclick = send; });
   q('[data-act="gallery"]', function(b){ b.onclick = function(){ galleryOpen = true; lastSig = ''; render(); }; });
   q('[data-act="galback"]', function(b){ b.onclick = function(){ galleryOpen = false; lastSig = ''; render(); }; });
-  q('[data-act="galadd"]', function(b){ b.onclick = function(){ pickPhoto(photos().length); }; });
+  q('[data-act="galadd"]', function(b){ b.onclick = function(){ pickPhoto(); }; });
+  q('[data-act="phlib"]', function(b){ b.onclick = function(){ pickFromPhone(); }; });   /* 1445 */
   q('[data-gview]', function(b){ b.onclick = function(){
     var i = Number(b.getAttribute('data-gview'));
     var p = photos()[i], u = pUrl(p);
@@ -62947,6 +63079,7 @@ window.CardinalPunchCard = {
   _stuckPhotos: function(){ return stuckPhotos(); },
   _retryPhoto: function(id){ return retryPhoto(id); },
   _discardPhoto: function(id){ return discardPhoto(id); },
+  _addPhotos: function(id, files){ return addPhotos(id, files); },   /* 1445 test hook */
 };
 })();
 </script>

@@ -38063,3 +38063,67 @@ The name was the only flexible item, so it was the one that gave way.
 - **gate_chromium:** GREEN. All 23 pass on 1444, and all 23 go red when what they protect is broken.
 - The machine restarted partway through the queue (42 of 74 jobs done). The other 32 were run again, along with gate_chromium.
 - **Sentinel** (standard setup, 390 and 1440, dark and light, `--since` 1443): running when this was committed. It does not hold this merge, because this is a naming build. The result goes in the next build's entry.
+
+## Build 1445 — punch-out photos, several at a time, and they arrive (12 Nov 2026)
+
+**Source:** Theo, 12 Nov, on Scottie's phone: "Can you please fix the issue with taking photos for the productions punchouts scottie. Ive used his phone and its one photo at a time and it doesnt even show up."
+
+**Measured before patching** (counts only):
+- **`punch_items`:** no punch-out has had a photo saved since August.
+- **`storage.objects`:** Scottie has sent no photo anywhere in 30 days. The one punch photo uploaded since August (Curtis, 14 Oct) reached storage and never reached its punch-out.
+- **The server logs for 12 Nov:** Scottie's session (16:49–16:53 UTC) read the punch-outs and sent **no upload and no punch-out save**. So the photo was lost on the phone before anything left it.
+- **The database side is clean for him:**
+  - `photos_upload` allows `punch/`;
+  - `punch_update` is open to authenticated users;
+  - `staff_only_1407` passes, because Scottie has a `team_profiles` row;
+  - `punch_close_guard` does not touch `photos`.
+
+**What was wrong, in the old `pickPhoto`:**
+1. **The input was never in the page.** It was made with `createElement`, never attached, then clicked. iPhone Safari can drop a detached input while its camera is up (BUG_CLASSES 106). Chromium never does, so 888 and 1221 stayed green.
+2. **`capture="environment"`.** This opens the phone camera for one shot and offers no library.
+3. **`CardinalSolUpload.prepare` ran first.** That is the scope reader's function. It sent a large photo to `scopes/` and could put up a scope-of-loss message on a punch-out.
+4. **`save()` returns early while another write is in flight.** A photo that finished uploading during a step tick was dropped silently.
+
+**What changed:**
+- **The camera:** a slot tap or **Take photos** opens `CardinalMultiCam`, the in-app camera from 1229. You shoot several, then tap Upload once.
+  - `CardinalMultiCam` gained a target mode, `open({ key, room, onUpload, native })`, which hides the Section picker. `open()` with no target is the album, unchanged.
+  - With no camera API, or "Use the phone camera instead", the phone camera opens through an input that is in the page.
+- **The library:** **Add photos from phone** under the slots, and **From phone** in the gallery, each pick several at once.
+- **The upload, in `addPhotos` and `attachPhotos`:**
+  - every photo still goes through `photoPrepFile` (1600px, no EXIF/GPS);
+  - with no signal it is still held in the 866 outbox;
+  - the card says "Uploading N photos…" while it works;
+  - it waits for an in-flight write before saving;
+  - a batch whose card has moved on, or whose save was refused, is appended on the server, as the offline flush does.
+- **Add receipt** on the same card had the same detached-input fault. Its input is now attached, and taken out again after use.
+
+**Not changed, recorded:**
+- The payments receipt camera (`rcptAttach`, main block) and the NACHI admin upload also use detached inputs. The payments side belongs to the other session.
+- The five-photo close rule is unchanged.
+
+**Files:**
+- `patch_1445_photos.py`, then `patch_1445.py`. Byte-reproducible on 1444.
+- `gate_1445.mjs`.
+
+**Gates:**
+- **Build gates:**
+  - `check_build` is GREEN.
+  - `gate_1445` is GREEN, 34/0, as Scottie in real Chromium with a canvas camera. On 1444 it is RED, 9 passed and 23 failed, without crashing.
+  - **Section J proves the album camera is unchanged.** It runs as an admin, because a field user has no album. Two shots with Section "Before" reach `addGalleryFiles` on both trees, and the camera closes. 1444 fails J only on the new `target` field.
+  - **Two old harnesses updated for 1445:**
+    - `render_punchphoto888` keeps 888's rule: the upload is a real File, never the wrapper. It now opens the picker through "Add photos from phone", because a slot tap opens the in-app camera. It expects the picked file's own bytes when the source no longer calls `CardinalSolUpload.prepare`, and the prepared 5000 on an older tree. GREEN 5/0 on both.
+    - `render_pkgallery859` wrote its screenshot into another session's scratchpad and stopped on ENOENT. It now writes to `os.tmpdir()`. GREEN 12/0 on both.
+    - ⚠ Seven more scripts still name that dead scratchpad path, `render_landing852` among them. Not touched here.
+  - ⚠ **`gate_1229` and `gate_1246` (the album camera's own gates) are stale on both trees.** Their rig lets the CDN supabase-js replace the mock (the 1441 lesson), so the album never opens: F reports `{"none":true}` and 1246 crashes. Their pass/fail lines are identical on 1444 and 1445. J above is the working check.
+  - ⚠ **Chromium cannot reproduce the iPhone dropping a detached input.** On 1444 the fallback photo still arrives in Chromium. The gate asserts what it can, that each chooser's input `isConnected`. **Scottie's phone is the final gate.**
+- **Standing gates:**
+  - `gate_dupes`: the RED lines are identical to 1444. Two inner helpers were renamed (`pkRepaint`, `pkAllShown`) after the first run showed `has` and `paint` gaining definitions.
+  - `audit_scrolllock` is GREEN, 16 modules.
+- **41 related gates on both trees, gate_types, gate_chromium, and the sentinel on the punch card** were still running when this was committed. Their results are in the PR and go in the next build's entry.
+
+**Carried from 1444:**
+- **1444's sentinel, carried here as its build log said it would be:**
+  - The full sweep (every state, 390 and 1440, dark and light, `--since` 1443) **timed out after 3,644s, at 256 renders.** That result is UNKNOWN, not clean.
+  - **A narrowed sweep** (nav, clientdir, insclients, truth and frontdoor; same viewports and themes) had 3 new findings in 20 renders. All 3 were TRUNCATED notices from the 20-per-render cap, in light at 390 on insclients, truth and frontdoor.
+  - **Uncapped** on those four states in light at 390: CLEAN, nothing new. 63 findings are carried from 1443.
+- **SETTLED 2 Nov 2026 (Theo, "1"): the Clients bar keeps its two rows at Normal on a phone.** Since 1444 the longer "Insurance" chip makes the bar wrap: All, Retail and Insurance on the first row, Community on the second. Every larger text size already looked this way. Do not tighten the chips to force one row. (Record this in OPEN_ITEMS' settled decisions with the next build.)
