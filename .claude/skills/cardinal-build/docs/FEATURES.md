@@ -10795,4 +10795,4 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - **`CardinalMultiCam.open(opts)` gained a target mode,** `{ key, room, onUpload, native }`. The shots go to the caller, and the album's Section picker is hidden. `open()` with no target is the album, unchanged.
 - **Unchanged:** the five-photo close rule and the slot labels.
 
-**Gate:** `gate_1445.mjs`, 31 checks, RED on 1444. It runs as Scottie in real Chromium with a canvas camera.
+**Gate:** `gate_1445.mjs`, 34 checks, RED on 1444. It runs as Scottie in real Chromium with a canvas camera. Section J runs as an admin and proves the job album's camera still runs album mode.

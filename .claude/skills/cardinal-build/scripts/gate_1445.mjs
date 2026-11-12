@@ -19,6 +19,8 @@
         the server; the card on screen is untouched
      G  no signal: the photo is held on the phone (the 866 outbox), not dropped
      I  the card's Add receipt camera is in the page too, and removed after use
+     J  the job album's camera still runs album mode (no target): Section picker shown,
+        Upload hands addGalleryFiles the shots with the chosen section
      H  source: the scope reader's CardinalSolUpload.prepare is off the punch path;
         the album's camera keeps its own path (open() with no target)
 
@@ -53,7 +55,7 @@ const LEAVE = `(() => { ['landingView','loginView'].forEach(id => { const e = do
 
 const browser = await launchChromium(chromium);
 
-async function boot(cam) {
+async function boot(cam, asWho = 'scottie') {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   /* every remote request refused: the CDN supabase-js would otherwise replace the
      e2e mock and the punch cache would load empty (the 1441 gate_stack lesson) */
@@ -79,7 +81,7 @@ async function boot(cam) {
     }
     try { Object.defineProperty(navigator, 'mediaDevices', { configurable: true, get: () => md }); } catch (e) {}
   }, cam);
-  await p.goto('file://' + artifact + '?as=scottie', { waitUntil: 'domcontentloaded' });
+  await p.goto('file://' + artifact + (asWho ? '?as=' + asWho : ''), { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(2600);
   const opened = await p.evaluate(async L => {
     eval(L);
@@ -234,6 +236,36 @@ console.log('\nE  no camera API: the phone camera, through an input in the page'
   await ctx.close();
 }
 
+/* ── J: the album camera, unchanged ───────────────────────────────────── */
+console.log('\nJ  the job album\u2019s camera keeps its own path (as an admin: a field user has no album)');
+{
+  const { ctx, p } = await boot(true, '');
+  await p.evaluate(async L => { eval(L); const s = (window.__sentinelStates || []).find(s => s.name === 'album'); if (s) await s.run(); }, LEAVE).catch(() => {});
+  await sleep(1200);
+  const r = await p.evaluate(async () => {
+    const btn = document.getElementById('galCamBtn'); if (!btn) return { nobtn: true };
+    window.addGalleryFiles = async function (files, metas) { window.__added = { n: files.length, metas: metas, types: [...files].map(f => f.type) }; };
+    btn.click();
+    const root = () => document.getElementById('cr-mcam');
+    for (let k = 0; k < 30; k++) { const st = window.CardinalMultiCam._state(); if (st.live) break; await new Promise(z => setTimeout(z, 150)); }
+    const st = window.CardinalMultiCam._state();
+    const sec = root() && root().querySelector('.mc-sec');
+    const out = { st, secHidden: sec ? sec.hidden : null };
+    const sh = root() && root().querySelector('[data-mc="shoot"]');
+    if (sh) { for (let i = 0; i < 2; i++) { sh.click(); await new Promise(z => setTimeout(z, 300)); } }
+    if (sec) sec.value = 'Before';
+    const up = root() && root().querySelector('[data-mc="upload"]');
+    if (up) { up.click(); await new Promise(z => setTimeout(z, 600)); }
+    out.added = window.__added || null;
+    out.closed = !!(root() && !root().classList.contains('open'));
+    return out;
+  }).catch(e => ({ threw: String(e).slice(0, 120) }));
+  ok(!!(r.st && r.st.open && r.st.target === false && r.secHidden === false), 'J  the album opens the camera in album mode, Section picker showing', r);
+  ok(!!(r.added && r.added.n === 2 && r.added.metas.every(m => m.section === 'Before') && r.added.types.every(t => t === 'image/jpeg')), 'J  Upload hands the album its two JPEGs with the chosen section', r.added);
+  ok(r.closed === true, 'J  and the camera closes', r.closed);
+  await ctx.close();
+}
+
 /* ── H: source ─────────────────────────────────────────────────────────── */
 console.log('\nH  source');
 const blk = id => { const i = HTML.indexOf('<script id="' + id + '"'); return i < 0 ? '' : HTML.slice(i, HTML.indexOf('</script>', i)); };
@@ -243,7 +275,7 @@ ok(/function pkInput\(\)[\s\S]{0,900}document\.body\.appendChild\(inp\)/.test(pk
 ok(/function mcOpen\(opts\)/.test(mc) && /if\(!window\.currentProject\) return;\n  mcBuild\(\);/.test(mc) && /addGalleryFiles\(files, metas\)/.test(mc), 'H  the album camera keeps its own path (no target → currentProject, addGalleryFiles)');
 
 await browser.close();
-const FLOOR = 26;
+const FLOOR = 29;
 const total = pass + fail;
 if (total < FLOOR) { console.log(`  ✗ FAIL only ${total} checks ran (floor ${FLOOR})`); fail++; }
 console.log(`\n${fail ? 'GATE 1445 RED' : 'GATE 1445 GREEN'} — ${pass} passed, ${fail} failed`);

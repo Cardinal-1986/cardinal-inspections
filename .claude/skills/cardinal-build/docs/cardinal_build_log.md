@@ -38108,7 +38108,9 @@ The name was the only flexible item, so it was the one that gave way.
 **Gates:**
 - **Build gates:**
   - `check_build` is GREEN.
-  - `gate_1445` is GREEN, 31/0, as Scottie in real Chromium with a canvas camera. On 1444 it is RED, 7 passed and 22 failed, without crashing.
+  - `gate_1445` is GREEN, 34/0, as Scottie in real Chromium with a canvas camera. On 1444 it is RED, 9 passed and 23 failed, without crashing.
+  - **Section J proves the album camera is unchanged.** It runs as an admin, because a field user has no album. Two shots with Section "Before" reach `addGalleryFiles` on both trees, and the camera closes. 1444 fails J only on the new `target` field.
+  - ⚠ **`gate_1229` and `gate_1246` (the album camera's own gates) are stale on both trees.** Their rig lets the CDN supabase-js replace the mock (the 1441 lesson), so the album never opens: F reports `{"none":true}` and 1246 crashes. Their pass/fail lines are identical on 1444 and 1445. J above is the working check.
   - ⚠ **Chromium cannot reproduce the iPhone dropping a detached input.** On 1444 the fallback photo still arrives in Chromium. The gate asserts what it can, that each chooser's input `isConnected`. **Scottie's phone is the final gate.**
 - **Standing gates:**
   - `gate_dupes`: the RED lines are identical to 1444. Two inner helpers were renamed (`pkRepaint`, `pkAllShown`) after the first run showed `has` and `paint` gaining definitions.
