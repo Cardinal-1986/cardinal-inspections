@@ -6491,3 +6491,16 @@ Theo, verbatim: "I don't know on calander put it on hold."
   desktop doc Save 42); the remaining modals (estimate picker, photo editor, walkthrough, What's New, AccuLynx
   import) do not close on Back. Audit coverage gaps: non-admin roles, the inspection checklist modal,
   Insurance/Production/Community-only menu sections.
+
+## 12 Nov 2026 (build 1445)
+- ✅ **SETTLED 2 Nov 2026 (Theo, "1"): the Clients bar keeps its two rows at Normal on a phone.**
+  - Since 1444 the longer "Insurance" chip makes the bar wrap: All, Retail and Insurance on the first row, Community on the second. Every larger text size already wrapped.
+  - Do not tighten the chips to force one row.
+- 🟠 **Punch-out photos (1445) need a check on Scottie's phone.** Chromium cannot reproduce an iPhone dropping a detached file input, so the fix is proven only up to "the input is in the page". After deploy, close and reopen the app twice, then on a punch-out:
+  - take three photos in the in-app camera and tap Upload;
+  - add two from the library.
+
+  All five should show.
+- **Still detached, not changed (BUG_CLASSES 106):**
+  - the payments receipt camera, `rcptAttach` in the main block. It sits on the payments side, which another session owns;
+  - the NACHI admin upload, `cr-nachi-cm-script`.
