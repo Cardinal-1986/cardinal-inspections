@@ -10816,3 +10816,11 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - **Sticky bar `#cr-pb > .pbstick`:** the date, today's words (shared `todayBits()`) and + Add. It appears once the sky scrolls away.
 
 **Gate:** `gate_1447.mjs`, 15 checks, RED on 1446; in `gate_chromium`.
+
+## Build 1448: Crew Dispatch rain flag (13 Nov 2026)
+
+- **What:** a booked job on a wet day wears the day's `CardinalWx.flag()` ("Rain 80%" / "Storm 70%" / "Snow") and a `--disp-wx` outline.
+- **Where:** `cr-disp-script` `jobChip(w, s)`.
+- **Not built:** the "suggest the next dry free day" sheet (option B).
+
+**Gate:** `gate_1448.mjs`, in `gate_chromium`.

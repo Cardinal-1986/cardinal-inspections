@@ -38184,3 +38184,22 @@ The name was the only flexible item, so it was the one that gave way.
 - Sentinel `--since` 1446 (production walk, 390 + 1440, dark + light): CLEAN, nothing new in 24 renders.
 - `gate_stack`: CLEAN.
 - Not run locally (Windows): the same set as 1446. CI is the record.
+
+## Build 1448 — Crew Dispatch: a job booked on a wet day says so (13 Nov 2026)
+
+**Theo, "flag only".** He picked option A of the rain-aware Dispatch previews over B (flag + "move to the next dry day" suggestion), which were drawn on the real board with a test forecast. B stays unbuilt.
+
+**What shipped (`cr-disp-script` / `cr-disp-styles`):**
+- `jobChip(w, s)` now gets the day. A booked, unfinished job on a wet day wears `CardinalWx.flag(s)` ("Rain 80%", "Storm 70%", "Snow") in a pill, plus an inset outline.
+- These are the same words the punch-outs wear (1295), so "wet" means one thing app-wide. The ink is `--disp-wx`, the header's own wet ink, already computed for Dark, Light and Sun.
+- Finished jobs carry no flag.
+- No new fetch: Dispatch already re-renders when the forecast lands (959).
+- Moving stays the existing grip.
+
+**Gates:**
+- `check_build` GREEN; the negative control holds.
+- `gate_1448.mjs` (new, in `gate_chromium` with a break on the flag line): 8 GREEN on 1448 and 4 RED on 1447. The break alone reds 4.
+  - It runs against the app's own `cr-dispwx` cache shape.
+  - Contrast: 8.9:1 dark, 6.1:1 light.
+- Sentinel `--since` 1447 (production walk incl. dispatch, 390 + 1440, dark + light): CLEAN.
+- `gate_stack`: CLEAN.
