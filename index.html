@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1449<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1450<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47208,6 +47208,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1450, d:'2026-11-13', t:'Obsidian instead of navy', s:'The dark theme drops its navy for obsidian. The home screen, the side menu, the top bar, client pages and Leads keep their layout; the boxes are the same polished black as the Activity Count tiles, lit from the top-left and raised on a soft shadow, on a near-black page. Light mode, Claims and Community are unchanged.' },
   { b: 1449, d:'2026-11-13', t:'Color Studio from the client\u2019s page', s:'On a client\u2019s page the Job Menu now has a Color Studio tile for the owner account. It opens the Showroom in a new tab, signs in and lands on the Cardinal Experience, where Lessons leads to the Color Studio \u2014 so the colour picker is one tap from the client you are looking at. It shows only for the owner because the Showroom itself only lets the owner in.' },
   { b: 1448, d:'2026-11-13', t:'Crew Dispatch: a job booked on a wet day says so', s:'On the Crew Dispatch board, any job booked on a day the forecast calls wet now wears a small blue tag on its card \u2014 \u201cRain 80%\u201d, \u201cStorm 70%\u201d or \u201cSnow\u201d \u2014 the same rain flag punch-outs already show, so you can see at a glance which crews are heading into weather and move them with the grip if you choose. Finished jobs carry no tag.' },
   { b: 1447, d:'2026-11-13', t:'Production\u2019s sky: the hour it rains, the temperature, and a bar that stays', s:'The weather chip on the Production sky now says when the wet starts and how warm it is \u2014 \u201c44\u00b0 \u00b7 Rain from 2pm\u201d \u2014 using today\u2019s hourly forecast for Dayton, and the sky shows what it is doing now: a dry morning stays dry until the rain actually arrives. Scroll down past the sky and a slim bar slides in along the top with the date, what today holds and + Add, so you never have to scroll back up to add something.' },
@@ -78403,7 +78404,7 @@ font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif
 font-size:15px;font-weight:800;letter-spacing:0;color:var(--rbe-head,#ffffff);}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipecard{
 --cr-stack:"1283 flat drawer panel (was gloss gradient + drop shadow); 1415 no red edge";
-background:#0F1521;border:1px solid #223047;
+background:#15161C;border:1px solid #24242C;
 box-shadow:none;border-radius:12px;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pipecard::after{
 --cr-stack:"1283 no glint line";display:none;}
@@ -78411,7 +78412,7 @@ box-shadow:none;border-radius:12px;}
 --cr-stack:"1283 no glint divider";display:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .pu-card{
 --cr-stack:"1283 flat punch card; its own priority edge stays";
-background:#141B27;box-shadow:none;border-top:1px solid #223047;border-bottom:1px solid #223047;border-right:1px solid #223047;}
+background:#15161C;box-shadow:none;border-top:1px solid #24242C;border-bottom:1px solid #24242C;border-right:1px solid #24242C;}
 
 /* ── Build 1284 · the top bar in the drawer's style (Theo: option B) ──────
    The header was a navy gloss gradient with a drop shadow and two raised gloss
@@ -78419,12 +78420,12 @@ background:#141B27;box-shadow:none;border-top:1px solid #223047;border-bottom:1p
    header's own tokens carry the ground, so every rule that reads them follows. */
 :root:not([data-theme="rb-light"]) body[data-crm-head="retail"] .site{
 --cr-stack:"1284 flat header ground, the drawer's well";
---hbg:#0A0E16;--htint:#0A0E16;--hsf:#0F1521;
-box-shadow:none;border-bottom:1px solid #223047;}
+--hbg:#0B0B0E;--htint:#0B0B0E;--hsf:#15161C;
+box-shadow:none;border-bottom:1px solid #24242C;}
 :root:not([data-theme="rb-light"]) body[data-crm-head="retail"] #cr-hd2-bar .cr-ib,
 :root:not([data-theme="rb-light"]) body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-home{
 --cr-stack:"1284 flat header buttons (were gloss bevels)";
-background:#0F1521;border:1px solid #223047;box-shadow:none;color:#c2cbd8;}
+background:#15161C;border:1px solid #24242C;box-shadow:none;color:#D8DBDF;}
 :root:not([data-theme="rb-light"]) body[data-crm-head="retail"] #cr-hd2-bar .cr-ib.primary{
 --cr-stack:"1284 flat red + (was sky-blue gloss)";
 background:#c8202e;border:1px solid #c8202e;box-shadow:none;color:#ffffff;}
@@ -78432,13 +78433,13 @@ background:#c8202e;border:1px solid #c8202e;box-shadow:none;color:#ffffff;}
 /* ── Build 1285 · Team Calendar arrows + Activity panel, drawer style ────── */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .teamcal .minical .calnav{
 --cr-stack:"1285 flat month arrows (were red bevels)";
-background:#0F1521;border:1px solid #223047;box-shadow:none;color:#c2cbd8;}
+background:#15161C;border:1px solid #24242C;box-shadow:none;color:#D8DBDF;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .teamcal .minical .calnav:hover{
 --cr-stack:"1285 hover for the flat arrows";
-background:#141C29;color:#ffffff;}
+background:#15161C;color:#ffffff;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #mainView .actcard{
 --cr-stack:"1285 flat Activity panel (was slab + drop shadow + ridge); 1415 no red edge";
-background:#0F1521;border:1px solid #223047;box-shadow:none;border-radius:12px;}
+background:#15161C;border:1px solid #24242C;box-shadow:none;border-radius:12px;}
 
 /* ── Build 1286 · the client page in the drawer's style (Theo: option B) ───
    Measured: Georgia on the client name and History heading, ui-monospace on the
@@ -78456,22 +78457,22 @@ font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .projinfo,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .projinfo:hover{
 --cr-stack:"1286 flat client card; its stage spine stays";
-background:#0F1521;border-top:1px solid #223047;border-right:1px solid #223047;border-bottom:1px solid #223047;box-shadow:none;}
+background:#15161C;border-top:1px solid #24242C;border-right:1px solid #24242C;border-bottom:1px solid #24242C;box-shadow:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .jabox,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .jabox:hover,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .jobvalrow:hover,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .rvcard{
 --cr-stack:"1286 flat drawer panel (was gloss + drop shadow)";
-background:#0F1521;border:1px solid #223047;box-shadow:none;}
+background:#15161C;border:1px solid #24242C;box-shadow:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .crji-card{
 --cr-stack:"1286 Invoices card: shadow off; its ground stays on its own --crji-card token (gate_1216 guards it)";
-border:1px solid #223047;box-shadow:none;}
+border:1px solid #24242C;box-shadow:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .kpsec{
 --cr-stack:"1286 flat History card; its red TOP border is its own marker (797) and stays";
-background:#0F1521;border-left:1px solid #223047;border-right:1px solid #223047;border-bottom:1px solid #223047;box-shadow:none;}
+background:#15161C;border-left:1px solid #24242C;border-right:1px solid #24242C;border-bottom:1px solid #24242C;box-shadow:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .jabox:hover{
---cr-stack:"1286 hover lifts the ground, not a shadow";background:#141C29;}
+--cr-stack:"1286 hover lifts the ground, not a shadow";background:#15161C;}
 
 /* ── Build 1287 · one typeface across the app, dark retail (Theo: option B) ─
    Every page title was Georgia and ui-monospace is declared 256 times, mostly in
@@ -78492,7 +78493,7 @@ font-variant-numeric:tabular-nums;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pu-hero .pu-card,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView .pu-card{
 --cr-stack:"1288 flat drawer panel (was bg1/bg2 gloss + shadow)";
-background:#0F1521;border:1px solid #223047;box-shadow:none;}
+background:#15161C;border:1px solid #24242C;box-shadow:none;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-ar-view .crar-btn:not(.primary),
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-ar-view .crar-empty,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #crewsView .crw-card{
@@ -78666,19 +78667,27 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 
    Scoped to DARK + RETAIL only. Claims, Community and the entire light theme
    are out of reach by construction, not by inspection.                     */
+/* ── Build 1450 · obsidian instead of navy (Theo, 13 Nov: "keep what we currently have and
+   just change the colors"; grey, then "darker maybe glass style", then "Try obsidian" — pick A).
+   Same layout, same drawer. The navy family becomes near-black: page #09090C, rail/header #0B0B0E,
+   panel #15161C, raised #1C1D24, line #24242C. The content boxes take the Activity Count tiles'
+   obsidian face (545): a sheen from the top-left, a #24242c edge, raised on a real shadow — the
+   face rule sits at the END of cr-nvl-styles so it wins its ties. Theo chose A knowing it is a
+   gradient (the August no-gradients rule); 545's tiles were already one. Dark retail only. */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community){
-  --nv-card1:#1A2434; --nv-card2:#141C29; --nv-edge:#33496A; --nv-bd:#223047;
-  --nv-well:#0A0E16;  --nv-cell:#0D1220;  --nv-ink:#dfe5ee;  --nv-ink2:#8d97a6;
+  --bg:#09090C; --nv-card1:#1C1D24; --nv-card2:#15161C; --nv-edge:#3A3B45; --nv-bd:#24242C;
+  --nv-well:#0B0B0E;  --nv-cell:#0D0E12;  --nv-ink:#F0F1F2;  --nv-ink2:#BEC2C7;
   --nv-sink:inset 0 1px 2px rgba(0,0,0,.5);
 }
 /* the card — raised, navy, lit along the top edge */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard{
-  background:linear-gradient(180deg,var(--nv-card1,#1A2434),var(--nv-card2,#141C29));
-  border:1px solid var(--nv-bd,#223047);
-  border-top:2px solid var(--nv-edge,#33496A);
-  border-bottom:1px solid var(--nv-bd,#223047);
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:linear-gradient(180deg,var(--nv-card1,#1C1D24),var(--nv-card2,#15161C));
+  border:1px solid var(--nv-bd,#24242C);
+  border-top:2px solid var(--nv-edge,#3A3B45);
+  border-bottom:1px solid var(--nv-bd,#24242C);
   box-shadow:0 12px 26px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.07);
-  color:var(--nv-ink,#dfe5ee);
+  color:var(--nv-ink,#F0F1F2);
 }
 /* ── the pipeline: orbs become a carved strip ──────────────────────────────
    The whole strip is the height the 52px circle alone used to be. .pcirc
@@ -78686,12 +78695,12 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    the cell's top edge, so the semantic colour mapping never leaves JS.     */
 :root body:not(.claim-insurance):not(.claim-community) .piperow{
   --cr-stack:"J16 the dark strip rule, widened to light: dark already beat the base here; light now does too, and the base sphere rules stay for Claims/Community bodies";
-  background:var(--nv-well,#0A0E16);border-radius:5px;padding:1px;gap:1px;
+  background:var(--nv-well,#0B0B0E);border-radius:5px;padding:1px;gap:1px;
   box-shadow:var(--nv-sink,inset 0 1px 2px rgba(0,0,0,.5));
 }
 :root body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn{
   --cr-stack:"J16 the dark strip rule, widened to light: dark already beat the base here; light now does too, and the base sphere rules stay for Claims/Community bodies";
-  flex:1;background:var(--nv-cell,#0D1220);border:0;border-radius:0;
+  flex:1;background:var(--nv-cell,#0D0E12);border:0;border-radius:0;
   padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;gap:1px;
 }
 :root body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:first-child{border-radius:4px 0 0 4px}
@@ -78704,12 +78713,15 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   background-image:none;
 }
 :root body:not(.claim-insurance):not(.claim-community) .piperow .pcount{
-  font:800 18px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--nv-ink,#dfe5ee);order:2}
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  font:800 18px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--nv-ink,#F0F1F2);order:2}
 :root body:not(.claim-insurance):not(.claim-community) .piperow .plabel{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
   font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--nv-ink2,#8d97a6);order:3}
+  color:var(--nv-ink2,#BEC2C7);order:3}
 :root body:not(.claim-insurance):not(.claim-community) .piperow .pmoney{
-  font:700 11px ui-monospace,Menlo,monospace;color:var(--nv-ink2,#8d97a6);order:4}
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  font:700 11px ui-monospace,Menlo,monospace;color:var(--nv-ink2,#BEC2C7);order:4}
 /* J16: the same strip in LIGHT — white card, a pale recessed well, near-white
    cells. Count #1b1f27 on #f7f8fa 15.6:1, label/money #535c69 6.4:1. These are
    the only light values; the eight rules above are shared with dark verbatim.
@@ -78721,7 +78733,8 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 
 /* ── client rows: sunk, at Theo's pick ─────────────────────────────────── */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .kplrow{
-  background:var(--nv-well,#0A0E16);box-shadow:var(--nv-sink,inset 0 1px 2px rgba(0,0,0,.5));
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:var(--nv-well,#0B0B0E);box-shadow:var(--nv-sink,inset 0 1px 2px rgba(0,0,0,.5));
   border-radius:0 6px 6px 0;
 }
 
@@ -78734,8 +78747,9 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    His list: same treatment · no red on top · white numbers · white month ·
    each small square gets the sunk cell · fix the text that cannot be read. */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .pipecard.teamcal{
-  border:1px solid var(--nv-bd,#223047);
-  border-top:2px solid var(--nv-edge,#33496A);   /* was 5px solid var(--red) */
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  border:1px solid var(--nv-bd,#24242C);
+  border-top:2px solid var(--nv-edge,#3A3B45);   /* was 5px solid var(--red) */
   box-shadow:0 12px 26px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.07);
 }
 /* the black hairline that sat under the red cap has nothing left to cap */
@@ -78744,7 +78758,8 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 }
 /* the red rule under the month header goes with it */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calhead{
-  border-bottom:1px solid var(--nv-bd,#223047);
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  border-bottom:1px solid var(--nv-bd,#24242C);
 }
 /* "White for month also" — this kills a gold→red→gold clipped gradient, so the
    clip has to be released too or the text stays transparent. */
@@ -78753,14 +78768,16 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 }
 /* each small square, same sunk cell as the pipeline */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .day{
-  background:var(--nv-cell,#0D1220);border:1px solid var(--nv-bd,#223047);
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:var(--nv-cell,#0D0E12);border:1px solid var(--nv-bd,#24242C);
   box-shadow:var(--nv-sink,inset 0 1px 2px rgba(0,0,0,.5));
   color:#ffffff;                                  /* "Make the numbers white" */
 }
 /* days outside the month: dimmed but still legible — the old #cfc4ba on cream
    was ~1.6:1, which is one of the "texts that can't be read". */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .day.other{
-  background:var(--nv-well,#0A0E16);border-color:#161d2a;color:#7c8695;box-shadow:none;
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:var(--nv-well,#0B0B0E);border-color:#24242C;color:#7c8695;box-shadow:none;
 }
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .day.cur:hover{
   background:#141d2c;
@@ -78772,12 +78789,14 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 }
 /* day-of-week strip: was #b8860b gold on cream, unreadable on the new ground */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calgrid .dow{
-  background:var(--nv-well,#0A0E16);border:1px solid var(--nv-bd,#223047);
-  color:var(--nv-ink2,#8d97a6);
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:var(--nv-well,#0B0B0E);border:1px solid var(--nv-bd,#24242C);
+  color:var(--nv-ink2,#BEC2C7);
 }
 /* the legend under the grid — #3a2e28 on this ground is invisible */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .callegend{
-  color:var(--nv-ink,#dfe5ee);
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  color:var(--nv-ink,#F0F1F2);
 }
 /* the nav arrows keep the red; only their shadow was tuned for paper */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .teamcal .minical .calnav{
@@ -78830,24 +78849,30 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 
 /* ── DARK · highlight-led ────────────────────────────────────────────────── */
 :root:not([data-theme="rb-light"]) #cr-lnav{
-  background:#0A0E16;
-  border-right:1px solid #223047;
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:#0B0B0E;
+  border-right:1px solid #24242C;
   /* the catch on the inner right edge is what says "dip" here; the shadow is
      nearly the page colour and does almost nothing on its own */
   box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
 }
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec{
-  background:linear-gradient(180deg,#141C29,#0F1521);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
-  color:#8d97a6;padding-top:8px;padding-bottom:7px;margin-top:6px;
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:radial-gradient(140% 120% at 20% -20%,#24252d 0%,#121318 55%,#0b0b0e 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #050507;
+  color:#BEC2C7;padding-top:8px;padding-bottom:7px;margin-top:6px;
 }
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec .cnt,
-:root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec .chev{color:#8d97a6}   /* 1393: #6b7688 was 3.72:1; the section label's own ink */
-:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item{color:#c2cbd8}
-:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item:hover{background:#111927;color:#ffffff}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-sec .chev{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";color:#BEC2C7}   /* 1393: #6b7688 was 3.72:1; the section label's own ink */
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";color:#D8DBDF}
+:root:not([data-theme="rb-light"]) #cr-lnav .lnav-item:hover{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";background:#141519;color:#ffffff}
 /* the active row is a navy card sitting IN the well — 535's card colour */
 :root:not([data-theme="rb-light"]) #cr-lnav .lnav-item.on{
-  background:linear-gradient(180deg,#1A2434,#141C29);
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:linear-gradient(180deg,#1C1D24,#15161C);
   color:#ffffff;font-weight:700;border-left-color:transparent;
   box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e),
              0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
@@ -79049,7 +79074,8 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   #clientsView .cd-card:hover{ border-color:#4a4d52; }
   :root[data-theme="rb-light"] #clientsView .cd-card:hover{ border-color:#cfcfcf; }
   #cr-orv-view button.orv-card:hover{ border-color:var(--orv-dim,#a8b0ba); }
-  :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:hover{ background:var(--nv-card1,#1A2434); }
+  :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:hover{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged"; background:var(--nv-card1,#1C1D24); }
   :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) .piperow .pipebtn:hover{ background:#ffffff; box-shadow:inset 0 0 0 1px #c9cdd3; }
 }
 
@@ -79058,16 +79084,18 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    object seen twice. Light: the bright white card on the off-white page, lifted
    the same way.                                                             */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
   /* 1288: flat, the drawer's style (Theo: option B); ground stays on its --nv token */
-  background:var(--nv-card2,#141C29);
-  border:1px solid var(--nv-bd,#223047);
-  border-top:1px solid var(--nv-bd,#223047);
+  background:var(--nv-card2,#15161C);
+  border:1px solid var(--nv-bd,#24242C);
+  border-top:1px solid var(--nv-bd,#24242C);
   box-shadow:none;
-  color:var(--nv-ink,#dfe5ee);
+  color:var(--nv-ink,#F0F1F2);
 }
 @media (hover:hover){
   :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljcard:hover{
-    box-shadow:none;background:var(--nv-card1,#1A2434);
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+    box-shadow:none;background:var(--nv-card1,#1C1D24);
     border-top-color:#435C82;
   }
 }
@@ -79122,8 +79150,10 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root:not([data-theme="rb-light"]) #leadsView .ljcard .ljkl{color:#ffffff;opacity:.82;}
 :root:not([data-theme="rb-light"]) #leadsView .ljcard .ljkv{color:#ffffff;}
 :root:not([data-theme="rb-light"]) #leadsView .ljcard .ljad{color:#b3bcca;}
-:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljct{color:#8d97a6;}
-:root:not([data-theme="rb-light"]) #leadsView .ljrl::after{background:var(--nv-bd,#223047);}
+:root:not([data-theme="rb-light"]) #leadsView .ljcard .ljct{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";color:#BEC2C7;}
+:root:not([data-theme="rb-light"]) #leadsView .ljrl::after{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";background:var(--nv-bd,#24242C);}
 :root[data-theme="rb-light"] #leadsView .ljcard .ljkl{color:#5b6673;}
 :root[data-theme="rb-light"] #leadsView .ljcard .ljkv{color:#161616;}
 
@@ -79179,8 +79209,9 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    the shadow is nearly the page colour and does almost nothing on its own).  */
 @media (min-width:901px){
   :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrail{
-    background:#0A0E16;
-    border:1px solid #223047;
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+    background:#0B0B0E;
+    border:1px solid #24242C;
     box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
     padding:11px 9px 13px;
   }
@@ -79198,14 +79229,19 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #leadsView .ljopts{padding:1px 0 3px;}
 #leadsView .ljopt{padding:6px 10px;border-radius:6px;margin:1px 0;transition:background .12s ease, color .12s ease;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljgroup>b{
-  background:linear-gradient(180deg,#141C29,#0F1521);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
-  color:#8d97a6;
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:linear-gradient(180deg,#15161C,#15161C);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #050507;
+  color:#BEC2C7;
 }
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt{color:#c2cbd8;}
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt:hover{background:#111927;color:#ffffff;}
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrhead{color:#dfe5ee;}
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrailnote{color:#8d97a6;/* 943: was #6b7688 at 4.20:1 on the rail; 6.54 */}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";color:#D8DBDF;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt:hover{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";background:#141519;color:#ffffff;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrhead{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";color:#F0F1F2;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrailnote{
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";color:#BEC2C7;/* 943: was #6b7688 at 4.20:1 on the rail; 6.54 */}
 :root[data-theme="rb-light"] #leadsView .ljgroup>b{
   background:linear-gradient(180deg,#e9ebee,#f2f3f5);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2;
@@ -79219,7 +79255,8 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    where it is unsupported the filter still works, it just is not highlighted. */
 #leadsView .ljopt:has(.cbx:checked){box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e);font-weight:700;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt:has(.cbx:checked){
-  background:linear-gradient(180deg,#1A2434,#141C29);color:#ffffff;
+  --cr-stack:"1450 obsidian: recoloured in place, the rule is otherwise unchanged";
+  background:linear-gradient(180deg,#1C1D24,#15161C);color:#ffffff;
 }
 :root[data-theme="rb-light"] #leadsView .ljopt:has(.cbx:checked){background:#ffffff;color:#161616;}
 
@@ -79572,6 +79609,14 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
   --rpt-down:#a11020;
   --rpt-chart-ink:#5f6670;
   --rpt-chart-grid:rgba(16,18,24,.10);
+}
+
+/* 1450: the obsidian face — 545's recipe on the content boxes (the drawer keeps its own red active edge) */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) :is(#mainView .pipecard,#mainView .actcard,#projectView .projinfo,#projectView .jabox,#projectView .dbrow,#projectView .acxsec,#projectView .kpsec,#leadsView .ljcard){
+  --cr-stack:"1450 obsidian face: replaces 1283–1288's flat navy boxes on purpose (Theo picked A, 13 Nov)";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
 }
 </style>
 <div id="crewsView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
@@ -87707,8 +87752,8 @@ select{min-height:44px;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney,
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbrow{
   /* 1286: flat, the drawer's panel (Theo: option B) — was the bg1/bg2 gloss */
-  background:#0F1521;
-  border:1px solid #223047;box-shadow:none;
+  background:#15161C;
+  border:1px solid #24242C;box-shadow:none;
   color:var(--rbe-ink,#cfd6df);
 }
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbrow:active{

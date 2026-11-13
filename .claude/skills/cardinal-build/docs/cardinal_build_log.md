@@ -38227,3 +38227,41 @@ The name was the only flexible item, so it was the one that gave way.
   - The base seed names its projects p1..p3, not R1, so `openProject('R1')` opened nothing. The "others don't see it" checks then passed VACUOUSLY on an empty page. Each now asserts the Job Menu rendered first.
   - `?as=joan` is not a rig persona and silently signs in as Theo. Joan is now set through `window.__AS__`, and the gate asserts the email took.
 - **Sentinel:** the full default walk (`--since` 1448) hit the 10-minute ceiling with no verdict. UNKNOWN, not clean. No CSS rule changed in this build.
+
+## Build 1450 — obsidian instead of navy (13 Nov 2026)
+
+**Theo, verbatim, in order:**
+- "I want to keep a drawer style thing on the left for nav. How about we keep what we currently have and just change the colors to what you have."
+- on a flat graphite first pass (never shipped): "I don't like the navy, maybe a medium semi gloss grey instead."
+- on three medium greys with a gloss wash: "I want a grey that's not cartoony however you can do that."
+- on the medium grey with one satin top line (built, fully gated, sentinel CLEAN, never shipped): "Darker maybe glass style".
+- on three glass options: "Try obsidian".
+- on three obsidian strengths — A the full 545 recipe, B half sheen and a short shadow, C flat black: **"A"**.
+
+The Steel style board and the phone/desktop/ultrawide home mocks were previews only; their layout was NOT built.
+
+**What changed.** Colours only; no layout, no markup, no JS.
+- The navy family (535's `--nv-*` palette and the 1283–1288 "drawer style" literals) maps to near-black:
+  - `#0A0E16` well/rail/header → `#0B0B0E`
+  - `#0F1521` panel, `#141C29`/`#141B27` → `#15161C` (545's middle stop)
+  - `#1A2434` card high / active row → `#1C1D24`; `#111927` hover → `#141519`
+  - `#223047`/`#161d2a` line → `#24242C` (545's border)
+  - `#33496A` edge → `#3A3B45`; `#0D1220` sunk → `#0D0E12` (545's well); `#060910` → `#050507`
+  - the navy-tinted inks `#dfe5ee`/`#8d97a6`/`#c2cbd8` → neutral `#F0F1F2`/`#BEC2C7`/`#D8DBDF`
+- **Where:** remapped at SOURCE across the 1283–1288 block, `cr-navy-styles`, the drawer (`cr-lnav-a-styles`) and Leads (`cr-nvl-styles`), plus the client page's `.dbrow` rule. Comments keep the old values they describe.
+- **The obsidian face** — 545's Activity Count recipe, on the content boxes (home cards, Activity, the client card, Job Menu tiles, money rows, sections, History, lead cards): `radial-gradient(120% 90% at 22% -10%,#2c2d36,#15161c 45%,#08080b)`, a `#24242c` edge, and `0 10px 24px` + `0 2px 0` + an inset top line. It is ONE rule appended at the end of `cr-nvl-styles`, so it wins its ties without `!important`.
+- **The drawer's section bands** take the same sheen (`radial-gradient(140% 120% at 20% -20%,#24252d,#121318 55%,#0b0b0e)`); its active row keeps its red inset edge.
+- **Page ground:** `--bg:#09090C` stated explicitly on the dark-retail token rule (it is also `:root`'s value — stated so a stripped token cannot leave the page transparent).
+- ⚠ **A is a gradient, and Theo chose it knowing that.** The 10 Aug "no gradients anywhere" rule was put to him with the three options; 545's tiles were already the precedent. This is the second sanctioned exception after Production's sky (1446).
+- **Untouched:** light mode, Claims, Community, Crews (`--crw-*`), Production/Dispatch.
+- Recorded, not changed: a few blue-grey pieces that were never navy (the client page's `.crjp-seg` and `.dbmtabs`, a `#2A3038` button, the Leads header at `rgb(24,27,32)`).
+
+**Gates:**
+- `check_build` GREEN; the negative control holds.
+- `gate_1450.mjs` (new, in `gate_chromium`; the break strips the face back to a flat `#15161C`): 6 GREEN on 1450, 5 RED on 1449. D (light untouched) passes on both, as it should.
+  - ⚠ Its first draft passed every check on 1449 too: `ok()` was called (cond, name) against a (name, cond) signature. Caught by running the control.
+- `gate_1290` E pinned the dark client card at `#0F1521`; it now expects `#15161C`. It hardcodes a Linux Chromium path and is not in `gate_chromium`, so it was not re-run here.
+- `gate_stack`: CLEAN. It first reported 61 stacks, every one an OLD rule recoloured in place (the gate keys rules by `cssText`). The 29 without a reason carry `--cr-stack:"1450 obsidian: recoloured in place…"`; the face rule carries its own.
+- `gate_dupes`: RED on the same 12 pre-existing names, unchanged by this build.
+- Contrast scan (home at 390 and 1440, client page, Leads): no navy left, no text under the floor. The ✎ pencil glyph is 3.51:1 (non-text, clears 3:1). The scan's own navy heuristic flags 545's slate sheen stop `rgb(44,45,54)` — that is the obsidian, not navy.
+- Sentinel: see the PR.

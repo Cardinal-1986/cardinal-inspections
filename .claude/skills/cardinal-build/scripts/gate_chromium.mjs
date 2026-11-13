@@ -252,6 +252,13 @@ const GATES = [
     protects: "the Job Menu's Color Studio tile is the Showroom owner's alone, and opens the Experience in a new tab",
     break: { find: "(crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')",
              repl: "(true ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')" } },
+
+  /* 1450: obsidian instead of navy. The break strips the obsidian face back to a flat panel,
+     so a home card paints no sheen and F goes red. */
+  { name: 'gate_1450.mjs',
+    protects: "dark retail is obsidian, not navy: #09090C page, 545's obsidian face on the boxes, no navy left on the home, drawer or client page; light untouched",
+    break: { find: '  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);',
+             repl: '  background:#15161C;' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

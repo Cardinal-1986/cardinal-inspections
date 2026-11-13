@@ -2,6 +2,17 @@
 
 ---
 
+## ✅ SETTLED 13 Nov 2026 (Theo: "keep what we currently have and just change the colors" → grey → "Darker maybe glass style" → "Try obsidian" → "A") — obsidian instead of navy (build 1450)
+
+- **Dark retail is obsidian, not navy and not grey:** page `#09090C`, rail/header `#0B0B0E`, panel `#15161C`, raised `#1C1D24`, line `#24242C`. Do not restore 535's navy; the medium grey (`#34373C`) was built and superseded the same night.
+- **The content boxes wear 545's obsidian face — the FULL recipe (A), not the half-strength (B) or flat (C) one.** Sheen from the top-left, `#24242c` edge, `0 10px 24px` shadow.
+- ⚠ **It is a gradient, and Theo picked it knowing that.** Second sanctioned exception to the 10 Aug "no gradients anywhere" rule, after Production's sky (1446). Do not flatten it as a violation, and do not spread it to other screens without asking.
+- **Keep the current layout and the left drawer.** The Steel home mocks (pipeline first, week calendar, ultrawide week board, bigger type) were PREVIEWS ONLY. Do not build them without a new ask.
+- **Open, not built:**
+  - light mode keeps its own palette, and nothing was asked for there
+  - a few non-navy blue-grey pieces on the client page and the Leads header could follow
+  - Claims and Community are untouched by design
+
 ## ✅ SETTLED 12 Nov 2026 (Theo, "Do all" / "Yes") — Production's sky (build 1446)
 
 - **The Production home banner may use a gradient sky.** It is the ONE exception to the 10 Aug "no gradients anywhere" rule. Do not remove it as a gradient violation, and do not copy it to another screen without asking.
