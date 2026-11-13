@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1447<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1448<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47191,6 +47191,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1448, d:'2026-11-13', t:'Crew Dispatch: a job booked on a wet day says so', s:'On the Crew Dispatch board, any job booked on a day the forecast calls wet now wears a small blue tag on its card \u2014 \u201cRain 80%\u201d, \u201cStorm 70%\u201d or \u201cSnow\u201d \u2014 the same rain flag punch-outs already show, so you can see at a glance which crews are heading into weather and move them with the grip if you choose. Finished jobs carry no tag.' },
   { b: 1447, d:'2026-11-13', t:'Production\u2019s sky: the hour it rains, the temperature, and a bar that stays', s:'The weather chip on the Production sky now says when the wet starts and how warm it is \u2014 \u201c44\u00b0 \u00b7 Rain from 2pm\u201d \u2014 using today\u2019s hourly forecast for Dayton, and the sky shows what it is doing now: a dry morning stays dry until the rain actually arrives. Scroll down past the sky and a slim bar slides in along the top with the date, what today holds and + Add, so you never have to scroll back up to add something.' },
   { b: 1446, d:'2026-11-12', t:'Production gets a sky that follows the time of day', s:'The top of the Production screen is now a sky that changes with the clock: dawn colours from 5 to 9, a blue daytime sky with the sun and slow clouds until 4, a sunset until 8, and a night sky with stars and the moon after that. When the forecast says rain or snow, it rains or snows up there, and snow settles along the bottom. The sun or moon sits where it would at that hour. The first time you open the board each day, the sun or moon rises into place. The calendar, the four boxes and today\u2019s work are exactly where they were and keep your Dark, Light or Sun setting. The animation stops whenever the sky is off the screen or the app is in the background.' },
   { b: 1445, d:'2026-11-12', t:'Punch-out photos: take several at once, and they stick', s:'On a phone, a punch-out photo went one at a time, and often never showed up on the punch-out at all. Tapping a photo box, or Take photos, now opens the app\u2019s own camera, the same one the job photo album uses: take as many as you need, then tap Upload once. Add photos from phone picks several from your library at once. The card says Uploading while it works, and a photo with no signal is still held on the phone until you are back in range. The five-photo rule to finish a punch-out is unchanged.' },
@@ -89297,6 +89298,13 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .dcol .c .wx svg{ width:11px; height:11px; flex:none; }
 #cr-disp .dcol .c .wx i{ font-style:normal; }
 #cr-disp .dcol .c .wx.wet{ color:var(--disp-wx,#6db3f2); }
+/* 1448: a booked job on a wet day wears the day's rain flag — the header's own --disp-wx, so the
+   board has one wet colour. Outline + pill, never a fill: red stays reserved for action. */
+#cr-disp .job.wetd{ box-shadow:inset 0 0 0 1px var(--disp-wx,#6db3f2); }
+#cr-disp .job .wxf{ display:inline-flex; align-items:center; gap:5px; margin-top:6px; padding:2px 8px; border-radius:999px;
+  border:1px solid var(--disp-wx,#6db3f2); color:var(--disp-wx,#6db3f2);
+  font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; letter-spacing:.02em; white-space:nowrap; }
+#cr-disp .job .wxf svg{ flex:none; }
 #cr-disp .crewc .cf{ font:700 11px var(--disp-mono,monospace); letter-spacing:.04em; text-transform:uppercase;
   color:var(--disp-band,#8b97a8); line-height:1.3; margin-top:2px; }
 #cr-disp .crewc .cf.full{ color:var(--disp-mute,#5c636e); }
@@ -89481,7 +89489,13 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     return 'draft';
   }
 
-  function jobChip(w){
+  /* 1448: the day travels with the chip so a booked job on a wet day can say so. The words are
+     CardinalWx.flag() — the same "Rain 80%" / "Storm 70%" / "Snow" the punch-outs wear (1295) —
+     so wet means one thing across the app. A finished job carries no flag: there is nothing left
+     to plan around. Flag only, by Theo's pick: moving stays the crew's grip, as it was. */
+  var WXF_ICON = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+    'stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 18 0z"/><path d="M12 12v6a2 2 0 0 0 4 0"/></svg>';
+  function jobChip(w, s){
     var p = projById(w.project_id);
     var nm = p ? (p.name || 'Job') : 'Job';
     var ad = p ? firstLine(p.address) : '';
@@ -89492,9 +89506,11 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" '+
       'stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M19 9l3 3-3 3M9 5l3-3 3 3M9 19l3 3 3-3"/>'+
       '</svg></button>';
-    return '<div class="job' + (String(armedMove) === String(w.id) ? ' moving' : '') + (grip ? ' hasmv' : '') + '" data-pid="' + esc(w.project_id) + '">' +
+    var wf = (s && statusPip(w) !== 'done' && window.CardinalWx && window.CardinalWx.flag) ? window.CardinalWx.flag(s) : '';
+    return '<div class="job' + (String(armedMove) === String(w.id) ? ' moving' : '') + (grip ? ' hasmv' : '') + (wf ? ' wetd' : '') + '" data-pid="' + esc(w.project_id) + '">' +
       '<div class="t"><span class="nm">' + esc(nm) + '</span><span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
-      (ad ? '<div class="a">' + esc(ad) + '</div>' : '') + '</div>';
+      (ad ? '<div class="a">' + esc(ad) + '</div>' : '') +
+      (wf ? '<div class="wxf">' + WXF_ICON + esc(wf) + '</div>' : '') + '</div>';
   }
 
   function render(){
@@ -89585,7 +89601,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           var home = canTake && String(mvWo.crew_id) === String(c.id) && mvWo.scheduled_on === s;
           tcls += (canTake && !home) ? ' tgt' : '';
           if(!list.length){ cells += '<div class="dcell demp' + tcls + '" data-dc="' + esc(c.id) + '|' + di + '"></div>'; continue; }
-          var shown = list.slice(0,2).map(jobChip).join('');
+          var shown = list.slice(0,2).map(function(w){ return jobChip(w, s); }).join('');   /* 1448: the day rides along */
           if(list.length > 2) shown += '<div class="more">+' + (list.length-2) + ' more</div>';
           cells += '<div class="dcell' + tcls + '" data-dc="' + esc(c.id) + '|' + di + '">' + shown + '</div>';
         }

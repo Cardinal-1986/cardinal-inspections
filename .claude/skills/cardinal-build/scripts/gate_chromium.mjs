@@ -238,6 +238,13 @@ const GATES = [
     protects: "Production's sticky bar appears once the sky scrolls away, and the sky's chip names the next wet hour and the temperature",
     break: { find: "if(st) st.classList.toggle('on', !es[0].isIntersecting);",
              repl: 'void st;' } },
+
+  /* 1448: Dispatch's wet-day flag. The break empties the one line that asks CardinalWx for
+     the day's flag, so a rain day's job goes bare and A/B go red. */
+  { name: 'gate_1448.mjs',
+    protects: "a Crew Dispatch job booked on a wet day wears the day's rain flag (CardinalWx.flag), and a dry day's does not",
+    break: { find: "var wf = (s && statusPip(w) !== 'done' && window.CardinalWx && window.CardinalWx.flag) ? window.CardinalWx.flag(s) : '';",
+             repl: "var wf = '';" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
