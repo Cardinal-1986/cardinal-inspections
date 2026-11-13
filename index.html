@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1450<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1451<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47208,6 +47208,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1451, d:'2026-11-13', t:'Punch-outs: ready to close', s:'When the crew says a punch-out is finished it now shows at the top of Punch & Repairs under Ready to close, so Curtis can see what to close without opening every card. On a phone the Close / Tell Curtis button stays at the bottom of the screen instead of two and a half screens down; once the crew has told Curtis it says so instead of offering to tell him again; and an empty checklist says Curtis adds the steps.' },
   { b: 1450, d:'2026-11-13', t:'Obsidian instead of navy', s:'The dark theme drops its navy for obsidian. The home screen, the side menu, the top bar, client pages and Leads keep their layout; the boxes are the same polished black as the Activity Count tiles, lit from the top-left and raised on a soft shadow, on a near-black page. Light mode, Claims and Community are unchanged.' },
   { b: 1449, d:'2026-11-13', t:'Color Studio from the client\u2019s page', s:'On a client\u2019s page the Job Menu now has a Color Studio tile for the owner account. It opens the Showroom in a new tab, signs in and lands on the Cardinal Experience, where Lessons leads to the Color Studio \u2014 so the colour picker is one tap from the client you are looking at. It shows only for the owner because the Showroom itself only lets the owner in.' },
   { b: 1448, d:'2026-11-13', t:'Crew Dispatch: a job booked on a wet day says so', s:'On the Crew Dispatch board, any job booked on a day the forecast calls wet now wears a small blue tag on its card \u2014 \u201cRain 80%\u201d, \u201cStorm 70%\u201d or \u201cSnow\u201d \u2014 the same rain flag punch-outs already show, so you can see at a glance which crews are heading into weather and move them with the grip if you choose. Finished jobs carry no tag.' },
@@ -61373,6 +61374,16 @@ if(window.__crProdPending){
 #cr-pk .pkclose.ready b{ color:#e4f6ec; }
 #cr-pk .pkclose.closed-ro{ cursor:default; }   /* 1252: closed, and this person may not reopen it */
 #cr-pk .pkclose .jump{ text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+#cr-pk .pkclose.sent{ cursor:default; }   /* 1451: told Curtis — a receipt, not a button */
+/* 1451: the dock — phones only; the in-flow copy of an OPEN card's close button hides there */
+#cr-pk .pkdock{ display:none; }
+@media (max-width:899px){
+  #cr-pk .pkdock{ display:block; position:fixed; left:0; right:0; bottom:0; z-index:4;
+    padding:10px 15px calc(10px + env(safe-area-inset-bottom,0px));
+    background:var(--pk-g,#0c0d0f); border-top:1px solid var(--pk-line,rgba(230,235,240,.11)); }
+  #cr-pk .pkdock .pkclose{ margin-top:0; }
+  #cr-pk .pksplit .pkclose:not(.reopen):not(.closed-ro){ display:none; }
+}
 /* 1249: On hold — the block on the card, and the sheet. Amber is the
    warning colour on this card already (--pk-hot); a held job is a warning,
    not an error. Inks computed for both themes. */
@@ -62097,7 +62108,18 @@ function cardHtml(){
       left +
     '</div><div>' +
       msgsHtml() + holdHtml(done) + closeHtml(done) +
-    '</div></div></div>' + (holdOpen && !done ? holdSheetHtml() : '');
+    '</div></div></div>' +
+    /* 1451: on a phone the finish / close button rides at the bottom of the screen; it was the
+       last thing on a card about two and a half screens long. Desktop keeps it in the right column. */
+    (!done ? '<div class="pkdock">' + closeHtml(false) + '</div>' : '') +
+    (holdOpen && !done ? holdSheetHtml() : '');
+}
+/* 1451: the crew's "Tell Curtis it's finished" is the LAST flagged comment until something
+   else (a follow-up flag, a needs-a-day) is flagged after it. The list reads the same rule. */
+function askedCloseEntry(){
+  var f = comments().filter(function(c){ return c && c.flag; });
+  var last = f.length ? f[f.length - 1] : null;
+  return last && last.flag === 'askclose' ? last : null;
 }
 /* ── 1250: Flag for follow-up ── */
 function pingOn(){ return !!(it && it.ping_at && !it.ping_done_at); }
@@ -62347,6 +62369,8 @@ function checklistHtml(){
       '</div>' + (noteFor === i && !s.d ? stepNoteHtml(i, s) : '');
   }).join('');
   var pick = '';
+  /* 1451: Scottie saw a bare "Checklist" box — steps are added by Curtis (1252) */
+  if(!st.length && !mgr) pick = '<div class="pktk0">No steps on this one \u2014 Curtis adds them if it needs any. The five photos are what finish it.</div>';
   if(!st.length && mgr){
     pick = '<div class="pkbtns" style="margin-bottom:4px;">' +
       Object.keys(TEMPLATES).map(function(k){
@@ -62467,7 +62491,11 @@ function closeHtml(done){
   if(ph < PHOTO_MIN) want.push('<span class="jump" data-jump="pkSecPh">' + (PHOTO_MIN - ph) + ' photo' + (PHOTO_MIN - ph === 1 ? '' : 's') + '</span>');
   if(left > 0) want.push('<span class="jump" data-jump="pkSecCk">' + left + ' step' + (left === 1 ? '' : 's') + '</span>');
   var ready = readyToClose();
+  var asked = ready ? askedCloseEntry() : null;   /* 1451 */
   if(!boss){
+    /* 1451: once told, the button is gone — it used to stay and post the same message again. */
+    if(asked) return '<div class="pkclose ready sent" role="status">Curtis has been told' +
+      '<b>' + esc((asked.by === myEmail() ? 'you' : nameOf(asked.by)) + ' said it\u2019s finished' + (asked.at ? ' \u00b7 ' + fmtWhen(asked.at) : '')) + ' \u00b7 Curtis closes it</b></div>';
     /* 1252: the crew finishes, Curtis closes. Ready = tell him; not ready = what is left. */
     return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="' + (ready ? 'askclose' : 'close') + '" type="button">' +
       (ready ? 'Tell Curtis it\u2019s finished' : 'Finish the punch-out') +
@@ -62475,7 +62503,7 @@ function closeHtml(done){
   }
   return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="close" type="button">' +
     'Close punch-out' +
-    '<b>' + (ready ? 'everything is done' : want.join(' \u00b7 ') + ' left') + '</b></button>';
+    '<b>' + (ready ? (asked ? esc(nameOf(asked.by) + ' says it\u2019s finished') + ' \u00b7 ' : '') + 'everything is done' : want.join(' \u00b7 ') + ' left') + '</b></button>';
 }
 function paintPhotos(){
   if(typeof window.paintSignedPhotoImgs === 'function'){
@@ -73204,6 +73232,7 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
   letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute);}
 .pl-grp::after{content:'';flex:1;height:1px;background:var(--rbe-line);}
 .pl-grp.late{color:var(--pl-late,#f08a90);}
+.pl-grp.ready{color:var(--pl-live,#6fd39b);}   /* 1451 */
 .pl-row{display:grid;grid-template-columns:4px auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px;
   grid-template-areas:"stp cl cl age" "stp kd pb pb" "stp wh wh cr";
   padding:10px 12px 10px 0;border-bottom:1px solid var(--rbe-line);cursor:pointer;color:var(--rbe-ink);font-size:15px;}
@@ -73589,6 +73618,7 @@ var PL_KINDS = [
 ];
 var PL_GROUPS = [
   { g:'ping',   l:'Needs follow-up' },
+  { g:'ready',  l:'Ready to close' },   /* 1451 */
   { g:'late',   l:'Past due' },
   { g:'today',  l:'Today' },
   { g:'next',   l:'Coming up' },
@@ -73634,7 +73664,17 @@ function plBackFromHold(it){
 }
 /* 1250: an active follow-up flag beats every other group, closed work included */
 function plPing(it){ return !!(it && it.ping_at && !it.ping_done_at); }
-function plGroup(it){ return plPing(it) ? 'ping' : plBase(it); }
+/* 1451: the crew said it is finished (the card's askclose message) and nobody has closed it */
+function plReady(it){
+  if(!it || it.status === 'done') return false;
+  var f = (Array.isArray(it.comments) ? it.comments : []).filter(function(c){ return c && c.flag; });
+  return !!(f.length && f[f.length - 1].flag === 'askclose');
+}
+function plReadyBy(it){
+  var f = (Array.isArray(it.comments) ? it.comments : []).filter(function(c){ return c && c.flag === 'askclose'; });
+  return f.length ? f[f.length - 1].by : '';
+}
+function plGroup(it){ return plPing(it) ? 'ping' : plReady(it) ? 'ready' : plBase(it); }
 function plBase(it){
   if(it.status === 'done') return 'closed';
   if(plOnHold(it)) return 'hold';
@@ -73656,6 +73696,10 @@ function plWhen(it){
   if(g === 'closed'){
     return { main: it.done_at ? 'Done ' + plDayLabel(plLocalKey(it.done_at)) : 'Done',
              sub: it.done_by ? 'by ' + plName(it.done_by) : '' };
+  }
+  if(plReady(it)){   /* 1451 */
+    var _rb = plReadyBy(it);
+    return { main:'Finished', sub:'Ready to close' + (_rb ? ' \u00b7 ' + plName(_rb) : ''), cls:'live' };
   }
   if(g === 'hold'){
     return { main: it.hold_until ? 'Back ' + plDayLabel(String(it.hold_until).slice(0, 10)) : 'On hold',
@@ -73808,7 +73852,7 @@ function render(){
   });
 
   var board = all.filter(function(it){ return (it.status !== 'done' ? !inQueue(it) : plPing(it)) && plShown(it); });
-  var G = { ping:[], late:[], today:[], next:[], nodate:[], hold:[] };
+  var G = { ping:[], ready:[], late:[], today:[], next:[], nodate:[], hold:[] };
   board.forEach(function(it){ G[plGroup(it)].push(it); });
   var closed = all.filter(function(it){ return it.status === 'done' && plShown(it); })
     .sort(function(a, b){ return String(b.done_at || '').localeCompare(String(a.done_at || '')); });
@@ -73816,6 +73860,7 @@ function render(){
 
   document.getElementById('puSub').textContent =
     (G.ping.length ? G.ping.length + ' need follow-up \u00b7 ' : '') +
+    (G.ready.length ? G.ready.length + ' ready to close \u00b7 ' : '') +   /* 1451 */
     (open.length) + ' open \u00b7 ' + nQueue + ' need assigned \u00b7 ' + G.late.length + ' past due';
 
   var cols = '<div class="pl-cols" aria-hidden="true"><span></span><span>Type</span><span>Client</span>' +
@@ -73830,7 +73875,7 @@ function render(){
     var groups = PL_GROUPS.filter(function(g){ return !PU.view || PU.view === g.g; });
     groups.forEach(function(g){
       var list = G[g.g].slice().sort(plOrder);
-      if(list.length) html += '<div class="pl-grp' + (g.g === 'late' || g.g === 'ping' ? ' late' : '') + '">' + g.l + ' · ' + list.length + '</div>' + list.map(plRow).join('');
+      if(list.length) html += '<div class="pl-grp' + (g.g === 'late' || g.g === 'ping' ? ' late' : g.g === 'ready' ? ' ready' : '') + '">' + g.l + ' · ' + list.length + '</div>' + list.map(plRow).join('');
     });
     html = html ? cols + html : '<div class="pu-empty">' +
       (all.length ? (PU.view ? 'Nothing here right now.' : 'Nothing matches — try All, or clear the filters.')
@@ -73859,6 +73904,7 @@ function render(){
     }).join('') +
     '<div class="pl-rh">Needs attention</div>' +
     ri('data-pufocus="ping"', PU.view === 'ping', 'Needs follow-up', G.ping.length, G.ping.length > 0) +
+    ri('data-pufocus="ready"', PU.view === 'ready', 'Ready to close', G.ready.length) +   /* 1451 */
     ri('data-pufocus="late"', PU.view === 'late', 'Past due', G.late.length, G.late.length > 0) +
     ri('data-pufocus="nodate"', PU.view === 'nodate', 'No date', G.nodate.length) +
     ri('data-pufocus="hold"', PU.view === 'hold', 'On hold', G.hold.length) +
