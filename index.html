@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1453<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1454<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4766,6 +4766,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="pu-asghead" id="puAsgHead"></div>
     <div id="puAsgWho"></div>
     <div class="pu-asgdays" id="puAsgDays"></div>
+    <div class="pu-asgmore"><label>Other day<input type="date" id="puAsgDate"></label><label>Time <i>optional</i><input type="time" id="puAsgTime"></label></div>
     <div class="pu-asgfoot">
       <button class="pu-asggo" id="puAsgGo" type="button" disabled>Pick a person</button>
       <button class="pu-asgntf on" id="puAsgNtf" type="button" aria-pressed="true"><span class="tg"></span>notify</button>
@@ -47208,6 +47209,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1454, d:'2026-11-13', t:'Assigning a punch item: more days, a time, and who is busy', s:'The Assign sheet on Punch & Repairs now offers six working days instead of four, any other date, and an optional time. Once you pick a person, each day shows how many stops they already have. The Assign button is readable in the dark theme again, and the sheet’s Close button is a full-size tap.' },
   { b: 1453, d:'2026-11-13', t:'Punch & Repairs: one name, and late shows everywhere', s:'The section is called Punch & Repairs everywhere now (it was also Punch, Punch Outs and Punch-outs), and a repair is a Repair, not a Ticket. A late job says how late on its own card, on the client page and on the Production tile, which used to show only how many were urgent. The client page also says when each item is due or that nobody is assigned. Closed items show how long they took instead of carrying on ageing, anything open 30 days or more is highlighted, Closed on Production opens the closed list, and the count at the top follows your filters.' },
   { b: 1452, d:'2026-11-13', t:'Punch-outs: saves you can trust', s:'On a punch card, a second change made while the first was still saving used to be thrown away while the card still said Saved. Now it waits its turn, and if a save is refused your message goes back in the box and nobody is buzzed. If the list cannot load it says so and offers Try again, instead of saying there is no punch work. And taking a photo off a card no longer moves the other photos under the wrong labels.' },
   { b: 1451, d:'2026-11-13', t:'Punch-outs: ready to close', s:'When the crew says a punch-out is finished it now shows at the top of Punch & Repairs under Ready to close, so Curtis can see what to close without opening every card. On a phone the Close / Tell Curtis button stays at the bottom of the screen instead of two and a half screens down; once the crew has told Curtis it says so instead of offering to tell him again; and an empty checklist says Curtis adds the steps.' },
@@ -73114,14 +73116,25 @@ if(typeof _origOLF === 'function'){
 .pu-asgrow .load{margin-left:auto;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-mute);text-align:right;}
 .pu-asgrow .load.warn{color:#f0a24a;font-weight:700;}
 .pu-asgrow .tick{font-weight:800;font-size:15px;color:var(--rbe-ok,#4fc98a);width:16px;}
-.pu-asgdays{display:flex;gap:6px;margin:12px 16px 0;}
+.pu-asgdays{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 16px 0;}   /* 1454: six days + no day, two rows */
 .pu-dayb{flex:1;text-align:center;border:1px solid var(--rbe-line);border-radius:9px;min-height:44px;background:none;cursor:pointer;
   font:600 11px ui-monospace,Menlo,monospace;color:var(--rbe-mute);display:flex;flex-direction:column;justify-content:center;gap:1px;}
 .pu-dayb b{font-size:13px;color:var(--rbe-ink);}
 .pu-dayb.sel{border-color:var(--rbe-ok,#4fc98a);}
 .pu-dayb.sel,.pu-dayb.sel b{color:var(--rbe-ok,#4fc98a);}
+/* 1454 */
+:root[data-theme="rb-light"] .pu-dayb.sel,:root[data-theme="rb-light"] .pu-dayb.sel b{color:#1b7d49;border-color:#1b7d49;}
+.pu-dayb .ld{display:block;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-style:normal;color:var(--rbe-mute);margin-top:1px;}
+.pu-dayb .ld.busy{color:#f0a24a;}
+:root[data-theme="rb-light"] .pu-dayb .ld.busy{color:#8a5500;}
+.pu-asgmore{display:flex;gap:10px;margin:10px 16px 0;}
+.pu-asgmore label{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--rbe-mute);}
+.pu-asgmore label i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500;}
+.pu-asgmore input{min-height:44px;width:100%;box-sizing:border-box;border:1px solid var(--rbe-line);border-radius:9px;background:none;color:var(--rbe-ink);padding:0 10px;font:500 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
+.pu-asgmore input:disabled{opacity:.5;}
+:root:not([data-theme="rb-light"]) .pu-asgmore input{color-scheme:dark;}
 .pu-asgfoot{display:flex;gap:10px;align-items:center;padding:14px 16px 16px;}
-.pu-asggo{flex:1;background:var(--rbe-acc,#c8202e);color:#fff;border:0;border-radius:11px;min-height:48px;
+.pu-asggo{flex:1;background:#c8202e;color:#fff;border:0;border-radius:11px;min-height:48px;
   font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}
 .pu-asggo[disabled]{opacity:.5;cursor:default;}
 .pu-asgntf{display:inline-flex;align-items:center;gap:7px;background:none;border:0;cursor:pointer;
@@ -73235,7 +73248,7 @@ body.cr-prod #punchView{ position:fixed; inset:0; z-index:9400; overflow-y:auto;
   overscroll-behavior:contain;}
 .pu-sheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid var(--rbe-hair);position:sticky;top:0;background:var(--rbe-panel);}
 .pu-sheet .ph .t{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-ink);flex:1;text-align:center;}
-.pu-sheet .ph button{background:none;border:0;color:var(--rbe-acc);font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;padding:4px 6px;}
+.pu-sheet .ph button{background:none;border:0;color:var(--rbe-acc);font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;padding:4px 10px;min-height:44px;}
 .pu-sheet .ph button.ap{color:var(--rbe-ok);}
 .pu-srow{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rbe-hair);cursor:pointer;
   font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-ink);}
@@ -74042,7 +74055,7 @@ var puAsg = { id:null, who:'', day:'', notify:true };
    map's (admins + production) and it is UX only — RLS is the authority. */
 function puAsgDayOpts(){
   var out = [], d = new Date();
-  for(var i = 0; out.length < 4 && i < 7; i++){
+  for(var i = 0; out.length < 6 && i < 9; i++){   /* 1454: six working days (was four) */
     if(d.getDay() !== 0){                       /* Sunday skipped, nothing else (940) */
       var key = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
       out.push({ key:key, lab: out.length === 0 ? 'TODAY' : ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()],
@@ -74081,22 +74094,28 @@ function paintAssign(){
       '<span class="load' + (carry ? ' warn' : '') + '">' + mine.length + ' open' + (carry ? ' \u00b7 day-2 carry' : '') + '</span>' +
       '<span class="tick">' + (puAsg.who === em ? '\u2713' : '') + '</span></div>';
   }).join('');
-  document.getElementById('puAsgDays').innerHTML = puAsgDayOpts().map(function(o){
+  var _opts = puAsgDayOpts();
+  document.getElementById('puAsgDays').innerHTML = _opts.map(function(o){
+    /* 1454: how busy the picked person already is that day (the hold sheet has shown this since 1249) */
+    var n = puAsg.who ? open.filter(function(r){ return r.assigned_to === puAsg.who && r.scheduled_at && String(r.scheduled_at).slice(0, 10) === o.key && String(r.id) !== String(puAsg.id); }).length : -1;
     return '<button class="pu-dayb' + (puAsg.day === o.key ? ' sel' : '') + '" type="button" data-asg-day="' + esc(o.key) + '">' +
-      '<b>' + o.lab + '</b>' + o.sub + '</button>';
+      '<b>' + o.lab + '</b>' + o.sub + (n >= 0 ? '<i class="ld' + (n >= 3 ? ' busy' : '') + '">' + (n ? n + ' stop' + (n === 1 ? '' : 's') : 'free') + '</i>' : '') + '</button>';
   }).join('') + '<button class="pu-dayb' + (puAsg.day === '' ? ' sel' : '') + '" type="button" data-asg-day=""><b>NO DAY</b>yet</button>';
+  var _dt = document.getElementById('puAsgDate'), _tm = document.getElementById('puAsgTime');   /* 1454 */
+  if(_dt) _dt.value = (puAsg.day && !_opts.some(function(o){ return o.key === puAsg.day; })) ? puAsg.day : '';
+  if(_tm){ _tm.value = puAsg.time || ''; _tm.disabled = !puAsg.day; }
   var go = document.getElementById('puAsgGo');
   go.disabled = !puAsg.who;
   go.textContent = puAsg.who
     ? 'Assign to ' + (puAsg.who.split('@')[0].charAt(0).toUpperCase() + puAsg.who.split('@')[0].slice(1)) +
-      (puAsg.day ? ' \u00b7 ' + fmtDate(puAsg.day) : '')
+      (puAsg.day ? ' \u00b7 ' + fmtDate(puAsg.day) + (puAsg.time ? fmtSchedClock(puAsg.time) : '') : '')
     : 'Pick a person';
   var nb = document.getElementById('puAsgNtf');
   nb.classList.toggle('on', !!puAsg.notify);
   nb.setAttribute('aria-pressed', puAsg.notify ? 'true' : 'false');
 }
 function openAssign(id){
-  puAsg = { id:id, who:'', day:'', notify:true };
+  puAsg = { id:id, who:'', day:'', time:'', notify:true };
   paintAssign();
   document.getElementById('puShAssign').classList.add('open');
 }
@@ -74118,12 +74137,16 @@ async function notifyAssignedBoard(id, email){
     return (typeof window.notifyOutcomeText === 'function') ? window.notifyOutcomeText(res, [email]) : '';
   }catch(_){ return ''; }
 }
+document.getElementById('puShAssign').addEventListener('change', function(e){   /* 1454 */
+  if(e.target.id === 'puAsgDate'){ puAsg.day = e.target.value || ''; if(!puAsg.day) puAsg.time = ''; paintAssign(); }
+  else if(e.target.id === 'puAsgTime'){ puAsg.time = e.target.value || ''; paintAssign(); }
+});
 document.getElementById('puShAssign').addEventListener('click', async function(e){
   if(e.target === this || e.target.closest('#puAsgClose')){ this.classList.remove('open'); return; }
   var w = e.target.closest('[data-asg-who]');
   if(w){ puAsg.who = w.getAttribute('data-asg-who'); paintAssign(); return; }
   var dbtn = e.target.closest('[data-asg-day]');
-  if(dbtn){ puAsg.day = dbtn.getAttribute('data-asg-day'); paintAssign(); return; }
+  if(dbtn){ puAsg.day = dbtn.getAttribute('data-asg-day'); if(!puAsg.day) puAsg.time = ''; paintAssign(); return; }
   if(e.target.closest('#puAsgNtf')){ puAsg.notify = !puAsg.notify; paintAssign(); return; }
   if(e.target.closest('#puAsgGo') && puAsg.who){
     var go = document.getElementById('puAsgGo');
@@ -74133,7 +74156,8 @@ document.getElementById('puShAssign').addEventListener('click', async function(e
        the old time too */
     var patch = { assigned_to: puAsg.who,
                   scheduled_at: puAsg.day || null,
-                  scheduled_time: (puAsg.day && it.scheduled_at === puAsg.day) ? (it.scheduled_time || null) : null };
+                  scheduled_time: (puAsg.day && puAsg.time) ? puAsg.time + ':00'   /* 1454: a time can be set here now */
+                                : (puAsg.day && it.scheduled_at === puAsg.day) ? (it.scheduled_time || null) : null };
     var r = window.CardinalPunch && window.CardinalPunch.update
       ? await window.CardinalPunch.update(puAsg.id, patch) : { ok:false };
     if(r && r.ok){
