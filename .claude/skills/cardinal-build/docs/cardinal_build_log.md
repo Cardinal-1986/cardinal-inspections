@@ -38311,3 +38311,12 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 - `.vercelignore` records that the image ships on purpose.
 
 **Gates:** `check_build` GREEN; `gate_1456.mjs` (new, in `gate_chromium`) 7/7, 6 RED on 1455 (light-untouched passes on both, as it should); sentinel in the PR.
+
+## Build 1457 — the 5-photo lock off for bosses, for now (13 Nov 2026)
+
+**Theo:** "Can we not put a lock on the taking 5 photos to complete it just for now so i can close out some of the old ones or tests".
+
+- The lock was app-only: no SQL enforces photos (checked every `*.sql`). It lived in `readyToClose()`, `closeHtml()`, `doClose()` and the Photos header in `cr-pk-script`.
+- New `PHOTO_LOCK = false` and `photosNeeded()`: 5 for the crew or when the lock is on, 0 for Theo / Joan / Curtis while it is off. Checklist steps are still required. The header reads "0 of 5 suggested" for a boss, "to close" for the crew.
+- **Turning it back on:** set `PHOTO_LOCK = true` and retire `gate_1457` in the same build (its break is exactly that line).
+- **Gates:** `check_build` GREEN; `gate_1457.mjs` (new, in `gate_chromium`) 4/4, 3 RED on 1456 (the crew check holds on both, as it should); `gate_999`, `gate_1005`, `gate_1451`, `gate_1452`, `gate_1453`, `gate_769` unchanged on 1456 vs 1457.

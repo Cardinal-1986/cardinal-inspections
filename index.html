@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1456<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1457<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47209,6 +47209,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1457, d:'2026-11-13', t:'Close old punch items without the five photos (for now)', s:'For now, Theo, Joan and Curtis can close a punch item without the five photos, so old items and tests can be cleared out. The crew still needs five photos before telling Curtis a job is finished, and any checklist steps still have to be ticked. This is temporary and can be switched back.' },
   { b: 1456, d:'2026-11-13', t:'Punch & Repairs in obsidian', s:'Punch & Repairs now matches the home screen in the dark theme: the list rows, the sections of a punch card and the punch list on a client page are the same polished black cards. The kind tabs lose their coloured caps and labels are no longer in capitals. Behind the list there is a faint dotted hand holding a framing hammer. Light mode is unchanged.' },
   { b: 1455, d:'2026-11-13', t:'Punch & Repairs on a big screen', s:'On a computer, a punch card now opens as a panel on the right with the list still showing, so you can click down the list without going back each time. Escape closes the card and the Assign sheet. The Client, Age and When headings sort the table, and on a very wide screen the list is shown as the full table instead of a narrow column beside the map.' },
   { b: 1454, d:'2026-11-13', t:'Assigning a punch item: more days, a time, and who is busy', s:'The Assign sheet on Punch & Repairs now offers six working days instead of four, any other date, and an optional time. Once you pick a person, each day shows how many stops they already have. The Assign button is readable in the dark theme again, and the sheet’s Close button is a full-size tap.' },
@@ -61698,6 +61699,13 @@ var HOLD_REASONS = [
 ];
 
 var PHOTO_MIN = 5;
+/* 1457 — TEMPORARY. Theo, 13 Nov: "Can we not put a lock on the taking 5 photos to complete it
+   just for now so i can close out some of the old ones or tests". With the lock off, Theo, Joan
+   and Curtis can close an item with fewer than five photos; the crew still needs five before
+   "Tell Curtis it's finished", so new work keeps being photographed. Checklist steps still have to
+   be ticked. Turn the lock back on by setting this to true — nothing else changes. */
+var PHOTO_LOCK = false;
+function photosNeeded(){ return (PHOTO_LOCK || !isManager()) ? PHOTO_MIN : 0; }
 var SLOTS = [
   { k:'overview', l:'Overview' },
   { k:'closeup',  l:'Close-up' },
@@ -61995,7 +62003,7 @@ function visitLogHtml(){
 }
 function stepsDone(){ return steps().filter(function(s){ return s && s.d; }).length; }
 function readyToClose(){
-  return photos().length >= PHOTO_MIN && (!steps().length || stepsDone() === steps().length);
+  return photos().length >= photosNeeded() && (!steps().length || stepsDone() === steps().length);   /* 1457 */
 }
 function fmtWhen(v){
   if(!v) return '';
@@ -62468,7 +62476,7 @@ function photosHtml(){
   var _upn = upFor(it && it.id);
   if(_upn) pnote += '<div class="pkpnote" data-pkup="' + _upn + '">' + svg('cam') + esc('Uploading ' + _upn + ' photo' + (_upn === 1 ? '' : 's') + '\u2026') + '</div>';
   return '<div class="pksec" id="pkSecPh"><div class="pkh">' + svg('cam') + 'Photos' +
-    '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + ' to close</span></div>' +
+    '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + (photosNeeded() ? ' to close' : ' suggested') + '</span></div>' +   /* 1457 */
     '<div class="pkslots">' + cells + '</div>' + gal + pnote + '</div>';
 }
 function galleryHtml(){
@@ -62544,7 +62552,7 @@ function closeHtml(done){
   }
   var ph = photos().length, st = steps(), left = st.length - stepsDone();
   var want = [];
-  if(ph < PHOTO_MIN) want.push('<span class="jump" data-jump="pkSecPh">' + (PHOTO_MIN - ph) + ' photo' + (PHOTO_MIN - ph === 1 ? '' : 's') + '</span>');
+  if(ph < photosNeeded()) want.push('<span class="jump" data-jump="pkSecPh">' + (PHOTO_MIN - ph) + ' photo' + (PHOTO_MIN - ph === 1 ? '' : 's') + '</span>');   /* 1457 */
   if(left > 0) want.push('<span class="jump" data-jump="pkSecCk">' + left + ' step' + (left === 1 ? '' : 's') + '</span>');
   var ready = readyToClose();
   var asked = ready ? askedCloseEntry() : null;   /* 1451 */
@@ -62914,7 +62922,7 @@ async function doClose(){
   if(!readyToClose()){
     var ph = photos().length, left = steps().length - stepsDone();
     crTell('Not ready to close.\n\n' +
-      (ph < PHOTO_MIN ? (PHOTO_MIN - ph) + ' more photo(s) needed.\n' : '') +
+      (ph < photosNeeded() ? (PHOTO_MIN - ph) + ' more photo(s) needed.\n' : '') +   /* 1457 */
       (left > 0 ? left + ' checklist step(s) still open.' : ''));
     return;
   }

@@ -10877,3 +10877,9 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - **Scope:** dark retail only. Light, Claims and Community unchanged.
 
 **Gate:** `gate_1456.mjs`.
+
+## Build 1457: the 5-photo lock, switchable (13 Nov 2026)
+
+- `PHOTO_LOCK` (currently **false**) and `photosNeeded()` in `cr-pk-script`. Off: bosses close without photos; the crew still needs five to tell Curtis. On: five for everyone, as before.
+
+**Gate:** `gate_1457.mjs`.
