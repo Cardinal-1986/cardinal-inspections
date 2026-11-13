@@ -259,6 +259,19 @@ Before building: grep `FEATURES.md`, then grep the in-app `CHANGELOG` (it covers
 
 ---
 
+## New screens and redesigns: check Mobbin first
+
+**✅ SETTLED 12 Nov 2026 (Theo):** Before building a **new screen** or **redesigning an existing one**, pull real-world references from Mobbin. The Mobbin connector is on Theo's claude.ai account (tools: `search_screens`, `search_flows`, `search_sections`, plus collections).
+
+- **When:** a new screen, a new multi-step flow, or a layout/redesign request. **Not** for bug fixes, copy changes, colour-token work or gate/maintenance builds.
+- **How:** run `search_screens` (or `search_flows` for multi-step work like estimate → sign → deposit) with `platform: "ios"` first, because the crew uses the app on phones. Use `web` only for desktop-heavy views. Set `output_destination: "code"`. Name the kind of screen and app ("contractor estimate screen with line items", "field inspection checklist with photo capture").
+- **Show Theo 2–4 picks** as links (`mobbin_url`) with one line each on what to borrow. Wait for his pick before writing code, unless he said to just build it.
+- **Save the picks** to a Mobbin collection named **"Cardinal"** (`create_collection` once, then `save_content`). Check that collection on later builds so screens stay consistent.
+- **Borrow layout and flow, never branding.** Everything still goes through Cardinal's own tokens and theme rules (see Theming, and the light-ink rule below). No other company's colours, logos or names.
+- If the Mobbin tools aren't loaded in a session (an API-key login, or the connector got disconnected), say so in one line and carry on without it.
+
+---
+
 ## ⚠ THE RECURRING ONE: light ink on the dark ground — read before any colour work
 
 **This is the single most repeated defect on this project.** Theo has reported
