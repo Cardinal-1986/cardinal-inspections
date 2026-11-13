@@ -146,7 +146,7 @@ for(const theme of ['dark','light']){
     need('G  desktop: the kind strip hides', desk.strip==='none', desk.strip);
     need('G  desktop: the rail carries the kinds', desk.rail==='all,tarp,ticket,callback,punch', desk.rail);
     /* 1250 added Needs follow-up at the head of the list */
-    need('G  desktop: the rail carries Needs attention', /^(ping,)?late,nodate,hold,closed$/.test(desk.focus), desk.focus);
+    need('G  desktop: the rail carries Needs attention', /^(ping,)?(ready,)?late,nodate,hold,closed$/.test(desk.focus) /* 1451 added Ready to close */, desk.focus);
     need('G  desktop: nothing scrolls sideways', desk.over<=0, desk.over);
     await tap(d,'#puRail [data-pufocus="late"]','rail Past due');
     need('G  rail Past due shows only the past-due group', (await ids(d,'#puList .pl-row[data-pu]')).join(',')==='i1');

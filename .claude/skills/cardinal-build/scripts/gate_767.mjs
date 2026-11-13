@@ -207,7 +207,11 @@ await page.click('#cr-pb .pbclosed');
 await page.waitForTimeout(700);
 ok('Closed repairs routes to the full punch page too (856)', await page.evaluate(() =>
   document.getElementById('punchView').style.display === 'block'));
-await page.click('#punchView #puList [data-pufocus="closed"]');   /* 1248: Closed is a view at the foot of the list */
+/* 1248: Closed is a view at the foot of the list. 1453: Production's Closed now lands on that view
+   already (it opened open work before), so the foot button is only pressed if we are not there yet. */
+if (!(await page.evaluate(() => !!document.querySelector('#punchView #puList .pl-back')))) {
+  await page.click('#punchView #puList [data-pufocus="closed"]');
+}
 await page.waitForTimeout(500);
 await shot('04-closed');
 const closed = await page.evaluate(() => document.getElementById('puList').textContent);

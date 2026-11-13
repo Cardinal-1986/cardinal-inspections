@@ -38265,3 +38265,36 @@ The Steel style board and the phone/desktop/ultrawide home mocks were previews o
 - `gate_dupes`: RED on the same 12 pre-existing names, unchanged by this build.
 - Contrast scan (home at 390 and 1440, client page, Leads): no navy left, no text under the floor. The ✎ pencil glyph is 3.51:1 (non-text, clears 3:1). The scan's own navy heuristic flags 545's slate sheen stop `rgb(44,45,54)` — that is the obsidian, not navy.
 - Sentinel: see the PR.
+
+## Build 1451 — Punch: finishing a job (13 Nov 2026)
+
+**Theo:** "audit with 10 judges on presentation, ease of use, visibility and workflow", then "All, in order". This is the audit's group 1 of 6 (the plan is in OPEN_ITEMS, "Punch audit, 13 Nov").
+
+**What the judges found (confirmed in code):** "Tell Curtis it's finished" (`askClose()`) only wrote a flagged message and sent a buzz. The list never read the flag, so Curtis had to open every card to find what was ready to close. The Close / Tell Curtis button was the last thing on a card about 1,885px tall on a phone, the crew's button stayed live after telling him (a second tap posted the same message again), and a non-boss's empty checklist was a bare heading.
+
+**What changed:**
+- **List (`cr-punch-script`):** `plReady()` — open, and the last flagged comment is `askclose` (the same rule the card's check-out already used at 1400). `plGroup()` puts it in a new **Ready to close** group, second after Needs follow-up; the row reads "Finished · Ready to close · <who>"; the headline and the desktop rail count it. Green via the existing `--pl-live` token.
+- **Card (`cr-pk-script`):** `askedCloseEntry()`; a phone-only **dock** (`.pkdock`, fixed to the bottom under 900px) carries the same `closeHtml()` button — the in-flow copy of an OPEN card's button hides there; desktop is unchanged. The crew's button becomes a receipt once told ("Curtis has been told · <who> said it's finished · <when>"); the boss's Close names who finished it. A non-boss's empty checklist says "No steps on this one — Curtis adds them if it needs any. The five photos are what finish it."
+
+**Gates:** `check_build` GREEN; `gate_1451.mjs` (new, in `gate_chromium`) 7/7 GREEN, 7/7 RED on 1450; `gate_stack` CLEAN; sentinel in the PR.
+
+## Builds 1452–1455 — the Punch audit, groups 2 to 5 (13 Nov 2026)
+
+Shipped in one PR with 1451 (a span, written up together). Each build has its own gate, in `gate_chromium`, green on its build and red on the one before.
+
+**1452 — saves that tell the truth (`cr-pk-script`, `cr-punch-script`, `cr-pp-script`).**
+- `save()` used to `return` when a save was already running — the second change was DROPPED and the caller went on to clear the message box, say "Saved on the job" and buzz people. It now waits (up to 15s) and returns true / false. send, askClose, needs-a-day, follow-up and reassign stop when it is false; a refused message goes back in the box.
+- A failed load read "No punch work yet". `_loadFail` (list) and `loadErr` (client page) now say "Could not load…" with Try again (`data-pureload`).
+- Photo slots were positional, so removing the Close-up moved the Cleanup photo under the Close-up label. `slotMap()` places a photo by its `.slot`; removing one pins the others first. Photos before 1452 have no `.slot` and read exactly as before.
+- Caught by `gate_983` before it shipped: the first Try again style used `font:600 15px inherit`, a shorthand the browser drops.
+
+**1453 — one vocabulary, honest counts, lateness.** Punch & Repairs on the client page heading and Job Menu tile, search, the section dropdown, Production's tile and the reply email; "Repair" not "Ticket" on the card and the client page (`kindName()`); Close / Finish / Reopen name the kind (`kWord()`). A late job says "N days late — was due …" on its card (`lateHtml()`), on the client page (`ppState()`), and on Production's tile ("1 late"). A closed row shows days to close (it kept ageing); 30+ days open is highlighted; the headline follows the filters; Production's Closed opens Closed; a fresh open clears a home strip's CRM filter. The strip's close refusal showed a literal backslash-n and offered a non-boss reassigning — reworded.
+- ⚠ **The app header keeps "Punch".** "Punch & Repairs" was cut off on a 390px phone ("Punch & Rep…"); the page heading directly under it says it in full.
+
+**1454 — the Assign sheet.** Six working days (was four) in a 4-column grid, any other date, an optional time (saved as `scheduled_time`); with a person picked each day shows their stops ("free" / "N stops", amber at 3+). "Assign to …" was white on `#8fb4d8` = 2.17:1 in dark — now `#c8202e`, 5.67:1. The sheet header buttons are 44px (Close was 28). The selected day in light was `#2f8f56` at 3.88:1 — now `#1b7d49`, 4.94:1. The gate's control reproduces the readability judge's 2.17 and 3.88 exactly.
+
+**1455 — desktop.** From 1280px, a card opened from Punch & Repairs is a right-hand panel (`#cr-pk.side`, 820px or 48vw) with its Close in a sticky dock, and the list stays clickable; anywhere else it still covers the screen. Escape closes the card (its hold sheet or gallery first) and the Assign sheet. Client / Age / When headings sort inside each group (`PU.sort`, `plSorter()`). From 1900px the list column is wide enough to be the table (it was 560px beside a 2,162px map at 3440).
+
+**Older gates updated because the behaviour changed on purpose:** `gate_1248` G (the rail now has Ready to close), `gate_945` (6 days + No day), `gate_767` (Production's Closed lands on Closed), `gate_769` (the visible Close on a phone is the dock's), `gate_1451` G (on a desk the one Close is in the panel's dock).
+
+**Gates:** `check_build` GREEN on each; `gate_1451`–`gate_1455` green on 1455; a sweep of 44 older punch gates on 1450 vs 1455 found exactly the four above and nothing else. ⚠ 26 of the 44 do not start on this Windows machine (hard-coded Linux browser paths) on 1450 or 1455 alike, so they are unchecked here. `gate_chromium` cannot run locally on Windows either; CI runs it. Sentinel in the PR.
