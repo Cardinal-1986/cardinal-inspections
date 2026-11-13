@@ -38203,3 +38203,27 @@ The name was the only flexible item, so it was the one that gave way.
   - Contrast: 8.9:1 dark, 6.1:1 light.
 - Sentinel `--since` 1447 (production walk incl. dispatch, 390 + 1440, dark + light): CLEAN.
 - `gate_stack`: CLEAN.
+
+## Build 1449 — Color Studio from the client's page (13 Nov 2026)
+
+**Theo, "A".** Door A of three. The current colour tool is the **Color Studio** in the Showroom (cardinal-showroom, owner sign-in); the Exterior Visualizer is retired. Facts are from session "Cardinal Experience 5090" plus a read of the Showroom's own code.
+
+**What shipped (main block, the Job Menu):**
+- **The tile.** A **Color Studio** tile beside The Walk / Owner review. It opens `https://showroom.cardinalroster.com/workspace.html?open=experience` in a new tab. That link is live on cardinal-showroom main (`workspace.js` `start()`): it signs in, then lands on `/cardinal-experience/index.html`, where Lessons → Color Studio is.
+- **OWNER ONLY** (`crIsShowroomOwner()`, theo@ only). The Showroom's `authorize()` refuses every account but the owner, so a tile for Joan, the reps or Production would be a door into a 401.
+- **NOT in The Appointment.** That screen faces the homeowner, and Theo's 29 Oct rule is that homeowners never see the Experience's main screen.
+- **New icon** `DB_ICONS.swatch`; the tap is routed in the Job Menu's router.
+- **Door B (open that client's own house) waits on the Showroom side:**
+  - the "+ Add a home" work (fc37ada, claude/color-studio-takeback) going live after Theo's iPad pass
+  - the build writing each house's shipped path onto the CRM project
+  - an `?open=` studio path in workspace.js
+
+  Nothing was changed in cardinal-showroom.
+
+**Gates:**
+- `check_build` GREEN; the negative control holds.
+- `gate_1449.mjs` (new, in `gate_chromium` with a break that shows the tile to everyone): 16 GREEN on 1449 and 3 RED on 1448. The break alone reds 3.
+- ⚠ Two rig traps cost a round here; both are now asserted:
+  - The base seed names its projects p1..p3, not R1, so `openProject('R1')` opened nothing. The "others don't see it" checks then passed VACUOUSLY on an empty page. Each now asserts the Job Menu rendered first.
+  - `?as=joan` is not a rig persona and silently signs in as Theo. Joan is now set through `window.__AS__`, and the gate asserts the email took.
+- **Sentinel:** the full default walk (`--since` 1448) hit the 10-minute ceiling with no verdict. UNKNOWN, not clean. No CSS rule changed in this build.
