@@ -38127,3 +38127,36 @@ The name was the only flexible item, so it was the one that gave way.
   - **A narrowed sweep** (nav, clientdir, insclients, truth and frontdoor; same viewports and themes) had 3 new findings in 20 renders. All 3 were TRUNCATED notices from the 20-per-render cap, in light at 390 on insclients, truth and frontdoor.
   - **Uncapped** on those four states in light at 390: CLEAN, nothing new. 63 findings are carried from 1443.
 - **SETTLED 2 Nov 2026 (Theo, "1"): the Clients bar keeps its two rows at Normal on a phone.** Since 1444 the longer "Insurance" chip makes the bar wrap: All, Retail and Insurance on the first row, Community on the second. Every larger text size already looked this way. Do not tighten the chips to force one row. (Record this in OPEN_ITEMS' settled decisions with the next build.)
+
+## Build 1446 — Production gets a sky that follows the time of day (12 Nov 2026)
+
+**Theo's ask:** "Can you do time of day in the production screen with the calendar?" He picked it from rendered previews: v1 to v4, with snow added and a fix for a cut-off sky bottom. Then he said "Yes" to building v4. The previews used Mobbin references; the Antimetal and "orbit" ideas they explored were set aside for v4.
+
+**What shipped (`cr-pb-styles` + `cr-pb-script`, the home pane only):**
+- **The sky banner.** The title row (`head()` + `.pbsub`) now sits in a `.pbsky` banner whose `data-sky` follows the clock: dawn 5–9, day 9–16, sunset 16–20, night 20–5.
+- **The weather.** The banner's `data-wx` comes from `CardinalWx.day(today)`, the same daily Open-Meteo forecast the calendar icons use. Rain or storm makes it rain, snow makes it snow, cloud adds clouds, and a chip shows the forecast ("Rain · 80%").
+- **One canvas, one loop.** It draws stars, the sun or moon on an arc for the hour (kept below the title), clouds, rain, and snow that settles into a drift.
+- **The loop stops** (no frame is scheduled) whenever the board is closed, the pane is not home, the tab is hidden, or the banner is out of view (IntersectionObserver).
+- **Reduced motion** gets one still frame.
+- **Once a day,** the first time the board opens, the sky fades up and the sun or moon rises into place. Canvas only: no DOM opacity animation, so no sentinel state is caught mid-fade.
+- **The board keeps the account's theme** (Dark / Light / Sun). Only the banner follows the hour. A field account in Sun still gets its light board; at night that sits under a night sky.
+- **Phones:** the Today row overlaps the sky's lower edge. **Desktop (≥1100):** the sky is a rounded panel spanning both grid columns, and the month moved from grid row 3 to row 2. The two `> .pbtop` / `> .pbsub` grid lines are replaced, not out-specified.
+- **1416's phone rule hiding `.pbsub` is deleted.** Inside the sky, the subtitle is the eyebrow.
+
+**⚠ GRADIENT EXCEPTION:** Theo's settled rule (10 Aug) is "no gradients anywhere". This banner is the one approved exception ("Do all", 12 Nov). The gradient lives on `.pbskybg`, a sibling of the text, never an ancestor. `.pbsky` paints the colour the text actually sits on, so the sentinel and gate_1446 score the real ground. Every sky names its own `background-color`: a shared default was flagged OVERRIDDEN by the sentinel, then fixed.
+
+**Gates:**
+- `check_build` GREEN; the negative control holds.
+- `gate_1446.mjs` (new, in `gate_chromium` with a break on the loop's stop condition): 19 checks GREEN on 1446, 14 RED on 1445.
+  - Clock key, canvas size, the 1416 heading, contrast >= 4.5 for every sky × weather (16 combos).
+  - The Today row (44px, on the sky's edge, above the fold).
+  - The forecast drives rain and snow.
+  - Zero sky frames when closed, on a list pane, or under reduced motion.
+  - Desktop grid; a Sun account keeps its light board.
+  - ⚠ Its first version counted every requestAnimationFrame. Other modules here schedule ~40/s on their own (measured on 1445), so a correct loop read as a leak. It now counts only the named `skyLoop`.
+- `sentinel` (`--since` 1445, production walk, 390 + 1440, default + rb-light): CLEAN, nothing new in 24 renders, 83 carried.
+- `gate_stack`: CLEAN.
+- `gate_dupes`: RED, but identical to 1445's 12 pre-existing names. None of the 11 new `sky*` names is flagged.
+- **Not run locally (Windows):** `gate_types` (no tsc), `gate_a11y` (no axe-core), `gate_1206` (its `new URL().pathname` breaks on a Windows path), `gate_1081` and the Linux-pathed Production gates (1416/1420/1438/1440). CI's chromium job and the PR checks are the record for those.
+
+**Not in this build** (from the v3/v4 previews, for later): a sticky date bar after the sky scrolls away; hourly weather ("Rain after 2pm" needs `hourly=precipitation_probability`; the daily call has no hours or temperature); card-rise intro animation (left out on purpose, see above).

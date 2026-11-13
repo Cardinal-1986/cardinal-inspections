@@ -221,6 +221,16 @@ const GATES = [
     protects: 'the AR dashboard and the offline payment sheet are dark, and light is byte-for-byte what shipped',
     break: { find: '--est-bg:#0c0d0f; --est-panel:#141619;',
              repl: '--est-bg:#F4F4F5; --est-panel:#FFFFFF;' } },
+
+  /* 1446: Production's sky. The break is the loop's stop condition, which is the
+     part a later edit is most likely to loosen: with only "is the canvas still
+     there" left, the sky keeps scheduling frames on a closed board and a list
+     pane, and the E checks go red. (The visual half — clock, contrast, grid —
+     is asserted on every run; this control proves the cost half can fail.) */
+  { name: 'gate_1446.mjs',
+    protects: "Production's sky follows the clock, keeps its text >= 4.5:1, and draws nothing once it cannot be seen",
+    break: { find: 'if(!skyLive()){ SKY.run = false; return; }',
+             repl: 'if(!(SKY.cv && SKY.cv.isConnected)){ SKY.run = false; return; }' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
