@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1451<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1452<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47208,6 +47208,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1452, d:'2026-11-13', t:'Punch-outs: saves you can trust', s:'On a punch card, a second change made while the first was still saving used to be thrown away while the card still said Saved. Now it waits its turn, and if a save is refused your message goes back in the box and nobody is buzzed. If the list cannot load it says so and offers Try again, instead of saying there is no punch work. And taking a photo off a card no longer moves the other photos under the wrong labels.' },
   { b: 1451, d:'2026-11-13', t:'Punch-outs: ready to close', s:'When the crew says a punch-out is finished it now shows at the top of Punch & Repairs under Ready to close, so Curtis can see what to close without opening every card. On a phone the Close / Tell Curtis button stays at the bottom of the screen instead of two and a half screens down; once the crew has told Curtis it says so instead of offering to tell him again; and an empty checklist says Curtis adds the steps.' },
   { b: 1450, d:'2026-11-13', t:'Obsidian instead of navy', s:'The dark theme drops its navy for obsidian. The home screen, the side menu, the top bar, client pages and Leads keep their layout; the boxes are the same polished black as the Activity Count tiles, lit from the top-left and raised on a soft shadow, on a near-black page. Light mode, Claims and Community are unchanged.' },
   { b: 1449, d:'2026-11-13', t:'Color Studio from the client\u2019s page', s:'On a client\u2019s page the Job Menu now has a Color Studio tile for the owner account. It opens the Showroom in a new tab, signs in and lands on the Cardinal Experience, where Lessons leads to the Color Studio \u2014 so the colour picker is one tap from the client you are looking at. It shows only for the owner because the Showroom itself only lets the owner in.' },
@@ -61914,7 +61915,7 @@ async function checkOut(){
     }
   }
   if(!needDay){ save(patch); return; }
-  await save(patch);
+  if(!(await save(patch))) return;   /* 1452 */
   var to = officeEmails();
   if(to.length && typeof window.notifyTeam === 'function'){
     var pr = projectFor(it.project_id), who = myEmail();
@@ -62155,8 +62156,8 @@ async function pingRaise(){
   var list = comments().slice();
   list.push({ by:me, name:nameOf(me), at:now, text:'Follow up: ' + note, flag:'ping' });
   pingOpen = false;
-  await save({ ping_note:note, ping_by:me || null, ping_at:now,
-               ping_done_note:null, ping_done_by:null, ping_done_at:null, comments:list });
+  if(!(await save({ ping_note:note, ping_by:me || null, ping_at:now,
+               ping_done_note:null, ping_done_by:null, ping_done_at:null, comments:list }))) return;   /* 1452 */
   if(typeof window.auditLog === 'function'){
     try{ window.auditLog('punch', 'Flagged for follow-up: ' + (it.title || ''), it.project_id); }catch(_){}
   }
@@ -62388,10 +62389,27 @@ function checklistHtml(){
     (mgr ? '<button class="pkadd" data-act="addstep" type="button">+ Add step</button>' : '') +
     '</div>';
 }
+/* 1452: which photo sits in which named slot. A photo that carries .slot claims it; the rest
+   fill the empty slots in order (every photo before 1452 has no .slot, so they read as before).
+   Returns, per slot, the index into photos() or -1. Removing a photo pins the others first, so
+   taking off the Close-up no longer moves the Cleanup photo under the Close-up label. */
+function slotMap(ph){
+  var m = SLOTS.map(function(){ return -1; }), used = {};
+  ph.forEach(function(p, j){
+    var k = p && typeof p === 'object' ? p.slot : null; if(!k) return;
+    for(var i = 0; i < SLOTS.length; i++){ if(SLOTS[i].k === k && m[i] < 0){ m[i] = j; used[j] = true; break; } }
+  });
+  ph.forEach(function(p, j){
+    if(used[j]) return;
+    var i = m.indexOf(-1); if(i >= 0){ m[i] = j; used[j] = true; }
+  });
+  return m;
+}
 function photosHtml(){
   var ph = photos();
+  var _map = slotMap(ph);
   var cells = SLOTS.map(function(s, i){
-    var u = pUrl(ph[i]);
+    var u = _map[i] >= 0 ? pUrl(ph[_map[i]]) : '';
     /* 771: a wrong photo could not be taken off an item anywhere in the app
        once 768 stopped opening the sheet that owned the remove control. */
     return '<div class="pkslotwrap">' +
@@ -62399,7 +62417,7 @@ function photosHtml(){
       (u ? '<img class="im" data-src="' + esc(u) + '" alt="' + esc(s.l) + '">'
          : '<span class="im">' + svg('cam') + '</span>') +
       '<span class="sl">' + esc(s.l) + '</span></button>' +
-      (u ? '<button class="pkrm" data-rmphoto="' + i + '" type="button" aria-label="Remove this photo">&times;</button>' : '') +
+      (u ? '<button class="pkrm" data-rmphoto="' + _map[i] + '" type="button" aria-label="Remove this photo">&times;</button>' : '') +
       '</div>';
   }).join('');
   var gal = '<button class="pkgalbtn" data-act="gallery" type="button">' + svg('cam') +
@@ -62521,8 +62539,14 @@ function paintPhotos(){
 
 /* ------------------------------------------------------------------ writes */
 async function save(patch){
-  if(busy) return;
+  /* 1452: a second save while one was running used to be DROPPED here, and the caller went on
+     to clear the message box, say "Saved" and buzz people. Wait for the running one (up to 15s),
+     then save. Returns true when saved or held on the phone, false when refused. */
+  var _w = 0;
+  while(busy && _w < 150){ await new Promise(function(res){ setTimeout(res, 100); }); _w++; }
+  if(busy){ crTell('Still saving the last change \u2014 try again in a moment.'); return false; }
   busy = true;
+  var _ok = true;
   Object.assign(it, patch);
   lastSig = ''; render();
   /* 865: no signal — don't fight the network. Save it on the phone and let the
@@ -62530,7 +62554,7 @@ async function save(patch){
      'N waiting to sync' badge is the receipt. */
   if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
     try{ await window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:it.id }, patch: patch }); }catch(_oq){}
-    busy = false; refreshOthers(); return;
+    busy = false; refreshOthers(); return true;
   }
   try{
     /* 861: a punch-out is filled on a roof with weak signal. iOS Safari reports
@@ -62566,6 +62590,7 @@ async function save(patch){
     if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e)){
       try{ await window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:it.id }, patch: patch }); }catch(_oq2){}
     }else{
+      _ok = false;   /* 1452 */
       crTell('Could not save: ' + (e.message || e));
       var fresh = rowFor(it.id);
       if(fresh) it = fresh;
@@ -62574,6 +62599,7 @@ async function save(patch){
   }
   busy = false;
   refreshOthers();
+  return _ok;
 }
 function refreshOthers(){
   try{ if(window.CardinalProduction) window.CardinalProduction.refresh(); }catch(_){}
@@ -62791,7 +62817,12 @@ async function send(){
   }catch(_){}
   list.push({ by:me, name:nameOf(me), at:new Date().toISOString(), text:text, mentions:names });
   if(inp) inp.value = '';
-  await save({ comments: list });
+  if(!(await save({ comments: list }))){
+    /* 1452: refused — put the words back (the card re-rendered, so it is a new box) and tell nobody */
+    var _box = document.querySelector('#cr-pk [data-f="msg"]');
+    if(_box && !_box.value) _box.value = text;
+    return;
+  }
   /* Theo's rule, unchanged: only the people a comment TAGS are notified. */
   var told = false;   /* 1416 */
   if(names.length && typeof window.notifyTeam === 'function'){
@@ -62826,7 +62857,7 @@ async function askClose(){
   if(it.status === 'done' || !readyToClose()) return;
   var me = myEmail(), list = comments().slice();
   list.push({ by:me, name:nameOf(me), at:new Date().toISOString(), text:'Finished \u2014 ready for Curtis to close.', flag:'askclose' });
-  await save({ comments:list });
+  if(!(await save({ comments:list }))) return;   /* 1452 */
   var to = officeEmails();
   if(to.length && typeof window.notifyTeam === 'function'){
     var pr = projectFor(it.project_id);
@@ -63240,7 +63271,8 @@ function wire(){
   }); });
   q('[data-slot]', function(b){ b.onclick = function(){
     var i = Number(b.getAttribute('data-slot'));
-    var u = photos()[i];
+    var _sm = slotMap(photos());   /* 1452 */
+    var u = _sm[i] >= 0 ? pUrl(photos()[_sm[i]]) : '';
     if(u && window.CardinalResourceImages && window.CardinalResourceImages.open){
       try{ window.CardinalResourceImages.open(u, it.title || ''); return; }catch(_){}
     }
@@ -63276,6 +63308,10 @@ function wire(){
     var list = photos().slice();
     if(!list[i]) return;
     if(!await crAsk('Remove this photo from the punch-out?')) return;
+    /* 1452: pin every slotted photo to the slot it shows in before taking one out */
+    slotMap(list).forEach(function(j, si){
+      if(j >= 0 && list[j] && typeof list[j] === 'object' && !list[j].slot) list[j] = Object.assign({}, list[j], { slot: SLOTS[si].k });
+    });
     list.splice(i, 1);
     save({ photos: list });
   }; });
@@ -63305,7 +63341,7 @@ function wire(){
   var as = el.querySelector('[data-f="assigned"]');
   if(as) as.onchange = async function(){
     var to = as.value || null;
-    await save({ assigned_to: to });
+    if(!(await save({ assigned_to: to }))) return;   /* 1452 */
     /* 769: reassigning is telling somebody the work is theirs now. */
     await notifyAssigned(to);
   };
@@ -63510,6 +63546,7 @@ var rows = [];
    a live compare can never settle. Build 567 proved that the expensive way. */
 var lastHtml = '';
 var loadedFor = null;
+var loadErr = false;   /* 1452 */
 var histOpen = false;
 function esc(s){
 return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
@@ -63538,14 +63575,16 @@ var r = await window.supa.from('punch_items')
 if(r.error){
 if(!/does not exist|schema cache/i.test(r.error.message || '')){
 console.warn('[punch] load:', r.error.message);
+loadErr = true;   /* 1452 */
 }
 rows = [];
 }else{
 rows = r.data || [];
+loadErr = false;
 }
 loadedFor = pid;
 syncMenuCount();
-}catch(e){ console.warn('[punch] load failed:', e); rows = []; }
+}catch(e){ console.warn('[punch] load failed:', e); rows = []; loadErr = true; }
 }
 /* 922: the job-menu "Punch Outs" tile renders its count synchronously, but the
    rows load on the observer's schedule AFTER the menu is drawn, so the tile read
@@ -63645,7 +63684,7 @@ var html =
 : '<div class="cr-pp-none">' +
 (done.length
 ? 'Nothing outstanding on this job.'
-: 'No punch items. Add one when the crew leaves something behind.') +
+: (loadErr ? 'Could not load the punch items. Check the signal and open this job again.' : 'No punch items. Add one when the crew leaves something behind.')) +   /* 1452 */
 '</div>') +
 (done.length
 ? '<button class="cr-pp-fold" data-act="fold" type="button">' +
@@ -73233,6 +73272,7 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-grp::after{content:'';flex:1;height:1px;background:var(--rbe-line);}
 .pl-grp.late{color:var(--pl-late,#f08a90);}
 .pl-grp.ready{color:var(--pl-live,#6fd39b);}   /* 1451 */
+.pl-retry{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--rbe-line);border-radius:9px;background:transparent;color:var(--rbe-ink);font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1452 */
 .pl-row{display:grid;grid-template-columns:4px auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px;
   grid-template-areas:"stp cl cl age" "stp kd pb pb" "stp wh wh cr";
   padding:10px 12px 10px 0;border-bottom:1px solid var(--rbe-line);cursor:pointer;color:var(--rbe-ink);font-size:15px;}
@@ -73321,15 +73361,17 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 'use strict';
 /* ── shared punch data layer: one query, one write path, reused by every surface ── */
 var _rows = [];
+var _loadFail = false;   /* 1452: the last load failed (a refused or dropped read) */
 async function reload(){
   if(!window.supa) return _rows;
   try{
     var r = await window.supa.from('punch_items').select('*').order('created_at', { ascending:false });
     if(r.error){
-      if(!/does not exist|schema cache/i.test(r.error.message || '')) console.warn('[punch] load:', r.error.message);
+      if(!/does not exist|schema cache/i.test(r.error.message || '')){ console.warn('[punch] load:', r.error.message); _loadFail = true; }
       return _rows;
     }
     _rows = r.data || [];
+    _loadFail = false;
     /* 1049: replay pending offline writes over the fetched rows — without this
        a refresh while still offline would wipe the crew's queued work. Once a
        write syncs it leaves the outbox, so the overlay stops on its own (the
@@ -73345,7 +73387,7 @@ async function reload(){
         });
       }
     }catch(_ov){}
-  }catch(e){ console.warn('[punch] load failed:', e); }
+  }catch(e){ console.warn('[punch] load failed:', e); _loadFail = true; }
   return _rows;
 }
 async function toggle(id){
@@ -73442,6 +73484,7 @@ async function update(id, patch){
 }
 window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
   rows   : function(){ return _rows.slice(); },
+  loadFailed : function(){ return _loadFail; },   /* 1452 */
   notifyAssigned : notifyAssignedBoard,   /* 945: one notify path for every assign surface */
   reload : reload,
   toggle : toggle,
@@ -73879,7 +73922,8 @@ function render(){
     });
     html = html ? cols + html : '<div class="pu-empty">' +
       (all.length ? (PU.view ? 'Nothing here right now.' : 'Nothing matches — try All, or clear the filters.')
-                  : 'No punch work yet. + New adds the first one.') + '</div>';
+                  : (_loadFail ? 'Could not load punch work. Check the signal, then <button type="button" class="pl-retry" data-pureload>try again</button>.'   /* 1452 */
+                               : 'No punch work yet. + New adds the first one.')) + '</div>';
     if(PU.view) html = '<button type="button" class="pl-back" data-pufocus="">‹ All open work</button>' + html;
     html += '<button type="button" class="pl-more" data-pufocus="closed"><span>Closed</span><span>' + closed.length + ' ›</span></button>';
   }
@@ -74145,6 +74189,8 @@ document.addEventListener('click', function(e){
     }
     return;
   }
+  var rl = e.target.closest('#punchView [data-pureload]');   /* 1452 */
+  if(rl){ if(typeof window.openPunchView === 'function') window.openPunchView(); return; }
   var fo = e.target.closest('#punchView [data-pufocus]');
   if(fo){
     var v = fo.getAttribute('data-pufocus');
