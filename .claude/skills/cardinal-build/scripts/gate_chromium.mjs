@@ -231,6 +231,13 @@ const GATES = [
     protects: "Production's sky follows the clock, keeps its text >= 4.5:1, and draws nothing once it cannot be seen",
     break: { find: 'if(!skyLive()){ SKY.run = false; return; }',
              repl: 'if(!(SKY.cv && SKY.cv.isConnected)){ SKY.run = false; return; }' } },
+
+  /* 1447: the sticky bar is shown by the sky's observer and by nothing else. The break
+     removes that one line, so the bar stays hidden past the sky and A goes red. */
+  { name: 'gate_1447.mjs',
+    protects: "Production's sticky bar appears once the sky scrolls away, and the sky's chip names the next wet hour and the temperature",
+    break: { find: "if(st) st.classList.toggle('on', !es[0].isIntersecting);",
+             repl: 'void st;' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

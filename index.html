@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-12 build 1446<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1447<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47191,6 +47191,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1447, d:'2026-11-13', t:'Production\u2019s sky: the hour it rains, the temperature, and a bar that stays', s:'The weather chip on the Production sky now says when the wet starts and how warm it is \u2014 \u201c44\u00b0 \u00b7 Rain from 2pm\u201d \u2014 using today\u2019s hourly forecast for Dayton, and the sky shows what it is doing now: a dry morning stays dry until the rain actually arrives. Scroll down past the sky and a slim bar slides in along the top with the date, what today holds and + Add, so you never have to scroll back up to add something.' },
   { b: 1446, d:'2026-11-12', t:'Production gets a sky that follows the time of day', s:'The top of the Production screen is now a sky that changes with the clock: dawn colours from 5 to 9, a blue daytime sky with the sun and slow clouds until 4, a sunset until 8, and a night sky with stars and the moon after that. When the forecast says rain or snow, it rains or snows up there, and snow settles along the bottom. The sun or moon sits where it would at that hour. The first time you open the board each day, the sun or moon rises into place. The calendar, the four boxes and today\u2019s work are exactly where they were and keep your Dark, Light or Sun setting. The animation stops whenever the sky is off the screen or the app is in the background.' },
   { b: 1445, d:'2026-11-12', t:'Punch-out photos: take several at once, and they stick', s:'On a phone, a punch-out photo went one at a time, and often never showed up on the punch-out at all. Tapping a photo box, or Take photos, now opens the app\u2019s own camera, the same one the job photo album uses: take as many as you need, then tap Upload once. Add photos from phone picks several from your library at once. The card says Uploading while it works, and a photo with no signal is still held on the phone until you are back in range. The five-photo rule to finish a punch-out is unchanged.' },
   { b: 1444, d:'2026-11-02', t:'The insurance side is called Insurance', s:'The insurance side had three names: Cardinal Truth on the Front Door, in the menu and on its own home screen, Insurance in the header, and Claims on the Clients page. It is Insurance everywhere now: the menu row, the Front Door, the home screen heading, the quick-jump list, Self Check and the Clients page columns and chips. Nothing moved and nothing else changed. The Claims button that opens the list of claims keeps its name, because that is the list, not the department.' },
@@ -59552,6 +59553,24 @@ body.standalone .cr-undo-toast.pbundo{ --cr-stack:"1416: clears the installed ta
   #cr-pb .pbskyin{ padding:24px 28px 0; }
 }
 @media (prefers-reduced-motion:reduce){ #cr-pb .pbsky.pbskyfade .pbskybg{ animation:none; } }
+
+/* ── 1447 · the sticky bar ── tokens are the board's own, so it follows Dark / Light / Sun:
+   ink #eceef0 15.4:1 and mut #9aa3ab 7.0:1 on --pb-c (dark); 17.6 / 5.8:1 on white. */
+#cr-pb .pbstick{
+  position:sticky; top:0; z-index:6; height:60px; margin-bottom:-60px;
+  background:var(--pb-c,#15171a); border-bottom:1px solid var(--pb-line,rgba(230,235,240,.11));
+  visibility:hidden; opacity:0; transform:translateY(-100%);
+  transition:opacity .2s, transform .2s, visibility 0s linear .2s;
+}
+#cr-pb .pbstick.on{ visibility:visible; opacity:1; transform:none; transition:opacity .2s, transform .2s, visibility 0s; }
+#cr-pb .pbstick .in{ max-width:1560px; height:100%; margin:0 auto; padding:0 15px; display:flex; align-items:center; gap:12px; }
+#cr-pb .pbstick .m{ flex:1; min-width:0; }
+#cr-pb .pbstick b{ display:block; font:700 15px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); color:var(--pb-ink,#eceef0); }
+#cr-pb .pbstick small{ display:block; font:600 12px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); color:var(--pb-mut,#9aa3ab);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#cr-pb .pbstick small em{ color:var(--pb-hot,#e07a5f); font-style:normal; font-weight:700; }
+#cr-pb .pbstick .pbchip{ --cr-stack:"1447: the sticky bar's Add is a 44px chip, the agenda's stays as it is"; min-height:44px; flex:none; }
+@media (prefers-reduced-motion:reduce){ #cr-pb .pbstick, #cr-pb .pbstick.on{ transition:none; } }
 </style>
 <script id="cr-pb-script">
 (function(){
@@ -59869,6 +59888,7 @@ function render(){
      lastSig guard below then does the rest: icons change the markup, so the
      repaint happens; nothing else does, so it does not. */
   if(window.CardinalWx) window.CardinalWx.load(function(){ render(); });
+  if(window.CardinalWx && window.CardinalWx.loadHours) window.CardinalWx.loadHours(function(){ render(); });   /* 1447 */
   var html = pane === 'cal' ? calHtml() : pane === 'list' ? listPaneHtml() : homeHtml();
   /* 606: an unguarded innerHTML write inside a module whose own observer
      watches document.body repainted 54x/sec and destroyed the button under
@@ -59995,19 +60015,37 @@ function homeMonthHtml(){
    agenda itself is ~760px down a phone, under the month (853's order stands).
    Counts come from eventsFor(), the agenda's own list, so the two can never
    disagree; the tap opens the 1090 day sheet for today. */
-function todayHtml(){
+/* 1447: today's words, ONCE — the Today row and the sticky bar both read them, so they can never disagree */
+function todayBits(){
   var evs = eventsFor(today()), n = { build:0, drop:0, punch:0, done:0 }, urg = 0, bits = [];
   evs.forEach(function(e){ n[e.cls] = (n[e.cls] || 0) + 1; if(e.tag === 'URGENT') urg++; });
   if(n.build) bits.push(n.build + ' build' + (n.build === 1 ? '' : 's'));
   if(n.drop)  bits.push(n.drop + ' drop' + (n.drop === 1 ? '' : 's'));
   if(n.punch) bits.push(n.punch + ' punch-out' + (n.punch === 1 ? '' : 's'));
   if(n.done)  bits.push(n.done + ' closed');
+  return { text:bits.length ? bits.join(' · ') : 'Nothing booked', urg:urg };
+}
+function todayHtml(){
+  var tb = todayBits();
   /* no aria-label: the visible words ARE the name (axe label-content-name-mismatch) */
   return '<button class="pbtoday" data-today="1" type="button">' +
     '<span class="k">Today</span>' +
-    '<span class="t">' + (bits.length ? esc(bits.join(' · ')) : 'Nothing booked') +
-      (urg ? ' · <em>' + urg + ' urgent</em>' : '') + '</span>' +
+    '<span class="t">' + esc(tb.text) +
+      (tb.urg ? ' · <em>' + tb.urg + ' urgent</em>' : '') + '</span>' +
     '<span class="go">›</span></button>';
+}
+/* 1447: once the sky has scrolled away, a slim bar keeps the day and + Add in reach. It sits
+   OUTSIDE .pbwrap (so it is never a cell of the home grid) and is sticky to #cr-pb, the board's
+   own scroller; its negative margin means it takes no room while hidden. Shown by the sky's
+   IntersectionObserver — no scroll listener. Hidden = visibility:hidden, so it is out of the
+   tab order and the accessibility tree until it appears. */
+function stickHtml(){
+  var tb = todayBits();
+  return '<div class="pbstick"><div class="in">' +
+    '<div class="m"><b>' + esc(pbFull(today())) + '</b><small>' + esc(tb.text) +
+      (tb.urg ? ' · <em>' + tb.urg + ' urgent</em>' : '') + '</small></div>' +
+    '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+    '</div></div>';
 }
 /* ── 1446 · the sky ────────────────────────────────────────────────────────
    One banner on the home pane, one canvas, one loop. The loop draws stars, the
@@ -60021,13 +60059,34 @@ var SKY = { cv:null, cx:null, W:0, H:0, P:[], clouds:[], pile:[], key:'', run:fa
 var skyReduce = (function(){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){ return false; } })();
 function skyHour(){ var d = new Date(); return d.getHours() + d.getMinutes() / 60; }
 function skyKey(h){ return h >= 5 && h < 9 ? 'dawn' : h >= 9 && h < 16 ? 'day' : h >= 16 && h < 20 ? 'sunset' : 'night'; }
+/* 1447: with today's HOURS the sky shows what it is doing NOW (a morning that turns wet at 2pm is
+   not drawn raining at 8am), and the chip names the next wet hour and the temperature:
+   "44° · Rain from 2pm". Without them it is 1446's daily forecast, unchanged. */
+function skyHourLabel(h){ return (h % 12 || 12) + (h < 12 ? 'am' : 'pm'); }
 function skyWx(){
-  var w = window.CardinalWx, d = w && w.day ? w.day(keyOf(today())) : null;
-  if(!d) return { k:'', label:'', icon:'' };
-  var k = w.kind(d.c), p = +d.p || 0;
-  var sky = k === 'snow' ? 'snow' : (k === 'rain' || k === 'storm') ? 'rain' : k === 'cloud' ? 'cloud' : '';
-  var word = k === 'sun' ? 'Clear' : k === 'cloud' ? 'Cloudy' : k === 'storm' ? 'Storms' : k === 'snow' ? 'Snow' : 'Rain';
-  return { k:sky, label:word + (p >= 30 ? ' \u00b7 ' + p + '%' : ''), icon:w.icon(k) };
+  var w = window.CardinalWx, d = w && w.day ? w.day(keyOf(today())) : null, H = w && w.hours ? w.hours() : null;
+  if(!d && !H) return { k:'', label:'', icon:'' };
+  var k = d ? w.kind(d.c) : 'sun', p = d ? (+d.p || 0) : 0, hr = new Date().getHours(), sky, from = null, label = '';
+  if(H){
+    var cur = null;
+    (H.hrs || []).forEach(function(x){ if(x.h === hr) cur = x; });
+    var kn = w.kind(cur ? cur.c : H.nowc), wetNow = !!cur && (+cur.p || 0) >= 50;
+    sky = (kn === 'snow' && wetNow) ? 'snow' : ((kn === 'rain' || kn === 'storm') && wetNow) ? 'rain' : kn === 'cloud' ? 'cloud' : '';
+    (H.hrs || []).forEach(function(x){
+      if(from || x.h < hr || (+x.p || 0) < 50) return;
+      var kx = w.kind(x.c); if(kx === 'rain' || kx === 'storm' || kx === 'snow') from = x;
+    });
+  } else {
+    sky = k === 'snow' ? 'snow' : (k === 'rain' || k === 'storm') ? 'rain' : k === 'cloud' ? 'cloud' : '';
+  }
+  if(from){
+    var kf = w.kind(from.c), wd = kf === 'snow' ? 'Snow' : kf === 'storm' ? 'Storms' : 'Rain';
+    label = from.h <= hr ? wd + ' now' : wd + ' from ' + skyHourLabel(from.h);
+  } else if(d){
+    label = (k === 'sun' ? 'Clear' : k === 'cloud' ? 'Cloudy' : k === 'storm' ? 'Storms' : k === 'snow' ? 'Snow' : 'Rain') + (p >= 30 ? ' \u00b7 ' + p + '%' : '');
+  }
+  if(H && typeof H.t === 'number') label = H.t + '\u00b0' + (label ? ' \u00b7 ' + label : '');
+  return { k:sky, label:label, icon:w.icon(from ? w.kind(from.c) : k) };
 }
 function skyHtml(inner){
   var wx = skyWx();
@@ -60123,7 +60182,10 @@ function skyMount(){
     SKY.cv = cv; SKY.cx = cv.getContext('2d');
     if(SKY.io){ try{ SKY.io.disconnect(); }catch(_){} }
     if('IntersectionObserver' in window){
-      SKY.io = new IntersectionObserver(function(es){ SKY.vis = es[0].isIntersecting; skyStart(); });
+      SKY.io = new IntersectionObserver(function(es){
+        SKY.vis = es[0].isIntersecting; skyStart();
+        var st = el && el.querySelector('.pbstick'); if(st) st.classList.toggle('on', !es[0].isIntersecting);   /* 1447 */
+      }, { rootMargin:'-72px 0px 0px 0px' });
       SKY.io.observe(box);
     }
   }
@@ -60151,7 +60213,8 @@ function homeHtml(){
   var d = selDay || today();
   /* 853: month calendar first (concept 2), then the command tiles, then the
      day's agenda — tapping a day up top swaps the agenda at the bottom. */
-  return '<div class="pbwrap pbhome">' +   /* 1416: the dashboard grid names this pane only */
+  return stickHtml() +                      /* 1447: outside .pbwrap, so never a grid cell */
+    '<div class="pbwrap pbhome">' +   /* 1416: the dashboard grid names this pane only */
     skyHtml(   /* 1446: the title row lives in the sky */
       head('Production', (typeof window.isProductionUser === 'function' && window.isProductionUser()) ? '' : 'home') +   /* 1416: one heading, one colour. A4 (P08.03): no "<" for a production account — close() reopens this same board for them (1420), so the button did nothing */
       '<div class="pbsub">Schedule · Jobs · Punch</div>') +
@@ -93579,8 +93642,46 @@ window.CardinalStorm = Object.assign(window.CardinalStorm || {}, {
     var w = k === 'storm' ? 'Storm' : k === 'snow' ? 'Snow' : 'Rain';
     return w + (p ? ' ' + p + '%' : '');
   }
+  /* 1447: TODAY's hours — the next wet hour ("Rain from 2pm") and the temperature now, for
+     Production's sky. A second, small call (one day, hourly, Fahrenheit) so the 14-day daily
+     call above, and every caller of it, stays exactly as it was. Same rules: 30-minute cache,
+     the callback fires only when a network fetch lands, a failure changes nothing anywhere. */
+  var HRS = null, HAT = 0, HPEND = false, HCBS = [];
+  function ymdNow(){ var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function hoursFresh(){ return !!HRS && Date.now() - HAT < TTL && HRS.day === ymdNow(); }
+  function loadHours(cb){
+    if(!hoursFresh()){
+      try{
+        var c = JSON.parse(localStorage.getItem('cr-wxhours') || 'null');
+        if(c && c.at && Date.now() - c.at < TTL && c.h && c.h.day === ymdNow()){ HRS = c.h; HAT = c.at; }
+      }catch(_e){}
+    }
+    if(hoursFresh()) return;
+    if(typeof cb === 'function') HCBS.push(cb);
+    if(HPEND) return;
+    HPEND = true;
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=39.7589&longitude=-84.1916' +
+          '&current=temperature_2m,weather_code&hourly=precipitation_probability,weather_code' +
+          '&forecast_days=1&temperature_unit=fahrenheit&timezone=auto')
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var hh = j && j.hourly, cur = j && j.current;
+        if(!hh || !hh.time){ HPEND = false; return; }
+        HRS = { day:ymdNow(),
+                t:(cur && typeof cur.temperature_2m === 'number') ? Math.round(cur.temperature_2m) : null,
+                nowc:cur ? cur.weather_code : null,
+                hrs:hh.time.map(function(t, i){ return { h:+String(t).slice(11, 13), p:(hh.precipitation_probability || [])[i], c:(hh.weather_code || [])[i] }; }) };
+        HAT = Date.now(); HPEND = false;
+        try{ localStorage.setItem('cr-wxhours', JSON.stringify({ at:HAT, h:HRS })); }catch(_e2){}
+        var l = HCBS; HCBS = [];
+        l.forEach(function(f){ try{ f(); }catch(_e3){} });
+      })
+      .catch(function(){ HPEND = false; });          /* silent, always */
+  }
+  function hours(){ return hoursFresh() ? HRS : null; }
   window.CardinalWx = Object.assign(window.CardinalWx || {}, {
-    load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell, flag: flag
+    load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell, flag: flag,
+    loadHours: loadHours, hours: hours
   });
 })();
 </script>

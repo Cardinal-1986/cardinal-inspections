@@ -38160,3 +38160,27 @@ The name was the only flexible item, so it was the one that gave way.
 - **Not run locally (Windows):** `gate_types` (no tsc), `gate_a11y` (no axe-core), `gate_1206` (its `new URL().pathname` breaks on a Windows path), `gate_1081` and the Linux-pathed Production gates (1416/1420/1438/1440). CI's chromium job and the PR checks are the record for those.
 
 **Not in this build** (from the v3/v4 previews, for later): a sticky date bar after the sky scrolls away; hourly weather ("Rain after 2pm" needs `hourly=precipitation_probability`; the daily call has no hours or temperature); card-rise intro animation (left out on purpose, see above).
+
+## Build 1447 — Production's sky: the hour it rains, the temperature, and a bar that stays (13 Nov 2026)
+
+**Theo, "Do 3,4,6".** Item 6 is the three Production-sky extras he approved in previews v3/v4 and that 1446 left out.
+
+**What shipped:**
+- **`CardinalWx.loadHours()` / `hours()`.** The ONE weather module gained today's hours: a second, small Open-Meteo call (`current=temperature_2m,weather_code`, `hourly=precipitation_probability,weather_code`, one day, Fahrenheit) cached 30 min under `cr-wxhours`. Same rules as the daily call: the callback fires only on a network fetch, and a failure changes nothing. The 14-day daily call and its callers are untouched.
+- **`skyWx()` reads the hours.**
+  - The sky shows what it is doing NOW: a dry morning with rain at 2pm is not drawn raining at 8am.
+  - The chip names the next wet hour and the temperature: "44° · Rain from 2pm" / "41° · Rain now".
+  - With no hours it falls back to 1446's daily forecast, unchanged.
+- **The sticky bar (`stickHtml()`).**
+  - It shows the date, today's words and + Add (a 44px chip).
+  - It sits OUTSIDE `.pbwrap`, so it is never a home-grid cell (a grid child would have pushed the month back to row 3), and is sticky to `#cr-pb` with a negative margin so it takes no room while hidden.
+  - It is hidden with `visibility:hidden`, which keeps it out of the tab order. The sky's existing IntersectionObserver shows it (`rootMargin -72px`); there is no scroll listener.
+- **`todayBits()`.** The Today row's counts were extracted once, so the row and the bar read the same words and can never disagree.
+
+**Gates:**
+- `check_build` GREEN; the negative control holds.
+- `gate_1447.mjs` (new, added to `gate_chromium` with a break on the bar's one show line): 15 GREEN on 1447 and 12 RED on 1446. The break alone reds A.
+- `gate_1446` still 19/19 on 1447.
+- Sentinel `--since` 1446 (production walk, 390 + 1440, dark + light): CLEAN, nothing new in 24 renders.
+- `gate_stack`: CLEAN.
+- Not run locally (Windows): the same set as 1446. CI is the record.
