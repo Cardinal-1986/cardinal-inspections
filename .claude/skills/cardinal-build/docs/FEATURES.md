@@ -10796,3 +10796,15 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - **Unchanged:** the five-photo close rule and the slot labels.
 
 **Gate:** `gate_1445.mjs`, 34 checks, RED on 1444. It runs as Scottie in real Chromium with a canvas camera. Section J runs as an admin and proves the job album's camera still runs album mode.
+
+## Build 1446: Production's sky (12 Nov 2026)
+
+**Where:** `cr-pb-styles` / `cr-pb-script`, home pane. `skyHtml()` wraps the title row; `skyMount()` runs after every home render and from `open()`.
+
+- **Sky by the clock:** dawn 5–9, day 9–16, sunset 16–20, night 20–5 (`skyKey()`). The sun or moon sits on an arc for the hour.
+- **Weather from `CardinalWx`:** rain/storm → rain, snow → snow with a drift, cloud → clouds, plus a forecast chip.
+- **Once-a-day rise:** localStorage `cr-pb-sky` holds the day it last played.
+- **Costs nothing when unseen:** the loop stops when closed, on another pane, hidden, scrolled away or under reduced motion.
+- **The board below keeps Dark / Light / Sun.** The banner gradient is the approved exception to "no gradients" (see the build log).
+
+**Gate:** `gate_1446.mjs`, 19 checks, RED on 1445; in `gate_chromium`.

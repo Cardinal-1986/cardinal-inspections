@@ -2,6 +2,16 @@
 
 ---
 
+## ✅ SETTLED 12 Nov 2026 (Theo, "Do all" / "Yes") — Production's sky (build 1446)
+
+- **The Production home banner may use a gradient sky.** It is the ONE exception to the 10 Aug "no gradients anywhere" rule. Do not remove it as a gradient violation, and do not copy it to another screen without asking.
+- **The sky follows the clock; the board follows the account's theme.** Sun stays Sun for Curtis and Scottie.
+- **Follow-ups he approved in preview, not yet built:**
+  - a sticky date + summary + Add bar once the sky scrolls away;
+  - hourly weather ("Rain after 2pm"), which needs an hourly Open-Meteo field;
+  - a temperature in the chip.
+- **Also from 1445's log, recorded here as it asked:** SETTLED 2 Nov 2026 (Theo, "1") — the Clients bar keeps its two rows at Normal on a phone. Do not tighten the chips to force one row.
+
 ## ✅ SETTLED 1 Nov 2026 (Theo, verbatim: "T1 C · T2 B · T3 B · T5 B · T6 B · T7 A · T8 C · T9 B · T10 Keep #1") — the round-1 taste calls
 
 He picked from the preview page (`taste/manifest.json`, published as the "Cardinal Taste Calls" artifact). Three of these **reverse earlier picks**. The new answer is the settled one; do not restore the old one.

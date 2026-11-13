@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-12 build 1445<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-12 build 1446<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47191,6 +47191,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1446, d:'2026-11-12', t:'Production gets a sky that follows the time of day', s:'The top of the Production screen is now a sky that changes with the clock: dawn colours from 5 to 9, a blue daytime sky with the sun and slow clouds until 4, a sunset until 8, and a night sky with stars and the moon after that. When the forecast says rain or snow, it rains or snows up there, and snow settles along the bottom. The sun or moon sits where it would at that hour. The first time you open the board each day, the sun or moon rises into place. The calendar, the four boxes and today\u2019s work are exactly where they were and keep your Dark, Light or Sun setting. The animation stops whenever the sky is off the screen or the app is in the background.' },
   { b: 1445, d:'2026-11-12', t:'Punch-out photos: take several at once, and they stick', s:'On a phone, a punch-out photo went one at a time, and often never showed up on the punch-out at all. Tapping a photo box, or Take photos, now opens the app\u2019s own camera, the same one the job photo album uses: take as many as you need, then tap Upload once. Add photos from phone picks several from your library at once. The card says Uploading while it works, and a photo with no signal is still held on the phone until you are back in range. The five-photo rule to finish a punch-out is unchanged.' },
   { b: 1444, d:'2026-11-02', t:'The insurance side is called Insurance', s:'The insurance side had three names: Cardinal Truth on the Front Door, in the menu and on its own home screen, Insurance in the header, and Claims on the Clients page. It is Insurance everywhere now: the menu row, the Front Door, the home screen heading, the quick-jump list, Self Check and the Clients page columns and chips. Nothing moved and nothing else changed. The Claims button that opens the list of claims keeps its name, because that is the list, not the department.' },
   { b: 1443, d:'2026-11-02', t:'Easier to tap, easier to read, and the keyboard works', s:'Small controls that were hard to hit on a phone now have a full-size tap area: Open full claim (and tapping the claim card itself opens the claim), the partner buttons, + Add on a punch card, the stage menu, Remember me, Forgot password, the punch search and the document title. The Back chip in the document editor is a real button. Faded numbers that were hard to read, such as out-of-month days on the Production calendar, Community zero counts and the Clients bar counts, are now a solid readable grey. On a desktop with a keyboard, the top bar and the home and Clients cards can be reached with Tab and opened with Enter, and Tab stays inside a form or the estimate builder instead of wandering to the page behind it. Unlabelled search boxes, sort menus and calendar arrows now say what they are for screen readers. Escape closes the Ask sheet and Self Check, and Back closes the Ask sheet without leaving the page. On a desktop the top bar is 3 pixels taller so every item in it is a full 44 pixels.' },
@@ -58993,18 +58994,16 @@ objections : OBJECTIONS,
     grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
     column-gap:28px; row-gap:14px; align-items:start; }
   #cr-pb .pbwrap.pbhome > *{ grid-column:2; }
-  #cr-pb .pbwrap.pbhome > .pbtop{ grid-column:1 / -1; }
-  #cr-pb .pbwrap.pbhome > .pbsub{ grid-column:1 / -1; }
-  #cr-pb .pbwrap.pbhome > .pbmonth{ grid-column:1; grid-row:3 / span 6; align-self:start; }
+  #cr-pb .pbwrap.pbhome > .pbsky{ grid-column:1 / -1; }   /* 1446: the title and subtitle live inside the sky now */
+  #cr-pb .pbwrap.pbhome > .pbmonth{ grid-column:1; grid-row:2 / span 6; align-self:start; }
 }
 @media (min-width:1600px){
   #cr-pb .pbwrap.pbhome{ --cr-stack:"1416: 904's ultrawide grid, renamed to the pane it serves"; max-width:2160px; display:grid;
     grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
     column-gap:36px; row-gap:14px; align-items:start; }
   #cr-pb .pbwrap.pbhome > *{ grid-column:2; }
-  #cr-pb .pbwrap.pbhome > .pbtop{ grid-column:1 / -1; }
-  #cr-pb .pbwrap.pbhome > .pbsub{ grid-column:1 / -1; }
-  #cr-pb .pbwrap.pbhome > .pbmonth{ grid-column:1; grid-row:3 / span 6; align-self:start; }
+  #cr-pb .pbwrap.pbhome > .pbsky{ grid-column:1 / -1; }   /* 1446: the title and subtitle live inside the sky now */
+  #cr-pb .pbwrap.pbhome > .pbmonth{ grid-column:1; grid-row:2 / span 6; align-self:start; }
 }
 
 /* ---- header ------------------------------------------------------------- */
@@ -59484,7 +59483,6 @@ body.cr-lnav-on #cr-pb h1{ font-size:30px; }
 #cr-pb .pbtoday .t{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #cr-pb .pbtoday .t em{ color:var(--pb-hot,#e07a5f); font-style:normal; font-weight:700; }
 #cr-pb .pbtoday .go{ margin-left:auto; flex:none; color:var(--pb-dim,#848c94); font:700 15px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; }
-@media (max-width:1099px){ #cr-pb .pbhome > .pbsub{ display:none; } }
 @media (min-width:1100px){ #cr-pb .pbtoday{ display:none; } }
 /* MINOR 11 — "Ordered — Undo". The app's one undo toast (CardinalUndo), sized
    for a thumb: its button is 44px here, its ink #ff8a90 7.70:1 on the toast's
@@ -59494,6 +59492,66 @@ body.cr-lnav-on #cr-pb h1{ font-size:30px; }
 .cr-undo-toast.pbundo{ --cr-stack:"1416: Production's undo only; the shared toast stays for its other caller"; width:max-content; max-width:calc(100vw - 32px); }   /* left:50% alone shrink-wrapped it to half the screen */
 .cr-undo-toast.pbundo .btn{ --cr-stack:"1416: Production's undo only"; min-height:44px; min-width:64px; color:#ff8a90; border-color:#e35c63; }
 body.standalone .cr-undo-toast.pbundo{ --cr-stack:"1416: clears the installed tab bar"; bottom:calc(76px + env(safe-area-inset-bottom,0px)); }
+
+/* ── 1446 · the sky ─────────────────────────────────────────────────────────
+   Theo, 12 Nov 2026, from rendered previews (v4): "time of day in the production
+   screen with the calendar". The title row sits in a sky that follows the clock —
+   dawn 5–9, day 9–16, sunset 16–20, night 20–5 — with the real weather on top
+   (CardinalWx: rain, storm, snow, cloud). The board below keeps the app theme
+   (Dark / Light / Sun) exactly as before; only the banner changes with the hour.
+   ⚠ GRADIENT: Theo's settled rule is "no gradients anywhere". This sky is the one
+   exception he approved for this screen ("Do all", 12 Nov), and it stays in this
+   banner. Do not copy it anywhere else.
+   CONTRAST: the gradient lives on .pbskybg, a SIBLING of the text, never an
+   ancestor. .pbsky paints the colour the text actually sits on (the sky's top
+   band), so the sentinel scores the real ground instead of the bright horizon:
+       dawn #120e26 / sunset #170704 / night #030308 / rain #14171c / snow #151b28
+         ink #ffffff 16+:1 · ink2 #f6decb 13+:1
+       day  #5ea6e4  ink #0b1a2c 6.72:1 · ink2 #1c3048 5.14:1
+       snow by day #a2afc0  ink #0b1a2c 7.87:1 · ink2 #1c3048 6.02:1  */
+#cr-pb .pbsky{
+  position:relative; overflow:hidden; isolation:isolate;
+  margin:-18px -15px 0; height:clamp(220px,30vh,300px);
+  --sky-ink:#ffffff; --sky-ink2:#f6decb;
+}
+/* every sky names its own ground — no default the other three would override (the sentinel's OVERRIDDEN) */
+#cr-pb .pbsky[data-sky="sunset"]{ background-color:#170704; }
+#cr-pb .pbsky[data-sky="dawn"]{ background-color:#120e26; }
+#cr-pb .pbsky[data-sky="night"]{ background-color:#030308; }
+#cr-pb .pbsky[data-sky="day"]{ background-color:#5ea6e4; --sky-ink:#0b1a2c; --sky-ink2:#1c3048; }
+#cr-pb .pbsky[data-wx="rain"]{ background-color:#14171c; --sky-ink:#ffffff; --sky-ink2:#f6decb; }
+#cr-pb .pbsky[data-wx="snow"]{ background-color:#151b28; --sky-ink:#ffffff; --sky-ink2:#f6decb; }
+#cr-pb .pbsky[data-sky="day"][data-wx="snow"]{ background-color:#a2afc0; --sky-ink:#0b1a2c; --sky-ink2:#1c3048; }
+#cr-pb .pbskybg{ position:absolute; inset:0; z-index:0; pointer-events:none; }
+#cr-pb .pbsky[data-sky="sunset"] .pbskybg{ background:linear-gradient(180deg,rgba(0,0,0,0) calc(100% - 64px),var(--pb-g,#0c0d0f) 100%),linear-gradient(180deg,#170704 0%,#4a1a08 32%,#a2421a 62%,#e8843a 86%,#f9c994 100%); }
+#cr-pb .pbsky[data-sky="dawn"] .pbskybg{ background:linear-gradient(180deg,rgba(0,0,0,0) calc(100% - 64px),var(--pb-g,#0c0d0f) 100%),linear-gradient(180deg,#120e26 0%,#3a2350 34%,#8a4a6a 64%,#e6957a 88%,#fbd3b0 100%); }
+#cr-pb .pbsky[data-sky="day"] .pbskybg{ background:linear-gradient(180deg,rgba(0,0,0,0) calc(100% - 64px),var(--pb-g,#0c0d0f) 100%),linear-gradient(180deg,#5ea6e4 0%,#8dc2ee 36%,#bfddf5 66%,#e9f2f6 88%,#fff1dd 100%); }
+#cr-pb .pbsky[data-sky="night"] .pbskybg{ background:linear-gradient(180deg,rgba(0,0,0,0) calc(100% - 64px),var(--pb-g,#0c0d0f) 100%),linear-gradient(180deg,#030308 0%,#0a0a16 34%,#141224 62%,#2a1418 86%,#4a1c14 100%); }
+#cr-pb .pbsky[data-wx="rain"] .pbskybg{ background:linear-gradient(180deg,rgba(0,0,0,0) calc(100% - 64px),var(--pb-g,#0c0d0f) 100%),linear-gradient(180deg,#14171c 0%,#262a31 34%,#3a3e46 64%,#55575c 88%,#6e6c6a 100%); }
+#cr-pb .pbsky[data-wx="snow"] .pbskybg{ background:linear-gradient(180deg,rgba(0,0,0,0) calc(100% - 64px),var(--pb-g,#0c0d0f) 100%),linear-gradient(180deg,#151b28 0%,#26304a 34%,#3e4862 64%,#64708a 88%,#9aa3b4 100%); }
+#cr-pb .pbsky[data-sky="day"][data-wx="snow"] .pbskybg{ background:linear-gradient(180deg,rgba(0,0,0,0) calc(100% - 64px),var(--pb-g,#0c0d0f) 100%),linear-gradient(180deg,#a2afc0 0%,#b9c4d2 36%,#cad3dd 66%,#e4e9ee 88%,#f6f7f9 100%); }
+#cr-pb .pbsky.pbskyfade .pbskybg{ animation:pbskyfade 1.1s ease-out both; }
+@keyframes pbskyfade{ from{ opacity:0; } to{ opacity:1; } }
+#cr-pb .pbskycv{ position:absolute; inset:0; z-index:1; width:100%; height:100%; display:block; pointer-events:none; }
+#cr-pb .pbskyin{ position:relative; z-index:2; padding:18px 15px 0; }
+#cr-pb .pbsky h1{ --cr-stack:"1446: the title sits on the sky, whose ink flips with the hour; the board's own h1 ink stays for every other pane"; color:var(--sky-ink,#ffffff); }
+#cr-pb .pbsky .pbmon{ --cr-stack:"1446: the date sits on the sky"; color:var(--sky-ink2,#f6decb); font-weight:700; }
+#cr-pb .pbsky .pbsub{ --cr-stack:"1446: the subtitle is the sky's eyebrow"; color:var(--sky-ink2,#f6decb); font-weight:700; margin:6px 0 0; }
+#cr-pb .pbsky .pbback{ --cr-stack:"1446: the back button sits on the sky"; color:var(--sky-ink,#ffffff); border-color:currentColor; }
+#cr-pb .pbskywx{
+  display:inline-flex; align-items:center; gap:6px; margin-top:10px; min-height:30px; padding:0 11px; border-radius:999px;
+  background:rgba(0,0,0,.42); color:#ffffff;
+  font:700 12px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); letter-spacing:.03em;
+}
+#cr-pb .pbskywx svg{ width:15px; height:15px; }
+#cr-pb .pbsky[data-sky="day"]:not([data-wx="rain"]) .pbskywx{ background:rgba(255,255,255,.8); color:#0b1a2c; }
+/* the Today row sits on the sky's lower edge (phones; desktop shows the day beside the month) */
+#cr-pb .pbsky + .pbtoday{ --cr-stack:"1446: the Today row overlaps the sky's lower edge"; position:relative; z-index:2; margin-top:-38px; }
+@media (min-width:1100px){
+  #cr-pb .pbsky{ --cr-stack:"1446: desktop sky is a rounded panel inside the board column"; margin:0 0 8px; border-radius:20px; height:clamp(200px,24vh,260px); }
+  #cr-pb .pbskyin{ padding:24px 28px 0; }
+}
+@media (prefers-reduced-motion:reduce){ #cr-pb .pbsky.pbskyfade .pbskybg{ animation:none; } }
 </style>
 <script id="cr-pb-script">
 (function(){
@@ -59821,6 +59879,7 @@ function render(){
   lastSig = html;
   el.innerHTML = html;
   wire();
+  if(pane === 'home') skyMount();   /* 1446 */
 }
 function head(title, backTo){
   return '<div class="pbtop">' +
@@ -59950,13 +60009,152 @@ function todayHtml(){
       (urg ? ' · <em>' + urg + ' urgent</em>' : '') + '</span>' +
     '<span class="go">›</span></button>';
 }
+/* ── 1446 · the sky ────────────────────────────────────────────────────────
+   One banner on the home pane, one canvas, one loop. The loop draws stars, the
+   sun or moon on its arc for the hour, clouds, rain or snow, and it STOPS —
+   no frame is scheduled — whenever the board is closed, the pane is not home,
+   the tab is hidden or the banner is scrolled out of view. Reduced motion gets
+   one still frame. Weather is CardinalWx's daily forecast (the same Open-Meteo
+   call the calendar's icons use); with no forecast the sky is just the hour.
+   The sun rises from the horizon once a day, the first time the board opens. */
+var SKY = { cv:null, cx:null, W:0, H:0, P:[], clouds:[], pile:[], key:'', run:false, vis:true, io:null, rise:1, riseAt:0, t0:0 };
+var skyReduce = (function(){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){ return false; } })();
+function skyHour(){ var d = new Date(); return d.getHours() + d.getMinutes() / 60; }
+function skyKey(h){ return h >= 5 && h < 9 ? 'dawn' : h >= 9 && h < 16 ? 'day' : h >= 16 && h < 20 ? 'sunset' : 'night'; }
+function skyWx(){
+  var w = window.CardinalWx, d = w && w.day ? w.day(keyOf(today())) : null;
+  if(!d) return { k:'', label:'', icon:'' };
+  var k = w.kind(d.c), p = +d.p || 0;
+  var sky = k === 'snow' ? 'snow' : (k === 'rain' || k === 'storm') ? 'rain' : k === 'cloud' ? 'cloud' : '';
+  var word = k === 'sun' ? 'Clear' : k === 'cloud' ? 'Cloudy' : k === 'storm' ? 'Storms' : k === 'snow' ? 'Snow' : 'Rain';
+  return { k:sky, label:word + (p >= 30 ? ' \u00b7 ' + p + '%' : ''), icon:w.icon(k) };
+}
+function skyHtml(inner){
+  var wx = skyWx();
+  return '<div class="pbsky" data-sky="' + skyKey(skyHour()) + '"' + (wx.k ? ' data-wx="' + wx.k + '"' : '') + '>' +
+    '<div class="pbskybg"></div><canvas class="pbskycv" aria-hidden="true"></canvas>' +
+    '<div class="pbskyin">' + inner +
+    (wx.label ? '<span class="pbskywx">' + wx.icon + esc(wx.label) + '</span>' : '') +
+    '</div></div>';
+}
+function skySeed(){
+  var box = el && el.querySelector('.pbsky'); if(!box) return;
+  var s = box.getAttribute('data-sky'), wx = box.getAttribute('data-wx') || '', W = SKY.W, H = SKY.H, phone = W < 600;
+  var n = wx === 'snow' ? (phone ? 140 : 300) : wx === 'rain' ? (phone ? 120 : 240) : s === 'night' ? (phone ? 110 : 220) : s === 'day' ? 0 : (phone ? 60 : 130);
+  SKY.P = [];
+  for(var i = 0; i < n; i++){
+    var z = .3 + Math.pow(Math.random(), 1.6) * .7, x = Math.random() * W, y = Math.random() * H * (wx ? 1 : .8);
+    SKY.P.push({ x:x, y:y, hx:x, hy:y, vx:0, vy:0, z:z, r:(.4 + Math.random() * .9) * (.6 + z), ph:Math.random() * 6.3, tw:1 + Math.random() * 3, rv:7 + Math.random() * 5 });
+  }
+  SKY.clouds = [];
+  var nc = wx === 'cloud' ? (phone ? 6 : 11) : (s === 'day' && !wx) ? (phone ? 3 : 5) : 0;
+  for(var c = 0; c < nc; c++) SKY.clouds.push({ x:Math.random() * W, y:H * (.15 + Math.random() * .45), w:70 + Math.random() * 130, sp:.08 + Math.random() * .15 });
+  SKY.pile = [];
+  for(var p = 0; p <= Math.ceil(W / 6); p++) SKY.pile.push(wx === 'snow' ? 3 + Math.sin(p * .35) * 2 + Math.random() * 2 : 0);
+}
+function skyDisc(x, y, r, col){ var cx = SKY.cx; cx.fillStyle = col; cx.beginPath(); cx.arc(x, y, r, 0, 6.283); cx.fill(); }
+function skyDraw(now){
+  var cx = SKY.cx, box = el && el.querySelector('.pbsky'); if(!cx || !box) return;
+  var W = SKY.W, H = SKY.H, s = box.getAttribute('data-sky'), wx = box.getAttribute('data-wx') || '';
+  var t = (now - SKY.t0) / 1000, floor = H - 64, dot = wx === 'rain' ? '200,214,232' : wx === 'snow' ? '255,255,255' : '255,236,220';
+  cx.clearRect(0, 0, W, H);
+  if(SKY.riseAt) SKY.rise = Math.min(1, (now - SKY.riseAt) / 1400);
+  var e = 1 - Math.pow(1 - SKY.rise, 3);
+  /* the sun 05:30–19:30, the moon otherwise, on an arc that never climbs into the title */
+  var hr = skyHour(), up = hr >= 5.5 && hr < 19.5, f = up ? (hr - 5.5) / 14 : ((hr >= 19.5 ? hr - 19.5 : hr + 4.5) / 10);
+  var top = W < 1100 ? 122 : 150, ax = W * (.08 + .84 * f), ay = floor - 10 - Math.sin(Math.PI * f) * Math.max(0, floor - 10 - top);
+  ay = H * 1.1 + (ay - H * 1.1) * e;
+  if(!wx){
+    if(up){ var low = Math.sin(Math.PI * f) < .35, col = low ? '255,214,160' : '255,248,224';
+      for(var g = 4; g >= 1; g--) skyDisc(ax, ay, 16 + g * 10, 'rgba(' + col + ',' + (s === 'day' ? .1 : .14) + ')');
+      skyDisc(ax, ay, 16, 'rgb(' + col + ')'); }
+    else { for(var g2 = 3; g2 >= 1; g2--) skyDisc(ax, ay, 12 + g2 * 8, 'rgba(230,236,255,.06)');
+      skyDisc(ax, ay, 12, 'rgba(244,240,228,.95)');
+      cx.globalCompositeOperation = 'destination-out'; skyDisc(ax + 6, ay - 4, 11, '#000'); cx.globalCompositeOperation = 'source-over'; }
+  }
+  var cloudA = s === 'day' ? .55 : .16;
+  SKY.clouds.forEach(function(c){ if(!skyReduce) c.x += c.sp; if(c.x - c.w > W) c.x = -c.w;
+    cx.fillStyle = 'rgba(255,255,255,' + cloudA + ')';
+    cx.beginPath(); cx.ellipse(c.x, c.y, c.w * .5, c.w * .16, 0, 0, 6.283); cx.fill();
+    cx.beginPath(); cx.ellipse(c.x + c.w * .18, c.y - c.w * .08, c.w * .26, c.w * .13, 0, 0, 6.283); cx.fill(); });
+  if(wx === 'snow'){
+    SKY.P.forEach(function(p){
+      if(!skyReduce){ p.y += .35 + .85 * p.z; p.x += Math.sin(t * .8 + p.ph) * .45 * p.z - .15; }
+      var col = Math.max(0, Math.min(SKY.pile.length - 1, Math.round(p.x / 6)));
+      if(p.y >= floor - SKY.pile[col]){
+        if(!skyReduce && SKY.pile[col] < 16){ SKY.pile[col] += .35; if(col > 0) SKY.pile[col - 1] += .12; if(col < SKY.pile.length - 1) SKY.pile[col + 1] += .12; }
+        p.y = -6 - Math.random() * 30; p.x = Math.random() * (W + 40) - 20; }
+      if(p.x < -10) p.x = W + 8; if(p.x > W + 10) p.x = -8;
+      skyDisc(p.x, p.y, .9 + 2.1 * p.z, 'rgba(' + dot + ',' + (.45 + .5 * p.z).toFixed(3) + ')'); });
+    cx.fillStyle = 'rgba(255,255,255,.92)'; cx.beginPath(); cx.moveTo(0, H);
+    for(var pc = 0; pc < SKY.pile.length; pc++) cx.lineTo(pc * 6, floor - SKY.pile[pc] - 2);
+    cx.lineTo(W, H); cx.closePath(); cx.fill();
+  } else if(wx === 'rain'){
+    cx.lineCap = 'round';
+    SKY.P.forEach(function(p){ var vx = -1.4 * p.z, vy = skyReduce ? 0 : p.rv * p.z;
+      p.x += vx; p.y += vy; if(p.y > H + 10){ p.y = -10 - Math.random() * 40; p.x = Math.random() * (W + 60); } if(p.x < -10) p.x = W + 10;
+      cx.strokeStyle = 'rgba(' + dot + ',' + (.18 + .34 * p.z).toFixed(3) + ')'; cx.lineWidth = .6 + .7 * p.z;
+      cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(p.x - vx * 1.2, p.y - (8 + 9 * p.z)); cx.stroke(); });
+    cx.lineCap = 'butt';
+  } else {
+    SKY.P.forEach(function(p){
+      if(!skyReduce) p.ph += .004;
+      var tw = skyReduce ? 1 : .6 + .4 * Math.sin(t * p.tw + p.ph), a = (.3 + .6 * p.z) * tw * (1 - p.y / H * .7) * e;
+      skyDisc(p.hx + Math.cos(p.ph) * 6, p.hy + Math.sin(p.ph * 1.3) * 4, p.r, 'rgba(' + dot + ',' + a.toFixed(3) + ')'); });
+  }
+}
+function skyLive(){
+  return !!(SKY.cv && SKY.cv.isConnected && el && el.classList.contains('open') && pane === 'home' && SKY.vis && !document.hidden);
+}
+function skyLoop(now){
+  if(!skyLive()){ SKY.run = false; return; }            /* nothing scheduled while it cannot be seen */
+  skyDraw(now); requestAnimationFrame(skyLoop);
+}
+function skyStart(){
+  if(SKY.run || skyReduce || !skyLive()) return;
+  SKY.run = true; requestAnimationFrame(skyLoop);
+}
+function skyMount(){
+  var cv = el && el.querySelector('.pbskycv');
+  if(!cv){ SKY.cv = null; return; }
+  var box = cv.parentNode, r = box.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var key = box.getAttribute('data-sky') + '|' + (box.getAttribute('data-wx') || '') + '|' + Math.round(r.width) + 'x' + Math.round(r.height);
+  if(cv !== SKY.cv){
+    SKY.cv = cv; SKY.cx = cv.getContext('2d');
+    if(SKY.io){ try{ SKY.io.disconnect(); }catch(_){} }
+    if('IntersectionObserver' in window){
+      SKY.io = new IntersectionObserver(function(es){ SKY.vis = es[0].isIntersecting; skyStart(); });
+      SKY.io.observe(box);
+    }
+  }
+  if(key !== SKY.key || cv.width !== Math.round(r.width * dpr)){
+    SKY.key = key; SKY.W = r.width; SKY.H = r.height;
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    SKY.cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    skySeed();
+  }
+  if(!SKY.t0) SKY.t0 = performance.now();
+  /* once a day, the first time the board opens: the sky fades up and the sun or moon rises to its hour */
+  var day = keyOf(today()), seen = '';
+  try{ seen = localStorage.getItem('cr-pb-sky') || ''; }catch(_){}
+  if(seen !== day && !skyReduce && el.classList.contains('open')){
+    try{ localStorage.setItem('cr-pb-sky', day); }catch(_){}
+    SKY.rise = 0; SKY.riseAt = performance.now(); box.classList.add('pbskyfade');
+  }
+  skyDraw(performance.now());                            /* a still frame now, whatever happens next */
+  skyStart();
+}
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) skyStart(); });
+window.addEventListener('resize', function(){ if(SKY.cv) skyMount(); });
+
 function homeHtml(){
   var d = selDay || today();
   /* 853: month calendar first (concept 2), then the command tiles, then the
      day's agenda — tapping a day up top swaps the agenda at the bottom. */
   return '<div class="pbwrap pbhome">' +   /* 1416: the dashboard grid names this pane only */
-    head('Production', (typeof window.isProductionUser === 'function' && window.isProductionUser()) ? '' : 'home') +   /* 1416: one heading, one colour. A4 (P08.03): no "<" for a production account — close() reopens this same board for them (1420), so the button did nothing */
-    '<div class="pbsub">Schedule · Jobs · Punch</div>' +
+    skyHtml(   /* 1446: the title row lives in the sky */
+      head('Production', (typeof window.isProductionUser === 'function' && window.isProductionUser()) ? '' : 'home') +   /* 1416: one heading, one colour. A4 (P08.03): no "<" for a production account — close() reopens this same board for them (1420), so the button did nothing */
+      '<div class="pbsub">Schedule · Jobs · Punch</div>') +
     todayHtml() +
     homeMonthHtml() +
     tilesHtml() +
@@ -60692,6 +60890,7 @@ async function open(){
   if(typeof window.hideAllViews === 'function') window.hideAllViews();
   el.classList.add('open');
   document.body.style.overflow = 'hidden';       /* one of the 13 writers */
+  if(pane === 'home') skyMount();                /* 1446: render() ran before .open */
   scrollTop();
   /* The __crNav wrap runs on a setTimeout scheduled mid-file and can fire
      before the last script parses, so record the view here as the belt. */
