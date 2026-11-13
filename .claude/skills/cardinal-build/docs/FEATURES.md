@@ -10808,3 +10808,11 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - **The board below keeps Dark / Light / Sun.** The banner gradient is the approved exception to "no gradients" (see the build log).
 
 **Gate:** `gate_1446.mjs`, 19 checks, RED on 1445; in `gate_chromium`.
+
+## Build 1447: Production's sky, the hour and the bar (13 Nov 2026)
+
+- **`CardinalWx.loadHours()` / `hours()`:** today's hourly rain chance, plus the temperature now (°F). Cached 30 min under `cr-wxhours`.
+- **The sky chip:** "44° · Rain from 2pm". The sky shows the weather at the current hour.
+- **Sticky bar `#cr-pb > .pbstick`:** the date, today's words (shared `todayBits()`) and + Add. It appears once the sky scrolls away.
+
+**Gate:** `gate_1447.mjs`, 15 checks, RED on 1446; in `gate_chromium`.

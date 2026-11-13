@@ -6,7 +6,7 @@
 
 - **The Production home banner may use a gradient sky.** It is the ONE exception to the 10 Aug "no gradients anywhere" rule. Do not remove it as a gradient violation, and do not copy it to another screen without asking.
 - **The sky follows the clock; the board follows the account's theme.** Sun stays Sun for Curtis and Scottie.
-- **Follow-ups he approved in preview, not yet built:**
+- **Follow-ups he approved in preview: ✅ ALL BUILT at 1447** (sticky bar, the next wet hour, the temperature). Was:
   - a sticky date + summary + Add bar once the sky scrolls away;
   - hourly weather ("Rain after 2pm"), which needs an hourly Open-Meteo field;
   - a temperature in the chip.
