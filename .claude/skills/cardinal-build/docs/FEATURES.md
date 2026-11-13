@@ -10869,3 +10869,11 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | 1455 | `#cr-pk.side` desk panel, Escape, `PU.sort` / `plSorter()`, ultrawide table from 1900px | `cr-pk-script`, `cr-punch-script` |
 
 **Gates:** `gate_1452.mjs` … `gate_1455.mjs`.
+
+## Build 1456: Punch & Repairs in obsidian, with the hammer art (13 Nov 2026)
+
+- **What:** look A — obsidian cards for the list rows, the punch card's sections and the client page's punch rows; no coloured tab caps; sentence-case labels; a faint dotted hand holding a framing hammer behind the list.
+- **Where:** `<style id="cr-punch-obs-styles">`; the image is `punch-art-hammer.jpg` at the repo root.
+- **Scope:** dark retail only. Light, Claims and Community unchanged.
+
+**Gate:** `gate_1456.mjs`.

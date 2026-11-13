@@ -38298,3 +38298,16 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 **Older gates updated because the behaviour changed on purpose:** `gate_1248` G (the rail now has Ready to close), `gate_945` (6 days + No day), `gate_767` (Production's Closed lands on Closed), `gate_769` (the visible Close on a phone is the dock's), `gate_1451` G (on a desk the one Close is in the panel's dock).
 
 **Gates:** `check_build` GREEN on each; `gate_1451`–`gate_1455` green on 1455; a sweep of 44 older punch gates on 1450 vs 1455 found exactly the four above and nothing else. ⚠ 26 of the 44 do not start on this Windows machine (hard-coded Linux browser paths) on 1450 or 1455 alike, so they are unchecked here. `gate_chromium` cannot run locally on Windows either; CI runs it. Sentinel in the PR.
+
+## Build 1456 — Punch & Repairs in obsidian, with the hammer art (13 Nov 2026)
+
+**Theo:** picked look **A** from the side-by-side page ("Punch & Repairs Looks" artifact), then sent a dotted-hand picture ("put something like this in the punch outs black background … more related to roofing"), then "Do a hand just like the pic", then, asked 1 or 2, "Let's do what you recommend" — the hand holding a framing hammer.
+
+**What changed (`cr-punch-obs-styles`, a new block before `</body>`; dark retail only, the 1450 scope):**
+- List rows, the needs-assigned card, the card's sections (`.pksec`, `.pkvis`, `.pkfold`) and the client page's `.pp-row` / `.pp-card` wear 545's obsidian face; a late or flagged row keeps a red-tinted face.
+- The kind tabs lose their four coloured caps; Assign-sheet names are ink, not teal/purple; card labels and buttons are sentence case.
+- `#punchView` carries `punch-art-hammer.jpg` (repo root, 900px, pre-faded to ~40%, ~70 KB) at the bottom right, `background-blend-mode:screen` over the page ground so its black never shows, `background-attachment:fixed` (iOS ignores fixed and lets it sit at the foot of the list; harmless).
+- The art was made with GPT Image 2.5 through Higgsfield from Theo's own reference picture: three versions (open hand, hammer, nail); he took the hammer. The code-drawn versions tried first were rejected as not defined enough.
+- `.vercelignore` records that the image ships on purpose.
+
+**Gates:** `check_build` GREEN; `gate_1456.mjs` (new, in `gate_chromium`) 7/7, 6 RED on 1455 (light-untouched passes on both, as it should); sentinel in the PR.

@@ -291,6 +291,12 @@ const GATES = [
     protects: "the card is a right-hand panel on a desk, Escape closes it and the Assign sheet, the table sorts, the ultrawide list is the table",
     break: { find: "el.classList.toggle('side', ",
              repl: "el.classList.toggle('side-off', " } },
+
+  /* 1456: Punch in obsidian with the hammer art. The break drops the art's URL, so A goes red. */
+  { name: 'gate_1456.mjs',
+    protects: "Punch & Repairs list, card and client rows in obsidian, no tab caps, sentence case, the hammer art behind the list; light untouched",
+    break: { find: "url('/punch-art-hammer.jpg') right bottom",
+             repl: "none right bottom" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

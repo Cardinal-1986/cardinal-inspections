@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1455<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1456<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47209,6 +47209,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1456, d:'2026-11-13', t:'Punch & Repairs in obsidian', s:'Punch & Repairs now matches the home screen in the dark theme: the list rows, the sections of a punch card and the punch list on a client page are the same polished black cards. The kind tabs lose their coloured caps and labels are no longer in capitals. Behind the list there is a faint dotted hand holding a framing hammer. Light mode is unchanged.' },
   { b: 1455, d:'2026-11-13', t:'Punch & Repairs on a big screen', s:'On a computer, a punch card now opens as a panel on the right with the list still showing, so you can click down the list without going back each time. Escape closes the card and the Assign sheet. The Client, Age and When headings sort the table, and on a very wide screen the list is shown as the full table instead of a narrow column beside the map.' },
   { b: 1454, d:'2026-11-13', t:'Assigning a punch item: more days, a time, and who is busy', s:'The Assign sheet on Punch & Repairs now offers six working days instead of four, any other date, and an optional time. Once you pick a person, each day shows how many stops they already have. The Assign button is readable in the dark theme again, and the sheet’s Close button is a full-size tap.' },
   { b: 1453, d:'2026-11-13', t:'Punch & Repairs: one name, and late shows everywhere', s:'The section is called Punch & Repairs everywhere now (it was also Punch, Punch Outs and Punch-outs), and a repair is a Repair, not a Ticket. A late job says how late on its own card, on the client page and on the Production tile, which used to show only how many were urgent. The client page also says when each item is due or that nobody is assigned. Closed items show how long they took instead of carrying on ageing, anything open 30 days or more is highlighted, Closed on Production opens the closed list, and the count at the top follows your filters.' },
@@ -102888,5 +102889,65 @@ window.CardinalFeedback = Object.assign(window.CardinalFeedback || {}, { open: f
 })();
 </script>
 
+<style id="cr-punch-obs-styles">
+/* ── Build 1456 · Punch & Repairs in obsidian (Theo, 13 Nov: picked look A from the side-by-side
+   page, then "Let's do what you recommend" — the dotted hand holding a framing hammer).
+   The punch audit's group 6: the list, the card and the client page's punch list were three
+   different styles and none of them was the obsidian the home screen wears since 1450. Now the
+   list rows, the card's sections and the client page's rows are all 545's obsidian face, the
+   kind tabs lose their four coloured caps, and labels stop shouting in capitals. Behind the
+   list, a dotted hand with a framing hammer (punch-art-hammer.jpg, pre-faded to ~40% and
+   screen-blended into the page ground so its black square never shows). Dark retail only,
+   scoped exactly like 1450; light, Claims and Community are untouched. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView{
+  --cr-stack:"1456 look A: the hammer art, a second background layer over the page ground";
+  background:var(--bg,#09090C) url('/punch-art-hammer.jpg') right bottom / min(92vw,720px) no-repeat fixed;
+  background-blend-mode:screen;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puList{ padding-bottom:96px; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puList .pl-row{
+  --cr-stack:"1456 look A: list rows become obsidian cards";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border-radius:12px; margin:0 0 10px; padding-left:0;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puList .pl-row.late,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puList .pl-row.ping{
+  --cr-stack:"1456 look A: a late or flagged row keeps its red, as an obsidian card";
+  background:#1c1013 radial-gradient(120% 90% at 22% -10%,#3a1c22 0%,#1c1013 45%,#0d0709 100%);
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puQueue .pu-card{
+  --cr-stack:"1456 look A: the needs-assigned card in obsidian";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border-radius:12px;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView .pu-tab::before{ --cr-stack:"1456 look A: the four coloured caps go"; background:transparent; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView .pu-asgrow .nm{ --cr-stack:"1456 look A: names in the Assign sheet in the ink colour, not teal and purple"; color:var(--rbe-ink); }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk{ --cr-stack:"1456 look A: the card page ground matches the app"; --pk-g:#09090C; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pksec,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkvis,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkfold{
+  --cr-stack:"1456 look A: the card sections in obsidian";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border-radius:12px;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkh,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkbtn,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkclose,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkgalbtn{ --cr-stack:"1456 look A: sentence case, not capitals"; text-transform:none; letter-spacing:.01em; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #ppPage .pp-row,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #ppPage .pp-card{
+  --cr-stack:"1456 look A: the client page punch rows in obsidian";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border-radius:12px;
+}
+</style>
 </body>
 </html>
