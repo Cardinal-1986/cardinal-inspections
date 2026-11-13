@@ -10832,3 +10832,15 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - **Door B (per-client house link)** is pending on the Showroom side.
 
 **Gate:** `gate_1449.mjs`.
+
+## Build 1450: obsidian instead of navy (13 Nov 2026)
+
+- **What:** dark retail's navy (535 / 1283–1288) is now obsidian (Theo's pick A):
+  - page `#09090C`, rail/header `#0B0B0E`, panel `#15161C`, raised `#1C1D24`, line `#24242C`
+  - neutral inks
+  - the content boxes wear 545's obsidian face: top-left sheen, `#24242c` edge, raised on a real shadow
+  - same layout, same drawer
+- **Where:** the 1283–1288 block, `cr-navy-styles` (token rule `--bg`), `cr-lnav-a-styles`, `cr-nvl-styles` (the face rule is the last rule in it).
+- **Not touched:** light mode, Claims, Community, Crews, Production and Dispatch.
+
+**Gate:** `gate_1450.mjs`.

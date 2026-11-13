@@ -5,7 +5,7 @@
         (no gradient, no drop shadow)
      C  light client page: no Georgia or monospace text
      D  light Leads: flat white lead cards, Segoe title
-     E  dark is unchanged: the 1286 client-card ground is still #0F1521
+     E  dark is untouched by light: the client-card ground is the dark panel (#15161C, obsidian, since 1450)
      F  light home: the + is solid red with white (it kept the blue accent until the sentinel caught it)
    Usage: node gate_1290.mjs [index.html] — control: the 1289 tree (RED, no crash) */
 import { createRequire } from 'module'; const require = createRequire(import.meta.url);
@@ -44,6 +44,6 @@ const bad = c.boxes.filter(b => b.grad || b.sh);
 ok(c.boxes.length >= 15 && bad.length === 0, 'B  light client: client card, money, Job Menu and sections are flat', `${c.boxes.length} boxes, ${bad.length} glossy: ${[...new Set(bad.map(b => b.s))].join(', ')}`);
 ok(c.oddPV.length === 0, 'C  light client: no Georgia or monospace text', c.oddPV.slice(0, 5).join(', ') || 'none');
 ok(l.lj.length > 0 && l.lj.every(b => b.bg === 'rgb(255, 255, 255)' && b.sh === 'none') && /Segoe UI/.test(String(l.ltF)), 'D  light Leads: flat white cards, Segoe title', JSON.stringify({ card: l.lj[0], f: l.ltF }));
-ok(d.theme !== 'rb-light' && d.piBg === 'rgb(15, 21, 33)', 'E  dark: client card ground unchanged (#0F1521)', d.piBg);
+ok(d.theme !== 'rb-light' && d.piBg === 'rgb(21, 22, 28)', 'E  dark: client card ground is the dark panel (#0F1521 until 1450, obsidian #15161C since)', d.piBg);
 ok(h.plus === 'rgb(200, 32, 46)', 'F  light home: the + is solid red', String(h.plus));
 await browser.close(); console.log(`GATE 1290 ${fail ? 'RED' : 'GREEN'} — ${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
