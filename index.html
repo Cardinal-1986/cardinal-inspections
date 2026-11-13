@@ -4296,7 +4296,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <select id="jobMenuSel" class="jobmenu jobmenu-head" aria-label="Job section" style="display:none;">
           <option value="overview">Overview</option>
           <option value="checklists">Checklists</option>
-          <option value="punch">Punch Outs</option>
+          <option value="punch">Punch &amp; Repairs</option>
           <option value="inspections">Inspections</option>
           <option value="estimates">Estimates</option>
           <option value="contracts">Contracts</option>
@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1452<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1453<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -13093,7 +13093,7 @@ function renderAcxOverview(){
          the exact trap 604 was about. 607 also removed the overview card, so
          punch had no reachable entry point at all. data-jm="punch" falls through
          the router's else branch to showTab('punch'), which 607 already wired. */
-      jt(dbIc('punch'), 'Punch Outs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
+      jt(dbIc('punch'), 'Punch & Repairs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
       /* 652: the tab always existed; the menu is where fingers go.
          'contracts' rides the router's else-branch to showTab, like punch. */
       jt(dbIc('contract'), 'Contracts', '', 'contracts') +
@@ -42592,7 +42592,7 @@ html += '<div class="cr-srch-row" data-t="p" data-id="' + esc(p.id) + '">' +
 html += '</div>';
 }
 if(r.punch && r.punch.length){
-html += '<div class="cr-srch-grp"><h5>Punch-outs \u00b7 ' + r.punch.length + '</h5>';
+html += '<div class="cr-srch-grp"><h5>Punch &amp; Repairs \u00b7 ' + r.punch.length + '</h5>';
 r.punch.forEach(function(k){
 html += '<div class="cr-srch-row" data-t="k" data-id="' + esc(k.id) + '">' +
 '<div class="n">' + esc(k.title) +
@@ -47208,6 +47208,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1453, d:'2026-11-13', t:'Punch & Repairs: one name, and late shows everywhere', s:'The section is called Punch & Repairs everywhere now (it was also Punch, Punch Outs and Punch-outs), and a repair is a Repair, not a Ticket. A late job says how late on its own card, on the client page and on the Production tile, which used to show only how many were urgent. The client page also says when each item is due or that nobody is assigned. Closed items show how long they took instead of carrying on ageing, anything open 30 days or more is highlighted, Closed on Production opens the closed list, and the count at the top follows your filters.' },
   { b: 1452, d:'2026-11-13', t:'Punch-outs: saves you can trust', s:'On a punch card, a second change made while the first was still saving used to be thrown away while the card still said Saved. Now it waits its turn, and if a save is refused your message goes back in the box and nobody is buzzed. If the list cannot load it says so and offers Try again, instead of saying there is no punch work. And taking a photo off a card no longer moves the other photos under the wrong labels.' },
   { b: 1451, d:'2026-11-13', t:'Punch-outs: ready to close', s:'When the crew says a punch-out is finished it now shows at the top of Punch & Repairs under Ready to close, so Curtis can see what to close without opening every card. On a phone the Close / Tell Curtis button stays at the bottom of the screen instead of two and a half screens down; once the crew has told Curtis it says so instead of offering to tell him again; and an empty checklist says Curtis adds the steps.' },
   { b: 1450, d:'2026-11-13', t:'Obsidian instead of navy', s:'The dark theme drops its navy for obsidian. The home screen, the side menu, the top bar, client pages and Leads keep their layout; the boxes are the same polished black as the Activity Count tiles, lit from the top-left and raised on a soft shadow, on a near-black page. Light mode, Claims and Community are unchanged.' },
@@ -59943,6 +59944,12 @@ function tilesHtml(){
     if(d && d >= today() && (!nextBuild || d < nextBuild)) nextBuild = d;
   });
   var urg = b.open.filter(function(i){ return i.priority === 'high'; }).length;
+  var _tk = keyOf(new Date());   /* 1453 */
+  var late = b.open.filter(function(i){
+    if(!i.scheduled_at) return false;
+    if(i.hold_reason && (!i.hold_until || String(i.hold_until).slice(0, 10) > _tk)) return false;
+    return String(i.scheduled_at).slice(0, 10) < _tk;
+  }).length;
   function tile(key, n, icon, label, sub, att){
     return '<button class="pbtile' + (att && n ? ' att' : '') + '" data-box="' + key + '" type="button">' +
       '<div class="v">' + n + '</div>' +
@@ -59956,11 +59963,12 @@ function tilesHtml(){
       b.ordered.length ? 'on the way' : 'nothing out') +
     tile('sched', b.sched.length, 'cal', 'Scheduled',
       nextBuild ? 'next build ' + esc(pbDay(nextBuild)) : 'nothing booked') +
-    tile('punch', b.open.length, 'tool', 'Punch-outs',
-      (urg ? '<em>' + urg + ' urgent</em>' : 'none urgent'), true) +
+    tile('punch', b.open.length, 'tool', 'Punch & Repairs',
+      /* 1453: "4 · 1 urgent" hid a repair 78 days late */
+      [late ? '<em>' + late + ' late</em>' : '', urg ? '<em>' + urg + ' urgent</em>' : ''].filter(Boolean).join(' · ') || 'none late', true) +
     '</div>' +
     '<button class="pbclosed" data-box="closed" type="button">' + svg('check') +
-      '<span class="t">Closed repairs</span><span class="c">' + b.closed.length + ' this month</span>' +
+      '<span class="t">Closed</span><span class="c">' + b.closed.length + ' this month</span>' +
       '<span class="go">›</span></button>';
 }
 function weekHtml(){
@@ -60350,7 +60358,7 @@ function itemHtml(i){
 }
 var BOX_TITLE = {
   needs:'Needs ordered', ordered:'Ordered', sched:'Scheduled',
-  punch:'Punch-outs', closed:'Closed repairs',
+  punch:'Punch & Repairs', closed:'Closed',
 };
 /* 1416 (judge 14 polish 14): the list's subtitle repeated its title. It says
    what is in the list now, from the same boxes() the tiles count. */
@@ -60436,7 +60444,7 @@ function wire(){
            openPunchView's hideAllViews finds cr-pb still .open and calls close()
            with no arg, which defaults to showHome() — so the retail home paints
            behind the punch page. close(false) drops the class and skips showHome. */
-        close(false); window.openPunchView(); return;
+        close(false); window.openPunchView(k === 'closed' ? 'closed' : undefined); return;
       }
       listKey = k; pane = 'list'; render(); scrollTop();
       /* 1036 (audit F1): same as the calendar — a list is a place back can leave. */
@@ -61375,7 +61383,8 @@ if(window.__crProdPending){
 #cr-pk .pkclose.ready b{ color:#e4f6ec; }
 #cr-pk .pkclose.closed-ro{ cursor:default; }   /* 1252: closed, and this person may not reopen it */
 #cr-pk .pkclose .jump{ text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
-#cr-pk .pkclose.sent{ cursor:default; }   /* 1451: told Curtis — a receipt, not a button */
+#cr-pk .pkclose.sent{ cursor:default; }
+#cr-pk .pklate{ margin:-4px 0 12px; font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--pk-acc,#e35c63); }   /* 1453 */   /* 1451: told Curtis — a receipt, not a button */
 /* 1451: the dock — phones only; the in-flow copy of an OPEN card's close button hides there */
 #cr-pk .pkdock{ display:none; }
 @media (max-width:899px){
@@ -62087,7 +62096,7 @@ function cardHtml(){
     '<div class="pktop">' +
       '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
       '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' :
-        it.kind === 'ticket' ? 'Ticket' :
+        it.kind === 'ticket' ? 'Repair' :
         /* 976: before the fallback on purpose. This chain ends by naming any
            kind it does not recognise a punch, which is the normStage() shape —
            so a kind added here and nowhere else silently reads as one.
@@ -62102,7 +62111,7 @@ function cardHtml(){
     '</div>' +
     (urgent ? '<div class="pkurg">' + svg('flag') + 'Urgent — do first</div>' : '') +
     pingHtml() +
-    '<h1>' + esc(it.title || 'Punch-out') + '</h1>' +
+    '<h1>' + esc(it.title || 'Punch-out') + '</h1>' + lateHtml() +
     (pingOn() || pingOpen ? '' : '<button class="pkfold dim pkpingbtn" data-act="ping" type="button"><span class="pkbang sm">!</span>' +
       '<span class="tx">Flag for follow-up</span><span class="ch">\u203A</span></button>') +
     '<div class="pksplit"><div>' +
@@ -62121,6 +62130,20 @@ function askedCloseEntry(){
   var f = comments().filter(function(c){ return c && c.flag; });
   var last = f.length ? f[f.length - 1] : null;
   return last && last.flag === 'askclose' ? last : null;
+}
+/* 1453: the kind as a word, for the Close / Finish / Reopen buttons */
+function kWord(){ return it && it.kind === 'ticket' ? 'repair' : it && it.kind === 'tarp' ? 'tarp' : it && it.kind === 'callback' ? 'callback' : 'punch-out'; }
+/* 1453: a late job says so on its own card (it was only on the list) */
+function lateHtml(){
+  if(!it || it.status === 'done' || !it.scheduled_at) return '';
+  var now = new Date();
+  var t = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2);
+  if(it.hold_reason && (!it.hold_until || String(it.hold_until).slice(0, 10) > t)) return '';
+  var d = String(it.scheduled_at).slice(0, 10);
+  if(!(d < t)) return '';
+  var n = Math.round((Date.parse(t + 'T12:00:00') - Date.parse(d + 'T12:00:00')) / 86400000);
+  var due = new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+  return '<div class="pklate">' + n + ' day' + (n === 1 ? '' : 's') + ' late — was due ' + esc(due) + '</div>';
 }
 /* ── 1250: Flag for follow-up ── */
 function pingOn(){ return !!(it && it.ping_at && !it.ping_done_at); }
@@ -62501,7 +62524,7 @@ function closeHtml(done){
   var boss = isManager();   /* 1252: Theo, Joan, Curtis — punch_boss_guard */
   if(done){
     if(!boss) return '<div class="pkclose closed-ro">Closed<b>' + esc((it.done_at ? fmtWhen(it.done_at) + ' ' : '') + 'by ' + nameOf(it.done_by)) + '</b></div>';
-    return '<button class="pkclose reopen" data-act="reopen" type="button">Reopen punch-out' +
+    return '<button class="pkclose reopen" data-act="reopen" type="button">Reopen ' + kWord() +
       '<b>' + esc('closed ' + (it.done_at ? fmtWhen(it.done_at) : '') + ' by ' + nameOf(it.done_by)) + '</b></button>';
   }
   var ph = photos().length, st = steps(), left = st.length - stepsDone();
@@ -62516,11 +62539,11 @@ function closeHtml(done){
       '<b>' + esc((asked.by === myEmail() ? 'you' : nameOf(asked.by)) + ' said it\u2019s finished' + (asked.at ? ' \u00b7 ' + fmtWhen(asked.at) : '')) + ' \u00b7 Curtis closes it</b></div>';
     /* 1252: the crew finishes, Curtis closes. Ready = tell him; not ready = what is left. */
     return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="' + (ready ? 'askclose' : 'close') + '" type="button">' +
-      (ready ? 'Tell Curtis it\u2019s finished' : 'Finish the punch-out') +
+      (ready ? 'Tell Curtis it\u2019s finished' : 'Finish the ' + kWord()) +
       '<b>' + (ready ? 'Curtis closes it' : want.join(' \u00b7 ') + ' left') + '</b></button>';
   }
   return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="close" type="button">' +
-    'Close punch-out' +
+    'Close ' + kWord() +
     '<b>' + (ready ? (asked ? esc(nameOf(asked.by) + ' says it\u2019s finished') + ' \u00b7 ' : '') + 'everything is done' : want.join(' \u00b7 ') + ' left') + '</b></button>';
 }
 function paintPhotos(){
@@ -63608,6 +63631,20 @@ if(el.textContent !== txt) el.textContent = txt;
 var zero = (open === 0);
 if(el.classList.contains('zero') !== zero) el.classList.toggle('zero', zero);
 }
+/* 1453: the kind as people say it, and where an open item stands — this list showed neither */
+var PP_KIND = { tarp:'Tarp', ticket:'Repair', callback:'Callback', punch:'Punch-out' };
+function kindName(k){ return PP_KIND[k] || 'Punch-out'; }
+function ppState(i){
+  if(!i || i.status === 'done') return '';
+  var n0 = new Date(), tk = n0.getFullYear() + '-' + ('0' + (n0.getMonth() + 1)).slice(-2) + '-' + ('0' + n0.getDate()).slice(-2);
+  if(i.hold_reason && (!i.hold_until || String(i.hold_until).slice(0, 10) > tk)) return '<span>· on hold</span>';
+  if(!i.assigned_to) return '<span class="hi">no one assigned</span>';
+  var d = i.scheduled_at ? String(i.scheduled_at).slice(0, 10) : '';
+  if(d && d < tk){ var n = Math.round((Date.parse(tk + 'T12:00:00') - Date.parse(d + 'T12:00:00')) / 86400000); return '<span class="hi">' + n + ' day' + (n === 1 ? '' : 's') + ' late</span>'; }
+  if(d === tk) return '<span>· today</span>';
+  if(d) return '<span>· ' + esc(new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })) + '</span>';
+  return '<span>· no date</span>';
+}
 function itemHtml(i){
 return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
 '" data-i="' + esc(i.id) + '">' +
@@ -63616,7 +63653,7 @@ return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
 '<span class="tx">' +
 '<span class="t">' + esc(i.title) + '</span>' +
 '<span class="m">' +
-'<span class="kind ' + esc(i.kind) + '">' + esc(i.kind) + '</span>' +
+'<span class="kind ' + esc(i.kind) + '">' + esc(kindName(i.kind)) + '</span>' +
 (i.priority === 'high' && i.status === 'open' ? '<span class="hi">urgent</span>' : '') +
 (i.assigned_to ? '<span>' + esc(shortName(i.assigned_to)) + '</span>' : '') +
 (i.status === 'done'
@@ -63826,10 +63863,11 @@ return '<button class="pp-row' + (i.status === 'done' ? ' done' : '') +
 '<span class="pp-rowb">' +
 '<span class="pp-rowt">' + esc(i.title) + '</span>' +
 '<span class="pp-rowm">' +
-'<span class="kind ' + esc(i.kind) + '">' + esc(i.kind) + '</span>' +
+'<span class="kind ' + esc(i.kind) + '">' + esc(kindName(i.kind)) + '</span>' +
 (i.priority === 'high' && i.status !== 'done' ? '<span class="hi">urgent</span>' : '') +
+ppState(i) +   /* 1453 */
 (i.assigned_to ? '<span>' + esc(shortName(i.assigned_to)) + '</span>' : '') +
-'<span>· ' + esc(when(i.created_at)) + '</span>' +
+'<span>· added ' + esc(when(i.created_at)) + '</span>' +
 '</span>' +
 '</span>' +
 (n ? '<span class="pp-rowc">💬 ' + n + '</span>' : '') +
@@ -63837,8 +63875,8 @@ return '<button class="pp-row' + (i.status === 'done' ? ' done' : '') +
 '</button>';
 }
 return '<div class="pp-page">' +
-'<h3 class="projsec">' + ICO('hardhat') + 'Punch Outs</h3>' +
-'<div class="pp-actions"><button class="pp-add" data-act="add" type="button">+ Add a punch out</button></div>' +
+'<h3 class="projsec">' + ICO('hardhat') + 'Punch &amp; Repairs</h3>' +
+'<div class="pp-actions"><button class="pp-add" data-act="add" type="button">+ Add</button></div>' +
 '<div class="pp-rule">Open <span>' + open.length + '</span></div>' +
 (open.length ? open.map(row).join('')
 : '<div class="pp-none">Nothing outstanding on this job.</div>') +
@@ -63858,8 +63896,9 @@ return '<div class="pp-page">' +
 '<span class="pp-dt' + (it.status === 'done' ? ' done' : '') + '">' + esc(it.title) + '</span>' +
 '</div>' +
 '<div class="pp-dm">' +
-'<span class="kind ' + esc(it.kind) + '">' + esc(it.kind) + '</span>' +
+'<span class="kind ' + esc(it.kind) + '">' + esc(kindName(it.kind)) + '</span>' +
 (it.priority === 'high' && it.status !== 'done' ? '<span class="hi">urgent</span>' : '') +
+ppState(it) +   /* 1453 */
 (it.assigned_to ? '<span>' + esc(shortName(it.assigned_to)) + '</span>' : '<span>unassigned</span>') +
 '<span>· added ' + esc(when(it.created_at)) + '</span>' +
 (it.status === 'done' && it.done_at ? '<span>· done ' + esc(when(it.done_at)) + '</span>' : '') +
@@ -63992,7 +64031,7 @@ msg.name + ' tagged you — ' + ((pr && pr.name) || 'a job'),
 '<p><b>' + esc(msg.name) + '</b> tagged you on the punch out <b>' + esc(it.title) + '</b>' +
 ((pr && pr.name) ? ' at <b>' + esc(pr.name) + '</b>' : '') + ':</p>' +
 '<blockquote>' + esc(text) + '</blockquote>' +
-'<p>Open the job’s Punch Outs page in Cardinal Resource to reply.</p>', punchLink(it.project_id));
+'<p>Open the job’s Punch &amp; Repairs page in Cardinal Resource to reply.</p>', punchLink(it.project_id));
 var th = document.querySelector('#ppPage .pp-thread');
 if(th){
 var d = document.createElement('div');
@@ -73272,6 +73311,7 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-grp::after{content:'';flex:1;height:1px;background:var(--rbe-line);}
 .pl-grp.late{color:var(--pl-late,#f08a90);}
 .pl-grp.ready{color:var(--pl-live,#6fd39b);}   /* 1451 */
+.pl-age.old{color:var(--pl-late,#f08a90);font-weight:700;}   /* 1453: 30+ days open */
 .pl-retry{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--rbe-line);border-radius:9px;background:transparent;color:var(--rbe-ink);font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1452 */
 .pl-row{display:grid;grid-template-columns:4px auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px;
   grid-template-areas:"stp cl cl age" "stp kd pb pb" "stp wh wh cr";
@@ -73783,6 +73823,8 @@ function plRain(it){
 function plRow(it){
   var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it), rain = plRain(it);
   var urg = isUrgent(it), age = ageDays(it.created_at);
+  /* 1453: a closed row kept ageing (filed 17 Aug, done 18 Aug, read 88d). Show days to close. */
+  if(it.status === 'done' && it.done_at && it.created_at){ age = Math.max(0, Math.round((Date.parse(it.done_at) - Date.parse(it.created_at)) / 86400000)); }
   var supp = String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0;
   var who = it.assigned_to;
   return '<div class="pl-row k-' + K.k + (urg ? ' u' : '') + (ping ? ' ping' : '') + (g === 'late' ? ' late' : '') + (g === 'closed' && !ping ? ' done' : '') +
@@ -73798,7 +73840,7 @@ function plRow(it){
       esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</b>' +
       '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
     '<span class="pl-pb">' + (ping ? esc('\u201C' + (it.ping_note || '') + '\u201D \u2014 ' + plName(it.ping_by)) : esc(it.title || 'Untitled item')) + '</span>' +
-    '<span class="pl-age">' + (age != null ? age + 'd' : '') + '</span>' +
+    '<span class="pl-age' + (it.status !== 'done' && age >= 30 ? ' old' : '') + '">' + (age != null ? age + 'd' + (it.status === 'done' ? ' to close' : '') : '') + '</span>' +
     '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + [w.sub, plOnSite(it)].filter(Boolean).map(function(x){ return '<span class="pl-nw">' + esc(x) + '</span>'; }).join(' \u00b7 ') + '</small></span>' +   /* 1416: wraps at the dot */
     '<span class="pl-cr">' + (who ? '<span class="pl-av">' + esc(plName(who).slice(0, 2).toUpperCase()) + '</span><span class="pl-nm">' + esc(plName(who)) + '</span>'
                               : '<span class="pl-nm">No one</span>') + '</span>' +
@@ -73904,7 +73946,7 @@ function render(){
   document.getElementById('puSub').textContent =
     (G.ping.length ? G.ping.length + ' need follow-up \u00b7 ' : '') +
     (G.ready.length ? G.ready.length + ' ready to close \u00b7 ' : '') +   /* 1451 */
-    (open.length) + ' open \u00b7 ' + nQueue + ' need assigned \u00b7 ' + G.late.length + ' past due';
+    (open.filter(plShown).length) + ' open \u00b7 ' + nQueue + ' need assigned \u00b7 ' + G.late.length + ' past due';
 
   var cols = '<div class="pl-cols" aria-hidden="true"><span></span><span>Type</span><span>Client</span>' +
     '<span>What’s wrong</span><span>Age</span><span>When</span><span>Crew</span></div>';
@@ -74116,6 +74158,8 @@ async function openPunchView(preset){
   PU.type = 'all'; PU.view = '';
   if(preset && preset.crm){ PU.sets = { crm:[preset.crm] }; }
   else if(preset === 'urgent'){ PU.sets = { status:['Urgent'] }; }
+  else if(preset === 'closed'){ PU.sets = {}; PU.view = 'closed'; }   /* 1453: Production's Closed lands on Closed */
+  else { PU.sets = {}; }   /* 1453: a strip's CRM filter no longer sticks to the next visit */
   document.getElementById('puList').innerHTML = '<div class="pu-empty">Loading\u2026</div>';
   try{ if(window.CardinalPunch && window.CardinalPunch.reload) await window.CardinalPunch.reload(); }catch(e){}
   render();
@@ -74177,9 +74221,7 @@ document.addEventListener('click', function(e){
     /* 418: the database refuses this write for anyone outside the production
        crew (punch_close_guard). Say so here rather than let it fail silently. */
     if(!mayClose()){
-      crTell('Only Theo, Joan and Curtis can close or reopen a punch item.\\n\\n' +
-            'You can still edit it, add photos, or change who it is assigned to \\u2014 ' +
-            'tap the item itself.');
+      crTell('Only Theo, Joan and Curtis close a punch item. Open it and tap Tell Curtis it’s finished.');   /* 1453 */
       return;
     }
     if(window.CardinalPunch && window.CardinalPunch.toggle){
