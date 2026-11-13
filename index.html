@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1454<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1455<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47209,6 +47209,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1455, d:'2026-11-13', t:'Punch & Repairs on a big screen', s:'On a computer, a punch card now opens as a panel on the right with the list still showing, so you can click down the list without going back each time. Escape closes the card and the Assign sheet. The Client, Age and When headings sort the table, and on a very wide screen the list is shown as the full table instead of a narrow column beside the map.' },
   { b: 1454, d:'2026-11-13', t:'Assigning a punch item: more days, a time, and who is busy', s:'The Assign sheet on Punch & Repairs now offers six working days instead of four, any other date, and an optional time. Once you pick a person, each day shows how many stops they already have. The Assign button is readable in the dark theme again, and the sheet’s Close button is a full-size tap.' },
   { b: 1453, d:'2026-11-13', t:'Punch & Repairs: one name, and late shows everywhere', s:'The section is called Punch & Repairs everywhere now (it was also Punch, Punch Outs and Punch-outs), and a repair is a Repair, not a Ticket. A late job says how late on its own card, on the client page and on the Production tile, which used to show only how many were urgent. The client page also says when each item is due or that nobody is assigned. Closed items show how long they took instead of carrying on ageing, anything open 30 days or more is highlighted, Closed on Production opens the closed list, and the count at the top follows your filters.' },
   { b: 1452, d:'2026-11-13', t:'Punch-outs: saves you can trust', s:'On a punch card, a second change made while the first was still saving used to be thrown away while the card still said Saved. Now it waits its turn, and if a save is refused your message goes back in the box and nobody is buzzed. If the list cannot load it says so and offers Try again, instead of saying there is no punch work. And taking a photo off a card no longer moves the other photos under the wrong labels.' },
@@ -61389,6 +61390,17 @@ if(window.__crProdPending){
 #cr-pk .pklate{ margin:-4px 0 12px; font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--pk-acc,#e35c63); }   /* 1453 */   /* 1451: told Curtis — a receipt, not a button */
 /* 1451: the dock — phones only; the in-flow copy of an OPEN card's close button hides there */
 #cr-pk .pkdock{ display:none; }
+/* 1455: the side panel (desk, opened from Punch & Repairs) */
+@media (min-width:1280px){
+  #cr-pk.side{ left:auto; right:0; width:min(820px,48vw); border-left:1px solid var(--pk-line,rgba(230,235,240,.11));
+    box-shadow:-24px 0 48px rgba(0,0,0,.45); }
+  #cr-pk.side .pksplit{ display:block; }
+  #cr-pk.side .pkdock{ display:block; position:sticky; bottom:0; z-index:4; padding:10px 15px 12px;
+    background:var(--pk-g,#0c0d0f); border-top:1px solid var(--pk-line,rgba(230,235,240,.11)); }
+  #cr-pk.side .pkdock .pkclose{ margin-top:0; }
+  #cr-pk.side .pksplit .pkclose:not(.reopen):not(.closed-ro){ display:none; }
+  #cr-pk.side .pkwrap{ padding-bottom:20px; }
+}
 @media (max-width:899px){
   #cr-pk .pkdock{ display:block; position:fixed; left:0; right:0; bottom:0; z-index:4;
     padding:10px 15px calc(10px + env(safe-area-inset-bottom,0px));
@@ -63407,6 +63419,11 @@ async function open(itemId, opts){
   window.__crPunchCardLast = row.id;                /* so navRestore can come back to it */
   lastSig = '';
   render();
+  /* 1455: on a desk, opened from Punch & Repairs, the card is a panel on the right and the list
+     stays in view (it covered the whole screen, so working down 40 items was open, back, find
+     your place, open). Anywhere else it still covers the screen. */
+  var _pv = document.getElementById('punchView');
+  el.classList.toggle('side', !!(_pv && _pv.style.display === 'block' && window.innerWidth >= 1280));
   el.classList.add('open');
   el.scrollTop = 0;
   if(typeof window.navSetView === 'function'){
@@ -63431,6 +63448,17 @@ function close(navigate){
     try{ window.CardinalProduction.open(); }catch(_){}
   }
 }
+/* 1455: Escape closes the card — the gallery first if it is open; never under an ask box or a sheet */
+document.addEventListener('keydown', function(e){
+  if((e.key !== 'Escape' && e.key !== 'Esc') || e.defaultPrevented) return;
+  if(!el || !el.classList.contains('open')) return;
+  var ask = document.querySelector('.askcard'); if(ask && ask.offsetParent) return;
+  e.preventDefault();
+  if(holdOpen){ holdOpen = false; lastSig = ''; render(); return; }   /* the hold sheet first */
+  if(galleryOpen){ galleryOpen = false; lastSig = ''; render(); return; }
+  var b = el.querySelector('[data-act="back"]');
+  if(b) b.click(); else close(true);
+});
 window.addEventListener('popstate', function(ev){
   var v = ev.state && ev.state.view;
   if(v !== 'punchcard' && el && el.classList.contains('open')){
@@ -73325,6 +73353,8 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-grp.late{color:var(--pl-late,#f08a90);}
 .pl-grp.ready{color:var(--pl-live,#6fd39b);}   /* 1451 */
 .pl-age.old{color:var(--pl-late,#f08a90);font-weight:700;}   /* 1453: 30+ days open */
+.pl-sort{background:none;border:0;padding:0;margin:0;min-height:34px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;text-align:left;cursor:pointer;}   /* 1455 */
+.pl-sort.on{color:var(--rbe-ink);}
 .pl-retry{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--rbe-line);border-radius:9px;background:transparent;color:var(--rbe-ink);font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1452 */
 .pl-row{display:grid;grid-template-columns:4px auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px;
   grid-template-areas:"stp cl cl age" "stp kd pb pb" "stp wh wh cr";
@@ -73546,7 +73576,7 @@ window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
 });
 /* 1248: type = the kind tab, view = a "needs attention" focus from the rail
    ('' = every open group, or late / nodate / hold / closed). */
-var PU = { sets:{}, q:'', type:'all', view:'' };
+var PU = { sets:{}, q:'', type:'all', view:'', sort:'' };   /* 1455: sort '' (when) | 'age' | 'client' */
 var PHOTO_MIN = 5;
 var puSheet = { cat:null, pend:[] };
 var CRM_LABEL = { retail:'Retail', insurance:'Insurance', community:'Community' };
@@ -73814,6 +73844,15 @@ function plWhen(it){
   if(g === 'next')  return { main: plDayLabel(d), sub: clock };
   return { main:'No date', sub:'Not scheduled' };
 }
+/* 1455: the table headings sort inside each group; '' is the usual urgency-then-day order */
+function plSorter(){
+  if(PU.sort === 'age') return function(a, b){ return String(a.created_at || '').localeCompare(String(b.created_at || '')) || plOrder(a, b); };
+  if(PU.sort === 'client') return function(a, b){
+    var x = String((projOf(a.project_id) || {}).name || ''), y = String((projOf(b.project_id) || {}).name || '');
+    return x.localeCompare(y) || plOrder(a, b);
+  };
+  return plOrder;
+}
 function plOrder(a, b){
   return (isUrgent(b) ? 1 : 0) - (isUrgent(a) ? 1 : 0) ||
     plDay(a).localeCompare(plDay(b)) ||
@@ -73961,8 +74000,11 @@ function render(){
     (G.ready.length ? G.ready.length + ' ready to close \u00b7 ' : '') +   /* 1451 */
     (open.filter(plShown).length) + ' open \u00b7 ' + nQueue + ' need assigned \u00b7 ' + G.late.length + ' past due';
 
-  var cols = '<div class="pl-cols" aria-hidden="true"><span></span><span>Type</span><span>Client</span>' +
-    '<span>What’s wrong</span><span>Age</span><span>When</span><span>Crew</span></div>';
+  var sb = function(k, l){   /* 1455 */
+    return '<button type="button" class="pl-sort' + (PU.sort === k ? ' on' : '') + '" data-pusort="' + k + '" aria-pressed="' + (PU.sort === k ? 'true' : 'false') + '">' + l + (PU.sort === k ? ' ▾' : '') + '</button>';
+  };
+  var cols = '<div class="pl-cols"><span></span><span>Type</span>' + sb('client', 'Client') +
+    '<span>What’s wrong</span>' + sb('age', 'Age') + sb('', 'When') + '<span>Crew</span></div>';
   var html = '';
   var listEl = document.getElementById('puList');
   if(PU.view === 'closed'){
@@ -73972,7 +74014,7 @@ function render(){
   } else {
     var groups = PL_GROUPS.filter(function(g){ return !PU.view || PU.view === g.g; });
     groups.forEach(function(g){
-      var list = G[g.g].slice().sort(plOrder);
+      var list = G[g.g].slice().sort(plSorter());
       if(list.length) html += '<div class="pl-grp' + (g.g === 'late' || g.g === 'ping' ? ' late' : g.g === 'ready' ? ' ready' : '') + '">' + g.l + ' · ' + list.length + '</div>' + list.map(plRow).join('');
     });
     html = html ? cols + html : '<div class="pu-empty">' +
@@ -74137,6 +74179,11 @@ async function notifyAssignedBoard(id, email){
     return (typeof window.notifyOutcomeText === 'function') ? window.notifyOutcomeText(res, [email]) : '';
   }catch(_){ return ''; }
 }
+document.addEventListener('keydown', function(e){   /* 1455 */
+  if((e.key !== 'Escape' && e.key !== 'Esc') || e.defaultPrevented) return;
+  var sh = document.getElementById('puShAssign');
+  if(sh && sh.classList.contains('open')){ e.preventDefault(); sh.classList.remove('open'); }
+});
 document.getElementById('puShAssign').addEventListener('change', function(e){   /* 1454 */
   if(e.target.id === 'puAsgDate'){ puAsg.day = e.target.value || ''; if(!puAsg.day) puAsg.time = ''; paintAssign(); }
   else if(e.target.id === 'puAsgTime'){ puAsg.time = e.target.value || ''; paintAssign(); }
@@ -74255,6 +74302,8 @@ document.addEventListener('click', function(e){
     }
     return;
   }
+  var so = e.target.closest('#punchView [data-pusort]');   /* 1455 */
+  if(so){ PU.sort = so.getAttribute('data-pusort') || ''; render(); return; }
   var rl = e.target.closest('#punchView [data-pureload]');   /* 1452 */
   if(rl){ if(typeof window.openPunchView === 'function') window.openPunchView(); return; }
   var fo = e.target.closest('#punchView [data-pufocus]');
@@ -91975,6 +92024,10 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 @media (min-width:1600px){
   body.pumap-on #punchView .pu-wrap{ max-width:3040px; margin:0 auto; padding-left:40px; padding-right:40px; }
   body.pumap-on #punchView .pu-lay{ grid-template-columns:206px minmax(480px,560px) minmax(0,1fr) !important; gap:16px; align-items:start; }
+}
+/* 1455: from 1900px the list is wide enough to be the table (at 3440 it was a 560px column beside a 2,162px map) */
+@media (min-width:1900px){
+  body.pumap-on #punchView .pu-lay{ --cr-stack:"1455 ultrawide: the list column grows past 560px so the table shows"; grid-template-columns:206px minmax(880px,1.15fr) minmax(0,1fr) !important; }
   /* 908: the map sits ~320px down the page (title, search, controls, tabs
      above it), so height:calc(100vh - 128px) ran ~190px BELOW the fold. Keep
      it filling the width (NOT squared \u2014 Theo's call) and just cap the height
