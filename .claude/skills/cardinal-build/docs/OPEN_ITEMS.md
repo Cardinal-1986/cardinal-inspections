@@ -2,6 +2,19 @@
 
 ---
 
+## 🔧 IN PROGRESS 13 Nov 2026 (Theo: "audit with 10 judges…", then "All, in order") — the Punch audit, six groups
+
+Ten judges scored Punch & Repairs about 6/10 (presentation 6.7, ease 6.0, visibility 5.9, workflow 5.8). Built in this order, one build each:
+
+1. ✅ **Finishing a job** — Ready to close on the list, Close pinned on a phone, the told-Curtis receipt, empty-checklist words (**1451**).
+2. ✅ **Saves that tell the truth** (**1452**) — a second save during a running one is dropped yet the card says "Saved"; a failed load reads "No punch work yet"; removing a photo shifts the others into the wrong named slots.
+3. ✅ **One vocabulary, honest counts, lateness everywhere** (**1453**; the app header keeps "Punch" — the full name was cut off on a phone) — "Punch" / "Punch & Repairs" / "Punch Outs" / "Punch-outs"; "Ticket" for a repair; tab counts include the queue item; the late repair's own card, the client page and Production never say "late".
+4. ✅ **The Assign sheet** (**1454**) — four days and no time; total load instead of load per day; "Assign to Curtis" white on #8fb4d8 at 2.17:1 in dark; its Close button 28px tall.
+5. ✅ **Desktop and ultrawide** (**1455**) — the card hides the list; no Escape; no sort; at 3440 the list is a 560px column.
+6. ✅ **The look** (**1456**) — SETTLED 13 Nov: Theo picked **A**, obsidian everywhere (card sections, client page AND the list rows as obsidian cards), no coloured tab caps, sentence-case labels. Previewed side by side in the "Punch & Repairs Looks" artifact. Plus the background art he asked for: the dotted hand holding a framing hammer (`punch-art-hammer.jpg`), dark only. Do not swap it for a code-drawn version: those were tried and rejected as not defined enough. Was: — list, card and client-page list are three styles, none obsidian; too many accents; the Ask button covers row initials. **Previews first** (Theo's rule for visual changes).
+
+Not confirmed, recorded only: two people editing one card can overwrite each other (steps, visits, truck list are written whole).
+
 ## ✅ SETTLED 13 Nov 2026 (Theo: "keep what we currently have and just change the colors" → grey → "Darker maybe glass style" → "Try obsidian" → "A") — obsidian instead of navy (build 1450)
 
 - **Dark retail is obsidian, not navy and not grey:** page `#09090C`, rail/header `#0B0B0E`, panel `#15161C`, raised `#1C1D24`, line `#24242C`. Do not restore 535's navy; the medium grey (`#34373C`) was built and superseded the same night.

@@ -259,6 +259,44 @@ const GATES = [
     protects: "dark retail is obsidian, not navy: #09090C page, 545's obsidian face on the boxes, no navy left on the home, drawer or client page; light untouched",
     break: { find: '  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);',
              repl: '  background:#15161C;' } },
+
+  /* 1451: Punch — finishing a job. The break stops the list grouping the crew's "finished"
+     jobs, so nothing sits under Ready to close and A goes red. */
+  { name: 'gate_1451.mjs',
+    protects: "a job the crew said is finished shows under Ready to close; the phone card pins Close to the bottom; a told-Curtis receipt replaces the button",
+    break: { find: "function plGroup(it){ return plPing(it) ? 'ping' : plReady(it) ? 'ready' : plBase(it); }",
+             repl: "function plGroup(it){ return plPing(it) ? 'ping' : plBase(it); }" } },
+
+  /* 1452: Punch — saves that tell the truth. The break puts back the early return that dropped a
+     second save, so the message never reaches the database and A goes red. */
+  { name: 'gate_1452.mjs',
+    protects: "a second save waits instead of being dropped; a refused save keeps the message and buzzes nobody; a failed load says so; photos keep their slots",
+    break: { find: "while(busy && _w < 150)",
+             repl: "if(busy) return true; while(false && _w < 150)" } },
+
+  /* 1453: Punch — one vocabulary and lateness. The break names a repair a Ticket again, so A goes red. */
+  { name: 'gate_1453.mjs',
+    protects: "Punch & Repairs everywhere, Repair not Ticket, lateness on the card / client page / Production tile, days to close, Closed opens Closed",
+    break: { find: "it.kind === 'ticket' ? 'Repair' :",
+             repl: "it.kind === 'ticket' ? 'Ticket' :" } },
+
+  /* 1454: Punch — the Assign sheet. The break goes back to four days, so A goes red. */
+  { name: 'gate_1454.mjs',
+    protects: "six days, a time, per-day stops, a readable Assign button in dark, a 44px Close",
+    break: { find: "for(var i = 0; out.length < 6 && i < 9; i++){",
+             repl: "for(var i = 0; out.length < 4 && i < 7; i++){" } },
+
+  /* 1455: Punch — desktop. The break stops the card becoming a side panel, so A goes red. */
+  { name: 'gate_1455.mjs',
+    protects: "the card is a right-hand panel on a desk, Escape closes it and the Assign sheet, the table sorts, the ultrawide list is the table",
+    break: { find: "el.classList.toggle('side', ",
+             repl: "el.classList.toggle('side-off', " } },
+
+  /* 1456: Punch in obsidian with the hammer art. The break drops the art's URL, so A goes red. */
+  { name: 'gate_1456.mjs',
+    protects: "Punch & Repairs list, card and client rows in obsidian, no tab caps, sentence case, the hammer art behind the list; light untouched",
+    break: { find: "url('/punch-art-hammer.jpg') right bottom",
+             repl: "none right bottom" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

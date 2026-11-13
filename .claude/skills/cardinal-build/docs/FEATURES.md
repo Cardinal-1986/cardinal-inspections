@@ -10844,3 +10844,36 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - **Not touched:** light mode, Claims, Community, Crews, Production and Dispatch.
 
 **Gate:** `gate_1450.mjs`.
+
+## Build 1451: Punch — Ready to close, and the pinned Close button (13 Nov 2026)
+
+| Piece | What |
+|---|---|
+| Ready to close (list) | `plReady()` / `plReadyBy()` in `cr-punch-script`: open + last flagged comment is `askclose`. Its own group after Needs follow-up, a headline count, a rail row (`data-pufocus="ready"`) |
+| The dock (card, phones) | `.pkdock` in `cr-pk-script`, fixed bottom under 900px, holds `closeHtml(false)`; the in-flow button of an open card hides there |
+| Told-Curtis receipt | `askedCloseEntry()`; crew sees "Curtis has been told", not a second button |
+| Empty checklist (crew) | "No steps on this one — Curtis adds them…" |
+
+**Gate:** `gate_1451.mjs`.
+
+## Builds 1452–1455: the rest of the Punch audit (13 Nov 2026)
+
+| Build | Piece | Where |
+|---|---|---|
+| 1452 | `save()` waits and returns true/false; refused messages go back in the box | `cr-pk-script` |
+| 1452 | "Could not load…" + Try again (`data-pureload`), list and client page | `cr-punch-script`, `cr-pp-script` |
+| 1452 | `slotMap()` — photos keep their named slot | `cr-pk-script` |
+| 1453 | Punch & Repairs everywhere a person reads it (the app header keeps "Punch"); `kindName()`, `kWord()` | several |
+| 1453 | `lateHtml()` on the card, `ppState()` on the client page, "N late" on Production's tile | `cr-pk-script`, `cr-pp-script`, Production |
+| 1454 | Assign sheet: 6 days, other date `#puAsgDate`, time `#puAsgTime`, per-day stops | `cr-punch-script` |
+| 1455 | `#cr-pk.side` desk panel, Escape, `PU.sort` / `plSorter()`, ultrawide table from 1900px | `cr-pk-script`, `cr-punch-script` |
+
+**Gates:** `gate_1452.mjs` … `gate_1455.mjs`.
+
+## Build 1456: Punch & Repairs in obsidian, with the hammer art (13 Nov 2026)
+
+- **What:** look A — obsidian cards for the list rows, the punch card's sections and the client page's punch rows; no coloured tab caps; sentence-case labels; a faint dotted hand holding a framing hammer behind the list.
+- **Where:** `<style id="cr-punch-obs-styles">`; the image is `punch-art-hammer.jpg` at the repo root.
+- **Scope:** dark retail only. Light, Claims and Community unchanged.
+
+**Gate:** `gate_1456.mjs`.

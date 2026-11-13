@@ -4296,7 +4296,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <select id="jobMenuSel" class="jobmenu jobmenu-head" aria-label="Job section" style="display:none;">
           <option value="overview">Overview</option>
           <option value="checklists">Checklists</option>
-          <option value="punch">Punch Outs</option>
+          <option value="punch">Punch &amp; Repairs</option>
           <option value="inspections">Inspections</option>
           <option value="estimates">Estimates</option>
           <option value="contracts">Contracts</option>
@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1450<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1456<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4766,6 +4766,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="pu-asghead" id="puAsgHead"></div>
     <div id="puAsgWho"></div>
     <div class="pu-asgdays" id="puAsgDays"></div>
+    <div class="pu-asgmore"><label>Other day<input type="date" id="puAsgDate"></label><label>Time <i>optional</i><input type="time" id="puAsgTime"></label></div>
     <div class="pu-asgfoot">
       <button class="pu-asggo" id="puAsgGo" type="button" disabled>Pick a person</button>
       <button class="pu-asgntf on" id="puAsgNtf" type="button" aria-pressed="true"><span class="tg"></span>notify</button>
@@ -13093,7 +13094,7 @@ function renderAcxOverview(){
          the exact trap 604 was about. 607 also removed the overview card, so
          punch had no reachable entry point at all. data-jm="punch" falls through
          the router's else branch to showTab('punch'), which 607 already wired. */
-      jt(dbIc('punch'), 'Punch Outs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
+      jt(dbIc('punch'), 'Punch & Repairs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
       /* 652: the tab always existed; the menu is where fingers go.
          'contracts' rides the router's else-branch to showTab, like punch. */
       jt(dbIc('contract'), 'Contracts', '', 'contracts') +
@@ -42592,7 +42593,7 @@ html += '<div class="cr-srch-row" data-t="p" data-id="' + esc(p.id) + '">' +
 html += '</div>';
 }
 if(r.punch && r.punch.length){
-html += '<div class="cr-srch-grp"><h5>Punch-outs \u00b7 ' + r.punch.length + '</h5>';
+html += '<div class="cr-srch-grp"><h5>Punch &amp; Repairs \u00b7 ' + r.punch.length + '</h5>';
 r.punch.forEach(function(k){
 html += '<div class="cr-srch-row" data-t="k" data-id="' + esc(k.id) + '">' +
 '<div class="n">' + esc(k.title) +
@@ -47208,6 +47209,12 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1456, d:'2026-11-13', t:'Punch & Repairs in obsidian', s:'Punch & Repairs now matches the home screen in the dark theme: the list rows, the sections of a punch card and the punch list on a client page are the same polished black cards. The kind tabs lose their coloured caps and labels are no longer in capitals. Behind the list there is a faint dotted hand holding a framing hammer. Light mode is unchanged.' },
+  { b: 1455, d:'2026-11-13', t:'Punch & Repairs on a big screen', s:'On a computer, a punch card now opens as a panel on the right with the list still showing, so you can click down the list without going back each time. Escape closes the card and the Assign sheet. The Client, Age and When headings sort the table, and on a very wide screen the list is shown as the full table instead of a narrow column beside the map.' },
+  { b: 1454, d:'2026-11-13', t:'Assigning a punch item: more days, a time, and who is busy', s:'The Assign sheet on Punch & Repairs now offers six working days instead of four, any other date, and an optional time. Once you pick a person, each day shows how many stops they already have. The Assign button is readable in the dark theme again, and the sheet’s Close button is a full-size tap.' },
+  { b: 1453, d:'2026-11-13', t:'Punch & Repairs: one name, and late shows everywhere', s:'The section is called Punch & Repairs everywhere now (it was also Punch, Punch Outs and Punch-outs), and a repair is a Repair, not a Ticket. A late job says how late on its own card, on the client page and on the Production tile, which used to show only how many were urgent. The client page also says when each item is due or that nobody is assigned. Closed items show how long they took instead of carrying on ageing, anything open 30 days or more is highlighted, Closed on Production opens the closed list, and the count at the top follows your filters.' },
+  { b: 1452, d:'2026-11-13', t:'Punch-outs: saves you can trust', s:'On a punch card, a second change made while the first was still saving used to be thrown away while the card still said Saved. Now it waits its turn, and if a save is refused your message goes back in the box and nobody is buzzed. If the list cannot load it says so and offers Try again, instead of saying there is no punch work. And taking a photo off a card no longer moves the other photos under the wrong labels.' },
+  { b: 1451, d:'2026-11-13', t:'Punch-outs: ready to close', s:'When the crew says a punch-out is finished it now shows at the top of Punch & Repairs under Ready to close, so Curtis can see what to close without opening every card. On a phone the Close / Tell Curtis button stays at the bottom of the screen instead of two and a half screens down; once the crew has told Curtis it says so instead of offering to tell him again; and an empty checklist says Curtis adds the steps.' },
   { b: 1450, d:'2026-11-13', t:'Obsidian instead of navy', s:'The dark theme drops its navy for obsidian. The home screen, the side menu, the top bar, client pages and Leads keep their layout; the boxes are the same polished black as the Activity Count tiles, lit from the top-left and raised on a soft shadow, on a near-black page. Light mode, Claims and Community are unchanged.' },
   { b: 1449, d:'2026-11-13', t:'Color Studio from the client\u2019s page', s:'On a client\u2019s page the Job Menu now has a Color Studio tile for the owner account. It opens the Showroom in a new tab, signs in and lands on the Cardinal Experience, where Lessons leads to the Color Studio \u2014 so the colour picker is one tap from the client you are looking at. It shows only for the owner because the Showroom itself only lets the owner in.' },
   { b: 1448, d:'2026-11-13', t:'Crew Dispatch: a job booked on a wet day says so', s:'On the Crew Dispatch board, any job booked on a day the forecast calls wet now wears a small blue tag on its card \u2014 \u201cRain 80%\u201d, \u201cStorm 70%\u201d or \u201cSnow\u201d \u2014 the same rain flag punch-outs already show, so you can see at a glance which crews are heading into weather and move them with the grip if you choose. Finished jobs carry no tag.' },
@@ -59941,6 +59948,12 @@ function tilesHtml(){
     if(d && d >= today() && (!nextBuild || d < nextBuild)) nextBuild = d;
   });
   var urg = b.open.filter(function(i){ return i.priority === 'high'; }).length;
+  var _tk = keyOf(new Date());   /* 1453 */
+  var late = b.open.filter(function(i){
+    if(!i.scheduled_at) return false;
+    if(i.hold_reason && (!i.hold_until || String(i.hold_until).slice(0, 10) > _tk)) return false;
+    return String(i.scheduled_at).slice(0, 10) < _tk;
+  }).length;
   function tile(key, n, icon, label, sub, att){
     return '<button class="pbtile' + (att && n ? ' att' : '') + '" data-box="' + key + '" type="button">' +
       '<div class="v">' + n + '</div>' +
@@ -59954,11 +59967,12 @@ function tilesHtml(){
       b.ordered.length ? 'on the way' : 'nothing out') +
     tile('sched', b.sched.length, 'cal', 'Scheduled',
       nextBuild ? 'next build ' + esc(pbDay(nextBuild)) : 'nothing booked') +
-    tile('punch', b.open.length, 'tool', 'Punch-outs',
-      (urg ? '<em>' + urg + ' urgent</em>' : 'none urgent'), true) +
+    tile('punch', b.open.length, 'tool', 'Punch & Repairs',
+      /* 1453: "4 · 1 urgent" hid a repair 78 days late */
+      [late ? '<em>' + late + ' late</em>' : '', urg ? '<em>' + urg + ' urgent</em>' : ''].filter(Boolean).join(' · ') || 'none late', true) +
     '</div>' +
     '<button class="pbclosed" data-box="closed" type="button">' + svg('check') +
-      '<span class="t">Closed repairs</span><span class="c">' + b.closed.length + ' this month</span>' +
+      '<span class="t">Closed</span><span class="c">' + b.closed.length + ' this month</span>' +
       '<span class="go">›</span></button>';
 }
 function weekHtml(){
@@ -60348,7 +60362,7 @@ function itemHtml(i){
 }
 var BOX_TITLE = {
   needs:'Needs ordered', ordered:'Ordered', sched:'Scheduled',
-  punch:'Punch-outs', closed:'Closed repairs',
+  punch:'Punch & Repairs', closed:'Closed',
 };
 /* 1416 (judge 14 polish 14): the list's subtitle repeated its title. It says
    what is in the list now, from the same boxes() the tiles count. */
@@ -60434,7 +60448,7 @@ function wire(){
            openPunchView's hideAllViews finds cr-pb still .open and calls close()
            with no arg, which defaults to showHome() — so the retail home paints
            behind the punch page. close(false) drops the class and skips showHome. */
-        close(false); window.openPunchView(); return;
+        close(false); window.openPunchView(k === 'closed' ? 'closed' : undefined); return;
       }
       listKey = k; pane = 'list'; render(); scrollTop();
       /* 1036 (audit F1): same as the calendar — a list is a place back can leave. */
@@ -61373,6 +61387,28 @@ if(window.__crProdPending){
 #cr-pk .pkclose.ready b{ color:#e4f6ec; }
 #cr-pk .pkclose.closed-ro{ cursor:default; }   /* 1252: closed, and this person may not reopen it */
 #cr-pk .pkclose .jump{ text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+#cr-pk .pkclose.sent{ cursor:default; }
+#cr-pk .pklate{ margin:-4px 0 12px; font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--pk-acc,#e35c63); }   /* 1453 */   /* 1451: told Curtis — a receipt, not a button */
+/* 1451: the dock — phones only; the in-flow copy of an OPEN card's close button hides there */
+#cr-pk .pkdock{ display:none; }
+/* 1455: the side panel (desk, opened from Punch & Repairs) */
+@media (min-width:1280px){
+  #cr-pk.side{ left:auto; right:0; width:min(820px,48vw); border-left:1px solid var(--pk-line,rgba(230,235,240,.11));
+    box-shadow:-24px 0 48px rgba(0,0,0,.45); }
+  #cr-pk.side .pksplit{ display:block; }
+  #cr-pk.side .pkdock{ display:block; position:sticky; bottom:0; z-index:4; padding:10px 15px 12px;
+    background:var(--pk-g,#0c0d0f); border-top:1px solid var(--pk-line,rgba(230,235,240,.11)); }
+  #cr-pk.side .pkdock .pkclose{ margin-top:0; }
+  #cr-pk.side .pksplit .pkclose:not(.reopen):not(.closed-ro){ display:none; }
+  #cr-pk.side .pkwrap{ padding-bottom:20px; }
+}
+@media (max-width:899px){
+  #cr-pk .pkdock{ display:block; position:fixed; left:0; right:0; bottom:0; z-index:4;
+    padding:10px 15px calc(10px + env(safe-area-inset-bottom,0px));
+    background:var(--pk-g,#0c0d0f); border-top:1px solid var(--pk-line,rgba(230,235,240,.11)); }
+  #cr-pk .pkdock .pkclose{ margin-top:0; }
+  #cr-pk .pksplit .pkclose:not(.reopen):not(.closed-ro){ display:none; }
+}
 /* 1249: On hold — the block on the card, and the sheet. Amber is the
    warning colour on this card already (--pk-hot); a held job is a warning,
    not an error. Inks computed for both themes. */
@@ -61903,7 +61939,7 @@ async function checkOut(){
     }
   }
   if(!needDay){ save(patch); return; }
-  await save(patch);
+  if(!(await save(patch))) return;   /* 1452 */
   var to = officeEmails();
   if(to.length && typeof window.notifyTeam === 'function'){
     var pr = projectFor(it.project_id), who = myEmail();
@@ -62075,7 +62111,7 @@ function cardHtml(){
     '<div class="pktop">' +
       '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
       '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' :
-        it.kind === 'ticket' ? 'Ticket' :
+        it.kind === 'ticket' ? 'Repair' :
         /* 976: before the fallback on purpose. This chain ends by naming any
            kind it does not recognise a punch, which is the normStage() shape —
            so a kind added here and nowhere else silently reads as one.
@@ -62090,14 +62126,39 @@ function cardHtml(){
     '</div>' +
     (urgent ? '<div class="pkurg">' + svg('flag') + 'Urgent — do first</div>' : '') +
     pingHtml() +
-    '<h1>' + esc(it.title || 'Punch-out') + '</h1>' +
+    '<h1>' + esc(it.title || 'Punch-out') + '</h1>' + lateHtml() +
     (pingOn() || pingOpen ? '' : '<button class="pkfold dim pkpingbtn" data-act="ping" type="button"><span class="pkbang sm">!</span>' +
       '<span class="tx">Flag for follow-up</span><span class="ch">\u203A</span></button>') +
     '<div class="pksplit"><div>' +
       left +
     '</div><div>' +
       msgsHtml() + holdHtml(done) + closeHtml(done) +
-    '</div></div></div>' + (holdOpen && !done ? holdSheetHtml() : '');
+    '</div></div></div>' +
+    /* 1451: on a phone the finish / close button rides at the bottom of the screen; it was the
+       last thing on a card about two and a half screens long. Desktop keeps it in the right column. */
+    (!done ? '<div class="pkdock">' + closeHtml(false) + '</div>' : '') +
+    (holdOpen && !done ? holdSheetHtml() : '');
+}
+/* 1451: the crew's "Tell Curtis it's finished" is the LAST flagged comment until something
+   else (a follow-up flag, a needs-a-day) is flagged after it. The list reads the same rule. */
+function askedCloseEntry(){
+  var f = comments().filter(function(c){ return c && c.flag; });
+  var last = f.length ? f[f.length - 1] : null;
+  return last && last.flag === 'askclose' ? last : null;
+}
+/* 1453: the kind as a word, for the Close / Finish / Reopen buttons */
+function kWord(){ return it && it.kind === 'ticket' ? 'repair' : it && it.kind === 'tarp' ? 'tarp' : it && it.kind === 'callback' ? 'callback' : 'punch-out'; }
+/* 1453: a late job says so on its own card (it was only on the list) */
+function lateHtml(){
+  if(!it || it.status === 'done' || !it.scheduled_at) return '';
+  var now = new Date();
+  var t = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2);
+  if(it.hold_reason && (!it.hold_until || String(it.hold_until).slice(0, 10) > t)) return '';
+  var d = String(it.scheduled_at).slice(0, 10);
+  if(!(d < t)) return '';
+  var n = Math.round((Date.parse(t + 'T12:00:00') - Date.parse(d + 'T12:00:00')) / 86400000);
+  var due = new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+  return '<div class="pklate">' + n + ' day' + (n === 1 ? '' : 's') + ' late — was due ' + esc(due) + '</div>';
 }
 /* ── 1250: Flag for follow-up ── */
 function pingOn(){ return !!(it && it.ping_at && !it.ping_done_at); }
@@ -62133,8 +62194,8 @@ async function pingRaise(){
   var list = comments().slice();
   list.push({ by:me, name:nameOf(me), at:now, text:'Follow up: ' + note, flag:'ping' });
   pingOpen = false;
-  await save({ ping_note:note, ping_by:me || null, ping_at:now,
-               ping_done_note:null, ping_done_by:null, ping_done_at:null, comments:list });
+  if(!(await save({ ping_note:note, ping_by:me || null, ping_at:now,
+               ping_done_note:null, ping_done_by:null, ping_done_at:null, comments:list }))) return;   /* 1452 */
   if(typeof window.auditLog === 'function'){
     try{ window.auditLog('punch', 'Flagged for follow-up: ' + (it.title || ''), it.project_id); }catch(_){}
   }
@@ -62347,6 +62408,8 @@ function checklistHtml(){
       '</div>' + (noteFor === i && !s.d ? stepNoteHtml(i, s) : '');
   }).join('');
   var pick = '';
+  /* 1451: Scottie saw a bare "Checklist" box — steps are added by Curtis (1252) */
+  if(!st.length && !mgr) pick = '<div class="pktk0">No steps on this one \u2014 Curtis adds them if it needs any. The five photos are what finish it.</div>';
   if(!st.length && mgr){
     pick = '<div class="pkbtns" style="margin-bottom:4px;">' +
       Object.keys(TEMPLATES).map(function(k){
@@ -62364,10 +62427,27 @@ function checklistHtml(){
     (mgr ? '<button class="pkadd" data-act="addstep" type="button">+ Add step</button>' : '') +
     '</div>';
 }
+/* 1452: which photo sits in which named slot. A photo that carries .slot claims it; the rest
+   fill the empty slots in order (every photo before 1452 has no .slot, so they read as before).
+   Returns, per slot, the index into photos() or -1. Removing a photo pins the others first, so
+   taking off the Close-up no longer moves the Cleanup photo under the Close-up label. */
+function slotMap(ph){
+  var m = SLOTS.map(function(){ return -1; }), used = {};
+  ph.forEach(function(p, j){
+    var k = p && typeof p === 'object' ? p.slot : null; if(!k) return;
+    for(var i = 0; i < SLOTS.length; i++){ if(SLOTS[i].k === k && m[i] < 0){ m[i] = j; used[j] = true; break; } }
+  });
+  ph.forEach(function(p, j){
+    if(used[j]) return;
+    var i = m.indexOf(-1); if(i >= 0){ m[i] = j; used[j] = true; }
+  });
+  return m;
+}
 function photosHtml(){
   var ph = photos();
+  var _map = slotMap(ph);
   var cells = SLOTS.map(function(s, i){
-    var u = pUrl(ph[i]);
+    var u = _map[i] >= 0 ? pUrl(ph[_map[i]]) : '';
     /* 771: a wrong photo could not be taken off an item anywhere in the app
        once 768 stopped opening the sheet that owned the remove control. */
     return '<div class="pkslotwrap">' +
@@ -62375,7 +62455,7 @@ function photosHtml(){
       (u ? '<img class="im" data-src="' + esc(u) + '" alt="' + esc(s.l) + '">'
          : '<span class="im">' + svg('cam') + '</span>') +
       '<span class="sl">' + esc(s.l) + '</span></button>' +
-      (u ? '<button class="pkrm" data-rmphoto="' + i + '" type="button" aria-label="Remove this photo">&times;</button>' : '') +
+      (u ? '<button class="pkrm" data-rmphoto="' + _map[i] + '" type="button" aria-label="Remove this photo">&times;</button>' : '') +
       '</div>';
   }).join('');
   var gal = '<button class="pkgalbtn" data-act="gallery" type="button">' + svg('cam') +
@@ -62459,7 +62539,7 @@ function closeHtml(done){
   var boss = isManager();   /* 1252: Theo, Joan, Curtis — punch_boss_guard */
   if(done){
     if(!boss) return '<div class="pkclose closed-ro">Closed<b>' + esc((it.done_at ? fmtWhen(it.done_at) + ' ' : '') + 'by ' + nameOf(it.done_by)) + '</b></div>';
-    return '<button class="pkclose reopen" data-act="reopen" type="button">Reopen punch-out' +
+    return '<button class="pkclose reopen" data-act="reopen" type="button">Reopen ' + kWord() +
       '<b>' + esc('closed ' + (it.done_at ? fmtWhen(it.done_at) : '') + ' by ' + nameOf(it.done_by)) + '</b></button>';
   }
   var ph = photos().length, st = steps(), left = st.length - stepsDone();
@@ -62467,15 +62547,19 @@ function closeHtml(done){
   if(ph < PHOTO_MIN) want.push('<span class="jump" data-jump="pkSecPh">' + (PHOTO_MIN - ph) + ' photo' + (PHOTO_MIN - ph === 1 ? '' : 's') + '</span>');
   if(left > 0) want.push('<span class="jump" data-jump="pkSecCk">' + left + ' step' + (left === 1 ? '' : 's') + '</span>');
   var ready = readyToClose();
+  var asked = ready ? askedCloseEntry() : null;   /* 1451 */
   if(!boss){
+    /* 1451: once told, the button is gone — it used to stay and post the same message again. */
+    if(asked) return '<div class="pkclose ready sent" role="status">Curtis has been told' +
+      '<b>' + esc((asked.by === myEmail() ? 'you' : nameOf(asked.by)) + ' said it\u2019s finished' + (asked.at ? ' \u00b7 ' + fmtWhen(asked.at) : '')) + ' \u00b7 Curtis closes it</b></div>';
     /* 1252: the crew finishes, Curtis closes. Ready = tell him; not ready = what is left. */
     return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="' + (ready ? 'askclose' : 'close') + '" type="button">' +
-      (ready ? 'Tell Curtis it\u2019s finished' : 'Finish the punch-out') +
+      (ready ? 'Tell Curtis it\u2019s finished' : 'Finish the ' + kWord()) +
       '<b>' + (ready ? 'Curtis closes it' : want.join(' \u00b7 ') + ' left') + '</b></button>';
   }
   return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="close" type="button">' +
-    'Close punch-out' +
-    '<b>' + (ready ? 'everything is done' : want.join(' \u00b7 ') + ' left') + '</b></button>';
+    'Close ' + kWord() +
+    '<b>' + (ready ? (asked ? esc(nameOf(asked.by) + ' says it\u2019s finished') + ' \u00b7 ' : '') + 'everything is done' : want.join(' \u00b7 ') + ' left') + '</b></button>';
 }
 function paintPhotos(){
   if(typeof window.paintSignedPhotoImgs === 'function'){
@@ -62493,8 +62577,14 @@ function paintPhotos(){
 
 /* ------------------------------------------------------------------ writes */
 async function save(patch){
-  if(busy) return;
+  /* 1452: a second save while one was running used to be DROPPED here, and the caller went on
+     to clear the message box, say "Saved" and buzz people. Wait for the running one (up to 15s),
+     then save. Returns true when saved or held on the phone, false when refused. */
+  var _w = 0;
+  while(busy && _w < 150){ await new Promise(function(res){ setTimeout(res, 100); }); _w++; }
+  if(busy){ crTell('Still saving the last change \u2014 try again in a moment.'); return false; }
   busy = true;
+  var _ok = true;
   Object.assign(it, patch);
   lastSig = ''; render();
   /* 865: no signal — don't fight the network. Save it on the phone and let the
@@ -62502,7 +62592,7 @@ async function save(patch){
      'N waiting to sync' badge is the receipt. */
   if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
     try{ await window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:it.id }, patch: patch }); }catch(_oq){}
-    busy = false; refreshOthers(); return;
+    busy = false; refreshOthers(); return true;
   }
   try{
     /* 861: a punch-out is filled on a roof with weak signal. iOS Safari reports
@@ -62538,6 +62628,7 @@ async function save(patch){
     if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e)){
       try{ await window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:it.id }, patch: patch }); }catch(_oq2){}
     }else{
+      _ok = false;   /* 1452 */
       crTell('Could not save: ' + (e.message || e));
       var fresh = rowFor(it.id);
       if(fresh) it = fresh;
@@ -62546,6 +62637,7 @@ async function save(patch){
   }
   busy = false;
   refreshOthers();
+  return _ok;
 }
 function refreshOthers(){
   try{ if(window.CardinalProduction) window.CardinalProduction.refresh(); }catch(_){}
@@ -62763,7 +62855,12 @@ async function send(){
   }catch(_){}
   list.push({ by:me, name:nameOf(me), at:new Date().toISOString(), text:text, mentions:names });
   if(inp) inp.value = '';
-  await save({ comments: list });
+  if(!(await save({ comments: list }))){
+    /* 1452: refused — put the words back (the card re-rendered, so it is a new box) and tell nobody */
+    var _box = document.querySelector('#cr-pk [data-f="msg"]');
+    if(_box && !_box.value) _box.value = text;
+    return;
+  }
   /* Theo's rule, unchanged: only the people a comment TAGS are notified. */
   var told = false;   /* 1416 */
   if(names.length && typeof window.notifyTeam === 'function'){
@@ -62798,7 +62895,7 @@ async function askClose(){
   if(it.status === 'done' || !readyToClose()) return;
   var me = myEmail(), list = comments().slice();
   list.push({ by:me, name:nameOf(me), at:new Date().toISOString(), text:'Finished \u2014 ready for Curtis to close.', flag:'askclose' });
-  await save({ comments:list });
+  if(!(await save({ comments:list }))) return;   /* 1452 */
   var to = officeEmails();
   if(to.length && typeof window.notifyTeam === 'function'){
     var pr = projectFor(it.project_id);
@@ -63212,7 +63309,8 @@ function wire(){
   }); });
   q('[data-slot]', function(b){ b.onclick = function(){
     var i = Number(b.getAttribute('data-slot'));
-    var u = photos()[i];
+    var _sm = slotMap(photos());   /* 1452 */
+    var u = _sm[i] >= 0 ? pUrl(photos()[_sm[i]]) : '';
     if(u && window.CardinalResourceImages && window.CardinalResourceImages.open){
       try{ window.CardinalResourceImages.open(u, it.title || ''); return; }catch(_){}
     }
@@ -63248,6 +63346,10 @@ function wire(){
     var list = photos().slice();
     if(!list[i]) return;
     if(!await crAsk('Remove this photo from the punch-out?')) return;
+    /* 1452: pin every slotted photo to the slot it shows in before taking one out */
+    slotMap(list).forEach(function(j, si){
+      if(j >= 0 && list[j] && typeof list[j] === 'object' && !list[j].slot) list[j] = Object.assign({}, list[j], { slot: SLOTS[si].k });
+    });
     list.splice(i, 1);
     save({ photos: list });
   }; });
@@ -63277,7 +63379,7 @@ function wire(){
   var as = el.querySelector('[data-f="assigned"]');
   if(as) as.onchange = async function(){
     var to = as.value || null;
-    await save({ assigned_to: to });
+    if(!(await save({ assigned_to: to }))) return;   /* 1452 */
     /* 769: reassigning is telling somebody the work is theirs now. */
     await notifyAssigned(to);
   };
@@ -63318,6 +63420,11 @@ async function open(itemId, opts){
   window.__crPunchCardLast = row.id;                /* so navRestore can come back to it */
   lastSig = '';
   render();
+  /* 1455: on a desk, opened from Punch & Repairs, the card is a panel on the right and the list
+     stays in view (it covered the whole screen, so working down 40 items was open, back, find
+     your place, open). Anywhere else it still covers the screen. */
+  var _pv = document.getElementById('punchView');
+  el.classList.toggle('side', !!(_pv && _pv.style.display === 'block' && window.innerWidth >= 1280));
   el.classList.add('open');
   el.scrollTop = 0;
   if(typeof window.navSetView === 'function'){
@@ -63342,6 +63449,17 @@ function close(navigate){
     try{ window.CardinalProduction.open(); }catch(_){}
   }
 }
+/* 1455: Escape closes the card — the gallery first if it is open; never under an ask box or a sheet */
+document.addEventListener('keydown', function(e){
+  if((e.key !== 'Escape' && e.key !== 'Esc') || e.defaultPrevented) return;
+  if(!el || !el.classList.contains('open')) return;
+  var ask = document.querySelector('.askcard'); if(ask && ask.offsetParent) return;
+  e.preventDefault();
+  if(holdOpen){ holdOpen = false; lastSig = ''; render(); return; }   /* the hold sheet first */
+  if(galleryOpen){ galleryOpen = false; lastSig = ''; render(); return; }
+  var b = el.querySelector('[data-act="back"]');
+  if(b) b.click(); else close(true);
+});
 window.addEventListener('popstate', function(ev){
   var v = ev.state && ev.state.view;
   if(v !== 'punchcard' && el && el.classList.contains('open')){
@@ -63482,6 +63600,7 @@ var rows = [];
    a live compare can never settle. Build 567 proved that the expensive way. */
 var lastHtml = '';
 var loadedFor = null;
+var loadErr = false;   /* 1452 */
 var histOpen = false;
 function esc(s){
 return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
@@ -63510,14 +63629,16 @@ var r = await window.supa.from('punch_items')
 if(r.error){
 if(!/does not exist|schema cache/i.test(r.error.message || '')){
 console.warn('[punch] load:', r.error.message);
+loadErr = true;   /* 1452 */
 }
 rows = [];
 }else{
 rows = r.data || [];
+loadErr = false;
 }
 loadedFor = pid;
 syncMenuCount();
-}catch(e){ console.warn('[punch] load failed:', e); rows = []; }
+}catch(e){ console.warn('[punch] load failed:', e); rows = []; loadErr = true; }
 }
 /* 922: the job-menu "Punch Outs" tile renders its count synchronously, but the
    rows load on the observer's schedule AFTER the menu is drawn, so the tile read
@@ -63541,6 +63662,20 @@ if(el.textContent !== txt) el.textContent = txt;
 var zero = (open === 0);
 if(el.classList.contains('zero') !== zero) el.classList.toggle('zero', zero);
 }
+/* 1453: the kind as people say it, and where an open item stands — this list showed neither */
+var PP_KIND = { tarp:'Tarp', ticket:'Repair', callback:'Callback', punch:'Punch-out' };
+function kindName(k){ return PP_KIND[k] || 'Punch-out'; }
+function ppState(i){
+  if(!i || i.status === 'done') return '';
+  var n0 = new Date(), tk = n0.getFullYear() + '-' + ('0' + (n0.getMonth() + 1)).slice(-2) + '-' + ('0' + n0.getDate()).slice(-2);
+  if(i.hold_reason && (!i.hold_until || String(i.hold_until).slice(0, 10) > tk)) return '<span>· on hold</span>';
+  if(!i.assigned_to) return '<span class="hi">no one assigned</span>';
+  var d = i.scheduled_at ? String(i.scheduled_at).slice(0, 10) : '';
+  if(d && d < tk){ var n = Math.round((Date.parse(tk + 'T12:00:00') - Date.parse(d + 'T12:00:00')) / 86400000); return '<span class="hi">' + n + ' day' + (n === 1 ? '' : 's') + ' late</span>'; }
+  if(d === tk) return '<span>· today</span>';
+  if(d) return '<span>· ' + esc(new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })) + '</span>';
+  return '<span>· no date</span>';
+}
 function itemHtml(i){
 return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
 '" data-i="' + esc(i.id) + '">' +
@@ -63549,7 +63684,7 @@ return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
 '<span class="tx">' +
 '<span class="t">' + esc(i.title) + '</span>' +
 '<span class="m">' +
-'<span class="kind ' + esc(i.kind) + '">' + esc(i.kind) + '</span>' +
+'<span class="kind ' + esc(i.kind) + '">' + esc(kindName(i.kind)) + '</span>' +
 (i.priority === 'high' && i.status === 'open' ? '<span class="hi">urgent</span>' : '') +
 (i.assigned_to ? '<span>' + esc(shortName(i.assigned_to)) + '</span>' : '') +
 (i.status === 'done'
@@ -63617,7 +63752,7 @@ var html =
 : '<div class="cr-pp-none">' +
 (done.length
 ? 'Nothing outstanding on this job.'
-: 'No punch items. Add one when the crew leaves something behind.') +
+: (loadErr ? 'Could not load the punch items. Check the signal and open this job again.' : 'No punch items. Add one when the crew leaves something behind.')) +   /* 1452 */
 '</div>') +
 (done.length
 ? '<button class="cr-pp-fold" data-act="fold" type="button">' +
@@ -63759,10 +63894,11 @@ return '<button class="pp-row' + (i.status === 'done' ? ' done' : '') +
 '<span class="pp-rowb">' +
 '<span class="pp-rowt">' + esc(i.title) + '</span>' +
 '<span class="pp-rowm">' +
-'<span class="kind ' + esc(i.kind) + '">' + esc(i.kind) + '</span>' +
+'<span class="kind ' + esc(i.kind) + '">' + esc(kindName(i.kind)) + '</span>' +
 (i.priority === 'high' && i.status !== 'done' ? '<span class="hi">urgent</span>' : '') +
+ppState(i) +   /* 1453 */
 (i.assigned_to ? '<span>' + esc(shortName(i.assigned_to)) + '</span>' : '') +
-'<span>· ' + esc(when(i.created_at)) + '</span>' +
+'<span>· added ' + esc(when(i.created_at)) + '</span>' +
 '</span>' +
 '</span>' +
 (n ? '<span class="pp-rowc">💬 ' + n + '</span>' : '') +
@@ -63770,8 +63906,8 @@ return '<button class="pp-row' + (i.status === 'done' ? ' done' : '') +
 '</button>';
 }
 return '<div class="pp-page">' +
-'<h3 class="projsec">' + ICO('hardhat') + 'Punch Outs</h3>' +
-'<div class="pp-actions"><button class="pp-add" data-act="add" type="button">+ Add a punch out</button></div>' +
+'<h3 class="projsec">' + ICO('hardhat') + 'Punch &amp; Repairs</h3>' +
+'<div class="pp-actions"><button class="pp-add" data-act="add" type="button">+ Add</button></div>' +
 '<div class="pp-rule">Open <span>' + open.length + '</span></div>' +
 (open.length ? open.map(row).join('')
 : '<div class="pp-none">Nothing outstanding on this job.</div>') +
@@ -63791,8 +63927,9 @@ return '<div class="pp-page">' +
 '<span class="pp-dt' + (it.status === 'done' ? ' done' : '') + '">' + esc(it.title) + '</span>' +
 '</div>' +
 '<div class="pp-dm">' +
-'<span class="kind ' + esc(it.kind) + '">' + esc(it.kind) + '</span>' +
+'<span class="kind ' + esc(it.kind) + '">' + esc(kindName(it.kind)) + '</span>' +
 (it.priority === 'high' && it.status !== 'done' ? '<span class="hi">urgent</span>' : '') +
+ppState(it) +   /* 1453 */
 (it.assigned_to ? '<span>' + esc(shortName(it.assigned_to)) + '</span>' : '<span>unassigned</span>') +
 '<span>· added ' + esc(when(it.created_at)) + '</span>' +
 (it.status === 'done' && it.done_at ? '<span>· done ' + esc(when(it.done_at)) + '</span>' : '') +
@@ -63925,7 +64062,7 @@ msg.name + ' tagged you — ' + ((pr && pr.name) || 'a job'),
 '<p><b>' + esc(msg.name) + '</b> tagged you on the punch out <b>' + esc(it.title) + '</b>' +
 ((pr && pr.name) ? ' at <b>' + esc(pr.name) + '</b>' : '') + ':</p>' +
 '<blockquote>' + esc(text) + '</blockquote>' +
-'<p>Open the job’s Punch Outs page in Cardinal Resource to reply.</p>', punchLink(it.project_id));
+'<p>Open the job’s Punch &amp; Repairs page in Cardinal Resource to reply.</p>', punchLink(it.project_id));
 var th = document.querySelector('#ppPage .pp-thread');
 if(th){
 var d = document.createElement('div');
@@ -73008,14 +73145,25 @@ if(typeof _origOLF === 'function'){
 .pu-asgrow .load{margin-left:auto;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-mute);text-align:right;}
 .pu-asgrow .load.warn{color:#f0a24a;font-weight:700;}
 .pu-asgrow .tick{font-weight:800;font-size:15px;color:var(--rbe-ok,#4fc98a);width:16px;}
-.pu-asgdays{display:flex;gap:6px;margin:12px 16px 0;}
+.pu-asgdays{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 16px 0;}   /* 1454: six days + no day, two rows */
 .pu-dayb{flex:1;text-align:center;border:1px solid var(--rbe-line);border-radius:9px;min-height:44px;background:none;cursor:pointer;
   font:600 11px ui-monospace,Menlo,monospace;color:var(--rbe-mute);display:flex;flex-direction:column;justify-content:center;gap:1px;}
 .pu-dayb b{font-size:13px;color:var(--rbe-ink);}
 .pu-dayb.sel{border-color:var(--rbe-ok,#4fc98a);}
 .pu-dayb.sel,.pu-dayb.sel b{color:var(--rbe-ok,#4fc98a);}
+/* 1454 */
+:root[data-theme="rb-light"] .pu-dayb.sel,:root[data-theme="rb-light"] .pu-dayb.sel b{color:#1b7d49;border-color:#1b7d49;}
+.pu-dayb .ld{display:block;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-style:normal;color:var(--rbe-mute);margin-top:1px;}
+.pu-dayb .ld.busy{color:#f0a24a;}
+:root[data-theme="rb-light"] .pu-dayb .ld.busy{color:#8a5500;}
+.pu-asgmore{display:flex;gap:10px;margin:10px 16px 0;}
+.pu-asgmore label{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--rbe-mute);}
+.pu-asgmore label i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500;}
+.pu-asgmore input{min-height:44px;width:100%;box-sizing:border-box;border:1px solid var(--rbe-line);border-radius:9px;background:none;color:var(--rbe-ink);padding:0 10px;font:500 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
+.pu-asgmore input:disabled{opacity:.5;}
+:root:not([data-theme="rb-light"]) .pu-asgmore input{color-scheme:dark;}
 .pu-asgfoot{display:flex;gap:10px;align-items:center;padding:14px 16px 16px;}
-.pu-asggo{flex:1;background:var(--rbe-acc,#c8202e);color:#fff;border:0;border-radius:11px;min-height:48px;
+.pu-asggo{flex:1;background:#c8202e;color:#fff;border:0;border-radius:11px;min-height:48px;
   font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}
 .pu-asggo[disabled]{opacity:.5;cursor:default;}
 .pu-asgntf{display:inline-flex;align-items:center;gap:7px;background:none;border:0;cursor:pointer;
@@ -73129,7 +73277,7 @@ body.cr-prod #punchView{ position:fixed; inset:0; z-index:9400; overflow-y:auto;
   overscroll-behavior:contain;}
 .pu-sheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid var(--rbe-hair);position:sticky;top:0;background:var(--rbe-panel);}
 .pu-sheet .ph .t{font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-ink);flex:1;text-align:center;}
-.pu-sheet .ph button{background:none;border:0;color:var(--rbe-acc);font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;padding:4px 6px;}
+.pu-sheet .ph button{background:none;border:0;color:var(--rbe-acc);font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;padding:4px 10px;min-height:44px;}
 .pu-sheet .ph button.ap{color:var(--rbe-ok);}
 .pu-srow{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rbe-hair);cursor:pointer;
   font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:var(--rbe-ink);}
@@ -73204,6 +73352,11 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
   letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute);}
 .pl-grp::after{content:'';flex:1;height:1px;background:var(--rbe-line);}
 .pl-grp.late{color:var(--pl-late,#f08a90);}
+.pl-grp.ready{color:var(--pl-live,#6fd39b);}   /* 1451 */
+.pl-age.old{color:var(--pl-late,#f08a90);font-weight:700;}   /* 1453: 30+ days open */
+.pl-sort{background:none;border:0;padding:0;margin:0;min-height:34px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;text-align:left;cursor:pointer;}   /* 1455 */
+.pl-sort.on{color:var(--rbe-ink);}
+.pl-retry{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--rbe-line);border-radius:9px;background:transparent;color:var(--rbe-ink);font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1452 */
 .pl-row{display:grid;grid-template-columns:4px auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px;
   grid-template-areas:"stp cl cl age" "stp kd pb pb" "stp wh wh cr";
   padding:10px 12px 10px 0;border-bottom:1px solid var(--rbe-line);cursor:pointer;color:var(--rbe-ink);font-size:15px;}
@@ -73292,15 +73445,17 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 'use strict';
 /* ── shared punch data layer: one query, one write path, reused by every surface ── */
 var _rows = [];
+var _loadFail = false;   /* 1452: the last load failed (a refused or dropped read) */
 async function reload(){
   if(!window.supa) return _rows;
   try{
     var r = await window.supa.from('punch_items').select('*').order('created_at', { ascending:false });
     if(r.error){
-      if(!/does not exist|schema cache/i.test(r.error.message || '')) console.warn('[punch] load:', r.error.message);
+      if(!/does not exist|schema cache/i.test(r.error.message || '')){ console.warn('[punch] load:', r.error.message); _loadFail = true; }
       return _rows;
     }
     _rows = r.data || [];
+    _loadFail = false;
     /* 1049: replay pending offline writes over the fetched rows — without this
        a refresh while still offline would wipe the crew's queued work. Once a
        write syncs it leaves the outbox, so the overlay stops on its own (the
@@ -73316,7 +73471,7 @@ async function reload(){
         });
       }
     }catch(_ov){}
-  }catch(e){ console.warn('[punch] load failed:', e); }
+  }catch(e){ console.warn('[punch] load failed:', e); _loadFail = true; }
   return _rows;
 }
 async function toggle(id){
@@ -73413,6 +73568,7 @@ async function update(id, patch){
 }
 window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
   rows   : function(){ return _rows.slice(); },
+  loadFailed : function(){ return _loadFail; },   /* 1452 */
   notifyAssigned : notifyAssignedBoard,   /* 945: one notify path for every assign surface */
   reload : reload,
   toggle : toggle,
@@ -73421,7 +73577,7 @@ window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
 });
 /* 1248: type = the kind tab, view = a "needs attention" focus from the rail
    ('' = every open group, or late / nodate / hold / closed). */
-var PU = { sets:{}, q:'', type:'all', view:'' };
+var PU = { sets:{}, q:'', type:'all', view:'', sort:'' };   /* 1455: sort '' (when) | 'age' | 'client' */
 var PHOTO_MIN = 5;
 var puSheet = { cat:null, pend:[] };
 var CRM_LABEL = { retail:'Retail', insurance:'Insurance', community:'Community' };
@@ -73589,6 +73745,7 @@ var PL_KINDS = [
 ];
 var PL_GROUPS = [
   { g:'ping',   l:'Needs follow-up' },
+  { g:'ready',  l:'Ready to close' },   /* 1451 */
   { g:'late',   l:'Past due' },
   { g:'today',  l:'Today' },
   { g:'next',   l:'Coming up' },
@@ -73634,7 +73791,17 @@ function plBackFromHold(it){
 }
 /* 1250: an active follow-up flag beats every other group, closed work included */
 function plPing(it){ return !!(it && it.ping_at && !it.ping_done_at); }
-function plGroup(it){ return plPing(it) ? 'ping' : plBase(it); }
+/* 1451: the crew said it is finished (the card's askclose message) and nobody has closed it */
+function plReady(it){
+  if(!it || it.status === 'done') return false;
+  var f = (Array.isArray(it.comments) ? it.comments : []).filter(function(c){ return c && c.flag; });
+  return !!(f.length && f[f.length - 1].flag === 'askclose');
+}
+function plReadyBy(it){
+  var f = (Array.isArray(it.comments) ? it.comments : []).filter(function(c){ return c && c.flag === 'askclose'; });
+  return f.length ? f[f.length - 1].by : '';
+}
+function plGroup(it){ return plPing(it) ? 'ping' : plReady(it) ? 'ready' : plBase(it); }
 function plBase(it){
   if(it.status === 'done') return 'closed';
   if(plOnHold(it)) return 'hold';
@@ -73657,6 +73824,10 @@ function plWhen(it){
     return { main: it.done_at ? 'Done ' + plDayLabel(plLocalKey(it.done_at)) : 'Done',
              sub: it.done_by ? 'by ' + plName(it.done_by) : '' };
   }
+  if(plReady(it)){   /* 1451 */
+    var _rb = plReadyBy(it);
+    return { main:'Finished', sub:'Ready to close' + (_rb ? ' \u00b7 ' + plName(_rb) : ''), cls:'live' };
+  }
   if(g === 'hold'){
     return { main: it.hold_until ? 'Back ' + plDayLabel(String(it.hold_until).slice(0, 10)) : 'On hold',
              sub: 'On hold · ' + ({ materials:'materials', homeowner:'homeowner', weather:'weather', adjuster:'adjuster', other:'see note' }[it.hold_reason] || String(it.hold_reason)) };
@@ -73673,6 +73844,15 @@ function plWhen(it){
   if(g === 'today') return { main:'Today', sub: clock || 'Not checked in', cls: clock ? '' : 'warn' };
   if(g === 'next')  return { main: plDayLabel(d), sub: clock };
   return { main:'No date', sub:'Not scheduled' };
+}
+/* 1455: the table headings sort inside each group; '' is the usual urgency-then-day order */
+function plSorter(){
+  if(PU.sort === 'age') return function(a, b){ return String(a.created_at || '').localeCompare(String(b.created_at || '')) || plOrder(a, b); };
+  if(PU.sort === 'client') return function(a, b){
+    var x = String((projOf(a.project_id) || {}).name || ''), y = String((projOf(b.project_id) || {}).name || '');
+    return x.localeCompare(y) || plOrder(a, b);
+  };
+  return plOrder;
 }
 function plOrder(a, b){
   return (isUrgent(b) ? 1 : 0) - (isUrgent(a) ? 1 : 0) ||
@@ -73696,6 +73876,8 @@ function plRain(it){
 function plRow(it){
   var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it), rain = plRain(it);
   var urg = isUrgent(it), age = ageDays(it.created_at);
+  /* 1453: a closed row kept ageing (filed 17 Aug, done 18 Aug, read 88d). Show days to close. */
+  if(it.status === 'done' && it.done_at && it.created_at){ age = Math.max(0, Math.round((Date.parse(it.done_at) - Date.parse(it.created_at)) / 86400000)); }
   var supp = String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0;
   var who = it.assigned_to;
   return '<div class="pl-row k-' + K.k + (urg ? ' u' : '') + (ping ? ' ping' : '') + (g === 'late' ? ' late' : '') + (g === 'closed' && !ping ? ' done' : '') +
@@ -73711,7 +73893,7 @@ function plRow(it){
       esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</b>' +
       '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
     '<span class="pl-pb">' + (ping ? esc('\u201C' + (it.ping_note || '') + '\u201D \u2014 ' + plName(it.ping_by)) : esc(it.title || 'Untitled item')) + '</span>' +
-    '<span class="pl-age">' + (age != null ? age + 'd' : '') + '</span>' +
+    '<span class="pl-age' + (it.status !== 'done' && age >= 30 ? ' old' : '') + '">' + (age != null ? age + 'd' + (it.status === 'done' ? ' to close' : '') : '') + '</span>' +
     '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + [w.sub, plOnSite(it)].filter(Boolean).map(function(x){ return '<span class="pl-nw">' + esc(x) + '</span>'; }).join(' \u00b7 ') + '</small></span>' +   /* 1416: wraps at the dot */
     '<span class="pl-cr">' + (who ? '<span class="pl-av">' + esc(plName(who).slice(0, 2).toUpperCase()) + '</span><span class="pl-nm">' + esc(plName(who)) + '</span>'
                               : '<span class="pl-nm">No one</span>') + '</span>' +
@@ -73808,7 +73990,7 @@ function render(){
   });
 
   var board = all.filter(function(it){ return (it.status !== 'done' ? !inQueue(it) : plPing(it)) && plShown(it); });
-  var G = { ping:[], late:[], today:[], next:[], nodate:[], hold:[] };
+  var G = { ping:[], ready:[], late:[], today:[], next:[], nodate:[], hold:[] };
   board.forEach(function(it){ G[plGroup(it)].push(it); });
   var closed = all.filter(function(it){ return it.status === 'done' && plShown(it); })
     .sort(function(a, b){ return String(b.done_at || '').localeCompare(String(a.done_at || '')); });
@@ -73816,10 +73998,14 @@ function render(){
 
   document.getElementById('puSub').textContent =
     (G.ping.length ? G.ping.length + ' need follow-up \u00b7 ' : '') +
-    (open.length) + ' open \u00b7 ' + nQueue + ' need assigned \u00b7 ' + G.late.length + ' past due';
+    (G.ready.length ? G.ready.length + ' ready to close \u00b7 ' : '') +   /* 1451 */
+    (open.filter(plShown).length) + ' open \u00b7 ' + nQueue + ' need assigned \u00b7 ' + G.late.length + ' past due';
 
-  var cols = '<div class="pl-cols" aria-hidden="true"><span></span><span>Type</span><span>Client</span>' +
-    '<span>What’s wrong</span><span>Age</span><span>When</span><span>Crew</span></div>';
+  var sb = function(k, l){   /* 1455 */
+    return '<button type="button" class="pl-sort' + (PU.sort === k ? ' on' : '') + '" data-pusort="' + k + '" aria-pressed="' + (PU.sort === k ? 'true' : 'false') + '">' + l + (PU.sort === k ? ' ▾' : '') + '</button>';
+  };
+  var cols = '<div class="pl-cols"><span></span><span>Type</span>' + sb('client', 'Client') +
+    '<span>What’s wrong</span>' + sb('age', 'Age') + sb('', 'When') + '<span>Crew</span></div>';
   var html = '';
   var listEl = document.getElementById('puList');
   if(PU.view === 'closed'){
@@ -73829,12 +74015,13 @@ function render(){
   } else {
     var groups = PL_GROUPS.filter(function(g){ return !PU.view || PU.view === g.g; });
     groups.forEach(function(g){
-      var list = G[g.g].slice().sort(plOrder);
-      if(list.length) html += '<div class="pl-grp' + (g.g === 'late' || g.g === 'ping' ? ' late' : '') + '">' + g.l + ' · ' + list.length + '</div>' + list.map(plRow).join('');
+      var list = G[g.g].slice().sort(plSorter());
+      if(list.length) html += '<div class="pl-grp' + (g.g === 'late' || g.g === 'ping' ? ' late' : g.g === 'ready' ? ' ready' : '') + '">' + g.l + ' · ' + list.length + '</div>' + list.map(plRow).join('');
     });
     html = html ? cols + html : '<div class="pu-empty">' +
       (all.length ? (PU.view ? 'Nothing here right now.' : 'Nothing matches — try All, or clear the filters.')
-                  : 'No punch work yet. + New adds the first one.') + '</div>';
+                  : (_loadFail ? 'Could not load punch work. Check the signal, then <button type="button" class="pl-retry" data-pureload>try again</button>.'   /* 1452 */
+                               : 'No punch work yet. + New adds the first one.')) + '</div>';
     if(PU.view) html = '<button type="button" class="pl-back" data-pufocus="">‹ All open work</button>' + html;
     html += '<button type="button" class="pl-more" data-pufocus="closed"><span>Closed</span><span>' + closed.length + ' ›</span></button>';
   }
@@ -73859,6 +74046,7 @@ function render(){
     }).join('') +
     '<div class="pl-rh">Needs attention</div>' +
     ri('data-pufocus="ping"', PU.view === 'ping', 'Needs follow-up', G.ping.length, G.ping.length > 0) +
+    ri('data-pufocus="ready"', PU.view === 'ready', 'Ready to close', G.ready.length) +   /* 1451 */
     ri('data-pufocus="late"', PU.view === 'late', 'Past due', G.late.length, G.late.length > 0) +
     ri('data-pufocus="nodate"', PU.view === 'nodate', 'No date', G.nodate.length) +
     ri('data-pufocus="hold"', PU.view === 'hold', 'On hold', G.hold.length) +
@@ -73910,7 +74098,7 @@ var puAsg = { id:null, who:'', day:'', notify:true };
    map's (admins + production) and it is UX only — RLS is the authority. */
 function puAsgDayOpts(){
   var out = [], d = new Date();
-  for(var i = 0; out.length < 4 && i < 7; i++){
+  for(var i = 0; out.length < 6 && i < 9; i++){   /* 1454: six working days (was four) */
     if(d.getDay() !== 0){                       /* Sunday skipped, nothing else (940) */
       var key = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
       out.push({ key:key, lab: out.length === 0 ? 'TODAY' : ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()],
@@ -73949,22 +74137,28 @@ function paintAssign(){
       '<span class="load' + (carry ? ' warn' : '') + '">' + mine.length + ' open' + (carry ? ' \u00b7 day-2 carry' : '') + '</span>' +
       '<span class="tick">' + (puAsg.who === em ? '\u2713' : '') + '</span></div>';
   }).join('');
-  document.getElementById('puAsgDays').innerHTML = puAsgDayOpts().map(function(o){
+  var _opts = puAsgDayOpts();
+  document.getElementById('puAsgDays').innerHTML = _opts.map(function(o){
+    /* 1454: how busy the picked person already is that day (the hold sheet has shown this since 1249) */
+    var n = puAsg.who ? open.filter(function(r){ return r.assigned_to === puAsg.who && r.scheduled_at && String(r.scheduled_at).slice(0, 10) === o.key && String(r.id) !== String(puAsg.id); }).length : -1;
     return '<button class="pu-dayb' + (puAsg.day === o.key ? ' sel' : '') + '" type="button" data-asg-day="' + esc(o.key) + '">' +
-      '<b>' + o.lab + '</b>' + o.sub + '</button>';
+      '<b>' + o.lab + '</b>' + o.sub + (n >= 0 ? '<i class="ld' + (n >= 3 ? ' busy' : '') + '">' + (n ? n + ' stop' + (n === 1 ? '' : 's') : 'free') + '</i>' : '') + '</button>';
   }).join('') + '<button class="pu-dayb' + (puAsg.day === '' ? ' sel' : '') + '" type="button" data-asg-day=""><b>NO DAY</b>yet</button>';
+  var _dt = document.getElementById('puAsgDate'), _tm = document.getElementById('puAsgTime');   /* 1454 */
+  if(_dt) _dt.value = (puAsg.day && !_opts.some(function(o){ return o.key === puAsg.day; })) ? puAsg.day : '';
+  if(_tm){ _tm.value = puAsg.time || ''; _tm.disabled = !puAsg.day; }
   var go = document.getElementById('puAsgGo');
   go.disabled = !puAsg.who;
   go.textContent = puAsg.who
     ? 'Assign to ' + (puAsg.who.split('@')[0].charAt(0).toUpperCase() + puAsg.who.split('@')[0].slice(1)) +
-      (puAsg.day ? ' \u00b7 ' + fmtDate(puAsg.day) : '')
+      (puAsg.day ? ' \u00b7 ' + fmtDate(puAsg.day) + (puAsg.time ? fmtSchedClock(puAsg.time) : '') : '')
     : 'Pick a person';
   var nb = document.getElementById('puAsgNtf');
   nb.classList.toggle('on', !!puAsg.notify);
   nb.setAttribute('aria-pressed', puAsg.notify ? 'true' : 'false');
 }
 function openAssign(id){
-  puAsg = { id:id, who:'', day:'', notify:true };
+  puAsg = { id:id, who:'', day:'', time:'', notify:true };
   paintAssign();
   document.getElementById('puShAssign').classList.add('open');
 }
@@ -73986,12 +74180,21 @@ async function notifyAssignedBoard(id, email){
     return (typeof window.notifyOutcomeText === 'function') ? window.notifyOutcomeText(res, [email]) : '';
   }catch(_){ return ''; }
 }
+document.addEventListener('keydown', function(e){   /* 1455 */
+  if((e.key !== 'Escape' && e.key !== 'Esc') || e.defaultPrevented) return;
+  var sh = document.getElementById('puShAssign');
+  if(sh && sh.classList.contains('open')){ e.preventDefault(); sh.classList.remove('open'); }
+});
+document.getElementById('puShAssign').addEventListener('change', function(e){   /* 1454 */
+  if(e.target.id === 'puAsgDate'){ puAsg.day = e.target.value || ''; if(!puAsg.day) puAsg.time = ''; paintAssign(); }
+  else if(e.target.id === 'puAsgTime'){ puAsg.time = e.target.value || ''; paintAssign(); }
+});
 document.getElementById('puShAssign').addEventListener('click', async function(e){
   if(e.target === this || e.target.closest('#puAsgClose')){ this.classList.remove('open'); return; }
   var w = e.target.closest('[data-asg-who]');
   if(w){ puAsg.who = w.getAttribute('data-asg-who'); paintAssign(); return; }
   var dbtn = e.target.closest('[data-asg-day]');
-  if(dbtn){ puAsg.day = dbtn.getAttribute('data-asg-day'); paintAssign(); return; }
+  if(dbtn){ puAsg.day = dbtn.getAttribute('data-asg-day'); if(!puAsg.day) puAsg.time = ''; paintAssign(); return; }
   if(e.target.closest('#puAsgNtf')){ puAsg.notify = !puAsg.notify; paintAssign(); return; }
   if(e.target.closest('#puAsgGo') && puAsg.who){
     var go = document.getElementById('puAsgGo');
@@ -74001,7 +74204,8 @@ document.getElementById('puShAssign').addEventListener('click', async function(e
        the old time too */
     var patch = { assigned_to: puAsg.who,
                   scheduled_at: puAsg.day || null,
-                  scheduled_time: (puAsg.day && it.scheduled_at === puAsg.day) ? (it.scheduled_time || null) : null };
+                  scheduled_time: (puAsg.day && puAsg.time) ? puAsg.time + ':00'   /* 1454: a time can be set here now */
+                                : (puAsg.day && it.scheduled_at === puAsg.day) ? (it.scheduled_time || null) : null };
     var r = window.CardinalPunch && window.CardinalPunch.update
       ? await window.CardinalPunch.update(puAsg.id, patch) : { ok:false };
     if(r && r.ok){
@@ -74026,6 +74230,8 @@ async function openPunchView(preset){
   PU.type = 'all'; PU.view = '';
   if(preset && preset.crm){ PU.sets = { crm:[preset.crm] }; }
   else if(preset === 'urgent'){ PU.sets = { status:['Urgent'] }; }
+  else if(preset === 'closed'){ PU.sets = {}; PU.view = 'closed'; }   /* 1453: Production's Closed lands on Closed */
+  else { PU.sets = {}; }   /* 1453: a strip's CRM filter no longer sticks to the next visit */
   document.getElementById('puList').innerHTML = '<div class="pu-empty">Loading\u2026</div>';
   try{ if(window.CardinalPunch && window.CardinalPunch.reload) await window.CardinalPunch.reload(); }catch(e){}
   render();
@@ -74087,9 +74293,7 @@ document.addEventListener('click', function(e){
     /* 418: the database refuses this write for anyone outside the production
        crew (punch_close_guard). Say so here rather than let it fail silently. */
     if(!mayClose()){
-      crTell('Only Theo, Joan and Curtis can close or reopen a punch item.\\n\\n' +
-            'You can still edit it, add photos, or change who it is assigned to \\u2014 ' +
-            'tap the item itself.');
+      crTell('Only Theo, Joan and Curtis close a punch item. Open it and tap Tell Curtis it’s finished.');   /* 1453 */
       return;
     }
     if(window.CardinalPunch && window.CardinalPunch.toggle){
@@ -74099,6 +74303,10 @@ document.addEventListener('click', function(e){
     }
     return;
   }
+  var so = e.target.closest('#punchView [data-pusort]');   /* 1455 */
+  if(so){ PU.sort = so.getAttribute('data-pusort') || ''; render(); return; }
+  var rl = e.target.closest('#punchView [data-pureload]');   /* 1452 */
+  if(rl){ if(typeof window.openPunchView === 'function') window.openPunchView(); return; }
   var fo = e.target.closest('#punchView [data-pufocus]');
   if(fo){
     var v = fo.getAttribute('data-pufocus');
@@ -91817,6 +92025,10 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
 @media (min-width:1600px){
   body.pumap-on #punchView .pu-wrap{ max-width:3040px; margin:0 auto; padding-left:40px; padding-right:40px; }
   body.pumap-on #punchView .pu-lay{ grid-template-columns:206px minmax(480px,560px) minmax(0,1fr) !important; gap:16px; align-items:start; }
+}
+/* 1455: from 1900px the list is wide enough to be the table (at 3440 it was a 560px column beside a 2,162px map) */
+@media (min-width:1900px){
+  body.pumap-on #punchView .pu-lay{ --cr-stack:"1455 ultrawide: the list column grows past 560px so the table shows"; grid-template-columns:206px minmax(880px,1.15fr) minmax(0,1fr) !important; }
   /* 908: the map sits ~320px down the page (title, search, controls, tabs
      above it), so height:calc(100vh - 128px) ran ~190px BELOW the fold. Keep
      it filling the width (NOT squared \u2014 Theo's call) and just cap the height
@@ -102677,5 +102889,65 @@ window.CardinalFeedback = Object.assign(window.CardinalFeedback || {}, { open: f
 })();
 </script>
 
+<style id="cr-punch-obs-styles">
+/* ── Build 1456 · Punch & Repairs in obsidian (Theo, 13 Nov: picked look A from the side-by-side
+   page, then "Let's do what you recommend" — the dotted hand holding a framing hammer).
+   The punch audit's group 6: the list, the card and the client page's punch list were three
+   different styles and none of them was the obsidian the home screen wears since 1450. Now the
+   list rows, the card's sections and the client page's rows are all 545's obsidian face, the
+   kind tabs lose their four coloured caps, and labels stop shouting in capitals. Behind the
+   list, a dotted hand with a framing hammer (punch-art-hammer.jpg, pre-faded to ~40% and
+   screen-blended into the page ground so its black square never shows). Dark retail only,
+   scoped exactly like 1450; light, Claims and Community are untouched. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView{
+  --cr-stack:"1456 look A: the hammer art, a second background layer over the page ground";
+  background:var(--bg,#09090C) url('/punch-art-hammer.jpg') right bottom / min(92vw,720px) no-repeat fixed;
+  background-blend-mode:screen;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puList{ padding-bottom:96px; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puList .pl-row{
+  --cr-stack:"1456 look A: list rows become obsidian cards";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border-radius:12px; margin:0 0 10px; padding-left:0;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puList .pl-row.late,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puList .pl-row.ping{
+  --cr-stack:"1456 look A: a late or flagged row keeps its red, as an obsidian card";
+  background:#1c1013 radial-gradient(120% 90% at 22% -10%,#3a1c22 0%,#1c1013 45%,#0d0709 100%);
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView #puQueue .pu-card{
+  --cr-stack:"1456 look A: the needs-assigned card in obsidian";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border-radius:12px;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView .pu-tab::before{ --cr-stack:"1456 look A: the four coloured caps go"; background:transparent; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #punchView .pu-asgrow .nm{ --cr-stack:"1456 look A: names in the Assign sheet in the ink colour, not teal and purple"; color:var(--rbe-ink); }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk{ --cr-stack:"1456 look A: the card page ground matches the app"; --pk-g:#09090C; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pksec,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkvis,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkfold{
+  --cr-stack:"1456 look A: the card sections in obsidian";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border-radius:12px;
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkh,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkbtn,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkclose,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #cr-pk .pkgalbtn{ --cr-stack:"1456 look A: sentence case, not capitals"; text-transform:none; letter-spacing:.01em; }
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #ppPage .pp-row,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #ppPage .pp-card{
+  --cr-stack:"1456 look A: the client page punch rows in obsidian";
+  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
+  border:1px solid #24242c;
+  box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border-radius:12px;
+}
+</style>
 </body>
 </html>

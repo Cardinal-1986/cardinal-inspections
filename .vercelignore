@@ -113,6 +113,10 @@ spark/
 #     Build 805 is why this is a separate file rather than a screen in
 #     index.html: a hostname check inside one big file separates nothing. ---
 
+# --- punch-art-hammer.jpg DELIBERATELY SHIPS (build 1456). The faint dotted hand
+#     holding a framing hammer behind the Punch & Repairs list in the dark theme
+#     (cr-punch-obs-styles loads it by path). 900px, pre-faded, ~70 KB. Generated
+#     artwork from Theo's own reference picture; nothing private. Must NOT be added here.
 # --- oc-preferred-contractor.png DELIBERATELY SHIPS (build 1277). The Owens
 #     Corning Preferred Contractor lockup, cut from Theo's printed master
 #     docs/Cardinal_Roofing_Contract.pdf. Client estimates fetch it by path

@@ -128,7 +128,7 @@ const sheet=await page.evaluate(()=>({
 need('assign sheet opens', sheet.open);
 need('person rows render (roster)', sheet.rows>=2, 'rows='+sheet.rows);
 need('person row shows real load', /\d+ open/.test(sheet.load), '"'+sheet.load+'"');
-need('day chips render (4 workdays + no-day)', sheet.days===5, 'days='+sheet.days);
+need('day chips render (6 workdays + no-day — 1454, was 4)', sheet.days===7, 'days='+sheet.days);
 await tap('#puAsgWho .pu-asgrow','pick the first person (Curtis — production first)');
 await page.waitForTimeout(200);
 await tap('#puAsgDays .pu-dayb','pick TODAY');

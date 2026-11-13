@@ -197,7 +197,8 @@ await page.evaluate(async () => {
   window.CardinalPunchCard.open('pi-1', { back: 'production' });
 });
 await page.waitForTimeout(900);
-await page.click('#cr-pk [data-act="close"]');
+/* 1451: on a phone the Close that shows is the one in the pinned dock; the in-page copy is hidden */
+await page.locator('#cr-pk [data-act="close"]:visible').first().click();
 await page.waitForTimeout(1600);
 n = await page.evaluate(() => window.__NOTIFIED__ || []);
 ok('the office is notified when the field closes something', n.length >= 1, JSON.stringify(n).slice(0, 220));
