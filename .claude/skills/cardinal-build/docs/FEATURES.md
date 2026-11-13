@@ -10824,3 +10824,11 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - **Not built:** the "suggest the next dry free day" sheet (option B).
 
 **Gate:** `gate_1448.mjs`, in `gate_chromium`.
+
+## Build 1449: Color Studio door (13 Nov 2026)
+
+- **What:** a Job Menu **Color Studio** tile, shown to the Showroom owner (Theo) only, that opens `showroom.cardinalroster.com/workspace.html?open=experience` in a new tab. Overridable with `window.CR_COLOR_STUDIO_URL`.
+- **Not in The Appointment** (homeowner-facing).
+- **Door B (per-client house link)** is pending on the Showroom side.
+
+**Gate:** `gate_1449.mjs`.

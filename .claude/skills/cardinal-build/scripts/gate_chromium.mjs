@@ -245,6 +245,13 @@ const GATES = [
     protects: "a Crew Dispatch job booked on a wet day wears the day's rain flag (CardinalWx.flag), and a dry day's does not",
     break: { find: "var wf = (s && statusPip(w) !== 'done' && window.CardinalWx && window.CardinalWx.flag) ? window.CardinalWx.flag(s) : '';",
              repl: "var wf = '';" } },
+
+  /* 1449: the Color Studio door. The break swaps the owner test for "everyone", which puts the
+     tile in front of Joan, Nick and Curtis — accounts the Showroom refuses — and C goes red. */
+  { name: 'gate_1449.mjs',
+    protects: "the Job Menu's Color Studio tile is the Showroom owner's alone, and opens the Experience in a new tab",
+    break: { find: "(crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')",
+             repl: "(true ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

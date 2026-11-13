@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1448<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1449<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12911,6 +12911,7 @@ function acxOpts(list, cur){
   }).join('');
 }
 var DB_ICONS = {
+  swatch:'M4.5 3h5A1.5 1.5 0 0 1 11 4.5v13a3.5 3.5 0 0 1-7 0v-13A1.5 1.5 0 0 1 4.5 3zm3 13.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4zM13 7.2l3.4-3.4a1.5 1.5 0 0 1 2.1 0l1.7 1.7a1.5 1.5 0 0 1 0 2.1L13 14.8V7.2zm0 9.8h6.5A1.5 1.5 0 0 1 21 18.5v1A1.5 1.5 0 0 1 19.5 21H11.2A4.4 4.4 0 0 0 13 17z',   /* 1449 */
   comms:'M3 4.5A1.5 1.5 0 0 1 4.5 3h15A1.5 1.5 0 0 1 21 4.5v10a1.5 1.5 0 0 1-1.5 1.5H9.4L3 21V4.5z',
   bell:'M12 22.2c1.2 0 2.2-1 2.2-2.2H9.8c0 1.2 1 2.2 2.2 2.2zM19 17H5v-1.2l1.8-2V9.5c0-2.5 1.6-4.7 4.2-5.2V3a1 1 0 1 1 2 0v1.3c2.6.5 4.2 2.7 4.2 5.2v4.3l1.8 2V17z',
   camera:'M9.4 4h5.2l1.3 2h3.6A1.5 1.5 0 0 1 21 7.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-11A1.5 1.5 0 0 1 4.5 6h3.6l1.3-2zm2.6 5.2a4.3 4.3 0 1 0 0 8.6 4.3 4.3 0 0 0 0-8.6zm0 2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6z',
@@ -13043,6 +13044,10 @@ function renderAcxOverview(){
   html += (_rt1351 ? '' : '<div class="dbrow" id="dbPayRow"><span class="dbic1">$</span> Payment Information<span class="dbgo">&#8250;</span></div>') +
     '<div class="dbrow" id="dbMoneyRow"><span class="dbic1">%</span> Money In &amp; Commissions<span class="dbgo">&#8250;</span></div>';
   /* ---- job menu ---- */
+  /* 1449: the Showroom's owner. Its authorize() admits one account; this mirrors that exactly. */
+  function crIsShowroomOwner(){
+    try{ return String((window.currentUser && window.currentUser.email) || '').toLowerCase() === 'theo@cardinalrenovations.net'; }catch(_){ return false; }
+  }
   function jt(ic, label, n, act, idn, extra){
     var zero = (n === 0 || n === '0' || n === '');
     return '<div class="jabox" data-jm="' + act + '">' + ic + '<span class="jbl">' + label + '</span>' +
@@ -13127,6 +13132,14 @@ function renderAcxOverview(){
          already share one glyph. */
       (isAdminUser() ? jt(dbIc('walk'), 'The Walk', '', 'walk') : '') +
       (isAdminUser() ? jt(dbIc('checklist'), 'Owner review', '', 'ownerreview') : '') +   /* 1322: admins only */
+      /* 1449: the Color Studio door (Theo's door A). OWNER ONLY, because the Showroom's own
+         authorize() refuses every account but his — a rep would tap straight into a 401. It opens
+         the Showroom workspace with ?open=experience, which signs him in and lands on the
+         Cardinal Experience (live on cardinal-showroom main); Lessons → Color Studio is there.
+         Never in The Appointment: that screen faces the homeowner, and Theo's 29 Oct rule is that
+         homeowners never see the Experience's main screen. A per-client house link (door B)
+         waits for the Showroom's "+ Add a home" work to go live. */
+      (crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '') +
     '</div>' +
     /* 849: Work Orders — the crew document. Full-width so the grid above stays
        in pairs; data-jm="workorders" rides the router's else branch to
@@ -13307,6 +13320,10 @@ function renderAcxOverview(){
          a tab inside CardinalShowcase, a full-screen view of its own.  A
          showTab('walk') would find no pane and do nothing at all. */
       else if(act === 'ownerreview'){ if(window.CardinalOwnerReview) window.CardinalOwnerReview.flag(pr); }   /* 1322 */
+      else if(act === 'colorstudio'){   /* 1449: a new tab, so the client's page stays where it was */
+        var csUrl = window.CR_COLOR_STUDIO_URL || 'https://showroom.cardinalroster.com/workspace.html?open=experience';
+        try{ window.open(csUrl, '_blank', 'noopener'); }catch(_){ location.href = csUrl; }
+      }
       else if(act === 'changeorder'){ if(window.CardinalChangeOrder) window.CardinalChangeOrder.open(pr); }   /* 1323 */
       else if(act === 'install'){ if(window.CardinalInstall) window.CardinalInstall.open(pr); }   /* 1331 */
       else if(act === 'walk'){
@@ -47191,6 +47208,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1449, d:'2026-11-13', t:'Color Studio from the client\u2019s page', s:'On a client\u2019s page the Job Menu now has a Color Studio tile for the owner account. It opens the Showroom in a new tab, signs in and lands on the Cardinal Experience, where Lessons leads to the Color Studio \u2014 so the colour picker is one tap from the client you are looking at. It shows only for the owner because the Showroom itself only lets the owner in.' },
   { b: 1448, d:'2026-11-13', t:'Crew Dispatch: a job booked on a wet day says so', s:'On the Crew Dispatch board, any job booked on a day the forecast calls wet now wears a small blue tag on its card \u2014 \u201cRain 80%\u201d, \u201cStorm 70%\u201d or \u201cSnow\u201d \u2014 the same rain flag punch-outs already show, so you can see at a glance which crews are heading into weather and move them with the grip if you choose. Finished jobs carry no tag.' },
   { b: 1447, d:'2026-11-13', t:'Production\u2019s sky: the hour it rains, the temperature, and a bar that stays', s:'The weather chip on the Production sky now says when the wet starts and how warm it is \u2014 \u201c44\u00b0 \u00b7 Rain from 2pm\u201d \u2014 using today\u2019s hourly forecast for Dayton, and the sky shows what it is doing now: a dry morning stays dry until the rain actually arrives. Scroll down past the sky and a slim bar slides in along the top with the date, what today holds and + Add, so you never have to scroll back up to add something.' },
   { b: 1446, d:'2026-11-12', t:'Production gets a sky that follows the time of day', s:'The top of the Production screen is now a sky that changes with the clock: dawn colours from 5 to 9, a blue daytime sky with the sun and slow clouds until 4, a sunset until 8, and a night sky with stars and the moon after that. When the forecast says rain or snow, it rains or snows up there, and snow settles along the bottom. The sun or moon sits where it would at that hour. The first time you open the board each day, the sun or moon rises into place. The calendar, the four boxes and today\u2019s work are exactly where they were and keep your Dark, Light or Sun setting. The animation stops whenever the sky is off the screen or the app is in the background.' },
