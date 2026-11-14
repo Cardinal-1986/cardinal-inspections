@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1460<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1461<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47210,6 +47210,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1461, d:'2026-11-13', t:'Punch: the needs-assigned box stays short', s:'The box of punch items waiting for someone to be assigned now shows the oldest three, with Show all underneath when there are more, so a busy morning does not push Past due off the first screen of a phone.' },
   { b: 1460, d:'2026-11-13', t:'Punch: two people on one card no longer undo each other', s:'If two people had the same punch card open, the second one to save the checklist or the Bring list used to wipe out what the first had just done, with nothing said. Now the card checks first: if someone else changed it a moment ago, it shows their change and asks you to make yours again.' },
   { b: 1459, d:'2026-11-13', t:'Punch: move a late job to tomorrow in one tap', s:'On Punch & Repairs, a past-due job now has a Tomorrow button for Theo, Joan and Curtis that moves it to the next working day. Whenever a job moves to a new day, from that button or from the date on the card, the person assigned to it gets a buzz saying the new day.' },
   { b: 1458, d:'2026-11-13', t:'Punch health on the home screen', s:'The home screen now has one line for Punch & Repairs right under the pipeline: how many are open, how many are late and how old the oldest is, how many have nobody assigned, how many are ready to close and how many closed this week. It turns red when something is late, and tapping it opens the late list.' },
@@ -73419,6 +73420,9 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-tmr{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;padding:0 12px;border:1px solid var(--pl-late,#f08a90);border-radius:9px;background:transparent;
   color:var(--pl-late,#f08a90);font:700 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1459 */
 .pl-tmr:disabled{opacity:.6;cursor:default;}
+.pu-qmore{display:block;width:100%;min-height:44px;margin-top:8px;border:1px dashed #f5c045;border-radius:10px;background:transparent;color:#f5c045;
+  font:700 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1461 */
+:root[data-theme="rb-light"] .pu-qmore{border-color:#8a5500;color:#8a5500;}
 .pl-retry{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--rbe-line);border-radius:9px;background:transparent;color:var(--rbe-ink);font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1452 */
 .pl-row{display:grid;grid-template-columns:4px auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px;
   grid-template-areas:"stp cl cl age" "stp kd pb pb" "stp wh wh cr";
@@ -74077,10 +74081,12 @@ function render(){
     });
     var mayAsg = false;
     try{ mayAsg = (typeof window.isPunchBoss === 'function') && window.isPunchBoss(); }catch(_){}   /* 1252 */
+    /* 1461: the oldest three, then "Show all N" — twenty unassigned items pushed Past due off a phone's first screen */
+    var qShow = PU.qAll ? queue : queue.slice(0, 3);
     qEl.innerHTML = (puMsg ? '<div class="pu-note">' + esc(puMsg) + '</div>' : '') +
       (queue.length ? '<div class="pu-hero"><div class="ph2"><b>' + queue.length +
         ' need' + (queue.length === 1 ? 's' : '') + ' assigned</b><span>oldest first</span></div>' +
-        queue.map(function(it){
+        qShow.map(function(it){
           var pr = projOf(it.project_id);
           var age = ageDays(it.created_at);
           return '<div class="pu-card" data-pu="' + esc(String(it.id)) + '"><div class="pu-qmain">' +
@@ -74090,7 +74096,9 @@ function render(){
             '<div class="pu-qm"><span class="pu-age' + (age >= 5 ? ' hot' : '') + '">waiting ' + (age || 0) + ' day' + (age === 1 ? '' : 's') + '</span>' +
               (String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0 ? '<span class="pu-st warn">SUPPLEMENT</span>' : '') + '</div>' +
           '</div>' + (mayAsg ? '<button class="pu-asgbtn" type="button" data-puassign-open="' + esc(String(it.id)) + '">Assign ›</button>' : '') + '</div>';
-        }).join('') + '</div>' : '');
+        }).join('') +
+        (queue.length > 3 ? '<button type="button" class="pu-qmore" data-puqmore>' + (PU.qAll ? 'Show the oldest 3' : 'Show all ' + queue.length) + '</button>' : '') +
+        '</div>' : '');
   }
 
   /* the kind counts: open work that passes the funnel and search, queue included */
@@ -74460,6 +74468,8 @@ document.addEventListener('click', function(e){
   if(rt){ if(window.CardinalRoute && window.CardinalRoute.open) window.CardinalRoute.open(rt.getAttribute('data-puroute')); return; }
   var ty = e.target.closest('#punchView [data-putype]');
   if(ty){ PU.type = ty.getAttribute('data-putype'); render(); return; }
+  var qm = e.target.closest('#punchView [data-puqmore]');   /* 1461 */
+  if(qm){ PU.qAll = !PU.qAll; render(); return; }
   var tm = e.target.closest('#punchView [data-putomorrow]');   /* 1459 */
   if(tm){
     e.stopPropagation();
