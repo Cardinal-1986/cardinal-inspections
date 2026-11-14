@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1475<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1476<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47499,6 +47499,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1476, d:'2026-11-14', t:'Crew Dispatch looks like Production', s:'Crew Dispatch now uses the same lettering as Production instead of a typewriter face, with crew names written normally rather than in capitals. On a computer it opens inside the app, under the header and beside the menu, like Production, instead of covering both, and on a wide screen it uses the width instead of a narrow column. Each crew says Nothing booked today, or the first day with nothing booked. The full calendar is now as wide as Production on a big screen, and Production’s month shows what is on each day on a computer, not just a dot.' },
   { b: 1475, d:'2026-11-14', t:'Production: the way back, and one name', s:'Open job and Crews from Production now keep the header on Production instead of switching it to Retail, and Home takes you back to Production. Crews opened from Production shows ‹ Production at the top and returns there. Production is called Production everywhere: the menu said Production Board. The empty Scheduled list now says a build day comes from booking a crew in Crew Dispatch, and + Add reads + Punch item.' },
   { b: 1474, d:'2026-11-14', t:'Production on a phone: today first', s:'On a phone, Production now opens with the boxes and today’s list right under a shorter sky; the month calendar, Closed and the doors to Crew Dispatch and Crews come after. The Today row, which only repeated today’s list, is gone on phones as it already was on a computer. A field login (Scottie) sees My day at the top: his own open work for today and anything past due, each with the address, a Directions button and Open. He no longer sees the materials boxes or Mark ordered, which are office work.' },
   { b: 1473, d:'2026-11-14', t:'Production: lists in the order they matter', s:'Job lists in Production now put a build that should already have started first, then the soonest build dates, then jobs with no date yet. Before they sorted by name, so a job building in two days with nothing ordered could sit at the bottom. Each card shows its build day on its own line (Build today, Build tomorrow, Build Mon Nov 16) so a long address cannot cut it off. Needs a date shows every undated job, including ones already ordered, and says how many more punch items have no date instead of quietly stopping. The Punch tile says past due, the same as the Punch & Repairs page, the Closed row says Punch closed, and a finished job no longer counts as Scheduled.' },
@@ -59825,6 +59826,18 @@ body.cr-lnav-on #cr-pb h1{ font-size:30px; }
   #cr-pb h1{ font-size:30px; }
   #cr-pb .pbwrap.pbcalw{ --cr-stack:"1416: the calendar pane is wider than a list; the 1180 base stays for the list"; max-width:1560px; }
 }
+/* 1476: on an ultrawide the home grid is 2160 and its Full calendar was 1560 - the "bigger" view was the
+   narrower one. Same width as home from 1600 up. */
+@media (min-width:1600px){
+  #cr-pb .pbwrap.pbcalw{ --cr-stack:"1476 as wide as home on an ultrawide"; max-width:2160px; }
+}
+/* 1476: on a desk the home month has room to say WHAT is on a day, not just that something is - the names
+   the full calendar shows. A phone keeps the pips (a 48px cell cannot hold a name). */
+#cr-pb .pbmonth .pbday .cch{ --cr-stack:"1476 home month: names on a desk only"; display:none; }
+@media (min-width:1100px){
+  #cr-pb .pbmonth .pbday .cch{ --cr-stack:"1476 home month: names on a desk"; display:block; }
+  #cr-pb .pbmonth .pbday .pbpips{ --cr-stack:"1476 the names replace the pips on a desk"; display:none; }
+}
 
 /* ── 1416 · judge 14 (Production) ───────────────────────────────────────
    MINOR 9 — today, above the fold. On a phone the day's agenda sat ~760px
@@ -60405,13 +60418,16 @@ function homeMonthHtml(){
     if(i >= 35 && day.getMonth() !== m.getMonth()) break;
     var evs = eventsFor(day), seen = {}, pips = '';
     evs.forEach(function(e){ if(seen[e.cls]) return; seen[e.cls] = true; pips += '<span class="pbpip ' + e.cls + '"></span>'; });
+    /* 1476: the names, as the full calendar draws them; CSS shows them on a desk and the pips on a phone */
+    var nm76 = evs.slice(0, 2).map(function(e){ return '<span class="cch ' + e.cls + '">' + esc(e.chip) + '</span>'; }).join('') +
+      (evs.length > 2 ? '<span class="cch drop">+' + (evs.length - 2) + ' more</span>' : '');
     cells += '<button class="pbday' +
       (day.getMonth() !== m.getMonth() ? ' out' : '') +
       (keyOf(day) === keyOf(today()) ? ' today' : '') +
       (keyOf(day) === keyOf(d) ? ' sel' : '') +
       '" data-day="' + keyOf(day) + '" type="button">' +
       '<span class="dn">' + day.getDate() + wxc(keyOf(day)) + '</span>' +
-      '<span class="pbpips">' + pips + '</span></button>';
+      '<span class="pbpips">' + pips + '</span>' + nm76 + '</button>';
   }
   return '<div class="pbmonth">' +
     '<div class="pbmhd">' +
@@ -90060,7 +90076,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-wkend:#838c99;
   --disp-today:#15171c; --disp-tline:#ffffff; --disp-need:#f5c045; --disp-band:#8b97a8;
   --disp-repair:#ff3b46; --disp-curtis:#3fb8c9; --disp-scottie:#a98bec; --disp-wx:#6db3f2;
-  --disp-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  /* 1476: Production's face. The token keeps its old name so the ~20 rules that read it follow without
+     being touched; it was a typewriter face beside Production's sans, the same crews and jobs in two voices. */
+  --disp-mono:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
   display:none; position:fixed; inset:0; z-index:9550;
   overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
   background:var(--disp-bg,#08090b); color:var(--disp-ink,#ffffff);
@@ -90080,6 +90098,18 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-tsh:none; --disp-sh-tag:0 1px 3px rgba(20,23,28,.10); --disp-sh-mag:0 1px 3px rgba(20,23,28,.12);
   --disp-tagline:#cdd2d9;
 }
+/* 1476: on a desk Dispatch covered the header and the menu (position:fixed; inset:0 at 9550) - you left the
+   app to look at it, while Production one tap back sits inside it. The same three lines 572 / P09.08 gave the
+   other full-screen pages, gated the same way, so the phone keeps its full-screen page. */
+body.cr-lnav-on #cr-disp{
+  --cr-stack:"1476 beside the rail on a desktop; its own inset:0 stays for the phone";
+  top:var(--headh,110px) !important;
+  left:var(--lnav-w) !important;
+  z-index:60 !important;
+}
+/* ...and a week of crews earns the width: 1180 left a 3440 screen two-thirds empty. Production's home goes
+   to 2160 on the same screen; Dispatch matches it. */
+@media (min-width:1600px){ body.cr-lnav-on #cr-disp .dspwrap{ --cr-stack:"1476 the week grid uses a wide screen"; max-width:2160px; } }
 #cr-disp .dspwrap{ max-width:1180px; margin:0 auto;
   padding:16px 14px calc(60px + env(safe-area-inset-bottom,0px)); }
 #cr-disp .dsptop{ display:flex; align-items:center; gap:9px; margin-bottom:12px; }
@@ -90189,7 +90219,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .crewc > div::before{ content:""; position:absolute; left:7px; top:50%; transform:translateY(-50%);
   width:6px; height:6px; border-radius:50%; background:var(--disp-bg,#08090b);
   box-shadow:inset 0 1px 2px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.12); }
-#cr-disp .crewc .cn{ font:750 11px var(--disp-mono,monospace); letter-spacing:.03em; text-transform:uppercase;
+#cr-disp .crewc .cn{ font:750 13px var(--disp-mono,monospace); letter-spacing:0; text-transform:none;   /* 1476: a name, not a label */
   color:var(--disp-ink,#fff); line-height:1.3; }
 #cr-disp .crewc .cc{ font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--disp-dim,#9aa1ac);
   line-height:1.2; margin-top:1px; text-transform:none; letter-spacing:0; }
@@ -90265,7 +90295,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   border:1px solid var(--disp-wx,#6db3f2); color:var(--disp-wx,#6db3f2);
   font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; letter-spacing:.02em; white-space:nowrap; }
 #cr-disp .job .wxf svg{ flex:none; }
-#cr-disp .crewc .cf{ font:700 11px var(--disp-mono,monospace); letter-spacing:.04em; text-transform:uppercase;
+#cr-disp .crewc .cf{ font:700 11px var(--disp-mono,monospace); letter-spacing:0; text-transform:none;   /* 1476 */
   color:var(--disp-band,#8b97a8); line-height:1.3; margin-top:2px; }
 #cr-disp .crewc .cf.full{ color:var(--disp-mute,#5c636e); }
 #cr-disp .uch.armed{ background:rgba(245,192,69,.18); box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
@@ -90326,7 +90356,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .dmap-pop .t{ font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--disp-ink,#fff); }
 #cr-disp .dmap-pop .a{ font:500 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--disp-dim,#9aa1ac); margin-top:1px; }
 #cr-disp .dmap-pop .r{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:9px; }
-#cr-disp .dmap-pop .chip{ font:800 11px ui-monospace,Menlo,monospace; letter-spacing:.05em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+#cr-disp .dmap-pop .chip{ font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; letter-spacing:.05em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
 #cr-disp .dmap-pop .dpop-go{ background:var(--disp-repair,#ff3b46); color:#fff; border:0; border-radius:8px; padding:6px 13px; font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; cursor:pointer; font-family:inherit; white-space:nowrap; }
 #cr-disp .dmap-pop .dpop-go.need{ background:#f5a623; color:#1a1204; }
 
@@ -90576,8 +90606,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           if(sunSet[fi]) continue;
           if(!((byCrewDay[c.id] || {})[fi] || []).length){ free = fi; break; }
         }
-        var cf = free < 0 ? '<div class="cf full">booked all 7</div>'
-          : '<div class="cf">None booked ' + (dayStr[free] === todayStr ? 'today'   /* 1416: bookings, not availability */
+        var cf = free < 0 ? '<div class="cf full">Booked all 7 days</div>'
+          : '<div class="cf">Nothing booked ' + (dayStr[free] === todayStr ? 'today'   /* 1476: sentence case */   /* 1416: bookings, not availability */
               : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][days[free].getDay()] + ' ' + days[free].getDate()) + '</div>';
         return '<div class="drow dlane"><div class="crewc"><div><div class="cn">' + esc(_main) +
           '</div>' + sub + cf + '</div></div>' + cells + '</div>';
@@ -90603,7 +90633,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         var names = inTrade.map(function(c){ return c.legal_name || c.name || 'Crew'; }).slice(0, 4).join(' \u00b7 ');
         var booked = active.length;
         return strip + '<div class="dsum"><b>' + esc(names) + (nAll > 4 ? ' \u00b7 \u2026' : '') + '</b> \u2014 ' +
-          (booked ? booked + ' booked this week' : 'none booked next 7 days') + '</div>';
+          (booked ? booked + ' booked this week' : 'nothing booked in the next 7 days') + '</div>';
       }
       return strip + lanes + idleRow;
     }).join('');

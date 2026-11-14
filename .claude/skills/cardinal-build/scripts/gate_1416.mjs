@@ -103,10 +103,17 @@ const shown = (p, id) => p.evaluate(i => { const e = document.getElementById(i);
       const t = await page.evaluate(() => {
         const b = document.querySelector('#cr-pb .pbtoday'), nav = document.getElementById('pwaNav').getBoundingClientRect();
         if (!b) return null; const r = b.getBoundingClientRect();
-        return { text: b.textContent.trim(), top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), navTop: Math.round(nav.top) };
+        const dr = document.getElementById('pbDayRule'), drr = dr && dr.getClientRects().length ? dr.getBoundingClientRect() : null;
+        const evs = [...document.querySelectorAll('#cr-pb .pbhome > .pbev')].filter(e => e.getClientRects().length).length;
+        return { text: b.textContent.trim(), top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), navTop: Math.round(nav.top),
+                 dayRuleTop: drr ? Math.round(drr.top) : null, evs };
       });
-      ok(t && t.bottom <= t.navTop && t.h >= 44 && /today/i.test(t.text) && /punch-out/.test(t.text), 'A3 a 44px Today row sits above the fold and names what today holds', JSON.stringify(t));
-      await click(page, '#cr-pb .pbtoday'); await wait(page, 800);
+      /* 1474 retired the phone's Today row: today's own list now sits right under the boxes, above the month.
+         Either shape passes - the 44px row above the fold, or today's list (all three items) starting above it. */
+      ok(t && (t.h >= 44 ? (t.bottom <= t.navTop && /today/i.test(t.text) && /punch-out/.test(t.text))
+                         : (t.h === 0 && t.dayRuleTop != null && t.dayRuleTop < t.navTop && t.evs >= 3)),
+         'A3 today is in reach above the fold: the 44px Today row, or (1474) today\'s list under the boxes', JSON.stringify(t));
+      await click(page, t && t.h >= 44 ? '#cr-pb .pbtoday' : '#cr-pb .pbmonth .pbday.today'); await wait(page, 800);
       const s = await page.evaluate(() => { const m = document.getElementById('cr-pb-modal'); return m ? { open: m.classList.contains('open'), mode: m.getAttribute('data-mode'), n: m.querySelectorAll('.pbev').length } : null; });
       ok(s && s.open && s.mode === 'day' && s.n >= 3, 'A3 it opens today\'s sheet with all three items', JSON.stringify(s));
       await click(page, '#cr-pb-modal .pbdx'); await wait(page, 500);
