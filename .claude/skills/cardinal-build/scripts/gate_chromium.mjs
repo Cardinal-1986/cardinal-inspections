@@ -330,6 +330,24 @@ const GATES = [
     protects: "the needs-assigned box shows the oldest three and a Show all button",
     break: { find: "var qShow = PU.qAll ? queue : queue.slice(0, 3);",
              repl: "var qShow = queue;" } },
+
+  /* 1462: the readable card. The break turns the whole block off, so A–C go red. */
+  { name: 'gate_1462.mjs',
+    protects: "the punch card's buttons and slot names at 13px, headings at 12px, and a light On site bar in light",
+    break: { find: '<style id="cr-pk-read-styles">',
+             repl: '<style id="cr-pk-read-styles" media="print">' } },
+
+  /* 1463: + New says so. The break makes flash() do nothing, so B goes red. */
+  { name: 'gate_1463.mjs',
+    protects: "+ New says Added and rings the new item; every form control named; readable placeholders",
+    break: { find: "  flash  : function(id, msg){",
+             repl: "  flash  : function(id, msg){ return;" } },
+
+  /* 1464: the desk dialog. The break leaves the sheet hanging from the top, so C goes red. */
+  { name: 'gate_1464.mjs',
+    protects: "the punch search finds kind, phone, filer, names, steps and messages; desk sheets open centred",
+    break: { find: '.pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:center; }',
+             repl: '.pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:flex-start; }' } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

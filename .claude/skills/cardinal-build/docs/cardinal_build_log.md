@@ -38333,3 +38333,13 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 - **1461 — the queue cap.** The needs-assigned box shows the oldest three and "Show all N" (`PU.qAll`).
 
 **Gates:** `check_build` GREEN on each; `gate_1458`–`gate_1461` new, in `gate_chromium`, each green on its build and red on the one before; all eleven punch gates 1451–1461 green on 1461. Older-gate sweep and sentinel in the PR.
+
+## Builds 1462–1464 — the last of the punch audit (14 Nov 2026)
+
+**Theo:** "1-6", from the leftover list.
+
+- **1462 — the card, readable on a roof (`cr-pk-read-styles`).** Measured first: the action buttons (Directions, Call, Open job, Add receipt, + Add step, Photo gallery), the photo slot names, the Close button's second line and the notes were all 11px; section headings, chips and the dispatch keys too. Buttons/names/notes → 13px, labels/chips → 12px, both themes, on `#cr-pk.open` so they win their ties. The On site bar (`.pkvis`) was pinned dark in BOTH themes at 946 to fix an unreadable Check out label — in light it is now `#eef6f1` with dark inks (Sun mode covered by specificity).
+- **1463 — "+ New" says so.** After Add it, `CardinalPunch.flash(id, msg)` sets the list's note ("Added — needs assigned" / "Added for Scottie, Tue 17 Nov.") and rings the new row or queue card (`.pu-flash`), and the 1461 cap always includes it. Every form control has an `aria-label` (the `<label>`s were never tied to them). Placeholders in the punch search, the + New form and the card were the browser's grey (3.91–4.22:1) — now `#a3a9b2` dark / `#5f6670` light.
+- **1464 — search and desk sheets.** `match()` also searches the kind name, the client's phone (as typed and digits only) and email, who filed it, people by name (not only the stored email), checklist steps, messages and the hold note; the placeholder says "Client, PO #, phone, tarp…". From 1100px the punch sheets and + New open as a centred dialog (they hung from the top / sat on the bottom of a 3440 screen).
+
+**Gates:** `check_build` GREEN on each; `gate_1462`–`gate_1464` new, in `gate_chromium`, each 3/3 and 0/3 on its control. Sweep and sentinel in the PR.
