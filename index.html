@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1461<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1462<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47210,6 +47210,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1462, d:'2026-11-14', t:'Punch card: bigger text', s:'On a punch card, the buttons and labels the crew uses on the roof are bigger: Directions, Call, Open job, Add step, the photo slot names and the section headings. In the light theme the On site bar is a light green band instead of a black one.' },
   { b: 1461, d:'2026-11-13', t:'Punch: the needs-assigned box stays short', s:'The box of punch items waiting for someone to be assigned now shows the oldest three, with Show all underneath when there are more, so a busy morning does not push Past due off the first screen of a phone.' },
   { b: 1460, d:'2026-11-13', t:'Punch: two people on one card no longer undo each other', s:'If two people had the same punch card open, the second one to save the checklist or the Bring list used to wipe out what the first had just done, with nothing said. Now the card checks first: if someone else changed it a moment ago, it shows their change and asks you to make yours again.' },
   { b: 1459, d:'2026-11-13', t:'Punch: move a late job to tomorrow in one tap', s:'On Punch & Repairs, a past-due job now has a Tomorrow button for Theo, Joan and Curtis that moves it to the next working day. Whenever a job moves to a new day, from that button or from the date on the card, the person assigned to it gets a buzz saying the new day.' },
@@ -103122,6 +103123,37 @@ window.CardinalFeedback = Object.assign(window.CardinalFeedback || {}, { open: f
   box-shadow:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
   border-radius:12px;
 }
+</style>
+<style id="cr-pk-read-styles">
+/* ── Build 1462 · the punch card, readable on a roof (Theo, 13 Nov: "1-6", from the punch audit's
+   readability judge: 61% of the card's text sat at exactly 11px, including what Scottie taps —
+   Directions, Call, Open job, + Add step, the photo slot names). Both themes. The section labels
+   and chips go to 12px; everything a person reads or taps goes to 13px. Nothing else changes. */
+#cr-pk.open .pkbtn,
+#cr-pk.open .pkadd,
+#cr-pk.open .pkgalbtn,
+#cr-pk.open .pksupc,
+#cr-pk.open .pkslot .sl,
+#cr-pk.open .pkclose b,
+#cr-pk.open .pknote,
+#cr-pk.open .ja,
+#cr-pk.open .jump{ --cr-stack:"1462 card text to 13px (was 11)"; font-size:13px; }
+#cr-pk.open .pkh,
+#cr-pk.open .pkh .rt,
+#cr-pk.open .pkm .k,
+#cr-pk.open .pkey,
+#cr-pk.open .pkchip,
+#cr-pk.open .pkurg{ --cr-stack:"1462 card labels to 12px (was 11)"; font-size:12px; }
+/* ── 1462 · the On site bar was a black band on the white card in the light theme (946 pinned it
+   dark in both themes to fix an unreadable Check out). In light it is now a light green band with
+   dark inks; Sun mode included (its light-on-dark ink would vanish on the light band). */
+:root[data-theme="rb-light"] #cr-pk.open .pkvis{
+  --cr-stack:"1462 the On site bar goes light in the light theme";
+  background:#eef6f1; border-color:#c9dfd1;
+  --pk-ink:#17191c; --pk-dim:#4f5660; --pk-line2:#c9d3cc;
+}
+:root[data-theme="rb-light"] #cr-pk.open .pkvon{ color:#1b6b40; }
+:root[data-theme="rb-light"] #cr-pk.open .pkvstale{ color:#8a5500; }
 </style>
 </body>
 </html>
