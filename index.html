@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1462<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1463<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47210,6 +47210,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1463, d:'2026-11-14', t:'Adding a punch item says so', s:'After + New on Punch & Repairs, the page now says what happened (Added for Scottie, or Added and needs assigned) and rings the new item so you can see it, even when the waiting box is showing only three. The form fields are named for screen readers, and the grey hint text in the forms and the search box is easier to read.' },
   { b: 1462, d:'2026-11-14', t:'Punch card: bigger text', s:'On a punch card, the buttons and labels the crew uses on the roof are bigger: Directions, Call, Open job, Add step, the photo slot names and the section headings. In the light theme the On site bar is a light green band instead of a black one.' },
   { b: 1461, d:'2026-11-13', t:'Punch: the needs-assigned box stays short', s:'The box of punch items waiting for someone to be assigned now shows the oldest three, with Show all underneath when there are more, so a busy morning does not push Past due off the first screen of a phone.' },
   { b: 1460, d:'2026-11-13', t:'Punch: two people on one card no longer undo each other', s:'If two people had the same punch card open, the second one to save the checklist or the Bring list used to wipe out what the first had just done, with nothing said. Now the card checks first: if someone else changed it a moment ago, it shows their change and asks you to make yours again.' },
@@ -60714,20 +60715,20 @@ function openAdd(presetProjectId){
     '<div class="sheet">' +
     '<h3>Add an item</h3>' +
     '<label>What needs doing</label>' +
-    '<input type="text" data-f="title" placeholder="Reattach gutter on the north side">' +
+    '<input type="text" data-f="title" aria-label="What needs doing" placeholder="Reattach gutter on the north side">' +
     '<label>Job</label>' +
     /* H (#27): no job given = the rep picks one; the first in the list is not a default */
-    '<select data-f="project">' + (opts ? ((presetProjectId && seen[String(presetProjectId)]) ? '' : '<option value="" selected>\u2014 pick a job \u2014</option>') + opts
+    '<select data-f="project" aria-label="Job">' + (opts ? ((presetProjectId && seen[String(presetProjectId)]) ? '' : '<option value="" selected>\u2014 pick a job \u2014</option>') + opts
                                          : '<option value="">No jobs yet</option>') + '</select>' +
     '<div class="row">' +
-    '<div><label>Kind</label><select data-f="kind">' +
+    '<div><label>Kind</label><select data-f="kind" aria-label="Kind">' +
     '<option value="punch">Punch-out</option><option value="ticket">Repair</option>' +
     '<option value="callback">Callback</option>' +
     /* 976: a tarp is not a repair, a ticket or a warranty callback. It is the
        thing we go and do now so the house stops taking water — and on a
        community job it is often done free before anything is bid. */
     '<option value="tarp">Tarp</option></select></div>' +
-    '<div><label>Priority</label><select data-f="priority">' +
+    '<div><label>Priority</label><select data-f="priority" aria-label="Priority">' +
     '<option value="normal">Normal</option><option value="high">Urgent</option>' +
     '<option value="low">Low</option></select></div>' +
     '</div>' +
@@ -60735,18 +60736,18 @@ function openAdd(presetProjectId){
     /* 1252: only Theo, Joan and Curtis assign; everyone else files it unassigned */
     ((typeof window.isPunchBoss === 'function' && !window.isPunchBoss())
       ? '<div><label>Assign to</label><div class="pbnote" style="padding:10px 0;">Curtis assigns it</div></div>'
-      : '<div><label>Assign to</label><select data-f="assigned">' + who + '</select></div>') +
+      : '<div><label>Assign to</label><select data-f="assigned" aria-label="Assign to">' + who + '</select></div>') +
     /* 1261: only they schedule, too — punch_schedule_guard.sql refuses a dated
        row from anyone else, so anyone else files it undated for Curtis */
     ((typeof window.isPunchBoss === 'function' && !window.isPunchBoss())
       ? '<div><label>Schedule for</label><div class="pbnote" style="padding:10px 0;">Curtis schedules it</div></div>'
       : '<div><label>Schedule for</label><div class="cr-when2">' +
-          '<input type="date" data-f="when">' +
+          '<input type="date" data-f="when" aria-label="Schedule for">' +
           '<input type="time" data-f="whentime" aria-label="Time (optional)">' +
         '</div></div>') +
     '</div>' +
     '<label>Detail</label>' +
-    '<textarea data-f="detail" placeholder="Optional"></textarea>' +
+    '<textarea data-f="detail" aria-label="Detail" placeholder="Optional"></textarea>' +
     '<div class="btns">' +
     '<button class="cancel" data-act="cancel" type="button">Cancel</button>' +
     '<button class="save" data-act="save" type="button">Add it</button>' +
@@ -60884,6 +60885,14 @@ async function saveAdd(){
     }
     closeAdd();
     lastSig = ''; render();
+    /* 1463: the sheet used to close with nothing said, and the new item landed at the bottom of an
+       oldest-first queue — or, since 1461, behind "Show all". Say what happened and ring the item. */
+    try{
+      var _who = row.assigned_to ? shortName(row.assigned_to) : '';
+      var _msg = 'Added' + (_who ? ' for ' + _who : ' \u2014 needs assigned') +
+        (row.scheduled_at ? ', ' + new Date(row.scheduled_at + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) : '') + '.';
+      if(window.CardinalPunch && typeof window.CardinalPunch.flash === 'function') window.CardinalPunch.flash(r.data && r.data.id, _msg);
+    }catch(_){}
     /* 769 (Theo's A1): the assignee hears about it. Until now Curtis and
        Scottie only found new work by opening the app — the gap CLAUDE.md
        records as "routing and notification, not software". This is one call
@@ -73421,6 +73430,12 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-tmr{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;padding:0 12px;border:1px solid var(--pl-late,#f08a90);border-radius:9px;background:transparent;
   color:var(--pl-late,#f08a90);font:700 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1459 */
 .pl-tmr:disabled{opacity:.6;cursor:default;}
+.pu-flash{outline:2px solid #6fd39b;outline-offset:2px;}   /* 1463: the item "+ New" just added */
+:root[data-theme="rb-light"] .pu-flash{outline-color:#1b7d49;}
+/* 1463: placeholders took the browser's grey — 3.91:1 on the search, 4.22:1 in the forms */
+#punchView input::placeholder,#cr-pb-modal input::placeholder,#cr-pb-modal textarea::placeholder,#cr-pk input::placeholder,#cr-pk textarea::placeholder{color:#a3a9b2;opacity:1;}
+:root[data-theme="rb-light"] #punchView input::placeholder,:root[data-theme="rb-light"] #cr-pb-modal input::placeholder,:root[data-theme="rb-light"] #cr-pb-modal textarea::placeholder,
+:root[data-theme="rb-light"] #cr-pk input::placeholder,:root[data-theme="rb-light"] #cr-pk textarea::placeholder{color:#5f6670;}
 .pu-qmore{display:block;width:100%;min-height:44px;margin-top:8px;border:1px dashed #f5c045;border-radius:10px;background:transparent;color:#f5c045;
   font:700 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1461 */
 :root[data-theme="rb-light"] .pu-qmore{border-color:#8a5500;color:#8a5500;}
@@ -73665,6 +73680,16 @@ async function update(id, patch){
 }
 window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
   rows   : function(){ return _rows.slice(); },
+  /* 1463: "+ New" rings the item it just added and says what happened, on Punch & Repairs */
+  flash  : function(id, msg){
+    PU.flash = id || null; puMsg = msg || '';
+    var pv = document.getElementById('punchView');
+    if(pv && pv.style.display === 'block'){
+      render();
+      var el = document.querySelector('#punchView [data-pu="' + String(id).replace(/"/g, '') + '"]');
+      if(el && el.scrollIntoView) el.scrollIntoView({ block:'center', behavior:'smooth' });
+    }
+  },
   loadFailed : function(){ return _loadFail; },   /* 1452 */
   notifyAssigned : notifyAssignedBoard,   /* 945: one notify path for every assign surface */
   reload : reload,
@@ -74000,7 +74025,7 @@ function plRow(it){
   if(it.status === 'done' && it.done_at && it.created_at){ age = Math.max(0, Math.round((Date.parse(it.done_at) - Date.parse(it.created_at)) / 86400000)); }
   var supp = String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0;
   var who = it.assigned_to;
-  return '<div class="pl-row k-' + K.k + (urg ? ' u' : '') + (ping ? ' ping' : '') + (g === 'late' ? ' late' : '') + (g === 'closed' && !ping ? ' done' : '') +
+  return '<div class="pl-row k-' + K.k + (PU.flash && String(PU.flash) === String(it.id) ? ' pu-flash' : '') + (urg ? ' u' : '') + (ping ? ' ping' : '') + (g === 'late' ? ' late' : '') + (g === 'closed' && !ping ? ' done' : '') +
       '" data-pu="' + esc(String(it.id)) + '" data-proj="' + esc(String(it.project_id || '')) + '" role="button" tabindex="0">' +
     '<span class="pl-stp"></span>' +
     '<span class="pl-kd"><span class="pl-k1"><i class="pl-dot"></i>' + K.one + '</span>' +
@@ -74084,13 +74109,15 @@ function render(){
     try{ mayAsg = (typeof window.isPunchBoss === 'function') && window.isPunchBoss(); }catch(_){}   /* 1252 */
     /* 1461: the oldest three, then "Show all N" — twenty unassigned items pushed Past due off a phone's first screen */
     var qShow = PU.qAll ? queue : queue.slice(0, 3);
+    /* 1463: the item just added is always shown, even past the first three */
+    if(PU.flash){ var _fq = queue.filter(function(x){ return String(x.id) === String(PU.flash); })[0]; if(_fq && qShow.indexOf(_fq) < 0) qShow = qShow.slice(0, 2).concat([_fq]); }
     qEl.innerHTML = (puMsg ? '<div class="pu-note">' + esc(puMsg) + '</div>' : '') +
       (queue.length ? '<div class="pu-hero"><div class="ph2"><b>' + queue.length +
         ' need' + (queue.length === 1 ? 's' : '') + ' assigned</b><span>oldest first</span></div>' +
         qShow.map(function(it){
           var pr = projOf(it.project_id);
           var age = ageDays(it.created_at);
-          return '<div class="pu-card" data-pu="' + esc(String(it.id)) + '"><div class="pu-qmain">' +
+          return '<div class="pu-card' + (PU.flash && String(PU.flash) === String(it.id) ? ' pu-flash' : '') + '" data-pu="' + esc(String(it.id)) + '"><div class="pu-qmain">' +
             '<div class="pu-qt">' + esc(it.title || 'Untitled item') + '</div>' +
             '<div class="pu-qa">' + esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') +
               (pr && pr.address ? ' · ' + esc(pr.address) : '') + '</div>' +
