@@ -254,11 +254,13 @@ const GATES = [
              repl: "(true ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')" } },
 
   /* 1450: obsidian instead of navy. The break strips the obsidian face back to a flat panel,
-     so a home card paints no sheen and F goes red. */
+     so a home card paints no sheen and F goes red. ⚠ all:true — 1456 and 1458 reuse the same face
+     line, and 1458's sits EARLIER in the file, so breaking only the first copy (the default) broke
+     the home health line instead of the home cards and the control stayed green (PR 773's CI). */
   { name: 'gate_1450.mjs',
     protects: "dark retail is obsidian, not navy: #09090C page, 545's obsidian face on the boxes, no navy left on the home, drawer or client page; light untouched",
     break: { find: '  background:#15161C radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);',
-             repl: '  background:#15161C;' } },
+             repl: '  background:#15161C;', all: true } },
 
   /* 1451: Punch — finishing a job. The break stops the list grouping the crew's "finished"
      jobs, so nothing sits under Ready to close and A goes red. */
