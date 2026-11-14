@@ -2698,6 +2698,25 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .ackv div{color:var(--rbe-ink,#2b2b2b);min-width:0;overflow-wrap:anywhere;}
 .ackv-ms{grid-template-columns:110px 1fr 110px 1fr;max-width:560px;}
 @media (max-width:560px){ .ackv-ms{grid-template-columns:104px 1fr;} }
+/* 1467: the status line under the stage band. The Overview orders its cards with CSS order (1225 phone,
+   1227 desk) - a card with no slot falls to the bottom, so this one takes the band's slot (ties keep DOM
+   order: the band, then this), and spans both columns of the wide grid. */
+body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstatus{ order:1; grid-column:1 / -1; }
+.dbstatus{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px;}
+.dbstatus .dbst{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:22px;box-sizing:border-box;
+  border:1px solid #2b2b33;background:#16161b;color:#e8ebf0;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+.dbstatus .dbst.ok{color:#6ee7a8;border-color:rgba(110,231,168,.4);}
+.dbstatus .dbst.warn{color:#f0b45a;border-color:rgba(240,180,90,.45);}
+.dbstatus .dbst.bad{color:#ff8a90;border-color:rgba(255,138,144,.5);}
+:root[data-theme="rb-light"] .dbstatus .dbst{background:#ffffff;border-color:#e2e2e2;color:#161616;}
+:root[data-theme="rb-light"] .dbstatus .dbst.ok{color:#047857;border-color:rgba(4,120,87,.4);}
+:root[data-theme="rb-light"] .dbstatus .dbst.warn{color:#8a5a08;border-color:rgba(138,90,8,.4);}
+:root[data-theme="rb-light"] .dbstatus .dbst.bad{color:#b3141f;border-color:rgba(179,20,31,.4);}
+@media (max-width:560px){
+  .dbstatus{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-top:0;padding-bottom:2px;}
+  .dbstatus::-webkit-scrollbar{display:none;}
+  .dbstatus .dbst{flex:none;white-space:nowrap;}
+}
 /* 1465: the stage menu (the band's three dots) */
 #msDrop{position:absolute;right:0;top:100%;z-index:70;min-width:236px;padding:6px;border-radius:14px;
   background:#141418;border:1px solid #2b2b33;box-shadow:0 14px 34px rgba(0,0,0,.55);text-align:left;}
@@ -4448,7 +4467,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1466<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1467<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12987,6 +13006,68 @@ function punchOpenCount(pr){
     return (n === null || n === undefined) ? '' : n;
   }catch(_){ return ''; }
 }
+/* 1467: the status line. Six of ten judges asked for the same thing: the stage bar says WHERE a job is but
+   not what is missing or next - money sat two screens down, Assigned To and History at the bottom, and an
+   Approved job with no contract raised no flag. One row under the band: the contract, the balance (not for
+   production or field logins), the next appointment, who has it, and the last activity. Each chip goes to
+   its place. Retail only - Insurance and Community keep their own strips. */
+function crStatusLine(pr, ck, stg, fin, docs){
+  try{
+    var ct = (typeof projClaimType === 'function') ? projClaimType(pr) : 'retail';
+    if(ct === 'insurance' || ct === 'community') return '';
+    var chip = function(tone, go, text){
+      return '<button type="button" class="dbst' + (tone ? ' ' + tone : '') + '" data-st-go="' + go + '">' + esc(text) + '</button>';
+    };
+    var shortDate = function(iso){ var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); };
+    var out = [];
+    var cons = (docs || []).filter(function(r){ return isContractTitle(r.title); });
+    var signedAt = '';
+    cons.forEach(function(r){ if(r.signed_at && String(r.signed_at) > signedAt) signedAt = String(r.signed_at); });
+    var signed = !!signedAt || !!(fin && fin.source === 'contract');
+    var sent = cons.some(function(r){ return r.sent_at; });
+    var SOLD = ['Approved','Scheduled','Completed','Invoiced','Closed'];
+    if(signed) out.push(chip('ok', 'contracts', 'Contract signed' + (signedAt ? ' ' + shortDate(signedAt) : '')));
+    else if(sent) out.push(chip('warn', 'contracts', 'Contract sent, not signed'));
+    else if(SOLD.indexOf(stg) !== -1) out.push(chip('bad', 'contracts', 'No signed contract'));
+    else out.push(chip('', 'contracts', 'No contract yet'));
+    var noMoney = (typeof isProductionUser === 'function' && isProductionUser()) || (typeof isFieldUser === 'function' && isFieldUser());
+    if(!noMoney && fin && Number(fin.value) > 0){
+      out.push(Number(fin.balance) > 0.005
+        ? '<button type="button" class="dbst bad" data-crji-jump="1">Balance ' + esc(fmtMoney(fin.balance)) + '</button>'
+        : '<button type="button" class="dbst ok" data-crji-jump="1">Paid in full</button>');
+    }
+    var now = new Date(), pad = function(n){ return (n < 10 ? '0' : '') + n; };
+    var today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+    var next = (typeof cacheAppts !== 'undefined' ? cacheAppts : []).filter(function(a){
+      return a && String(a.project_id) === String(pr.id) && String(a.appt_date || '').slice(0, 10) >= today;
+    }).sort(function(a, b){ return (String(a.appt_date) + String(a.appt_time || '')).localeCompare(String(b.appt_date) + String(b.appt_time || '')); })[0];
+    if(next){
+      var dp = String(next.appt_date).slice(0, 10).split('-');
+      var dd = new Date(Number(dp[0]), Number(dp[1]) - 1, Number(dp[2]));
+      var lbl = dd.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+      var tm = String(next.appt_time || '').match(/^([0-9][0-9]?):([0-9][0-9])/);
+      if(tm){ var h = Number(tm[1]); lbl += ', ' + ((h % 12) || 12) + ':' + tm[2] + (h < 12 ? ' am' : ' pm'); }
+      out.push(chip('', 'appts', 'Next: ' + lbl));
+    }else{
+      out.push(chip('', 'appts', 'No appointment set'));
+    }
+    var rep = (typeof assignedRepOf === 'function') ? assignedRepOf(pr) : null;
+    out.push(chip('', 'asg', (rep && (rptRepName(rep) || rep)) || 'Unassigned'));
+    var last = '';
+    try{
+      buildActivityEvents().forEach(function(x){ if(x && x.pid === pr.id && x.t && String(x.t) > last) last = String(x.t); });
+    }catch(_ev){}
+    if(last) out.push(chip('', 'his', 'Last activity ' + timeAgo(last)));
+    return '<div class="dbstatus" id="dbStatus" role="group" aria-label="Where this job stands">' + out.join('') + '</div>';
+  }catch(_e){ return ''; }
+}
+/* 1467: the Contracts tile says where the contract is, not nothing */
+function crConBadge(docs){
+  var cons = (docs || []).filter(function(r){ return isContractTitle(r.title); });
+  if(cons.some(function(r){ return r.signed_at; })) return 'Signed';
+  if(cons.some(function(r){ return r.sent_at; })) return 'Sent';
+  return cons.length || '';
+}
 function renderAcxOverview(){
   var mount = document.getElementById('acxMount');
   if(!mount || !currentProject) return;
@@ -13059,6 +13140,7 @@ function renderAcxOverview(){
       (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
     '</div></span>' +
   '</div>';
+  html += crStatusLine(pr, ck, stg, fin, docs);   /* 1467 */
   /* 1351: retail no longer shows the strip, the old Payment Information row, or the invoice + Payments cards
      apart — the Payments card is the one place the job's money is read. Community / Insurance unchanged. */
   var _rt1351 = (_ct !== 'insurance' && _ct !== 'community');
@@ -13135,10 +13217,10 @@ function renderAcxOverview(){
       jt(dbIc('punch'), 'Punch & Repairs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
       /* 652: the tab always existed; the menu is where fingers go.
          'contracts' rides the router's else-branch to showTab, like punch. */
-      jt(dbIc('contract'), 'Contracts', '', 'contracts') +
+      jt(dbIc('contract'), 'Contracts', crConBadge(docs), 'contracts') +   /* 1467 */
     '</div><div class="jaboxrow">' +
       jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
-      jt(dbIc('orders'), 'Orders', '', 'materials') +
+      jt(dbIc('orders'), 'Orders', (ck.materials_ordered_at ? 'Ordered' : (['Approved','Scheduled'].indexOf(stg) !== -1 ? 'To order' : '')), 'materials') +   /* 1467 */
       /* 981 (Theo's A1): the live menu had no Checklists tile; the RETIRED
          grid Community used to mirror did, and the header dropdown that also
          carries one is inert on a community job. So re-pointing the mirror
@@ -13184,7 +13266,7 @@ function renderAcxOverview(){
        in pairs; data-jm="workorders" rides the router's else branch to
        showTab, the same section the header button and the dropdown open. */
     '<div class="jaboxrow" style="grid-template-columns:1fr">' +
-      jt(dbIc('workorder'), 'Work Orders', '', 'workorders') +
+      jt(dbIc('workorder'), 'Work Orders', (docs.filter(function(r){ return isWorkOrderTitle(r.title); }).length || ''), 'workorders') +   /* 1467 */
     '</div></div>';
   /* 1373: written after the Job Menu (was before it). On a phone both are order:2, so page order decides. */
   html += (window.CardinalGuide && !window.CardinalGuide.isNonRoofOnly(pr)) ? ('<div class="db-guiderow"><span class="dbg-t">Roof Pre-Install Guide</span><button class="btn ghost" data-cr-guide-send="' + esc(pr.id) + '">Email to client</button></div>') : '';
@@ -13347,6 +13429,19 @@ function renderAcxOverview(){
   /* mini map */
   dbInitMiniMap(pr);
   /* fresh-element direct wiring (innerHTML replaced everything) */
+  /* 1467: the status line's chips open the tile they name, or scroll to Assigned To / open History */
+  mount.querySelectorAll('[data-st-go]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var go = b.getAttribute('data-st-go');
+      if(go === 'asg'){ var a = mount.querySelector('.acxassignsec'); if(a) a.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+      if(go === 'his'){
+        var hs = document.getElementById('kpHis');
+        if(hs){ if(!hs.classList.contains('open')){ var hh = hs.querySelector('.kpsech'); if(hh) /** @type {any} */ (hh).click(); } hs.scrollIntoView({ behavior:'smooth', block:'center' }); }
+        return;
+      }
+      var t = mount.querySelector('.ja-menu [data-jm="' + go + '"]'); if(t) /** @type {any} */ (t).click();
+    });
+  });
   mount.querySelectorAll('[data-jm]').forEach(function(b){
     b.addEventListener('click', function(){
       var act = b.getAttribute('data-jm');
@@ -47307,6 +47402,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1467, d:'2026-11-14', t:'Client page: where the job stands, at a glance', s:'A row under the stage bar now says what you would otherwise scroll for: whether the contract is signed (and warns when a sold job has none), the balance due, the next appointment, who has the job and when it was last touched. Tap any of them to go there. The Contracts tile says Signed or Sent, Orders says Ordered or To order, and Work Orders shows how many there are. Production and field logins do not see the balance.' },
   { b: 1466, d:'2026-11-14', t:'The crew can take the install photos', s:'A field login (Scottie) never sees the client page, and Install photos only opened from there, yet a job cannot be marked Completed until those photos are in. Now, tapping a job that is Approved or Scheduled opens a job sheet: the address with Directions, Call and Text, an Install photos button with its count, and the job\'s open punch items. A job with no punch-out opens the same sheet instead of a message saying there is nothing to show. A finished job with a punch-out still opens its punch card.' },
   { b: 1465, d:'2026-11-14', t:'Client page: a safer stage menu, and numbers you can read', s:'The three-dot menu on the stage bar is a proper menu now, with big rows, and Mark Lost sits at the bottom under a line instead of right under Advance. Mark Lost asks why before it does anything (Cancel leaves the job alone), and Advance, Mark Lost and Reopen all give you the same 5-second Undo as the arrows. Measurement numbers (squares, pitch, lengths) were almost invisible on the dark card and now read clearly, two to a row on a phone. On Orders the Mark ordered button shows in light mode, and a job with no total yet shows a $0.00 balance in plain text, not red.' },
   { b: 1464, d:'2026-11-14', t:'Punch search finds more', s:'The search on Punch & Repairs now also finds a kind of job (tarp, repair, callback), the client phone number, who filed it, a person by name, and words in the checklist or the messages. On a computer, the Assign, filter and + New windows open in the middle of the screen instead of stuck to the top or bottom edge.' },
@@ -102548,7 +102644,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
   /* P09.06 (1442): Insurance joins. Its invoice and Payments cards are bare .crji-card (retail
      wraps them in .crji-stack), and its claim strip is a full-width band under the stage bar. */
   var LEFT = ['.crji-stack', '.crji-card', '#dbMoneyRow', '.ja-menu'];
-  var STAY = ['.dbstage', '.cr-claimstrip', '.cr-admin-tog', '#dbConvertIns'];
+  var STAY = ['.dbstage', '.dbstatus', '.cr-claimstrip', '.cr-admin-tog', '#dbConvertIns'];   /* 1467: the status line stays under the band */
   function matchesAny(el, list){ for(var i = 0; i < list.length; i++){ try{ if(el.matches(list[i])) return true; }catch(_){} } return false; }
   function cols(){
     var mount = document.getElementById('acxMount');
