@@ -10904,3 +10904,17 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | 1464 | Wider `match()` haystack; centred desk dialogs from 1100px | `cr-punch-script`, `cr-punch-styles` |
 
 **Gates:** `gate_1462.mjs` … `gate_1464.mjs`.
+
+
+## Builds 1465–1470: the client profile audit (14 Nov 2026)
+
+| Build | Piece | Where |
+|---|---|---|
+| 1465 | Stage ⋮ menu styled (`#msDrop`, 44px, Mark Lost last); Mark Lost asks first; Advance/Mark Lost/Reopen via `crStageDefer` (Undo); `setStage(…, opts.lostReason)`; `.ackv` inks themed; Orders card `--rbe-bg2` + `.cr-matord-*`; `.crjp-bal.zero` | main block, `cr-jobpay` styles |
+| 1466 | Field job sheet `#cr-fjob` (`fjOpen`) from `crFieldJob`: address, Directions/Call/Text, Install photos, punch items | main block, `cr-fjob-styles` |
+| 1467 | Status line `#dbStatus` (`crStatusLine`) under the band; `crConBadge`; Orders/Work Orders badges; `order:1` + `STAY` | main block, `cr-jobpay-script` |
+| 1468 | Job Menu: Sell / Build / Close (`.jasect`); glyphs `changeorder`, `review`, `install`; Files note | main block |
+| 1469 | Dark twins: message box, Appointments form/inputs (`.ap-lbl`), Checklists cards; one "← Back to client profile" (`.btn.dark.tabback`); emoji removed | main block |
+| 1470 | Desk Text link (`.hsms`); ultrawide 2100px; History count + last touch; Color Studio ↗; punch flags #ffb4a0; 44px folds / appointment ✕ | main block, `#ppPage` styles |
+
+**Gates:** `gate_1465.mjs` … `gate_1470.mjs`.
