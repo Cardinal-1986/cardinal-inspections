@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1458<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1459<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47210,6 +47210,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1459, d:'2026-11-13', t:'Punch: move a late job to tomorrow in one tap', s:'On Punch & Repairs, a past-due job now has a Tomorrow button for Theo, Joan and Curtis that moves it to the next working day. Whenever a job moves to a new day, from that button or from the date on the card, the person assigned to it gets a buzz saying the new day.' },
   { b: 1458, d:'2026-11-13', t:'Punch health on the home screen', s:'The home screen now has one line for Punch & Repairs right under the pipeline: how many are open, how many are late and how old the oldest is, how many have nobody assigned, how many are ready to close and how many closed this week. It turns red when something is late, and tapping it opens the late list.' },
   { b: 1457, d:'2026-11-13', t:'Close old punch items without the five photos (for now)', s:'For now, Theo, Joan and Curtis can close a punch item without the five photos, so old items and tests can be cleared out. The crew still needs five photos before telling Curtis a job is finished, and any checklist steps still have to be ticked. This is temporary and can be switched back.' },
   { b: 1456, d:'2026-11-13', t:'Punch & Repairs in obsidian', s:'Punch & Repairs now matches the home screen in the dark theme: the list rows, the sections of a punch card and the punch list on a client page are the same polished black cards. The kind tabs lose their coloured caps and labels are no longer in capitals. Behind the list there is a faint dotted hand holding a framing hammer. Light mode is unchanged.' },
@@ -62973,6 +62974,24 @@ async function doToggle(){
   }catch(e){ crTell('Could not save: ' + (e.message || e)); }
 }
 /* 769: the person it was just handed to hears about it. */
+/* 1459: the date moved — tell the person doing it */
+async function notifyMoved(email){
+  if(!email) return;
+  var me = myEmail();
+  if(String(email).toLowerCase() === me) return;
+  if(typeof window.notifyTeam !== 'function') return;
+  var pr = projectFor(it.project_id);
+  try{
+    var when = fmtSchedule(it.scheduled_at, it.scheduled_time);
+    var res = await window.notifyTeam([email],
+      'Moved to ' + when + ': ' + (it.title || 'a punch item'),
+      '<p><b>' + esc(nameOf(me)) + '</b> moved <b>' + esc(it.title || '') + '</b> at <b>' +
+      esc((pr && pr.name) || 'a job') + '</b> to <b>' + esc(when) + '</b>.</p>',
+      punchLink(it.project_id));
+    outMsg = outcomeText(res, [email]);
+    lastSig = ''; render();
+  }catch(_){}
+}
 async function notifyAssigned(email){
   if(!email) return;
   var me = myEmail();
@@ -63397,9 +63416,12 @@ function wire(){
   var wt = el.querySelector('[data-f="whentime"]');
   /* 882: date and time save together — a time with no date is meaningless, so
      clearing the date clears the time too. */
-  function saveWhen(){
+  async function saveWhen(){
     var d = wh && wh.value ? wh.value : null;
-    save({ scheduled_at: d, scheduled_time: (d && wt && wt.value) ? wt.value : null });
+    var was = it && it.scheduled_at ? String(it.scheduled_at).slice(0, 10) : null;
+    var ok = await save({ scheduled_at: d, scheduled_time: (d && wt && wt.value) ? wt.value : null });
+    /* 1459: a new DAY is news for whoever is doing it — a time-only change is not buzzed */
+    if(ok && d && d !== was && it && it.assigned_to) await notifyMoved(it.assigned_to);
   }
   if(wh) wh.onchange = saveWhen;
   if(wt) wt.onchange = saveWhen;
@@ -73393,6 +73415,9 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-age.old{color:var(--pl-late,#f08a90);font-weight:700;}   /* 1453: 30+ days open */
 .pl-sort{background:none;border:0;padding:0;margin:0;min-height:34px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;text-align:left;cursor:pointer;}   /* 1455 */
 .pl-sort.on{color:var(--rbe-ink);}
+.pl-tmr{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;padding:0 12px;border:1px solid var(--pl-late,#f08a90);border-radius:9px;background:transparent;
+  color:var(--pl-late,#f08a90);font:700 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1459 */
+.pl-tmr:disabled{opacity:.6;cursor:default;}
 .pl-retry{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--rbe-line);border-radius:9px;background:transparent;color:var(--rbe-ink);font:600 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1452 */
 .pl-row{display:grid;grid-template-columns:4px auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px;
   grid-template-areas:"stp cl cl age" "stp kd pb pb" "stp wh wh cr";
@@ -73910,6 +73935,29 @@ function plRain(it){
   var d = plDay(it); if(!d || !window.CardinalWx || !window.CardinalWx.flag) return '';
   return window.CardinalWx.flag(d);
 }
+/* 1459: past due and you may schedule it — one tap moves it to the next working day */
+function plTomorrow(it){
+  if(plBase(it) !== 'late') return '';
+  var boss = false; try{ boss = (typeof window.isPunchBoss === 'function') && window.isPunchBoss(); }catch(_){}
+  return boss ? '<button type="button" class="pl-tmr" data-putomorrow="' + esc(String(it.id)) + '">Tomorrow ›</button>' : '';
+}
+function plNextWorkKey(){
+  var d = new Date(); d.setDate(d.getDate() + 1); if(d.getDay() === 0) d.setDate(d.getDate() + 1);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+/* 1459: the assignee hears the new day — a date used to move with nobody told */
+async function notifyMoved(it, key){
+  var email = it && it.assigned_to; if(!email || typeof window.notifyTeam !== 'function') return '';
+  var me = ''; try{ me = (window.currentUser && window.currentUser.email) || ''; }catch(_){}
+  if(String(email).toLowerCase() === String(me).toLowerCase()) return '';
+  var pr = projOf(it.project_id), day = plDayLabel(key);
+  try{
+    var res = await window.notifyTeam([email], 'Moved to ' + day + ': ' + (it.title || 'a punch item'),
+      '<p><b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b> is now on <b>' + esc(day) + '</b>.</p>',
+      punchLink(it.project_id));
+    return (typeof window.notifyOutcomeText === 'function') ? window.notifyOutcomeText(res, [email]) : '';
+  }catch(_){ return ''; }
+}
 function plRow(it){
   var pr = projOf(it.project_id), K = plKind(it), w = plWhen(it), g = plBase(it), ping = plPing(it), rain = plRain(it);
   var urg = isUrgent(it), age = ageDays(it.created_at);
@@ -73931,7 +73979,7 @@ function plRow(it){
       '<small>' + esc((pr && pr.address) || '') + '</small></span>' +
     '<span class="pl-pb">' + (ping ? esc('\u201C' + (it.ping_note || '') + '\u201D \u2014 ' + plName(it.ping_by)) : esc(it.title || 'Untitled item')) + '</span>' +
     '<span class="pl-age' + (it.status !== 'done' && age >= 30 ? ' old' : '') + '">' + (age != null ? age + 'd' + (it.status === 'done' ? ' to close' : '') : '') + '</span>' +
-    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + [w.sub, plOnSite(it)].filter(Boolean).map(function(x){ return '<span class="pl-nw">' + esc(x) + '</span>'; }).join(' \u00b7 ') + '</small></span>' +   /* 1416: wraps at the dot */
+    '<span class="pl-wh' + (w.cls ? ' ' + w.cls : '') + '"><b>' + esc(w.main) + '</b><small>' + [w.sub, plOnSite(it)].filter(Boolean).map(function(x){ return '<span class="pl-nw">' + esc(x) + '</span>'; }).join(' \u00b7 ') + '</small>' + plTomorrow(it) + '</span>' +   /* 1416: wraps at the dot */
     '<span class="pl-cr">' + (who ? '<span class="pl-av">' + esc(plName(who).slice(0, 2).toUpperCase()) + '</span><span class="pl-nm">' + esc(plName(who)) + '</span>'
                               : '<span class="pl-nm">No one</span>') + '</span>' +
   '</div>';
@@ -74382,6 +74430,25 @@ document.addEventListener('click', function(e){
   if(rt){ if(window.CardinalRoute && window.CardinalRoute.open) window.CardinalRoute.open(rt.getAttribute('data-puroute')); return; }
   var ty = e.target.closest('#punchView [data-putype]');
   if(ty){ PU.type = ty.getAttribute('data-putype'); render(); return; }
+  var tm = e.target.closest('#punchView [data-putomorrow]');   /* 1459 */
+  if(tm){
+    e.stopPropagation();
+    var tid = tm.getAttribute('data-putomorrow'), key = plNextWorkKey();
+    var row = rows().filter(function(r){ return String(r.id) === String(tid); })[0];
+    tm.disabled = true; tm.textContent = 'Moving…';
+    (async function(){
+      var res = window.CardinalPunch && window.CardinalPunch.update ? await window.CardinalPunch.update(tid, { scheduled_at: key }) : { ok:false };
+      if(res && res.ok !== false){
+        puMsg = 'Moved to ' + plDayLabel(key) + '.';
+        if(row){ var line = await notifyMoved(Object.assign({}, row, { scheduled_at: key }), key); if(line) puMsg += ' ' + line; }
+        render();
+      } else {
+        tm.disabled = false; tm.textContent = 'Tomorrow ›';
+        crTell('Could not move it' + (res && res.error ? ': ' + res.error : '') + '.');
+      }
+    })();
+    return;
+  }
   var card = e.target.closest('#puList .pl-row, #puList .pu-card, #puQueue .pu-card, .pu-strip .pu-card');
   if(card && window.CardinalPunchCard && window.CardinalPunchCard.open){
     /* 837: one detail screen — the card, same as Production and the client
