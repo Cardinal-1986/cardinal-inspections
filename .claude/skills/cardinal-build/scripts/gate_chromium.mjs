@@ -354,8 +354,8 @@ const GATES = [
              repl: ".mathead.collhead{min-height:0;}" } },
   { name: 'gate_1469.mjs',
     protects: "the screens behind the Job Menu: the message box, Appointments form and Checklists cards are dark in dark (unchanged in light), one Back to client profile everywhere, no emoji",
-    break: { find: ':root:not([data-theme="rb-light"]) .ckcard{--cr-stack:"1469 the Checklists cards' dark twin";background:#141418;',
-             repl: ':root:not([data-theme="rb-light"]) .ckcard{--cr-stack:"1469 the Checklists cards' dark twin";background:#ffffff;' } },
+    break: { find: ":root:not([data-theme=\"rb-light\"]) .ckcard{--cr-stack:\"1469 the Checklists cards' dark twin\";background:#141418;",
+             repl: ":root:not([data-theme=\"rb-light\"]) .ckcard{--cr-stack:\"1469 the Checklists cards' dark twin\";background:#ffffff;" } },
   { name: 'gate_1468.mjs',
     protects: "the Job Menu runs Sell / Build / Close in job order, every tile has its own icon, no tile lost, readable headings",
     break: { find: "'<div class=\"jasect\" role=\"heading\" aria-level=\"4\">Sell</div>' +",
@@ -370,12 +370,8 @@ const GATES = [
              repl: "  if(false){ fjOpen(pr, open, installing); return; }" } },
   { name: 'gate_1465.mjs',
     protects: "the stage menu is styled with 44px rows and Mark Lost last; Mark Lost asks first and Advance waits out the Undo window; measurement numbers, Orders and a $0 balance are readable",
-    break: { find: "    if(ans === null) return;
-  }
-  crStageDefer(pr, 'Lost', { lostReason: String(ans) });",
-             repl: "    if(ans === null) ans = 'Unspecified';
-  }
-  await setStage(pr.id, 'Lost', { lostReason: String(ans) }); renderOverview(); renderPipeline();" } },
+    break: { find: "crStageDefer(pr, 'Lost', { lostReason: String(ans) });",
+             repl: "await setStage(pr.id, 'Lost', { lostReason: String(ans) }); renderOverview(); renderPipeline();" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
