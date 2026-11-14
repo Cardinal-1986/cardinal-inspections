@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1463<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1464<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4737,7 +4737,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">Punch &amp; Repairs</h2><button class="pu-new" id="puNewBtn" type="button">&#65291; New</button></div>
     <p class="pu-sub" id="puSub">&mdash;</p>
     <div id="puQueue"></div>
-    <div class="pu-ctl"><div class="pu-srch" data-cri="search"><input type="search" id="puSearch" placeholder="Client or PO #" aria-label="Search punch items"></div>
+    <div class="pu-ctl"><div class="pu-srch" data-cri="search"><input type="search" id="puSearch" placeholder="Client, PO #, phone, tarp…" aria-label="Search punch items"></div>
       <button class="pu-ico" id="puFunnel" type="button" title="Filters" aria-label="Filters">&#9923;<span class="bdg" id="puBadge">0</span></button>
     </div>
     <div class="pu-tabs" id="puTabs" role="group" aria-label="Kind of work">
@@ -47210,6 +47210,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1464, d:'2026-11-14', t:'Punch search finds more', s:'The search on Punch & Repairs now also finds a kind of job (tarp, repair, callback), the client phone number, who filed it, a person by name, and words in the checklist or the messages. On a computer, the Assign, filter and + New windows open in the middle of the screen instead of stuck to the top or bottom edge.' },
   { b: 1463, d:'2026-11-14', t:'Adding a punch item says so', s:'After + New on Punch & Repairs, the page now says what happened (Added for Scottie, or Added and needs assigned) and rings the new item so you can see it, even when the waiting box is showing only three. The form fields are named for screen readers, and the grey hint text in the forms and the search box is easier to read.' },
   { b: 1462, d:'2026-11-14', t:'Punch card: bigger text', s:'On a punch card, the buttons and labels the crew uses on the roof are bigger: Directions, Call, Open job, Add step, the photo slot names and the section headings. In the light theme the On site bar is a light green band instead of a black one.' },
   { b: 1461, d:'2026-11-13', t:'Punch: the needs-assigned box stays short', s:'The box of punch items waiting for someone to be assigned now shows the oldest three, with Show all underneath when there are more, so a busy morning does not push Past due off the first screen of a phone.' },
@@ -73430,6 +73431,14 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pl-tmr{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;padding:0 12px;border:1px solid var(--pl-late,#f08a90);border-radius:9px;background:transparent;
   color:var(--pl-late,#f08a90);font:700 14px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;cursor:pointer;}   /* 1459 */
 .pl-tmr:disabled{opacity:.6;cursor:default;}
+/* 1464: on a desk the Assign / filter sheets hung from the top of a 3440px screen, 1,500px from the
+   button pressed. From 1100px they open as a dialog in the middle. Phones keep their sheets. */
+@media (min-width:1100px){
+  .pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:center; }
+  .pu-sheet .panel{ max-width:520px; border-top:1px solid var(--rbe-line); border-radius:16px; max-height:86vh; overflow-y:auto; }
+  #cr-pb-modal.open{ --cr-stack:"1464 desk: + New opens as a centred dialog"; align-items:center; }
+  #cr-pb-modal .sheet{ border-radius:18px; }
+}
 .pu-flash{outline:2px solid #6fd39b;outline-offset:2px;}   /* 1463: the item "+ New" just added */
 :root[data-theme="rb-light"] .pu-flash{outline-color:#1b7d49;}
 /* 1463: placeholders took the browser's grey — 3.91:1 on the search, 4.22:1 in the forms */
@@ -73850,7 +73859,15 @@ function match(it){
        "#1042" both find it. poOf() is the main block's one resolver; asked for
        defensively because this is a different script block. */
     var po978 = (typeof poOf === 'function') ? poOf(pr) : null;
-    var hay = [it.title, it.detail, it.assigned_to, pr && pr.name, pr && pr.address,
+    /* 1464: it found title, detail, assignee, client, address and PO — not the kind ("tarp"), the
+       client's phone, who filed it, the person's NAME (only the stored email), the steps or the messages */
+    var K1464 = plKind(it);
+    var digits = function(v){ return String(v || '').replace(/[^0-9]/g, ''); };
+    var hay = [it.title, it.detail, it.assigned_to, plName(it.assigned_to), it.created_by, plName(it.created_by),
+      K1464.one, K1464.many, pr && pr.name, pr && pr.address, pr && pr.phone, digits(pr && pr.phone), pr && pr.email,
+      (Array.isArray(it.steps) ? it.steps : []).map(function(x){ return x && x.t; }).join(' '),
+      (Array.isArray(it.comments) ? it.comments : []).map(function(x){ return x && x.text; }).join(' '),
+      it.hold_note,
       po978 ? '#' + po978 + ' ' + po978 : ''].join(' ').toLowerCase();
     if(hay.indexOf(PU.q) === -1) return false;
   }
