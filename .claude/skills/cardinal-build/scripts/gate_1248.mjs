@@ -91,7 +91,8 @@ need('C  every open item is in exactly one place', both.length===0 && seen===ope
 
 const phone=await p.evaluate(()=>{
   const pv=document.getElementById('punchView'), cols=document.querySelector('#puList .pl-cols');
-  const row=document.querySelector('#puList .pl-row[data-pu="i1"]');
+  /* 1459: measured on an ordinary row (i4). The past-due row (i1) carries a full-size 44px Tomorrow button now and is taller on purpose. */
+  const row=document.querySelector('#puList .pl-row[data-pu="i4"]');
   return { over: Math.max(pv.scrollWidth-pv.clientWidth, document.documentElement.scrollWidth-document.documentElement.clientWidth),
            tabsFit: (()=>{const t=document.getElementById('puTabs'); return t.scrollWidth<=t.clientWidth;})(),
            cols: cols?getComputedStyle(cols).display:'missing',
@@ -133,7 +134,7 @@ if(SHOTS){ const pl=await boot(390,844,'light'); await snap(pl,SHOTS+'/m-light.p
 for(const theme of ['dark','light']){
   const d=await boot(1500,900,theme);
   const desk=await d.evaluate(()=>{
-    const cols=document.querySelector('#puList .pl-cols'), row=document.querySelector('#puList .pl-row[data-pu="i1"]');
+    const cols=document.querySelector('#puList .pl-cols'), row=document.querySelector('#puList .pl-row[data-pu="i4"]');   /* 1459: an ordinary row, see F */
     return { cols: cols?getComputedStyle(cols).display:'missing', rowH: row?Math.round(row.getBoundingClientRect().height):0,
       strip: getComputedStyle(document.getElementById('puTabs')).display,
       rail: [...document.querySelectorAll('#puRail [data-putype]')].map(b=>b.getAttribute('data-putype')).join(','),
