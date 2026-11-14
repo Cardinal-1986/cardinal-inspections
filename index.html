@@ -2692,8 +2692,31 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .acxcols{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media (max-width:820px){ .acxcols{grid-template-columns:1fr;} .msleft{flex-basis:100%;} }
 .ackv{display:grid;grid-template-columns:110px 1fr;gap:7px 10px;font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
-.ackv span{color:#8a7a72;font-weight:800;}
-.ackv div{color:#2b2b2b;min-width:0;overflow-wrap:anywhere;}
+/* 1465: these were light-era inks (#8a7a72 / #2b2b2b) on every theme. On the dark card the Measurement
+   VALUES read 1.02:1 - the numbers an estimate is priced from. They follow the theme's ink pair now. */
+.ackv span{color:var(--rbe-mute,#8a7a72);font-weight:800;}
+.ackv div{color:var(--rbe-ink,#2b2b2b);min-width:0;overflow-wrap:anywhere;}
+.ackv-ms{grid-template-columns:110px 1fr 110px 1fr;max-width:560px;}
+@media (max-width:560px){ .ackv-ms{grid-template-columns:104px 1fr;} }
+/* 1465: the stage menu (the band's three dots) */
+#msDrop{position:absolute;right:0;top:100%;z-index:70;min-width:236px;padding:6px;border-radius:14px;
+  background:#141418;border:1px solid #2b2b33;box-shadow:0 14px 34px rgba(0,0,0,.55);text-align:left;}
+#msDrop .estopt{display:flex;align-items:center;width:100%;box-sizing:border-box;min-height:44px;margin:0;padding:0 14px;
+  border:0;border-radius:10px;background:transparent;color:#eef1f5;font-family:inherit;font-size:15px;font-weight:600;
+  line-height:1.2;text-align:left;cursor:pointer;}
+#msDrop .estopt:hover,#msDrop .estopt:focus-visible{background:#23232b;outline:none;}
+#msDrop .estopt[data-act="dead"]{position:relative;margin-top:9px;color:#ff8a90;}
+#msDrop .estopt[data-act="dead"]::before{content:"";position:absolute;left:8px;right:8px;top:-5px;height:1px;background:#2b2b33;}
+:root[data-theme="rb-light"] #msDrop{background:#ffffff;border-color:#e2e2e2;box-shadow:0 12px 30px rgba(0,0,0,.14);}
+:root[data-theme="rb-light"] #msDrop .estopt{color:#161616;}
+:root[data-theme="rb-light"] #msDrop .estopt:hover,:root[data-theme="rb-light"] #msDrop .estopt:focus-visible{background:#f2f2f2;}
+:root[data-theme="rb-light"] #msDrop .estopt[data-act="dead"]{color:#b3141f;}
+:root[data-theme="rb-light"] #msDrop .estopt[data-act="dead"]::before{background:#e2e2e2;}
+/* 1465: the Orders ordered / not-ordered card - its labels were 2.99:1 and its button 1.03:1 in light */
+.cr-matord-no{color:#f0b45a;}
+.cr-matord-yes{color:#5fd39a;}
+:root[data-theme="rb-light"] .cr-matord-no{color:#8a5a08;}
+:root[data-theme="rb-light"] .cr-matord-yes{color:#2f7d55;}
 .ackv a{color:var(--red);font-weight:800;text-decoration:none;}
 .acxtabs{display:flex;gap:2px;margin:-14px -14px 12px;border-bottom:2px solid var(--red);}
 .acxtab{padding:9px 14px;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;cursor:pointer;}
@@ -4425,7 +4448,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1464<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1465<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -12823,7 +12846,7 @@ function _crStageCommit(p){
   if(_crStagePending === p) _crStagePending = null;
   p.pr.stage = p.from; if(currentProject && currentProject.id === p.pr.id) currentProject.stage = p.from;
   Promise.resolve()
-    .then(function(){ return setStage(p.pr.id, p.target); })
+    .then(function(){ return setStage(p.pr.id, p.target, p.opts); })
     .then(function(){ _crStageReviewMaybe(p.pr, p.from); try{ renderOverview(); renderPipeline(); }catch(_){} })
     .catch(function(err){
       p.pr.stage = p.from; if(currentProject && currentProject.id === p.pr.id) currentProject.stage = p.from;
@@ -12831,7 +12854,7 @@ function _crStageCommit(p){
       if(window.showError) showError('Could not update: ' + ((err && err.message) || err));
     });
 }
-function crStageDefer(pr, target){
+function crStageDefer(pr, target, opts){
   if(!pr || !target) return;
   var from = normStage(pr.stage), tgt = normStage(target);
   if(tgt === from) return;
@@ -12851,7 +12874,7 @@ function crStageDefer(pr, target){
       _crStageCommit(q);   /* different job: never drop the pending move (1008) */
     }
   }
-  var p = { pr: pr, from: from, target: tgt, timer: null, done: false };
+  var p = { pr: pr, from: from, target: tgt, timer: null, done: false, opts: opts || null };   /* 1465: opts rides to setStage */
   pr.stage = tgt; if(currentProject && currentProject.id === pr.id) currentProject.stage = tgt;
   try{ renderOverview(); renderPipeline(); }catch(_p){}
   p.timer = setTimeout(function(){ _crStageCommit(p); }, 5000);
@@ -12872,8 +12895,21 @@ try{
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden' && _crStagePending) _crStageCommit(_crStagePending); });
 }catch(_evt){}
 async function acxDead(pr){
-  try{ await setStage(pr.id, 'Lost'); renderOverview(); renderPipeline(); }
-  catch(err){ showError('Could not update: ' + (err.message || err)); }
+  /* 1465: Mark Lost SAVED the job as Lost and only then asked why - cancelling the question still left it
+     Lost ("Unspecified"), with no Undo. Now the reason is asked first (Cancel changes nothing), and the move
+     goes through crStageDefer, so it shows at once and can be undone for 5 s like the arrows. Community has
+     no loss reasons (setStage skips them), so it is not asked. */
+  var ans = '';
+  var isCom = false;
+  try{ isCom = (typeof window.projClaimType === 'function') && window.projClaimType(pr) === 'community'; }catch(_c){}
+  if(!isCom){
+    var NL = String.fromCharCode(10);
+    ans = prompt('Why was this lead lost?' + NL +
+      LOSS_REASONS.map(function(r, i){ return (i + 1) + '. ' + r; }).join(NL) +
+      NL + NL + 'Enter a number (1-' + LOSS_REASONS.length + ') or type a reason:', '1');
+    if(ans === null) return;
+  }
+  crStageDefer(pr, 'Lost', { lostReason: String(ans) });
 }
 /* H (#18): the ONE lead-source vocabulary (see patch note above acxSrcOpts) */
 var CR_LEAD_SOURCES = ['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social',
@@ -13012,14 +13048,15 @@ function renderAcxOverview(){
     '<span class="dbstgmid"><b>' + esc(stg.toUpperCase()) + '</b><small>' + esc(stageAgo(ck.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
     (nx ? '<button class="dbstgarr" id="dbStgFwd" title="Advance to ' + esc(nx) + '">&#8250;</button>' : '<span class="dbstgarr ghost"></span>') +
     '<span class="msmenu" style="position:relative;"><button type="button" class="dots" id="msDots" aria-label="More stage actions" aria-haspopup="true" style="cursor:pointer;font-size:22px;color:inherit;padding:0 6px;">&#8942;</button>' +
-    '<div id="msDrop" style="display:none;position:absolute;right:0;top:100%;z-index:70;background:#fff;border:1px solid #c9c2bf;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);min-width:180px;overflow:hidden;">' +
+    '<div id="msDrop" role="menu" style="display:none;">' +   /* 1465: styled in cr-msdrop rules (was a white box of browser buttons) */
       (nx ? '<button class="estopt" data-act="adv">Advance to ' + esc(nx) + '</button>' : '') +
-      (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
       (stg === 'Lost' || stg === 'Closed' ? '<button class="estopt" data-act="reopen">Reopen as Lead</button>' : '') +
       /* 1372: a second sale for the same client is a second job */
       '<button class="estopt" data-act="newjob">New job for this client</button>' +
       (ck.prior_job && cacheProjects.some(function(x){ return x.id === ck.prior_job; }) ? '<button class="estopt" data-act="priorjob">Open earlier job</button>' : '') +
       (cacheProjects.some(function(x){ return x.id !== pr.id && parseCkAll(x).prior_job === pr.id; }) ? '<button class="estopt" data-act="laterjob">Open newer job</button>' : '') +
+      /* 1465: Mark Lost moved to the bottom, under a rule - it sat directly under Advance */
+      (stg !== 'Lost' && stg !== 'Closed' ? '<button class="estopt" data-act="dead">Mark Lost</button>' : '') +
     '</div></span>' +
   '</div>';
   /* 1351: retail no longer shows the strip, the old Payment Information row, or the invoice + Payments cards
@@ -13420,9 +13457,11 @@ function acxBindOnce(mount){
     }
     if((el = hit('#msDrop button'))){
       var act = el.getAttribute('data-act');
-      if(act === 'adv') acxAdvance(pr);
+      /* 1465: the menu's Advance wrote at once (no Undo) while the > arrow beside it waited 5 s with Undo.
+         Both now take the same deferred move; so does Reopen. */
+      if(act === 'adv'){ var _nx1465 = acxNext(normStage(pr.stage)); if(_nx1465) crStageDefer(pr, _nx1465); }
       else if(act === 'dead') acxDead(pr);
-      else if(act === 'reopen') setStage(pr.id, 'Lead').then(function(){ renderOverview(); renderPipeline(); });
+      else if(act === 'reopen') crStageDefer(pr, 'Lead');
       else if(act === 'newjob') pfNewJobFor(pr);   /* 1372 */
       else if(act === 'priorjob' && ck.prior_job) openProject(ck.prior_job);
       else if(act === 'laterjob'){
@@ -13657,7 +13696,7 @@ async function renderMeasureTab(){
   var ms = parseCkAll(pr).meas || null;
   document.getElementById('msValCount').textContent = ms ? (ms.sq ? ms.sq + ' squares' : 'recorded') : 'none yet';
   document.getElementById('msValMount').innerHTML = ms
-    ? '<div class="ackv" style="grid-template-columns:110px 1fr 110px 1fr;max-width:560px;">' +
+    ? '<div class="ackv ackv-ms">' +   /* 1465: two columns on a phone - "6/12" broke over two lines */
       '<span>Squares:</span><div><b>' + esc(ms.sq || '\u2014') + '</b></div>' +
       '<span>Pitch:</span><div><b>' + esc(ms.pitch || '\u2014') + '</b></div>' +
       /* 674: Hover reports ridges and hips as one figure. Show it as one rather
@@ -21336,20 +21375,20 @@ function renderMatOrderState(){
     var d = crDate(at);
     mount.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
-      'background:var(--rbe-card,#161918);border:1px solid rgba(108,185,143,.35);' +
+      'background:var(--rbe-bg2,#161918);border:1px solid rgba(108,185,143,.35);' +   /* 1465: --rbe-card is declared nowhere - it was always the dark fallback */
       'border-radius:12px;padding:11px 14px;">' +
-      '<b style="color:#2f7d55;font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.08em;">MATERIALS ORDERED</b>' +
-      '<span style="color:var(--rbe-mut,#8d959d);font-size:13px;">' +
+      '<b class="cr-matord-yes" style="font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.08em;">MATERIALS ORDERED</b>' +
+      '<span style="color:var(--rbe-mute,#8d959d);font-size:13px;">' +
       esc(isNaN(d) ? at : fmtLongDate(d)) + (by ? ' \u00b7 ' + esc(shortNameOf(by)) : '') + '</span>' +
       '<button class="chipbtn" data-matord="clear" style="margin-left:auto;">Not ordered after all</button>' +
       '</div>';
   }else{
     mount.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
-      'background:var(--rbe-card,#161918);border:1px solid rgba(245,166,35,.35);' +
+      'background:var(--rbe-bg2,#161918);border:1px solid rgba(245,166,35,.35);' +
       'border-radius:12px;padding:11px 14px;">' +
-      '<b style="color:#8a5a08;font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.08em;">NOT ORDERED YET</b>' +
-      '<span style="color:var(--rbe-mut,#8d959d);font-size:13px;">This job reads &ldquo;Materials?&rdquo; on the Production board.</span>' +
+      '<b class="cr-matord-no" style="font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.08em;">NOT ORDERED YET</b>' +
+      '<span style="color:var(--rbe-mute,#8d959d);font-size:13px;">This job reads &ldquo;Materials?&rdquo; on the Production board.</span>' +
       '<button class="chipbtn" data-matord="set" style="margin-left:auto;">Mark ordered</button>' +
       '</div>';
   }
@@ -21944,7 +21983,7 @@ function _notifyOrQueue(to, subject, html, url){
     }, _q);
   }catch(_e){ _q(); }
 }
-async function setStage(prId, v){
+async function setStage(prId, v, opts){
   var pr = cacheProjects.find(function(x){ return String(x.id) === String(prId); });
   if(!pr) return;
   var prev = normStage(pr.stage);
@@ -21975,7 +22014,7 @@ async function setStage(prId, v){
   }catch(_e){}
   if(v === 'Lost'){
     if(!_isCommunityLoss){
-      var _rNum = prompt('Why was this lead lost?\n' +
+      var _rNum = (opts && typeof opts.lostReason === 'string') ? opts.lostReason : prompt('Why was this lead lost?\n' +
         LOSS_REASONS.map(function(r,i){ return (i+1) + '. ' + r; }).join('\n') +
         '\n\nEnter a number (1-' + LOSS_REASONS.length + ') or type a reason:', '1');
       var _reason = 'Unspecified';
@@ -47210,6 +47249,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1465, d:'2026-11-14', t:'Client page: a safer stage menu, and numbers you can read', s:'The three-dot menu on the stage bar is a proper menu now, with big rows, and Mark Lost sits at the bottom under a line instead of right under Advance. Mark Lost asks why before it does anything (Cancel leaves the job alone), and Advance, Mark Lost and Reopen all give you the same 5-second Undo as the arrows. Measurement numbers (squares, pitch, lengths) were almost invisible on the dark card and now read clearly, two to a row on a phone. On Orders the Mark ordered button shows in light mode, and a job with no total yet shows a $0.00 balance in plain text, not red.' },
   { b: 1464, d:'2026-11-14', t:'Punch search finds more', s:'The search on Punch & Repairs now also finds a kind of job (tarp, repair, callback), the client phone number, who filed it, a person by name, and words in the checklist or the messages. On a computer, the Assign, filter and + New windows open in the middle of the screen instead of stuck to the top or bottom edge.' },
   { b: 1463, d:'2026-11-14', t:'Adding a punch item says so', s:'After + New on Punch & Repairs, the page now says what happened (Added for Scottie, or Added and needs assigned) and rings the new item so you can see it, even when the waiting box is showing only three. The form fields are named for screen readers, and the grey hint text in the forms and the search box is easier to read.' },
   { b: 1462, d:'2026-11-14', t:'Punch card: bigger text', s:'On a punch card, the buttons and labels the crew uses on the roof are bigger: Directions, Call, Open job, Add step, the photo slot names and the section headings. In the light theme the On site bar is a light green band instead of a black one.' },
@@ -101731,6 +101771,8 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 .crjp-card .crjp-sum .crjp-bal{color:var(--crji-ink,#f2f4f7);font-weight:700;}
 .crjp-card .crjp-sum b.crjp-bal{font-size:18px;color:var(--crji-due,#f08a90);}
 .crjp-card .crjp-sum b.crjp-bal.paid{color:var(--crji-pos,#34d399);}
+/* 1465: no job total yet means nothing is owed - $0.00 in alarm red taught people to ignore red */
+.crjp-card .crjp-sum b.crjp-bal.zero{color:var(--crji-ink,#f2f4f7);}
 .crjp-card .crjp-sum b.crjp-gp{color:var(--crji-pos,#34d399);}
 .crjp-card .crjp-sum b.crjp-gp.neg{color:var(--crji-due,#f08a90);}
 .crjp-card .crjp-sum hr{grid-column:1/-1;border:0;border-top:1px solid var(--crji-line,#262a30);margin:4px 0;}
@@ -102157,7 +102199,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
         '<span class="crjp-bal">Gross profit</span><b class="crjp-gp' + (gp < 0 ? ' neg' : '') + '">' + (noCost ? '—' : M(gp)) + '</b>' +
         '<span>Margin</span><b class="crjp-gp' + (gp < 0 ? ' neg' : '') + '">' + (total > 0 && !noCost ? (Math.round(gp / total * 1000) / 10).toFixed(1) + '%' : '—') + '</b>';
     }
-    h += '<hr><span class="crjp-bal">Balance due</span><b class="crjp-bal' + (total > 0 && bal <= 0.005 ? ' paid' : '') + '">' + M(bal) + '</b>' +
+    h += '<hr><span class="crjp-bal">Balance due</span><b class="crjp-bal' + (total > 0 && bal <= 0.005 ? ' paid' : (total > 0 ? '' : ' zero')) + '">' + M(bal) + '</b>' +
     '</div>';
     if(total > 0){
       var pp = Math.max(0, Math.min(100, Math.round(paid / total * 100)));

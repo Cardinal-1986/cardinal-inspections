@@ -38,7 +38,7 @@ function sliceFn(anchor, label) {
 }
 
 const commitBody = sliceFn('function _crStageCommit(p){', '_crStageCommit');
-const deferBody  = sliceFn('function crStageDefer(pr, target){', 'crStageDefer');
+const deferBody  = sliceFn('function crStageDefer(pr, target', 'crStageDefer');   /* 1465 added an optional opts parameter */
 
 // Build a harness that owns _crStagePending and exposes both functions plus a
 // synchronous drain of the microtask queue used by _crStageCommit.

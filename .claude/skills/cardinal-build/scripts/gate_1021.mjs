@@ -130,7 +130,7 @@ const ok = (c, m) => { if (!c) fails.push(m); };
 
 // ---- [C] setStage routes both emails through the helper --------------------
 {
-  const at = src.indexOf('async function setStage(prId, v){');
+  const at = src.indexOf('async function setStage(prId, v');   /* 1465 added an optional opts parameter */
   let body = null;
   if (at === -1) fails.push('[C] setStage not found');
   else {
