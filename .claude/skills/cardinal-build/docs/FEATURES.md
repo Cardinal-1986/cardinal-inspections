@@ -10918,3 +10918,12 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | 1470 | Desk Text link (`.hsms`); ultrawide 2100px; History count + last touch; Color Studio ↗; punch flags #ffb4a0; 44px folds / appointment ✕ | main block, `#ppPage` styles |
 
 **Gates:** `gate_1465.mjs` … `gate_1470.mjs`.
+
+
+## Build 1471: the ultrawide side panel (14 Nov 2026)
+
+| Piece | Where |
+|---|---|
+| `crSplitTab()` + `#projectView.cr-split` grid at ≥2200px: overview left, the opened section right; resize listener | main block (`showTab`), `cr-…` styles beside 1470 |
+
+**Gate:** `gate_1471.mjs`.

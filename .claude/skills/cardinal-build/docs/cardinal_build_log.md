@@ -38359,3 +38359,14 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 **Not done, and why:** the desktop money-first order (Theo's 1227 pick — settled); a side-panel tile layout for ultrawide (bigger than this pass); Owner review creating a record on tap (asks first, left as designed).
 
 **Gates:** `check_build` GREEN on each; `gate_1465`–`gate_1470` new, in `gate_chromium`, each green on its build and red on the one before. ⚠ A `\d` inside a JS template literal in a patch script is written as `d` — 1467's time regex shipped as `/^(dd?):(dd)/` until gate C caught it.
+
+
+## Build 1471 — the ultrawide side panel (14 Nov 2026)
+
+**Theo:** "3 and 1" — 3 was the one client-page item 1465–1470 left: on his 3440 ultrawide the job and its parts were never on screen together.
+
+- `crSplitTab(name)`, called from the base `showTab`: at `(min-width:2200px)`, outside Community, a section other than the overview (inspections, estimates, contracts, workorders, commissions, checklists, materials, measure, punch) gets `#projectView.cr-split` and the overview stays displayed. CSS grid on `#projectView > .wrap`: `.projhead` spans, `#tab-overview` left, the open tab right — sticky, its own scroll (`overscroll-behavior:contain`), a rule on its left. A `matchMedia` change listener drops back to one section when the window shrinks.
+- ⚠ 1470's `body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView .wrap:not(.masthead){max-width:2100px}` out-ranked a plain split rule — the first render was still capped. The split's 3200px rule carries the same prefix.
+- **Not split:** Communication, Photos, Tasks, Files and Appointments are views of their own (`hideAllViews`), not tabs.
+
+**Gate:** `gate_1471` (5 checks), registered; RED 4/5 on 1470 (only the split itself is new — the other four are unchanged behaviour by design).

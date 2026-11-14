@@ -2698,6 +2698,16 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .ackv div{color:var(--rbe-ink,#2b2b2b);min-width:0;overflow-wrap:anywhere;}
 .ackv-ms{grid-template-columns:110px 1fr 110px 1fr;max-width:560px;}
 @media (max-width:560px){ .ackv-ms{grid-template-columns:104px 1fr;} }
+/* 1471: the ultrawide side panel (crSplitTab) */
+@media (min-width:2200px){
+  body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView.cr-split .wrap:not(.masthead), body:not(.claim-community) #projectView.cr-split .wrap:not(.masthead){ --cr-stack:"1471 the split page uses the whole ultrawide (beats 1470's 2100 cap)"; max-width:3200px; }
+  body:not(.claim-community) #projectView.cr-split > .wrap{ display:grid; grid-template-columns:minmax(0,1.12fr) minmax(0,1fr); column-gap:32px; align-items:start; }
+  body:not(.claim-community) #projectView.cr-split > .wrap > .projhead{ grid-column:1 / -1; }
+  body:not(.claim-community) #projectView.cr-split > .wrap > #tab-overview{ grid-column:1; grid-row:2; min-width:0; }
+  body:not(.claim-community) #projectView.cr-split > .wrap > [id^="tab-"]:not(#tab-overview){ grid-column:2; grid-row:2; min-width:0;
+    position:sticky; top:12px; max-height:calc(100vh - 24px); overflow-y:auto; overscroll-behavior:contain;
+    padding:4px 4px 24px 28px; border-left:1px solid var(--rbe-line2,#2b2b33); box-sizing:border-box; }
+}
 /* 1470: the small things the audit measured */
 .hcontact .hsms{margin-left:10px;}
 #apMount .tskrow small{font-size:12px;}
@@ -4499,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1470<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1471<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -15568,7 +15578,35 @@ function showTab(name){
   ['overview','inspections','estimates','contracts','workorders','commissions','checklists','materials','measure','punch'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
+  crSplitTab(name);   /* 1471 */
   if(name === 'inspections') refreshInspGalN();
+}
+/* 1471: on a screen 2200px or wider a section opened from the Job Menu (Estimates, Contracts, Inspections,
+   Measurements, Orders, Checklists, Work Orders, Punch & Repairs, Commissions) opens BESIDE the client page
+   instead of replacing it - Theo's 3440 ultrawide left the job and its parts never on screen together. The
+   overview stays on the left; "Back to client profile" closes the side. Community keeps its own takeover. */
+var CR_SPLIT_MQ = (window.matchMedia ? window.matchMedia('(min-width:2200px)') : null);
+function crSplitTab(name){
+  var pv = document.getElementById('projectView');
+  if(!pv) return;
+  var com = false;
+  try{ com = document.body.classList.contains('claim-community') ||
+    (typeof projClaimType === 'function' && currentProject && projClaimType(currentProject) === 'community'); }catch(_c){}
+  var on = !!(name && name !== 'overview' && !com && CR_SPLIT_MQ && CR_SPLIT_MQ.matches);
+  pv.classList.toggle('cr-split', on);
+  if(on){ var ov = document.getElementById('tab-overview'); if(ov) ov.style.display = 'block'; }
+}
+/* resizing across the line: the side panel closes back into one page (or opens) with it */
+if(CR_SPLIT_MQ){
+  var _crSplitResync = function(){
+    var pv = document.getElementById('projectView');
+    if(!pv || pv.style.display === 'none') return;
+    var cur = window.__curTab || 'overview';
+    if(cur === 'overview') return;
+    if(CR_SPLIT_MQ.matches) crSplitTab(cur);
+    else { pv.classList.remove('cr-split'); var ov = document.getElementById('tab-overview'); if(ov) ov.style.display = 'none'; }
+  };
+  try{ CR_SPLIT_MQ.addEventListener('change', _crSplitResync); }catch(_l){ try{ CR_SPLIT_MQ.addListener(_crSplitResync); }catch(_l2){} }
 }
 document.getElementById('jobMenuSel').addEventListener('change', function(){
   showTab(this.value);
@@ -47459,6 +47497,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1471, d:'2026-11-14', t:'On a very wide screen, the job and its parts side by side', s:'On a screen 2200 pixels wide or more (Theo’s ultrawide), opening Estimates, Contracts, Inspections, Measurements, Orders, Checklists, Work Orders, Punch & Repairs or Commissions from the Job Menu shows it beside the client page instead of replacing it, so the job and the part you are working on stay on screen together. Back to client profile closes the side. Phones, tablets and normal monitors are unchanged.' },
   { b: 1470, d:'2026-11-14', t:'Client page: desktop and the small things', s:'On a computer you can text a client from the top bar now, not only call. On a very wide screen the client page uses more of it instead of stopping at 1600 pixels. History says how many events a job has (it stopped at 8) and when it was last touched. Color Studio is marked as opening in a new tab. The URGENT and DAYS LATE tags on punch items are brighter and easier to read, and the delete button on an appointment and the fold-out rows on Measurements and Orders are full-size to tap.' },
   { b: 1469, d:'2026-11-14', t:'Client page: the screens behind the tiles match', s:'In dark mode the Communication box, the Appointments form and the Checklists cards were cream and white panels on the black page. They are dark now, like everything around them (light mode is unchanged). Every screen you open from the client page has the same Back to client profile button, instead of Back, Back to client profile or Overview depending on the screen. The emoji that had crept back onto the Measurements, Orders, Files and Photos buttons are gone, and the Not completed tag on Checklists no longer breaks over two lines.' },
   { b: 1468, d:'2026-11-14', t:'Client page: the Job Menu in the order a job runs', s:'The Job Menu tiles were in the order they were built, so Inspections was tenth and Work Orders last. Now Photos and Tasks come first, then three short headings: Sell (Inspections, Measurements, Estimates, Contracts, Appointments), Build (Orders, Work Orders, Change order, Checklists, Install photos) and Close (Punch & Repairs, Files, Owner review). Change order, Owner review and Install photos each have their own icon instead of borrowing another tile’s, and Files now says a signed contract belongs in Contracts, which is what opens the invoice.' },
