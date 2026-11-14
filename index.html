@@ -59837,9 +59837,10 @@ body.cr-lnav-on #cr-pb h1{ font-size:30px; }
 }
 /* 1476: on a desk the home month has room to say WHAT is on a day, not just that something is - the names
    the full calendar shows. A phone keeps the pips (a 48px cell cannot hold a name). */
-#cr-pb .pbmonth .pbday .cch{ --cr-stack:"1476 home month: names on a desk only"; display:none; }
+@media (max-width:1099px){
+  #cr-pb .pbmonth .pbday .cch{ --cr-stack:"1476 home month on a phone: pips, not names"; display:none; }
+}
 @media (min-width:1100px){
-  #cr-pb .pbmonth .pbday .cch{ --cr-stack:"1476 home month: names on a desk"; display:block; }
   #cr-pb .pbmonth .pbday .pbpips{ --cr-stack:"1476 the names replace the pips on a desk"; display:none; }
 }
 
@@ -90153,10 +90154,9 @@ body.cr-lnav-on #cr-disp{
 }
 #cr-disp .dspwk button::after{ content:""; position:absolute; top:-10px; bottom:-10px; left:-13px; right:-13px; }
 #cr-disp .dspfilt{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
-#cr-disp .dspfilt .fc{ font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; padding:5px 11px; border-radius:8px;
-  background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer; }
-#cr-disp .dspfilt .fc{ --cr-stack:"1477 a 44px chip, as Production's"; display:inline-flex; align-items:center; justify-content:center;
-  min-height:44px; min-width:44px; padding:0 14px; font-size:13px; box-sizing:border-box; }
+#cr-disp .dspfilt .fc{ font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; padding:0 14px; border-radius:8px;
+  background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:44px; box-sizing:border-box; }   /* 1477: a 44px chip, as Production's (was 11px / 27px tall) */
 /* 1477: every card and band is a keyboard stop now - say where focus is */
 #cr-disp [role="button"]:focus-visible{ outline:2px solid var(--disp-ink,#fff); outline-offset:2px; }
 #cr-disp .dspfilt .fc.on{ border-color:var(--disp-ink,#fff); color:var(--disp-ink,#fff); }
@@ -90327,7 +90327,10 @@ body.cr-lnav-on #cr-disp{
 #cr-disp .job .mv{ margin-left:4px; flex:none; width:15px; height:15px; padding:0; border:0;
   border-radius:4px; background:transparent; color:var(--disp-dim,#9aa1ac);
   display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
-#cr-disp .job .mv::after{ content:""; position:absolute; inset:-15px; }/* 1040: -9px made 33px effective — under the 44 floor the rest of the app holds */
+#cr-disp .job .mv::after{ content:""; position:absolute; inset:-15px; }
+/* 1477 (gate_1206): the name became the card's control and measured 61x34 - so its hit area is the card */
+#cr-disp .job .nm::after{ content:""; position:absolute; inset:0; }
+#cr-disp .job .mv{ --cr-stack:"1477 the grip stays above the name's card-wide hit area"; z-index:1; }/* 1040: -9px made 33px effective — under the 44 floor the rest of the app holds */
 #cr-disp .job .mv:hover{ color:var(--disp-ink,#fff); }
 #cr-disp .job.moving{ box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
 #cr-disp .job.moving .mv{ color:var(--disp-need,#f5c045); }
