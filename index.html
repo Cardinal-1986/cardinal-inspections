@@ -2745,8 +2745,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbsta
 :root[data-theme="rb-light"] .dbstatus .dbst.warn{color:#8a5a08;border-color:rgba(138,90,8,.4);}
 :root[data-theme="rb-light"] .dbstatus .dbst.bad{color:#b3141f;border-color:rgba(179,20,31,.4);}
 @media (max-width:560px){
-  .dbstatus{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-top:0;padding-bottom:2px;}
-  .dbstatus::-webkit-scrollbar{display:none;}
+  /* 1470 (sentinel): a hidden scrollbar left 295px of chips off the edge with no sign they were there - a thin bar shows it */ .dbstatus{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;margin-top:0;padding-bottom:6px;}
+  .dbstatus::-webkit-scrollbar{height:4px;} .dbstatus::-webkit-scrollbar-thumb{background:rgba(160,168,180,.45);border-radius:4px;}
   .dbstatus .dbst{flex:none;white-space:nowrap;}
 }
 /* 1465: the stage menu (the band's three dots) */
