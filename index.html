@@ -2698,6 +2698,11 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .ackv div{color:var(--rbe-ink,#2b2b2b);min-width:0;overflow-wrap:anywhere;}
 .ackv-ms{grid-template-columns:110px 1fr 110px 1fr;max-width:560px;}
 @media (max-width:560px){ .ackv-ms{grid-template-columns:104px 1fr;} }
+/* 1470: the small things the audit measured */
+.hcontact .hsms{margin-left:10px;}
+#apMount .tskrow small{font-size:12px;}
+#apMount .tskrow .chipbtn{min-width:44px;min-height:44px;}
+.mathead.collhead{min-height:44px;}
 /* 1469: the screens the Job Menu opens were five different apps - a cream message box, a white
    Appointments form and white Checklists cards on the dark page. Dark twins below; light is unchanged
    (the cream box and white cards ARE the light design). */
@@ -4494,7 +4499,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1469<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1470<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -13298,7 +13303,7 @@ function renderAcxOverview(){
       jt(dbIc('contract'), 'Contracts', crConBadge(docs), 'contracts') +
       jt(dbIc('appts'), 'Appointments', appts, 'appts') +
       (isAdminUser() ? jt(dbIc('walk'), 'The Walk', '', 'walk') : '') +
-      (crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '') +
+      (crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio ↗', '', 'colorstudio') : '') +
     '</div>' +
     '<div class="jasect" role="heading" aria-level="4">Build</div>' +
     '<div class="jaboxrow">' +
@@ -13328,10 +13333,14 @@ function renderAcxOverview(){
        button proxied `#jaGrid [data-ja="payments"]` — the legacy grid hidden by
        #tab-overview — so it had been display:none since the day it shipped.
        History below keeps the .kpsec shell and its toggle. */
-    var _hist = (typeof buildActivityEvents === 'function')
-      ? buildActivityEvents().filter(function(x){ return x.pid === pr.id; }).slice(0, 8) : [];
+    var _histAll = (typeof buildActivityEvents === 'function')
+      ? buildActivityEvents().filter(function(x){ return x.pid === pr.id; }) : [];
+    var _hist = _histAll.slice(0, 8);
+    /* 1470: the header showed _hist.length - capped at 8 - and no date */
+    var _histLast = '';
+    _histAll.forEach(function(x){ if(x && x.t && String(x.t) > _histLast) _histLast = String(x.t); });
     html += '<div class="kpsec kpred" id="kpHis"><div class="kpsech" data-kps="1">' +
-        '<span class="kpst">' + (window.crIco ? window.crIco('clock') : '') + 'History</span><span class="kpcnt">' + _hist.length + '</span><span class="kpcar">\u203A</span></div>' +
+        '<span class="kpst">' + (window.crIco ? window.crIco('clock') : '') + 'History</span><span class="kpcnt">' + _histAll.length + (_histLast ? ' · ' + esc(timeAgo(_histLast)) : '') + '</span><span class="kpcar">\u203A</span></div>' +
       '<div class="kpsecb"><div class="kphist">' +
         (_hist.length ? _hist.map(function(x){
           return '<div class="kpev">' + esc(x.label || '') + (x.detail ? ' \u2014 ' + esc(String(x.detail)) : '') +
@@ -15343,6 +15352,7 @@ function openProject(id){
     '</span>' +
     ((pr.phone || pr.email) ? '<span class="hcontact">' +
       (pr.phone ? '<a class="hph" href="tel:' + _heroTel + '">' + esc(pr.phone) + '</a>' : '') +
+      (pr.phone ? '<a class="hph hsms" href="sms:' + _heroTel + '" title="Text ' + esc(pr.name || 'the client') + '">Text</a>' : '') +   /* 1470: there was no way to text from a desk */
       (pr.email ? '<a class="hem" href="mailto:' + esc(pr.email) + '">' + esc(pr.email) + '</a>' : '') +
     '</span>' : '') +
     '<span class="hmanage"><a href="#" id="dbSwitchPrim">Switch Primary</a> \u00b7 <a href="#" id="dbAddContact">Add contact</a></span>' +
@@ -47449,6 +47459,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1470, d:'2026-11-14', t:'Client page: desktop and the small things', s:'On a computer you can text a client from the top bar now, not only call. On a very wide screen the client page uses more of it instead of stopping at 1600 pixels. History says how many events a job has (it stopped at 8) and when it was last touched. Color Studio is marked as opening in a new tab. The URGENT and DAYS LATE tags on punch items are brighter and easier to read, and the delete button on an appointment and the fold-out rows on Measurements and Orders are full-size to tap.' },
   { b: 1469, d:'2026-11-14', t:'Client page: the screens behind the tiles match', s:'In dark mode the Communication box, the Appointments form and the Checklists cards were cream and white panels on the black page. They are dark now, like everything around them (light mode is unchanged). Every screen you open from the client page has the same Back to client profile button, instead of Back, Back to client profile or Overview depending on the screen. The emoji that had crept back onto the Measurements, Orders, Files and Photos buttons are gone, and the Not completed tag on Checklists no longer breaks over two lines.' },
   { b: 1468, d:'2026-11-14', t:'Client page: the Job Menu in the order a job runs', s:'The Job Menu tiles were in the order they were built, so Inspections was tenth and Work Orders last. Now Photos and Tasks come first, then three short headings: Sell (Inspections, Measurements, Estimates, Contracts, Appointments), Build (Orders, Work Orders, Change order, Checklists, Install photos) and Close (Punch & Repairs, Files, Owner review). Change order, Owner review and Install photos each have their own icon instead of borrowing another tile’s, and Files now says a signed contract belongs in Contracts, which is what opens the invoice.' },
   { b: 1467, d:'2026-11-14', t:'Client page: where the job stands, at a glance', s:'A row under the stage bar now says what you would otherwise scroll for: whether the contract is signed (and warns when a sold job has none), the balance due, the next appointment, who has the job and when it was last touched. Tap any of them to go there. The Contracts tile says Signed or Sent, Orders says Ordered or To order, and Work Orders shows how many there are. Production and field logins do not see the balance.' },
@@ -63825,10 +63836,10 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 #ppPage .pp-rowc{flex:0 0 auto;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--rbe-mute,#9aa0a8)}
 #ppPage .pp-chev{flex:0 0 auto;color:var(--rbe-mute,#9aa0a8);font-size:18px;line-height:1}
 #ppPage .kind{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(245,166,35,.16);color:#f5a623}
-#ppPage .kind.callback{background:rgba(224,122,95,.18);color:#e07a5f}
+#ppPage .kind.callback{background:rgba(224,122,95,.18);color:#ffb4a0}
 #ppPage .kind.tarp{background:rgba(90,169,230,.18);color:#8ec8f2}
 #ppPage .kind.ticket{background:rgba(230,232,234,.1);color:var(--rbe-ink,#cfd6df)}
-#ppPage .hi{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(224,122,95,.18);color:#e07a5f}
+#ppPage .hi{font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(224,122,95,.18);color:#ffb4a0}
 #ppPage .pp-back{background:transparent;border:1px solid var(--rbe-hair,#2c3038);color:var(--rbe-mute,#9aa0a8);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;margin-bottom:12px}
 #ppPage .pp-back:hover{border-color:#f5a623;color:var(--rbe-ink,#cfd6df)}
 #ppPage .pp-card{background:var(--rbe-bg1,#2e333b);border:1px solid var(--rbe-hair,#2c3038);border-radius:12px;padding:15px}
@@ -88825,6 +88836,8 @@ select{min-height:44px;}
   /* P09.05 (1442): from 1280, not 1600 - two ~440px columns fit beside the rail there */
   @media (min-width:1280px){
     body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView .wrap:not(.masthead){ max-width:1600px; }
+    /* 1470: from 2300px wide the client page uses up to 2100px (it left ~55% of an ultrawide empty) */
+    @media (min-width:2300px){ body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView .wrap:not(.masthead){ --cr-stack:"1470 ultrawide: a wider page"; max-width:2100px; } }
     /* 1227: a GRID, not CSS columns. Columns cannot be ordered (the browser
        balances them by height), so the Job Menu could not be put first; a grid
        honours the order block below. Band across the top as before; the Job
