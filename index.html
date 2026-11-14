@@ -4448,7 +4448,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1465<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1466<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -15085,12 +15085,70 @@ function crFieldJob(id){
   var open = rows.filter(function(r){ return r && String(r.project_id) === String(id) && r.status !== 'done'; });
   var mine = open.filter(function(r){ return String(r.assigned_to || '').toLowerCase() === me; });
   var pick = mine[0] || open[0];
-  if(pick && window.CardinalPunchCard && typeof window.CardinalPunchCard.open === 'function'){
+  /* 1466: a field login never sees the client profile (1317/1430) - and Install photos opened ONLY from the
+     profile's Job Menu, while setStage() will not mark a job Completed until those photos are in. The person
+     on the roof with the camera could not fill them. And a job with no open punch-out was a dead end (a toast:
+     no address, no Directions, no Call). Now: a job still being installed (Approved / Scheduled), or one with
+     no punch-out, opens the field job sheet; a job past install with a punch-out still opens its punch card. */
+  var pr = (typeof cacheProjects !== 'undefined' && cacheProjects) ? cacheProjects.find(function(x){ return String(x.id) === String(id); }) : null;
+  var installing = !!(pr && ['Approved','Scheduled'].indexOf(normStage(pr.stage)) !== -1 &&
+    window.CardinalInstall && window.CardinalInstall.setFor && window.CardinalInstall.setFor(pr));
+  if(pick && !installing && window.CardinalPunchCard && typeof window.CardinalPunchCard.open === 'function'){
     try{ window.CardinalPunchCard.open(pick.id, { back:'none' }); }catch(_){}
     return;
   }
+  if(pr){ fjOpen(pr, open, installing); return; }
   try{ crTell('No open punch-out on this job yet. When there is one, its punch card has the address and directions.', 'info'); }catch(_){}
 }
+/* 1466: the field job sheet. Name, address, Directions / Call / Text, Install photos while the job is being
+   installed, and the job's open punch items. No money, no admin - a field login's whole view of a job. */
+var _fjEl = null;
+function fjClose(){ if(_fjEl) _fjEl.classList.remove('open'); }
+function fjOpen(pr, open, installing){
+  if(!_fjEl){
+    _fjEl = document.createElement('div'); _fjEl.id = 'cr-fjob';
+    document.body.appendChild(_fjEl);
+    _fjEl.addEventListener('click', function(e){
+      var t = /** @type {any} */ (e.target);
+      if(t.closest('[data-fj-close]')){ fjClose(); return; }
+      var pu = t.closest('[data-fj-punch]');
+      if(pu){ fjClose(); try{ window.CardinalPunchCard.open(pu.getAttribute('data-fj-punch'), { back:'none' }); }catch(_p){} return; }
+      if(t.closest('[data-fj-inst]')){ var p = _fjEl.__pr; if(p && window.CardinalInstall) window.CardinalInstall.open(p); }
+    });
+    var instUp = function(){ var m = document.getElementById('cr-inst-sheet'); return !!(m && m.classList.contains('open')); };
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && _fjEl.classList.contains('open') && !instUp()) fjClose(); });
+    window.addEventListener('popstate', function(){ if(_fjEl.classList.contains('open') && !instUp()) fjClose(); });
+  }
+  _fjEl.__pr = pr;
+  var addr = [pr.address, pr.city].filter(Boolean).join(', ');
+  var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
+  var dir = pr.address ? ((typeof mapsUrl === 'function') ? mapsUrl(addr) : 'https://maps.google.com/?q=' + encodeURIComponent(addr)) : '';
+  var badge = installing ? String(window.CardinalInstall.badge(pr) || '') : '';
+  _fjEl.innerHTML = '<div class="fj-scrim" data-fj-close="1"></div>' +
+    '<div class="fj-box" role="dialog" aria-modal="true" aria-labelledby="fjName">' +
+      '<div class="fj-h"><b id="fjName">' + esc(pr.name || 'Job') + '</b>' +
+        '<button type="button" class="fj-x" data-fj-close="1" aria-label="Close">&times;</button></div>' +
+      (addr ? '<div class="fj-addr">' + esc(addr) + '</div>' : '<div class="fj-addr">No address on file yet</div>') +
+      '<div class="fj-acts">' +
+        (dir ? '<a class="fj-btn" target="_blank" rel="noopener" href="' + esc(dir) + '">Directions</a>' : '') +
+        (tel ? '<a class="fj-btn" href="tel:' + esc(tel) + '">Call</a><a class="fj-btn" href="sms:' + esc(tel) + '">Text</a>' : '') +
+      '</div>' +
+      (installing ? '<button type="button" class="fj-row fj-inst" data-fj-inst="1"><span>Install photos</span><b id="fjInstN">' + esc(badge) + '</b><i aria-hidden="true">&rsaquo;</i></button>' : '') +
+      '<div class="fj-sec">Punch &amp; Repairs</div>' +
+      (open.length
+        ? open.map(function(r){ return '<button type="button" class="fj-row" data-fj-punch="' + esc(r.id) + '"><span>' + esc(r.title || 'Punch item') + '</span><i aria-hidden="true">&rsaquo;</i></button>'; }).join('')
+        : '<div class="fj-empty">Nothing open on this job.</div>') +
+    '</div>';
+  _fjEl.classList.add('open');
+  if(installing && window.CardinalInstall.missing){
+    var len = Number(badge.split('/')[1]) || 0;
+    window.CardinalInstall.missing(pr).then(function(miss){
+      var b = document.getElementById('fjInstN');
+      if(b && len && Array.isArray(miss)) b.textContent = (len - miss.length) + '/' + len;
+    }, function(){});
+  }
+}
+window.fjOpen = fjOpen;
 function openProject(id){
   /* 1317: a client profile carries Balance Due and every money tab. A field user's job
      details — address, phone, directions — are on the punch card. */
@@ -47249,6 +47307,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1466, d:'2026-11-14', t:'The crew can take the install photos', s:'A field login (Scottie) never sees the client page, and Install photos only opened from there, yet a job cannot be marked Completed until those photos are in. Now, tapping a job that is Approved or Scheduled opens a job sheet: the address with Directions, Call and Text, an Install photos button with its count, and the job\'s open punch items. A job with no punch-out opens the same sheet instead of a message saying there is nothing to show. A finished job with a punch-out still opens its punch card.' },
   { b: 1465, d:'2026-11-14', t:'Client page: a safer stage menu, and numbers you can read', s:'The three-dot menu on the stage bar is a proper menu now, with big rows, and Mark Lost sits at the bottom under a line instead of right under Advance. Mark Lost asks why before it does anything (Cancel leaves the job alone), and Advance, Mark Lost and Reopen all give you the same 5-second Undo as the arrows. Measurement numbers (squares, pitch, lengths) were almost invisible on the dark card and now read clearly, two to a row on a phone. On Orders the Mark ordered button shows in light mode, and a job with no total yet shows a $0.00 balance in plain text, not red.' },
   { b: 1464, d:'2026-11-14', t:'Punch search finds more', s:'The search on Punch & Repairs now also finds a kind of job (tarp, repair, callback), the client phone number, who filed it, a person by name, and words in the checklist or the messages. On a computer, the Assign, filter and + New windows open in the middle of the screen instead of stuck to the top or bottom edge.' },
   { b: 1463, d:'2026-11-14', t:'Adding a punch item says so', s:'After + New on Punch & Repairs, the page now says what happened (Added for Scottie, or Added and needs assigned) and rings the new item so you can see it, even when the waiting box is showing only three. The form fields are named for screen readers, and the grey hint text in the forms and the search box is easier to read.' },
@@ -101150,6 +101209,32 @@ window.CardinalFrontDoor = Object.assign(window.CardinalFrontDoor || {}, {
 #cr-inst-sheet .in-foot{display:flex; gap:8px; margin-top:14px;}
 #cr-inst-sheet .in-foot .in-btn{flex:1 1 0;}
 #cr-inst-sheet .in-why{font-size:13px; color:var(--in-due,#f08a90); margin-top:8px; min-height:18px;}
+</style>
+<style id="cr-fjob-styles">
+/* 1466: the field job sheet (crFieldJob). Below the Install photos sheet (12000), which opens over it. */
+#cr-fjob{--fj-sheet:#141619;--fj-ink:#f2f4f7;--fj-dim:#a8b0ba;--fj-line:#2a2e35;--fj-well:#1b1f24;
+  position:fixed;inset:0;z-index:11900;display:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+:root[data-theme="rb-light"] #cr-fjob{--fj-sheet:#FFFFFF;--fj-ink:#0F172A;--fj-dim:#475569;--fj-line:#E2E8F0;--fj-well:#F8FAFC;}
+#cr-fjob.open{display:block;}
+#cr-fjob .fj-scrim{position:absolute;inset:0;background:rgba(0,0,0,.62);}
+#cr-fjob .fj-box{position:absolute;left:0;right:0;bottom:0;max-height:92vh;overflow:auto;box-sizing:border-box;max-width:560px;margin:0 auto;
+  background:var(--fj-sheet);color:var(--fj-ink);border-radius:18px 18px 0 0;padding:14px 16px 26px;}
+#cr-fjob .fj-h{display:flex;align-items:center;gap:10px;}
+#cr-fjob .fj-h b{flex:1;font-size:20px;font-weight:800;line-height:1.2;}
+#cr-fjob .fj-x{width:44px;height:44px;border:0;border-radius:12px;background:var(--fj-well);color:var(--fj-ink);font-size:24px;line-height:1;cursor:pointer;}
+#cr-fjob .fj-addr{font-size:15px;color:var(--fj-dim);margin:2px 0 12px;}
+#cr-fjob .fj-acts{display:flex;gap:8px;margin:0 0 14px;}
+#cr-fjob .fj-btn{flex:1;display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:12px;background:#C8202E;color:#fff;
+  font-size:16px;font-weight:800;text-decoration:none;}
+#cr-fjob .fj-row{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;min-height:54px;margin:0 0 8px;padding:0 14px;
+  border:1px solid var(--fj-line);border-radius:12px;background:var(--fj-well);color:var(--fj-ink);font-family:inherit;font-size:16px;font-weight:700;
+  text-align:left;cursor:pointer;}
+#cr-fjob .fj-row span{flex:1;}
+#cr-fjob .fj-row b{font-size:15px;color:var(--fj-dim);}
+#cr-fjob .fj-row i{font-style:normal;font-size:22px;color:var(--fj-dim);}
+#cr-fjob .fj-inst{border-color:#C8202E;}
+#cr-fjob .fj-sec{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--fj-dim);margin:12px 0 8px;}
+#cr-fjob .fj-empty{font-size:15px;color:var(--fj-dim);padding:6px 2px;}
 </style>
 <script id="cr-inst-script">
 /* 1331: install-day photos. See patch_1331.py for the why. window.CardinalInstall. */

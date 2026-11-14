@@ -348,6 +348,10 @@ const GATES = [
     protects: "the punch search finds kind, phone, filer, names, steps and messages; desk sheets open centred",
     break: { find: '.pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:center; }',
              repl: '.pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:flex-start; }' } },
+  { name: 'gate_1466.mjs',
+    protects: "a field login reaches Install photos: a job being installed (or with no punch-out) opens the field job sheet with directions, call, install photos and its punch items",
+    break: { find: "  if(pr){ fjOpen(pr, open, installing); return; }",
+             repl: "  if(false){ fjOpen(pr, open, installing); return; }" } },
   { name: 'gate_1465.mjs',
     protects: "the stage menu is styled with 44px rows and Mark Lost last; Mark Lost asks first and Advance waits out the Undo window; measurement numbers, Orders and a $0 balance are readable",
     break: { find: "    if(ans === null) return;
