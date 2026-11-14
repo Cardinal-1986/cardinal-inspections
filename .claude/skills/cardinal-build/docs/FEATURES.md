@@ -10894,3 +10894,13 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | 1461 | Needs-assigned box: oldest three + Show all (`PU.qAll`, `data-puqmore`) | `cr-punch-script` |
 
 **Gates:** `gate_1458.mjs` … `gate_1461.mjs`.
+
+## Builds 1462–1464: punch polish (14 Nov 2026)
+
+| Build | Piece | Where |
+|---|---|---|
+| 1462 | Card text 13px / labels 12px; light On site bar | `cr-pk-read-styles` |
+| 1463 | `CardinalPunch.flash()` after + New; `.pu-flash`; form `aria-label`s; placeholder colours | `cr-punch-script`, Production's add sheet |
+| 1464 | Wider `match()` haystack; centred desk dialogs from 1100px | `cr-punch-script`, `cr-punch-styles` |
+
+**Gates:** `gate_1462.mjs` … `gate_1464.mjs`.
