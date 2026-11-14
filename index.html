@@ -4425,7 +4425,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1459<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-13 build 1460<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47210,6 +47210,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1460, d:'2026-11-13', t:'Punch: two people on one card no longer undo each other', s:'If two people had the same punch card open, the second one to save the checklist or the Bring list used to wipe out what the first had just done, with nothing said. Now the card checks first: if someone else changed it a moment ago, it shows their change and asks you to make yours again.' },
   { b: 1459, d:'2026-11-13', t:'Punch: move a late job to tomorrow in one tap', s:'On Punch & Repairs, a past-due job now has a Tomorrow button for Theo, Joan and Curtis that moves it to the next working day. Whenever a job moves to a new day, from that button or from the date on the card, the person assigned to it gets a buzz saying the new day.' },
   { b: 1458, d:'2026-11-13', t:'Punch health on the home screen', s:'The home screen now has one line for Punch & Repairs right under the pipeline: how many are open, how many are late and how old the oldest is, how many have nobody assigned, how many are ready to close and how many closed this week. It turns red when something is late, and tapping it opens the late list.' },
   { b: 1457, d:'2026-11-13', t:'Close old punch items without the five photos (for now)', s:'For now, Theo, Joan and Curtis can close a punch item without the five photos, so old items and tests can be cleared out. The crew still needs five photos before telling Curtis a job is finished, and any checklist steps still have to be ticked. This is temporary and can be switched back.' },
@@ -73507,7 +73508,18 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 'use strict';
 /* ── shared punch data layer: one query, one write path, reused by every surface ── */
 var _rows = [];
-var _loadFail = false;   /* 1452: the last load failed (a refused or dropped read) */
+var _loadFail = false;
+/* 1460: what the SERVER last said each card's checklist and Bring list were. The card writes those
+   lists whole, from its own copy — so if Scottie ticked a step after Curtis opened the card, Curtis's
+   next save wiped the tick. Before writing either list we now re-read it; if it moved under us we do
+   not overwrite: the card takes the server's list and says so. Messages already merge (1413). Photos
+   and check-ins are left out on purpose: refusing a photo over a conflict could strand the upload. */
+var SNAP_KEYS = ['steps', 'truck'];
+var _snap = {};
+function _snapSet(id, data){
+  var o = _snap[id] = _snap[id] || {};
+  SNAP_KEYS.forEach(function(k){ if(Object.prototype.hasOwnProperty.call(data, k)) o[k] = JSON.stringify(data[k] == null ? null : data[k]); });
+}   /* 1452: the last load failed (a refused or dropped read) */
 async function reload(){
   if(!window.supa) return _rows;
   try{
@@ -73518,6 +73530,7 @@ async function reload(){
     }
     _rows = r.data || [];
     _loadFail = false;
+    _rows.forEach(function(row){ _snapSet(row.id, row); });   /* 1460: before any offline overlay */
     /* 1049: replay pending offline writes over the fetched rows — without this
        a refresh while still offline would wipe the crew's queued work. Once a
        write syncs it leaves the outbox, so the overlay stops on its own (the
@@ -73596,6 +73609,22 @@ async function update(id, patch){
       if(_fr && !_fr.error && _fr.data && Array.isArray(_fr.data.comments)) patch.comments = window.crMergeComments(_fr.data.comments, patch.comments);
     }catch(_){}
   }
+  /* 1460: did someone else change the checklist or the Bring list since we loaded it? */
+  var _ck = SNAP_KEYS.filter(function(k){ return Object.prototype.hasOwnProperty.call(patch, k); });
+  if(_ck.length && _snap[it.id] && !_noSignal(null)){
+    try{
+      var _sv = await window.supa.from('punch_items').select(Object.keys(patch).join(',')).eq('id', it.id).single();
+      if(_sv && !_sv.error && _sv.data){
+        var _moved = _ck.filter(function(k){ return _snap[it.id][k] !== undefined && JSON.stringify(_sv.data[k] == null ? null : _sv.data[k]) !== _snap[it.id][k]; });
+        if(_moved.length){
+          /* every field of the refused save goes back to what the server has (the template's name too) */
+          Object.keys(patch).forEach(function(k){ if(Object.prototype.hasOwnProperty.call(_sv.data, k)) it[k] = _sv.data[k]; });
+          _snapSet(it.id, _sv.data);
+          return { ok:false, conflict:true, error:'someone else changed this card a moment ago. It now shows their change \u2014 make yours again.' };
+        }
+      }
+    }catch(_){}
+  }
   var before = {};
   Object.keys(patch).forEach(function(k){ before[k] = it[k]; });
   Object.assign(it, patch);
@@ -73614,6 +73643,7 @@ async function update(id, patch){
       }
       throw r.error;
     }
+    if(_ck.length) _snapSet(it.id, patch);   /* 1460: our write is now what the server says */
     if(window.CardinalProduction && window.CardinalProduction.refresh){ try{ window.CardinalProduction.refresh(); }catch(_){} }
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){ try{ window.CardinalPunchProfile.refresh(); }catch(_){} }
     return { ok:true };
