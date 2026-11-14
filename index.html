@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1476<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1477<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47499,6 +47499,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1477, d:'2026-11-14', t:'Production: readable in the rain, easier to tap', s:'On a rainy or snowy night the date and the line under Production could sit on a pale cloud and nearly vanish; the words now keep a dark ground under them. The tick box beside a punch item is easier to hit, and Crew Dispatch’s trade filters are full-size buttons. On a computer, Dispatch’s jobs, trade rows and filters can be reached with the keyboard and opened with Enter.' },
   { b: 1476, d:'2026-11-14', t:'Crew Dispatch looks like Production', s:'Crew Dispatch now uses the same lettering as Production instead of a typewriter face, with crew names written normally rather than in capitals. On a computer it opens inside the app, under the header and beside the menu, like Production, instead of covering both, and on a wide screen it uses the width instead of a narrow column. Each crew says Nothing booked today, or the first day with nothing booked. The full calendar is now as wide as Production on a big screen, and Production’s month shows what is on each day on a computer, not just a dot.' },
   { b: 1475, d:'2026-11-14', t:'Production: the way back, and one name', s:'Open job and Crews from Production now keep the header on Production instead of switching it to Retail, and Home takes you back to Production. Crews opened from Production shows ‹ Production at the top and returns there. Production is called Production everywhere: the menu said Production Board. The empty Scheduled list now says a build day comes from booking a crew in Crew Dispatch, and + Add reads + Punch item.' },
   { b: 1474, d:'2026-11-14', t:'Production on a phone: today first', s:'On a phone, Production now opens with the boxes and today’s list right under a shorter sky; the month calendar, Closed and the doors to Crew Dispatch and Crews come after. The Today row, which only repeated today’s list, is gone on phones as it already was on a computer. A field login (Scottie) sees My day at the top: his own open work for today and anything past due, each with the address, a Directions button and Open. He no longer sees the materials boxes or Mark ordered, which are office work.' },
@@ -59658,6 +59659,9 @@ objections : OBJECTIONS,
   display:flex; align-items:center; justify-content:center; color:transparent;
 }
 #cr-pb .pbitem .bx svg{ width:12px; height:12px; }
+/* 1477: the tick was a 22px target (the 1206 floor is 44) - the box stays 22 to the eye, the pad makes it 44 */
+#cr-pb .pbitem .bx{ --cr-stack:"1477 a 44px hit pad round the 22px tick"; position:relative; }
+#cr-pb .pbitem .bx::after{ content:""; position:absolute; inset:-11px; }
 /* 775: the ONE rule in this stylesheet that must NOT be scoped to #cr-pb —
    it dresses the button this module injects into the burger menu, which is
    somebody else's container. Bare-class first so the icon is sized wherever
@@ -59909,6 +59913,17 @@ body.standalone .cr-undo-toast.pbundo{ --cr-stack:"1416: clears the installed ta
 @keyframes pbskyfade{ from{ opacity:0; } to{ opacity:1; } }
 #cr-pb .pbskycv{ position:absolute; inset:0; z-index:1; width:100%; height:100%; display:block; pointer-events:none; }
 #cr-pb .pbskyin{ position:relative; z-index:2; padding:18px 15px 0; }
+/* 1477: in rain (any hour) and in night/dawn/sunset snow the words are light, and the canvas drifts pale
+   clouds - or lays the snow line - straight behind them: measured 1.16-1.19:1 for the date, the subtitle
+   and the title. A dark wash behind the text block only, held under the words and faded out below them,
+   so a cloud passing behind the title dims and the sky below is untouched. At .66 the palest cloud
+   (#ebebec) composites to ~#585858 - 5.4:1 for the #f6decb date ink, 7:1 for the white title. The CSS
+   ground of these skies is already near-black at the top, so on a clear frame the wash is invisible. */
+#cr-pb .pbsky[data-wx="rain"] .pbskyin,
+#cr-pb .pbsky[data-wx="snow"]:not([data-sky="day"]) .pbskyin{
+  padding-bottom:16px;
+  background:linear-gradient(180deg, rgba(10,12,16,.66) 0, rgba(10,12,16,.66) calc(100% - 16px), rgba(10,12,16,0) 100%);
+}
 #cr-pb .pbsky h1{ --cr-stack:"1446: the title sits on the sky, whose ink flips with the hour; the board's own h1 ink stays for every other pane"; color:var(--sky-ink,#ffffff); }
 #cr-pb .pbsky .pbmon{ --cr-stack:"1446: the date sits on the sky"; color:var(--sky-ink2,#f6decb); font-weight:700; }
 #cr-pb .pbsky .pbsub{ --cr-stack:"1446: the subtitle is the sky's eyebrow"; color:var(--sky-ink2,#f6decb); font-weight:700; margin:6px 0 0; }
@@ -90140,6 +90155,10 @@ body.cr-lnav-on #cr-disp{
 #cr-disp .dspfilt{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
 #cr-disp .dspfilt .fc{ font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; padding:5px 11px; border-radius:8px;
   background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer; }
+#cr-disp .dspfilt .fc{ --cr-stack:"1477 a 44px chip, as Production's"; display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 14px; font-size:13px; box-sizing:border-box; }
+/* 1477: every card and band is a keyboard stop now - say where focus is */
+#cr-disp [role="button"]:focus-visible{ outline:2px solid var(--disp-ink,#fff); outline-offset:2px; }
 #cr-disp .dspfilt .fc.on{ border-color:var(--disp-ink,#fff); color:var(--disp-ink,#fff); }
 
 /* ── 948: THE MAGNET BOARD (Theo's 4C pick) ─────────────────────────────
@@ -90498,7 +90517,7 @@ body.cr-lnav-on #cr-disp{
       '</svg></button>';
     var wf = (s && statusPip(w) !== 'done' && window.CardinalWx && window.CardinalWx.flag) ? window.CardinalWx.flag(s) : '';
     return '<div class="job' + (String(armedMove) === String(w.id) ? ' moving' : '') + (grip ? ' hasmv' : '') + (wf ? ' wetd' : '') + '" data-pid="' + esc(w.project_id) + '">' +
-      '<div class="t"><span class="nm">' + esc(nm) + '</span><span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
+      '<div class="t"><span class="nm" role="button" tabindex="0">' + esc(nm) + '</span><span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
       (ad ? '<div class="a">' + esc(ad) + '</div>' : '') +
       (wf ? '<div class="wxf">' + WXF_ICON + esc(wf) + '</div>' : '') + '</div>';
   }
@@ -90559,7 +90578,7 @@ body.cr-lnav-on #cr-disp{
     el.classList.toggle('armmv', !!mvWo);
     var railInner = needCrew.length
       ? needCrew.map(function(p){
-          return '<div class="uch' + (String(p.id) === String(armed) ? ' armed' : '') + (ro() ? ' ro' : '') + '" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
+          return '<div class="uch' + (String(p.id) === String(armed) ? ' armed' : '') + (ro() ? ' ro' : '') + '" role="button" tabindex="0" aria-pressed="' + (String(p.id) === String(armed) ? 'true' : 'false') + '" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
             '</div><div class="a">' + esc(firstLine(p.address)) + '</div></div>';
         }).join('')
       : '<span class="none">every scheduled job has a crew</span>';
@@ -90626,7 +90645,7 @@ body.cr-lnav-on #cr-disp{
       }
       /* 948: the strip is a control — chevron folds the trade to one line */
       var nAll = inTrade.length;
-      var strip = '<div class="dband" data-band="' + esc(tr) + '"><span class="bl">' +
+      var strip = '<div class="dband" role="button" tabindex="0" aria-expanded="' + (foldTrade[tr] ? 'false' : 'true') + '" data-band="' + esc(tr) + '"><span class="bl">' +
         '<span class="chev">' + (foldTrade[tr] ? '\u25B8' : '\u25BE') + '</span>' + esc(tr) +
         '<span class="cnt">' + nAll + (nAll === 1 ? ' CREW' : ' CREWS') + '</span></span></div>';
       if(foldTrade[tr]){
@@ -90642,7 +90661,7 @@ body.cr-lnav-on #cr-disp{
     function repChip(pi){
       var pp = projById(pi.project_id);
       var loc = pp ? firstLine(pp.address) : '';
-      return '<div class="rep" data-pid="' + esc(pi.project_id) + '"><div class="t">' + esc(pi.title||'Repair') +
+      return '<div class="rep" role="button" tabindex="0" data-pid="' + esc(pi.project_id) + '"><div class="t">' + esc(pi.title||'Repair') +
         '</div>' + (loc ? '<div class="a">' + esc(loc) + '</div>' : '') + '</div>';
     }
     function repairsBand(){
@@ -90755,7 +90774,7 @@ body.cr-lnav-on #cr-disp{
     el = document.createElement('div');
     el.id = 'cr-disp';
     var tradeChips = ['All','Roofing','Siding','Windows','Gutters'].map(function(t){
-      return '<span class="fc' + (t==='All'?' on':'') + '" data-f="' + t + '">' + t + '</span>';
+      return '<span class="fc' + (t==='All'?' on':'') + '" role="button" tabindex="0" aria-pressed="' + (t==='All' ? 'true' : 'false') + '" data-f="' + t + '">' + t + '</span>';
     }).join('');
     el.innerHTML =
       '<div class="dspwrap">' +
@@ -90782,6 +90801,13 @@ body.cr-lnav-on #cr-disp{
     el.querySelector('.dspback').addEventListener('click', dspBack);   /* 1416 */
     el.querySelector('.dspprev').addEventListener('click', function(){ weekOffset--; render(); if(mapOn) syncMap(); });
     el.querySelector('.dspnext').addEventListener('click', function(){ weekOffset++; render(); if(mapOn) syncMap(); });
+    /* 1477: Enter and Space on a card, band or chip do what a tap does - the delegated click below */
+    el.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      var t = e.target;
+      if(!t || !t.getAttribute || t.getAttribute('role') !== 'button') return;
+      e.preventDefault(); t.click();
+    });
     el.addEventListener('click', function(e){
       var f = e.target.closest('.dspfilt .fc');
       if(f){ filter = f.getAttribute('data-f'); render(); if(mapOn) syncMap(); return; }

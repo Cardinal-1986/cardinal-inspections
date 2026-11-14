@@ -177,7 +177,7 @@ const shown = (p, id) => p.evaluate(i => { const e = document.getElementById(i);
         return { dd, cf };
       });
       ok(d.dd.length === 7 && d.dd.every(x => x[0] >= 0 && x[1] <= 390 && x[2] >= 44), 'A9 all seven days are named on screen, each a 44px target', JSON.stringify(d.dd.map(x => x.slice(0, 3))));
-      ok(d.cf.length > 0 && !d.cf.some(t => /^free\b/i.test(t)) && d.cf.some(t => /^none booked/i.test(t)), 'A9 the crew tags say "None booked", never "free"', JSON.stringify(d.cf));
+      ok(d.cf.length > 0 && !d.cf.some(t => /^free\b/i.test(t)) && d.cf.some(t => /^(none|nothing) booked/i.test(t)), 'A9 the crew tags say what is booked (1476: "Nothing booked"), never "free"', JSON.stringify(d.cf));
       await click(page, '#cr-disp .dspdays .dd[data-dday="5"]'); await wait(page, 1100);
       const v = await page.evaluate(() => { const sc = document.querySelector('#cr-disp .dspscroll').getBoundingClientRect(); const rail = document.querySelector('#cr-disp .dcol .c.rail').getBoundingClientRect();
         const hd = document.querySelectorAll('#cr-disp .dcol .c')[6].getBoundingClientRect(); return { left: Math.round(hd.left), right: Math.round(hd.right), from: Math.round(rail.right), to: Math.round(sc.right) }; });
