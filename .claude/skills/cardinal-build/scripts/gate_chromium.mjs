@@ -297,6 +297,13 @@ const GATES = [
     protects: "Punch & Repairs list, card and client rows in obsidian, no tab caps, sentence case, the hammer art behind the list; light untouched",
     break: { find: "url('/punch-art-hammer.jpg') right bottom",
              repl: "none right bottom" } },
+
+  /* 1457: the 5-photo lock off for bosses, for now. The break turns the lock back on, so A goes red.
+     ⚠ When Theo asks for the lock back, flip PHOTO_LOCK and retire this gate in the same build. */
+  { name: 'gate_1457.mjs',
+    protects: "with PHOTO_LOCK off, Theo, Joan and Curtis close without photos; the crew still needs five",
+    break: { find: "var PHOTO_LOCK = false;",
+             repl: "var PHOTO_LOCK = true;" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

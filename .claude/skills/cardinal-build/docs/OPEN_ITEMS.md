@@ -2,6 +2,11 @@
 
 ---
 
+## ⏸ TEMPORARY 13 Nov 2026 (Theo: "just for now so i can close out some of the old ones or tests") — the 5-photo lock is OFF for bosses (build 1457)
+
+- Theo, Joan and Curtis can close a punch item with fewer than five photos. The crew still needs five before "Tell Curtis it's finished". Steps still count.
+- **The settled rule (closing needs 5 photos) is paused, not repealed.** When Theo says the old items are cleared, set `PHOTO_LOCK = true` in `cr-pk-script` and retire `gate_1457` in the same build.
+
 ## 🔧 IN PROGRESS 13 Nov 2026 (Theo: "audit with 10 judges…", then "All, in order") — the Punch audit, six groups
 
 Ten judges scored Punch & Repairs about 6/10 (presentation 6.7, ease 6.0, visibility 5.9, workflow 5.8). Built in this order, one build each:
