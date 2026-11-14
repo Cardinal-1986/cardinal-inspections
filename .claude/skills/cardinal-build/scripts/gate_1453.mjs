@@ -85,7 +85,7 @@ ok(c.h.length && c.h.every(t => /^Punch & Repairs$/.test(t)) && !c.tile.some(t =
 /* E, G on Production */
 await run(p, 'production');
 const e = await p.evaluate(() => { const t = document.querySelector('[data-box="punch"]'); return t && t.textContent.replace(/\s+/g, ' ').trim(); });
-ok(/Punch & Repairs/.test(e || '') && /1 late/.test(e || ''), 'E  Production tile: Punch & Repairs, 1 late', e);
+ok(/Punch & Repairs/.test(e || '') && /1 (late|past due)/.test(e || ''), 'E  Production tile: Punch & Repairs, 1 late (1473 words it "past due", as the Punch page does)', e);
 await p.evaluate(() => { const t = document.querySelector('[data-box="closed"]'); if (t) t.click(); }); await wait(1500);
 const g = await p.evaluate(() => ({ back: !!document.querySelector('#puList .pl-back'), grp: [...document.querySelectorAll('#puList .pl-grp')].map(x => x.textContent) }));
 ok(g.back && g.grp.some(x => /^Closed/.test(x)), 'G  Production Closed opens the closed list', g);

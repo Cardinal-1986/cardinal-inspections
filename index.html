@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1472<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1473<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47497,6 +47497,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1473, d:'2026-11-14', t:'Production: lists in the order they matter', s:'Job lists in Production now put a build that should already have started first, then the soonest build dates, then jobs with no date yet. Before they sorted by name, so a job building in two days with nothing ordered could sit at the bottom. Each card shows its build day on its own line (Build today, Build tomorrow, Build Mon Nov 16) so a long address cannot cut it off. Needs a date shows every undated job, including ones already ordered, and says how many more punch items have no date instead of quietly stopping. The Punch tile says past due, the same as the Punch & Repairs page, the Closed row says Punch closed, and a finished job no longer counts as Scheduled.' },
   { b: 1472, d:'2026-11-14', t:'Production: one schedule', s:'Booking a crew in Crew Dispatch now sets the job’s build day everywhere in Production: the calendar, the Scheduled box, the job’s tags and the day’s list, with the crew named on it. Before, Production only knew about build-day appointments, so a job with a crew booked still said Needs scheduling. Each job card in Production has a Book crew button that opens Crew Dispatch with that job ready to place on a crew’s day, and Back from Dispatch returns to Production. Dispatch’s Needs a crew list now includes sold jobs, not only ones that already had a date.' },
   { b: 1471, d:'2026-11-14', t:'On a very wide screen, the job and its parts side by side', s:'On a screen 2200 pixels wide or more (Theo’s ultrawide), opening Estimates, Contracts, Inspections, Measurements, Orders, Checklists, Work Orders, Punch & Repairs or Commissions from the Job Menu shows it beside the client page instead of replacing it, so the job and the part you are working on stay on screen together. Back to client profile closes the side. Phones, tablets and normal monitors are unchanged.' },
   { b: 1470, d:'2026-11-14', t:'Client page: desktop and the small things', s:'On a computer you can text a client from the top bar now, not only call. On a very wide screen the client page uses more of it instead of stopping at 1600 pixels. History says how many events a job has (it stopped at 8) and when it was last touched. Color Studio is marked as opening in a new tab. The URGENT and DAYS LATE tags on punch items are brighter and easier to read, and the delete button on an appointment and the fold-out rows on Measurements and Orders are full-size to tap.' },
@@ -59593,6 +59594,7 @@ objections : OBJECTIONS,
   display:block; color:var(--pb-dim,#848c94); font-size:11px; margin:2px 0 0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
+#cr-pb .pbjob .bd{ display:block; margin:3px 0 0; font-size:13px; font-weight:700; color:var(--pb-ink,#e8ebef); }   /* 1473 */
 #cr-pb .pbdot{ width:8px; height:8px; border-radius:50%; flex:none; background:#3a4149; }
 #cr-pb .pbdot.retail{ background:#c8202e; }
 #cr-pb .pbdot.insurance{ background:#c4180f; }
@@ -60012,6 +60014,13 @@ function apptDay(v){
   return (d && !isNaN(d)) ? midnight(d) : null;
 }
 function pbDay(d){ return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+/* 1473: "Build today" / "Build tomorrow" / "Build Mon Nov 16" */
+function pbWhen1473(d){
+  var t = today(), n = Math.round((d - t) / 864e5);
+  if(n === 0) return 'today';
+  if(n === 1) return 'tomorrow';
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
 function pbFull(d){ return d.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' }); }
 
 /* ------------------------------------------------------------ punch access */
@@ -60110,11 +60119,16 @@ function activeJobs(){
   return (window.cacheProjects || []).filter(function(pr){
     var st = normStage(pr.stage);
     return st === 'Approved' || st === 'Scheduled' || st === 'Completed';
-  }).map(function(pr){ return { pr:pr, blk:blockerFor(pr) }; })
+  }).map(function(pr){ return { pr:pr, blk:blockerFor(pr), sd:schedFor(pr) }; })
     .sort(function(a, b){
-      var rank = { blocked:0, soon:1, clear:2 };
-      var ra = a.blk ? rank[a.blk.tone] : 3, rb = b.blk ? rank[b.blk.tone] : 3;
-      if(ra !== rb) return ra - rb;
+      /* 1473: was tone first, then NAME - a job building in two days with nothing ordered sat below eight
+         undated jobs. Now: a build that should have started, then dated builds soonest first, then the
+         undated, then finished jobs; name only breaks ties. */
+      var t = today();
+      var grp = function(j){ var st = normStage(j.pr.stage); if(st === 'Completed') return 3; if(j.sd && j.sd < t) return 0; return j.sd ? 1 : 2; };
+      var ga = grp(a), gb = grp(b);
+      if(ga !== gb) return ga - gb;
+      if(a.sd && b.sd && a.sd.getTime() !== b.sd.getTime()) return a.sd - b.sd;
       return String(a.pr.name || '').localeCompare(String(b.pr.name || ''));
     });
 }
@@ -60145,7 +60159,7 @@ function boxes(){
   var ordered = jobs.filter(function(j){
     return matOrdered(j.pr) && normStage(j.pr.stage) !== 'Completed';
   });
-  var sched = jobs.filter(function(j){ return !!schedFor(j.pr); });
+  var sched = jobs.filter(function(j){ return !!schedFor(j.pr) && normStage(j.pr.stage) !== 'Completed'; });   /* 1473: a finished job left Scheduled */
   var open = punchRows().filter(function(i){ return i.status === 'open'; });
   var mstart = new Date(); mstart.setDate(1); mstart = midnight(mstart);
   var closed = punchRows().filter(function(i){
@@ -60284,6 +60298,7 @@ function tilesHtml(){
   var _tk = keyOf(new Date());   /* 1453 */
   var late = b.open.filter(function(i){
     if(!i.scheduled_at) return false;
+    if(!i.assigned_to) return false;   /* 1473: Punch & Repairs files it under "need assigned", not past due */
     if(i.hold_reason && (!i.hold_until || String(i.hold_until).slice(0, 10) > _tk)) return false;
     return String(i.scheduled_at).slice(0, 10) < _tk;
   }).length;
@@ -60302,10 +60317,10 @@ function tilesHtml(){
       nextBuild ? 'next build ' + esc(pbDay(nextBuild)) : 'nothing booked') +
     tile('punch', b.open.length, 'tool', 'Punch & Repairs',
       /* 1453: "4 · 1 urgent" hid a repair 78 days late */
-      [late ? '<em>' + late + ' late</em>' : '', urg ? '<em>' + urg + ' urgent</em>' : ''].filter(Boolean).join(' · ') || 'none late', true) +
+      [late ? '<em>' + late + ' past due</em>' : '', urg ? '<em>' + urg + ' urgent</em>' : ''].filter(Boolean).join(' · ') || 'none past due', true) +   /* 1473: the Punch page's word */
     '</div>' +
     '<button class="pbclosed" data-box="closed" type="button">' + svg('check') +
-      '<span class="t">Closed</span><span class="c">' + b.closed.length + ' this month</span>' +
+      '<span class="t">Punch closed</span><span class="c">' + b.closed.length + ' this month</span>' +   /* 1473: it never counted finished jobs */
       '<span class="go">›</span></button>';
 }
 function weekHtml(){
@@ -60631,16 +60646,19 @@ function calHtml(){
 /* Curtis's dispatch queue: work that exists but has no date on it yet. */
 function unscheduledHtml(){
   var b = boxes();
-  var waiting = b.needs.concat(b.sched.length ? [] : []).filter(function(j){ return !schedFor(j.pr); });
+  /* 1473: it was built from Needs-ordered only (marking a job ordered dropped it from here though it still
+     had no date) and showed 4 jobs and 4 items with no sign that more existed. */
+  var waiting = activeJobs().filter(function(j){ var st = normStage(j.pr.stage); return (st === 'Approved' || st === 'Scheduled') && !schedFor(j.pr); });
   var loose = punchRows().filter(function(i){ return i.status === 'open' && !i.scheduled_at; });
   if(!waiting.length && !loose.length) return '';
   var out = '<div class="pbrule" style="margin-top:16px;">Needs a date</div>';
-  waiting.slice(0, 4).forEach(function(j){
+  waiting.forEach(function(j){
     out += jobHtml(j);
   });
   loose.slice(0, 4).forEach(function(i){
     out += itemHtml(i);
   });
+  if(loose.length > 4) out += '<button class="pbchip pbmore1473" data-box="punch" type="button">' + (loose.length - 4) + ' more punch item' + (loose.length - 4 === 1 ? '' : 's') + ' without a date ›</button>';
   return out;
 }
 function jobHtml(j){
@@ -60668,7 +60686,8 @@ function jobHtml(j){
   acts += '<button class="pbact ghost" data-job="' + esc(pr.id) + '" type="button">Open job</button>';
   return '<div class="pbjob ' + (blk ? blk.tone : '') + '">' +
     '<div class="nm"><span class="pbdot ' + portalOf(pr) + '"></span><span class="t">' + esc(pr.name || 'Unnamed') + '</span></div>' +
-    '<span class="ad">' + esc(pr.address || 'No address') + (sched ? ' · build ' + esc(pbDay(sched)) : '') + '</span>' +
+    '<span class="ad">' + esc(pr.address || 'No address') + '</span>' +
+    (sched ? '<span class="bd">Build ' + esc(pbWhen1473(sched)) + '</span>' : '') +   /* 1473 */
     '<div class="pbrow2">' + bits + '</div>' +
     '<div class="pbrow2">' + acts + '</div>' +
     '</div>';
