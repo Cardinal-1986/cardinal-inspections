@@ -10883,3 +10883,14 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 - `PHOTO_LOCK` (currently **false**) and `photosNeeded()` in `cr-pk-script`. Off: bosses close without photos; the crew still needs five to tell Curtis. On: five for everyone, as before.
 
 **Gate:** `gate_1457.mjs`.
+
+## Builds 1458–1461: Punch follow-ups (13 Nov 2026)
+
+| Build | Piece | Where |
+|---|---|---|
+| 1458 | Home health line `#kpPunchHealth` (`CardinalPunchStrip.health`) | `cr-punch-script`, `cr-punchstrip-script` |
+| 1459 | "Tomorrow ›" on past-due rows (`plTomorrow`, `data-putomorrow`); buzz on a day change (list and card `notifyMoved`) | `cr-punch-script`, `cr-pk-script` |
+| 1460 | Conflict check for `steps` / `truck` (`SNAP_KEYS`, `_snap`, in `update()`) | `cr-punch-script` |
+| 1461 | Needs-assigned box: oldest three + Show all (`PU.qAll`, `data-puqmore`) | `cr-punch-script` |
+
+**Gates:** `gate_1458.mjs` … `gate_1461.mjs`.

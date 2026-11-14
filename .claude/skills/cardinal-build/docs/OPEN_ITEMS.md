@@ -18,7 +18,7 @@ Ten judges scored Punch & Repairs about 6/10 (presentation 6.7, ease 6.0, visibi
 5. ✅ **Desktop and ultrawide** (**1455**) — the card hides the list; no Escape; no sort; at 3440 the list is a 560px column.
 6. ✅ **The look** (**1456**) — SETTLED 13 Nov: Theo picked **A**, obsidian everywhere (card sections, client page AND the list rows as obsidian cards), no coloured tab caps, sentence-case labels. Previewed side by side in the "Punch & Repairs Looks" artifact. Plus the background art he asked for: the dotted hand holding a framing hammer (`punch-art-hammer.jpg`), dark only. Do not swap it for a code-drawn version: those were tried and rejected as not defined enough. Was: — list, card and client-page list are three styles, none obsidian; too many accents; the Ask button covers row initials. **Previews first** (Theo's rule for visual changes).
 
-Not confirmed, recorded only: two people editing one card can overwrite each other (steps, visits, truck list are written whole).
+✅ Two people on one card overwriting each other: confirmed in code and fixed for the checklist and Bring list at **1460** (photos and visits deliberately not). Follow-ups shipped at 1458–1461: Home health line, Tomorrow + reschedule buzz, the queue cap.
 
 ## ✅ SETTLED 13 Nov 2026 (Theo: "keep what we currently have and just change the colors" → grey → "Darker maybe glass style" → "Try obsidian" → "A") — obsidian instead of navy (build 1450)
 
