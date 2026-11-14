@@ -304,6 +304,30 @@ const GATES = [
     protects: "with PHOTO_LOCK off, Theo, Joan and Curtis close without photos; the crew still needs five",
     break: { find: "var PHOTO_LOCK = false;",
              repl: "var PHOTO_LOCK = true;" } },
+
+  /* 1458: punch health on Home. The break empties the mount id, so the line has nowhere to paint. */
+  { name: 'gate_1458.mjs',
+    protects: "one Punch & Repairs health line under the pipeline on Home; a tap opens Past due",
+    break: { find: '<div id="kpPunchHealth"></div>',
+             repl: '<div id="kpPunchHealthOff"></div>' } },
+
+  /* 1459: Tomorrow on a late row. The break stops the button being drawn. */
+  { name: 'gate_1459.mjs',
+    protects: "a Tomorrow button on past-due rows for the schedulers, and a buzz to the assignee when a day moves",
+    break: { find: "  if(plBase(it) !== 'late') return '';",
+             repl: "  return '';" } },
+
+  /* 1460: two editors. The break skips the conflict check, so the second save overwrites again. */
+  { name: 'gate_1460.mjs',
+    protects: "a save of the checklist or Bring list does not overwrite a change made since the card loaded",
+    break: { find: "  if(_ck.length && _snap[it.id] && !_noSignal(null)){",
+             repl: "  if(false){" } },
+
+  /* 1461: the queue cap. The break shows every queued item again. */
+  { name: 'gate_1461.mjs',
+    protects: "the needs-assigned box shows the oldest three and a Show all button",
+    break: { find: "var qShow = PU.qAll ? queue : queue.slice(0, 3);",
+             repl: "var qShow = queue;" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
