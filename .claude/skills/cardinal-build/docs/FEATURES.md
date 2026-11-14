@@ -10927,3 +10927,16 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | `crSplitTab()` + `#projectView.cr-split` grid at ≥2200px: overview left, the opened section right; resize listener | main block (`showTab`), `cr-…` styles beside 1470 |
 
 **Gate:** `gate_1471.mjs`.
+
+## Builds 1472–1477: Production, the six fix groups (14 Nov 2026)
+
+| Build | Piece | Where |
+|---|---|---|
+| 1472 | Crew Dispatch bookings are build days: `loadWos()`, `schedFor` / `eventsFor`, Crew tag, Book crew / Move crew → Dispatch armed (`armPid`), Back returns (`openedFrom1472`) | `cr-pb-script`, `cr-disp-script` |
+| 1473 | job sort (late, soonest, undated, Completed), `pbWhen1473` build line, Needs a date = every undated job, past due / Punch closed | `cr-pb-script` |
+| 1474 | phone landing order (flex column < 1100px), `myDayHtml()` for a field login, office tiles hidden for him | `cr-pb-script` + its styles |
+| 1475 | `prodCtx1475()` → Production head + Home back to Production; Crews `open({from})` / "‹ Production"; one name; + Punch item | header block (`crmHead`, `goHome`, `hideAllViews`), `cr-crew-script`, `cr-pb-script` |
+| 1476 | Dispatch: Production's sans, sentence case, desk shell (`body.cr-lnav-on #cr-disp`), 2160 on ultrawide; full calendar 2160; home month names on a desk | `cr-disp-styles`, `cr-pb` styles + `homeMonthHtml` |
+| 1477 | sky text wash in rain / night snow; 44px tick pad; 44px filter chips; Dispatch keyboard (`role=button`, Enter/Space) | `cr-pb` styles, `cr-disp-styles`, `cr-disp-script` |
+
+**Gates:** `gate_1472.mjs` … `gate_1477.mjs`.

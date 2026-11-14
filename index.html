@@ -60181,8 +60181,8 @@ function activeJobs(){
          undated jobs. Now: a build that should have started, then dated builds soonest first, then the
          undated, then finished jobs; name only breaks ties. */
       var t = today();
-      var grp = function(j){ var st = normStage(j.pr.stage); if(st === 'Completed') return 3; if(j.sd && j.sd < t) return 0; return j.sd ? 1 : 2; };
-      var ga = grp(a), gb = grp(b);
+      var sortGroup1473 = function(j){ var st = normStage(j.pr.stage); if(st === 'Completed') return 3; if(j.sd && j.sd < t) return 0; return j.sd ? 1 : 2; };
+      var ga = sortGroup1473(a), gb = sortGroup1473(b);
       if(ga !== gb) return ga - gb;
       if(a.sd && b.sd && a.sd.getTime() !== b.sd.getTime()) return a.sd - b.sd;
       return String(a.pr.name || '').localeCompare(String(b.pr.name || ''));
