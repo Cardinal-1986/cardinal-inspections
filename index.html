@@ -2698,6 +2698,31 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .ackv div{color:var(--rbe-ink,#2b2b2b);min-width:0;overflow-wrap:anywhere;}
 .ackv-ms{grid-template-columns:110px 1fr 110px 1fr;max-width:560px;}
 @media (max-width:560px){ .ackv-ms{grid-template-columns:104px 1fr;} }
+/* 1469: the screens the Job Menu opens were five different apps - a cream message box, a white
+   Appointments form and white Checklists cards on the dark page. Dark twins below; light is unchanged
+   (the cream box and white cards ARE the light design). */
+.ap-lbl{font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5f58;}
+.ap-status{font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#666;}
+.btn.dark.tabback{margin:0 0 12px;}
+.ckcard .projcount{white-space:nowrap;}
+:root:not([data-theme="rb-light"]) .ap-lbl{color:#b8bec6;}
+:root:not([data-theme="rb-light"]) .ap-status{color:#a8b0ba;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #apptsView .acxsec{--cr-stack:"1469 the Appointments form's dark twin";background:#141418;border-color:#2b2b33;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #apptsView .acxsel{--cr-stack:"1469 the Appointments fields' dark twin";background:#0f0f13;color:#eef1f5;border-color:#3a3a44;color-scheme:dark;}
+:root:not([data-theme="rb-light"]) .ckcard{--cr-stack:"1469 the Checklists cards' dark twin";background:#141418;border-color:#2b2b33;color:#e8ebf0;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatbox{--cr-stack:"1469 the message box's dark twin";background:#141418;border-color:#2b2b33;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatmsg .bub{--cr-stack:"1469 dark twin";background:#1d1d23;border-color:#2b2b33;color:#e8ebf0;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatmsg .who{color:#ff8a90;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatmsg .when,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatwill{--cr-stack:"1469 dark twin";color:#a8b0ba;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatwill.warn{--cr-stack:"1469 the warning keeps its red on the dark box";color:#ff8a90;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatmsg .mention{background:rgba(200,32,46,.28);color:#ffc2c6;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatmsg.mine .av{background:#3a3a44;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatmsg .chattag{--cr-stack:"1469 dark twin";color:#d8c9c2;border-color:#6b5d57;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView #chatTagRow .chipbtn{--cr-stack:"1469 the @name chips on the dark box";color:#e6e9ee;border-color:#3a3a44;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatbox textarea,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatbox input[type="text"]{--cr-stack:"1469 dark twin";background:#0f0f13;color:#eef1f5;border-color:#3a3a44;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance) #commsView .chatbox .chatempty{--cr-stack:"1469 dark twin";color:#a8b0ba;}
 /* 1468: the Job Menu's three headings */
 .ja-menu .jasect{margin:16px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);}
 /* 1467: the status line under the stage band. The Overview orders its cards with CSS order (1225 phone,
@@ -4469,7 +4494,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1468<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1469<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4931,7 +4956,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
 
     <div id="tab-inspections" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <div class="jabox" id="inspGalBox" style="max-width:430px;margin:0 0 8px;"><svg class="dbic2" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9.4 4h5.2l1.3 2h3.6A1.5 1.5 0 0 1 21 7.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-11A1.5 1.5 0 0 1 4.5 6h3.6l1.3-2zm2.6 5.2a4.3 4.3 0 1 0 0 8.6 4.3 4.3 0 0 0 0-8.6zm0 2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6z"/></svg> Photo Gallery <b class="jan zero" id="inspGalN">0</b></div>
       <p class="subnote">Photos transferred for this client&#8217;s inspections (max 30). The full album lives in
       <b>Photo Album</b> on the Overview.</p>
@@ -4944,7 +4969,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
 
     <div id="tab-estimates" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <h3 class="projsec" data-cri="calculator lg">Estimates</h3>
       <div style="margin:6px 0 12px;">
         <span id="pEstWrap" style="position:relative;">
@@ -4969,7 +4994,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
 
     <div id="tab-contracts" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <h3 class="projsec" data-cri="contract lg">Contracts</h3>
       <p class="subnote">Roofing, siding and gutter Construction Agreements, prefilled from this profile.
       Signed on paper, or a windows job?
@@ -4994,7 +5019,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
 
     <div id="tab-commissions" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <h3 class="projsec" data-cri="money lg">Money In &amp; Commissions</h3>
       <p class="subnote">Every check received on this job &#8212; the rep&#8217;s 10% commission writes itself.
       Reps see their own rows; admins see everyone&#8217;s.</p>
@@ -5002,7 +5027,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
 
     <div id="tab-workorders" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <h3 class="projsec" data-cri="ladder lg">Work Orders</h3>
       <p class="subnote">Cardinal&#8217;s own work order, issued <b>to a crew</b> &#8212; one per trade.
       Filled from the inspection and the measurements on this job. Open it to correct anything,
@@ -5014,7 +5039,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
 
     <div id="tab-checklists" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <h3 class="projsec" data-cri="clipboard lg">Checklists</h3>
       <p class="subnote">Job checklists for this client. The Roofing Inspection Checklist must be completed
       before an inspection report can be created &#8212; its core specs feed the report automatically.</p>
@@ -5037,62 +5062,62 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
 
     <div id="tab-measure" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <h3 class="projsec" data-cri="ruler lg">Measurements</h3>
       <p class="subnote">Order aerial measurements, keep every report with the client, and record the numbers your estimates run on.</p>
 
       <div class="matcard">
-        <div class="mathead collhead matcoll open"><b>&#128200; Measurement Values</b><span class="projcount" id="msValCount"></span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll open"><b>Measurement Values</b><span class="projcount" id="msValCount"></span><span class="collchev">&#9656;</span></div>
         <div class="matbody"><div id="msValMount"></div>
           <button class="chipbtn" id="msValEdit" style="margin-top:8px;">&#9998; Edit values</button>
         </div>
       </div>
 
       <div class="matcard">
-        <div class="mathead collhead matcoll open"><b>&#128225; Satellite estimate</b><span class="projcount" id="satCount">not run</span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll open"><b>Satellite estimate</b><span class="projcount" id="satCount">not run</span><span class="collchev">&#9656;</span></div>
         <div class="matbody">
           <p class="subnote" style="margin:0 0 8px;">A rough roof size from aerial imagery, in about two seconds and at no cost. <b>An estimate, not a measurement</b> &mdash; it is never filed against the job and never goes on a document. Order a report when you need a number to defend.</p>
           <div class="matbtns">
-            <button class="chipbtn" id="satGo">&#128225; Estimate from satellite</button>
+            <button class="chipbtn" id="satGo">Estimate from satellite</button>
           </div>
           <div id="satMount"></div>
         </div>
       </div>
 
       <div class="matcard">
-        <div class="mathead collhead matcoll open"><b>&#128312; Roofr</b><span class="projcount" id="msCntRoofr">No reports</span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll open"><b>Roofr</b><span class="projcount" id="msCntRoofr">No reports</span><span class="collchev">&#9656;</span></div>
         <div class="matbody"><div class="matbtns">
-          <button class="chipbtn msOrder" data-src="Roofr">&#128722; Order on Roofr &#8599;</button>
-          <button class="chipbtn msUp" data-src="Roofr">&#128206; Upload Roofr report</button>
+          <button class="chipbtn msOrder" data-src="Roofr">Order on Roofr &#8599;</button>
+          <button class="chipbtn msUp" data-src="Roofr">Upload Roofr report</button>
         </div>
         <div class="matmount" id="msListRoofr"></div></div>
       </div>
 
       <div class="matcard">
-        <div class="mathead collhead matcoll open"><b>&#128313; Hover</b><span class="projcount" id="msCntHover">No reports</span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll open"><b>Hover</b><span class="projcount" id="msCntHover">No reports</span><span class="collchev">&#9656;</span></div>
         <div class="matbody"><div class="matbtns">
-          <button class="chipbtn msOrder" data-src="Hover">&#128722; Order on Hover &#8599;</button>
-          <button class="chipbtn msUp" data-src="Hover">&#128206; Upload Hover report</button>
+          <button class="chipbtn msOrder" data-src="Hover">Order on Hover &#8599;</button>
+          <button class="chipbtn msUp" data-src="Hover">Upload Hover report</button>
         </div>
         <div class="matmount" id="msListHover"></div></div>
       </div>
       <div class="note" id="msImpNote" style="display:none;margin:0 0 10px;"></div>
 
       <div class="matcard">
-        <div class="mathead collhead matcoll"><b>&#128208; Field / Other</b><span class="projcount" id="msCntField">No reports</span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll"><b>Field / Other</b><span class="projcount" id="msCntField">No reports</span><span class="collchev">&#9656;</span></div>
         <div class="matbody"><div class="matbtns">
-          <button class="chipbtn msUp" data-src="Field">&#128206; Upload file</button>
+          <button class="chipbtn msUp" data-src="Field">Upload file</button>
         </div>
         <div class="matmount" id="msListField"></div></div>
       </div>
       <input type="file" id="msFileInput" accept="application/pdf,image/*" style="display:none;" multiple>
     </div>
     <div id="tab-punch" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <div id="ppPage"></div>
     </div>
     <div id="tab-materials" style="display:none;">
-      <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
+      <button class="btn dark tabback" onclick="showTab('overview')">&larr; Back to client profile</button>
       <h3 class="projsec" data-cri="box lg">Material Order Lists</h3>
       <p class="subnote">Import measurements once and auto-generate a material order with quantities and units.
       Quantities include standard waste and are fully editable &#8212; always verify against the scope before ordering.</p>
@@ -5104,45 +5129,45 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn" id="matAbcOrder" type="button" hidden style="margin:0 0 16px;">Order from ABC</button>
 
       <div class="matcard" data-trade="roofing">
-        <div class="mathead collhead matcoll"><b>&#127968; Roofing</b><span class="projcount" id="matSrcroofing">No measurements yet</span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll"><b>Roofing</b><span class="projcount" id="matSrcroofing">No measurements yet</span><span class="collchev">&#9656;</span></div>
         <div class="matbody" style="display:none;"><div class="matbtns">
-          <button class="chipbtn matup" data-trade="roofing">&#128196; Import Roofr PDF</button>
-          <button class="chipbtn matgen" data-trade="roofing">&#9881;&#65039; Generate list</button>
-          <button class="chipbtn matcopy" data-trade="roofing">&#128203; Copy</button>
-          <button class="chipbtn matprint" data-trade="roofing">&#128424; Print</button>
+          <button class="chipbtn matup" data-trade="roofing">Import Roofr PDF</button>
+          <button class="chipbtn matgen" data-trade="roofing">Generate list</button>
+          <button class="chipbtn matcopy" data-trade="roofing">Copy</button>
+          <button class="chipbtn matprint" data-trade="roofing">Print</button>
         </div>
         <div class="matmount" id="matListroofing"></div></div>
       </div>
 
       <div class="matcard" data-trade="siding">
-        <div class="mathead collhead matcoll"><b>&#129521; Siding</b><span class="projcount" id="matSrcsiding">No measurements yet</span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll"><b>Siding</b><span class="projcount" id="matSrcsiding">No measurements yet</span><span class="collchev">&#9656;</span></div>
         <div class="matbody" style="display:none;"><div class="matbtns">
-          <button class="chipbtn matup" data-trade="siding">&#128196; Import Hover PDF</button>
-          <button class="chipbtn matgen" data-trade="siding">&#9881;&#65039; Generate list</button>
-          <button class="chipbtn matcopy" data-trade="siding">&#128203; Copy</button>
-          <button class="chipbtn matprint" data-trade="siding">&#128424; Print</button>
+          <button class="chipbtn matup" data-trade="siding">Import Hover PDF</button>
+          <button class="chipbtn matgen" data-trade="siding">Generate list</button>
+          <button class="chipbtn matcopy" data-trade="siding">Copy</button>
+          <button class="chipbtn matprint" data-trade="siding">Print</button>
         </div>
         <div class="matmount" id="matListsiding"></div></div>
       </div>
 
       <div class="matcard" data-trade="gutters">
-        <div class="mathead collhead matcoll"><b>&#127783;&#65039; Gutters</b><span class="projcount" id="matSrcgutters">No footage set</span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll"><b>Gutters</b><span class="projcount" id="matSrcgutters">No footage set</span><span class="collchev">&#9656;</span></div>
         <div class="matbody" style="display:none;"><div class="matbtns">
-          <button class="chipbtn matset" data-trade="gutters">&#9999;&#65039; Set gutter footage</button>
-          <button class="chipbtn matgen" data-trade="gutters">&#9881;&#65039; Generate list</button>
-          <button class="chipbtn matcopy" data-trade="gutters">&#128203; Copy</button>
-          <button class="chipbtn matprint" data-trade="gutters">&#128424; Print</button>
+          <button class="chipbtn matset" data-trade="gutters">Set gutter footage</button>
+          <button class="chipbtn matgen" data-trade="gutters">Generate list</button>
+          <button class="chipbtn matcopy" data-trade="gutters">Copy</button>
+          <button class="chipbtn matprint" data-trade="gutters">Print</button>
         </div>
         <div class="matmount" id="matListgutters"></div></div>
       </div>
 
       <div class="matcard" data-trade="windows">
-        <div class="mathead collhead matcoll"><b>&#129695; Windows</b><span class="projcount" id="matSrcwindows">No count set</span><span class="collchev">&#9656;</span></div>
+        <div class="mathead collhead matcoll"><b>Windows</b><span class="projcount" id="matSrcwindows">No count set</span><span class="collchev">&#9656;</span></div>
         <div class="matbody" style="display:none;"><div class="matbtns">
-          <button class="chipbtn matset" data-trade="windows">&#9999;&#65039; Set window count</button>
-          <button class="chipbtn matgen" data-trade="windows">&#9881;&#65039; Generate list</button>
-          <button class="chipbtn matcopy" data-trade="windows">&#128203; Copy</button>
-          <button class="chipbtn matprint" data-trade="windows">&#128424; Print</button>
+          <button class="chipbtn matset" data-trade="windows">Set window count</button>
+          <button class="chipbtn matgen" data-trade="windows">Generate list</button>
+          <button class="chipbtn matcopy" data-trade="windows">Copy</button>
+          <button class="chipbtn matprint" data-trade="windows">Print</button>
         </div>
         <div class="matmount" id="matListwindows"></div></div>
       </div>
@@ -5225,7 +5250,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <span id="galCount" class="projcount" style="vertical-align:middle;">0</span></h2>
       <p class="subnote" id="galHint">Every photo for this client.</p>
       <div class="galtools" style="margin:6px 0 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <button class="btn" id="galCamBtn">&#128247; Take photos</button>
+        <button class="btn" id="galCamBtn">Take photos</button>
         <button class="btn ghost" id="galAddBtn">&#43; Add from phone</button>
         <button class="chipbtn" id="galCcBtn" style="display:none;">From CompanyCam</button>
         <button class="btn" id="galInspBtn">&#10145;&#65039; Add checked to Inspection Photos</button>
@@ -5305,8 +5330,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <p class="subnote">Receipts, delivery tickets, voice memos &#8212; anything for this job.
     Scans and uploads are visible to the whole team. <b>A signed contract goes in Contracts</b> (Upload signed contract) &#8212; that is what opens the invoice.</p>
     <div style="margin:6px 0 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="chipbtn" id="jdScanBtn" style="background:#C8202E;color:#fff;border-color:var(--red);">&#128247; Scan document</button>
-      <button class="chipbtn" id="jdUploadBtn">&#11014;&#65039; Upload files</button>
+      <button class="chipbtn" id="jdScanBtn" style="background:#C8202E;color:#fff;border-color:var(--red);">Scan document</button>
+      <button class="chipbtn" id="jdUploadBtn">Upload files</button>
       <span id="jdStatus" style="font:12.5px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#666;"></span>
       <input type="file" id="jdScanInput" accept="image/*" capture="environment" style="display:none;">
       <input type="file" id="jdFileInput" accept="*/*" multiple style="display:none;">
@@ -5322,7 +5347,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <h2 class="viewhead" data-cri="calendar lg">Appointments <span id="apClient" style="color:var(--rbe-mute,#8a6f66);font-size:18px;"></span></h2>
     <p class="subnote">Everything scheduled for this job &#8212; these also show on the team calendar.</p>
     <div class="acxsec"><div class="acxbody" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-      <label style="font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5f58;">Type<br>
+      <label class="ap-lbl">Type<br>
         <select id="apKind" class="acxsel">
           <option value="Inspection">Inspection</option>
           <option value="Client meeting">Client meeting</option>
@@ -5333,14 +5358,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <option value="Follow-up">Follow-up</option>
           <option value="Other">Other</option>
         </select></label>
-      <label style="font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5f58;">Date<br>
+      <label class="ap-lbl">Date<br>
         <input type="date" id="apDate" class="acxsel"></label>
-      <label style="font:700 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5f58;">Time<br>
+      <label class="ap-lbl">Time<br>
         <input type="time" id="apTime" class="acxsel"></label>
       <input type="text" id="apNotes" class="acxsel" placeholder="notes (optional)" style="flex:1 1 220px;min-width:130px;"><!-- A4 (P12.15): a 220px basis, so on a phone it takes its own row instead of cutting its hint -->
       <button class="btn" id="apAddBtn">Add</button>
     </div></div>
-    <span id="apStatus" style="font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#666;"></span>
+    <span id="apStatus" class="ap-status"></span>
     <div id="apMount" style="margin-top:12px;"></div>
   </div>
 </div>
@@ -8555,7 +8580,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <!-- ============ COMMUNICATIONS PAGE ============ -->
 <div id="commsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:900px;">
-    <button class="btn dark" id="commsBackBtn">&larr; Back</button>
+    <button class="btn dark" id="commsBackBtn">&larr; Back to client profile</button>
     <h2 class="viewhead" data-cri="chat lg">Communications <span id="commsCli" style="color:var(--rbe-mute,#9c1822);"></span></h2>
     <div class="chatbox">
       <div class="chatthread" id="chatThread"></div>
@@ -15827,7 +15852,7 @@ function renderGallery(){
   if(!currentPhotos.length){
     grid.innerHTML = galMode === 'insp'
       ? '<div class="galempty">No inspection photos yet \u2014 open the \uD83D\uDCF7 Photo Album, check photos, and tap \u27A1\uFE0F Add checked to Inspection Photos.</div>'
-      : '<div class="galempty">No photos yet \u2014 tap <b>\uD83D\uDCF7 Take photos</b> or <b>+ Add from phone</b>.</div>';
+      : '<div class="galempty">No photos yet \u2014 tap <b>Take photos</b> or <b>+ Add from phone</b>.</div>';
     return;
   }
   grid.innerHTML = currentPhotos.map(function(ph){
@@ -47424,6 +47449,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1469, d:'2026-11-14', t:'Client page: the screens behind the tiles match', s:'In dark mode the Communication box, the Appointments form and the Checklists cards were cream and white panels on the black page. They are dark now, like everything around them (light mode is unchanged). Every screen you open from the client page has the same Back to client profile button, instead of Back, Back to client profile or Overview depending on the screen. The emoji that had crept back onto the Measurements, Orders, Files and Photos buttons are gone, and the Not completed tag on Checklists no longer breaks over two lines.' },
   { b: 1468, d:'2026-11-14', t:'Client page: the Job Menu in the order a job runs', s:'The Job Menu tiles were in the order they were built, so Inspections was tenth and Work Orders last. Now Photos and Tasks come first, then three short headings: Sell (Inspections, Measurements, Estimates, Contracts, Appointments), Build (Orders, Work Orders, Change order, Checklists, Install photos) and Close (Punch & Repairs, Files, Owner review). Change order, Owner review and Install photos each have their own icon instead of borrowing another tile’s, and Files now says a signed contract belongs in Contracts, which is what opens the invoice.' },
   { b: 1467, d:'2026-11-14', t:'Client page: where the job stands, at a glance', s:'A row under the stage bar now says what you would otherwise scroll for: whether the contract is signed (and warns when a sold job has none), the balance due, the next appointment, who has the job and when it was last touched. Tap any of them to go there. The Contracts tile says Signed or Sent, Orders says Ordered or To order, and Work Orders shows how many there are. Production and field logins do not see the balance.' },
   { b: 1466, d:'2026-11-14', t:'The crew can take the install photos', s:'A field login (Scottie) never sees the client page, and Install photos only opened from there, yet a job cannot be marked Completed until those photos are in. Now, tapping a job that is Approved or Scheduled opens a job sheet: the address with Directions, Call and Text, an Install photos button with its count, and the job\'s open punch items. A job with no punch-out opens the same sheet instead of a message saying there is nothing to show. A finished job with a punch-out still opens its punch card.' },
@@ -52318,7 +52344,7 @@ return String(b.created_at || '').localeCompare(String(a.created_at || ''));
 if(!shown.length){
 grid.innerHTML = '<div class="galempty">' +
 (activeTab === 'all'
-? 'No photos yet \u2014 tap <b>\uD83D\uDCF7 Take photos</b> or <b>+ Add from phone</b>.'
+? 'No photos yet \u2014 tap <b>Take photos</b> or <b>+ Add from phone</b>.'
 : 'No photos in <b>' + esc(activeTab) + '</b> yet.') +
 '</div>';
 updateActionBar();
