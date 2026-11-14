@@ -38,10 +38,21 @@ const ok = (name, cond, detail) => {
 const wait = ms => new Promise(r => setTimeout(r, ms));
 setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 240000).unref();
 
+/* 1457: the page clock is pinned to a FRIDAY at 10:00. The shared seed (sentinel_setup_cardinal.js)
+   puts work orders on +1, +5 and NEXT SUNDAY; this gate wants one on +2 (the dry day) — which is next
+   Sunday only when today is a Friday. The gate was written and passed on Friday 13 Nov and was red on
+   every other day: measured with GATE_NOW, Mon–Thu and Sat all RED 6/2, Fri GREEN 8/0. PR 772 hit it
+   at 00:11 UTC on Sat 14 Nov (Friday evening in Dayton) with nothing wrong in the build. The seed, the
+   forecast and the board all read the same pinned clock, so the gate now means the same thing every
+   day. GATE_NOW overrides it. */
+const PINNED = process.env.GATE_NOW ? new Date(process.env.GATE_NOW) : (() => {
+  const d = new Date(); d.setHours(10, 0, 0, 0); d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7)); return d;
+})();
 const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 async function dispatch({ light = false, forecast = true } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
+  await page.clock.setFixedTime(PINNED);
   const errs = [];
   page.on('pageerror', e => errs.push(String(e).split('\n')[0]));
   page.on('dialog', d => d.accept());
