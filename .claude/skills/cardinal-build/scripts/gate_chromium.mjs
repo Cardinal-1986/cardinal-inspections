@@ -250,8 +250,8 @@ const GATES = [
      tile in front of Joan, Nick and Curtis — accounts the Showroom refuses — and C goes red. */
   { name: 'gate_1449.mjs',
     protects: "the Job Menu's Color Studio tile is the Showroom owner's alone, and opens the Experience in a new tab",
-    break: { find: "(crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')",
-             repl: "(true ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')" } },
+    break: { find: "(crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio ↗', '', 'colorstudio') : '')",
+             repl: "(true ? jt(dbIc('swatch'), 'Color Studio ↗', '', 'colorstudio') : '')" } },
 
   /* 1450: obsidian instead of navy. The break strips the obsidian face back to a flat panel,
      so a home card paints no sheen and F goes red. ⚠ all:true — 1456 and 1458 reuse the same face
