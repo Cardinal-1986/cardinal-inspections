@@ -250,8 +250,8 @@ const GATES = [
      tile in front of Joan, Nick and Curtis — accounts the Showroom refuses — and C goes red. */
   { name: 'gate_1449.mjs',
     protects: "the Job Menu's Color Studio tile is the Showroom owner's alone, and opens the Experience in a new tab",
-    break: { find: "(crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')",
-             repl: "(true ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '')" } },
+    break: { find: "(crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio ↗', '', 'colorstudio') : '')",
+             repl: "(true ? jt(dbIc('swatch'), 'Color Studio ↗', '', 'colorstudio') : '')" } },
 
   /* 1450: obsidian instead of navy. The break strips the obsidian face back to a flat panel,
      so a home card paints no sheen and F goes red. ⚠ all:true — 1456 and 1458 reuse the same face
@@ -348,6 +348,30 @@ const GATES = [
     protects: "the punch search finds kind, phone, filer, names, steps and messages; desk sheets open centred",
     break: { find: '.pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:center; }',
              repl: '.pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:flex-start; }' } },
+  { name: 'gate_1470.mjs',
+    protects: "client page desktop + small things: a Text link on desk, a wider page on ultrawide, History's real count and last touch, readable punch flags, 44px folds and appointment X, Color Studio marked",
+    break: { find: ".mathead.collhead{min-height:44px;}",
+             repl: ".mathead.collhead{min-height:0;}" } },
+  { name: 'gate_1469.mjs',
+    protects: "the screens behind the Job Menu: the message box, Appointments form and Checklists cards are dark in dark (unchanged in light), one Back to client profile everywhere, no emoji",
+    break: { find: ":root:not([data-theme=\"rb-light\"]) .ckcard{--cr-stack:\"1469 the Checklists cards' dark twin\";background:#141418;",
+             repl: ":root:not([data-theme=\"rb-light\"]) .ckcard{--cr-stack:\"1469 the Checklists cards' dark twin\";background:#ffffff;" } },
+  { name: 'gate_1468.mjs',
+    protects: "the Job Menu runs Sell / Build / Close in job order, every tile has its own icon, no tile lost, readable headings",
+    break: { find: "'<div class=\"jasect\" role=\"heading\" aria-level=\"4\">Sell</div>' +",
+             repl: "" } },
+  { name: 'gate_1467.mjs',
+    protects: "the client page's status line sits under the stage band on phone, desk and wide; it flags a sold job with no contract, shows the next appointment, and hides the balance from production",
+    break: { find: "body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstatus{ order:1; grid-column:1 / -1; }",
+             repl: "body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstatus{ grid-column:1 / -1; }" } },
+  { name: 'gate_1466.mjs',
+    protects: "a field login reaches Install photos: a job being installed (or with no punch-out) opens the field job sheet with directions, call, install photos and its punch items",
+    break: { find: "  if(pr){ fjOpen(pr, open, installing); return; }",
+             repl: "  if(false){ fjOpen(pr, open, installing); return; }" } },
+  { name: 'gate_1465.mjs',
+    protects: "the stage menu is styled with 44px rows and Mark Lost last; Mark Lost asks first and Advance waits out the Undo window; measurement numbers, Orders and a $0 balance are readable",
+    break: { find: "crStageDefer(pr, 'Lost', { lostReason: String(ans) });",
+             repl: "await setStage(pr.id, 'Lost', { lostReason: String(ans) }); renderOverview(); renderPipeline();" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS

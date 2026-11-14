@@ -68,7 +68,7 @@ const tile = () => {
   const { ctx, page, errs } = await clientPage('theo');
   const a = await page.evaluate(tile);
   ok('A the client page rendered its Job Menu', a.menu, a);
-  ok('A the owner sees a "Color Studio" tile', a.has && a.label === 'Color Studio', a);
+  ok('A the owner sees a "Color Studio" tile', a.has && /^Color Studio( ↗)?$/.test(a.label)   /* 1470 marks it as opening in a new tab */, a);
   const before = await page.evaluate(() => location.href);
   await page.evaluate(() => { const t = document.querySelector('.ja-menu .jabox[data-jm="colorstudio"]'); if (t) t.click(); });
   await wait(500);

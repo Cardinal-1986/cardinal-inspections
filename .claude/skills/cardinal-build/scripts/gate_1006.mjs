@@ -31,7 +31,7 @@ let fails = [], passes = 0;
 const need = (n, ok, d) => { if (ok) passes++; else fails.push(n + (d ? ' — ' + d : '')); };
 
 /* source-level shape: the new race-free primitives exist, the old single-timer drop is gone */
-need('crStageDefer takes (pr, target) — commitFn dropped', /function crStageDefer\(pr, target\)\{/.test(APP) || APP.includes('function crStageDefer(pr, target){'),
+need('crStageDefer takes (pr, target) — commitFn dropped', /function crStageDefer\(pr, target(, opts)?\)\{/.test(APP),   /* 1465: an optional opts (a pre-asked loss reason) is not the dropped commitFn */
      'signature not updated');
 need('a pending move is committed, not dropped, on supersede', APP.includes('if(_crStagePending) _crStageCommit(_crStagePending);'),
      'no commit-on-supersede');
