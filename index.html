@@ -4447,7 +4447,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
                static markup. The LAST "Insurance" heading is still the one
                renameSec() turns into "CRMs" - keep these sections above it. -->
           <div class="navsec">Production</div>
-          <button class="navopt" data-nav="prodboard" data-cri="factory lg">Production Board</button>
+          <button class="navopt" data-nav="prodboard" data-cri="factory lg">Production</button>
           <button class="navopt" data-nav="dispatch" data-cri="truck lg">Crew Dispatch</button>
           <button class="navopt" data-nav="punch" data-cri="ladder lg">Punch &amp; Repairs</button>
 
@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1474<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1475<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4529,7 +4529,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <span class="cbn" data-go="track" data-cri="calculator lg">Track</span>
   <span class="cbn" data-go="reports" data-cri="chart lg">Reports</span>
   <span class="cbn cbdd" data-dd="prod"><span class="cbl" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">Production <b class="car">&#9660;</b></span>
-    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="factory lg">Production Board</span><span class="cbi" data-go="dispatch" data-cri="truck lg">Crew Dispatch</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
+    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="factory lg">Production</span><span class="cbi" data-go="dispatch" data-cri="truck lg">Crew Dispatch</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
   </span>
   <span class="cbn cbdd" data-dd="tools"><span class="cbl" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">Tools <b class="car">&#9660;</b></span>
     <span class="cbmenu">
@@ -6432,7 +6432,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             </tbody>
           </table>
         </div>
-        <div class="rl-use"><b>Use it when:</b> Every job, on the last day. The Production board already carries a shared punch list &mdash; put what you find on it while you are standing there, not from the truck an hour later. An item written on site with a photo gets fixed; an item remembered later gets argued about.</div>
+        <div class="rl-use"><b>Use it when:</b> Every job, on the last day. Production already carries a shared punch list &mdash; put what you find on it while you are standing there, not from the truck an hour later. An item written on site with a photo gets fixed; an item remembered later gets argued about.</div>
         <div class="rl-doc"><b>Document:</b> Photograph the finished roof from all elevations the same way you photographed the damage. That set is the before-and-after, and it is what answers a complaint six months out.</div>
         <div class="rl-tags"><span>punch list</span><span>close out</span><span>quality</span></div>
       </div>
@@ -21243,6 +21243,8 @@ function setHeaderJobMenu(on){
   setTimeout(fixHeadPad, 40);
 }
 function hideAllViews(){
+  /* 1475: a navigation after the hand-off's screen was seen ends the hand-off */
+  try{ if(window.__crProdCtx1475 && window.__crProdCtx1475.seen) window.__crProdCtx1475 = null; }catch(_){}
   /* Release any scroll lock a modal or viewer left behind (build 364) — otherwise
      the next view opens unscrollable on desktop. */
   if(document.body.style.overflow === 'hidden') document.body.style.overflow = '';
@@ -21636,7 +21638,7 @@ function renderMatOrderState(){
       'background:var(--rbe-bg2,#161918);border:1px solid rgba(245,166,35,.35);' +
       'border-radius:12px;padding:11px 14px;">' +
       '<b class="cr-matord-no" style="font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.08em;">NOT ORDERED YET</b>' +
-      '<span style="color:var(--rbe-mute,#8d959d);font-size:13px;">This job reads &ldquo;Materials?&rdquo; on the Production board.</span>' +
+      '<span style="color:var(--rbe-mute,#8d959d);font-size:13px;">This job reads &ldquo;Materials?&rdquo; on Production.</span>' +
       '<button class="chipbtn" data-matord="set" style="margin-left:auto;">Mark ordered</button>' +
       '</div>';
   }
@@ -47497,6 +47499,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1475, d:'2026-11-14', t:'Production: the way back, and one name', s:'Open job and Crews from Production now keep the header on Production instead of switching it to Retail, and Home takes you back to Production. Crews opened from Production shows ‹ Production at the top and returns there. Production is called Production everywhere: the menu said Production Board. The empty Scheduled list now says a build day comes from booking a crew in Crew Dispatch, and + Add reads + Punch item.' },
   { b: 1474, d:'2026-11-14', t:'Production on a phone: today first', s:'On a phone, Production now opens with the boxes and today’s list right under a shorter sky; the month calendar, Closed and the doors to Crew Dispatch and Crews come after. The Today row, which only repeated today’s list, is gone on phones as it already was on a computer. A field login (Scottie) sees My day at the top: his own open work for today and anything past due, each with the address, a Directions button and Open. He no longer sees the materials boxes or Mark ordered, which are office work.' },
   { b: 1473, d:'2026-11-14', t:'Production: lists in the order they matter', s:'Job lists in Production now put a build that should already have started first, then the soonest build dates, then jobs with no date yet. Before they sorted by name, so a job building in two days with nothing ordered could sit at the bottom. Each card shows its build day on its own line (Build today, Build tomorrow, Build Mon Nov 16) so a long address cannot cut it off. Needs a date shows every undated job, including ones already ordered, and says how many more punch items have no date instead of quietly stopping. The Punch tile says past due, the same as the Punch & Repairs page, the Closed row says Punch closed, and a finished job no longer counts as Scheduled.' },
   { b: 1472, d:'2026-11-14', t:'Production: one schedule', s:'Booking a crew in Crew Dispatch now sets the job’s build day everywhere in Production: the calendar, the Scheduled box, the job’s tags and the day’s list, with the crew named on it. Before, Production only knew about build-day appointments, so a job with a crew booked still said Needs scheduling. Each job card in Production has a Book crew button that opens Crew Dispatch with that job ready to place on a crew’s day, and Back from Dispatch returns to Production. Dispatch’s Needs a crew list now includes sold jobs, not only ones that already had a date.' },
@@ -60452,7 +60455,7 @@ function stickHtml(){
   return '<div class="pbstick"><div class="in">' +
     '<div class="m"><b>' + esc(pbFull(today())) + '</b><small>' + esc(tb.text) +
       (tb.urg ? ' · <em>' + tb.urg + ' urgent</em>' : '') + '</small></div>' +
-    '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+    '<button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button>' +
     '</div></div>';
 }
 /* ── 1446 · the sky ────────────────────────────────────────────────────────
@@ -60633,7 +60636,7 @@ function homeHtml(){
     crewNavHtml() +
     '<div class="pbrule" id="pbDayRule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) + wxc(keyOf(d)) +
       '<span class="sp">' +
-      '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+      '<button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button>' +
       '<button class="pbchip" data-go="cal" type="button">Full calendar ›</button>' +
       '</span></div>' +
     agendaHtml(d) +
@@ -60666,7 +60669,7 @@ function calHtml(){
     '<div class="pbgrid">' + cells + '</div></div>' +
     '<div class="pbsheet"><div class="hd"></div>' +
     '<div class="pbrule">' + esc(pbFull(d)) + wxc(keyOf(d)) +
-      '<span class="sp"><button class="pbchip" data-add="1" type="button">+ Add</button></span></div>' +
+      '<span class="sp"><button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button></span></div>' +
     agendaHtml(d) + unscheduledHtml() +
     '</div></div></div>';
 }
@@ -60814,13 +60817,13 @@ function listPaneHtml(){
       : '<div class="pbempty"><b>Nothing here</b>' +
         (listKey === 'needs' ? 'Every job in production has its materials marked ordered.'
          : listKey === 'ordered' ? 'No materials are out for order right now.'
-         : 'No job has a build day on the Schedule Board yet.') + '</div>';
+         : 'No job has a build day yet. Booking a crew in Crew Dispatch gives a job its build day.') + '</div>';   /* 1475 */
   }
   return '<div class="pbwrap">' +
     head(esc(BOX_TITLE[listKey] || 'Production'), 'home') +
     '<div class="pbsub">' + esc(listSub(listKey, b)) + '</div>' +
     (listKey === 'punch' ? '<div class="pbrule">Open<span class="sp">' +
-      '<button class="pbchip" data-add="1" type="button">+ Add</button></span></div>' : '') +
+      '<button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button></span></div>' : '') +
     body + '</div>';
 }
 
@@ -60880,7 +60883,7 @@ function wire(){
          their own open(), so drop the hub without showHome() first. Close only
          when the target module is actually present. */
       if(h === 'dispatch' && window.CardinalDispatch && window.CardinalDispatch.open){ close(false); window.CardinalDispatch.open({ from:'production' }); }   /* 1472: Back returns here */
-      else if(h === 'crews' && !(window.isFieldUser && window.isFieldUser()) && window.CardinalCrews && window.CardinalCrews.open){ close(false); window.CardinalCrews.open(); }   /* 1317: crew pay is not a field screen */
+      else if(h === 'crews' && !(window.isFieldUser && window.isFieldUser()) && window.CardinalCrews && window.CardinalCrews.open){ window.__crProdCtx1475 = { kind:'crews', t:Date.now() }; close(false); window.CardinalCrews.open({ from:'production' }); }   /* 1475: Back returns here */   /* 1317: crew pay is not a field screen */
     };
   });
   qAll('[data-go="cal"]').forEach(function(b){
@@ -60926,7 +60929,8 @@ function wire(){
       var id = b.getAttribute('data-job');
       if(!id) return;
       /* 1400: a field user's openProject refuses — closing first stranded him on a blank shell */
-      if(!(window.isFieldUser && window.isFieldUser())) close(false);
+      /* 1475: and the header keeps saying Production on that job, with the gold house back to here */
+      if(!(window.isFieldUser && window.isFieldUser())){ window.__crProdCtx1475 = { kind:'job', pid:String(id), t:Date.now() }; close(false); }
       if(typeof window.openProject === 'function') window.openProject(id);
     };
   });
@@ -61217,7 +61221,7 @@ function daySheetHtml(d){
     '</div>' +
     '<div class="pbdbody">' + agendaHtml(d) + '</div>' +
     '<div class="pbdfoot">' +
-      '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+      '<button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button>' +
       '<button class="pbchip" data-daygo="cal" type="button">Full calendar \u203a</button>' +
     '</div></div>';
 }
@@ -64257,7 +64261,7 @@ if(!pr) return;
 if(window.CardinalProduction && window.CardinalProduction.addFor){
 window.CardinalProduction.addFor(pr.id);
 }else{
-crTell('Production board not loaded \u2014 reload the app.');
+crTell('Production is not loaded \u2014 reload the app.');
 }
 };
 var fold = host.querySelector('[data-act="fold"]');
@@ -64465,7 +64469,7 @@ if(!pr) return;
 if(window.CardinalProduction && window.CardinalProduction.addFor){
 window.CardinalProduction.addFor(pr.id);
 }else{
-crTell('Production board not loaded — reload the app.');
+crTell('Production is not loaded — reload the app.');
 }
 };
 var tg = host.querySelector('[data-act="toggle"]');
@@ -70381,9 +70385,11 @@ return 'retail';
    always did, and 756 made the three insurance/library hub navigations do it
    too — so leaving a tool screen closes the tool screen. */
 function goHome(){
+var pc1475 = prodCtx1475();   /* 1475: read BEFORE projopen goes - it is half of the test */
 /* 417: leaving a project. Nothing else clears this, and a stale `projopen`
    hides the CRM title and the burger on every screen that follows. */
 document.body.classList.remove('projopen');
+if(pc1475 && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.__crProdCtx1475 = null; window.CardinalProduction.open(); return; }
 var crm = crmHead(); /* 754: from a shared screen, home returns to YOUR CRM */
 /* 979: ...and production and sales are TOOL screens, not portals — there is no
    "production home" to land on, which is why this branch has always fallen
@@ -70442,7 +70448,29 @@ function sharedScreen(){
   }
   return '';
 }
+/* 1475: Open job and Crews from Production turned the header "Retail" - the client is a retail job and
+   Crews is no CRM's - so the one screen you came from vanished from the header and Home led to the retail
+   home. Production records the hand-off; while THAT job (or Crews) is the screen on show, the
+   header says Production and Home goes back to it. The record clears on the first navigation after its
+   screen was seen (hideAllViews) or when that screen is seen gone, so opening the same client later from
+   Leads is retail again. HEAD only: data-crm stays the
+   job's own, so its grounds and module gates are untouched (the 754 line). */
+function prodCtx1475(){
+  var c = window.__crProdCtx1475; if(!c) return false;
+  var on = false;
+  if(c.kind === 'crews'){
+    var cv = document.getElementById('crewsView');
+    on = !!(cv && cv.style.display !== 'none' && cv.getClientRects().length);
+  }else if(c.kind === 'job'){
+    var pv = document.getElementById('projectView'), cp = window.currentProject;
+    on = !!(pv && pv.getClientRects().length && document.body.classList.contains('projopen') && cp && String(cp.id) === String(c.pid));
+  }
+  if(on){ c.seen = true; return true; }
+  if(c.seen || Date.now() - (c.t || 0) > 8000) window.__crProdCtx1475 = null;
+  return false;
+}
 function crmHead(){
+if(prodCtx1475()) return 'production';   /* 1475 */
 var k = crmNow();
 if(k !== 'retail') return k;
 /* 880: crmNow() already returns insurance/community for an open project of that
@@ -80514,6 +80542,9 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-btn{ background:var(--crw-btn,#fff);
   border-color:var(--crw-line,#dcdee2);color:var(--crw-ink,#2f3338); }
 #crewsView .crw-btn.primary{ background:#c8202e;border-color:#c8202e;color:#fff; }
+#crewsView .crw-back1475{ display:inline-flex; align-items:center; min-height:44px; margin:0 0 6px -6px; padding:0 10px;
+  background:none; border:0; border-radius:10px; cursor:pointer; color:var(--crw-ink,#eceef0);
+  font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; }   /* 1475 */
 #crewsView .crw-x{ background:none;border:0;font-size:22px;line-height:1;cursor:pointer;
   color:var(--crw-mut,#9aa0a8); }
 
@@ -81588,11 +81619,12 @@ function render(){
   if(!v) return;
   v.innerHTML =
     '<div class="crw-top"><div>' +
+      (from1475 === 'production' ? '<button class="crw-back1475" data-act="close" type="button" aria-label="Back to Production">\u2039 Production</button>' : '') +
       '<div class="crw-h">Crews</div>' +
       '<div class="crw-mut" style="font-size:13px">Subcontractors, grouped by trade.</div>' +
     '</div><div style="display:flex;gap:8px;align-items:center">' +
       '<button class="crw-btn primary" data-act="new">+ New crew</button>' +
-      '<button class="crw-x" data-act="close" aria-label="Close">&times;</button>' +
+      (from1475 === 'production' ? '' : '<button class="crw-x" data-act="close" aria-label="Close">&times;</button>') +
     '</div></div>' +
     '<div class="crw-wrap"><div>' + navHtml() + '</div><div>' + panelHtml() + '</div></div>';
 }
@@ -81793,9 +81825,13 @@ function wire(){
   });
 }
 
+var from1475 = '';   /* 1475: 'production' when Production's Crews door opened this */
 function close(){
   var v = view();
   if(v) v.style.display = 'none';
+  if(from1475 === 'production' && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
+    from1475 = ''; window.__crProdCtx1475 = null; window.CardinalProduction.open(); return;
+  }
   /* This module took no scroll lock, so it releases none — the one global lock
      has 13 writers already and does not need a 14th. */
   /* 1416 (judge 14 MAJOR 3): a production account came here from the Production
@@ -81808,9 +81844,10 @@ function close(){
   try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
 }
 
-async function open(){
+async function open(opts){
   var v = view();
   if(!v) return;
+  from1475 = (opts && opts.from) || '';
   /* 1406: the crew tables are full access only — anyone else is refused here, not shown an empty, dead screen */
   try{
     var _adm = typeof window.isAdminUser === 'function' ? window.isAdminUser() : (typeof isAdminUser === 'function' && isAdminUser());
@@ -81835,6 +81872,7 @@ async function open(){
 }
 
 window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
+  from: function(){ return from1475; },   /* 1475 */
   open: open, reload: async function(){ await load(); render(); }
 });
 })();
