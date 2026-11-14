@@ -2698,6 +2698,8 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .ackv div{color:var(--rbe-ink,#2b2b2b);min-width:0;overflow-wrap:anywhere;}
 .ackv-ms{grid-template-columns:110px 1fr 110px 1fr;max-width:560px;}
 @media (max-width:560px){ .ackv-ms{grid-template-columns:104px 1fr;} }
+/* 1468: the Job Menu's three headings */
+.ja-menu .jasect{margin:16px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);}
 /* 1467: the status line under the stage band. The Overview orders its cards with CSS order (1225 phone,
    1227 desk) - a card with no slot falls to the bottom, so this one takes the band's slot (ties keep DOM
    order: the band, then this), and spans both columns of the wide grid. */
@@ -4467,7 +4469,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1467<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1468<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -5300,8 +5302,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="jdBackBtn">&larr; Back to client profile</button>
     <h2 class="viewhead" data-cri="folder lg">Job Documents <span id="jdClient" style="color:var(--rbe-mute,#8a6f66);font-size:17px;"></span></h2>
-    <p class="subnote">Receipts, delivery tickets, signed paperwork, voice memos &#8212; anything for this job.
-    Scans and uploads are visible to the whole team.</p>
+    <p class="subnote">Receipts, delivery tickets, voice memos &#8212; anything for this job.
+    Scans and uploads are visible to the whole team. <b>A signed contract goes in Contracts</b> (Upload signed contract) &#8212; that is what opens the invoice.</p>
     <div style="margin:6px 0 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <button class="chipbtn" id="jdScanBtn" style="background:#C8202E;color:#fff;border-color:var(--red);">&#128247; Scan document</button>
       <button class="chipbtn" id="jdUploadBtn">&#11014;&#65039; Upload files</button>
@@ -12985,6 +12987,11 @@ var DB_ICONS = {
   workorder:'M6 13a6 6 0 0 1 12 0v.6H6V13z M3.4 14.6h17.2a1 1 0 0 1 0 2H3.4a1 1 0 0 1 0-2z',
   punch:'M13.1 2.6l2.6 2.6-1.7 1.7 1.3 1.3 1.7-1.7 2.6 2.6-1.7 1.7 1.3 1.3-2.2 2.2-8.6-8.6L10.6 3.4l1.3 1.3 1.2-2.1zM9.1 10.9l4 4-6.3 6.3a1.9 1.9 0 0 1-2.7-2.7l5-7.6z',
   checklist:'M3.2 5.6l1.5 1.5 3-3 1.3 1.3-4.3 4.3L2 7 3.2 5.6zM11.5 6.2h9.6v2h-9.6V6.2zM3.2 12.1l1.5 1.5 3-3 1.3 1.3-4.3 4.3L2 13.5l1.2-1.4zM11.5 12.7h9.6v2h-9.6v-2zM3.2 18.6l1.5 1.5 3-3 1.3 1.3-4.3 4.3L2 20l1.2-1.4zM11.5 19.2h9.6v2h-9.6v-2z',
+  /* 1468: three tiles borrowed another tile's glyph (Change order = Contracts, Owner review = Checklists,
+     Install photos = Photos); each has its own now */
+  changeorder:'M6 2h7.2L19 7.8V21a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm5 9V8.5h2V11h2.5v2H13v2.5h-2V13H8.5v-2H11z',
+  review:'M12 5C6.5 5 2.7 9.2 1.5 12c1.2 2.8 5 7 10.5 7s9.3-4.2 10.5-7C21.3 9.2 17.5 5 12 5zm0 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
+  install:'M12 2.5L2.6 10.1l1.3 1.6L5 10.8v8.4A1.8 1.8 0 0 0 6.8 21h10.4a1.8 1.8 0 0 0 1.8-1.8v-8.4l1.1.9 1.3-1.6L12 2.5zm-1.2 14.3l5.4-5.6-1.4-1.4-4 4.2-2-2-1.4 1.4 3.4 3.4z',
   walk:'M12 2.5L2.6 10.1l1.3 1.6L5 10.8v8.4A1.8 1.8 0 0 0 6.8 21h10.4a1.8 1.8 0 0 0 1.8-1.8v-8.4l1.1.9 1.3-1.6L12 2.5zm-.3 6.1a3.9 3.9 0 0 1 3 6.4l2.4 2.4-1.4 1.4-2.4-2.4a3.9 3.9 0 1 1-1.6-7.8zm0 2a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8z',
   contract:'M6 2h7.2L19 7.8v3.4l-2 2V9h-5V4H7v16h5.6l-.4 2H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM8.5 10.4h5v1.7h-5v-1.7zm0 3.4h4v1.7h-4v-1.7zm12.2-.7l1.6 1.6a.8.8 0 0 1 0 1.1l-1.2 1.2-2.7-2.7 1.2-1.2a.8.8 0 0 1 1.1 0zm-2.4 2.4l2.7 2.7-5.4 5.4H13v-2.7l5.3-5.4z'
 };
@@ -13199,75 +13206,90 @@ function renderAcxOverview(){
     '<div class="jaboxrow" style="grid-template-columns:1fr">' +
       jt(dbIc('comms'), 'Communication', commsCount(pr), 'comms', null,
          mentions ? '<span class="jatag">' + mentions + (mentions === 1 ? ' tag for you' : ' tags for you') + '</span>' : '') +
-    '</div><div class="jaboxrow">' +
+    '</div>' +
+    /* 1468: the tiles were in the order they were BUILT, not the order a job runs - Inspections was tenth,
+       Punch came before Contracts, Work Orders was last. Now: the everyday two, then Sell, Build and Close.
+       Every tile and every role rule is unchanged; only the order and the three headings are new. The notes
+       that sat between the tiles travel with them: */
+    /* 609: THIS is the job menu that renders. 607 added Punch Outs to #jaGrid
+             instead — the legacy grid hidden by #tab-overview's display:none rule,
+             the exact trap 604 was about. 607 also removed the overview card, so
+             punch had no reachable entry point at all. data-jm="punch" falls through
+             the router's else branch to showTab('punch'), which 607 already wired. */
+    /* 652: the tab always existed; the menu is where fingers go.
+             'contracts' rides the router's else-branch to showTab, like punch. */
+    /* 1467 */
+    /* 1467 */
+    /* 981 (Theo's A1): the live menu had no Checklists tile; the RETIRED
+             grid Community used to mirror did, and the header dropdown that also
+             carries one is inert on a community job. So re-pointing the mirror
+             would have LOST that door. Added to the one shared menu rather than to
+             the card alone — retail gains a tile it did not have, and the two
+             menus stay one list, which is the whole point of this build.
+             'checklists' rides the router's else-branch to showTab('checklists'),
+             a tab that already exists, so nothing else moves. 1082 gave it its own key: DB_ICONS.checklist,
+             ticks beside lines. Until then it borrowed dbIc('tasks'), the
+             clipboard Punch Outs also reused — a known compromise, now closed. */
+    /* 1323 */
+    /* 1331 */
+    /* 1076: The Walk.  It goes in THIS row rather than a row of its own
+             because Checklists already wraps alone into a two-column grid, so the
+             admin tile fills a hole that is there today rather than opening a new
+             one — and a rep, who does not get the tile, sees exactly what they saw
+             before.  Rendered at 390px to check that, not reasoned about.
+    
+             The TILE is gated rather than the handler, because walks_schema.sql
+             makes insert, update, delete and every walk_shots and storage write
+             is_cardinal_admin().  A tile a rep can tap, landing on a screen with no
+             Start button, backed by a table that would refuse the row anyway, is
+             BUG_CLASSES 16 with extra steps.  Whether a rep should be able to run a
+             walk is an RLS decision and Theo's to make; until he makes it, the door
+             matches the fence.
+    
+             dbIc('camera') is reused, not added — 981's Checklists tile set the
+             precedent for that in this same menu, and Tasks/Punch/Checklists
+             already share one glyph. */
+    /* 1322: admins only */
+    /* 1449: the Color Studio door (Theo's door A). OWNER ONLY, because the Showroom's own
+             authorize() refuses every account but his — a rep would tap straight into a 401. It opens
+             the Showroom workspace with ?open=experience, which signs him in and lands on the
+             Cardinal Experience (live on cardinal-showroom main); Lessons → Color Studio is there.
+             Never in The Appointment: that screen faces the homeowner, and Theo's 29 Oct rule is that
+             homeowners never see the Experience's main screen. A per-client house link (door B)
+             waits for the Showroom's "+ Add a home" work to go live. */
+    /* 849: Work Orders — the crew document. Full-width so the grid above stays
+           in pairs; data-jm="workorders" rides the router's else branch to
+           showTab, the same section the header button and the dropdown open. */
+    /* 1467 */
+    '<div class="jaboxrow">' +
       jt(dbIc('camera'), 'Photos', '\u2026', 'album', 'dbPhotoN') +
       jt(dbIc('tasks'), 'Tasks', openTasks, 'tasks') +
-    '</div><div class="jaboxrow">' +
+    '</div>' +
+    '<div class="jasect" role="heading" aria-level="4">Sell</div>' +
+    '<div class="jaboxrow">' +
+      jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
       jt(dbIc('ruler'), 'Measurements', '\u2026', 'measure', 'dbMeasN') +
       jt(dbIc('estimates'), 'Estimates', '\u2026', 'estimates', 'dbEstN') +
-    '</div><div class="jaboxrow">' +
-      jt(dbIc('docs'), 'Files', fileDocs.length, 'docs') +
+      jt(dbIc('contract'), 'Contracts', crConBadge(docs), 'contracts') +
       jt(dbIc('appts'), 'Appointments', appts, 'appts') +
-    '</div><div class="jaboxrow">' +
-      /* 609: THIS is the job menu that renders. 607 added Punch Outs to #jaGrid
-         instead — the legacy grid hidden by #tab-overview's display:none rule,
-         the exact trap 604 was about. 607 also removed the overview card, so
-         punch had no reachable entry point at all. data-jm="punch" falls through
-         the router's else branch to showTab('punch'), which 607 already wired. */
-      jt(dbIc('punch'), 'Punch & Repairs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
-      /* 652: the tab always existed; the menu is where fingers go.
-         'contracts' rides the router's else-branch to showTab, like punch. */
-      jt(dbIc('contract'), 'Contracts', crConBadge(docs), 'contracts') +   /* 1467 */
-    '</div><div class="jaboxrow">' +
-      jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
-      jt(dbIc('orders'), 'Orders', (ck.materials_ordered_at ? 'Ordered' : (['Approved','Scheduled'].indexOf(stg) !== -1 ? 'To order' : '')), 'materials') +   /* 1467 */
-      /* 981 (Theo's A1): the live menu had no Checklists tile; the RETIRED
-         grid Community used to mirror did, and the header dropdown that also
-         carries one is inert on a community job. So re-pointing the mirror
-         would have LOST that door. Added to the one shared menu rather than to
-         the card alone — retail gains a tile it did not have, and the two
-         menus stay one list, which is the whole point of this build.
-         'checklists' rides the router's else-branch to showTab('checklists'),
-         a tab that already exists, so nothing else moves. 1082 gave it its own key: DB_ICONS.checklist,
-         ticks beside lines. Until then it borrowed dbIc('tasks'), the
-         clipboard Punch Outs also reused — a known compromise, now closed. */
-      jt(dbIc('checklist'), 'Checklists', '', 'checklists') +
-      jt(dbIc('contract'), 'Change order', (docs.filter(function(r){ return /^change order/i.test((r.title || '').trim()); }).length || ''), 'changeorder') +   /* 1323 */
-      ((window.CardinalInstall && window.CardinalInstall.setFor(pr)) ? jt(dbIc('camera'), 'Install photos', window.CardinalInstall.badge(pr), 'install', 'jmInstallN') : '') +   /* 1331 */
-      /* 1076: The Walk.  It goes in THIS row rather than a row of its own
-         because Checklists already wraps alone into a two-column grid, so the
-         admin tile fills a hole that is there today rather than opening a new
-         one — and a rep, who does not get the tile, sees exactly what they saw
-         before.  Rendered at 390px to check that, not reasoned about.
-
-         The TILE is gated rather than the handler, because walks_schema.sql
-         makes insert, update, delete and every walk_shots and storage write
-         is_cardinal_admin().  A tile a rep can tap, landing on a screen with no
-         Start button, backed by a table that would refuse the row anyway, is
-         BUG_CLASSES 16 with extra steps.  Whether a rep should be able to run a
-         walk is an RLS decision and Theo's to make; until he makes it, the door
-         matches the fence.
-
-         dbIc('camera') is reused, not added — 981's Checklists tile set the
-         precedent for that in this same menu, and Tasks/Punch/Checklists
-         already share one glyph. */
       (isAdminUser() ? jt(dbIc('walk'), 'The Walk', '', 'walk') : '') +
-      (isAdminUser() ? jt(dbIc('checklist'), 'Owner review', '', 'ownerreview') : '') +   /* 1322: admins only */
-      /* 1449: the Color Studio door (Theo's door A). OWNER ONLY, because the Showroom's own
-         authorize() refuses every account but his — a rep would tap straight into a 401. It opens
-         the Showroom workspace with ?open=experience, which signs him in and lands on the
-         Cardinal Experience (live on cardinal-showroom main); Lessons → Color Studio is there.
-         Never in The Appointment: that screen faces the homeowner, and Theo's 29 Oct rule is that
-         homeowners never see the Experience's main screen. A per-client house link (door B)
-         waits for the Showroom's "+ Add a home" work to go live. */
       (crIsShowroomOwner() ? jt(dbIc('swatch'), 'Color Studio', '', 'colorstudio') : '') +
     '</div>' +
-    /* 849: Work Orders — the crew document. Full-width so the grid above stays
-       in pairs; data-jm="workorders" rides the router's else branch to
-       showTab, the same section the header button and the dropdown open. */
-    '<div class="jaboxrow" style="grid-template-columns:1fr">' +
-      jt(dbIc('workorder'), 'Work Orders', (docs.filter(function(r){ return isWorkOrderTitle(r.title); }).length || ''), 'workorders') +   /* 1467 */
-    '</div></div>';
+    '<div class="jasect" role="heading" aria-level="4">Build</div>' +
+    '<div class="jaboxrow">' +
+      jt(dbIc('orders'), 'Orders', (ck.materials_ordered_at ? 'Ordered' : (['Approved','Scheduled'].indexOf(stg) !== -1 ? 'To order' : '')), 'materials') +
+      jt(dbIc('workorder'), 'Work Orders', (docs.filter(function(r){ return isWorkOrderTitle(r.title); }).length || ''), 'workorders') +
+      jt(dbIc('changeorder'), 'Change order', (docs.filter(function(r){ return /^change order/i.test((r.title || '').trim()); }).length || ''), 'changeorder') +
+      jt(dbIc('checklist'), 'Checklists', '', 'checklists') +
+      ((window.CardinalInstall && window.CardinalInstall.setFor(pr)) ? jt(dbIc('install'), 'Install photos', window.CardinalInstall.badge(pr), 'install', 'jmInstallN') : '') +
+    '</div>' +
+    '<div class="jasect" role="heading" aria-level="4">Close</div>' +
+    '<div class="jaboxrow">' +
+      jt(dbIc('punch'), 'Punch & Repairs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
+      jt(dbIc('docs'), 'Files', fileDocs.length, 'docs') +
+      (isAdminUser() ? jt(dbIc('review'), 'Owner review', '', 'ownerreview') : '') +
+    '</div>' +
+    '</div>';
   /* 1373: written after the Job Menu (was before it). On a phone both are order:2, so page order decides. */
   html += (window.CardinalGuide && !window.CardinalGuide.isNonRoofOnly(pr)) ? ('<div class="db-guiderow"><span class="dbg-t">Roof Pre-Install Guide</span><button class="btn ghost" data-cr-guide-send="' + esc(pr.id) + '">Email to client</button></div>') : '';
   /* ---- contacts: retired to the hero name row (Keeper, build 348). dbSwitchPrimary + add-contact live there now. ---- */
@@ -47402,6 +47424,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1468, d:'2026-11-14', t:'Client page: the Job Menu in the order a job runs', s:'The Job Menu tiles were in the order they were built, so Inspections was tenth and Work Orders last. Now Photos and Tasks come first, then three short headings: Sell (Inspections, Measurements, Estimates, Contracts, Appointments), Build (Orders, Work Orders, Change order, Checklists, Install photos) and Close (Punch & Repairs, Files, Owner review). Change order, Owner review and Install photos each have their own icon instead of borrowing another tile’s, and Files now says a signed contract belongs in Contracts, which is what opens the invoice.' },
   { b: 1467, d:'2026-11-14', t:'Client page: where the job stands, at a glance', s:'A row under the stage bar now says what you would otherwise scroll for: whether the contract is signed (and warns when a sold job has none), the balance due, the next appointment, who has the job and when it was last touched. Tap any of them to go there. The Contracts tile says Signed or Sent, Orders says Ordered or To order, and Work Orders shows how many there are. Production and field logins do not see the balance.' },
   { b: 1466, d:'2026-11-14', t:'The crew can take the install photos', s:'A field login (Scottie) never sees the client page, and Install photos only opened from there, yet a job cannot be marked Completed until those photos are in. Now, tapping a job that is Approved or Scheduled opens a job sheet: the address with Directions, Call and Text, an Install photos button with its count, and the job\'s open punch items. A job with no punch-out opens the same sheet instead of a message saying there is nothing to show. A finished job with a punch-out still opens its punch card.' },
   { b: 1465, d:'2026-11-14', t:'Client page: a safer stage menu, and numbers you can read', s:'The three-dot menu on the stage bar is a proper menu now, with big rows, and Mark Lost sits at the bottom under a line instead of right under Advance. Mark Lost asks why before it does anything (Cancel leaves the job alone), and Advance, Mark Lost and Reopen all give you the same 5-second Undo as the arrows. Measurement numbers (squares, pitch, lengths) were almost invisible on the dark card and now read clearly, two to a row on a phone. On Orders the Mark ordered button shows in light mode, and a job with no total yet shows a $0.00 balance in plain text, not red.' },
