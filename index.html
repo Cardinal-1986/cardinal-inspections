@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1473<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1474<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47497,6 +47497,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1474, d:'2026-11-14', t:'Production on a phone: today first', s:'On a phone, Production now opens with the boxes and today’s list right under a shorter sky; the month calendar, Closed and the doors to Crew Dispatch and Crews come after. The Today row, which only repeated today’s list, is gone on phones as it already was on a computer. A field login (Scottie) sees My day at the top: his own open work for today and anything past due, each with the address, a Directions button and Open. He no longer sees the materials boxes or Mark ordered, which are office work.' },
   { b: 1473, d:'2026-11-14', t:'Production: lists in the order they matter', s:'Job lists in Production now put a build that should already have started first, then the soonest build dates, then jobs with no date yet. Before they sorted by name, so a job building in two days with nothing ordered could sit at the bottom. Each card shows its build day on its own line (Build today, Build tomorrow, Build Mon Nov 16) so a long address cannot cut it off. Needs a date shows every undated job, including ones already ordered, and says how many more punch items have no date instead of quietly stopping. The Punch tile says past due, the same as the Punch & Repairs page, the Closed row says Punch closed, and a finished job no longer counts as Scheduled.' },
   { b: 1472, d:'2026-11-14', t:'Production: one schedule', s:'Booking a crew in Crew Dispatch now sets the job’s build day everywhere in Production: the calendar, the Scheduled box, the job’s tags and the day’s list, with the crew named on it. Before, Production only knew about build-day appointments, so a job with a crew booked still said Needs scheduling. Each job card in Production has a Book crew button that opens Crew Dispatch with that job ready to place on a crew’s day, and Back from Dispatch returns to Production. Dispatch’s Needs a crew list now includes sold jobs, not only ones that already had a date.' },
   { b: 1471, d:'2026-11-14', t:'On a very wide screen, the job and its parts side by side', s:'On a screen 2200 pixels wide or more (Theo’s ultrawide), opening Estimates, Contracts, Inspections, Measurements, Orders, Checklists, Work Orders, Punch & Repairs or Commissions from the Job Menu shows it beside the client page instead of replacing it, so the job and the part you are working on stay on screen together. Back to client profile closes the side. Phones, tablets and normal monitors are unchanged.' },
@@ -59594,6 +59595,30 @@ objections : OBJECTIONS,
   display:block; color:var(--pb-dim,#848c94); font-size:11px; margin:2px 0 0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
+/* 1474: on a phone the landing leads with the work - the boxes and today's list - not a 270px sky and a
+   month grid. The Today row repeats the list that now sits right under the boxes, so it goes (the desk
+   already hides it). Desk keeps its grid. */
+@media (max-width:1099px){
+  #cr-pb .pbhome{ display:flex; flex-direction:column; }
+  #cr-pb .pbhome > *{ order:5; }
+  #cr-pb .pbhome > .pbsky{ --cr-stack:"1474 phone: a shorter sky"; order:0; height:clamp(128px,17vh,160px); }
+  #cr-pb .pbhome > .pbmine{ order:1; }
+  #cr-pb .pbhome > .pbtoday{ display:none; }
+  #cr-pb .pbhome > .pbtiles{ order:2; }
+  #cr-pb .pbhome > #pbDayRule{ order:3; }
+  #cr-pb .pbhome > .pbev, #cr-pb .pbhome > .pbempty{ order:4; }
+  #cr-pb .pbhome > .pbmonth{ order:6; margin-top:14px; }
+  #cr-pb .pbhome > .pbclosed{ order:7; }
+  #cr-pb .pbhome > .pbnav{ order:8; }
+}
+#cr-pb .pbtiles.pbtiles1{ grid-template-columns:1fr; }
+#cr-pb .pbmine{ margin:12px 0 4px; }
+#cr-pb .pbmrow{ background:var(--pb-c,#15171a); border:1px solid var(--pb-line,rgba(230,235,240,.11)); border-left:4px solid var(--pb-acc,#e35c63);
+  border-radius:12px; padding:12px 14px; margin:0 0 10px; }
+#cr-pb .pbmrow.late{ border-left-color:var(--pb-hot,#e07a5f); }
+#cr-pb .pbmrow b{ display:block; font-size:16px; font-weight:800; color:var(--pb-ink,#eceef0); }
+#cr-pb .pbmrow small{ display:block; font-size:13px; color:var(--pb-mut,#9aa3ab); margin-top:2px; }
+#cr-pb .pbmrow .pbact{ min-height:48px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
 #cr-pb .pbjob .bd{ display:block; margin:3px 0 0; font-size:13px; font-weight:700; color:var(--pb-ink,#e8ebef); }   /* 1473 */
 #cr-pb .pbdot{ width:8px; height:8px; border-radius:50%; flex:none; background:#3a4149; }
 #cr-pb .pbdot.retail{ background:#c8202e; }
@@ -60308,13 +60333,14 @@ function tilesHtml(){
       '<div class="l">' + svg(icon) + esc(label) + '</div>' +
       '<div class="s">' + sub + '</div></button>';
   }
-  return '<div class="pbtiles">' +
-    tile('needs', b.needs.length, 'box', 'Needs ordered',
+  var field74 = !!(window.isFieldUser && window.isFieldUser());   /* 1474: materials and scheduling are boss work */
+  return '<div class="pbtiles' + (field74 ? ' pbtiles1' : '') + '">' +
+    (field74 ? '' : tile('needs', b.needs.length, 'box', 'Needs ordered',
       b.needs.length ? esc(b.needs[0].pr.name || 'a job') + (b.needs.length > 1 ? ' +' + (b.needs.length - 1) : '') : 'all ordered', true) +
     tile('ordered', b.ordered.length, 'truck', 'Ordered',
       b.ordered.length ? 'on the way' : 'nothing out') +
     tile('sched', b.sched.length, 'cal', 'Scheduled',
-      nextBuild ? 'next build ' + esc(pbDay(nextBuild)) : 'nothing booked') +
+      nextBuild ? 'next build ' + esc(pbDay(nextBuild)) : 'nothing booked')) +
     tile('punch', b.open.length, 'tool', 'Punch & Repairs',
       /* 1453: "4 · 1 urgent" hid a repair 78 days late */
       [late ? '<em>' + late + ' past due</em>' : '', urg ? '<em>' + urg + ' urgent</em>' : ''].filter(Boolean).join(' · ') || 'none past due', true) +   /* 1473: the Punch page's word */
@@ -60600,6 +60626,7 @@ function homeHtml(){
     skyHtml(   /* 1446: the title row lives in the sky */
       head('Production', (typeof window.isProductionUser === 'function' && window.isProductionUser()) ? '' : 'home') +   /* 1416: one heading, one colour. A4 (P08.03): no "<" for a production account — close() reopens this same board for them (1420), so the button did nothing */
       '<div class="pbsub">Schedule · Jobs · Punch</div>') +
+    myDayHtml() +   /* 1474 */
     todayHtml() +
     homeMonthHtml() +
     tilesHtml() +
@@ -60675,7 +60702,7 @@ function jobHtml(j){
     .map(function(w){ return crewName1472(w.crew_id); });
   if(crews72.length) bits += '<span class="pbtag mut">Crew: ' + esc(crews72.filter(function(x, i, a){ return a.indexOf(x) === i; }).join(', ')) + '</span>';
   var acts = '';
-  if(listKey === 'needs' || (!matOrdered(pr) && listKey !== 'closed')){
+  if(!(window.isFieldUser && window.isFieldUser()) && (listKey === 'needs' || (!matOrdered(pr) && listKey !== 'closed'))){   /* 1474: not for a field login */
     acts += '<button class="pbact" data-ord="' + esc(pr.id) + '" type="button">Mark ordered</button>';
   }
   /* 1472: set the build day from Production - opens Crew Dispatch with this job in hand (pick a crew's day) */
@@ -60701,6 +60728,36 @@ function pbDays(i){
     if(d && !seen[d]){ seen[d] = 1; n++; }
   }
   return n;
+}
+/* 1474: a field login's own day, first. Scottie's agenda row sat two screens down, under the sky, the month,
+   four boss tiles and the doors, and it was everyone's work, not his. His open items that are due today or
+   past due (and any with no date), each with the address and a Directions button. */
+function myDayHtml(){
+  if(!(window.isFieldUser && window.isFieldUser())) return '';
+  var me = String((window.currentUser && window.currentUser.email) || '').toLowerCase();
+  var tk = keyOf(today());
+  var mine = punchRows().filter(function(i){
+    if(!i || i.status === 'done' || String(i.assigned_to || '').toLowerCase() !== me) return false;
+    var d = i.scheduled_at ? String(i.scheduled_at).slice(0, 10) : '';
+    return !d || d <= tk;
+  }).sort(function(a, b){ return String(a.scheduled_at || '9999').localeCompare(String(b.scheduled_at || '9999')); });
+  var out = '';
+  if(!mine.length) out = '<div class="pbempty"><b>Nothing on your list today</b>New work shows here when Curtis assigns it to you.</div>';
+  mine.forEach(function(i){
+    var pr = projectFor(i.project_id), addr = pr ? [pr.address, pr.city].filter(Boolean).join(', ') : '';
+    var d = i.scheduled_at ? String(i.scheduled_at).slice(0, 10) : '';
+    var when = !d ? 'no date set' : d < tk ? 'past due' : (i.scheduled_time ? 'today ' + String(i.scheduled_time).slice(0, 5) : 'today');
+    var dir = addr ? ((typeof window.mapsUrl === 'function') ? window.mapsUrl(addr) : 'https://maps.google.com/?q=' + encodeURIComponent(addr)) : '';
+    out += '<div class="pbmrow' + (d && d < tk ? ' late' : '') + '">' +
+      '<b>' + esc(i.title || 'Punch-out') + '</b>' +
+      '<small>' + esc((pr && pr.name ? pr.name + ' · ' : '') + when) + '</small>' +
+      (addr ? '<small class="ad">' + esc(addr) + '</small>' : '') +
+      '<div class="pbrow2">' +
+        (dir ? '<a class="pbact" target="_blank" rel="noopener" href="' + esc(dir) + '">Directions</a>' : '') +
+        '<button class="pbact ghost" data-item="' + esc(i.id) + '" type="button">Open</button>' +
+      '</div></div>';
+  });
+  return '<div class="pbmine"><div class="pbrule">My day</div>' + out + '</div>';
 }
 function itemHtml(i){
   var pr = projectFor(i.project_id);
