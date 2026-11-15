@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1423 — inspections after judge 4 (Inspections) and judge 11's inspection-report items.
  * Real Chromium through gate_1403_lib's boot() (the seeded mock; no Supabase, no network).
  *
@@ -20,11 +21,11 @@
  *
  *   node gate_1423.mjs [index.html]      GREEN on the build, RED with named failures on b1422.
  */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
-const { boot, log } = await import('/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/gate_1403_lib.mjs');
+process.env.APPFILE = process.argv[2] || GENV.APP;
+const { boot, log } = await import('./gate_1403_lib.mjs');
 import fs from 'fs';
 import { execSync } from 'child_process';
-const F = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';   /* 1423: fixtures live beside the gate; output goes to the OS temp dir */
+const F = GENV.SCRIPTS;   /* 1423: fixtures live beside the gate; output goes to the OS temp dir */
 const TMP = (await import('os')).tmpdir() + '/';
 const IMG = [0, 1, 2].map(i => F + 'fixtures/roof_synth_1423_' + i + '.jpg');   /* synthetic test roofs, not customer photos */
 const OUT = TMP + 'gate_1423_out/gate_' + String(process.env.APPFILE).split('/').pop().replace(/\W+/g, '_') + '/';
@@ -35,7 +36,7 @@ const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (
 const shot = async (page, n) => { if (process.env.SHOTS) { try { await page.screenshot({ path: OUT + n + '.png' }); } catch (e) {} } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function tryDo(why, fn) { try { return await fn(); } catch (e) { ok(false, why + ' (could not run)', (e.message || String(e)).split('\n')[0]); return undefined; } }
-const LOGO = fs.readFileSync('/home/user/cardinal-inspections/cardinal-report-logo.png');
+const LOGO = fs.readFileSync((GENV.REPO + 'cardinal-report-logo.png'));
 const seedPhotos = () => {
   const imgs = IMG.map(f => 'data:image/jpeg;base64,' + fs.readFileSync(f).toString('base64'));
   const caps = ['Ground shots — all elevations', 'Pipe boots & penetrations', 'Valleys'];

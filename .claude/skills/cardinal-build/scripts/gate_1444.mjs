@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1444 — the insurance side is called Insurance (Theo's pick for question C, 2 Nov 2026).
  *
  *   A  the menu row that opens the insurance portal reads "Insurance" (desktop, where the
@@ -18,7 +19,7 @@ import { fileURLToPath } from 'url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FILE = resolve(process.argv[2] || resolve(HERE, '../../../../index.html'));
 process.env.APPFILE = FILE;
-const L = await import(resolve(HERE, 'gate_1403_lib.mjs'));
+const L = await import(GENV.url(resolve(HERE, 'gate_1403_lib.mjs')));
 const HTML = readFileSync(FILE, 'utf8');
 setTimeout(() => { console.log('  ✗ FAIL gate timed out'); process.exit(1); }, 600000);
 

@@ -1,10 +1,11 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1425 — insurance and community job pages sit still while nobody touches them.
  *   A  idle for 2 s on I1, I2 (insurance) and C1 (community): no more page changes than a retail job plus a
  *      margin (the clocks tick; nothing else may) — 1424 measured 460-545, retail 22
  *   B  the relabellers still relabel: the forward arrow and the ⋮ menu speak the portal's stage words
  *   C  (1432) the Supplement card stays retired: no mount, no sheet — it was the busiest idle writer here
  * Arg: [index.html] -> negative control (1424 must go RED on A). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 300000);
 let pass = 0, fail = 0;

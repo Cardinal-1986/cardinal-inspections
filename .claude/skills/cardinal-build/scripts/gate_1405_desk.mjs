@@ -1,7 +1,8 @@
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import * as GENV from './gate_env.mjs';
+const { chromium } = GENV;
 import fs from 'fs';
-const S='/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
-const HTML=fs.readFileSync(process.env.DESKFILE||'/home/user/cardinal-inspections/supplement.html','utf8');
+const S=GENV.SCRIPTS;
+const HTML=fs.readFileSync(process.env.DESKFILE||(GENV.REPO + 'supplement.html'),'utf8');
 const MOCK=fs.readFileSync(S+'e2e_mock_supa.js','utf8');
 const iso=d=>new Date(Date.now()+d*86400000).toISOString();
 const SEED={
@@ -17,7 +18,7 @@ const SEED={
  claim_notes:[], insurance_supplements:[], code_letters:[]
 };
 export async function boot({apiPlan={}, slow=null, width=390}={}){
- const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
+ const browser=await chromium.launch({executablePath:GENV.EXE});
  const page=await (await browser.newContext({viewport:{width,height:844}})).newPage();
  const apiCalls=[];
  await page.route('**/*', async route=>{ const url=route.request().url();

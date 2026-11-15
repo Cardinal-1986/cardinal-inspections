@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 // rig_1436.mjs — build 1436's render rig. Copies gate_1400_lib's approach (the sentinel
 // production seed, the repo's own e2e mock) with three differences the Sun work needs:
 //   1. the APPEARANCE is set through localStorage in an init script BEFORE boot —
@@ -9,9 +10,9 @@
 //      bottom tab bar renders the way it does on Scottie's phone); desktop = 1440x900.
 // Personas: curtis / scottie / theo / nick via the sentinel setup's ?as= param.
 // Real client names in the seed are scrubbed to sample names before anything renders.
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+const { chromium } = GENV;
 import fs from 'fs';
-export const S = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
+export const S = GENV.SCRIPTS;
 const MOCK = fs.readFileSync(S + 'e2e_mock_supa.js', 'utf8');
 const BASE = fs.readFileSync(S + 'sentinel_setup_cardinal.js', 'utf8');
 const PROD = fs.readFileSync(S + 'sentinel_setup_production.js', 'utf8');
@@ -40,7 +41,7 @@ const SCRUB = `(function(){
 
 let BROWSER = null;
 export async function browser() {
-  if (!BROWSER) BROWSER = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  if (!BROWSER) BROWSER = await chromium.launch({ executablePath: GENV.EXE });
   return BROWSER;
 }
 export async function closeBrowser() { if (BROWSER) { await BROWSER.close(); BROWSER = null; } }

@@ -1,9 +1,10 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1409 — a lead card opens the client at every width; hover previews on a mouse.
  *   A  1280×900: clicking a card opens the profile
  *   B  1280×900: pointing at a card fills the side pane with that lead
  *   C  390 phone: clicking a card still opens the profile
  * Arg: [index.html] -> negative control (1407 must go RED on A). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 200000);
 let pass = 0, fail = 0;

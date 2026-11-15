@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_A — judge 16 (colour / buttons / text), builder A. Every assertion is a
  * MEASUREMENT in Chromium, in the theme it is about, and most are made in BOTH.
  *   T  Insurance follows the app theme: unset key -> siren in a dark app, docket
@@ -17,8 +18,8 @@
  *   X  Estimates discard 44x44 + danger ink; Community chart button 44; the
  *      Community profile's 16px gutter; "Switch portal" in the normal rail ink
  * Arg: [index.html] -> negative control (b1415 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
-const { boot, log } = await import('/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/gate_1403_lib.mjs');
+process.env.APPFILE = process.argv[2] || GENV.APP;
+const { boot, log } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 420000);
 let pass = 0, fail = 0;
 const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (d !== '' ? '  → ' + d : '')); c ? pass++ : fail++; };

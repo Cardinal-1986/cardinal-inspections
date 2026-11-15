@@ -12,25 +12,43 @@
  */
 import { existsSync } from 'fs';
 import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BOX_PW = '/opt/node22/lib/node_modules/playwright/index.js';
 const BOX_EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
-export const { chromium } = require(process.env.PW_CORE || (existsSync(BOX_PW) ? BOX_PW : 'playwright'));
+/* Playwright only when a gate touches it: gate_1407 imports this file for its paths and never opens
+   a browser, and should not need Playwright installed to run. */
+let PW = null, PW_ERR = null;
+try { PW = require(process.env.PW_CORE || (existsSync(BOX_PW) ? BOX_PW : 'playwright')); } catch (e) { PW_ERR = e; }
+export const chromium = PW ? PW.chromium : new Proxy({}, { get() { throw PW_ERR; } });
 const EXE = process.env.PW_CHROMIUM || (existsSync(BOX_EXE) ? BOX_EXE : '');
 /** spread into chromium.launch(): the executable only when one is named or the container's exists */
 export const launchOpts = EXE ? { executablePath: EXE } : {};
+/** the same, as a bare value for `executablePath:` (undefined = Playwright's own browser) */
+const EXE_ = EXE || undefined;
+export { EXE_ as EXE };
 /** this folder, forward slashes, trailing slash - safe to concatenate a file name onto */
 export const SCRIPTS = HERE.replace(/\\/g, '/') + '/';
+/** the repo root, forward slashes, trailing slash */
+export const REPO = resolve(HERE, '../../../..').replace(/\\/g, '/') + '/';
 /** the shipped app, four folders up */
 export const APP = resolve(HERE, '../../../../index.html');
+/** a CommonJS path to Playwright for gates that require() it */
+export const PW_JS = process.env.PW_CORE || (existsSync(BOX_PW) ? BOX_PW : 'playwright');
 /** a test-only package (typescript, axe-core): normal resolution, then beside PW_CORE, then npm's global root */
 export function tool(name) {
   const tries = [name];
   if (process.env.PW_CORE) tries.push(resolve(process.env.PW_CORE, '..', name));
   for (const t of tries) { try { return require(t); } catch (_) {} }
   return require(require('child_process').execSync('npm root -g').toString().trim() + '/' + name);
+}
+/** a path for import(): Windows will not import a bare C:\ path, so absolute paths become file:// URLs (a ?query is kept) */
+export function url(p) {
+  p = String(p);
+  if (/^(file|data|node):/.test(p) || p.startsWith('.')) return p;
+  const i = p.indexOf('?');
+  return i < 0 ? pathToFileURL(p).href : pathToFileURL(p.slice(0, i)).href + p.slice(i);
 }

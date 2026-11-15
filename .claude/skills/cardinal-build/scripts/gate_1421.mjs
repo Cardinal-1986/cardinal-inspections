@@ -1,9 +1,10 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1421 — the shared task sheet (#tskModal: New work order, Measurements) reads on its white card.
  *   A  every text colour in the sheet clears 4.5:1 against the card it sits on, dark AND light theme
  *   B  the close × is a 44px target and reads >= 4.5:1
  *   C  the heading is the app sans, not Georgia
  * Arg: [index.html] -> negative control (1420 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 240000);
 let pass = 0, fail = 0;

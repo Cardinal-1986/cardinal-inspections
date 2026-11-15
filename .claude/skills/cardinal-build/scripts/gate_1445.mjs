@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'url';
+import * as GENV from './gate_env.mjs';
 /* gate_1445.mjs — build 1445: punch-out photos go up several at a time, and they arrive.
 
    Theo, 12 Nov 2026, on Scottie's phone: "it's one photo at a time and it doesn't even
@@ -34,9 +36,9 @@ import { dirname, resolve } from 'path';
 import { createRequire } from 'module';
 
 const require_ = createRequire(import.meta.url);
-const here = dirname(new URL(import.meta.url).pathname);
+const here = dirname(fileURLToPath(import.meta.url));
 const artifact = resolve(process.argv[2] || resolve(here, '../../../../index.html'));
-const PW_SANDBOX = '/opt/node22/lib/node_modules/playwright/index.js';
+const PW_SANDBOX = GENV.PW_JS;
 const { chromium } = require_(existsSync(PW_SANDBOX) ? PW_SANDBOX : 'playwright');
 const { launchChromium } = require_(resolve(here, 'chromium_launch.cjs'));
 const HTML = readFileSync(artifact, 'utf8');

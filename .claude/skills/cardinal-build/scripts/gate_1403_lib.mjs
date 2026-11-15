@@ -36,6 +36,8 @@ export async function boot(as, opts={}){
   if(opts.instr!==false) await ctx.addInitScript(INSTR);
   await ctx.addInitScript(BASE);
   if(opts.seed) await ctx.addInitScript(opts.seed);
+  /* MOCK_COPY_READS: the same opt-in as gate_1400_lib (see there) */
+  if(process.env.MOCK_COPY_READS) await ctx.addInitScript(t => { window.__MOCK_COPY_READS__ = t; }, process.env.MOCK_COPY_READS.split(','));
   await ctx.addInitScript(MOCK);
   await page.goto('https://app.cardinalroster.com/?as='+as,{waitUntil:'domcontentloaded'});
   if(opts.clock) { for(let i=0;i<10;i++){ await page.clock.runFor(500); } } else await page.waitForTimeout(2500);

@@ -1,8 +1,9 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1412 — the three bottom sheets sit above the installed app's nav.
  *   A  phone, body.standalone: Upload signed contract opens and its Save button is the topmost element at its own centre
  *   B  #ctUpSheet, #apptCalSheet, #ljAsk each compute a z-index above #pwaNav's
  * Arg: [index.html] -> negative control (1411 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 200000);
 let pass = 0, fail = 0;

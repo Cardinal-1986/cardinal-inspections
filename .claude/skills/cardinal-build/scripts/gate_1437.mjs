@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1437 — the Clients bar's portal chips never run off the screen.
  *
  * #cdCrmBar is the phone's only way to filter Clients by portal. Before 1437 it was a
@@ -31,7 +32,7 @@ import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import os from 'os';
 const require = createRequire(import.meta.url);
-let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.error('gate_1437: playwright not found'); process.exit(2); }
+let chromium; try { ({ chromium } = require(GENV.PW_JS)); } catch (e) { console.error('gate_1437: playwright not found'); process.exit(2); }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -55,7 +56,7 @@ const BIG = ['312', '240', '58', '14'];
 let passes = 0; const fails = [];
 function ok(c, msg, det) { if (c) passes++; else fails.push(msg); console.log((c ? '  ✓ ' : '  ✗ FAIL ') + msg + (det !== undefined ? '  — ' + (typeof det === 'string' ? det : JSON.stringify(det)).slice(0, 240) : '')); }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(GENV.launchOpts);
 async function open(file, mode, big) {
   const HTML = readFileSync(file, 'utf8');
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });

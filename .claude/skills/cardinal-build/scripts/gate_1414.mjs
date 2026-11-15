@@ -1,10 +1,11 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1414 — the common screens carry drawn icons, not emoji.
  *   Every target element exists, holds an svg.cri, and has no emoji in its text:
  *   Clients (Home, search, filter), Activity title, an insurance profile (badge, address, rep, claim strip,
  *   document rows, Upload SOL, Scope of Loss, iTel), a retail profile (History, Punch List), Quick jump.
  *   Plus: no emoji left in any visible text node on those screens (typographic marks ▼ ☆ ✦ ✎ ▸ ▾ excepted).
  * Arg: [index.html] -> negative control (1413 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 200000);
 let pass = 0, fail = 0;

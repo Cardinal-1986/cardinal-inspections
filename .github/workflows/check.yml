@@ -374,6 +374,13 @@ jobs:
     # before any gate ran (run 39776186283, twice). Pinned to the image this job has always passed on.
     # Lift the pin only together with a Playwright bump that lists ubuntu26.04 as supported.
     runs-on: ubuntu-24.04
+    # 15 Nov 2026: three jobs side by side, each running every third gate (gate_chromium --shard).
+    # One job took 50 minutes at 64 gates; 98 in one job would have been about an hour and three
+    # quarters. fail-fast off, so one red shard does not cancel the others and hide their results.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
 
@@ -412,5 +419,5 @@ jobs:
       # must pass, and once on a copy where the specific thing that
       # gate protects has been broken, where it must go red. Browser
       # gates that have only ever been seen to pass prove nothing.
-      - name: Chromium gates + negative controls
-        run: node .claude/skills/cardinal-build/scripts/gate_chromium.mjs
+      - name: Chromium gates + negative controls (shard ${{ matrix.shard }} of 3)
+        run: node .claude/skills/cardinal-build/scripts/gate_chromium.mjs --shard ${{ matrix.shard }}/3

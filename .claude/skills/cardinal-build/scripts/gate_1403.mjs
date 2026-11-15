@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1403 — scheduling, notifications, offline.
  *   A  an offline job edit, synced, keeps a teammate's change to another key of the same job
  *   B  appt-remind texts the job's rep about job / drop appointments, never a personal one (Theo, pick 1)
@@ -5,8 +6,8 @@
  *   D  booking with no signal says so, not "run the migration"
  *   E  the calendar's Next line skips an appointment already over today; local-day helpers
  * Args: [index.html] [api/appt-remind.js] -> negative control (1402 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
-const AR = process.argv[3] || '/home/user/cardinal-inspections/api/appt-remind.js';
+process.env.APPFILE = process.argv[2] || GENV.APP;
+const AR = process.argv[3] || (GENV.REPO + 'api/appt-remind.js');
 import fs from 'fs';
 const SRC = fs.readFileSync(process.env.APPFILE, 'utf8');
 const { boot } = await import('./gate_1403_lib.mjs');
@@ -58,7 +59,7 @@ const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (
 /* B — the cron route, stubbed */
 {
   process.env.CRON_SECRET = 'x'; process.env.SUPABASE_SERVICE_ROLE_KEY = 'stub'; process.env.TWILIO_ACCOUNT_SID = 'ACtest'; process.env.TWILIO_AUTH_TOKEN = 't'; process.env.TWILIO_FROM = '+19375550000';
-  const mod = await import(AR);
+  const mod = await import(GENV.url(AR));
   const run = (nowISO, appts) => {
     const sms = [];
     globalThis.fetch = async (url, o = {}) => {

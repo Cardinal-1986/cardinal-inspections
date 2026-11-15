@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1426 — client names show in full.
  *   A  Clients list, phone 390: every visible name is shown whole (visible width >= its full width), dark and light
  *   B  Clients list at 1600 and 1280 desktop: the same
@@ -6,7 +7,7 @@
  *   F  the phone client page header (#cr-namebar) shows the whole name
  *   E  the card still carries its PO / star / portal tag, and the star still toggles (no control lost)
  * Arg: [index.html] -> negative control (1425 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 300000);
 let pass = 0, fail = 0;

@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1431 — the lead-source list without duplicates (Theo: "Trim duplicate lead sources").
  *   L1  New Lead's picker and the client page's picker offer the same 18 sources, no Canvasser / Internet* left
  *   L2  every old spelling maps to the source it is (Canvasser, Door Knocking -> Door knock; Google, Website,
@@ -7,7 +8,7 @@
  *   L3  a job stored as "Internet: Google" shows "Google / website" on its client page, and opening it writes nothing
  *   L4  Storm canvass is still a source and still one of the eight Add-project chips
  * Arg: [index.html] -> negative control (1430 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot, log } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 240000).unref();
 let pass = 0, fail = 0;

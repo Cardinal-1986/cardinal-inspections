@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1405 — inspection reports on paper, the Supplement Desk, api/supplement.js.
  *   A  a report opened from a list is not filled (or saved) with the last-open client's checklist
  *   B  print numbering skips the Contents heading; the print fix caps the cover; Save as PDF compacts
@@ -5,9 +6,9 @@
  *   D  Desk: a drafted letter's script does not run; an inline-data photo is not offered as evidence
  *   E  route: all-503 Gemini tries the OpenAI backup; a non-JSON error body is not shown as parser text
  * Args: [index.html] [supplement.html] [api/supplement.js] -> negative control (1404 trees must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
-process.env.DESKFILE = process.argv[3] || '/home/user/cardinal-inspections/supplement.html';
-const ROUTE = process.argv[4] || '/home/user/cardinal-inspections/api/supplement.js';
+process.env.APPFILE = process.argv[2] || GENV.APP;
+process.env.DESKFILE = process.argv[3] || (GENV.REPO + 'supplement.html');
+const ROUTE = process.argv[4] || (GENV.REPO + 'api/supplement.js');
 import fs from 'fs';
 const SRC = fs.readFileSync(process.env.APPFILE, 'utf8');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 280000);
@@ -91,7 +92,7 @@ const tryDo = async (why, f) => { try { return await f(); } catch (e) { ok(false
 
 /* E — the route */
 {
-  const handler = (await import(ROUTE)).default;
+  const handler = (await import(GENV.url(ROUTE))).default;
   process.env.GEMINI_API_KEY = 'stubkey'; process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'stub';
   let plan = [], oaCalls = 0;
   globalThis.fetch = async (url) => {

@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1443 — round-1 leftovers: accessibility and sheets (builder A5, made on build 1438): P07.05, P07.06, P07.10, P07.11, P07.12, P10.03.
  *
  *   A  P07.05  the document editor's Back chip is a <button>, its hit area is 44px, Enter takes it back
@@ -23,7 +24,7 @@ import { fileURLToPath } from 'url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FILE = resolve(process.argv[2] || resolve(HERE, '../../../../index.html'));
 process.env.APPFILE = FILE;
-const L = await import(resolve(HERE, 'gate_1403_lib.mjs'));
+const L = await import(GENV.url(resolve(HERE, 'gate_1403_lib.mjs')));
 setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 1500000).unref();
 const W = ms => new Promise(r => setTimeout(r, ms));
 

@@ -10973,3 +10973,13 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | `window.__MOCK_COPY_READS__` — the mock returns copies of rows, as a database does (opt-in: `true` or a table list) | `e2e_mock_supa.js` |
 | `GATE_NOW=2026-11-15T15:00:00` — pins the browser's day in gates 1472–1479 | each gate |
 | per-gate `timeout` in a `GATES` entry | `gate_chromium.mjs` |
+
+## Gate tooling, continued (15 Nov 2026)
+
+| Piece | Where |
+|---|---|
+| `gate_chromium.mjs --shard i/n` — every n-th gate from the i-th; CI runs `chromium` as a three-job matrix | `scripts/`, `.github/workflows/check.yml` |
+| `gate_chromium.mjs --only a,b` — just these gates (applied before `--shard`) | `scripts/gate_chromium.mjs` |
+| a `GATES` entry's `args` (positive arguments; `[]` = the gate's defaults) and `break.file` (break a file under `api/`; its folder is copied) | `scripts/gate_chromium.mjs` |
+| `gate_env.mjs`: `url(p)` for `import()` on any OS, `EXE`, `REPO`, `PW_JS`; Playwright loaded lazily | `scripts/gate_env.mjs` |
+| `MOCK_COPY_READS` honoured by `gate_1403_lib` as well as `gate_1400_lib` | `scripts/gate_1403_lib.mjs` |

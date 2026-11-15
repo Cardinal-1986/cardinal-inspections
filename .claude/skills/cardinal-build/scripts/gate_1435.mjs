@@ -1,3 +1,5 @@
+import { fileURLToPath as fileURLToPath1435 } from 'url';
+import * as GENV from './gate_env.mjs';
 /* gate_1435.mjs — build 1435, Theo's taste calls T1 C (Graphs & Reports) and T3 B (the eight form sheets go dark in dark mode).
  *
  *   node gate_1435.mjs [index.html]       (default: the repo's index.html; control: build 1434's tree)
@@ -29,11 +31,11 @@
  * sign-in in this rig: sw.js). sw.js is blocked; Chart.js 4.4.3 is served from ./vendor (the version index.html pins).
  * RED on 1433 with named failures, never a crash (BUG_CLASSES 37): every step records its own failure and carries on. */
 import fs from 'fs';
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const FILE = process.argv[2] || GENV.APP;
 process.env.APPFILE = FILE;
-const { boot, log } = await import('/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/gate_1403_lib.mjs');
+const { boot, log } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(1); }, 600000).unref();
-const HERE = new URL('./', import.meta.url).pathname;
+const HERE = fileURLToPath1435(new URL('./', import.meta.url)).replace(/\\/g, '/');   /* .pathname is /C:/... on Windows */
 const CHART_PATHS = [HERE + 'vendor/chart.umd.min.js'];   /* Chart.js 4.4.3, the version index.html pins (MIT) */
 const CHART = (() => { for (const p of CHART_PATHS) { try { return fs.readFileSync(p); } catch (e) {} } return null; })();
 let pass = 0, fail = 0;

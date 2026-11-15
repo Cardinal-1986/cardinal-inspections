@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'url';
+import * as GENV from './gate_env.mjs';
 /* gate_1407 — staff only (public signup is on, so a session is not staff).
  *   A  api/companycam-job.js refuses a signed-in non-staff account (403) before reading anything
  *   B  api/sms-link.js refuses a signed-in non-staff account and never reaches Twilio
@@ -5,7 +7,7 @@
  *   D  api/clientsign.js never hands a public signer the database's raw error text
  * Arg: [api dir] -> negative control (the 1406 api/ must go RED). */
 import fs from 'fs'; import os from 'os'; import path from 'path';
-const DIR = process.argv[2] || '/home/user/cardinal-inspections/api';
+const DIR = process.argv[2] || (GENV.REPO + 'api');
 let pass = 0, fail = 0;
 const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (d ? '  → ' + d : '')); c ? pass++ : fail++; };
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'g1407-'));
@@ -20,7 +22,7 @@ const stub = (email) => async (u) => { u = String(u); calls.push(u);
   if (u.includes('twilio.com')) return { ok: true, status: 201, json: async () => ({ sid: 'SM' }), text: async () => '{}' };
   return { ok: true, status: 200, json: async () => ([]), text: async () => '' }; };
 const run = async (file, email, body) => { calls = []; global.fetch = stub(email);
-  const mod = await import('file://' + path.join(tmp, file));
+  const mod = await import(pathToFileURL(path.join(tmp, file)).href);
   let code = 200, out = null; const res = { status(c) { code = c; return this; }, json(j) { out = j; return this; }, setHeader() {}, end() {} };
   try { await mod.default({ method: 'POST', headers: { authorization: 'Bearer x', host: 'app.cardinalroster.com' }, body }, res); } catch (e) { out = { threw: e.message }; }
   return { code, out, calls: calls.slice() }; };

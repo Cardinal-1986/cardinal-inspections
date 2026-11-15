@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1428 — uploading a signed contract asks to move the job to Approved (Theo, 29 Oct: "yes").
  *   U1  a Prospect job: the upload ends on "Move <name> to Approved?" with Move to Approved / Not yet,
  *       and nothing is written or sent before the answer
@@ -7,7 +8,7 @@
  *   U4  a job already Approved: no question and no notice
  *   U5  an estimate upload asks nothing
  * Arg: [index.html] -> negative control (1427 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot, log } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 300000).unref();
 let pass = 0, fail = 0;

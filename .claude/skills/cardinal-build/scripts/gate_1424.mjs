@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1424 — estimates and invoicing after judges #2 (Estimates) and #5 (Invoicing & payments).
  *  E1  the job's measurements (checklist.meas) carry into the estimate: template, Library, assemblies
  *  E2  the unsaved-changes sheet: the filled choice saves, Discard is red words, Keep editing cancels
@@ -16,8 +17,8 @@
  *  I6  a contract-only invoice line describes the work
  *  I7  one red Record payment per job page   I8  AR sub-lines wrap   I9  the home A/R card counts the other boards
  * Arg: [index.html] -> negative control (b1422 must go RED with named failures, no crash). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
-const { boot, log } = await import('/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/gate_1403_lib.mjs');
+process.env.APPFILE = process.argv[2] || GENV.APP;
+const { boot, log } = await import('./gate_1403_lib.mjs');
 import fs from 'fs';
 import { execFileSync } from 'child_process';
 const DIR = (await import('os')).tmpdir();   /* 1424: the print PDF is a throwaway */
@@ -199,7 +200,8 @@ async function openTemplate(page) {
         await p2.close();
         fs.writeFileSync(DIR + '/gateE_est.pdf', pdf);
         const pages = execFileSync('pdftotext', ['-layout', DIR + '/gateE_est.pdf', '-']).toString().split('\f').filter(s => s.trim());
-        const withSub = pages.map((t, i) => /SUBTOTAL/i.test(t) ? i + 1 : 0).filter(Boolean);
+        /* the heading is letter-spaced, and some pdftotext builds read it back as "S U B TOTA L" */
+        const withSub = pages.map((t, i) => /S\s?U\s?B\s?T\s?O\s?T\s?A\s?L/i.test(t) ? i + 1 : 0).filter(Boolean);
         const lastLine = pages.map((t, i) => /Line 12 roofing/.test(t) ? i + 1 : 0).filter(Boolean)[0];
         ok(pages.length >= 2 && withSub.length === 1 && withSub[0] >= lastLine, 'E7 the printed totals appear once, after the last line', JSON.stringify({ pages: pages.length, subtotalOn: withSub, line12On: lastLine }));
       }
