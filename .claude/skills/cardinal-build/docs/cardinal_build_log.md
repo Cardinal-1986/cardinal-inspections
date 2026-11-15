@@ -38385,3 +38385,14 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 **Not done, and why:** Dispatch still closes itself to open the work-order picker (it sat at z 9550 over the picker's 210); on a desk it now sits at 60 and could stay open under it — a separate change. 1416 A11, 1317 C, 1430 #17 and 1116 (`cr-orv-view` unclassified) are RED on the 1470 base as well — pre-existing, not touched here.
 
 **Gates:** `check_build` GREEN on each; `gate_1472`–`gate_1477` new, registered in `gate_chromium` with breaks, each green on its build and red on the one before. Updated for intended changes: `gate_1446` C and `gate_1416` A3 (the phone Today row 1474 retired), `gate_1416` A9 ("Nothing booked" — the rule is "never free"), `gate_1453` E ("past due"). `gate_dupes` back to the 1470 base's 16 after renaming 1473's `grp` helper; `gate_stack` clean. ⚠ `gate_1400/1416/1420/1430/1317` hardcode the cloud container's Linux paths and are not in `gate_chromium`, so CI never runs them — run here from a path-rewritten copy.
+
+## Build 1478 — one Production in the menu (14 Nov 2026)
+
+**Theo:** "Fix it" — the sentinel's last finding after 1475: two menu rows named "Production" opening the same screen.
+
+- The duplicate only ever showed in the **Production portal**: the Production section (`data-nav="prodboard"`, beside Crew Dispatch and Punch & Repairs) is hidden by `syncPortalSections()` everywhere else, and Daily's row (`#cr-nav-production`, injected by `cr-pb-script`) is shown everywhere. 1475 renamed "Production Board" to "Production" and exposed it.
+- `syncPortalSections()` now hides Daily's row in the Production portal with the same inline-display + `data-cr-pohid` pair `setSectionHidden()` writes (the drawer's `!important` flex rule beats a bare inline style; the rail's `scrape()` keys on the inline one). Outside Production it is the door, as `gate_955` / `gate_956` require.
+- **Why Daily's row and not the section's:** the section's row is a field login's only Production door (`body.cr-field` hides every row but prodboard / dispatch / punch), and hiding a row inside a section `setSectionHidden()` already toggles would fight it on every sync.
+- The desk rail opens the Production section on the way into the portal (`openSection1478`, 954's Insurance one-shot, same `cardinal.lnav.sections` store), so the one row is on screen. The phone drawer still starts folded with Daily open — 1115 / T2 outrank it there, as they do for Insurance.
+
+**Gates:** `check_build` GREEN; `gate_1478.mjs` new (5) — GREEN on 1478, RED on 1477 (A, D, E); registered in `gate_chromium` with a break. `gate_dupes` at the 1470 base's 16.

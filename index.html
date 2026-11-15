@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1477<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1478<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47499,6 +47499,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1478, d:'2026-11-14', t:'One Production in the menu', s:'In Production the menu listed Production twice, once under Daily and once beside Crew Dispatch and Punch & Repairs. It is listed once now, with the other Production tools. Everywhere else the Daily row is still the way in.' },
   { b: 1477, d:'2026-11-14', t:'Production: readable in the rain, easier to tap', s:'On a rainy or snowy night the date and the line under Production could sit on a pale cloud and nearly vanish; the words now keep a dark ground under them. The tick box beside a punch item is easier to hit, and Crew Dispatch’s trade filters are full-size buttons. On a computer, Dispatch’s jobs, trade rows and filters can be reached with the keyboard and opened with Enter.' },
   { b: 1476, d:'2026-11-14', t:'Crew Dispatch looks like Production', s:'Crew Dispatch now uses the same lettering as Production instead of a typewriter face, with crew names written normally rather than in capitals. On a computer it opens inside the app, under the header and beside the menu, like Production, instead of covering both, and on a wide screen it uses the width instead of a narrow column. Each crew says Nothing booked today, or the first day with nothing booked. The full calendar is now as wide as Production on a big screen, and Production’s month shows what is on each day on a computer, not just a dot.' },
   { b: 1475, d:'2026-11-14', t:'Production: the way back, and one name', s:'Open job and Crews from Production now keep the header on Production instead of switching it to Retail, and Home takes you back to Production. Crews opened from Production shows ‹ Production at the top and returns there. Production is called Production everywhere: the menu said Production Board. The empty Scheduled list now says a build day comes from booking a crew in Crew Dispatch, and + Add reads + Punch item.' },
@@ -49663,6 +49664,15 @@ localStorage.setItem(SEC_KEY, JSON.stringify(st));
 return true;
 }catch(_){ return false; }
 }
+function openSection1478(k){
+try{
+var st = JSON.parse(localStorage.getItem(SEC_KEY) || '{}') || {};
+if(st[k] === 1) return false;
+st[k] = 1;
+localStorage.setItem(SEC_KEY, JSON.stringify(st));
+return true;
+}catch(_){ return false; }
+}
 var lastPortal = null;
 function syncPortalSections(){
 var menu = document.getElementById('navMenu');
@@ -49680,7 +49690,28 @@ if(setSectionHidden(findSec('sell'), !(p === 'retail' || p === 'sales'))) change
 if(setSectionHidden(secOfNav('sol'), p !== 'insurance')) changed = true;
 if(setSectionHidden(secOfNav('prodboard'), p !== 'production')) changed = true;
 if(setSectionHidden(secOfNav('newbid'), p !== 'community')) changed = true;
+/* 1478: one Production door. In the Production portal the Production section already holds
+   the "Production" row beside Crew Dispatch and Punch & Repairs, so Daily's row (injected by
+   cr-pb-script) was a second door to the same screen. It steps aside there by the same
+   inline-plus-attribute pair setSectionHidden() writes; everywhere else it is the door. */
+var dp1478 = document.getElementById('cr-nav-production');
+if(dp1478){
+var hd1478 = (p === 'production');
+if(hd1478 && dp1478.getAttribute('data-cr-pohid') !== '1'){
+dp1478.style.display = 'none';
+dp1478.setAttribute('data-cr-pohid', '1');
+changed = true;
+}else if(!hd1478 && dp1478.getAttribute('data-cr-pohid') === '1'){
+dp1478.style.display = '';
+dp1478.removeAttribute('data-cr-pohid');
+changed = true;
+}
+}
 if(p === 'insurance' && lastPortal !== 'insurance' && openInsuranceSection()) changed = true;
+/* 1478: with Daily's row gone in this portal, the rail opens the Production section on the
+   way in - 954's Insurance one-shot, the same store. The phone drawer still starts folded
+   (1115 / T2 outrank it there, as they do for Insurance). */
+if(p === 'production' && lastPortal !== 'production' && openSection1478('production')) changed = true;
 lastPortal = p;
 if(changed){
 /* wake the two scrape modules: the rail keys its rebuild on a signature,

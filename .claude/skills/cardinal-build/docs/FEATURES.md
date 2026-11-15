@@ -10940,3 +10940,11 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | 1477 | sky text wash in rain / night snow; 44px tick pad; 44px filter chips; Dispatch keyboard (`role=button`, Enter/Space) | `cr-pb` styles, `cr-disp-styles`, `cr-disp-script` |
 
 **Gates:** `gate_1472.mjs` … `gate_1477.mjs`.
+
+## Build 1478: one Production in the menu
+
+| Piece | Where |
+|---|---|
+| Daily's `#cr-nav-production` steps aside in the Production portal (inline + `data-cr-pohid`); the rail opens the Production section on entry (`openSection1478`) | `cr-menu-script` → `syncPortalSections()` |
+
+**Gate:** `gate_1478.mjs`.
