@@ -2698,6 +2698,16 @@ body[data-rltheme="siren"].claim-insurance{--dbmap-bg:#0E0E12;}
 .ackv div{color:var(--rbe-ink,#2b2b2b);min-width:0;overflow-wrap:anywhere;}
 .ackv-ms{grid-template-columns:110px 1fr 110px 1fr;max-width:560px;}
 @media (max-width:560px){ .ackv-ms{grid-template-columns:104px 1fr;} }
+/* 1471: the ultrawide side panel (crSplitTab) */
+@media (min-width:2200px){
+  body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView.cr-split .wrap:not(.masthead), body:not(.claim-community) #projectView.cr-split .wrap:not(.masthead){ --cr-stack:"1471 the split page uses the whole ultrawide (beats 1470's 2100 cap)"; max-width:3200px; }
+  body:not(.claim-community) #projectView.cr-split > .wrap{ display:grid; grid-template-columns:minmax(0,1.12fr) minmax(0,1fr); column-gap:32px; align-items:start; }
+  body:not(.claim-community) #projectView.cr-split > .wrap > .projhead{ grid-column:1 / -1; }
+  body:not(.claim-community) #projectView.cr-split > .wrap > #tab-overview{ grid-column:1; grid-row:2; min-width:0; }
+  body:not(.claim-community) #projectView.cr-split > .wrap > [id^="tab-"]:not(#tab-overview){ grid-column:2; grid-row:2; min-width:0;
+    position:sticky; top:12px; max-height:calc(100vh - 24px); overflow-y:auto; overscroll-behavior:contain;
+    padding:4px 4px 24px 28px; border-left:1px solid var(--rbe-line2,#2b2b33); box-sizing:border-box; }
+}
 /* 1470: the small things the audit measured */
 .hcontact .hsms{margin-left:10px;}
 #apMount .tskrow small{font-size:12px;}
@@ -4437,7 +4447,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
                static markup. The LAST "Insurance" heading is still the one
                renameSec() turns into "CRMs" - keep these sections above it. -->
           <div class="navsec">Production</div>
-          <button class="navopt" data-nav="prodboard" data-cri="factory lg">Production Board</button>
+          <button class="navopt" data-nav="prodboard" data-cri="factory lg">Production</button>
           <button class="navopt" data-nav="dispatch" data-cri="truck lg">Crew Dispatch</button>
           <button class="navopt" data-nav="punch" data-cri="ladder lg">Punch &amp; Repairs</button>
 
@@ -4499,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1470<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1478<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4519,7 +4529,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <span class="cbn" data-go="track" data-cri="calculator lg">Track</span>
   <span class="cbn" data-go="reports" data-cri="chart lg">Reports</span>
   <span class="cbn cbdd" data-dd="prod"><span class="cbl" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">Production <b class="car">&#9660;</b></span>
-    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="factory lg">Production Board</span><span class="cbi" data-go="dispatch" data-cri="truck lg">Crew Dispatch</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
+    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="factory lg">Production</span><span class="cbi" data-go="dispatch" data-cri="truck lg">Crew Dispatch</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
   </span>
   <span class="cbn cbdd" data-dd="tools"><span class="cbl" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">Tools <b class="car">&#9660;</b></span>
     <span class="cbmenu">
@@ -6422,7 +6432,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             </tbody>
           </table>
         </div>
-        <div class="rl-use"><b>Use it when:</b> Every job, on the last day. The Production board already carries a shared punch list &mdash; put what you find on it while you are standing there, not from the truck an hour later. An item written on site with a photo gets fixed; an item remembered later gets argued about.</div>
+        <div class="rl-use"><b>Use it when:</b> Every job, on the last day. Production already carries a shared punch list &mdash; put what you find on it while you are standing there, not from the truck an hour later. An item written on site with a photo gets fixed; an item remembered later gets argued about.</div>
         <div class="rl-doc"><b>Document:</b> Photograph the finished roof from all elevations the same way you photographed the damage. That set is the before-and-after, and it is what answers a complaint six months out.</div>
         <div class="rl-tags"><span>punch list</span><span>close out</span><span>quality</span></div>
       </div>
@@ -15568,7 +15578,35 @@ function showTab(name){
   ['overview','inspections','estimates','contracts','workorders','commissions','checklists','materials','measure','punch'].forEach(function(t){
     document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
   });
+  crSplitTab(name);   /* 1471 */
   if(name === 'inspections') refreshInspGalN();
+}
+/* 1471: on a screen 2200px or wider a section opened from the Job Menu (Estimates, Contracts, Inspections,
+   Measurements, Orders, Checklists, Work Orders, Punch & Repairs, Commissions) opens BESIDE the client page
+   instead of replacing it - Theo's 3440 ultrawide left the job and its parts never on screen together. The
+   overview stays on the left; "Back to client profile" closes the side. Community keeps its own takeover. */
+var CR_SPLIT_MQ = (window.matchMedia ? window.matchMedia('(min-width:2200px)') : null);
+function crSplitTab(name){
+  var pv = document.getElementById('projectView');
+  if(!pv) return;
+  var com = false;
+  try{ com = document.body.classList.contains('claim-community') ||
+    (typeof projClaimType === 'function' && currentProject && projClaimType(currentProject) === 'community'); }catch(_c){}
+  var on = !!(name && name !== 'overview' && !com && CR_SPLIT_MQ && CR_SPLIT_MQ.matches);
+  pv.classList.toggle('cr-split', on);
+  if(on){ var ov = document.getElementById('tab-overview'); if(ov) ov.style.display = 'block'; }
+}
+/* resizing across the line: the side panel closes back into one page (or opens) with it */
+if(CR_SPLIT_MQ){
+  var _crSplitResync = function(){
+    var pv = document.getElementById('projectView');
+    if(!pv || pv.style.display === 'none') return;
+    var cur = window.__curTab || 'overview';
+    if(cur === 'overview') return;
+    if(CR_SPLIT_MQ.matches) crSplitTab(cur);
+    else { pv.classList.remove('cr-split'); var ov = document.getElementById('tab-overview'); if(ov) ov.style.display = 'none'; }
+  };
+  try{ CR_SPLIT_MQ.addEventListener('change', _crSplitResync); }catch(_l){ try{ CR_SPLIT_MQ.addListener(_crSplitResync); }catch(_l2){} }
 }
 document.getElementById('jobMenuSel').addEventListener('change', function(){
   showTab(this.value);
@@ -21205,6 +21243,8 @@ function setHeaderJobMenu(on){
   setTimeout(fixHeadPad, 40);
 }
 function hideAllViews(){
+  /* 1475: a navigation after the hand-off's screen was seen ends the hand-off */
+  try{ if(window.__crProdCtx1475 && window.__crProdCtx1475.seen) window.__crProdCtx1475 = null; }catch(_){}
   /* Release any scroll lock a modal or viewer left behind (build 364) — otherwise
      the next view opens unscrollable on desktop. */
   if(document.body.style.overflow === 'hidden') document.body.style.overflow = '';
@@ -21598,7 +21638,7 @@ function renderMatOrderState(){
       'background:var(--rbe-bg2,#161918);border:1px solid rgba(245,166,35,.35);' +
       'border-radius:12px;padding:11px 14px;">' +
       '<b class="cr-matord-no" style="font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.08em;">NOT ORDERED YET</b>' +
-      '<span style="color:var(--rbe-mute,#8d959d);font-size:13px;">This job reads &ldquo;Materials?&rdquo; on the Production board.</span>' +
+      '<span style="color:var(--rbe-mute,#8d959d);font-size:13px;">This job reads &ldquo;Materials?&rdquo; on Production.</span>' +
       '<button class="chipbtn" data-matord="set" style="margin-left:auto;">Mark ordered</button>' +
       '</div>';
   }
@@ -47459,6 +47499,14 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1478, d:'2026-11-14', t:'One Production in the menu', s:'In Production the menu listed Production twice, once under Daily and once beside Crew Dispatch and Punch & Repairs. It is listed once now, with the other Production tools. Everywhere else the Daily row is still the way in.' },
+  { b: 1477, d:'2026-11-14', t:'Production: readable in the rain, easier to tap', s:'On a rainy or snowy night the date and the line under Production could sit on a pale cloud and nearly vanish; the words now keep a dark ground under them. The tick box beside a punch item is easier to hit, and Crew Dispatch’s trade filters are full-size buttons. On a computer, Dispatch’s jobs, trade rows and filters can be reached with the keyboard and opened with Enter.' },
+  { b: 1476, d:'2026-11-14', t:'Crew Dispatch looks like Production', s:'Crew Dispatch now uses the same lettering as Production instead of a typewriter face, with crew names written normally rather than in capitals. On a computer it opens inside the app, under the header and beside the menu, like Production, instead of covering both, and on a wide screen it uses the width instead of a narrow column. Each crew says Nothing booked today, or the first day with nothing booked. The full calendar is now as wide as Production on a big screen, and Production’s month shows what is on each day on a computer, not just a dot.' },
+  { b: 1475, d:'2026-11-14', t:'Production: the way back, and one name', s:'Open job and Crews from Production now keep the header on Production instead of switching it to Retail, and Home takes you back to Production. Crews opened from Production shows ‹ Production at the top and returns there. Production is called Production everywhere: the menu said Production Board. The empty Scheduled list now says a build day comes from booking a crew in Crew Dispatch, and + Add reads + Punch item.' },
+  { b: 1474, d:'2026-11-14', t:'Production on a phone: today first', s:'On a phone, Production now opens with the boxes and today’s list right under a shorter sky; the month calendar, Closed and the doors to Crew Dispatch and Crews come after. The Today row, which only repeated today’s list, is gone on phones as it already was on a computer. A field login (Scottie) sees My day at the top: his own open work for today and anything past due, each with the address, a Directions button and Open. He no longer sees the materials boxes or Mark ordered, which are office work.' },
+  { b: 1473, d:'2026-11-14', t:'Production: lists in the order they matter', s:'Job lists in Production now put a build that should already have started first, then the soonest build dates, then jobs with no date yet. Before they sorted by name, so a job building in two days with nothing ordered could sit at the bottom. Each card shows its build day on its own line (Build today, Build tomorrow, Build Mon Nov 16) so a long address cannot cut it off. Needs a date shows every undated job, including ones already ordered, and says how many more punch items have no date instead of quietly stopping. The Punch tile says past due, the same as the Punch & Repairs page, the Closed row says Punch closed, and a finished job no longer counts as Scheduled.' },
+  { b: 1472, d:'2026-11-14', t:'Production: one schedule', s:'Booking a crew in Crew Dispatch now sets the job’s build day everywhere in Production: the calendar, the Scheduled box, the job’s tags and the day’s list, with the crew named on it. Before, Production only knew about build-day appointments, so a job with a crew booked still said Needs scheduling. Each job card in Production has a Book crew button that opens Crew Dispatch with that job ready to place on a crew’s day, and Back from Dispatch returns to Production. Dispatch’s Needs a crew list now includes sold jobs, not only ones that already had a date.' },
+  { b: 1471, d:'2026-11-14', t:'On a very wide screen, the job and its parts side by side', s:'On a screen 2200 pixels wide or more (Theo’s ultrawide), opening Estimates, Contracts, Inspections, Measurements, Orders, Checklists, Work Orders, Punch & Repairs or Commissions from the Job Menu shows it beside the client page instead of replacing it, so the job and the part you are working on stay on screen together. Back to client profile closes the side. Phones, tablets and normal monitors are unchanged.' },
   { b: 1470, d:'2026-11-14', t:'Client page: desktop and the small things', s:'On a computer you can text a client from the top bar now, not only call. On a very wide screen the client page uses more of it instead of stopping at 1600 pixels. History says how many events a job has (it stopped at 8) and when it was last touched. Color Studio is marked as opening in a new tab. The URGENT and DAYS LATE tags on punch items are brighter and easier to read, and the delete button on an appointment and the fold-out rows on Measurements and Orders are full-size to tap.' },
   { b: 1469, d:'2026-11-14', t:'Client page: the screens behind the tiles match', s:'In dark mode the Communication box, the Appointments form and the Checklists cards were cream and white panels on the black page. They are dark now, like everything around them (light mode is unchanged). Every screen you open from the client page has the same Back to client profile button, instead of Back, Back to client profile or Overview depending on the screen. The emoji that had crept back onto the Measurements, Orders, Files and Photos buttons are gone, and the Not completed tag on Checklists no longer breaks over two lines.' },
   { b: 1468, d:'2026-11-14', t:'Client page: the Job Menu in the order a job runs', s:'The Job Menu tiles were in the order they were built, so Inspections was tenth and Work Orders last. Now Photos and Tasks come first, then three short headings: Sell (Inspections, Measurements, Estimates, Contracts, Appointments), Build (Orders, Work Orders, Change order, Checklists, Install photos) and Close (Punch & Repairs, Files, Owner review). Change order, Owner review and Install photos each have their own icon instead of borrowing another tile’s, and Files now says a signed contract belongs in Contracts, which is what opens the invoice.' },
@@ -49616,6 +49664,15 @@ localStorage.setItem(SEC_KEY, JSON.stringify(st));
 return true;
 }catch(_){ return false; }
 }
+function openSection1478(k){
+try{
+var st = JSON.parse(localStorage.getItem(SEC_KEY) || '{}') || {};
+if(st[k] === 1) return false;
+st[k] = 1;
+localStorage.setItem(SEC_KEY, JSON.stringify(st));
+return true;
+}catch(_){ return false; }
+}
 var lastPortal = null;
 function syncPortalSections(){
 var menu = document.getElementById('navMenu');
@@ -49633,7 +49690,28 @@ if(setSectionHidden(findSec('sell'), !(p === 'retail' || p === 'sales'))) change
 if(setSectionHidden(secOfNav('sol'), p !== 'insurance')) changed = true;
 if(setSectionHidden(secOfNav('prodboard'), p !== 'production')) changed = true;
 if(setSectionHidden(secOfNav('newbid'), p !== 'community')) changed = true;
+/* 1478: one Production door. In the Production portal the Production section already holds
+   the "Production" row beside Crew Dispatch and Punch & Repairs, so Daily's row (injected by
+   cr-pb-script) was a second door to the same screen. It steps aside there by the same
+   inline-plus-attribute pair setSectionHidden() writes; everywhere else it is the door. */
+var dp1478 = document.getElementById('cr-nav-production');
+if(dp1478){
+var hd1478 = (p === 'production');
+if(hd1478 && dp1478.getAttribute('data-cr-pohid') !== '1'){
+dp1478.style.display = 'none';
+dp1478.setAttribute('data-cr-pohid', '1');
+changed = true;
+}else if(!hd1478 && dp1478.getAttribute('data-cr-pohid') === '1'){
+dp1478.style.display = '';
+dp1478.removeAttribute('data-cr-pohid');
+changed = true;
+}
+}
 if(p === 'insurance' && lastPortal !== 'insurance' && openInsuranceSection()) changed = true;
+/* 1478: with Daily's row gone in this portal, the rail opens the Production section on the
+   way in - 954's Insurance one-shot, the same store. The phone drawer still starts folded
+   (1115 / T2 outrank it there, as they do for Insurance). */
+if(p === 'production' && lastPortal !== 'production' && openSection1478('production')) changed = true;
 lastPortal = p;
 if(changed){
 /* wake the two scrape modules: the rail keys its rebuild on a signature,
@@ -59553,6 +59631,31 @@ objections : OBJECTIONS,
   display:block; color:var(--pb-dim,#848c94); font-size:11px; margin:2px 0 0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
+/* 1474: on a phone the landing leads with the work - the boxes and today's list - not a 270px sky and a
+   month grid. The Today row repeats the list that now sits right under the boxes, so it goes (the desk
+   already hides it). Desk keeps its grid. */
+@media (max-width:1099px){
+  #cr-pb .pbhome{ display:flex; flex-direction:column; }
+  #cr-pb .pbhome > *{ order:5; }
+  #cr-pb .pbhome > .pbsky{ --cr-stack:"1474 phone: a shorter sky"; order:0; height:clamp(128px,17vh,160px); }
+  #cr-pb .pbhome > .pbmine{ order:1; }
+  #cr-pb .pbhome > .pbtoday{ display:none; }
+  #cr-pb .pbhome > .pbtiles{ order:2; }
+  #cr-pb .pbhome > #pbDayRule{ order:3; }
+  #cr-pb .pbhome > .pbev, #cr-pb .pbhome > .pbempty{ order:4; }
+  #cr-pb .pbhome > .pbmonth{ order:6; margin-top:14px; }
+  #cr-pb .pbhome > .pbclosed{ order:7; }
+  #cr-pb .pbhome > .pbnav{ order:8; }
+}
+#cr-pb .pbtiles.pbtiles1{ grid-template-columns:1fr; }
+#cr-pb .pbmine{ margin:12px 0 4px; }
+#cr-pb .pbmrow{ background:var(--pb-c,#15171a); border:1px solid var(--pb-line,rgba(230,235,240,.11)); border-left:4px solid var(--pb-acc,#e35c63);
+  border-radius:12px; padding:12px 14px; margin:0 0 10px; }
+#cr-pb .pbmrow.late{ border-left-color:var(--pb-hot,#e07a5f); }
+#cr-pb .pbmrow b{ display:block; font-size:16px; font-weight:800; color:var(--pb-ink,#eceef0); }
+#cr-pb .pbmrow small{ display:block; font-size:13px; color:var(--pb-mut,#9aa3ab); margin-top:2px; }
+#cr-pb .pbmrow .pbact{ min-height:48px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
+#cr-pb .pbjob .bd{ display:block; margin:3px 0 0; font-size:13px; font-weight:700; color:var(--pb-ink,#e8ebef); }   /* 1473 */
 #cr-pb .pbdot{ width:8px; height:8px; border-radius:50%; flex:none; background:#3a4149; }
 #cr-pb .pbdot.retail{ background:#c8202e; }
 #cr-pb .pbdot.insurance{ background:#c4180f; }
@@ -59587,6 +59690,9 @@ objections : OBJECTIONS,
   display:flex; align-items:center; justify-content:center; color:transparent;
 }
 #cr-pb .pbitem .bx svg{ width:12px; height:12px; }
+/* 1477: the tick was a 22px target (the 1206 floor is 44) - the box stays 22 to the eye, the pad makes it 44 */
+#cr-pb .pbitem .bx{ --cr-stack:"1477 a 44px hit pad round the 22px tick"; position:relative; }
+#cr-pb .pbitem .bx::after{ content:""; position:absolute; inset:-11px; }
 /* 775: the ONE rule in this stylesheet that must NOT be scoped to #cr-pb —
    it dresses the button this module injects into the burger menu, which is
    somebody else's container. Bare-class first so the icon is sized wherever
@@ -59755,6 +59861,19 @@ body.cr-lnav-on #cr-pb h1{ font-size:30px; }
   #cr-pb h1{ font-size:30px; }
   #cr-pb .pbwrap.pbcalw{ --cr-stack:"1416: the calendar pane is wider than a list; the 1180 base stays for the list"; max-width:1560px; }
 }
+/* 1476: on an ultrawide the home grid is 2160 and its Full calendar was 1560 - the "bigger" view was the
+   narrower one. Same width as home from 1600 up. */
+@media (min-width:1600px){
+  #cr-pb .pbwrap.pbcalw{ --cr-stack:"1476 as wide as home on an ultrawide"; max-width:2160px; }
+}
+/* 1476: on a desk the home month has room to say WHAT is on a day, not just that something is - the names
+   the full calendar shows. A phone keeps the pips (a 48px cell cannot hold a name). */
+@media (max-width:1099px){
+  #cr-pb .pbmonth .pbday .cch{ --cr-stack:"1476 home month on a phone: pips, not names"; display:none; }
+}
+@media (min-width:1100px){
+  #cr-pb .pbmonth .pbday .pbpips{ --cr-stack:"1476 the names replace the pips on a desk"; display:none; }
+}
 
 /* ── 1416 · judge 14 (Production) ───────────────────────────────────────
    MINOR 9 — today, above the fold. On a phone the day's agenda sat ~760px
@@ -59826,6 +59945,17 @@ body.standalone .cr-undo-toast.pbundo{ --cr-stack:"1416: clears the installed ta
 @keyframes pbskyfade{ from{ opacity:0; } to{ opacity:1; } }
 #cr-pb .pbskycv{ position:absolute; inset:0; z-index:1; width:100%; height:100%; display:block; pointer-events:none; }
 #cr-pb .pbskyin{ position:relative; z-index:2; padding:18px 15px 0; }
+/* 1477: in rain (any hour) and in night/dawn/sunset snow the words are light, and the canvas drifts pale
+   clouds - or lays the snow line - straight behind them: measured 1.16-1.19:1 for the date, the subtitle
+   and the title. A dark wash behind the text block only, held under the words and faded out below them,
+   so a cloud passing behind the title dims and the sky below is untouched. At .66 the palest cloud
+   (#ebebec) composites to ~#585858 - 5.4:1 for the #f6decb date ink, 7:1 for the white title. The CSS
+   ground of these skies is already near-black at the top, so on a clear frame the wash is invisible. */
+#cr-pb .pbsky[data-wx="rain"] .pbskyin,
+#cr-pb .pbsky[data-wx="snow"]:not([data-sky="day"]) .pbskyin{
+  padding-bottom:16px;
+  background:linear-gradient(180deg, rgba(10,12,16,.66) 0, rgba(10,12,16,.66) calc(100% - 16px), rgba(10,12,16,0) 100%);
+}
 #cr-pb .pbsky h1{ --cr-stack:"1446: the title sits on the sky, whose ink flips with the hour; the board's own h1 ink stays for every other pane"; color:var(--sky-ink,#ffffff); }
 #cr-pb .pbsky .pbmon{ --cr-stack:"1446: the date sits on the sky"; color:var(--sky-ink2,#f6decb); font-weight:700; }
 #cr-pb .pbsky .pbsub{ --cr-stack:"1446: the subtitle is the sky's eyebrow"; color:var(--sky-ink2,#f6decb); font-weight:700; margin:6px 0 0; }
@@ -59886,6 +60016,7 @@ body.standalone .cr-undo-toast.pbundo{ --cr-stack:"1416: clears the installed ta
    No emoji: every glyph is an inline SVG on currentColor (the 759 convention).
    ========================================================================== */
 
+var wos1472 = [], crews1472 = [];   /* 1472: Crew Dispatch's bookings, read here so there is ONE schedule */
 var items = [];          /* punch rows — CardinalPunch's cache when it exists  */
 var pane  = 'home';      /* 'home' | 'cal' | 'list'                            */
 var listKey = 'punch';   /* which box the list pane is showing                 */
@@ -59971,6 +60102,13 @@ function apptDay(v){
   return (d && !isNaN(d)) ? midnight(d) : null;
 }
 function pbDay(d){ return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+/* 1473: "Build today" / "Build tomorrow" / "Build Mon Nov 16" */
+function pbWhen1473(d){
+  var t = today(), n = Math.round((d - t) / 864e5);
+  if(n === 0) return 'today';
+  if(n === 1) return 'tomorrow';
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
 function pbFull(d){ return d.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' }); }
 
 /* ------------------------------------------------------------ punch access */
@@ -60014,6 +60152,14 @@ function schedFor(pr){
     if(d >= t){ if(!soonest || d < soonest) soonest = d; }
     else if(!latestPast || d > latestPast) latestPast = d;
   }
+  /* 1472: a crew booked on a day (Crew Dispatch) is a build day */
+  wos1472.forEach(function(w){
+    if(!w || !w.scheduled_on || String(w.project_id) !== String(pr.id)) return;
+    var wd = apptDay(w.scheduled_on);
+    if(!wd) return;
+    if(wd >= t){ if(!soonest || wd < soonest) soonest = wd; }
+    else if(!latestPast || wd > latestPast) latestPast = wd;
+  });
   if(soonest) return soonest;
   if(latestPast) return latestPast;
   var c = ck(pr) || {};
@@ -60061,11 +60207,16 @@ function activeJobs(){
   return (window.cacheProjects || []).filter(function(pr){
     var st = normStage(pr.stage);
     return st === 'Approved' || st === 'Scheduled' || st === 'Completed';
-  }).map(function(pr){ return { pr:pr, blk:blockerFor(pr) }; })
+  }).map(function(pr){ return { pr:pr, blk:blockerFor(pr), sd:schedFor(pr) }; })
     .sort(function(a, b){
-      var rank = { blocked:0, soon:1, clear:2 };
-      var ra = a.blk ? rank[a.blk.tone] : 3, rb = b.blk ? rank[b.blk.tone] : 3;
-      if(ra !== rb) return ra - rb;
+      /* 1473: was tone first, then NAME - a job building in two days with nothing ordered sat below eight
+         undated jobs. Now: a build that should have started, then dated builds soonest first, then the
+         undated, then finished jobs; name only breaks ties. */
+      var t = today();
+      var sortGroup1473 = function(j){ var st = normStage(j.pr.stage); if(st === 'Completed') return 3; if(j.sd && j.sd < t) return 0; return j.sd ? 1 : 2; };
+      var ga = sortGroup1473(a), gb = sortGroup1473(b);
+      if(ga !== gb) return ga - gb;
+      if(a.sd && b.sd && a.sd.getTime() !== b.sd.getTime()) return a.sd - b.sd;
       return String(a.pr.name || '').localeCompare(String(b.pr.name || ''));
     });
 }
@@ -60096,7 +60247,7 @@ function boxes(){
   var ordered = jobs.filter(function(j){
     return matOrdered(j.pr) && normStage(j.pr.stage) !== 'Completed';
   });
-  var sched = jobs.filter(function(j){ return !!schedFor(j.pr); });
+  var sched = jobs.filter(function(j){ return !!schedFor(j.pr) && normStage(j.pr.stage) !== 'Completed'; });   /* 1473: a finished job left Scheduled */
   var open = punchRows().filter(function(i){ return i.status === 'open'; });
   var mstart = new Date(); mstart.setDate(1); mstart = midnight(mstart);
   var closed = punchRows().filter(function(i){
@@ -60124,6 +60275,26 @@ function eventsFor(d){
       tag  : a.appt_time ? String(a.appt_time).slice(0, 5) : (a.kind === 'job' ? 'BUILD' : 'DROP'),
       pid  : a.project_id || null,
       chip : (pr && pr.name) ? pr.name : (a.kind === 'job' ? 'Build' : 'Drop'),
+    });
+  });
+  /* 1472: the crew bookings for this day. A booking on a day that already has the job's build-day appointment
+     names the crew on it; otherwise it is the build day. */
+  wos1472.forEach(function(w){
+    if(!w || !w.scheduled_on) return;
+    var wd = apptDay(w.scheduled_on);
+    if(!wd || keyOf(wd) !== k) return;
+    var cn = crewName1472(w.crew_id);
+    var ex = out.find(function(e){ return e.cls === 'build' && String(e.pid) === String(w.project_id); });
+    if(ex){ ex.sub = /^Crew: /.test(ex.sub || '') ? ex.sub + ', ' + cn : (ex.sub ? ex.sub + ' · ' : '') + 'Crew: ' + cn; return; }
+    var pr = projectFor(w.project_id);
+    out.push({
+      cls  : 'build',
+      icon : 'cal',
+      title: ((pr && pr.name) ? pr.name : 'Job') + ' — build day',
+      sub  : 'Crew: ' + cn,
+      tag  : 'CREW',
+      pid  : w.project_id || null,
+      chip : (pr && pr.name) ? pr.name : 'Build',
     });
   });
   punchRows().forEach(function(i){
@@ -60215,6 +60386,7 @@ function tilesHtml(){
   var _tk = keyOf(new Date());   /* 1453 */
   var late = b.open.filter(function(i){
     if(!i.scheduled_at) return false;
+    if(!i.assigned_to) return false;   /* 1473: Punch & Repairs files it under "need assigned", not past due */
     if(i.hold_reason && (!i.hold_until || String(i.hold_until).slice(0, 10) > _tk)) return false;
     return String(i.scheduled_at).slice(0, 10) < _tk;
   }).length;
@@ -60224,19 +60396,20 @@ function tilesHtml(){
       '<div class="l">' + svg(icon) + esc(label) + '</div>' +
       '<div class="s">' + sub + '</div></button>';
   }
-  return '<div class="pbtiles">' +
-    tile('needs', b.needs.length, 'box', 'Needs ordered',
+  var field74 = !!(window.isFieldUser && window.isFieldUser());   /* 1474: materials and scheduling are boss work */
+  return '<div class="pbtiles' + (field74 ? ' pbtiles1' : '') + '">' +
+    (field74 ? '' : tile('needs', b.needs.length, 'box', 'Needs ordered',
       b.needs.length ? esc(b.needs[0].pr.name || 'a job') + (b.needs.length > 1 ? ' +' + (b.needs.length - 1) : '') : 'all ordered', true) +
     tile('ordered', b.ordered.length, 'truck', 'Ordered',
       b.ordered.length ? 'on the way' : 'nothing out') +
     tile('sched', b.sched.length, 'cal', 'Scheduled',
-      nextBuild ? 'next build ' + esc(pbDay(nextBuild)) : 'nothing booked') +
+      nextBuild ? 'next build ' + esc(pbDay(nextBuild)) : 'nothing booked')) +
     tile('punch', b.open.length, 'tool', 'Punch & Repairs',
       /* 1453: "4 · 1 urgent" hid a repair 78 days late */
-      [late ? '<em>' + late + ' late</em>' : '', urg ? '<em>' + urg + ' urgent</em>' : ''].filter(Boolean).join(' · ') || 'none late', true) +
+      [late ? '<em>' + late + ' past due</em>' : '', urg ? '<em>' + urg + ' urgent</em>' : ''].filter(Boolean).join(' · ') || 'none past due', true) +   /* 1473: the Punch page's word */
     '</div>' +
     '<button class="pbclosed" data-box="closed" type="button">' + svg('check') +
-      '<span class="t">Closed</span><span class="c">' + b.closed.length + ' this month</span>' +
+      '<span class="t">Punch closed</span><span class="c">' + b.closed.length + ' this month</span>' +   /* 1473: it never counted finished jobs */
       '<span class="go">›</span></button>';
 }
 function weekHtml(){
@@ -60292,13 +60465,16 @@ function homeMonthHtml(){
     if(i >= 35 && day.getMonth() !== m.getMonth()) break;
     var evs = eventsFor(day), seen = {}, pips = '';
     evs.forEach(function(e){ if(seen[e.cls]) return; seen[e.cls] = true; pips += '<span class="pbpip ' + e.cls + '"></span>'; });
+    /* 1476: the names, as the full calendar draws them; CSS shows them on a desk and the pips on a phone */
+    var nm76 = evs.slice(0, 2).map(function(e){ return '<span class="cch ' + e.cls + '">' + esc(e.chip) + '</span>'; }).join('') +
+      (evs.length > 2 ? '<span class="cch drop">+' + (evs.length - 2) + ' more</span>' : '');
     cells += '<button class="pbday' +
       (day.getMonth() !== m.getMonth() ? ' out' : '') +
       (keyOf(day) === keyOf(today()) ? ' today' : '') +
       (keyOf(day) === keyOf(d) ? ' sel' : '') +
       '" data-day="' + keyOf(day) + '" type="button">' +
       '<span class="dn">' + day.getDate() + wxc(keyOf(day)) + '</span>' +
-      '<span class="pbpips">' + pips + '</span></button>';
+      '<span class="pbpips">' + pips + '</span>' + nm76 + '</button>';
   }
   return '<div class="pbmonth">' +
     '<div class="pbmhd">' +
@@ -60342,7 +60518,7 @@ function stickHtml(){
   return '<div class="pbstick"><div class="in">' +
     '<div class="m"><b>' + esc(pbFull(today())) + '</b><small>' + esc(tb.text) +
       (tb.urg ? ' · <em>' + tb.urg + ' urgent</em>' : '') + '</small></div>' +
-    '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+    '<button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button>' +
     '</div></div>';
 }
 /* ── 1446 · the sky ────────────────────────────────────────────────────────
@@ -60516,13 +60692,14 @@ function homeHtml(){
     skyHtml(   /* 1446: the title row lives in the sky */
       head('Production', (typeof window.isProductionUser === 'function' && window.isProductionUser()) ? '' : 'home') +   /* 1416: one heading, one colour. A4 (P08.03): no "<" for a production account — close() reopens this same board for them (1420), so the button did nothing */
       '<div class="pbsub">Schedule · Jobs · Punch</div>') +
+    myDayHtml() +   /* 1474 */
     todayHtml() +
     homeMonthHtml() +
     tilesHtml() +
     crewNavHtml() +
     '<div class="pbrule" id="pbDayRule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) + wxc(keyOf(d)) +
       '<span class="sp">' +
-      '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+      '<button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button>' +
       '<button class="pbchip" data-go="cal" type="button">Full calendar ›</button>' +
       '</span></div>' +
     agendaHtml(d) +
@@ -60555,23 +60732,26 @@ function calHtml(){
     '<div class="pbgrid">' + cells + '</div></div>' +
     '<div class="pbsheet"><div class="hd"></div>' +
     '<div class="pbrule">' + esc(pbFull(d)) + wxc(keyOf(d)) +
-      '<span class="sp"><button class="pbchip" data-add="1" type="button">+ Add</button></span></div>' +
+      '<span class="sp"><button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button></span></div>' +
     agendaHtml(d) + unscheduledHtml() +
     '</div></div></div>';
 }
 /* Curtis's dispatch queue: work that exists but has no date on it yet. */
 function unscheduledHtml(){
   var b = boxes();
-  var waiting = b.needs.concat(b.sched.length ? [] : []).filter(function(j){ return !schedFor(j.pr); });
+  /* 1473: it was built from Needs-ordered only (marking a job ordered dropped it from here though it still
+     had no date) and showed 4 jobs and 4 items with no sign that more existed. */
+  var waiting = activeJobs().filter(function(j){ var st = normStage(j.pr.stage); return (st === 'Approved' || st === 'Scheduled') && !schedFor(j.pr); });
   var loose = punchRows().filter(function(i){ return i.status === 'open' && !i.scheduled_at; });
   if(!waiting.length && !loose.length) return '';
   var out = '<div class="pbrule" style="margin-top:16px;">Needs a date</div>';
-  waiting.slice(0, 4).forEach(function(j){
+  waiting.forEach(function(j){
     out += jobHtml(j);
   });
   loose.slice(0, 4).forEach(function(i){
     out += itemHtml(i);
   });
+  if(loose.length > 4) out += '<button class="pbchip pbmore1473" data-box="punch" type="button">' + (loose.length - 4) + ' more punch item' + (loose.length - 4 === 1 ? '' : 's') + ' without a date ›</button>';
   return out;
 }
 function jobHtml(j){
@@ -60583,14 +60763,24 @@ function jobHtml(j){
   if(matOrdered(pr)) bits += '<span class="pbtag done">Ordered</span>';
   var n = openPunchFor(pr.id).length;
   if(n) bits += '<span class="pbtag blocked">' + n + ' open</span>';
+  /* 1472: which crew is on it */
+  var crews72 = wos1472.filter(function(w){ return w && w.scheduled_on && String(w.project_id) === String(pr.id); })
+    .map(function(w){ return crewName1472(w.crew_id); });
+  if(crews72.length) bits += '<span class="pbtag mut">Crew: ' + esc(crews72.filter(function(x, i, a){ return a.indexOf(x) === i; }).join(', ')) + '</span>';
   var acts = '';
-  if(listKey === 'needs' || (!matOrdered(pr) && listKey !== 'closed')){
+  if(!(window.isFieldUser && window.isFieldUser()) && (listKey === 'needs' || (!matOrdered(pr) && listKey !== 'closed'))){   /* 1474: not for a field login */
     acts += '<button class="pbact" data-ord="' + esc(pr.id) + '" type="button">Mark ordered</button>';
+  }
+  /* 1472: set the build day from Production - opens Crew Dispatch with this job in hand (pick a crew's day) */
+  if(!(window.isFieldUser && window.isFieldUser()) && ['Approved','Scheduled'].indexOf(normStage(pr.stage)) !== -1 &&
+     window.CardinalDispatch && window.CardinalDispatch.open){
+    acts += '<button class="pbact" data-book="' + esc(pr.id) + '" type="button">' + (crews72.length ? 'Move crew' : 'Book crew') + '</button>';
   }
   acts += '<button class="pbact ghost" data-job="' + esc(pr.id) + '" type="button">Open job</button>';
   return '<div class="pbjob ' + (blk ? blk.tone : '') + '">' +
     '<div class="nm"><span class="pbdot ' + portalOf(pr) + '"></span><span class="t">' + esc(pr.name || 'Unnamed') + '</span></div>' +
-    '<span class="ad">' + esc(pr.address || 'No address') + (sched ? ' · build ' + esc(pbDay(sched)) : '') + '</span>' +
+    '<span class="ad">' + esc(pr.address || 'No address') + '</span>' +
+    (sched ? '<span class="bd">Build ' + esc(pbWhen1473(sched)) + '</span>' : '') +   /* 1473 */
     '<div class="pbrow2">' + bits + '</div>' +
     '<div class="pbrow2">' + acts + '</div>' +
     '</div>';
@@ -60604,6 +60794,36 @@ function pbDays(i){
     if(d && !seen[d]){ seen[d] = 1; n++; }
   }
   return n;
+}
+/* 1474: a field login's own day, first. Scottie's agenda row sat two screens down, under the sky, the month,
+   four boss tiles and the doors, and it was everyone's work, not his. His open items that are due today or
+   past due (and any with no date), each with the address and a Directions button. */
+function myDayHtml(){
+  if(!(window.isFieldUser && window.isFieldUser())) return '';
+  var me = String((window.currentUser && window.currentUser.email) || '').toLowerCase();
+  var tk = keyOf(today());
+  var mine = punchRows().filter(function(i){
+    if(!i || i.status === 'done' || String(i.assigned_to || '').toLowerCase() !== me) return false;
+    var d = i.scheduled_at ? String(i.scheduled_at).slice(0, 10) : '';
+    return !d || d <= tk;
+  }).sort(function(a, b){ return String(a.scheduled_at || '9999').localeCompare(String(b.scheduled_at || '9999')); });
+  var out = '';
+  if(!mine.length) out = '<div class="pbempty"><b>Nothing on your list today</b>New work shows here when Curtis assigns it to you.</div>';
+  mine.forEach(function(i){
+    var pr = projectFor(i.project_id), addr = pr ? [pr.address, pr.city].filter(Boolean).join(', ') : '';
+    var d = i.scheduled_at ? String(i.scheduled_at).slice(0, 10) : '';
+    var when = !d ? 'no date set' : d < tk ? 'past due' : (i.scheduled_time ? 'today ' + String(i.scheduled_time).slice(0, 5) : 'today');
+    var dir = addr ? ((typeof window.mapsUrl === 'function') ? window.mapsUrl(addr) : 'https://maps.google.com/?q=' + encodeURIComponent(addr)) : '';
+    out += '<div class="pbmrow' + (d && d < tk ? ' late' : '') + '">' +
+      '<b>' + esc(i.title || 'Punch-out') + '</b>' +
+      '<small>' + esc((pr && pr.name ? pr.name + ' · ' : '') + when) + '</small>' +
+      (addr ? '<small class="ad">' + esc(addr) + '</small>' : '') +
+      '<div class="pbrow2">' +
+        (dir ? '<a class="pbact" target="_blank" rel="noopener" href="' + esc(dir) + '">Directions</a>' : '') +
+        '<button class="pbact ghost" data-item="' + esc(i.id) + '" type="button">Open</button>' +
+      '</div></div>';
+  });
+  return '<div class="pbmine"><div class="pbrule">My day</div>' + out + '</div>';
 }
 function itemHtml(i){
   var pr = projectFor(i.project_id);
@@ -60660,13 +60880,13 @@ function listPaneHtml(){
       : '<div class="pbempty"><b>Nothing here</b>' +
         (listKey === 'needs' ? 'Every job in production has its materials marked ordered.'
          : listKey === 'ordered' ? 'No materials are out for order right now.'
-         : 'No job has a build day on the Schedule Board yet.') + '</div>';
+         : 'No job has a build day yet. Booking a crew in Crew Dispatch gives a job its build day.') + '</div>';   /* 1475 */
   }
   return '<div class="pbwrap">' +
     head(esc(BOX_TITLE[listKey] || 'Production'), 'home') +
     '<div class="pbsub">' + esc(listSub(listKey, b)) + '</div>' +
     (listKey === 'punch' ? '<div class="pbrule">Open<span class="sp">' +
-      '<button class="pbchip" data-add="1" type="button">+ Add</button></span></div>' : '') +
+      '<button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button></span></div>' : '') +
     body + '</div>';
 }
 
@@ -60725,8 +60945,8 @@ function wire(){
       /* 857: same as the punch route — Dispatch and Crews call hideAllViews in
          their own open(), so drop the hub without showHome() first. Close only
          when the target module is actually present. */
-      if(h === 'dispatch' && window.CardinalDispatch && window.CardinalDispatch.open){ close(false); window.CardinalDispatch.open(); }
-      else if(h === 'crews' && !(window.isFieldUser && window.isFieldUser()) && window.CardinalCrews && window.CardinalCrews.open){ close(false); window.CardinalCrews.open(); }   /* 1317: crew pay is not a field screen */
+      if(h === 'dispatch' && window.CardinalDispatch && window.CardinalDispatch.open){ close(false); window.CardinalDispatch.open({ from:'production' }); }   /* 1472: Back returns here */
+      else if(h === 'crews' && !(window.isFieldUser && window.isFieldUser()) && window.CardinalCrews && window.CardinalCrews.open){ window.__crProdCtx1475 = { kind:'crews', t:Date.now() }; close(false); window.CardinalCrews.open({ from:'production' }); }   /* 1475: Back returns here */   /* 1317: crew pay is not a field screen */
     };
   });
   qAll('[data-go="cal"]').forEach(function(b){
@@ -60772,8 +60992,17 @@ function wire(){
       var id = b.getAttribute('data-job');
       if(!id) return;
       /* 1400: a field user's openProject refuses — closing first stranded him on a blank shell */
-      if(!(window.isFieldUser && window.isFieldUser())) close(false);
+      /* 1475: and the header keeps saying Production on that job, with the gold house back to here */
+      if(!(window.isFieldUser && window.isFieldUser())){ window.__crProdCtx1475 = { kind:'job', pid:String(id), t:Date.now() }; close(false); }
       if(typeof window.openProject === 'function') window.openProject(id);
+    };
+  });
+  qAll('[data-book]').forEach(function(b){
+    b.onclick = function(ev){
+      ev.stopPropagation();
+      var id = b.getAttribute('data-book');
+      close(false);
+      window.CardinalDispatch.open({ from:'production', armPid:id });   /* 1472 */
     };
   });
   qAll('[data-ord]').forEach(function(b){
@@ -61055,7 +61284,7 @@ function daySheetHtml(d){
     '</div>' +
     '<div class="pbdbody">' + agendaHtml(d) + '</div>' +
     '<div class="pbdfoot">' +
-      '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+      '<button class="pbchip" data-add="1" type="button" aria-label="Add a punch item">+ Punch item</button>' +
       '<button class="pbchip" data-daygo="cal" type="button">Full calendar \u203a</button>' +
     '</div></div>';
 }
@@ -61217,6 +61446,19 @@ async function notifyProductionUnassigned(title, pid){
 }
 
 /* ------------------------------------------------------------------- load */
+/* 1472: Production read only build-day APPOINTMENTS; Crew Dispatch books crew_work_orders.scheduled_on and
+   nothing joined the two - on the live database all 3 dated work orders had no build-day appointment, so a
+   job booked with a crew still read "Needs scheduling" here. Production now reads the bookings too. */
+async function loadWos(){
+  if(!window.supa) return;
+  try{
+    var w = await window.supa.from('crew_work_orders').select('id,crew_id,project_id,status,scheduled_on');
+    if(!w.error) wos1472 = w.data || [];
+    var c = await window.supa.from('crews').select('id,name,trade');
+    if(!c.error) crews1472 = c.data || [];
+  }catch(_w){}
+}
+function crewName1472(id){ var c = crews1472.find(function(x){ return String(x.id) === String(id); }); return c ? c.name : 'a crew'; }
 async function load(){
   /* CardinalPunch is the app's one punch query/write path. Use it when it has
      parsed (it lives later in the document); the direct read is the fallback,
@@ -61266,7 +61508,7 @@ async function open(){
   if(typeof window.navSetView === 'function'){
     try{ window.navSetView('production'); }catch(_){}
   }
-  await load();
+  await Promise.all([load(), loadWos()]);   /* 1472 */
   lastSig = '';
   render();
 }
@@ -64082,7 +64324,7 @@ if(!pr) return;
 if(window.CardinalProduction && window.CardinalProduction.addFor){
 window.CardinalProduction.addFor(pr.id);
 }else{
-crTell('Production board not loaded \u2014 reload the app.');
+crTell('Production is not loaded \u2014 reload the app.');
 }
 };
 var fold = host.querySelector('[data-act="fold"]');
@@ -64290,7 +64532,7 @@ if(!pr) return;
 if(window.CardinalProduction && window.CardinalProduction.addFor){
 window.CardinalProduction.addFor(pr.id);
 }else{
-crTell('Production board not loaded — reload the app.');
+crTell('Production is not loaded — reload the app.');
 }
 };
 var tg = host.querySelector('[data-act="toggle"]');
@@ -70206,9 +70448,11 @@ return 'retail';
    always did, and 756 made the three insurance/library hub navigations do it
    too — so leaving a tool screen closes the tool screen. */
 function goHome(){
+var pc1475 = prodCtx1475();   /* 1475: read BEFORE projopen goes - it is half of the test */
 /* 417: leaving a project. Nothing else clears this, and a stale `projopen`
    hides the CRM title and the burger on every screen that follows. */
 document.body.classList.remove('projopen');
+if(pc1475 && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.__crProdCtx1475 = null; window.CardinalProduction.open(); return; }
 var crm = crmHead(); /* 754: from a shared screen, home returns to YOUR CRM */
 /* 979: ...and production and sales are TOOL screens, not portals — there is no
    "production home" to land on, which is why this branch has always fallen
@@ -70267,7 +70511,29 @@ function sharedScreen(){
   }
   return '';
 }
+/* 1475: Open job and Crews from Production turned the header "Retail" - the client is a retail job and
+   Crews is no CRM's - so the one screen you came from vanished from the header and Home led to the retail
+   home. Production records the hand-off; while THAT job (or Crews) is the screen on show, the
+   header says Production and Home goes back to it. The record clears on the first navigation after its
+   screen was seen (hideAllViews) or when that screen is seen gone, so opening the same client later from
+   Leads is retail again. HEAD only: data-crm stays the
+   job's own, so its grounds and module gates are untouched (the 754 line). */
+function prodCtx1475(){
+  var c = window.__crProdCtx1475; if(!c) return false;
+  var on = false;
+  if(c.kind === 'crews'){
+    var cv = document.getElementById('crewsView');
+    on = !!(cv && cv.style.display !== 'none' && cv.getClientRects().length);
+  }else if(c.kind === 'job'){
+    var pv = document.getElementById('projectView'), cp = window.currentProject;
+    on = !!(pv && pv.getClientRects().length && document.body.classList.contains('projopen') && cp && String(cp.id) === String(c.pid));
+  }
+  if(on){ c.seen = true; return true; }
+  if(c.seen || Date.now() - (c.t || 0) > 8000) window.__crProdCtx1475 = null;
+  return false;
+}
 function crmHead(){
+if(prodCtx1475()) return 'production';   /* 1475 */
 var k = crmNow();
 if(k !== 'retail') return k;
 /* 880: crmNow() already returns insurance/community for an open project of that
@@ -80339,6 +80605,9 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-btn{ background:var(--crw-btn,#fff);
   border-color:var(--crw-line,#dcdee2);color:var(--crw-ink,#2f3338); }
 #crewsView .crw-btn.primary{ background:#c8202e;border-color:#c8202e;color:#fff; }
+#crewsView .crw-back1475{ display:inline-flex; align-items:center; min-height:44px; margin:0 0 6px -6px; padding:0 10px;
+  background:none; border:0; border-radius:10px; cursor:pointer; color:var(--crw-ink,#eceef0);
+  font:700 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; }   /* 1475 */
 #crewsView .crw-x{ background:none;border:0;font-size:22px;line-height:1;cursor:pointer;
   color:var(--crw-mut,#9aa0a8); }
 
@@ -81413,11 +81682,12 @@ function render(){
   if(!v) return;
   v.innerHTML =
     '<div class="crw-top"><div>' +
+      (from1475 === 'production' ? '<button class="crw-back1475" data-act="close" type="button" aria-label="Back to Production">\u2039 Production</button>' : '') +
       '<div class="crw-h">Crews</div>' +
       '<div class="crw-mut" style="font-size:13px">Subcontractors, grouped by trade.</div>' +
     '</div><div style="display:flex;gap:8px;align-items:center">' +
       '<button class="crw-btn primary" data-act="new">+ New crew</button>' +
-      '<button class="crw-x" data-act="close" aria-label="Close">&times;</button>' +
+      (from1475 === 'production' ? '' : '<button class="crw-x" data-act="close" aria-label="Close">&times;</button>') +
     '</div></div>' +
     '<div class="crw-wrap"><div>' + navHtml() + '</div><div>' + panelHtml() + '</div></div>';
 }
@@ -81618,9 +81888,13 @@ function wire(){
   });
 }
 
+var from1475 = '';   /* 1475: 'production' when Production's Crews door opened this */
 function close(){
   var v = view();
   if(v) v.style.display = 'none';
+  if(from1475 === 'production' && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
+    from1475 = ''; window.__crProdCtx1475 = null; window.CardinalProduction.open(); return;
+  }
   /* This module took no scroll lock, so it releases none — the one global lock
      has 13 writers already and does not need a 14th. */
   /* 1416 (judge 14 MAJOR 3): a production account came here from the Production
@@ -81633,9 +81907,10 @@ function close(){
   try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
 }
 
-async function open(){
+async function open(opts){
   var v = view();
   if(!v) return;
+  from1475 = (opts && opts.from) || '';
   /* 1406: the crew tables are full access only — anyone else is refused here, not shown an empty, dead screen */
   try{
     var _adm = typeof window.isAdminUser === 'function' ? window.isAdminUser() : (typeof isAdminUser === 'function' && isAdminUser());
@@ -81660,6 +81935,7 @@ async function open(){
 }
 
 window.CardinalCrews = Object.assign(window.CardinalCrews || {}, {
+  from: function(){ return from1475; },   /* 1475 */
   open: open, reload: async function(){ await load(); render(); }
 });
 })();
@@ -89847,7 +90123,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-wkend:#838c99;
   --disp-today:#15171c; --disp-tline:#ffffff; --disp-need:#f5c045; --disp-band:#8b97a8;
   --disp-repair:#ff3b46; --disp-curtis:#3fb8c9; --disp-scottie:#a98bec; --disp-wx:#6db3f2;
-  --disp-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  /* 1476: Production's face. The token keeps its old name so the ~20 rules that read it follow without
+     being touched; it was a typewriter face beside Production's sans, the same crews and jobs in two voices. */
+  --disp-mono:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
   display:none; position:fixed; inset:0; z-index:9550;
   overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
   background:var(--disp-bg,#08090b); color:var(--disp-ink,#ffffff);
@@ -89867,6 +90145,18 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-tsh:none; --disp-sh-tag:0 1px 3px rgba(20,23,28,.10); --disp-sh-mag:0 1px 3px rgba(20,23,28,.12);
   --disp-tagline:#cdd2d9;
 }
+/* 1476: on a desk Dispatch covered the header and the menu (position:fixed; inset:0 at 9550) - you left the
+   app to look at it, while Production one tap back sits inside it. The same three lines 572 / P09.08 gave the
+   other full-screen pages, gated the same way, so the phone keeps its full-screen page. */
+body.cr-lnav-on #cr-disp{
+  --cr-stack:"1476 beside the rail on a desktop; its own inset:0 stays for the phone";
+  top:var(--headh,110px) !important;
+  left:var(--lnav-w) !important;
+  z-index:60 !important;
+}
+/* ...and a week of crews earns the width: 1180 left a 3440 screen two-thirds empty. Production's home goes
+   to 2160 on the same screen; Dispatch matches it. */
+@media (min-width:1600px){ body.cr-lnav-on #cr-disp .dspwrap{ --cr-stack:"1476 the week grid uses a wide screen"; max-width:2160px; } }
 #cr-disp .dspwrap{ max-width:1180px; margin:0 auto;
   padding:16px 14px calc(60px + env(safe-area-inset-bottom,0px)); }
 #cr-disp .dsptop{ display:flex; align-items:center; gap:9px; margin-bottom:12px; }
@@ -89895,8 +90185,11 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 }
 #cr-disp .dspwk button::after{ content:""; position:absolute; top:-10px; bottom:-10px; left:-13px; right:-13px; }
 #cr-disp .dspfilt{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
-#cr-disp .dspfilt .fc{ font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; padding:5px 11px; border-radius:8px;
-  background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer; }
+#cr-disp .dspfilt .fc{ font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; padding:0 14px; border-radius:8px;
+  background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:44px; box-sizing:border-box; }   /* 1477: a 44px chip, as Production's (was 11px / 27px tall) */
+/* 1477: every card and band is a keyboard stop now - say where focus is */
+#cr-disp [role="button"]:focus-visible{ outline:2px solid var(--disp-ink,#fff); outline-offset:2px; }
 #cr-disp .dspfilt .fc.on{ border-color:var(--disp-ink,#fff); color:var(--disp-ink,#fff); }
 
 /* ── 948: THE MAGNET BOARD (Theo's 4C pick) ─────────────────────────────
@@ -89976,7 +90269,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .crewc > div::before{ content:""; position:absolute; left:7px; top:50%; transform:translateY(-50%);
   width:6px; height:6px; border-radius:50%; background:var(--disp-bg,#08090b);
   box-shadow:inset 0 1px 2px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.12); }
-#cr-disp .crewc .cn{ font:750 11px var(--disp-mono,monospace); letter-spacing:.03em; text-transform:uppercase;
+#cr-disp .crewc .cn{ font:750 13px var(--disp-mono,monospace); letter-spacing:0; text-transform:none;   /* 1476: a name, not a label */
   color:var(--disp-ink,#fff); line-height:1.3; }
 #cr-disp .crewc .cc{ font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--disp-dim,#9aa1ac);
   line-height:1.2; margin-top:1px; text-transform:none; letter-spacing:0; }
@@ -90052,7 +90345,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   border:1px solid var(--disp-wx,#6db3f2); color:var(--disp-wx,#6db3f2);
   font:700 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; letter-spacing:.02em; white-space:nowrap; }
 #cr-disp .job .wxf svg{ flex:none; }
-#cr-disp .crewc .cf{ font:700 11px var(--disp-mono,monospace); letter-spacing:.04em; text-transform:uppercase;
+#cr-disp .crewc .cf{ font:700 11px var(--disp-mono,monospace); letter-spacing:0; text-transform:none;   /* 1476 */
   color:var(--disp-band,#8b97a8); line-height:1.3; margin-top:2px; }
 #cr-disp .crewc .cf.full{ color:var(--disp-mute,#5c636e); }
 #cr-disp .uch.armed{ background:rgba(245,192,69,.18); box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
@@ -90065,7 +90358,10 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .job .mv{ margin-left:4px; flex:none; width:15px; height:15px; padding:0; border:0;
   border-radius:4px; background:transparent; color:var(--disp-dim,#9aa1ac);
   display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
-#cr-disp .job .mv::after{ content:""; position:absolute; inset:-15px; }/* 1040: -9px made 33px effective — under the 44 floor the rest of the app holds */
+#cr-disp .job .mv::after{ content:""; position:absolute; inset:-15px; }
+/* 1477 (gate_1206): the name became the card's control and measured 61x34 - so its hit area is the card */
+#cr-disp .job .nm::after{ content:""; position:absolute; inset:0; }
+#cr-disp .job .mv{ --cr-stack:"1477 the grip stays above the name's card-wide hit area"; z-index:1; }/* 1040: -9px made 33px effective — under the 44 floor the rest of the app holds */
 #cr-disp .job .mv:hover{ color:var(--disp-ink,#fff); }
 #cr-disp .job.moving{ box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
 #cr-disp .job.moving .mv{ color:var(--disp-need,#f5c045); }
@@ -90113,7 +90409,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .dmap-pop .t{ font:800 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--disp-ink,#fff); }
 #cr-disp .dmap-pop .a{ font:500 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; color:var(--disp-dim,#9aa1ac); margin-top:1px; }
 #cr-disp .dmap-pop .r{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:9px; }
-#cr-disp .dmap-pop .chip{ font:800 11px ui-monospace,Menlo,monospace; letter-spacing:.05em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+#cr-disp .dmap-pop .chip{ font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; letter-spacing:.05em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
 #cr-disp .dmap-pop .dpop-go{ background:var(--disp-repair,#ff3b46); color:#fff; border:0; border-radius:8px; padding:6px 13px; font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif; cursor:pointer; font-family:inherit; white-space:nowrap; }
 #cr-disp .dmap-pop .dpop-go.need{ background:#f5a623; color:#1a1204; }
 
@@ -90255,7 +90551,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       '</svg></button>';
     var wf = (s && statusPip(w) !== 'done' && window.CardinalWx && window.CardinalWx.flag) ? window.CardinalWx.flag(s) : '';
     return '<div class="job' + (String(armedMove) === String(w.id) ? ' moving' : '') + (grip ? ' hasmv' : '') + (wf ? ' wetd' : '') + '" data-pid="' + esc(w.project_id) + '">' +
-      '<div class="t"><span class="nm">' + esc(nm) + '</span><span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
+      '<div class="t"><span class="nm" role="button" tabindex="0">' + esc(nm) + '</span><span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
       (ad ? '<div class="a">' + esc(ad) + '</div>' : '') +
       (wf ? '<div class="wxf">' + WXF_ICON + esc(wf) + '</div>' : '') + '</div>';
   }
@@ -90316,7 +90612,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     el.classList.toggle('armmv', !!mvWo);
     var railInner = needCrew.length
       ? needCrew.map(function(p){
-          return '<div class="uch' + (String(p.id) === String(armed) ? ' armed' : '') + (ro() ? ' ro' : '') + '" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
+          return '<div class="uch' + (String(p.id) === String(armed) ? ' armed' : '') + (ro() ? ' ro' : '') + '" role="button" tabindex="0" aria-pressed="' + (String(p.id) === String(armed) ? 'true' : 'false') + '" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
             '</div><div class="a">' + esc(firstLine(p.address)) + '</div></div>';
         }).join('')
       : '<span class="none">every scheduled job has a crew</span>';
@@ -90363,8 +90659,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           if(sunSet[fi]) continue;
           if(!((byCrewDay[c.id] || {})[fi] || []).length){ free = fi; break; }
         }
-        var cf = free < 0 ? '<div class="cf full">booked all 7</div>'
-          : '<div class="cf">None booked ' + (dayStr[free] === todayStr ? 'today'   /* 1416: bookings, not availability */
+        var cf = free < 0 ? '<div class="cf full">Booked all 7 days</div>'
+          : '<div class="cf">Nothing booked ' + (dayStr[free] === todayStr ? 'today'   /* 1476: sentence case */   /* 1416: bookings, not availability */
               : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][days[free].getDay()] + ' ' + days[free].getDate()) + '</div>';
         return '<div class="drow dlane"><div class="crewc"><div><div class="cn">' + esc(_main) +
           '</div>' + sub + cf + '</div></div>' + cells + '</div>';
@@ -90383,14 +90679,14 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       }
       /* 948: the strip is a control — chevron folds the trade to one line */
       var nAll = inTrade.length;
-      var strip = '<div class="dband" data-band="' + esc(tr) + '"><span class="bl">' +
+      var strip = '<div class="dband" role="button" tabindex="0" aria-expanded="' + (foldTrade[tr] ? 'false' : 'true') + '" data-band="' + esc(tr) + '"><span class="bl">' +
         '<span class="chev">' + (foldTrade[tr] ? '\u25B8' : '\u25BE') + '</span>' + esc(tr) +
         '<span class="cnt">' + nAll + (nAll === 1 ? ' CREW' : ' CREWS') + '</span></span></div>';
       if(foldTrade[tr]){
         var names = inTrade.map(function(c){ return c.legal_name || c.name || 'Crew'; }).slice(0, 4).join(' \u00b7 ');
         var booked = active.length;
         return strip + '<div class="dsum"><b>' + esc(names) + (nAll > 4 ? ' \u00b7 \u2026' : '') + '</b> \u2014 ' +
-          (booked ? booked + ' booked this week' : 'none booked next 7 days') + '</div>';
+          (booked ? booked + ' booked this week' : 'nothing booked in the next 7 days') + '</div>';
       }
       return strip + lanes + idleRow;
     }).join('');
@@ -90399,7 +90695,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     function repChip(pi){
       var pp = projById(pi.project_id);
       var loc = pp ? firstLine(pp.address) : '';
-      return '<div class="rep" data-pid="' + esc(pi.project_id) + '"><div class="t">' + esc(pi.title||'Repair') +
+      return '<div class="rep" role="button" tabindex="0" data-pid="' + esc(pi.project_id) + '"><div class="t">' + esc(pi.title||'Repair') +
         '</div>' + (loc ? '<div class="a">' + esc(loc) + '</div>' : '') + '</div>';
     }
     function repairsBand(){
@@ -90512,7 +90808,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     el = document.createElement('div');
     el.id = 'cr-disp';
     var tradeChips = ['All','Roofing','Siding','Windows','Gutters'].map(function(t){
-      return '<span class="fc' + (t==='All'?' on':'') + '" data-f="' + t + '">' + t + '</span>';
+      return '<span class="fc' + (t==='All'?' on':'') + '" role="button" tabindex="0" aria-pressed="' + (t==='All' ? 'true' : 'false') + '" data-f="' + t + '">' + t + '</span>';
     }).join('');
     el.innerHTML =
       '<div class="dspwrap">' +
@@ -90539,6 +90835,13 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     el.querySelector('.dspback').addEventListener('click', dspBack);   /* 1416 */
     el.querySelector('.dspprev').addEventListener('click', function(){ weekOffset--; render(); if(mapOn) syncMap(); });
     el.querySelector('.dspnext').addEventListener('click', function(){ weekOffset++; render(); if(mapOn) syncMap(); });
+    /* 1477: Enter and Space on a card, band or chip do what a tap does - the delegated click below */
+    el.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      var t = e.target;
+      if(!t || !t.getAttribute || t.getAttribute('role') !== 'button') return;
+      e.preventDefault(); t.click();
+    });
     el.addEventListener('click', function(e){
       var f = e.target.closest('.dspfilt .fc');
       if(f){ filter = f.getAttribute('data-f'); render(); if(mapOn) syncMap(); return; }
@@ -90653,23 +90956,31 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     });
   }
 
-  async function open(){
+  var openedFrom1472 = null;
+  async function open(opts){
     if(!el) buildShell();
     if(typeof window.hideAllViews === 'function') window.hideAllViews();
     el.classList.add('open');
     try{ el.scrollTop = 0; }catch(_e){}
     weekOffset = 0; filter = 'All'; showIdle = {}; foldTrade = {}; armed = null;
     armedMove = null;
+    openedFrom1472 = (opts && opts.from) || null;   /* 1472 */
     setMapMode(false);
     loadWx();                 /* 949: forecast for the day headers, cached 30 min */
     render();                 /* paint immediately with whatever is cached */
     await load();
+    /* 1472: Production's "Book crew" arrives with the job in hand - the next tap on a crew's day books it */
+    if(opts && opts.armPid && !ro()) armed = String(opts.armPid);
     render();                 /* repaint with fresh crews + work orders */
   }
 
   function close(){
     if(el) el.classList.remove('open');
     armed = null; armedMove = null;
+    /* 1472: opened from Production, Back goes back there (it went to the retail home) */
+    if(openedFrom1472 === 'production' && window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
+      openedFrom1472 = null; window.CardinalProduction.open(); return;
+    }
     if(typeof window.showHome === 'function') window.showHome();
   }
 
@@ -90678,7 +90989,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   function crewColorById(cid){ for(var i=0;i<crews.length;i++){ if(String(crews[i].id)===String(cid)) return CPAL[i%CPAL.length]; } return '#8b95a1'; }
   function needCrewList(){
     var woProjIds = {}; wos.forEach(function(w){ if(w.project_id) woProjIds[w.project_id] = 1; });
-    var arr = (window.cacheProjects || []).filter(function(p){ return p && p.stage === 'Scheduled' && !woProjIds[p.id]; });
+    /* 1472: a sold (Approved) job needs a crew too - it was listed only once it already had a build-day appointment */
+    var arr = (window.cacheProjects || []).filter(function(p){ var st = (typeof normStage === 'function') ? normStage(p && p.stage) : (p && p.stage);
+      return p && (st === 'Scheduled' || st === 'Approved') && !woProjIds[p.id]; });
     arr.sort(function(a,b){ var ha=/habitat/i.test(a.name||'')?0:1, hb=/habitat/i.test(b.name||'')?0:1;
       return ha - hb || String(a.name||'').localeCompare(String(b.name||'')); });
     return arr;

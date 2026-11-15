@@ -106,9 +106,15 @@ const frames = async (page, ms = 1000) => { const a = await page.evaluate(() => 
     const t = document.querySelector('#cr-pb .pbsky + .pbtoday'), s = document.querySelector('#cr-pb .pbsky'); if (!t || !s) return null;
     const r = t.getBoundingClientRect(), q = s.getBoundingClientRect(), nav = document.getElementById('pwaNav');
     const navTop = nav && nav.getClientRects().length ? nav.getBoundingClientRect().top : innerHeight;
-    return { h: Math.round(r.height), top: Math.round(r.top), bottom: Math.round(r.bottom), skyBottom: Math.round(q.bottom), navTop: Math.round(navTop) };
+    const b = document.querySelector('#cr-pb .pbtiles'), bb = b && b.getClientRects().length ? b.getBoundingClientRect() : null;
+    return { h: Math.round(r.height), top: Math.round(r.top), bottom: Math.round(r.bottom), skyBottom: Math.round(q.bottom), navTop: Math.round(navTop),
+             tilesTop: bb ? Math.round(bb.top) : null, tilesBottom: bb ? Math.round(bb.bottom) : null };
   });
-  ok('C the Today row is 44px, on the sky\'s lower edge, above the fold', c && c.h >= 44 && c.top < c.skyBottom && c.bottom > c.skyBottom && c.bottom <= c.navTop, c);
+  /* 1474 retired the phone's Today row (it repeated the list that now sits right under the boxes). Either shape passes:
+     the pre-1474 row on the sky's edge, or the boxes directly under a shorter sky, above the fold. */
+  ok('C today is in reach above the fold: the Today row on the sky\'s edge, or (1474) the boxes right under the sky',
+     c && (c.h >= 44 ? (c.top < c.skyBottom && c.bottom > c.skyBottom && c.bottom <= c.navTop)
+                     : (c.h === 0 && c.tilesTop != null && c.tilesTop >= c.skyBottom - 1 && c.tilesTop - c.skyBottom <= 40 && c.tilesBottom <= c.navTop)), c);
 
   /* E — the loop runs while it can be seen, and stops when it cannot */
   const on = await frames(page);

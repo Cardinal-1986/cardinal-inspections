@@ -38359,3 +38359,40 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 **Not done, and why:** the desktop money-first order (Theo's 1227 pick — settled); a side-panel tile layout for ultrawide (bigger than this pass); Owner review creating a record on tap (asks first, left as designed).
 
 **Gates:** `check_build` GREEN on each; `gate_1465`–`gate_1470` new, in `gate_chromium`, each green on its build and red on the one before. ⚠ A `\d` inside a JS template literal in a patch script is written as `d` — 1467's time regex shipped as `/^(dd?):(dd)/` until gate C caught it.
+
+
+## Build 1471 — the ultrawide side panel (14 Nov 2026)
+
+**Theo:** "3 and 1" — 3 was the one client-page item 1465–1470 left: on his 3440 ultrawide the job and its parts were never on screen together.
+
+- `crSplitTab(name)`, called from the base `showTab`: at `(min-width:2200px)`, outside Community, a section other than the overview (inspections, estimates, contracts, workorders, commissions, checklists, materials, measure, punch) gets `#projectView.cr-split` and the overview stays displayed. CSS grid on `#projectView > .wrap`: `.projhead` spans, `#tab-overview` left, the open tab right — sticky, its own scroll (`overscroll-behavior:contain`), a rule on its left. A `matchMedia` change listener drops back to one section when the window shrinks.
+- ⚠ 1470's `body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView .wrap:not(.masthead){max-width:2100px}` out-ranked a plain split rule — the first render was still capped. The split's 3200px rule carries the same prefix.
+- **Not split:** Communication, Photos, Tasks, Files and Appointments are views of their own (`hideAllViews`), not tabs.
+
+**Gate:** `gate_1471` (5 checks), registered; RED 4/5 on 1470 (only the split itself is new — the other four are unchanged behaviour by design).
+
+## Builds 1472–1477 — Production, the six fix groups from the 10-judge audit (14 Nov 2026)
+
+**Theo:** "All, in order" — the six groups the Production audit put in front of him.
+
+- **1472 — one schedule.** Production read build days only from appointments; Crew Dispatch writes `crew_work_orders`. In production data 3 of 3 dated work orders had no job appointment and no trigger joins them. Production now loads both (`loadWos()`), `schedFor` / `eventsFor` see a crew booking as the build day ("Crew: Betos, Pineda"), job cards say Book crew / Move crew, and Book crew opens Dispatch with the job armed; Dispatch's Back returns to Production (`openedFrom1472`). Needs a crew lists Approved jobs too.
+- **1473 — lists in the order they matter.** `activeJobs` sorts late-start first, then soonest build, then undated, then Completed; name only breaks ties. The build day has its own line (`pbWhen1473`: today / tomorrow / Mon Nov 16). Needs a date lists every undated Approved/Scheduled job (it was built from Needs-ordered only) and counts the hidden punch items. "past due" (the Punch page's word), "Punch closed", and a Completed job leaves Scheduled.
+- **1474 — phone: today first; Scottie's My day.** Below 1100px the landing is a flex column: shorter sky, My day, the boxes, today's list, then the month. The Today row is hidden on phones (it repeated the list). A field login gets `myDayHtml()`: his own open items due today, past due or undated, with the address, Directions and Open; the materials / scheduling tiles and Mark ordered are hidden for him.
+- **1475 — the way back, and one name.** `prodCtx1475()` in front of `crmHead()`: a job or Crews opened FROM Production wears the Production head (head only — `data-crm` stays the job's own, the 754 line), and `goHome()` returns to Production. The hand-off ends on the first `hideAllViews()` after its screen was seen. Crews opened from Production shows "‹ Production" and returns there. Menu: Production (was Production Board). Empty Scheduled points at Crew Dispatch. "+ Add" → "+ Punch item" (aria-label "Add a punch item"; the long label wrapped at 360px).
+- **1476 — Dispatch in Production's look; desk widths.** `--disp-mono` now holds Production's sans (one line moves ~20 rules); crew names and status lines in sentence case ("Nothing booked today", "Booked all 7 days"). On a desk Dispatch sits under the header and beside the menu (`body.cr-lnav-on #cr-disp`, the 572 / P09.08 lines) and goes to 2160px on an ultrawide. The full calendar matches home's 2160px from 1600 up. The home month draws the day's names on a desk (`nm76`); a phone keeps the pips.
+- **1477 — rain, small targets, keyboard.** The sky's words sat on pale drifting clouds / the snow line in rain and night snow (1.16–1.19:1); a .66 wash behind the text block only holds title 7.2:1 and date/subtitle 5.6:1 over a #ebebec cloud, measured on real pixels. The punch tick keeps its 22px box with a 44px pad; Dispatch's filter chips are a visible 44. Dispatch's bands, Needs-a-crew and repair cards and chips are `role=button` + tabindex and answer Enter/Space; a job card's NAME is its control (the card holds a real Move button).
+
+**Not done, and why:** Dispatch still closes itself to open the work-order picker (it sat at z 9550 over the picker's 210); on a desk it now sits at 60 and could stay open under it — a separate change. 1416 A11, 1317 C, 1430 #17 and 1116 (`cr-orv-view` unclassified) are RED on the 1470 base as well — pre-existing, not touched here.
+
+**Gates:** `check_build` GREEN on each; `gate_1472`–`gate_1477` new, registered in `gate_chromium` with breaks, each green on its build and red on the one before. Updated for intended changes: `gate_1446` C and `gate_1416` A3 (the phone Today row 1474 retired), `gate_1416` A9 ("Nothing booked" — the rule is "never free"), `gate_1453` E ("past due"). `gate_dupes` back to the 1470 base's 16 after renaming 1473's `grp` helper; `gate_stack` clean. ⚠ `gate_1400/1416/1420/1430/1317` hardcode the cloud container's Linux paths and are not in `gate_chromium`, so CI never runs them — run here from a path-rewritten copy.
+
+## Build 1478 — one Production in the menu (14 Nov 2026)
+
+**Theo:** "Fix it" — the sentinel's last finding after 1475: two menu rows named "Production" opening the same screen.
+
+- The duplicate only ever showed in the **Production portal**: the Production section (`data-nav="prodboard"`, beside Crew Dispatch and Punch & Repairs) is hidden by `syncPortalSections()` everywhere else, and Daily's row (`#cr-nav-production`, injected by `cr-pb-script`) is shown everywhere. 1475 renamed "Production Board" to "Production" and exposed it.
+- `syncPortalSections()` now hides Daily's row in the Production portal with the same inline-display + `data-cr-pohid` pair `setSectionHidden()` writes (the drawer's `!important` flex rule beats a bare inline style; the rail's `scrape()` keys on the inline one). Outside Production it is the door, as `gate_955` / `gate_956` require.
+- **Why Daily's row and not the section's:** the section's row is a field login's only Production door (`body.cr-field` hides every row but prodboard / dispatch / punch), and hiding a row inside a section `setSectionHidden()` already toggles would fight it on every sync.
+- The desk rail opens the Production section on the way into the portal (`openSection1478`, 954's Insurance one-shot, same `cardinal.lnav.sections` store), so the one row is on screen. The phone drawer still starts folded with Daily open — 1115 / T2 outrank it there, as they do for Insurance.
+
+**Gates:** `check_build` GREEN; `gate_1478.mjs` new (5) — GREEN on 1478, RED on 1477 (A, D, E); registered in `gate_chromium` with a break. `gate_dupes` at the 1470 base's 16.
