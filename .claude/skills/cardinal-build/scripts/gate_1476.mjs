@@ -29,6 +29,7 @@ const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath
 async function page(width, height) {
   const ctx = await browser.newContext({ viewport: { width, height } });
   const p = await ctx.newPage(); p.on('dialog', d => d.dismiss());
+  if (process.env.GATE_NOW) await p.clock.install({ time: new Date(process.env.GATE_NOW) });
   await p.route('**/*', r => r.request().url().startsWith('https://cardinal.test/') ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML }) : r.fulfill({ status: 200, contentType: 'text/plain', body: '' }));
   await p.addInitScript(SETUP);
   await p.goto('https://cardinal.test/?as=theo', { waitUntil: 'domcontentloaded' }); await wait(3800);
@@ -39,7 +40,8 @@ const tomorrow = () => { const d = new Date(); d.setDate(d.getDate() + 1); const
 
 /* E (desk) first, while on the home */
 let { ctx, p } = await page(1440, 900);
-const tk = tomorrow();
+/* tomorrow by the PAGE's clock, not Node's - they differ under GATE_NOW or a TZ mismatch */
+const tk = await p.evaluate('(' + tomorrow.toString() + ')()');
 const e1 = await p.evaluate(k => { const c = document.querySelector('#cr-pb .pbmonth .pbday[data-day="' + k + '"]'); if (!c) return null;
   return { names: [...c.querySelectorAll('.cch')].filter(x => x.getClientRects().length).map(x => x.textContent), pips: [...c.querySelectorAll('.pbpip')].filter(x => x.getClientRects().length).length }; }, tk);
 ok(!!e1 && e1.names.some(t => /Mark Diamond/.test(t)) && e1.pips === 0, 'E  desk: the home month names tomorrow\'s job', e1);

@@ -28,6 +28,7 @@ setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 220000).unre
 const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const p = await ctx.newPage(); p.on('dialog', d => d.dismiss());
+if (process.env.GATE_NOW) await p.clock.install({ time: new Date(process.env.GATE_NOW) });
 const errs = []; p.on('pageerror', e => errs.push(String(e).slice(0, 160)));
 await p.route('**/*', r => r.request().url().startsWith('https://cardinal.test/') ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML }) : r.fulfill({ status: 200, contentType: 'text/plain', body: '' }));
 await p.addInitScript(SETUP);

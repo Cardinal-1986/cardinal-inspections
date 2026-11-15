@@ -27,6 +27,8 @@ setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 220000).unre
 const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const p = await ctx.newPage(); p.on('dialog', d => d.dismiss());
+/* GATE_NOW=2026-11-15T15:00:00 pins the browser's day, so the gate can be proved on every weekday */
+if (process.env.GATE_NOW) await p.clock.install({ time: new Date(process.env.GATE_NOW) });
 await p.route('**/*', r => r.request().url().startsWith('https://cardinal.test/') ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML }) : r.fulfill({ status: 200, contentType: 'text/plain', body: '' }));
 await p.addInitScript(SETUP);
 await p.goto('https://cardinal.test/?as=theo', { waitUntil: 'domcontentloaded' }); await wait(3800);
@@ -40,7 +42,9 @@ ok(!!a && /^[1-9]/.test(a), 'A  the Scheduled box counts the job booked in Dispa
 const tk = await p.evaluate(() => { const d = new Date(); d.setDate(d.getDate() + 1); const pad = n => (n < 10 ? '0' : '') + n; return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); });
 await click('#cr-pb .pbday[data-day="' + tk + '"]'); await wait(1300);
 const b = await p.evaluate(() => document.body.innerText);
-ok(/Mark Diamond — build day/.test(b) && /Crew: Betos[^\n]*, Pineda/i.test(b), 'B  tomorrow lists the build day with the crew named', (b.match(/Mark Diamond[^\n]{0,60}\n?[^\n]{0,60}/) || [''])[0]);
+/* Betos (w1) is seeded at +1 every day; Pineda (w3) rides the next Sunday, which is tomorrow only on a
+   Saturday. Requiring both passed on Saturdays alone - CI went red the first Sunday (UTC) it ran. */
+ok(/Mark Diamond — build day/.test(b) && /Crew: Betos/i.test(b), 'B  tomorrow lists the build day with the crew named', (b.match(/Mark Diamond[^\n]{0,60}\n?[^\n]{0,60}/) || [''])[0]);
 
 await openProd();
 await click('#cr-pb [data-box="needs"]'); await wait(1300);

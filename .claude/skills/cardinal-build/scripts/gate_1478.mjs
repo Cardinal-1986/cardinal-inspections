@@ -30,6 +30,7 @@ const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath
 async function boot(w, h) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h } });
   const p = await ctx.newPage(); p.on('dialog', d => d.dismiss());
+  if (process.env.GATE_NOW) await p.clock.install({ time: new Date(process.env.GATE_NOW) });
   await p.route('**/*', r => r.request().url().startsWith('https://cardinal.test/') ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML }) : r.fulfill({ status: 200, contentType: 'text/plain', body: '' }));
   await p.addInitScript(SETUP);
   await p.goto('https://cardinal.test/?as=theo', { waitUntil: 'domcontentloaded' }); await wait(3800);

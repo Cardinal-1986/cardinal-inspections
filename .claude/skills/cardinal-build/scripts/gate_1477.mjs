@@ -47,6 +47,8 @@ const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath
 async function page(width, height) {
   const ctx = await browser.newContext({ viewport: { width, height } });
   const p = await ctx.newPage(); p.on('dialog', d => d.dismiss());
+  /* GATE_NOW=2026-11-15T15:00:00 pins the browser's day, so the gate can be proved on every weekday */
+  if (process.env.GATE_NOW) await p.clock.install({ time: new Date(process.env.GATE_NOW) });
   await p.route('**/*', r => r.request().url().startsWith('https://cardinal.test/') ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML }) : r.fulfill({ status: 200, contentType: 'text/plain', body: '' }));
   await p.addInitScript(SETUP);
   await p.goto('https://cardinal.test/?as=theo', { waitUntil: 'domcontentloaded' }); await wait(3800);
@@ -104,14 +106,16 @@ await p.evaluate(async () => { await window.CardinalDispatch.open(); }); await w
 const c = await p.evaluate(() => [...document.querySelectorAll('#cr-disp .dspfilt .fc')].map(e => { const r = e.getBoundingClientRect(); return [e.textContent, Math.round(r.width), Math.round(r.height)]; }));
 ok(c.length && c.every(x => x[1] >= 44 && x[2] >= 44), 'C  Dispatch filter chips are 44 x 44', c);
 
+/* read the job name BEFORE a band is folded: folding Roofing hides Betos's jobs, and the one left (Pineda's, on
+   the next Sunday) is off the 7-day board when today IS Sunday - this check went red in CI on a Sunday */
+const nm = await p.evaluate(() => { const n = document.querySelector('#cr-disp .job .nm'); const j = n && n.closest('.job');
+  return n ? { role: n.getAttribute('role'), tab: n.tabIndex, jobRole: j.getAttribute('role'), buttonsIn: j.querySelectorAll('button,[role="button"]').length } : null; });
 const band0 = await p.evaluate(() => { const b = document.querySelector('#cr-disp .dband[data-band]:not(.repband)'); if (!b) return null; b.focus(); return { k: b.getAttribute('data-band'), focused: document.activeElement === b, tab: b.tabIndex }; });
 await p.keyboard.press('Enter'); await wait(600);
 const band1 = await p.evaluate(k => { const b = document.querySelector('#cr-disp .dband[data-band="' + k + '"]'); return b ? { exp: b.getAttribute('aria-expanded'), summary: !!(b.nextElementSibling && b.nextElementSibling.classList.contains('dsum')) } : null; }, band0 && band0.k);
 const u0 = await p.evaluate(() => { const u = document.querySelector('#cr-disp .uch[data-pid]'); if (!u) return null; u.focus(); return { pid: u.getAttribute('data-pid'), focused: document.activeElement === u }; });
 await p.keyboard.press('Enter'); await wait(600);
 const u1 = await p.evaluate(pid => { const u = document.querySelector('#cr-disp .uch[data-pid="' + pid + '"]'); return u ? { armed: u.classList.contains('armed'), pressed: u.getAttribute('aria-pressed') } : null; }, u0 && u0.pid);
-const nm = await p.evaluate(() => { const n = document.querySelector('#cr-disp .job .nm'); const j = n && n.closest('.job');
-  return n ? { role: n.getAttribute('role'), tab: n.tabIndex, jobRole: j.getAttribute('role'), buttonsIn: j.querySelectorAll('button,[role="button"]').length } : null; });
 ok(!!band0 && band0.focused && !!band1 && band1.summary && band1.exp === 'false', 'D  Enter on a trade band folds it', { band0, band1 });
 ok(!!u0 && u0.focused && !!u1 && u1.armed && u1.pressed === 'true', 'D  Enter on a Needs-a-crew card arms it', { u0, u1 });
 ok(!!nm && nm.role === 'button' && nm.tab === 0 && nm.jobRole == null, 'D  the job name is the keyboard control; the card is not a button around a button', nm);
