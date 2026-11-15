@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-14 build 1478<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-15 build 1480<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47499,6 +47499,8 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1480, d:'2026-11-15', t:'Punch search hint fits at larger text', s:'On a phone with Large or Larger text, or with Sun on, the grey hint in the Punch & Repairs search box was cut off at the end. It now shows a shorter hint (Client or PO #) whenever the full one would not fit. Search itself is unchanged: it still finds phone numbers and tarps.' },
+  { b: 1479, d:'2026-11-15', t:'Crew Dispatch stays open on a desktop', s:'On a desktop, booking a crew from Crew Dispatch used to close Dispatch and drop you on the home screen behind the work order form. Dispatch now stays where it is: Cancel leaves you on the board, and a new work order shows on it as soon as it is created. On a phone nothing changes.' },
   { b: 1478, d:'2026-11-14', t:'One Production in the menu', s:'In Production the menu listed Production twice, once under Daily and once beside Crew Dispatch and Punch & Repairs. It is listed once now, with the other Production tools. Everywhere else the Daily row is still the way in.' },
   { b: 1477, d:'2026-11-14', t:'Production: readable in the rain, easier to tap', s:'On a rainy or snowy night the date and the line under Production could sit on a pale cloud and nearly vanish; the words now keep a dark ground under them. The tick box beside a punch item is easier to hit, and Crew Dispatch’s trade filters are full-size buttons. On a computer, Dispatch’s jobs, trade rows and filters can be reached with the keyboard and opened with Enter.' },
   { b: 1476, d:'2026-11-14', t:'Crew Dispatch looks like Production', s:'Crew Dispatch now uses the same lettering as Production instead of a typewriter face, with crew names written normally rather than in capitals. On a computer it opens inside the app, under the header and beside the menu, like Production, instead of covering both, and on a wide screen it uses the width instead of a narrow column. Each crew says Nothing booked today, or the first day with nothing booked. The full calendar is now as wide as Production on a big screen, and Production’s month shows what is on each day on a computer, not just a dot.' },
@@ -60104,7 +60106,7 @@ function apptDay(v){
 function pbDay(d){ return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
 /* 1473: "Build today" / "Build tomorrow" / "Build Mon Nov 16" */
 function pbWhen1473(d){
-  var t = today(), n = Math.round((d - t) / 864e5);
+  var t = today(), n = Math.round((+d - +t) / 864e5);
   if(n === 0) return 'today';
   if(n === 1) return 'tomorrow';
   return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
@@ -60800,7 +60802,8 @@ function pbDays(i){
    past due (and any with no date), each with the address and a Directions button. */
 function myDayHtml(){
   if(!(window.isFieldUser && window.isFieldUser())) return '';
-  var me = String((window.currentUser && window.currentUser.email) || '').toLowerCase();
+  var cu1474 = /** @type {any} */ (window).currentUser;
+  var me = String((cu1474 && cu1474.email) || '').toLowerCase();
   var tk = keyOf(today());
   var mine = punchRows().filter(function(i){
     if(!i || i.status === 'done' || String(i.assigned_to || '').toLowerCase() !== me) return false;
@@ -74911,9 +74914,30 @@ document.getElementById('puShAssign').addEventListener('click', async function(e
     }
   }
 });
+/* 1480: the search hint is the long one where it fits and the short one where it does not.
+   "Client, PO #, phone, tarp..." says everything search reads, and on a phone at Large, Larger
+   or Sun it is wider than its box, so its end was cut off (measured at 390px: it needs 215-225px
+   and had 204 / 166 / 135). Measured, not keyed to the text-size setting, so a narrow phone at
+   the normal size is covered by the same line. */
+function puHintFit(){
+  var inp = /** @type {any} */ (document.getElementById('puSearch')); if(!inp) return;
+  var LONG = 'Client, PO #, phone, tarp\u2026', SHORT = 'Client or PO #';
+  try{
+    var cs = getComputedStyle(inp), cv = document.createElement('canvas').getContext('2d');
+    cv.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    var have = inp.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var want = (have > 0 && cv.measureText(LONG).width > have) ? SHORT : LONG;
+    if(inp.placeholder !== want) inp.placeholder = want;
+  }catch(_){}
+}
+window.addEventListener('resize', function(){
+  var v = document.getElementById('punchView');
+  if(v && v.style.display !== 'none') puHintFit();
+});
 async function openPunchView(preset){
   if(typeof hideAllViews === 'function') hideAllViews();
   document.getElementById('punchView').style.display = 'block';
+  puHintFit();   /* 1480 */
   window.scrollTo(0, 0);
   PU.q = ''; document.getElementById('puSearch').value = '';
   PU.type = 'all'; PU.view = '';
@@ -90838,7 +90862,7 @@ body.cr-lnav-on #cr-disp{
     /* 1477: Enter and Space on a card, band or chip do what a tap does - the delegated click below */
     el.addEventListener('keydown', function(e){
       if(e.key !== 'Enter' && e.key !== ' ') return;
-      var t = e.target;
+      var t = /** @type {any} */ (e.target);
       if(!t || !t.getAttribute || t.getAttribute('role') !== 'button') return;
       e.preventDefault(); t.click();
     });
@@ -90860,9 +90884,7 @@ body.cr-lnav-on #cr-disp{
           /* 949: second tap on the armed chip = the classic flow, unchanged */
           armed = null;
           var proj = projById(upid);
-          close();   /* the picker modal is z-index 210 — must not open behind the grid */
-          if(proj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(proj);
-          else if(typeof window.openProject === 'function') window.openProject(upid);
+          toPicker1479(proj, undefined, upid);
           return;
         }
         /* 949 arms the chip; 958: and empties the hand — one thing at a time,
@@ -90888,9 +90910,7 @@ body.cr-lnav-on #cr-disp{
       if(dop){ if(!ro()) close(); if(typeof window.openProject === 'function') window.openProject(dop.getAttribute('data-dopen')); return; }
       var dnd = e.target.closest('[data-dneed]');
       if(dnd && ro()){ roTell(); return; }   /* 1416 */
-      if(dnd){ var npid = dnd.getAttribute('data-dneed'), nproj = projById(npid); close();
-        if(nproj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(nproj);
-        else if(typeof window.openProject === 'function') window.openProject(npid); return; }
+      if(dnd){ var npid = dnd.getAttribute('data-dneed'), nproj = projById(npid); toPicker1479(nproj, undefined, npid); return; }
       /* 949: while a tray chip is armed, a tap on any crew day cell books it —
          the build-555 picker opens with that crew and day already filled. */
       if(armed){
@@ -90900,10 +90920,7 @@ body.cr-lnav-on #cr-disp{
           var apid = armed, aproj = projById(apid);
           var when = weekDays().map(ymd)[+dc[1]] || null;
           armed = null;
-          close();
-          if(aproj && typeof window.openWorkOrderPicker === 'function')
-            window.openWorkOrderPicker(aproj, { crew_id: dc[0], scheduled_on: when });
-          else if(typeof window.openProject === 'function') window.openProject(apid);
+          toPicker1479(aproj, { crew_id: dc[0], scheduled_on: when }, apid);
           return;
         }
       }
@@ -90923,10 +90940,7 @@ body.cr-lnav-on #cr-disp{
           if(!mw || !mwhen){ render(); return; }
           if(String(mdc[0]) !== String(mw.crew_id)){
             var mproj = projById(mw.project_id);
-            close();
-            if(mproj && typeof window.openWorkOrderPicker === 'function')
-              window.openWorkOrderPicker(mproj, { crew_id: mdc[0], scheduled_on: mwhen });
-            else if(typeof window.openProject === 'function') window.openProject(mw.project_id);
+            toPicker1479(mproj, { crew_id: mdc[0], scheduled_on: mwhen }, mw.project_id);
             return;
           }
           /* the magnet moves at once, and moves BACK if the write is refused \u2014
@@ -90957,6 +90971,32 @@ body.cr-lnav-on #cr-disp{
   }
 
   var openedFrom1472 = null;
+  /* 1479: the one door from Dispatch to the build-555 work-order picker.
+     On a phone Dispatch is a full-screen page at z-index 9550 and the picker modal is 210, so
+     Dispatch closes first (the 949 rule, unchanged). On a desk Dispatch sits inside the shell
+     at z-index 60 (1476): the picker already draws over it, and closing first only threw the
+     user out to the home screen, where Cancel left them. There it stays open, and the board
+     reloads when the picker goes away - a new work order shows without leaving the page. The
+     gate is the same body class the 1476 CSS keys on, so the two cannot disagree. */
+  function toPicker1479(proj, preset, pid){
+    var canPick = !!proj && typeof window.openWorkOrderPicker === 'function';
+    if(!canPick || !document.body.classList.contains('cr-lnav-on')){
+      close();
+      if(canPick) window.openWorkOrderPicker(proj, preset);
+      else if(typeof window.openProject === 'function') window.openProject(pid);
+      return;
+    }
+    render();   /* the armed outline comes off; the board stays */
+    window.openWorkOrderPicker(proj, preset);
+    var m = document.getElementById('tskModal');
+    if(!m || typeof MutationObserver !== 'function') return;
+    var mo = new MutationObserver(function(){
+      if(m.style.display !== 'none') return;
+      mo.disconnect();
+      if(el && el.classList.contains('open')) load().then(render, render);
+    });
+    mo.observe(m, { attributes:true, attributeFilter:['style'] });
+  }
   async function open(opts){
     if(!el) buildShell();
     if(typeof window.hideAllViews === 'function') window.hideAllViews();

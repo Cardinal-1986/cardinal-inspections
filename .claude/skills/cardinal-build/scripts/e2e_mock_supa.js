@@ -265,6 +265,14 @@
         else if (this._single) { res.data = out[0] || null; if (!out.length) { res.error = { code: 'PGRST116', message: 'no rows' }; } }
         else if (this._maybe) { res.data = out[0] || null; }
         else res.data = out;
+        /* __MOCK_COPY_READS__ (true, or a list of tables): hand back COPIES, as a real database does.
+           By default a read returns the store's own row objects, so the app editing its copy has
+           already edited "the server" - which makes any check that compares the two (the 1460
+           someone-else-changed-this-card check) see a change that is only the app's own. */
+        var cr = (typeof window !== 'undefined') && window.__MOCK_COPY_READS__;
+        if (res.data && cr && (cr === true || cr.indexOf(this.table) !== -1)) {
+          try { res.data = JSON.parse(JSON.stringify(res.data)); } catch (e) {}
+        }
       }
     } catch (e) { res.error = { message: String(e && e.message || e) }; }
     return res;

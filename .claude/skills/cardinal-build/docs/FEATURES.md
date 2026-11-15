@@ -10948,3 +10948,28 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | Daily's `#cr-nav-production` steps aside in the Production portal (inline + `data-cr-pohid`); the rail opens the Production section on entry (`openSection1478`) | `cr-menu-script` → `syncPortalSections()` |
 
 **Gate:** `gate_1478.mjs`.
+
+## Build 1479: Crew Dispatch stays open under the work-order picker (desk)
+
+| Piece | Where |
+|---|---|
+| `toPicker1479(proj, preset, pid)` — the one door from Dispatch to `openWorkOrderPicker()`; desk (`body.cr-lnav-on`) keeps Dispatch open and reloads it when `#tskModal` hides; phone closes first as before | `cr-disp-script` |
+
+**Gate:** `gate_1479.mjs`.
+
+## Build 1480: the Punch search hint fits at every text size
+
+| Piece | Where |
+|---|---|
+| `puHintFit()` — long hint where it fits, "Client or PO #" where it would be cut; runs on open and on resize | Punch & Repairs block, beside `openPunchView()` |
+
+**Gate:** `gate_1441.mjs` H.
+
+## Gate tooling (15 Nov 2026)
+
+| Piece | Where |
+|---|---|
+| `gate_env.mjs` — Playwright, Chromium, the scripts folder and the app, for any machine (`PW_CORE`, `PW_CHROMIUM`) | `scripts/` |
+| `window.__MOCK_COPY_READS__` — the mock returns copies of rows, as a database does (opt-in: `true` or a table list) | `e2e_mock_supa.js` |
+| `GATE_NOW=2026-11-15T15:00:00` — pins the browser's day in gates 1472–1479 | each gate |
+| per-gate `timeout` in a `GATES` entry | `gate_chromium.mjs` |

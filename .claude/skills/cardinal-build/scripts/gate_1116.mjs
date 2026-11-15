@@ -13,10 +13,10 @@
  */
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { chromium } = require('playwright');
+const { chromium, launchOpts, APP: APP_FILE } = await import('./gate_env.mjs');
 const fs = require('fs'), http = require('http'), path = require('path');
 
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const FILE = process.argv[2] || APP_FILE;
 let fails = 0;
 const ok = (c, m) => { if (!c) { console.log('  FAIL ' + m); fails++; } else console.log('  ok   ' + m); };
 
@@ -33,7 +33,14 @@ const DEFERRED = ['cr-occ', 'cr-est-view', 'cr-owner', 'cr-disp', 'cr-can', 'cr-
    Door (1164, the picker itself), Why Cardinal (1160) and The Appointment (1161).
    Finance rates (1153) is the same fixed inset:0, display-shown shape. A new view
    in NO bucket is still red; that is the point of the check. */
-const OWN_SCREEN = ['cr-fd', 'cr-fin', 'cr-why', 'cr-appt'];
+const OWN_SCREEN = ['cr-fd', 'cr-fin', 'cr-why', 'cr-appt',
+  /* Owner Review (1322) joined hideAllViews() and was never classified here, so the check at the
+     bottom went red and stayed red, unseen, because nothing ran this gate. Measured at 390px (the
+     width this gate runs at): the view is fixed inset:0 at z-index 9500 with its own .cr-mhd
+     header, and elementFromPoint on the app header's title lands inside the view. So on a phone
+     there is no shared header for it to drift. (On a desk it sits under the app header, which
+     reads "Owner Review" and fits: 157 of 157px at 1440.) */
+  'cr-orv-view'];
 
 (async () => {
   const dir = path.dirname(path.resolve(FILE)), base = path.basename(FILE);
@@ -44,8 +51,9 @@ const OWN_SCREEN = ['cr-fd', 'cr-fin', 'cr-why', 'cr-appt'];
   await new Promise(r => srv.listen(0, '127.0.0.1', r));
   const url = 'http://127.0.0.1:' + srv.address().port + '/' + base;
 
-  const b = await chromium.launch();
+  const b = await chromium.launch(launchOpts);
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+  if (process.env.GATE_NOW) await p.clock.install({ time: new Date(process.env.GATE_NOW) });   /* pin the browser's day: BUG_CLASSES 107 */
   await p.goto(url, { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(900);
 

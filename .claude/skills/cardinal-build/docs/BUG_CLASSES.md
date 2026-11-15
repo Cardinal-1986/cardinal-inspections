@@ -5054,3 +5054,19 @@ read the punch-outs and sent **no upload and no punch-out save**, and no punch-o
 `galFileInput`. A Chromium gate cannot see this fault. What it can assert is `isConnected` on the chooser's element
 (`gate_1445` C, E, I). **Still detached, recorded and not changed:** the payments receipt `rcptAttach` (main block,
 payments side) and the NACHI admin upload (`cr-nachi-cm-script`).
+
+## 107 — a gate that passes only on the weekday it was written
+
+**Builds 1472 / 1476 / 1477 (PR #776, 15 Nov 2026).** Three new gates went red in CI and green on the desk. The seed dates its rows relative to today — one work order at +1 day, one on "the next Sunday" — and the assertions quietly assumed a coincidence: written on a **Saturday**, "tomorrow" and "the next Sunday" were the same day, so "tomorrow's sheet names both crews" was true. CI ran after midnight UTC, on a Sunday. A third gate computed "tomorrow" in Node while the page had its own clock.
+
+- **A relative seed makes every assertion a statement about a weekday.** Ask of each one: is this true on all seven?
+- **Prove it on all seven.** `GATE_NOW=2026-11-15T15:00:00` pins the browser's day (`page.clock.install`); gates 1472–1479 take it. The sweep that found the third gate was seven gates x seven days, and CI had not reached that gate yet.
+- **`TZ=UTC` on the Node process does not move the browser's clock.** The first reproduction attempt "passed under UTC" for that reason. Set `timezoneId` on the context, or pin the clock.
+
+## 108 — a gate only one machine can run is a file, not a gate
+
+**Gates 1116, 1317, 1400, 1416, 1420, 1430, 1441 (found 15 Nov 2026).** Each hard-coded the cloud container's paths, so CI could not start it and neither could a desk; none was registered in `gate_chromium`. **Five of the seven had been red for weeks.** Three were tests a later build had made untrue, one was a rig fault, and one was a real defect a customer-facing screen had carried the whole time (build 1480).
+
+- **A gate is finished when CI runs it**, with a break that has been seen to turn it red. Until then it is one session's scratch work with a convincing name.
+- **Paths come from `gate_env.mjs`**, never from a literal. `grep -n "/home/user\|/opt/" gate_*.mjs` should find comments only.
+- **Read each red before believing any of them.** "Pre-existing, identical on the base" was true of all five and was carried in three PR bodies; it said nothing about which were the app's fault. One was.

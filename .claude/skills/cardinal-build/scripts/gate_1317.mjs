@@ -6,11 +6,11 @@
  *   E  as Scottie: the menu offers only Production Board, Crew Dispatch, Punch List, Notifications
  *   F  as Curtis: showHome() shows the home, openProject() opens the profile, the Front Door opens
  * Arg: [index.html] -> negative control (1316: must go RED). */
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { chromium, launchOpts, SCRIPTS, APP as APP_FILE } from './gate_env.mjs';
 import fs from 'fs';
 import { waitAppReady, settle } from './gate_ready.mjs';
-const HERE = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const HERE = SCRIPTS;
+const FILE = process.argv[2] || APP_FILE;
 const SHOT = process.env.SHOT || '';
 const APP_HTML = fs.readFileSync(FILE, 'utf8');
 const MOCK = fs.readFileSync(HERE + 'e2e_mock_supa.js', 'utf8');
@@ -21,13 +21,14 @@ const SEED = {
                   { email: 'scottie@cardinalrenovations.net', name: 'Scottie', role: 'production', title: 'Production' }],
   projects: [{ id: 'p1', name: 'Dana Test', stage: 'Scheduled', address: '1 Main St', phone: '9375550101', email: '', checklist: JSON.stringify({ lead: { claim_type: 'retail' } }), created_at: '2026-09-01T12:00:00Z', updated_at: '2026-09-01T12:00:00Z' }],
   inspection_reports: [], appointments: [], estimates: [], collections: [], commissions: [], contracts: [], punch_items: [], insurance_claims: [] };
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const browser = await chromium.launch(launchOpts);
 let pass = 0, fail = 0;
 const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (d ? '  → ' + d : '')); c ? pass++ : fail++; };
 
 async function boot(as, light){
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
+  if (process.env.GATE_NOW) await page.clock.install({ time: new Date(process.env.GATE_NOW) });   /* pin the browser's day: BUG_CLASSES 107 */
   await page.route('**/*', async route => {
     const url = route.request().url(); const rt = route.request().resourceType();
     if (url === 'https://app.cardinalroster.com/' || url.startsWith('https://app.cardinalroster.com/?'))
@@ -70,8 +71,13 @@ try {
   const b3 = await hubOpen(page);
   ok(b1 && b2 && b3, 'B  Scottie: showHome, goToLanding and Back-to-clients all land on Production', JSON.stringify({ showHome: b1, landing: b2, back: b3 }));
   const c = await page.evaluate(async () => { const told = []; const k = window.crTell; window.crTell = t => told.push(String(t)); openProject('p1'); await new Promise(r => setTimeout(r, 400)); window.crTell = k;
-    const pv = document.getElementById('projectView'); return { pv: !!(pv && getComputedStyle(pv).display !== 'none'), told: told.join(' | ') }; });
-  ok(!c.pv && /punch card/i.test(c.told), 'C  Scottie: openProject opens no profile and points to the punch card', JSON.stringify(c));
+    const pv = document.getElementById('projectView'), fj = document.querySelector('#cr-fjob.open');
+    return { pv: !!(pv && getComputedStyle(pv).display !== 'none'), told: told.join(' | '), sheet: !!fj, sheetText: fj ? fj.innerText.replace(/\s+/g, ' ').slice(0, 160) : '' }; });
+  /* 1466 replaced the toast: a job being installed (p1 is Scheduled), or one with no punch-out, opens the
+     field job sheet - address, Directions, Call, Install photos, its punch items. Still never the profile,
+     and still no money. The toast is accepted too, for a job the sheet cannot be built for. */
+  ok(!c.pv && (c.sheet ? (/Dana Test/.test(c.sheetText) && !/\$\s?\d/.test(c.sheetText)) : /punch card/i.test(c.told)),
+     'C  Scottie: openProject opens no profile; he gets the field job sheet (no money) or is pointed to the punch card', JSON.stringify(c));
   const d = await page.evaluate(() => { try { window.CardinalFrontDoor.open(); } catch (_) {} const f = document.getElementById('cr-fd'); return !!(f && f.classList.contains('open')); });
   const doors = {}; for (const sel of ['#crBanner', '#cbCrm', '#cbSearch', '#headSearch', '#newWrap']) doors[sel] = await vis(page, sel);
   ok(!d && Object.values(doors).every(v => !v), 'D  Scottie: no Front Door, no banner, CRM switch, searches or + New', JSON.stringify({ frontDoor: d, doors }));

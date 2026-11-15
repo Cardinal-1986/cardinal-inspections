@@ -36,7 +36,7 @@ const require = createRequire(import.meta.url);
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FILE = resolve(process.argv[2] || resolve(HERE, '../../../../index.html'));
 process.env.APPFILE = FILE;
-const L = await import(resolve(HERE, 'gate_1403_lib.mjs'));
+const L = await import('./gate_1403_lib.mjs');
 const HTML = readFileSync(FILE, 'utf8');
 setTimeout(() => { console.log('  ✗ FAIL gate timed out'); process.exit(1); }, 900000);
 
@@ -360,7 +360,7 @@ try {
   }
   console.log('\nK  P12.09 no question falls back to "Continue"');
   {
-    const ts = require(execSync('npm root -g').toString().trim() + '/typescript');
+    const ts = (await import('./gate_env.mjs')).tool('typescript');
     const VERBS = ['delete', 'remove', 'discard', 'clear', 'archive', 'reset', 'overwrite', 'replace', 'send', 'email', 'switch', 'move', 'close', 'mark', 'log', 'download', 'finish'];
     const leadVerb = msg => { const m = /^\s*[^\w]*([A-Za-z]+)/.exec(String(msg || '')); return m && VERBS.includes(m[1].toLowerCase().replace(/ing$/, '')); };
     const re = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi; let m; let total = 0; const fall = [];

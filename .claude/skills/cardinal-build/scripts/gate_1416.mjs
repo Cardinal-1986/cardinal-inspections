@@ -30,13 +30,14 @@
  *
  * Negative control: point it at b1415 — it must go RED, named, without crashing.
  */
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const ENV = await import('./gate_env.mjs');
+const FILE = process.argv[2] || ENV.APP;
 process.env.APPFILE = FILE;
-const LIBDIR = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';   
+process.env.MOCK_COPY_READS = 'punch_items';   /* A11 saves a checklist - see gate_1400_lib */
 /* gate_1400_lib always opens a 390 mobile context; for the desktop widths the
    context options are swapped at newContext() time, so every width rides the
    SAME boot (mock, seeds, routes, personas). */
-const { chromium } = await import('/opt/node22/lib/node_modules/playwright/index.mjs');
+const { chromium } = ENV;
 const _launch = chromium.launch.bind(chromium);
 let DESK = null;
 chromium.launch = async (o) => {
@@ -45,7 +46,7 @@ chromium.launch = async (o) => {
   b.newContext = (opts) => nc(DESK ? { viewport: DESK } : opts);
   return b;
 };
-const lib = await import(LIBDIR + 'gate_1400_lib.mjs');
+const lib = await import('./gate_1400_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 420000);
 
 let pass = 0, fail = 0;

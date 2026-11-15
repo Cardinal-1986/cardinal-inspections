@@ -71,12 +71,14 @@
  */
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
 
 const require = createRequire(import.meta.url);
-const HERE = new URL('.', import.meta.url).pathname;
+const HERE = fileURLToPath(new URL('.', import.meta.url));   /* .pathname is '/C:/...' on Windows */
 
 let chromium;
-for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright/index.js']) {
+/* PW_CORE: a playwright / playwright-core folder, for a machine that is neither the container nor CI */
+for (const p of [process.env.PW_CORE, 'playwright', '/opt/node22/lib/node_modules/playwright/index.js'].filter(Boolean)) {
   try { chromium = require(p).chromium; break; } catch (e) {}
 }
 if (!chromium) { console.error('gate_a11y: playwright not found'); process.exit(2); }
@@ -86,7 +88,12 @@ if (!chromium) { console.error('gate_a11y: playwright not found'); process.exit(
    quiet pass — an a11y gate that reports green because its engine is missing
    is the worst thing in this file. */
 let AXE_SRC;
-try { AXE_SRC = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8'); }
+try {
+  let axe;
+  try { axe = require.resolve('axe-core/axe.min.js'); }
+  catch (e) { if (!process.env.PW_CORE) throw e; axe = require.resolve(process.env.PW_CORE + '/../axe-core/axe.min.js'); }
+  AXE_SRC = readFileSync(axe, 'utf8');
+}
 catch (e) {
   console.error('gate_a11y: axe-core not installed.\n' +
                 '  npm install axe-core   (into the scripts/node_modules symlink)');
@@ -255,7 +262,7 @@ async function selftest(browser) {
 
 /* ── main ──────────────────────────────────────────────────────────────── */
 const browser = await chromium.launch({
-  executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+  executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
 }).catch(() => chromium.launch());
 
 if (SELFTEST) {
