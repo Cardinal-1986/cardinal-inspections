@@ -396,7 +396,9 @@ jobs:
               echo "dropping unused apt source $f"; sudo rm -f "$f"
             fi
           done
-          npm install --no-save --no-audit --no-fund playwright@1.56.1 jsdom@30.0.1
+          # typescript: gate_1441 K parses every inline script with it (it looked
+          # in npm's GLOBAL root, which is one container's layout, not a runner's).
+          npm install --no-save --no-audit --no-fund playwright@1.56.1 jsdom@30.0.1 typescript@5.9.3
           npx playwright install --with-deps chromium
 
       # ⚠ THE RUNNER'S OWN CONTROL, FIRST. It proves every break

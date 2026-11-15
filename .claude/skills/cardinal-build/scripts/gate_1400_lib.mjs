@@ -1,16 +1,17 @@
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { chromium, launchOpts, SCRIPTS, APP as APP_FILE } from './gate_env.mjs';
 import fs from 'fs';
-export const S = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
-const APP = fs.readFileSync(process.env.APPFILE || '/home/user/cardinal-inspections/index.html','utf8');
+export const S = SCRIPTS;
+const APP = fs.readFileSync(process.env.APPFILE || APP_FILE,'utf8');
 const MOCK = fs.readFileSync(S+'e2e_mock_supa.js','utf8');
 const BASE = fs.readFileSync(S+'sentinel_setup_cardinal.js','utf8');
 const PROD = fs.readFileSync(S+'sentinel_setup_production.js','utf8');
 const EXTRA = fs.readFileSync(new URL('./gate_1400_seed.js', import.meta.url),'utf8');
 export const log = [];
 export async function boot(as, opts={}){
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const browser = await chromium.launch(launchOpts);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
+  if (process.env.GATE_NOW) await page.clock.install({ time: new Date(process.env.GATE_NOW) });   /* pin the browser's day: BUG_CLASSES 107 */
   page.on('pageerror', e => log.push('PAGEERROR ' + e.message + ' @ ' + (e.stack||'').split('\n').slice(1,3).join(' | ')));
   page.on('console', m => { if (m.type()==='error' || /unhandled|^TOAST/i.test(m.text())) log.push('CONSOLE.' + m.type() + ' ' + m.text().slice(0,300)); });
   page.on('dialog', d => { log.push('DIALOG ' + d.type() + ' ' + d.message().slice(0,200)); (opts.dialog||(x=>x.accept()))(d); });
@@ -30,6 +31,12 @@ export async function boot(as, opts={}){
   await page.addInitScript(BASE);
   await page.addInitScript(PROD);
   await page.addInitScript(EXTRA);
+  /* MOCK_COPY_READS=punch_items (a gate sets it before importing this file): reads of those tables
+     come back as copies, as they do from Supabase. Without it the card's own optimistic tick has
+     already changed the mock's "server" row, and build 1460's conflict check refuses every checklist
+     save as someone else's change (gate_1416 A11 was red on exactly that). Opt-in, because ~38 gates
+     boot through here and only the one that saves a checklist has been read against it. */
+  if (process.env.MOCK_COPY_READS) await page.addInitScript(t => { window.__MOCK_COPY_READS__ = t; }, process.env.MOCK_COPY_READS.split(','));
   await page.addInitScript(MOCK);
   if (opts.slowAuth) await page.addInitScript(() => { const cc = window.supabase.createClient; window.supabase.createClient = function(){ const c = cc.apply(this, arguments); const g = c.auth.getSession.bind(c.auth); c.auth.getSession = () => new Promise(r => setTimeout(() => r(g()), 3000)); return c; }; });
   await page.addInitScript(() => { window.__TOASTS__=[]; (function hook(){ var t=setInterval(function(){ if(window.crTell && !window.crTell.__h){ var o=window.crTell; window.crTell=function(m){ window.__TOASTS__.push(String(m)); console.log('TOAST '+m); return o.apply(this,arguments); }; window.crTell.__h=1; } },50); })(); window.addEventListener('unhandledrejection', e => console.error('UNHANDLED ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason))); });

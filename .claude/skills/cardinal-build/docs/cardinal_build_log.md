@@ -38396,3 +38396,49 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 - The desk rail opens the Production section on the way into the portal (`openSection1478`, 954's Insurance one-shot, same `cardinal.lnav.sections` store), so the one row is on screen. The phone drawer still starts folded with Daily open — 1115 / T2 outrank it there, as they do for Insurance.
 
 **Gates:** `check_build` GREEN; `gate_1478.mjs` new (5) — GREEN on 1478, RED on 1477 (A, D, E); registered in `gate_chromium` with a break. `gate_dupes` at the 1470 base's 16.
+
+## Build 1479 — Crew Dispatch stays open under the work-order picker, on a desk (15 Nov 2026)
+
+**Theo:** "1-4" — item 1 of the follow-ups left by 1471–1478.
+
+- Dispatch closed itself before every `openWorkOrderPicker()` call — four sites — because on a phone it is a full-screen page at z-index 9550 and the picker modal (`#tskModal`) is 210 (the 949 comment: "must not open behind the grid"). Since 1476 a **desk** Dispatch sits inside the shell at z-index 60 (`body.cr-lnav-on #cr-disp`), so the picker already draws over it. Closing first only threw the user to the home screen (or the Production board), and **Cancel left them there**.
+- `toPicker1479(proj, preset, pid)` is now the one door from Dispatch to the picker. Phone: unchanged (close, then picker). Desk: Dispatch stays, the armed outline comes off, and a one-shot `MutationObserver` on `#tskModal`'s `style` (not on `document.body` — the observer census is untouched) reloads the board when the picker goes away, so a new work order is on it without leaving the page. The gate is the same body class the 1476 CSS keys on, so the script and the stylesheet cannot disagree.
+- **Back from the new work order now returns to Dispatch.** Measured: the history entry under the editor is `dispatch` on 1479 and `home` on 1478, because `close()` → `showHome()` used to push one. The editor (z-index 150) opens over a desk Dispatch (60) with no change.
+- Rode along, type-only, no behaviour change: the five errors `gate_types` attributes to 1471–1478 (below) — `(+d - +t)` in `pbWhen1473`, a cast on `window.currentUser` in `myDayHtml`, a cast on `e.target` in Dispatch's keydown.
+
+**Gates:** `check_build` GREEN; `gate_1479.mjs` new (5: picker over Dispatch with crew and day filled, Cancel, the reload, the second-tap door, the phone unchanged) — GREEN on 1479, RED on 1478 (A–D); registered in `gate_chromium` with a break. ⚠ Not shown by the rig: the editor actually closing on Back (it stays open after `history.back()` in the mock on 1478 and 1479 alike) — the history entry is what was measured.
+
+## Build 1480 — the Punch & Repairs search hint fits at every text size (15 Nov 2026)
+
+- `gate_1441` H has asserted since 1441 that the search hint fits its box at Normal, Large, Larger, Sun and Sun + Larger. A later build lengthened the hint from "Client or PO #" to "Client, PO #, phone, tarp…" when search learned phones and tarps, and at 390px it then needed 215–225px against 204 / 166 / 135. **The gate was red and nobody saw it, because nothing ran it** (see the maintenance entry below). This is the one real defect among the five old reds.
+- `puHintFit()` measures the long hint against the input's own width on open (and on resize while Punch is up) and uses the short one where the long one would be cut. Measured, not keyed to the text-size setting, so a narrow phone at the normal size is covered by the same line. Search itself is unchanged.
+
+**Gates:** `check_build` GREEN; `gate_1441.mjs` GREEN 88/88 (was 82 + 4 H reds + a crash); registered in `gate_chromium`, break = always the long hint.
+
+## Maintenance — seven gates that ran on one machine only; the type and accessibility checks, run (15 Nov 2026)
+
+**Items 2–4 of the same list.** No app change beyond 1479/1480.
+
+**The five old reds, read one at a time:**
+
+| Gate | Was red on | What it was | Fix |
+|---|---|---|---|
+| `gate_1317` C | field login `openProject` "points to the punch card" | **stale test** — 1466 replaced that toast with the field job sheet (`#cr-fjob`) | accepts the sheet (and checks it shows no money) |
+| `gate_1430` #17 | same, from a Dispatch chip | **stale test** — same 1466 change | accepts the sheet on top |
+| `gate_1116` | `cr-orv-view` unclassified | **stale test** — 1322 added Owner Review to `hideAllViews()` | classified `OWN_SCREEN`: measured at 390px it is fixed `inset:0` z-index 9500 with its own `.cr-mhd`, and `elementFromPoint` on the app header's title lands inside it |
+| `gate_1416` A11 | "Save writes the note" | **rig fault** — the mock hands back its own live rows, so the card's optimistic tick had already changed "the server" and 1460's conflict check refused the card's own save | `window.__MOCK_COPY_READS__` (a mock knob, opt-in, `true` or a table list); `gate_1416` asks for it on `punch_items` through `MOCK_COPY_READS`, so the ~38 other gates that boot through `gate_1400_lib` are untouched |
+| `gate_1441` H | the search hint | **real defect** | build 1480 |
+
+⚠ **`gate_1116` nearly became a third app build.** With Owner Review added to the gate's shared-header list it failed "the longest name fits at Large" by 2px, and a step-down rule was half written before the measurement: on a phone that screen COVERS the app header, so the title that "did not fit" is never on screen. Measure where the element is before fixing how it looks.
+
+**Why nobody saw them:** all seven (`1116`, `1317`, `1400`, `1416`, `1420`, `1430`, `1441`) hard-coded the cloud container's paths — `/home/user/cardinal-inspections`, `/opt/node22`, `/opt/pw-browsers/chromium-1194` — so neither CI nor a desk could start them, and none was in `gate_chromium`. They read their environment from **`gate_env.mjs`** now (`PW_CORE`, `PW_CHROMIUM`, else the container's, else Playwright's own), and all seven plus `gate_1479` are registered in `gate_chromium` (64 entries), each with a break proved red. `gate_chromium`'s `run()` takes a per-gate `timeout` (600s for 1416 / 1430 / 1441, which walk five widths or five text sizes in 80–110s on a desk). CI installs `typescript@5.9.3` for `gate_1441` K, which looked for it in npm's GLOBAL root.
+
+**`gate_types` (item 4):** TypeScript 5.9.3 reproduces the committed baseline **exactly** on the tree that wrote it (`e9d751a`, build 1308: 1520 errors, every code equal), so the instrument matches. The gate had not run since. 1308 → 1470 added **31** (all TS2339 / TS2345 DOM typing: `closest` / `getAttribute` / `value` on `EventTarget`), 1471–1478 added **5** (mine; fixed in 1479). **TS2304 — the ReferenceError class the gate exists for — went DOWN, 11 → 9.** Rebaselined at 1522 errors (TS2339 1385, TS2345 35; TS2304 9) so the next one is caught the build it lands; the 31 are locked in as debt, not fixed.
+
+**`gate_a11y` (item 4):** ran on 1480 and on the 1470 base with identical reds, so **nothing from 1471–1480**. ⚠ This desk does not reproduce the baseline on the baseline's own tree (`1545a1a`, build 1242: `landmark-one-main` 12 against a recorded 9, `region` 300 against 302 — Chromium 1248 here, 1194 in the container), so **the baseline was NOT rewritten from here** and the `landmark-one-main` +3 is the instrument, not the app. One finding is real and older than 1470: **`nested-interactive` x1 on the Punch & Repairs state (`.u`)** — 0 on the 1242 tree, 1 on 1470 and 1480. Open; not fixed here. `region` is down 300 → 189 → 181.
+
+**Proved on every weekday before it went to CI** (BUG_CLASSES 107): the eight newly registered gates x Mon 16 – Sun 22 Nov, 55 of 56 green. The one red was `gate_1420` D on a fixed 500ms wait for the tab bar to relight — it lost that race about one run in three on any day; it waits for the result now (6 of 6). The two libraries and `gate_1116` / `gate_1317` take `GATE_NOW` too.
+
+⚠ **About 33 more gates (1403–1444) boot through the same two libraries and are still in no CI job.** They are portable now where they import the library by a relative path; none has been read or run here.
+
+⚠ `gate_types` and `gate_a11y` still run on no CI job. Both now start on a Windows desk (`PW_CORE` / `PW_CHROMIUM`; `gate_a11y` used `URL.pathname`, which is `/C:/…` there).

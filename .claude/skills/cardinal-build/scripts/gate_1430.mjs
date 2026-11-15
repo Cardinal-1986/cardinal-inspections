@@ -11,12 +11,13 @@
  * theo / joan / rep boot through gate_1403_lib; curtis / scottie through gate_1400_lib.
  */
 import fs from 'fs';
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const ENV = await import('./gate_env.mjs');
+const FILE = process.argv[2] || ENV.APP;
 if (!fs.existsSync(FILE)) { console.log('gate_G: no such file ' + FILE); process.exit(2); }
 process.env.APPFILE = FILE;
-const S = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
-const L3 = await import(S + 'gate_1403_lib.mjs');
-const L0 = await import(S + 'gate_1400_lib.mjs');
+const S = ENV.SCRIPTS;
+const L3 = await import('./gate_1403_lib.mjs');
+const L0 = await import('./gate_1400_lib.mjs');
 setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 540000);
 
 let fails = 0, passes = 0; const red = [];
@@ -264,10 +265,11 @@ await group('#17 the field account (scottie, gate_1400_lib)', async () => {
     await page.tap('#cr-disp .job[data-pid="' + chip + '"] .nm', { timeout: 3000 }).catch(() => ev(page, (c) => document.querySelector('#cr-disp .job[data-pid="' + c + '"] .nm').click(), chip));
     await pause(page, 1300);
     const t = await toasts(page);
-    const st = await ev(page, () => ({ pk: !!document.querySelector('#cr-pk.open'), disp: !!document.querySelector('#cr-disp.open'), crm: document.body.dataset.crm }));
-    const pkTop = st.pk ? await onTop(page, '#cr-pk') : { top: false };
+    /* 1466: a job still being installed, or one with no punch-out, opens the field job sheet (#cr-fjob) */
+    const st = await ev(page, () => ({ pk: !!document.querySelector('#cr-pk.open'), fj: !!document.querySelector('#cr-fjob.open'), disp: !!document.querySelector('#cr-disp.open'), crm: document.body.dataset.crm }));
+    const pkTop = st.pk ? await onTop(page, '#cr-pk') : st.fj ? await onTop(page, '#cr-fjob .fj-box') : { top: false };
     ok(Array.isArray(t) && !t.some(x => /^err/.test(x)), '#17 tapping a Dispatch job gives no red error', JSON.stringify(t));
-    ok(st.pk ? pkTop.top : (Array.isArray(t) && t.some(x => /^info/.test(x))), '#17 …it opens that job\'s punch card on top (or says plainly there is none)', JSON.stringify({ st, pkTop, t }));
+    ok((st.pk || st.fj) ? pkTop.top : (Array.isArray(t) && t.some(x => /^info/.test(x))), '#17 …it opens that job\'s punch card or field job sheet on top (or says plainly there is none)', JSON.stringify({ st, pkTop, t }));
     ok(st.disp, '#17 …and Dispatch is still there underneath (he keeps his place)', JSON.stringify(st));
     if (st.pk) {
       const money = await ev(page, () => /\$\s?\d/.test(document.getElementById('cr-pk').innerText));

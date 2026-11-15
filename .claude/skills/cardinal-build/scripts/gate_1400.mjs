@@ -6,7 +6,7 @@
  *   E  a field user's "Open job" does not close the punch card he is on
  *   F  production's work order is not given the crew_rates read
  * Arg: [index.html] -> negative control (1399 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || (await import('./gate_env.mjs')).APP;
 const { boot } = await import('./gate_1400_lib.mjs');
 import fs from 'fs';
 const SRC = fs.readFileSync(process.env.APPFILE, 'utf8');

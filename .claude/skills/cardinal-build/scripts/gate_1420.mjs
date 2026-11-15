@@ -4,7 +4,7 @@
  *   B  Curtis: the header's goHome() (the gold house) does the same
  *   C  CONTROLS — Theo and a sales rep: Home still opens the retail home
  * Arg: [index.html] -> negative control (1419 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || (await import('./gate_env.mjs')).APP;
 const lib = await import('./gate_1400_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 300000);
 let pass = 0, fail = 0;
@@ -47,7 +47,9 @@ async function run(as, expectBoard, kind) {
     /* D: a job's thread is inside the job — it lights Jobs (it lit nothing) */
     await page.evaluate(id => { try { if (window.CardinalProduction) window.CardinalProduction.close(false); } catch (_) {} openProject(id); }, pid); await page.waitForTimeout(900);
     await page.evaluate(() => { openCommunications(); document.getElementById('commsView').dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    await page.waitForTimeout(500);
+    /* the bar relights a beat after the click; a fixed 500ms lost that race about one run in three
+       (found on the weekday sweep, 15 Nov 2026). Wait for the result - a bar that never lights still fails. */
+    await page.waitForFunction(() => { const on = document.querySelector('#pwaNav .pwatab.on'); return !!on && on.getAttribute('data-tab') === 'jobs'; }, null, { timeout: 4000 }).catch(() => {});
     const s3 = await state(page);
     ok(s3.lit === 'jobs', 'D  ' + as + ': a job\'s thread lights Jobs', JSON.stringify(s3));
     const errs = lib.log ? lib.log.filter(l => /PAGEERROR/.test(l)) : [];

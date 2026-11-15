@@ -2,6 +2,12 @@
 
 ---
 
+## 🔴 OPEN 15 Nov 2026 — left by the gate clean-up (builds 1479–1480)
+
+- **A button inside a button on Punch & Repairs.** `gate_a11y` reports `nested-interactive` x1 on the sentinel's `punch` state, selector `.u` — 0 on the build-1242 tree, 1 on 1470 and on 1480, so it arrived between them and not in 1471–1480. Serious for a screen reader and a keyboard; not yet read to its element.
+- **`gate_types` and `gate_a11y` run on no CI job.** Both start on a desk now. `types_baseline.json` was rewritten 15 Nov (TypeScript 5.9.3 reproduces the old baseline exactly on its own tree). `a11y_baseline.json` was **not**: this desk reads the baseline's own tree differently (`landmark-one-main` 12 against 9, `region` 300 against 302), so it wants rewriting from the container or from CI, not from here.
+- **On a phone Crew Dispatch still closes for the work-order picker** (1479 is desk only): Dispatch is z-index 9550 there and the picker 210, so keeping it open means lifting the picker and closing Dispatch when the editor opens. Not asked for.
+
 ## ⏸ TEMPORARY 13 Nov 2026 (Theo: "just for now so i can close out some of the old ones or tests") — the 5-photo lock is OFF for bosses (build 1457)
 
 - Theo, Joan and Curtis can close a punch item with fewer than five photos. The crew still needs five before "Tell Curtis it's finished". Steps still count.

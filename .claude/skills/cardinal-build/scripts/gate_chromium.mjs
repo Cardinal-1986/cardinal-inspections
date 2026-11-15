@@ -348,6 +348,47 @@ const GATES = [
     protects: "the punch search finds kind, phone, filer, names, steps and messages; desk sheets open centred",
     break: { find: '.pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:center; }',
              repl: '.pu-sheet.open{ --cr-stack:"1464 desk: the punch sheets open as a centred dialog"; align-items:flex-start; }' } },
+  /* ⚠ 15 Nov 2026 — THE SEVEN BELOW RAN NOWHERE BUT ONE CONTAINER FOR WEEKS, AND FIVE WERE RED.
+     1116, 1317, 1400, 1416, 1420, 1430 and 1441 hard-coded /home/user/cardinal-inspections, /opt/node22
+     and /opt/pw-browsers, so neither this runner nor a desk could start them, and nothing registered
+     them here. Read one at a time, the five reds were: three tests a later build had made untrue
+     (1466's field job sheet replaced the toast 1317 C and 1430 #17 wait for; 1322 added a view 1116
+     never classified), one rig fault (the mock hands out its own live rows, so 1460's conflict check
+     refused the card's own save - 1416 A11), and ONE real defect, fixed as build 1480 (1441 H: the
+     Punch search hint cut off at Large / Larger / Sun). They read their paths from gate_env.mjs now.
+     A gate that only one machine can run is not a gate; it is a file. */
+  { name: 'gate_1441.mjs', timeout: 600000,
+    protects: "round-1 leftovers at four text sizes - among them: the Punch & Repairs search hint fits its box at Normal, Large, Larger, Sun and Sun + Larger (1480)",
+    break: { find: "var want = (have > 0 && cv.measureText(LONG).width > have) ? SHORT : LONG;",
+             repl: "var want = LONG;" } },
+  { name: 'gate_1479.mjs',
+    protects: "on a desk Crew Dispatch stays open under the work-order picker: Cancel leaves you on the board and a new work order shows on it; on a phone Dispatch still closes first",
+    break: { find: "if(!canPick || !document.body.classList.contains('cr-lnav-on')){",
+             repl: "if(true){" } },
+  { name: 'gate_1430.mjs', timeout: 600000,
+    protects: "audit items 7/11/16/17/22/23/24 - among them: a field login tapping a Dispatch job gets that job's punch card or field job sheet on top, never the client profile",
+    break: { find: "  if((typeof isFieldUser === 'function' && isFieldUser())){ crFieldJob(id); return; }   /* 1430 */",
+             repl: "" } },
+  { name: 'gate_1420.mjs',
+    protects: "for a production account Home (the bottom bar and the header house) opens the Production board, not the retail home; Theo and a rep still get the retail home",
+    break: { find: "   window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){ window.CardinalProduction.open(); return; }",
+             repl: "   false){ window.CardinalProduction.open(); return; }" } },
+  { name: 'gate_1416.mjs', timeout: 600000,
+    protects: "the production judge's fixes at five widths - among them: a punch step that requires a note opens a field in the card and ticks nothing until the note is saved",
+    break: { find: "  if(!s.d && s.req && !String(s.note || '').trim()){",
+             repl: "  if(false){" } },
+  { name: 'gate_1400.mjs',
+    protects: "a production day - among them: only the admin's work order reads crew_rates (production's says the office handles rates)",
+    break: { find: "    if(typeof isAdminUser === 'function' && isAdminUser()) try{",
+             repl: "    if(true) try{" } },
+  { name: 'gate_1317.mjs',
+    protects: "Scottie stays in Production: his app opens there, and openProject never opens the client profile (Balance Due, the money tabs) for a field login",
+    break: { find: "  if((typeof isFieldUser === 'function' && isFieldUser())){ crFieldJob(id); return; }   /* 1430 */",
+             repl: "" } },
+  { name: 'gate_1116.mjs',
+    protects: "every shared screen keeps ONE header under every portal and names itself, and every view hideAllViews() knows is classified",
+    break: { find: "'cr-ar-view':'Invoices'",
+             repl: "'cr-ar-view':'Production'" } },
   { name: 'gate_1478.mjs',
     protects: "the menu has one Production row in every portal: Daily's outside Production, the section's inside it; the desk rail opens that section on the way in",
     break: { find: "var hd1478 = (p === 'production');",
@@ -426,14 +467,16 @@ const GATES = [
    spawned, not the browser behind it. Writing to a temp file removes the pipe,
    so the timeout is real. The gates also close their browser in the watchdog
    now, which is the same hazard closed from the other side. */
-function run(script, args) {
+/* `timeout`: a gate entry may name its own (1416, 1430 and 1441 are 80-110s on a desk and walk
+   five widths or five text sizes; the 300s default is one slow runner away from killing them). */
+function run(script, args, timeout) {
   const t0 = Date.now();
   const log = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gate-out-')), 'out.txt');
   const fd = fs.openSync(log, 'w');
   let code;
   try {
     execFileSync(process.execPath, [path.join(HERE, script), ...args],
-                 { stdio: ['ignore', fd, fd], timeout: 300000, killSignal: 'SIGKILL' });
+                 { stdio: ['ignore', fd, fd], timeout: timeout || 300000, killSignal: 'SIGKILL' });
     code = 0;
   } catch (e) {
     code = e.status == null ? 'CRASH' : e.status;
@@ -487,7 +530,7 @@ let bad = 0;
 
 for (const g of GATES) {
   /* POSITIVE — the gate must pass on the shipped artifact. */
-  const pos = run(g.name, g.selftestFlag ? [APP] : [APP]);
+  const pos = run(g.name, g.selftestFlag ? [APP] : [APP], g.timeout);
   if (pos.code === 0) console.log(`  ok   ${g.name.padEnd(20)} ${String(pos.secs + 's').padStart(5)}  ${lastLine(pos.out)}`);
   else { console.error(`::error::${g.name} FAILED on the shipped artifact after ${pos.secs}s (exit ${pos.code}): ${lastLine(pos.out)}` + failLines(pos.out)); bad++; }
 
@@ -496,7 +539,7 @@ for (const g of GATES) {
   if (g.selftestFlag) {
     /* audit_contrast poisons its own stylesheet and reports whether it caught it,
        so its control is its --selftest: exit 0 means "the regression was seen". */
-    neg = run(g.name, [APP, '--selftest']);
+    neg = run(g.name, [APP, '--selftest'], g.timeout);
     const caught = neg.code === 0 && /SELFTEST PASS/.test(neg.out);
     if (caught) console.log(`  ok     negative (${neg.secs}s): ${lastLine(neg.out)}`);
     else { console.error(`::error::${g.name}: its own regression control did not fire — ${lastLine(neg.out)}`); bad++; }
@@ -508,7 +551,7 @@ for (const g of GATES) {
   const poisoned = path.join(tmp, g.name.replace(/\W/g, '_') + '.html');
   fs.writeFileSync(poisoned, g.break.all ? src.split(g.break.find).join(g.break.repl)
                                          : src.replace(g.break.find, g.break.repl));
-  neg = run(g.name, [poisoned]);
+  neg = run(g.name, [poisoned], g.timeout);
   if (neg.code !== 0) console.log(`  ok     negative (${neg.secs}s): broke ${hits} site(s) of ${JSON.stringify(g.break.find).slice(0, 70)} -> exit ${neg.code}`);
   else { console.error(`::error::${g.name} stayed GREEN on an artifact where ${JSON.stringify(g.break.find)} was broken — it does not protect ${g.protects}`); bad++; }
   fs.rmSync(poisoned, { force: true });

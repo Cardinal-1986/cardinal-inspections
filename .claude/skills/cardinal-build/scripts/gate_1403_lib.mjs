@@ -1,7 +1,7 @@
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { chromium, launchOpts, SCRIPTS, APP as APP_FILE } from './gate_env.mjs';
 import fs from 'fs';
-const S='/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
-const APP=fs.readFileSync(process.env.APPFILE||'/home/user/cardinal-inspections/index.html','utf8');
+const S=SCRIPTS;
+const APP=fs.readFileSync(process.env.APPFILE||APP_FILE,'utf8');
 const MOCK=fs.readFileSync(S+'e2e_mock_supa.js','utf8');
 const BASE=fs.readFileSync(S+'gate_1401_seed.js','utf8');
 export const log=[];
@@ -17,9 +17,10 @@ const INSTR = `(function(){
   Object.defineProperty(ND,'name',{value:'Date'}); window.Date=ND;
 })();`;
 export async function boot(as, opts={}){
-  const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
+  const browser=await chromium.launch(launchOpts);
   const ctx=await browser.newContext(Object.assign(opts.desktop?{viewport:{width:1280,height:900}}:{viewport:{width:390,height:844},hasTouch:true,isMobile:true},{timezoneId:'America/New_York'}));
   const page=await ctx.newPage();
+  if (process.env.GATE_NOW) await page.clock.install({ time: new Date(process.env.GATE_NOW) });   /* pin the browser's day: BUG_CLASSES 107 */
   if(opts.clock) await page.clock.install({time:new Date(opts.clock)});
   page.on('pageerror',e=>log.push('PAGEERROR '+e.message+' @ '+(e.stack||'').split('\n').slice(1,3).join(' | ')));
   page.on('console',m=>{ if(m.type()==='error'||/^TOAST/.test(m.text())) log.push('CONSOLE.'+m.type()+' '+m.text().slice(0,300)); });
