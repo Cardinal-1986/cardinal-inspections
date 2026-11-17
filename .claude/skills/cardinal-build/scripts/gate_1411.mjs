@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1411 — Team Feedback.
  *   A  phone, a sales rep: Menu -> Account has Team Feedback and it opens the box
  *   B  the rep sends an Idea: one team_feedback insert under their own address, status new,
@@ -9,7 +10,7 @@
  *   F  ink: every text colour in the box clears 4.5:1 against the sheet, dark AND light
  *   G  it never touches the global scroll lock
  * Arg: [index.html] -> negative control (1409 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot, log } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 240000);
 let pass = 0, fail = 0;

@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_C — judge 13 (chat boxes + team comms), Builder C. A real Chromium drive against the e2e mock.
  *   A  a second device's post appears in the OPEN thread within one poll window (25 s), no reload;
  *      a reader scrolled up keeps their place; the poll is one narrow select per window
@@ -19,9 +20,9 @@
  *      (the thread's status line, .chatempty, is Builder A's J16 ink and is not asserted here)
  *   L  no new document.body observer, the global scroll lock untouched
  * Arg: [artifact] (default: index.html). Negative control: b1415.html must go RED, not crash. */
-const DEF = '/home/user/cardinal-inspections/index.html';
+const DEF = GENV.APP;
 process.env.APPFILE = process.argv[2] || DEF;
-const { boot, log } = await import('/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/gate_1403_lib.mjs');
+const { boot, log } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 330000);
 let pass = 0, fail = 0;
 const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (d ? '  → ' + String(d).slice(0, 260) : '')); c ? pass++ : fail++; };

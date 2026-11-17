@@ -1,12 +1,13 @@
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import * as GENV from './gate_env.mjs';
+const { chromium } = GENV;
 import fs from 'fs';
-export const S = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
-const APP = fs.readFileSync(process.env.APPFILE || '/home/user/cardinal-inspections/index.html','utf8');
+export const S = GENV.SCRIPTS;
+const APP = fs.readFileSync(process.env.APPFILE || GENV.APP,'utf8');
 const MOCK = fs.readFileSync(S+'e2e_mock_supa.js','utf8');
 const BASE = fs.readFileSync(new URL('./gate_1401_seed.js', import.meta.url),'utf8');
 export const log = [];
 export async function boot(as, opts={}){
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const browser = await chromium.launch({ executablePath: GENV.EXE });
   const ctx = await browser.newContext(opts.desktop ? { viewport:{width:1280,height:900} } : { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   page.on('pageerror', e => log.push('PAGEERROR ' + e.message + ' @ ' + (e.stack||'').split('\n').slice(1,3).join(' | ')));

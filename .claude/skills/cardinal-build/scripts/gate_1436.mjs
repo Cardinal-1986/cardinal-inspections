@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 // gate_1436.mjs [index.html] — SUN, the third appearance (Theo's T8 C pick).
 //
 //   NODE_PATH=<scratchpad>/jsd/node_modules:$(npm root -g) node gate_1436.mjs [index.html]
@@ -23,7 +24,7 @@
 // Exit 0 green · 1 red · 2 could not run.
 import fs from 'fs';
 const HERE = new URL('./', import.meta.url).pathname;
-const APP = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const APP = process.argv[2] || GENV.APP;
 if (!fs.existsSync(APP)) { console.error('gate_1436: no such file ' + APP); process.exit(2); }
 let rig;
 try { rig = await import(HERE + 'rig_1436.mjs'); } catch (e) { console.error('gate_1436: rig did not load: ' + e.message); process.exit(2); }

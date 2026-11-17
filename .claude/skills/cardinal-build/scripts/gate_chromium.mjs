@@ -26,9 +26,11 @@ import path from 'path';
 import os from 'os';
 import { execFileSync } from 'child_process';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
 const require_ = createRequire(import.meta.url);
 const P = require_('./script_paths.cjs');
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+/* fileURLToPath, not URL.pathname: on Windows .pathname is /C:/..., and every gate died in 0s */
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 /* Each break targets what its gate is FOR — not a random corruption. A control
    that breaks something the gate never asserts on passes by doing nothing, and
@@ -445,6 +447,142 @@ const GATES = [
     protects: "the stage menu is styled with 44px rows and Mark Lost last; Mark Lost asks first and Advance waits out the Undo window; measurement numbers, Orders and a $0 balance are readable",
     break: { find: "crStageDefer(pr, 'Lost', { lostReason: String(ans) });",
              repl: "await setStage(pr.id, 'Lost', { lostReason: String(ans) }); renderOverview(); renderPipeline();" } },
+  /* 15 Nov 2026: 34 gates from 1401-1445 that only ever ran in the container they were written in.
+     Each break undoes one piece of that build's own change (or, for 1407 / 1424 / 1425 / 1432, the
+     thing its header names), and each was seen to turn its gate red ON A NAMED CHECK, not by a crash.
+     Left out on purpose: 1438 / 1443 (CI's fonts put a label 2px over its box and ten tap areas at
+     43px where a desk measures 44 - font metrics, not the app; OPEN_ITEMS), 1423 (needs pdfinfo),
+     1439 (PDF text read by poppler), 1434 / 1442 (they
+     compare against a frozen 1433 / 1438 tree, so every later build that moves those screens turns
+     them red), 1436 (Sun contrast - open item). */
+  { name: "gate_1401.mjs",
+    protects: "an office day on insurance, Community and money. Seed: gate_1401_seed.js (sample names only).",
+    break: { find: "amt:_cl.dep + _cl.sup });",
+             repl: "amt:(Number(c.approved_depreciation) || 0) +\n(Number(c.supplement_approved) || 0) });" } },
+  { name: "gate_1402.mjs",
+    protects: "what the client sees: documents made by the app, served by the real api/share.js, rendered at 390px.",
+    break: { find: "  var num = (poOf(pr) || 'INV') + '-' + (invCount + 1);   /* 1402: the label already says \"Invoice #\" */",
+             repl: "  var num = '#' + (poOf(pr) || 'INV') + '-' + (invCount + 1);" } },
+  { name: "gate_1403.mjs",
+    protects: "scheduling, notifications, offline.",
+    break: { find: "  await pdb.update(pr.id, { checklist: s }, patch);   /* 1403: offline, only these keys are replayed */",
+             repl: "  await pdb.update(pr.id, { checklist: s });" } },
+  { name: "gate_1404.mjs",
+    protects: "photos, quick inspection, estimate builder (390px, America/New_York, the 1401 seed).",
+    break: { find: "        sp = row.data && row.data.storage_path || null;",
+             repl: "        if(row.data && row.data.storage_path){\n          /* 1221: the twin goes with it; removing a twin that was never made is a no-op */\n          await sb.storage.from('photos').remove([row.data.storage_path, photoThumbPathOf(row.data.storage_path)].filter(Boolean));\n        }" } },
+  { name: "gate_1405.mjs",
+    protects: "inspection reports on paper, the Supplement Desk, api/supplement.js.",
+    break: { find: "  /* 1405: the same compaction Print applies — the PDF a client is sent carried every placeholder and empty section */\n  var _dd = null; try{ _dd = /** @type {any} */ (frame).contentDocument; if(_dd) compactForPrint(_dd); }catch(_cp){}\n  try{ if(window.CardinalDownload) window.CardinalDownload.frame(frame, t); }\n  finally{ try{ if(_dd) restorePrintMarks(_dd); }catch(_rp){} }",
+             repl: "  if(window.CardinalDownload) window.CardinalDownload.frame(frame, t);" } },
+  { name: "gate_1406.mjs",
+    protects: "roles, search, the Community bid path (seed gate_1406_seed.js, sample names only).",
+    break: { find: "((p.location && p.location.street) || ''));\ns = _fold(s);   /* 1406 */",
+             repl: "((p.location && p.location.street) || '')).toLowerCase();" } },
+  { name: "gate_1407.mjs", args: [],
+    protects: "staff only (public signup is on, so a session is not staff).",
+    break: { file: "api/companycam-job.js", find: "    if (!isStaff(email)) { res.status(403).json({ error: 'Cardinal staff only' }); return; }   // 1407",
+             repl: "" } },
+  { name: "gate_1409.mjs",
+    protects: "a lead card opens the client at every width; hover previews on a mouse.",
+    break: { find: "  /* 1409: a click opens the client at every width (it only selected on desktop, which did nothing\n     visible whenever the side pane was off screen). The pane is now the hover preview, below. */\n  openProject(card.getAttribute('data-lj'));\n});\n/* 1409: pointing at a card with a mouse previews it in the side pane (the old click-to-select) */\ndocument.getElementById('ljList').addEventListener('mouseover', function(e){\n  if(window.innerWidth <= 900 || !window.matchMedia || !window.matchMedia('(hover: hover)').matches) return;\n  var tg = /** @type {any} */ (e.target), card = tg && tg.closest && tg.closest('.ljcard');\n  if(!card) return;",
+             repl: "" } },
+  { name: "gate_1411.mjs",
+    protects: "Team Feedback.",
+    break: { find: "  feedback:  'CardinalFeedback.open',",
+             repl: "" } },
+  { name: "gate_1412.mjs",
+    protects: "the three bottom sheets sit above the installed app's nav.",
+    break: { find: "/* 1412: 9995 — Jacob could not reach Save under the installed app's nav */\n#ctUpSheet{position:fixed;left:0;right:0;bottom:0;z-index:9995;display:none;max-height:92vh;overflow:auto;",
+             repl: "#ctUpSheet{position:fixed;left:0;right:0;bottom:0;z-index:9600;display:none;max-height:92vh;overflow:auto;" } },
+  { name: "gate_1413.mjs",
+    protects: "posting a message never erases a teammate's.",
+    break: { find: "  Object.keys(patch).forEach(function(k){\n    /* 1413: a message list is merged, never replaced — a teammate's note posted since this copy was read survives */\n    if(k === 'comments' && Array.isArray(patch[k]) && Array.isArray(all[k])) all[k] = crMergeComments(all[k], patch[k]);\n    else all[k] = patch[k];\n  });",
+             repl: "  Object.keys(patch).forEach(function(k){ all[k] = patch[k]; });" } },
+  { name: "gate_1414.mjs",
+    protects: "the common screens carry drawn icons, not emoji.",
+    break: { find: "      Delete Client</button>",
+             repl: "      &#128465; Delete Client</button>" } },
+  { name: "gate_1415.mjs",
+    protects: "calmer cards, spelled stages, one typeface.",
+    break: { find: "  font:13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}",
+             repl: "  font:13px 'Segoe UI',Arial,sans-serif;}" } },
+  { name: "gate_1417.mjs", timeout: 600000,
+    protects: "team messages: a second device's post reaches an open thread, mentions reach only the person meant, the tag badge",
+    break: { find: "  function jt(ic, label, n, act, idn, extra){",
+             repl: "  function jt(ic, label, n, act, idn){" } },
+  { name: "gate_1418.mjs", timeout: 600000,
+    protects: "Insurance follows the app theme; the siren surfaces (claim card, money ring, Balance Due) are dark and readable in both",
+    break: { find: "    background: var(--xl-card, #fff);\n    border: 1px solid var(--xl-bd, #e5e5e5);",
+             repl: "    background: #fff;\n    border: 1px solid #e5e5e5;" } },
+  { name: "gate_1419.mjs",
+    protects: "a draft stays on its own job.",
+    break: { find: "          '<p>Tap to open the job\\u2019s thread and reply.</p>', commsLink(pr.id));   /* 1417 #7; 1419 the job it was sent on */",
+             repl: "          '<p>Tap to open the job\\u2019s thread and reply.</p>', commsLink(currentProject.id));   /* 1417 #7 */" } },
+  { name: "gate_1421.mjs",
+    protects: "the shared task sheet (#tskModal: New work order, Measurements) reads on its white card.",
+    break: { find: "    '<label style=\"display:block;font:700 11px \\'Segoe UI\\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b5d56;margin-bottom:3px;\">Crew</label>' +",
+             repl: "    '<label style=\"display:block;font:700 11px \\'Segoe UI\\',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#8a7a72;margin-bottom:3px;\">Crew</label>' +" } },
+  { name: "gate_1422.mjs",
+    protects: "the Ask button wears the portal colour and is a round star on a phone.",
+    break: { find: "  height:48px; padding:0 18px; border-radius:99px; border:0; background:var(--crm-id,var(--ai-red,#C8202E)); color:var(--crm-id-ink,#fff);",
+             repl: "  height:48px; padding:0 18px; border-radius:99px; border:0; background:var(--ai-red,#C8202E); color:#fff;" } },
+  { name: "gate_1424.mjs", timeout: 600000,
+    protects: "estimates and invoicing after judges #2 (Estimates) and #5 (Invoicing & payments).",
+    break: { find: "if(paid > 0.005) return { k:'part', label:'Partly paid' };",
+             repl: "if(paid > 0.005) return { k:'part', label:'Deposit Paid' };" } },
+  { name: "gate_1425.mjs",
+    protects: "insurance and community job pages sit still while nobody touches them.",
+    break: { find: "      if(a && INS_LABEL[a[1]]){ if(t !== 'Advance to ' + INS_LABEL[a[1]]) b.textContent = 'Advance to ' + INS_LABEL[a[1]]; return; }",
+             repl: "      if(a && INS_LABEL[a[1]]){ b.textContent = 'Advance to ' + INS_LABEL[a[1]]; return; }" } },
+  { name: "gate_1426.mjs",
+    protects: "client names show in full.",
+    break: { find: "    line-height:1.15; overflow-wrap:anywhere;   /* 1426: wraps instead of cutting — 119 of 161px showed */",
+             repl: "    line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" } },
+  { name: "gate_1427.mjs",
+    protects: "contracts sent by link: notices, the signed copy, initials, co-buyer, the phone page",
+    break: { find: "(_tr ? ' Its Terms and Conditions and both Notice of Cancellation copies are the trade\\u2019s printed master: '\n     + 'the share link and the client\\u2019s signed-copy email carry them. Signing in person, hand the client the printed master.'",
+             repl: "(_tr ? ' The Right to Cancel and the printed Notice of Cancellation go with this agreement.'" } },
+  { name: "gate_1428.mjs",
+    protects: "uploading a signed contract asks to move the job to Approved (Theo, 29 Oct: \"yes\").",
+    break: { find: "           (_upMoved ? ' The job is Approved and Curtis has the schedule + order materials alert.'\n            : (_upTold ? ' Curtis and the office were told; the job stays ' + _upStage + ' until someone moves it to Approved.' : ''))));",
+             repl: "           (_upTold ? ' Curtis and the office were told; the job stays ' + _upStage + ' until someone moves it to Approved.' : '')));" } },
+  { name: "gate_1429.mjs",
+    protects: "contract viewer readable, lead source, checklist required fields, drawn pins (Builder H's items)",
+    break: { find: "        <button class=\"chipbtn\" id=\"qiLocBtn\" data-cri=\"pin crico\">My location</button>",
+             repl: "        <button class=\"chipbtn\" id=\"qiLocBtn\">&#128205; My location</button>" } },
+  { name: "gate_1431.mjs",
+    protects: "the lead-source list without duplicates (Theo: \"Trim duplicate lead sources\").",
+    break: { find: "  'Commercial','Direct Mailings','Door hanger','Habitat - Dayton','Non Profit','Real-estate','Real-estate: Kitty Hawk',\n  'Roofle','Telemarketing','Truck','Other'];\n/* other spellings of the same sources (case is matched separately). 1431 (Theo: \"Trim duplicate lead\n   sources\"): Canvasser and the four Internet/Google spellings left the picker; jobs stored under them,\n   and under the \"Non Proffit\" typo, show and count as the source they are. Nothing stored is rewritten. */\nvar CR_LEAD_SOURCE_ALIAS = { 'door knocking':'Door knock', 'canvasser':'Door knock', 'previous customer':'Repeat customer',\n  'google':'Google / website', 'website':'Google / website', 'internet':'Google / website',\n  'internet: google':'Google / website', 'internet: website':'Google / website',\n  'non proffit':'Non Profit', 'kitty hawk':'Real-estate: Kitty Hawk' };",
+             repl: "  'Canvasser','Commercial','Direct Mailings','Door hanger','Habitat - Dayton','Internet','Internet: Google','Internet: Website',\n  'Non Profit','Real-estate','Real-estate: Kitty Hawk','Roofle','Telemarketing','Truck','Other'];\n/* the New Lead form's old spellings of three of the same sources (case is matched separately) */\nvar CR_LEAD_SOURCE_ALIAS = { 'door knocking':'Door knock', 'previous customer':'Repeat customer' };" } },
+  { name: "gate_1432.mjs",
+    protects: "the Supplement card is retired (Theo, 30 Oct: \"Retire card\").",
+    break: { find: "module's other job: putting the Scope of Loss card on an insurance client page. */\nfunction isInsurance(pr){",
+             repl: "module's other job: putting the Scope of Loss card on an insurance client page. */\nwindow.CardinalSupplement = { open: function(){} };\nfunction isInsurance(pr){" } },
+  { name: "gate_1433.mjs",
+    protects: "the appointment sheet reads, and Ask stops covering form buttons.",
+    break: { find: "    return open('cr-est-view') || open('editorView') || open('cr-scan') || open('cr-ce-view') || shown('commsView') || shown('qiStartView') || shown('resourceLibraryView') ||   /* H (#13): + the contract viewer */\n      shown('apptModal') || shown('leadFormModal') || shown('projModal');   /* 1433: the form sheets' own Add / Create / Save sat under it */",
+             repl: "    return open('cr-est-view') || open('editorView') || open('cr-scan') || open('cr-ce-view') || shown('commsView') || shown('qiStartView') || shown('resourceLibraryView');   /* H (#13): + the contract viewer */" } },
+  { name: "gate_1435.mjs", timeout: 600000,
+    protects: "Reports follow light mode, and the eight form sheets go dark in dark mode, measured at 1440 and 390",
+    break: { find: "    st.style.color = (j.ok ? 'var(--sheet-good,#2e7d32)' : 'var(--sheet-amber,#8a5a00)');",
+             repl: "    st.style.color = (j.ok ? '#2e7d32' : '#8a5a00');" } },
+  { name: "gate_1437.mjs",
+    protects: "the Clients bar's portal chips never run off the screen.",
+    break: { find: ".cd-wrap{padding-bottom:160px;--cr-stack:\"the Clients list's own clearance over its fixed CRM bar; .wrap is the shared page container\"}/* 1437: was 120 — room for the CRM bar's second row (62 tab bar + ~81 two rows) */",
+             repl: ".cd-wrap{padding-bottom:120px;}" } },
+  { name: "gate_1440.mjs", timeout: 600000,
+    protects: "thirteen round-1 phone leftovers: Crew Dispatch chips, Production home, the inspection checklist asked once",
+    break: { find: "    if(a === 'skip'){ S.skipCl = true; return igStep3(); }   /* A4 (P12.13) */",
+             repl: "    if(a === 'skip') return igStep3();" } },
+  { name: "gate_1444.mjs",
+    protects: "the insurance side is called Insurance (Theo's pick for question C, 2 Nov 2026).",
+    break: { find: "{ name:'Insurance', open:function(){",
+             repl: "{ name:'Cardinal Claims', open:function(){" } },
+  { name: "gate_1445.mjs",
+    protects: "punch-out photos go up several at a time, are held on the phone while offline, and arrive",
+    break: { find: "        await queuePhoto(id, f); held++; continue;",
+             repl: "        await queuePhoto(it.id, f); flushPhotos(); return;" } },
 ];
 
 /* ⚠ THE PER-GATE SECONDS ARE HERE BECAUSE I ONCE CANCELLED TWO HEALTHY CI RUNS
@@ -498,7 +636,9 @@ const lastLine = o => (o.trim().split('\n').filter(Boolean).pop() || '').slice(0
 const CAP = 24;
 function failLines(o) {
   const hits = (o || '').split('\n')
-    .filter(l => /^\s*FAIL /.test(l) || /^GATE (ERROR|\w+ )?TIMEOUT/.test(l) || /^GATE ERROR/.test(l));
+    .filter(l => /^\s*(✗\s*)?FAIL /.test(l) || /^GATE (ERROR|\w+ )?TIMEOUT/.test(l) || /^GATE ERROR/.test(l)
+              /* an uncaught throw: the gate died before printing a check — show what killed it */
+              || /^\w*Error[:\s]|^\s+at .*\.mjs:\d+/.test(l));
   if (!hits.length) return '';
   const shown = hits.slice(0, CAP).map(l => '         ' + l.trim().slice(0, 200)).join('\n');
   return '\n' + shown + (hits.length > CAP ? `\n         ... and ${hits.length - CAP} more` : '');
@@ -511,7 +651,7 @@ if (process.argv[2] === '--selftest') {
   let fail = 0;
   for (const g of GATES) {
     if (!g.break) continue;
-    const hit = app.split(g.break.find).length - 1;
+    const hit = (g.break.file ? fs.readFileSync(path.join(P.ROOT, g.break.file), 'utf8') : app).split(g.break.find).length - 1;
     const ok = hit > 0;
     console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${g.name}: break anchor ${JSON.stringify(g.break.find)} occurs ${hit}x in the artifact`);
     if (!ok) fail++;
@@ -520,6 +660,28 @@ if (process.argv[2] === '--selftest') {
   process.exit(fail ? 1 : 0);
 }
 
+/* --only a,b,c: just these gates (by name, with or without .mjs) - for proving new entries on a desk.
+   Applied before --shard, so the two combine. */
+const ON = process.argv.indexOf('--only');
+if (ON > 0) {
+  const want = String(process.argv[ON + 1] || '').split(',').map(s => s.trim().replace(/\.(mjs|js)$/, '')).filter(Boolean);
+  const keep = GATES.filter(g => want.includes(g.name.replace(/\.(mjs|js)$/, '')));
+  console.log(`only: ${keep.length} of ${want.length} named`);
+  GATES.length = 0; GATES.push(...keep);
+  process.argv.splice(ON, 2);
+}
+/* --shard i/n (15 Nov 2026): CI splits the gates across n parallel jobs. Each job runs every n-th
+   gate starting at the i-th, so the slow ones (1416 / 1430 / 1435 / 1440 / 1441) spread out by
+   their place in the list rather than landing together. No --shard = all of them, as before. */
+const SH = process.argv.indexOf('--shard');
+if (SH > 0) {
+  const [i, n] = String(process.argv[SH + 1] || '').split('/').map(Number);
+  if (!(n >= 1 && i >= 1 && i <= n)) { console.error('usage: --shard i/n'); process.exit(2); }
+  const keep = GATES.filter((g, k) => k % n === i - 1);
+  console.log(`shard ${i}/${n}: ${keep.length} of ${GATES.length} gates`);
+  GATES.length = 0; GATES.push(...keep);
+  process.argv.splice(SH, 2);
+}
 const APP = process.argv[2] || path.join(P.ROOT, 'index.html');
 const STUDIO = path.join(P.ROOT, 'studio.html');
 console.log(`gate_chromium — node ${process.versions.node} · ${path.relative(P.ROOT, APP)}`);
@@ -530,7 +692,9 @@ let bad = 0;
 
 for (const g of GATES) {
   /* POSITIVE — the gate must pass on the shipped artifact. */
-  const pos = run(g.name, g.selftestFlag ? [APP] : [APP], g.timeout);
+  /* `args` (15 Nov 2026): a gate whose first argument is not the app (gate_1407 takes the api/
+     folder) names its own; [] means "its defaults". */
+  const pos = run(g.name, g.args || [APP], g.timeout);
   if (pos.code === 0) console.log(`  ok   ${g.name.padEnd(20)} ${String(pos.secs + 's').padStart(5)}  ${lastLine(pos.out)}`);
   else { console.error(`::error::${g.name} FAILED on the shipped artifact after ${pos.secs}s (exit ${pos.code}): ${lastLine(pos.out)}` + failLines(pos.out)); bad++; }
 
@@ -545,16 +709,31 @@ for (const g of GATES) {
     else { console.error(`::error::${g.name}: its own regression control did not fire — ${lastLine(neg.out)}`); bad++; }
     continue;
   }
-  const src = fs.readFileSync(APP, 'utf8');
+  /* `break.file` (15 Nov 2026): the protected thing lives in another file (an api/ route). Its
+     whole folder is copied, the one file broken in the copy, and the copy's folder handed over. */
+  /* the app itself is never a "file" break: copying its folder copies the whole repo */
+  if (g.break.file === 'index.html') { console.error(`::error::${g.name}: break.file "index.html" — leave it out; the app is the default`); bad++; continue; }
+  const srcPath = g.break.file ? path.join(P.ROOT, g.break.file) : APP;
+  const src = fs.readFileSync(srcPath, 'utf8');
   const hits = src.split(g.break.find).length - 1;
   if (!hits) { console.error(`::error::${g.name}: break anchor ${JSON.stringify(g.break.find)} matched NOTHING — the control would be vacuous`); bad++; continue; }
-  const poisoned = path.join(tmp, g.name.replace(/\W/g, '_') + '.html');
-  fs.writeFileSync(poisoned, g.break.all ? src.split(g.break.find).join(g.break.repl)
-                                         : src.replace(g.break.find, g.break.repl));
+  /* a function replacer: a string one reads $& and $1 in the replacement as patterns, and the
+     breaks taken from real code carry dollar signs */
+  const broken = g.break.all ? src.split(g.break.find).join(g.break.repl)
+                             : src.replace(g.break.find, () => g.break.repl);
+  let poisoned;
+  if (g.break.file) {
+    poisoned = path.join(tmp, g.name.replace(/\W/g, '_'));
+    fs.cpSync(path.dirname(srcPath), poisoned, { recursive: true });
+    fs.writeFileSync(path.join(poisoned, path.basename(srcPath)), broken);
+  } else {
+    poisoned = path.join(tmp, g.name.replace(/\W/g, '_') + '.html');
+    fs.writeFileSync(poisoned, broken);
+  }
   neg = run(g.name, [poisoned], g.timeout);
   if (neg.code !== 0) console.log(`  ok     negative (${neg.secs}s): broke ${hits} site(s) of ${JSON.stringify(g.break.find).slice(0, 70)} -> exit ${neg.code}`);
   else { console.error(`::error::${g.name} stayed GREEN on an artifact where ${JSON.stringify(g.break.find)} was broken — it does not protect ${g.protects}`); bad++; }
-  fs.rmSync(poisoned, { force: true });
+  fs.rmSync(poisoned, { recursive: true, force: true });
 }
 
 fs.rmSync(tmp, { recursive: true, force: true });

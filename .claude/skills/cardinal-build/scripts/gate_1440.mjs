@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_A4 — thirteen round-1 leftovers on the phone (build 1438 re-check, builder A4).
  *
  *   P08.02  Crew Dispatch at 390: the name gets the chip's width and breaks at spaces, the grip
@@ -25,10 +26,10 @@
  */
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
-const HERE = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts';
+const HERE = GENV.SCRIPTS.slice(0, -1);
 const FILE = resolve(process.argv[2] || join(HERE, '../../../../index.html'));
 process.env.APPFILE = FILE;
-const L = await import(join(HERE, 'gate_1403_lib.mjs'));
+const L = await import(GENV.url(join(HERE, 'gate_1403_lib.mjs')));
 setTimeout(() => { console.log('  ✗ FAIL gate timed out'); process.exit(3); }, 900000).unref();
 
 let passes = 0; const fails = [];

@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1413 — posting a message never erases a teammate's.
  *   A  job thread: another device posts + sets a field after this one opened the job; posting keeps BOTH
  *      messages and the other device's field, and the thread shows the teammate's note
@@ -5,7 +6,7 @@
  *   C  CardinalPunch.update with a stale comments list keeps the server's messages
  *   D  crMergeComments: union, de-duplicated, oldest first; same message kept once
  * Arg: [index.html] -> negative control (1412 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 200000);
 let pass = 0, fail = 0;

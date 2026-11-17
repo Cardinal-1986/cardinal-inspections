@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1415 — calmer cards, spelled stages, one typeface.
  *   A  Home pipeline: seven cards spell "Leads Prospects Approved Completed Invoiced Closed On Hold"; no label clipped;
  *      phone scrolls one row; with the rail open rows are 7 or 4+3 — never a stranded single card (390 → 1920)
@@ -6,7 +7,7 @@
  *   D  static: no 'Segoe UI' -> Arial stack is left without the system faces
  * Arg: [index.html] -> negative control (1414 must go RED). */
 import { readFileSync } from 'fs';
-const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+const FILE = process.argv[2] || GENV.APP;
 process.env.APPFILE = FILE;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 280000);

@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_A3 — round-1 leftovers on 1438: documents, the editor, two money labels.
  *
  *   P12.14  the Estimates empty state names Blank estimate
@@ -27,15 +28,15 @@ import { dirname, join, resolve } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { execFileSync } from 'child_process';
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO = '/home/user/cardinal-inspections/';
+const REPO = GENV.REPO;
 const S = REPO + '.claude/skills/cardinal-build/scripts/';
 const args = process.argv.slice(2);
 const si = args.indexOf('--share');
 const SHARE = resolve(si !== -1 ? args[si + 1] : REPO + 'api/share.js');
 const FILE = resolve(args.find((a, i) => !a.startsWith('--') && (si === -1 || i !== si + 1)) || REPO + 'index.html');
 process.env.APPFILE = FILE;
-const { boot, log } = await import(S + 'gate_1403_lib.mjs');
-const { chromium } = await import('/opt/node22/lib/node_modules/playwright/index.mjs');
+const { boot, log } = await import(GENV.url(S + 'gate_1403_lib.mjs'));
+const { chromium } = GENV;
 /* fixtures beside this file: R9 with three priced estimates (V2's seed) and an AI-drafted report saved by 1438 (V3) */
 const SEED_EXTRA = fs.readFileSync(join(HERE, 'gate_1439_seed.js'), 'utf8');
 const REPORT_AI = fs.readFileSync(join(HERE, 'gate_1439_report.html'), 'utf8');
@@ -50,7 +51,7 @@ const PROMPT_RX = /\[[^\]\n]{1,90}\]/g;
 console.log('gate_1439 on ' + FILE + '\n  share.js: ' + SHARE);
 
 /* ── PDF helper: Letter, served from the repo origin so the logo loads ── */
-const pb = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const pb = await chromium.launch({ executablePath: GENV.EXE });
 async function pdfOf(html, tag, probe) {
   const ctx = await pb.newContext({ viewport: { width: 900, height: 1200 } });
   await ctx.route('**/*', async route => { const url = route.request().url();

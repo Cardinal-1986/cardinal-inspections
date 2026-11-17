@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import * as GENV from './gate_env.mjs';
 /* gate_1434.mjs — build 1434: five of Theo's taste calls (1 Nov 2026), measured in Chromium.
      T2   the phone drawer opens with Daily expanded and every other section folded, every time;
           nothing remembered; the rail's 'cardinal.lnav.sections' untouched; a field account flat
@@ -19,7 +20,7 @@ import path from 'path';
 import os from 'os';
 import { execSync } from 'child_process';
 const HERE = path.dirname(new URL(import.meta.url).pathname);
-const S = '/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/';
+const S = GENV.SCRIPTS;
 const args = process.argv.slice(2);
 const ri = args.indexOf('--ref');
 function ref1433() {   /* build 1433 (main at 7b5003c), the tree these five picks changed */
@@ -32,10 +33,10 @@ const APPF = path.resolve(args.filter((a, i) => a !== '--ref' && (ri < 0 || i !=
 /* ⚠ both libs read APPFILE at IMPORT time — set it first, and import the reference tree under a
    query string so it is a separate module instance with its own APP */
 process.env.APPFILE = APPF;
-const L3 = await import(S + 'gate_1403_lib.mjs');
-const L0 = await import(S + 'gate_1400_lib.mjs');
+const L3 = await import(GENV.url(S + 'gate_1403_lib.mjs'));
+const L0 = await import(GENV.url(S + 'gate_1400_lib.mjs'));
 process.env.APPFILE = REF;
-const R0 = await import(S + 'gate_1400_lib.mjs?ref');
+const R0 = await import(GENV.url(S + 'gate_1400_lib.mjs?ref'));
 process.env.APPFILE = APPF;
 console.log('gate_1434 on', path.basename(APPF), '(reference', path.basename(REF) + ')');
 

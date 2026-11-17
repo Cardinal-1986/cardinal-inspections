@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1402 — what the client sees: documents made by the app, served by the real api/share.js, rendered at 390px.
  *   A  the invoice's Pay button is thumb-sized on a phone (≥ 40px on screen)
  *   B  no "Loading…" veil on the client's page
@@ -6,13 +7,13 @@
  *   E  back from checkout (?paid=1) says thank you, no Pay button
  *   F  the invoice number has one "#"; a share token minted without crypto.randomUUID is a UUID
  * Args: [index.html] [api/share.js] -> negative control (1401 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
-const SHAREJS = process.argv[3] || '/home/user/cardinal-inspections/api/share.js';
+process.env.APPFILE = process.argv[2] || GENV.APP;
+const SHAREJS = process.argv[3] || (GENV.REPO + 'api/share.js');
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'stub';
 const { boot } = await import('./gate_1401_lib.mjs');
-const share = await import(SHAREJS);
+const share = await import(GENV.url(SHAREJS));
 import fs from 'fs';
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+const { chromium } = GENV;
 const SRC = fs.readFileSync(process.env.APPFILE, 'utf8');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 240000);
 let pass = 0, fail = 0;
@@ -64,7 +65,7 @@ async function serve(id, html, query = {}) {
   await share.default({ query: Object.assign({ t: TOK }, query) }, res);
   return res.body;
 }
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const browser = await chromium.launch({ executablePath: GENV.EXE });
 async function open(body) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   const page = await ctx.newPage();

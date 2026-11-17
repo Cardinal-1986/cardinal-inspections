@@ -1,10 +1,11 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1422 — the Ask button wears the portal colour and is a round star on a phone.
  *   A  its fill is the CRM's identity hue in retail / insurance / community, dark and light, matching the +
  *   B  its label/star clears 4.5:1 on that fill in every case
  *   C  on a phone it is 52x52 with a 22px star (1373's shape, which had been losing to the base rule)
  *   D  on a desktop it is still the labelled pill (48 tall, label shown)
  * Arg: [index.html] -> negative control (1421 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 240000);
 let pass = 0, fail = 0;

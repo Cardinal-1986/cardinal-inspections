@@ -38442,3 +38442,25 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 ⚠ **About 33 more gates (1403–1444) boot through the same two libraries and are still in no CI job.** They are portable now where they import the library by a relative path; none has been read or run here.
 
 ⚠ `gate_types` and `gate_a11y` still run on no CI job. Both now start on a Windows desk (`PW_CORE` / `PW_CHROMIUM`; `gate_a11y` used `URL.pathname`, which is `/C:/…` there).
+
+## Maintenance — 34 more gates into CI; the browser job runs in three (15 Nov 2026)
+
+**Theo:** "Should we run them" — then "Ok", then "Yes" to adding the passing ones to CI. No app change.
+
+**All 40 of the unregistered 1401–1445 gates were run on a desk first** (39 gates plus `rig_1436`'s helper). They needed the same port as the seven before them — container paths — plus a Windows fault: Node will not `import()` a bare `C:\` path, so a dozen crashed before testing anything. `gate_env.mjs` gained `url()` (an absolute path becomes a `file://` URL, a `?query` kept), `EXE`, `REPO` and `PW_JS`, and loads Playwright lazily so a gate that never opens a browser (1407) does not need it.
+
+| Result | Gates |
+|---|---|
+| **GREEN, registered (34)** | 1401–1407, 1409, 1411–1415, 1417–1419, 1421, 1422, 1424–1429, 1431–1433, 1435, 1437, 1438, 1440, 1443–1445 |
+| rig faults, fixed in the gate | **1429** #32 — the same mock fault as 1416 A11 (the mock hands back live rows; 1460's conflict check refused the card's own save): `MOCK_COPY_READS` is now an opt-in in `gate_1403_lib` too. **1424** E7 — this desk's `pdftotext` (xpdf 4.06) reads the letter-spaced heading as "S U B TOTA L"; the match allows the spaces. **1435** — `URL.pathname` gave `/C:/…`, so Chart.js "could not be loaded" |
+| left out | 1423, 1434, 1436, 1439, 1442 — see OPEN_ITEMS 15 Nov |
+
+**No app defect was found** except what 1436 reports in Sun mode (OPEN_ITEMS).
+
+**The breaks.** Each gate's break undoes one hunk of that build's own diff — found by a search that reverted the build's hunks one at a time, smallest first, until the gate went red — and four (1407, 1424, 1425, 1432) were written by hand from what the gate's header says it protects. **A break was accepted only when the gate failed a NAMED check**: the first search took four reds that were crashes or timeouts (1402, 1403, 1409, 1424 — a deleted parameter makes a ReferenceError, and every check fails for that reason alone), and a second pass replaced each. That is BUG_CLASSES 37.
+
+**`gate_chromium.mjs`:** 98 entries; `--shard i/n` (CI runs it as a three-job matrix — one job was 50 minutes at 64 gates); `--only a,b`; `args` (1407 takes the api folder); `break.file` (the protected code is in `api/`: the folder is copied and the one file broken in the copy); the replacement goes through a function, because `String.replace` reads `$&` in a replacement taken from real code. **It had never run on Windows:** `HERE` was `URL.pathname`, so every gate died in 0 s. ⚠ And my own first registration carried `file: "index.html"` on 30 entries, which copied the whole repo for each negative and handed the gate a folder — 0-second reds that looked like caught breaks. The runner now refuses that field for the app.
+
+**Gates:** `gate_chromium --selftest` 97/97; the 34 through the runner itself, `--only … --shard i/3` on a desk: **GREEN in all three shards — 34 pass on the shipped file and 34 go red when broken.** Slowest positives 204 s (1440), 125 s (1417), 107 s (1443). The 64 entries already in CI were not re-run on the desk; CI runs them.
+
+**CI, rounds 2–3 (16 Nov 2026).** Round 1 on CI: 29 of the 34 green. Fixed for CI: `poppler-utils` installed (1424 E7's `pdftotext`), the reference commit 1437 compares against fetched (the checkout is one deep), 1435's known-debt button floor follows the font (39px on Ubuntu, 41 in the container). Round 2 left two that CI's fonts move by a pixel or two — 1438 ("Scheduled" 92px in a 90px box at 1366) and 1443 (ten hit areas at 43 where the desk measures 44) — and they came back out (OPEN_ITEMS). **32 of the 34 stay registered.** `gate_types` runs in the `check` job from round 2.

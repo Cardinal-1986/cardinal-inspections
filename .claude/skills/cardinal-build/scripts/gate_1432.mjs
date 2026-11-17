@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1432 — the Supplement card is retired (Theo, 30 Oct: "Retire card").
  *   S1  an insurance client page carries no Supplement card, no filing sheet, and no window.CardinalSupplement
  *   S2  the module's other job still works: the Scope of Loss card mounts on the insurance page
@@ -6,7 +7,7 @@
  *   S5  no page errors
  * Arg: [index.html] -> negative control (1431 must go RED). */
 import fs from 'fs';
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot, log } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 240000).unref();
 let pass = 0, fail = 0;

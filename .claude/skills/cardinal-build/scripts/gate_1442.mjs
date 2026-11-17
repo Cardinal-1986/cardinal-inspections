@@ -20,7 +20,7 @@
  */
 import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { dirname, join, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { execSync } from 'child_process';
 import os from 'os';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -45,7 +45,7 @@ function ok(c, msg, det) { if (c) passes++; else fails.push(msg); console.log((c
 function child(file, theme, phone) {
   const seed = "try{localStorage.setItem('cardinal.theme.rb','" + (theme === 'light' ? '1' : '0') + "');}catch(e){}\n" + SEED;
   return `process.env.APPFILE = ${JSON.stringify(file)};
-const L3 = await import(${JSON.stringify(LIB)});
+const L3 = await import(${JSON.stringify(pathToFileURL(LIB).href)});
 const PHONE = ${phone ? 'true' : 'false'};
 const { browser, page } = await L3.boot('theo', { instr: false, desktop: !PHONE, seed: ${JSON.stringify(seed)} });
 const R = { theme: await page.evaluate(() => document.documentElement.getAttribute('data-theme')), rl: null };

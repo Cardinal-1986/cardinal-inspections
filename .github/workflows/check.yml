@@ -261,6 +261,18 @@ jobs:
             "
           fi
 
+      # 15 Nov 2026: the type gate, in CI at last. tsc --checkJs over every inline script, ratcheted per
+      # TS code against types_baseline.json (rewritten 15 Nov at 1522; TypeScript 5.9.3 reproduces the
+      # committed baseline exactly on the tree that wrote it, so the version is pinned). TS2304 is the
+      # undefined-name class - a ReferenceError waiting for its line to run. ~7 s. The selftest runs
+      # first so a gate that cannot fail is caught before it is trusted.
+      - name: Type gate (tsc, ratcheted)
+        run: |
+          npm install --no-save --no-audit --no-fund typescript@5.9.3
+          export PATH="$PWD/node_modules/.bin:$PATH"
+          python3 .claude/skills/cardinal-build/scripts/gate_types.py --selftest
+          python3 .claude/skills/cardinal-build/scripts/gate_types.py
+
   # ═══════════════════════════════════════════════════════════
   # NEW — the harnesses run in CI at last, on node 22.
   #
@@ -374,6 +386,13 @@ jobs:
     # before any gate ran (run 39776186283, twice). Pinned to the image this job has always passed on.
     # Lift the pin only together with a Playwright bump that lists ubuntu26.04 as supported.
     runs-on: ubuntu-24.04
+    # 15 Nov 2026: three jobs side by side, each running every third gate (gate_chromium --shard).
+    # One job took 50 minutes at 64 gates; 98 in one job would have been about an hour and three
+    # quarters. fail-fast off, so one red shard does not cancel the others and hide their results.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
 
@@ -400,6 +419,13 @@ jobs:
           # in npm's GLOBAL root, which is one container's layout, not a runner's).
           npm install --no-save --no-audit --no-fund playwright@1.56.1 jsdom@30.0.1 typescript@5.9.3
           npx playwright install --with-deps chromium
+          # poppler-utils: gate_1424 E7 reads a printed estimate back with pdftotext (15 Nov 2026)
+          sudo apt-get install -y --no-install-recommends poppler-utils
+
+      # gate_1437 compares against the tree of the build before it (git show <sha>:index.html), and the
+      # checkout above is one commit deep. Fetch just that commit.
+      - name: Fetch the reference tree gate_1437 compares against
+        run: git fetch --no-tags --depth=1 origin 002d5210e89474e5c881eae0730c2068200a860c
 
       # ⚠ THE RUNNER'S OWN CONTROL, FIRST. It proves every break
       # anchor still matches something in the artifact. A negative
@@ -412,5 +438,5 @@ jobs:
       # must pass, and once on a copy where the specific thing that
       # gate protects has been broken, where it must go red. Browser
       # gates that have only ever been seen to pass prove nothing.
-      - name: Chromium gates + negative controls
-        run: node .claude/skills/cardinal-build/scripts/gate_chromium.mjs
+      - name: Chromium gates + negative controls (shard ${{ matrix.shard }} of 3)
+        run: node .claude/skills/cardinal-build/scripts/gate_chromium.mjs --shard ${{ matrix.shard }}/3

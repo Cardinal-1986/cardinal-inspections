@@ -5070,3 +5070,11 @@ payments side) and the NACHI admin upload (`cr-nachi-cm-script`).
 - **A gate is finished when CI runs it**, with a break that has been seen to turn it red. Until then it is one session's scratch work with a convincing name.
 - **Paths come from `gate_env.mjs`**, never from a literal. `grep -n "/home/user\|/opt/" gate_*.mjs` should find comments only.
 - **Read each red before believing any of them.** "Pre-existing, identical on the base" was true of all five and was carried in three PR bodies; it said nothing about which were the app's fault. One was.
+
+## 109 — a red that comes back in 0 seconds is not a caught break
+
+**15 Nov 2026, registering 34 gates.** The runner reported every one of them "ok negative" — red when broken — and some had gone red in 0 s. A browser gate cannot finish in 0 s. The break definitions carried `file: "index.html"`, the runner read that as an `api/` break, copied the repo's root folder and handed the gate a FOLDER, and the gate crashed on it. Every control "passed".
+
+- **Read the seconds.** A negative that is much faster than its positive did not run the checks.
+- **A negative must fail a named check, not crash.** `exit != 0` is all the runner asks; the search that chose these breaks asked for a `FAIL <check>` line and rejected crashes and timeouts. Same family as class 37.
+- The runner now refuses `break.file: "index.html"`.
