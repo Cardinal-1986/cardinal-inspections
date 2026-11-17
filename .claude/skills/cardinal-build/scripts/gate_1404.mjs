@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1404 — photos, quick inspection, estimate builder (390px, America/New_York, the 1401 seed).
  *   A  the Photo Album keeps going past an unreadable file and says which failed
  *   B  a photo row insert that fails once keeps its file (no row pointing at a removed file)
@@ -6,7 +7,7 @@
  *   E  estimate line amounts are cents and add up to the subtotal; the discount is clamped; Valid through is local
  *   F  quick-inspection shots carry their label; unsaved shots are counted for the resume line
  * Arg: [index.html] -> negative control (1403 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 import fs from 'fs';
 const SRC = fs.readFileSync(process.env.APPFILE, 'utf8');
 const { boot } = await import('./gate_1403_lib.mjs');

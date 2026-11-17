@@ -1,9 +1,10 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1433 — the appointment sheet reads, and Ask stops covering form buttons.
  *   A  the appointment row's small line and its delete x read >= 4.5:1 on the sheet, dark and light; the x is >= 44px
  *   B  at 390 (installed app) the point at the centre of the sheet's Add button is the Add button, not Ask
  *   C  Ask is tucked while New Lead or Add project is open, and back when they close
  * Arg: [index.html] -> negative control (1432 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot, log } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 300000).unref();
 let pass = 0, fail = 0;

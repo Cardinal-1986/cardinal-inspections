@@ -17,7 +17,7 @@
  */
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { dirname, join, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { execSync } from 'child_process';
 import os from 'os';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -41,7 +41,7 @@ function ok(c, msg, det) { if (c) passes++; else fails.push(msg); console.log((c
 /* gate_1403_lib reads APPFILE at import time, so each tree is measured in its own child process */
 async function measure(file, mode, theme, widths) {
   const js = `process.env.APPFILE = ${JSON.stringify(file)};
-const L3 = await import(${JSON.stringify(join(HERE, 'gate_1403_lib.mjs'))});
+const L3 = await import(${JSON.stringify(pathToFileURL(join(HERE, 'gate_1403_lib.mjs')).href)});
 const { browser, page } = await L3.boot('curtis', { instr: false, desktop: true, seed: ${JSON.stringify(seedFor(mode, theme))} });
 await page.waitForFunction(() => { const m = document.getElementById('mainView'); return !!(m && m.style.display === 'block' && window.CardinalProduction); }, null, { timeout: 60000, polling: 200 }).catch(() => {});
 await page.waitForTimeout(1500);

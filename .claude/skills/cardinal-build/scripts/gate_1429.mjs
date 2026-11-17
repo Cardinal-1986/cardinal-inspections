@@ -1,12 +1,14 @@
+import * as GENV from './gate_env.mjs';
 /* gate_H.mjs [index.html] — Builder H's items, measured in Chromium (gate_1403_lib rig, 390x844 phone).
    GREEN on the patched tree; RED with named failures (and no crash) on base1428.
    Every check names its meta-report item. INFO lines are measurements of items that do not
    reproduce on 1428 (#25, #28) and are printed, not counted.
    NODE_PATH=<scratch>/jsd/node_modules:$(npm root -g) node gate_H.mjs H1.html */
 import path from 'path';
-const FILE = path.resolve(process.argv[2] || '/home/user/cardinal-inspections/index.html');
+const FILE = path.resolve(process.argv[2] || GENV.APP);
 process.env.APPFILE = FILE;
-const L = await import('/home/user/cardinal-inspections/.claude/skills/cardinal-build/scripts/gate_1403_lib.mjs');
+process.env.MOCK_COPY_READS = process.env.MOCK_COPY_READS || 'punch_items';   /* #32 saves a punch checklist: reads must be copies, as in gate_1416 */
+const L = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 420000).unref();
 
 let pass = 0; const fails = [];

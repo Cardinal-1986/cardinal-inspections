@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1419 — a draft stays on its own job.
  *   A  a note half-typed on job A is NOT in the box when job B's thread opens
  *   B  going back to A brings A's draft back; B's own draft is kept too
@@ -5,7 +6,7 @@
  *   D  a thread changed mid-save: the tag alert names the job the note was SENT on, and the
  *      newly opened job's draft is not wiped by the save that finished behind it
  * Arg: [index.html] -> negative control (1418 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot } = await import('./gate_1403_lib.mjs');
 setTimeout(() => { console.log('TIMEOUT'); process.exit(1); }, 240000);
 let pass = 0, fail = 0;

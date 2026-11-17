@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1427.mjs — Builder D: contracts, remote signing, shared client pages.
    usage: node gate_1427.mjs [index.html] [api dir]      GREEN on D's output, RED (named, no crash) on 1422.
    Needs NODE_PATH for nothing beyond playwright; drives the SHIPPED code:
@@ -9,12 +10,12 @@
      api/senddoc.js   (node, stubbed fetch)     an emailed agreement carries its printed master
    Sections: A app · S share page · E end-to-end remote signing · B clientsign · C senddoc            */
 import fs from 'fs'; import os from 'os'; import path from 'path'; import { pathToFileURL } from 'url';
-const REPO = '/home/user/cardinal-inspections';
+const REPO = GENV.REPO.slice(0, -1);
 const INDEX = path.resolve(process.argv[2] || path.join(REPO, 'index.html'));
 const API = path.resolve(process.argv[3] || path.join(REPO, 'api'));
 process.env.APPFILE = INDEX;
-const { boot, log } = await import(REPO + '/.claude/skills/cardinal-build/scripts/gate_1403_lib.mjs');
-const { chromium } = await import('/opt/node22/lib/node_modules/playwright/index.mjs');
+const { boot, log } = await import(GENV.url(REPO + '/.claude/skills/cardinal-build/scripts/gate_1403_lib.mjs'));
+const { chromium } = GENV;
 setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 420000).unref();
 
 let pass = 0; const fails = [];
@@ -176,7 +177,7 @@ async function served(html, title) {
   return out;
 }
 const PDF_BYTES = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(4000, 32)]);
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+const browser = await chromium.launch({ executablePath: GENV.EXE, args: ['--no-sandbox'] });
 async function phone(html, onSign) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));

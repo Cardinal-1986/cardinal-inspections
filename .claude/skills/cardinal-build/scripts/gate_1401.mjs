@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1401 — an office day on insurance, Community and money. Seed: gate_1401_seed.js (sample names only).
  *   A  the claim strip on an insurance job counts the job's own payments
  *   B  Claims hub: Deductibles due nets the homeowner's payments; Owed by carriers nets the deductible;
@@ -7,7 +8,7 @@
  *   E  Invoices & AR's text/email greet through invHello
  *   F  Community Partners: Habitat first, and Owed is the balance after payments
  * Arg: [index.html] -> negative control (1400 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
+process.env.APPFILE = process.argv[2] || GENV.APP;
 const { boot, go, txt, portal2, tapSel } = await import('./gate_1401_lib.mjs');
 import fs from 'fs';
 const SRC = fs.readFileSync(process.env.APPFILE, 'utf8');

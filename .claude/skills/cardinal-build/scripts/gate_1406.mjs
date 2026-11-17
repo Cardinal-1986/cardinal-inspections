@@ -1,3 +1,4 @@
+import * as GENV from './gate_env.mjs';
 /* gate_1406 — roles, search, the Community bid path (seed gate_1406_seed.js, sample names only).
  *   A  api/abc.js refuses a signed-in account that is not Cardinal staff
  *   B  Crews is not offered to, and does not open for, a sales rep; it opens for Production
@@ -5,8 +6,8 @@
  *   D  search folds accents / curly apostrophes, reads +1 phone numbers and "PO 3001"
  *   E  partner lists put Habitat first; a general contractor is labelled so in search
  * Args: [index.html] [api/abc.js] -> negative control (1405 must go RED). */
-process.env.APPFILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';
-const ABC = process.argv[3] || '/home/user/cardinal-inspections/api/abc.js';
+process.env.APPFILE = process.argv[2] || GENV.APP;
+const ABC = process.argv[3] || (GENV.REPO + 'api/abc.js');
 import fs from 'fs';
 const { boot } = await import('./gate_1403_lib.mjs');
 const seed = fs.readFileSync(new URL('./gate_1406_seed.js', import.meta.url), 'utf8');
@@ -17,7 +18,7 @@ const tryDo = async (why, f) => { try { return await f(); } catch (e) { ok(false
 
 /* A */
 await tryDo('A', async () => {
-  const mod = await import(ABC);
+  const mod = await import(GENV.url(ABC));
   const call = async (email) => {
     globalThis.fetch = async (url) => { url = String(url);
       if (url.endsWith('/auth/v1/user')) return { ok: true, json: async () => ({ email }) };
