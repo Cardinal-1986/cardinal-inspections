@@ -232,7 +232,7 @@ const HOSTS = [...new Set(STATES.map(s => s.host))];
 /* Pre-existing debt this build did NOT cause and does not own — printed as DEBT, never silently passed, and
    RED if it gets worse than the value measured on 1433. Light is out of T3's scope by Theo's own terms. */
 const DEBT_INK = [ { theme: 'light', key: /#ldScopeNote$/, max: 4.19, why: "light: #8a6f66 on the insurance box's #f2f4f8 (since the box shipped; light is unchanged by T3)" } ];
-const DEBT_TAP = [ { key: /^#leadList div\.apptrow button\.btn$/, min: 41, why: "the Leads-from-this-inspection 'Create estimate' button is 41px tall in both themes on 1433 too" } ];
+const DEBT_TAP = [ { key: /^#leadList div\.apptrow button\.btn$/, min: 39, why: "the Leads-from-this-inspection 'Create estimate' button is 41px tall in both themes on 1433 too (39px on CI's Ubuntu fonts, 15 Nov 2026 - the same button, a different font; its height comes from its text)" } ];
 const debtLine = m => console.log('  DEBT  ' + m);
 const LIGHT_EXPECT = [   /* the paper literals light mode must still paint (G) */
   ['#projModal .projform', 'backgroundColor', 'rgb(255, 255, 255)'], ['#projModal .projform label', 'color', 'rgb(85, 85, 85)'],

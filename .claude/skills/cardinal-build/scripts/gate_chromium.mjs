@@ -642,7 +642,9 @@ const lastLine = o => (o.trim().split('\n').filter(Boolean).pop() || '').slice(0
 const CAP = 24;
 function failLines(o) {
   const hits = (o || '').split('\n')
-    .filter(l => /^\s*FAIL /.test(l) || /^GATE (ERROR|\w+ )?TIMEOUT/.test(l) || /^GATE ERROR/.test(l));
+    .filter(l => /^\s*(✗\s*)?FAIL /.test(l) || /^GATE (ERROR|\w+ )?TIMEOUT/.test(l) || /^GATE ERROR/.test(l)
+              /* an uncaught throw: the gate died before printing a check — show what killed it */
+              || /^\w*Error[:\s]|^\s+at .*\.mjs:\d+/.test(l));
   if (!hits.length) return '';
   const shown = hits.slice(0, CAP).map(l => '         ' + l.trim().slice(0, 200)).join('\n');
   return '\n' + shown + (hits.length > CAP ? `\n         ... and ${hits.length - CAP} more` : '');
