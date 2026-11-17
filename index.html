@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-15 build 1480<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-16 build 1481<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47499,6 +47499,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1481, d:'2026-11-16', t:'Sun mode is easier to read on Production and the punch card', s:'In Sun, the words over the daytime sky at the top of Production (the date, the title and the line under it) are now near-black, so they read clearly in bright light. On the punch card the green Close button is a deeper green, and the On site band (Not checked in, On site, and the stale warning) uses darker colours. Only Sun changes; Dark and Light look exactly as before.' },
   { b: 1480, d:'2026-11-15', t:'Punch search hint fits at larger text', s:'On a phone with Large or Larger text, or with Sun on, the grey hint in the Punch & Repairs search box was cut off at the end. It now shows a shorter hint (Client or PO #) whenever the full one would not fit. Search itself is unchanged: it still finds phone numbers and tarps.' },
   { b: 1479, d:'2026-11-15', t:'Crew Dispatch stays open on a desktop', s:'On a desktop, booking a crew from Crew Dispatch used to close Dispatch and drop you on the home screen behind the work order form. Dispatch now stays where it is: Cancel leaves you on the board, and a new work order shows on it as soon as it is created. On a phone nothing changes.' },
   { b: 1478, d:'2026-11-14', t:'One Production in the menu', s:'In Production the menu listed Production twice, once under Daily and once beside Crew Dispatch and Punch & Repairs. It is listed once now, with the other Production tools. Everywhere else the Daily row is still the way in.' },
@@ -103836,6 +103837,23 @@ window.CardinalFeedback = Object.assign(window.CardinalFeedback || {}, { open: f
 }
 :root[data-theme="rb-light"] #cr-pk.open .pkvon{ color:#1b6b40; }
 :root[data-theme="rb-light"] #cr-pk.open .pkvstale{ color:#8a5500; }
+/* 1481 (Theo, option 1): Sun promises 7:1 and five pieces missed it (gate_1436, measured): the
+   Production header under the DAYTIME sky (#5ea6e4) — the date 5.14:1, "Production" 6.72:1 — and on the
+   punch card the green Close button (white 5.15:1, its sub-line 4.59:1) and the light On site band's
+   "Not checked in" (6.74:1). That band's On site green (5.92) and stale amber (5.65) missed too; 1436
+   never drew those two states. Sun only: Dark and Light keep every value. Computed:
+     day sky   title #000000 8.05:1 · date / eyebrow #05101c 7.34:1 (on day + snow, 9.43 / 8.59)
+     Close     #0f5c36 ground: white 8.06:1 · #e4f6ec 7.18:1
+     the band  #eef6f1: "Not checked in" #454b54 7.99 · On site #155c36 7.30 · stale #6e4400 7.67
+   Rain over a day sky keeps its white words on a dark sky: the :not() is what stops black on #14171c. */
+:root[data-cr-sun] #cr-pb .pbsky[data-sky="day"]:not([data-wx="rain"]){
+  --cr-stack:"1481 Sun: the day sky's words go near-black (7:1)"; --sky-ink:#000000; --sky-ink2:#05101c; }
+:root[data-cr-sun] #cr-pk .pkclose.ready{
+  --cr-stack:"1481 Sun: a deeper go-green (7:1)"; background:#0f5c36; border-color:#0f5c36; }
+:root[data-cr-sun][data-theme="rb-light"] #cr-pk.open .pkvis{
+  --cr-stack:"1481 Sun: the On site band's grey (7:1)"; --pk-dim:#454b54; }
+:root[data-cr-sun][data-theme="rb-light"] #cr-pk.open .pkvon{ --cr-stack:"1481 Sun: On site green (7:1)"; color:#155c36; }
+:root[data-cr-sun][data-theme="rb-light"] #cr-pk.open .pkvstale{ --cr-stack:"1481 Sun: stale amber (7:1)"; color:#6e4400; }
 </style>
 </body>
 </html>

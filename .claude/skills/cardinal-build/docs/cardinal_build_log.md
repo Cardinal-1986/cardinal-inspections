@@ -38442,3 +38442,15 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 ⚠ **About 33 more gates (1403–1444) boot through the same two libraries and are still in no CI job.** They are portable now where they import the library by a relative path; none has been read or run here.
 
 ⚠ `gate_types` and `gate_a11y` still run on no CI job. Both now start on a Windows desk (`PW_CORE` / `PW_CHROMIUM`; `gate_a11y` used `URL.pathname`, which is `/C:/…` there).
+
+## Build 1481 — Sun clears its own 7:1 on the Production day sky and the punch card (16 Nov 2026)
+
+**Theo:** "1" — option 1 of three, previewed (darker words on the same sky; the others were a paler day sky, and no sky in Sun).
+
+- `gate_1436`, run on a desk 15 Nov, found five pieces of text under Sun's 7:1: under the **daytime** sky (#5ea6e4) the date / eyebrow 5.14:1 and "Production" 6.72:1; on the punch card the green Close button 5.15:1 with its sub-line 4.59:1, and the light On site band's "Not checked in" 6.74:1. ⚠ **The sky follows the real clock**, so the header passes at night and fails by day — a probe run after dark first read every sky as passing.
+- Sun only, in one block at the end of the last stylesheet: `:root[data-cr-sun] #cr-pb .pbsky[data-sky="day"]:not([data-wx="rain"])` sets `--sky-ink:#000000` (8.05:1) and `--sky-ink2:#05101c` (7.34:1); the `:not()` keeps rain-over-day's white words on its dark sky. Close ready: `#0f5c36` (white 8.06, sub-line 7.18). The On site band in Sun: "Not checked in" `#454b54` 7.99, **On site `#155c36` 7.30 and stale `#6e4400` 7.67 — those two missed too (5.92 / 5.65) and 1436 never drew those states.** Snow over a day sky also missed in Sun on 1480 (date 6.02); the same rule fixes it (8.59).
+- Dark and Light keep every value — asserted (`gate_1481` D, G).
+
+**Gates:** `check_build` GREEN; `gate_1481.mjs` new (9: A day sky, B rain over day stays white, C snow over day, D Light unchanged, E Close, F the band's three states, G Light and Dark unchanged) — GREEN on 1481, RED on 1480 (A, C, E, F); registered in `gate_chromium`, break = the day-sky inks removed. `gate_types` GREEN (1522, no code grew). `gate_stack` CLEAN — but it walks the default appearance, never Sun, so it cannot see these rules. Sentinel (default + rb-light, 390 and 1440, `--since` 1480): CLEAN, 24 renders, nothing new (50 carried) — it has no Sun theme, so it can only show that Dark and Light did not move.
+
+Tooling, on the way: `gate_1400_lib` takes `opts.init` (an init script before the page — the appearance); `gate_stack` and `sentinel.js` take `PW_CORE` / `PW_CHROMIUM` and `gate_stack` resolves Windows paths.

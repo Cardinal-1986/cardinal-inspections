@@ -10973,3 +10973,12 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | `window.__MOCK_COPY_READS__` — the mock returns copies of rows, as a database does (opt-in: `true` or a table list) | `e2e_mock_supa.js` |
 | `GATE_NOW=2026-11-15T15:00:00` — pins the browser's day in gates 1472–1479 | each gate |
 | per-gate `timeout` in a `GATES` entry | `gate_chromium.mjs` |
+
+## Build 1481: Sun clears 7:1 on the Production day sky and the punch card
+
+| Piece | Where |
+|---|---|
+| Sun's day-sky inks (`--sky-ink` #000, `--sky-ink2` #05101c; never over rain) | last stylesheet, `/* 1481 */` block |
+| Sun's Close button green `#0f5c36`; the On site band's three inks | same block |
+
+**Gate:** `gate_1481.mjs`.
