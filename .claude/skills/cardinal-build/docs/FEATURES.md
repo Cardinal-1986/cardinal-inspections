@@ -10983,3 +10983,11 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | a `GATES` entry's `args` (positive arguments; `[]` = the gate's defaults) and `break.file` (break a file under `api/`; its folder is copied) | `scripts/gate_chromium.mjs` |
 | `gate_env.mjs`: `url(p)` for `import()` on any OS, `EXE`, `REPO`, `PW_JS`; Playwright loaded lazily | `scripts/gate_env.mjs` |
 | `MOCK_COPY_READS` honoured by `gate_1403_lib` as well as `gate_1400_lib` | `scripts/gate_1403_lib.mjs` |
+## Build 1481: Sun clears 7:1 on the Production day sky and the punch card
+
+| Piece | Where |
+|---|---|
+| Sun's day-sky inks (`--sky-ink` #000, `--sky-ink2` #05101c; never over rain) | last stylesheet, `/* 1481 */` block |
+| Sun's Close button green `#0f5c36`; the On site band's three inks | same block |
+
+**Gate:** `gate_1481.mjs`.

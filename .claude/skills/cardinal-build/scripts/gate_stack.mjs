@@ -46,6 +46,7 @@
    Exit 0 clean · 1 stacks found · 2 could not run.
    ═══════════════════════════════════════════════════════════════════════════ */
 import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
 /* ⚠ A bare `import('playwright')` resolves from THIS file's directory and
    ignores NODE_PATH, so on a machine where playwright is installed globally
    (the build container: /opt/node22/lib/node_modules) this standing gate
@@ -54,7 +55,8 @@ import { existsSync, readFileSync } from 'fs';
    hard-coded Chromium path chromium_launch.cjs exists to kill: resolve it in
    one place, with a fallback, and say which one answered. */
 let chromium;
-for (const spec of ['playwright', '/opt/node22/lib/node_modules/playwright/index.js']) {
+for (const spec of [...(process.env.PW_CORE ? [new URL('file:///' + process.env.PW_CORE.replace(/\\/g, '/').replace(/^\/+/, '') + '/index.js').href] : []),
+                    'playwright', '/opt/node22/lib/node_modules/playwright/index.js']) {   /* PW_CORE: a desk (15 Nov 2026) */
   try {
     const m = await import(spec);
     /* ⚠ playwright is CJS. Importing it from ESM yields { default: {...} },
@@ -200,7 +202,7 @@ async function sweep(page, file, setupSrc, states, evalStr) {
      which this pattern does not match. */
   await page.route(/^(https?|wss?):\/\//, r => r.abort('blockedbyclient'));
   await page.addInitScript(setupSrc || '');
-  await page.goto('file://' + file, { waitUntil: 'domcontentloaded' });
+  await page.goto(new URL('file:///' + resolve(file).replace(/\\/g, '/').replace(/^\/+/, '')).href, { waitUntil: 'domcontentloaded' });   /* a Windows path too (15 Nov 2026) */
   await page.waitForTimeout(2500);
   let acc = await page.evaluate(evalStr);
   if (acc && acc.stat) { globalThis.__stat = acc.stat; acc = acc.findings; }
@@ -227,7 +229,7 @@ if (SELFTEST) {
   const base = `<style>.x{color:rgb(1,1,1)}</style><div class="x" id="d">t</div>`;
   const stacked = `<style>.x{color:rgb(1,1,1)}</style><style>#d.x{color:rgb(2,2,2)}</style><div class="x" id="d">t</div>`;
   const replaced = `<style>#d.x{color:rgb(2,2,2)}</style><div class="x" id="d">t</div>`;
-  const b = await chromium.launch(); const pg = await b.newPage();
+  const b = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}); const pg = await b.newPage();
   const load = async (html) => { await pg.setContent(html); await pg.waitForTimeout(50); };
   await load(base);    const prior = (await pg.evaluate(COLLECT)).map(r => r.text);
   /* ⚠ ANALYSE returns { findings, stat } — reading it as a bare array made
@@ -255,8 +257,8 @@ const setupSrc = SETUP ? SETUP.split(',').map(p => {
 const states = STATES ? STATES.split(',').map(s => s.trim()).filter(Boolean) : null;
 
 /* absolute paths must survive: prepending cwd to /tmp/... yields a path that does not exist */
-const abs = (p) => p.startsWith('/') ? p : process.cwd() + '/' + p.replace(/^\.\//, '');
-const browser = await chromium.launch();
+const abs = (p) => resolve(p);   /* was a '/'-only join: on Windows C:/... read as relative (15 Nov 2026) */
+const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
 const page = await browser.newPage({ viewport: { width: VW, height: VH } });
 
 const priorRules = await sweep(page, abs(PREV), setupSrc, states, COLLECT)

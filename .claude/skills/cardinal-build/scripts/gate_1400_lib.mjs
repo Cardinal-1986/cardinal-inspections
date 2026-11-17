@@ -40,6 +40,9 @@ export async function boot(as, opts={}){
   await page.addInitScript(MOCK);
   if (opts.slowAuth) await page.addInitScript(() => { const cc = window.supabase.createClient; window.supabase.createClient = function(){ const c = cc.apply(this, arguments); const g = c.auth.getSession.bind(c.auth); c.auth.getSession = () => new Promise(r => setTimeout(() => r(g()), 3000)); return c; }; });
   await page.addInitScript(() => { window.__TOASTS__=[]; (function hook(){ var t=setInterval(function(){ if(window.crTell && !window.crTell.__h){ var o=window.crTell; window.crTell=function(m){ window.__TOASTS__.push(String(m)); console.log('TOAST '+m); return o.apply(this,arguments); }; window.crTell.__h=1; } },50); })(); window.addEventListener('unhandledrejection', e => console.error('UNHANDLED ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason))); });
+  /* opts.init (1481): one more init script, run before the page — e.g. the appearance in localStorage,
+     which the app reads at boot (a reload instead can come back signed out) */
+  if (opts.init) await page.addInitScript(opts.init);
   await page.goto('https://app.cardinalroster.com/?as=' + as, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
   return { browser, ctx, page };

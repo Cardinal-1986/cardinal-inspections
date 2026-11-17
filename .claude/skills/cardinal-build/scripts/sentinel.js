@@ -129,7 +129,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
 let chromium;
-for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright/index.js']) {
+for (const p of [...(process.env.PW_CORE ? [process.env.PW_CORE] : []), 'playwright', '/opt/node22/lib/node_modules/playwright/index.js']) {   /* PW_CORE: a desk (15 Nov 2026) */
   try { chromium = require(p).chromium; break; } catch (e) {}
 }
 if (!chromium) { console.error('sentinel: playwright not found'); process.exit(2); }
@@ -245,7 +245,7 @@ const SETUP_JS = SETUP.split(',').map(s => s.trim()).filter(Boolean)
   .join('\n;\n');
 
 const browser = await chromium.launch({
-  executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+  executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
 }).catch(() => chromium.launch());
 
 /* One sweep over one artifact. --since runs this a second time against the
