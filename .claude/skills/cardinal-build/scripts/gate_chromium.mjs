@@ -363,6 +363,10 @@ const GATES = [
     protects: "round-1 leftovers at four text sizes - among them: the Punch & Repairs search hint fits its box at Normal, Large, Larger, Sun and Sun + Larger (1480)",
     break: { find: "var want = (have > 0 && cv.measureText(LONG).width > have) ? SHORT : LONG;",
              repl: "var want = LONG;" } },
+  { name: 'gate_1482.mjs',
+    protects: "the 44px floor holds when the text is squeezed (desktop top bar, Community partner buttons, the punch card's + Add, Create estimate) and the Production boxes have 10px sides with .03em label tracking; the phone bar is unchanged",
+    break: { find: "@media (min-width:901px){ #crBanner .cbn{min-height:44px;} }",
+             repl: "" } },
   { name: 'gate_1481.mjs',
     protects: "Sun clears 7:1 on the Production day sky (and snow over it, never black on rain) and on the punch card's Close button and On site band; Light and Dark keep their values",
     break: { find: "--sky-ink:#000000; --sky-ink2:#05101c; }",
@@ -451,11 +455,10 @@ const GATES = [
     protects: "the stage menu is styled with 44px rows and Mark Lost last; Mark Lost asks first and Advance waits out the Undo window; measurement numbers, Orders and a $0 balance are readable",
     break: { find: "crStageDefer(pr, 'Lost', { lostReason: String(ans) });",
              repl: "await setStage(pr.id, 'Lost', { lostReason: String(ans) }); renderOverview(); renderPipeline();" } },
-  /* 15 Nov 2026: 34 gates from 1401-1445 that only ever ran in the container they were written in.
+  /* 15 Nov 2026: 34 gates from 1401-1445 (1438 / 1443 out 16 Nov on CI's fonts, back 17 Nov with build 1482's fix) that only ever ran in the container they were written in.
      Each break undoes one piece of that build's own change (or, for 1407 / 1424 / 1425 / 1432, the
      thing its header names), and each was seen to turn its gate red ON A NAMED CHECK, not by a crash.
-     Left out on purpose: 1438 / 1443 (CI's fonts put a label 2px over its box and ten tap areas at
-     43px where a desk measures 44 - font metrics, not the app; OPEN_ITEMS), 1423 (needs pdfinfo),
+     Left out on purpose: 1423 (needs pdfinfo),
      1439 (PDF text read by poppler), 1434 / 1442 (they
      compare against a frozen 1433 / 1438 tree, so every later build that moves those screens turns
      them red), 1436 (Sun contrast - open item). */
@@ -575,10 +578,18 @@ const GATES = [
     protects: "the Clients bar's portal chips never run off the screen.",
     break: { find: ".cd-wrap{padding-bottom:160px;--cr-stack:\"the Clients list's own clearance over its fixed CRM bar; .wrap is the shared page container\"}/* 1437: was 120 — room for the CRM bar's second row (62 tab bar + ~81 two rows) */",
              repl: ".cd-wrap{padding-bottom:120px;}" } },
+  { name: "gate_1438.mjs", timeout: 600000,
+    protects: "the Production boxes go four across only where their labels fit.",
+    break: { find: "/* 1438: four across only where four labels fit. Forced 4-up from 1100px, the boxes cut\n   \"Scheduled\" (and at 1100 all four labels) at Normal up to 1280, at Large up to 1440 and\n   at Larger up to 1600. A media query sees the unzoomed viewport, so the width is per Text\n   size step, as Sun's own 1700/1950/2200 rules record; Sun keeps those, which outrank these. */\n@media (min-width:1366px){ :root:not([data-cr-text]) #cr-pb .pbtiles{ --cr-stack:\"desktop twin of the 2-up phone grid, which stays\"; grid-template-columns:repeat(4,minmax(0,1fr)); } }\n@media (min-width:1600px){ :root[data-cr-text=\"lg\"] #cr-pb .pbtiles{ --cr-stack:\"desktop twin of the 2-up phone grid, which stays\"; grid-template-columns:repeat(4,minmax(0,1fr)); } }\n@media (min-width:1800px){ :root[data-cr-text=\"xl\"] #cr-pb .pbtiles{ --cr-stack:\"desktop twin of the 2-up phone grid, which stays\"; grid-template-columns:repeat(4,minmax(0,1fr)); } }",
+             repl: "body.cr-lnav-on #cr-pb .pbtiles{ --cr-stack:\"desktop twin of the 2-up phone grid, which stays\"; grid-template-columns:repeat(4,minmax(0,1fr)); }" } },
   { name: "gate_1440.mjs", timeout: 600000,
     protects: "thirteen round-1 phone leftovers: Crew Dispatch chips, Production home, the inspection checklist asked once",
     break: { find: "    if(a === 'skip'){ S.skipCl = true; return igStep3(); }   /* A4 (P12.13) */",
              repl: "    if(a === 'skip') return igStep3();" } },
+  { name: "gate_1443.mjs", timeout: 600000,
+    protects: "round-1 leftovers: accessibility and sheets (builder A5, made on build 1438): P07.05, P07.06, P07.10, P07.11, P07.12, P10.03.",
+    break: { find: "    '<div class=\"bd\" role=\"button\" tabindex=\"0\">' +",
+             repl: "    '<div class=\"bd\">' +" } },
   { name: "gate_1444.mjs",
     protects: "the insurance side is called Insurance (Theo's pick for question C, 2 Nov 2026).",
     break: { find: "{ name:'Insurance', open:function(){",

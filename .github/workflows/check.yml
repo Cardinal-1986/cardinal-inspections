@@ -422,10 +422,10 @@ jobs:
           # poppler-utils: gate_1424 E7 reads a printed estimate back with pdftotext (15 Nov 2026)
           sudo apt-get install -y --no-install-recommends poppler-utils
 
-      # gate_1437 compares against the tree of the build before it (git show <sha>:index.html), and the
-      # checkout above is one commit deep. Fetch just that commit.
-      - name: Fetch the reference tree gate_1437 compares against
-        run: git fetch --no-tags --depth=1 origin 002d5210e89474e5c881eae0730c2068200a860c
+      # gate_1437 / gate_1438 compare against the tree of the build before them (git show <sha>:index.html),
+      # and the checkout above is one commit deep. Fetch just those two commits.
+      - name: Fetch the reference trees two gates compare against
+        run: git fetch --no-tags --depth=1 origin 002d5210e89474e5c881eae0730c2068200a860c 518264957aed9ed5436a5db65e2f1cf9500b4ef0
 
       # ⚠ THE RUNNER'S OWN CONTROL, FIRST. It proves every break
       # anchor still matches something in the artifact. A negative

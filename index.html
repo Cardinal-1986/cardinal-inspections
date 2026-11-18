@@ -1164,6 +1164,7 @@ body.cr-prod:has(#punchView:not([style*="none"])) :is(#projModal,#apptModal,#lea
 .ldot.appt{background:#E8A33D;}
 .calnextup{font:600 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#7a4a3e;margin-top:6px;}
 .apptlist{max-height:220px;overflow:auto;overscroll-behavior-x:contain;}
+#leadList .btn{min-height:44px;}   /* 1482: Create estimate was 42 (39-41 on other fonts); .btn itself stays */
 .apptrow{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:8px;
   padding:9px 11px;margin:6px 0;font:15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;}
 .apptrow .tm{font-weight:800;color:var(--sheet-red,var(--red-dk));white-space:nowrap;min-width:64px;}
@@ -4509,7 +4510,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-16 build 1481<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-17 build 1482<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47499,6 +47500,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1482, d:'2026-11-17', t:'Buttons that are easier to hit, and Production labels that fit', s:'A few buttons were a hair under the size a thumb needs on some phones and computers: the top bar on a desktop, the Community partner buttons, the punch card\u2019s + Add, and Create estimate in the leads sheet. They now keep their full size whatever the font. On Production the four boxes have a little more room, so their labels (like Scheduled) are never cut off on a laptop.' },
   { b: 1481, d:'2026-11-16', t:'Sun mode is easier to read on Production and the punch card', s:'In Sun, the words over the daytime sky at the top of Production (the date, the title and the line under it) are now near-black, so they read clearly in bright light. On the punch card the green Close button is a deeper green, and the On site band (Not checked in, On site, and the stale warning) uses darker colours. Only Sun changes; Dark and Light look exactly as before.' },
   { b: 1480, d:'2026-11-15', t:'Punch search hint fits at larger text', s:'On a phone with Large or Larger text, or with Sun on, the grey hint in the Punch & Repairs search box was cut off at the end. It now shows a shorter hint (Client or PO #) whenever the full one would not fit. Search itself is unchanged: it still finds phone numbers and tarps.' },
   { b: 1479, d:'2026-11-15', t:'Crew Dispatch stays open on a desktop', s:'On a desktop, booking a crew from Crew Dispatch used to close Dispatch and drop you on the home screen behind the work order form. Dispatch now stays where it is: Cancel leaves you on the board, and a new work order shows on it as soon as it is created. On a phone nothing changes.' },
@@ -59423,7 +59425,7 @@ objections : OBJECTIONS,
   text-align:left; cursor:pointer; min-width:0;
   background:radial-gradient(125% 135% at 28% 16%, var(--pb-c2,#1b1e22) 0%, var(--pb-c,#15171a) 74%);
   border:1px solid var(--pb-line,rgba(230,235,240,.11)); border-radius:12px;
-  padding:12px 12px 10px; box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 6px 16px rgba(0,0,0,.3);
+  padding:12px 10px 10px; box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 6px 16px rgba(0,0,0,.3);   /* 1482: sides 12 -> 10 */
 }
 :root[data-theme="rb-light"] #cr-pb .pbtile{
   background:var(--pb-c,#fff); box-shadow:0 2px 10px rgba(25,28,40,.09);
@@ -59433,8 +59435,10 @@ objections : OBJECTIONS,
 #cr-pb .pbtile .l{
   display:flex; align-items:center; gap:6px; margin-top:6px;
   /* T6: .14em was the mono's tracking; in the sans "SCHEDULED" ran 8px wider and clipped in the
-     1366 laptop's 4-up row, so the sans is tracked back to the mono's width */
-  font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.06em; color:var(--pb-mut,#9aa3ab);
+     1366 laptop's 4-up row, so the sans is tracked back to the mono's width. 1482 (Theo, option C): .06em -> .03em
+     and the box's sides 12 -> 10px. On Windows "SCHEDULED" had 4.9px to spare at 1366 and on Linux fonts was cut
+     by 2 (gate_1438 on CI); now 11.8px on Windows, about 5 on Linux - room for a wider font than the desk's */
+  font:600 11px var(--pb-sans,'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif); font-variant-numeric:tabular-nums; letter-spacing:.03em; color:var(--pb-mut,#9aa3ab);
   text-transform:uppercase;
 }
 #cr-pb .pbtile .l svg{ width:12px; height:12px; color:var(--pb-dim,#848c94); flex:none; }
@@ -64030,7 +64034,7 @@ window.CardinalPunchCard = {
 })();
 </script>
 
-<style id="cr-pp-styles">.cr-pp-card{margin:14px 0;border:1px solid #ddd6cf;border-radius:11px;background:#fff;overflow:hidden}.cr-pp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#fdf8ee,#f8f1e2);border-bottom:1px solid #ece1cc}.cr-pp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#7a4e00}.cr-pp-hd .n{flex:0 0 auto;padding:3px 9px;border-radius:20px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-pp-hd .n.open{background:#f5a623;color:#241a09}.cr-pp-hd .n.clear{background:#e2efe6;color:#2f7048}.cr-pp-hd .add{flex:0 0 auto;position:relative;background:#f5a623;color:#241a09;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-family:inherit}.cr-pp-hd .add:hover{background:#e0940f}.cr-pp-hd .add::after{content:'';position:absolute;left:0;right:0;top:-9px;bottom:-9px}.cr-pp-bd{padding:12px 14px 14px}.cr-pp-none{font:400 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;line-height:1.6;padding:6px 2px}
+<style id="cr-pp-styles">.cr-pp-card{margin:14px 0;border:1px solid #ddd6cf;border-radius:11px;background:#fff;overflow:hidden}.cr-pp-hd{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(180deg,#fdf8ee,#f8f1e2);border-bottom:1px solid #ece1cc}.cr-pp-hd .t{flex:1;min-width:0;font:800 13px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#7a4e00}.cr-pp-hd .n{flex:0 0 auto;padding:3px 9px;border-radius:20px;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-pp-hd .n.open{background:#f5a623;color:#241a09}.cr-pp-hd .n.clear{background:#e2efe6;color:#2f7048}.cr-pp-hd .add{flex:0 0 auto;position:relative;background:#f5a623;color:#241a09;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;font-family:inherit}.cr-pp-hd .add:hover{background:#e0940f}.cr-pp-hd .add::after{content:'';position:absolute;left:0;right:0;top:50%;height:46px;margin-top:-23px}/* 1482: a fixed pad, as the partner buttons */.cr-pp-bd{padding:12px 14px 14px}.cr-pp-none{font:400 15px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#6b6b6b;line-height:1.6;padding:6px 2px}
 /* 637, Theo: "Cannot hardly read address on card in dark mode." Retail dark
    measured 1.46:1 against a 4.5:1 floor — var(--rbe-ink) flips
    #161616 -> #cfd6df with the theme, but .acxsec is background:#fff with NO
@@ -68310,7 +68314,7 @@ background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A2
 #cr-cc .cc-pp .ppacts button{position:relative;background:transparent;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-ink,#f2f4f3);border-radius:7px;padding:7px 11px;cursor:pointer;font:800 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 #cr-cc .cc-pp .ppacts button:active{background:var(--ccm-line,#2a2f2c)}
 /* 1443 P07.06: 30px buttons, 46px targets — the pad sits in the row's 7px margin above and 9px padding below */
-#cr-cc .cc-pp .ppacts button::after{content:'';position:absolute;left:0;right:0;top:-8px;bottom:-8px}
+#cr-cc .cc-pp .ppacts button::after{content:'';position:absolute;left:0;right:0;top:50%;height:46px;margin-top:-23px}/* 1482: was the box +/-8 - 44 only when the 11px text set a 28px box (27.x elsewhere: 43) */
 /* 886: the OUTBOUND crew work order, surfaced on the black card. It lives as an
    inspection_reports doc (isWorkOrderTitle) with dispatch/completion on
    woByReport, and had never rendered here — only the inbound partner-upload
@@ -72878,6 +72882,9 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
    hold focusable items; laid out exactly as the bare text and caret were, and its pad fills the whole item. */
 #crBanner .cbl{display:inline-flex;align-items:center;gap:5px;}
 #crBanner .cbdd .cbl::after{content:'';position:absolute;left:0;right:0;top:0;bottom:-3px;}
+/* 1482: padding 12/13 + 13px text made 44 in Segoe UI and 43 in a narrower font (CI's Ubuntu, gate_1443 D) -
+   the floor is a min-height now. Desktop only: a phone's items stay 37px with their pad (the 900px rule). */
+@media (min-width:901px){ #crBanner .cbn{min-height:44px;} }
 /* 1144 — the banner is a THIRD chrome system with its own tokens and its own
    per-CRM dark grounds (#15171b, community #08211a, insurance #1a0e0d). Light
    chrome is not one surface: header tokens, header inks, the drawer, the

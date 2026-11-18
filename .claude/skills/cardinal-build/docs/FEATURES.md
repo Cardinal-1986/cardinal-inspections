@@ -10991,3 +10991,14 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | Sun's Close button green `#0f5c36`; the On site band's three inks | same block |
 
 **Gate:** `gate_1481.mjs`.
+
+## Build 1482: tap sizes and the Production box label stop depending on the font
+
+| Piece | Where |
+|---|---|
+| desktop top bar `min-height:44px` (901px up) | `#crBanner` rules, beside the 1443 P07.11 note |
+| fixed 46px centred pads on the partner buttons and the punch card's + Add | `#cr-cc .cc-pp .ppacts button::after`, `.cr-pp-hd .add::after` |
+| `#leadList .btn{min-height:44px}` | above `.apptrow` |
+| Production boxes: sides 10px, label tracking .03em | `#cr-pb .pbtile`, `#cr-pb .pbtile .l` |
+
+**Gate:** `gate_1482.mjs` (text squeezed, floors held); `gate_1438` and `gate_1443` back in CI.

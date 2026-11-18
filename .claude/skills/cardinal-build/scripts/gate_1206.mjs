@@ -25,9 +25,10 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
 
 const require_ = createRequire(import.meta.url);
-const here = dirname(new URL(import.meta.url).pathname);
+const here = dirname(fileURLToPath(import.meta.url));   /* not URL.pathname: /C:/... on Windows (17 Nov 2026) */
 const root = resolve(here, '../../../..');
 const argv = process.argv.slice(2);
 const REBASE = argv.includes('--rebaseline');
@@ -60,7 +61,7 @@ setTimeout(() => { console.log('GATE TIMEOUT'); process.exit(3); }, 900000).unre
 
 const html = readFileSync(artifact, 'utf8');
 const PW_SANDBOX = '/opt/node22/lib/node_modules/playwright/index.js';
-const PW = existsSync(PW_SANDBOX) ? PW_SANDBOX : 'playwright';
+const PW = process.env.PW_CORE || (existsSync(PW_SANDBOX) ? PW_SANDBOX : 'playwright');   /* PW_CORE: a desk */
 const { launchChromium } = require_(resolve(here, 'chromium_launch.cjs'));
 const setupPath = resolve(here, 'sentinel_setup_cardinal.js');
 const mockPath = resolve(here, 'e2e_mock_supa.js');

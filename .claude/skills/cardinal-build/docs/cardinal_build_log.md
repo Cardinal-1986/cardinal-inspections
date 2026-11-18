@@ -38475,3 +38475,15 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 **Gates:** `check_build` GREEN; `gate_1481.mjs` new (9: A day sky, B rain over day stays white, C snow over day, D Light unchanged, E Close, F the band's three states, G Light and Dark unchanged) — GREEN on 1481, RED on 1480 (A, C, E, F); registered in `gate_chromium`, break = the day-sky inks removed. `gate_types` GREEN (1522, no code grew). `gate_stack` CLEAN — but it walks the default appearance, never Sun, so it cannot see these rules. Sentinel (default + rb-light, 390 and 1440, `--since` 1480): CLEAN, 24 renders, nothing new (50 carried) — it has no Sun theme, so it can only show that Dark and Light did not move.
 
 Tooling, on the way: `gate_1400_lib` takes `opts.init` (an init script before the page — the appearance); `gate_stack` and `sentinel.js` take `PW_CORE` / `PW_CHROMIUM` and `gate_stack` resolves Windows paths.
+
+## Build 1482 — tap sizes and the Production box label stop depending on the font (17 Nov 2026)
+
+**Theo:** "Tap sizes", then "C, both" (previewed: tighter label tracking, 2px less box padding, or both).
+
+- **Why:** `gate_1443` and `gate_1438` were green on a Windows desk and red on CI by a pixel or two. Every one of those floors was PADDING PLUS THE FONT'S LINE HEIGHT: Segoe UI landed on 44, a narrower font on 43. A phone's font is neither, so the fix belongs in the app, not in the gates' floors.
+- **The desktop top bar** (`#crBanner .cbn`): `min-height:44px` from 901px up. A phone's items stay 37px with their 1443 pad (asserted).
+- **The Community partner buttons and the punch card's + Add:** their `::after` pads were the box ±8 / ±9 — now a fixed 46px centred on the button, whatever the text's height. They look exactly as before.
+- **Create estimate in the leads sheet:** `#leadList .btn{min-height:44px}` (was 42 on the desk, 39–41 elsewhere). ⚠ **The app-wide `.btn` is 42px and was NOT changed** — that moves every screen; recorded in OPEN_ITEMS as Theo's call.
+- **The Production boxes:** sides 12 → 10px and the label's tracking .06em → .03em (option C). "SCHEDULED" at 1366: 4.9px spare on the desk → 11.8 (about 5 on CI's fonts, where it had been cut by 2).
+
+**Gates:** `check_build` GREEN; `gate_1482.mjs` new — it **squeezes the text** (line-height 0.9) and requires the floors to hold, so it does not depend on the font it happens to get: GREEN 6/6 on 1482, RED on 1481 (A top bar 40px, B partner buttons and + Add 41, C Create estimate 35.5, E the box values). **`gate_1438` and `gate_1443` are back in `gate_chromium`** (out since 16 Nov), GREEN on the desk and through the runner with their breaks; CI is the proof on the wider fonts. `gate_types` GREEN; `gate_stack` CLEAN; `gate_1206` GREEN (no new under-floor target, 2 carried); sentinel (default + light, 390 / 1366 / 1440, since 1481): CLEAN, 36 renders, nothing new (54 carried). `gate_1206` runs on a Windows desk now (`fileURLToPath`, `PW_CORE`).
