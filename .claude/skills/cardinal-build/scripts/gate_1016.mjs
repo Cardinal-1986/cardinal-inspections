@@ -28,7 +28,8 @@ const ROUTES = ['analyze', 'caption', 'summarize', 'organize', 'sortphotos', 'de
 const LIVE = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net',
   'curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net',
   'nick@cardinalrenovations.net', 'jacob@cardinalrenovations.net', 'jerry@cardinalrenovations.net',
-  'audit@cardinalrenovations.net', 'clarkie022@gmail.com', 'theodorion1986@gmail.com'];
+  'audit@cardinalrenovations.net', 'clarkie022@gmail.com', 'theodorion1986@gmail.com',
+  'jerry@jerrywamsley.com'];   // 18 Nov 2026: Jerry Wamsley, sales (off-domain)
 const OUTSIDERS = ['attacker@evil.com', 'x@gmail.com', '', null, undefined, 'nope@example.org'];
 
 const fails = [];
@@ -69,4 +70,4 @@ if (fails.length) {
   for (const f of fails) console.error('  ✗ ' + f);
   process.exit(1);
 }
-console.log('GREEN — gate_1016: 13 AI/spend routes gated on staff identity; all 10 live accounts pass, outsiders refused.');
+console.log('GREEN — gate_1016: 13 AI/spend routes gated on staff identity; all ' + LIVE.length + ' live accounts pass, outsiders refused.');

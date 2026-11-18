@@ -19,10 +19,12 @@
 // (Theo's owner login). A static check keeps these 13 routes free of a per-call
 // DB lookup; ⚠ ADD any future non-domain staff member's email to EXTRA_STAFF
 // here, or they will be refused these features (a 403, not a silent failure).
+// 18 Nov 2026: jerry@jerrywamsley.com (Jerry Wamsley, sales; Theo added him to team_profiles).
 const STAFF_DOMAIN = '@cardinalrenovations.net';
 const EXTRA_STAFF = new Set([
   'clarkie022@gmail.com',
   'theodorion1986@gmail.com',
+  'jerry@jerrywamsley.com',
 ]);
 
 export function isStaff(email) {
