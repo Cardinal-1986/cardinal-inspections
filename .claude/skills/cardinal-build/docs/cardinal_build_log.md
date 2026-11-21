@@ -38518,3 +38518,27 @@ Cause: the fan-out read sent `apikey: <publishable>` with `Authorization: Bearer
 - `gate_types` was GREEN. `gate_chromium` was GREEN, 23/23.
 - **Sentinel** on the punch card and its gallery (390 and 1440, dark and light, `--since` 1444, uncapped): CLEAN, nothing new in 8 renders.
 - **Still open from 1445:** confirmation from Scottie's phone that photos arrive. Theo has not reported back yet.
+
+## Build 1484 — the Assistant for one sales rep, on their own jobs only (21 Nov 2026)
+Theo asked for a named sales rep to get the assistant, seeing only their own clients.
+- `api/assistant.js`:
+  - `PEOPLE` gains one `sales: true` entry.
+  - `SALES_TABLES` and `SALES_WRITE` added; `tablesFor()` and `toolsFor()` narrowed for a sales person.
+  - `cleanProposals()` drops a rep's money, reference-list and delete proposals.
+  - The 403 message no longer names people.
+  - The system prompt gains the sales line.
+- `index.html`: `AI_PEOPLE` gains the same login. Stamp 1484, plus a CHANGELOG entry that does not name the rep.
+- **Measured before writing**, in a read-only transaction as the rep (counts only):
+  - 6 projects visible of 331, and 0 rows off those 6 on every job-keyed table.
+  - The policies were read for each table in the list. `community_partners_read` is `true` for all staff, which is why partners are fenced by the table list.
+  - The job-files read policy goes through `projects`.
+- **Gates:**
+  - `gate_1484` GREEN 7/0; RED on main 1/6, no crash.
+  - `gate_1327` GREEN, with the new B1b (a real render of the rep's button). B1b is RED on 1483.
+  - `gate_1483` GREEN 15/0.
+  - `check_build` GREEN. `gate_types` GREEN (1522, 0 grew).
+  - `gate_dupes` is 16 over baseline on both main and this tree: the same old reason, nothing new.
+  - `audit_scrolllock` GREEN (16).
+  - The surgery reproduces byte-for-byte from main.
+  - Sentinel not run: no screen changed, only who sees the existing button.
+- `patch_1484_sales.py`, `patch_1484.py`, `gate_1484.mjs`.
