@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-16 build 1481<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-21 build 1483<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -47499,6 +47499,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1483, d:'2026-11-21', t:'The Assistant reads measurement reports', s:'The Assistant can now open a PDF filed on a job and read it: a Roofr, Hover or EagleView measurement report, an insurance scope, signed paperwork. Ask it for a job\u2019s measurements and it reads the report itself instead of asking you to type the numbers in. It quotes the numbers as the report gives them and says when something is not in the report. It reads PDFs only, never photos, and only files you could open yourself.' },
   { b: 1481, d:'2026-11-16', t:'Sun mode is easier to read on Production and the punch card', s:'In Sun, the words over the daytime sky at the top of Production (the date, the title and the line under it) are now near-black, so they read clearly in bright light. On the punch card the green Close button is a deeper green, and the On site band (Not checked in, On site, and the stale warning) uses darker colours. Only Sun changes; Dark and Light look exactly as before.' },
   { b: 1480, d:'2026-11-15', t:'Punch search hint fits at larger text', s:'On a phone with Large or Larger text, or with Sun on, the grey hint in the Punch & Repairs search box was cut off at the end. It now shows a shorter hint (Client or PO #) whenever the full one would not fit. Search itself is unchanged: it still finds phone numbers and tarps.' },
   { b: 1479, d:'2026-11-15', t:'Crew Dispatch stays open on a desktop', s:'On a desktop, booking a crew from Crew Dispatch used to close Dispatch and drop you on the home screen behind the work order form. Dispatch now stays where it is: Cancel leaves you on the board, and a new work order shows on it as soon as it is created. On a phone nothing changes.' },

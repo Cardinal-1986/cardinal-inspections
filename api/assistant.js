@@ -18,6 +18,12 @@
 // person taps Approve, and then the browser applies them with the person's own session — the
 // same RLS, the same refusals, the same audit trail as doing it by hand.
 //
+// HOW IT READS A FILE (build 1483, Theo: "Can you have this ai read measurements"): read_file opens one
+// PDF filed on a job (an inspection_reports row titled "File: …") and hands the PDF itself to the
+// model, which reads it natively. The row is fetched and the bytes downloaded WITH THE CALLER'S OWN
+// TOKEN, so RLS and the job-files storage policy decide, as with db_select. PDFs only: a customer
+// photo is not sent to the model from here. 12 MB a file, 20 MB a question.
+//
 // Model: claude-opus-5-5 with the server-side refusal fallback (as inspect-assist). Needs
 // ANTHROPIC_API_KEY. 60s maxDuration in vercel.json.
 
@@ -30,6 +36,9 @@ const DEADLINE_MS = 54000;     // whole request; Vercel stops us at 60s
 const CALL_MAX_MS = 45000;     // one model call, at most
 const MIN_CALL_MS = 8000;      // less than this left: answer with what we have instead of starting a call
 const MAX_STEPS = 8;           // tool rounds per question
+const FILE_MAX_BYTES = 12 * 1024 * 1024;    // one PDF handed to the model (1483)
+const FILES_MAX_BYTES = 20 * 1024 * 1024;   // all PDFs in one question; the request itself is capped at 32 MB
+const FILE_BUCKETS = new Set(['job-files']); // where job files live (1359)
 
 /* the people this route serves, and what kind */
 export const PEOPLE = {
@@ -120,6 +129,11 @@ export const RULES = [
   '- When asked to change something, read the current row first, then call propose_changes with exactly the change, and a one-line plain-English label per change. Say in your reply what you proposed and that it needs their Approve. Never say it is done.',
   '- To move a job to a new stage, update projects.stage only; the app writes the stage date itself. projects.checklist cannot be changed from here; say so and point them to the job page.',
   '- If a request is unclear or would change many records, ask one short question first.',
+  '',
+  'Files and measurements:',
+  '- Files on a job (PDFs the team uploaded: Roofr, Hover or EagleView measurement reports, insurance scopes, signed paperwork) are inspection_reports rows whose title starts "File: ". To see what is inside one, call read_file with that row\'s id; the PDF itself comes back for you to read. Only PDFs open this way.',
+  '- Measurements already entered on a job are in projects.checklist under meas (sq, pitch, ridge, hip, valley, eave, rake, stepflash, wall, source); select checklist on that one project to see them. If they are empty and a measurement report is filed on the job, read the report with read_file instead of asking the person to type the numbers.',
+  '- Quote measurements exactly as the report states them and say which report they came from. Never round, estimate or fill in a number the report does not give; say it is not in the report.',
 ].join('\n');
 
 export function toolsFor(person) {
@@ -150,6 +164,18 @@ export function toolsFor(person) {
           limit: { type: 'integer', minimum: 1, maximum: 200 },
         },
         required: ['table'],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: 'read_file',
+      description: 'Open one PDF filed on a job and read what is inside it: a Roofr, Hover or EagleView measurement report, an insurance scope, signed paperwork. Pass the id of the inspection_reports row whose title starts "File: ". Returns the PDF itself. PDFs only.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          file_id: { type: 'string', description: 'inspection_reports.id of the file row (title starts "File: ").' },
+        },
+        required: ['file_id'],
         additionalProperties: false,
       },
     },
@@ -237,6 +263,56 @@ export function cleanProposals(person, input) {
   return { summary: clip(input && input.summary, 300), changes: out, dropped };
 }
 
+/* 1483: read_file. Exported for the gate. Everything goes out with the caller's own token: the row
+   through PostgREST (RLS), the bytes through Storage's authenticated route (the bucket's policy).
+   Returns { content, bytes } for a tool_result, or throws a plain-English Error. `spent` is how many
+   file bytes this question has already sent. */
+export async function readFile(person, token, input, spent = 0) {
+  const id = String(input && input.file_id || '').trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new Error('That is not a file id. Look the file up in inspection_reports first (title starts "File: ").');
+  const H = { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token };
+  const r = await fetch(SUPABASE_URL + '/rest/v1/inspection_reports?select=id,title,html,project_id,created_at&id=eq.' + id + '&limit=1', { headers: H });
+  if (!r.ok) throw new Error('Could not look that file up (' + r.status + ').');
+  const rows = JSON.parse(await r.text() || '[]');
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!row) throw new Error('No file with that id, or this person cannot see it.');
+  const title = String(row.title || '');
+  if (!/^file:\s*/i.test(title)) throw new Error('That record is not an uploaded file (its title does not start "File:").');
+  let meta = null;
+  try { meta = JSON.parse(row.html || 'null'); } catch (e) { meta = null; }
+  if (!meta || typeof meta !== 'object') throw new Error('That file has nothing stored with it.');
+  const name = clip(meta.name || title.replace(/^file:\s*/i, ''), 160);
+  const isPdfName = /\.pdf$/i.test(name) || /^application\/pdf$/i.test(String(meta.mime || ''));
+  if (!isPdfName) throw new Error('"' + name + '" is not a PDF. Only PDFs are read here; photos are not sent from this assistant.');
+  if (Number(meta.size) > FILE_MAX_BYTES) throw new Error('"' + name + '" is ' + Math.round(Number(meta.size) / 1048576) + ' MB; the limit here is 12 MB.');
+  let buf;
+  if (meta.path) {
+    const bucket = String(meta.bucket || 'job-files');
+    if (!FILE_BUCKETS.has(bucket)) throw new Error('That file is not in job files.');
+    const key = String(meta.path).split('/').map(encodeURIComponent).join('/');
+    const d = await fetch(SUPABASE_URL + '/storage/v1/object/authenticated/' + bucket + '/' + key, { headers: H });
+    if (!d.ok) throw new Error('Could not download "' + name + '" (' + d.status + ').');
+    buf = Buffer.from(await d.arrayBuffer());
+  } else if (typeof meta.data === 'string') {
+    const m = /^data:[^,]*;base64,(.*)$/s.exec(meta.data);
+    if (!m) throw new Error('"' + name + '" is stored in a form that cannot be read here.');
+    buf = Buffer.from(m[1], 'base64');
+  } else {
+    throw new Error('That file has nothing stored with it.');
+  }
+  if (buf.length > FILE_MAX_BYTES) throw new Error('"' + name + '" is ' + Math.round(buf.length / 1048576) + ' MB; the limit here is 12 MB.');
+  if (spent + buf.length > FILES_MAX_BYTES) throw new Error('That is more file than one question can carry. Ask about this file on its own.');
+  if (buf.length < 5 || buf.subarray(0, 5).toString('latin1') !== '%PDF-') throw new Error('"' + name + '" does not open as a PDF.');
+  const when = row.created_at ? String(row.created_at).slice(0, 10) : '';
+  return {
+    bytes: buf.length,
+    content: [
+      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: buf.toString('base64') }, title: name },
+      { type: 'text', text: 'This is the file "' + name + '"' + (when ? ', filed ' + when : '') + '. Answer from what it says.' },
+    ],
+  };
+}
+
 async function whoIs(req) {
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
@@ -303,7 +379,7 @@ export default async function handler(req, res) {
 
   const client = new Anthropic({ apiKey, maxRetries: 0 });
   const left = () => Math.min(CALL_MAX_MS, DEADLINE_MS - (Date.now() - started));
-  let fallbacks = true, proposals = null, usage = { input: 0, output: 0, cache_read: 0 };
+  let fallbacks = true, proposals = null, usage = { input: 0, output: 0, cache_read: 0 }, fileBytes = 0;
   try {
     for (let step = 0; step < MAX_STEPS; step++) {
       if (left() < MIN_CALL_MS) break;
@@ -330,6 +406,9 @@ export default async function handler(req, res) {
       for (const b of uses) {
         if (b.name === 'db_select') {
           try { results.push({ type: 'tool_result', tool_use_id: b.id, content: await runSelect(person, who.token, b.input) }); }
+          catch (e) { results.push({ type: 'tool_result', tool_use_id: b.id, content: String(e && e.message || e), is_error: true }); }
+        } else if (b.name === 'read_file') {
+          try { const f = await readFile(person, who.token, b.input, fileBytes); fileBytes += f.bytes; results.push({ type: 'tool_result', tool_use_id: b.id, content: f.content }); }
           catch (e) { results.push({ type: 'tool_result', tool_use_id: b.id, content: String(e && e.message || e), is_error: true }); }
         } else if (b.name === 'propose_changes') {
           const p = cleanProposals(person, b.input);

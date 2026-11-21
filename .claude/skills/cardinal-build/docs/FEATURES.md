@@ -10991,3 +10991,23 @@ Theo, on Scottie's phone: "it's one photo at a time and it doesn't even show up.
 | Sun's Close button green `#0f5c36`; the On site band's three inks | same block |
 
 **Gate:** `gate_1481.mjs`.
+
+## Build 1483: the Assistant reads measurement reports (21 Nov 2026)
+Theo, about a Roofr report filed on a job: "Can you have this ai read measurements". Before this the Assistant could see the file row in `inspection_reports` (its title and when it was filed) but never the file, so it asked for every number to be typed in.
+
+- **`read_file` is a new tool in `api/assistant.js`.**
+  - **What it opens:** one PDF filed on a job, meaning an `inspection_reports` row titled "File: …". That covers Roofr, Hover and EagleView reports, insurance scopes and signed paperwork. The PDF goes to the model as a `document` block, and Claude reads it natively.
+  - **How it reads:** the row through PostgREST, and the bytes from Storage's authenticated route in `job-files`, both with **the caller's own token**. RLS and the bucket policy decide, exactly as for `db_select`.
+  - **Old files** that carry their bytes inline as a data URL (423 of 457 file rows today) open the same way.
+  - **Limits:**
+    - **PDFs only:** photos are refused before download, so a customer photo is not sent from here.
+    - **Size:** 12 MB a file and 20 MB a question.
+    - **Shape:** the bytes must start `%PDF-`; a uuid id only; `job-files` only.
+- **The rules now say:**
+  - measurements already entered are in `projects.checklist.meas`;
+  - when those are empty and a report is filed, read the report instead of asking;
+  - quote the numbers as the report states them, and never round or fill one in.
+- **Who:** Theo and Joan, as before. Nothing is written by the tool.
+- **Cost, roughly:** a 10–20 page measurement report is tens of thousands of input tokens per read, about $0.10–$0.30 at Opus 5.5's $4 per million.
+
+**Gate:** `gate_1483.mjs`, 15 checks: server only, with a stub SDK and a fake Supabase. It is RED on main's `assistant.js` (1 passed, 14 failed) without crashing. `gate_1327` is GREEN, 11/0.

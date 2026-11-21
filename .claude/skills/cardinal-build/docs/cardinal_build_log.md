@@ -38483,3 +38483,38 @@ A live send (Theo's alert to Jerry Wamsley) answered mailed 1, texted 1, `subs_q
 Cause: the fan-out read sent `apikey: <publishable>` with `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>`. That key is now an opaque secret key, not a JWT, and Supabase only swaps a `Bearer sb_...` for the role JWT when it is the same key as `apikey`. Fix: when the service key is set, the read sends it in both headers, as remind, digest, companycam-sync and pay-webhook already do. The caller-token fallback is unchanged.
 
 **Gates:** `gate_notify_subskey.mjs` (new, 5 checks) is GREEN on the fix and RED on b1625e5 (A apikey, C one key). `gate_1184` 19/19 and `gate_1352` GREEN on the fix.
+
+## Build 1483 — the Assistant reads measurement reports (21 Nov 2026)
+
+**Source:** Theo, with a screenshot of the Assistant asking him to type in a job's Roofr numbers: "Can you have this ai read measurements".
+
+**Measured first:**
+- `inspection_reports` holds 457 file rows: 34 with a stored `path` in `job-files`, and 423 with an inline data URL. 215 or more are PDFs.
+- The Roofr report on that job is a stored `job-files` PDF.
+- The Assistant's `SCHEMA` leaves `inspection_reports.html` out, so it saw only the title.
+
+**What changed:**
+- **`api/assistant.js` has a new tool, `read_file(file_id)`.**
+  - It reads the row and downloads the bytes with the caller's own token, then returns the PDF as a `document` block in the `tool_result`. The SDK pinned here (0.117.1) types `ToolResultBlockParam.content` to include `DocumentBlockParam`; checked in the package, not assumed.
+  - **Refusals:** anything that is not a PDF (photos never reach the model from here), another bucket, more than 12 MB a file or 20 MB a question, bytes not starting `%PDF-`, and a non-uuid id (refused before any request).
+- **The rules** send the model to `projects.checklist.meas` first, then to the report, and forbid rounding or inventing numbers.
+- `index.html`: the stamp and the What's New entry only.
+
+**Files:**
+- `api/assistant.js`
+- `patch_1483.py`
+- `gate_1483.mjs`
+
+**Gates:**
+- `check_build` is GREEN.
+- `gate_1483` is GREEN, 15/0, and RED on main's `assistant.js` (1 passed, 14 failed) without crashing. The first control run crashed on a missing `calls` array, and one F4 check passed trivially without the tool. Both are fixed: the control now records failures.
+- `gate_1327` (the Assistant's own gate, server and browser halves) is GREEN, 11/0.
+- ⚠ **This container's Chromium is 1243, and 434 scripts still name `chromium-1194`.** Locally the old path was symlinked to run the browser halves; nothing in the repo changed. CI has its own browser.
+- ⚠ **A real model read cannot be gated here.** The stub SDK proves the PDF reaches the request. Whether the numbers come out right is Theo's first question on that job.
+
+**Carried from 1445 (punch-out photos):**
+- **41 related gates on 1445 and 1444:** every failure line matched on both trees, once `render_punchphoto888` and `render_pkgallery859` were updated in 1445.
+- **Red on both trees for older reasons:** `gate_1039`, `gate_1040`, `gate_1229` and `gate_1246` (stale album rig), `gate_1295`, `gate_1297`, `gate_947`, `gate_1436`, `render_logoutclear871` and `render_saveretry861`.
+- `gate_types` was GREEN. `gate_chromium` was GREEN, 23/23.
+- **Sentinel** on the punch card and its gallery (390 and 1440, dark and light, `--since` 1444, uncapped): CLEAN, nothing new in 8 renders.
+- **Still open from 1445:** confirmation from Scottie's phone that photos arrive. Theo has not reported back yet.
