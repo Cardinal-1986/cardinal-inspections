@@ -6,7 +6,10 @@
 //   POST { history: [{ role:'user'|'ai', text }], question }
 //     → { reply, proposals: null | { summary, changes:[{ table, action, id, values, label }] } }
 //
-// WHO: Theo (two logins) and Joan only, checked here, server-side. Everyone else gets a 403.
+// WHO: Theo (two logins), Joan, and since build 1484 one sales rep, checked here, server-side.
+// Everyone else gets a 403. A sales rep is fenced twice: only the tables in SALES_TABLES, each of
+// which RLS already limits to the jobs that rep created or is assigned; and changes may be proposed
+// only to SALES_WRITE (money and the reference lists stay read-only for a rep).
 //
 // HOW IT READS: one tool, db_select, run through PostgREST WITH THE CALLER'S OWN JWT. Row level
 // security therefore decides what it can see — exactly what that person can see by hand. Owner
@@ -45,6 +48,8 @@ export const PEOPLE = {
   'theo@cardinalrenovations.net':  { name: 'Theo', owner: true },
   'theodorion1986@gmail.com':      { name: 'Theo', owner: true },
   'joan@cardinalrenovations.net':  { name: 'Joan', owner: false },
+  /* 1484 (Theo, 21 Nov 2026): a sales rep, who sees only their own clients */
+  'jerry@jerrywamsley.com':        { name: 'Jerry', owner: false, sales: true },
 };
 
 /* What the assistant may read and propose changes to, and the columns it can name. Measured
@@ -94,19 +99,33 @@ export const SCHEMA = {
   owner_ledger_txns: 'id,ledger_id,direction,amount,txn_date,note,created_by,created_at',
 };
 const OWNER_ONLY = /^owner_/;
+/* 1484: what a sales rep's assistant may read. Each job table is limited by RLS to the jobs that rep
+   created or is assigned (measured 21 Nov 2026 signed in as the rep: 6 jobs of 331, and 0 rows on
+   any table that belong to a job outside those 6). The last four are the shared lists every rep
+   already sees by hand. Left out on purpose: crews and everything crew (rates, pay, work orders;
+   Theo: "Crew rates is not needed by productions, I write the checks"), community partners and
+   properties (every staff login can read the raw partner table, confidential ones included; the app
+   masks them and this route would not), community contacts, carrier adjusters, payment reminders,
+   and the audit history. */
+export const SALES_TABLES = ['projects', 'appointments', 'estimates', 'inspection_reports', 'document_versions', 'contracts',
+  'collections', 'commissions', 'draws', 'insurance_claims', 'insurance_payments', 'insurance_supplements', 'claim_notes',
+  'claim_upgrades', 'punch_items', 'project_photos', 'pricing_items', 'materials', 'oc_colors', 'team_profiles'];
+/* 1484: what a sales rep may PROPOSE changes to (still only on Approve, with their own session). No deletes. */
+export const SALES_WRITE = new Set(['projects', 'appointments', 'punch_items', 'claim_notes']);
 /* never written by the assistant: audit history, and the JSON blob that holds a job's whole
    lead sheet (one wrong merge would wipe it — those edits stay by hand) */
 const NO_WRITE_TABLES = new Set(['audit_events', 'document_versions', 'payment_reminders', 'team_profiles']);
 const NO_WRITE_COLUMNS = { projects: ['checklist', 'id', 'created_at', 'created_by'] };
 
 export function tablesFor(person) {
+  if (person && person.sales) return SALES_TABLES.filter(t => SCHEMA[t] && !OWNER_ONLY.test(t));
   return Object.keys(SCHEMA).filter(t => person.owner || !OWNER_ONLY.test(t));
 }
 
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 
 export const RULES = [
-  'You are the assistant inside the Cardinal Roofing & Renovations app (Dayton, Ohio). You work for the owner, Theo, or the office manager, Joan.',
+  'You are the assistant inside the Cardinal Roofing & Renovations app (Dayton, Ohio). You work for the person you are talking to: the owner, Theo, the office manager, Joan, or a sales rep.',
   'You can look up anything in the app with db_select, and you can propose changes with propose_changes. You never change anything yourself: a proposal is shown to the person as a card and only happens if they tap Approve.',
   '',
   'The business:',
@@ -193,8 +212,8 @@ export function toolsFor(person) {
             items: {
               type: 'object',
               properties: {
-                table: { type: 'string', enum: tables },
-                action: { type: 'string', enum: ['insert', 'update', 'delete'] },
+                table: { type: 'string', enum: person && person.sales ? tables.filter(t => SALES_WRITE.has(t)) : tables },   /* 1484 */
+                action: { type: 'string', enum: person && person.sales ? ['insert', 'update'] : ['insert', 'update', 'delete'] },
                 id: { type: 'string', description: 'Row id, for update and delete.' },
                 values: { type: 'object', description: 'Columns to set, for insert and update.' },
                 label: { type: 'string', description: 'Plain English, e.g. "Record a $2,000 deposit for Susan Townsend".' },
@@ -247,6 +266,8 @@ export function cleanProposals(person, input) {
   for (const c of (Array.isArray(input && input.changes) ? input.changes : []).slice(0, 25)) {
     const t = String(c && c.table || ''), a = String(c && c.action || '');
     const why = !tables.includes(t) ? 'table not available' : NO_WRITE_TABLES.has(t) ? 'that table is not changed from here'
+      : (person && person.sales && !SALES_WRITE.has(t)) ? 'a sales rep cannot change that from here'
+      : (person && person.sales && a === 'delete') ? 'a sales rep cannot delete from here'
       : !['insert', 'update', 'delete'].includes(a) ? 'unknown action'
       : (a !== 'insert' && !String(c.id || '').trim()) ? 'no row id'
       : (a !== 'delete' && (!c.values || typeof c.values !== 'object' || !Object.keys(c.values).length)) ? 'nothing to set' : '';
@@ -323,7 +344,7 @@ async function whoIs(req) {
     const u = await r.json();
     const email = String(u && u.email || '').trim().toLowerCase();
     const person = PEOPLE[email];
-    if (!person) return { status: 403, error: 'The assistant is for Theo and Joan only' };
+    if (!person) return { status: 403, error: 'The assistant is not turned on for this login' };
     return { person: Object.assign({ email }, person), token };
   } catch (e) { return { status: 401, error: 'Could not verify session' }; }
 }
@@ -363,7 +384,8 @@ export default async function handler(req, res) {
   const system = [
     { type: 'text', text: RULES, cache_control: { type: 'ephemeral' } },
     { type: 'text', text: 'You are talking to ' + person.name + ' (' + person.email + '). Today is ' + today + ' (Eastern).' +
-      (person.owner ? '' : ' Owner-only records (Owner Review, the Owner Console) are not available in this conversation.') },
+      (person.owner ? '' : ' Owner-only records (Owner Review, the Owner Console) are not available in this conversation.') +
+      (person.sales ? ' ' + person.name + ' is a sales rep. You can see only the jobs ' + person.name + ' created or is assigned to, and their own commissions and draws; nothing about crews, crew pay, community partners, other reps\' jobs or company-wide totals. Every total you give covers their jobs only, so say so. If asked about anything outside that, say it is not available to them here; never guess at it. Changes can be proposed only to their jobs, appointments, punch-outs and claim notes, and nothing can be deleted from here.' : '') },
   ];
   const tools = toolsFor(person);
   const messages = [];

@@ -11011,3 +11011,14 @@ Theo, about a Roofr report filed on a job: "Can you have this ai read measuremen
 - **Cost, roughly:** a 10–20 page measurement report is tens of thousands of input tokens per read, about $0.10–$0.30 at Opus 5.5's $4 per million.
 
 **Gate:** `gate_1483.mjs`, 15 checks: server only, with a stub SDK and a fake Supabase. It is RED on main's `assistant.js` (1 passed, 14 failed) without crashing. `gate_1327` is GREEN, 11/0.
+
+## Build 1484: the Assistant for one sales rep, on their own jobs only (21 Nov 2026)
+Theo: give a named sales rep the assistant "but make sure he can only see his clients".
+- **Who:** `PEOPLE` in `api/assistant.js` gains one entry with `sales: true`, and `AI_PEOPLE` in `cr-ai-script` gains the same login so the Ask button draws for them. Every other rep still gets a 403 ("The assistant is not turned on for this login"; it no longer names Theo and Joan). `gate_1484` J7 asserts the two lists name exactly the same people.
+- **Fence 1, tables:** a sales person's `tablesFor()` is `SALES_TABLES` only: projects, appointments, estimates, inspection_reports, document_versions, contracts, collections, commissions, draws, insurance_claims/payments/supplements, claim_notes, claim_upgrades, punch_items, project_photos, plus the shared pricing_items, materials, oc_colors and team_profiles. A read of anything else is refused before a request is built.
+  - Left out on purpose: crews and everything crew (rates, pay, work orders), community partners, properties and contacts, carrier adjusters, payment reminders, audit history, owner tables.
+  - ⚠ **Community partners are fenced by this list, not by RLS.** `community_partners_read` is `true` for every staff login, confidential partners included; the app masks those in `prospects()`, and this route would not.
+- **Fence 2, RLS:** every read and every file goes out with the rep's own token, as for Theo and Joan. Measured 21 Nov in a read-only transaction signed in as the rep: 6 jobs of 331 visible. Every job-keyed table returned 0 rows on a job outside those 6. The job-files storage policy reads through `projects`, so `read_file` is fenced the same way.
+- **Writes:** a rep may propose changes only to `SALES_WRITE` (projects, appointments, punch_items, claim_notes), never a delete. The tool schema offers only those tables and `insert`/`update`, and `cleanProposals()` drops anything else with a reason. Money, the price list and the reference lists are read-only for a rep. Approve still applies with the rep's own session.
+- **Prompt:** the per-person system line tells the model it sees only that rep's jobs, that every total covers their jobs only, and to say something is not available rather than guess.
+- **Gate:** `gate_1484.mjs`, J1–J7, server plus the browser list. It is RED on main at 1483 (1 passed, 6 failed) without crashing. `gate_1327` gained B1b, a real render showing the button for the rep; it is RED on 1483. `gate_1327` and `gate_1483` are GREEN.

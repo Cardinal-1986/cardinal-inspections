@@ -11,7 +11,8 @@
  *   S6  (504 fix) every call gets only what is left of the 54s budget, no SDK retry; no call starts
  *       with under 8s left; a timeout mid-lookup answers 200 (proposals kept), never a Vercel 504
  * BROWSER (index.html):
- *   B1  the Ask button shows for Theo and Joan, 48px tall, never for a rep
+ *   B1  the Ask button shows for Theo and Joan, 48px tall, never for a rep it is not turned on for
+ *   B1b (1484) it shows for the one sales rep it is turned on for (the server fences that rep to their own jobs; gate_1484)
  *   B2  a named job is a tappable link that opens the job
  *   B3  a proposal shows as a card (a delete in red); Cancel changes nothing
  *   B4  Approve applies with the person's session: stage via setStage, the insert, an Activity line each
@@ -178,7 +179,10 @@ try {
   const J = await fab(page); await ctx.close();
   ({ ctx, page } = await boot(REP, false)); await page.waitForTimeout(3500);
   const N = await fab(page); await ctx.close();
-  ok(!!T && T.shown && T.h >= 44 && !!J && J.shown && (!N || !N.shown), 'B1  the Ask button shows for Theo and Joan (44px+), never for a rep', JSON.stringify({ theo: T, joan: J, rep: N }));
+  ok(!!T && T.shown && T.h >= 44 && !!J && J.shown && (!N || !N.shown), 'B1  the Ask button shows for Theo and Joan (44px+), never for a rep it is not turned on for', JSON.stringify({ theo: T, joan: J, rep: N }));
+  ({ ctx, page } = await boot('jerry@jerrywamsley.com', false)); await page.waitForTimeout(3500);
+  const W = await fab(page); await ctx.close();
+  ok(!!W && W.shown && W.h >= 44, 'B1b (1484) the Ask button shows for the sales rep it is turned on for', JSON.stringify({ rep: W }));
 
   ({ ctx, page } = await boot(null, false)); await page.waitForTimeout(3500);
   ANSWERS.push({ reply: 'Your newest job is [Dana Test](job:' + PID + ').', proposals: null });
