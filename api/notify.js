@@ -247,7 +247,15 @@ export default async function handler(req, res){
        and would return [] — the exact silent-zero this route already learned to
        distrust at 612. */
     var _subsKey = SERVICE_KEY || ((_caller && _caller._token) ? _caller._token : SUPA_KEY);
-    var r = await fetch(q, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + _subsKey } });
+    /* 21 Nov 2026: ONE key in both headers when it is the service key. SUPABASE_SERVICE_ROLE_KEY
+       is now an opaque secret key, not a JWT, and Supabase only swaps a `Bearer sb_...` for the
+       role's JWT when it is the same key as `apikey`. Mixed with the publishable apikey it reached
+       PostgREST as a bearer token and every push failed with "Expected 3 parts in JWT; got 1"
+       while email and text kept going. The other service-key routes (remind, digest,
+       companycam-sync ...) already send it this way. gate_notify_subskey.mjs holds it; the
+       caller-token fallback below is unchanged. */
+    var _subsApikey = SERVICE_KEY ? SERVICE_KEY : SUPA_KEY;
+    var r = await fetch(q, { headers: { apikey: _subsApikey, Authorization: 'Bearer ' + _subsKey } });
     var subsRaw = await r.json();
     if(!Array.isArray(subsRaw)){
       /* 612: this returned sent:0 and looked identical to "nobody is

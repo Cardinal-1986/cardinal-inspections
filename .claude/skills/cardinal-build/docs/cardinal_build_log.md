@@ -38475,3 +38475,11 @@ Shipped in one PR with 1451 (a span, written up together). Each build has its ow
 **Gates:** `check_build` GREEN; `gate_1481.mjs` new (9: A day sky, B rain over day stays white, C snow over day, D Light unchanged, E Close, F the band's three states, G Light and Dark unchanged) — GREEN on 1481, RED on 1480 (A, C, E, F); registered in `gate_chromium`, break = the day-sky inks removed. `gate_types` GREEN (1522, no code grew). `gate_stack` CLEAN — but it walks the default appearance, never Sun, so it cannot see these rules. Sentinel (default + rb-light, 390 and 1440, `--since` 1480): CLEAN, 24 renders, nothing new (50 carried) — it has no Sun theme, so it can only show that Dark and Light did not move.
 
 Tooling, on the way: `gate_1400_lib` takes `opts.init` (an init script before the page — the appearance); `gate_stack` and `sentinel.js` take `PW_CORE` / `PW_CHROMIUM` and `gate_stack` resolves Windows paths.
+
+## 21 Nov 2026 - api/notify.js: push alerts read push_subs with one key (no build number; index.html unchanged)
+
+A live send (Theo's alert to Jerry Wamsley) answered mailed 1, texted 1, `subs_query_failed`: "could not read the subscription list: Expected 3 parts in JWT; got 1", with 19 rows in `push_subs`. So team push alerts had stopped while email and text kept working.
+
+Cause: the fan-out read sent `apikey: <publishable>` with `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>`. That key is now an opaque secret key, not a JWT, and Supabase only swaps a `Bearer sb_...` for the role JWT when it is the same key as `apikey`. Fix: when the service key is set, the read sends it in both headers, as remind, digest, companycam-sync and pay-webhook already do. The caller-token fallback is unchanged.
+
+**Gates:** `gate_notify_subskey.mjs` (new, 5 checks) is GREEN on the fix and RED on b1625e5 (A apikey, C one key). `gate_1184` 19/19 and `gate_1352` GREEN on the fix.
