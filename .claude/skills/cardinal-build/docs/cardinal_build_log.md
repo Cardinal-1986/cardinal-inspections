@@ -38542,3 +38542,19 @@ Theo asked for a named sales rep to get the assistant, seeing only their own cli
   - The surgery reproduces byte-for-byte from main.
   - Sentinel not run: no screen changed, only who sees the existing button.
 - `patch_1484_sales.py`, `patch_1484.py`, `gate_1484.mjs`.
+
+## Build 1485 — Jerry Wamsley on the team roster; "@jerry" reaches nobody (23 Nov 2026)
+Theo sent a photo of the Reassign list with the line "Wamsley isn't here". `TEAM_ROSTER` is hardcoded, and he had never been added to it, so no picker could offer him (the 21 Nov reassignments went in by script for exactly this reason).
+- `TEAM_ROSTER` gains `{ name:'Jerry Wamsley', email:'jerry@jerrywamsley.com', tag:'wamsley' }`. Jerry Vera stays on it (his access is Theo's to cut) and gains `tag:'vera'`.
+- **Why the tag:** both men share the first name AND the email prefix "jerry", and `mentionMatch` keys on exactly those two. Added bare, "@jerry" would have buzzed both, including the ex-partner whose access is being cut. A roster entry may now carry `tag`, its @handle. A tagged member is reached by the tag or the last name only. Both Jerrys are tagged, so "@jerry" reaches nobody and the Will-notify line says "fits 2 people — type more: Vera, Wamsley".
+- The three chip rows (job thread, punch card, punch page) draw a tagged member as `@Wamsley` / `@Vera`, and `mentionPreview`'s hint names a tagged member by the tag.
+- Every other surface that reads `TEAM_ROSTER` picks him up with no change: Reassign (both builders), the new-lead rep picker, the list rep filter, the audit person list, punch assignees, the Open-items rep picker, and `DEFAULT_NAMES`, so `rptRepName` shows "Jerry Wamsley" instead of "jerry".
+- **Gates:**
+  - `check_build` GREEN, with marker and negative control.
+  - `gate_1485` GREEN 29/0. It runs the shipped roster, mention functions, both option builders and all three chip rows in a vm. It is RED on main 13/16, without a crash.
+  - `gate_dupes` is 16 over baseline on both main and this tree: identical findings, nothing new.
+  - `gate_types` not run: `tsc` is not on this PC's PATH.
+  - The surgery reproduces from main, newline-normalised.
+  - Sentinel not run: no layout or colour changed.
+- ⚠ **Windows checkouts are CRLF** (`core.autocrlf=true`). A gate that slices on "\n" finds nothing in the working tree and everything in `git show`. `gate_1485` normalises on read. Python's text mode hides this, because it already translates.
+- `patch_1485.py`, `gate_1485.mjs`.

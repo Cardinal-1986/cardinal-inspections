@@ -11022,3 +11022,9 @@ Theo: give a named sales rep the assistant "but make sure he can only see his cl
 - **Writes:** a rep may propose changes only to `SALES_WRITE` (projects, appointments, punch_items, claim_notes), never a delete. The tool schema offers only those tables and `insert`/`update`, and `cleanProposals()` drops anything else with a reason. Money, the price list and the reference lists are read-only for a rep. Approve still applies with the rep's own session.
 - **Prompt:** the per-person system line tells the model it sees only that rep's jobs, that every total covers their jobs only, and to say something is not available rather than guess.
 - **Gate:** `gate_1484.mjs`, J1–J7, server plus the browser list. It is RED on main at 1483 (1 passed, 6 failed) without crashing. `gate_1327` gained B1b, a real render showing the button for the rep; it is RED on 1483. `gate_1327` and `gate_1483` are GREEN.
+
+## Build 1485: Jerry Wamsley on the roster, and tagged @handles (23 Nov 2026)
+- `TEAM_ROSTER` entries may carry `tag`, an @handle. A tagged member answers to the tag or the last name only, never to the first name or the email prefix. Use it for anyone whose first name another member shares.
+- **Jerry Wamsley** (`jerry@jerrywamsley.com`, sales) is on the roster as `@wamsley`, and **Jerry Vera** is `@vera`. "@jerry" reaches nobody, and the line under the box says so before Send.
+- The chip rows in the job thread, the punch card and the punch page show the tag (`@Wamsley`, `@Vera`).
+- **Gate:** `gate_1485.mjs`.

@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-21 build 1484<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-23 build 1485<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -18775,7 +18775,7 @@ function openCommunications(){
   var tr = document.getElementById('chatTagRow');
   var me = TEAM && currentUser ? currentUser.email : '';
   tr.innerHTML = TEAM_ROSTER.filter(function(mbr){ return mbr.email !== me; }).map(function(mbr){
-    var first = (mbr.name || '').trim().split(/\s+/)[0];
+    var first = mbr.tag ? String(mbr.tag).charAt(0).toUpperCase() + String(mbr.tag).slice(1) : (mbr.name || '').trim().split(/\s+/)[0];   /* 1485 */
     return '<button class="chipbtn" data-tag="' + esc(first.toLowerCase()) + '" style="padding:4px 11px;font-size:11px;">@' + esc(first) + '</button>';
   }).join('');
   chatDraftSwap(currentProject.id);   /* 1419: the box is shared; the draft is not */
@@ -20715,7 +20715,11 @@ function mentionMatch(mn){
   mn = String(mn || '').toLowerCase();
   if(!mn) return [];
   var roster = (typeof TEAM_ROSTER !== 'undefined' ? TEAM_ROSTER : []);
-  function keys(mbr){ return [(mbr.name || '').trim().split(/\s+/)[0].toLowerCase(), (mbr.email || '').split('@')[0].toLowerCase()]; }
+  /* 1485: a tagged member answers to the tag and the last name only (see TEAM_ROSTER) */
+  function keys(mbr){
+    if(mbr.tag){ var nm = (mbr.name || '').trim().split(/\s+/); return [String(mbr.tag).toLowerCase(), String(nm[nm.length - 1] || '').toLowerCase()]; }
+    return [(mbr.name || '').trim().split(/\s+/)[0].toLowerCase(), (mbr.email || '').split('@')[0].toLowerCase()];
+  }
   var exact = roster.filter(function(mbr){ return keys(mbr).indexOf(mn) !== -1; });
   if(exact.length || mn.length < 3) return exact;
   var pre = roster.filter(function(mbr){ return keys(mbr).some(function(k){ return !!k && k.indexOf(mn) === 0; }); });
@@ -20740,7 +20744,7 @@ function mentionPreview(text, byEmail){
   }
   var roster = (typeof TEAM_ROSTER !== 'undefined' ? TEAM_ROSTER : []);
   function mentionWho(em){ return (typeof rptRepName === 'function' ? rptRepName(em) : '') || String(em || '').split('@')[0]; }
-  function firstOf(mbr){ return (mbr.name || '').trim().split(/\s+/)[0]; }
+  function firstOf(mbr){ return mbr.tag ? String(mbr.tag).charAt(0).toUpperCase() + String(mbr.tag).slice(1) : (mbr.name || '').trim().split(/\s+/)[0]; }   /* 1485 */
   var to = mentionEmailsFor(names, byEmail), miss = [], parts = [];
   names.forEach(function(mn){ if(!mentionMatch(mn).length && miss.indexOf(mn) === -1) miss.push(mn); });
   if(to.length) parts.push('Will notify: ' + to.map(mentionWho).join(', '));
@@ -30777,13 +30781,17 @@ var addProjBtn = document.getElementById('addProjectBtn');
 var storageNote = document.getElementById('storageNote');
 
 /* ---- team roster & roles (edit emails here if any differ) ---- */
+/* 1485: `tag` is an optional @handle. A member with a tag is reached by that tag (or the last name)
+   only, never by first name or email prefix: Jerry Vera and Jerry Wamsley share both ("jerry"),
+   so "@jerry" must reach nobody rather than both. Tag anyone whose first name another member has. */
 var TEAM_ROSTER = [
   { name:'Nick Hey',            email:'nick@cardinalrenovations.net' },
   { name:'Joan Hunt',           email:'joan@cardinalrenovations.net' },
   { name:'Joseph Lehman',       email:'joey@cardinalrenovations.net' },
   { name:'Theo Dorion',         email:'theo@cardinalrenovations.net' },
   { name:'Jacob Henderson',     email:'jacob@cardinalrenovations.net' },
-  { name:'Jerry Vera',          email:'jerry@cardinalrenovations.net' },
+  { name:'Jerry Vera',          email:'jerry@cardinalrenovations.net', tag:'vera' },
+  { name:'Jerry Wamsley',       email:'jerry@jerrywamsley.com', tag:'wamsley' },
   { name:'Scottie Steinbrugge', email:'scottie@cardinalrenovations.net' },
   { name:'Curtis',              email:'curtis@cardinalrenovations.net' }
 ];
@@ -47499,6 +47507,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1485, d:'2026-11-23', t:'Jerry Wamsley can be picked as a rep', s:'Jerry Wamsley now appears in Reassign, in the rep list on a new lead and everywhere else a teammate is chosen. Because he and Jerry Vera share a first name, @jerry in a message no longer notifies either of them: tag @Wamsley or @Vera instead. The tag buttons show those names, and the line under the box tells you if a tag fits two people.' },
   { b: 1484, d:'2026-11-21', t:'The Assistant for a sales rep, on their own jobs only', s:'The Ask button now appears for one sales rep as well as the office. For a rep it works only on the jobs that rep created or is assigned to, plus their own commissions and draws: it cannot see other reps\u2019 jobs, crews or crew pay, community partners, or company-wide totals, and it says so when asked. A rep can ask it to change their own jobs, appointments, punch-outs and claim notes, still only on Approve; it cannot change money or delete anything. Every other rep is unchanged.' },
   { b: 1483, d:'2026-11-21', t:'The Assistant reads measurement reports', s:'The Assistant can now open a PDF filed on a job and read it: a Roofr, Hover or EagleView measurement report, an insurance scope, signed paperwork. Ask it for a job\u2019s measurements and it reads the report itself instead of asking you to type the numbers in. It quotes the numbers as the report gives them and says when something is not in the report. It reads PDFs only, never photos, and only files you could open yourself.' },
   { b: 1481, d:'2026-11-16', t:'Sun mode is easier to read on Production and the punch card', s:'In Sun, the words over the daytime sky at the top of Production (the date, the title and the line under it) are now near-black, so they read clearly in bright light. On the punch card the green Close button is a deeper green, and the On site band (Not checked in, On site, and the stale warning) uses darker colours. Only Sun changes; Dark and Light look exactly as before.' },
@@ -63035,8 +63044,9 @@ function msgsHtml(){
      people a punch-out most needs to reach. The row already wraps
      (`.pktags{flex-wrap:wrap}`), so there was nothing to protect. */
   var chips = roster().filter(function(m){ return m.email !== me; }).map(function(m){
-    return '<button class="pktag" data-tag="' + esc((m.name || nameOf(m.email)).split(' ')[0]) + '" type="button">@' +
-      esc((m.name || nameOf(m.email)).split(' ')[0]) + '</button>';
+    var first = m.tag ? String(m.tag).charAt(0).toUpperCase() + String(m.tag).slice(1) : (m.name || nameOf(m.email)).split(' ')[0];   /* 1485 */
+    return '<button class="pktag" data-tag="' + esc(first) + '" type="button">@' +
+      esc(first) + '</button>';
   }).join('');
   return '<div class="pksec"><div class="pkh">' + svg('chat') + 'Messages' +
     '<span class="rt">@ tags notify</span></div>' +
@@ -64401,7 +64411,7 @@ function tagChips(){
 var me = myEmail();
 var R = (typeof window.TEAM_ROSTER !== 'undefined' && window.TEAM_ROSTER) || [];
 return R.filter(function(m){ return m.email && m.email !== me; }).map(function(m){
-var first = String(m.name || '').trim().split(/\s+/)[0];
+var first = m.tag ? String(m.tag).charAt(0).toUpperCase() + String(m.tag).slice(1) : String(m.name || '').trim().split(/\s+/)[0];   /* 1485 */
 if(!first) return '';
 return '<button class="pp-tag" data-tag="' + esc(first.toLowerCase()) +
 '" type="button">@' + esc(first) + '</button>';
