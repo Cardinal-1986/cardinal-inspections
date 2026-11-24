@@ -11028,3 +11028,14 @@ Theo: give a named sales rep the assistant "but make sure he can only see his cl
 - **Jerry Wamsley** (`jerry@jerrywamsley.com`, sales) is on the roster as `@wamsley`, and **Jerry Vera** is `@vera`. "@jerry" reaches nobody, and the line under the box says so before Send.
 - The chip rows in the job thread, the punch card and the punch page show the tag (`@Wamsley`, `@Vera`).
 - **Gate:** `gate_1485.mjs`.
+
+## Build 1486: every note shows its date and time (23 Nov 2026)
+- Theo: "When writing notes can you make a time and date stamp ?"
+- `noteStamp(iso)` (main block, beside `timeAgo`) prints **"Nov 23, 2026 · 4:12 PM"**. It returns `''` for a missing or bad time, never "Invalid Date".
+- It is used everywhere a note is read:
+  - the job's Communications thread (`renderChat`)
+  - the job list's preview pane (`renderLjPane`)
+  - the punch card's discussion (`cr-pp-script` `threadHtml`)
+- Each note already stored its exact time (`at`, set by `sendChat`). The screens just drew it as "3h ago", or as "Nov 5" with no time or year.
+- The punch page already showed date and time (`fmtTime`) and is unchanged. `timeAgo` stays on the activity feed, history and "last activity" chips, because those are not notes.
+- **Gate:** `gate_1486.mjs`.

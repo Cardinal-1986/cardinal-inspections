@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-23 build 1485<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-23 build 1486<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -14526,7 +14526,7 @@ function renderLjPane(){
   var msgs = commsMessages(p);
   var comms = '<div class="ljcomms">' + (msgs.length ? msgs.map(function(m){
     return '<div class="ljcmsg"><span class="who">' + esc(m.name || m.by || '') + '</span>' +
-      '<span class="when">' + (m.at ? timeAgo(m.at) : '') + '</span><br>' + fmtChatText(m.text || '') + '</div>';
+      '<span class="when">' + (m.at ? noteStamp(m.at) : '') + '</span><br>' + fmtChatText(m.text || '') + '</div>';   /* 1486 */
   }).join('') : '<div class="ljcmsg" style="color:#6d747e;">No notes yet \u2014 the thread starts on the client profile.</div>') + '</div>';
   var mapInner = addr
     ? '<iframe class="ljmapframe" loading="lazy" src="https://maps.google.com/maps?q=' +
@@ -20641,7 +20641,7 @@ function renderChat(opt){
       '<span class="av">' + esc(initials) + '</span>' +
       '<span class="bub">' + (m.sys ? '<span class="chattag">' + (m.sys === 'chase' ? 'Carrier chase' : 'Claim note') + '</span>' : '') +
       '<span class="who">' + esc(m.name || m.by || '') + '</span>' +
-      '<span class="when">' + (m.at ? timeAgo(m.at) : '') + '</span><br>' +
+      '<span class="when">' + (m.at ? noteStamp(m.at) : '') + '</span><br>' +   /* 1486 */
       fmtChatText(m.text || '') + '</span></div>';
   }).join('') : '<div class="chatempty">No notes yet \u2014 start the thread.</div>';
   __chatSig = sig;
@@ -25402,6 +25402,16 @@ document.getElementById('pipeScopeNote').addEventListener('click', function(e){
   if(window.CardinalPortalAssign) window.CardinalPortalAssign.open();
 });
 
+/* 1486: a note's date-and-time stamp, "Nov 23, 2026 · 4:12 PM" (Theo: "When writing notes can you make a
+   time and date stamp"). Every place a NOTE is read uses it: the job thread, the job list's preview and
+   the punch card. timeAgo stays for feeds and chips, which are not notes. '' for a missing or bad time. */
+function noteStamp(iso){
+  if(!iso) return '';
+  var d = crDate(iso);
+  if(isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) + ' \u00b7 ' +
+         d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+}
 function timeAgo(iso){
   var s = (Date.now() - crDate(iso).getTime()) / 1000;
   if(s < 60) return 'just now';
@@ -47507,6 +47517,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1486, d:'2026-11-23', t:'Every note shows its date and time', s:'Notes on a client now show the day and time they were written, for example Nov 23, 2026 · 4:12 PM, instead of “3h ago”. The same stamp shows in the job list preview and on punch card notes.' },
   { b: 1485, d:'2026-11-23', t:'Jerry Wamsley can be picked as a rep', s:'Jerry Wamsley now appears in Reassign, in the rep list on a new lead and everywhere else a teammate is chosen. Because he and Jerry Vera share a first name, @jerry in a message no longer notifies either of them: tag @Wamsley or @Vera instead. The tag buttons show those names, and the line under the box tells you if a tag fits two people.' },
   { b: 1484, d:'2026-11-21', t:'The Assistant for a sales rep, on their own jobs only', s:'The Ask button now appears for one sales rep as well as the office. For a rep it works only on the jobs that rep created or is assigned to, plus their own commissions and draws: it cannot see other reps\u2019 jobs, crews or crew pay, community partners, or company-wide totals, and it says so when asked. A rep can ask it to change their own jobs, appointments, punch-outs and claim notes, still only on Approve; it cannot change money or delete anything. Every other rep is unchanged.' },
   { b: 1483, d:'2026-11-21', t:'The Assistant reads measurement reports', s:'The Assistant can now open a PDF filed on a job and read it: a Roofr, Hover or EagleView measurement report, an insurance scope, signed paperwork. Ask it for a job\u2019s measurements and it reads the report itself instead of asking you to type the numbers in. It quotes the numbers as the report gives them and says when something is not in the report. It reads PDFs only, never photos, and only files you could open yourself.' },
@@ -64436,7 +64447,7 @@ lastBy = m.by || m.name || '';
 return '<div class="pp-msg' + (mine ? ' mine' : '') + (head ? ' head' : '') + '">' +
 (head && !mine ? '<div class="pp-who">' + esc(m.name || m.by || 'Someone') + '</div>' : '') +
 '<div class="pp-bub">' + esc(m.text || '') + '</div>' +
-'<div class="pp-when">' + esc(when(m.at)) + '</div>' +
+'<div class="pp-when">' + esc(typeof noteStamp === 'function' ? noteStamp(m.at) : when(m.at)) + '</div>' +   /* 1486 */
 '</div>';
 }).join('');
 lastBy = null;

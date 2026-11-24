@@ -38558,3 +38558,25 @@ Theo sent a photo of the Reassign list with the line "Wamsley isn't here". `TEAM
   - Sentinel not run: no layout or colour changed.
 - ⚠ **Windows checkouts are CRLF** (`core.autocrlf=true`). A gate that slices on "\n" finds nothing in the working tree and everything in `git show`. `gate_1485` normalises on read. Python's text mode hides this, because it already translates.
 - `patch_1485.py`, `gate_1485.mjs`.
+
+## Build 1486 — every note shows its date and time (23 Nov 2026)
+Theo asked: "When writing notes can you make a time and date stamp ?" Every job note already saved its exact moment (`at`, an ISO time set by `sendChat`). The screens just drew it through `timeAgo()`: "3h ago", "2d ago", then "Nov 5" with no time and no year. The punch card's discussion showed the date only.
+- **New helper** `noteStamp(iso)`, beside `timeAgo`. It prints "Nov 23, 2026 · 4:12 PM" through `crDate`, and returns '' for a missing or bad time.
+- **Three places a note is read now use it:**
+  - `renderChat` (the job's Communications thread)
+  - `renderLjPane` (the job list's preview)
+  - `cr-pp-script` `threadHtml` (the punch card). It calls through `typeof noteStamp === 'function'` because it is a separate block.
+- **Unchanged on purpose:**
+  - The punch page's `fmtTime` already printed date and time.
+  - `timeAgo` keeps the activity feed, history and chips, which are not notes.
+  - The punch card's "added" and "done" dates stay date-only.
+- The legacy `projects.notes` text still shows as the first message, stamped with the job's `created_at`, the same time it showed before.
+- **Gates:**
+  - `check_build` GREEN, with marker and negative control.
+  - `gate_1486` GREEN 13/0. It runs the shipped `noteStamp`, `renderChat`, the preview's comms expression and `threadHtml` in a vm, on Eastern time. It is RED on main 4/7 without crashing, and main prints "6h ago" and "Mar 4".
+  - `gate_1485` GREEN 29/0.
+  - `gate_dupes`: the same 16 over baseline as main, and nothing new.
+  - The patch reproduces byte-for-byte from main.
+  - Phone-width Chromium render of the real Communications screen: the stamp sits beside the name on one line.
+  - Sentinel not run: no colour or layout rule changed, only the text inside an existing span.
+- `patch_1486.py`, `gate_1486.mjs`.
