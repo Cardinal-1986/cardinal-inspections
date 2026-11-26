@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-23 build 1486<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-25 build 1487<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -20751,7 +20751,8 @@ function mentionPreview(text, byEmail){
   miss.forEach(function(mn){
     var could = roster.filter(function(mbr){
       var f = firstOf(mbr).toLowerCase(), p = (mbr.email || '').split('@')[0].toLowerCase();
-      return (!!f && f.indexOf(mn) === 0) || (!!p && p.indexOf(mn) === 0);
+      var n = (mbr.name || '').trim().split(/\s+/)[0].toLowerCase();   /* 1487: the real first name too */
+      return (!!f && f.indexOf(mn) === 0) || (!!p && p.indexOf(mn) === 0) || (!!n && n.indexOf(mn) === 0);
     }).map(firstOf);
     parts.push('@' + mn + (could.length > 1 ? ' fits ' + could.length + ' people \u2014 type more: ' + could.join(', ')
                          : could.length === 1 ? ' \u2014 type more of the name: ' + could[0]
@@ -30801,7 +30802,7 @@ var TEAM_ROSTER = [
   { name:'Theo Dorion',         email:'theo@cardinalrenovations.net' },
   { name:'Jacob Henderson',     email:'jacob@cardinalrenovations.net' },
   { name:'Jerry Vera',          email:'jerry@cardinalrenovations.net', tag:'vera' },
-  { name:'Jerry Wamsley',       email:'jerry@jerrywamsley.com', tag:'wamsley' },
+  { name:'Jerry Wamsley',       email:'jwamsley@cardinalrenovations.net', tag:'wamsley' },   /* 1487: his work email */
   { name:'Scottie Steinbrugge', email:'scottie@cardinalrenovations.net' },
   { name:'Curtis',              email:'curtis@cardinalrenovations.net' }
 ];
@@ -47517,6 +47518,7 @@ window.CardinalRBTheme = Object.assign(window.CardinalRBTheme || {}, { toggle:to
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b: 1487, d:'2026-11-25', t:'Jerry Wamsley on his work email', s:'Jerry Wamsley is now jwamsley@cardinalrenovations.net everywhere in the app. Picking him in Reassign or on a new lead gives him the job under the email he signs in with, his name shows on his jobs, and he can use the Ask button.' },
   { b: 1486, d:'2026-11-23', t:'Every note shows its date and time', s:'Notes on a client now show the day and time they were written, for example Nov 23, 2026 · 4:12 PM, instead of “3h ago”. The same stamp shows in the job list preview and on punch card notes.' },
   { b: 1485, d:'2026-11-23', t:'Jerry Wamsley can be picked as a rep', s:'Jerry Wamsley now appears in Reassign, in the rep list on a new lead and everywhere else a teammate is chosen. Because he and Jerry Vera share a first name, @jerry in a message no longer notifies either of them: tag @Wamsley or @Vera instead. The tag buttons show those names, and the line under the box tells you if a tag fits two people.' },
   { b: 1484, d:'2026-11-21', t:'The Assistant for a sales rep, on their own jobs only', s:'The Ask button now appears for one sales rep as well as the office. For a rep it works only on the jobs that rep created or is assigned to, plus their own commissions and draws: it cannot see other reps\u2019 jobs, crews or crew pay, community partners, or company-wide totals, and it says so when asked. A rep can ask it to change their own jobs, appointments, punch-outs and claim notes, still only on Approve; it cannot change money or delete anything. Every other rep is unchanged.' },
@@ -95726,7 +95728,7 @@ body.cr-ar-adm #arCard:hover{box-shadow:0 2px 4px rgba(15,23,42,.08),0 10px 22px
 (function(){
   'use strict';
   /* 1484: + one sales rep. The server is the fence (api/assistant.js fences a rep to their own jobs); this only shows the button. */
-  var AI_PEOPLE = { 'theo@cardinalrenovations.net':1, 'theodorion1986@gmail.com':1, 'joan@cardinalrenovations.net':1, 'jerry@jerrywamsley.com':1 };
+  var AI_PEOPLE = { 'theo@cardinalrenovations.net':1, 'theodorion1986@gmail.com':1, 'joan@cardinalrenovations.net':1, 'jwamsley@cardinalrenovations.net':1 };   /* 1487: Wamsley signs in as jwamsley@ */
   var AI_PK = { owner_review_rules:'rule', team_profiles:'email' };
   var aiHist = [], aiBusy = false, aiPending = null, aiShown = null;
   function aiQ(id){ return document.getElementById(id); }

@@ -39,7 +39,7 @@ try {
 } catch (e) { ok(false, 'extract the shipped roster and mention code', e.message); console.log(`\ngate_1485: ${pass} pass, ${fail} fail — RED`); process.exit(1); }
 
 const R = ctx.TEAM_ROSTER;
-const W = 'jerry@jerrywamsley.com', V = 'jerry@cardinalrenovations.net';
+const W = 'jwamsley@cardinalrenovations.net', V = 'jerry@cardinalrenovations.net';
 const emailsOf = arr => (arr || []).map(m => m.email);
 
 // R1

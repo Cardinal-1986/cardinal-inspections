@@ -29,7 +29,7 @@ let pass = 0, fail = 0;
 const ok = (c, m, d = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + m + (d ? '  → ' + String(d).slice(0, 320) : '')); c ? pass++ : fail++; };
 console.log('gate_1484 on ' + SRC + ' + ' + APP);
 
-const REP = 'jerry@jerrywamsley.com', OTHER = 'nick@cardinalrenovations.net';
+const REP = 'jwamsley@cardinalrenovations.net', OTHER = 'nick@cardinalrenovations.net';
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gate1484-'));
 const api = path.join(tmp, 'api');
 fs.mkdirSync(path.join(api, 'node_modules', '@anthropic-ai', 'sdk'), { recursive: true });

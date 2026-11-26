@@ -11039,3 +11039,13 @@ Theo: give a named sales rep the assistant "but make sure he can only see his cl
 - Each note already stored its exact time (`at`, set by `sendChat`). The screens just drew it as "3h ago", or as "Nov 5" with no time or year.
 - The punch page already showed date and time (`fmtTime`) and is unchanged. `timeAgo` stays on the activity feed, history and "last activity" chips, because those are not notes.
 - **Gate:** `gate_1486.mjs`.
+
+## Build 1487: Jerry Wamsley on his work email (25 Nov 2026)
+- Theo had me create the Workspace mailbox **jwamsley@cardinalrenovations.net**, then said "Yes" to switching his CRM email to it.
+- His sign-in (since 18 Nov), `team_profiles` row, leads and push device were already on jwamsley@. Two hardcoded lists still named `jerry@jerrywamsley.com`:
+  - `TEAM_ROSTER` (Reassign, the new-lead rep picker, `rptRepName`). Picking him there assigned a job to an address nobody signs in with.
+  - `AI_PEOPLE` (the Ask button) and `api/assistant.js` `PEOPLE` (the server). He couldn't use the Assistant from build 1484.
+- Both now carry jwamsley@; he is still tagged `@wamsley`.
+- The "type more" hint under the composer also matches a member's real first name now, so "@jerry" still says it fits 2 people (Vera, Wamsley) and doesn't offer Vera alone.
+- `api/_staff.js` still lists the old off-domain address. jwamsley@ is staff by its domain.
+- **Gate:** `gate_1487.mjs`. gate_1485, gate_1484 and gate_1327 now use the new address.

@@ -49,7 +49,7 @@ export const PEOPLE = {
   'theodorion1986@gmail.com':      { name: 'Theo', owner: true },
   'joan@cardinalrenovations.net':  { name: 'Joan', owner: false },
   /* 1484 (Theo, 21 Nov 2026): a sales rep, who sees only their own clients */
-  'jerry@jerrywamsley.com':        { name: 'Jerry', owner: false, sales: true },
+  'jwamsley@cardinalrenovations.net': { name: 'Jerry', owner: false, sales: true },   /* 1487: his work email */
 };
 
 /* What the assistant may read and propose changes to, and the columns it can name. Measured

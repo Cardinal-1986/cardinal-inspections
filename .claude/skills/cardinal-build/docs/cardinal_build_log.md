@@ -38580,3 +38580,21 @@ Theo asked: "When writing notes can you make a time and date stamp ?" Every job 
   - Phone-width Chromium render of the real Communications screen: the stamp sits beside the name on one line.
   - Sentinel not run: no colour or layout rule changed, only the text inside an existing span.
 - `patch_1486.py`, `gate_1486.mjs`.
+
+## Build 1487 — Jerry Wamsley on his work email (25 Nov 2026)
+Theo: "Can you please create an [email] for Jerry Wamsley jwamsley@". I created the Workspace user with GAM after Theo OK'd the added seat. Theo then said "Yes" to switching his CRM email.
+- **Checked first:** the database had already moved. auth.users has had jwamsley@ since 18 Nov, and `team_profiles` (updated 26 Nov 03:15 UTC), 22 leads (`sales_rep`) and `push_subs` were all on jwamsley@. No `jerry@jerrywamsley.com` was left in any public table except audit history.
+- **The code had not moved:**
+  - `TEAM_ROSTER` still offered him in Reassign and the new-lead picker under the old address. Picking him wrote the old address onto the job.
+  - `AI_PEOPLE` and the server's `PEOPLE` didn't know his real login.
+- **Changes:**
+  - Both lists now carry jwamsley@.
+  - `mentionPreview`'s "type more" list also matches the real first name. Without that, "@jerry" offered Vera alone, because Wamsley had matched only through his old "jerry@" prefix. Caught by gate_1485 M3.
+- **Gates:**
+  - `gate_1487` GREEN 11/0, and RED on main 3/8 without crashing.
+  - gate_1485 GREEN 29/0 on the new address. Main's copy is GREEN on main.
+  - gate_1484 7/0.
+  - check_build GREEN.
+  - gate_dupes is identical to main (the same 16 over baseline).
+  - `node --check api/assistant.js` passes.
+- `patch_1487.py`, `gate_1487.mjs`.

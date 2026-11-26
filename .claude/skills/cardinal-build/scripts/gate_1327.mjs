@@ -180,7 +180,7 @@ try {
   ({ ctx, page } = await boot(REP, false)); await page.waitForTimeout(3500);
   const N = await fab(page); await ctx.close();
   ok(!!T && T.shown && T.h >= 44 && !!J && J.shown && (!N || !N.shown), 'B1  the Ask button shows for Theo and Joan (44px+), never for a rep it is not turned on for', JSON.stringify({ theo: T, joan: J, rep: N }));
-  ({ ctx, page } = await boot('jerry@jerrywamsley.com', false)); await page.waitForTimeout(3500);
+  ({ ctx, page } = await boot('jwamsley@cardinalrenovations.net', false)); await page.waitForTimeout(3500);
   const W = await fab(page); await ctx.close();
   ok(!!W && W.shown && W.h >= 44, 'B1b (1484) the Ask button shows for the sales rep it is turned on for', JSON.stringify({ rep: W }));
 
