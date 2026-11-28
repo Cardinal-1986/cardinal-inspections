@@ -10051,6 +10051,8 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 |---|---|---|
 | **Costs tab, gross profit, margin** | Payments card (`cr-jpay-script`), office only | `job_costs` + crew payments as labor. Commission not included. |
 | **Add a cost / receipt** | Costs tab (office) or My receipts (rep) | Rep: paid by self only; RLS in `job_costs.sql`. |
+| **Read crew invoice** (1489, 1490) | Costs tab button (office) or `#crew-invoice` (Command's Agents page links there); `cr-crinv-script` | Photo or PDF → `api/crew-invoice.js` (Claude Opus 5.5, structured output, reads only) → review card → Apply inserts ONE `job_costs` row (labor, paid by company). Job matched by job number, address or last name; duplicate-invoice-# guard. Office only (`is_full_access`). |
+| **Original crew invoices** (1490) | private `crew-docs` bucket, `invoices/YYYY-MM/<rand>-<name>`; "📄 View invoice" on the cost row | `job_costs.file_bucket/file_path/file_name` (`job_costs_invoice_file.sql`). Not `job-files`: reps can read that, and crew pay is office-only. PDFs up to 25 MB are read from storage by path (Vercel caps request bodies at 4.5 MB); photos send a shrunk copy. Cancel removes an unapplied upload (delete needs `is_cardinal_admin`). |
 | **Reimburse → Needs paid → Reimbursed** | cost rows; **Owed back to the team** group at the top of Invoices & Payments (`CardinalJobPay.owedInto`) | Only the office marks reimbursed (no update policy for anyone else). |
 
 ## Build 1362: Sales Numbers
@@ -11049,3 +11051,9 @@ Theo: give a named sales rep the assistant "but make sure he can only see his cl
 - The "type more" hint under the composer also matches a member's real first name now, so "@jerry" still says it fits 2 people (Vera, Wamsley) and doesn't offer Vera alone.
 - `api/_staff.js` still lists the old off-domain address. jwamsley@ is staff by its domain.
 - **Gate:** `gate_1487.mjs`. gate_1485, gate_1484 and gate_1327 now use the new address.
+
+## Builds 1488–1490 (27 Nov 2026, built on the Mac, checked and shipped from the PC)
+| Feature | Where | Notes |
+|---|---|---|
+| **Recent leads: Newest / To call** (1488) | Home → Recent leads, `#kpLeadSeg` | To call = the login's own retail Lead-stage jobs, oldest untouched first (the later of `stage_since` and the newest comment), with days, town, PO and a Call link. Remembers the choice in sessionStorage. |
+| **Read crew invoice + originals** (1489, 1490) | see the job-costs table above | |

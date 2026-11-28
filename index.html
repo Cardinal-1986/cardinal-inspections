@@ -4509,7 +4509,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      1137: the FIFTH. Same call. Main reached 1136 while the Owner-hub branch
      was open, so this build renumbered 1129 -> 1137 as well — #541 had already
      taken 1129. Re-run next_build.py before pushing, not only before starting. -->
-<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-25 build 1487<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
+<div data-cr-footer class="cr-drawer-foot" style="padding:7px 14px;font:600 11px 'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-11-27 build 1490<button type="button" id="signOutBtn" class="cr-df-out" data-cri="lock" title="Sign out" aria-label="Sign out" style="display:none;"></button></div>
         </div>
       </span>
       <input type="search" id="headSearch" enterkeyhint="search"
@@ -4640,7 +4640,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         </div>
         <div class="rowfil"></div>
         <div class="kphomerow">
-          <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="5" width="18" height="2.6" rx="1.3"/><rect x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect x="3" y="16.4" width="11" height="2.6" rx="1.3"/></g><g class="i5"><path d="M4 7h16" class="m"/><path d="M4 12h11"/><path d="M4 17h6" class="m"/></g></svg>Recent leads</div><div id="kpLeadsList"></div></div>
+          <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="5" width="18" height="2.6" rx="1.3"/><rect x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect x="3" y="16.4" width="11" height="2.6" rx="1.3"/></g><g class="i5"><path d="M4 7h16" class="m"/><path d="M4 12h11"/><path d="M4 17h6" class="m"/></g></svg>Recent leads<span class="kplseg" id="kpLeadSeg"></span></div><div id="kpLeadsList"></div></div>
           <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path fill-rule="evenodd" d="M4.8 3.6h14.4a2 2 0 0 1 2 2v12.8a2 2 0 0 1-2 2H4.8a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM5.2 10.2h13.6v7.6H5.2z"/><circle cx="12" cy="14" r="2.2"/></g><g class="i5"><rect x="2.8" y="3.6" width="18.4" height="16.8" rx="2"/><path d="M2.8 9.8h18.4"/><circle cx="12" cy="15" r="2" class="m"/></g></svg>Today</div><div id="kpTodayList"></div></div>
           <div class="pipecard kpquiet"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4v5l3.4 2"/></g><g class="i5"><circle cx="12" cy="12" r="8" class="m"/><path d="M12 7.5v4.9l3.2 1.9"/></g></svg>Gone quiet</div><div id="kpQuietList"></div></div>
         </div>
@@ -73568,6 +73568,19 @@ section.history > .subnote{color:var(--rbe-mute);}
   #historyMount .projgrid::-webkit-scrollbar-thumb:hover{background:#5d646e;}
   #historyMount .projgrid::-webkit-scrollbar-track{background:rgba(255,255,255,.05);border-radius:999px;}
 }
+/* 1488: Recent leads — Newest | To call */
+.kplseg{float:right;display:inline-flex;gap:2px;padding:2px;border:1px solid var(--rbe-line2,#2b2b33);border-radius:999px;
+  font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+.kplseg button{background:transparent;border:0;color:var(--rbe-mute,#9aa0a8);padding:5px 10px;border-radius:999px;font:inherit;cursor:pointer;min-height:30px;}
+.kplseg button.on{background:var(--rbe-line2,#2b2b33);color:var(--rbe-head,#ffffff);}
+.kpcallrow{flex-wrap:nowrap;align-items:center;gap:10px;min-height:48px;}
+.kpcd{min-width:40px;text-align:center;font-weight:800;font-size:17px;line-height:1;color:var(--rbe-head,#ffffff);}
+.kpcd small{display:block;font-size:10px;font-weight:600;color:var(--rbe-mute,#9aa0a8);}
+.kpcd.mid{color:#f2a531;}
+.kpcd.old{color:#ff5a61;}
+.kpcm{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;}
+.kpct{flex-basis:100%;font-size:12.5px;color:var(--rbe-mute,#9aa0a8);}
+.kpcall{flex:none;background:#2d6a4f;color:#fff;border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;text-decoration:none;}
 </style>
 <script id="cr-kphome-script">
 (function(){
@@ -73606,6 +73619,48 @@ window.renderKpHomeRow = function(){
         esc(typeof ljRepLabel === 'function' ? ljRepLabel(p) : rptRepName(p.created_by || '')) +
       '</span></div>';
   }).join('') : '<div class="kpempty">No retail clients yet.</div>';
+  /* 1488: "To call" — the rep's own Leads, oldest untouched first (Theo, 27 Nov: Option A).
+     Touched = the later of the stage move (stage_since) and the newest comment; falls back to
+     created_at. RLS already limits cacheProjects to what this login may see, so a rep sees only
+     their own leads. Lead stage only: Prospect and later already live in Gone quiet. */
+  var seg = document.getElementById('kpLeadSeg');
+  var kpMode = 'new';
+  try{ kpMode = sessionStorage.getItem('kpLeadMode') === 'call' ? 'call' : 'new'; }catch(_){}
+  var callRows = (window.cacheProjects || []).filter(function(p){
+    return crmOfSafe(p) === 'retail' && normStage(p.stage) === 'Lead';
+  }).map(function(p){
+    var ck = (typeof parseCkAll === 'function') ? (parseCkAll(p) || {}) : {};
+    var t = new Date(p.created_at || 0).getTime() || 0;
+    var ss = new Date(p.stage_since || ck.stage_since || 0).getTime() || 0;
+    if(ss > t) t = ss;
+    (Array.isArray(ck.comments) ? ck.comments : []).forEach(function(c){
+      var ct = new Date((c && c.at) || 0).getTime() || 0;
+      if(ct > t) t = ct;
+    });
+    return { p:p, days: t ? Math.max(0, Math.floor((Date.now() - t) / 86400000)) : null };
+  }).sort(function(a, b){ return (b.days == null ? -1 : b.days) - (a.days == null ? -1 : a.days); });
+  if(seg){
+    seg.innerHTML = '<button type="button" data-kpm="new"' + (kpMode === 'new' ? ' class="on"' : '') + '>Newest</button>' +
+      '<button type="button" data-kpm="call"' + (kpMode === 'call' ? ' class="on"' : '') + '>To call' +
+      (callRows.length ? ' \u00b7 ' + callRows.length : '') + '</button>';
+  }
+  if(kpMode === 'call'){
+    var KP_SHOW = 8;
+    lm.innerHTML = callRows.length ? callRows.slice(0, KP_SHOW).map(function(x){
+      var p = x.p, po = poOf(p);
+      var tel = String(p.phone || '').replace(/[^\d+]/g, '');
+      var town = p.city || '';
+      var dc = x.days == null ? '' : (x.days >= 14 ? ' old' : (x.days >= 7 ? ' mid' : ''));
+      return '<div class="kplrow kpcallrow" role="button" tabindex="0" data-proj="' + p.id + '">' +
+        '<span class="kpcd' + dc + '">' + (x.days == null ? '\u2013' : x.days) + '<small>days</small></span>' +
+        '<span class="kpcm"><span class="nm">' + esc(p.name || 'Unnamed client') + '</span>' +
+          (po ? '<span class="po">' + esc(String(po)) + '</span>' : '') +
+          (town ? '<span class="kpct">' + esc(town) + '</span>' : '') + '</span>' +
+        (tel.length >= 10 ? '<a class="kpcall" href="tel:' + tel + '">Call</a>' : '') +
+        '</div>';
+    }).join('') + (callRows.length > KP_SHOW ? '<div class="kpempty">+ ' + (callRows.length - KP_SHOW) + ' more \u00b7 oldest first</div>' : '')
+    : '<div class="kpempty">No leads waiting for a call.</div>';
+  }
   var today = new Date();
   function sameDay(ds){
     if(!ds) return false;
@@ -73659,6 +73714,14 @@ window.renderKpHomeRow = function(){
   }
 };
 document.addEventListener('click', function(e){
+  /* 1488: the To call toggle, and the Call link dials without opening the lead */
+  var sb = e.target.closest('.kplseg button[data-kpm]');
+  if(sb){
+    try{ sessionStorage.setItem('kpLeadMode', sb.getAttribute('data-kpm')); }catch(_){}
+    window.renderKpHomeRow();
+    return;
+  }
+  if(e.target.closest('a.kpcall')) return;
   var r = e.target.closest('.kplrow[data-proj], .kptrow[data-proj], .kpqrow[data-proj]');
   if(!r) return;
   if(typeof openProject === 'function') openProject(r.getAttribute('data-proj'));
@@ -102742,6 +102805,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
           '<button type="button" data-crjp-keep="' + E(r.id) + '">Keep both</button>' +
         '</span></div>';
     }
+    if(r.k === 'cost' && r.raw && r.raw.file_path && r.raw.file_bucket === 'crew-docs' && isOffice()){   /* 1490 */
+      h += '<div class="crjp-rb"><button type="button" data-crinv-view="' + E(r.raw.file_path) + '" data-crinv-bucket="crew-docs">📄 View invoice</button></div>';
+    }
     if(r.k === 'cost' && r.raw && r.raw.reimburse){
       var c = r.raw, nm = payer(c.paid_by);
       h += '<div class="crjp-rb">' + (c.reimbursed_at
@@ -102867,7 +102933,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projsec{ --cr-sta
     h += '</div>';
     if(showTab === 'cost'){
       if(form === pid) h += formHtml(pid);
-      else h += '<div class="crjp-foot"><button type="button" class="crji-btn primary" data-crjp-add="' + E(pid) + '">' + (office ? 'Add a cost' : 'Add a receipt') + '</button></div>';
+      else h += '<div class="crjp-foot"><button type="button" class="crji-btn primary" data-crjp-add="' + E(pid) + '">' + (office ? 'Add a cost' : 'Add a receipt') + '</button>' +
+        (office ? '<button type="button" class="crji-btn" data-crinv-open="' + E(pid) + '">Read crew invoice</button>' : '') + '</div>';   /* 1489 */
     }else if(total > 0 && bal > 0.005){
       /* E (judge 5): the Invoice card right above already carries the red Record payment (Buttons A: one red) */
       h += '<div class="crjp-foot"><button type="button" class="crji-btn" data-arpay="' + E(pid) + '">Record payment</button></div>';
@@ -103881,5 +103948,255 @@ window.CardinalFeedback = Object.assign(window.CardinalFeedback || {}, { open: f
 :root[data-cr-sun][data-theme="rb-light"] #cr-pk.open .pkvon{ --cr-stack:"1481 Sun: On site green (7:1)"; color:#155c36; }
 :root[data-cr-sun][data-theme="rb-light"] #cr-pk.open .pkvstale{ --cr-stack:"1481 Sun: stale amber (7:1)"; color:#6e4400; }
 </style>
+<style id="cr-crinv-styles">
+/* 1489: crew invoice reader — one dark sheet in both themes, like the scanner */
+#cr-crinv{position:fixed;inset:0;z-index:100040;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.62);}
+#cr-crinv.on{display:flex;}
+#cr-crinv .ci-box{width:100%;max-width:600px;max-height:92vh;overflow:auto;background:#141416;color:#ececee;border-radius:20px 20px 0 0;
+  padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 18px);font:400 15px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+#cr-crinv h3{margin:0 0 4px;font-size:20px;}
+#cr-crinv .ci-sub{color:#9a9aa6;font-size:13.5px;margin:0 0 12px;}
+#cr-crinv label{display:block;color:#9a9aa6;font-size:12.5px;margin:12px 0 4px;}
+#cr-crinv input,#cr-crinv select{width:100%;box-sizing:border-box;background:#0b0b0c;border:1px solid #2b2b33;border-radius:12px;
+  padding:11px 12px;color:#ececee;font:inherit;font-size:16px;}
+#cr-crinv .ci-row2{display:flex;gap:10px;}#cr-crinv .ci-row2>div{flex:1;min-width:0;}
+#cr-crinv .ci-lines{margin-top:12px;border:1px solid #2b2b33;border-radius:12px;overflow:hidden;}
+#cr-crinv .ci-line{display:flex;gap:8px;padding:8px 10px;border-top:1px solid #222227;font-size:13.5px;}
+#cr-crinv .ci-line:first-child{border-top:0;}#cr-crinv .ci-line span:first-child{flex:1;min-width:0;}
+#cr-crinv .ci-warn{background:#3a2c08;color:#ffd98a;border-radius:10px;padding:9px 11px;font-size:13.5px;margin-top:10px;}
+#cr-crinv .ci-ok{background:#0f2f22;color:#7fe0b5;border-radius:10px;padding:9px 11px;font-size:13.5px;margin-top:10px;}
+#cr-crinv .ci-btns{display:flex;gap:10px;margin-top:16px;}
+#cr-crinv .ci-btn{flex:1;border:0;border-radius:999px;padding:14px;font:700 16px -apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;
+  background:#ececee;color:#0b0b0c;}
+#cr-crinv .ci-btn.ghost{background:#26262b;color:#ececee;}
+#cr-crinv .ci-btn[disabled]{opacity:.5;}
+#cr-crinv .ci-pick{display:block;text-align:center;border:1.5px dashed #3a3a42;border-radius:16px;padding:28px 12px;color:#cfcfd4;cursor:pointer;}
+</style>
+<script id="cr-crinv-script">
+/* ═══ Build 1489 · Crew invoice reader (Theo, 27 Nov 2026) ═══
+   Upload a crew's invoice (photo or PDF) → /api/crew-invoice reads it (writes nothing) → a review card
+   shows crew, invoice #, date, job, lines and total → Apply inserts ONE job_costs row (kind labor) with
+   the signed-in session, so RLS decides. Office only, matching the Costs tab's own fence.
+   Opened from: the job's Costs tab ("Read crew invoice"), or #crew-invoice (Command's Agents page links
+   there), where the job is matched from the invoice address / job number and can be changed.
+   1490 (Theo: "I do want to save original invoices"): the ORIGINAL file goes to the private crew-docs
+   bucket first (read = is_full_access only, the crew-pay fence; job-files would show it to every rep
+   on the job). PDFs are then read from storage by path, so the 4.5 MB Vercel body cap no longer
+   applies; photos still send a shrunk copy. Apply links the cost to the file (job_costs.file_*);
+   Cancel removes an unapplied upload. Costs rows with a file get "View invoice" (office only). */
+(function(){
+'use strict';
+var MAXB = 25 * 1024 * 1024;   /* 1490: originals go to storage; Claude reads PDFs up to ~30 MB */
+var st = null;   /* { pid, inv, busy, err, dupe, saved, applied } */
+function q(id){ return document.getElementById(id); }
+function E(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+function M(n){ n = Number(n) || 0; return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function office(){ try{ return typeof commFullAccess === 'function' && !!commFullAccess(); }catch(_){ return false; } }
+function me(){ return String((window.currentUser && currentUser.email) || '').toLowerCase(); }
+function db(){ return window.sb || window.supa; }
+function tell(m, k){ try{ if(typeof window.crTell === 'function') window.crTell(m, k); }catch(_){} }
+function projects(){ return (window.cacheProjects || []).filter(function(p){ return p && p.id; }); }
+function poOfSafe(p){ try{ return typeof poOf === 'function' ? poOf(p) : ''; }catch(_){ return ''; } }
+function toks(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean); }
+
+/* best job for an invoice: job number first, then house number + street word, then customer last name */
+function matchJob(inv){
+  var best = null, bestS = 0, why = '';
+  var ref = String(inv.job_ref || '').replace(/\D/g, '');
+  var at = toks(inv.job_address), house = (at[0] && /^\d+$/.test(at[0])) ? at[0] : '', street = at[1] || '';
+  var last = toks(inv.customer_name).slice(-1)[0] || '';
+  projects().forEach(function(p){
+    var s = 0, w = '';
+    var po = String(poOfSafe(p) || '').replace(/\D/g, '');
+    if(ref && po && ref === po){ s += 10; w = 'job number ' + po; }
+    var pa = toks(p.address || [p.street, p.city].join(' '));
+    if(house && pa[0] === house){ s += 4; w = w || 'address'; if(street && pa.indexOf(street) !== -1){ s += 4; } }
+    if(last && last.length > 2 && toks(p.name).indexOf(last) !== -1){ s += 3; w = w || 'customer name'; }
+    if(s > bestS){ bestS = s; best = p; why = w; }
+  });
+  return bestS >= 7 ? { p: best, why: why } : null;
+}
+
+function shell(){
+  var m = q('cr-crinv');
+  if(m) return m;
+  m = document.createElement('div');
+  m.id = 'cr-crinv';
+  m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Read crew invoice');
+  m.innerHTML = '<div class="ci-box" id="ci-box"></div>';
+  document.body.appendChild(m);
+  m.addEventListener('click', onClick);
+  m.addEventListener('change', onChange);
+  return m;
+}
+function close(){ var m = q('cr-crinv'); if(m) m.classList.remove('on');
+  if(st && st.saved && !st.applied){ try{ db().storage.from(st.saved.bucket).remove([st.saved.path]); }catch(_){} }   /* 1490 */
+  st = null; if(location.hash === '#crew-invoice'){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(_){} } }
+
+function paint(){
+  var b = q('ci-box'); if(!b || !st) return;
+  var h = '<h3>Read crew invoice</h3>';
+  if(!office()){
+    b.innerHTML = h + '<p class="ci-sub">Crew invoices are office only.</p><div class="ci-btns"><button class="ci-btn ghost" data-ci-close>Close</button></div>';
+    return;
+  }
+  if(!st.inv){
+    h += '<p class="ci-sub">Take a photo of the crew’s invoice or pick the PDF. It’s read for you, then you check it. Nothing is saved until you tap Apply.</p>';
+    h += '<label class="ci-pick" for="ci-file">' + (st.busy ? 'Reading the invoice…' : '📄 Choose photo or PDF') + '</label>';
+    h += '<input type="file" id="ci-file" accept="image/*,application/pdf" style="display:none"' + (st.busy ? ' disabled' : '') + '>';
+    if(st.err) h += '<div class="ci-warn">' + E(st.err) + '</div>';
+    h += '<div class="ci-btns"><button class="ci-btn ghost" data-ci-close>Cancel</button></div>';
+    b.innerHTML = h; return;
+  }
+  var inv = st.inv, f = st.form;
+  h += '<p class="ci-sub">Check what was read. Change anything that’s wrong, then Apply. It adds one Labor cost to the job.</p>';
+  var opts = projects().slice().sort(function(a, b){ return String(a.name || '').localeCompare(String(b.name || '')); })
+    .map(function(p){ var po = poOfSafe(p); return '<option value="' + E(p.id) + '"' + (String(p.id) === String(f.pid) ? ' selected' : '') + '>' + E((p.name || 'Unnamed') + (po ? ' · #' + po : '') + (p.city ? ' · ' + p.city : '')) + '</option>'; }).join('');
+  h += '<label for="ci-job">Job</label><select id="ci-job" data-ci-f="pid"><option value="">Choose the job…</option>' + opts + '</select>';
+  if(st.matchWhy && f.pid) h += '<div class="ci-ok">Matched by ' + E(st.matchWhy) + '. Change it if that’s the wrong job.</div>';
+  else if(!f.pid) h += '<div class="ci-warn">Couldn’t tell which job this is' + (inv.job_address ? ' (invoice says “' + E(inv.job_address) + '”)' : '') + '. Choose it above.</div>';
+  h += '<div class="ci-row2"><div><label for="ci-crew">Crew</label><input id="ci-crew" data-ci-f="crew" value="' + E(f.crew) + '"></div>' +
+       '<div><label for="ci-no">Invoice #</label><input id="ci-no" data-ci-f="no" value="' + E(f.no) + '"></div></div>';
+  h += '<div class="ci-row2"><div><label for="ci-date">Invoice date</label><input id="ci-date" type="date" data-ci-f="date" value="' + E(f.date) + '"></div>' +
+       '<div><label for="ci-amt">Total</label><input id="ci-amt" inputmode="decimal" data-ci-f="amt" value="' + E(f.amt) + '"></div></div>';
+  if(inv.lines.length){
+    h += '<div class="ci-lines">' + inv.lines.map(function(l){
+      return '<div class="ci-line"><span>' + E(l.description || '—') + (l.qty != null ? ' · ' + E(l.qty) + (l.unit ? ' ' + E(l.unit) : '') : '') + '</span><span>' + (l.amount != null ? M(l.amount) : '') + '</span></div>';
+    }).join('') + '</div>';
+    var sum = inv.lines.reduce(function(a, l){ return a + (Number(l.amount) || 0); }, 0) + (Number(inv.tax) || 0);
+    var amt = Number(String(f.amt).replace(/[$,\s]/g, ''));
+    if(sum > 0 && amt > 0 && Math.abs(sum - amt) > 0.5) h += '<div class="ci-warn">The lines add up to ' + M(sum) + ' but the total says ' + M(amt) + '. Check the page.</div>';
+  }
+  if(inv.notes) h += '<div class="ci-warn">Hard to read: ' + E(inv.notes) + '</div>';
+  if(st.dupe) h += '<div class="ci-warn">This job already has a cost for invoice ' + E(f.no) + '. Tap Apply again only if this is a different bill.</div>';
+  if(st.err) h += '<div class="ci-warn">' + E(st.err) + '</div>';
+  h += '<div class="ci-btns"><button class="ci-btn ghost" data-ci-close>Cancel</button><button class="ci-btn" data-ci-apply' + (st.busy ? ' disabled' : '') + '>' + (st.busy ? 'Saving…' : 'Apply') + '</button></div>';
+  b.innerHTML = h;
+}
+
+function shrink(file){
+  return new Promise(function(res, rej){
+    if(file.type === 'application/pdf'){ res({ mime: 'application/pdf', data: null }); return; }   /* 1490: read from storage */
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){
+      var k = Math.min(1, 2000 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res({ mime: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85).split(',')[1] });
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error('Could not open that photo.')); };
+    img.src = url;
+  });
+}
+
+async function read(file){
+  st.busy = true; st.err = ''; paint();
+  try{
+    if(file.size > MAXB) throw new Error('That file is ' + (file.size / 1048576).toFixed(1) + ' MB; the limit is 25 MB. Take a photo of the page instead.');
+    var f = await shrink(file);
+    /* 1490: keep the original — private crew-docs bucket, office-only like crew pay */
+    var safe = String(file.name || 'invoice').replace(/[^\w.\-]+/g, '_').slice(-80) || 'invoice';
+    var key = 'invoices/' + new Date().toISOString().slice(0, 7) + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + '-' + safe;
+    var up = await db().storage.from('crew-docs').upload(key, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+    if(up && up.error) throw new Error('Could not save the original: ' + (up.error.message || 'refused'));
+    st.saved = { bucket: 'crew-docs', path: key, name: file.name || safe };
+    var s = db() && db().auth ? await db().auth.getSession() : {};
+    var tok = s && s.data && s.data.session ? s.data.session.access_token : '';
+    var r = await fetch('/api/crew-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify(f.data ? { file: f.data, mime: f.mime } : { storage_path: key, mime: f.mime }) });
+    var j = await r.json().catch(function(){ return {}; });
+    if(!r.ok || !j.ok) throw new Error(j.error || 'Could not read the invoice.');
+    var inv = j.invoice;
+    var mt = st.pid ? null : matchJob(inv);
+    st.inv = inv; st.matchWhy = mt ? mt.why : '';
+    st.form = { pid: st.pid || (mt ? mt.p.id : ''), crew: inv.crew_name, no: inv.invoice_number,
+      date: inv.invoice_date || new Date().toISOString().slice(0, 10), amt: inv.total != null ? String(inv.total) : '' };
+  }catch(e){ st.err = (e && e.message) || 'Could not read the invoice.'; }
+  st.busy = false; paint();
+}
+
+async function apply(){
+  var f = st.form, amt = Number(String(f.amt || '').replace(/[$,\s]/g, ''));
+  if(!f.pid){ st.err = 'Choose the job first.'; paint(); return; }
+  if(!(amt > 0)){ st.err = 'Enter the total, more than $0.'; paint(); return; }
+  var desc = ('Crew invoice' + (f.no ? ' #' + f.no : '') + (f.crew ? ' · ' + f.crew : '')).slice(0, 200);
+  st.busy = true; st.err = ''; paint();
+  try{
+    if(f.no && !st.dupe){
+      var d = await db().from('job_costs').select('id,description').eq('project_id', f.pid);
+      var hit = ((d && d.data) || []).some(function(c){ return String(c.description || '').indexOf('#' + f.no) !== -1; });
+      if(hit){ st.dupe = true; st.busy = false; paint(); return; }
+    }
+    var row = { project_id: f.pid, kind: 'labor', description: desc, amount: Math.round(amt * 100) / 100,
+      spent_on: f.date || new Date().toISOString().slice(0, 10), paid_by: 'company', reimburse: false, created_by: me() };
+    var linked = false;
+    if(st.saved){ row.file_bucket = st.saved.bucket; row.file_path = st.saved.path; row.file_name = String(st.saved.name).slice(0, 120); }
+    var r = await db().from('job_costs').insert(row).select('id');
+    if(r.error && st.saved && /file_(bucket|path|name)/.test(String(r.error.message || ''))){   /* 1490 SQL not run yet */
+      delete row.file_bucket; delete row.file_path; delete row.file_name;
+      r = await db().from('job_costs').insert(row).select('id');
+    }else if(!r.error && st.saved){ linked = true; }
+    if(r.error || !r.data || !r.data.length) throw new Error('Not saved: ' + ((r.error && r.error.message) || 'the database refused it.'));
+    var pid = f.pid;
+    st.applied = true;
+    close();
+    tell('Added ' + M(row.amount) + ' labor cost' + (f.crew ? ' from ' + f.crew : '') + '.' +
+      (st && st.saved && !linked ? ' The original is saved but not linked yet (database update pending).' : (linked ? ' Original invoice saved.' : '')), 'ok');
+    try{ if(window.CardinalJobPay && window.CardinalJobPay.refresh) window.CardinalJobPay.refresh(pid); }catch(_){}
+  }catch(e){ st.busy = false; st.err = (e && e.message) || 'Not saved.'; paint(); }
+}
+
+function onClick(e){
+  var t = e.target;
+  if(t === q('cr-crinv') || t.closest('[data-ci-close]')){ close(); return; }
+  if(t.closest('[data-ci-apply]')){ if(st && !st.busy) apply(); return; }
+}
+function onChange(e){
+  var t = e.target;
+  if(t.id === 'ci-file' && t.files && t.files[0]){ read(t.files[0]); return; }
+  var k = t.getAttribute('data-ci-f');
+  if(k && st && st.form){ st.form[k] = t.value; if(k === 'pid'){ st.matchWhy = ''; st.dupe = false; paint(); } else if(k === 'no'){ st.dupe = false; } }
+}
+
+function open(opts){
+  st = { pid: (opts && opts.pid) ? String(opts.pid) : '', inv: null, form: null, busy: false, err: '', dupe: false, matchWhy: '' };
+  shell().classList.add('on'); paint();
+}
+
+/* entry 1: the job's Costs tab button (delegated; the button is drawn by cr-jpay-script) */
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('[data-crinv-open]');
+  if(b){ open({ pid: b.getAttribute('data-crinv-open') }); return; }
+  var v = e.target.closest && e.target.closest('[data-crinv-view]');
+  if(v){ viewFile(v.getAttribute('data-crinv-bucket'), v.getAttribute('data-crinv-view'), v); }
+});
+/* 1490: open the saved original (crew-docs; storage RLS refuses anyone outside the office) */
+async function viewFile(bucket, path, btn){
+  if(bucket !== 'crew-docs' || !path) return;
+  var tab = null; try{ tab = window.open('', '_blank'); }catch(_){}
+  try{
+    var r = await db().storage.from(bucket).download(path);
+    if(!r || r.error || !r.data) throw new Error((r && r.error && r.error.message) || 'not found');
+    var url = URL.createObjectURL(r.data);
+    if(tab && !tab.closed) tab.location = url; else window.open(url, '_blank');
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 120000);
+  }catch(err){ if(tab && !tab.closed) tab.close(); tell('Could not open the invoice: ' + ((err && err.message) || err)); }
+}
+/* entry 2: #crew-invoice — Command's Agents page links here. Waits for sign-in and the project cache. */
+function fromHash(){
+  if(location.hash !== '#crew-invoice') return;
+  var n = 0, iv = setInterval(function(){
+    n++;
+    var ready = window.currentUser && (typeof cacheLoaded === 'undefined' || cacheLoaded);
+    if(ready || n > 60){ clearInterval(iv); if(ready) open({}); }
+  }, 500);
+}
+window.addEventListener('hashchange', fromHash);
+fromHash();
+
+window.CardinalCrewInvoice = Object.assign(window.CardinalCrewInvoice || {}, { open: open, matchJob: matchJob });
+})();
+</script>
+
 </body>
 </html>

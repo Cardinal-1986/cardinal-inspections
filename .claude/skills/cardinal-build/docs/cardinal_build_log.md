@@ -38598,3 +38598,31 @@ Theo: "Can you please create an [email] for Jerry Wamsley jwamsley@". I created 
   - gate_dupes is identical to main (the same 16 over baseline).
   - `node --check api/assistant.js` passes.
 - `patch_1487.py`, `gate_1487.mjs`.
+
+## Build 1488 — Recent leads: Newest / To call (27 Nov 2026)
+Theo picked Option A. Built on the Mac from main 1487.
+- Home → Recent leads gets a two-way switch. **To call** lists the login's own retail jobs at Lead stage, oldest untouched first: touched = the later of `stage_since` and the newest comment, else `created_at`. Each row shows days (amber at 7, red at 14), town, PO and a Call link that dials without opening the lead.
+- RLS already limits `cacheProjects`, so a rep sees only their own leads. Prospect and later stay in Gone quiet.
+- Mac gate: jsdom 15/15, RED on 1487.
+
+## Build 1489 — Read crew invoice (27 Nov 2026)
+Theo: "upload invoices from crews that go into the CRM", "put it on Claude".
+- New `api/crew-invoice.js`: Claude Opus 5.5 with structured output (`INVOICE_SCHEMA`) and the server-side refusal fallback, as in `assistant.js`. It reads one photo or PDF and writes nothing. Staff and `is_full_access` only. `vercel.json` gives it 60 s.
+- `cr-crinv-script`: the Costs tab's "Read crew invoice" (office) and `#crew-invoice` open a review card. Apply inserts ONE `job_costs` row (kind labor, paid_by company, reimburse false) with the user's own session, so RLS decides. Duplicate-invoice-# guard; a lines-vs-total warning.
+- Mac gate: jsdom 16/16, RED on 1488.
+- PC check: the PDF limit (5 MB, about 6.7 MB as base64) was over Vercel's 4.5 MB request-body cap. Fixed in 1490, so 1489 never shipped on its own.
+
+## Build 1490 — the original crew invoice is kept (27 Nov 2026)
+Theo: "I do want to save original invoices". Ships 1488 + 1489 + 1490 together.
+- **SQL first:** `job_costs_invoice_file.sql` adds `job_costs.file_bucket/file_path/file_name`, with a check that `file_bucket` is null or 'crew-docs'. It only adds columns and is safe to run twice.
+- The original goes to the private `crew-docs` bucket (read and insert: `is_full_access`; delete: `is_cardinal_admin`), not `job-files`, because reps can read job-files and crew pay is office-only. Path: `invoices/YYYY-MM/<rand>-<name>`.
+- PDFs are read back by `api/crew-invoice.js` from storage with the user's token (`storage_path`), so the 4.5 MB body cap no longer applies; PDFs up to 25 MB. Photos still send a shrunk copy (2000 px JPEG), capped at 3 MB in the body.
+- Apply links the cost to the file. If the SQL hasn't run, Apply still saves the cost and says the file isn't linked. Cancel removes an unapplied upload. Cost rows with a file show "📄 View invoice" (office only).
+- **Gates:** the Mac ran jsdom gate_1490 24/24 (RED on 1489), gate_1488 still green, and an offline API test 12/12. On the PC:
+  - check_build GREEN against main 1487 (marker "View invoice", absent from 1487 and 1489).
+  - Against 1489 only the date label gate trips; it is the same day and the build number was checked by hand.
+  - `node --check api/crew-invoice.js` passes.
+  - The 1487 → 1490 diff is additions plus the label line.
+- **Database checked on the live project before shipping:** `job_costs` has kind/paid_by/reimburse/spent_on/created_by, 'labor' is allowed, and `job_costs_insert` lets an `is_full_access` login insert with `created_by = my_email()`. `crew-docs` exists (private) with the three policies above.
+- **Known edge:** a PDF over about 23 MB is over the Claude API's 32 MB request limit once base64-encoded, and fails with a technical error. Rare for an invoice; to lower the cap later.
+- **Not verified:** a real invoice through Claude, a real upload from the phone, how the card and "View invoice" look and open on the phone (Self Check + Theo's eyes).

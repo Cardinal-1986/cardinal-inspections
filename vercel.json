@@ -79,6 +79,7 @@
     "api/assistant.js": {
       "maxDuration": 60
     },
+    "api/crew-invoice.js": { "maxDuration": 60 },
     "api/inspect-assist.js": {
       "maxDuration": 60
     },
