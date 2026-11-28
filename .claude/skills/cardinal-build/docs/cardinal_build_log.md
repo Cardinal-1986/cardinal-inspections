@@ -38626,3 +38626,35 @@ Theo: "I do want to save original invoices". Ships 1488 + 1489 + 1490 together.
 - **Database checked on the live project before shipping:** `job_costs` has kind/paid_by/reimburse/spent_on/created_by, 'labor' is allowed, and `job_costs_insert` lets an `is_full_access` login insert with `created_by = my_email()`. `crew-docs` exists (private) with the three policies above.
 - **Known edge:** a PDF over about 23 MB is over the Claude API's 32 MB request limit once base64-encoded, and fails with a technical error. Rare for an invoice; to lower the cap later.
 - **Not verified:** a real invoice through Claude, a real upload from the phone, how the card and "View invoice" look and open on the phone (Self Check + Theo's eyes).
+
+## Build 1491 — crew invoice limits: 20 MB, and no leftover uploads (27 Nov 2026)
+The PC's two notes on 1490, built on the Mac from main 3810a86.
+- PDFs are capped at 20 MB on the client (`MAXB`) and the server (`MAX_PDF_BYTES`). The base64 of a bigger PDF passes the Claude API's 32 MB request limit. The message names the size: "That file is 21.0 MB; the limit is 20 MB. Take a photo of the page instead."
+- Picking a second file after a failed read removes the first, never-applied upload before the new one goes up. As with Cancel, the delete needs `is_cardinal_admin`, so for other office logins the file stays.
+- No SQL.
+- **Gates:**
+  - Mac: gate_1491 28/28, RED 2 on 1490. gate_1489 now accepts the 1490 `storage_path` body, with a no-op storage mock.
+  - On the PC (jsdom 24.1.3):
+    - gate_1488 15/15, gate_1489 16/16, gate_1490 24/24 and gate_1491 28/28 on 1491. gate_1491 fails 2 on 1490.
+    - test_crew_invoice_api passes.
+    - check_build GREEN against 1487 (marker "the limit is 20 MB").
+    - The 1490 → 1491 diff is the label, two limit lines and the clean-up line.
+- `patch_1491.py`, `gate_1491.js`.
+
+## Build 1492 — Crews › Invoices, and checks linked to the bills they paid (27 Nov 2026)
+Theo: "There should be an invoiced section with stats but also a thumbnail pic that opens of the invoice", "Or whatever you think but somewhere we can also put checks". Built on the Mac, on top of 1491.
+- **SQL, schema:** `crew_invoices.sql` adds `crew_invoices`, `crew_payment_invoices` and `crew_payments.file_*`. RLS is `is_cardinal_admin` plus the restrictive `staff_only_1407`, the same fence as `crew_payments`.
+- **Data (one-off, kept out of the repo because it holds crew pay and client addresses):**
+  - Crew bills that had been entered in `crew_payments` as if paid (method other) were moved to `crew_invoices` with source `migrated`.
+  - Chase checks from `bank_register` that were never entered were added.
+  - Exact check-to-bill matches were linked.
+  - Newer bills were added from the crews' texts and emails (source `text_import`).
+  - Each run backs up the crew's `crew_payments` rows first (`crew_payments_bak_1492`, `crew_payments_bak_1493`; the `ensure_rls` trigger enables RLS on them, with no policies).
+  - The SQL files and the PC's checks are in OneDrive Cardinal-Transfer/Mac-Handoff-CRM1489-Agents-20261127.
+  - Run on the Mac on Theo's yes in its own session, because the PC's Supabase connector stalls on writes. The PC then checked the result with reads: counts, sums and a fingerprint of the imported rows against the files.
+- **Gates on the PC (jsdom 24.1.3), on 1492:**
+  - gate_1492 19/19, and it fails 2 on 1491.
+  - gate_1491 28/28, gate_1490 24/24, gate_1489 16/16, gate_1488 15/15.
+  - check_build GREEN against 1487.
+- **Not verified:** the look on the phone, a real thumbnail load, linking on the phone.
+- `patch_1492.py`, `gate_1492.js`.

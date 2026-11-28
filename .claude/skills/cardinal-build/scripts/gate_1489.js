@@ -20,11 +20,11 @@ function table(name) {
   };
   return api;
 }
-const supa = { from: table, auth: { getSession: async () => ({ data: { session: { access_token: 'tok' } } }) } };
-const invoice = { crew_name: 'Francisco Gutters', invoice_number: '4411', invoice_date: '2026-11-20', job_address: '8952 Salem Rd, Lewisburg', customer_name: 'Pat Sample', job_ref: '',
+const supa = { storage: { from: () => ({ upload: async k => ({ data: { path: k }, error: null }), remove: async () => ({ error: null }), download: async () => ({ data: null, error: { message: 'x' } }) }) }, from: table, auth: { getSession: async () => ({ data: { session: { access_token: 'tok' } } }) } };
+const invoice = { crew_name: 'Sample Gutters', invoice_number: '4411', invoice_date: '2026-11-20', job_address: '8952 Sample Rd, Testville', customer_name: 'Pat Sample', job_ref: '',
   lines: [{ description: 'Seamless gutter 6in', qty: 120, unit: 'LF', rate: 8, amount: 960 }, { description: 'Leaf guard', qty: 120, unit: 'LF', rate: 3, amount: 360 }], subtotal: 1320, tax: null, total: 1320, notes: '' };
 const projects = [
-  { id: 'pA', name: 'Pat Sample', stage: 'Completed', address: '8952 Salem Rd, Lewisburg OH', city: 'Lewisburg', created_at: '2026-10-01T00:00:00Z', checklist: '{"po":1401}' },
+  { id: 'pA', name: 'Pat Sample', stage: 'Completed', address: '8952 Sample Rd, Testville OH', city: 'Testville', created_at: '2026-10-01T00:00:00Z', checklist: '{"po":1401}' },
   { id: 'pB', name: 'Someone Else', stage: 'Lead', address: '100 Main St, Dayton OH', city: 'Dayton', created_at: '2026-10-02T00:00:00Z', checklist: '{"po":1402}' },
 ];
 let isOffice = true;
@@ -55,7 +55,7 @@ setTimeout(async () => {
     check('module exported', w.CardinalCrewInvoice && typeof w.CardinalCrewInvoice.open === 'function');
     // matcher on its own
     const mt = w.CardinalCrewInvoice.matchJob(invoice);
-    check('matcher picks the Salem Rd job by address', mt && mt.p.id === 'pA');
+    check('matcher picks the Sample Rd job by address', mt && mt.p.id === 'pA');
     check('matcher refuses a weak match', w.CardinalCrewInvoice.matchJob({ job_address: '5 Nowhere Ln', customer_name: 'Zed' }) === null);
     // the Costs tab button is drawn by the REAL builder: prove the markup string is in the shipped file
     check('Costs tab draws the button for office only', html.includes("(office ? '<button type=\"button\" class=\"crji-btn\" data-crinv-open=\"' + E(pid) + '\">Read crew invoice</button>' : '')"));
@@ -69,12 +69,13 @@ setTimeout(async () => {
     Object.defineProperty(fileInput, 'files', { value: [f] });
     fileInput.dispatchEvent(new w.Event('change', { bubbles: true }));
     await tick(400);
-    check('file sent to /api/crew-invoice as PDF', posts.length === 1 && posts[0].mime === 'application/pdf' && posts[0].file.length > 0);
+    /* 1491: since 1490 a PDF goes by storage path; accept either body shape */
+    check('file sent to /api/crew-invoice as PDF', posts.length === 1 && posts[0].mime === 'application/pdf' && ((posts[0].file && posts[0].file.length > 0) || /^invoices\//.test(posts[0].storage_path || '')));
     check('review card shows the matched job selected', w.document.getElementById('ci-job').value === 'pA' && /Matched by address/.test(w.document.getElementById('ci-box').textContent));
-    check('fields prefilled from the invoice', w.document.getElementById('ci-crew').value === 'Francisco Gutters' && w.document.getElementById('ci-no').value === '4411' && w.document.getElementById('ci-amt').value === '1320' && w.document.getElementById('ci-date').value === '2026-11-20');
+    check('fields prefilled from the invoice', w.document.getElementById('ci-crew').value === 'Sample Gutters' && w.document.getElementById('ci-no').value === '4411' && w.document.getElementById('ci-amt').value === '1320' && w.document.getElementById('ci-date').value === '2026-11-20');
     check('both lines listed, nothing saved yet', w.document.querySelectorAll('.ci-line').length === 2 && inserts.length === 0);
     // duplicate guard: an existing cost mentions #4411
-    existingCosts = [{ id: 'c0', description: 'Crew invoice #4411 · Francisco Gutters' }];
+    existingCosts = [{ id: 'c0', description: 'Crew invoice #4411 · Sample Gutters' }];
     w.document.querySelector('[data-ci-apply]').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
     await tick(200);
     check('duplicate invoice # warns and does not save', inserts.length === 0 && /already has a cost for invoice 4411/.test(w.document.getElementById('ci-box').textContent));
@@ -85,7 +86,7 @@ setTimeout(async () => {
     const row = inserts[0] && inserts[0].row;
     check('one job_costs row inserted', inserts.length === 1 && inserts[0].name === 'job_costs');
     check('row shape matches the Costs tab (labor, company, no reimburse)', row && row.project_id === 'pA' && row.kind === 'labor' && row.amount === 1320 && row.paid_by === 'company' && row.reimburse === false && row.spent_on === '2026-11-20' && row.created_by === 'theo@cardinalrenovations.net');
-    check('description names invoice # and crew', row && row.description === 'Crew invoice #4411 · Francisco Gutters');
+    check('description names invoice # and crew', row && row.description === 'Crew invoice #4411 · Sample Gutters');
     check('sheet closed and the job card refreshed', !m.matches('.on') && refreshed.join() === 'pA');
     // non-office login: refused before any upload
     isOffice = false;

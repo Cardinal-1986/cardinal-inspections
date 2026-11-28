@@ -1,5 +1,5 @@
 // /api/crew-invoice.js — reads ONE crew invoice (photo or PDF) and returns what it says, as JSON.
-// Build 1489/1490 (Theo, 27 Nov 2026): "upload invoices from crews that go into the CRM". Theo: "put it on Claude".
+// Build 1489/1490/1491 (Theo, 27 Nov 2026): "upload invoices from crews that go into the CRM". Theo: "put it on Claude".
 //
 // THIS ROUTE WRITES NOTHING. It only reads the document and returns fields. The app shows them on a
 // review card; Theo (or another office login) fixes anything and taps Apply, and only then does the
@@ -19,7 +19,7 @@ const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
 const MODEL = 'claude-opus-5-5';
 const MAX_BYTES = 3 * 1024 * 1024;          // a photo in the request body (Vercel caps bodies at 4.5 MB)
-const MAX_PDF_BYTES = 25 * 1024 * 1024;     // 1490: PDFs are read from storage, not the body
+const MAX_PDF_BYTES = 20 * 1024 * 1024;     // 1490: PDFs read from storage; 1491: 20 MB (base64 must stay under Claude's 32 MB request limit)
 const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const DEADLINE_MS = 55000;
 
@@ -105,7 +105,7 @@ export default async function handler(req, res){
       const so = await fetch(SUPABASE_URL + '/storage/v1/object/authenticated/crew-docs/' + sp, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token } });
       if(!so.ok){ res.status(404).json({ error: 'Could not find the saved invoice.' }); return; }
       const buf = Buffer.from(await so.arrayBuffer());
-      if(buf.length > MAX_PDF_BYTES){ res.status(413).json({ error: 'That PDF is over 25 MB. Take a photo of the page instead.' }); return; }
+      if(buf.length > MAX_PDF_BYTES){ res.status(413).json({ error: 'That PDF is over 20 MB. Take a photo of the page instead.' }); return; }
       data = buf.toString('base64');
     }
     if(!data || typeof data !== 'string'){ res.status(400).json({ error: 'No file' }); return; }

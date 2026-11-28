@@ -10052,7 +10052,7 @@ Theo's picks: 1A, a floating Ask button on every screen; 2C, it can change anyth
 | **Costs tab, gross profit, margin** | Payments card (`cr-jpay-script`), office only | `job_costs` + crew payments as labor. Commission not included. |
 | **Add a cost / receipt** | Costs tab (office) or My receipts (rep) | Rep: paid by self only; RLS in `job_costs.sql`. |
 | **Read crew invoice** (1489, 1490) | Costs tab button (office) or `#crew-invoice` (Command's Agents page links there); `cr-crinv-script` | Photo or PDF → `api/crew-invoice.js` (Claude Opus 5.5, structured output, reads only) → review card → Apply inserts ONE `job_costs` row (labor, paid by company). Job matched by job number, address or last name; duplicate-invoice-# guard. Office only (`is_full_access`). |
-| **Original crew invoices** (1490) | private `crew-docs` bucket, `invoices/YYYY-MM/<rand>-<name>`; "📄 View invoice" on the cost row | `job_costs.file_bucket/file_path/file_name` (`job_costs_invoice_file.sql`). Not `job-files`: reps can read that, and crew pay is office-only. PDFs up to 25 MB are read from storage by path (Vercel caps request bodies at 4.5 MB); photos send a shrunk copy. Cancel removes an unapplied upload (delete needs `is_cardinal_admin`). |
+| **Original crew invoices** (1490) | private `crew-docs` bucket, `invoices/YYYY-MM/<rand>-<name>`; "📄 View invoice" on the cost row | `job_costs.file_bucket/file_path/file_name` (`job_costs_invoice_file.sql`). Not `job-files`: reps can read that, and crew pay is office-only. PDFs up to 20 MB (1491; 25 MB in 1490) are read from storage by path (Vercel caps request bodies at 4.5 MB); photos send a shrunk copy. Cancel removes an unapplied upload (delete needs `is_cardinal_admin`). |
 | **Reimburse → Needs paid → Reimbursed** | cost rows; **Owed back to the team** group at the top of Invoices & Payments (`CardinalJobPay.owedInto`) | Only the office marks reimbursed (no update policy for anyone else). |
 
 ## Build 1362: Sales Numbers
@@ -11057,3 +11057,11 @@ Theo: give a named sales rep the assistant "but make sure he can only see his cl
 |---|---|---|
 | **Recent leads: Newest / To call** (1488) | Home → Recent leads, `#kpLeadSeg` | To call = the login's own retail Lead-stage jobs, oldest untouched first (the later of `stage_since` and the newest comment), with days, town, PO and a Call link. Remembers the choice in sessionStorage. |
 | **Read crew invoice + originals** (1489, 1490) | see the job-costs table above | |
+
+## Build 1492 (27 Nov 2026): crew invoices and the checks that paid them
+| Feature | Where | Notes |
+|---|---|---|
+| **Crews › Invoices tab** | Crews card, admin only (`MONEY_TABS`) | `crew_invoices` (`crew_invoices.sql`): what a crew BILLED. Stats Invoiced / Paid / Open / Not linked. One row per bill with a thumbnail (signed `crew-docs` URL; tap opens the original via `openDoc`), "+ Photo" when none, and status from linked checks. Flags: the same invoice # and amount twice, another bill on the same job, a job marked Lost. |
+| **Checks linked to bills** | Crews › Payments: photo slot (`crew-docs` checks/…), "Pays #…", **Link invoices** picker | `crew_payment_invoices` (check → bill, amount). Refuses more than the check. `crew_payments.file_*` holds the check photo. |
+| **Reader: File under crew** | Read crew invoice (admin) | Files the bill in `crew_invoices`, not `job_costs`. Other logins, or "Not a crew bill", go to `job_costs` as in 1489. |
+| **Job Costs with crew bills** | Costs tab | A crew bill counts as labor ("CREW BILL"). A check linked to a bill is not counted a second time. Unpaid bills don't show in "All" as money out. |
