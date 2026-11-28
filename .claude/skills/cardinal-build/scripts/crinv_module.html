@@ -1,0 +1,217 @@
+<style id="cr-crinv-styles">
+/* 1489: crew invoice reader — one dark sheet in both themes, like the scanner */
+#cr-crinv{position:fixed;inset:0;z-index:100040;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.62);}
+#cr-crinv.on{display:flex;}
+#cr-crinv .ci-box{width:100%;max-width:600px;max-height:92vh;overflow:auto;background:#141416;color:#ececee;border-radius:20px 20px 0 0;
+  padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 18px);font:400 15px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+#cr-crinv h3{margin:0 0 4px;font-size:20px;}
+#cr-crinv .ci-sub{color:#9a9aa6;font-size:13.5px;margin:0 0 12px;}
+#cr-crinv label{display:block;color:#9a9aa6;font-size:12.5px;margin:12px 0 4px;}
+#cr-crinv input,#cr-crinv select{width:100%;box-sizing:border-box;background:#0b0b0c;border:1px solid #2b2b33;border-radius:12px;
+  padding:11px 12px;color:#ececee;font:inherit;font-size:16px;}
+#cr-crinv .ci-row2{display:flex;gap:10px;}#cr-crinv .ci-row2>div{flex:1;min-width:0;}
+#cr-crinv .ci-lines{margin-top:12px;border:1px solid #2b2b33;border-radius:12px;overflow:hidden;}
+#cr-crinv .ci-line{display:flex;gap:8px;padding:8px 10px;border-top:1px solid #222227;font-size:13.5px;}
+#cr-crinv .ci-line:first-child{border-top:0;}#cr-crinv .ci-line span:first-child{flex:1;min-width:0;}
+#cr-crinv .ci-warn{background:#3a2c08;color:#ffd98a;border-radius:10px;padding:9px 11px;font-size:13.5px;margin-top:10px;}
+#cr-crinv .ci-ok{background:#0f2f22;color:#7fe0b5;border-radius:10px;padding:9px 11px;font-size:13.5px;margin-top:10px;}
+#cr-crinv .ci-btns{display:flex;gap:10px;margin-top:16px;}
+#cr-crinv .ci-btn{flex:1;border:0;border-radius:999px;padding:14px;font:700 16px -apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;
+  background:#ececee;color:#0b0b0c;}
+#cr-crinv .ci-btn.ghost{background:#26262b;color:#ececee;}
+#cr-crinv .ci-btn[disabled]{opacity:.5;}
+#cr-crinv .ci-pick{display:block;text-align:center;border:1.5px dashed #3a3a42;border-radius:16px;padding:28px 12px;color:#cfcfd4;cursor:pointer;}
+</style>
+<script id="cr-crinv-script">
+/* ═══ Build 1489 · Crew invoice reader (Theo, 27 Nov 2026) ═══
+   Upload a crew's invoice (photo or PDF) → /api/crew-invoice reads it (writes nothing) → a review card
+   shows crew, invoice #, date, job, lines and total → Apply inserts ONE job_costs row (kind labor) with
+   the signed-in session, so RLS decides. Office only, matching the Costs tab's own fence.
+   Opened from: the job's Costs tab ("Read crew invoice"), or #crew-invoice (Command's Agents page links
+   there), where the job is matched from the invoice address / job number and can be changed. */
+(function(){
+'use strict';
+var MAXB = 5 * 1024 * 1024;
+var st = null;   /* { pid, inv, busy, err, dupe } */
+function q(id){ return document.getElementById(id); }
+function E(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+function M(n){ n = Number(n) || 0; return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function office(){ try{ return typeof commFullAccess === 'function' && !!commFullAccess(); }catch(_){ return false; } }
+function me(){ return String((window.currentUser && currentUser.email) || '').toLowerCase(); }
+function db(){ return window.sb || window.supa; }
+function tell(m, k){ try{ if(typeof window.crTell === 'function') window.crTell(m, k); }catch(_){} }
+function projects(){ return (window.cacheProjects || []).filter(function(p){ return p && p.id; }); }
+function poOfSafe(p){ try{ return typeof poOf === 'function' ? poOf(p) : ''; }catch(_){ return ''; } }
+function toks(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean); }
+
+/* best job for an invoice: job number first, then house number + street word, then customer last name */
+function matchJob(inv){
+  var best = null, bestS = 0, why = '';
+  var ref = String(inv.job_ref || '').replace(/\D/g, '');
+  var at = toks(inv.job_address), house = (at[0] && /^\d+$/.test(at[0])) ? at[0] : '', street = at[1] || '';
+  var last = toks(inv.customer_name).slice(-1)[0] || '';
+  projects().forEach(function(p){
+    var s = 0, w = '';
+    var po = String(poOfSafe(p) || '').replace(/\D/g, '');
+    if(ref && po && ref === po){ s += 10; w = 'job number ' + po; }
+    var pa = toks(p.address || [p.street, p.city].join(' '));
+    if(house && pa[0] === house){ s += 4; w = w || 'address'; if(street && pa.indexOf(street) !== -1){ s += 4; } }
+    if(last && last.length > 2 && toks(p.name).indexOf(last) !== -1){ s += 3; w = w || 'customer name'; }
+    if(s > bestS){ bestS = s; best = p; why = w; }
+  });
+  return bestS >= 7 ? { p: best, why: why } : null;
+}
+
+function shell(){
+  var m = q('cr-crinv');
+  if(m) return m;
+  m = document.createElement('div');
+  m.id = 'cr-crinv';
+  m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Read crew invoice');
+  m.innerHTML = '<div class="ci-box" id="ci-box"></div>';
+  document.body.appendChild(m);
+  m.addEventListener('click', onClick);
+  m.addEventListener('change', onChange);
+  return m;
+}
+function close(){ var m = q('cr-crinv'); if(m) m.classList.remove('on'); st = null; if(location.hash === '#crew-invoice'){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(_){} } }
+
+function paint(){
+  var b = q('ci-box'); if(!b || !st) return;
+  var h = '<h3>Read crew invoice</h3>';
+  if(!office()){
+    b.innerHTML = h + '<p class="ci-sub">Crew invoices are office only.</p><div class="ci-btns"><button class="ci-btn ghost" data-ci-close>Close</button></div>';
+    return;
+  }
+  if(!st.inv){
+    h += '<p class="ci-sub">Take a photo of the crew’s invoice or pick the PDF. It’s read for you, then you check it. Nothing is saved until you tap Apply.</p>';
+    h += '<label class="ci-pick" for="ci-file">' + (st.busy ? 'Reading the invoice…' : '📄 Choose photo or PDF') + '</label>';
+    h += '<input type="file" id="ci-file" accept="image/*,application/pdf" style="display:none"' + (st.busy ? ' disabled' : '') + '>';
+    if(st.err) h += '<div class="ci-warn">' + E(st.err) + '</div>';
+    h += '<div class="ci-btns"><button class="ci-btn ghost" data-ci-close>Cancel</button></div>';
+    b.innerHTML = h; return;
+  }
+  var inv = st.inv, f = st.form;
+  h += '<p class="ci-sub">Check what was read. Change anything that’s wrong, then Apply. It adds one Labor cost to the job.</p>';
+  var opts = projects().slice().sort(function(a, b){ return String(a.name || '').localeCompare(String(b.name || '')); })
+    .map(function(p){ var po = poOfSafe(p); return '<option value="' + E(p.id) + '"' + (String(p.id) === String(f.pid) ? ' selected' : '') + '>' + E((p.name || 'Unnamed') + (po ? ' · #' + po : '') + (p.city ? ' · ' + p.city : '')) + '</option>'; }).join('');
+  h += '<label for="ci-job">Job</label><select id="ci-job" data-ci-f="pid"><option value="">Choose the job…</option>' + opts + '</select>';
+  if(st.matchWhy && f.pid) h += '<div class="ci-ok">Matched by ' + E(st.matchWhy) + '. Change it if that’s the wrong job.</div>';
+  else if(!f.pid) h += '<div class="ci-warn">Couldn’t tell which job this is' + (inv.job_address ? ' (invoice says “' + E(inv.job_address) + '”)' : '') + '. Choose it above.</div>';
+  h += '<div class="ci-row2"><div><label for="ci-crew">Crew</label><input id="ci-crew" data-ci-f="crew" value="' + E(f.crew) + '"></div>' +
+       '<div><label for="ci-no">Invoice #</label><input id="ci-no" data-ci-f="no" value="' + E(f.no) + '"></div></div>';
+  h += '<div class="ci-row2"><div><label for="ci-date">Invoice date</label><input id="ci-date" type="date" data-ci-f="date" value="' + E(f.date) + '"></div>' +
+       '<div><label for="ci-amt">Total</label><input id="ci-amt" inputmode="decimal" data-ci-f="amt" value="' + E(f.amt) + '"></div></div>';
+  if(inv.lines.length){
+    h += '<div class="ci-lines">' + inv.lines.map(function(l){
+      return '<div class="ci-line"><span>' + E(l.description || '—') + (l.qty != null ? ' · ' + E(l.qty) + (l.unit ? ' ' + E(l.unit) : '') : '') + '</span><span>' + (l.amount != null ? M(l.amount) : '') + '</span></div>';
+    }).join('') + '</div>';
+    var sum = inv.lines.reduce(function(a, l){ return a + (Number(l.amount) || 0); }, 0) + (Number(inv.tax) || 0);
+    var amt = Number(String(f.amt).replace(/[$,\s]/g, ''));
+    if(sum > 0 && amt > 0 && Math.abs(sum - amt) > 0.5) h += '<div class="ci-warn">The lines add up to ' + M(sum) + ' but the total says ' + M(amt) + '. Check the page.</div>';
+  }
+  if(inv.notes) h += '<div class="ci-warn">Hard to read: ' + E(inv.notes) + '</div>';
+  if(st.dupe) h += '<div class="ci-warn">This job already has a cost for invoice ' + E(f.no) + '. Tap Apply again only if this is a different bill.</div>';
+  if(st.err) h += '<div class="ci-warn">' + E(st.err) + '</div>';
+  h += '<div class="ci-btns"><button class="ci-btn ghost" data-ci-close>Cancel</button><button class="ci-btn" data-ci-apply' + (st.busy ? ' disabled' : '') + '>' + (st.busy ? 'Saving…' : 'Apply') + '</button></div>';
+  b.innerHTML = h;
+}
+
+function shrink(file){
+  return new Promise(function(res, rej){
+    if(file.type === 'application/pdf'){
+      if(file.size > MAXB) return rej(new Error('That PDF is over 5 MB. Take a photo of the page instead.'));
+      var r = new FileReader(); r.onload = function(){ res({ mime: 'application/pdf', data: String(r.result).split(',')[1] }); }; r.onerror = function(){ rej(new Error('Could not open the file.')); };
+      r.readAsDataURL(file); return;
+    }
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){
+      var k = Math.min(1, 2000 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res({ mime: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85).split(',')[1] });
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error('Could not open that photo.')); };
+    img.src = url;
+  });
+}
+
+async function read(file){
+  st.busy = true; st.err = ''; paint();
+  try{
+    var f = await shrink(file);
+    var s = db() && db().auth ? await db().auth.getSession() : {};
+    var tok = s && s.data && s.data.session ? s.data.session.access_token : '';
+    var r = await fetch('/api/crew-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ file: f.data, mime: f.mime }) });
+    var j = await r.json().catch(function(){ return {}; });
+    if(!r.ok || !j.ok) throw new Error(j.error || 'Could not read the invoice.');
+    var inv = j.invoice;
+    var mt = st.pid ? null : matchJob(inv);
+    st.inv = inv; st.matchWhy = mt ? mt.why : '';
+    st.form = { pid: st.pid || (mt ? mt.p.id : ''), crew: inv.crew_name, no: inv.invoice_number,
+      date: inv.invoice_date || new Date().toISOString().slice(0, 10), amt: inv.total != null ? String(inv.total) : '' };
+  }catch(e){ st.err = (e && e.message) || 'Could not read the invoice.'; }
+  st.busy = false; paint();
+}
+
+async function apply(){
+  var f = st.form, amt = Number(String(f.amt || '').replace(/[$,\s]/g, ''));
+  if(!f.pid){ st.err = 'Choose the job first.'; paint(); return; }
+  if(!(amt > 0)){ st.err = 'Enter the total, more than $0.'; paint(); return; }
+  var desc = ('Crew invoice' + (f.no ? ' #' + f.no : '') + (f.crew ? ' · ' + f.crew : '')).slice(0, 200);
+  st.busy = true; st.err = ''; paint();
+  try{
+    if(f.no && !st.dupe){
+      var d = await db().from('job_costs').select('id,description').eq('project_id', f.pid);
+      var hit = ((d && d.data) || []).some(function(c){ return String(c.description || '').indexOf('#' + f.no) !== -1; });
+      if(hit){ st.dupe = true; st.busy = false; paint(); return; }
+    }
+    var row = { project_id: f.pid, kind: 'labor', description: desc, amount: Math.round(amt * 100) / 100,
+      spent_on: f.date || new Date().toISOString().slice(0, 10), paid_by: 'company', reimburse: false, created_by: me() };
+    var r = await db().from('job_costs').insert(row).select('id');
+    if(r.error || !r.data || !r.data.length) throw new Error('Not saved: ' + ((r.error && r.error.message) || 'the database refused it.'));
+    var pid = f.pid;
+    close();
+    tell('Added ' + M(row.amount) + ' labor cost' + (f.crew ? ' from ' + f.crew : '') + '.', 'ok');
+    try{ if(window.CardinalJobPay && window.CardinalJobPay.refresh) window.CardinalJobPay.refresh(pid); }catch(_){}
+  }catch(e){ st.busy = false; st.err = (e && e.message) || 'Not saved.'; paint(); }
+}
+
+function onClick(e){
+  var t = e.target;
+  if(t === q('cr-crinv') || t.closest('[data-ci-close]')){ close(); return; }
+  if(t.closest('[data-ci-apply]')){ if(st && !st.busy) apply(); return; }
+}
+function onChange(e){
+  var t = e.target;
+  if(t.id === 'ci-file' && t.files && t.files[0]){ read(t.files[0]); return; }
+  var k = t.getAttribute('data-ci-f');
+  if(k && st && st.form){ st.form[k] = t.value; if(k === 'pid'){ st.matchWhy = ''; st.dupe = false; paint(); } else if(k === 'no'){ st.dupe = false; } }
+}
+
+function open(opts){
+  st = { pid: (opts && opts.pid) ? String(opts.pid) : '', inv: null, form: null, busy: false, err: '', dupe: false, matchWhy: '' };
+  shell().classList.add('on'); paint();
+}
+
+/* entry 1: the job's Costs tab button (delegated; the button is drawn by cr-jpay-script) */
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('[data-crinv-open]');
+  if(b){ open({ pid: b.getAttribute('data-crinv-open') }); }
+});
+/* entry 2: #crew-invoice — Command's Agents page links here. Waits for sign-in and the project cache. */
+function fromHash(){
+  if(location.hash !== '#crew-invoice') return;
+  var n = 0, iv = setInterval(function(){
+    n++;
+    var ready = window.currentUser && (typeof cacheLoaded === 'undefined' || cacheLoaded);
+    if(ready || n > 60){ clearInterval(iv); if(ready) open({}); }
+  }, 500);
+}
+window.addEventListener('hashchange', fromHash);
+fromHash();
+
+window.CardinalCrewInvoice = Object.assign(window.CardinalCrewInvoice || {}, { open: open, matchJob: matchJob });
+})();
+</script>
